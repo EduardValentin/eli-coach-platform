@@ -25,6 +25,10 @@ import { runRegistry } from "./run-registry";
 // starts recording its own.
 const createdEmails = runRegistry("created-emails-");
 
+// The addresses whose users and invitations a journey already removed as it
+// ended, so teardown looks up only what a crashed journey left behind.
+const releasedEmails = runRegistry("released-emails-");
+
 export function registryFileName(runId: string): string {
   return createdEmails.fileName(runId);
 }
@@ -39,12 +43,28 @@ export function readCreatedEmails(runId: string): string[] {
   return createdEmails.read(runId);
 }
 
+export function recordReleasedEmails(
+  emails: readonly string[],
+  runId: string,
+): void {
+  for (const email of emails) {
+    releasedEmails.record(email, runId);
+  }
+}
+
+export function readUnreleasedEmails(runId: string): string[] {
+  const released = new Set(releasedEmails.read(runId));
+
+  return createdEmails.read(runId).filter((email) => !released.has(email));
+}
+
 // Deletes this run's own registry file — called once a run's users have all
 // been accounted for (see run-cleanup.ts's cleanUpRun),
 // never unconditionally, so a run that leaves genuine deletion failures
 // behind keeps its file around for the next sweep to retry.
 export function deleteRegistryFile(runId: string): void {
   createdEmails.remove(runId);
+  releasedEmails.remove(runId);
 }
 
 // A suite that's still running keeps appending to its own registry file

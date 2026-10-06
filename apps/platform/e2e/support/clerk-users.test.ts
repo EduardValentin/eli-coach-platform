@@ -11,7 +11,9 @@ import {
   findPossiblyActiveRunIds,
   hasDeletionFailures,
   readCreatedEmails,
+  readUnreleasedEmails,
   recordCreatedEmail,
+  recordReleasedEmails,
   summarizeDeletionResults,
   type ClerkUsersApi,
 } from "./clerk-users";
@@ -32,6 +34,10 @@ function registryPathFor(runId: string): string {
   return resolve(runtimeDirectory, `created-emails-${runId}.log`);
 }
 
+function releasedPathFor(runId: string): string {
+  return resolve(runtimeDirectory, `released-emails-${runId}.log`);
+}
+
 // recordCreatedEmail always writes with the real current mtime, so a
 // scenario proving the age guard has to backdate a file after writing it.
 function backdateRegistryFile(runId: string, ageMs: number): void {
@@ -45,9 +51,10 @@ describe("clerk-users registry", () => {
 
   afterEach(() => {
     for (const runId of createdRunIds.splice(0)) {
-      const path = registryPathFor(runId);
-      if (existsSync(path)) {
-        rmSync(path);
+      for (const path of [registryPathFor(runId), releasedPathFor(runId)]) {
+        if (existsSync(path)) {
+          rmSync(path);
+        }
       }
     }
   });
@@ -69,6 +76,29 @@ describe("clerk-users registry", () => {
       "a-2+clerk_test@evoa.fit",
     ]);
     expect(readCreatedEmails(runIdB)).toEqual(["b-1+clerk_test@evoa.fit"]);
+  });
+
+  it("reads back as unreleased only the run's addresses no journey has released yet", () => {
+    // arrange
+    const runId = uniqueRunId("released");
+    createdRunIds.push(runId);
+    recordCreatedEmail("first+clerk_test@evoa.fit", runId);
+    recordCreatedEmail("second+clerk_test@evoa.fit", runId);
+    recordCreatedEmail("third+clerk_test@evoa.fit", runId);
+
+    // act
+    recordReleasedEmails(
+      ["first+clerk_test@evoa.fit", "third+clerk_test@evoa.fit"],
+      runId,
+    );
+
+    // assert
+    expect(readUnreleasedEmails(runId)).toEqual(["second+clerk_test@evoa.fit"]);
+    expect(readCreatedEmails(runId)).toEqual([
+      "first+clerk_test@evoa.fit",
+      "second+clerk_test@evoa.fit",
+      "third+clerk_test@evoa.fit",
+    ]);
   });
 
   it("finds other runs' leftover registry files old enough to sweep, but excludes the current run", () => {
@@ -124,17 +154,20 @@ describe("clerk-users registry", () => {
     expect(possiblyActive).not.toContain(currentRunId);
   });
 
-  it("deletes a run's registry file", () => {
+  it("deletes a run's registry file with its record of released addresses", () => {
     // arrange
     const runId = uniqueRunId("delete");
     createdRunIds.push(runId);
     recordCreatedEmail("delete-me+clerk_test@evoa.fit", runId);
+
+    recordReleasedEmails(["delete-me+clerk_test@evoa.fit"], runId);
 
     // act
     deleteRegistryFile(runId);
 
     // assert
     expect(existsSync(registryPathFor(runId))).toBe(false);
+    expect(existsSync(releasedPathFor(runId))).toBe(false);
   });
 
   describe("deleteRecordedClerkUser", () => {

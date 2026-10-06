@@ -9,7 +9,7 @@ import {
   deleteRecordedClerkUsers,
   deleteRegistryFile,
   hasDeletionFailures,
-  readCreatedEmails,
+  readUnreleasedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
 import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
@@ -19,7 +19,7 @@ export async function cleanUpRun(
   runId: string,
   logPrefix: string,
 ): Promise<void> {
-  const emails = readCreatedEmails(runId);
+  const emails = readUnreleasedEmails(runId);
   const deletions = await deleteRecordedClerkUsers(clerkClient.users, emails);
 
   const revocations = await revokePendingInvitations(

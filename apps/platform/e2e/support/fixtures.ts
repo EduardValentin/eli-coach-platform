@@ -58,9 +58,14 @@ import {
   type SubmittedClient,
 } from "./submitted-clients";
 import {
+  revokePendingInvitations,
+  summarizeRevocations,
+} from "./clerk-invitations";
+import {
   deleteRecordedClerkUsers,
   hasDeletionFailures,
   recordCreatedEmail,
+  recordReleasedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
@@ -364,10 +369,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new AccountPortal(page));
   },
 
-  // Each test releases the Clerk users it created as it ends, so a full run
-  // never holds more than one test's users against the instance's 100-user
-  // cap; the run's registry keeps every address for global teardown's sweep
-  // and its database cleanup.
+  // Each test releases its Clerk users and invitations as it ends, so a full
+  // run never holds more than one test's users against the 100-user cap.
   mintTestEmail: async ({ clerkBackendClient }, use, testInfo) => {
     const minted: string[] = [];
 
@@ -382,12 +385,19 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       clerkBackendClient.users,
       minted,
     );
+    const revocations = await revokePendingInvitations(
+      clerkBackendClient.invitations,
+      minted,
+    );
 
-    if (hasDeletionFailures(deletions)) {
+    if (hasDeletionFailures(deletions) || revocations.failed.length > 0) {
       console.log(
-        `[e2e cleanup] Clerk users after "${testInfo.title}": ${summarizeDeletionResults(deletions)}`,
+        `[e2e cleanup] Clerk after "${testInfo.title}": users ${summarizeDeletionResults(deletions)}; invitations ${summarizeRevocations(revocations)}`,
       );
+      return;
     }
+
+    recordReleasedEmails(minted, RUN_ID);
   },
 
   testEmail: async ({ mintTestEmail }, use) => {
