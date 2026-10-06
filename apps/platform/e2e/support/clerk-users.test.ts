@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { e2eDirectory } from "./repo-paths";
 import {
   deleteRecordedClerkUser,
+  deleteRecordedClerkUsers,
   deleteRegistryFile,
   findLeftoverRunIds,
   findPossiblyActiveRunIds,
@@ -230,6 +231,71 @@ describe("clerk-users registry", () => {
         outcome: "failed",
         reason: "Clerk API unavailable",
       });
+    });
+  });
+
+  describe("deleteRecordedClerkUsers", () => {
+    it("deletes the user of every recorded test address and reports each outcome in order", async () => {
+      // arrange
+      const userIds: Record<string, string> = {
+        "coach+clerk_test@evoa.fit": "user_coach",
+        "client+clerk_test@evoa.fit": "user_client",
+      };
+      const deletedIds: string[] = [];
+      const usersApi: ClerkUsersApi = {
+        getUserList: async ({ emailAddress }) => {
+          const id = userIds[emailAddress[0] ?? ""];
+
+          return { data: id ? [{ id }] : [] };
+        },
+        deleteUser: async (userId) => {
+          deletedIds.push(userId);
+        },
+      };
+
+      // act
+      const results = await deleteRecordedClerkUsers(usersApi, [
+        "coach+clerk_test@evoa.fit",
+        "never-created+clerk_test@evoa.fit",
+        "client+clerk_test@evoa.fit",
+        "owner@evoa.fit",
+      ]);
+
+      // assert
+      expect(results.map(({ email, outcome }) => [email, outcome])).toEqual([
+        ["coach+clerk_test@evoa.fit", "deleted"],
+        ["never-created+clerk_test@evoa.fit", "not-found"],
+        ["client+clerk_test@evoa.fit", "deleted"],
+        ["owner@evoa.fit", "skipped"],
+      ]);
+      expect(deletedIds).toEqual(["user_coach", "user_client"]);
+    });
+
+    it("keeps deleting the rest after one deletion fails", async () => {
+      // arrange
+      const deletedIds: string[] = [];
+      const usersApi: ClerkUsersApi = {
+        getUserList: async ({ emailAddress }) => ({
+          data: [{ id: `user_${emailAddress[0]?.split("+")[0]}` }],
+        }),
+        deleteUser: async (userId) => {
+          if (userId === "user_flaky") throw new Error("Clerk API unavailable");
+          deletedIds.push(userId);
+        },
+      };
+
+      // act
+      const results = await deleteRecordedClerkUsers(usersApi, [
+        "flaky+clerk_test@evoa.fit",
+        "steady+clerk_test@evoa.fit",
+      ]);
+
+      // assert
+      expect(results.map(({ outcome }) => outcome)).toEqual([
+        "failed",
+        "deleted",
+      ]);
+      expect(deletedIds).toEqual(["user_steady"]);
     });
   });
 

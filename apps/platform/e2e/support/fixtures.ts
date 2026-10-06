@@ -57,7 +57,12 @@ import {
   type ReviewState,
   type SubmittedClient,
 } from "./submitted-clients";
-import { recordCreatedEmail } from "./clerk-users";
+import {
+  deleteRecordedClerkUsers,
+  hasDeletionFailures,
+  recordCreatedEmail,
+  summarizeDeletionResults,
+} from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
@@ -89,6 +94,7 @@ type PlatformFixtures = {
   photoView: PhotoView;
   photoLightbox: PhotoLightbox;
   accountPortal: AccountPortal;
+  mintTestEmail: () => string;
   testEmail: string;
   visitorEmail: string;
   stripeCheckout: StripeCheckoutPage;
@@ -358,17 +364,38 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new AccountPortal(page));
   },
 
-  // Playwright inspects this signature to resolve fixture dependencies;
-  // the first param must stay a destructuring pattern even when this
-  // fixture needs none of them.
-  // eslint-disable-next-line no-empty-pattern
-  testEmail: async ({}, use, testInfo) => {
-    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  // Each test releases the Clerk users it created as it ends, so a full run
+  // never holds more than one test's users against the instance's 100-user
+  // cap; the run's registry keeps every address for global teardown's sweep
+  // and its database cleanup.
+  mintTestEmail: async ({ clerkBackendClient }, use, testInfo) => {
+    const minted: string[] = [];
+
+    await use(() => {
+      const email = mintRecordedTestEmail(testInfo.workerIndex);
+      minted.push(email);
+
+      return email;
+    });
+
+    const deletions = await deleteRecordedClerkUsers(
+      clerkBackendClient.users,
+      minted,
+    );
+
+    if (hasDeletionFailures(deletions)) {
+      console.log(
+        `[e2e cleanup] Clerk users after "${testInfo.title}": ${summarizeDeletionResults(deletions)}`,
+      );
+    }
   },
 
-  // eslint-disable-next-line no-empty-pattern
-  visitorEmail: async ({}, use, testInfo) => {
-    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  testEmail: async ({ mintTestEmail }, use) => {
+    await use(mintTestEmail());
+  },
+
+  visitorEmail: async ({ mintTestEmail }, use) => {
+    await use(mintTestEmail());
   },
 
   stripeCheckout: async ({ page }, use) => {
@@ -423,9 +450,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await outage.dispose();
   },
 
-  // eslint-disable-next-line no-empty-pattern
-  coachEmail: async ({}, use, testInfo) => {
-    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  coachEmail: async ({ mintTestEmail }, use) => {
+    await use(mintTestEmail());
   },
 
   // eslint-disable-next-line no-empty-pattern
@@ -531,12 +557,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   },
 
   provisionClientInState: async (
-    { clerkBackendClient, databasePool, scenarioTag },
+    { clerkBackendClient, databasePool, mintTestEmail, scenarioTag },
     use,
-    testInfo,
   ) => {
     await use(async (state: ClientState) => {
-      const email = mintRecordedTestEmail(testInfo.workerIndex);
+      const email = mintTestEmail();
       const invitation = isInvitedState(state)
         ? await createProviderInvitation(clerkBackendClient, email)
         : undefined;
@@ -561,16 +586,15 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   },
 
   provisionProfiledClient: async (
-    { databasePool, scenarioTag },
+    { databasePool, mintTestEmail, scenarioTag },
     use,
-    testInfo,
   ) => {
     await use(async (profile: SubmissionProfile) =>
       insertProfiledClientRecords(
         databasePool,
         {
           authSubjectId: `user_e2e_${randomUUID()}`,
-          email: mintRecordedTestEmail(testInfo.workerIndex),
+          email: mintTestEmail(),
           firstName: PROFILED_CLIENT_FIRST_NAME[profile],
           lastName: `Profile ${scenarioTag}`,
         },
@@ -583,9 +607,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new PortalRequests(page));
   },
 
-  // eslint-disable-next-line no-empty-pattern
-  otherClientEmail: async ({}, use, testInfo) => {
-    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  otherClientEmail: async ({ mintTestEmail }, use) => {
+    await use(mintTestEmail());
   },
 
   provisionMeasuredClient: async (
@@ -665,12 +688,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   },
 
   provisionInvitedClient: async (
-    { clerkBackendClient, databasePool, scenarioTag },
+    { clerkBackendClient, databasePool, mintTestEmail, scenarioTag },
     use,
-    testInfo,
   ) => {
     await use(async (standing: InvitationStanding) => {
-      const email = mintRecordedTestEmail(testInfo.workerIndex);
+      const email = mintTestEmail();
       const invitation = await createProviderInvitation(
         clerkBackendClient,
         email,

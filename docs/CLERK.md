@@ -277,8 +277,12 @@ starts failing at the email/code step with no other explanation, wait a few
 minutes before rerunning rather than assuming a regression.
 
 **Cleanup:** the suite deletes every Clerk user it creates. This is what
-keeps the shared Development instance under its hard 100-user cap. After the
-users, teardown revokes every invitation still pending for the run's
+keeps the shared Development instance under its hard 100-user cap. Each
+journey deletes its own users as it ends (the `mintTestEmail` fixture in
+`e2e/support/fixtures.ts`), because a full run creates more users than the
+cap leaves room for if they all wait for the end of the run; teardown then
+sweeps the run's registry again for anything a crashed journey left. After
+the users, teardown revokes every invitation still pending for the run's
 `+clerk_test` addresses, so a journey that stopped between the payment and
 the sign-up leaves no open invitation behind. Last, it deletes the database
 rows booked under those addresses: the assessment calls, the clients bound

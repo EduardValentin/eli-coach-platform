@@ -6,7 +6,7 @@ import {
   summarizeRevocations,
 } from "./clerk-invitations";
 import {
-  deleteRecordedClerkUser,
+  deleteRecordedClerkUsers,
   deleteRegistryFile,
   hasDeletionFailures,
   readCreatedEmails,
@@ -20,11 +20,7 @@ export async function cleanUpRun(
   logPrefix: string,
 ): Promise<void> {
   const emails = readCreatedEmails(runId);
-  const deletions = [];
-
-  for (const email of emails) {
-    deletions.push(await deleteRecordedClerkUser(clerkClient.users, email));
-  }
+  const deletions = await deleteRecordedClerkUsers(clerkClient.users, emails);
 
   const revocations = await revokePendingInvitations(
     clerkClient.invitations,

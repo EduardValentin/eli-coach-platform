@@ -178,6 +178,19 @@ export async function deleteRecordedClerkUser(
   }
 }
 
+export async function deleteRecordedClerkUsers(
+  usersApi: ClerkUsersApi,
+  emails: readonly string[],
+): Promise<EmailDeletionResult[]> {
+  const results: EmailDeletionResult[] = [];
+
+  for (const email of emails) {
+    results.push(await deleteRecordedClerkUser(usersApi, email));
+  }
+
+  return results;
+}
+
 // A "skipped" entry (an address that doesn't carry the +clerk_test
 // convention) is a data-integrity oddity worth investigating, but retrying
 // it will never resolve it — only a genuine "failed" outcome (a real error
