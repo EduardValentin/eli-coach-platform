@@ -17,6 +17,10 @@ const CLIENT_RESOURCES_PATH = "/api/client-resources";
 
 const CREATED = 201;
 
+function openedPathOf(resourceId: string): string {
+  return `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`;
+}
+
 function responseOf(response: APIResponse): ResourceResponse {
   return { status: response.status(), headers: response.headers() };
 }
@@ -122,9 +126,13 @@ export class ResourceRequests {
   }
 
   async markOpened(resourceId: string): Promise<number> {
-    const response = await this.request.post(
-      `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`,
-    );
+    const response = await this.request.post(openedPathOf(resourceId));
+
+    return response.status();
+  }
+
+  async readOpened(resourceId: string): Promise<number> {
+    const response = await this.request.get(openedPathOf(resourceId));
 
     return response.status();
   }

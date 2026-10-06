@@ -2,6 +2,7 @@ import { expect, test } from "../support/fixtures";
 import { collectPageProblems } from "../support/page-problems";
 import {
   mealPlanPdf,
+  postureGuideImage,
   readableSizeOf,
   recipesDoc,
 } from "../support/sample-resources";
@@ -22,9 +23,16 @@ const RECIPES = {
   description: "Dinners for the weekend.",
 };
 
+const POSTURE = {
+  title: "Posture guide",
+  description: "How to stand for your progress photos.",
+};
+
 const MEAL_PLAN_CARD = { title: MEAL_PLAN.title, type: "PDF", pages: 3 };
 
 const RECIPES_CARD = { title: RECIPES.title, type: "DOC" };
+
+const POSTURE_CARD = { title: POSTURE.title, type: "IMG" };
 
 const NO_OTHER_MEASUREMENTS = {
   system: "metric",
@@ -73,6 +81,22 @@ test("a client finds what her coach gave her marked new, opens, pages and downlo
 
   // assert
   await clientPortalShell.expectSidebarResources("marked");
+
+  // act
+  const dashboardPayload = await clientDashboard.readLoaderPayload();
+
+  // assert
+  expect(dashboardPayload).toContain("unopenedResources");
+  for (const leaked of [
+    MEAL_PLAN.title,
+    MEAL_PLAN.description,
+    RECIPES.title,
+    RECIPES.description,
+    "meal-plan-week-1.pdf",
+    "recipes.doc",
+  ]) {
+    expect(dashboardPayload).not.toContain(leaked);
+  }
 
   // act
   await clientPortalShell.openResourcesFromSidebar();
@@ -239,6 +263,7 @@ test("on her phone a client reaches her resources from the marked More tab, read
   const client = await provisionSubmittedClient("waiting");
   await page.goto("/store");
   await signInAsCoach();
+  await resourceRequests.add(client.clientId, postureGuideImage(), POSTURE);
   await resourceRequests.add(client.clientId, await mealPlanPdf(), MEAL_PLAN);
   await resourceRequests.add(client.clientId, recipesDoc(), RECIPES);
   await page.goto("/");
@@ -264,7 +289,13 @@ test("on her phone a client reaches her resources from the marked More tab, read
 
   // assert
   await clientResources.expectOpen();
-  await clientResources.expectCards([RECIPES.title, MEAL_PLAN.title]);
+  await clientResources.expectCards([
+    RECIPES.title,
+    MEAL_PLAN.title,
+    POSTURE.title,
+  ]);
+  await clientResources.expectNew(POSTURE_CARD);
+  await clientResources.expectThumbnail(POSTURE.title);
   await clientResources.expectColumns(2);
   await expectNoHorizontalScroll(page);
 
@@ -311,6 +342,26 @@ test("on her phone a client reaches her resources from the marked More tab, read
 
   // assert
   await clientResources.expectNotNew(RECIPES_CARD);
+  await clientPortalShell.expectMoreButton("marked");
+
+  // act
+  await clientResources.openResource(POSTURE.title);
+
+  // assert
+  await resourceViewer.expectFullScreen();
+  await resourceViewer.expectShowing({
+    title: POSTURE.title,
+    page: 1,
+    count: 1,
+  });
+  await resourceViewer.expectNoPageControls();
+  await resourceViewer.expectDownloadInView();
+
+  // act
+  await resourceViewer.close();
+
+  // assert
+  await clientResources.expectNotNew(POSTURE_CARD);
   await clientPortalShell.expectMoreButton("unmarked");
 
   // act
@@ -382,8 +433,12 @@ test("only she and her coach reach her resources: another client, a visitor and 
     mealPlan,
     MEAL_PLAN,
   );
+  const malformedMarking = await resourceRequests.markOpened("not-a-resource");
+  const openedRead = await resourceRequests.readOpened(resourceId);
 
   // assert
+  expect(malformedMarking).toBe(404);
+  expect(openedRead).toBe(405);
   expect(clientReads.map((read) => read.status)).toEqual([200, 200, 200]);
   expect(clientReads[2]?.headers).toMatchObject({
     "content-disposition":
