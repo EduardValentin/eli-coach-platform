@@ -1,6 +1,7 @@
 import { clientPronouns } from "../support/client-pronouns";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
+import { paidThrough } from "../support/subscribed-clients";
 import {
   PROTOTYPE_DETAIL_REQUEST,
   SEEDED_FACT_READINGS,
@@ -142,7 +143,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
     "Payment date": dayMonthFormatter.format(submitted.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(submitted.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": `Once ${clientPronouns(submitted.gender).possessive} program starts`,
+    "Renews on": `Starts when ${clientPronouns(submitted.gender).possessive} program is delivered`,
   });
   await coachClient.expectReducedPrice("No");
   await coachClient.expectAssessmentCallCollapsed();
@@ -379,7 +380,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
     "Payment date": dayMonthFormatter.format(onboarding.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(onboarding.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": `Once ${clientPronouns(onboarding.gender).possessive} program starts`,
+    "Renews on": `Starts when ${clientPronouns(onboarding.gender).possessive} program is delivered`,
   });
   await coachClient.expectReducedPrice("No");
 });
@@ -432,4 +433,72 @@ test("a client account is refused the coach's client pages and every coach actio
     answersApprovedAt: null,
   });
   expect(await onboardingRecords.detailRequests()).toEqual([]);
+});
+
+test("a client who cancels without a refund reads Cancelled with the day her coaching ends, and the coach can no longer act on her onboarding", async ({
+  coachClient,
+  coachClients,
+  page,
+  portalRequests,
+  provisionCoach,
+  provisionSubscribedClient,
+  publicNav,
+  scenarioTag,
+  signIn,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionCoach();
+  const client = await provisionSubscribedClient({
+    start: "immediate",
+    daysSincePayment: 3,
+  });
+  await page.goto("/store");
+  await signIn();
+  expect((await portalRequests.cancelSubscription()).status).toBe(200);
+  await page.goto("/");
+  await publicNav.signOut();
+  await signInAsCoach();
+
+  // act
+  await coachClients.open();
+  await coachClients.search(scenarioTag);
+
+  // assert
+  await coachClients.expectRow(client.fullName, "Cancelled");
+  await coachClients.expectRowWithoutRefundBadge(client.fullName);
+  await coachClients.expectStatusGroups(["Onboarding", "Active", "Inactive"]);
+  await coachClients.expectStatusCount("Cancelled", 1);
+
+  // act
+  await coachClients.filterByStatus("Cancelled");
+
+  // assert
+  await coachClients.expectRows([client.fullName]);
+
+  // act
+  await coachClients.openClient(client.fullName);
+
+  // assert
+  await coachClient.expectOpen(client.clientId);
+  await coachClient.expectSubscription({
+    "Ends on": dayMonthFormatter.format(paidThrough(client.paidAt)),
+  });
+  await coachClient.expectNoNeedsRefundBadge(client.fullName);
+  await coachClient.expectNoCoachingActions();
+
+  // act
+  const refusals = [
+    await portalRequests.openReview(client.clientId),
+    await portalRequests.requestDetails(
+      client.clientId,
+      PROTOTYPE_DETAIL_REQUEST,
+    ),
+    await portalRequests.approveAnswers(client.clientId),
+  ];
+
+  // assert
+  expect(refusals).toEqual([409, 409, 409]);
 });

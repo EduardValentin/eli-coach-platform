@@ -250,8 +250,29 @@
     {
       "idx": 35,
       "version": "7",
-      "when": 1791217124703,
-      "tag": "0035_client_resources",
+      "when": 1790961598998,
+      "tag": "0035_coaching_subscription_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791130308475,
+      "tag": "0036_payment_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791204486674,
+      "tag": "0037_coaching_subscription_payment_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791294917334,
+      "tag": "0038_client_resources",
       "breakpoints": true
     }
   ]

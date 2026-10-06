@@ -10,7 +10,6 @@ import type { SamplePhoto } from "./sample-photos";
 const PHOTO_CONSENT_STATEMENT =
   /^I agree to share progress photos with my coach\./;
 const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
-const PHOTOS_SEND_NOTE = "Your photos are sent with your answers.";
 const PHOTO_REFUSAL = "Choose a JPEG, PNG or WebP under 10 MB.";
 
 export class ProgressPhotoTiles {
@@ -61,13 +60,7 @@ export class ProgressPhotoTiles {
     await this.consent.uncheck();
   }
 
-  async expectConsentAlreadyGiven(agreedOn: string): Promise<void> {
-    await expect(
-      this.scope.getByText(
-        `You agreed to share progress photos on ${agreedOn}.`,
-        { exact: true },
-      ),
-    ).toBeVisible();
+  async expectConsentAlreadyGiven(): Promise<void> {
     await expect(this.consent).toHaveCount(0);
 
     for (const view of PROGRESS_PHOTO_VIEWS) {
@@ -89,10 +82,7 @@ export class ProgressPhotoTiles {
     }
   }
 
-  async expectSendNote(): Promise<void> {
-    await expect(
-      this.scope.getByText(PHOTOS_SEND_NOTE, { exact: true }),
-    ).toBeVisible();
+  async expectUnlocked(): Promise<void> {
     await expect(
       this.scope.getByText(PHOTOS_LOCKED_NOTE, { exact: true }),
     ).toHaveCount(0);

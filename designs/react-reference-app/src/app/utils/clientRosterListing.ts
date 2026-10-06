@@ -39,7 +39,7 @@ export type RosterRow = {
   detailPath: string;
   actionLabel: string;
   avatarUrl?: string;
-  terminable?: { status: RosterStatus };
+  needsRefund: boolean;
 };
 
 export type RosterSelection = {

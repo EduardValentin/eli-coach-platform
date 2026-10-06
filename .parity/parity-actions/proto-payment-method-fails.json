@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity=\"manage-payment-method\"]"},
+  {"wait": 400},
+  {"click": "[data-parity=\"manage-payment-method\"]"},
+  {"waitFor": "[data-parity=\"payment-method-problem\"]"},
+  {"wait": 600}
+]

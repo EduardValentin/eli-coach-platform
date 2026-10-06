@@ -22,7 +22,6 @@ import {
   SCREENING_CLEARED_MESSAGE,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from "~/features/client-onboarding/contracts/onboarding-copy";
-import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
 import { ProgressPhotoBlock } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
 import {
   NO_PROGRESS_PHOTO_PICKS,
@@ -329,7 +328,6 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
                   }}
                   onPhotosChange={setPhotos}
                   photos={photos}
-                  sendNote={MEASUREMENTS_COPY.photos.sendNote}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"

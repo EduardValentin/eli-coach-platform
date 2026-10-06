@@ -17,6 +17,16 @@ const FIND_CLIENTS_OF_CALLS = `
 `;
 const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   {
+    rows: "payment cards",
+    statement: `
+      delete from app.payment_cards
+      where stripe_customer_id in (
+        select stripe_customer_id from app.coaching_subscriptions
+        where assessment_call_id = any($1::uuid[])
+      )
+    `,
+  },
+  {
     rows: "coaching subscriptions",
     statement: `
       delete from app.coaching_subscriptions

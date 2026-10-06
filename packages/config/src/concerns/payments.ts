@@ -9,6 +9,13 @@ export const paymentsShape = {
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
   STRIPE_API_BASE_URL: z.url({ protocol: /^https?$/ }).optional(),
+  STRIPE_PORTAL_CONFIGURATION_ID: z
+    .string()
+    .regex(/^bpc_\w+$/, {
+      message:
+        "STRIPE_PORTAL_CONFIGURATION_ID must be a Stripe customer-portal configuration id.",
+    })
+    .optional(),
 };
 
 export type PaymentsConfig = z.infer<z.ZodObject<typeof paymentsShape>>;
@@ -28,6 +35,8 @@ export function refinePayments(
     for (const name of STRIPE_SECRET_NAMES) {
       refineStripeSecret({ environment, name, context });
     }
+
+    refinePortalConfiguration(environment, context);
   }
 
   if (!isProductionRuntime(environment)) {
@@ -50,6 +59,24 @@ export function refinePayments(
       path: ["STRIPE_API_BASE_URL"],
     });
   }
+}
+
+function refinePortalConfiguration(
+  environment: PaymentsConfig & AppConfig,
+  context: z.RefinementCtx,
+): void {
+  if (environment.ENVIRONMENT !== "production") {
+    return;
+  }
+  if (environment.STRIPE_PORTAL_CONFIGURATION_ID) {
+    return;
+  }
+  context.addIssue({
+    code: "custom",
+    message:
+      "Production requires STRIPE_PORTAL_CONFIGURATION_ID for the Stripe customer portal.",
+    path: ["STRIPE_PORTAL_CONFIGURATION_ID"],
+  });
 }
 
 function refineStripeSecret({

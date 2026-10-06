@@ -24,11 +24,17 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
+import {
+  stripeSubscriptionObject,
+  SubscriptionLifecycleJourney,
+} from "~integration-test-config/subscription-lifecycle-journey";
+import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/stripe-api";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
+const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const CLIENTS_PAGE = "/coach/clients";
 const UNKNOWN_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
@@ -93,6 +99,53 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Ana Popescu");
       expect(texts).toContain("Awaiting review");
       expect(texts).not.toContain("Invited");
+    });
+
+    it("keeps a client whose coaching ended on the list as Inactive", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await lifecycle.deliverEvent({
+        id: "evt_clients_page_deleted",
+        type: "customer.subscription.deleted",
+        object: stripeSubscriptionObject({
+          status: "canceled",
+          ended_at: toUnixSeconds(rig.now()),
+        }),
+      });
+
+      // act
+      const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Ana Popescu");
+      expect(texts).toContain("Inactive");
+      expect(texts).not.toContain("Onboarding");
+    });
+
+    it("lists a client whose cancellation is scheduled as Cancelled", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await lifecycle.deliverEvent({
+        id: "evt_clients_page_scheduled",
+        type: "customer.subscription.updated",
+        object: stripeSubscriptionObject({
+          cancel_at: toUnixSeconds(new Date("2027-01-21T08:00:00.000Z")),
+        }),
+        previousAttributes: { cancel_at: null },
+      });
+
+      // act
+      const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+
+      expect(texts).toContain("Ana Popescu");
+      expect(texts).toContain("Cancelled");
+      expect(texts).not.toContain("Onboarding");
     });
 
     it("says no one has paid yet while the roster is empty", async () => {
@@ -199,7 +252,7 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("3 months");
       expect(texts).toContain("21 October");
       expect(texts).toContain("Immediate start");
-      expect(texts).toContain("Once her program starts");
+      expect(texts).toContain("Starts when her program is delivered");
       expect(texts).toContain("She has not sent any measurements yet.");
     });
 
@@ -237,6 +290,66 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Approve answers");
       expect(texts).not.toContain("Re-send invitation");
       expect(texts).not.toContain("Her answers are not in yet.");
+    });
+
+    it("keeps a submitted client's answers readable but offers no review step once her coaching has ended", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await onboarding.submit(ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+      await lifecycle.deliverEvent({
+        id: "evt_client_page_deleted",
+        type: "customer.subscription.deleted",
+        object: stripeSubscriptionObject({
+          status: "canceled",
+          ended_at: toUnixSeconds(rig.now()),
+        }),
+      });
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}`,
+      );
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Inactive");
+      expect(texts).toContain("Ended on");
+      expect(texts).toContain("Answers");
+      expect(texts).not.toContain("Review answers");
+      expect(texts).not.toContain("Approve answers");
+    });
+
+    it("offers no invitation re-send for an invited client whose coaching has ended", async () => {
+      // arrange
+      const { callId } = await sales.payForCall();
+      const clientId = await sales.clientIdPaidFor(callId);
+      await lifecycle.deliverEvent({
+        id: "evt_client_page_invited_deleted",
+        type: "customer.subscription.deleted",
+        object: stripeSubscriptionObject({
+          status: "canceled",
+          ended_at: toUnixSeconds(rig.now()),
+        }),
+      });
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}`,
+      );
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Invitation");
+      expect(texts).toContain("Inactive");
+      expect(texts).not.toContain("Re-send invitation");
     });
 
     it("answers 404 for a client no one paid for and for an id that is not one", async () => {

@@ -25,14 +25,54 @@ export function parseStartPath(
 
 export const WITHDRAWAL_WINDOW_DAYS = 14;
 
+export const REFUND_DUE_WITHIN_DAYS = 14;
+
+export type RefundReason = 'full-refund' | 'coach-issued';
+
+export type RefundDue = {
+  amountCents: number;
+  reason: RefundReason;
+  dueBy: Date;
+  refundedCents: number;
+  refundedAt?: Date;
+};
+
+export type CancellationRule = 'full-refund' | 'no-refund' | 'none';
+
+export type CardBrand =
+  | 'visa'
+  | 'mastercard'
+  | 'amex'
+  | 'discover'
+  | 'diners'
+  | 'jcb'
+  | 'unionpay'
+  | 'unknown';
+
+export type CardOnFile = {
+  brand: CardBrand;
+  lastFour: string;
+  expiryMonth: number;
+  expiryYear: number;
+};
+
 export type CoachingSubscription = {
   bundle: SubscriptionBundle;
   startPath: SubscriptionStartPath;
   purchasedAt: Date;
+  amountPaidCents: number;
   status: SubscriptionStatus;
   day1?: Date;
   periodEndsAt?: Date;
   cancelledAt?: Date;
+  refund?: RefundDue;
+  paymentProblem: boolean;
+  cardOnFile?: CardOnFile;
+};
+
+export type RefundSettlement = {
+  refundedCents: number;
+  at: Date;
 };
 
 export type Day1Request = {
@@ -45,11 +85,6 @@ export type SubscriptionPeriod = {
   index: number;
   startsAt: Date;
   endsAt: Date;
-};
-
-export type SubscriptionCancellation = {
-  subscription: CoachingSubscription;
-  fullRefund: boolean;
 };
 
 export function withdrawalDeadline(purchasedAt: Date): Date {
@@ -115,39 +150,107 @@ export function currentPeriod(
   return { index, startsAt, endsAt };
 }
 
+export function cancellationRule(
+  subscription: CoachingSubscription,
+  now: Date,
+): CancellationRule {
+  const status = deriveStatus(subscription, now);
+  if (status === 'cancelled' || status === 'ended') return 'none';
+
+  const withinWithdrawal =
+    now.getTime() < withdrawalDeadline(subscription.purchasedAt).getTime();
+  const keepsWithdrawalRight = subscription.startPath === 'waiting';
+
+  return withinWithdrawal && keepsWithdrawalRight ? 'full-refund' : 'no-refund';
+}
+
+export function accessEndWithoutRefund(
+  subscription: CoachingSubscription,
+  now: Date,
+): Date {
+  const period = currentPeriod(subscription, now);
+  if (period) return period.endsAt;
+
+  return addMonths(subscription.purchasedAt, subscription.bundle);
+}
+
 export function cancel(
   subscription: CoachingSubscription,
   now: Date,
-): SubscriptionCancellation {
-  if (!canStartWork(subscription, now)) {
+): CoachingSubscription {
+  const rule = cancellationRule(subscription, now);
+  if (rule === 'none') return subscription;
+
+  if (rule === 'no-refund') {
     return {
-      subscription: {
-        ...subscription,
-        status: 'ended',
-        cancelledAt: now,
-        periodEndsAt: now,
-      },
-      fullRefund: true,
-    };
-  }
-
-  const period = currentPeriod(subscription, now);
-  const endsAt = period
-    ? period.endsAt
-    : periodEnd(
-        subscription.day1 ?? subscription.purchasedAt,
-        subscription.bundle,
-        0,
-      );
-
-  return {
-    subscription: {
       ...subscription,
       status: 'cancelled',
       cancelledAt: now,
-      periodEndsAt: endsAt,
+      periodEndsAt: accessEndWithoutRefund(subscription, now),
+    };
+  }
+
+  return {
+    ...subscription,
+    status: 'ended',
+    cancelledAt: now,
+    periodEndsAt: now,
+    refund: {
+      amountCents: subscription.amountPaidCents,
+      reason: 'full-refund',
+      dueBy: addDays(now, REFUND_DUE_WITHIN_DAYS),
+      refundedCents: 0,
     },
-    fullRefund: false,
+  };
+}
+
+export function outstandingRefundCents(
+  subscription: CoachingSubscription,
+): number {
+  const { refund } = subscription;
+  if (!refund) return 0;
+
+  return Math.max(0, refund.amountCents - refund.refundedCents);
+}
+
+export function needsRefund(
+  subscription: CoachingSubscription | undefined,
+): boolean {
+  return subscription ? outstandingRefundCents(subscription) > 0 : false;
+}
+
+function withCoachIssuedRefund(
+  subscription: CoachingSubscription,
+  settlement: RefundSettlement,
+): CoachingSubscription {
+  return {
+    ...subscription,
+    refund: {
+      amountCents: settlement.refundedCents,
+      reason: 'coach-issued',
+      dueBy: settlement.at,
+      refundedCents: settlement.refundedCents,
+      refundedAt: settlement.at,
+    },
+  };
+}
+
+export function settleRefund(
+  subscription: CoachingSubscription,
+  settlement: RefundSettlement,
+): CoachingSubscription {
+  const { refund } = subscription;
+  if (!refund) return withCoachIssuedRefund(subscription, settlement);
+
+  const settled = settlement.refundedCents >= refund.amountCents;
+
+  return {
+    ...subscription,
+    refund: {
+      ...refund,
+      refundedCents: settlement.refundedCents,
+      refundedAt: settled ? settlement.at : undefined,
+    },
   };
 }
 

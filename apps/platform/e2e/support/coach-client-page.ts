@@ -32,6 +32,16 @@ const FOCUS_TRAP_TAB_STOPS = 60;
 
 const ABSENT_READING = "—";
 
+const NEEDS_REFUND_LABEL = "Needs refund";
+
+const CANCELLED_OR_ENDED_ACTIONS = [
+  "Review answers",
+  "Continue review",
+  "Approve answers",
+  "Ask for more details",
+  "Re-send invitation",
+] as const;
+
 const ONBOARDING_PROFILE_TERMS = [
   "Height",
   "Starting weight",
@@ -86,6 +96,12 @@ export class CoachClientPage {
     );
     await confirmation.getByRole("button", { name: "Approve" }).click();
     await expect(confirmation).toBeHidden();
+  }
+
+  private headerOf(fullName: string): Locator {
+    return this.page
+      .getByRole("heading", { level: 1, name: fullName })
+      .locator("xpath=ancestor::header[1]");
   }
 
   private definitionOf(scope: Locator, term: string): Locator {
@@ -211,6 +227,48 @@ export class CoachClientPage {
 
   async expectSubscription(readings: Readings): Promise<void> {
     await this.expectReadings(this.block("Subscription"), readings);
+  }
+
+  async expectNeedsRefundBadge(fullName: string): Promise<void> {
+    await expect(
+      this.headerOf(fullName).getByText(NEEDS_REFUND_LABEL, { exact: true }),
+    ).toBeVisible();
+  }
+
+  async expectNoNeedsRefundBadge(fullName: string): Promise<void> {
+    await expect(this.headerOf(fullName)).toBeVisible();
+    await expect(
+      this.headerOf(fullName).getByText(NEEDS_REFUND_LABEL, { exact: true }),
+    ).toHaveCount(0);
+  }
+
+  async expectRefundDue(amountDue: string, reason: string): Promise<void> {
+    const refundDue = this.definitionOf(
+      this.block("Subscription"),
+      "Refund due",
+    );
+
+    await expect(refundDue).toHaveText(amountDue);
+    await expect(
+      refundDue.locator("xpath=following-sibling::dd[1]"),
+    ).toHaveText(reason);
+  }
+
+  async expectRefunded(day: string): Promise<void> {
+    await this.expectSubscription({ Refunded: day });
+    await expect(
+      this.definitionOf(this.block("Subscription"), "Refund due"),
+    ).toHaveCount(0);
+  }
+
+  async expectNoCoachingActions(): Promise<void> {
+    await expect(this.onboarding).toBeVisible();
+
+    for (const action of CANCELLED_OR_ENDED_ACTIONS) {
+      await expect(this.page.getByRole("button", { name: action })).toHaveCount(
+        0,
+      );
+    }
   }
 
   async expectReducedPrice(answer: ReducedPriceAnswer): Promise<void> {

@@ -32,6 +32,7 @@ const invitedClient: InvitedClient = {
   email: "ana@example.com",
   firstName: "Ana",
   authSubjectId: null,
+  subscriptionCancelledOrEnded: false,
 };
 
 function clockAt(now: Date) {

@@ -2,7 +2,9 @@ import { type ReactNode } from 'react';
 import { CreditCard } from 'lucide-react';
 import {
   deriveStatus,
+  outstandingRefundCents,
   type CoachingSubscription,
+  type RefundDue,
 } from '../domain/coachingSubscription';
 import type { JourneyGender, JourneyPricing } from '../domain/journey';
 import {
@@ -13,6 +15,8 @@ import {
   REDUCED_PRICE_LABELS,
   startPathLabel,
 } from '../utils/journeyLabels';
+import { formatEuroCents } from '../utils/money';
+import { REFUND_REASON_LABELS } from '../utils/subscriptionCopy';
 import { cn } from './ui/utils';
 import { PortalWidget } from './PortalWidget';
 import { Reading } from './Reading';
@@ -61,7 +65,7 @@ function periodLine(
   if (!endsAt) {
     return {
       term: 'Renews on',
-      value: `Once ${ownerPossessive} program starts`,
+      value: `Starts when ${ownerPossessive} program is delivered`,
     };
   }
   if (status === 'cancelled') {
@@ -72,6 +76,47 @@ function periodLine(
   }
 
   return { term: 'Renews on', value: formatJourneyDate(endsAt) };
+}
+
+function refundDetail(refund: RefundDue): string {
+  const reason = REFUND_REASON_LABELS[refund.reason];
+  if (refund.refundedCents === 0) return reason;
+
+  return `${reason} ${formatEuroCents(refund.refundedCents)} refunded so far.`;
+}
+
+function RefundReading({
+  subscription,
+}: {
+  subscription: CoachingSubscription;
+}) {
+  const { refund } = subscription;
+  if (!refund) return null;
+
+  if (refund.refundedAt) {
+    return (
+      <Reading
+        as="dl-item"
+        label="Refunded"
+        value={formatJourneyDate(refund.refundedAt)}
+        valueParity="subscription-refunded"
+      />
+    );
+  }
+
+  const outstanding = formatEuroCents(outstandingRefundCents(subscription));
+
+  return (
+    <Reading
+      as="dl-item"
+      className="col-span-2 sm:col-span-3"
+      label="Refund due"
+      value={`${outstanding} by ${formatJourneyDate(refund.dueBy)}`}
+      valueParity="subscription-refund-due"
+      detail={refundDetail(refund)}
+      detailParity="subscription-refund-reason"
+    />
+  );
 }
 
 export function SubscriptionSummary(props: SubscriptionSummaryProps) {
@@ -132,6 +177,9 @@ export function SubscriptionSummary(props: SubscriptionSummaryProps) {
             value={REDUCED_PRICE_LABELS[props.pricing]}
             valueParity="subscription-reduced-price"
           />
+        )}
+        {props.perspective === 'coach' && (
+          <RefundReading subscription={subscription} />
         )}
       </dl>
 

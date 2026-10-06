@@ -8,7 +8,7 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
-import { programWorkStart } from "@eli-coach-platform/domain/coaching-subscription";
+import type { RefundDueSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -39,12 +39,19 @@ type ResendRefusal = Exclude<
 const RESEND_REFUSALS = {
   "not-found": { error: "not-found", status: 404 },
   "already-admitted": { error: "already-admitted", status: 409 },
+  "subscription-cancelled-or-ended": {
+    error: "subscription-cancelled-or-ended",
+    status: 409,
+  },
   failed: { error: "send-failed", status: 503 },
 } as const satisfies Record<ResendRefusal, { error: string; status: number }>;
 
 const RESEND_REQUEST_MAX_BYTES = 1024;
 
-type ListedClient = ClientRosterEntry & { status: ClientStatus };
+type ListedClient = ClientRosterEntry & {
+  status: ClientStatus;
+  needsRefund: boolean;
+};
 
 type ClientRecord = NonNullable<
   Awaited<ReturnType<ReadClientRecordUseCase["execute"]>>
@@ -94,6 +101,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
+      subscriptionCancelledOrEnded: record.subscriptionCancelledOrEnded,
       gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
@@ -132,6 +140,7 @@ function identityOf(client: ListedClient) {
     lastName: client.journey.lastName,
     email: client.booking.email,
     status: client.status,
+    needsRefund: client.needsRefund,
   };
 }
 
@@ -164,21 +173,44 @@ function toRosterClient(client: ListedClient) {
   };
 }
 
-function subscriptionOf(client: ListedClient) {
-  if (!client.subscription) {
+function subscriptionOf(record: ClientRecord) {
+  if (!record.subscription) {
     return null;
   }
 
-  const { bundleId, months, tier, paidAt, startChoice } = client.subscription;
+  const { subscription, subscriptionStatus } = record;
+  const accessEndsOn = subscription.accessEndsAt?.toISOString() ?? null;
 
   return {
-    bundleId,
-    months,
-    reducedPrice: tier === "reduced",
-    paidAt: paidAt.toISOString(),
-    workStartsOn:
-      programWorkStart({ startChoice, purchasedAt: paidAt })?.toISOString() ??
-      null,
+    bundleId: subscription.bundleId,
+    months: subscription.months,
+    reducedPrice: subscription.tier === "reduced",
+    paidAt: subscription.paidAt.toISOString(),
+    workStartsOn: record.workStartsOn?.toISOString() ?? null,
+    status: subscriptionStatus,
+    endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
+    endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
+    refund: subscription.refund
+      ? refundOf(subscription.refund, {
+          currency: subscription.currency,
+          outstandingCents: record.refundOutstandingCents ?? 0,
+        })
+      : null,
+  };
+}
+
+function refundOf(
+  refund: RefundDueSnapshot,
+  reading: { currency: string; outstandingCents: number },
+) {
+  return {
+    reason: refund.reason,
+    amountCents: refund.amountCents,
+    outstandingCents: reading.outstandingCents,
+    refundedCents: refund.refundedCents,
+    currency: reading.currency,
+    dueBy: refund.dueBy?.toISOString() ?? null,
+    refundedOn: refund.refundedAt?.toISOString() ?? null,
   };
 }
 

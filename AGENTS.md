@@ -49,6 +49,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Comments explain non-obvious reasons, not what the code does.
 - Formatting belongs to Prettier (`pnpm format`); `pnpm lint` fails on unformatted files, so never hand-format or argue layout in review.
 - At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
+- A function created to serve one class is a private method of that class, or a private static one when it holds no instance state. A module exists only when it has two or more consumers. One factory per concern, not one per port.
 - No production code whose only purpose is to serve a test.
 - In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths
 - Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.

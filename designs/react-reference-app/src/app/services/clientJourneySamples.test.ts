@@ -6,8 +6,16 @@ import {
   type JourneyStage,
 } from '../domain/journey';
 import { measurementDueLine } from '../domain/measurementSchedule';
+import { subDays } from 'date-fns';
+import {
+  cancellationRule,
+  deriveStatus,
+  needsRefund,
+  outstandingRefundCents,
+} from '../domain/coachingSubscription';
 import {
   seedJourney,
+  type JourneySeed,
   type PrototypeMeasurementsDue,
   type PrototypeSeededPhotos,
 } from './clientJourneySamples';
@@ -44,6 +52,10 @@ function journeyAt(
     measurementsDue,
     lifeStage: 'none',
     seededPhotos,
+    refund: 'none',
+    paymentProblem: false,
+    cardOnFile: 'visa',
+    daysSincePayment: 'stage',
     now: NOW,
   });
 }
@@ -177,5 +189,138 @@ describe('seeding a client profile', () => {
         clientNotes: 'Night shifts twice a week, so those days start late.',
       });
     }
+  });
+});
+
+function subscriptionSeededWith(overrides: Partial<JourneySeed>) {
+  const journey = seedJourney({
+    callId: 'ac-seed-subscription',
+    identity: {
+      firstName: 'Ana',
+      lastName: 'Popescu',
+      dateOfBirth: '1994-03-14',
+      email: 'ana@example.com',
+      gender: 'female',
+      country: 'RO',
+    },
+    stage: 'submitted',
+    startPath: 'immediate',
+    subscriptionStatus: 'active',
+    pricing: 'regular',
+    bookingNotes: null,
+    invitationStanding: 'sent',
+    prototypeMode: 'mvp',
+    measurementsDue: 'none',
+    lifeStage: 'none',
+    seededPhotos: 'none',
+    refund: 'none',
+    paymentProblem: false,
+    cardOnFile: 'visa',
+    daysSincePayment: 'stage',
+    now: NOW,
+    ...overrides,
+  });
+
+  if (!journey.subscription) throw new Error('expected a subscription');
+
+  return journey.subscription;
+}
+
+describe('seeding the subscription', () => {
+  it('records the bundle price she paid', () => {
+    // act
+    const subscription = subscriptionSeededWith({});
+
+    // assert
+    expect(subscription.amountPaidCents).toBe(44700);
+  });
+
+  it('dates the payment from the days since payment', () => {
+    // act
+    const subscription = subscriptionSeededWith({ daysSincePayment: '14' });
+
+    // assert
+    expect(subscription.purchasedAt).toEqual(subDays(NOW, 14));
+    expect(cancellationRule(subscription, NOW)).toBe('no-refund');
+  });
+
+  it('reaches the full refund on the waiting path within 14 days', () => {
+    // act
+    const subscription = subscriptionSeededWith({
+      startPath: 'waiting',
+      daysSincePayment: '13',
+    });
+
+    // assert
+    expect(cancellationRule(subscription, NOW)).toBe('full-refund');
+  });
+
+  it('seeds a cancellation without a refund with access until the bundle runs out', () => {
+    // act
+    const subscription = subscriptionSeededWith({
+      subscriptionStatus: 'cancelled',
+      daysSincePayment: '30',
+    });
+
+    // assert
+    expect(deriveStatus(subscription, NOW)).toBe('cancelled');
+    expect(subscription.periodEndsAt).toEqual(
+      new Date(2026, 10, 22, 12, 0, 0),
+    );
+  });
+
+  it('seeds an ended subscription with the refund still due', () => {
+    // act
+    const subscription = subscriptionSeededWith({
+      startPath: 'waiting',
+      refund: 'due',
+    });
+
+    // assert
+    expect(deriveStatus(subscription, NOW)).toBe('ended');
+    expect(subscription.refund).toMatchObject({
+      amountCents: 44700,
+      reason: 'full-refund',
+      refundedCents: 0,
+    });
+    expect(needsRefund(subscription)).toBe(true);
+  });
+
+  it('seeds a refund on the waiting path, the only one that refunds', () => {
+    // act
+    const subscription = subscriptionSeededWith({
+      startPath: 'immediate',
+      refund: 'due',
+    });
+
+    // assert
+    expect(subscription.startPath).toBe('waiting');
+    expect(subscription.refund?.reason).toBe('full-refund');
+  });
+
+  it('seeds a partly refunded subscription with the rest still due', () => {
+    // act
+    const subscription = subscriptionSeededWith({ refund: 'part-refunded' });
+
+    // assert
+    expect(subscription.refund?.reason).toBe('full-refund');
+    expect(outstandingRefundCents(subscription)).toBe(29800);
+  });
+
+  it('seeds a settled refund with its date', () => {
+    // act
+    const subscription = subscriptionSeededWith({ refund: 'refunded' });
+
+    // assert
+    expect(needsRefund(subscription)).toBe(false);
+    expect(subscription.refund?.refundedAt).toEqual(NOW);
+  });
+
+  it('flags the payment problem', () => {
+    // act
+    const subscription = subscriptionSeededWith({ paymentProblem: true });
+
+    // assert
+    expect(subscription.paymentProblem).toBe(true);
   });
 });

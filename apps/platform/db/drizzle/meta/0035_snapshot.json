@@ -1,5 +1,5 @@
 {
-  "id": "efccef79-d3ba-4b18-b535-bca33a4d0a3d",
+  "id": "918dc273-cee7-4413-83d4-65ad51fd4e4f",
   "prevId": "cb6d1e10-57b1-4e82-b28a-4deb55fd8b03",
   "version": "7",
   "dialect": "postgresql",
@@ -1129,120 +1129,6 @@
       },
       "isRLSEnabled": false
     },
-    "app.client_resources": {
-      "name": "client_resources",
-      "schema": "app",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "client_id": {
-          "name": "client_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "original_name": {
-          "name": "original_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "format": {
-          "name": "format",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "size_bytes": {
-          "name": "size_bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "page_count": {
-          "name": "page_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "added_at": {
-          "name": "added_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "client_resources_client_id_added_at_idx": {
-          "name": "client_resources_client_id_added_at_idx",
-          "columns": [
-            {
-              "expression": "client_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "added_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "client_resources_client_id_clients_id_fk": {
-          "name": "client_resources_client_id_clients_id_fk",
-          "tableFrom": "client_resources",
-          "tableTo": "clients",
-          "schemaTo": "app",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "client_resources_format_check": {
-          "name": "client_resources_format_check",
-          "value": "\"app\".\"client_resources\".\"format\" in ('pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'jpeg', 'png', 'webp')"
-        },
-        "client_resources_page_count_check": {
-          "name": "client_resources_page_count_check",
-          "value": "\"app\".\"client_resources\".\"page_count\" is null or \"app\".\"client_resources\".\"page_count\" >= 1"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "app.checkout_sessions": {
       "name": "checkout_sessions",
       "schema": "app",
@@ -1785,6 +1671,54 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_ends_at": {
+          "name": "access_ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_problem_since": {
+          "name": "payment_problem_since",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refund_reason": {
+          "name": "refund_reason",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refund_due_cents": {
+          "name": "refund_due_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refund_due_by": {
+          "name": "refund_due_by",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refunded_cents": {
+          "name": "refunded_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refunded_at": {
+          "name": "refunded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1906,7 +1840,23 @@
         },
         "coaching_subscriptions_status_check": {
           "name": "coaching_subscriptions_status_check",
-          "value": "\"app\".\"coaching_subscriptions\".\"status\" in ('not-started')"
+          "value": "\"app\".\"coaching_subscriptions\".\"status\" in ('not-started', 'active', 'cancelled', 'ended')"
+        },
+        "coaching_subscriptions_refund_reason_check": {
+          "name": "coaching_subscriptions_refund_reason_check",
+          "value": "\"app\".\"coaching_subscriptions\".\"refund_reason\" in ('full-refund', 'coach-issued')"
+        },
+        "coaching_subscriptions_refund_complete": {
+          "name": "coaching_subscriptions_refund_complete",
+          "value": "(\"app\".\"coaching_subscriptions\".\"refund_reason\" is null) = (\"app\".\"coaching_subscriptions\".\"refund_due_cents\" is null) and (\"app\".\"coaching_subscriptions\".\"refund_reason\" is null) = (\"app\".\"coaching_subscriptions\".\"refunded_cents\" is null)"
+        },
+        "coaching_subscriptions_refund_amounts_not_negative": {
+          "name": "coaching_subscriptions_refund_amounts_not_negative",
+          "value": "\"app\".\"coaching_subscriptions\".\"refund_due_cents\" >= 0 and \"app\".\"coaching_subscriptions\".\"refunded_cents\" >= 0"
+        },
+        "coaching_subscriptions_ending_has_access_end": {
+          "name": "coaching_subscriptions_ending_has_access_end",
+          "value": "\"app\".\"coaching_subscriptions\".\"status\" not in ('cancelled', 'ended') or \"app\".\"coaching_subscriptions\".\"access_ends_at\" is not null"
         }
       },
       "isRLSEnabled": false

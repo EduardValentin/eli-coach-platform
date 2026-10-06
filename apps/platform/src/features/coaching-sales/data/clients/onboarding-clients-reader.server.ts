@@ -6,9 +6,11 @@ import type {
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
+import { CoachingSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import { eq, type SQL } from "drizzle-orm";
 
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
+import { currentSubscriptionStatus } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 
 export class PostgresOnboardingClients
   implements
@@ -53,6 +55,7 @@ export class PostgresOnboardingClients
         detailsRequestedAt: clientsTable.detailsRequestedAt,
         detailsAnsweredAt: clientsTable.detailsAnsweredAt,
         answersApprovedAt: clientsTable.answersApprovedAt,
+        currentSubscriptionStatus,
       })
       .from(clientsTable)
       .where(filter)
@@ -78,6 +81,9 @@ export class PostgresOnboardingClients
         detailsAnsweredAt: row.detailsAnsweredAt,
         answersApprovedAt: row.answersApprovedAt,
       },
+      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
+        row.currentSubscriptionStatus,
+      ),
     };
   }
 }

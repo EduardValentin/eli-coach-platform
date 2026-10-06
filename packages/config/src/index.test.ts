@@ -539,6 +539,76 @@ describe("payments settings", () => {
     );
   });
 
+  it("loads the pinned customer-portal configuration", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      STRIPE_PORTAL_CONFIGURATION_ID: "bpc_payments",
+    });
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.STRIPE_PORTAL_CONFIGURATION_ID).toBe("bpc_payments");
+  });
+
+  it("refuses a customer-portal configuration that is not a Stripe portal configuration id", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      STRIPE_PORTAL_CONFIGURATION_ID: "replace-me",
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow(
+      "STRIPE_PORTAL_CONFIGURATION_ID must be a Stripe customer-portal configuration id.",
+    );
+  });
+
+  it("requires the customer-portal configuration for the Stripe provider in production", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      ENVIRONMENT: "production",
+      NODE_ENV: "production",
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow(
+      "Production requires STRIPE_PORTAL_CONFIGURATION_ID for the Stripe customer portal.",
+    );
+  });
+
+  it("leaves the customer-portal configuration optional in a TEST production runtime", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+      BOT_DETECTION_PROVIDER: "turnstile",
+      NODE_ENV: "production",
+      PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
+      PRODUCT_EMAIL_FROM_NAME: "Eli",
+      PRODUCT_EMAIL_PROVIDER: "resend",
+      PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
+      RESEND_API_KEY: "re_123",
+      TURNSTILE_SECRET_KEY: "real-secret",
+      TURNSTILE_SITE_KEY: "real-site-key",
+    });
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.STRIPE_PORTAL_CONFIGURATION_ID).toBeUndefined();
+  });
+
   it("accepts the memory provider without Stripe secrets outside production", () => {
     // arrange
     const source = buildEnvironment({ PAYMENTS_PROVIDER: "memory" });

@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { Dialog as RadixDialog } from "radix-ui";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, RefObject } from "react";
 
 import { cn } from "./cn";
 import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
@@ -15,6 +15,7 @@ type DialogFrameProps = Omit<
 > & {
   dismissal?: DialogDismissal;
   placement?: DialogFramePlacement;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 };
 
 export function preventDismissalWhenLocked(dismissal: DialogDismissal) {
@@ -48,9 +49,11 @@ export function DialogFrame({
   onEscapeKeyDown,
   onInteractOutside,
   placement = "centred",
+  returnFocusTo,
   ...props
 }: DialogFrameProps) {
-  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+  const { rememberOpener, returnFocusToOpener } =
+    useReturnFocusToOpener(returnFocusTo);
   const preventWhenLocked = preventDismissalWhenLocked(dismissal);
 
   return (

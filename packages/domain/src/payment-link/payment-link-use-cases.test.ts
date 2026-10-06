@@ -76,7 +76,6 @@ function createIncidents(): CoachingSalesIncidents {
   return {
     salesModeReadFailed: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
-    paymentEventRejected: vi.fn(),
   };
 }
 

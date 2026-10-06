@@ -210,6 +210,15 @@ export async function insertSubmittedClientRecords(
   start: StartChoice = "waiting",
 ): Promise<SubmittedClient> {
   const client = await insertPaidClientRecords(pool, identity, start);
+
+  return recordOnboardingSubmitted(pool, identity, client);
+}
+
+export async function recordOnboardingSubmitted(
+  pool: pg.Pool,
+  identity: ClientIdentity,
+  client: PaidClient,
+): Promise<SubmittedClient> {
   const submittedAt = new Date();
 
   await recordSubmission(pool, {

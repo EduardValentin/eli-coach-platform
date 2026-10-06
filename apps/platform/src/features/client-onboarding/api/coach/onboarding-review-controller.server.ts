@@ -36,6 +36,7 @@ const REVIEW_ACTION_MAX_BYTES = 16 * 1024;
 
 const REFUSAL_STATUS = {
   "not-found": 404,
+  "subscription-cancelled-or-ended": 409,
   "not-submitted": 409,
   approved: 409,
   "not-in-review": 409,

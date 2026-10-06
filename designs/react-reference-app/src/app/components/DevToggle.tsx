@@ -41,10 +41,24 @@ import {
   PHOTO_REMOVAL_OUTCOMES,
 } from '../services/measurementService';
 import {
+  PROTOTYPE_CARDS_ON_FILE,
+  PROTOTYPE_DAYS_SINCE_PAYMENT,
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
+  PROTOTYPE_REFUNDS,
   PROTOTYPE_SEEDED_PHOTOS,
+  type PrototypeCardOnFile,
+  type PrototypeDaysSincePayment,
+  type PrototypeRefund,
 } from '../services/clientJourneySamples';
+import {
+  PROTOTYPE_CANCEL_OUTCOMES,
+  PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+  PROTOTYPE_START_NOW_OUTCOMES,
+  type PrototypeCancelOutcome,
+  type PrototypePaymentPortalOutcome,
+  type PrototypeStartNowOutcome,
+} from '../services/subscriptionService';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_SEEDS,
@@ -270,6 +284,47 @@ function parseCallSettingsSaveOutcomeControl(
   if (value === 'server_error') return value;
   return 'saved';
 }
+
+const DAYS_SINCE_PAYMENT_LABELS: Record<PrototypeDaysSincePayment, string> = {
+  stage: 'Follows the journey stage',
+  '1': '1 day',
+  '5': '5 days',
+  '13': '13 days (last refundable day)',
+  '14': '14 days (withdrawal right gone)',
+  '30': '30 days',
+  '100': '100 days (past the bundle)',
+};
+
+const REFUND_LABELS: Record<PrototypeRefund, string> = {
+  none: 'None',
+  due: 'Due',
+  'part-refunded': 'Part refunded',
+  refunded: 'Refunded',
+};
+
+const CARD_ON_FILE_LABELS: Record<PrototypeCardOnFile, string> = {
+  visa: 'Visa •••• 4242, 12/34',
+  mastercard: 'Mastercard •••• 4444, 03/31',
+  none: 'No card',
+};
+
+const CANCEL_OUTCOME_LABELS: Record<PrototypeCancelOutcome, string> = {
+  works: 'Works',
+  fails: 'Fails',
+};
+
+const START_NOW_OUTCOME_LABELS: Record<PrototypeStartNowOutcome, string> = {
+  works: 'Works',
+  fails: 'Fails',
+};
+
+const PAYMENT_PORTAL_OUTCOME_LABELS: Record<
+  PrototypePaymentPortalOutcome,
+  string
+> = {
+  works: 'Works',
+  fails: 'Fails',
+};
 
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
@@ -922,11 +977,16 @@ export function DevToggle() {
                   </Label>
                   <Select
                     value={appState.journeyStartPath}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const startPath = parseStartPathControl(value);
                       setAppState({
-                        journeyStartPath: parseStartPathControl(value),
-                      })
-                    }
+                        journeyStartPath: startPath,
+                        journeyRefund:
+                          startPath === 'waiting'
+                            ? appState.journeyRefund
+                            : 'none',
+                      });
+                    }}
                   >
                     <SelectTrigger
                       id="dev-journey-start-path"
@@ -952,12 +1012,14 @@ export function DevToggle() {
                   </Label>
                   <Select
                     value={appState.journeySubscriptionStatus}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const status = parseSubscriptionStatusControl(value);
                       setAppState({
-                        journeySubscriptionStatus:
-                          parseSubscriptionStatusControl(value),
-                      })
-                    }
+                        journeySubscriptionStatus: status,
+                        journeyRefund:
+                          status === 'ended' ? appState.journeyRefund : 'none',
+                      });
+                    }}
                   >
                     <SelectTrigger
                       id="dev-journey-subscription"
@@ -970,6 +1032,226 @@ export function DevToggle() {
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                       <SelectItem value="ended">Ended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-days-since-payment"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Days since payment
+                  </Label>
+                  <Select
+                    value={appState.journeyDaysSincePayment}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyDaysSincePayment: optionOrDefault(
+                          PROTOTYPE_DAYS_SINCE_PAYMENT,
+                          value,
+                          'stage',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-days-since-payment"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_DAYS_SINCE_PAYMENT.map((days) => (
+                        <SelectItem key={days} value={days}>
+                          {DAYS_SINCE_PAYMENT_LABELS[days]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-refund"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Refund
+                  </Label>
+                  <Select
+                    value={appState.journeyRefund}
+                    onValueChange={(value) => {
+                      const refund = optionOrDefault(
+                        PROTOTYPE_REFUNDS,
+                        value,
+                        'none',
+                      );
+                      setAppState(
+                        refund === 'none'
+                          ? { journeyRefund: refund }
+                          : {
+                              journeyRefund: refund,
+                              journeySubscriptionStatus: 'ended',
+                              journeyStartPath: 'waiting',
+                            },
+                      );
+                    }}
+                  >
+                    <SelectTrigger id="dev-journey-refund" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_REFUNDS.map((refund) => (
+                        <SelectItem key={refund} value={refund}>
+                          {REFUND_LABELS[refund]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <DevCheckboxRow
+                  id="dev-journey-payment-problem"
+                  label="Payment problem"
+                  checked={appState.journeyPaymentProblem}
+                  onCheckedChange={(checked) =>
+                    setAppState({ journeyPaymentProblem: checked })
+                  }
+                />
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-card-on-file"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Card on file
+                  </Label>
+                  <Select
+                    value={appState.journeyCardOnFile}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyCardOnFile: optionOrDefault(
+                          PROTOTYPE_CARDS_ON_FILE,
+                          value,
+                          'visa',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-card-on-file"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_CARDS_ON_FILE.map((card) => (
+                        <SelectItem key={card} value={card}>
+                          {CARD_ON_FILE_LABELS[card]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-cancel-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Cancel outcome
+                  </Label>
+                  <Select
+                    value={appState.cancelOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        cancelOutcome: optionOrDefault(
+                          PROTOTYPE_CANCEL_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-cancel-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_CANCEL_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {CANCEL_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-start-now-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Start now outcome
+                  </Label>
+                  <Select
+                    value={appState.startNowOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        startNowOutcome: optionOrDefault(
+                          PROTOTYPE_START_NOW_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-start-now-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_START_NOW_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {START_NOW_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-payment-portal-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Payment method hand-off
+                  </Label>
+                  <Select
+                    value={appState.paymentPortalOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        paymentPortalOutcome: optionOrDefault(
+                          PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-payment-portal-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_PAYMENT_PORTAL_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {PAYMENT_PORTAL_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

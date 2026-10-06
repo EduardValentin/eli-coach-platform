@@ -22,6 +22,8 @@ interface ReadingProps {
   className?: string;
   as?: 'dl-item' | 'block';
   valueParity?: string;
+  detail?: ReactNode;
+  detailParity?: string;
 }
 
 export function Reading({
@@ -33,6 +35,8 @@ export function Reading({
   className,
   as = 'block',
   valueParity,
+  detail,
+  detailParity,
 }: ReadingProps) {
   const LabelTag = as === 'dl-item' ? 'dt' : 'p';
   const ValueTag = as === 'dl-item' ? 'dd' : 'p';
@@ -58,6 +62,14 @@ export function Reading({
           </span>
         )}
       </ValueTag>
+      {detail != null && (
+        <ValueTag
+          className="mt-1 text-xs text-text-secondary"
+          data-parity={detailParity}
+        >
+          {detail}
+        </ValueTag>
+      )}
     </div>
   );
 }

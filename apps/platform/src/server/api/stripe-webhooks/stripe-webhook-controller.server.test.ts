@@ -1,8 +1,11 @@
 import type {
   PaidCheckoutSession,
+  PaymentCardChange,
   PaymentCompletionHandler,
   PaymentEvents,
   PaymentEventVerdict,
+  PaymentRefund,
+  PaymentSubscriptionChange,
 } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -29,6 +32,37 @@ function paidSession(metadata: Record<string, string>): PaidCheckoutSession {
 }
 
 const coachingSession = paidSession({ purpose: "coaching-subscription" });
+
+const subscriptionDeletion: PaymentSubscriptionChange = {
+  kind: "subscription_state",
+  subscriptionId: "sub_1",
+  customerId: "cus_1",
+  standing: "ended",
+  previousStanding: null,
+  scheduledEndAt: null,
+  scheduledEndChanged: false,
+  endedAt: new Date("2026-10-20T10:00:00.000Z"),
+  occurredAt: new Date("2026-10-20T10:00:00.000Z"),
+};
+
+const chargeRefund: PaymentRefund = {
+  kind: "charge_refund",
+  paymentIntentId: "pi_1",
+  chargeCents: 44700,
+  refundedCents: 44700,
+  currency: "eur",
+  refundedAt: new Date("2026-10-20T10:00:00.000Z"),
+};
+
+const cardAttached: PaymentCardChange = {
+  kind: "attached",
+  customerId: "cus_1",
+  paymentMethodId: "pm_visa",
+  brand: "visa",
+  lastFour: "4242",
+  expiryMonth: 12,
+  expiryYear: 2034,
+};
 
 describe("StripeWebhookController", () => {
   it("answers 503 without reading the event when no signing secret is configured", async () => {
@@ -163,6 +197,174 @@ describe("StripeWebhookController", () => {
   );
 });
 
+describe("StripeWebhookController with a subscription change", () => {
+  it("hands the change to the subscription handler of its purpose and acknowledges it", async () => {
+    // arrange
+    const { controller, subscriptionHandler, coachingHandler } =
+      createController({
+        verdict: {
+          kind: "subscription_changed",
+          eventId: "evt_deleted",
+          purpose: "coaching-subscription",
+          change: subscriptionDeletion,
+        },
+      });
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(subscriptionHandler.handle).toHaveBeenCalledWith(
+      "evt_deleted",
+      subscriptionDeletion,
+    );
+    expect(coachingHandler.handle).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a purpose no handler serves", "gift-card"],
+    ["no purpose", null],
+  ])(
+    "acknowledges a change with %s without handing it on and reports it",
+    async (_description, purpose) => {
+      // arrange
+      const { controller, subscriptionHandler, incidents } = createController({
+        verdict: {
+          kind: "subscription_changed",
+          eventId: "evt_deleted",
+          purpose,
+          change: subscriptionDeletion,
+        },
+      });
+
+      // act
+      const response = await controller.handleEvent(createWebhookRequest());
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(subscriptionHandler.handle).not.toHaveBeenCalled();
+      expect(incidents.paymentEventUnrouted).toHaveBeenCalledWith({
+        eventId: "evt_deleted",
+        purpose,
+      });
+    },
+  );
+
+  it("answers 500 so Stripe redelivers when the subscription handler fails", async () => {
+    // arrange
+    const { controller, subscriptionHandler, incidents } = createController({
+      verdict: {
+        kind: "subscription_changed",
+        eventId: "evt_deleted",
+        purpose: "coaching-subscription",
+        change: subscriptionDeletion,
+      },
+    });
+    subscriptionHandler.handle.mockRejectedValue(new RangeError("stale"));
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
+      errorClass: "RangeError",
+      eventId: "evt_deleted",
+      handler: "coaching-subscription",
+    });
+  });
+});
+
+describe("StripeWebhookController with a refunded charge", () => {
+  it("hands the refund to the one refund handler and acknowledges it", async () => {
+    // arrange
+    const { controller, refundHandler } = createController({
+      verdict: {
+        kind: "charge_refunded",
+        eventId: "evt_refunded",
+        refund: chargeRefund,
+      },
+    });
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(refundHandler.handle).toHaveBeenCalledWith(
+      "evt_refunded",
+      chargeRefund,
+    );
+  });
+
+  it("answers 500 and reports the refunds handler when it fails", async () => {
+    // arrange
+    const { controller, refundHandler, incidents } = createController({
+      verdict: {
+        kind: "charge_refunded",
+        eventId: "evt_refunded",
+        refund: chargeRefund,
+      },
+    });
+    refundHandler.handle.mockRejectedValue(new Error("database down"));
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
+      errorClass: "Error",
+      eventId: "evt_refunded",
+      handler: "charge-refunds",
+    });
+  });
+});
+
+describe("StripeWebhookController with a card change", () => {
+  it("hands the change to the one card handler and acknowledges it", async () => {
+    // arrange
+    const { controller, cardHandler } = createController({
+      verdict: {
+        kind: "payment_method_changed",
+        eventId: "evt_card",
+        change: cardAttached,
+      },
+    });
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(cardHandler.handle).toHaveBeenCalledWith("evt_card", cardAttached);
+  });
+
+  it("answers 500 and reports the card handler when it fails", async () => {
+    // arrange
+    const { controller, cardHandler, incidents } = createController({
+      verdict: {
+        kind: "payment_method_changed",
+        eventId: "evt_card",
+        change: cardAttached,
+      },
+    });
+    cardHandler.handle.mockRejectedValue(new Error("database down"));
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
+      errorClass: "Error",
+      eventId: "evt_card",
+      handler: "payment-cards",
+    });
+  });
+});
+
 describe("StripeWebhookController with a paid session without a customer", () => {
   it("reports it unrouted when its purpose names no handler", async () => {
     // arrange
@@ -215,7 +417,7 @@ describe("StripeWebhookController when the handler fails", () => {
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
       errorClass: "TypeError",
       eventId: "evt_failing",
-      purpose: "coaching-subscription",
+      handler: "coaching-subscription",
     });
   });
 });
@@ -230,20 +432,41 @@ function createController(options: {
     purpose: "coaching-subscription",
     handle: vi.fn().mockResolvedValue(options.outcome ?? "recorded"),
   };
+  const subscriptionHandler = {
+    purpose: "coaching-subscription",
+    handle: vi.fn().mockResolvedValue("recorded"),
+  };
+  const refundHandler = { handle: vi.fn().mockResolvedValue("recorded") };
+  const cardHandler = { handle: vi.fn().mockResolvedValue("recorded") };
   const incidents = {
     paymentEventHandlingFailed: vi.fn(),
     paymentEventUnrouted: vi.fn(),
   };
   const paymentEvents: PaymentEvents = { verify };
   const controller = new StripeWebhookController({
-    handlersByPurpose: new Map([[coachingHandler.purpose, coachingHandler]]),
+    cardHandler,
+    completionHandlersByPurpose: new Map([
+      [coachingHandler.purpose, coachingHandler],
+    ]),
     incidents,
     paymentEvents,
+    refundHandler,
+    subscriptionChangeHandlersByPurpose: new Map([
+      [subscriptionHandler.purpose, subscriptionHandler],
+    ]),
     signingSecret:
       "signingSecret" in options ? options.signingSecret : SIGNING_SECRET,
   });
 
-  return { coachingHandler, controller, incidents, verify };
+  return {
+    cardHandler,
+    coachingHandler,
+    controller,
+    incidents,
+    refundHandler,
+    subscriptionHandler,
+    verify,
+  };
 }
 
 function createWebhookRequest(): Request {

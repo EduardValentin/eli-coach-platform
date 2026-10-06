@@ -1,0 +1,634 @@
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import { Toaster } from 'sonner';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { ClientSettings } from './ClientSettings';
+import { PortalEnded } from './PortalEnded';
+import { PaymentMethodStandIn } from '../PaymentMethodStandIn';
+import { ClientJourneyGate } from '../../components/client-portal/ClientJourneyGate';
+import { DevToggle } from '../../components/DevToggle';
+import { AppProvider } from '../../context/AppContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { CheckinProvider } from '../../context/CheckinContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { TrainingProvider } from '../../context/TrainingContext';
+import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
+
+const SERVICE_TIMEOUT = 4000;
+
+const ENDED_REFUND_LINE =
+  'Eli will refund you in the next few days; it reaches your card within 5–10 business days.';
+
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
+
+afterEach(() => {
+  window.history.replaceState({}, '', '/');
+});
+
+function renderSettings(devParams: string) {
+  const url = `/portal/settings?session=client&${devParams}&jstage=submitted`;
+  window.history.replaceState({}, '', url);
+
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <TrainingProvider>
+          <ClientProfileProvider>
+            <UnitPreferencesProvider>
+              <AssessmentCallProvider>
+                <ClientJourneyProvider>
+                  <CheckinProvider>
+                    <Routes>
+                      <Route element={<ClientJourneyGate />}>
+                        <Route element={<p>portal home</p>} path="/portal" />
+                        <Route
+                          element={<ClientSettings />}
+                          path="/portal/settings"
+                        />
+                        <Route element={<PortalEnded />} path="/portal/ended" />
+                        <Route
+                          element={<PaymentMethodStandIn />}
+                          path="/billing/payment-method"
+                        />
+                      </Route>
+                    </Routes>
+                    <DevToggle />
+                    <Toaster />
+                  </CheckinProvider>
+                </ClientJourneyProvider>
+              </AssessmentCallProvider>
+            </UnitPreferencesProvider>
+          </ClientProfileProvider>
+        </TrainingProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+
+  return userEvent.setup();
+}
+
+function subscriptionSection(): HTMLElement {
+  return screen.getByRole('region', { name: 'Subscription' });
+}
+
+function cancellationRow(): HTMLElement {
+  const title = within(subscriptionSection()).getByText('Cancellation');
+  const row = title.closest('[data-parity="subscription-cancellation"]');
+  if (!(row instanceof HTMLElement)) throw new Error('No cancellation row');
+
+  return row;
+}
+
+function paymentMethodRow(): HTMLElement {
+  const title = within(subscriptionSection()).getByText('Payment method');
+  const row = title.closest('[data-parity="subscription-payment-method"]');
+  if (!(row instanceof HTMLElement)) throw new Error('No payment method row');
+
+  return row;
+}
+
+describe('the subscription section', () => {
+  it('shows her plan with the day she paid until her program is delivered', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const section = subscriptionSection();
+
+    // assert
+    expect(within(section).getByText('3 months of coaching')).toBeVisible();
+    expect(
+      within(section).getByText(
+        /^Paid \d{1,2} \w+ · starts when your program is delivered\.$/,
+      ),
+    ).toBeVisible();
+    expect(within(section).queryByText(/renews/i)).not.toBeInTheDocument();
+    expect(
+      within(section).queryByText(
+        'Your coaching plan, when it renews, and how to cancel.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows when a running plan renews', () => {
+    // arrange
+    renderSettings('scope=post-mvp&jstage=program-ready&jpaid=30');
+
+    // act
+    const section = subscriptionSection();
+
+    // assert
+    expect(
+      within(section).getByText(
+        /^Active until \d{1,2} \w+ · renews then unless you cancel first\.$/,
+      ),
+    ).toBeVisible();
+  });
+
+  it('offers a full refund on the waiting path within the 14 days', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const row = cancellationRow();
+
+    // assert
+    expect(
+      within(row).getByText(
+        /^Until \d{1,2} \w+ you can cancel for a full refund\. Your access ends right away\.$/,
+      ),
+    ).toBeVisible();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toHaveAccessibleDescription(
+      /^Cancellation Until \d{1,2} \w+ you can cancel for a full refund\. Your access ends right away\.$/,
+    );
+  });
+
+  it('offers to cancel without a refund on the immediate path within the 14 days', () => {
+    // arrange
+    renderSettings('jstart=immediate');
+
+    // act
+    const row = cancellationRow();
+
+    // assert
+    expect(
+      within(row).getByText(
+        /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
+      ),
+    ).toBeVisible();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toHaveAccessibleDescription(
+      /^Cancellation You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
+    );
+  });
+
+  it('offers to cancel without a refund once the withdrawal right is gone', () => {
+    // arrange
+    renderSettings('jstart=waiting&jpaid=14');
+
+    // act
+    const row = cancellationRow();
+
+    // assert
+    expect(
+      within(row).getByText(
+        /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
+      ),
+    ).toBeVisible();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toBeVisible();
+  });
+
+  it('shows a cancelled subscription with its access date and no further actions', () => {
+    // arrange
+    renderSettings('jsub=cancelled&jpaid=30');
+
+    // act
+    const section = subscriptionSection();
+
+    // assert
+    expect(
+      within(section).getByText(
+        /^Paid \d{1,2} \w+ · cancelled \d{1,2} \w+ · access until \d{1,2} \w+\.$/,
+      ),
+    ).toBeVisible();
+    expect(within(section).queryByText('Cancellation')).not.toBeInTheDocument();
+    expect(
+      within(section).queryByRole('button', { name: 'Change' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the units section on the page', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const units = screen.getByRole('region', { name: 'Units & Measurements' });
+
+    // assert
+    expect(units).toBeVisible();
+  });
+});
+
+describe('the cancel dialogs', () => {
+  it('names the action and its consequence for the full refund', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // assert
+    const dialog = screen.getByRole('dialog', {
+      name: 'Cancel and get a full refund',
+    });
+    expect(dialog).toHaveAccessibleDescription(
+      "You'll get a full refund and your access ends right away.",
+    );
+    expect(
+      within(dialog).getByRole('button', { name: 'Cancel and get a full refund' }),
+    ).toBeVisible();
+    expect(
+      within(dialog).getByRole('button', { name: 'Keep my coaching' }),
+    ).toBeVisible();
+  });
+
+  it('repeats the facts for the cancellation without a refund', async () => {
+    // arrange
+    const user = renderSettings('jpaid=14');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // assert
+    expect(
+      screen.getByRole('dialog', { name: 'Cancel subscription' }),
+    ).toHaveAccessibleDescription(
+      /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
+    );
+  });
+
+  it('keeps her coaching and returns focus to the action', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    const action = screen.getByRole('button', { name: 'Cancel' });
+    await user.click(action);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Keep my coaching' }));
+
+    // assert
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(action).toHaveFocus();
+    expect(cancellationRow()).toBeVisible();
+  });
+
+  it('closes on Escape', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(
+      screen.getByRole('button', { name: 'Cancel' }),
+    ).toHaveFocus();
+  });
+
+  it('keeps focus inside the dialog', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    const dialog = screen.getByRole('dialog');
+
+    // act
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    await user.tab();
+
+    // assert
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  });
+});
+
+describe('cancelling', () => {
+  it('ends a refundable subscription and shows the refund on its way', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // act
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancel and get a full refund',
+      }),
+    );
+
+    // assert
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Your coaching has ended' },
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toBeVisible();
+    expect(screen.getByText('It was good to train together.')).toBeVisible();
+    expect(screen.getByText(ENDED_REFUND_LINE)).toBeVisible();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('keeps access after a cancellation without a refund', async () => {
+    // arrange
+    const user = renderSettings('jpaid=14');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // act
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancel subscription',
+      }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(
+        /^Paid \d{1,2} \w+ · cancelled \d{1,2} \w+ · access until \d{1,2} \w+\.$/,
+        undefined,
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toBeVisible();
+    expect(
+      await screen.findByText(
+        /^Subscription cancelled\. Your access stays until \d{1,2} \w+\.$/,
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { level: 2, name: 'Subscription' }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it('asks her to try again when the cancellation fails', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting&jcancel=fails');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // act
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancel and get a full refund',
+      }),
+    );
+
+    // assert
+    expect(
+      await within(screen.getByRole('dialog')).findByRole(
+        'alert',
+        {},
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toHaveTextContent(
+      "Your coaching couldn't be cancelled just now. Nothing has changed, so please try again.",
+    );
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Keep my coaching',
+      }),
+    ).toBeVisible();
+  });
+
+  it('drops the refund once the start path is immediate', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Start path' }));
+    await user.click(await screen.findByRole('option', { name: 'Immediate start' }));
+
+    // assert
+    expect(
+      within(cancellationRow()).getByText(
+        /^You won't be charged again, there is no refund for the coaching already paid/,
+      ),
+    ).toBeVisible();
+  });
+});
+
+describe('the row actions', () => {
+  it('describes Change with the card and the payment problem when there is one', () => {
+    // arrange
+    renderSettings('jpayproblem=1');
+
+    // act
+    const change = within(subscriptionSection()).getByRole('button', {
+      name: 'Change',
+    });
+
+    // assert
+    expect(change).toHaveAccessibleDescription(
+      "Payment method Visa ending in 4242 Expires 12/34 Your last payment didn't go through. Update your card to keep your coaching going.",
+    );
+  });
+});
+
+describe('the payment method', () => {
+  it('lets her change her payment method', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const section = subscriptionSection();
+
+    // assert
+    expect(within(section).getByText('Payment method')).toBeVisible();
+    expect(
+      within(section).getByRole('button', { name: 'Change' }),
+    ).toHaveAccessibleDescription('Payment method Visa ending in 4242 Expires 12/34');
+    expect(
+      within(section).queryByText('The card your coaching renews on.'),
+    ).not.toBeInTheDocument();
+    expect(within(section).queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows the card on file as the row reading', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    expect(within(row).getByText('Visa')).toBeVisible();
+    expect(within(row).getByText('•••• 4242')).toBeVisible();
+    expect(within(row).getByText('Expires 12/34')).toBeVisible();
+  });
+
+  it('shows whichever card is on file', () => {
+    // arrange
+    renderSettings('jstart=waiting&jcard=mastercard');
+
+    // act
+    const change = within(paymentMethodRow()).getByRole('button', {
+      name: 'Change',
+    });
+
+    // assert
+    expect(change).toHaveAccessibleDescription(
+      'Payment method Mastercard ending in 4444 Expires 03/31',
+    );
+    expect(within(paymentMethodRow()).getByText('•••• 4444')).toBeVisible();
+  });
+
+  it('says when no payment method is configured', () => {
+    // arrange
+    renderSettings('jstart=waiting&jcard=none');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    expect(within(row).getByText('No payment method configured')).toBeVisible();
+    expect(within(row).queryByText(/••••/)).not.toBeInTheDocument();
+    expect(
+      within(row).getByRole('button', { name: 'Change' }),
+    ).toHaveAccessibleDescription('Payment method No payment method configured');
+  });
+
+  it('keeps the payment problem under the card', () => {
+    // arrange
+    renderSettings('jpayproblem=1&jpaid=30');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    const card = within(row).getByText('Expires 12/34');
+    const problem = within(row).getByRole('status');
+    expect(
+      card.compareDocumentPosition(problem) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('removes the card from the Dev Toggle', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Card on file' }));
+    await user.click(screen.getByRole('option', { name: 'No card' }));
+
+    // assert
+    expect(
+      within(paymentMethodRow()).getByText('No payment method configured'),
+    ).toBeVisible();
+    expect(window.location.search).toContain('jcard=none');
+  });
+
+  it('announces a payment problem', () => {
+    // arrange
+    renderSettings('jpayproblem=1&jpaid=30');
+
+    // act
+    const status = within(subscriptionSection()).getByRole('status');
+
+    // assert
+    expect(status).toHaveTextContent(
+      /^Your last payment didn't go through\. Update your card to keep your coaching going\.$/,
+    );
+    expect(
+      within(subscriptionSection()).queryByText('Payment problem'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hands her over to update her card and brings her back to Settings', async () => {
+    // arrange
+    const user = renderSettings('jpayproblem=1&jpaid=30');
+    await user.click(
+      screen.getByRole('button', { name: 'Change' }),
+    );
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Update your card' },
+      { timeout: SERVICE_TIMEOUT },
+    );
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Save card' }));
+
+    // assert
+    expect(
+      await screen.findByRole(
+        'region',
+        { name: 'Subscription' },
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows the card she saved once she is back in Settings', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Change' }));
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Update your card' },
+      { timeout: SERVICE_TIMEOUT },
+    );
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Save card' }));
+
+    // assert
+    await screen.findByRole(
+      'region',
+      { name: 'Subscription' },
+      { timeout: SERVICE_TIMEOUT },
+    );
+    const row = paymentMethodRow();
+    expect(within(row).getByText('Visa')).toBeVisible();
+    expect(within(row).getByText('•••• 5556')).toBeVisible();
+    expect(within(row).getByText('Expires 08/30')).toBeVisible();
+    expect(within(row).queryByText('•••• 4242')).not.toBeInTheDocument();
+  });
+
+  it('asks her to try again when the hand-off fails', async () => {
+    // arrange
+    const user = renderSettings('jpayportal=fails');
+
+    // act
+    await user.click(
+      screen.getByRole('button', { name: 'Change' }),
+    );
+
+    // assert
+    expect(
+      await within(subscriptionSection()).findByRole(
+        'alert',
+        {},
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toHaveTextContent(
+      "Your payment details couldn't be opened just now. Please try again.",
+    );
+  });
+
+  it('raises the payment problem from the Dev Toggle', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('checkbox', { name: 'Payment problem' }));
+
+    // assert
+    expect(
+      within(subscriptionSection()).getByRole('status'),
+    ).toHaveTextContent(/^Your last payment didn't go through\./);
+    expect(window.location.search).toContain('jpayproblem=1');
+  });
+});

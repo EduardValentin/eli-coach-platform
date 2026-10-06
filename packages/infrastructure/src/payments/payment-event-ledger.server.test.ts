@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { recordPaymentEvent } from "./payment-event-ledger.server";
+import {
+  recordEventOnce,
+  recordPaymentEvent,
+} from "./payment-event-ledger.server";
 
 type Transaction = Parameters<typeof recordPaymentEvent>[0];
+type Database = Parameters<typeof recordEventOnce>[0];
 
 const ENTRY = {
   eventId: "evt_1",
@@ -48,6 +52,81 @@ describe("recordPaymentEvent", () => {
     await expect(recording).rejects.toBe(failure);
   });
 });
+
+describe("recordEventOnce", () => {
+  it("records the event and its write together", async () => {
+    // arrange
+    const ledger = createLedgerInserting([{ id: "evt_1" }]);
+    const write = vi.fn(async () => true);
+
+    // act
+    const outcome = await recordEventOnce(databaseOver(ledger.transaction), {
+      ...ENTRY,
+      write,
+    });
+
+    // assert
+    expect(outcome).toBe("recorded");
+    expect(write).toHaveBeenCalledWith(ledger.transaction);
+  });
+
+  it("answers duplicate without writing when the ledger already holds the event", async () => {
+    // arrange
+    const ledger = createLedgerInserting([]);
+    const write = vi.fn(async () => true);
+
+    // act
+    const outcome = await recordEventOnce(databaseOver(ledger.transaction), {
+      ...ENTRY,
+      write,
+    });
+
+    // assert
+    expect(outcome).toBe("duplicate");
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it("answers stale and rolls the event back when the write finds the row changed", async () => {
+    // arrange
+    const ledger = createLedgerInserting([{ id: "evt_1" }]);
+    const database = databaseOver(ledger.transaction);
+
+    // act
+    const outcome = await recordEventOnce(database, {
+      ...ENTRY,
+      write: async () => false,
+    });
+
+    // assert
+    expect(outcome).toBe("stale");
+    await expect(
+      vi.mocked(database.transaction).mock.results[0]?.value,
+    ).rejects.toThrow();
+  });
+
+  it("rethrows a failure of the write", async () => {
+    // arrange
+    const failure = new Error("connection reset");
+    const ledger = createLedgerInserting([{ id: "evt_1" }]);
+
+    // act
+    const recording = recordEventOnce(databaseOver(ledger.transaction), {
+      ...ENTRY,
+      write: () => Promise.reject(failure),
+    });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+  });
+});
+
+function databaseOver(transaction: Transaction): Database {
+  return {
+    transaction: vi.fn((work: (inner: Transaction) => Promise<unknown>) =>
+      work(transaction),
+    ),
+  } as unknown as Database;
+}
 
 function createLedgerInserting(rows: unknown) {
   const returning = vi.fn(() => rows);

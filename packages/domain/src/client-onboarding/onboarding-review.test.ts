@@ -41,6 +41,7 @@ const CLIENT: OnboardingClient = {
   dateOfBirth: "1994-03-14",
   submittedAt: SUBMITTED_AT,
   reviewStamps: NO_STAMPS,
+  subscriptionCancelledOrEnded: false,
 };
 
 function submittedAnswers(): OnboardingAnswersByForm {

@@ -1,12 +1,11 @@
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type RecordCheckoutCompletedUseCase,
+  type RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
-import {
-  toCheckoutCompletion,
-  type PaidCheckoutSession,
-  type PaymentCompletionHandler,
+import type {
+  PaidCheckoutSession,
+  PaymentCompletionHandler,
 } from "@eli-coach-platform/infrastructure/payments/server";
 
 type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
@@ -16,8 +15,8 @@ type RecordStatus = Awaited<
 >["status"];
 
 type CoachingPurchaseCompletionHandlerOptions = {
-  incidents: CoachingSalesIncidents;
   recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
+  refreshPaymentCard: RefreshPaymentCardUseCase;
 };
 
 const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
@@ -25,6 +24,7 @@ const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
   duplicate: "duplicate",
   already_paid: "ignored",
   call_not_found: "ignored",
+  unreadable_checkout: "ignored",
 };
 
 export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandler {
@@ -38,21 +38,16 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<HandlerOutcome> {
-    const completion = toCheckoutCompletion(session);
-
-    if (!completion) {
-      this.options.incidents.paymentEventRejected({
-        eventId,
-        reason: "unreadable_checkout",
-      });
-
-      return "ignored";
-    }
-
     const recorded = await this.options.recordCheckoutCompleted.execute({
-      ...completion,
       eventId,
+      checkoutSessionId: session.id,
     });
+
+    if (recorded.status === "recorded" || recorded.status === "duplicate") {
+      await this.options.refreshPaymentCard.execute({
+        paymentCustomerId: recorded.paymentCustomerId,
+      });
+    }
 
     return OUTCOME_BY_RECORD_STATUS[recorded.status];
   }

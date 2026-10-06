@@ -24,6 +24,7 @@ function row(details: Partial<RosterRow> = {}): RosterRow {
     joinedAt: new Date('2025-10-01'),
     detailPath: '/coach/clients/r1',
     actionLabel: 'View details for Jane Doe',
+    needsRefund: false,
     ...details,
   };
 }

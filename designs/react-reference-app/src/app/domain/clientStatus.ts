@@ -81,7 +81,7 @@ export function clientStatusNamed(label: ClientStatusLabel): ClientStatus {
   return { label, tone: STATUS_TONES[label] };
 }
 
-function closedSubscriptionLabel(
+function cancelledOrEndedLabel(
   subscription: CoachingSubscription,
   now: Date,
 ): ClientStatusLabel | null {
@@ -93,10 +93,18 @@ function closedSubscriptionLabel(
   return null;
 }
 
+export function isCancelledOrEnded(journey: ClientJourney, now: Date): boolean {
+  return journey.subscription
+    ? cancelledOrEndedLabel(journey.subscription, now) !== null
+    : false;
+}
+
 export function clientStatus(journey: ClientJourney, now: Date): ClientStatus {
-  const closed = journey.subscription
-    ? closedSubscriptionLabel(journey.subscription, now)
+  const cancelledOrEnded = journey.subscription
+    ? cancelledOrEndedLabel(journey.subscription, now)
     : null;
 
-  return clientStatusNamed(closed ?? STAGE_STATUS_LABELS[journey.stage]);
+  return clientStatusNamed(
+    cancelledOrEnded ?? STAGE_STATUS_LABELS[journey.stage],
+  );
 }

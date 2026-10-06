@@ -32,6 +32,7 @@ const SUBMITTED: ProgramStatus = {
   kind: "submitted",
   submittedAt: "2026-10-01T09:00:00.000Z",
   workStartsOn: null,
+  startNowUntil: null,
 };
 
 function renderDashboard(
@@ -112,6 +113,7 @@ describe("client dashboard", () => {
       kind: "submitted",
       submittedAt: "2026-10-01T09:00:00.000Z",
       workStartsOn: null,
+      startNowUntil: null,
     };
 
     // act
@@ -135,6 +137,7 @@ describe("client dashboard", () => {
       kind: "needs-details",
       submittedAt: "2026-10-01T09:00:00.000Z",
       workStartsOn: null,
+      startNowUntil: null,
     };
 
     // act

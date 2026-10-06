@@ -317,9 +317,7 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
   await clientProfile.openAdd();
 
   // assert
-  await measurementsSheet.expectConsentAlreadyGiven(
-    dayMonthYearFormatter.format(now),
-  );
+  await measurementsSheet.expectConsentAlreadyGiven();
   await measurementsSheet.expectPrefilled({
     Weight: "144",
     Waist: "29",
@@ -382,9 +380,7 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
   await clientProfile.openAdd();
 
   // assert
-  await measurementsSheet.expectConsentAlreadyGiven(
-    dayMonthYearFormatter.format(client.submittedAt),
-  );
+  await measurementsSheet.expectConsentAlreadyGiven();
   await measurementsSheet.expectPrefilled({
     Weight: "65.4",
     Waist: "73.5",

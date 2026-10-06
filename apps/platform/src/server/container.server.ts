@@ -23,10 +23,7 @@ import {
   createProgressPhotoRenditions,
   createResourceImagePages,
 } from "@eli-coach-platform/infrastructure/images/server";
-import {
-  createPaymentCheckout,
-  createPaymentEvents,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import {
   createManagementAuthConfig,
   createManagementAuthenticator,
@@ -98,6 +95,7 @@ export function createPlatformContainer(options: {
   );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
+  const payments = createPayments(environment);
   const databaseFeatureFlags = new GetFeatureFlagsUseCase({
     featureFlags: new PostgresFeatureFlagRepository(database.client),
   });
@@ -140,6 +138,7 @@ export function createPlatformContainer(options: {
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
     clock,
+    coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
@@ -148,7 +147,9 @@ export function createPlatformContainer(options: {
       returnUrl: clientPortalUrl(environment),
     }),
     incidents,
-    paymentCheckout: createPaymentCheckout(environment),
+    paymentCheckout: payments.checkout,
+    paymentCustomerCards: payments.customerCards,
+    paymentSubscriptions: payments.subscriptions,
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
@@ -199,8 +200,13 @@ export function createPlatformContainer(options: {
     botDetection,
     featureFlags,
     incidents,
+    paymentCardHandler: coachingSales.handles.paymentCardHandler,
     paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
-    paymentEvents: createPaymentEvents(environment),
+    paymentEvents: payments.events,
+    paymentRefundHandler: coachingSales.handles.refundHandler,
+    paymentSubscriptionChangeHandlers: [
+      coachingSales.handles.subscriptionChangeHandler,
+    ],
     version: process.env.GIT_SHA ?? "dev",
     webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
   });

@@ -36,6 +36,21 @@ function paidSession() {
       object: "subscription",
       created: 1790003590,
     },
+    payment_intent: null,
+    invoice: {
+      id: "in_test",
+      object: "invoice",
+      payments: {
+        object: "list",
+        data: [
+          {
+            object: "invoice_payment",
+            status: "paid",
+            payment: { type: "payment_intent", payment_intent: "pi_test" },
+          },
+        ],
+      },
+    },
     amount_total: 37500,
     currency: "eur",
     created: 1790000000,
@@ -49,6 +64,14 @@ function paidSession() {
       startChoice: "immediate",
     },
   };
+}
+
+function metadataWith(overrides: Record<string, string | undefined>) {
+  const merged = { ...paidSession().metadata, ...overrides };
+
+  return Object.fromEntries(
+    Object.entries(merged).filter((entry) => entry[1] !== undefined),
+  );
 }
 
 function invalidRequest(code?: string) {
@@ -227,7 +250,7 @@ describe("StripePaymentCheckout", () => {
     expect(client.checkout.sessions.retrieve).not.toHaveBeenCalled();
   });
 
-  it("finds a complete and paid session as a checkout completion paid when its subscription was created", async () => {
+  it("finds a complete and paid session as a checkout completion paid when its subscription was created, with the payment intent of its invoice", async () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.retrieve.mockResolvedValue(paidSession());
@@ -239,12 +262,13 @@ describe("StripePaymentCheckout", () => {
     // assert
     expect(client.checkout.sessions.retrieve).toHaveBeenCalledWith(
       "cs_test_paid",
-      { expand: ["subscription"] },
+      { expand: ["subscription", "invoice.payments"] },
     );
     expect(completion).toEqual({
       checkoutSessionId: "cs_test_paid",
       paymentCustomerId: "cus_test",
       paymentSubscriptionId: "sub_test",
+      paymentIntentId: "pi_test",
       amountCents: 37500,
       currency: "eur",
       customerEmail: "sofia@example.com",
@@ -271,6 +295,25 @@ describe("StripePaymentCheckout", () => {
 
     // assert
     expect(completion).toBeNull();
+  });
+
+  it("finds a paid session whose invoice names no paid payment intent as a completion without one", async () => {
+    // arrange
+    const client = createStubClient();
+    client.checkout.sessions.retrieve.mockResolvedValue({
+      ...paidSession(),
+      invoice: "in_test",
+    });
+    const checkout = new StripePaymentCheckout(client);
+
+    // act
+    const completion = await checkout.findCompletedSession("cs_test_paid");
+
+    // assert
+    expect(completion).toMatchObject({
+      checkoutSessionId: "cs_test_paid",
+      paymentIntentId: null,
+    });
   });
 
   it.each([
@@ -309,6 +352,94 @@ describe("StripePaymentCheckout", () => {
 
     // assert
     expect(completion).toBeNull();
+  });
+
+  it("finds nothing for a paid session without a customer", async () => {
+    // arrange
+    const client = createStubClient();
+    client.checkout.sessions.retrieve.mockResolvedValue({
+      ...paidSession(),
+      customer: null,
+    });
+    const checkout = new StripePaymentCheckout(client);
+
+    // act
+    const completion = await checkout.findCompletedSession("cs_test_paid");
+
+    // assert
+    expect(completion).toBeNull();
+  });
+
+  it.each([
+    ["no purpose", { purpose: undefined }],
+    [
+      "an assessment call id that is not a uuid",
+      { assessmentCallId: "call-1" },
+    ],
+    ["no assessment call", { assessmentCallId: undefined }],
+    ["an unknown coaching bundle", { bundleId: "12-months" }],
+    ["months that differ from the bundle", { months: "6" }],
+    ["no months", { months: undefined }],
+    ["an unknown price tier", { tier: "discounted" }],
+    ["an unknown start choice", { startChoice: "later" }],
+  ])(
+    "finds nothing for a paid session whose metadata names %s",
+    async (_description, overrides) => {
+      // arrange
+      const client = createStubClient();
+      client.checkout.sessions.retrieve.mockResolvedValue({
+        ...paidSession(),
+        metadata: metadataWith(overrides),
+      });
+      const checkout = new StripePaymentCheckout(client);
+
+      // act
+      const completion = await checkout.findCompletedSession("cs_test_paid");
+
+      // assert
+      expect(completion).toBeNull();
+    },
+  );
+
+  it("finds a completion carrying the choices its created session wrote", async () => {
+    // arrange
+    const client = createStubClient();
+    client.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_created",
+      url: "https://checkout.stripe.com/c/pay/cs_test_created",
+    });
+    const checkout = new StripePaymentCheckout(client);
+    await checkout.createSession({
+      ...command,
+      bundle: {
+        id: "6-months",
+        title: "6 Months",
+        months: 6,
+        amountCents: 71400,
+      },
+      metadata: {
+        ...command.metadata,
+        bundleId: "6-months",
+        tier: "regular",
+        startChoice: "waiting",
+      },
+    });
+    const [request] = client.checkout.sessions.create.mock.calls[0];
+    client.checkout.sessions.retrieve.mockResolvedValue({
+      ...paidSession(),
+      metadata: request.metadata,
+    });
+
+    // act
+    const completion = await checkout.findCompletedSession("cs_test_created");
+
+    // assert
+    expect(completion).toMatchObject({
+      assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
+      bundleId: "6-months",
+      tier: "regular",
+      startChoice: "waiting",
+    });
   });
 
   it("finds nothing for a session Stripe does not know", async () => {

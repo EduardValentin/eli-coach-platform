@@ -60,6 +60,8 @@ const CLIENT: CoachClient = {
   firstName: "Andreea",
   invitation: null,
   lastName: "Popescu",
+  needsRefund: false,
+  subscriptionCancelledOrEnded: false,
   assessmentCall: {
     startsAt: "2026-09-18T12:00:00.000Z",
     firstName: "Andreea",

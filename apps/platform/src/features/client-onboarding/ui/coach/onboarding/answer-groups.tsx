@@ -105,6 +105,7 @@ export function AnswerGroups({ forms, view }: AnswerGroupsProps) {
   return (
     <Accordion
       className={cn(cardVariants({ variant: "inset" }), "px-4 py-0 sm:px-5")}
+      data-parity="answers"
       onValueChange={view.onOpenForms}
       type="multiple"
       value={view.openForms}
@@ -113,7 +114,11 @@ export function AnswerGroups({ forms, view }: AnswerGroupsProps) {
         const askedCount = askedInForm(form, view.asked);
 
         return (
-          <AccordionItem key={form.formId} value={form.formId}>
+          <AccordionItem
+            data-parity={`answer-group-${form.formId}`}
+            key={form.formId}
+            value={form.formId}
+          >
             <AccordionTrigger data-parity={`form-${form.formId}`}>
               <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="text-base font-medium">{form.title}</span>

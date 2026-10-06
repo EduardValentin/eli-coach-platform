@@ -1,5 +1,6 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import type { ClientRosterEntry } from "@eli-coach-platform/domain/client-roster";
+import type { CoachingSubscriptionSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -21,11 +22,40 @@ const PAID_AT = new Date("2026-09-26T10:00:00.000Z");
 const SENT_AT = new Date("2026-09-26T10:05:00.000Z");
 const EXPIRES_AT = new Date("2026-10-26T10:05:00.000Z");
 
+const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
+  id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+  clientId: CLIENT_ID,
+  bundleId: "3-months",
+  months: 3,
+  tier: "regular",
+  amountCents: 44700,
+  currency: "eur",
+  paymentCustomerId: "cus_1",
+  paymentSubscriptionId: "sub_1",
+  checkoutSessionId: "cs_1",
+  paidAt: PAID_AT,
+  startChoice: "immediate",
+  status: "not-started",
+  cancelledAt: null,
+  accessEndsAt: null,
+  paymentProblemSince: null,
+  refund: null,
+};
+
 const COACH: AccountSnapshot = {
   authSubjectId: "user_coach",
   id: "acct_coach",
   role: "COACH",
 };
+
+const RECORD_READINGS = {
+  status: "invited",
+  needsRefund: false,
+  subscriptionStatus: "not-started",
+  subscriptionCancelledOrEnded: false,
+  refundOutstandingCents: null,
+  workStartsOn: null,
+} as const;
 
 const BOOKED_CALL = {
   startsAt: new Date("2026-09-24T15:00:00.000Z"),
@@ -64,14 +94,7 @@ function rosterEntry(
     },
     subscription:
       overrides.subscription === undefined
-        ? {
-            bundleId: "3-months",
-            months: 3,
-            tier: "regular",
-            paidAt: PAID_AT,
-            startChoice: "immediate",
-            status: "not-started",
-          }
+        ? SUBSCRIPTION
         : overrides.subscription,
   };
 }
@@ -83,10 +106,11 @@ describe("CoachClientsController#loadRoster", () => {
       listed: {
         status: "listed",
         clients: [
-          { ...rosterEntry(), status: "invited" },
+          { ...rosterEntry(), status: "invited", needsRefund: true },
           {
             ...rosterEntry({ clientId: OTHER_CLIENT_ID, subscription: null }),
             status: "onboarding",
+            needsRefund: false,
           },
         ],
       },
@@ -104,6 +128,7 @@ describe("CoachClientsController#loadRoster", () => {
           lastName: "Popescu",
           email: "ana@example.com",
           status: "invited",
+          needsRefund: true,
           bundleMonths: 3,
           paidAt: "2026-09-26T10:00:00.000Z",
         },
@@ -113,6 +138,7 @@ describe("CoachClientsController#loadRoster", () => {
           lastName: "Popescu",
           email: "ana@example.com",
           status: "onboarding",
+          needsRefund: false,
           bundleMonths: null,
           paidAt: null,
         },
@@ -172,7 +198,7 @@ describe("CoachClientsController#loadClient", () => {
       createController({
         record: {
           ...rosterEntry(),
-          status: "invited",
+          ...RECORD_READINGS,
           assessmentCall: { ...BOOKED_CALL, notes: "I train at home." },
         },
         invitation: {
@@ -192,6 +218,8 @@ describe("CoachClientsController#loadClient", () => {
       lastName: "Popescu",
       email: "ana@example.com",
       status: "invited",
+      needsRefund: false,
+      subscriptionCancelledOrEnded: false,
       gender: "female",
       assessmentCall: {
         startsAt: "2026-09-24T15:00:00.000Z",
@@ -211,6 +239,10 @@ describe("CoachClientsController#loadClient", () => {
         reducedPrice: false,
         paidAt: "2026-09-26T10:00:00.000Z",
         workStartsOn: null,
+        status: "not-started",
+        endsOn: null,
+        endedOn: null,
+        refund: null,
       },
       invitation: {
         state: "pending",
@@ -220,6 +252,129 @@ describe("CoachClientsController#loadClient", () => {
     });
     expect(readClientRecord).toHaveBeenCalledWith(CLIENT_ID);
     expect(readClientInvitation).toHaveBeenCalledWith(CLIENT_ID);
+  });
+
+  it("reads when a cancelled subscription ends", async () => {
+    // arrange
+    const { controller } = createController({
+      record: {
+        ...rosterEntry({
+          subscription: {
+            ...SUBSCRIPTION,
+            status: "cancelled",
+            cancelledAt: new Date("2026-10-15T10:00:00.000Z"),
+            accessEndsAt: new Date("2026-12-26T10:00:00.000Z"),
+          },
+        }),
+        ...RECORD_READINGS,
+        status: "cancelled",
+        subscriptionStatus: "cancelled",
+        subscriptionCancelledOrEnded: true,
+        assessmentCall: BOOKED_CALL,
+      },
+    });
+
+    // act
+    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(client.subscriptionCancelledOrEnded).toBe(true);
+    expect(client.subscription).toMatchObject({
+      status: "cancelled",
+      endsOn: "2026-12-26T10:00:00.000Z",
+      endedOn: null,
+    });
+  });
+
+  it("reads when an ended subscription ended and the refund still owed", async () => {
+    // arrange
+    const endedAt = new Date("2026-10-15T10:00:00.000Z");
+    const { controller } = createController({
+      record: {
+        ...rosterEntry({
+          subscription: {
+            ...SUBSCRIPTION,
+            status: "ended",
+            cancelledAt: endedAt,
+            accessEndsAt: endedAt,
+            refund: {
+              reason: "full-refund",
+              amountCents: 44700,
+              dueBy: new Date("2026-10-29T10:00:00.000Z"),
+              refundedCents: 10000,
+              refundedAt: null,
+            },
+          },
+        }),
+        ...RECORD_READINGS,
+        status: "inactive",
+        needsRefund: true,
+        subscriptionStatus: "ended",
+        subscriptionCancelledOrEnded: true,
+        refundOutstandingCents: 34700,
+        assessmentCall: BOOKED_CALL,
+      },
+    });
+
+    // act
+    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(client.needsRefund).toBe(true);
+    expect(client.subscriptionCancelledOrEnded).toBe(true);
+    expect(client.subscription).toMatchObject({
+      status: "ended",
+      endsOn: null,
+      endedOn: "2026-10-15T10:00:00.000Z",
+      refund: {
+        reason: "full-refund",
+        amountCents: 44700,
+        outstandingCents: 34700,
+        refundedCents: 10000,
+        currency: "eur",
+        dueBy: "2026-10-29T10:00:00.000Z",
+        refundedOn: null,
+      },
+    });
+  });
+
+  it("reads the day a refund was settled", async () => {
+    // arrange
+    const endedAt = new Date("2026-10-15T10:00:00.000Z");
+    const { controller } = createController({
+      record: {
+        ...rosterEntry({
+          subscription: {
+            ...SUBSCRIPTION,
+            status: "ended",
+            cancelledAt: endedAt,
+            accessEndsAt: endedAt,
+            refund: {
+              reason: "full-refund",
+              amountCents: 44700,
+              dueBy: new Date("2026-10-29T10:00:00.000Z"),
+              refundedCents: 44700,
+              refundedAt: new Date("2026-10-20T10:00:00.000Z"),
+            },
+          },
+        }),
+        ...RECORD_READINGS,
+        status: "inactive",
+        subscriptionStatus: "ended",
+        subscriptionCancelledOrEnded: true,
+        refundOutstandingCents: 0,
+        assessmentCall: BOOKED_CALL,
+      },
+    });
+
+    // act
+    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(client.subscription?.refund).toMatchObject({
+      outstandingCents: 0,
+      refundedOn: "2026-10-20T10:00:00.000Z",
+    });
   });
 
   it("reads a reduced price for a subscription bought at the reduced tier", async () => {
@@ -232,7 +387,7 @@ describe("CoachClientsController#loadClient", () => {
           ...entry.subscription,
           tier: "reduced",
         },
-        status: "invited",
+        ...RECORD_READINGS,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -246,15 +401,11 @@ describe("CoachClientsController#loadClient", () => {
 
   it("names the day her work starts when she chose to wait", async () => {
     // arrange
-    const entry = rosterEntry();
     const { controller } = createController({
       record: {
-        ...entry,
-        subscription: entry.subscription && {
-          ...entry.subscription,
-          startChoice: "waiting",
-        },
-        status: "invited",
+        ...rosterEntry(),
+        ...RECORD_READINGS,
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -263,7 +414,7 @@ describe("CoachClientsController#loadClient", () => {
     const client = await controller.loadClient(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(client.subscription?.workStartsOn).toEqual(expect.any(String));
+    expect(client.subscription?.workStartsOn).toBe("2026-10-10T10:00:00.000Z");
   });
 
   it("reads no subscription for a client without one", async () => {
@@ -271,7 +422,9 @@ describe("CoachClientsController#loadClient", () => {
     const { controller } = createController({
       record: {
         ...rosterEntry({ subscription: null }),
+        ...RECORD_READINGS,
         status: "onboarding",
+        subscriptionStatus: null,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -281,6 +434,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.subscription).toBeNull();
+    expect(client.subscriptionCancelledOrEnded).toBe(false);
   });
 
   it("reads no invitation once her account is bound", async () => {
@@ -288,6 +442,7 @@ describe("CoachClientsController#loadClient", () => {
     const { controller } = createController({
       record: {
         ...rosterEntry({ accountBound: true }),
+        ...RECORD_READINGS,
         status: "onboarding",
         assessmentCall: BOOKED_CALL,
       },
@@ -385,6 +540,7 @@ describe("CoachClientsController#resendInvitation", () => {
   it.each([
     ["not-found", 404, "not-found"],
     ["already-admitted", 409, "already-admitted"],
+    ["subscription-cancelled-or-ended", 409, "subscription-cancelled-or-ended"],
     ["failed", 503, "send-failed"],
   ] as const)(
     "answers the %s outcome with %i and names it %s",

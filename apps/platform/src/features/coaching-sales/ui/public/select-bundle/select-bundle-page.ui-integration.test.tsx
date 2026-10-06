@@ -166,7 +166,7 @@ describe("SelectBundleRoute", () => {
     expect(screen.getByRole("radio", { name: "3 Months" })).toBeChecked();
     expect(
       screen.getByRole("radio", {
-        name: /Start as soon as my payment is confirmed\./,
+        name: "Start as soon as my payment is confirmed. I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.",
       }),
     ).not.toBeChecked();
     expect(

@@ -1,5 +1,4 @@
 import { useId, useState, type ChangeEvent } from 'react';
-import { format } from 'date-fns';
 import { Image as ImageIcon, X } from 'lucide-react';
 import {
   NO_PROGRESS_PHOTOS,
@@ -41,12 +40,7 @@ type ProgressPhotoBlockProps = {
   consent: ProgressPhotoConsent;
   photos: ProgressPhotoSet;
   onPhotosChange: (photos: ProgressPhotoSet) => void;
-  sendNote?: string;
 };
-
-function consentedLine(consentedAt: Date): string {
-  return `You agreed to share progress photos on ${format(consentedAt, 'd MMMM yyyy')}.`;
-}
 
 function locksPhotos(consent: ProgressPhotoConsent): boolean {
   return consent.status === 'asking' && !consent.ticked;
@@ -163,7 +157,6 @@ export function ProgressPhotoBlock({
   consent,
   photos,
   onPhotosChange,
-  sendNote,
 }: ProgressPhotoBlockProps) {
   const groupId = useId();
   const noteId = useId();
@@ -203,14 +196,7 @@ export function ProgressPhotoBlock({
         </span>
       </p>
 
-      {consent.status === 'recorded' ? (
-        <p
-          className="text-sm leading-relaxed text-text-secondary"
-          data-parity="progress-photos-consented"
-        >
-          {consentedLine(consent.at)}
-        </p>
-      ) : (
+      {consent.status !== 'recorded' &&  (
         <ConsentCheckbox
           onTickedChange={(ticked) => {
             if (!ticked) clearPicks();
@@ -260,15 +246,6 @@ export function ProgressPhotoBlock({
           id={noteId}
         >
           {LOCKED_NOTE}
-        </p>
-      )}
-
-      {!locked && sendNote && (
-        <p
-          className="text-xs text-text-secondary"
-          data-parity="progress-photos-send-note"
-        >
-          {sendNote}
         </p>
       )}
     </div>

@@ -2,7 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import { AssessmentCall } from "@eli-coach-platform/domain/assessment-call";
 import { Client } from "@eli-coach-platform/domain/client";
 import {
-  CoachingSubscription,
+  PurchasedSubscription,
   type CoachingPurchase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
@@ -186,36 +186,6 @@ describe("PostgresCoachingPurchases#forCalls", () => {
   });
 });
 
-describe("PostgresCoachingPurchases#findOpenForClient", () => {
-  it("reads how and when the client's open subscription was bought", async () => {
-    // arrange
-    const purchases = createPurchases(
-      createDatabaseAnsweringSubscriptionRows([
-        { startChoice: "waiting", purchasedAt: NOW },
-      ]),
-    );
-
-    // act
-    const start = await purchases.findOpenForClient("client-1");
-
-    // assert
-    expect(start).toEqual({ startChoice: "waiting", purchasedAt: NOW });
-  });
-
-  it("answers null for a client with no open subscription", async () => {
-    // arrange
-    const purchases = createPurchases(
-      createDatabaseAnsweringSubscriptionRows([]),
-    );
-
-    // act
-    const start = await purchases.findOpenForClient("client-1");
-
-    // assert
-    expect(start).toBeNull();
-  });
-});
-
 function createPurchases(database: DatabaseClient): PostgresCoachingPurchases {
   return new PostgresCoachingPurchases({
     clock: { now: () => NOW },
@@ -244,10 +214,11 @@ function purchase(): CoachingPurchase {
   return {
     eventId: "evt_1",
     client: Client.fromAssessmentCall(call, NOW),
-    subscription: CoachingSubscription.fromCompletedCheckout({
+    subscription: PurchasedSubscription.fromCompletedCheckout({
       checkoutSessionId: "cs_1",
       paymentCustomerId: "cus_1",
       paymentSubscriptionId: "sub_1",
+      paymentIntentId: "pi_1",
       amountCents: 44700,
       currency: "eur",
       customerEmail: "ana@example.com",
@@ -318,18 +289,6 @@ function createDatabaseAnsweringSalesRows(
     where: () => selection,
     union: () => Promise.resolve(rows),
     getSQL: () => ({}),
-  };
-
-  return { select: () => selection } as unknown as DatabaseClient;
-}
-
-function createDatabaseAnsweringSubscriptionRows(
-  rows: readonly unknown[],
-): DatabaseClient {
-  const selection = {
-    from: () => selection,
-    where: () => selection,
-    limit: () => Promise.resolve(rows),
   };
 
   return { select: () => selection } as unknown as DatabaseClient;

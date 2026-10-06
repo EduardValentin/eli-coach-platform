@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -183,15 +183,58 @@ describe('the program status card', () => {
     );
 
     // assert
-    const dialog = screen.getByRole('alertdialog', {
+    const dialog = screen.getByRole('dialog', {
       name: 'Let Eli start now?',
     });
     expect(dialog).toHaveAccessibleDescription(
-      /^I expressly request that my program begins before the end of the 14-day withdrawal period\./,
+      'I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.',
     );
     expect(
       screen.getByRole('button', { name: 'Keep my 14 days' }),
     ).toBeVisible();
+  });
+
+  it('returns focus to the opener when she keeps her 14 days', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jstart=waiting');
+    const opener = screen.getByRole('button', { name: 'Let Eli start now' });
+    await userEvent.click(opener);
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Keep my 14 days' }),
+    );
+
+    // assert
+    await waitFor(() => expect(opener).toHaveFocus());
+    expect(
+      screen.queryByRole('dialog', { name: 'Let Eli start now?' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('holds the confirmation disabled while Eli is being started', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jstart=waiting');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    ).toBeDisabled();
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole('button', { name: 'Let Eli start now' }),
+        ).not.toBeInTheDocument(),
+      { timeout: SERVICE_TIMEOUT },
+    );
   });
 
   it('drops the waiting line once she lets Eli start now', async () => {
@@ -219,6 +262,99 @@ describe('the program status card', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('closes the confirmation once Eli has started', async () => {
+    // arrange
+    renderCard(
+      '?session=client&jstage=reviewing&jstart=waiting&jstartnow=works',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    );
+
+    // assert
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole('dialog', { name: 'Let Eli start now?' }),
+        ).not.toBeInTheDocument(),
+      { timeout: SERVICE_TIMEOUT },
+    );
+  });
+
+  it('keeps the confirmation open and asks her to try again when the start fails', async () => {
+    // arrange
+    renderCard(
+      '?session=client&jstage=reviewing&jstart=waiting&jstartnow=fails',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    );
+
+    // assert
+    const dialog = screen.getByRole('dialog', { name: 'Let Eli start now?' });
+    expect(
+      await within(dialog).findByRole(
+        'alert',
+        {},
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toHaveTextContent(
+      /^Your program couldn't be started just now\. Nothing has changed, so please try again\.$/,
+    );
+    expect(
+      within(dialog).getByRole('button', { name: 'Yes, start now' }),
+    ).toBeEnabled();
+    expect(
+      screen.getByText(/she starts working on your program on/),
+    ).toBeInTheDocument();
+  });
+
+  it('clears the start failure once she closes the confirmation', async () => {
+    // arrange
+    renderCard(
+      '?session=client&jstage=reviewing&jstart=waiting&jstartnow=fails',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    );
+    await screen.findByText(
+      "Your program couldn't be started just now. Nothing has changed, so please try again.",
+      undefined,
+      { timeout: SERVICE_TIMEOUT },
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Keep my 14 days' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('dialog', { name: 'Let Eli start now?' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        "Your program couldn't be started just now. Nothing has changed, so please try again.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it('keeps billing off the program card once the coaching runs', () => {
     // arrange
     renderCard('?session=client&jstage=program-ready&jsub=active');
@@ -228,5 +364,23 @@ describe('the program status card', () => {
 
     // assert
     expect(reassurance).not.toBeInTheDocument();
+  });
+
+  it('keeps every payment concern off the card even with a payment problem', () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jpayproblem=1');
+
+    // act
+    const label = screen.getByText('Your coach is reviewing your answers');
+
+    // assert
+    expect(label).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Your last payment didn't go through/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /payment method/i }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -210,6 +210,7 @@ describe("ClientJourneyController program status", () => {
           kind: "submitted",
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
           workStartsOn,
+          startNowUntil: null,
         },
       });
 
@@ -221,10 +222,31 @@ describe("ClientJourneyController program status", () => {
         kind: "submitted",
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: expectedWorkStartsOn,
+        startNowUntil: null,
       });
       expect(readProgramStatus).toHaveBeenCalledWith("user_ana");
     },
   );
+
+  it("carries until when she can start now", async () => {
+    // arrange
+    const { controller } = createController({
+      programStatus: {
+        kind: "submitted",
+        submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+        startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
+      },
+    });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toMatchObject({
+      startNowUntil: "2026-10-10T10:00:00.000Z",
+    });
+  });
 
   it.each(["in-review", "needs-details", "approved"] as const)(
     "answers the %s step of her reviewed onboarding",
@@ -235,6 +257,7 @@ describe("ClientJourneyController program status", () => {
           kind,
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
           workStartsOn: null,
+          startNowUntil: null,
         },
       });
 
@@ -246,6 +269,7 @@ describe("ClientJourneyController program status", () => {
         kind,
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: null,
+        startNowUntil: null,
       });
     },
   );

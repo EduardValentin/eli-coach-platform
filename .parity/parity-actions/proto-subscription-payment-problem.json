@@ -1,0 +1,9 @@
+[
+  {"waitFor": "[data-parity-root=\"SubscriptionSection\"]"},
+  {"click": "[aria-label=\"Open Dev Toggle\"]"},
+  {"click": "role=tab[name=\"Journey\"]"},
+  {"click": "#dev-journey-payment-problem"},
+  {"click": "[aria-label=\"Close Dev Settings\"]"},
+  {"waitFor": "[data-parity=\"payment-problem\"]"},
+  {"wait": 400}
+]

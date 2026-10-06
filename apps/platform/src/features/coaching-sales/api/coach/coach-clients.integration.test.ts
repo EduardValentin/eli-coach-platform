@@ -26,6 +26,10 @@ import {
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 import {
+  stripeSubscriptionObject,
+  SubscriptionLifecycleJourney,
+} from "~integration-test-config/subscription-lifecycle-journey";
+import {
   CLERK_INVITATION_URL,
   CLERK_INVITATIONS_PATH,
   clerkCreatesInvitation,
@@ -33,10 +37,12 @@ import {
   clerkRefusesInvitationRevocations,
   clerkServesUser,
 } from "~integration-test-config/wire-mock/expectations/clerk-backend-api";
+import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/stripe-api";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const INVITATION_RESENDS_API = "/api/coaching-sales/invitation-resends";
 const INVITATION_API = "/api/coaching-sales/invitation";
@@ -221,6 +227,33 @@ describe.sequential("coach clients integration", () => {
       expect(response.status).toBe(409);
       expect(await response.json()).toEqual({ error: "already-admitted" });
       expect(await readInvitation()).toEqual(accepted);
+      expect(await revocationsOf(EARLIER_PROVIDER_ID)).toEqual([]);
+      expect(await invitationEmails()).toHaveLength(1);
+    });
+
+    it("refuses with 409 once her coaching has ended, changing nothing", async () => {
+      // arrange
+      const earlier = await payAndReadInvitation();
+      const ended = await lifecycle.deliverEvent({
+        id: "evt_resend_coaching_ended",
+        type: "customer.subscription.deleted",
+        object: stripeSubscriptionObject({
+          status: "canceled",
+          ended_at: toUnixSeconds(rig.now()),
+        }),
+      });
+      await rig.holdClock(RESEND_INSTANT);
+
+      // act
+      const response = await resendAs(COACH_SESSION, earlier.clientId);
+
+      // assert
+      expect(ended.status).toBe(200);
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({
+        error: "subscription-cancelled-or-ended",
+      });
+      expect(await readInvitation()).toEqual(earlier);
       expect(await revocationsOf(EARLIER_PROVIDER_ID)).toEqual([]);
       expect(await invitationEmails()).toHaveLength(1);
     });

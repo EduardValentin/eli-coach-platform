@@ -19,6 +19,7 @@ import {
   PaymentLink,
   type PaymentLinkVariant,
 } from '../../email-templates/PaymentLink';
+import { RefundDue } from '../../email-templates/RefundDue';
 
 type TemplateKey =
   | 'waitlist-confirmation'
@@ -27,7 +28,8 @@ type TemplateKey =
   | 'details-request'
   | 'payment-link'
   | 'assessment-call-visitor'
-  | 'assessment-call-coach';
+  | 'assessment-call-coach'
+  | 'refund-due';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -87,6 +89,11 @@ const TEMPLATES: TemplateOption[] = [
       { value: 'with-notes', label: 'With a shared note and a phone' },
       { value: 'without-notes', label: 'Without a shared note or a phone' },
     ],
+  },
+  {
+    key: 'refund-due',
+    label: 'Refund due — coach',
+    variants: [{ value: 'full-refund', label: 'Full refund' }],
   },
 ];
 
@@ -158,6 +165,13 @@ export function EmailPreview() {
           variant={variant as AssessmentCallEmailVariant}
           visitorPhone={variant === 'with-notes' ? SAMPLE_VISITOR_PHONE : null}
           joinUrl={`${window.location.origin}/book/ac-demo/join`}
+        />
+      );
+    }
+    if (template === 'refund-due') {
+      return (
+        <RefundDue
+          clientPageUrl={`${window.location.origin}/coach/clients/ac-demo-client-1`}
         />
       );
     }

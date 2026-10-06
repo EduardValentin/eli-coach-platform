@@ -11,6 +11,8 @@ export type SortDirection = "ascending" | "descending";
 const CLIENTS_PATH = "/coach/clients";
 const MAX_KEY_PRESSES = 20;
 const TYPING_DELAY_MS = 50;
+const NEEDS_REFUND_LABEL = "Needs refund";
+const STATUS_COLUMN = 1;
 
 export type EmptyRoster = { title: string; description: string };
 
@@ -79,6 +81,10 @@ export class CoachClientsPage {
 
   private row(fullName: string): Locator {
     return this.clientRows.filter({ hasText: fullName });
+  }
+
+  private statusCellOf(fullName: string): Locator {
+    return this.row(fullName).getByRole("cell").nth(STATUS_COLUMN);
   }
 
   async open(): Promise<void> {
@@ -153,6 +159,21 @@ export class CoachClientsPage {
 
     await expect(row).toHaveCount(1);
     await expect(row.getByText(status, { exact: true })).toBeVisible();
+  }
+
+  async expectRowNeedsRefund(fullName: string, status: string): Promise<void> {
+    const statusCell = this.statusCellOf(fullName);
+
+    await expect(statusCell.getByText(status, { exact: true })).toBeVisible();
+    await expect(
+      statusCell.getByText(NEEDS_REFUND_LABEL, { exact: true }),
+    ).toBeVisible();
+  }
+
+  async expectRowWithoutRefundBadge(fullName: string): Promise<void> {
+    await expect(
+      this.row(fullName).getByText(NEEDS_REFUND_LABEL, { exact: true }),
+    ).toHaveCount(0);
   }
 
   async expectRowDetails(

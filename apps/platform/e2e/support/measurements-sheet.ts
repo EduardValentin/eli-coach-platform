@@ -122,8 +122,8 @@ export class MeasurementsSheet {
     await this.photoTiles.withdraw();
   }
 
-  async expectConsentAlreadyGiven(agreedOn: string): Promise<void> {
-    await this.photoTiles.expectConsentAlreadyGiven(agreedOn);
+  async expectConsentAlreadyGiven(): Promise<void> {
+    await this.photoTiles.expectConsentAlreadyGiven();
   }
 
   async expectPhotoTilesAreLabelledFileInputs(): Promise<void> {

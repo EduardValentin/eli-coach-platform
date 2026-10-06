@@ -19,6 +19,9 @@ import {
   programStatusLabel,
   programStatusLine,
 } from "./program-status-copy";
+import { StartNowDialog } from "./start-now-dialog";
+import { StartNowOfferAction, StartNowOfferNote } from "./start-now-offer";
+import { useStartNow } from "./use-start-now";
 
 type DetailsRequest = { note: string };
 
@@ -34,10 +37,12 @@ export function ProgramStatusCard({
   detailsRequest = null,
 }: ProgramStatusCardProps) {
   const timeZone = useCalendarDayTimeZone();
+  const startNow = useStartNow();
   const workStartDay = status.workStartsOn
     ? formatDayMonth(status.workStartsOn, timeZone)
     : null;
   const needsDetails = status.kind === "needs-details";
+  const canStartNow = status.startNowUntil !== null;
   const statusLine = programStatusLine({
     kind: status.kind,
     requestNote: detailsRequest?.note ?? null,
@@ -78,6 +83,7 @@ export function ProgramStatusCard({
             {statusLine}
           </p>
         )}
+        {canStartNow && <StartNowOfferNote />}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {needsDetails && (
             <Link
@@ -92,8 +98,10 @@ export function ProgramStatusCard({
               {ANSWER_NOW_LABEL}
             </Link>
           )}
+          {canStartNow && <StartNowOfferAction startNow={startNow} />}
         </div>
       </PortalWidget>
+      <StartNowDialog dialog={startNow.dialog} />
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import type {
+  CardOnFile,
   SubscriptionBundle,
   SubscriptionStartPath,
 } from '../domain/coachingSubscription';
+import { TEST_VISA } from './prototypeCards';
 
 export type CheckoutSelection = {
   bundle: SubscriptionBundle;
@@ -13,7 +15,11 @@ export type CheckoutSession = CheckoutSelection & {
   token: string;
 };
 
-export type CompletedCheckout = { sessionId: string; paidAt: Date };
+export type CompletedCheckout = {
+  sessionId: string;
+  paidAt: Date;
+  cardOnFile: CardOnFile;
+};
 
 export const SIMULATED_LATENCY_MS = 1100;
 
@@ -44,5 +50,5 @@ export async function completeCheckout(
 ): Promise<CompletedCheckout> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
-  return { sessionId, paidAt: new Date() };
+  return { sessionId, paidAt: new Date(), cardOnFile: TEST_VISA };
 }

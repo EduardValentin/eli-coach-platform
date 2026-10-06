@@ -16,6 +16,7 @@ import {
   STRIPE_SUBSCRIPTION_ID,
   completedCheckoutSession,
   stripeCreatesCheckoutSessionForBundle,
+  stripeRetrievesSession,
   type StripeCheckoutSession,
 } from "./wire-mock/expectations/stripe-api";
 import { turnstileTokenForAction } from "./wire-mock/expectations/turnstile-siteverify";
@@ -41,6 +42,7 @@ export type Purchase = {
   bundleId: string;
   checkout: RequestedCheckout;
   eventId: string;
+  startChoice: "immediate" | "waiting";
   subscriptionId: string;
 };
 
@@ -70,6 +72,7 @@ export const FIRST_PURCHASE: Purchase = {
     sessionId: STRIPE_CHECKOUT_SESSION_ID,
   },
   eventId: "evt_integration_paid",
+  startChoice: "immediate",
   subscriptionId: STRIPE_SUBSCRIPTION_ID,
 };
 
@@ -77,9 +80,10 @@ export const SECOND_PURCHASE: Purchase = {
   bundleId: "6-months",
   checkout: {
     requestIndex: SECOND_CHECKOUT_REQUEST,
-    sessionId: "cs_test_integration_second",
+    sessionId: "cs_test_integrationsecond",
   },
   eventId: "evt_integration_second_paid",
+  startChoice: "immediate",
   subscriptionId: "sub_integration_second",
 };
 
@@ -263,6 +267,8 @@ export class CoachingSalesJourney {
     session: StripeCheckoutSession,
     eventId: string,
   ): Promise<Response> {
+    await this.rig.suite.wireMock.stub(stripeRetrievesSession(session));
+
     return this.rig.suite.request(
       stripeWebhook({
         event: {
@@ -289,7 +295,7 @@ export class CoachingSalesJourney {
     const sentLink = await this.sendPaymentLinkAfterEndedCall(visitor);
     await this.startCheckout({
       bundleId: purchase.bundleId,
-      startChoice: "immediate",
+      startChoice: purchase.startChoice,
       token: sentLink.token,
     });
     const completion = await this.completionOfCheckoutRequest(

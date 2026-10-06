@@ -7,7 +7,6 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { format } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -184,8 +183,6 @@ const WITHHELD_CONSENTS: OnboardingConsents = {
   specialCategory: false,
   progressPhotos: false,
 };
-
-const SEND_NOTE = 'Your photos are sent with your answers.';
 
 function photo(): File {
   return new File([new Uint8Array(512)], 'photo', { type: 'image/jpeg' });
@@ -790,7 +787,7 @@ describe('the onboarding', () => {
     );
   });
 
-  it('opens the photo tiles once she agrees and says her photos go with her answers', async () => {
+  it('opens the photo tiles once she agrees', async () => {
     // arrange
     await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
@@ -804,7 +801,6 @@ describe('the onboarding', () => {
     expect(screen.getByLabelText('Add front photo')).toBeEnabled();
     expect(screen.getByLabelText('Add side photo')).toBeEnabled();
     expect(screen.getByLabelText('Add back photo')).toBeEnabled();
-    expect(screen.getByText(SEND_NOTE)).toBeVisible();
     expect(
       screen.queryByText('Tick the box to add your photos.'),
     ).not.toBeInTheDocument();
@@ -933,11 +929,10 @@ describe('the onboarding', () => {
       timeout: SERVICE_TIMEOUT,
     });
     await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
+    expect(await screen.findByLabelText('Add front photo')).toBeEnabled();
     expect(
-      screen.getByText(
-        `You agreed to share progress photos on ${format(new Date(), 'd MMMM yyyy')}.`,
-      ),
-    ).toBeVisible();
+      screen.queryByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY }),
+    ).not.toBeInTheDocument();
   });
 
   it('lets her pick the measurement system before the first measurement', async () => {
