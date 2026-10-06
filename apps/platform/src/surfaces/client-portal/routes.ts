@@ -3,6 +3,7 @@ import { index, prefix, relative } from "@react-router/dev/routes";
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
 import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
+import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
 import {
   coachingSalesClientRoutes,
   coachingSalesClientShellRoutes,
@@ -16,6 +17,7 @@ export const clientPortalRoutes = [
       layout("./shell/layout.tsx", [
         index("./surfaces/client-portal/pages/home.tsx"),
         ...clientProfileClientRoutes,
+        ...clientResourcesClientRoutes,
         ...coachingSalesClientShellRoutes,
       ]),
       ...coachingSalesClientRoutes,

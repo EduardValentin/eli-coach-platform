@@ -1,8 +1,18 @@
-import { relative } from "@react-router/dev/routes";
+import { relative, type RouteConfigEntry } from "@react-router/dev/routes";
 
-import { CLIENT_RESOURCES_API_PATHS } from "./contracts/paths";
+import {
+  CLIENT_RESOURCES_API_PATHS,
+  CLIENT_RESOURCES_ROUTE_SEGMENT,
+} from "./contracts/paths";
 
 const { route } = relative(import.meta.dirname);
+
+export const clientResourcesClientRoutes: RouteConfigEntry[] = [
+  route(
+    CLIENT_RESOURCES_ROUTE_SEGMENT,
+    "./ui/client/resources/resources-page.tsx",
+  ),
+];
 
 export const clientResourcesApiRoutes = [
   route(

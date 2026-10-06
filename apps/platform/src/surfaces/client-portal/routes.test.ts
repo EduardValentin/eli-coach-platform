@@ -91,6 +91,30 @@ describe("client portal routes", () => {
     );
   });
 
+  it("serves her resources inside the portal shell", () => {
+    // arrange
+    const accessLayout = clientPortalRoutes.find((entry) =>
+      ACCESS_LAYOUT_FILE.test(entry.file),
+    );
+
+    // act
+    const shell = accessLayout?.children?.find((entry) =>
+      SHELL_LAYOUT_FILE.test(entry.file),
+    );
+
+    // assert
+    expect(shell?.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          file: expect.stringMatching(
+            /features\/client-resources\/ui\/client\/resources\/resources-page\.tsx$/,
+          ),
+          path: "client/resources",
+        }),
+      ]),
+    );
+  });
+
   it("serves the ended page behind the access layout but outside the portal shell", () => {
     // arrange
     const accessLayout = clientPortalRoutes.find((entry) =>
