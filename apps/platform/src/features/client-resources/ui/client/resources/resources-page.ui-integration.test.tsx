@@ -473,10 +473,7 @@ async function renderResourcesPage() {
       <RouterProvider router={router} />
     </MotionConfig>,
   );
-  await waitFor(() => {
-    expect(router.state.initialized).toBe(true);
-    expect(router.state.navigation.state).toBe("idle");
-  });
+  await screen.findByRole("heading", { level: 1 });
 
   return user;
 }
