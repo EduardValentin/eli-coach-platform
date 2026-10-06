@@ -102,20 +102,20 @@ function AddMeasurementsForm({
 
           <SheetDialogActions>
             <Button
-              className="w-full sm:w-auto"
               disabled={recording}
               size="md"
               type="submit"
               variant="primary"
+              width="full-below-sm"
             >
               {SHEET_COPY.save}
             </Button>
             <Button
-              className="w-full sm:w-auto"
               onClick={onClose}
               size="md"
               type="button"
               variant="ghost"
+              width="full-below-sm"
             >
               {SHEET_COPY.cancel}
             </Button>

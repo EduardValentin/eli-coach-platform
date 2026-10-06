@@ -480,7 +480,7 @@
   }
 }
 
-/* [data-chip-control] covers a chip or a choice card whose real control is a visually hidden input, which cannot show its own outline. */
+/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
   ):not([role="menuitemradio"]):not([tabindex="-1"]),

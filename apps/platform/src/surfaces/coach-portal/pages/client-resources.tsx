@@ -1,7 +1,6 @@
-import { ArrowLeft } from "lucide-react";
+import { PortalBackLink } from "@eli-coach-platform/ui/portal";
 import {
   isRouteErrorResponse,
-  Link,
   useLoaderData,
   useRevalidator,
   useRouteError,
@@ -71,13 +70,9 @@ export default function CoachClientResourcesRoute() {
 
   return (
     <div className={PAGE_CLASS} data-parity-root={PAGE_PARITY_ROOT}>
-      <Link
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-        to={coachClientPath(client.clientId)}
-      >
-        <ArrowLeft aria-hidden="true" size={16} /> Back to{" "}
-        {clientFullName(client)}
-      </Link>
+      <PortalBackLink to={coachClientPath(client.clientId)}>
+        Back to {clientFullName(client)}
+      </PortalBackLink>
 
       <CoachResourceLibrary
         clientId={client.clientId}

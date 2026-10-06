@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { ArrowLeft, FolderOpen, Plus } from 'lucide-react';
+import { useParams } from 'react-router';
+import { FolderOpen, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { EmptyState } from '../../components/EmptyState';
+import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ResourceActionsMenu, type ResourceManagement } from '../../components/resources/ResourceActionsMenu';
 import {
@@ -77,12 +78,7 @@ function CoachResourceLibrary({
 
   return (
     <div className="w-full" data-parity-root="CoachResourceLibrary">
-      <Link
-        to={`/coach/clients/${routeId}`}
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-      >
-        <ArrowLeft size={16} aria-hidden="true" /> Back to {names.full}
-      </Link>
+      <PortalBackLink to={`/coach/clients/${routeId}`}>Back to {names.full}</PortalBackLink>
 
       {listing.status !== 'failed' && (
         <PortalPageHeader

@@ -1,4 +1,4 @@
-import { ArrowLeft, FolderOpen } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { Link } from 'react-router';
 import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
@@ -9,6 +9,7 @@ import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
+import { PortalBackLink } from '../PortalBackLink';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -31,12 +32,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
-      <Link
-        to="/coach/clients"
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-      >
-        <ArrowLeft size={16} /> Back to Clients
-      </Link>
+      <PortalBackLink to="/coach/clients">Back to Clients</PortalBackLink>
 
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">

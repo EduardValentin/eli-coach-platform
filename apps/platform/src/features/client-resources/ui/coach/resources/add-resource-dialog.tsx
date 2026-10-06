@@ -325,20 +325,20 @@ function AddResourceForm({
 
           <SheetDialogActions>
             <Button
-              className="w-full sm:w-auto"
               disabled={busy}
               size="md"
               type="submit"
               variant="primary"
+              width="full-below-sm"
             >
               {submitLabelOf(uploadState)}
             </Button>
             <Button
-              className="w-full sm:w-auto"
               disabled={busy}
               onClick={onClose}
               size="md"
               variant="ghost"
+              width="full-below-sm"
             >
               {COPY.cancel}
             </Button>
