@@ -6,5 +6,7 @@
   {"wait": 600},
   {"click": "[data-parity-root=\"ResourceViewer\"] >> role=button[name=\"Next page\"]"},
   {"waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-counter\"] >> text=2 / 6"},
-  {"wait": 600}
+  {"wait": 600},
+  {"hover": "[data-parity-root=\"ResourceViewer\"] h2"},
+  {"wait": 400}
 ]
