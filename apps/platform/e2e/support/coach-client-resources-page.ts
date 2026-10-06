@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { expectAccessRefused } from "./control-states";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import { ResourceCards, type ResourceCardFacts } from "./resource-cards";
 
 export type ResourcesOwner = {
   clientId: string;
@@ -10,16 +11,14 @@ export type ResourcesOwner = {
   fullName: string;
 };
 
-export type ResourceCardFacts = {
-  title: string;
-  type: string;
-  pages?: number;
-};
-
 const ADD_RESOURCE = "Add resource";
 
 export class CoachClientResourcesPage {
-  constructor(private readonly page: Page) {}
+  private readonly cards: ResourceCards;
+
+  constructor(private readonly page: Page) {
+    this.cards = new ResourceCards(page);
+  }
 
   private get addButton() {
     return this.page.getByRole("button", { name: ADD_RESOURCE, exact: true });
@@ -29,34 +28,8 @@ export class CoachClientResourcesPage {
     return this.page.getByRole("dialog", { name: ADD_RESOURCE });
   }
 
-  private get resources() {
-    return this.page.getByRole("region", { name: "Resources", exact: true });
-  }
-
-  private get cards() {
-    return this.resources.getByRole("button");
-  }
-
-  private card(title: string): Locator {
-    return this.resources.getByRole("button", { name: title, exact: true });
-  }
-
-  private viewerFor(title: string): Locator {
-    return this.page.getByRole("dialog", { name: title, exact: true });
-  }
-
   private backLinkTo(fullName: string): Locator {
     return this.page.getByRole("link", { name: `Back to ${fullName}` });
-  }
-
-  private async openDialogWith(
-    trigger: Locator,
-    dialog: Locator,
-  ): Promise<void> {
-    await expect(async () => {
-      await trigger.click();
-      await expect(dialog).toBeVisible({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
-    }).toPass();
   }
 
   async open(clientId: string): Promise<void> {
@@ -94,45 +67,33 @@ export class CoachClientResourcesPage {
       ),
     ).toBeVisible();
     await expect(this.addButton).toHaveCount(1);
-    await expect(this.resources).toHaveCount(0);
+    await this.cards.expectNone();
   }
 
   async expectCards(titles: readonly string[]): Promise<void> {
-    await expect(this.cards).toHaveCount(titles.length);
-
-    for (const [position, title] of titles.entries()) {
-      await expect(this.cards.nth(position)).toHaveAccessibleName(title);
-    }
-
+    await this.cards.expectListed(titles);
     await expect(this.addButton).toHaveCount(1);
   }
 
-  async expectCard({ title, type, pages }: ResourceCardFacts): Promise<void> {
-    await expect(this.card(title)).toHaveAccessibleDescription(
-      pages ? `${type} ${pages} pages` : type,
-    );
+  async expectCard(facts: ResourceCardFacts): Promise<void> {
+    await this.cards.expectCard(facts);
   }
 
   async expectThumbnail(title: string): Promise<void> {
-    const thumbnail = this.card(title).locator("img");
-
-    await expect
-      .poll(() =>
-        thumbnail.evaluate(
-          (element: HTMLImageElement) =>
-            element.complete && element.naturalWidth > 0,
-        ),
-      )
-      .toBe(true);
+    await this.cards.expectThumbnail(title);
   }
 
   async expectCover(title: string): Promise<void> {
-    await expect(this.card(title)).toBeVisible();
-    await expect(this.card(title).locator("img")).toHaveCount(0);
+    await this.cards.expectCover(title);
   }
 
   async openAdd(): Promise<void> {
-    await this.openDialogWith(this.addButton, this.addDialog);
+    await expect(async () => {
+      await this.addButton.click();
+      await expect(this.addDialog).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
   }
 
   async openAddWithKeyboard(): Promise<void> {
@@ -149,17 +110,15 @@ export class CoachClientResourcesPage {
   }
 
   async openResource(title: string): Promise<void> {
-    await this.openDialogWith(this.card(title), this.viewerFor(title));
+    await this.cards.open(title);
   }
 
   async openResourceWithKeyboard(title: string): Promise<void> {
-    await tabTo(this.page, this.card(title));
-    await this.page.keyboard.press("Enter");
-    await expect(this.viewerFor(title)).toBeVisible();
+    await this.cards.openWithKeyboard(title);
   }
 
   async expectFocusOn(title: string): Promise<void> {
-    await expect(this.card(title)).toBeFocused();
+    await this.cards.expectFocusOn(title);
   }
 
   async expectAddFocused(): Promise<void> {

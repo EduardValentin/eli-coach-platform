@@ -27,6 +27,14 @@ const PDF_MIME_TYPE = "application/pdf";
 
 const PDF_COMMENT_START = Buffer.from("\n%");
 
+const KILOBYTE = 1024;
+
+export function readableSizeOf({ buffer }: SampleResource): string {
+  return buffer.byteLength < KILOBYTE
+    ? `${buffer.byteLength} B`
+    : `${Math.round(buffer.byteLength / KILOBYTE)} KB`;
+}
+
 export async function mealPlanPdf(): Promise<SampleResource> {
   return {
     name: "meal-plan-week-1.pdf",

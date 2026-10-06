@@ -19,12 +19,12 @@ import {
   oversizedPdf,
   pdfOfExactLength,
   postureGuideImage,
+  readableSizeOf,
   recipesDoc,
   renamedTextFile,
   stretchingPhotoWebp,
   trainingBlockPdf,
   weeklyTrackerXlsx,
-  type SampleResource,
 } from "../support/sample-resources";
 import { DARK_INK, darkestGreyOf } from "../support/served-page-images";
 import { setPhoneViewport } from "../support/viewport";
@@ -42,14 +42,6 @@ const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
 });
-
-const KILOBYTE = 1024;
-
-function readableSizeOf({ buffer }: SampleResource): string {
-  return buffer.byteLength < KILOBYTE
-    ? `${buffer.byteLength} B`
-    : `${Math.round(buffer.byteLength / KILOBYTE)} KB`;
-}
 
 test("the coach reaches a client's resources from her record, keeps her entries through every refusal, and opens, pages and downloads what she added", async ({
   addResourceDialog,
