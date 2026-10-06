@@ -691,7 +691,38 @@ describe("createConsoleLogger", () => {
     );
   });
 
-  it("logs a client resource that could not be stored by ids only", () => {
+  it("logs a client resource that could not be stored by ids and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(
+      new Error("ENOSPC: no space left on device, open 'Meal plan.pdf'"),
+      { code: "ENOSPC" },
+    );
+
+    // act
+    logger.resourceStorageFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: cause,
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource could not be stored.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_storage_failure",
+        errorClass: "Error",
+        errorCode: "ENOSPC",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
+  it("logs a client resource storage failure whose cause has no code by its class alone", () => {
     // arrange
     const consoleError = vi
       .spyOn(console, "error")
@@ -702,6 +733,7 @@ describe("createConsoleLogger", () => {
     logger.resourceStorageFailed({
       clientId: "client-1",
       resourceId: "resource-1",
+      error: new TypeError("page renderer stopped"),
     });
 
     // assert
@@ -710,6 +742,7 @@ describe("createConsoleLogger", () => {
       {
         clientId: "client-1",
         errorCategory: "client_resource_storage_failure",
+        errorClass: "TypeError",
         resourceId: "resource-1",
       },
     );

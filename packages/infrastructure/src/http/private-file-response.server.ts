@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import { Readable } from "node:stream";
+import { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 type FileBytes = AsyncIterable<Uint8Array> | Iterable<Uint8Array>;
 
@@ -12,18 +12,25 @@ type AttachmentOptions = {
 const SANDBOX_POLICY = "sandbox; default-src 'none'";
 
 function streamOf(bytes: FileBytes): ReadableStream<Uint8Array> {
-  return Readable.toWeb(Readable.from(bytes)) as ReadableStream<Uint8Array>;
+  return NodeReadableStream.from(bytes) as ReadableStream<Uint8Array>;
+}
+
+function quotedFilenameOf(filename: string): string {
+  return filename.replace(/[\r\n"\\/]/g, "").replace(/[^\x20-\x7e]/g, "_");
+}
+
+function encodedFilenameOf(filename: string): string {
+  return encodeURIComponent(filename).replace(
+    /['()*!]/g,
+    (character) =>
+      `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`,
+  );
 }
 
 function createContentDisposition(path: string): string {
   const filename = basename(path);
-  const safeFilename = filename
-    .replace(/[\r\n"]/g, "")
-    .replace(/[^\x20-\x7e]/g, "_");
 
-  return `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodeURIComponent(
-    filename,
-  )}`;
+  return `attachment; filename="${quotedFilenameOf(filename)}"; filename*=UTF-8''${encodedFilenameOf(filename)}`;
 }
 
 function attachmentHeaders(options: AttachmentOptions): Record<string, string> {

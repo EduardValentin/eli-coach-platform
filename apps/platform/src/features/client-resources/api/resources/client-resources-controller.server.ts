@@ -131,7 +131,7 @@ export class ClientResourcesController {
     }
 
     return createSandboxedAttachmentResponse(result.bytes, {
-      filename: result.originalName,
+      filename: result.downloadName,
       mimeType: result.mimeType,
       byteLength: result.sizeBytes,
     });

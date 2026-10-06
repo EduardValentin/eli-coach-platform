@@ -57,7 +57,7 @@ const OLDER_SPREADSHEET: ClientResourceSnapshot = {
   title: "Macros",
   description: "",
   file: {
-    originalName: "macros.ods",
+    originalName: "macros",
     format: "ods",
     sizeBytes: 9_120,
     pageCount: null,
@@ -66,7 +66,7 @@ const OLDER_SPREADSHEET: ClientResourceSnapshot = {
 };
 
 describe("CoachResourcesController load", () => {
-  it("hands the coach the client's resources in the order they were listed, as the page reads them", async () => {
+  it("hands the coach the client's resources in the order they were listed, as the page reads them, each named for its real format", async () => {
     // arrange
     const { controller, listClientResources } = createController({
       status: "listed",
@@ -86,6 +86,7 @@ describe("CoachResourcesController load", () => {
         description: "Week one",
         file: {
           originalName: "Meal plan.pdf",
+          downloadName: "Meal plan.pdf",
           kind: "pdf",
           sizeBytes: 182_431,
           pageCount: 3,
@@ -97,7 +98,8 @@ describe("CoachResourcesController load", () => {
         title: "Macros",
         description: "",
         file: {
-          originalName: "macros.ods",
+          originalName: "macros",
+          downloadName: "macros.ods",
           kind: "excel",
           sizeBytes: 9_120,
           pageCount: null,

@@ -19,6 +19,7 @@ const clientResourceSchema = z.object({
   description: z.string(),
   file: z.object({
     originalName: z.string(),
+    downloadName: z.string(),
     kind: z.enum(RESOURCE_FILE_KINDS),
     sizeBytes: z.number().int().nonnegative(),
     pageCount: z.number().int().positive().nullable(),
@@ -58,6 +59,7 @@ export function presentClientResource(
     description,
     file: {
       originalName: file.originalName,
+      downloadName: resource.file.downloadName(),
       kind: resource.file.kind,
       sizeBytes: file.sizeBytes,
       pageCount: file.pageCount,

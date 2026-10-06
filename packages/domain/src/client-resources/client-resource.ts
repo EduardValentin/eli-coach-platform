@@ -2,11 +2,13 @@ import type { ClientResourceOwner } from "./client-resource-store";
 import type { ResourceDetails } from "./resource-details";
 import {
   hasPagePreview,
+  resourceFileExtensionsOf,
   resourceFileKindOf,
   resourceFileMimeTypeOf,
   type ResourceFileFormat,
   type ResourceFileKind,
 } from "./resource-file-kind";
+import { pinnedFileName } from "./resource-file-name";
 
 export type ResourceFileSnapshot = {
   originalName: string;
@@ -53,6 +55,13 @@ export class ResourceFile {
 
   get mimeType(): string {
     return resourceFileMimeTypeOf(this.snapshot.format);
+  }
+
+  downloadName(): string {
+    return pinnedFileName(
+      this.snapshot.originalName,
+      resourceFileExtensionsOf(this.snapshot.format),
+    );
   }
 
   hasPagePreview(): boolean {

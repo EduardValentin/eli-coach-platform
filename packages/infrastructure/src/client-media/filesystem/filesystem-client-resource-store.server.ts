@@ -16,12 +16,13 @@ import {
 } from "../client-resource-layout.server";
 import {
   readThenClose,
-  streamThenClose,
+  streamWhenPulled,
   writeNewFile,
 } from "./media-files.server";
 import {
   createConfinedFolders,
   directoryPlacement,
+  findConfinedFile,
   openConfinedFile,
 } from "./media-root-confinement.server";
 
@@ -29,6 +30,8 @@ const LOCATION_LEAVES_ROOT_MESSAGE =
   "Client resource location leaves the storage root.";
 const ALREADY_STORED_MESSAGE =
   "A client resource file is already stored at this location.";
+const ORIGINAL_GONE_MESSAGE =
+  "The client resource original was removed before it was read.";
 
 export class FilesystemClientResourceStore implements ClientResourceStore {
   private readonly root: string;
@@ -64,15 +67,24 @@ export class FilesystemClientResourceStore implements ClientResourceStore {
   async openOriginal(
     owner: ClientResourceOwner,
   ): Promise<StoredResourceOriginal | null> {
-    const file = await this.openStored(clientResourceOriginalKey(owner));
+    const storageKey = clientResourceOriginalKey(owner);
+    const finding = await findConfinedFile(
+      this.root,
+      resolve(this.root, storageKey),
+    );
 
-    if (file === null) {
+    if (finding.kind === "outside-root") {
+      throw new Error(LOCATION_LEAVES_ROOT_MESSAGE);
+    }
+
+    if (finding.kind === "missing") {
       return null;
     }
 
-    const sizeBytes = await sizeOf(file);
-
-    return { bytes: streamThenClose(file), sizeBytes };
+    return {
+      bytes: streamWhenPulled(() => this.openStillStored(storageKey)),
+      sizeBytes: finding.sizeBytes,
+    };
   }
 
   async openPage(
@@ -123,6 +135,16 @@ export class FilesystemClientResourceStore implements ClientResourceStore {
     return file === null ? null : readThenClose(file);
   }
 
+  private async openStillStored(storageKey: string): Promise<FileHandle> {
+    const file = await this.openStored(storageKey);
+
+    if (file === null) {
+      throw new Error(ORIGINAL_GONE_MESSAGE);
+    }
+
+    return file;
+  }
+
   private async openStored(storageKey: string): Promise<FileHandle | null> {
     const opening = await openConfinedFile(
       this.root,
@@ -134,15 +156,5 @@ export class FilesystemClientResourceStore implements ClientResourceStore {
     }
 
     return opening.kind === "opened" ? opening.file : null;
-  }
-}
-
-async function sizeOf(file: FileHandle): Promise<number> {
-  try {
-    return (await file.stat()).size;
-  } catch (error) {
-    await file.close();
-
-    throw error;
   }
 }

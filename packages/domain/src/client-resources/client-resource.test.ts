@@ -89,6 +89,105 @@ describe("ResourceFile", () => {
     expect(result).toBe(expected);
   });
 
+  describe("download name", () => {
+    const LONG_STEM = "a".repeat(300);
+
+    it.each([
+      {
+        case: "keeps an honest name unchanged",
+        originalName: "Glute guide.pdf",
+        format: "pdf",
+        downloadName: "Glute guide.pdf",
+      },
+      {
+        case: "keeps an honest extension in any letter case",
+        originalName: "Glute guide.PDF",
+        format: "pdf",
+        downloadName: "Glute guide.PDF",
+      },
+      {
+        case: "keeps another extension of the same format",
+        originalName: "posture.jpeg",
+        format: "jpeg",
+        downloadName: "posture.jpeg",
+      },
+      {
+        case: "replaces an extension the bytes contradict",
+        originalName: "plan.html",
+        format: "pdf",
+        downloadName: "plan.pdf",
+      },
+      {
+        case: "appends the extension to a name without one",
+        originalName: "plan",
+        format: "pdf",
+        downloadName: "plan.pdf",
+      },
+      {
+        case: "pins a macro-enabled name to the Word document it is",
+        originalName: "Recipes.docm",
+        format: "docx",
+        downloadName: "Recipes.docx",
+      },
+      {
+        case: "names a JPEG photo with its canonical extension",
+        originalName: "posture.heic",
+        format: "jpeg",
+        downloadName: "posture.jpg",
+      },
+      {
+        case: "shortens an over-long name and keeps its extension",
+        originalName: `${LONG_STEM}.pdf`,
+        format: "pdf",
+        downloadName: `${"a".repeat(251)}.pdf`,
+      },
+      {
+        case: "strips a right-to-left override that disguises the extension",
+        originalName: "invoice\u202Efdp.exe",
+        format: "pdf",
+        downloadName: "invoicefdp.pdf",
+      },
+      {
+        case: "strips control and bidirectional characters",
+        originalName:
+          "\u0000me\u0007al\u001F \u007Fpl\u0085an\u009F\u200E\u200F\u202A\u202B\u202C\u202D\u2066\u2067\u2068\u2069.xlsx",
+        format: "xlsx",
+        downloadName: "meal plan.xlsx",
+      },
+    ] as const)("$case", ({ originalName, format, downloadName }) => {
+      // arrange
+      const file = ResourceFile.of({
+        originalName,
+        format,
+        sizeBytes: 10,
+        pageCount: null,
+      });
+
+      // act
+      const name = file.downloadName();
+
+      // assert
+      expect(name).toBe(downloadName);
+    });
+
+    it("never splits a character when it shortens a name", () => {
+      // arrange
+      const file = ResourceFile.of({
+        originalName: `${"😀".repeat(300)}.pdf`,
+        format: "pdf",
+        sizeBytes: 10,
+        pageCount: 3,
+      });
+
+      // act
+      const name = file.downloadName();
+
+      // assert
+      expect(Array.from(name)).toHaveLength(255);
+      expect(name).toBe(`${"😀".repeat(251)}.pdf`);
+    });
+  });
+
   it("has no pages for a Word file", () => {
     // arrange
     const file = ResourceFile.of({

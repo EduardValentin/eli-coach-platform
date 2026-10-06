@@ -128,8 +128,8 @@ export class AddClientResourceUseCase {
       });
 
       return { status: "added", resource };
-    } catch {
-      return this.fail(owner);
+    } catch (error) {
+      return this.fail(owner, error);
     }
   }
 
@@ -216,9 +216,10 @@ export class AddClientResourceUseCase {
 
   private async fail(
     owner: ClientResourceOwner,
+    error: unknown,
   ): Promise<AddClientResourceResult> {
     await this.options.store.remove(owner).catch(() => undefined);
-    this.options.incidents.resourceStorageFailed(owner);
+    this.options.incidents.resourceStorageFailed({ ...owner, error });
 
     return { status: "failed" };
   }

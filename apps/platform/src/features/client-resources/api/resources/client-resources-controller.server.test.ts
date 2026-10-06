@@ -78,6 +78,7 @@ describe("ClientResourcesController add", () => {
         description: "Week one",
         file: {
           originalName: "Meal plan.pdf",
+          downloadName: "Meal plan.pdf",
           kind: "pdf",
           sizeBytes: PDF_BYTES.byteLength,
           pageCount: 3,
@@ -426,14 +427,14 @@ describe("ClientResourcesController openThumbnail", () => {
 });
 
 describe("ClientResourcesController download", () => {
-  it("streams the original as a sandboxed attachment under its original name, type and length", async () => {
+  it("streams the original as a sandboxed attachment under its download name, type and length", async () => {
     // arrange
     const { controller, downloadClientResource } = createController({
       downloaded: {
         status: "opened",
         bytes: chunksOf(PDF_BYTES),
         sizeBytes: PDF_BYTES.byteLength,
-        originalName: "Plan alimentar – săptămâna 1.pdf",
+        downloadName: "Plan alimentar – săptămâna 1.pdf",
         kind: "pdf",
         mimeType: "application/pdf",
       },

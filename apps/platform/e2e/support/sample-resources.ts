@@ -28,6 +28,14 @@ export async function mealPlanPdf(): Promise<SampleResource> {
   };
 }
 
+export async function mealPlanPdfNamedHtml(): Promise<SampleResource> {
+  return {
+    name: "meal-plan.html",
+    mimeType: "text/html",
+    buffer: await pdfWithPages(1),
+  };
+}
+
 export async function trainingBlockPdf(): Promise<SampleResource> {
   return {
     name: "training_block.pdf",
@@ -72,9 +80,9 @@ export function postureGuideImage(): SampleResource {
   return { ...samplePhotoOf("front"), name: "posture-guide.png" };
 }
 
-export async function groceryListDocx(): Promise<SampleResource> {
+export async function groceryListDocxNamedDoc(): Promise<SampleResource> {
   return {
-    name: "grocery-list.docx",
+    name: "grocery-list.doc",
     mimeType:
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     buffer: await wordDocument(),

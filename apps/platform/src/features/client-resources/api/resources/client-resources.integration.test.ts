@@ -221,6 +221,7 @@ describe.sequential("client resources integration", () => {
         description: "Week one",
         file: {
           originalName: "Meal plan.pdf",
+          downloadName: "Meal plan.pdf",
           kind: "pdf",
           sizeBytes: pdf.byteLength,
           pageCount: 3,
@@ -269,6 +270,7 @@ describe.sequential("client resources integration", () => {
         // assert
         expect(resource.file).toEqual({
           originalName: sample.fileName,
+          downloadName: sample.fileName,
           kind: sample.kind,
           sizeBytes: bytes.byteLength,
           pageCount: sample.pageCount,
@@ -584,6 +586,33 @@ describe.sequential("client resources integration", () => {
       expect(response.headers.get("content-security-policy")).toContain(
         "sandbox",
       );
+      expect(Buffer.from(await response.arrayBuffer())).toEqual(pdf);
+    });
+
+    it("downloads a PDF sent under another extension as a PDF, named for what it is", async () => {
+      // arrange
+      const clientId = await admitAna();
+      const pdf = await pdfWithPages(1);
+      const resource = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: pdf,
+        fileName: "plan.html",
+        title: "Plan",
+      });
+
+      // act
+      const response = await resources.download(COACH_SESSION, resource.id);
+
+      // assert
+      expect(resource.file).toMatchObject({
+        originalName: "plan.html",
+        downloadName: "plan.pdf",
+        kind: "pdf",
+      });
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-disposition")).toBe(
+        "attachment; filename=\"plan.pdf\"; filename*=UTF-8''plan.pdf",
+      );
+      expect(response.headers.get("content-type")).toBe("application/pdf");
       expect(Buffer.from(await response.arrayBuffer())).toEqual(pdf);
     });
 

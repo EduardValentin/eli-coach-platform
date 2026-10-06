@@ -140,7 +140,7 @@ function CoverStage({ resource }: { resource: ClientResourceView }) {
   return (
     <div className={cn(STAGE_CLASS, "h-56")} data-parity="viewer-stage">
       <ResourceFileCover
-        fileName={resource.file.originalName}
+        fileName={resource.file.downloadName}
         kind={resource.file.kind}
         placement="stage"
       />
@@ -255,7 +255,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
               variant: "primary",
             })}
             data-parity="viewer-download"
-            download={resource.file.originalName}
+            download={resource.file.downloadName}
             href={resourceDownloadUrl(resource.id)}
           >
             <Download aria-hidden="true" size={16} />

@@ -12,6 +12,34 @@ type PageLayout = "portrait" | "landscape";
 
 type PdfOptions = { userPassword?: string };
 
+const OVERSIZED_IMAGE = { width: 8_000, height: 5_001 };
+
+async function pdfWithOneBlackImage(size: {
+  width: number;
+  height: number;
+}): Promise<Uint8Array> {
+  const jpeg = await sharp({
+    create: { ...size, channels: 3, background: "#000000" },
+  })
+    .jpeg()
+    .toBuffer();
+  const document = new PDFDocument({ size: "A4" });
+  const chunks: Buffer[] = [];
+  document.on("data", (chunk: Buffer) => chunks.push(chunk));
+  document.image(jpeg, 0, 0, { fit: [595, 842] });
+
+  return new Promise((resolve) => {
+    document.on("end", () => resolve(new Uint8Array(Buffer.concat(chunks))));
+    document.end();
+  });
+}
+
+async function meanBrightnessOf(image: Uint8Array): Promise<number> {
+  const { channels } = await sharp(image).greyscale().stats();
+
+  return channels[0]?.mean ?? 0;
+}
+
 function pdfOf(
   layouts: PageLayout[],
   options: PdfOptions = {},
@@ -35,7 +63,10 @@ function pdfOf(
 }
 
 async function openedPages(bytes: Uint8Array): Promise<PdfPages> {
-  const opening = await openPdfPages(WORKER_URL, bytes);
+  const opening = await openPdfPages(WORKER_URL, {
+    bytes,
+    longestEdge: PAGE_RENDITION.longEdge,
+  });
 
   if (opening.status !== "opened") {
     throw new Error("Expected the PDF to open.");
@@ -115,6 +146,36 @@ describe("openPdfPages", () => {
     expect((await sharp(page).metadata()).format).toBe("webp");
   });
 
+  it("draws a page whose image is within the pixel cap", async () => {
+    // arrange
+    const pages = await openedPages(
+      await pdfWithOneBlackImage({ width: 800, height: 500 }),
+    );
+
+    // act
+    const page = await pages.renderPage(1, THUMBNAIL_RENDITION);
+
+    // assert
+    expect(await meanBrightnessOf(page)).toBeLessThan(200);
+  });
+
+  it("leaves out an image over the pixel cap instead of decoding it, and keeps the worker answering", async () => {
+    // arrange
+    const pages = await openedPages(
+      await pdfWithOneBlackImage(OVERSIZED_IMAGE),
+    );
+
+    // act
+    const page = await pages.renderPage(1, THUMBNAIL_RENDITION);
+
+    // assert
+    expect(await meanBrightnessOf(page)).toBeGreaterThan(250);
+    expect(
+      (await sharp(await pages.renderPage(1, PAGE_RENDITION)).metadata())
+        .format,
+    ).toBe("webp");
+  });
+
   it("leaves the caller's bytes intact", async () => {
     // arrange
     const bytes = await pdfOf(["portrait"]);
@@ -132,7 +193,10 @@ describe("openPdfPages", () => {
     const bytes = new TextEncoder().encode("plain text, not a document");
 
     // act
-    const opening = await openPdfPages(WORKER_URL, bytes);
+    const opening = await openPdfPages(WORKER_URL, {
+      bytes,
+      longestEdge: PAGE_RENDITION.longEdge,
+    });
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -143,7 +207,10 @@ describe("openPdfPages", () => {
     const bytes = await pdfOf(["portrait"], { userPassword: "secret" });
 
     // act
-    const opening = await openPdfPages(WORKER_URL, bytes);
+    const opening = await openPdfPages(WORKER_URL, {
+      bytes,
+      longestEdge: PAGE_RENDITION.longEdge,
+    });
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -155,7 +222,10 @@ describe("openPdfPages", () => {
     const truncated = bytes.subarray(0, Math.floor(bytes.byteLength / 2));
 
     // act
-    const opening = await openPdfPages(WORKER_URL, truncated);
+    const opening = await openPdfPages(WORKER_URL, {
+      bytes: truncated,
+      longestEdge: PAGE_RENDITION.longEdge,
+    });
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -167,7 +237,10 @@ describe("openPdfPages", () => {
     const bytes = await pdfOf(["portrait"]);
 
     // act
-    const opening = openPdfPages(missingWorker, bytes);
+    const opening = openPdfPages(missingWorker, {
+      bytes,
+      longestEdge: PAGE_RENDITION.longEdge,
+    });
 
     // assert
     await expect(opening).rejects.toThrow(Error);

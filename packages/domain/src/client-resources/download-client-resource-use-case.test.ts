@@ -18,7 +18,7 @@ const RESOURCE = ClientResource.reconstitute({
   title: "Shopping list",
   description: "",
   file: {
-    originalName: "Shopping list.xls",
+    originalName: "Shopping list.txt",
     format: "xls",
     sizeBytes: ORIGINAL_BYTES.byteLength,
     pageCount: null,
@@ -105,7 +105,7 @@ describe("DownloadClientResourceUseCase", () => {
     ["the coach", { role: "COACH", authSubjectId: "user_eli" }],
     ["the client it is for", { role: "CLIENT", authSubjectId: "user_ana" }],
   ] as const)(
-    "streams the unchanged original under its own name for %s",
+    "streams the unchanged original, named for its real format, to %s",
     async (_case, requester) => {
       // arrange
       const { useCase } = createUseCase();
@@ -120,7 +120,7 @@ describe("DownloadClientResourceUseCase", () => {
       expect(result).toMatchObject({
         status: "opened",
         sizeBytes: 4,
-        originalName: "Shopping list.xls",
+        downloadName: "Shopping list.xls",
         kind: "excel",
         mimeType: "application/vnd.ms-excel",
       });

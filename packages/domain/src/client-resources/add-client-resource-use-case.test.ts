@@ -524,10 +524,11 @@ describe("AddClientResourceUseCase", () => {
     });
   });
 
-  it("removes the stored files when the record cannot be written", async () => {
+  it("removes the stored files when the record cannot be written, reporting why", async () => {
     // arrange
     const { useCase, resources, store, incidents } = createUseCase();
-    resources.add.mockRejectedValueOnce(new Error("database down"));
+    const failure = new Error("database down");
+    resources.add.mockRejectedValueOnce(failure);
 
     // act
     const result = await useCase.execute(
@@ -538,7 +539,10 @@ describe("AddClientResourceUseCase", () => {
     expect(result).toEqual({ status: "failed" });
     expect(store.remove).toHaveBeenCalledWith(OWNER);
     expect(store.storedNames()).toEqual([]);
-    expect(incidents.resourceStorageFailed).toHaveBeenCalledWith(OWNER);
+    expect(incidents.resourceStorageFailed).toHaveBeenCalledWith({
+      ...OWNER,
+      error: failure,
+    });
     expect(incidents.resourceStored).not.toHaveBeenCalled();
   });
 
@@ -572,6 +576,9 @@ describe("AddClientResourceUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(incidents.resourceStorageFailed).toHaveBeenCalledWith(OWNER);
+    expect(incidents.resourceStorageFailed).toHaveBeenCalledWith({
+      ...OWNER,
+      error: new Error("database down"),
+    });
   });
 });

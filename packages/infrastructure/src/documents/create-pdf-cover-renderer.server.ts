@@ -11,7 +11,7 @@ const COVER_PAGE = 1;
 export function createPdfCoverRenderer(): PdfCoverRenderer {
   return {
     async render(pdf, rendition) {
-      const loadingTask = loadPdfDocument(pdf.slice());
+      const loadingTask = loadPdfDocument(pdf.slice(), rendition.width);
 
       try {
         const document = await loadingTask.promise;

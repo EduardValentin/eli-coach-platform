@@ -1,9 +1,10 @@
 import { storedResourceIdsOf } from "../support/client-resource-files";
 import { expect, test } from "../support/fixtures";
 import {
-  groceryListDocx,
+  groceryListDocxNamedDoc,
   lockedPdf,
   mealPlanPdf,
+  mealPlanPdfNamedHtml,
   overlongPdf,
   oversizedPdf,
   postureGuideImage,
@@ -52,7 +53,7 @@ test("the coach reaches a client's resources from her record, keeps her entries 
   const today = dayMonthFormatter.format(new Date());
   const mealPlan = await mealPlanPdf();
   const postureGuide = postureGuideImage();
-  const groceryList = await groceryListDocx();
+  const groceryList = await groceryListDocxNamedDoc();
   const recipes = recipesDoc();
   await provisionCoach();
   const client = await provisionClientInState("approved");
@@ -422,7 +423,7 @@ test("only the coach opens a client's resources: a signed-out visitor and the cl
   test.setTimeout(JOURNEY_TIMEOUT_MS);
 
   // arrange
-  const mealPlan = await mealPlanPdf();
+  const mealPlan = await mealPlanPdfNamedHtml();
   await provisionCoach();
   const client = await provisionPaidClient("female");
   await page.goto("/store");
@@ -447,7 +448,11 @@ test("only the coach opens a client's resources: a signed-out visitor and the cl
     "content-type": "image/webp",
     "x-content-type-options": "nosniff",
   });
-  expect(coachReads[2]?.headers["content-disposition"]).toContain("attachment");
+  expect(coachReads[2]?.headers).toMatchObject({
+    "content-disposition":
+      "attachment; filename=\"meal-plan.pdf\"; filename*=UTF-8''meal-plan.pdf",
+    "content-type": "application/pdf",
+  });
 
   // arrange
   await page.goto("/");

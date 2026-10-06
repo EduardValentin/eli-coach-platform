@@ -251,10 +251,12 @@ export function createConsoleLogger(): ConsoleLogger {
         receivedBytes,
       });
     },
-    resourceStorageFailed: ({ clientId, resourceId }) => {
+    resourceStorageFailed: ({ clientId, error, resourceId }) => {
       console.error("Client resource could not be stored.", {
         clientId,
         errorCategory: "client_resource_storage_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
         resourceId,
       });
     },
@@ -315,4 +317,10 @@ function describeError(
 
 function errorClassOf(error: unknown): string {
   return error instanceof Error ? error.name : typeof error;
+}
+
+function errorCodeOf(error: unknown): { errorCode?: string } {
+  if (!(error instanceof Error) || !("code" in error)) return {};
+
+  return typeof error.code === "string" ? { errorCode: error.code } : {};
 }

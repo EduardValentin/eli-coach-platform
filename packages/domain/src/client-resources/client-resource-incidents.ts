@@ -26,6 +26,7 @@ type ClientResourceAccessRefusedIncident = {
 type ClientResourceStorageFailedIncident = {
   clientId: string;
   resourceId: string;
+  error: unknown;
 };
 
 export interface ClientResourceIncidents {

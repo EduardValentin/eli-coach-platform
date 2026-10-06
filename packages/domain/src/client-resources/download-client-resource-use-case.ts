@@ -18,7 +18,7 @@ export type DownloadClientResourceResult =
       status: "opened";
       bytes: AsyncIterable<Uint8Array>;
       sizeBytes: number;
-      originalName: string;
+      downloadName: string;
       kind: ResourceFileKind;
       mimeType: string;
     }
@@ -57,7 +57,7 @@ export class DownloadClientResourceUseCase {
       status: "opened",
       bytes: original.bytes,
       sizeBytes: original.sizeBytes,
-      originalName: file.originalName,
+      downloadName: file.downloadName(),
       kind: file.kind,
       mimeType: file.mimeType,
     };

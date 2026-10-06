@@ -10,6 +10,11 @@ import { isAbsolute, join, relative, sep } from "node:path";
 
 type DirectoryPlacement = "within-root" | "outside-root" | "missing";
 
+type ConfinedFileFinding =
+  | { kind: "found"; sizeBytes: number }
+  | { kind: "outside-root" }
+  | { kind: "missing" };
+
 type ConfinedFileOpening =
   | { kind: "opened"; file: FileHandle }
   | { kind: "outside-root" }
@@ -69,6 +74,23 @@ export async function createConfinedFolders(
   }
 
   return "within-root";
+}
+
+export async function findConfinedFile(
+  root: string,
+  path: string,
+): Promise<ConfinedFileFinding> {
+  const realFile = await nullWhenMissing(realpath(path));
+
+  if (realFile === null) {
+    return { kind: "missing" };
+  }
+
+  if (!isPathWithinRoot(await realpath(root), realFile)) {
+    return { kind: "outside-root" };
+  }
+
+  return { kind: "found", sizeBytes: (await stat(realFile)).size };
 }
 
 export async function openConfinedFile(

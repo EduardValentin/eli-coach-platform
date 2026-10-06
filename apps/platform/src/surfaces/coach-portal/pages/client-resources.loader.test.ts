@@ -45,6 +45,7 @@ const RESOURCES: ClientResourceView[] = [
     description: "Run through this before every lower-body session.",
     file: {
       originalName: "glute-activation-warm-up.pdf",
+      downloadName: "glute-activation-warm-up.pdf",
       kind: "pdf",
       sizeBytes: 1_840_000,
       pageCount: 6,

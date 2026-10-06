@@ -162,6 +162,37 @@ describe("FilesystemClientResourceStore", () => {
     expect(everyOpenedFileIsClosed()).toBe(true);
   });
 
+  it("opens the original's file only once its bytes are first pulled", async () => {
+    // arrange
+    await store.storeOriginal(OWNER, ORIGINAL);
+    openedFiles.length = 0;
+
+    // act
+    const original = await store.openOriginal(OWNER);
+    const openedBeforePulling = openedFiles.length;
+    const firstChunk = await original!.bytes[Symbol.asyncIterator]().next();
+
+    // assert
+    expect(original?.sizeBytes).toBe(ORIGINAL.length);
+    expect(openedBeforePulling).toBe(0);
+    expect(firstChunk.done).toBe(false);
+    expect(openedFiles).toHaveLength(1);
+  });
+
+  it("leaves no file open when the original is opened and dropped unread", async () => {
+    // arrange
+    await store.storeOriginal(OWNER, ORIGINAL);
+    openedFiles.length = 0;
+
+    // act
+    const original = await store.openOriginal(OWNER);
+    await original!.bytes[Symbol.asyncIterator]().return?.();
+
+    // assert
+    expect(original?.sizeBytes).toBe(ORIGINAL.length);
+    expect(openedFiles).toEqual([]);
+  });
+
   it("releases the original's file when the reader stops after the first chunk", async () => {
     // arrange
     await store.storeOriginal(OWNER, ORIGINAL);

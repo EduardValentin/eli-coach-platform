@@ -14,11 +14,21 @@ export type PdfPageRendition =
 
 type PageSize = { width: number; height: number };
 
-export function loadPdfDocument(bytes: Uint8Array): PDFDocumentLoadingTask {
+const MAX_IMAGE_PIXELS = 40_000_000;
+const RGBA_BYTES_PER_PIXEL = 4;
+const CANVAS_AREA_HEADROOM = 4;
+
+export function loadPdfDocument(
+  bytes: Uint8Array,
+  longestEdge: number,
+): PDFDocumentLoadingTask {
   return getDocument({
     data: bytes,
     standardFontDataUrl: standardFontDirectory(),
     verbosity: VerbosityLevel.ERRORS,
+    maxImageSize: MAX_IMAGE_PIXELS,
+    canvasMaxAreaInBytes:
+      longestEdge * longestEdge * RGBA_BYTES_PER_PIXEL * CANVAS_AREA_HEADROOM,
   });
 }
 

@@ -4,7 +4,7 @@ export type PageRendition = {
 };
 
 export type PdfPagesQuestion =
-  | { kind: "open"; bytes: Uint8Array }
+  | { kind: "open"; bytes: Uint8Array; longestEdge: number }
   | { kind: "render"; pageNumber: number; rendition: PageRendition };
 
 export type PdfPagesRequest = PdfPagesQuestion & { requestId: number };

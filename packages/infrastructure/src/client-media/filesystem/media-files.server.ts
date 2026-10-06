@@ -65,3 +65,29 @@ export function streamThenClose(file: FileHandle): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+export function streamWhenPulled(
+  open: () => Promise<FileHandle>,
+): AsyncIterable<Uint8Array> {
+  return {
+    [Symbol.asyncIterator]() {
+      let chunks: Promise<AsyncIterator<Uint8Array>> | undefined;
+
+      return {
+        next: async () => {
+          chunks ??= open().then((file) =>
+            streamThenClose(file)[Symbol.asyncIterator](),
+          );
+
+          return (await chunks).next();
+        },
+        return: async () => {
+          const opened = await chunks?.catch(() => undefined);
+          await opened?.return?.();
+
+          return { done: true, value: undefined };
+        },
+      };
+    },
+  };
+}

@@ -22,6 +22,7 @@ export type AddedResource = {
   description: string;
   file: {
     originalName: string;
+    downloadName: string;
     kind: ResourceFileKind;
     sizeBytes: number;
     pageCount: number | null;

@@ -80,6 +80,7 @@ const PLATE_GUIDE: ClientResourceView = {
   description: "Half the plate vegetables, a quarter protein, a quarter carbs.",
   file: {
     originalName: "plate-portions.png",
+    downloadName: "plate-portions.png",
     kind: "image",
     sizeBytes: 412_000,
     pageCount: 1,
@@ -94,6 +95,7 @@ const WARM_UP: ClientResourceView = {
     "Run through this before every lower-body session. Ten minutes is enough.",
   file: {
     originalName: "glute-activation-warm-up.pdf",
+    downloadName: "glute-activation-warm-up.pdf",
     kind: "pdf",
     sizeBytes: 1_840_000,
     pageCount: 3,
@@ -106,7 +108,8 @@ const FOOD_DIARY: ClientResourceView = {
   title: "Food diary template",
   description: "",
   file: {
-    originalName: "food-diary-template.docx",
+    originalName: "food-diary-template.docm",
+    downloadName: "food-diary-template.docx",
     kind: "word",
     sizeBytes: 310_000,
     pageCount: null,
@@ -120,6 +123,7 @@ const MACRO_TRACKER: ClientResourceView = {
   description: "Fill in one row a day. Totals add up on their own.",
   file: {
     originalName: "weekly-macro-tracker.xlsx",
+    downloadName: "weekly-macro-tracker.xlsx",
     kind: "excel",
     sizeBytes: 96_000,
     pageCount: null,
@@ -135,6 +139,7 @@ const ADDED: ClientResourceView = {
   description: "Start on Monday.",
   file: {
     originalName: "meal-plan-week-one.pdf",
+    downloadName: "meal-plan-week-one.pdf",
     kind: "pdf",
     sizeBytes: 2 * MEGABYTE,
     pageCount: 2,
@@ -817,7 +822,7 @@ describe("the resource viewer", () => {
     { title: "Food diary template", fileName: "food-diary-template.docx" },
     { title: "Weekly macro tracker", fileName: "weekly-macro-tracker.xlsx" },
   ])(
-    "shows $title as a file cover with its file name and no pages",
+    "shows $title as a file cover with the name it downloads under and no pages",
     async ({ title, fileName }) => {
       // arrange
       const { user } = await renderResourcesPage();
@@ -866,7 +871,7 @@ describe("the resource viewer", () => {
     });
   });
 
-  it("downloads the original under its own name", async () => {
+  it("downloads the original under the name of its real format", async () => {
     // arrange
     const { user } = await renderResourcesPage();
 

@@ -11,6 +11,30 @@ function storedBytes(...chunks: string[]): AsyncIterable<Uint8Array> {
   return Readable.from(chunks.map((chunk) => Buffer.from(chunk)));
 }
 
+function countedChunks(...chunks: string[]) {
+  let pulls = 0;
+  let returned = false;
+  const bytes: AsyncIterable<Uint8Array> = {
+    [Symbol.asyncIterator]: () => ({
+      next: async () => {
+        const chunk = chunks[pulls];
+        pulls += 1;
+
+        return chunk === undefined
+          ? { done: true, value: undefined }
+          : { done: false, value: Buffer.from(chunk) };
+      },
+      return: async () => {
+        returned = true;
+
+        return { done: true, value: undefined };
+      },
+    }),
+  };
+
+  return { bytes, pulls: () => pulls, returned: () => returned };
+}
+
 function headersOf(response: Response): Record<string, string> {
   return Object.fromEntries(response.headers.entries());
 }
@@ -85,6 +109,67 @@ describe("createAttachmentResponse", () => {
     expect(disposition).toBe(
       "attachment; filename=\"Plan d__t_.pdf\"; filename*=UTF-8''Plan%20d%E2%80%99%C3%A9t%C3%A9.pdf",
     );
+  });
+
+  it("drops backslashes from the plain name and keeps them encoded in the exact one", () => {
+    // arrange
+    const filename = "Week\\one.pdf";
+
+    // act
+    const disposition = dispositionFor(filename);
+
+    // assert
+    expect(disposition).toBe(
+      "attachment; filename=\"Weekone.pdf\"; filename*=UTF-8''Week%5Cone.pdf",
+    );
+  });
+
+  it("encodes the characters a URI leaves bare in the exact name", () => {
+    // arrange
+    const filename = "Ana's plan (v2)*!.pdf";
+
+    // act
+    const disposition = dispositionFor(filename);
+
+    // assert
+    expect(disposition).toBe(
+      "attachment; filename=\"Ana's plan (v2)*!.pdf\"; filename*=UTF-8''Ana%27s%20plan%20%28v2%29%2A%21.pdf",
+    );
+  });
+
+  it("pulls nothing from the file until the body is read", async () => {
+    // arrange
+    const file = countedChunks("meal ", "plan");
+
+    // act
+    const response = createAttachmentResponse(file.bytes, {
+      filename: "plan.pdf",
+      mimeType: "application/pdf",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const pulledBeforeReading = file.pulls();
+    const body = await response.text();
+
+    // assert
+    expect(pulledBeforeReading).toBe(0);
+    expect(body).toBe("meal plan");
+  });
+
+  it("hands the file back when the reader cancels the body", async () => {
+    // arrange
+    const file = countedChunks("meal ", "plan");
+    const response = createSandboxedAttachmentResponse(file.bytes, {
+      filename: "plan.pdf",
+      mimeType: "application/pdf",
+    });
+    const reader = response.body!.getReader();
+    await reader.read();
+
+    // act
+    await reader.cancel();
+
+    // assert
+    expect(file.returned()).toBe(true);
   });
 
   it.each([

@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource } from "./client-resource";
-import { ClientResourceAccess } from "./client-resource-access";
+import {
+  ClientResourceAccess,
+  type ResourceRequester,
+} from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
@@ -57,24 +60,26 @@ class InMemoryResourceClients implements ResourceClients {
 }
 
 function createAccess() {
+  const resources = new InMemoryClientResources([RESOURCE]);
+  const clients = new InMemoryResourceClients();
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
-  const access = new ClientResourceAccess({
-    resources: new InMemoryClientResources([RESOURCE]),
-    clients: new InMemoryResourceClients(),
-    incidents,
-  });
+  const access = new ClientResourceAccess({ resources, clients, incidents });
 
-  return { access, incidents };
+  return { access, incidents, resources, clients };
 }
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
 const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
 const BEA = { role: "CLIENT", authSubjectId: "user_bea" } as const;
+const ACCOUNT_WITHOUT_RESOURCE_ROLE = {
+  role: "USER",
+  authSubjectId: "user_ana",
+} as unknown as ResourceRequester;
 const UNBOUND_CLIENT = {
   role: "CLIENT",
   authSubjectId: "user_nobody",
@@ -179,6 +184,44 @@ describe("ClientResourceAccess", () => {
       // assert
       expect(reached).toBe(false);
       expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("an account in neither the coach nor the client role", () => {
+    it("is refused one resource before anything is looked up, even when a client record is linked to it", async () => {
+      // arrange
+      const { access, resources, clients } = createAccess();
+      const findResource = vi.spyOn(resources, "findById");
+      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+
+      // act
+      const resource = await access.resourceFor(
+        ACCOUNT_WITHOUT_RESOURCE_ROLE,
+        "resource-1",
+      );
+
+      // assert
+      expect(resource).toBeNull();
+      expect(findResource).not.toHaveBeenCalled();
+      expect(findClient).not.toHaveBeenCalled();
+    });
+
+    it("is refused a client's resources before anything is looked up, even her own", async () => {
+      // arrange
+      const { access, clients } = createAccess();
+      const clientExists = vi.spyOn(clients, "exists");
+      const findClient = vi.spyOn(clients, "findByAuthSubjectId");
+
+      // act
+      const reached = await access.reachesClient(
+        ACCOUNT_WITHOUT_RESOURCE_ROLE,
+        "client-ana",
+      );
+
+      // assert
+      expect(reached).toBe(false);
+      expect(clientExists).not.toHaveBeenCalled();
+      expect(findClient).not.toHaveBeenCalled();
     });
   });
 });

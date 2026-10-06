@@ -7,6 +7,19 @@ import type { ResourceClients } from "./resource-clients";
 
 export type ResourceRequester = { role: AccountRole; authSubjectId: string };
 
+type ResourceReach = "every-client" | "own-client" | "none";
+
+function reachOf(requester: ResourceRequester): ResourceReach {
+  switch (requester.role) {
+    case "COACH":
+      return "every-client";
+    case "CLIENT":
+      return "own-client";
+    default:
+      return "none";
+  }
+}
+
 type ClientResourceAccessOptions = {
   resources: ClientResources;
   clients: ResourceClients;
@@ -20,6 +33,8 @@ export class ClientResourceAccess {
     requester: ResourceRequester,
     resourceId: string,
   ): Promise<ClientResource | null> {
+    if (reachOf(requester) === "none") return null;
+
     const resource = await this.options.resources.findById(resourceId);
 
     if (!resource) return null;
@@ -39,6 +54,7 @@ export class ClientResourceAccess {
     requester: ResourceRequester,
     clientId: string,
   ): Promise<boolean> {
+    if (reachOf(requester) === "none") return false;
     if (!(await this.options.clients.exists(clientId))) return false;
     if (await this.reaches(requester, (ownId) => ownId === clientId)) {
       return true;
@@ -57,7 +73,7 @@ export class ClientResourceAccess {
     requester: ResourceRequester,
     isOwnedBy: (clientId: string) => boolean,
   ): Promise<boolean> {
-    if (requester.role === "COACH") return true;
+    if (reachOf(requester) === "every-client") return true;
 
     const client = await this.options.clients.findByAuthSubjectId(
       requester.authSubjectId,
