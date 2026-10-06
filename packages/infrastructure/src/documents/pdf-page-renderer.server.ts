@@ -23,7 +23,10 @@ const MAX_IMAGE_PIXELS = 40_000_000;
 export function loadPdfDocument(bytes: Uint8Array): PDFDocumentLoadingTask {
   return getDocument({
     data: bytes,
-    standardFontDataUrl: standardFontDirectory(),
+    cMapPacked: true,
+    cMapUrl: pdfjsDirectory("cmaps"),
+    standardFontDataUrl: pdfjsDirectory("standard_fonts"),
+    wasmUrl: pdfjsDirectory("wasm"),
     verbosity: VerbosityLevel.ERRORS,
     maxImageSize: MAX_IMAGE_PIXELS,
   });
@@ -69,11 +72,11 @@ function scaleFor(naturalSize: PageSize, rendition: PdfPageRendition): number {
   return rendition.width / naturalSize.width;
 }
 
-// pdf.js reads standard fonts in Node through the filesystem, so a file: URL draws no text.
-function standardFontDirectory(): string {
+// pdf.js reads its fonts, CMaps and image decoders in Node through the filesystem, so a file: URL loads nothing.
+function pdfjsDirectory(name: "cmaps" | "standard_fonts" | "wasm"): string {
   return fileURLToPath(
     new URL(
-      "../../standard_fonts/",
+      `../../${name}/`,
       import.meta.resolve("pdfjs-dist/legacy/build/pdf.mjs"),
     ),
   );
