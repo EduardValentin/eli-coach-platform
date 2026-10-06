@@ -1,0 +1,4 @@
+[
+  {"waitFor": "[data-parity-root=\"ClientResources\"] >> text=Nothing here yet"},
+  {"wait": 400}
+]
