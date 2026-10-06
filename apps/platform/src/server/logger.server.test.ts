@@ -748,6 +748,66 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a resource she opened whose mark could not be kept by its ids and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.resourceOpeningFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: cause,
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource opening could not be recorded.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_opening_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
+  it.each([
+    ["her client", "client-1"],
+    ["no client, when hers could not be read", null],
+  ])(
+    "logs an unopened count that could not be read with %s and the class of its cause only",
+    (_case, clientId) => {
+      // arrange
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const logger = createConsoleLogger();
+
+      // act
+      logger.unopenedCountFailed({
+        clientId,
+        error: new TypeError("secret row contents"),
+      });
+
+      // assert
+      expect(consoleError).toHaveBeenCalledWith(
+        "Unopened client resources could not be counted.",
+        {
+          clientId,
+          errorCategory: "client_resource_unopened_count_failure",
+          errorClass: "TypeError",
+        },
+      );
+    },
+  );
+
   it("logs a client resource storage failure whose cause has no code by its class alone", () => {
     // arrange
     const consoleError = vi

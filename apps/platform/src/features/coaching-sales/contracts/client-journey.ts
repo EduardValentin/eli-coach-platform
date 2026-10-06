@@ -1,6 +1,8 @@
-import type {
-  ClientJourneyStep,
-  ClientPortalAccess,
+import {
+  ClientJourney,
+  STEPS_AFTER_SUBMISSION,
+  type ClientJourneyStep,
+  type ClientPortalAccess,
 } from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
@@ -88,7 +90,10 @@ function decodedPathOf(requestedPath: string): string {
 export function clientJourneyPortalLink(
   standing: ClientPortalStanding,
 ): { href: string; label: string } | null {
-  if (standing.access === "ended" || isAfterSubmission(standing.step)) {
+  if (
+    standing.access === "ended" ||
+    ClientJourney.isAfterSubmission(standing.step)
+  ) {
     return null;
   }
 
@@ -112,21 +117,10 @@ function gateOf(standing: ClientPortalStanding): ClientJourneyGate {
   };
 }
 
-const PROGRAM_STATUS_KINDS = [
-  "submitted",
-  "in-review",
-  "needs-details",
-  "approved",
-] as const satisfies readonly ClientJourneyStep[];
-
-export type ProgramStatusKind = (typeof PROGRAM_STATUS_KINDS)[number];
-
-function isAfterSubmission(step: ClientJourneyStep): boolean {
-  return PROGRAM_STATUS_KINDS.some((kind) => kind === step);
-}
+export type ProgramStatusKind = (typeof STEPS_AFTER_SUBMISSION)[number];
 
 export const programStatusSchema = z.object({
-  kind: z.enum(PROGRAM_STATUS_KINDS),
+  kind: z.enum(STEPS_AFTER_SUBMISSION),
   submittedAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
   startNowUntil: z.iso.datetime().nullable(),

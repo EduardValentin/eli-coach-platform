@@ -3,7 +3,7 @@ import {
   ClientResource,
   type ClientResources,
 } from "@eli-coach-platform/domain/client-resources";
-import { desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 
 import { clientResourcesTable } from "~/features/client-resources/data/schema.server";
 
@@ -46,6 +46,34 @@ export class PostgresClientResources implements ClientResources {
 
     return row ? clientResourceOf(row) : null;
   }
+
+  async recordOpened(resource: ClientResource): Promise<void> {
+    const { id, openedAt } = resource.toSnapshot();
+
+    await this.database
+      .update(clientResourcesTable)
+      .set({ openedAt })
+      .where(
+        and(
+          eq(clientResourcesTable.id, id),
+          isNull(clientResourcesTable.openedAt),
+        ),
+      );
+  }
+
+  async countUnopenedForClient(clientId: string): Promise<number> {
+    const [row] = await this.database
+      .select({ unopened: count() })
+      .from(clientResourcesTable)
+      .where(
+        and(
+          eq(clientResourcesTable.clientId, clientId),
+          isNull(clientResourcesTable.openedAt),
+        ),
+      );
+
+    return row?.unopened ?? 0;
+  }
 }
 
 function clientResourceOf(row: ClientResourceRow): ClientResource {
@@ -61,5 +89,6 @@ function clientResourceOf(row: ClientResourceRow): ClientResource {
       pageCount: row.pageCount,
     },
     addedAt: row.addedAt,
+    openedAt: row.openedAt,
   });
 }

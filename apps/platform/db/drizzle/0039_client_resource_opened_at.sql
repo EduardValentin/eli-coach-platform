@@ -1,0 +1,1 @@
+ALTER TABLE "app"."client_resources" ADD COLUMN "opened_at" timestamp with time zone;

@@ -3,7 +3,7 @@ import {
   ClientResource,
   type ClientResourceSnapshot,
 } from "@eli-coach-platform/domain/client-resources";
-import { desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { clientResourcesTable } from "~/features/client-resources/data/schema.server";
@@ -15,6 +15,7 @@ const PDF_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const SPREADSHEET_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 const PDF_ADDED_AT = new Date("2026-10-05T09:30:00.000Z");
 const SPREADSHEET_ADDED_AT = new Date("2026-10-04T08:00:00.000Z");
+const SPREADSHEET_OPENED_AT = new Date("2026-10-06T07:15:00.000Z");
 
 const PDF_SNAPSHOT: ClientResourceSnapshot = {
   id: PDF_ID,
@@ -28,6 +29,7 @@ const PDF_SNAPSHOT: ClientResourceSnapshot = {
     pageCount: 3,
   },
   addedAt: PDF_ADDED_AT,
+  openedAt: null,
 };
 
 const PDF_ROW = {
@@ -40,6 +42,7 @@ const PDF_ROW = {
   sizeBytes: 182_431,
   pageCount: 3,
   addedAt: PDF_ADDED_AT,
+  openedAt: null,
 };
 
 const SPREADSHEET_ROW = {
@@ -52,6 +55,7 @@ const SPREADSHEET_ROW = {
   sizeBytes: 9_120,
   pageCount: null,
   addedAt: SPREADSHEET_ADDED_AT,
+  openedAt: SPREADSHEET_OPENED_AT,
 };
 
 describe("PostgresClientResources#add", () => {
@@ -94,6 +98,7 @@ describe("PostgresClientResources#listForClient", () => {
           pageCount: null,
         },
         addedAt: SPREADSHEET_ADDED_AT,
+        openedAt: SPREADSHEET_OPENED_AT,
       },
     ]);
     expect(database.query).toEqual({
@@ -133,6 +138,89 @@ describe("PostgresClientResources#findById", () => {
     expect(resource).toBeNull();
   });
 });
+
+describe("PostgresClientResources#recordOpened", () => {
+  it("stamps the moment she opened it only on a resource not opened before", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const resources = new PostgresClientResources(database.client);
+    const opened = ClientResource.reconstitute(PDF_SNAPSHOT).opened(
+      SPREADSHEET_OPENED_AT,
+    );
+
+    // act
+    await resources.recordOpened(opened);
+
+    // assert
+    expect(database.updates).toEqual([
+      {
+        table: clientResourcesTable,
+        values: { openedAt: SPREADSHEET_OPENED_AT },
+        filter: and(
+          eq(clientResourcesTable.id, PDF_ID),
+          isNull(clientResourcesTable.openedAt),
+        ),
+      },
+    ]);
+  });
+});
+
+describe("PostgresClientResources#countUnopenedForClient", () => {
+  it("counts that client's resources she has not opened", async () => {
+    // arrange
+    const database = createDatabaseCounting(2);
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    const unopened = await resources.countUnopenedForClient(CLIENT_ID);
+
+    // assert
+    expect(unopened).toBe(2);
+    expect(database.query).toEqual({
+      selection: { unopened: count() },
+      filter: and(
+        eq(clientResourcesTable.clientId, CLIENT_ID),
+        isNull(clientResourcesTable.openedAt),
+      ),
+    });
+  });
+});
+
+function createDatabaseCounting(unopened: number) {
+  const query: { selection?: unknown; filter?: unknown } = {};
+  const client = {
+    select: (selection: unknown) => {
+      query.selection = selection;
+
+      return {
+        from: () => ({
+          where: (filter: unknown) => {
+            query.filter = filter;
+
+            return Promise.resolve([{ unopened }]);
+          },
+        }),
+      };
+    },
+  } as unknown as DatabaseClient;
+
+  return { client, query };
+}
+
+function createDatabaseRecordingUpdates() {
+  const updates: unknown[] = [];
+  const client = {
+    update: (table: unknown) => ({
+      set: (values: unknown) => ({
+        where: async (filter: unknown) => {
+          updates.push({ table, values, filter });
+        },
+      }),
+    }),
+  } as unknown as DatabaseClient;
+
+  return { client, updates };
+}
 
 function createDatabaseAnswering(rows: readonly unknown[]) {
   const query: { filter?: unknown; order?: unknown[] } = {};

@@ -64,6 +64,21 @@ describe.sequential("client resources schema", () => {
     expect(row).toEqual({ description: "" });
   });
 
+  it("keeps a resource unopened until she opens it", async () => {
+    // arrange
+    await insertClient();
+
+    // act
+    await insertResource({ format: "pdf", pageCount: 3 });
+
+    // assert
+    const [row] = await suite.postgres.queryRows<{ opened_at: Date | null }>({
+      sql: "select opened_at from app.client_resources where id = $1",
+      values: [RESOURCE_ID],
+    });
+    expect(row).toEqual({ opened_at: null });
+  });
+
   it("keeps a Word or Excel file without a page count", async () => {
     // arrange
     await insertClient();
