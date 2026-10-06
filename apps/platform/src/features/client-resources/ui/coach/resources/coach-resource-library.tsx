@@ -2,27 +2,61 @@ import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { FolderOpen, Plus } from "lucide-react";
 import { useState } from "react";
+import { useRevalidator } from "react-router";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGrid } from "~/features/client-resources/ui/shared/resources/resource-grid";
 import { ResourceViewer } from "~/features/client-resources/ui/shared/resources/resource-viewer";
+import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 
 import { AddResourceDialog } from "./add-resource-dialog";
 
 const ADD_RESOURCE = "Add resource";
 
+export type CoachResourceListing =
+  | { status: "ready"; resources: readonly ClientResourceView[] }
+  | { status: "failed" };
+
 type CoachResourceLibraryProps = {
   clientId: string;
   firstName: string;
-  resources: readonly ClientResourceView[];
+  listing: CoachResourceListing;
 };
 
 export function CoachResourceLibrary({
   clientId,
   firstName,
-  resources,
+  listing,
 }: CoachResourceLibraryProps) {
+  const revalidator = useRevalidator();
+
+  if (listing.status === "failed") {
+    return (
+      <ResourcesUnavailable onRetry={() => void revalidator.revalidate()} />
+    );
+  }
+
+  return (
+    <ResourceLibrary
+      clientId={clientId}
+      firstName={firstName}
+      resources={listing.resources}
+    />
+  );
+}
+
+type ResourceLibraryProps = {
+  clientId: string;
+  firstName: string;
+  resources: readonly ClientResourceView[];
+};
+
+function ResourceLibrary({
+  clientId,
+  firstName,
+  resources,
+}: ResourceLibraryProps) {
   const [adding, setAdding] = useState({ formGeneration: 0, open: false });
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewing = resources.find((resource) => resource.id === viewingId);

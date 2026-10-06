@@ -2,15 +2,17 @@ import { PortalBackLink } from "@eli-coach-platform/ui/portal";
 import {
   isRouteErrorResponse,
   useLoaderData,
-  useRevalidator,
   useRouteError,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "react-router";
 
-import { CoachResourceLibrary } from "~/features/client-resources/ui/coach/resources/coach-resource-library";
+import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import {
+  CoachResourceLibrary,
+  type CoachResourceListing,
+} from "~/features/client-resources/ui/coach/resources/coach-resource-library";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
-import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
@@ -23,6 +25,20 @@ const PAGE_CLASS = "w-full";
 
 const PAGE_PARITY_ROOT = "CoachResourceLibrary";
 
+const FAILED_LISTING: CoachResourceListing = { status: "failed" };
+
+async function listingOf(
+  reading: Promise<ClientResourceView[]>,
+): Promise<CoachResourceListing> {
+  try {
+    return { status: "ready", resources: await reading };
+  } catch (error) {
+    if (error instanceof Response) throw error;
+
+    return FAILED_LISTING;
+  }
+}
+
 export async function loader(args: LoaderFunctionArgs) {
   const { clientId } = args.params;
 
@@ -30,16 +46,18 @@ export async function loader(args: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: CLIENT_NOT_FOUND_STATUS });
   }
 
-  const [client, resources] = await Promise.all([
+  const [client, listing] = await Promise.all([
     args.context
       .get(coachingSalesContext)
       .coachClients.loadClient(args, clientId),
-    args.context
-      .get(clientResourcesContext)
-      .coachResources.load(args, clientId),
+    listingOf(
+      args.context
+        .get(clientResourcesContext)
+        .coachResources.load(args, clientId),
+    ),
   ]);
 
-  return { client, resources };
+  return { client, listing };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -52,21 +70,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  const revalidator = useRevalidator();
 
   if (isRouteErrorResponse(error) && error.status === CLIENT_NOT_FOUND_STATUS) {
     return <ClientNotFound />;
   }
 
-  return (
-    <div className={PAGE_CLASS} data-parity-root={PAGE_PARITY_ROOT}>
-      <ResourcesUnavailable onRetry={() => void revalidator.revalidate()} />
-    </div>
-  );
+  throw error;
 }
 
 export default function CoachClientResourcesRoute() {
-  const { client, resources } = useLoaderData<typeof loader>();
+  const { client, listing } = useLoaderData<typeof loader>();
 
   return (
     <div className={PAGE_CLASS} data-parity-root={PAGE_PARITY_ROOT}>
@@ -77,7 +90,7 @@ export default function CoachClientResourcesRoute() {
       <CoachResourceLibrary
         clientId={client.clientId}
         firstName={client.firstName}
-        resources={resources}
+        listing={listing}
       />
     </div>
   );

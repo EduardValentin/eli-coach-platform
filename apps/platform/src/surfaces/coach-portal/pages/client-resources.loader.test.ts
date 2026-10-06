@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { CoachResourceListing } from "~/features/client-resources/ui/coach/resources/coach-resource-library";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
@@ -63,7 +64,10 @@ describe("coach client resources page loader", () => {
     const loaded = await loader(args);
 
     // assert
-    expect(loaded).toEqual({ client: CLIENT, resources: RESOURCES });
+    expect(loaded).toEqual({
+      client: CLIENT,
+      listing: { status: "ready", resources: RESOURCES },
+    });
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadResources).toHaveBeenCalledWith(args, CLIENT_ID);
   });
@@ -80,11 +84,37 @@ describe("coach client resources page loader", () => {
     await expect(loading).rejects.toMatchObject({ status: 404 });
   });
 
-  it("leaves a failed read of her resources alone for the error boundary", async () => {
+  it("still reads her record when her resources cannot be read, and says the listing failed", async () => {
     // arrange
     const { args, loadResources } = routeArguments();
-    const failure = new Error("The resources could not be read.");
-    loadResources.mockRejectedValue(failure);
+    loadResources.mockRejectedValue(
+      new Error("The resources could not be read."),
+    );
+
+    // act
+    const loaded = await loader(args);
+
+    // assert
+    expect(loaded).toEqual({ client: CLIENT, listing: { status: "failed" } });
+  });
+
+  it("leaves the denial the portal guard raises alone", async () => {
+    // arrange
+    const { args, loadResources } = routeArguments();
+    loadResources.mockRejectedValue(new Response("Forbidden", { status: 403 }));
+
+    // act
+    const loading = loader(args);
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 403 });
+  });
+
+  it("leaves a failed read of her record alone for the error boundary", async () => {
+    // arrange
+    const { args, loadClient } = routeArguments();
+    const failure = new Error("The client could not be read.");
+    loadClient.mockRejectedValue(failure);
 
     // act
     const loading = loader(args);
@@ -108,7 +138,13 @@ describe("coach client resources page loader", () => {
 describe("coach client resources page meta", () => {
   it("titles the page with her first name's resources", () => {
     // arrange
-    const data = { client: CLIENT, resources: RESOURCES };
+    const data = {
+      client: CLIENT,
+      listing: {
+        status: "ready",
+        resources: RESOURCES,
+      } as CoachResourceListing,
+    };
 
     // act
     const descriptors = meta({ data } as Parameters<typeof meta>[0]);

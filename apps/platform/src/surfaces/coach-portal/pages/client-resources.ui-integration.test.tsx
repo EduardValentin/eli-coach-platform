@@ -299,16 +299,42 @@ describe("the coach's client resources page", () => {
     expect(await screen.findByText("Client not found")).toBeInTheDocument();
   });
 
-  it("says the resources did not load and loads them again when she tries again", async () => {
+  it("says her resources did not load under the way back to her record, without the page header", async () => {
+    // arrange, act
+    await renderResourcesRouter(() => ({
+      client: CLIENT,
+      listing: { status: "failed" },
+    }));
+
+    // assert
+    expect(screen.getByRole("heading", { level: 1 })).toHaveAccessibleName(
+      "Resources didn’t load",
+    );
+    expect(
+      screen.getByRole("link", { name: "Back to Andreea Popescu" }),
+    ).toHaveAttribute("href", coachClientPath(CLIENT_ID));
+    expect(
+      screen.queryByRole("heading", { name: "Andreea’s resources" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Add resource" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("loads her resources again when the coach tries again", async () => {
     // arrange
     let reads = 0;
     const { user } = await renderResourcesRouter(() => {
       reads += 1;
-      if (reads === 1) throw new Error("The resources could not be read.");
 
-      return { client: CLIENT, resources: LIBRARY };
+      return {
+        client: CLIENT,
+        listing:
+          reads === 1
+            ? { status: "failed" }
+            : { status: "ready", resources: LIBRARY },
+      };
     });
-    expect(await screen.findByText("Resources didn’t load")).toBeVisible();
 
     // act
     await user.click(screen.getByRole("button", { name: "Try again" }));
@@ -323,6 +349,7 @@ describe("the coach's client resources page", () => {
     expect(
       screen.getByRole("button", { name: "Plate portions guide" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Resources didn’t load")).not.toBeInTheDocument();
   });
 });
 
@@ -907,7 +934,8 @@ describe("the resource viewer", () => {
 
 type ResourcesPageData = {
   client: CoachClient;
-  resources: ClientResourceView[];
+  listing:
+    { status: "ready"; resources: ClientResourceView[] } | { status: "failed" };
 };
 
 type SentUpload = { fileName: string; title: string; description: string };
@@ -926,7 +954,7 @@ function libraryStore(resources: ClientResourceView[]) {
     resources: [...resources],
     load: (): ResourcesPageData => ({
       client: CLIENT,
-      resources: [...store.resources],
+      listing: { status: "ready", resources: [...store.resources] },
     }),
   };
 
