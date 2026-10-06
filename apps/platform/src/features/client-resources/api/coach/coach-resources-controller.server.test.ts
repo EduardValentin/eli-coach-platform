@@ -1,7 +1,6 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
   ClientResource,
-  type ClientResourceIncidents,
   type ClientResourceSnapshot,
   type ListClientResourcesResult,
   type ListClientResourcesUseCase,
@@ -117,21 +116,15 @@ describe("CoachResourcesController load", () => {
     });
   });
 
-  it("reports a failed read as an incident and answers a failed listing", async () => {
+  it("answers a failed listing when the client's resources are unavailable", async () => {
     // arrange
-    const { controller, listClientResources, incidents } = createController();
-    const failure = new Error("connection terminated");
-    listClientResources.mockRejectedValue(failure);
+    const { controller } = createController({ status: "unavailable" });
 
     // act
     const listing = await controller.load(coachArgs(), CLIENT_ID);
 
     // assert
     expect(listing).toEqual({ status: "failed" });
-    expect(incidents.resourceListingFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: failure,
-    });
   });
 
   it("answers not found to a client who does not exist", async () => {
@@ -194,15 +187,13 @@ function createController(
   listed: ListClientResourcesResult = { status: "listed", resources: [] },
 ) {
   const listClientResources = vi.fn().mockResolvedValue(listed);
-  const incidents = { resourceListingFailed: vi.fn() };
   const controller = new CoachResourcesController({
     listClientResources: {
       execute: listClientResources,
     } as unknown as ListClientResourcesUseCase,
-    incidents: incidents as unknown as ClientResourceIncidents,
   });
 
-  return { controller, incidents, listClientResources };
+  return { controller, listClientResources };
 }
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {

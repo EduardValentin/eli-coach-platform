@@ -39,7 +39,9 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-function createUseCase() {
+function createUseCase(
+  resources: ClientResources = new InMemoryClientResources(),
+) {
   const clients = {
     exists: vi.fn(async (clientId: string) =>
       ["client-ana", "client-bea"].includes(clientId),
@@ -56,7 +58,7 @@ function createUseCase() {
     resourceListingFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const useCase = new ListClientResourcesUseCase({
-    resources: new InMemoryClientResources(),
+    resources,
     clients,
     incidents,
   });
@@ -117,5 +119,26 @@ describe("ListClientResourcesUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-found" });
     expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed read and answers that the listing is unavailable", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const unreadable = new InMemoryClientResources();
+    vi.spyOn(unreadable, "listForClient").mockRejectedValue(failure);
+    const { useCase, incidents } = createUseCase(unreadable);
+
+    // act
+    const result = await useCase.execute({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      clientId: "client-ana",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unavailable" });
+    expect(incidents.resourceListingFailed).toHaveBeenCalledWith({
+      clientId: "client-ana",
+      error: failure,
+    });
   });
 });

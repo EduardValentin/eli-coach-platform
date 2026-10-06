@@ -1,8 +1,4 @@
-import type {
-  ClientResourceIncidents,
-  ListClientResourcesResult,
-  ListClientResourcesUseCase,
-} from "@eli-coach-platform/domain/client-resources";
+import type { ListClientResourcesUseCase } from "@eli-coach-platform/domain/client-resources";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
@@ -15,7 +11,6 @@ import {
 
 type CoachResourcesControllerOptions = {
   listClientResources: ListClientResourcesUseCase;
-  incidents: ClientResourceIncidents;
 };
 
 const FAILED_LISTING: ClientResourceListing = { status: "failed" };
@@ -36,22 +31,17 @@ export class CoachResourcesController {
       throw notFoundResponse();
     }
 
-    let listing: ListClientResourcesResult;
-    try {
-      listing = await this.options.listClientResources.execute({
-        requester: { role: coach.role, authSubjectId: coach.authSubjectId },
-        clientId: target.data,
-      });
-    } catch (error) {
-      this.options.incidents.resourceListingFailed({
-        clientId: target.data,
-        error,
-      });
-      return FAILED_LISTING;
-    }
+    const listing = await this.options.listClientResources.execute({
+      requester: { role: coach.role, authSubjectId: coach.authSubjectId },
+      clientId: target.data,
+    });
 
     if (listing.status === "not-found") {
       throw notFoundResponse();
+    }
+
+    if (listing.status === "unavailable") {
+      return FAILED_LISTING;
     }
 
     return {

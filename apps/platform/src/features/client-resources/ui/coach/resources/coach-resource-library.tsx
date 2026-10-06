@@ -37,7 +37,7 @@ export function CoachResourceLibrary({
   }
 
   return (
-    <ResourceLibrary
+    <ReadyResourceLibrary
       clientId={clientId}
       firstName={firstName}
       resources={listing.resources}
@@ -45,17 +45,17 @@ export function CoachResourceLibrary({
   );
 }
 
-type ResourceLibraryProps = {
+type ReadyResourceLibraryProps = {
   clientId: string;
   firstName: string;
   resources: readonly ClientResourceView[];
 };
 
-function ResourceLibrary({
+function ReadyResourceLibrary({
   clientId,
   firstName,
   resources,
-}: ResourceLibraryProps) {
+}: ReadyResourceLibraryProps) {
   const [adding, setAdding] = useState({ formGeneration: 0, open: false });
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewing = resources.find((resource) => resource.id === viewingId);

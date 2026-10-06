@@ -13,7 +13,9 @@ type ListClientResourcesCommand = {
 };
 
 export type ListClientResourcesResult =
-  { status: "listed"; resources: ClientResource[] } | { status: "not-found" };
+  | { status: "listed"; resources: ClientResource[] }
+  | { status: "not-found" }
+  | { status: "unavailable" };
 
 type ListClientResourcesUseCaseOptions = {
   resources: ClientResources;
@@ -37,9 +39,24 @@ export class ListClientResourcesUseCase {
       return { status: "not-found" };
     }
 
-    return {
-      status: "listed",
-      resources: await this.options.resources.listForClient(command.clientId),
-    };
+    const resources = await this.readResources(command.clientId);
+
+    if (!resources) {
+      return { status: "unavailable" };
+    }
+
+    return { status: "listed", resources };
+  }
+
+  private async readResources(
+    clientId: string,
+  ): Promise<ClientResource[] | null> {
+    try {
+      return await this.options.resources.listForClient(clientId);
+    } catch (error) {
+      this.options.incidents.resourceListingFailed({ clientId, error });
+
+      return null;
+    }
   }
 }

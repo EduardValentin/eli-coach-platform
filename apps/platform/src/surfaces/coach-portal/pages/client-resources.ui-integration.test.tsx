@@ -33,7 +33,10 @@ import {
 } from "vitest";
 
 import { clientAction as uploadResource } from "~/features/client-resources/api/resources/client-resources";
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type {
+  ClientResourceListing,
+  ClientResourceView,
+} from "~/features/client-resources/contracts/client-resources";
 import {
   CLIENT_RESOURCES_API_PATHS,
   clientResourcesPath,
@@ -934,8 +937,7 @@ describe("the resource viewer", () => {
 
 type ResourcesPageData = {
   client: CoachClient;
-  listing:
-    { status: "ready"; resources: ClientResourceView[] } | { status: "failed" };
+  listing: ClientResourceListing;
 };
 
 type SentUpload = { fileName: string; title: string; description: string };
