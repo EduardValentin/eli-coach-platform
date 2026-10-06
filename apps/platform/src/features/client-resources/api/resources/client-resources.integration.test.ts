@@ -29,6 +29,10 @@ import {
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
+import {
   excelWorkbook,
   oldExcelWorkbook,
   oldWordDocument,
@@ -90,6 +94,9 @@ const SECOND_ADDED = new Date(FIRST_ADDED.getTime() + MINUTE_IN_MILLISECONDS);
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_UUID = "not-a-resource-id";
 const NON_ASCII_NAME = "Plan alimentar – săptămâna 1.pdf";
+const CLIENT_PORTAL = "/client";
+const WELCOME = "/client/welcome";
+const ENDED_PAGE = "/client/ended";
 const FIRST_OPENED = new Date(
   CALL_ENDED_INSTANT.getTime() + 2 * 60 * MINUTE_IN_MILLISECONDS,
 );
@@ -885,8 +892,121 @@ describe.sequential("client resources integration", () => {
 
       // assert
       expect(response.status).toBe(200);
-      expect(await response.text()).toContain("Meal plan");
+      const page = await pageTextOf(response);
+      expect(page).toContain("PDF 3 pages Meal plan.pdf");
+      expect(page).not.toContain("New");
     });
+  });
+
+  describe("her resources page", () => {
+    it("lists only her own resources, the newest first", async () => {
+      // arrange
+      const anaId = await submittedAna();
+      const mariaId = await submittedMaria();
+      await rig.holdClock(FIRST_ADDED);
+      await resources.uploadAccepted(COACH_SESSION, anaId, {
+        bytes: await wordDocument(),
+        fileName: "Food diary.docx",
+        title: "Food diary",
+      });
+      await resources.uploadAccepted(COACH_SESSION, mariaId, {
+        bytes: await wordDocument(),
+        fileName: "For Maria.docx",
+        title: "For Maria",
+      });
+      await rig.holdClock(SECOND_ADDED);
+      await resources.uploadAccepted(COACH_SESSION, anaId, {
+        bytes: await excelWorkbook(),
+        fileName: "Macro tracker.xlsx",
+        title: "Macro tracker",
+      });
+
+      // act
+      const response = await resources.openResourcesPage(ANA_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain(
+        "Resources XLS New Macro tracker DOC New Food diary",
+      );
+      expect(page).not.toContain("For Maria");
+    });
+
+    it("marks a resource New until she opens it", async () => {
+      // arrange
+      const { resource } = await submittedAnaWithPdf();
+      const unopened = await pageTextOf(
+        await resources.openResourcesPage(ANA_SESSION),
+      );
+
+      // act
+      await resources.markOpened(ANA_SESSION, resource.id);
+
+      // assert
+      const response = await resources.openResourcesPage(ANA_SESSION);
+      expect(response.status).toBe(200);
+      expect(unopened).toContain("PDF 3 pages New Meal plan.pdf");
+      const opened = await pageTextOf(response);
+      expect(opened).toContain("PDF 3 pages Meal plan.pdf");
+      expect(opened).not.toContain("New");
+    });
+
+    it("marks Resources new in her navigation while any of her resources is unopened", async () => {
+      // arrange
+      const { clientId, resource } = await submittedAnaWithPdf();
+      const second = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Food diary.docx",
+      });
+      await resources.markOpened(ANA_SESSION, resource.id);
+
+      // act
+      const oneUnopened = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
+      await resources.markOpened(ANA_SESSION, second.id);
+      const allOpened = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
+
+      // assert
+      expect(oneUnopened.status).toBe(200);
+      expect(await pageTextOf(oneUnopened)).toContain(
+        "Profile Resources (new) Settings",
+      );
+      expect(allOpened.status).toBe(200);
+      const navigation = await pageTextOf(allOpened);
+      expect(navigation).toContain("Profile Resources Settings");
+      expect(navigation).not.toContain("(new)");
+    });
+
+    it.each([
+      {
+        who: "who has not submitted her onboarding",
+        arrange: async () => anaWithPdf(),
+        location: WELCOME,
+      },
+      {
+        who: "whose coaching has ended",
+        arrange: async () => {
+          const arranged = await submittedAnaWithPdf();
+          await endAnasCoaching();
+
+          return arranged;
+        },
+        location: ENDED_PAGE,
+      },
+    ])(
+      "sends a client $who away from the page",
+      async ({ arrange, location }) => {
+        // arrange
+        await arrange();
+
+        // act
+        const response = await resources.openResourcesPage(ANA_SESSION);
+
+        // assert
+        expect(response.status).toBe(302);
+        expect(response.headers.get("location")).toBe(suite.path(location));
+      },
+    );
   });
 });
 
@@ -913,12 +1033,16 @@ async function anaWithPdf(): Promise<ClientWithPdf> {
   return pdfFor(await admitAna());
 }
 
-async function submittedAnaWithPdf(): Promise<ClientWithPdf> {
+async function submittedAna(): Promise<string> {
   const clientId = await admitAna();
   await rig.holdClock(CALL_ENDED_INSTANT);
   await onboarding.submit(ANA_SESSION);
 
-  return pdfFor(clientId);
+  return clientId;
+}
+
+async function submittedAnaWithPdf(): Promise<ClientWithPdf> {
+  return pdfFor(await submittedAna());
 }
 
 async function pdfFor(clientId: string): Promise<ClientWithPdf> {
@@ -951,6 +1075,12 @@ async function openedAtOf(clientId: string): Promise<(Date | null)[]> {
   const rows = await resources.resourceRowsOf(clientId);
 
   return rows.map(({ openedAt }) => openedAt);
+}
+
+async function pageTextOf(response: Response): Promise<string> {
+  return textNodesOf(await visibleDocument(response))
+    .filter((text) => text.length > 0)
+    .join(" ");
 }
 
 function expectPrivateImageHeaders(response: Response, body: Buffer): void {

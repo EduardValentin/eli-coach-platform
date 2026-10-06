@@ -45,6 +45,8 @@ export type ClientResourceRow = {
 
 const CLIENT_RESOURCES_API = "/api/client-resources";
 
+const CLIENT_RESOURCES_PAGE = "/client/resources";
+
 export class ClientResourcesJourney {
   constructor(private readonly rig: PlatformRig) {}
 
@@ -112,6 +114,10 @@ export class ClientResourcesJourney {
         method: "POST",
       },
     );
+  }
+
+  openResourcesPage(requester: AccountSession): Promise<Response> {
+    return this.rig.requestAs(requester, CLIENT_RESOURCES_PAGE);
   }
 
   resourceRowsOf(clientId: string): Promise<ClientResourceRow[]> {
