@@ -9,8 +9,7 @@ import type {
   ClientResourceView,
 } from "~/features/client-resources/contracts/client-resources";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
-import { ResourceGrid } from "~/features/client-resources/ui/shared/resources/resource-grid";
-import { ResourceViewer } from "~/features/client-resources/ui/shared/resources/resource-viewer";
+import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 
 import { AddResourceDialog } from "./add-resource-dialog";
@@ -57,8 +56,6 @@ function ReadyResourceLibrary({
   resources,
 }: ReadyResourceLibraryProps) {
   const [adding, setAdding] = useState({ formGeneration: 0, open: false });
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const viewing = resources.find((resource) => resource.id === viewingId);
   const populated = resources.length > 0;
 
   const startAdding = () =>
@@ -82,10 +79,7 @@ function ReadyResourceLibrary({
       />
 
       {populated ? (
-        <ResourceGrid
-          onOpen={(resource) => setViewingId(resource.id)}
-          resources={resources}
-        />
+        <ResourceGallery perspective="coach" resources={resources} />
       ) : (
         <EmptyState
           action={
@@ -99,8 +93,6 @@ function ReadyResourceLibrary({
           title="No resources yet"
         />
       )}
-
-      <ResourceViewer onClose={() => setViewingId(null)} resource={viewing} />
 
       <AddResourceDialog
         clientId={clientId}

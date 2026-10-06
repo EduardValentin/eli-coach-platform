@@ -283,6 +283,23 @@ describe("the coach's client resources page", () => {
     ).toHaveLength(1);
   });
 
+  it("never marks a resource new for the coach, whether the client opened it or not", async () => {
+    // arrange, act
+    await renderResourcesPage({
+      resources: [
+        PLATE_GUIDE,
+        { ...WARM_UP, openedAt: "2026-10-03T08:00:00.000Z" },
+      ],
+    });
+
+    // assert
+    const grid = screen.getByRole("region", { name: "Resources" });
+    expect(within(grid).queryByText("New")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Plate portions guide" }),
+    ).toHaveAccessibleDescription("IMG");
+  });
+
   it("shows a page preview for a PDF or an image and a file cover for Word and Excel", async () => {
     // arrange, act
     await renderResourcesPage();

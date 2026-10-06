@@ -8,15 +8,25 @@ import { pageCountLabel, RESOURCE_KIND_LABELS } from "./resource-copy";
 import { ResourceFileCover } from "./resource-file-cover";
 import { resourceThumbnailUrl } from "./resource-urls";
 
+export type ResourcePerspective = "coach" | "client";
+
 type ResourceCardProps = {
   resource: ClientResourceView;
+  perspective: ResourcePerspective;
+  unopened: boolean;
   onOpen: () => void;
 };
 
-export function ResourceCard({ resource, onOpen }: ResourceCardProps) {
+export function ResourceCard({
+  resource,
+  perspective,
+  unopened,
+  onOpen,
+}: ResourceCardProps) {
   const titleId = useId();
   const metaId = useId();
   const { file } = resource;
+  const showsNew = perspective === "client" && unopened;
 
   return (
     <li
@@ -57,6 +67,15 @@ export function ResourceCard({ resource, onOpen }: ResourceCardProps) {
             >
               {pageCountLabel(file.pageCount)}
             </span>
+          )}
+          {showsNew && (
+            <Badge
+              className="ml-auto"
+              data-parity="resource-new"
+              tone="pending"
+            >
+              New
+            </Badge>
           )}
         </span>
         <span
