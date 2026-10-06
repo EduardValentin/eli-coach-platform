@@ -418,7 +418,7 @@ function stampMarks(): string[] {
       marks.push(resourceId);
       stampOpened(resourceId);
 
-      return new HttpResponse(null, { status: 204 });
+      return HttpResponse.json({ status: "opened" });
     }),
   );
 
@@ -435,7 +435,7 @@ function holdMarks(): HeldMark[] {
       });
       stampOpened(resourceId);
 
-      return new HttpResponse(null, { status: 204 });
+      return HttpResponse.json({ status: "opened" });
     }),
   );
 

@@ -410,7 +410,7 @@ test("only she and her coach reach her resources: another client, a visitor and 
   const repeatedMarking = await resourceRequests.markOpened(resourceId);
 
   // assert
-  expect(repeatedMarking).toBe(204);
+  expect(repeatedMarking).toBe(200);
 
   // arrange
   await page.goto("/");

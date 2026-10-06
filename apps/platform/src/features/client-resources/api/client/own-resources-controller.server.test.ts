@@ -210,7 +210,7 @@ describe("OwnResourcesController countUnopened", () => {
 });
 
 describe("OwnResourcesController markOpened", () => {
-  it("answers no content once her resource is marked opened", async () => {
+  it("answers that her resource is opened once it is marked", async () => {
     // arrange
     const { controller, markResourceOpened } = createController({
       marked: { status: "opened" },
@@ -220,8 +220,8 @@ describe("OwnResourcesController markOpened", () => {
     const response = await controller.markOpened(markArgs(), NEW_ID);
 
     // assert
-    expect(response.status).toBe(204);
-    expect(await response.text()).toBe("");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "opened" });
     expect(markResourceOpened).toHaveBeenCalledWith({
       requester: { role: "CLIENT", authSubjectId: "user_ana" },
       resourceId: NEW_ID,

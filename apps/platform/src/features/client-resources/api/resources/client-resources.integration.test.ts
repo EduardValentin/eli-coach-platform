@@ -822,7 +822,7 @@ describe.sequential("client resources integration", () => {
   });
 
   describe("marking a resource opened", () => {
-    it("stamps the moment she first opened it and answers no content", async () => {
+    it("stamps the moment she first opened it and answers that it is opened", async () => {
       // arrange
       const { clientId, resource } = await submittedAnaWithPdf();
       await rig.holdClock(FIRST_OPENED);
@@ -831,8 +831,8 @@ describe.sequential("client resources integration", () => {
       const response = await resources.markOpened(ANA_SESSION, resource.id);
 
       // assert
-      expect(response.status).toBe(204);
-      expect(await response.text()).toBe("");
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ status: "opened" });
       expect(await openedAtOf(clientId)).toEqual([FIRST_OPENED]);
     });
 
@@ -847,7 +847,7 @@ describe.sequential("client resources integration", () => {
       const response = await resources.markOpened(ANA_SESSION, resource.id);
 
       // assert
-      expect(response.status).toBe(204);
+      expect(response.status).toBe(200);
       expect(await openedAtOf(clientId)).toEqual([FIRST_OPENED]);
     });
 

@@ -25,6 +25,9 @@ type OwnResourcesControllerOptions = {
 
 const UNAVAILABLE_LISTING: ClientResourceListing = { status: "unavailable" };
 
+// A bodiless answer leaves React Router's fetch unread, and Chrome then cancels it.
+const OPENED_ANSWER = { status: "opened" };
+
 const resourceIdSchema = z.uuid();
 
 export class OwnResourcesController {
@@ -82,7 +85,7 @@ export class OwnResourcesController {
 
     switch (result.status) {
       case "opened":
-        return new Response(null, { status: 204 });
+        return Response.json(OPENED_ANSWER);
       case "not-found":
         return notFoundResponse();
       case "failed":
