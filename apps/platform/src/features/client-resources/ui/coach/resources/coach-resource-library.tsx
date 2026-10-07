@@ -2,7 +2,7 @@ import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { FolderOpen, Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { useRevalidator } from "react-router";
 
 import type {
@@ -74,31 +74,20 @@ function ReadyResourceLibrary({
   resources,
 }: ReadyResourceLibraryProps) {
   const [formMode, setFormMode] = useState<ResourceFormMode | null>(null);
-  const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const removal = useResourceRemoval();
+  const deletion = useResourceDeletion(removal, heading);
   const listed = resources.filter(
     (resource) => !removal.isBeingRemoved(resource.id),
   );
   const populated = listed.length > 0;
-  const deletionUnderway =
-    deletion?.stage === "asking" ||
-    (deletion?.stage === "confirmed" &&
-      removal.awaitsAnswer(deletion.resource.id));
 
-  const startAdding = () => setFormMode({ kind: "add" });
+  const startAdding = () => setFormMode({ kind: "add", clientId });
 
-  const manage = (resource: ClientResourceView): ResourceManagement => ({
+  const managementOf = (resource: ClientResourceView): ResourceManagement => ({
     onEdit: () => setFormMode({ kind: "edit", resource }),
-    onDelete: () => setDeletion({ resource, stage: "asking" }),
+    onDelete: () => deletion.ask(resource),
   });
-
-  const confirmDeletion = () => {
-    if (!deletion) return;
-
-    setDeletion({ ...deletion, stage: "confirmed" });
-    removal.remove(deletion.resource.id);
-  };
 
   return (
     <>
@@ -118,17 +107,17 @@ function ReadyResourceLibrary({
       {populated ? (
         <ResourceGallery
           detailsActionsFor={(resource) => (
-            <ResourceDetailsActions management={manage(resource)} />
+            <ResourceDetailsActions management={managementOf(resource)} />
           )}
           menuFor={(resource) => (
             <ResourceActionsMenu
-              management={manage(resource)}
+              management={managementOf(resource)}
               title={resource.title}
             />
           )}
           perspective="coach"
           resources={listed}
-          returnFocusTo={deletionUnderway ? heading : undefined}
+          returnFocusTo={deletion.viewerFocusTarget}
         />
       ) : (
         <EmptyState
@@ -144,37 +133,63 @@ function ReadyResourceLibrary({
         />
       )}
 
-      <ResourceFormDialog
-        clientId={clientId}
-        mode={formMode}
-        onClose={() => setFormMode(null)}
-      />
+      <ResourceFormDialog mode={formMode} onClose={() => setFormMode(null)} />
 
       <ConfirmDialog
         cancelLabel="Keep"
         confirmLabel="Delete"
         description={`It’s removed for you and ${firstName}.`}
-        onConfirm={confirmDeletion}
+        onConfirm={deletion.confirm}
         onOpenChange={(open) => {
-          if (!open && deletion?.stage === "asking") {
-            setDeletion({ ...deletion, stage: "kept" });
-          }
+          if (!open) deletion.keep();
         }}
-        open={deletion?.stage === "asking"}
-        returnFocusTo={deletion?.stage === "confirmed" ? heading : undefined}
-        title={`Delete “${deletion?.resource.title ?? ""}”?`}
+        open={deletion.asking}
+        returnFocusTo={deletion.confirmFocusTarget}
+        title={`Delete “${deletion.title}”?`}
         tone="destructive"
       />
 
-      {removal.unanswered.map((resourceId) => (
+      {removal.unansweredIds.map((resourceId) => (
         <ResourceRemovalAnswer
           key={resourceId}
-          onAnswered={removal.answered}
+          onAnswered={removal.forgetAnswered}
           resourceId={resourceId}
         />
       ))}
     </>
   );
+}
+
+function useResourceDeletion(
+  removal: ReturnType<typeof useResourceRemoval>,
+  heading: RefObject<HTMLHeadingElement | null>,
+) {
+  const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
+  const asking = deletion?.stage === "asking";
+  const confirmedAwaitingAnswer =
+    deletion?.stage === "confirmed" &&
+    removal.answerNotYetShown(deletion.resource.id);
+  const viewerReturnsFocusToHeading = asking || confirmedAwaitingAnswer;
+
+  return {
+    asking,
+    title: deletion?.resource.title ?? "",
+    viewerFocusTarget: viewerReturnsFocusToHeading ? heading : undefined,
+    confirmFocusTarget: deletion?.stage === "confirmed" ? heading : undefined,
+    ask: (resource: ClientResourceView) =>
+      setDeletion({ resource, stage: "asking" }),
+    keep: () => {
+      if (deletion?.stage === "asking") {
+        setDeletion({ ...deletion, stage: "kept" });
+      }
+    },
+    confirm: () => {
+      if (!deletion) return;
+
+      setDeletion({ ...deletion, stage: "confirmed" });
+      removal.remove(deletion.resource.id);
+    },
+  };
 }
 
 type ResourceRemovalAnswerProps = {

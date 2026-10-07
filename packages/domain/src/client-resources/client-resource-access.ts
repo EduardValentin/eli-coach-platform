@@ -65,7 +65,8 @@ export class ClientResourceAccess {
   ): Promise<ClientResource | null> {
     const resource = await this.options.resources.findById(resourceId);
 
-    if (!resource || reachOf(requester) === "every-client") return resource;
+    if (!resource) return null;
+    if (reachOf(requester) === "every-client") return resource;
 
     this.options.incidents.resourceAccessRefused({
       requesterRole: requester.role,

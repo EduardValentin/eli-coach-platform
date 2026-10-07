@@ -12,7 +12,7 @@ const COPY = {
 
 export function useResourceRemoval() {
   const submit = useSubmit();
-  const [unanswered, setUnanswered] = useState<readonly string[]>([]);
+  const [unansweredIds, setUnansweredIds] = useState<readonly string[]>([]);
   const pendingFetcherKeys = new Set(
     useFetchers().map((fetcher) => fetcher.key),
   );
@@ -20,7 +20,7 @@ export function useResourceRemoval() {
   const remove = (resourceId: string) => {
     const action = resourcePath(resourceId);
 
-    setUnanswered((current) => [...current, resourceId]);
+    setUnansweredIds((current) => [...current, resourceId]);
     void submit(null, {
       action,
       fetcherKey: action,
@@ -29,16 +29,17 @@ export function useResourceRemoval() {
     });
   };
 
-  const answered = (resourceId: string) => {
-    setUnanswered((current) => current.filter((id) => id !== resourceId));
+  const forgetAnswered = (resourceId: string) => {
+    setUnansweredIds((current) => current.filter((id) => id !== resourceId));
   };
 
   return {
     isBeingRemoved: (resourceId: string) =>
       pendingFetcherKeys.has(resourcePath(resourceId)),
-    awaitsAnswer: (resourceId: string) => unanswered.includes(resourceId),
-    unanswered,
-    answered,
+    answerNotYetShown: (resourceId: string) =>
+      unansweredIds.includes(resourceId),
+    unansweredIds,
+    forgetAnswered,
     remove,
   };
 }

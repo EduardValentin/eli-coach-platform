@@ -1211,7 +1211,7 @@ describe("editing a resource's details", () => {
 
   it("cannot be dismissed while the save is on its way", async () => {
     // arrange
-    const held = holdDetailsChanges();
+    const held = holdThenFailDetailsChanges();
     const { user } = await renderResourcesPage();
     const dialog = await openEditDialog(user, "Plate portions guide");
     await user.type(
@@ -1359,7 +1359,7 @@ describe("deleting a resource", () => {
 
   it("hides the resource while the removal is on its way, then tells her and brings it back when it fails", async () => {
     // arrange
-    const held = holdRemovals();
+    const held = holdThenFailRemovals();
     const { user } = await renderResourcesPage();
     const confirm = await openDeleteConfirm(user, "Plate portions guide");
 
@@ -1475,7 +1475,7 @@ function recordDetailsChanges(
   return sent;
 }
 
-function holdDetailsChanges(): (() => void)[] {
+function holdThenFailDetailsChanges(): (() => void)[] {
   const held: (() => void)[] = [];
   server.use(
     http.patch(RESOURCE_URL, async () => {
@@ -1505,7 +1505,7 @@ function recordRemovals(store: ReturnType<typeof libraryStore>): string[] {
   return sent;
 }
 
-function holdRemovals(): (() => void)[] {
+function holdThenFailRemovals(): (() => void)[] {
   const held: (() => void)[] = [];
   server.use(
     http.delete(RESOURCE_URL, async () => {

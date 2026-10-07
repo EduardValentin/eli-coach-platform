@@ -56,7 +56,8 @@ import {
 } from "./use-resource-upload";
 
 export type ResourceFormMode =
-  { kind: "add" } | { kind: "edit"; resource: ClientResourceView };
+  | { kind: "add"; clientId: string }
+  | { kind: "edit"; resource: ClientResourceView };
 
 type Dismissal = NonNullable<
   ComponentProps<typeof ResponsiveSheetDialog>["dismissal"]
@@ -89,8 +90,9 @@ const FIELD_COPY = {
   noTitle: "Give it a title.",
   titleTooLong: `Keep the title to ${MAX_RESOURCE_TITLE_LENGTH} characters.`,
   descriptionTooLong: `Keep the description to ${MAX_RESOURCE_DESCRIPTION_LENGTH.toLocaleString("en-GB")} characters.`,
-  cancel: "Cancel",
 } as const;
+
+const CANCEL = "Cancel";
 
 const UPLOAD_COPY = {
   preparing: "Preparing pages…",
@@ -262,7 +264,7 @@ function ResourceFormActions({
         variant="ghost"
         width="full-below-sm"
       >
-        {FIELD_COPY.cancel}
+        {CANCEL}
       </Button>
     </SheetDialogActions>
   );
@@ -518,28 +520,22 @@ function EditResourceDetailsForm({
 type ShownForm = { mode: ResourceFormMode; session: number };
 
 function ResourceForm({
-  clientId,
   mode,
   ...formProps
-}: ResourceFormProps & { clientId: string; mode: ResourceFormMode }) {
+}: ResourceFormProps & { mode: ResourceFormMode }) {
   if (mode.kind === "edit") {
     return <EditResourceDetailsForm resource={mode.resource} {...formProps} />;
   }
 
-  return <AddResourceForm clientId={clientId} {...formProps} />;
+  return <AddResourceForm clientId={mode.clientId} {...formProps} />;
 }
 
 type ResourceFormDialogProps = {
-  clientId: string;
   mode: ResourceFormMode | null;
   onClose: () => void;
 };
 
-export function ResourceFormDialog({
-  clientId,
-  mode,
-  onClose,
-}: ResourceFormDialogProps) {
+export function ResourceFormDialog({ mode, onClose }: ResourceFormDialogProps) {
   const [shown, setShown] = useState<ShownForm | null>(null);
   const [dismissal, setDismissal] = useState<Dismissal>("allowed");
 
@@ -558,7 +554,6 @@ export function ResourceFormDialog({
     >
       {shown && (
         <ResourceForm
-          clientId={clientId}
           key={shown.session}
           mode={shown.mode}
           onClose={onClose}
