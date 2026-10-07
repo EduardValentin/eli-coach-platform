@@ -46,11 +46,11 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "open" | "closed" };
+type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
 
 const CLIENT_BY_SUBJECT = new Map<string, ResourceClient>([
-  ["user_ana", { clientId: "client-ana", portal: "open" }],
-  ["user_cleo", { clientId: "client-cleo", portal: "closed" }],
+  ["user_ana", { clientId: "client-ana", portal: "reachable" }],
+  ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
 ]);
 
 function createUseCase(
@@ -82,7 +82,7 @@ function createUseCase(
 }
 
 describe("ListOwnResourcesUseCase", () => {
-  it("lists only her own resources, newest first, to a client whose portal is open", async () => {
+  it("lists only her own resources, newest first, to a client whose portal is reachable", async () => {
     // arrange
     const { useCase } = createUseCase();
 
@@ -97,7 +97,7 @@ describe("ListOwnResourcesUseCase", () => {
   });
 
   it.each([
-    ["a client whose portal is closed", "user_cleo"],
+    ["a client whose portal is unreachable", "user_cleo"],
     ["an account bound to no client", "user_nobody"],
   ])("finds nothing for %s", async (_case, authSubjectId) => {
     // arrange

@@ -27,7 +27,7 @@ function resourceOf(id: string, clientId: string): ClientResource {
 }
 
 const RESOURCE = resourceOf("resource-1", "client-ana");
-const CLOSED_PORTAL_RESOURCE = resourceOf("resource-cleo", "client-cleo");
+const UNREACHABLE_PORTAL_RESOURCE = resourceOf("resource-cleo", "client-cleo");
 
 class InMemoryClientResources implements ClientResources {
   constructor(private readonly stored: readonly ClientResource[]) {}
@@ -52,13 +52,13 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "open" | "closed" };
+type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
 
 class InMemoryResourceClients implements ResourceClients {
   private readonly clientBySubject = new Map<string, ResourceClient>([
-    ["user_ana", { clientId: "client-ana", portal: "open" }],
-    ["user_bea", { clientId: "client-bea", portal: "open" }],
-    ["user_cleo", { clientId: "client-cleo", portal: "closed" }],
+    ["user_ana", { clientId: "client-ana", portal: "reachable" }],
+    ["user_bea", { clientId: "client-bea", portal: "reachable" }],
+    ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
   ]);
 
   async exists(clientId: string): Promise<boolean> {
@@ -77,7 +77,7 @@ class InMemoryResourceClients implements ResourceClients {
 function createAccess() {
   const resources = new InMemoryClientResources([
     RESOURCE,
-    CLOSED_PORTAL_RESOURCE,
+    UNREACHABLE_PORTAL_RESOURCE,
   ]);
   const clients = new InMemoryResourceClients();
   const incidents = {
@@ -101,7 +101,7 @@ const ACCOUNT_WITHOUT_RESOURCE_ROLE = {
   role: "USER",
   authSubjectId: "user_ana",
 } as unknown as ResourceRequester;
-const CLEO_WITH_CLOSED_PORTAL = {
+const CLEO_WITH_UNREACHABLE_PORTAL = {
   role: "CLIENT",
   authSubjectId: "user_cleo",
 } as const;
@@ -149,13 +149,13 @@ describe("ClientResourceAccess", () => {
       },
     );
 
-    it("hides her own resource from a client whose portal is closed and reports the refusal", async () => {
+    it("hides her own resource from a client whose portal is unreachable and reports the refusal", async () => {
       // arrange
       const { access, incidents } = createAccess();
 
       // act
       const resource = await access.resourceFor(
-        CLEO_WITH_CLOSED_PORTAL,
+        CLEO_WITH_UNREACHABLE_PORTAL,
         "resource-cleo",
       );
 
@@ -218,13 +218,13 @@ describe("ClientResourceAccess", () => {
       });
     });
 
-    it("keeps a client whose portal is closed out of her own resources and reports the refusal", async () => {
+    it("keeps a client whose portal is unreachable out of her own resources and reports the refusal", async () => {
       // arrange
       const { access, incidents } = createAccess();
 
       // act
       const reached = await access.reachesClient(
-        CLEO_WITH_CLOSED_PORTAL,
+        CLEO_WITH_UNREACHABLE_PORTAL,
         "client-cleo",
       );
 
@@ -251,7 +251,7 @@ describe("ClientResourceAccess", () => {
   });
 
   describe("finding the client with an open portal", () => {
-    it("answers her own client to a client whose portal is open", async () => {
+    it("answers her own client to a client whose portal is reachable", async () => {
       // arrange
       const { access } = createAccess();
 
@@ -276,7 +276,7 @@ describe("ClientResourceAccess", () => {
     });
 
     it.each([
-      ["a client whose portal is closed", CLEO_WITH_CLOSED_PORTAL],
+      ["a client whose portal is unreachable", CLEO_WITH_UNREACHABLE_PORTAL],
       ["an account bound to no client", UNBOUND_CLIENT],
     ])(
       "answers no client to %s, without reporting it",
@@ -322,8 +322,8 @@ describe("ClientResourceAccess", () => {
     it.each([
       ["another client", BEA, "resource-1", "client-ana"],
       [
-        "a client whose portal is closed",
-        CLEO_WITH_CLOSED_PORTAL,
+        "a client whose portal is unreachable",
+        CLEO_WITH_UNREACHABLE_PORTAL,
         "resource-cleo",
         "client-cleo",
       ],

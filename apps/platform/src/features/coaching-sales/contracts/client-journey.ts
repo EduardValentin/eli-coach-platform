@@ -2,7 +2,7 @@ import {
   ClientJourney,
   STEPS_AFTER_SUBMISSION,
   type ClientJourneyStep,
-  type ClientPortalAccess,
+  type CoachingStanding,
 } from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
@@ -30,7 +30,7 @@ type ClientJourneyGate = {
 
 export type ClientPortalStanding = {
   step: ClientJourneyStep;
-  access: ClientPortalAccess;
+  coaching: CoachingStanding;
 };
 
 const ENDED_GATE: ClientJourneyGate = {
@@ -91,7 +91,7 @@ export function clientJourneyPortalLink(
   standing: ClientPortalStanding,
 ): { href: string; label: string } | null {
   if (
-    standing.access === "ended" ||
+    standing.coaching === "ended" ||
     ClientJourney.isAfterSubmission(standing.step)
   ) {
     return null;
@@ -104,7 +104,7 @@ export function clientJourneyPortalLink(
 }
 
 function gateOf(standing: ClientPortalStanding): ClientJourneyGate {
-  if (standing.access === "ended") {
+  if (standing.coaching === "ended") {
     return ENDED_GATE;
   }
 

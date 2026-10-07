@@ -65,7 +65,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const handles = createHandles();
     handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
-      portal: "open",
+      portal: "reachable",
     });
     const feature = composeClientResourcesFeature(handles);
 
@@ -85,7 +85,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const handles = createHandles();
     handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
-      portal: "open",
+      portal: "reachable",
     });
     const feature = composeClientResourcesFeature(handles);
 
@@ -105,7 +105,7 @@ describe("composeClientResourcesFeature, for the client herself", () => {
     const handles = createHandles();
     handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
-      portal: "open",
+      portal: "reachable",
     });
     const feature = composeClientResourcesFeature(handles);
 

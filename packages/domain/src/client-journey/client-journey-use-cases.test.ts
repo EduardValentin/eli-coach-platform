@@ -331,7 +331,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     };
   }
 
-  it("opens the portal to a client who submitted onboarding and whose subscription has not ended", async () => {
+  it("answers her portal reachable to a client who submitted onboarding and whose coaching is active", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
     const { useCase, subscriptions } = standingUseCase({
@@ -346,13 +346,13 @@ describe("ReadClientPortalStandingUseCase", () => {
     // assert
     expect(standing).toEqual({
       journey: found,
-      access: "open",
-      portal: "open",
+      coaching: "active",
+      portal: "reachable",
     });
     expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
   });
 
-  it("keeps the portal open to a client the coach sent back for details", async () => {
+  it("keeps the portal reachable to a client the coach sent back for details", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
       reviewOpenedAt: OPENED_AT,
@@ -370,8 +370,8 @@ describe("ReadClientPortalStandingUseCase", () => {
     // assert
     expect(standing).toEqual({
       journey: found,
-      access: "open",
-      portal: "open",
+      coaching: "active",
+      portal: "reachable",
     });
   });
 
@@ -379,7 +379,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     ["has not seen welcome", journey(null)],
     ["has not submitted onboarding", journey(WELCOME_SEEN_AT)],
   ])(
-    "keeps the portal closed to a client who %s, though her coaching is open",
+    "keeps the portal unreachable to a client who %s, though her coaching is active",
     async (_label, found) => {
       // arrange
       const { useCase } = standingUseCase({
@@ -394,8 +394,8 @@ describe("ReadClientPortalStandingUseCase", () => {
       // assert
       expect(standing).toEqual({
         journey: found,
-        access: "open",
-        portal: "closed",
+        coaching: "active",
+        portal: "unreachable",
       });
     },
   );
@@ -413,7 +413,7 @@ describe("ReadClientPortalStandingUseCase", () => {
       ACCESS_END,
     ],
   ])(
-    "closes the portal to a submitted client whose subscription is %s",
+    "answers her coaching ended and her portal unreachable to a submitted client whose subscription is %s",
     async (_label, subscription, now) => {
       // arrange
       const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
@@ -425,8 +425,8 @@ describe("ReadClientPortalStandingUseCase", () => {
       // assert
       expect(standing).toEqual({
         journey: found,
-        access: "ended",
-        portal: "closed",
+        coaching: "ended",
+        portal: "unreachable",
       });
     },
   );
@@ -446,12 +446,12 @@ describe("ReadClientPortalStandingUseCase", () => {
     // assert
     expect(standing).toEqual({
       journey: found,
-      access: "ended",
-      portal: "closed",
+      coaching: "ended",
+      portal: "unreachable",
     });
   });
 
-  it("opens the portal to a submitted client with no subscription", async () => {
+  it("answers her portal reachable to a submitted client with no subscription", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
     const { useCase } = standingUseCase({
@@ -466,8 +466,8 @@ describe("ReadClientPortalStandingUseCase", () => {
     // assert
     expect(standing).toEqual({
       journey: found,
-      access: "open",
-      portal: "open",
+      coaching: "active",
+      portal: "reachable",
     });
   });
 

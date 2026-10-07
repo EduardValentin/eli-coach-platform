@@ -213,7 +213,7 @@ describe("composeCoachingSalesFeature client onboarding handles", () => {
 describe("composeCoachingSalesFeature resource clients", () => {
   const SUBMITTED_AT = new Date("2026-10-15T10:00:00.000Z");
 
-  it("answers her client with her portal open once she submitted onboarding and her coaching runs", async () => {
+  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
     // arrange
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
@@ -228,10 +228,13 @@ describe("composeCoachingSalesFeature resource clients", () => {
       await handles.resourceClients.findByAuthSubjectId("user_ana");
 
     // assert
-    expect(client).toEqual({ clientId: RESOURCE_CLIENT_ID, portal: "open" });
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "reachable",
+    });
   });
 
-  it("answers her portal closed once her coaching ended", async () => {
+  it("answers her portal unreachable once her coaching ended", async () => {
     // arrange
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
@@ -252,10 +255,13 @@ describe("composeCoachingSalesFeature resource clients", () => {
       await handles.resourceClients.findByAuthSubjectId("user_ana");
 
     // assert
-    expect(client).toEqual({ clientId: RESOURCE_CLIENT_ID, portal: "closed" });
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "unreachable",
+    });
   });
 
-  it("answers her portal closed before she submitted onboarding", async () => {
+  it("answers her portal unreachable before she submitted onboarding", async () => {
     // arrange
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
@@ -270,7 +276,10 @@ describe("composeCoachingSalesFeature resource clients", () => {
       await handles.resourceClients.findByAuthSubjectId("user_ana");
 
     // assert
-    expect(client).toEqual({ clientId: RESOURCE_CLIENT_ID, portal: "closed" });
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "unreachable",
+    });
   });
 
   it("answers no client for a subject bound to none", async () => {

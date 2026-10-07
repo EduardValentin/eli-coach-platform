@@ -68,7 +68,7 @@ export class ClientResourceAccess {
       requester.authSubjectId,
     );
 
-    return client?.portal === "open" ? client.clientId : null;
+    return client?.portal === "reachable" ? client.clientId : null;
   }
 
   mayAddFor(requester: ResourceRequester, clientId: string): boolean {

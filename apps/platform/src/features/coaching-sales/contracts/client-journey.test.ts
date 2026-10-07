@@ -30,7 +30,7 @@ describe("clientJourneyRedirect", () => {
 
     // act
     const redirectTo = clientJourneyRedirect(
-      { step: journeyStep, access: "open" },
+      { step: journeyStep, coaching: "active" },
       requestedPath,
     );
 
@@ -70,7 +70,7 @@ describe("clientJourneyRedirect", () => {
 
       // act
       const redirectTo = clientJourneyRedirect(
-        { step: journeyStep, access: "open" },
+        { step: journeyStep, coaching: "active" },
         requestedPath,
       );
 
@@ -88,7 +88,7 @@ describe("clientJourneyRedirect over a path written differently", () => {
   ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
     // act
     const redirectTo = clientJourneyRedirect(
-      { step, access: "open" },
+      { step, coaching: "active" },
       requestedPath,
     );
 
@@ -101,7 +101,7 @@ describe("clientJourneyRedirect over a path written differently", () => {
     (requestedPath) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step: "approved", access: "ended" },
+        { step: "approved", coaching: "ended" },
         requestedPath,
       );
 
@@ -117,7 +117,7 @@ describe("clientJourneyRedirect once her coaching has ended", () => {
     (step) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step, access: "ended" },
+        { step, coaching: "ended" },
         "/client/ended",
       );
 
@@ -138,7 +138,7 @@ describe("clientJourneyRedirect once her coaching has ended", () => {
     (step, requestedPath) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step, access: "ended" },
+        { step, coaching: "ended" },
         requestedPath,
       );
 
@@ -161,7 +161,7 @@ describe("clientJourneyPortalLink", () => {
       // act
       const link = clientJourneyPortalLink({
         step: journeyStep,
-        access: "open",
+        coaching: "active",
       });
 
       // assert
@@ -176,7 +176,7 @@ describe("clientJourneyPortalLink", () => {
     "offers no onboarding link at the %s step once her coaching has ended",
     (step) => {
       // act
-      const link = clientJourneyPortalLink({ step, access: "ended" });
+      const link = clientJourneyPortalLink({ step, coaching: "ended" });
 
       // assert
       expect(link).toBeNull();
@@ -192,7 +192,7 @@ describe("clientJourneyPortalLink", () => {
       // act
       const link = clientJourneyPortalLink({
         step: journeyStep,
-        access: "open",
+        coaching: "active",
       });
 
       // assert
