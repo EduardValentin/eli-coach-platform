@@ -3,8 +3,10 @@ import {
   MAX_RESOURCE_FILE_BYTES,
   type AddClientResourceResult,
   type AddClientResourceUseCase,
+  type ChangeResourceDetailsUseCase,
   type DownloadClientResourceUseCase,
   type OpenResourcePreviewUseCase,
+  type RemoveClientResourceUseCase,
   type ResourcePreview,
   type ResourceRequester,
 } from "@eli-coach-platform/domain/client-resources";
@@ -13,6 +15,7 @@ import {
   createPrivateInlineFileResponse,
   createSandboxedAttachmentResponse,
   readFormDataRequestBody,
+  readTextRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -20,9 +23,12 @@ import { z } from "zod";
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import {
   addedResourceAnswerSchema,
+  changedResourceAnswerSchema,
   presentClientResource,
   refusedResourceAnswerSchema,
+  removedResourceAnswerSchema,
   resourceDetailsProblemsAnswerSchema,
+  resourceDetailsRequestSchema,
 } from "~/features/client-resources/contracts/client-resources";
 import { receivedResourceUploadOf } from "~/features/client-resources/contracts/resource-upload-parts";
 
@@ -30,12 +36,16 @@ type ClientResourcesControllerOptions = {
   addClientResource: AddClientResourceUseCase;
   openResourcePreview: OpenResourcePreviewUseCase;
   downloadClientResource: DownloadClientResourceUseCase;
+  changeResourceDetails: ChangeResourceDetailsUseCase;
+  removeClientResource: RemoveClientResourceUseCase;
 };
 
 const MULTIPART_ALLOWANCE_BYTES = 1024 * 1024;
 
 const RESOURCE_UPLOAD_MAX_BYTES =
   MAX_RESOURCE_FILE_BYTES + MULTIPART_ALLOWANCE_BYTES;
+
+const RESOURCE_DETAILS_MAX_BYTES = 16 * 1024;
 
 const idSchema = z.uuid();
 
@@ -86,6 +96,80 @@ export class ClientResourcesController {
     });
 
     return addingResponse(result);
+  }
+
+  async changeDetails(
+    args: ActionFunctionArgs,
+    resourceId: string | undefined,
+  ): Promise<Response> {
+    const requester = requireCoach(args);
+    const id = idSchema.safeParse(resourceId);
+
+    if (!id.success) {
+      return notFoundResponse();
+    }
+
+    const details = resourceDetailsRequestSchema.safeParse(
+      await ClientResourcesController.readJsonBody(args.request),
+    );
+
+    if (!details.success) {
+      return createBadRequestResponse("The details could not be read.");
+    }
+
+    const result = await this.options.changeResourceDetails.execute({
+      requester,
+      resourceId: id.data,
+      details: details.data,
+    });
+
+    switch (result.status) {
+      case "changed":
+        return Response.json(
+          changedResourceAnswerSchema.parse({
+            resource: presentClientResource(result.resource),
+          }),
+        );
+      case "invalid-details":
+        return Response.json(
+          resourceDetailsProblemsAnswerSchema.parse({
+            problems: result.problems,
+          }),
+          { status: 400 },
+        );
+      case "not-found":
+        return notFoundResponse();
+      case "failed":
+        return serverErrorResponse();
+    }
+  }
+
+  async remove(
+    args: ActionFunctionArgs,
+    resourceId: string | undefined,
+  ): Promise<Response> {
+    const requester = requireCoach(args);
+    const id = idSchema.safeParse(resourceId);
+
+    if (!id.success) {
+      return notFoundResponse();
+    }
+
+    const result = await this.options.removeClientResource.execute({
+      requester,
+      resourceId: id.data,
+    });
+
+    switch (result.status) {
+      case "removed":
+        return Response.json(
+          removedResourceAnswerSchema.parse({ status: "removed" }),
+        );
+      case "not-found":
+        return notFoundResponse();
+      case "failed":
+        return serverErrorResponse();
+    }
   }
 
   async openPage(
@@ -161,6 +245,22 @@ export class ClientResourcesController {
 
     return createPrivateInlineFileResponse(result.bytes, result.mimeType);
   }
+
+  private static async readJsonBody(request: Request): Promise<unknown> {
+    const body = await readTextRequestBody(request, {
+      maxBytes: RESOURCE_DETAILS_MAX_BYTES,
+    });
+
+    if (body.status !== "valid") {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(body.text);
+    } catch {
+      return undefined;
+    }
+  }
 }
 
 function requireCoach(args: LoaderFunctionArgs): ResourceRequester {
@@ -199,10 +299,14 @@ function addingResponse(result: AddClientResourceResult): Response {
     case "not-found":
       return notFoundResponse();
     case "failed":
-      return new Response("Internal Server Error", { status: 500 });
+      return serverErrorResponse();
   }
 }
 
 function notFoundResponse(): Response {
   return new Response("Not Found", { status: 404 });
+}
+
+function serverErrorResponse(): Response {
+  return new Response("Internal Server Error", { status: 500 });
 }

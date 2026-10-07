@@ -11,6 +11,7 @@ import {
   resourceDownloadPath,
   resourceOpenedPath,
   resourcePagePath,
+  resourcePath,
   resourceThumbnailPath,
 } from "./paths";
 
@@ -52,6 +53,11 @@ describe("client resources paths", () => {
         pattern: CLIENT_RESOURCES_API_PATHS.clientResources,
         link: clientResourcesPath(CLIENT_ID),
         params: { clientId: CLIENT_ID },
+      },
+      {
+        pattern: CLIENT_RESOURCES_API_PATHS.resource,
+        link: resourcePath(RESOURCE_ID),
+        params: { resourceId: RESOURCE_ID },
       },
       {
         pattern: CLIENT_RESOURCES_API_PATHS.resourcePage,

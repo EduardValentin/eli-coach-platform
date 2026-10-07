@@ -165,6 +165,51 @@ describe("PostgresClientResources#recordOpened", () => {
   });
 });
 
+describe("PostgresClientResources#saveDetails", () => {
+  it("writes only the title and description of that resource", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const resources = new PostgresClientResources(database.client);
+    const changed = ClientResource.reconstitute({
+      ...PDF_SNAPSHOT,
+      title: "Week two plan",
+      description: "Swap the oats",
+      openedAt: SPREADSHEET_OPENED_AT,
+    });
+
+    // act
+    await resources.saveDetails(changed);
+
+    // assert
+    expect(database.updates).toEqual([
+      {
+        table: clientResourcesTable,
+        values: { title: "Week two plan", description: "Swap the oats" },
+        filter: eq(clientResourcesTable.id, PDF_ID),
+      },
+    ]);
+  });
+});
+
+describe("PostgresClientResources#remove", () => {
+  it("deletes that resource's row only", async () => {
+    // arrange
+    const database = createDatabaseRecordingDeletes();
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    await resources.remove(PDF_ID);
+
+    // assert
+    expect(database.deletes).toEqual([
+      {
+        table: clientResourcesTable,
+        filter: eq(clientResourcesTable.id, PDF_ID),
+      },
+    ]);
+  });
+});
+
 describe("PostgresClientResources#countUnopenedForClient", () => {
   it("counts that client's resources she has not opened", async () => {
     // arrange
@@ -220,6 +265,19 @@ function createDatabaseRecordingUpdates() {
   } as unknown as DatabaseClient;
 
   return { client, updates };
+}
+
+function createDatabaseRecordingDeletes() {
+  const deletes: unknown[] = [];
+  const client = {
+    delete: (table: unknown) => ({
+      where: async (filter: unknown) => {
+        deletes.push({ table, filter });
+      },
+    }),
+  } as unknown as DatabaseClient;
+
+  return { client, deletes };
 }
 
 function createDatabaseAnswering(rows: readonly unknown[]) {
