@@ -1,0 +1,14 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"},
+  {"waitFor": "[data-parity-root=\"ResourceActionsMenu\"] >> role=menuitem[name=\"Delete\" s]"},
+  {"click": "[data-parity-root=\"ResourceActionsMenu\"] >> role=menuitem[name=\"Edit details\" s]"},
+  {"waitFor": "[role=\"dialog\"] [data-parity=\"resource-file-row\"]"},
+  {"wait": 1200},
+  {"fill": ["[role=\"dialog\"] >> role=textbox[name=\"Title\"]", "Glute warm-up for lower-body days"]},
+  {"fill": ["[role=\"dialog\"] >> role=textbox[name=\"Description\"]", "Ten minutes before every lower-body session."]},
+  {"click": "[role=\"dialog\"] >> role=button[name=\"Save\" s]"},
+  {"waitFor": "[role=\"dialog\"] [role=\"alert\"]"},
+  {"wait": 600}
+]
