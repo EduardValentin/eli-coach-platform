@@ -36,6 +36,10 @@ class InMemoryClientResources implements ClientResources {
 
   async recordOpened(): Promise<void> {}
 
+  async saveDetails(): Promise<void> {}
+
+  async remove(): Promise<void> {}
+
   async countUnopenedForClient(): Promise<number> {
     return 0;
   }
@@ -87,6 +91,8 @@ function createAccess() {
     resourceStorageFailed: vi.fn(),
     resourceListingFailed: vi.fn(),
     resourceOpeningFailed: vi.fn(),
+    resourceChangeFailed: vi.fn(),
+    resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const access = new ClientResourceAccess({ resources, clients, incidents });
@@ -345,6 +351,61 @@ describe("ClientResourceAccess", () => {
         });
       },
     );
+  });
+
+  describe("reaching a resource the coach manages", () => {
+    it("hands the resource to the coach", async () => {
+      // arrange
+      const { access, incidents } = createAccess();
+
+      // act
+      const resource = await access.managedResourceFor(COACH, "resource-1");
+
+      // assert
+      expect(resource).toBe(RESOURCE);
+      expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["the client it is for", ANA, "CLIENT"],
+      [
+        "an account in neither the coach nor the client role",
+        ACCOUNT_WITHOUT_RESOURCE_ROLE,
+        "USER",
+      ],
+    ])(
+      "hands %s nothing and reports the refusal",
+      async (_case, requester, requesterRole) => {
+        // arrange
+        const { access, incidents } = createAccess();
+
+        // act
+        const resource = await access.managedResourceFor(
+          requester,
+          "resource-1",
+        );
+
+        // assert
+        expect(resource).toBeNull();
+        expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
+          requesterRole,
+          clientId: "client-ana",
+          resourceId: "resource-1",
+        });
+      },
+    );
+
+    it("finds no unknown resource, even for the coach, without reporting it", async () => {
+      // arrange
+      const { access, incidents } = createAccess();
+
+      // act
+      const resource = await access.managedResourceFor(COACH, "resource-404");
+
+      // assert
+      expect(resource).toBeNull();
+      expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+    });
   });
 
   describe("an account in neither the coach nor the client role", () => {

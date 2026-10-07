@@ -59,6 +59,22 @@ export class ClientResourceAccess {
     return this.resourceFor(requester, resourceId);
   }
 
+  async managedResourceFor(
+    requester: ResourceRequester,
+    resourceId: string,
+  ): Promise<ClientResource | null> {
+    const resource = await this.options.resources.findById(resourceId);
+
+    if (!resource || reachOf(requester) === "every-client") return resource;
+
+    this.options.incidents.resourceAccessRefused({
+      requesterRole: requester.role,
+      ...resource.storageOwner(),
+    });
+
+    return null;
+  }
+
   async clientWithReachablePortalOf(
     requester: ResourceRequester,
   ): Promise<string | null> {

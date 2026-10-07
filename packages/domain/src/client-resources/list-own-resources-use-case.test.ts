@@ -31,6 +31,10 @@ class InMemoryClientResources implements ClientResources {
 
   async recordOpened(): Promise<void> {}
 
+  async saveDetails(): Promise<void> {}
+
+  async remove(): Promise<void> {}
+
   async countUnopenedForClient(): Promise<number> {
     return 0;
   }
@@ -70,6 +74,8 @@ function createUseCase(
     resourceStorageFailed: vi.fn(),
     resourceListingFailed: vi.fn(),
     resourceOpeningFailed: vi.fn(),
+    resourceChangeFailed: vi.fn(),
+    resourceFilesOrphaned: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const useCase = new ListOwnResourcesUseCase({

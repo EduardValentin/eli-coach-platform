@@ -115,6 +115,13 @@ export class ClientResource {
     return ClientResource.reconstitute({ ...this.snapshot, openedAt: at });
   }
 
+  withDetails(details: ResourceDetails): ClientResource {
+    return ClientResource.reconstitute({
+      ...this.snapshot,
+      ...details.toSnapshot(),
+    });
+  }
+
   isFor(clientId: string): boolean {
     return this.snapshot.clientId === clientId;
   }

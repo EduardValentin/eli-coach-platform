@@ -778,6 +778,67 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a client resource change that could not be written by its ids and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.resourceChangeFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: cause,
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource change could not be written.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_change_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
+  it("logs the files a removed client resource left behind by its ids and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(
+      new Error("EACCES: permission denied, rmdir '/resources/client-1'"),
+      { code: "EACCES" },
+    );
+
+    // act
+    logger.resourceFilesOrphaned({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: cause,
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource files were left behind after its removal.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_files_orphaned",
+        errorClass: "Error",
+        errorCode: "EACCES",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
   it.each([
     ["her client", "client-1"],
     ["no client, when hers could not be read", null],
