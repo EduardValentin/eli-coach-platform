@@ -25,7 +25,7 @@ const buttonClasses = cva(
         destructive:
           "bg-feedback-danger text-text-inverted hover:bg-feedback-danger/90",
         "destructive-outline":
-          "border border-feedback-danger/30 bg-surface-base text-feedback-danger hover:bg-feedback-danger-soft",
+          "border border-feedback-danger/30 bg-surface-base text-feedback-danger hover:bg-feedback-danger/10",
         glass:
           "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm hover:bg-text-inverted/25",
         ink: "bg-text-primary text-surface-base hover:bg-brand-primary",

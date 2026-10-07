@@ -25,7 +25,10 @@ export function SheetDialogHeader({
 
 export function SheetDialogBody({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
+    <div
+      className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8"
+      data-parity="sheet-body"
+    >
       {children}
     </div>
   );

@@ -102,7 +102,9 @@ const UPLOAD_COPY = {
   replace: "Replace",
 } as const;
 
-const OPTIONAL_SUFFIX = [{ text: "(optional)" }];
+const OPTIONAL_SUFFIX = [
+  { parity: "description-optional", text: "(optional)" },
+];
 
 type ResourceFormProps = {
   onClose: () => void;
