@@ -1,0 +1,9 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"},
+  {"waitFor": "[data-parity-root=\"ResourceActionsMenu\"] >> role=menuitem[name=\"Delete\" s]"},
+  {"wait": 400},
+  {"press": "Escape"},
+  {"wait": 400}
+]

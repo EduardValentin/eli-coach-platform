@@ -7,7 +7,7 @@
   {"waitFor": "[role=\"dialog\"] [data-parity=\"resource-file-row\"]"},
   {"wait": 1200},
   {"fill": ["[role=\"dialog\"] >> role=textbox[name=\"Title\"]", "Glute warm-up for lower-body days"]},
-  {"fill": ["[role=\"dialog\"] >> role=textbox[name=\"Description\"]", "Ten minutes before every lower-body session."]},
+  {"fill": ["[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]", "Ten minutes before every lower-body session."]},
   {"click": "[role=\"dialog\"] >> role=button[name=\"Save\" s]"},
   {"waitFor": "[data-sonner-toast]"},
   {"wait": 800}
