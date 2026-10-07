@@ -8,8 +8,10 @@ import {
   resourceDetailsFrom,
   titleFromFileName,
   type Resource,
+  type ResourceAddition,
   type ResourceDetails,
   type ResourceFileKind,
+  type ServerDecidedRefusal,
 } from '../../domain/resources';
 import type { NewResourceUpload } from '../../hooks/useClientResources';
 import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
@@ -41,13 +43,45 @@ import {
   SheetDialogHeader,
 } from '../workout/ResponsiveSheetDialog';
 
+type AddResource = (
+  upload: NewResourceUpload,
+  onProgress: (fraction: number) => void,
+) => Promise<ResourceAddition>;
+
 export type ResourceFormMode =
-  | { kind: 'add'; onAdd: (upload: NewResourceUpload, onProgress: (fraction: number) => void) => Promise<Resource> }
+  | { kind: 'add'; onAdd: AddResource }
   | { kind: 'edit'; resource: Resource; onSave: (details: ResourceDetails) => Promise<Resource> };
 
 type ResourceFormValues = { title: string; description: string; tags: string[] };
 
-type Submission = { state: 'idle' } | { state: 'sending'; progress: number } | { state: 'failed' };
+type Submission =
+  | { state: 'idle' }
+  | { state: 'sending'; progress: number }
+  | { state: 'preparing' }
+  | { state: 'failed' };
+
+const IDLE: Submission = { state: 'idle' };
+
+function isBusy(submission: Submission): boolean {
+  return submission.state === 'sending' || submission.state === 'preparing';
+}
+
+function submissionAt(progress: number): Submission {
+  return progress < 1 ? { state: 'sending', progress } : { state: 'preparing' };
+}
+
+type FileRowState =
+  | { state: 'chosen' }
+  | { state: 'sending'; progress: number }
+  | { state: 'preparing' };
+
+const FILE_CHOSEN: FileRowState = { state: 'chosen' };
+
+function fileRowStateOf(submission: Submission): FileRowState {
+  if (submission.state === 'sending' || submission.state === 'preparing') return submission;
+
+  return FILE_CHOSEN;
+}
 
 const COPY = {
   add: {
@@ -68,40 +102,75 @@ const COPY = {
 
 const NO_FILE_MESSAGE = 'Choose a file to add.';
 
+const PREPARING_LABEL = 'Preparing pages…';
+
+type FormCopy = (typeof COPY)[keyof typeof COPY];
+
+function submitLabelOf(submission: Submission, copy: FormCopy): string {
+  if (submission.state === 'sending') return copy.sending;
+  if (submission.state === 'preparing') return PREPARING_LABEL;
+
+  return copy.submit;
+}
+
 type ChosenFile = { name: string; sizeBytes: number; kind: ResourceFileKind };
 
 type ChosenUpload = { file: File; kind: ResourceFileKind };
 
+const PREPARING_HINT = 'Large files can take a minute or two.';
+
+function FileRowStatus({ file, row }: { file: ChosenFile; row: FileRowState }) {
+  const hintId = useId();
+
+  if (row.state === 'sending') {
+    return (
+      <Progress aria-label="Upload progress" className="h-1.5" value={row.progress * 100} />
+    );
+  }
+  if (row.state === 'preparing') {
+    return (
+      <>
+        <Progress aria-describedby={hintId} aria-label="Preparing pages" className="h-1.5" />
+        <p className="text-sm text-text-secondary" id={hintId}>
+          {PREPARING_HINT}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <p className="text-sm text-text-secondary tabular-nums">{formatFileSize(file.sizeBytes)}</p>
+  );
+}
+
 function ResourceFileRow({
   file,
-  progress,
+  row,
   action,
 }: {
   file: ChosenFile;
-  progress: number | null;
+  row: FileRowState;
   action?: ReactNode;
 }) {
   const Glyph = RESOURCE_KIND_GLYPHS[file.kind];
 
   return (
-    <div className="flex items-center gap-3 rounded-field border border-control-border-soft bg-surface-base p-3">
+    <div
+      className="flex items-center gap-3 rounded-field border border-control-border-soft bg-surface-base p-3"
+      data-parity="resource-file-row"
+    >
       <span
         aria-hidden="true"
         className="flex size-10 shrink-0 items-center justify-center rounded-field bg-surface-quiet text-text-secondary"
+        data-parity="resource-file-glyph"
       >
         <Glyph className="size-5" />
       </span>
       <div className="grid min-w-0 flex-1 gap-1">
         <p className="truncate text-sm font-medium text-text-primary">{file.name}</p>
-        {progress === null ? (
-          <p className="text-sm text-text-secondary tabular-nums">
-            {formatFileSize(file.sizeBytes)}
-          </p>
-        ) : (
-          <Progress aria-label="Upload progress" className="h-1.5" value={progress * 100} />
-        )}
+        <FileRowStatus file={file} row={row} />
       </div>
-      {progress === null && action}
+      {row.state === 'chosen' && action}
     </div>
   );
 }
@@ -119,10 +188,14 @@ function FileFieldError({ id, message }: { id: string; message: string | null })
 function ResourceForm({
   mode,
   vocabulary,
+  submission,
+  onSubmissionChange,
   onClose,
 }: {
   mode: ResourceFormMode;
   vocabulary: readonly string[];
+  submission: Submission;
+  onSubmissionChange: (submission: Submission) => void;
   onClose: () => void;
 }) {
   const fileInputId = useId();
@@ -131,7 +204,6 @@ function ResourceForm({
   const copy = COPY[mode.kind];
   const [upload, setUpload] = useState<ChosenUpload | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [submission, setSubmission] = useState<Submission>({ state: 'idle' });
   const form = useForm<ResourceFormValues>({
     defaultValues: {
       title: editing?.title ?? '',
@@ -140,7 +212,7 @@ function ResourceForm({
     },
   });
   const values = form.watch();
-  const sending = submission.state === 'sending';
+  const busy = isBusy(submission);
   const typedDetails = resourceDetailsFrom(values);
   const unchanged =
     editing !== null && (typedDetails === null || !detailsDiffer(editing, typedDetails));
@@ -163,24 +235,38 @@ function ResourceForm({
     setUpload({ file: candidate, kind: check.kind });
   };
 
-  const send = async (details: ResourceDetails) => {
-    if (mode.kind === 'edit') return mode.onSave(details);
+  const addChosenFile = async (
+    onAdd: AddResource,
+    details: ResourceDetails,
+  ): Promise<ServerDecidedRefusal | null> => {
     if (!upload) throw new Error(NO_FILE_MESSAGE);
 
-    return mode.onAdd({ file: upload.file, details }, (progress) =>
-      setSubmission({ state: 'sending', progress }),
+    const addition = await onAdd({ file: upload.file, details }, (progress) =>
+      onSubmissionChange(submissionAt(progress)),
     );
+
+    return addition.status === 'refused' ? addition.refusal : null;
   };
 
   const save = form.handleSubmit(async (formValues) => {
     const details = resourceDetailsFrom(formValues);
     if (!details || (mode.kind === 'add' && !upload)) return;
 
-    setSubmission({ state: 'sending', progress: 0 });
+    onSubmissionChange({ state: 'sending', progress: 0 });
+    let refusal: ServerDecidedRefusal | null = null;
     try {
-      await send(details);
+      if (mode.kind === 'edit') {
+        await mode.onSave(details);
+      } else {
+        refusal = await addChosenFile(mode.onAdd, details);
+      }
     } catch {
-      setSubmission({ state: 'failed' });
+      onSubmissionChange({ state: 'failed' });
+      return;
+    }
+    if (refusal) {
+      setFileError(UPLOAD_REFUSAL_MESSAGES[refusal]);
+      onSubmissionChange(IDLE);
       return;
     }
     onClose();
@@ -219,7 +305,7 @@ function ResourceForm({
                     )
                   }
                   file={chosenFile}
-                  progress={submission.state === 'sending' && !editing ? submission.progress : null}
+                  row={editing ? FILE_CHOSEN : fileRowStateOf(submission)}
                 />
               ) : (
                 <FileDropzone
@@ -293,16 +379,16 @@ function ResourceForm({
             <SheetDialogActions>
               <Button
                 className="w-full sm:w-auto"
-                disabled={sending || unchanged}
+                disabled={busy || unchanged}
                 size="md"
                 type="submit"
                 variant="primary"
               >
-                {sending ? copy.sending : copy.submit}
+                {submitLabelOf(submission, copy)}
               </Button>
               <Button
                 className="w-full sm:w-auto"
-                disabled={sending}
+                disabled={busy}
                 onClick={onClose}
                 size="md"
                 type="button"
@@ -328,12 +414,15 @@ export function ResourceFormDialog({
   onClose: () => void;
 }) {
   const [shown, setShown] = useState<{ mode: ResourceFormMode; session: number } | null>(null);
+  const [submission, setSubmission] = useState<Submission>(IDLE);
   if (mode !== null && mode !== shown?.mode) {
     setShown({ mode, session: (shown?.session ?? 0) + 1 });
+    setSubmission(IDLE);
   }
 
   return (
     <ResponsiveSheetDialog
+      dismissal={isBusy(submission) ? 'locked' : 'allowed'}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
@@ -345,6 +434,8 @@ export function ResourceFormDialog({
           key={shown.session}
           mode={shown.mode}
           onClose={onClose}
+          onSubmissionChange={setSubmission}
+          submission={submission}
           vocabulary={vocabulary}
         />
       )}

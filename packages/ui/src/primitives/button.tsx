@@ -44,8 +44,10 @@ const buttonClasses = cva(
         lg: "h-(--size-control-lg) px-8 text-base",
         "lg-tight": "h-(--size-control-lg) px-4 text-base",
         xl: "h-(--size-control-xl) px-12 text-lg",
-        "icon-xs": "size-(--size-control-xs) rounded-full",
-        "icon-sm": "size-(--size-control-sm) rounded-full",
+        "icon-xs":
+          "size-(--size-control-xs) rounded-full [&_svg:not([class*='size-'])]:size-4",
+        "icon-sm":
+          "size-(--size-control-sm) rounded-full [&_svg:not([class*='size-'])]:size-4",
         "icon-md":
           "size-(--size-control-md) rounded-full [&_svg:not([class*='size-'])]:size-5",
       },

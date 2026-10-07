@@ -54,6 +54,7 @@ pnpm install
 pnpm secrets:local:prepare        # create gitignored /.env and /.env.postgres
 pnpm store:assets:local:prepare   # create the gitignored store asset root
 pnpm client:media:local:prepare   # create the gitignored progress photo root
+pnpm client:resources:local:prepare   # create the gitignored client resource root
 pnpm db:bootstrap:local           # create the local database and roles
 ```
 

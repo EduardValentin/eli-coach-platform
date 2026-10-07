@@ -7,6 +7,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@napi-rs/canvas": "catalog:",
       "@types/node": "catalog:",
       "brace-expansion@>=5.0.0 <5.0.11": "5.0.11",
       "compression": "1.8.2",
@@ -19,6 +20,7 @@
     "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/test-support/src packages/ui/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
     "client:media:local:prepare": "./scripts/dev/prepare_local_client_media.sh",
+    "client:resources:local:prepare": "./scripts/dev/prepare_local_client_resources.sh",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
     "db:generate": "pnpm --filter @eli-coach-platform/platform run db:generate",
     "db:migrate": "pnpm --filter @eli-coach-platform/platform run db:migrate",
@@ -43,7 +45,7 @@
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "validate": "pnpm validate:unit && pnpm test:integration",
-    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
+    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build CLIENT_RESOURCE_ROOT=/tmp/eli-coach-client-resources-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {

@@ -8,11 +8,16 @@ import { Dialog as RadixDialog } from "radix-ui";
 import { useRef, type ReactNode } from "react";
 
 import { cn } from "../lib/cn";
+import {
+  preventDismissalWhenLocked,
+  type DialogDismissal,
+} from "../lib/dialog-frame";
 
 type BottomSheetProps = {
   children: ReactNode;
   className?: string;
   description?: string;
+  dismissal?: DialogDismissal;
   id?: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -42,8 +47,16 @@ function isFocusLost() {
 }
 
 export function BottomSheet(props: BottomSheetProps) {
-  const { children, className, description, id, onOpenChange, open, title } =
-    props;
+  const {
+    children,
+    className,
+    description,
+    dismissal = "allowed",
+    id,
+    onOpenChange,
+    open,
+    title,
+  } = props;
   const shouldReduceMotion = useReducedMotionConfig() === true;
   const opener = useRef<HTMLElement | null>(null);
 
@@ -70,21 +83,28 @@ export function BottomSheet(props: BottomSheetProps) {
         initial: { opacity: 0 },
         transition: SCRIM_TRANSITION,
       };
+  const preventWhenLocked = preventDismissalWhenLocked(dismissal);
+  const dragToDismissProps =
+    dismissal === "locked"
+      ? {}
+      : {
+          drag: "y" as const,
+          dragConstraints: { bottom: 0, top: 0 },
+          dragElastic: { bottom: 0.7, top: 0 },
+          onDragEnd: (_event: unknown, info: PanInfo) => {
+            if (isDismissingDrag(info)) {
+              onOpenChange(false);
+            }
+          },
+        };
   const sheetMotionProps = shouldReduceMotion
     ? {}
     : {
         animate: { y: 0 },
-        drag: "y" as const,
-        dragConstraints: { bottom: 0, top: 0 },
-        dragElastic: { bottom: 0.7, top: 0 },
         exit: { y: "100%" },
         initial: { y: "100%" },
-        onDragEnd: (_event: unknown, info: PanInfo) => {
-          if (isDismissingDrag(info)) {
-            onOpenChange(false);
-          }
-        },
         transition: SHEET_TRANSITION,
+        ...dragToDismissProps,
       };
 
   return (
@@ -103,6 +123,8 @@ export function BottomSheet(props: BottomSheetProps) {
               id={id}
               {...descriptionAttributes}
               onCloseAutoFocus={returnFocusToOpener}
+              onEscapeKeyDown={preventWhenLocked}
+              onInteractOutside={preventWhenLocked}
               onOpenAutoFocus={rememberOpener}
             >
               <motion.div

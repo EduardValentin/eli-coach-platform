@@ -3,6 +3,7 @@ import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessm
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
+import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
@@ -13,6 +14,7 @@ type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
+  ClientResourceIncidents &
   ClientRosterIncidents &
   CoachingSalesIncidents &
   CoachingSubscriptionIncidents &
@@ -300,6 +302,55 @@ export function createConsoleLogger(): ConsoleLogger {
         },
       );
     },
+    resourceAccessRefused: ({ clientId, requesterRole, resourceId }) => {
+      console.warn("Client resource access refused.", {
+        clientId,
+        eventCategory: "client_resource_access_refused",
+        requesterRole,
+        resourceId,
+      });
+    },
+    resourceRefused: ({ clientId, reason, receivedBytes }) => {
+      console.warn("Client resource refused.", {
+        clientId,
+        eventCategory: "client_resource_refused",
+        reason,
+        receivedBytes,
+      });
+    },
+    resourceListingFailed: ({ clientId, error }) => {
+      console.error("Client resources could not be listed.", {
+        clientId,
+        errorCategory: "client_resource_listing_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
+    resourceStorageFailed: ({ clientId, error, resourceId }) => {
+      console.error("Client resource could not be stored.", {
+        clientId,
+        errorCategory: "client_resource_storage_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        resourceId,
+      });
+    },
+    resourceStored: ({
+      clientId,
+      format,
+      pageCount,
+      resourceId,
+      sizeBytes,
+    }) => {
+      console.info("Client resource stored.", {
+        clientId,
+        eventCategory: "client_resource_stored",
+        format,
+        pageCount,
+        resourceId,
+        sizeBytes,
+      });
+    },
     retryableDeliveryAuditPending: ({ requestId }) => {
       console.error("Store retryable delivery audit requires reconciliation.", {
         errorCategory: "store_delivery_retryable_audit_pending",
@@ -380,4 +431,10 @@ function describeError(
 
 function errorClassOf(error: unknown): string {
   return error instanceof Error ? error.name : typeof error;
+}
+
+function errorCodeOf(error: unknown): { errorCode?: string } {
+  if (!(error instanceof Error) || !("code" in error)) return {};
+
+  return typeof error.code === "string" ? { errorCode: error.code } : {};
 }

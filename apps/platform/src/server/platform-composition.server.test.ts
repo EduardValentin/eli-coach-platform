@@ -38,6 +38,7 @@ function createRuntimeEnvironment() {
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
+    CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
   });
 }
 

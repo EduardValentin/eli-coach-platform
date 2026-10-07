@@ -102,6 +102,14 @@ module.exports = {
       to: { path: `${FEATURES}client-profile/` },
     },
     {
+      name: "coaching-sales-never-reaches-client-resources",
+      comment:
+        "client-resources builds on coaching-sales, so coaching-sales never imports client-resources, not even its public folders.",
+      severity: "error",
+      from: { path: `${FEATURES}coaching-sales/` },
+      to: { path: `${FEATURES}client-resources/` },
+    },
+    {
       name: "client-profile-never-reaches-client-onboarding",
       comment:
         "client-onboarding builds on client-profile, so client-profile never imports client-onboarding, not even its public folders.",
@@ -262,12 +270,28 @@ module.exports = {
       to: { path: "(^|/)sharp(/|$)" },
     },
     {
+      name: "pdf-rendering-confined",
+      comment:
+        "PDF rendering stays behind the infrastructure documents concern: nothing else names pdfjs-dist or @napi-rs/canvas.",
+      severity: "error",
+      from: { pathNot: ["^packages/infrastructure/src/documents/"] },
+      to: { path: "(^|/)(pdfjs-dist|@napi-rs/canvas)(/|$)" },
+    },
+    {
       name: "feature-api-to-data",
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
       severity: "error",
       from: { path: `${FEATURES}[^/]+/api/` },
       to: { path: `${FEATURES}[^/]+/(data|email)/` },
+    },
+    {
+      name: "feature-api-never-imports-ui",
+      comment:
+        "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in contracts/ or a package's browser entry.",
+      severity: "error",
+      from: { path: `${FEATURES}[^/]+/api/` },
+      to: { path: `${FEATURES}[^/]+/ui/` },
     },
     {
       name: "root-registry-to-server",

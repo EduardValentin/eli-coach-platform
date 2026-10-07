@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -131,5 +132,31 @@ describe("BottomSheet", () => {
     // assert
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open sheet" })).toHaveFocus();
+  });
+
+  it("stays open on Escape and outside presses while dismissal is locked", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const closeRequests: boolean[] = [];
+    render(
+      <MotionConfig reducedMotion="always">
+        <BottomSheet
+          dismissal="locked"
+          onOpenChange={(open) => closeRequests.push(open)}
+          open
+          title="More"
+        >
+          <a href="/client/cycle">Cycle</a>
+        </BottomSheet>
+      </MotionConfig>,
+    );
+
+    // act
+    await user.keyboard("{Escape}");
+    fireEvent.pointerDown(document.body);
+
+    // assert
+    expect(closeRequests).toEqual([]);
+    expect(screen.getByRole("dialog", { name: "More" })).toBeInTheDocument();
   });
 });

@@ -32,7 +32,7 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `FormField` | Label, control, hint and error with the `aria-describedby`/`aria-invalid` wiring done once | No variants |
 | `TagInput` | Multi-value tag field: the chosen tags as removable chips (`surface-neutral`, each remove button named "Remove {tag}") inside a frame with the `Input` look that grows as chips wrap, and a WAI-ARIA combobox whose `Popover` listbox suggests existing tags containing the typed text in any casing. Enter or a comma commits, Backspace on empty text removes the last chip, a tag typed in other casing resolves to the existing one, and "Create “x”" appears only for a tag that does not exist yet. Reference app only | No variants |
-| `FileDropzone`, `FilePickerButton` | A native file input behind a labelled zone opened by click, keyboard or a dropped file: dashed `control-border-soft` border on the quiet surface, `primary` border on `primary-soft` while a file is held over it, the accepted types and size limit stated once inside it. `FilePickerButton` is the same input behind an `xs` outline button, the Replace of a chosen file. Reference app only | No variants |
+| `FileDropzone`, `FilePickerButton` | A native file input behind a labelled zone opened by click, keyboard or a dropped file: dashed `control-border-soft` border on the quiet surface, `primary` border on `primary-soft` while a file is held over it, the accepted types and size limit stated once inside it. `FilePickerButton` is the same input behind an `xs` outline button, the Replace of a chosen file. | No variants |
 | `RadioGroup` | Fieldset-grouped radio options with a legend | No variants |
 | `Stepper` | Wizard progress with a spoken step count and decorative bars | No variants |
 | `Slider` | Single-thumb range control, labelled on the thumb Radix gives the role to | No variants |
@@ -41,9 +41,12 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `TextArea` | Multi-line form control with the `Input` look | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
 | `DateField` | Popover date picker built on `BrandCalendar` over `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph, picking one day. Reference app only | No variants |
+| `PortalBackLink` | The quiet link above a portal page back to the page it was reached from: a 16px left arrow and its text in secondary ink, primary ink on hover, with the gap to the page below set once | No variants |
 | `PortalPageHeader` | The one page header of both portals: a serif `<h1>`, an optional subtitle and an optional action slot, with the gap to the content set once | No variants |
 | `PortalShell` | Portal chrome: sidebar, mobile top bar, a drawer or a tab bar with a More sheet, main landmark | No variants |
-| `BottomSheet` | Modal sheet that slides up from the bottom edge over a strong scrim: a grab handle, a spoken title, dismissal by a downward drag or flick, Escape or the scrim, focus back on the control that opened it, and no slide or drag under reduced motion | No variants |
+| `BottomSheet` | Modal sheet that slides up from the bottom edge over a strong scrim: a grab handle, a spoken title, dismissal by a downward drag or flick, Escape or the scrim, focus back on the control that opened it, and no slide or drag under reduced motion. `dismissal="locked"` holds it open while work it started is in flight: no drag, Escape or scrim closes it | No variants |
+| `Dialog`, `ResponsiveSheetDialog` | `Dialog` is the centred modal; `ResponsiveSheetDialog` is the same content as a `Dialog` from 768px and a `BottomSheet` below it. Both take `dismissal`: `"allowed"` by default, and `"locked"` while work the dialog started is in flight, when Escape and a click outside do nothing and the close button is not offered | `dismissal`: `allowed`, `locked` |
+| `Progress` | A thin bar on the `primary/20` track: determinate, its `primary` fill sliding to the value it is given; indeterminate when it has no value, a third-width fill sweeping across, which under reduced motion stands still as a full-width fill at half opacity | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
 

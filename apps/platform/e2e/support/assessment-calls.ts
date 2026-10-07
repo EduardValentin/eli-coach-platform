@@ -1,6 +1,7 @@
 import type pg from "pg";
 
 import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
+import { removeClientResourceFilesOf } from "./client-resource-files";
 import { createE2eDatabasePool } from "./database";
 import { removeProgressPhotoFilesOf } from "./progress-photo-files";
 import { runEmailPrefix } from "./run-id";
@@ -44,6 +45,7 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   clientOwnedRows("onboarding drafts", "client_onboarding_drafts"),
   clientOwnedRows("onboarding submissions", "client_onboarding_submissions"),
   clientOwnedRows("progress photos", "client_progress_photos"),
+  clientOwnedRows("client resources", "client_resources"),
   clientOwnedRows("measurements", "client_measurements"),
   clientOwnedRows("unit preferences", "client_unit_preferences"),
   clientOwnedRows("detail requests", "client_onboarding_detail_requests"),
@@ -155,6 +157,9 @@ export async function cleanUpRunAssessmentCalls(
     console.log(`${logPrefix} Database: ${summarize(removed)}`);
     console.log(
       `${logPrefix} Progress photo files: ${removeProgressPhotoFilesOf(clientIds)}`,
+    );
+    console.log(
+      `${logPrefix} Client resource files: ${removeClientResourceFilesOf(clientIds)}`,
     );
 
     return { allCleaned: true };

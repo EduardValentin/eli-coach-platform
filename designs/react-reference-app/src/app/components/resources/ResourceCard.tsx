@@ -19,7 +19,11 @@ function TagPreview({ tags, id }: { tags: readonly string[]; id: string }) {
   const hidden = tags.length - SHOWN_TAGS;
 
   return (
-    <span className="flex min-w-0 flex-wrap items-center gap-1 self-start px-0.5" id={id}>
+    <span
+      className="flex min-w-0 flex-wrap items-center gap-1 self-start px-0.5"
+      data-parity="resource-tags"
+      id={id}
+    >
       {tags.slice(0, SHOWN_TAGS).map((tag) => (
         <Badge className="max-w-full" key={tag} tone="brand-secondary">
           <span className="truncate">{tag}</span>
@@ -112,7 +116,10 @@ export function ResourceCard({
         {hasTags && <TagPreview id={tagsId} tags={tags} />}
       </button>
       {menu && (
-        <div className="col-start-1 row-start-2 -my-2 mr-1 self-center justify-self-end sm:mr-1.5">
+        <div
+          className="col-start-1 row-start-2 -my-2 mr-1 self-center justify-self-end sm:mr-1.5"
+          data-parity="resource-menu"
+        >
           {menu}
         </div>
       )}

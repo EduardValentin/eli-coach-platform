@@ -1,9 +1,8 @@
-import { Readable } from "node:stream";
-
 import type {
   OpenProgressPhotoUseCase,
   RemoveProgressPhotoUseCase,
 } from "@eli-coach-platform/domain/client-profile";
+import { createPrivateInlineFileResponse } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
@@ -39,20 +38,7 @@ export class ProgressPhotoController {
       return notFoundResponse();
     }
 
-    return new Response(
-      Readable.toWeb(
-        Readable.from([result.bytes]),
-      ) as ReadableStream<Uint8Array>,
-      {
-        headers: {
-          "Cache-Control": "private, no-store",
-          "Content-Length": String(result.bytes.byteLength),
-          "Content-Security-Policy": "sandbox; default-src 'none'",
-          "Content-Type": result.mimeType,
-          "X-Content-Type-Options": "nosniff",
-        },
-      },
-    );
+    return createPrivateInlineFileResponse(result.bytes, result.mimeType);
   }
 
   async remove(

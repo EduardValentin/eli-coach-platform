@@ -4,7 +4,7 @@ import { cn } from "../lib/cn";
 import { describedByOf } from "../lib/described-by";
 import { FieldError } from "./field-error";
 import { FieldHint } from "./field-hint";
-import { Label, LabelSuffix } from "./label";
+import { Label, LabelSuffix, type LabelLayout } from "./label";
 
 type FieldLabelSuffix = { parity?: string; text: string };
 
@@ -26,6 +26,7 @@ type FieldLayoutProps = Omit<
   hint?: string;
   hintPlacement?: FieldHintPlacement;
   label: React.ReactNode;
+  labelLayout?: LabelLayout;
   suffixes?: readonly FieldLabelSuffix[];
 };
 
@@ -37,6 +38,7 @@ export function FieldLayout({
   hint,
   hintPlacement = "before-control",
   label,
+  labelLayout = "wrap",
   suffixes = [],
   ...props
 }: FieldLayoutProps) {
@@ -48,7 +50,7 @@ export function FieldLayout({
 
   return (
     <div className={cn("grid gap-2", className)} {...props}>
-      <Label htmlFor={controlId} invalid={invalid} layout="wrap">
+      <Label htmlFor={controlId} invalid={invalid} layout={labelLayout}>
         {label}
         {suffixes.map((suffix) => (
           <LabelSuffix data-parity={suffix.parity} key={suffix.text}>

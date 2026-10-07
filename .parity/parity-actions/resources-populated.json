@@ -1,0 +1,4 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 400}
+]

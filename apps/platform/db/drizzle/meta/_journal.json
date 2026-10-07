@@ -267,6 +267,13 @@
       "when": 1791204486674,
       "tag": "0037_coaching_subscription_payment_intent",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791294917334,
+      "tag": "0038_client_resources",
+      "breakpoints": true
     }
   ]
 }

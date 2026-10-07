@@ -13,6 +13,8 @@ export const RESOURCE_KIND_LABELS: Record<
 export const UPLOAD_REFUSAL_MESSAGES: Record<UploadRefusal, string> = {
   'unsupported-type': 'That file type can’t be added.',
   'too-large': 'That file is over 25 MB.',
+  'too-many-pages': 'That PDF has more than 50 pages.',
+  unreadable: 'That PDF can’t be opened. It may be damaged or password protected.',
 };
 
 export const RESOURCE_UPLOAD_HINT = 'PDF, Word, Excel or image · up to 25 MB';

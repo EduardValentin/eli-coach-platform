@@ -4,6 +4,7 @@ import { accountsContext } from "~/features/accounts/server/guards/accounts-cont
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
@@ -21,6 +22,7 @@ export function createFeatureContextMiddleware(
     context.set(assessmentCallsContext, container.assessmentCalls.feature);
     context.set(clientOnboardingContext, container.clientOnboarding);
     context.set(clientProfileContext, container.clientProfile.feature);
+    context.set(clientResourcesContext, container.clientResources);
     context.set(coachingSalesContext, container.coachingSales.feature);
     context.set(platformContext, {
       featureFlags: container.platform.featureFlags,

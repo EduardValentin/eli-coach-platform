@@ -29,4 +29,15 @@ describe("Textarea", () => {
       "resize-none",
     );
   });
+
+  it("lets the field shrink inside a grid or flex row like the inputs", () => {
+    // arrange
+    // act
+    render(<Textarea aria-label="Notes" />);
+
+    // assert
+    expect(screen.getByRole("textbox", { name: "Notes" })).toHaveClass(
+      "min-w-0",
+    );
+  });
 });

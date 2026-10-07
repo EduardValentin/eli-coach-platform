@@ -1,4 +1,5 @@
 import { subDays } from 'date-fns';
+import { AWAITING_REVIEW_CALL_ID } from '../context/ClientJourneyContext';
 import type { Resource, ResourceFileKind } from '../domain/resources';
 import { documentPageArt, plateGuideArt } from '../utils/resourcePageArt';
 import {
@@ -163,6 +164,51 @@ const SAMPLE_SPECS: SampleSpec[] = [
     sizeBytes: 480_000,
     pdfPages: 2,
     daysAgo: 20,
+    opened: false,
+  },
+  {
+    clientId: AWAITING_REVIEW_CALL_ID,
+    title: 'Plate portions guide',
+    description: 'Half the plate vegetables, a quarter protein, a quarter carbs.',
+    tags: ['Nutrition'],
+    fileName: 'plate-portions.png',
+    kind: 'image',
+    sizeBytes: 412_000,
+    daysAgo: 1,
+    opened: false,
+  },
+  {
+    clientId: AWAITING_REVIEW_CALL_ID,
+    title: 'Glute activation warm-up',
+    description: 'Run through this before every lower-body session. Ten minutes is enough.',
+    tags: ['Training', 'Glutes'],
+    fileName: 'glute-activation-warm-up.pdf',
+    kind: 'pdf',
+    sizeBytes: 1_840_000,
+    pdfPages: 6,
+    daysAgo: 2,
+    opened: false,
+  },
+  {
+    clientId: AWAITING_REVIEW_CALL_ID,
+    title: 'Food diary template',
+    description: 'Note what you eat for three ordinary days before we start.',
+    tags: ['Nutrition', 'Tracking'],
+    fileName: 'food-diary-template.docx',
+    kind: 'word',
+    sizeBytes: 310_000,
+    daysAgo: 4,
+    opened: false,
+  },
+  {
+    clientId: AWAITING_REVIEW_CALL_ID,
+    title: 'Weekly macro tracker',
+    description: 'Fill in one row a day. Totals add up on their own.',
+    tags: ['Nutrition', 'Tracking'],
+    fileName: 'weekly-macro-tracker.xlsx',
+    kind: 'excel',
+    sizeBytes: 96_000,
+    daysAgo: 6,
     opened: false,
   },
 ];

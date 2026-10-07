@@ -1,6 +1,6 @@
-type StorageKeyOwner = Record<"clientId" | "entryId" | "photoId", string>;
+import { isStorageKeySegment } from "./storage-key-segment.server";
 
-const STORAGE_KEY_SEGMENT = /^[A-Za-z0-9_-]+$/;
+type StorageKeyOwner = Record<"clientId" | "entryId" | "photoId", string>;
 
 export const PHOTO_ALREADY_STORED_MESSAGE =
   "A progress photo is already stored for this owner.";
@@ -8,7 +8,7 @@ export const PHOTO_ALREADY_STORED_MESSAGE =
 export function progressPhotoStorageKey(owner: StorageKeyOwner): string {
   const segments = [owner.clientId, owner.entryId, owner.photoId];
 
-  if (!segments.every((segment) => STORAGE_KEY_SEGMENT.test(segment))) {
+  if (!segments.every(isStorageKeySegment)) {
     throw new Error("Invalid progress photo owner.");
   }
 

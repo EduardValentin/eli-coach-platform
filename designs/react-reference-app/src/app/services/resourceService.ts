@@ -3,8 +3,10 @@ import {
   coachTagVocabulary,
   hasPagePreview,
   type Resource,
+  type ResourceAddition,
   type ResourceDetails,
   type ResourceFileKind,
+  type ServerDecidedRefusal,
 } from '../domain/resources';
 import { resolveTag, uniqueTags } from '../domain/tags';
 
@@ -14,12 +16,26 @@ export type ResourceSeed = (typeof RESOURCE_SEEDS)[number];
 export const RESOURCE_LOAD_OUTCOMES = ['works', 'fails'] as const;
 export type ResourceLoad = (typeof RESOURCE_LOAD_OUTCOMES)[number];
 
-export const RESOURCE_UPLOAD_OUTCOMES = ['works', 'fails'] as const;
+export const RESOURCE_UPLOAD_OUTCOMES = [
+  'works',
+  'fails',
+  'holds',
+  'too-many-pages',
+  'unreadable',
+] as const;
 export type ResourceUpload = (typeof RESOURCE_UPLOAD_OUTCOMES)[number];
+
+type ServerAnswer = Exclude<ResourceUpload, 'holds'>;
 
 export const RESOURCE_LATENCY_MS = 600;
 export const UPLOAD_STEP_MS = 250;
 export const UPLOAD_STEPS = 5;
+export const PREPARING_MS = 800;
+
+const PDF_REFUSAL_FOR: Partial<Record<ResourceUpload, ServerDecidedRefusal>> = {
+  'too-many-pages': 'too-many-pages',
+  unreadable: 'unreadable',
+};
 
 export const RESOURCES_UNAVAILABLE = 'Resources could not be loaded.';
 export const UPLOAD_FAILED = 'The upload did not go through.';
@@ -51,6 +67,15 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function serverRefusalOf(
+  kind: ResourceFileKind,
+  outcome: ServerAnswer,
+): ServerDecidedRefusal | null {
+  if (kind !== 'pdf') return null;
+
+  return PDF_REFUSAL_FOR[outcome] ?? null;
+}
+
 function placeholderFile(resource: Resource): Blob {
   return new Blob([`${resource.title}\n\nA placeholder for ${resource.file.name}.`], {
     type: 'text/plain',
@@ -60,6 +85,7 @@ function placeholderFile(resource: Resource): Blob {
 export class ResourceServer {
   private records: Resource[];
   private readonly files = new Map<string, File>();
+  private readonly heldAnswers = new Set<(answer: ServerAnswer) => void>();
   private readonly renderer: ResourcePageRenderer;
   private readonly now: () => Date;
 
@@ -82,7 +108,7 @@ export class ResourceServer {
     return coachTagVocabulary(this.records);
   }
 
-  async add(request: ResourceUploadRequest, options: UploadOptions): Promise<Resource> {
+  async add(request: ResourceUploadRequest, options: UploadOptions): Promise<ResourceAddition> {
     const check = checkResourceUpload(request.file);
     if (!check.accepted) throw new Error(UPLOAD_FAILED);
 
@@ -91,6 +117,11 @@ export class ResourceServer {
       options.onProgress(step / UPLOAD_STEPS);
     }
     if (options.outcome === 'fails') throw new Error(UPLOAD_FAILED);
+
+    const answer = await this.answerAfterPreparing(options.outcome);
+    if (answer === 'fails') throw new Error(UPLOAD_FAILED);
+    const refusal = serverRefusalOf(check.kind, answer);
+    if (refusal) return { status: 'refused', refusal };
 
     const details = this.withVocabularyCasing(request.details);
     const pageImageUrls = hasPagePreview(check.kind)
@@ -112,7 +143,24 @@ export class ResourceServer {
     this.records = [resource, ...this.records];
     this.files.set(resource.id, request.file);
 
-    return resource;
+    return { status: 'added', resource };
+  }
+
+  releaseHeldUploads(outcome: ResourceUpload): void {
+    if (outcome === 'holds') return;
+
+    const held = [...this.heldAnswers];
+    this.heldAnswers.clear();
+    held.forEach((answer) => answer(outcome));
+  }
+
+  private async answerAfterPreparing(outcome: ResourceUpload): Promise<ServerAnswer> {
+    if (outcome === 'holds') {
+      return new Promise((answer) => this.heldAnswers.add(answer));
+    }
+
+    await wait(PREPARING_MS);
+    return outcome;
   }
 
   async updateDetails(id: string, details: ResourceDetails): Promise<Resource> {

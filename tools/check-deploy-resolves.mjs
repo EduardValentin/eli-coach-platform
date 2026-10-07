@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const SERVER_BUNDLE = "build/server/index.js";
+const SERVER_DIRECTORY = "build/server";
+const REQUIRED_SERVER_OUTPUTS = ["index.js", "pdf-pages-worker.js"];
 
 const STATIC_IMPORT =
   /^(?:import|export)\b[^'"\n]*?\bfrom\s*['"]([^'"\n]+)['"]/gm;
@@ -38,15 +39,29 @@ export function unresolvableImports(deployDirectory, specifiers) {
   const output = execFileSync(
     process.execPath,
     ["--input-type=module", "--eval", probe],
-    { cwd: dirname(resolve(deployDirectory, SERVER_BUNDLE)), encoding: "utf8" },
+    { cwd: resolve(deployDirectory, SERVER_DIRECTORY), encoding: "utf8" },
   );
 
   return JSON.parse(output);
 }
 
+function serverModulesOf(serverDirectory) {
+  const emitted = readdirSync(serverDirectory, { recursive: true }).filter(
+    (path) => path.endsWith(".js"),
+  );
+
+  return [...new Set([...REQUIRED_SERVER_OUTPUTS, ...emitted])];
+}
+
 function main(deployDirectory) {
-  const bundle = readFileSync(resolve(deployDirectory, SERVER_BUNDLE), "utf8");
-  const missing = unresolvableImports(deployDirectory, bareImportsOf(bundle));
+  const serverDirectory = resolve(deployDirectory, SERVER_DIRECTORY);
+  const bundles = serverModulesOf(serverDirectory).map((path) =>
+    readFileSync(resolve(serverDirectory, path), "utf8"),
+  );
+  const missing = unresolvableImports(
+    deployDirectory,
+    bareImportsOf(bundles.join("\n")),
+  );
 
   if (missing.length > 0) {
     console.error(
@@ -56,7 +71,7 @@ function main(deployDirectory) {
   }
 
   console.log(
-    "Every bare import of the server bundle resolves from the deploy layout.",
+    "Every bare import of the server bundle, the PDF pages worker and their chunks resolves from the deploy layout.",
   );
 }
 

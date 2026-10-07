@@ -3,6 +3,7 @@ import { index, relative } from "@react-router/dev/routes";
 import { COACH_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
 import { COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT } from "../../features/assessment-calls/contracts/paths";
 import { assessmentCallsCoachRoutes } from "../../features/assessment-calls/routes";
+import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/contracts/paths";
 import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/coaching-sales/contracts/paths";
 import { coachingSalesCoachRoutes } from "../../features/coaching-sales/routes";
 
@@ -15,6 +16,7 @@ export const coachPortalRoutes = [
     ...assessmentCallsCoachRoutes,
     ...coachingSalesCoachRoutes,
     route(`${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`, "./pages/client.tsx"),
+    route(COACH_CLIENT_RESOURCES_ROUTE_SEGMENT, "./pages/client-resources.tsx"),
   ]),
   route(`${COACH_PORTAL_ROUTE_SEGMENT}/readyz`, "./api/readyz.ts"),
 ];

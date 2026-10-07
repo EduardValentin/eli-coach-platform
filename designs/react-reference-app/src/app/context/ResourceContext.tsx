@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { createResourceServer } from '../services/resourceSamples';
 import type { ResourceServer } from '../services/resourceService';
 import { useAppState } from './AppContext';
@@ -18,6 +26,10 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     [appState.resourceSeed],
   );
   const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    server.releaseHeldUploads(appState.resourceUpload);
+  }, [server, appState.resourceUpload]);
   const announceChange = useCallback(() => setRevision((current) => current + 1), []);
 
   return (

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { ArrowLeft, FolderOpen, Plus } from 'lucide-react';
+import { useParams } from 'react-router';
+import { FolderOpen, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { EmptyState } from '../../components/EmptyState';
+import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ResourceActionsMenu, type ResourceManagement } from '../../components/resources/ResourceActionsMenu';
 import {
@@ -18,7 +19,9 @@ import {
 import { ResourceViewer } from '../../components/resources/ResourceViewer';
 import { Button } from '../../components/ui/button';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { fullName, useClientProfile } from '../../context/ClientProfileContext';
+import type { JourneyIdentity } from '../../domain/journey';
 import type { Resource } from '../../domain/resources';
 import { useClientResources, useResourceTags } from '../../hooks/useClientResources';
 import { possessive } from '../../utils/resourceLabels';
@@ -74,13 +77,8 @@ function CoachResourceLibrary({
   };
 
   return (
-    <div className="w-full">
-      <Link
-        to={`/coach/clients/${routeId}`}
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-      >
-        <ArrowLeft size={16} aria-hidden="true" /> Back to {names.full}
-      </Link>
+    <div className="w-full" data-parity-root="CoachResourceLibrary">
+      <PortalBackLink to={`/coach/clients/${routeId}`}>Back to {names.full}</PortalBackLink>
 
       {listing.status !== 'failed' && (
         <PortalPageHeader
@@ -151,18 +149,37 @@ function CoachResourceLibrary({
   );
 }
 
+type ResourceClient = { clientId: string; names: ClientNames };
+
+function useResourceClient(id: string): ResourceClient | null {
+  const { journeyForCall } = useClientJourneys();
+  const { getProfile } = useClientProfile();
+  const journey = journeyForCall(id);
+  if (journey) {
+    return { clientId: journey.callId, names: journeyNames(journey.identity) };
+  }
+
+  const profile = getProfile(id);
+  if (!profile) return null;
+
+  return {
+    clientId: profile.id,
+    names: { first: profile.firstName, full: fullName(profile) },
+  };
+}
+
+function journeyNames(identity: JourneyIdentity): ClientNames {
+  return {
+    first: identity.firstName,
+    full: `${identity.firstName} ${identity.lastName}`.trim(),
+  };
+}
+
 export function ClientResources() {
   const { id = 'c1' } = useParams();
-  const { getProfile } = useClientProfile();
-  const profile = getProfile(id);
+  const client = useResourceClient(id);
 
-  if (!profile) return <ClientNotFound />;
+  if (!client) return <ClientNotFound />;
 
-  return (
-    <CoachResourceLibrary
-      clientId={profile.id}
-      names={{ first: profile.firstName, full: fullName(profile) }}
-      routeId={id}
-    />
-  );
+  return <CoachResourceLibrary clientId={client.clientId} names={client.names} routeId={id} />;
 }

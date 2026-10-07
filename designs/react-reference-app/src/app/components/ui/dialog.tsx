@@ -31,6 +31,16 @@ const dialogContentVariants = cva(
 
 type DialogSize = NonNullable<VariantProps<typeof dialogContentVariants>["size"]>;
 
+type DialogDismissal = "allowed" | "locked";
+
+type ContentProps = React.ComponentProps<typeof DialogPrimitive.Content>;
+
+type InteractOutsideEvent = Parameters<NonNullable<ContentProps["onInteractOutside"]>>[0];
+
+function offersCloseControl(size: DialogSize | null | undefined, dismissal: DialogDismissal) {
+  return dismissal === "allowed" && size !== "screen" && size !== "viewer";
+}
+
 const DialogSizeContext = React.createContext<DialogSize>("default");
 
 function useWideDialog(): boolean {
@@ -81,12 +91,25 @@ function DialogContent({
   className,
   children,
   size,
+  dismissal = "allowed",
   onOpenAutoFocus,
   onCloseAutoFocus,
+  onEscapeKeyDown,
+  onInteractOutside,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> &
-  VariantProps<typeof dialogContentVariants>) {
+}: ContentProps &
+  VariantProps<typeof dialogContentVariants> & { dismissal?: DialogDismissal }) {
   const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+
+  const escapeUnlessLocked = (event: KeyboardEvent) => {
+    onEscapeKeyDown?.(event);
+    if (dismissal === "locked") event.preventDefault();
+  };
+
+  const interactOutsideUnlessLocked = (event: InteractOutsideEvent) => {
+    onInteractOutside?.(event);
+    if (dismissal === "locked") event.preventDefault();
+  };
 
   const openWithOpenerRemembered = (event: Event) => {
     rememberOpener();
@@ -105,13 +128,15 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(dialogContentVariants({ size }), className)}
         onCloseAutoFocus={closeWithFocusReturned}
+        onEscapeKeyDown={escapeUnlessLocked}
+        onInteractOutside={interactOutsideUnlessLocked}
         onOpenAutoFocus={openWithOpenerRemembered}
         {...props}
       >
         <DialogSizeContext.Provider value={size ?? "default"}>
           {children}
         </DialogSizeContext.Provider>
-        {size !== "screen" && size !== "viewer" && (
+        {offersCloseControl(size, dismissal) && (
           <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
             <XIcon />
             <span className="sr-only">Close</span>
@@ -196,6 +221,8 @@ function DialogDescription({
     />
   );
 }
+
+export type { DialogDismissal };
 
 export {
   Dialog,

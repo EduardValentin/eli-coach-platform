@@ -5,6 +5,7 @@ import { accountsContext } from "~/features/accounts/server/guards/accounts-cont
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
@@ -27,6 +28,7 @@ describe("createFeatureContextMiddleware", () => {
         feature: { kind: "client-profile" },
         handles: { kind: "client-profile-handles" },
       },
+      clientResources: { kind: "client-resources" },
       coachingSales: {
         feature: { kind: "coaching-sales" },
         handles: { kind: "coaching-sales-handles" },
@@ -71,6 +73,7 @@ describe("createFeatureContextMiddleware", () => {
     expect(context.get(clientProfileContext)).toBe(
       container.clientProfile.feature,
     );
+    expect(context.get(clientResourcesContext)).toBe(container.clientResources);
     expect(context.get(coachingSalesContext)).toBe(
       container.coachingSales.feature,
     );

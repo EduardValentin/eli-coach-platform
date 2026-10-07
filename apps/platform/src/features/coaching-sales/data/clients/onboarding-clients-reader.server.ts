@@ -4,6 +4,7 @@ import type {
   OnboardingClients,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
+import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import { CoachingSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import { eq, type SQL } from "drizzle-orm";
@@ -12,9 +13,23 @@ import { clientsTable } from "~/features/coaching-sales/data/schema.server";
 import { currentSubscriptionStatus } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 
 export class PostgresOnboardingClients
-  implements OnboardingClients, UnitPreferenceClients, MeasurementClients
+  implements
+    OnboardingClients,
+    UnitPreferenceClients,
+    MeasurementClients,
+    ResourceClients
 {
   constructor(private readonly database: DatabaseClient) {}
+
+  async exists(clientId: string): Promise<boolean> {
+    const [row] = await this.database
+      .select({ clientId: clientsTable.id })
+      .from(clientsTable)
+      .where(eq(clientsTable.id, clientId))
+      .limit(1);
+
+    return row !== undefined;
+  }
 
   findByAuthSubjectId(authSubjectId: string): Promise<OnboardingClient | null> {
     return this.findOne(eq(clientsTable.authSubjectId, authSubjectId));

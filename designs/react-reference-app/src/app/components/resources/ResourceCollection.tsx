@@ -25,7 +25,12 @@ const SKELETON_CARDS = 8;
 
 export function ResourceGridSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading resources" role="status">
+    <div
+      aria-busy="true"
+      aria-label="Loading resources"
+      data-parity="resource-grid-skeleton"
+      role="status"
+    >
       <ul className={GRID_CLASS}>
         {Array.from({ length: SKELETON_CARDS }, (_, index) => (
           <li

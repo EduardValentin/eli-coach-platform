@@ -66,6 +66,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
   private clientMediaRoot: string | null = null;
+  private clientResourceRoot: string | null = null;
   private readonly clientMediaKey = randomBytes(32).toString("base64");
 
   constructor(private readonly options: ApiIntegrationTestSuiteOptions = {}) {
@@ -78,6 +79,9 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     );
     this.clientMediaRoot = await mkdtemp(
       join(tmpdir(), "eli-coach-client-media-integration-"),
+    );
+    this.clientResourceRoot = await mkdtemp(
+      join(tmpdir(), "eli-coach-client-resources-integration-"),
     );
     await super.start();
 
@@ -116,6 +120,11 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     if (this.clientMediaRoot) {
       await rm(this.clientMediaRoot, { force: true, recursive: true });
       this.clientMediaRoot = null;
+    }
+
+    if (this.clientResourceRoot) {
+      await rm(this.clientResourceRoot, { force: true, recursive: true });
+      this.clientResourceRoot = null;
     }
 
     await super.stop();
@@ -160,6 +169,14 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return this.clientMediaRoot;
   }
 
+  resourceRoot(): string {
+    if (!this.clientResourceRoot) {
+      throw new Error("Integration suite has not been started.");
+    }
+
+    return this.clientResourceRoot;
+  }
+
   async sentEmails(): Promise<SentEmail[]> {
     const sends = await this.wireMock.recordedRequests(RESEND_EMAILS_PATH);
 
@@ -193,6 +210,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
       CLIENT_MEDIA_ROOT: this.mediaRoot(),
       CLIENT_MEDIA_KEY: this.clientMediaKey,
       CLIENT_MEDIA_KEY_ID,
+      CLIENT_RESOURCE_ROOT: this.resourceRoot(),
       ...this.options.environment,
     };
   }

@@ -1,4 +1,4 @@
-import { loadImage } from "@napi-rs/canvas";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 import { renderProductCover } from "./render-product-cover";
@@ -32,7 +32,7 @@ describe("renderProductCover", () => {
       pdfBytes: SINGLE_PAGE_PDF,
       targetWidth: 300,
     });
-    const decoded = await loadImage(Buffer.from(cover));
+    const decoded = await sharp(cover).metadata();
 
     // assert
     expect(Buffer.from(cover.subarray(0, 4)).toString("ascii")).toBe("RIFF");
@@ -45,7 +45,7 @@ describe("renderProductCover", () => {
     // arrange
     // act
     const cover = await renderProductCover({ pdfBytes: SINGLE_PAGE_PDF });
-    const decoded = await loadImage(Buffer.from(cover));
+    const decoded = await sharp(cover).metadata();
 
     // assert
     expect(decoded.width).toBe(1200);

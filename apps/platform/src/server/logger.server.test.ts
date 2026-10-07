@@ -615,6 +615,165 @@ describe("createConsoleLogger", () => {
     });
   });
 
+  it("logs a stored client resource by ids, format, size and page count only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceStored({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      format: "pdf",
+      sizeBytes: 182_431,
+      pageCount: 3,
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Client resource stored.", {
+      clientId: "client-1",
+      eventCategory: "client_resource_stored",
+      format: "pdf",
+      pageCount: 3,
+      resourceId: "resource-1",
+      sizeBytes: 182_431,
+    });
+  });
+
+  it("logs a refused client resource by client, byte count and reason only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceRefused({
+      clientId: "client-1",
+      receivedBytes: 12,
+      reason: "unsupported-type",
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith("Client resource refused.", {
+      clientId: "client-1",
+      eventCategory: "client_resource_refused",
+      reason: "unsupported-type",
+      receivedBytes: 12,
+    });
+  });
+
+  it("logs a refused client resource request by requester role and ids only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceAccessRefused({
+      requesterRole: "CLIENT",
+      clientId: "client-1",
+      resourceId: null,
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "Client resource access refused.",
+      {
+        clientId: "client-1",
+        eventCategory: "client_resource_access_refused",
+        requesterRole: "CLIENT",
+        resourceId: null,
+      },
+    );
+  });
+
+  it("logs a client resource that could not be stored by ids and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(
+      new Error("ENOSPC: no space left on device, open 'Meal plan.pdf'"),
+      { code: "ENOSPC" },
+    );
+
+    // act
+    logger.resourceStorageFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: cause,
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource could not be stored.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_storage_failure",
+        errorClass: "Error",
+        errorCode: "ENOSPC",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
+  it("logs a client's resources that could not be listed by id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(
+      new Error("connect ECONNREFUSED 10.0.0.5:5432 user=platform"),
+      { code: "ECONNREFUSED" },
+    );
+
+    // act
+    logger.resourceListingFailed({ clientId: "client-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resources could not be listed.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_listing_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+      },
+    );
+  });
+
+  it("logs a client resource storage failure whose cause has no code by its class alone", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceStorageFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      error: new TypeError("page renderer stopped"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource could not be stored.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_storage_failure",
+        errorClass: "TypeError",
+        resourceId: "resource-1",
+      },
+    );
+  });
+
   describe("coaching subscription incidents", () => {
     it.each([
       [

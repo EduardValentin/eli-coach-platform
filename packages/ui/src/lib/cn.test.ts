@@ -39,6 +39,7 @@ const roleNamespaces = [
   { namespace: "tracking", utility: "tracking", framework: "tracking-wide" },
   { namespace: "leading", utility: "leading", framework: "leading-tight" },
   { namespace: "container", utility: "max-w", framework: "max-w-full" },
+  { namespace: "animate", utility: "animate", framework: "animate-none" },
 ];
 
 describe("cn theme role registration", () => {

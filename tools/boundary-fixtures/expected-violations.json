@@ -11,6 +11,9 @@
   "apps/platform/src/features/coaching-sales/contracts/reaches-client-profile.ts": [
     "coaching-sales-never-reaches-client-profile"
   ],
+  "apps/platform/src/features/coaching-sales/contracts/reaches-client-resources.ts": [
+    "coaching-sales-never-reaches-client-resources"
+  ],
   "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",
     "not-to-unresolvable"
@@ -23,6 +26,9 @@
     "route-thinness"
   ],
   "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
+  "apps/platform/src/features/store/api/feature-api-never-imports-ui.ts": [
+    "feature-api-never-imports-ui"
+  ],
   "apps/platform/src/features/store/api/feature-internals.ts": [
     "feature-api-to-data",
     "feature-internals",
@@ -142,6 +148,10 @@
   ],
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
+  ],
+  "packages/infrastructure/src/email/pdf-rendering-confined.server.ts": [
+    "not-to-unresolvable",
+    "pdf-rendering-confined"
   ],
   "packages/infrastructure/src/email/sharp-confined.server.ts": [
     "not-to-unresolvable",

@@ -4,6 +4,7 @@ import {
   hasPagePreview,
   hasUnopenedResources,
 } from '../domain/resources';
+import { AWAITING_REVIEW_CALL_ID } from '../context/ClientJourneyContext';
 import { sampleResources } from './resourceSamples';
 
 const NOW = new Date('2026-10-03T09:00:00.000Z');
@@ -48,5 +49,18 @@ describe('the seeded resources', () => {
 
     // assert
     expect(shared).toEqual(expect.arrayContaining(['Nutrition', 'Training']));
+  });
+});
+
+describe('the seeded resources of the client in onboarding', () => {
+  it('give the client the coach list opens on her record something to show', () => {
+    // arrange
+    const resources = sampleResources(NOW);
+
+    // act
+    const hers = resources.filter((resource) => resource.clientId === AWAITING_REVIEW_CALL_ID);
+
+    // assert
+    expect(hers.length).toBeGreaterThan(0);
   });
 });

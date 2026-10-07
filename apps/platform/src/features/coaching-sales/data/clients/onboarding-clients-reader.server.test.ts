@@ -132,6 +132,32 @@ describe("PostgresOnboardingClients#findByClientId", () => {
   });
 });
 
+describe("PostgresOnboardingClients#exists", () => {
+  it("answers that a client with a record exists", async () => {
+    // arrange
+    const clients = new PostgresOnboardingClients(
+      createDatabaseAnswering([CLIENT_ROW]),
+    );
+
+    // act
+    const exists = await clients.exists(CLIENT_ID);
+
+    // assert
+    expect(exists).toBe(true);
+  });
+
+  it("answers that an unknown client does not exist", async () => {
+    // arrange
+    const clients = new PostgresOnboardingClients(createDatabaseAnswering([]));
+
+    // act
+    const exists = await clients.exists(CLIENT_ID);
+
+    // assert
+    expect(exists).toBe(false);
+  });
+});
+
 function createDatabaseAnswering(
   rows: readonly Record<string, unknown>[],
 ): DatabaseClient {

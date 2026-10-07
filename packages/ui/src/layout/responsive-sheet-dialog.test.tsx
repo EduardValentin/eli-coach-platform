@@ -2,7 +2,14 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { useState } from "react";
@@ -78,6 +85,25 @@ function AddMeasurements() {
       </ResponsiveSheetDialog>
     </MotionConfig>
   );
+}
+
+function renderLockedOnViewport(width: number) {
+  viewportIs(width);
+  const closeRequests: boolean[] = [];
+  render(
+    <MotionConfig reducedMotion="always">
+      <ResponsiveSheetDialog
+        dismissal="locked"
+        onOpenChange={(open) => closeRequests.push(open)}
+        open
+        title="Add resource"
+      >
+        <p>Uploading</p>
+      </ResponsiveSheetDialog>
+    </MotionConfig>,
+  );
+
+  return { closeRequests, user: userEvent.setup() };
 }
 
 async function openOnViewport(width: number) {
@@ -162,6 +188,29 @@ describe("ResponsiveSheetDialog", () => {
       await screen.findByRole("dialog", { name: "Add measurements" }),
     ).toHaveClass("rounded-t-panel");
   });
+
+  it.each([
+    ["a wide screen", DESKTOP_WIDTH],
+    ["a phone", PHONE_WIDTH],
+  ])(
+    "stays open on Escape and outside presses and offers no close control while dismissal is locked on %s",
+    async (_viewport, width) => {
+      // arrange
+      const { closeRequests, user } = renderLockedOnViewport(width);
+      const surface = screen.getByRole("dialog", { name: "Add resource" });
+
+      // act
+      await user.keyboard("{Escape}");
+      fireEvent.pointerDown(document.body);
+
+      // assert
+      expect(closeRequests).toEqual([]);
+      expect(surface).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Close" }),
+      ).not.toBeInTheDocument();
+    },
+  );
 
   it("renders its opener on the server without reading the screen", () => {
     // arrange

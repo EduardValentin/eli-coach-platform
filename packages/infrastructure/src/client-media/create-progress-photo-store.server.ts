@@ -1,5 +1,3 @@
-import { accessSync, constants, statSync } from "node:fs";
-
 import type { ClientMediaConfig } from "@eli-coach-platform/config";
 import type { ProgressPhotoStore } from "@eli-coach-platform/domain/client-profile";
 
@@ -7,6 +5,7 @@ import {
   EncryptedFilesystemProgressPhotoStore,
   type EncryptedFilesystemSettings,
 } from "./filesystem/encrypted-filesystem-progress-photo-store.server";
+import { isReadyMediaRoot } from "./filesystem/media-root.server";
 import { InMemoryProgressPhotoStore } from "./memory/in-memory-progress-photo-store.server";
 
 type FilesystemSettingName =
@@ -21,7 +20,7 @@ export function createProgressPhotoStore(
 
   const settings = filesystemSettings(config);
 
-  if (!isReadyDirectory(settings.root)) {
+  if (!isReadyMediaRoot(settings.root)) {
     throw new Error("Client media root is not ready.");
   }
 
@@ -49,14 +48,4 @@ function requiredSetting(
   }
 
   return value;
-}
-
-function isReadyDirectory(root: string): boolean {
-  try {
-    accessSync(root, constants.R_OK | constants.W_OK);
-
-    return statSync(root).isDirectory();
-  } catch {
-    return false;
-  }
 }

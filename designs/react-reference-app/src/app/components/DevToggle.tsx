@@ -455,7 +455,7 @@ export function DevToggle() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed right-4 z-[9999] bg-surface-inverted text-surface-inverted-foreground p-3 rounded-full shadow-lg hover:bg-brand transition-colors bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:bottom-4"
+        className="pointer-events-auto fixed right-4 z-[9999] bg-surface-inverted text-surface-inverted-foreground p-3 rounded-full shadow-lg hover:bg-brand transition-colors bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:bottom-4"
         aria-label="Open Dev Toggle"
       >
         <Settings size={24} aria-hidden="true" />
@@ -467,7 +467,7 @@ export function DevToggle() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed right-4 z-[9999] bg-card p-5 rounded-card shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
+            className="pointer-events-auto fixed right-4 z-[9999] bg-card p-5 rounded-card shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-lg">Dev Settings</h3>
@@ -1770,6 +1770,9 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
+                      <SelectItem value="holds">Holds at preparing</SelectItem>
+                      <SelectItem value="too-many-pages">Refused: over 50 pages</SelectItem>
+                      <SelectItem value="unreadable">Refused: cannot be read</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

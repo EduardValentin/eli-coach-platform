@@ -59,6 +59,7 @@ import {
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
+import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type {
@@ -126,6 +127,7 @@ type CoachingSalesComposition = {
     paymentCardHandler: PaymentCardHandler;
     paymentCompletionHandler: PaymentCompletionHandler;
     refundHandler: PaymentRefundHandler;
+    resourceClients: ResourceClients;
     reviewStampWriter: ReviewStampWriter;
     subscriptionChangeHandler: PaymentSubscriptionChangeHandler;
     unitPreferenceClients: UnitPreferenceClients;
@@ -401,6 +403,7 @@ export function composeCoachingSalesFeature(
         refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
       }),
       refundHandler: subscriptionChangeHandler,
+      resourceClients: onboardingClients,
       reviewStampWriter: writeReviewStamps,
       subscriptionChangeHandler,
       unitPreferenceClients: onboardingClients,

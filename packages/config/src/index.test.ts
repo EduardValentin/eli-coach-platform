@@ -44,6 +44,7 @@ function buildEnvironment(
     PUBLIC_APP_URL: "https://evoa.fit",
     MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
     ...overrides,
   };
 }
@@ -115,6 +116,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
           MANAGEMENT_API_SECRET: "production-management-api-secret-value",
           NODE_ENV: "production",
           STORE_ASSET_ROOT: "/srv/store-assets",
+          CLIENT_RESOURCE_ROOT: "/srv/client-resources",
         }),
       ),
     ).toThrow(
@@ -225,6 +227,46 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(loadPlaceholderAssetRoot).toThrow(
       "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
     );
+  });
+
+  it("requires a configured private client resource root", () => {
+    // arrange
+    // act
+    const loadWithoutResourceRoot = () =>
+      loadTestRuntimeEnvironment({
+        CLIENT_RESOURCE_ROOT: undefined,
+      });
+
+    // assert
+    expect(loadWithoutResourceRoot).toThrow();
+  });
+
+  it("rejects a placeholder client resource root in production", () => {
+    // arrange
+    // act
+    const loadPlaceholderResourceRoot = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "production",
+        CLIENT_RESOURCE_ROOT: "replace-me",
+        TURNSTILE_SECRET_KEY: "real-secret",
+        TURNSTILE_SITE_KEY: "real-site-key",
+      });
+
+    // assert
+    expect(loadPlaceholderResourceRoot).toThrow(
+      "Production client resources require a non-placeholder CLIENT_RESOURCE_ROOT.",
+    );
+  });
+
+  it("exposes the configured client resource root", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      CLIENT_RESOURCE_ROOT: "/srv/client-resources",
+    });
+
+    // assert
+    expect(environment.CLIENT_RESOURCE_ROOT).toBe("/srv/client-resources");
   });
 
   it("requires a configured management API secret", () => {

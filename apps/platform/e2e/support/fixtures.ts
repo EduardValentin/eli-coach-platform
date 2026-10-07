@@ -8,6 +8,7 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";
+import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
 import { ClientDashboard } from "./client-dashboard";
 import { ClientEndedPage } from "./client-ended-page";
@@ -17,6 +18,8 @@ import { ClientProfilePage } from "./client-profile-page";
 import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
+import { ClientResourcesOutage } from "./client-resources-outage";
+import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import {
   insertMeasuredClientRecords,
@@ -31,6 +34,8 @@ import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import { PrivacyPolicyPage } from "./privacy-policy-page";
+import { ResourceRequests } from "./resource-requests";
+import { ResourceViewer } from "./resource-viewer";
 import {
   insertInvitedClientRecords,
   insertPaidClientRecords,
@@ -91,6 +96,10 @@ type PlatformFixtures = {
   coachAssessmentCalls: CoachAssessmentCallsPage;
   coachClients: CoachClientsPage;
   coachClient: CoachClientPage;
+  coachClientResources: CoachClientResourcesPage;
+  addResourceDialog: AddResourceDialog;
+  resourceViewer: ResourceViewer;
+  clientResourcesOutage: ClientResourcesOutage;
   coachEmail: string;
   scenarioTag: string;
   createClerkUser: () => Promise<string>;
@@ -127,6 +136,8 @@ type PlatformFixtures = {
   measurementRecords: MeasurementRecords;
   photoRequests: PhotoRequests;
   visitorPhotoRequests: PhotoRequests;
+  resourceRequests: ResourceRequests;
+  visitorResourceRequests: ResourceRequests;
   portalRequests: PortalRequests;
   provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
@@ -386,6 +397,26 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new CoachClientPage(page));
   },
 
+  coachClientResources: async ({ page }, use) => {
+    await use(new CoachClientResourcesPage(page));
+  },
+
+  addResourceDialog: async ({ page }, use) => {
+    await use(new AddResourceDialog(page));
+  },
+
+  resourceViewer: async ({ page }, use) => {
+    await use(new ResourceViewer(page));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  clientResourcesOutage: async ({}, use) => {
+    const outage = new ClientResourcesOutage();
+
+    await use(outage);
+    await outage.dispose();
+  },
+
   // eslint-disable-next-line no-empty-pattern
   coachEmail: async ({}, use, testInfo) => {
     await use(mintRecordedTestEmail(testInfo.workerIndex));
@@ -613,6 +644,17 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     const visitor = await playwright.request.newContext({ baseURL });
 
     await use(new PhotoRequests(visitor));
+    await visitor.dispose();
+  },
+
+  resourceRequests: async ({ page }, use) => {
+    await use(new ResourceRequests(page.request));
+  },
+
+  visitorResourceRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new ResourceRequests(visitor));
     await visitor.dispose();
   },
 

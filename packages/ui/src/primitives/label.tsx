@@ -11,7 +11,7 @@ const LABEL_LAYOUT_CLASSES = {
   wrap: "flex flex-wrap items-baseline gap-1.5",
 } as const;
 
-type LabelLayout = keyof typeof LABEL_LAYOUT_CLASSES;
+export type LabelLayout = keyof typeof LABEL_LAYOUT_CLASSES;
 
 type LabelProps = React.ComponentPropsWithoutRef<"label"> & {
   htmlFor: string;

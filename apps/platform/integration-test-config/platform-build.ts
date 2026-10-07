@@ -41,7 +41,13 @@ export async function buildPlatformServer(): Promise<void> {
         cwd: workspaceRootPath,
         // `process.loadEnvFile` in the router config leaves an already-set
         // variable alone, so this wins over a developer's local `.env`.
-        env: { ...process.env, APP_BASE_PATH: basePath },
+        // Vitest exports NODE_ENV=test, which would make this a development
+        // build rather than the artifact the image deploys.
+        env: {
+          ...process.env,
+          APP_BASE_PATH: basePath,
+          NODE_ENV: "production",
+        },
         // Vite's build output (chunk sizes, future-flag warnings) can exceed
         // `execFile`'s 1 MB default, which truncates stdout with an
         // ERR_CHILD_PROCESS_STDIO_MAXBUFFER before the catch below can turn
