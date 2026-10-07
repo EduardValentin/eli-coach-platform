@@ -17,8 +17,12 @@ const CLIENT_RESOURCES_PATH = "/api/client-resources";
 
 const CREATED = 201;
 
+function resourcePathOf(resourceId: string): string {
+  return `${CLIENT_RESOURCES_PATH}/${resourceId}`;
+}
+
 function openedPathOf(resourceId: string): string {
-  return `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`;
+  return `${resourcePathOf(resourceId)}/opened`;
 }
 
 function responseOf(response: APIResponse): ResourceResponse {
@@ -116,13 +120,36 @@ export class ResourceRequests {
     );
   }
 
-  async reachStatuses(resourceId: string): Promise<number[]> {
+  async readStatuses(resourceId: string): Promise<number[]> {
     return [
       (await this.openPage(resourceId, 1)).status,
       (await this.openThumbnail(resourceId)).status,
       (await this.download(resourceId)).status,
+    ];
+  }
+
+  async reachStatuses(resourceId: string): Promise<number[]> {
+    return [
+      ...(await this.readStatuses(resourceId)),
       await this.markOpened(resourceId),
     ];
+  }
+
+  async changeDetails(
+    resourceId: string,
+    details: ResourceDetails,
+  ): Promise<number> {
+    const response = await this.request.patch(resourcePathOf(resourceId), {
+      data: details,
+    });
+
+    return response.status();
+  }
+
+  async remove(resourceId: string): Promise<number> {
+    const response = await this.request.delete(resourcePathOf(resourceId));
+
+    return response.status();
   }
 
   async markOpened(resourceId: string): Promise<number> {

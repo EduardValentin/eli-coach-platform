@@ -35,6 +35,7 @@ import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import { PrivacyPolicyPage } from "./privacy-policy-page";
+import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
 import { ResourceViewer } from "./resource-viewer";
 import {
@@ -107,6 +108,7 @@ type PlatformFixtures = {
   coachClient: CoachClientPage;
   coachClientResources: CoachClientResourcesPage;
   addResourceDialog: AddResourceDialog;
+  resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
   clientResourcesOutage: ClientResourcesOutage;
   coachEmail: string;
@@ -435,6 +437,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   addResourceDialog: async ({ page }, use) => {
     await use(new AddResourceDialog(page));
+  },
+
+  resourceDetailsDialog: async ({ page }, use) => {
+    await use(new ResourceDetailsDialog(page));
   },
 
   resourceViewer: async ({ page }, use) => {

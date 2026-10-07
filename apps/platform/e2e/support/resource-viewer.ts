@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { ConfirmationDialog } from "./confirmation-dialog";
 import { escapedPattern } from "./locator-text";
 
 export type ShownPage = {
@@ -223,6 +224,22 @@ export class ResourceViewer {
         );
       })
       .toEqual({ x: 0, y: 0, width: viewport.width, height: viewport.height });
+  }
+
+  async editDetails(): Promise<void> {
+    await this.button("Edit details").click();
+  }
+
+  async delete(title: string): Promise<ConfirmationDialog> {
+    const confirmation = new ConfirmationDialog(this.page, {
+      title: `Delete “${title}”?`,
+      confirm: "Delete",
+      dismiss: "Keep",
+    });
+
+    await this.button("Delete").click();
+
+    return confirmation;
   }
 
   async close(): Promise<void> {

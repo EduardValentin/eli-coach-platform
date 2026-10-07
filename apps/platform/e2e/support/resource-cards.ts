@@ -16,8 +16,8 @@ export class ResourceCards {
     return this.page.getByRole("region", { name: "Resources", exact: true });
   }
 
-  private get cards() {
-    return this.region.getByRole("button");
+  private get items() {
+    return this.region.getByRole("listitem");
   }
 
   private card(title: string): Locator {
@@ -29,10 +29,14 @@ export class ResourceCards {
   }
 
   async expectListed(titles: readonly string[]): Promise<void> {
-    await expect(this.cards).toHaveCount(titles.length);
+    await expect(this.items).toHaveCount(titles.length);
 
     for (const [position, title] of titles.entries()) {
-      await expect(this.cards.nth(position)).toHaveAccessibleName(title);
+      await expect(
+        this.items
+          .nth(position)
+          .getByRole("button", { name: title, exact: true }),
+      ).toBeVisible();
     }
   }
 
@@ -73,7 +77,7 @@ export class ResourceCards {
     await expect
       .poll(async () => {
         const boxes = await Promise.all(
-          (await this.cards.all()).map((card) => card.boundingBox()),
+          (await this.items.all()).map((item) => item.boundingBox()),
         );
 
         return new Set(boxes.map((box) => Math.round(box?.x ?? -1))).size;
