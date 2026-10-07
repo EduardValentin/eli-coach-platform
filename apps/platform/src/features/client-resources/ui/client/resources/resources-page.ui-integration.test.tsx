@@ -154,6 +154,26 @@ describe("the client's resources page", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers no actions menu on her cards and no Edit details or Delete in an opened resource", async () => {
+    // arrange
+    stampMarks();
+    const user = await renderResourcesPage();
+
+    // act
+    const viewer = await openResource(user, "Glute activation warm-up");
+
+    // assert
+    expect(
+      screen.queryByRole("button", { name: /^Actions for /, hidden: true }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(viewer).queryByRole("button", { name: "Edit details" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(viewer).queryByRole("button", { name: "Delete" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("tells her when nothing has been shared yet", async () => {
     // arrange
     listing = { status: "ready", resources: [] };

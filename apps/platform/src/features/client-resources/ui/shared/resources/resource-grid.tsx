@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 
 import { ResourceCard, type ResourcePerspective } from "./resource-card";
@@ -7,6 +9,7 @@ type ResourceGridProps = {
   perspective: ResourcePerspective;
   unopenedIds: ReadonlySet<string>;
   onOpen: (resource: ClientResourceView) => void;
+  menuFor?: (resource: ClientResourceView) => ReactNode;
 };
 
 export function ResourceGrid({
@@ -14,6 +17,7 @@ export function ResourceGrid({
   perspective,
   unopenedIds,
   onOpen,
+  menuFor,
 }: ResourceGridProps) {
   return (
     <section aria-label="Resources">
@@ -21,6 +25,7 @@ export function ResourceGrid({
         {resources.map((resource) => (
           <ResourceCard
             key={resource.id}
+            menu={menuFor?.(resource)}
             onOpen={() => onOpen(resource)}
             perspective={perspective}
             resource={resource}

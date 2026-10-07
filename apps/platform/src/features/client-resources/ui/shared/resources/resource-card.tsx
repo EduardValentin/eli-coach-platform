@@ -1,6 +1,6 @@
 import { cn } from "@eli-coach-platform/ui/lib";
 import { Badge, cardVariants } from "@eli-coach-platform/ui/primitives";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 
@@ -15,6 +15,7 @@ type ResourceCardProps = {
   perspective: ResourcePerspective;
   unopened: boolean;
   onOpen: () => void;
+  menu?: ReactNode;
 };
 
 export function ResourceCard({
@@ -22,6 +23,7 @@ export function ResourceCard({
   perspective,
   unopened,
   onOpen,
+  menu,
 }: ResourceCardProps) {
   const titleId = useId();
   const metaId = useId();
@@ -58,7 +60,12 @@ export function ResourceCard({
             />
           )}
         </span>
-        <span className="flex min-h-6 items-center gap-1.5 px-0.5" id={metaId}>
+        <span
+          className={cn("flex min-h-6 items-center gap-1.5 px-0.5", {
+            "pr-10": menu !== undefined,
+          })}
+          id={metaId}
+        >
           <Badge tone="muted">{RESOURCE_KIND_LABELS[file.kind].short}</Badge>
           {file.pageCount !== null && file.pageCount > 1 && (
             <span
@@ -85,6 +92,14 @@ export function ResourceCard({
           {resource.title}
         </span>
       </button>
+      {menu !== undefined && (
+        <div
+          className="col-start-1 row-start-2 -my-2 mr-1 self-center justify-self-end sm:mr-1.5"
+          data-parity="resource-menu"
+        >
+          {menu}
+        </div>
+      )}
     </li>
   );
 }
