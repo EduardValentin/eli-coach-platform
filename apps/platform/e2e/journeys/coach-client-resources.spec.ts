@@ -960,7 +960,7 @@ test("the coach corrects a resource from its card, deletes another from the view
   await resourceViewer.expectClosed();
   await coachClientResources.expectToast("Resource deleted.");
   await coachClientResources.expectCards([CORRECTED_RECIPES.title]);
-  expect(await resourceRequests.readStatuses(mealPlanId)).toEqual([
+  expect(await resourceRequests.fileStatuses(mealPlanId)).toEqual([
     404, 404, 404,
   ]);
   expect(storedResourceIdsOf(client.clientId)).toEqual([recipesId]);
@@ -978,7 +978,7 @@ test("the coach corrects a resource from its card, deletes another from the view
   await clientResources.expectCards([CORRECTED_RECIPES.title]);
 
   // act
-  const deletedReads = await resourceRequests.readStatuses(mealPlanId);
+  const deletedReads = await resourceRequests.fileStatuses(mealPlanId);
   const clientChange = await resourceRequests.changeDetails(recipesId, RECIPES);
   const clientRemoval = await resourceRequests.remove(recipesId);
 

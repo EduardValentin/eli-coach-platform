@@ -226,10 +226,6 @@ export class ResourceViewer {
       .toEqual({ x: 0, y: 0, width: viewport.width, height: viewport.height });
   }
 
-  async editDetails(): Promise<void> {
-    await this.button("Edit details").click();
-  }
-
   async delete(title: string): Promise<ConfirmationDialog> {
     const confirmation = new ConfirmationDialog(this.page, {
       title: `Delete “${title}”?`,
