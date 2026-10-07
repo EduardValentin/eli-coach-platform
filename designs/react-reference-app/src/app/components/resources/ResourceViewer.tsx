@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import {
@@ -199,10 +199,12 @@ function ViewerContent({
   resource,
   management,
   onDownload,
+  returnFocusTo,
 }: {
   resource: Resource;
   management?: ResourceManagement;
   onDownload: () => void;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 }) {
   const isDesktop = useIsDesktop();
   const [page, setPage] = useState(0);
@@ -233,6 +235,7 @@ function ViewerContent({
       aria-describedby={undefined}
       data-parity-root="ResourceViewer"
       onKeyDown={turnWithArrowKeys}
+      returnFocusTo={returnFocusTo}
       size="viewer"
     >
       <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
@@ -290,11 +293,13 @@ export function ResourceViewer({
   management,
   onDownload,
   onClose,
+  returnFocusTo,
 }: {
   resource: Resource | undefined;
   management?: ResourceManagement;
   onDownload: (resource: Resource) => void;
   onClose: () => void;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 }) {
   return (
     <Dialog
@@ -309,6 +314,7 @@ export function ResourceViewer({
           management={management}
           onDownload={() => onDownload(resource)}
           resource={resource}
+          returnFocusTo={returnFocusTo}
         />
       )}
     </Dialog>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { FolderOpen, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,7 +29,9 @@ import { saveDownload } from '../../utils/saveDownload';
 
 type ClientNames = { first: string; full: string };
 
-type PendingDeletion = { resource: Resource; open: boolean };
+type PendingDeletion = { resource: Resource; stage: 'asking' | 'kept' | 'confirmed' };
+
+const DELETE_FAILED = 'The resource wasn’t deleted. Try again.';
 
 function CoachResourceLibrary({
   clientId,
@@ -45,6 +47,7 @@ function CoachResourceLibrary({
   const [formMode, setFormMode] = useState<ResourceFormMode | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const { listing } = resources;
   const listed = listing.status === 'ready' ? listing.resources : [];
   const viewing = listed.find((resource) => resource.id === viewingId);
@@ -60,15 +63,23 @@ function CoachResourceLibrary({
         resource,
         onSave: (details) => resources.updateDetails(resource.id, details),
       }),
-    onDelete: () => setDeletion({ resource, open: true }),
+    onDelete: () => setDeletion({ resource, stage: 'asking' }),
   });
+
+  const viewedDeletionInQuestion =
+    deletion?.stage === 'asking' && deletion.resource.id === viewingId;
 
   const confirmDeletion = async () => {
     if (!deletion) return;
     const { id } = deletion.resource;
-    setDeletion({ ...deletion, open: false });
+    setDeletion({ ...deletion, stage: 'confirmed' });
     if (viewingId === id) setViewingId(null);
-    await resources.remove(id);
+    try {
+      await resources.remove(id);
+    } catch {
+      toast.error(DELETE_FAILED);
+      return;
+    }
     toast.success('Resource deleted.');
   };
 
@@ -90,6 +101,7 @@ function CoachResourceLibrary({
               </Button>
             )
           }
+          headingRef={heading}
           title={`${possessive(names.first)} resources`}
         />
       )}
@@ -125,6 +137,7 @@ function CoachResourceLibrary({
         onClose={() => setViewingId(null)}
         onDownload={download}
         resource={viewing}
+        returnFocusTo={viewedDeletionInQuestion ? heading : undefined}
       />
 
       <ResourceFormDialog
@@ -139,9 +152,10 @@ function CoachResourceLibrary({
         description={`It’s removed for you and ${names.first}.`}
         onConfirm={confirmDeletion}
         onOpenChange={(open) => {
-          if (!open && deletion) setDeletion({ ...deletion, open: false });
+          if (!open && deletion?.stage === 'asking') setDeletion({ ...deletion, stage: 'kept' });
         }}
-        open={deletion?.open === true}
+        open={deletion?.stage === 'asking'}
+        returnFocusTo={deletion?.stage === 'confirmed' ? heading : undefined}
         title={`Delete “${deletion?.resource.title ?? ''}”?`}
         tone="destructive"
       />

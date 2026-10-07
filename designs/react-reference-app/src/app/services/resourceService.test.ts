@@ -4,6 +4,7 @@ import {
   OPENING_NOT_RECORDED,
   PREPARING_MS,
   RESOURCE_LATENCY_MS,
+  RESOURCE_NOT_CHANGED,
   RESOURCES_UNAVAILABLE,
   ResourceServer,
   UPLOAD_FAILED,
@@ -130,7 +131,7 @@ describe('the coach-wide tags', () => {
       stored({ id: 'one', tags: ['Training'] }),
       stored({ id: 'two', tags: ['Sleep'] }),
     ]);
-    await settled(server.remove('two'));
+    await settled(server.remove('two', 'works'));
 
     // act
     const tags = await settled(server.listTags());
@@ -353,11 +354,11 @@ describe('changing a resource', () => {
 
     // act
     const updated = await settled(
-      server.updateDetails(original.id, {
-        title: 'Warm-up',
-        description: '',
-        tags: ['Glutes'],
-      }),
+      server.updateDetails(
+        original.id,
+        { title: 'Warm-up', description: '', tags: ['Glutes'] },
+        'works',
+      ),
     );
 
     // assert
@@ -394,6 +395,42 @@ describe('changing a resource', () => {
     await failure;
     const listed = await settled(server.listForClient('client-1', 'works'));
     expect(listed[0].openedAt).toBeNull();
+  });
+});
+
+describe('a failing resource change', () => {
+  it('leaves the details as they were when saving them fails', async () => {
+    // arrange
+    const original = stored({});
+    const server = serverWith([original]);
+    const failure = expect(
+      server.updateDetails(original.id, { title: 'Warm-up', description: '', tags: [] }, 'fails'),
+    ).rejects.toThrow(RESOURCE_NOT_CHANGED);
+
+    // act
+    await vi.advanceTimersByTimeAsync(RESOURCE_LATENCY_MS);
+
+    // assert
+    await failure;
+    const listed = await settled(server.listForClient('client-1', 'works'));
+    expect(listed).toEqual([original]);
+  });
+
+  it('keeps the resource when deleting it fails', async () => {
+    // arrange
+    const original = stored({});
+    const server = serverWith([original]);
+    const failure = expect(server.remove(original.id, 'fails')).rejects.toThrow(
+      RESOURCE_NOT_CHANGED,
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(RESOURCE_LATENCY_MS);
+
+    // assert
+    await failure;
+    const listed = await settled(server.listForClient('client-1', 'works'));
+    expect(listed).toEqual([original]);
   });
 });
 

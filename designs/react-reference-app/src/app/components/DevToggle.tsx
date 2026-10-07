@@ -64,6 +64,7 @@ import {
   RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
   RESOURCE_UPLOAD_OUTCOMES,
+  RESOURCE_WRITE_OUTCOMES,
 } from '../services/resourceService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
@@ -1791,6 +1792,28 @@ export function DevToggle() {
                     }
                   >
                     <SelectTrigger id="dev-resource-mark" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-resource-write" className={DEV_LABEL_CLASS}>
+                    Resource changes
+                  </Label>
+                  <Select
+                    value={appState.resourceWrite}
+                    onValueChange={(value) =>
+                      setAppState({
+                        resourceWrite: optionOrDefault(RESOURCE_WRITE_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-resource-write" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>

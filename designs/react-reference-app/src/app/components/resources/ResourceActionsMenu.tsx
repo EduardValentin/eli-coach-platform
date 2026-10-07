@@ -43,6 +43,7 @@ export function ResourceActionsMenu({
       <DropdownMenuContent
         align="end"
         className="min-w-40"
+        data-parity-root="ResourceActionsMenu"
         onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
       >
         <DropdownMenuItem

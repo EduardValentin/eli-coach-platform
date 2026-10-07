@@ -96,9 +96,13 @@ function DialogContent({
   onCloseAutoFocus,
   onEscapeKeyDown,
   onInteractOutside,
+  returnFocusTo,
   ...props
 }: ContentProps &
-  VariantProps<typeof dialogContentVariants> & { dismissal?: DialogDismissal }) {
+  VariantProps<typeof dialogContentVariants> & {
+    dismissal?: DialogDismissal;
+    returnFocusTo?: React.RefObject<HTMLElement | null>;
+  }) {
   const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
 
   const escapeUnlessLocked = (event: KeyboardEvent) => {
@@ -118,7 +122,16 @@ function DialogContent({
 
   const closeWithFocusReturned = (event: Event) => {
     onCloseAutoFocus?.(event);
-    if (!event.defaultPrevented) returnFocusToOpener(event);
+    if (event.defaultPrevented) return;
+
+    const target = returnFocusTo?.current;
+    if (!target?.isConnected) {
+      returnFocusToOpener(event);
+      return;
+    }
+
+    event.preventDefault();
+    target.focus();
   };
 
   return (

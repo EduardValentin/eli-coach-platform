@@ -433,6 +433,104 @@ describe('coach resources page', () => {
     );
   });
 
+  it('moves focus to the page heading once a resource is deleted from its card menu', async () => {
+    // arrange
+    renderPage();
+    await waitForResources();
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for Hip thrust form checklist' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete “Hip thrust form checklist”?' });
+
+    // act
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }));
+
+    // assert
+    await waitFor(
+      () => expect(shownTitles()).not.toContain('Hip thrust form checklist'),
+      SERVICE_TIMEOUT,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Jane’s resources' })).toHaveFocus();
+  });
+
+  it('closes the viewer and moves focus to the page heading once a resource is deleted from it', async () => {
+    // arrange
+    renderPage();
+    await waitForResources();
+    await userEvent.click(screen.getByRole('button', { name: 'Weekly macro tracker' }));
+    const viewer = screen.getByRole('dialog', { name: 'Weekly macro tracker' });
+    await userEvent.click(within(viewer).getByRole('button', { name: 'Delete' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete “Weekly macro tracker”?' });
+
+    // act
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }));
+
+    // assert
+    await waitFor(
+      () => expect(shownTitles()).not.toContain('Weekly macro tracker'),
+      SERVICE_TIMEOUT,
+    );
+    expect(screen.queryByRole('dialog', { name: 'Weekly macro tracker' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Jane’s resources' })).toHaveFocus();
+  });
+
+  it('returns focus to the card menu when she keeps the resource', async () => {
+    // arrange
+    renderPage();
+    await waitForResources();
+    const trigger = screen.getByRole('button', { name: 'Actions for Hip thrust form checklist' });
+    await userEvent.click(trigger);
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete “Hip thrust form checklist”?' });
+
+    // act
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Keep' }));
+
+    // assert
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(shownTitles()).toContain('Hip thrust form checklist');
+  });
+
+  it('tells her when a delete fails and keeps the resource', async () => {
+    // arrange
+    renderPage('&rwrite=fails');
+    await waitForResources();
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for Hip thrust form checklist' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete “Hip thrust form checklist”?' });
+
+    // act
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }));
+
+    // assert
+    expect(
+      await screen.findByText('The resource wasn’t deleted. Try again.', {}, SERVICE_TIMEOUT),
+    ).toBeInTheDocument();
+    expect(shownTitles()).toContain('Hip thrust form checklist');
+    expect(screen.queryByText('Resource deleted.')).not.toBeInTheDocument();
+  });
+
+  it('keeps the edit dialog open with her edits when saving fails', async () => {
+    // arrange
+    renderPage('&rwrite=fails');
+    await waitForResources();
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for Weekly macro tracker' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Edit details' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit details' });
+    const title = within(dialog).getByLabelText('Title');
+    await userEvent.clear(title);
+    await userEvent.type(title, 'Daily macro tracker');
+
+    // act
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    // assert
+    expect(await within(dialog).findByRole('alert', {}, SERVICE_TIMEOUT)).toHaveTextContent(
+      'Your changes weren’t saved. Try again.',
+    );
+    expect(within(dialog).getByLabelText('Title')).toHaveValue('Daily macro tracker');
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeEnabled();
+  });
+
   it('offers to add the first resource when the client has none', async () => {
     // arrange
     renderPage('&rseed=empty');
