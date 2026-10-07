@@ -343,7 +343,7 @@ function ResourceForm({
                 <FormItem>
                   <FormLabel className="flex flex-wrap items-baseline gap-1.5">
                     Description
-                    <span className="font-normal text-text-secondary">(optional)</span>
+                    <span data-parity="description-optional" className="font-normal text-text-secondary">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea {...field} className="min-h-24" />
@@ -356,7 +356,7 @@ function ResourceForm({
               control={form.control}
               name="tags"
               render={({ field }) => (
-                <FormItem>
+                <FormItem data-parity="resource-tags-field">
                   <FormLabel className="flex flex-wrap items-baseline gap-1.5">
                     Tags
                     <span className="font-normal text-text-secondary">(optional)</span>
