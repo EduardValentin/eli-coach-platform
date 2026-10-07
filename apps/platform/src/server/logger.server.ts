@@ -318,6 +318,27 @@ export function createConsoleLogger(): ConsoleLogger {
         receivedBytes,
       });
     },
+    resourceChangeFailed: ({ clientId, error, resourceId }) => {
+      console.error("Client resource change could not be written.", {
+        clientId,
+        errorCategory: "client_resource_change_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        resourceId,
+      });
+    },
+    resourceFilesOrphaned: ({ clientId, error, resourceId }) => {
+      console.error(
+        "Client resource files were left behind after its removal.",
+        {
+          clientId,
+          errorCategory: "client_resource_files_orphaned",
+          errorClass: errorClassOf(error),
+          ...errorCodeOf(error),
+          resourceId,
+        },
+      );
+    },
     resourceListingFailed: ({ clientId, error }) => {
       console.error("Client resources could not be listed.", {
         clientId,

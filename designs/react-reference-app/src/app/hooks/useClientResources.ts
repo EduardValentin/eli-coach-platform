@@ -88,13 +88,13 @@ export function useClientResources(clientId: string): ClientResources {
       return addition;
     },
     updateDetails: async (id, details) => {
-      const updated = await server.updateDetails(id, details);
+      const updated = await server.updateDetails(id, details, appState.resourceWrite);
       replaceListed(updated);
       announceChange();
       return updated;
     },
     remove: async (id) => {
-      await server.remove(id);
+      await server.remove(id, appState.resourceWrite);
       changeListed((resources) => resources.filter((resource) => resource.id !== id));
       announceChange();
     },

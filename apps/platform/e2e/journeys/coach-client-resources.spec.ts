@@ -38,6 +38,16 @@ const MEAL_PLAN = {
   description: "Breakfasts and dinners for the first week.",
 };
 
+const RECIPES = {
+  title: "Recipes",
+  description: "Dinners for the weekend.",
+};
+
+const CORRECTED_RECIPES = {
+  title: "Weekend recipes",
+  description: "Three dinners for Saturday and Sunday.",
+};
+
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
@@ -873,4 +883,108 @@ test("when a client's resources cannot be loaded the coach is told, keeps her wa
 
   // assert
   await coachClientResources.expectCards([MEAL_PLAN.title]);
+});
+
+test("the coach corrects a resource from its card, deletes another from the viewer, and the client finds only what is left, while the client can neither change nor delete", async ({
+  clientResources,
+  coachClientResources,
+  page,
+  provisionCoach,
+  provisionSubmittedClient,
+  publicNav,
+  resourceDetailsDialog,
+  resourceRequests,
+  resourceViewer,
+  signIn,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const today = dayMonthFormatter.format(new Date());
+  const recipes = recipesDoc();
+  await provisionCoach();
+  const client = await provisionSubmittedClient("waiting");
+  await page.goto("/store");
+  await signInAsCoach();
+  const mealPlanId = await resourceRequests.add(
+    client.clientId,
+    await mealPlanPdf(),
+    MEAL_PLAN,
+  );
+  const recipesId = await resourceRequests.add(
+    client.clientId,
+    recipes,
+    RECIPES,
+  );
+  await coachClientResources.open(client.clientId);
+
+  // act
+  await coachClientResources.chooseAction(RECIPES.title, "Edit details");
+  await resourceDetailsDialog.fill(CORRECTED_RECIPES);
+  await resourceDetailsDialog.save();
+
+  // assert
+  await resourceDetailsDialog.expectClosed();
+  await coachClientResources.expectToast("Changes saved.");
+  await coachClientResources.expectCards([
+    CORRECTED_RECIPES.title,
+    MEAL_PLAN.title,
+  ]);
+
+  // act
+  await coachClientResources.openResource(CORRECTED_RECIPES.title);
+
+  // assert
+  await resourceViewer.expectCover(CORRECTED_RECIPES.title, "recipes.doc");
+  await resourceViewer.expectDetails({
+    description: CORRECTED_RECIPES.description,
+    type: "Word document",
+    size: readableSizeOf(recipes),
+    added: today,
+  });
+
+  // act
+  await resourceViewer.close();
+  await coachClientResources.openResource(MEAL_PLAN.title);
+  const deletion = await resourceViewer.delete(MEAL_PLAN.title);
+
+  // assert
+  await deletion.expectOpen(`It’s removed for you and ${client.firstName}.`);
+
+  // act
+  await deletion.confirm();
+
+  // assert
+  await deletion.expectClosed();
+  await resourceViewer.expectClosed();
+  await coachClientResources.expectToast("Resource deleted.");
+  await coachClientResources.expectCards([CORRECTED_RECIPES.title]);
+  expect(await resourceRequests.fileStatuses(mealPlanId)).toEqual([
+    404, 404, 404,
+  ]);
+  expect(storedResourceIdsOf(client.clientId)).toEqual([recipesId]);
+
+  // arrange
+  await page.goto("/");
+  await publicNav.signOut();
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientResources.open();
+
+  // assert
+  await clientResources.expectCards([CORRECTED_RECIPES.title]);
+
+  // act
+  const deletedReads = await resourceRequests.fileStatuses(mealPlanId);
+  const clientChange = await resourceRequests.changeDetails(recipesId, RECIPES);
+  const clientRemoval = await resourceRequests.remove(recipesId);
+
+  // assert
+  expect(deletedReads).toEqual([404, 404, 404]);
+  expect(clientChange).toBe(403);
+  expect(clientRemoval).toBe(403);
+  expect(storedResourceIdsOf(client.clientId)).toEqual([recipesId]);
 });

@@ -40,6 +40,18 @@ type ClientResourceOpeningFailedIncident = {
   error: unknown;
 };
 
+type ClientResourceChangeFailedIncident = {
+  clientId: string;
+  resourceId: string;
+  error: unknown;
+};
+
+type ClientResourceFilesOrphanedIncident = {
+  clientId: string;
+  resourceId: string;
+  error: unknown;
+};
+
 type UnopenedResourceCountFailedIncident = {
   clientId: string | null;
   error: unknown;
@@ -52,5 +64,7 @@ export interface ClientResourceIncidents {
   resourceStorageFailed(incident: ClientResourceStorageFailedIncident): void;
   resourceListingFailed(incident: ClientResourceListingFailedIncident): void;
   resourceOpeningFailed(incident: ClientResourceOpeningFailedIncident): void;
+  resourceChangeFailed(incident: ClientResourceChangeFailedIncident): void;
+  resourceFilesOrphaned(incident: ClientResourceFilesOrphanedIncident): void;
   unopenedCountFailed(incident: UnopenedResourceCountFailedIncident): void;
 }

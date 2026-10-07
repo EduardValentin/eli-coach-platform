@@ -294,6 +294,14 @@ module.exports = {
       to: { path: `${FEATURES}[^/]+/ui/` },
     },
     {
+      name: "feature-shared-ui-never-imports-actor-ui",
+      comment:
+        "A feature's ui/shared/ serves every actor UI of that feature, so it never imports the feature's own ui/public/, ui/client/ or ui/coach/.",
+      severity: "error",
+      from: { path: `${FEATURES}([^/]+)/ui/shared/` },
+      to: { path: `${FEATURES}$1/ui/(public|client|coach)/` },
+    },
+    {
       name: "root-registry-to-server",
       comment:
         "The registry imports only the platform route fragment from server/.",

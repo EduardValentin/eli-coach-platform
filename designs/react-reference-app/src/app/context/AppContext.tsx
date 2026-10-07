@@ -38,10 +38,12 @@ import {
   RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
   RESOURCE_UPLOAD_OUTCOMES,
+  RESOURCE_WRITE_OUTCOMES,
   type ResourceLoad,
   type ResourceMark,
   type ResourceSeed,
   type ResourceUpload,
+  type ResourceWrite,
 } from '../services/resourceService';
 import {
   PROTOTYPE_CARDS_ON_FILE,
@@ -147,6 +149,7 @@ type AppState = {
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
   resourceMark: ResourceMark;
+  resourceWrite: ResourceWrite;
 };
 
 type AppContextType = {
@@ -200,6 +203,7 @@ const defaultState: AppState = {
   resourceLoad: 'works',
   resourceUpload: 'works',
   resourceMark: 'works',
+  resourceWrite: 'works',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -515,6 +519,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('rmark'),
     defaultState.resourceMark,
   );
+  state.resourceWrite = optionOrDefault(
+    RESOURCE_WRITE_OUTCOMES,
+    params.get('rwrite'),
+    defaultState.resourceWrite,
+  );
 
   return state;
 }
@@ -577,6 +586,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
     url.searchParams.delete('rmark');
+    url.searchParams.delete('rwrite');
 
     if (appState.prototypeMode === 'post-mvp') {
       url.searchParams.set('scope', 'post-mvp');
@@ -713,6 +723,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.resourceMark !== defaultState.resourceMark) {
       url.searchParams.set('rmark', appState.resourceMark);
+    }
+    if (appState.resourceWrite !== defaultState.resourceWrite) {
+      url.searchParams.set('rwrite', appState.resourceWrite);
     }
 
     const target = url.pathname + url.search + url.hash;

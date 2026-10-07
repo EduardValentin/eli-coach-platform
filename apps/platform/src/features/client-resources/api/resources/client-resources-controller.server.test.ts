@@ -3,10 +3,14 @@ import {
   ClientResource,
   type AddClientResourceResult,
   type AddClientResourceUseCase,
+  type ChangeResourceDetailsResult,
+  type ChangeResourceDetailsUseCase,
   type DownloadClientResourceResult,
   type DownloadClientResourceUseCase,
   type OpenResourcePreviewResult,
   type OpenResourcePreviewUseCase,
+  type RemoveClientResourceResult,
+  type RemoveClientResourceUseCase,
 } from "@eli-coach-platform/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
@@ -27,6 +31,7 @@ const RESOURCE_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PAGE_BYTES = new Uint8Array([0x52, 0x49, 0x46, 0x46]);
 const UPLOAD_URL = `https://evoa.fit/api/client-resources/clients/${CLIENT_ID}/resources`;
+const RESOURCE_URL = `https://evoa.fit/api/client-resources/${RESOURCE_ID}`;
 const BODY_CAP_BYTES = 26 * 1024 * 1024;
 
 const COACH: AccountSnapshot = {
@@ -55,6 +60,13 @@ const ADDED_PDF = ClientResource.reconstitute({
   },
   addedAt: new Date("2026-10-05T09:30:00.000Z"),
   openedAt: null,
+});
+
+const CHANGED_PDF = ClientResource.reconstitute({
+  ...ADDED_PDF.toSnapshot(),
+  title: "Week two plan",
+  description: "Swap the oats",
+  openedAt: new Date("2026-10-06T07:15:00.000Z"),
 });
 
 describe("ClientResourcesController add", () => {
@@ -544,11 +556,243 @@ describe("ClientResourcesController download", () => {
   });
 });
 
+describe("ClientResourcesController changeDetails", () => {
+  it("changes the details she sent and answers the resource as the page shows it", async () => {
+    // arrange
+    const { controller, changeResourceDetails } = createController({
+      changed: { status: "changed", resource: CHANGED_PDF },
+    });
+
+    // act
+    const response = await controller.changeDetails(
+      detailsArgs({
+        body: { title: "  Week two plan ", description: "Swap the oats  " },
+      }),
+      RESOURCE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      resource: {
+        id: RESOURCE_ID,
+        title: "Week two plan",
+        description: "Swap the oats",
+        file: {
+          originalName: "Meal plan.pdf",
+          downloadName: "Meal plan.pdf",
+          kind: "pdf",
+          sizeBytes: PDF_BYTES.byteLength,
+          pageCount: 3,
+        },
+        addedAt: "2026-10-05T09:30:00.000Z",
+        openedAt: "2026-10-06T07:15:00.000Z",
+      },
+    });
+    expect(changeResourceDetails).toHaveBeenCalledWith({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      resourceId: RESOURCE_ID,
+      details: { title: "  Week two plan ", description: "Swap the oats  " },
+    });
+  });
+
+  it("answers details that break the rules as a bad request naming each problem", async () => {
+    // arrange
+    const { controller } = createController({
+      changed: {
+        status: "invalid-details",
+        problems: { title: "missing", description: "too-long" },
+      },
+    });
+
+    // act
+    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      problems: { title: "missing", description: "too-long" },
+    });
+  });
+
+  it("answers not found to a resource the coach cannot change", async () => {
+    // arrange
+    const { controller } = createController({
+      changed: { status: "not-found" },
+    });
+
+    // act
+    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("answers a server error when the details could not be kept", async () => {
+    // arrange
+    const { controller } = createController({ changed: { status: "failed" } });
+
+    // act
+    const response = await controller.changeDetails(detailsArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(500);
+  });
+
+  it("answers not found to a resource id that is not a uuid without changing anything", async () => {
+    // arrange
+    const { controller, changeResourceDetails } = createController();
+
+    // act
+    const response = await controller.changeDetails(
+      detailsArgs(),
+      "not-a-uuid",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(changeResourceDetails).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { name: "not JSON", body: "title=Week two plan" },
+    {
+      name: "without a description",
+      body: JSON.stringify({ title: "Week two plan" }),
+    },
+    {
+      name: "with a title that is not text",
+      body: JSON.stringify({ title: 2, description: "" }),
+    },
+  ])(
+    "answers a bad request to a body $name without changing anything",
+    async ({ body }) => {
+      // arrange
+      const { controller, changeResourceDetails } = createController();
+      const request = new Request(RESOURCE_URL, {
+        body,
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      });
+
+      // act
+      const response = await controller.changeDetails(
+        detailsArgs({ request }),
+        RESOURCE_ID,
+      );
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(changeResourceDetails).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { who: "a signed-in client", session: CLIENT_SESSION, status: 403 },
+    {
+      who: "a visitor who is not signed in",
+      session: ANONYMOUS_SESSION,
+      status: 401,
+    },
+  ])("refuses $who without changing anything", async ({ session, status }) => {
+    // arrange
+    const { controller, changeResourceDetails } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.changeDetails(detailsArgs({ session }), RESOURCE_ID),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(status);
+    expect(changeResourceDetails).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClientResourcesController remove", () => {
+  it("removes the resource and answers that it is removed", async () => {
+    // arrange
+    const { controller, removeClientResource } = createController({
+      removed: { status: "removed" },
+    });
+
+    // act
+    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "removed" });
+    expect(removeClientResource).toHaveBeenCalledWith({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      resourceId: RESOURCE_ID,
+    });
+  });
+
+  it("answers not found to a resource the coach cannot remove", async () => {
+    // arrange
+    const { controller } = createController({
+      removed: { status: "not-found" },
+    });
+
+    // act
+    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("answers a server error when the resource could not be removed", async () => {
+    // arrange
+    const { controller } = createController({ removed: { status: "failed" } });
+
+    // act
+    const response = await controller.remove(removalArgs(), RESOURCE_ID);
+
+    // assert
+    expect(response.status).toBe(500);
+  });
+
+  it("answers not found to a resource id that is not a uuid without removing anything", async () => {
+    // arrange
+    const { controller, removeClientResource } = createController();
+
+    // act
+    const response = await controller.remove(removalArgs(), "../../etc");
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(removeClientResource).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { who: "a signed-in client", session: CLIENT_SESSION, status: 403 },
+    {
+      who: "a visitor who is not signed in",
+      session: ANONYMOUS_SESSION,
+      status: 401,
+    },
+  ])("refuses $who without removing anything", async ({ session, status }) => {
+    // arrange
+    const { controller, removeClientResource } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.remove(removalArgs({ session }), RESOURCE_ID),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(status);
+    expect(removeClientResource).not.toHaveBeenCalled();
+  });
+});
+
 function createController(
   options: {
     added?: AddClientResourceResult;
     opened?: OpenResourcePreviewResult;
     downloaded?: DownloadClientResourceResult;
+    changed?: ChangeResourceDetailsResult;
+    removed?: RemoveClientResourceResult;
   } = {},
 ) {
   const addClientResource = vi
@@ -560,6 +804,12 @@ function createController(
   const downloadClientResource = vi
     .fn()
     .mockResolvedValue(options.downloaded ?? { status: "not-found" });
+  const changeResourceDetails = vi
+    .fn()
+    .mockResolvedValue(options.changed ?? { status: "not-found" });
+  const removeClientResource = vi
+    .fn()
+    .mockResolvedValue(options.removed ?? { status: "not-found" });
   const controller = new ClientResourcesController({
     addClientResource: {
       execute: addClientResource,
@@ -570,6 +820,12 @@ function createController(
     downloadClientResource: {
       execute: downloadClientResource,
     } as unknown as DownloadClientResourceUseCase,
+    changeResourceDetails: {
+      execute: changeResourceDetails,
+    } as unknown as ChangeResourceDetailsUseCase,
+    removeClientResource: {
+      execute: removeClientResource,
+    } as unknown as RemoveClientResourceUseCase,
   });
 
   return {
@@ -577,6 +833,8 @@ function createController(
     addClientResource,
     openResourcePreview,
     downloadClientResource,
+    changeResourceDetails,
+    removeClientResource,
   };
 }
 
@@ -604,6 +862,34 @@ function uploadArgs(
     request:
       options.request ??
       new Request(UPLOAD_URL, { body: options.form, method: "POST" }),
+  });
+}
+
+function detailsArgs(
+  options: {
+    body?: { title: string; description: string };
+    request?: Request;
+    session?: ResolvedSession;
+  } = {},
+) {
+  return createRequestArgs({
+    contexts: sessionContexts(options.session),
+    request:
+      options.request ??
+      new Request(RESOURCE_URL, {
+        body: JSON.stringify(
+          options.body ?? { title: "Week two plan", description: "" },
+        ),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      }),
+  });
+}
+
+function removalArgs(options: { session?: ResolvedSession } = {}) {
+  return createRequestArgs({
+    contexts: sessionContexts(options.session),
+    request: new Request(RESOURCE_URL, { method: "DELETE" }),
   });
 }
 

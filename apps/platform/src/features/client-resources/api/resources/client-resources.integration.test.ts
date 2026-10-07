@@ -898,6 +898,179 @@ describe.sequential("client resources integration", () => {
     });
   });
 
+  describe("changing a resource's details", () => {
+    it("keeps the new title and description trimmed, lists the new title to the coach and to her, and keeps the moment she opened it", async () => {
+      // arrange
+      const { clientId, resource } = await submittedAnaWithPdf();
+      await rig.holdClock(FIRST_OPENED);
+      await resources.markOpened(ANA_SESSION, resource.id);
+
+      // act
+      const response = await resources.changeDetails(
+        COACH_SESSION,
+        resource.id,
+        { title: "  Week two plan  ", description: "  Swap the oats  " },
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        resource: {
+          ...resource,
+          title: "Week two plan",
+          description: "Swap the oats",
+          openedAt: FIRST_OPENED.toISOString(),
+        },
+      });
+      expect(await resources.resourceRowsOf(clientId)).toEqual([
+        expect.objectContaining({
+          id: resource.id,
+          title: "Week two plan",
+          description: "Swap the oats",
+          openedAt: FIRST_OPENED,
+        }),
+      ]);
+      const coachPage = await pageTextOf(
+        await rig.requestAs(
+          COACH_SESSION,
+          `/coach/clients/${clientId}/resources`,
+        ),
+      );
+      expect(coachPage).toContain("PDF 3 pages Week two plan");
+      expect(coachPage).not.toContain("Meal plan");
+      const herPage = await pageTextOf(
+        await resources.openResourcesPage(ANA_SESSION),
+      );
+      expect(herPage).toContain("PDF 3 pages Week two plan");
+      expect(herPage).not.toContain("Meal plan");
+    });
+
+    it("answers a blank title as a bad request naming the problem and changes nothing", async () => {
+      // arrange
+      const { clientId, resource } = await submittedAnaWithPdf();
+
+      // act
+      const response = await resources.changeDetails(
+        COACH_SESSION,
+        resource.id,
+        { title: "   ", description: "Swap the oats" },
+      );
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        problems: { title: "missing" },
+      });
+      expect(await resources.resourceRowsOf(clientId)).toEqual([
+        expect.objectContaining({ title: "Meal plan.pdf", description: "" }),
+      ]);
+    });
+  });
+
+  describe("removing a resource", () => {
+    it("removes a PDF with its original, every page image and its thumbnail, and its files answer not found to the coach and to her", async () => {
+      // arrange
+      const { clientId, resource } = await submittedAnaWithPdf();
+
+      // act
+      const response = await resources.remove(COACH_SESSION, resource.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ status: "removed" });
+      expect(await resources.resourceRowsOf(clientId)).toEqual([]);
+      expect(await resources.storedFileNamesOf(clientId, resource.id)).toEqual(
+        [],
+      );
+      expect(await resources.storedFileCountOf(clientId)).toBe(0);
+      const answers = await Promise.all(
+        [COACH_SESSION, ANA_SESSION].flatMap((requester) => [
+          resources.openPage(requester, resource.id, 1),
+          resources.openThumbnail(requester, resource.id),
+          resources.download(requester, resource.id),
+        ]),
+      );
+      expect(answers.map(({ status }) => status)).toEqual([
+        404, 404, 404, 404, 404, 404,
+      ]);
+    });
+
+    it("answers not found when the resource was already removed", async () => {
+      // arrange
+      const { resource } = await anaWithPdf();
+
+      // act
+      const first = await resources.remove(COACH_SESSION, resource.id);
+      const again = await resources.remove(COACH_SESSION, resource.id);
+
+      // assert
+      expect([first.status, again.status]).toEqual([200, 404]);
+    });
+  });
+
+  describe("reaching one resource to change or remove it", () => {
+    it.each([
+      { who: "a signed-in client", requester: ANA_SESSION, status: 403 },
+      { who: "a signed-out visitor", requester: VISITOR, status: 401 },
+    ] as const)(
+      "refuses $who the change and the removal of her resource and changes nothing",
+      async ({ requester, status }) => {
+        // arrange
+        const { clientId, resource } = await submittedAnaWithPdf();
+
+        // act
+        const answers = await Promise.all([
+          resources.changeDetails(requester, resource.id, {
+            title: "Week two plan",
+            description: "",
+          }),
+          resources.remove(requester, resource.id),
+        ]);
+
+        // assert
+        expect(answers.map(({ status }) => status)).toEqual([status, status]);
+        expect(await resources.resourceRowsOf(clientId)).toEqual([
+          expect.objectContaining({ id: resource.id, title: "Meal plan.pdf" }),
+        ]);
+        expect(
+          await resources.storedFileNamesOf(clientId, resource.id),
+        ).toEqual(["original", "page-1", "page-2", "page-3", "thumbnail"]);
+      },
+    );
+
+    it("answers not found to a resource that does not exist or an id that is not a uuid", async () => {
+      // arrange
+      await anaWithPdf();
+      const details = { title: "Week two plan", description: "" };
+
+      // act
+      const answers = await Promise.all([
+        resources.changeDetails(COACH_SESSION, UNKNOWN_ID, details),
+        resources.changeDetails(COACH_SESSION, NOT_A_UUID, details),
+        resources.remove(COACH_SESSION, UNKNOWN_ID),
+        resources.remove(COACH_SESSION, NOT_A_UUID),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([404, 404, 404, 404]);
+    });
+
+    it("takes the resource only as a change or a removal", async () => {
+      // arrange
+      const { resource } = await anaWithPdf();
+      const target = `/api/client-resources/${resource.id}`;
+
+      // act
+      const answers = await Promise.all([
+        rig.requestAs(COACH_SESSION, target),
+        rig.requestAs(COACH_SESSION, target, { method: "POST" }),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([405, 405]);
+    });
+  });
+
   describe("her resources page", () => {
     it("lists only her own resources, the newest first", async () => {
       // arrange

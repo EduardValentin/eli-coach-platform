@@ -369,4 +369,46 @@ describe("ClientResource", () => {
       expect(reopened.toSnapshot().openedAt).toEqual(OPENED_AT);
     });
   });
+
+  describe("changing its details", () => {
+    const OPENED_AT = new Date("2026-10-06T08:00:00.000Z");
+
+    it("answers a copy with the new title and description and everything else unchanged", () => {
+      // arrange
+      const resource = ClientResource.reconstitute({
+        id: "resource-1",
+        clientId: "client-1",
+        title: "Old plan",
+        description: "Old notes",
+        file: {
+          originalName: "plan.pdf",
+          format: "pdf",
+          sizeBytes: 10,
+          pageCount: 1,
+        },
+        addedAt: ADDED_AT,
+        openedAt: OPENED_AT,
+      });
+
+      // act
+      const changed = resource.withDetails(details());
+
+      // assert
+      expect(changed.toSnapshot()).toEqual({
+        id: "resource-1",
+        clientId: "client-1",
+        title: "Meal plan",
+        description: "Week one",
+        file: {
+          originalName: "plan.pdf",
+          format: "pdf",
+          sizeBytes: 10,
+          pageCount: 1,
+        },
+        addedAt: ADDED_AT,
+        openedAt: OPENED_AT,
+      });
+      expect(resource.toSnapshot().title).toBe("Old plan");
+    });
+  });
 });

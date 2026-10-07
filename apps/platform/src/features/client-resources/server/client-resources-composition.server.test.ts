@@ -57,6 +57,46 @@ describe("composeClientResourcesFeature", () => {
     // assert
     await expect(opening).rejects.toThrow("database down");
   });
+
+  it("looks a resource whose details change up in the clients' resources table", async () => {
+    // arrange
+    const feature = composeClientResourcesFeature(createHandles());
+    const request = new Request(
+      `https://evoa.fit/api/client-resources/${RESOURCE_ID}`,
+      {
+        body: JSON.stringify({ title: "Week two plan", description: "" }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      },
+    );
+
+    // act
+    const changing = feature.clientResources.changeDetails(
+      coachArgs(request),
+      RESOURCE_ID,
+    );
+
+    // assert
+    await expect(changing).rejects.toThrow("database down");
+  });
+
+  it("looks a resource being removed up in the clients' resources table", async () => {
+    // arrange
+    const feature = composeClientResourcesFeature(createHandles());
+    const request = new Request(
+      `https://evoa.fit/api/client-resources/${RESOURCE_ID}`,
+      { method: "DELETE" },
+    );
+
+    // act
+    const removing = feature.clientResources.remove(
+      coachArgs(request),
+      RESOURCE_ID,
+    );
+
+    // assert
+    await expect(removing).rejects.toThrow("database down");
+  });
 });
 
 describe("composeClientResourcesFeature, for the client herself", () => {
@@ -130,6 +170,8 @@ function createHandles() {
       resourceStorageFailed: vi.fn(),
       resourceListingFailed: vi.fn(),
       resourceOpeningFailed: vi.fn(),
+      resourceChangeFailed: vi.fn(),
+      resourceFilesOrphaned: vi.fn(),
       unopenedCountFailed: vi.fn(),
     },
     resourceClients: {
@@ -156,7 +198,11 @@ function createUnreachableDatabase(): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function coachArgs() {
+function coachArgs(
+  request = new Request(
+    `https://evoa.fit/coach/clients/${UNKNOWN_CLIENT_ID}/resources`,
+  ),
+) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -170,9 +216,7 @@ function coachArgs() {
       contextEntry(accountsContext, accounts),
       contextEntry(sessionContext, { account: COACH, kind: "authenticated" }),
     ],
-    request: new Request(
-      `https://evoa.fit/coach/clients/${UNKNOWN_CLIENT_ID}/resources`,
-    ),
+    request,
   });
 }
 

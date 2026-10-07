@@ -22,7 +22,14 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 
@@ -153,7 +160,15 @@ function CoverStage({ resource }: { resource: ClientResourceView }) {
   );
 }
 
-function ResourceDetailsPanel({ resource }: { resource: ClientResourceView }) {
+type ResourceDetailsPanelProps = {
+  resource: ClientResourceView;
+  actions?: ReactNode;
+};
+
+function ResourceDetailsPanel({
+  resource,
+  actions,
+}: ResourceDetailsPanelProps) {
   const timeZone = useCalendarDayTimeZone();
   const { file } = resource;
 
@@ -187,11 +202,22 @@ function ResourceDetailsPanel({ resource }: { resource: ClientResourceView }) {
           value={formatDayMonth(resource.addedAt, timeZone)}
         />
       </dl>
+      {actions}
     </div>
   );
 }
 
-function ViewerContent({ resource }: { resource: ClientResourceView }) {
+type ViewerContentProps = {
+  resource: ClientResourceView;
+  actions?: ReactNode;
+  returnFocusTo?: RefObject<HTMLElement | null>;
+};
+
+function ViewerContent({
+  resource,
+  actions,
+  returnFocusTo,
+}: ViewerContentProps) {
   const isDesktop = useIsDesktopViewport();
   const [pageNumber, setPageNumber] = useState(FIRST_PAGE);
   const [step, setStep] = useState<PageStep>(1);
@@ -219,8 +245,9 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
     <ViewerDialogContent
       data-parity-root="ResourceViewer"
       onKeyDown={turnWithArrowKeys}
+      returnFocusTo={returnFocusTo}
     >
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="flex min-w-0 items-center gap-2 border-b border-border-subtle px-2 py-2 sm:px-4 lg:col-span-2 lg:gap-4 lg:py-3 lg:pr-3 lg:pl-6">
           <ViewerDialogClose asChild>
             <Button
@@ -249,7 +276,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
               step={step}
             />
           )}
-          <ResourceDetailsPanel resource={resource} />
+          <ResourceDetailsPanel actions={actions} resource={resource} />
         </div>
 
         <div className="border-t border-border-subtle bg-surface-base px-4 py-3 sm:px-6 lg:col-start-2 lg:row-start-3 lg:border-l lg:py-4">
@@ -279,9 +306,16 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
 type ResourceViewerProps = {
   resource: ClientResourceView | undefined;
   onClose: () => void;
+  actions?: ReactNode;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 };
 
-export function ResourceViewer({ resource, onClose }: ResourceViewerProps) {
+export function ResourceViewer({
+  resource,
+  onClose,
+  actions,
+  returnFocusTo,
+}: ResourceViewerProps) {
   return (
     <ViewerDialog
       onOpenChange={(open) => {
@@ -289,7 +323,14 @@ export function ResourceViewer({ resource, onClose }: ResourceViewerProps) {
       }}
       open={resource !== undefined}
     >
-      {resource && <ViewerContent key={resource.id} resource={resource} />}
+      {resource && (
+        <ViewerContent
+          actions={actions}
+          key={resource.id}
+          resource={resource}
+          returnFocusTo={returnFocusTo}
+        />
+      )}
     </ViewerDialog>
   );
 }

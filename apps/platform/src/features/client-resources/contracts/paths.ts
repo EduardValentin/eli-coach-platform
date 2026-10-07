@@ -10,6 +10,7 @@ const RESOURCES_SEGMENT = "resources";
 
 export const CLIENT_RESOURCES_API_PATHS = {
   clientResources: `${CLIENT_RESOURCES_API}/clients/:clientId/${RESOURCES_SEGMENT}`,
+  resource: `${CLIENT_RESOURCES_API}/:resourceId`,
   resourcePage: `${CLIENT_RESOURCES_API}/:resourceId/pages/:pageNumber`,
   resourceThumbnail: `${CLIENT_RESOURCES_API}/:resourceId/thumbnail`,
   resourceDownload: `${CLIENT_RESOURCES_API}/:resourceId/download`,
@@ -30,6 +31,10 @@ export function clientResourcesPath(clientId: string): string {
   return `${CLIENT_RESOURCES_API}/clients/${encodeURIComponent(clientId)}/${RESOURCES_SEGMENT}`;
 }
 
+export function resourcePath(resourceId: string): string {
+  return `${CLIENT_RESOURCES_API}/${encodeURIComponent(resourceId)}`;
+}
+
 export function resourcePagePath(
   resourceId: string,
   pageNumber: number,
@@ -47,8 +52,4 @@ export function resourceDownloadPath(resourceId: string): string {
 
 export function resourceOpenedPath(resourceId: string): string {
   return `${resourcePath(resourceId)}/opened`;
-}
-
-function resourcePath(resourceId: string): string {
-  return `${CLIENT_RESOURCES_API}/${encodeURIComponent(resourceId)}`;
 }

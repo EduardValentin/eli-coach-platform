@@ -20,6 +20,10 @@ export const clientResourcesApiRoutes = [
     "./api/resources/client-resources.ts",
   ),
   route(
+    CLIENT_RESOURCES_API_PATHS.resource.slice(1),
+    "./api/resources/resource.ts",
+  ),
+  route(
     CLIENT_RESOURCES_API_PATHS.resourcePage.slice(1),
     "./api/resources/resource-page.ts",
   ),

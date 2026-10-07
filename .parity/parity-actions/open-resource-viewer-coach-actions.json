@@ -1,0 +1,9 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\" s]"},
+  {"waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"]"},
+  {"wait": 600},
+  {"hover": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"] >> role=button[name=\"Edit details\" s]"},
+  {"wait": 400}
+]

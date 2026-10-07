@@ -1,12 +1,14 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   AddClientResourceUseCase,
+  ChangeResourceDetailsUseCase,
   CountUnopenedResourcesUseCase,
   DownloadClientResourceUseCase,
   ListClientResourcesUseCase,
   ListOwnResourcesUseCase,
   MarkResourceOpenedUseCase,
   OpenResourcePreviewUseCase,
+  RemoveClientResourceUseCase,
   type ClientResourceIncidents,
   type ClientResourceStore,
   type ResourceClients,
@@ -58,6 +60,8 @@ export function composeClientResourcesFeature(
       }),
       openResourcePreview: new OpenResourcePreviewUseCase(servingPorts),
       downloadClientResource: new DownloadClientResourceUseCase(servingPorts),
+      changeResourceDetails: new ChangeResourceDetailsUseCase(accessPorts),
+      removeClientResource: new RemoveClientResourceUseCase(servingPorts),
     }),
     coachResources: new CoachResourcesController({
       listClientResources: new ListClientResourcesUseCase(accessPorts),

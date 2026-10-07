@@ -19,6 +19,9 @@ export type ResourceLoad = (typeof RESOURCE_LOAD_OUTCOMES)[number];
 export const RESOURCE_MARK_OUTCOMES = ['works', 'fails'] as const;
 export type ResourceMark = (typeof RESOURCE_MARK_OUTCOMES)[number];
 
+export const RESOURCE_WRITE_OUTCOMES = ['works', 'fails'] as const;
+export type ResourceWrite = (typeof RESOURCE_WRITE_OUTCOMES)[number];
+
 export const RESOURCE_UPLOAD_OUTCOMES = [
   'works',
   'fails',
@@ -43,6 +46,7 @@ const PDF_REFUSAL_FOR: Partial<Record<ResourceUpload, ServerDecidedRefusal>> = {
 export const RESOURCES_UNAVAILABLE = 'Resources could not be loaded.';
 export const UPLOAD_FAILED = 'The upload did not go through.';
 export const OPENING_NOT_RECORDED = 'The opening was not recorded.';
+export const RESOURCE_NOT_CHANGED = 'The resource was not changed.';
 
 export type ResourcePageRenderer = {
   render(upload: { title: string; kind: ResourceFileKind; file: File }): string[];
@@ -167,8 +171,14 @@ export class ResourceServer {
     return outcome;
   }
 
-  async updateDetails(id: string, details: ResourceDetails): Promise<Resource> {
+  async updateDetails(
+    id: string,
+    details: ResourceDetails,
+    write: ResourceWrite,
+  ): Promise<Resource> {
     await wait(RESOURCE_LATENCY_MS);
+    if (write === 'fails') throw new Error(RESOURCE_NOT_CHANGED);
+
     const others = this.records.filter((resource) => resource.id !== id);
     const updated = {
       ...this.recordFor(id),
@@ -181,8 +191,10 @@ export class ResourceServer {
     return updated;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, write: ResourceWrite): Promise<void> {
     await wait(RESOURCE_LATENCY_MS);
+    if (write === 'fails') throw new Error(RESOURCE_NOT_CHANGED);
+
     this.recordFor(id);
     this.records = this.records.filter((resource) => resource.id !== id);
     this.files.delete(id);

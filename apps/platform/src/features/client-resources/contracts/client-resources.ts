@@ -40,6 +40,19 @@ export const addedResourceAnswerSchema = z.object({
   resource: clientResourceSchema,
 });
 
+export const changedResourceAnswerSchema = z.object({
+  resource: clientResourceSchema,
+});
+
+export const removedResourceAnswerSchema = z.object({
+  status: z.literal("removed"),
+});
+
+export const resourceDetailsRequestSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+});
+
 export const refusedResourceAnswerSchema = z.object({
   refusal: z.enum(RESOURCE_REFUSALS),
 });

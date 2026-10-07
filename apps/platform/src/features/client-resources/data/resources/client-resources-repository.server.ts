@@ -61,6 +61,21 @@ export class PostgresClientResources implements ClientResources {
       );
   }
 
+  async saveDetails(resource: ClientResource): Promise<void> {
+    const { id, title, description } = resource.toSnapshot();
+
+    await this.database
+      .update(clientResourcesTable)
+      .set({ title, description })
+      .where(eq(clientResourcesTable.id, id));
+  }
+
+  async remove(resourceId: string): Promise<void> {
+    await this.database
+      .delete(clientResourcesTable)
+      .where(eq(clientResourcesTable.id, resourceId));
+  }
+
   async countUnopenedForClient(clientId: string): Promise<number> {
     const [row] = await this.database
       .select({ unopened: count() })

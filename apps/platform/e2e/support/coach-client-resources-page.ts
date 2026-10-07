@@ -11,6 +11,8 @@ export type ResourcesOwner = {
   fullName: string;
 };
 
+type ResourceAction = "Edit details" | "Delete";
+
 const ADD_RESOURCE = "Add resource";
 
 export class CoachClientResourcesPage {
@@ -107,6 +109,27 @@ export class CoachClientResourcesPage {
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
     }).toPass();
+  }
+
+  async chooseAction(title: string, action: ResourceAction): Promise<void> {
+    const menuItem = this.page.getByRole("menuitem", {
+      name: action,
+      exact: true,
+    });
+
+    await expect(async () => {
+      await this.page
+        .getByRole("button", { name: `Actions for ${title}`, exact: true })
+        .click();
+      await expect(menuItem).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await menuItem.click();
+  }
+
+  async expectToast(message: string): Promise<void> {
+    await expect(this.page.getByText(message, { exact: true })).toBeVisible();
   }
 
   async openResource(title: string): Promise<void> {

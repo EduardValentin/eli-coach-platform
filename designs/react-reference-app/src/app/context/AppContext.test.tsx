@@ -186,3 +186,66 @@ describe('subscription dev params', () => {
     });
   });
 });
+
+function ResourceWriteProbe() {
+  const { appState, setAppState } = useAppState();
+
+  return (
+    <>
+      <p>resource changes {appState.resourceWrite}</p>
+      <button type="button" onClick={() => setAppState({ resourceWrite: 'fails' })}>
+        Make resource changes fail
+      </button>
+    </>
+  );
+}
+
+function renderResourceWrite(search = '') {
+  window.history.replaceState(null, '', `/${search}`);
+
+  return render(
+    <MemoryRouter>
+      <AppProvider>
+        <ResourceWriteProbe />
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('resource changes dev param', () => {
+  it('reads failing resource changes from the URL', () => {
+    // arrange
+    const search = '?rwrite=fails';
+
+    // act
+    renderResourceWrite(search);
+
+    // assert
+    expect(screen.getByText('resource changes fails')).toBeInTheDocument();
+  });
+
+  it('falls back to working resource changes for an unknown value', () => {
+    // arrange
+    const search = '?rwrite=sometimes';
+
+    // act
+    renderResourceWrite(search);
+
+    // assert
+    expect(screen.getByText('resource changes works')).toBeInTheDocument();
+  });
+
+  it('writes failing resource changes back to the URL', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderResourceWrite();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Make resource changes fail' }));
+
+    // assert
+    await waitFor(() => {
+      expect(window.location.search).toBe('?rwrite=fails');
+    });
+  });
+});

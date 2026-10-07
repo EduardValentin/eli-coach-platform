@@ -14,6 +14,11 @@ export type ResourceUpload = {
   description?: string;
 };
 
+export type ResourceDetails = {
+  title: string;
+  description: string;
+};
+
 export type ResourceFileKind = "pdf" | "image" | "word" | "excel";
 
 export type AddedResource = {
@@ -114,6 +119,24 @@ export class ClientResourcesJourney {
         method: "POST",
       },
     );
+  }
+
+  changeDetails(
+    requester: Requester,
+    resourceId: string,
+    details: ResourceDetails,
+  ): Promise<Response> {
+    return this.send(requester, `${CLIENT_RESOURCES_API}/${resourceId}`, {
+      body: JSON.stringify(details),
+      headers: { "Content-Type": "application/json" },
+      method: "PATCH",
+    });
+  }
+
+  remove(requester: Requester, resourceId: string): Promise<Response> {
+    return this.send(requester, `${CLIENT_RESOURCES_API}/${resourceId}`, {
+      method: "DELETE",
+    });
   }
 
   openResourcesPage(requester: AccountSession): Promise<Response> {

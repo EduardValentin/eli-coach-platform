@@ -3,6 +3,10 @@ export {
   type AddClientResourceResult,
 } from "./add-client-resource-use-case";
 export {
+  ChangeResourceDetailsUseCase,
+  type ChangeResourceDetailsResult,
+} from "./change-resource-details-use-case";
+export {
   ClientResource,
   type ClientResourceOwner,
   type ClientResourceSnapshot,
@@ -32,6 +36,10 @@ export {
   type OpenResourcePreviewResult,
   type ResourcePreview,
 } from "./open-resource-preview-use-case";
+export {
+  RemoveClientResourceUseCase,
+  type RemoveClientResourceResult,
+} from "./remove-client-resource-use-case";
 export { type ResourceClients } from "./resource-clients";
 export {
   MAX_RESOURCE_DESCRIPTION_LENGTH,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 
@@ -13,6 +13,9 @@ type ResourceGalleryProps = {
   perspective: ResourcePerspective;
   openingsBeingRecorded?: ReadonlySet<string>;
   onOpenUnopened?: (resource: ClientResourceView) => void;
+  menuFor?: (resource: ClientResourceView) => ReactNode;
+  detailsActionsFor?: (resource: ClientResourceView) => ReactNode;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 };
 
 export function ResourceGallery({
@@ -20,6 +23,9 @@ export function ResourceGallery({
   perspective,
   openingsBeingRecorded = NO_OPENINGS_BEING_RECORDED,
   onOpenUnopened,
+  menuFor,
+  detailsActionsFor,
+  returnFocusTo,
 }: ResourceGalleryProps) {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewing = resources.find((resource) => resource.id === viewingId);
@@ -32,6 +38,10 @@ export function ResourceGallery({
       .map((resource) => resource.id),
   );
 
+  if (viewingId !== null && viewing === undefined) {
+    setViewingId(null);
+  }
+
   const open = (resource: ClientResourceView) => {
     setViewingId(resource.id);
 
@@ -43,12 +53,18 @@ export function ResourceGallery({
   return (
     <>
       <ResourceGrid
+        menuFor={menuFor}
         onOpen={open}
         perspective={perspective}
         resources={resources}
         unopenedIds={unopenedIds}
       />
-      <ResourceViewer onClose={() => setViewingId(null)} resource={viewing} />
+      <ResourceViewer
+        actions={viewing && detailsActionsFor?.(viewing)}
+        onClose={() => setViewingId(null)}
+        resource={viewing}
+        returnFocusTo={returnFocusTo}
+      />
     </>
   );
 }

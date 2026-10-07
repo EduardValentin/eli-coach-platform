@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { MAX_RESOURCE_TITLE_LENGTH } from "@eli-coach-platform/domain/client-resources";
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
@@ -33,6 +34,7 @@ import {
 } from "vitest";
 
 import { clientAction as uploadResource } from "~/features/client-resources/api/resources/client-resources";
+import { clientAction as changeOrRemoveResource } from "~/features/client-resources/api/resources/resource";
 import type {
   ClientResourceListing,
   ClientResourceView,
@@ -45,12 +47,16 @@ import {
 } from "~/features/client-resources/contracts/paths";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import CoachClientResourcesRoute, { ErrorBoundary } from "./client-resources";
 
 const COACH_TIME_ZONE = "Europe/Bucharest";
 const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const UPLOAD_URL = `http://localhost${clientResourcesPath(CLIENT_ID)}`;
+const RESOURCE_URL = `http://localhost${CLIENT_RESOURCES_API_PATHS.resource}`;
+const HEADING = "Andreea’s resources";
+const DELETE_FAILED = "The resource wasn’t deleted. Try again.";
 const MEGABYTE = 1024 * 1024;
 const DROP_PROMPT = "Drop a file here or choose one";
 
@@ -269,7 +275,7 @@ describe("the coach's client resources page", () => {
 
     // assert
     const grid = screen.getByRole("region", { name: "Resources" });
-    const cards = within(grid).getAllByRole("button");
+    const cards = resourceCardsIn(grid);
     expect(cards.map((card) => card.textContent)).toEqual([
       "IMGPlate portions guide",
       "PDF3 pagesGlute activation warm-up",
@@ -744,11 +750,7 @@ describe("adding a resource", () => {
     });
     const grid = screen.getByRole("region", { name: "Resources" });
     await waitFor(() => {
-      expect(
-        within(grid)
-          .getAllByRole("button")
-          .map((card) => card.textContent),
-      ).toEqual([
+      expect(resourceCardsIn(grid).map((card) => card.textContent)).toEqual([
         "PDF2 pagesMeal plan week one",
         "PDF3 pagesGlute activation warm-up",
       ]);
@@ -959,12 +961,463 @@ describe("the resource viewer", () => {
   });
 });
 
+describe("a resource's actions", () => {
+  it("offers each resource's actions in a menu named by its title, beside the card's button and never inside it", async () => {
+    // arrange, act
+    await renderResourcesPage();
+
+    // assert
+    for (const resource of LIBRARY) {
+      const card = screen.getByRole("button", { name: resource.title });
+      const menu = screen.getByRole("button", {
+        name: `Actions for ${resource.title}`,
+      });
+      expect(card).not.toContainElement(menu);
+      expect(card.closest("li")).toContainElement(menu);
+    }
+  });
+
+  it("offers Edit details and Delete", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Plate portions guide" }),
+    );
+
+    // assert
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Edit details", "Delete"]);
+  });
+
+  it("offers Edit details and Delete in the opened resource's details", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+
+    // act
+    const viewer = await openResource(user, "Glute activation warm-up");
+
+    // assert
+    expect(
+      within(viewer).getByRole("button", { name: "Edit details" }),
+    ).toBeVisible();
+    expect(
+      within(viewer).getByRole("button", { name: "Delete" }),
+    ).toBeVisible();
+  });
+
+  it("reaches both dialogs from the keyboard alone", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+    const trigger = screen.getByRole("button", {
+      name: "Actions for Glute activation warm-up",
+    });
+    await tabTo(user, trigger);
+
+    // act
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Delete “Glute activation warm-up”?",
+      }),
+    ).toBeInTheDocument();
+
+    // act
+    await user.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", { name: "Edit details" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("editing a resource's details", () => {
+  it("opens with the stored title and description and the file it holds, which cannot be replaced", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+
+    // act
+    const dialog = await openEditDialog(user, "Food diary template");
+
+    // assert
+    expect(within(dialog).getByText("food-diary-template.docx")).toBeVisible();
+    expect(within(dialog).getByText("303 KB")).toBeVisible();
+    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
+      "Food diary template",
+    );
+    expect(
+      within(dialog).getByRole("textbox", { name: "Description (optional)" }),
+    ).toHaveValue("");
+    expect(within(dialog).queryByLabelText("Replace")).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText(DROP_PROMPT),
+    ).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("offers Save only once the trimmed details differ and the title is not blank", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+    const dialog = await openEditDialog(user, "Plate portions guide");
+    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const description = within(dialog).getByRole("textbox", {
+      name: "Description (optional)",
+    });
+    const save = within(dialog).getByRole("button", { name: "Save" });
+
+    // act
+    await user.type(title, "   ");
+    await user.type(description, "  ");
+
+    // assert
+    expect(save).toBeDisabled();
+
+    // act
+    await user.type(description, " Weigh nothing.");
+
+    // assert
+    expect(save).toBeEnabled();
+
+    // act
+    await user.clear(title);
+
+    // assert
+    expect(save).toBeDisabled();
+  });
+
+  it("sends the trimmed details, closes, confirms and shows them in the open resource and on its card", async () => {
+    // arrange
+    const store = libraryStore(LIBRARY);
+    const sent = recordDetailsChanges(store);
+    const { user } = await renderResourcesRouter(store.load);
+    const viewer = await openResource(user, "Glute activation warm-up");
+    await user.click(
+      within(viewer).getByRole("button", { name: "Edit details" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Edit details" });
+    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    await user.clear(title);
+    await user.type(title, "  Glute warm-up  ");
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    // assert
+    expect(await screen.findByText("Changes saved.")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "Glute warm-up" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Edit details" }),
+    ).not.toBeInTheDocument();
+    expect(sent).toEqual([
+      {
+        resourceId: WARM_UP.id,
+        details: { title: "Glute warm-up", description: WARM_UP.description },
+      },
+    ]);
+
+    // act
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Glute warm-up" })).getByRole(
+        "button",
+        { name: "Close" },
+      ),
+    );
+
+    // assert
+    expect(
+      await screen.findByRole("button", { name: "Glute warm-up" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps her edits and says so when the save does not go through", async () => {
+    // arrange
+    server.use(
+      http.patch(
+        RESOURCE_URL,
+        () => new HttpResponse("Internal Server Error", { status: 500 }),
+      ),
+    );
+    const { user } = await renderResourcesPage();
+    const dialog = await openEditDialog(user, "Plate portions guide");
+    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    await user.clear(title);
+    await user.type(title, "Portions");
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    // assert
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Your changes weren’t saved. Try again.",
+    );
+    expect(title).toHaveValue("Portions");
+    expect(within(dialog).getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("saves when she tries again after a failed save", async () => {
+    // arrange
+    const store = libraryStore(LIBRARY);
+    let attempts = 0;
+    server.use(
+      http.patch(RESOURCE_URL, async ({ request, params }) => {
+        attempts += 1;
+        if (attempts === 1) {
+          return new HttpResponse("Internal Server Error", { status: 500 });
+        }
+
+        return HttpResponse.json({
+          resource: store.change(
+            String(params.resourceId),
+            (await request.json()) as ResourceDetails,
+          ),
+        });
+      }),
+    );
+    const { user } = await renderResourcesRouter(store.load);
+    const dialog = await openEditDialog(user, "Plate portions guide");
+    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    await user.clear(title);
+    await user.type(title, "Portions");
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+    await within(dialog).findByRole("alert");
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    // assert
+    expect(await screen.findByText("Changes saved.")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Portions" }),
+    ).toBeInTheDocument();
+  });
+
+  it("cannot be dismissed while the save is on its way", async () => {
+    // arrange
+    const held = holdThenFailDetailsChanges();
+    const { user } = await renderResourcesPage();
+    const dialog = await openEditDialog(user, "Plate portions guide");
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Title" }),
+      " v2",
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(held).toHaveLength(1);
+    });
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(
+      within(dialog).getByRole("button", { name: "Saving…" }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("dialog", { name: "Edit details" }),
+    ).toBeInTheDocument();
+    held[0]();
+  });
+
+  it("shows the server's problem under the title and keeps her edits", async () => {
+    // arrange
+    server.use(
+      http.patch(RESOURCE_URL, () =>
+        HttpResponse.json({ problems: { title: "too-long" } }, { status: 400 }),
+      ),
+    );
+    const { user } = await renderResourcesPage();
+    const dialog = await openEditDialog(user, "Plate portions guide");
+    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    await user.type(title, " for every meal");
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    // assert
+    await waitFor(() => {
+      expect(title).toHaveAccessibleDescription(
+        `Keep the title to ${MAX_RESOURCE_TITLE_LENGTH} characters.`,
+      );
+    });
+    expect(title).toHaveValue("Plate portions guide for every meal");
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("deleting a resource", () => {
+  it("asks first, naming the resource and who loses it", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+
+    // act
+    const confirm = await openDeleteConfirm(user, "Plate portions guide");
+
+    // assert
+    expect(confirm).toHaveAccessibleDescription(
+      "It’s removed for you and Andreea.",
+    );
+    expect(
+      within(confirm).getByRole("button", { name: "Delete" }),
+    ).toBeVisible();
+    expect(within(confirm).getByRole("button", { name: "Keep" })).toBeVisible();
+  });
+
+  it("keeps the resource and returns focus to its menu button when she keeps it", async () => {
+    // arrange
+    const sent = recordRemovals(libraryStore(LIBRARY));
+    const { user } = await renderResourcesPage();
+    const confirm = await openDeleteConfirm(user, "Plate portions guide");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Keep" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("button", { name: "Actions for Plate portions guide" }),
+    ).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Plate portions guide" }),
+    ).toBeInTheDocument();
+    expect(sent).toEqual([]);
+  });
+
+  it("removes the card, confirms and moves focus to the page heading when she confirms", async () => {
+    // arrange
+    const store = libraryStore(LIBRARY);
+    const sent = recordRemovals(store);
+    const { user } = await renderResourcesRouter(store.load);
+    const confirm = await openDeleteConfirm(user, "Plate portions guide");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(await screen.findByText("Resource deleted.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Plate portions guide" }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 1, name: HEADING }),
+      ).toHaveFocus();
+    });
+    expect(sent).toEqual([PLATE_GUIDE.id]);
+  });
+
+  it("closes the opened resource and moves focus to the page heading when she deletes it from there", async () => {
+    // arrange
+    const store = libraryStore(LIBRARY);
+    recordRemovals(store);
+    const { user } = await renderResourcesRouter(store.load);
+    const viewer = await openResource(user, "Glute activation warm-up");
+    await user.click(within(viewer).getByRole("button", { name: "Delete" }));
+    const confirm = await screen.findByRole("dialog", {
+      name: "Delete “Glute activation warm-up”?",
+    });
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(await screen.findByText("Resource deleted.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Glute activation warm-up" }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 1, name: HEADING }),
+      ).toHaveFocus();
+    });
+  });
+
+  it("hides the resource while the removal is on its way, then tells her and brings it back when it fails", async () => {
+    // arrange
+    const held = holdThenFailRemovals();
+    const { user } = await renderResourcesPage();
+    const confirm = await openDeleteConfirm(user, "Plate portions guide");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "Plate portions guide" }),
+      ).not.toBeInTheDocument();
+    });
+
+    // act
+    await waitFor(() => {
+      expect(held).toHaveLength(1);
+    });
+    held[0]();
+
+    // assert
+    expect(await screen.findByText(DELETE_FAILED)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Plate portions guide" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Resource deleted.")).not.toBeInTheDocument();
+  });
+
+  it("tells her and keeps the resource when the removal never reaches the server", async () => {
+    // arrange
+    server.use(http.delete(RESOURCE_URL, () => HttpResponse.error()));
+    const { user } = await renderResourcesPage();
+    const confirm = await openDeleteConfirm(user, "Weekly macro tracker");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(await screen.findByText(DELETE_FAILED)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Weekly macro tracker" }),
+    ).toBeInTheDocument();
+  });
+});
+
 type ResourcesPageData = {
   client: CoachClient;
   listing: ClientResourceListing;
 };
 
 type SentUpload = { fileName: string; title: string; description: string };
+
+type ResourceDetails = { title: string; description: string };
+
+type SentDetailsChange = { resourceId: string; details: ResourceDetails };
+
+type UserSession = ReturnType<typeof userEvent.setup>;
+
+const MAX_TAB_STOPS = 40;
 
 function coachIsIn(timeZone: string) {
   const actual = new Intl.DateTimeFormat().resolvedOptions();
@@ -982,9 +1435,89 @@ function libraryStore(resources: ClientResourceView[]) {
       client: CLIENT,
       listing: { status: "ready", resources: [...store.resources] },
     }),
+    change: (resourceId: string, details: ResourceDetails) => {
+      const changed = {
+        ...(store.resources.find(
+          (resource) => resource.id === resourceId,
+        ) as ClientResourceView),
+        ...details,
+      };
+      store.resources = store.resources.map((resource) =>
+        resource.id === resourceId ? changed : resource,
+      );
+
+      return changed;
+    },
+    remove: (resourceId: string) => {
+      store.resources = store.resources.filter(
+        (resource) => resource.id !== resourceId,
+      );
+    },
   };
 
   return store;
+}
+
+function recordDetailsChanges(
+  store: ReturnType<typeof libraryStore>,
+): SentDetailsChange[] {
+  const sent: SentDetailsChange[] = [];
+  server.use(
+    http.patch(RESOURCE_URL, async ({ params, request }) => {
+      const resourceId = String(params.resourceId);
+      const details = (await request.json()) as ResourceDetails;
+      sent.push({ resourceId, details });
+
+      return HttpResponse.json({ resource: store.change(resourceId, details) });
+    }),
+  );
+
+  return sent;
+}
+
+function holdThenFailDetailsChanges(): (() => void)[] {
+  const held: (() => void)[] = [];
+  server.use(
+    http.patch(RESOURCE_URL, async () => {
+      await new Promise<void>((release) => {
+        held.push(release);
+      });
+
+      return new HttpResponse("Internal Server Error", { status: 500 });
+    }),
+  );
+
+  return held;
+}
+
+function recordRemovals(store: ReturnType<typeof libraryStore>): string[] {
+  const sent: string[] = [];
+  server.use(
+    http.delete(RESOURCE_URL, ({ params }) => {
+      const resourceId = String(params.resourceId);
+      sent.push(resourceId);
+      store.remove(resourceId);
+
+      return HttpResponse.json({ status: "removed" });
+    }),
+  );
+
+  return sent;
+}
+
+function holdThenFailRemovals(): (() => void)[] {
+  const held: (() => void)[] = [];
+  server.use(
+    http.delete(RESOURCE_URL, async () => {
+      await new Promise<void>((release) => {
+        held.push(release);
+      });
+
+      return new HttpResponse("Internal Server Error", { status: 500 });
+    }),
+  );
+
+  return held;
 }
 
 function partOf(body: string, name: string): string {
@@ -1036,6 +1569,10 @@ async function heldUpload(): Promise<HeldUploadRequest> {
   return HeldUploadRequest.sent[0];
 }
 
+function resourceCardsIn(grid: HTMLElement): HTMLElement[] {
+  return within(grid).getAllByRole("button", { name: /^(?!Actions for )/ });
+}
+
 function detailsOf(viewer: HTMLElement): Record<string, string> {
   const terms = within(viewer).getAllByRole("term");
 
@@ -1065,6 +1602,38 @@ async function openFilledAddDialog(user: ReturnType<typeof userEvent.setup>) {
   );
 
   return dialog;
+}
+
+async function tabTo(user: UserSession, control: HTMLElement) {
+  for (let stop = 0; stop < MAX_TAB_STOPS; stop += 1) {
+    if (control === document.activeElement) return;
+    await user.tab();
+  }
+
+  throw new Error("The keyboard never reached the expected control.");
+}
+
+async function chooseAction(
+  user: UserSession,
+  title: string,
+  action: "Edit details" | "Delete",
+) {
+  await user.click(
+    screen.getByRole("button", { name: `Actions for ${title}` }),
+  );
+  await user.click(await screen.findByRole("menuitem", { name: action }));
+}
+
+async function openEditDialog(user: UserSession, title: string) {
+  await chooseAction(user, title, "Edit details");
+
+  return screen.findByRole("dialog", { name: "Edit details" });
+}
+
+async function openDeleteConfirm(user: UserSession, title: string) {
+  await chooseAction(user, title, "Delete");
+
+  return screen.findByRole("dialog", { name: `Delete “${title}”?` });
 }
 
 async function openResource(
@@ -1099,6 +1668,10 @@ async function renderResourcesRouter(load: () => ResourcesPageData) {
       {
         action: uploadResource as unknown as ActionFunction,
         path: CLIENT_RESOURCES_API_PATHS.clientResources,
+      },
+      {
+        action: frameworkModeAction(changeOrRemoveResource),
+        path: CLIENT_RESOURCES_API_PATHS.resource,
       },
     ],
     { initialEntries: [coachClientResourcesPath(CLIENT_ID)] },

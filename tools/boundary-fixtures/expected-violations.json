@@ -101,6 +101,9 @@
     "browser-half",
     "route-thinness"
   ],
+  "apps/platform/src/features/store/ui/shared/feature-shared-ui-never-imports-actor-ui.ts": [
+    "feature-shared-ui-never-imports-actor-ui"
+  ],
   "apps/platform/src/root-error-page.tsx": ["composition-root"],
   "apps/platform/src/root.server.ts": ["server-guards-consumers"],
   "apps/platform/src/routes.ts": ["root-registry-to-server"],
