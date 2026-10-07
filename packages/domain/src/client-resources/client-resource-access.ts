@@ -59,7 +59,7 @@ export class ClientResourceAccess {
     return this.resourceFor(requester, resourceId);
   }
 
-  async clientWithOpenPortalOf(
+  async clientWithReachablePortalOf(
     requester: ResourceRequester,
   ): Promise<string | null> {
     if (reachOf(requester) !== "own-client") return null;
@@ -108,7 +108,7 @@ export class ClientResourceAccess {
   ): Promise<boolean> {
     if (reachOf(requester) === "every-client") return true;
 
-    const ownClientId = await this.clientWithOpenPortalOf(requester);
+    const ownClientId = await this.clientWithReachablePortalOf(requester);
 
     return ownClientId !== null && isOwnedBy(ownClientId);
   }
