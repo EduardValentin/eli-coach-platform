@@ -92,6 +92,12 @@ class InMemoryClientResources implements ClientResources {
     this.added.push(resource);
   });
 
+  async recordOpened(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
+
   async listForClient(): Promise<ClientResource[]> {
     return [...this.added];
   }
@@ -201,6 +207,8 @@ function createUseCase(setup: Setup = {}) {
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
     resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const clock: Clock = { now: () => NOW };
   const useCase = new AddClientResourceUseCase({
@@ -253,6 +261,7 @@ describe("AddClientResourceUseCase", () => {
           pageCount: 3,
         },
         addedAt: NOW,
+        openedAt: null,
       },
     ]);
     expect(store.storedNames()).toEqual([

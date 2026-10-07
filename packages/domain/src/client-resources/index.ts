@@ -16,6 +16,7 @@ export {
   type StoredResourceOriginal,
 } from "./client-resource-store";
 export { type ClientResources } from "./client-resources";
+export { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
 export {
   DownloadClientResourceUseCase,
   type DownloadClientResourceResult,
@@ -24,6 +25,8 @@ export {
   ListClientResourcesUseCase,
   type ListClientResourcesResult,
 } from "./list-client-resources-use-case";
+export { ListOwnResourcesUseCase } from "./list-own-resources-use-case";
+export { MarkResourceOpenedUseCase } from "./mark-resource-opened-use-case";
 export {
   OpenResourcePreviewUseCase,
   type OpenResourcePreviewResult,

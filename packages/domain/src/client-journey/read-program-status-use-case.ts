@@ -1,11 +1,11 @@
 import type { CoachingSubscriptions } from "../coaching-subscription";
 import type { Clock } from "../shared";
 
-import type { ClientJourneyStep } from "./client-journey";
+import { ClientJourney, type StepAfterSubmission } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 
 type ProgramStatus = {
-  kind: Exclude<ClientJourneyStep, "welcome" | "onboarding">;
+  kind: StepAfterSubmission;
   submittedAt: Date;
   workStartsOn: Date | null;
   startNowUntil: Date | null;
@@ -30,7 +30,7 @@ export class ReadProgramStatusUseCase {
 
     const step = journey.step();
 
-    if (step === "welcome" || step === "onboarding") {
+    if (!ClientJourney.isAfterSubmission(step)) {
       return null;
     }
 

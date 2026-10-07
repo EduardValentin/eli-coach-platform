@@ -298,6 +298,20 @@ export function composeCoachingSalesFeature(
     }),
   };
 
+  const resourceClients: ResourceClients = {
+    exists: (clientId) => onboardingClients.exists(clientId),
+    findByAuthSubjectId: async (authSubjectId) => {
+      const standing =
+        await clientJourneyUseCases.readClientPortalStanding.execute(
+          authSubjectId,
+        );
+
+      return standing
+        ? { clientId: standing.journey.clientId, portal: standing.portal }
+        : null;
+    },
+  };
+
   const paidClientAdmission: PaidClientAdmission = {
     admit: (input) =>
       invitationUseCases.admitPaidClient.execute(input).then(() => undefined),
@@ -403,7 +417,7 @@ export function composeCoachingSalesFeature(
         refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
       }),
       refundHandler: subscriptionChangeHandler,
-      resourceClients: onboardingClients,
+      resourceClients,
       reviewStampWriter: writeReviewStamps,
       subscriptionChangeHandler,
       unitPreferenceClients: onboardingClients,

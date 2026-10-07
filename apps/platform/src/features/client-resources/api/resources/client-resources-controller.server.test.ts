@@ -54,6 +54,7 @@ const ADDED_PDF = ClientResource.reconstitute({
     pageCount: 3,
   },
   addedAt: new Date("2026-10-05T09:30:00.000Z"),
+  openedAt: null,
 });
 
 describe("ClientResourcesController add", () => {
@@ -84,6 +85,7 @@ describe("ClientResourcesController add", () => {
           pageCount: 3,
         },
         addedAt: "2026-10-05T09:30:00.000Z",
+        openedAt: null,
       },
     });
     expect(addClientResource).toHaveBeenCalledWith({
@@ -335,16 +337,10 @@ describe("ClientResourcesController openPage", () => {
     expect(openResourcePreview).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { who: "a signed-in client", session: CLIENT_SESSION, status: 403 },
-    {
-      who: "a visitor who is not signed in",
-      session: ANONYMOUS_SESSION,
-      status: 401,
-    },
-  ])("refuses $who without opening anything", async ({ session, status }) => {
+  it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
     const { controller, openResourcePreview } = createController();
+    const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
@@ -352,8 +348,25 @@ describe("ClientResourcesController openPage", () => {
     );
 
     // assert
-    expect((thrown as Response).status).toBe(status);
+    expect((thrown as Response).status).toBe(401);
     expect(openResourcePreview).not.toHaveBeenCalled();
+  });
+
+  it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
+    // arrange
+    const { controller, openResourcePreview } = createController();
+    const session = CLIENT_SESSION;
+
+    // act
+    await controller.openPage(servingArgs({ session }), RESOURCE_ID, "1");
+
+    // assert
+    expect(openResourcePreview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requester: { role: "CLIENT", authSubjectId: "user_ana" },
+        resourceId: RESOURCE_ID,
+      }),
+    );
   });
 });
 
@@ -404,16 +417,10 @@ describe("ClientResourcesController openThumbnail", () => {
     expect(openResourcePreview).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { who: "a signed-in client", session: CLIENT_SESSION, status: 403 },
-    {
-      who: "a visitor who is not signed in",
-      session: ANONYMOUS_SESSION,
-      status: 401,
-    },
-  ])("refuses $who without opening anything", async ({ session, status }) => {
+  it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
     const { controller, openResourcePreview } = createController();
+    const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
@@ -421,8 +428,25 @@ describe("ClientResourcesController openThumbnail", () => {
     );
 
     // assert
-    expect((thrown as Response).status).toBe(status);
+    expect((thrown as Response).status).toBe(401);
     expect(openResourcePreview).not.toHaveBeenCalled();
+  });
+
+  it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
+    // arrange
+    const { controller, openResourcePreview } = createController();
+    const session = CLIENT_SESSION;
+
+    // act
+    await controller.openThumbnail(servingArgs({ session }), RESOURCE_ID);
+
+    // assert
+    expect(openResourcePreview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requester: { role: "CLIENT", authSubjectId: "user_ana" },
+        resourceId: RESOURCE_ID,
+      }),
+    );
   });
 });
 
@@ -487,16 +511,10 @@ describe("ClientResourcesController download", () => {
     expect(downloadClientResource).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { who: "a signed-in client", session: CLIENT_SESSION, status: 403 },
-    {
-      who: "a visitor who is not signed in",
-      session: ANONYMOUS_SESSION,
-      status: 401,
-    },
-  ])("refuses $who without opening anything", async ({ session, status }) => {
+  it("refuses a visitor who is not signed in without opening anything", async () => {
     // arrange
     const { controller, downloadClientResource } = createController();
+    const session = ANONYMOUS_SESSION;
 
     // act
     const thrown = await captureThrown(() =>
@@ -504,8 +522,25 @@ describe("ClientResourcesController download", () => {
     );
 
     // assert
-    expect((thrown as Response).status).toBe(status);
+    expect((thrown as Response).status).toBe(401);
     expect(downloadClientResource).not.toHaveBeenCalled();
+  });
+
+  it("asks for it as the signed-in client, leaving the reach to her resources to the rule", async () => {
+    // arrange
+    const { controller, downloadClientResource } = createController();
+    const session = CLIENT_SESSION;
+
+    // act
+    await controller.download(servingArgs({ session }), RESOURCE_ID);
+
+    // assert
+    expect(downloadClientResource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requester: { role: "CLIENT", authSubjectId: "user_ana" },
+        resourceId: RESOURCE_ID,
+      }),
+    );
   });
 });
 

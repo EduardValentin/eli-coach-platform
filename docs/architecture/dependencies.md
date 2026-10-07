@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit a85e9770, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit cc1cef26, change review.
 
 ## Component graph
 
@@ -45,6 +45,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C12 client-portal | C18 coaching-sales | 6 | `routes.ts` spreads `coachingSalesClientShellRoutes` inside the sidebar layout and `coachingSalesClientRoutes` inside the access layout outside it; `shell/navigation-links.ts` takes `CLIENT_SETTINGS_PATH`; `shell/access-layout.server.ts` runs `requireClientPortalStanding`; the shell loader reads the client's identity and `pages/home.tsx` the program status through `coachingSalesContext` and renders `ui/client/status/program-status-card.tsx` |
 | C12 client-portal | C19 client-onboarding | 2 | `routes.ts` spreads `clientOnboardingClientRoutes` inside the access layout, outside the sidebar shell; `pages/home.tsx` reads `clientOnboardingContext` for the open detail request |
 | C12 client-portal | C20 client-profile | 4 | `routes.ts` spreads `clientProfileClientRoutes` inside the shell; the shell links the client's name to `CLIENT_PROFILE_PATH`; `pages/home.tsx` reads `clientProfileContext` and renders `ui/client/nudge/measurements-nudge.tsx` |
+| C12 client-portal | C21 client-resources | 3 | `routes.ts` spreads `clientResourcesClientRoutes` inside the sidebar shell; the shell layout's loader reads `clientResourcesContext` for the unopened count; `navigation-links.ts` reads `CLIENT_RESOURCES_PATH` |
 | C13 coach-portal | C5 ui | 7 | the shell and its navigation links; the dashboard, the assessment-calls page and the client page compose portal, appointment, layout and primitive modules |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
@@ -301,13 +302,13 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B2673 | PaymentCards (U3411) | C1 coaching-subscription (use-cases) | U3420 PostgresPaymentCards (adapters, C18) | U3413, U3414, U3159 | payment customer id in; a `PaymentCard` or `null` out; `{ paymentCustomerId, card, previous }` (with `eventId` for an event) in; `saved \| stale` or `recorded \| duplicate \| stale` out | implementer | dependency-absence; the write-port instance allowance in decisions.md |
 | B2674 | PaymentCustomerCards (U3412) | C1 coaching-subscription (use-cases) | U3417 InMemoryPaymentCustomerCards and U3418 StripePaymentCustomerCards (adapters, C6), built by U1402 on `PAYMENTS_PROVIDER` | U3414 | payment customer id in; a `PaymentCard` or `null` out | implementer | dependency-absence; `./payments/server` publishes only the factory |
 | B2692 | PaymentCardHandler (U3201) | C6 payments (adapters; adapter-facing contract) | U3419 CoachingPaymentCardHandler (adapters, C18), handed out as `handles.paymentCardHandler` | U518, U1458 (one handler, reported as `payment-cards`) | an event id and a provider-neutral `PaymentCardChange` in; `recorded \| duplicate \| ignored` out | implementer | composition injection |
-| B2693 | ClientResources (U3461) | C1 use-cases | U3436 PostgresClientResources (adapters, C21) | U3455, U3456, U3464 | `ClientResource` instances in and out | implementer | dependency-absence; `feature-api-to-data` |
+| B2693 | ClientResources (U3461) | C1 use-cases | U3436 PostgresClientResources (adapters, C21) | U3455, U3456, U3464, U3506, U3507, U3508 | `ClientResource` instances in and out | implementer | dependency-absence; `feature-api-to-data` |
 | B2694 | ClientResourceStore (U3459) | C1 use-cases | U3476 FilesystemClientResourceStore through U3475 `createClientResourceStore` (adapters, C6 `./client-media/server`) | U3455, U3462, U3465 | `{ clientId, resourceId }` owner, bytes, page images, original as `AsyncIterable<Uint8Array>` with size | implementer | dependency-absence; exports |
 | B2695 | ResourceDocumentPages (U3468) | C1 use-cases | the C6 `./documents/server` factory `createResourceDocumentPages` over a worker thread (U3483, U3484) | U3455 | PDF bytes in; `unreadable`, or a page count and pages pulled one at a time | implementer | dependency-absence; exports; `pdf-rendering-confined` |
 | B2696 | ResourceImagePages (U3472) | C1 use-cases | the C6 `./images/server` factory `createResourceImagePages` | U3455 | image bytes in; a page and a thumbnail, or `refused` | implementer | dependency-absence; exports; `sharp-confined` |
-| B2697 | ResourceClients (U3466) | C1 use-cases | U3007 PostgresOnboardingClients (adapters, C18; the composition's `handles.resourceClients`) | U3456 | `exists(clientId)` → boolean | implementer | dependency-absence; handed by the container |
+| B2697 | ResourceClients (U3466) | C1 use-cases | the inline `ResourceClients` in U1423 (composition, C18; `exists` over U3007, `findByAuthSubjectId` over U3161), handed out as `handles.resourceClients` | U3456, U3506, U3507, U3508 | `exists(clientId)` → boolean; auth subject id in, `{ clientId, portal: "reachable" \| "unreachable" }` or null out | implementer | dependency-absence; handed by the container |
 | B2698 | ClientResourceIds (U3457) | C1 use-cases | U3437 RandomClientResourceIds (adapters, C21) | U3455 | string ids | implementer | dependency-absence |
-| B2699 | ClientResourceIncidents (U3458) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U3455, U3456 | ids, reasons, sizes; no file contents | implementer | dependency-absence |
+| B2699 | ClientResourceIncidents (U3458) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U3455, U3456, U3506, U3507, U3508 | ids, reasons, sizes; no file contents | implementer | dependency-absence |
 
 ## Entry points and composition roots
 
@@ -1860,7 +1861,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2103 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
 | E2105 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
 | E2106 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | external:zod | import | n/a | no | lateral | present |
-| E2107 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
+| E2107 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | packages/domain/src/client-journey/index.ts | import | yes | yes | inward | present |
 | E2108 | apps/platform/src/features/coaching-sales/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
 | E2109 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | no | lateral | present |
 | E2110 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
@@ -2689,7 +2690,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3314 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
 | E3315 | packages/domain/src/client-journey/client-journey.ts | packages/domain/src/client-onboarding/index.ts | import | no | no | lateral | present |
 | E3318 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/read-program-status-use-case.ts | re-export | no | no | lateral | present |
-| E3319 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-journey.ts | type-only import | no | yes | inward | present |
+| E3319 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-journey.ts | import | no | yes | inward | present |
 | E3320 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
 | E3322 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | no | no | lateral | present |
 | E3323 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
@@ -3362,7 +3363,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3952 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |
 | E3953 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/needs-refund-badge.tsx | import | yes | no | lateral | present |
 | E3954 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | re-export | no | yes | inward | present |
-| E3955 | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | packages/domain/src/client-journey/client-journey.ts | type-only import | no | yes | inward | present |
+| E3955 | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | packages/domain/src/client-journey/client-journey.ts | import | no | yes | inward | present |
 | E3956 | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
 | E3957 | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | no | no | lateral | present |
 | E3958 | packages/domain/src/client-journey/read-client-portal-standing-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
@@ -3658,7 +3659,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4283 | apps/platform/src/features/client-resources/ui/shared/resources/resources-unavailable.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E4284 | apps/platform/src/features/client-resources/ui/shared/resources/resources-unavailable.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E4285 | apps/platform/src/features/client-resources/ui/shared/resources/resources-unavailable.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E4286 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | packages/domain/src/client-resources/index.ts | type-only import | yes | yes | inward | present |
 | E4287 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-resources/index.ts | type-only import | yes | yes | inward | present |
 | E4288 | apps/platform/src/routes.ts | apps/platform/src/features/client-resources/routes.ts | import | yes | no | lateral | present |
 | E4289 | apps/platform/src/server/container.server.ts | packages/domain/src/client-resources/index.ts | import | yes | yes | inward | present |
@@ -3837,3 +3837,31 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4462 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/coaching-subscription/payment-checkout.ts | type-only import | no | no | lateral | present |
 | E4463 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/resource-file-name.ts | import | no | yes | inward | present |
 | E4464 | packages/domain/src/client-resources/client-resources.ts | packages/domain/src/client-resources/client-resource.ts | type-only import | no | yes | inward | present |
+| E4465 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/client-resources/routes.ts | import | yes | no | lateral | present |
+| E4466 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/features/client-resources/server/guards/client-resources-context.server.ts | import | yes | yes | inward | present |
+| E4467 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/client-resources/contracts/paths.ts | import | yes | yes | inward | present |
+| E4468 | apps/platform/src/features/client-resources/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E4471 | apps/platform/src/features/client-resources/api/resources/resource-opened.ts | apps/platform/src/features/client-resources/server/guards/client-resources-context.server.ts | import | no | no | lateral | present |
+| E4472 | apps/platform/src/features/client-resources/api/resources/resource-opened.ts | packages/infrastructure/src/http/index.ts | import | yes | yes | inward | present |
+| E4473 | apps/platform/src/features/client-resources/api/resources/resource-opened.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E4474 | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | packages/domain/src/client-resources/index.ts | type-only import | yes | yes | inward | present |
+| E4475 | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E4476 | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E4477 | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | apps/platform/src/features/accounts/server/guards/session-context.server.ts | import | yes | no | lateral | present |
+| E4478 | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | apps/platform/src/features/client-resources/contracts/client-resources.ts | import | no | yes | inward | present |
+| E4479 | apps/platform/src/features/client-resources/server/client-resources-composition.server.ts | apps/platform/src/features/client-resources/api/client/own-resources-controller.server.ts | import | no | no | lateral | present |
+| E4480 | apps/platform/src/features/client-resources/ui/client/resources/resources-page.tsx | apps/platform/src/features/client-resources/server/guards/client-resources-context.server.ts | import | no | no | lateral | present |
+| E4481 | apps/platform/src/features/client-resources/ui/client/resources/resources-page.tsx | apps/platform/src/features/client-resources/ui/client/resources/client-resource-library.tsx | import | no | no | lateral | present |
+| E4482 | apps/platform/src/features/client-resources/ui/client/resources/client-resource-library.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resource-gallery.tsx | import | no | no | lateral | present |
+| E4483 | apps/platform/src/features/client-resources/ui/client/resources/client-resource-library.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resources-unavailable.tsx | import | no | no | lateral | present |
+| E4484 | apps/platform/src/features/client-resources/ui/client/resources/client-resource-library.tsx | apps/platform/src/features/client-resources/contracts/paths.ts | import | no | yes | inward | present |
+| E4485 | apps/platform/src/features/client-resources/ui/coach/resources/coach-resource-library.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resource-gallery.tsx | import | no | no | lateral | present |
+| E4486 | apps/platform/src/features/client-resources/ui/shared/resources/resource-gallery.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resource-grid.tsx | import | no | no | lateral | present |
+| E4487 | apps/platform/src/features/client-resources/ui/shared/resources/resource-gallery.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resource-viewer.tsx | import | no | no | lateral | present |
+| E4488 | packages/domain/src/client-resources/list-own-resources-use-case.ts | packages/domain/src/client-resources/client-resource-access.ts | import | no | no | lateral | present |
+| E4489 | packages/domain/src/client-resources/count-unopened-resources-use-case.ts | packages/domain/src/client-resources/client-resource-access.ts | import | no | no | lateral | present |
+| E4490 | packages/domain/src/client-resources/mark-resource-opened-use-case.ts | packages/domain/src/client-resources/client-resource-access.ts | import | no | no | lateral | present |
+| E4491 | packages/domain/src/client-resources/mark-resource-opened-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E4492 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/list-own-resources-use-case.ts | re-export | no | no | lateral | present |
+| E4493 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/count-unopened-resources-use-case.ts | re-export | no | no | lateral | present |
+| E4494 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/mark-resource-opened-use-case.ts | re-export | no | no | lateral | present |

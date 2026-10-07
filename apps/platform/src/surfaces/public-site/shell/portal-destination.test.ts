@@ -17,7 +17,7 @@ describe("resolvePortalDestination", () => {
   it("points a client who has not seen her welcome at the welcome screen", () => {
     // arrange
     const session = {
-      standing: { step: "welcome", access: "open" },
+      standing: { step: "welcome", coaching: "active" },
       role: "CLIENT",
     } as const;
 
@@ -34,7 +34,7 @@ describe("resolvePortalDestination", () => {
   it("points a client who has seen her welcome at onboarding", () => {
     // arrange
     const session = {
-      standing: { step: "onboarding", access: "open" },
+      standing: { step: "onboarding", coaching: "active" },
       role: "CLIENT",
     } as const;
 
@@ -51,7 +51,7 @@ describe("resolvePortalDestination", () => {
   it("points a client who has sent her onboarding at the client portal", () => {
     // arrange
     const session = {
-      standing: { step: "submitted", access: "open" },
+      standing: { step: "submitted", coaching: "active" },
       role: "CLIENT",
     } as const;
 
@@ -76,7 +76,7 @@ describe("resolvePortalDestination", () => {
   it("points a client whose coaching has ended at the client portal, which sends her to the ended page", () => {
     // arrange
     const session = {
-      standing: { step: "welcome", access: "ended" },
+      standing: { step: "welcome", coaching: "ended" },
       role: "CLIENT",
     } as const;
 

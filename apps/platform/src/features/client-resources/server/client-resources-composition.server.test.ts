@@ -18,6 +18,14 @@ const COACH: AccountSnapshot = {
   role: "COACH",
 };
 
+const CLIENT: AccountSnapshot = {
+  authSubjectId: "user_ana",
+  id: "acct_ana",
+  role: "CLIENT",
+};
+
+const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
+
 const UNKNOWN_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const RESOURCE_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 
@@ -51,6 +59,64 @@ describe("composeClientResourcesFeature", () => {
   });
 });
 
+describe("composeClientResourcesFeature, for the client herself", () => {
+  it("lists her own resources from the clients' resources table and reports a failed read", async () => {
+    // arrange
+    const handles = createHandles();
+    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+      clientId: CLIENT_ID,
+      portal: "reachable",
+    });
+    const feature = composeClientResourcesFeature(handles);
+
+    // act
+    const listing = await feature.ownResources.load(clientArgs());
+
+    // assert
+    expect(listing).toEqual({ status: "unavailable" });
+    expect(handles.incidents.resourceListingFailed).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      error: new Error("database down"),
+    });
+  });
+
+  it("counts her unopened resources in the clients' resources table and reports a failed count", async () => {
+    // arrange
+    const handles = createHandles();
+    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+      clientId: CLIENT_ID,
+      portal: "reachable",
+    });
+    const feature = composeClientResourcesFeature(handles);
+
+    // act
+    const count = await feature.ownResources.countUnopened(clientArgs());
+
+    // assert
+    expect(count).toBe(0);
+    expect(handles.incidents.unopenedCountFailed).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      error: new Error("database down"),
+    });
+  });
+
+  it("looks the resource she opened up in the clients' resources table", async () => {
+    // arrange
+    const handles = createHandles();
+    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+      clientId: CLIENT_ID,
+      portal: "reachable",
+    });
+    const feature = composeClientResourcesFeature(handles);
+
+    // act
+    const marking = feature.ownResources.markOpened(clientArgs(), RESOURCE_ID);
+
+    // assert
+    await expect(marking).rejects.toThrow("database down");
+  });
+});
+
 function createHandles() {
   return {
     clock: { now: () => new Date("2026-10-05T09:30:00.000Z") },
@@ -63,6 +129,8 @@ function createHandles() {
       resourceAccessRefused: vi.fn(),
       resourceStorageFailed: vi.fn(),
       resourceListingFailed: vi.fn(),
+      resourceOpeningFailed: vi.fn(),
+      unopenedCountFailed: vi.fn(),
     },
     resourceClients: {
       exists: vi.fn().mockResolvedValue(false),
@@ -105,6 +173,24 @@ function coachArgs() {
     request: new Request(
       `https://evoa.fit/coach/clients/${UNKNOWN_CLIENT_ID}/resources`,
     ),
+  });
+}
+
+function clientArgs() {
+  const accounts = {
+    portal: {
+      appBasePath: "/",
+      publicAppUrl: "https://evoa.fit",
+      signInUrl: "https://accounts.evoa.fit/sign-in",
+    },
+  } as unknown as AccountsFeature;
+
+  return createRequestArgs({
+    contexts: [
+      contextEntry(accountsContext, accounts),
+      contextEntry(sessionContext, { account: CLIENT, kind: "authenticated" }),
+    ],
+    request: new Request("https://evoa.fit/client/resources"),
   });
 }
 

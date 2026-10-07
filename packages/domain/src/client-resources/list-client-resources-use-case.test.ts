@@ -19,6 +19,7 @@ function resource(id: string, clientId: string): ClientResource {
       pageCount: 1,
     },
     addedAt: new Date("2026-10-05T09:00:00.000Z"),
+    openedAt: null,
   });
 }
 
@@ -27,6 +28,12 @@ const OLDER = resource("resource-older", "client-ana");
 
 class InMemoryClientResources implements ClientResources {
   async add(): Promise<void> {}
+
+  async recordOpened(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
 
   async listForClient(clientId: string): Promise<ClientResource[]> {
     return [NEWER, OLDER, resource("resource-bea", "client-bea")].filter(
@@ -47,7 +54,9 @@ function createUseCase(
       ["client-ana", "client-bea"].includes(clientId),
     ),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
-      authSubjectId === "user_ana" ? { clientId: "client-ana" } : null,
+      authSubjectId === "user_ana"
+        ? { clientId: "client-ana", portal: "reachable" as const }
+        : null,
     ),
   } satisfies ResourceClients;
   const incidents = {
@@ -56,6 +65,8 @@ function createUseCase(
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
     resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const useCase = new ListClientResourcesUseCase({
     resources,

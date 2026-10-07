@@ -1,4 +1,4 @@
-type ResourceClient = { clientId: string };
+type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
 
 export interface ResourceClients {
   exists(clientId: string): Promise<boolean>;

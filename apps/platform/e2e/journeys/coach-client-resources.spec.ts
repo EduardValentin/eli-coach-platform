@@ -19,12 +19,12 @@ import {
   oversizedPdf,
   pdfOfExactLength,
   postureGuideImage,
+  readableSizeOf,
   recipesDoc,
   renamedTextFile,
   stretchingPhotoWebp,
   trainingBlockPdf,
   weeklyTrackerXlsx,
-  type SampleResource,
 } from "../support/sample-resources";
 import { DARK_INK, darkestGreyOf } from "../support/served-page-images";
 import { setPhoneViewport } from "../support/viewport";
@@ -42,14 +42,6 @@ const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
 });
-
-const KILOBYTE = 1024;
-
-function readableSizeOf({ buffer }: SampleResource): string {
-  return buffer.byteLength < KILOBYTE
-    ? `${buffer.byteLength} B`
-    : `${Math.round(buffer.byteLength / KILOBYTE)} KB`;
-}
 
 test("the coach reaches a client's resources from her record, keeps her entries through every refusal, and opens, pages and downloads what she added", async ({
   addResourceDialog,
@@ -422,7 +414,7 @@ test("the coach reaches a client's resources from her record, keeps her entries 
   expect(storedResourceIdsOf(otherClient.clientId)).toEqual([]);
 });
 
-test("only the coach opens a client's resources: a signed-out visitor and the client herself are refused the page, its page images and the download", async ({
+test("only the coach adds to a client's resources: a signed-out visitor is refused the page, its page images, the download and adding, and the client herself is refused the page and adding", async ({
   accountPortal,
   coachClientResources,
   page,
@@ -500,15 +492,14 @@ test("only the coach opens a client's resources: a signed-out visitor and the cl
   await coachClientResources.expectRefused();
 
   // act
-  const clientStatuses = [
-    (await resourceRequests.openPage(resourceId, 1)).status,
-    (await resourceRequests.openThumbnail(resourceId)).status,
-    (await resourceRequests.download(resourceId)).status,
-    await resourceRequests.upload(client.clientId, mealPlan, MEAL_PLAN),
-  ];
+  const clientAdding = await resourceRequests.upload(
+    client.clientId,
+    mealPlan,
+    MEAL_PLAN,
+  );
 
   // assert
-  expect(clientStatuses).toEqual([403, 403, 403, 403]);
+  expect(clientAdding).toBe(403);
   expect(storedResourceIdsOf(client.clientId)).toEqual([resourceId]);
 });
 

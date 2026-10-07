@@ -247,6 +247,12 @@ Prerequisites:
   user, and refuses a client who signs in through `provisionPaidClient`; the
   files it adds land under `CLIENT_RESOURCE_ROOT`, and the run's cleanup
   removes them with the client's rows (`e2e/support/client-resource-files.ts`).
+  `client-resources.spec.ts` signs the coach in to add files for a client
+  from `provisionSubmittedClient`, then signs out and signs her in to read
+  them; another client from `provisionOtherMeasuredClient` signs in to find
+  none of them, a client from `provisionPaidClient` has not submitted her
+  onboarding, and an ended client is arranged as `client-subscription.spec.ts`
+  arranges one, by cancelling inside her withdrawal window.
   `sign-up-unavailable.spec.ts`
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
@@ -271,8 +277,15 @@ starts failing at the email/code step with no other explanation, wait a few
 minutes before rerunning rather than assuming a regression.
 
 **Cleanup:** the suite deletes every Clerk user it creates. This is what
-keeps the shared Development instance under its hard 100-user cap. After the
-users, teardown revokes every invitation still pending for the run's
+keeps the shared Development instance under its hard 100-user cap. Each
+journey deletes its own users and revokes its own pending invitations as it
+ends (the `mintTestEmail` fixture in `e2e/support/fixtures.ts`), because a
+full run creates more users than the cap leaves room for if they all wait
+for the end of the run. A journey that released everything records its
+addresses in `e2e/.runtime/released-emails-<run-id>.log`, and teardown looks
+up only the addresses no journey released, so it stays under Clerk's
+Backend API rate limit while still catching what a crashed journey left.
+After the users, teardown revokes every invitation still pending for the run's
 `+clerk_test` addresses, so a journey that stopped between the payment and
 the sign-up leaves no open invitation behind. Last, it deletes the database
 rows booked under those addresses: the assessment calls, the clients bound

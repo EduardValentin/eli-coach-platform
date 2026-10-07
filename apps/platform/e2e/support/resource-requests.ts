@@ -17,6 +17,10 @@ const CLIENT_RESOURCES_PATH = "/api/client-resources";
 
 const CREATED = 201;
 
+function openedPathOf(resourceId: string): string {
+  return `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`;
+}
+
 function responseOf(response: APIResponse): ResourceResponse {
   return { status: response.status(), headers: response.headers() };
 }
@@ -110,5 +114,26 @@ export class ResourceRequests {
     return responseOf(
       await this.request.get(`${CLIENT_RESOURCES_PATH}/${resourceId}/download`),
     );
+  }
+
+  async reachStatuses(resourceId: string): Promise<number[]> {
+    return [
+      (await this.openPage(resourceId, 1)).status,
+      (await this.openThumbnail(resourceId)).status,
+      (await this.download(resourceId)).status,
+      await this.markOpened(resourceId),
+    ];
+  }
+
+  async markOpened(resourceId: string): Promise<number> {
+    const response = await this.request.post(openedPathOf(resourceId));
+
+    return response.status();
+  }
+
+  async readOpened(resourceId: string): Promise<number> {
+    const response = await this.request.get(openedPathOf(resourceId));
+
+    return response.status();
   }
 }

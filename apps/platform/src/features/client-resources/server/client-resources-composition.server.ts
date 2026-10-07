@@ -1,8 +1,11 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   AddClientResourceUseCase,
+  CountUnopenedResourcesUseCase,
   DownloadClientResourceUseCase,
   ListClientResourcesUseCase,
+  ListOwnResourcesUseCase,
+  MarkResourceOpenedUseCase,
   OpenResourcePreviewUseCase,
   type ClientResourceIncidents,
   type ClientResourceStore,
@@ -12,6 +15,7 @@ import {
 } from "@eli-coach-platform/domain/client-resources";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 
+import { OwnResourcesController } from "~/features/client-resources/api/client/own-resources-controller.server";
 import { CoachResourcesController } from "~/features/client-resources/api/coach/coach-resources-controller.server";
 import { ClientResourcesController } from "~/features/client-resources/api/resources/client-resources-controller.server";
 import { PostgresClientResources } from "~/features/client-resources/data/resources/client-resources-repository.server";
@@ -20,6 +24,7 @@ import { RandomClientResourceIds } from "~/features/client-resources/data/resour
 export type ClientResourcesFeature = {
   clientResources: ClientResourcesController;
   coachResources: CoachResourcesController;
+  ownResources: OwnResourcesController;
 };
 
 type ClientResourcesFeatureHandles = {
@@ -56,6 +61,14 @@ export function composeClientResourcesFeature(
     }),
     coachResources: new CoachResourcesController({
       listClientResources: new ListClientResourcesUseCase(accessPorts),
+    }),
+    ownResources: new OwnResourcesController({
+      listOwnResources: new ListOwnResourcesUseCase(accessPorts),
+      countUnopenedResources: new CountUnopenedResourcesUseCase(accessPorts),
+      markResourceOpened: new MarkResourceOpenedUseCase({
+        ...accessPorts,
+        clock: handles.clock,
+      }),
     }),
   };
 }

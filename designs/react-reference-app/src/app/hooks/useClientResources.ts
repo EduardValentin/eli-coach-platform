@@ -68,6 +68,11 @@ export function useClientResources(clientId: string): ClientResources {
       resources.map((resource) => (resource.id === updated.id ? updated : resource)),
     );
 
+  const changeOpenedAt = (id: string, openedAt: Date | null) =>
+    changeListed((resources) =>
+      resources.map((resource) => (resource.id === id ? { ...resource, openedAt } : resource)),
+    );
+
   return {
     listing,
     retry: () => setAttempt((count) => count + 1),
@@ -94,14 +99,13 @@ export function useClientResources(clientId: string): ClientResources {
       announceChange();
     },
     markOpened: async (id) => {
-      changeListed((resources) =>
-        resources.map((resource) =>
-          resource.id === id && resource.openedAt === null
-            ? { ...resource, openedAt: new Date() }
-            : resource,
-        ),
-      );
-      await server.markOpened(id);
+      changeOpenedAt(id, new Date());
+      try {
+        await server.markOpened(id, appState.resourceMark);
+      } catch {
+        changeOpenedAt(id, null);
+        return;
+      }
       announceChange();
     },
     download: (id) => server.download(id),

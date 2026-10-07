@@ -179,7 +179,9 @@ function createMiddlewareArgs(options: {
       execute: vi
         .fn()
         .mockResolvedValue(
-          options.journey ? { journey: options.journey, access: "open" } : null,
+          options.journey
+            ? { journey: options.journey, coaching: "active" }
+            : null,
         ),
     },
   } as unknown as CoachingSalesFeature;

@@ -35,9 +35,11 @@ import {
 } from '../services/measurementService';
 import {
   RESOURCE_LOAD_OUTCOMES,
+  RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
   RESOURCE_UPLOAD_OUTCOMES,
   type ResourceLoad,
+  type ResourceMark,
   type ResourceSeed,
   type ResourceUpload,
 } from '../services/resourceService';
@@ -144,6 +146,7 @@ type AppState = {
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
+  resourceMark: ResourceMark;
 };
 
 type AppContextType = {
@@ -196,6 +199,7 @@ const defaultState: AppState = {
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
+  resourceMark: 'works',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -506,6 +510,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('rupload'),
     defaultState.resourceUpload,
   );
+  state.resourceMark = optionOrDefault(
+    RESOURCE_MARK_OUTCOMES,
+    params.get('rmark'),
+    defaultState.resourceMark,
+  );
 
   return state;
 }
@@ -567,6 +576,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
+    url.searchParams.delete('rmark');
 
     if (appState.prototypeMode === 'post-mvp') {
       url.searchParams.set('scope', 'post-mvp');
@@ -700,6 +710,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.resourceUpload !== defaultState.resourceUpload) {
       url.searchParams.set('rupload', appState.resourceUpload);
+    }
+    if (appState.resourceMark !== defaultState.resourceMark) {
+      url.searchParams.set('rmark', appState.resourceMark);
     }
 
     const target = url.pathname + url.search + url.hash;

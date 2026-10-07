@@ -25,6 +25,7 @@ export type ClientResourceSnapshot = {
   description: string;
   file: ResourceFileSnapshot;
   addedAt: Date;
+  openedAt: Date | null;
 };
 
 type AddedClientResourceInput = {
@@ -92,6 +93,7 @@ export class ClientResource {
       ...input.details.toSnapshot(),
       file: input.file.toSnapshot(),
       addedAt: input.at,
+      openedAt: null,
     });
   }
 
@@ -101,6 +103,16 @@ export class ClientResource {
 
   get file(): ResourceFile {
     return ResourceFile.of(this.snapshot.file);
+  }
+
+  isUnopened(): boolean {
+    return this.snapshot.openedAt === null;
+  }
+
+  opened(at: Date): ClientResource {
+    if (!this.isUnopened()) return this;
+
+    return ClientResource.reconstitute({ ...this.snapshot, openedAt: at });
   }
 
   isFor(clientId: string): boolean {

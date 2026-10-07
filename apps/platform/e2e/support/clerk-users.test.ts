@@ -5,12 +5,15 @@ import { afterEach, describe, expect, it } from "vitest";
 import { e2eDirectory } from "./repo-paths";
 import {
   deleteRecordedClerkUser,
+  deleteRecordedClerkUsers,
   deleteRegistryFile,
   findLeftoverRunIds,
   findPossiblyActiveRunIds,
   hasDeletionFailures,
   readCreatedEmails,
+  readUnreleasedEmails,
   recordCreatedEmail,
+  recordReleasedEmails,
   summarizeDeletionResults,
   type ClerkUsersApi,
 } from "./clerk-users";
@@ -31,6 +34,10 @@ function registryPathFor(runId: string): string {
   return resolve(runtimeDirectory, `created-emails-${runId}.log`);
 }
 
+function releasedPathFor(runId: string): string {
+  return resolve(runtimeDirectory, `released-emails-${runId}.log`);
+}
+
 // recordCreatedEmail always writes with the real current mtime, so a
 // scenario proving the age guard has to backdate a file after writing it.
 function backdateRegistryFile(runId: string, ageMs: number): void {
@@ -44,9 +51,10 @@ describe("clerk-users registry", () => {
 
   afterEach(() => {
     for (const runId of createdRunIds.splice(0)) {
-      const path = registryPathFor(runId);
-      if (existsSync(path)) {
-        rmSync(path);
+      for (const path of [registryPathFor(runId), releasedPathFor(runId)]) {
+        if (existsSync(path)) {
+          rmSync(path);
+        }
       }
     }
   });
@@ -68,6 +76,29 @@ describe("clerk-users registry", () => {
       "a-2+clerk_test@evoa.fit",
     ]);
     expect(readCreatedEmails(runIdB)).toEqual(["b-1+clerk_test@evoa.fit"]);
+  });
+
+  it("reads back as unreleased only the run's addresses no journey has released yet", () => {
+    // arrange
+    const runId = uniqueRunId("released");
+    createdRunIds.push(runId);
+    recordCreatedEmail("first+clerk_test@evoa.fit", runId);
+    recordCreatedEmail("second+clerk_test@evoa.fit", runId);
+    recordCreatedEmail("third+clerk_test@evoa.fit", runId);
+
+    // act
+    recordReleasedEmails(
+      ["first+clerk_test@evoa.fit", "third+clerk_test@evoa.fit"],
+      runId,
+    );
+
+    // assert
+    expect(readUnreleasedEmails(runId)).toEqual(["second+clerk_test@evoa.fit"]);
+    expect(readCreatedEmails(runId)).toEqual([
+      "first+clerk_test@evoa.fit",
+      "second+clerk_test@evoa.fit",
+      "third+clerk_test@evoa.fit",
+    ]);
   });
 
   it("finds other runs' leftover registry files old enough to sweep, but excludes the current run", () => {
@@ -123,17 +154,20 @@ describe("clerk-users registry", () => {
     expect(possiblyActive).not.toContain(currentRunId);
   });
 
-  it("deletes a run's registry file", () => {
+  it("deletes a run's registry file with its record of released addresses", () => {
     // arrange
     const runId = uniqueRunId("delete");
     createdRunIds.push(runId);
     recordCreatedEmail("delete-me+clerk_test@evoa.fit", runId);
+
+    recordReleasedEmails(["delete-me+clerk_test@evoa.fit"], runId);
 
     // act
     deleteRegistryFile(runId);
 
     // assert
     expect(existsSync(registryPathFor(runId))).toBe(false);
+    expect(existsSync(releasedPathFor(runId))).toBe(false);
   });
 
   describe("deleteRecordedClerkUser", () => {
@@ -230,6 +264,71 @@ describe("clerk-users registry", () => {
         outcome: "failed",
         reason: "Clerk API unavailable",
       });
+    });
+  });
+
+  describe("deleteRecordedClerkUsers", () => {
+    it("deletes the user of every recorded test address and reports each outcome in order", async () => {
+      // arrange
+      const userIds: Record<string, string> = {
+        "coach+clerk_test@evoa.fit": "user_coach",
+        "client+clerk_test@evoa.fit": "user_client",
+      };
+      const deletedIds: string[] = [];
+      const usersApi: ClerkUsersApi = {
+        getUserList: async ({ emailAddress }) => {
+          const id = userIds[emailAddress[0] ?? ""];
+
+          return { data: id ? [{ id }] : [] };
+        },
+        deleteUser: async (userId) => {
+          deletedIds.push(userId);
+        },
+      };
+
+      // act
+      const results = await deleteRecordedClerkUsers(usersApi, [
+        "coach+clerk_test@evoa.fit",
+        "never-created+clerk_test@evoa.fit",
+        "client+clerk_test@evoa.fit",
+        "owner@evoa.fit",
+      ]);
+
+      // assert
+      expect(results.map(({ email, outcome }) => [email, outcome])).toEqual([
+        ["coach+clerk_test@evoa.fit", "deleted"],
+        ["never-created+clerk_test@evoa.fit", "not-found"],
+        ["client+clerk_test@evoa.fit", "deleted"],
+        ["owner@evoa.fit", "skipped"],
+      ]);
+      expect(deletedIds).toEqual(["user_coach", "user_client"]);
+    });
+
+    it("keeps deleting the rest after one deletion fails", async () => {
+      // arrange
+      const deletedIds: string[] = [];
+      const usersApi: ClerkUsersApi = {
+        getUserList: async ({ emailAddress }) => ({
+          data: [{ id: `user_${emailAddress[0]?.split("+")[0]}` }],
+        }),
+        deleteUser: async (userId) => {
+          if (userId === "user_flaky") throw new Error("Clerk API unavailable");
+          deletedIds.push(userId);
+        },
+      };
+
+      // act
+      const results = await deleteRecordedClerkUsers(usersApi, [
+        "flaky+clerk_test@evoa.fit",
+        "steady+clerk_test@evoa.fit",
+      ]);
+
+      // assert
+      expect(results.map(({ outcome }) => outcome)).toEqual([
+        "failed",
+        "deleted",
+      ]);
+      expect(deletedIds).toEqual(["user_steady"]);
     });
   });
 

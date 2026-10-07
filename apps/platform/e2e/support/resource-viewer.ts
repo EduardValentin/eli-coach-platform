@@ -189,6 +189,10 @@ export class ResourceViewer {
     await expect(this.downloadLink).toHaveAttribute("href", DOWNLOAD_PATH);
   }
 
+  async expectDownloadInView(): Promise<void> {
+    await expect(this.downloadLink).toBeInViewport({ ratio: 1 });
+  }
+
   async download(): Promise<DownloadedResource> {
     const downloading = this.page.waitForEvent("download");
     await this.downloadLink.click();

@@ -3,6 +3,7 @@ import { expect, type Page } from "@playwright/test";
 
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { tabTo } from "./keyboard";
+import { readLoaderPayloadOf } from "./loader-payload";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import {
   REFUSED_PHOTO_TOAST,
@@ -69,6 +70,10 @@ export class ClientDashboard {
   async open(): Promise<void> {
     await this.page.goto(DASHBOARD_PATH);
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+  }
+
+  async readLoaderPayload(): Promise<string> {
+    return readLoaderPayloadOf(this.page, DASHBOARD_PATH);
   }
 
   async expectOpen(): Promise<void> {

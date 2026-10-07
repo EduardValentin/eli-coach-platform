@@ -1,15 +1,11 @@
 import type { ClerkClient } from "@clerk/backend";
 
 import { cleanUpRunAssessmentCalls } from "./assessment-calls";
+import { releaseClerkAccounts } from "./clerk-accounts";
+import { summarizeRevocations } from "./clerk-invitations";
 import {
-  revokePendingInvitations,
-  summarizeRevocations,
-} from "./clerk-invitations";
-import {
-  deleteRecordedClerkUser,
   deleteRegistryFile,
-  hasDeletionFailures,
-  readCreatedEmails,
+  readUnreleasedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
 import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
@@ -19,33 +15,21 @@ export async function cleanUpRun(
   runId: string,
   logPrefix: string,
 ): Promise<void> {
-  const emails = readCreatedEmails(runId);
-  const deletions = [];
-
-  for (const email of emails) {
-    deletions.push(await deleteRecordedClerkUser(clerkClient.users, email));
-  }
-
-  const revocations = await revokePendingInvitations(
-    clerkClient.invitations,
-    emails,
+  const release = await releaseClerkAccounts(
+    clerkClient,
+    readUnreleasedEmails(runId),
   );
 
   console.log(
-    `${logPrefix} Clerk users: ${summarizeDeletionResults(deletions)}`,
+    `${logPrefix} Clerk users: ${summarizeDeletionResults(release.deletions)}`,
   );
   console.log(
-    `${logPrefix} Clerk invitations: ${summarizeRevocations(revocations)}`,
+    `${logPrefix} Clerk invitations: ${summarizeRevocations(release.revocations)}`,
   );
   const stripe = await cleanUpRecordedStripeObjects(runId, logPrefix);
   const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
 
-  if (
-    !hasDeletionFailures(deletions) &&
-    revocations.failed.length === 0 &&
-    stripe.allCleaned &&
-    database.allCleaned
-  ) {
+  if (release.released && stripe.allCleaned && database.allCleaned) {
     deleteRegistryFile(runId);
   }
 }

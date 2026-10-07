@@ -326,6 +326,15 @@ export function createConsoleLogger(): ConsoleLogger {
         ...errorCodeOf(error),
       });
     },
+    resourceOpeningFailed: ({ clientId, error, resourceId }) => {
+      console.error("Client resource opening could not be recorded.", {
+        clientId,
+        errorCategory: "client_resource_opening_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        resourceId,
+      });
+    },
     resourceStorageFailed: ({ clientId, error, resourceId }) => {
       console.error("Client resource could not be stored.", {
         clientId,
@@ -411,6 +420,14 @@ export function createConsoleLogger(): ConsoleLogger {
         eventKind,
         outcome,
         paymentReference,
+      });
+    },
+    unopenedCountFailed: ({ clientId, error }) => {
+      console.error("Unopened client resources could not be counted.", {
+        clientId,
+        errorCategory: "client_resource_unopened_count_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
       });
     },
     waitlistModeReadFailed: () => {

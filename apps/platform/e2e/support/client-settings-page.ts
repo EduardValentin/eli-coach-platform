@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { tabTo } from "./keyboard";
+import { readLoaderPayloadOf } from "./loader-payload";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export type CancellationAction =
@@ -199,13 +200,7 @@ export class ClientSettingsPage {
   }
 
   async readLoaderPayload(): Promise<string> {
-    const html = await this.page.request.get(SETTINGS_PATH);
-    const data = await this.page.request.get(`${SETTINGS_PATH}.data`);
-
-    expect(html.status()).toBe(200);
-    expect(data.status()).toBe(200);
-
-    return `${await html.text()}\n${await data.text()}`;
+    return readLoaderPayloadOf(this.page, SETTINGS_PATH);
   }
 
   async change(): Promise<void> {

@@ -50,6 +50,27 @@ export class ClientResourceAccess {
     return null;
   }
 
+  async ownResourceFor(
+    requester: ResourceRequester,
+    resourceId: string,
+  ): Promise<ClientResource | null> {
+    if (reachOf(requester) !== "own-client") return null;
+
+    return this.resourceFor(requester, resourceId);
+  }
+
+  async clientWithReachablePortalOf(
+    requester: ResourceRequester,
+  ): Promise<string | null> {
+    if (reachOf(requester) !== "own-client") return null;
+
+    const client = await this.options.clients.findByAuthSubjectId(
+      requester.authSubjectId,
+    );
+
+    return client?.portal === "reachable" ? client.clientId : null;
+  }
+
   mayAddFor(requester: ResourceRequester, clientId: string): boolean {
     if (reachOf(requester) === "every-client") return true;
 
@@ -87,10 +108,8 @@ export class ClientResourceAccess {
   ): Promise<boolean> {
     if (reachOf(requester) === "every-client") return true;
 
-    const client = await this.options.clients.findByAuthSubjectId(
-      requester.authSubjectId,
-    );
+    const ownClientId = await this.clientWithReachablePortalOf(requester);
 
-    return client !== null && isOwnedBy(client.clientId);
+    return ownClientId !== null && isOwnedBy(ownClientId);
   }
 }

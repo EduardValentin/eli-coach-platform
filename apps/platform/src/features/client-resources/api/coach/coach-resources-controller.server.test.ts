@@ -49,6 +49,7 @@ const NEWER_PDF: ClientResourceSnapshot = {
     pageCount: 3,
   },
   addedAt: new Date("2026-10-05T09:30:00.000Z"),
+  openedAt: new Date("2026-10-06T07:15:00.000Z"),
 };
 
 const OLDER_SPREADSHEET: ClientResourceSnapshot = {
@@ -63,6 +64,7 @@ const OLDER_SPREADSHEET: ClientResourceSnapshot = {
     pageCount: null,
   },
   addedAt: new Date("2026-10-04T08:00:00.000Z"),
+  openedAt: null,
 };
 
 describe("CoachResourcesController load", () => {
@@ -94,6 +96,7 @@ describe("CoachResourcesController load", () => {
             pageCount: 3,
           },
           addedAt: "2026-10-05T09:30:00.000Z",
+          openedAt: "2026-10-06T07:15:00.000Z",
         },
         {
           id: OLDER_ID,
@@ -107,6 +110,7 @@ describe("CoachResourcesController load", () => {
             pageCount: null,
           },
           addedAt: "2026-10-04T08:00:00.000Z",
+          openedAt: null,
         },
       ],
     });

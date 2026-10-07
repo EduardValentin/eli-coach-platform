@@ -19,6 +19,7 @@ import {
 } from "./coaching-sales-composition.server";
 
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
+const RESOURCE_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
 describe("composeCoachingSalesFeature", () => {
   it("refuses to send a payment link while the site is in waitlist mode", async () => {
@@ -206,6 +207,94 @@ describe("composeCoachingSalesFeature client onboarding handles", () => {
 
     // assert
     expect(writer).toBe(writeReviewStamps);
+  });
+});
+
+describe("composeCoachingSalesFeature resource clients", () => {
+  const SUBMITTED_AT = new Date("2026-10-15T10:00:00.000Z");
+
+  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
+        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+      ]),
+    });
+
+    // act
+    const client =
+      await handles.resourceClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "reachable",
+    });
+  });
+
+  it("answers her portal unreachable once her coaching ended", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
+        [
+          subscriptionRow({
+            status: "ended",
+            cancelledAt: SUBMITTED_AT,
+            accessEndsAt: SUBMITTED_AT,
+          }),
+        ],
+      ]),
+    });
+
+    // act
+    const client =
+      await handles.resourceClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "unreachable",
+    });
+  });
+
+  it("answers her portal unreachable before she submitted onboarding", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [journeyRow({ onboardingSubmittedAt: null })],
+        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+      ]),
+    });
+
+    // act
+    const client =
+      await handles.resourceClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "unreachable",
+    });
+  });
+
+  it("answers no client for a subject bound to none", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([[]]),
+    });
+
+    // act
+    const client =
+      await handles.resourceClients.findByAuthSubjectId("user_nobody");
+
+    // assert
+    expect(client).toBeNull();
   });
 });
 
@@ -402,6 +491,71 @@ function createIncidents() {
     rosterReadFailed: vi.fn(),
     salesModeReadFailed: vi.fn(),
   };
+}
+
+function journeyRow(stamps: { onboardingSubmittedAt: Date | null }) {
+  return {
+    clientId: RESOURCE_CLIENT_ID,
+    firstName: "Ana",
+    lastName: "Popescu",
+    gender: "female",
+    welcomeSeenAt: new Date("2026-10-14T10:00:00.000Z"),
+    onboardingSubmittedAt: stamps.onboardingSubmittedAt,
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  };
+}
+
+function subscriptionRow(lifecycle: {
+  status: string;
+  cancelledAt?: Date;
+  accessEndsAt: Date | null;
+}) {
+  return {
+    id: "subscription-1",
+    clientId: RESOURCE_CLIENT_ID,
+    bundleId: "3-months",
+    months: 3,
+    tier: "regular",
+    amountCents: 44700,
+    currency: "eur",
+    paymentCustomerId: "cus_1",
+    paymentSubscriptionId: "sub_1",
+    checkoutSessionId: "cs_1",
+    paidAt: new Date("2026-10-10T10:00:00.000Z"),
+    startChoice: "waiting",
+    status: lifecycle.status,
+    cancelledAt: lifecycle.cancelledAt ?? null,
+    accessEndsAt: lifecycle.accessEndsAt,
+    paymentProblemSince: null,
+    refundReason: null,
+    refundDueCents: null,
+    refundDueBy: null,
+    refundedCents: null,
+    refundedAt: null,
+  };
+}
+
+function createDatabaseAnswering(
+  answers: readonly (readonly Record<string, unknown>[])[],
+): DatabaseClient {
+  const pending = [...answers];
+
+  return {
+    select: () => {
+      const rows = pending.shift() ?? [];
+      const selection = {
+        from: () => selection,
+        where: () => selection,
+        orderBy: () => selection,
+        limit: () => Promise.resolve(rows),
+      };
+
+      return selection;
+    },
+  } as unknown as DatabaseClient;
 }
 
 function createUnreachableDatabase(): DatabaseClient {

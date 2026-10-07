@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ClientJourney } from "./client-journey";
+import { ClientJourney, STEPS_AFTER_SUBMISSION } from "./client-journey";
 
 function journey(
   overrides: Partial<Parameters<typeof ClientJourney.from>[0]> = {},
@@ -94,6 +94,42 @@ describe("ClientJourney#step, once she has submitted", () => {
 
     // assert
     expect(step).toBe(expected);
+  });
+});
+
+describe("ClientJourney.isAfterSubmission", () => {
+  it.each([
+    ["welcome", false],
+    ["onboarding", false],
+    ["submitted", true],
+    ["in-review", true],
+    ["needs-details", true],
+    ["approved", true],
+  ] as const)("answers %s with %s", (step, expected) => {
+    // arrange
+    const asked = step;
+
+    // act
+    const answer = ClientJourney.isAfterSubmission(asked);
+
+    // assert
+    expect(answer).toBe(expected);
+  });
+
+  it("names the steps that follow submission in journey order", () => {
+    // arrange
+    const named = STEPS_AFTER_SUBMISSION;
+
+    // act
+    const steps = [...named];
+
+    // assert
+    expect(steps).toEqual([
+      "submitted",
+      "in-review",
+      "needs-details",
+      "approved",
+    ]);
   });
 });
 

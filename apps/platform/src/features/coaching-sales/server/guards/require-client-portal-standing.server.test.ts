@@ -238,7 +238,7 @@ describe("requireClientPortalStanding", () => {
       // arrange
       const args = journeyArgs({
         journey: journeyOf(REVIEW_JOURNEYS.approved),
-        access: "ended",
+        coaching: "ended",
         pathname,
       });
 
@@ -259,7 +259,7 @@ describe("requireClientPortalStanding", () => {
     // arrange
     const args = journeyArgs({
       journey: journeyOf(REVIEW_JOURNEYS.approved),
-      access: "ended",
+      coaching: "ended",
       pathname: "/app/client/ended",
     });
 
@@ -347,7 +347,7 @@ describe("requireClientPortalStanding", () => {
 });
 
 describe("readClientPortalStanding", () => {
-  it("names the step a signed-in client is at and whether her portal is open", async () => {
+  it("names the step a signed-in client is at and whether her coaching is active", async () => {
     // arrange
     const args = journeyArgs({
       journey: journeyOf({ welcomeSeenAt: null }),
@@ -358,7 +358,7 @@ describe("readClientPortalStanding", () => {
     const standing = await readClientPortalStanding(args);
 
     // assert
-    expect(standing).toEqual({ step: "welcome", access: "open" });
+    expect(standing).toEqual({ step: "welcome", coaching: "active" });
   });
 
   it("hands over no journey snapshot, which only the gate does", async () => {
@@ -423,7 +423,7 @@ describe("requireOpenClientPortal", () => {
   it("refuses a write from a client whose coaching has ended", async () => {
     // arrange
     const args = journeyArgs({
-      access: "ended",
+      coaching: "ended",
       journey: journeyOf(SUBMITTED),
       pathname: "/app/api/client-profile/measurements",
     });
@@ -466,7 +466,7 @@ describe("requireOpenClientPortal", () => {
   ])("leaves %s to the route's own account check", async (_label, session) => {
     // arrange
     const args = journeyArgs({
-      access: "ended",
+      coaching: "ended",
       journey: journeyOf(SUBMITTED),
       pathname: "/app/api/client-profile/measurements",
       session,
@@ -522,7 +522,7 @@ const REVIEW_JOURNEYS = {
 type ReviewJourney = keyof typeof REVIEW_JOURNEYS;
 
 function journeyArgs(options: {
-  access?: "open" | "ended";
+  coaching?: "active" | "ended";
   appBasePath?: string;
   journey: ClientJourney | null;
   pathname: string;
@@ -530,13 +530,14 @@ function journeyArgs(options: {
 }) {
   const coachingSales = {
     readClientPortalStanding: {
-      execute: vi
-        .fn()
-        .mockResolvedValue(
-          options.journey
-            ? { journey: options.journey, access: options.access ?? "open" }
-            : null,
-        ),
+      execute: vi.fn().mockResolvedValue(
+        options.journey
+          ? {
+              journey: options.journey,
+              coaching: options.coaching ?? "active",
+            }
+          : null,
+      ),
     },
   } as unknown as CoachingSalesFeature;
   const accounts = {

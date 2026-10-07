@@ -32,6 +32,7 @@ export const clientResourcesTable = appSchema.table(
     sizeBytes: integer("size_bytes").notNull(),
     pageCount: integer("page_count"),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull(),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
   },
   (table) => [
     index("client_resources_client_id_added_at_idx").on(

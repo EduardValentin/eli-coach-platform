@@ -15,6 +15,7 @@ import {
   Calendar,
   CalendarCheck,
   Droplet,
+  FolderOpen,
   LayoutDashboard,
   MessageSquare,
   Settings,
@@ -47,6 +48,7 @@ const portalLinks = [
 
 type ShellOptions = {
   initialPath?: string;
+  links?: readonly PortalNavigationLink[];
   reducedMotion?: "always" | "never";
   topBarActions?: ReactNode;
 };
@@ -54,6 +56,7 @@ type ShellOptions = {
 function renderShell(options: ShellOptions = {}) {
   const {
     initialPath = "/coach",
+    links = portalLinks,
     reducedMotion = "always",
     topBarActions,
   } = options;
@@ -64,7 +67,7 @@ function renderShell(options: ShellOptions = {}) {
         <PortalShell
           asideLabel="Coach portal sidebar"
           brand={<p>Evoa</p>}
-          links={portalLinks}
+          links={links}
           mobileNavigation={{
             kind: "drawer",
             label: "Coach portal mobile navigation",
@@ -149,8 +152,11 @@ function getMoreButton() {
   return screen.getByRole("button", { name: "More" });
 }
 
-async function openMoreSheet(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(getMoreButton());
+async function openMoreSheet(
+  user: ReturnType<typeof userEvent.setup>,
+  moreName: string | RegExp = "More",
+) {
+  await user.click(screen.getByRole("button", { name: moreName }));
 
   return screen.findByRole("dialog", { name: "More" });
 }
@@ -693,6 +699,160 @@ describe("PortalShell tab navigation", () => {
 
     // assert
     expect(sheet.style.transform).toBe("");
+  });
+});
+
+const markedResourcesLinks: readonly PortalNavigationLink[] = [
+  ...clientLinks,
+  {
+    href: "/client/resources",
+    label: "Resources",
+    icon: FolderOpen,
+    marked: true,
+  },
+];
+
+const markedProfileLinks: readonly PortalNavigationLink[] = clientLinks.map(
+  (link) => (link.label === "Profile" ? { ...link, marked: true } : link),
+);
+
+function markedName(label: string) {
+  return new RegExp(`^${label} ?\\(new\\)$`);
+}
+
+function queryAttentionDot(container: ParentNode) {
+  return container.querySelector<HTMLElement>('[data-parity="attention-dot"]');
+}
+
+function getSidebarLink(name: RegExp) {
+  const sidebar = screen.getByRole("complementary", {
+    name: "Client portal sidebar",
+  });
+
+  return within(sidebar).getByRole("link", { name });
+}
+
+describe("PortalShell marked navigation link", () => {
+  it("names a marked sidebar link as new and draws its dot after the label", () => {
+    // arrange, act
+    renderClientShell({ links: markedResourcesLinks });
+
+    // assert
+    const link = getSidebarLink(markedName("Resources"));
+    const dot = queryAttentionDot(link);
+
+    expect(link).toHaveTextContent("Resources (new)");
+    expect(dot).toHaveAttribute("aria-hidden", "true");
+    expect(link.lastElementChild).toBe(dot);
+  });
+
+  it("names a marked link in the coach's drawer as new and draws its dot", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({
+      links: [portalLinks[0], { ...portalLinks[1], marked: true }],
+    });
+
+    // act
+    const menu = await openMobileMenu(user);
+
+    // assert
+    const link = within(menu).getByRole("link", {
+      name: markedName("Clients"),
+    });
+
+    expect(link).toHaveTextContent("Clients (new)");
+    expect(queryAttentionDot(link)).toBeInTheDocument();
+    expect(
+      queryAttentionDot(within(menu).getByRole("link", { name: "Dashboard" })),
+    ).toBeNull();
+  });
+
+  it("names a marked sheet link as new and draws its dot before the chevron", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell({ links: markedResourcesLinks });
+
+    // act
+    const sheet = await openMoreSheet(user, markedName("More"));
+
+    // assert
+    const link = within(sheet).getByRole("link", {
+      name: markedName("Resources"),
+    });
+    const dot = queryAttentionDot(link);
+
+    expect(link).toHaveTextContent("Resources (new)");
+    expect(dot).toBeInTheDocument();
+    expect(dot?.nextElementSibling).toBe(link.lastElementChild);
+    expect(link.lastElementChild?.tagName.toLowerCase()).toBe("svg");
+  });
+
+  it("marks More when a link in the sheet is marked, with the dot on its icon", () => {
+    // arrange, act
+    renderClientShell({ links: markedResourcesLinks });
+
+    // assert
+    const more = screen.getByRole("button", { name: markedName("More") });
+    const dot = queryAttentionDot(more);
+
+    expect(more).toHaveTextContent("More (new)");
+    expect(dot).toBeInTheDocument();
+    expect(dot?.parentElement).not.toBe(more);
+    expect(dot?.parentElement).toBe(more.querySelector("svg")?.parentElement);
+  });
+
+  it("marks a tab whose link is marked, and leaves More unmarked", () => {
+    // arrange, act
+    renderClientShell({
+      links: markedProfileLinks,
+      tabs: markedProfileLinks.slice(0, 5),
+    });
+
+    // assert
+    const tabBar = screen.getByRole("navigation", {
+      name: "Client portal tabs",
+    });
+    const tab = within(tabBar).getByRole("link", {
+      name: markedName("Profile"),
+    });
+    const dot = queryAttentionDot(tab);
+
+    expect(tab).toHaveTextContent("Profile (new)");
+    expect(dot?.parentElement).toBe(tab.querySelector("svg")?.parentElement);
+    expect(getMoreButton()).toBeInTheDocument();
+    expect(queryAttentionDot(getMoreButton())).toBeNull();
+  });
+
+  it("draws no dot and keeps every name plain when nothing is marked", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    expect(queryAttentionDot(document.body)).toBeNull();
+    expect(
+      within(sheet).getByRole("link", { name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { hidden: true, name: "More" }),
+    ).toBeInTheDocument();
+  });
+
+  it("has no obvious axe violations with a marked link and the sheet open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { baseElement } = renderClientShell({ links: markedResourcesLinks });
+    await openMoreSheet(user, markedName("More"));
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
   });
 });
 

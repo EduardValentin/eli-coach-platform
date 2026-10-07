@@ -221,7 +221,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
       onKeyDown={turnWithArrowKeys}
     >
       <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="flex items-center gap-2 border-b border-border-subtle px-2 py-2 sm:px-4 lg:col-span-2 lg:gap-4 lg:py-3 lg:pr-3 lg:pl-6">
+        <div className="flex min-w-0 items-center gap-2 border-b border-border-subtle px-2 py-2 sm:px-4 lg:col-span-2 lg:gap-4 lg:py-3 lg:pr-3 lg:pl-6">
           <ViewerDialogClose asChild>
             <Button
               aria-label="Close"

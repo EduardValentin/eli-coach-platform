@@ -290,7 +290,9 @@ describe("ClientResource", () => {
         pageCount: 4,
       },
       addedAt: ADDED_AT,
+      openedAt: null,
     });
+    expect(resource.isUnopened()).toBe(true);
   });
 
   it("knows which client it is for", () => {
@@ -307,6 +309,7 @@ describe("ClientResource", () => {
         pageCount: null,
       },
       addedAt: ADDED_AT,
+      openedAt: null,
     });
 
     // act
@@ -319,5 +322,51 @@ describe("ClientResource", () => {
       resourceId: "resource-1",
     });
     expect(resource.file.kind).toBe("excel");
+  });
+
+  describe("opening", () => {
+    const OPENED_AT = new Date("2026-10-06T08:00:00.000Z");
+    const LATER = new Date("2026-10-07T08:00:00.000Z");
+
+    function unopened(): ClientResource {
+      return ClientResource.reconstitute({
+        id: "resource-1",
+        clientId: "client-1",
+        title: "Meal plan",
+        description: "",
+        file: {
+          originalName: "plan.pdf",
+          format: "pdf",
+          sizeBytes: 10,
+          pageCount: 1,
+        },
+        addedAt: ADDED_AT,
+        openedAt: null,
+      });
+    }
+
+    it("records the moment she first opens it", () => {
+      // arrange
+      const resource = unopened();
+
+      // act
+      const opened = resource.opened(OPENED_AT);
+
+      // assert
+      expect(opened.isUnopened()).toBe(false);
+      expect(opened.toSnapshot().openedAt).toEqual(OPENED_AT);
+      expect(resource.isUnopened()).toBe(true);
+    });
+
+    it("never moves the moment once she has opened it", () => {
+      // arrange
+      const opened = unopened().opened(OPENED_AT);
+
+      // act
+      const reopened = opened.opened(LATER);
+
+      // assert
+      expect(reopened.toSnapshot().openedAt).toEqual(OPENED_AT);
+    });
   });
 });

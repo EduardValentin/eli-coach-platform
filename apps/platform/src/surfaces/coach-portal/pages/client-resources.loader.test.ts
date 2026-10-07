@@ -56,6 +56,7 @@ const RESOURCES: ClientResourceView[] = [
       pageCount: 6,
     },
     addedAt: "2026-10-03T09:00:00.000Z",
+    openedAt: null,
   },
 ];
 

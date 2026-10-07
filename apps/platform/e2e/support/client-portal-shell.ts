@@ -1,7 +1,17 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+export type NavigationMark = "marked" | "unmarked";
+
+const RESOURCES = "Resources";
+const MORE = "More";
+const ANY_RESOURCES_LINK = /^Resources( \(new\))?$/;
+
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
+
+  private static markedName(name: string, mark: NavigationMark): string {
+    return mark === "marked" ? `${name} (new)` : name;
+  }
 
   private get sidebar() {
     return this.page.getByRole("complementary", {
@@ -37,6 +47,10 @@ export class ClientPortalShell {
 
   private settingsLinkIn(scope: Locator): Locator {
     return scope.getByRole("link", { name: "Settings", exact: true });
+  }
+
+  private resourcesLinkIn(scope: Locator): Locator {
+    return scope.getByRole("link", { name: ANY_RESOURCES_LINK });
   }
 
   private nameLinkIn(scope: Locator, displayName: string): Locator {
@@ -88,6 +102,40 @@ export class ClientPortalShell {
     await this.expectSheetOpen();
     await this.settingsLinkIn(this.moreSheet).click();
     await expect(this.moreSheet).toBeHidden();
+  }
+
+  async openResourcesFromSidebar(): Promise<void> {
+    await this.resourcesLinkIn(this.sidebarNavigation).click();
+  }
+
+  async openResourcesFromOpenMoreSheet(): Promise<void> {
+    await this.resourcesLinkIn(this.moreSheet).click();
+    await expect(this.moreSheet).toBeHidden();
+  }
+
+  async expectResourcesCurrent(): Promise<void> {
+    await expect(this.resourcesLinkIn(this.sidebarNavigation)).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  }
+
+  async expectSidebarResources(mark: NavigationMark): Promise<void> {
+    await expect(
+      this.resourcesLinkIn(this.sidebarNavigation),
+    ).toHaveAccessibleName(ClientPortalShell.markedName(RESOURCES, mark));
+  }
+
+  async expectMoreButton(mark: NavigationMark): Promise<void> {
+    await expect(this.moreButton).toHaveAccessibleName(
+      ClientPortalShell.markedName(MORE, mark),
+    );
+  }
+
+  async expectSheetResources(mark: NavigationMark): Promise<void> {
+    await expect(this.resourcesLinkIn(this.moreSheet)).toHaveAccessibleName(
+      ClientPortalShell.markedName(RESOURCES, mark),
+    );
   }
 
   async expectSettingsCurrent(): Promise<void> {

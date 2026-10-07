@@ -4,8 +4,10 @@ import type {
   ReadClientJourneyUseCase,
   ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
+import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import { clientJourneyContext } from "~/features/coaching-sales/server/guards/client-journey-context.server";
@@ -32,47 +34,60 @@ const ANA: ClientJourneySnapshot = {
 };
 
 describe("client shell loader", () => {
-  it("names the client the gate handed over", () => {
+  it("names the client the gate handed over and counts the resources she has not opened", async () => {
     // arrange
-    const args = shellArguments([contextEntry(clientJourneyContext, ANA)]);
+    const countUnopened = vi.fn().mockResolvedValue(2);
+    const args = shellArguments(
+      [contextEntry(clientJourneyContext, ANA)],
+      countUnopened,
+    );
 
     // act
-    const presentation = loader(args);
+    const shell = await loader(args);
 
     // assert
-    expect(presentation).toEqual({
-      displayName: "Ana Popescu",
-      greeting: "Welcome back, Ana.",
+    expect(shell).toEqual({
+      presentation: {
+        displayName: "Ana Popescu",
+        greeting: "Welcome back, Ana.",
+      },
+      unopenedResources: 2,
     });
+    expect(countUnopened).toHaveBeenCalledWith(args);
   });
 
-  it("falls back to the quiet greeting for an account with no client record", () => {
+  it("falls back to the quiet greeting for an account with no client record", async () => {
     // arrange
     const args = shellArguments([contextEntry(clientJourneyContext, null)]);
 
     // act
-    const presentation = loader(args);
+    const shell = await loader(args);
 
     // assert
-    expect(presentation).toEqual({
-      displayName: "Client",
-      greeting: "Welcome back.",
+    expect(shell).toEqual({
+      presentation: { displayName: "Client", greeting: "Welcome back." },
+      unopenedResources: 0,
     });
   });
 
-  it("refuses to render when the access layout's gate never ran", () => {
+  it("refuses to render, without counting anything, when the access layout's gate never ran", async () => {
     // arrange
-    const args = shellArguments([]);
+    const countUnopened = vi.fn().mockResolvedValue(0);
+    const args = shellArguments([], countUnopened);
 
     // act
-    const loading = () => loader(args);
+    const loading = loader(args);
 
     // assert
-    expect(loading).toThrow();
+    await expect(loading).rejects.toThrow();
+    expect(countUnopened).not.toHaveBeenCalled();
   });
 });
 
-function shellArguments(journeyEntries: readonly ContextEntry[]) {
+function shellArguments(
+  journeyEntries: readonly ContextEntry[],
+  countUnopened = vi.fn().mockResolvedValue(0),
+) {
   const clientJourney = new ClientJourneyController({
     markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
     readClientJourney: {} as ReadClientJourneyUseCase,
@@ -84,6 +99,9 @@ function shellArguments(journeyEntries: readonly ContextEntry[]) {
       contextEntry(coachingSalesContext, {
         clientJourney,
       } as unknown as CoachingSalesFeature),
+      contextEntry(clientResourcesContext, {
+        ownResources: { countUnopened },
+      } as unknown as ClientResourcesFeature),
       ...journeyEntries,
     ],
     request: new Request("https://evoa.fit/client"),

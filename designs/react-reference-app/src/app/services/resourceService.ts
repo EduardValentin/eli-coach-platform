@@ -16,6 +16,9 @@ export type ResourceSeed = (typeof RESOURCE_SEEDS)[number];
 export const RESOURCE_LOAD_OUTCOMES = ['works', 'fails'] as const;
 export type ResourceLoad = (typeof RESOURCE_LOAD_OUTCOMES)[number];
 
+export const RESOURCE_MARK_OUTCOMES = ['works', 'fails'] as const;
+export type ResourceMark = (typeof RESOURCE_MARK_OUTCOMES)[number];
+
 export const RESOURCE_UPLOAD_OUTCOMES = [
   'works',
   'fails',
@@ -39,6 +42,7 @@ const PDF_REFUSAL_FOR: Partial<Record<ResourceUpload, ServerDecidedRefusal>> = {
 
 export const RESOURCES_UNAVAILABLE = 'Resources could not be loaded.';
 export const UPLOAD_FAILED = 'The upload did not go through.';
+export const OPENING_NOT_RECORDED = 'The opening was not recorded.';
 
 export type ResourcePageRenderer = {
   render(upload: { title: string; kind: ResourceFileKind; file: File }): string[];
@@ -184,8 +188,10 @@ export class ResourceServer {
     this.files.delete(id);
   }
 
-  async markOpened(id: string): Promise<Resource> {
+  async markOpened(id: string, mark: ResourceMark): Promise<Resource> {
     await wait(RESOURCE_LATENCY_MS);
+    if (mark === 'fails') throw new Error(OPENING_NOT_RECORDED);
+
     const resource = this.recordFor(id);
     if (resource.openedAt) return resource;
 

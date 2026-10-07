@@ -91,6 +91,7 @@ const PLATE_GUIDE: ClientResourceView = {
     pageCount: 1,
   },
   addedAt: "2026-10-04T09:00:00.000Z",
+  openedAt: null,
 };
 
 const WARM_UP: ClientResourceView = {
@@ -106,6 +107,7 @@ const WARM_UP: ClientResourceView = {
     pageCount: 3,
   },
   addedAt: "2026-10-02T22:30:00.000Z",
+  openedAt: null,
 };
 
 const FOOD_DIARY: ClientResourceView = {
@@ -120,6 +122,7 @@ const FOOD_DIARY: ClientResourceView = {
     pageCount: null,
   },
   addedAt: "2026-10-01T09:00:00.000Z",
+  openedAt: null,
 };
 
 const MACRO_TRACKER: ClientResourceView = {
@@ -134,6 +137,7 @@ const MACRO_TRACKER: ClientResourceView = {
     pageCount: null,
   },
   addedAt: "2026-09-29T09:00:00.000Z",
+  openedAt: null,
 };
 
 const LIBRARY = [PLATE_GUIDE, WARM_UP, FOOD_DIARY, MACRO_TRACKER];
@@ -150,6 +154,7 @@ const ADDED: ClientResourceView = {
     pageCount: 2,
   },
   addedAt: "2026-10-05T09:00:00.000Z",
+  openedAt: null,
 };
 
 const REFUSALS = [
@@ -276,6 +281,23 @@ describe("the coach's client resources page", () => {
     expect(
       screen.getAllByRole("button", { name: "Add resource" }),
     ).toHaveLength(1);
+  });
+
+  it("never marks a resource new for the coach, whether the client opened it or not", async () => {
+    // arrange, act
+    await renderResourcesPage({
+      resources: [
+        PLATE_GUIDE,
+        { ...WARM_UP, openedAt: "2026-10-03T08:00:00.000Z" },
+      ],
+    });
+
+    // assert
+    const grid = screen.getByRole("region", { name: "Resources" });
+    expect(within(grid).queryByText("New")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Plate portions guide" }),
+    ).toHaveAccessibleDescription("IMG");
   });
 
   it("shows a page preview for a PDF or an image and a file cover for Word and Excel", async () => {

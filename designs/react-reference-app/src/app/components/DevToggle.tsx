@@ -61,6 +61,7 @@ import {
 } from '../services/subscriptionService';
 import {
   RESOURCE_LOAD_OUTCOMES,
+  RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
   RESOURCE_UPLOAD_OUTCOMES,
 } from '../services/resourceService';
@@ -1773,6 +1774,28 @@ export function DevToggle() {
                       <SelectItem value="holds">Holds at preparing</SelectItem>
                       <SelectItem value="too-many-pages">Refused: over 50 pages</SelectItem>
                       <SelectItem value="unreadable">Refused: cannot be read</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-resource-mark" className={DEV_LABEL_CLASS}>
+                    Resource opening
+                  </Label>
+                  <Select
+                    value={appState.resourceMark}
+                    onValueChange={(value) =>
+                      setAppState({
+                        resourceMark: optionOrDefault(RESOURCE_MARK_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-resource-mark" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

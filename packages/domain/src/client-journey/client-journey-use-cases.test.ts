@@ -307,6 +307,12 @@ describe("ReadProgramStatusUseCase", () => {
 
 describe("ReadClientPortalStandingUseCase", () => {
   const ACCESS_END = new Date("2026-12-26T10:00:00.000Z");
+  const ENDED_SUBSCRIPTION = subscriptionOf({
+    startChoice: "waiting",
+    status: "ended",
+    cancelledAt: NOW,
+    accessEndsAt: NOW,
+  });
 
   function standingUseCase(options: {
     found: ClientJourney | null;
@@ -325,9 +331,9 @@ describe("ReadClientPortalStandingUseCase", () => {
     };
   }
 
-  it("opens the portal to a client whose subscription has not ended", async () => {
+  it("answers her portal reachable to a client who submitted onboarding and whose coaching is active", async () => {
     // arrange
-    const found = journey(WELCOME_SEEN_AT);
+    const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
     const { useCase, subscriptions } = standingUseCase({
       found,
       subscription: subscriptionOf({ startChoice: "waiting" }),
@@ -338,21 +344,64 @@ describe("ReadClientPortalStandingUseCase", () => {
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({ journey: found, access: "open" });
+    expect(standing).toEqual({
+      journey: found,
+      coaching: "active",
+      portal: "reachable",
+    });
     expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
   });
 
+  it("keeps the portal reachable to a client the coach sent back for details", async () => {
+    // arrange
+    const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
+      reviewOpenedAt: OPENED_AT,
+      detailsRequestedAt: ASKED_AT,
+    });
+    const { useCase } = standingUseCase({
+      found,
+      subscription: subscriptionOf({ startChoice: "waiting" }),
+      now: NOW,
+    });
+
+    // act
+    const standing = await useCase.execute("user_ana");
+
+    // assert
+    expect(standing).toEqual({
+      journey: found,
+      coaching: "active",
+      portal: "reachable",
+    });
+  });
+
   it.each([
-    [
-      "ended",
-      subscriptionOf({
-        startChoice: "waiting",
-        status: "ended",
-        cancelledAt: NOW,
-        accessEndsAt: NOW,
-      }),
-      NOW,
-    ],
+    ["has not seen welcome", journey(null)],
+    ["has not submitted onboarding", journey(WELCOME_SEEN_AT)],
+  ])(
+    "keeps the portal unreachable to a client who %s, though her coaching is active",
+    async (_label, found) => {
+      // arrange
+      const { useCase } = standingUseCase({
+        found,
+        subscription: subscriptionOf({ startChoice: "waiting" }),
+        now: NOW,
+      });
+
+      // act
+      const standing = await useCase.execute("user_ana");
+
+      // assert
+      expect(standing).toEqual({
+        journey: found,
+        coaching: "active",
+        portal: "unreachable",
+      });
+    },
+  );
+
+  it.each([
+    ["ended", ENDED_SUBSCRIPTION, NOW],
     [
       "cancelled and past her access end",
       subscriptionOf({
@@ -364,23 +413,47 @@ describe("ReadClientPortalStandingUseCase", () => {
       ACCESS_END,
     ],
   ])(
-    "closes the portal to a client whose subscription is %s",
+    "answers her coaching ended and her portal unreachable to a submitted client whose subscription is %s",
     async (_label, subscription, now) => {
       // arrange
-      const found = journey(WELCOME_SEEN_AT);
+      const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
       const { useCase } = standingUseCase({ found, subscription, now });
 
       // act
       const standing = await useCase.execute("user_ana");
 
       // assert
-      expect(standing).toEqual({ journey: found, access: "ended" });
+      expect(standing).toEqual({
+        journey: found,
+        coaching: "ended",
+        portal: "unreachable",
+      });
     },
   );
 
-  it("opens the portal to a client with no subscription", async () => {
+  it("answers her coaching ended to a client who never submitted onboarding", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT);
+    const { useCase } = standingUseCase({
+      found,
+      subscription: ENDED_SUBSCRIPTION,
+      now: NOW,
+    });
+
+    // act
+    const standing = await useCase.execute("user_ana");
+
+    // assert
+    expect(standing).toEqual({
+      journey: found,
+      coaching: "ended",
+      portal: "unreachable",
+    });
+  });
+
+  it("answers her portal reachable to a submitted client with no subscription", async () => {
+    // arrange
+    const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
     const { useCase } = standingUseCase({
       found,
       subscription: null,
@@ -391,7 +464,11 @@ describe("ReadClientPortalStandingUseCase", () => {
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({ journey: found, access: "open" });
+    expect(standing).toEqual({
+      journey: found,
+      coaching: "active",
+      portal: "reachable",
+    });
   });
 
   it("answers no standing for a subject bound to no client", async () => {
