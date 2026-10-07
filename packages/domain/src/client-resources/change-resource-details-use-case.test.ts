@@ -73,7 +73,7 @@ function createUseCase() {
     exists: vi.fn(async () => true),
     findByAuthSubjectId: vi.fn(async () => ({
       clientId: "client-ana",
-      portal: "open" as const,
+      portal: "reachable" as const,
     })),
   } satisfies ResourceClients;
   const incidents = {
