@@ -32,6 +32,17 @@ const MEAL_PLAN_CARD = { title: MEAL_PLAN.title, type: "PDF", pages: 3 };
 
 const RECIPES_CARD = { title: RECIPES.title, type: "DOC" };
 
+const LONG_TITLED_RECIPES = {
+  ...RECIPES,
+  title:
+    "Family recipes, the whole collection grandma wrote down for the weekends",
+};
+
+const LONG_TITLED_RECIPES_CARD = {
+  title: LONG_TITLED_RECIPES.title,
+  type: "DOC",
+};
+
 const POSTURE_CARD = { title: POSTURE.title, type: "IMG" };
 
 const NO_OTHER_MEASUREMENTS = {
@@ -265,7 +276,11 @@ test("on her phone a client reaches her resources from the marked More tab, read
   await signInAsCoach();
   await resourceRequests.add(client.clientId, postureGuideImage(), POSTURE);
   await resourceRequests.add(client.clientId, await mealPlanPdf(), MEAL_PLAN);
-  await resourceRequests.add(client.clientId, recipesDoc(), RECIPES);
+  await resourceRequests.add(
+    client.clientId,
+    recipesDoc(),
+    LONG_TITLED_RECIPES,
+  );
   await page.goto("/");
   await publicNav.signOut();
   await page.goto("/store");
@@ -290,7 +305,7 @@ test("on her phone a client reaches her resources from the marked More tab, read
   // assert
   await clientResources.expectOpen();
   await clientResources.expectCards([
-    RECIPES.title,
+    LONG_TITLED_RECIPES.title,
     MEAL_PLAN.title,
     POSTURE.title,
   ]);
@@ -330,18 +345,18 @@ test("on her phone a client reaches her resources from the marked More tab, read
   await clientPortalShell.expectMoreButton("marked");
 
   // act
-  await clientResources.openResource(RECIPES.title);
+  await clientResources.openResource(LONG_TITLED_RECIPES.title);
 
   // assert
   await resourceViewer.expectFullScreen();
-  await resourceViewer.expectCover(RECIPES.title, "recipes.doc");
+  await resourceViewer.expectCover(LONG_TITLED_RECIPES.title, "recipes.doc");
   await resourceViewer.expectDownloadInView();
 
   // act
   await resourceViewer.close();
 
   // assert
-  await clientResources.expectNotNew(RECIPES_CARD);
+  await clientResources.expectNotNew(LONG_TITLED_RECIPES_CARD);
   await clientPortalShell.expectMoreButton("marked");
 
   // act
