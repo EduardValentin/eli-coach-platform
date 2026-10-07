@@ -14,6 +14,12 @@ export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
 export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
+export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
 export { FieldError } from "./field-error";
 export { FileDropzone, FilePickerButton } from "./file-dropzone";
 export { FieldHint } from "./field-hint";

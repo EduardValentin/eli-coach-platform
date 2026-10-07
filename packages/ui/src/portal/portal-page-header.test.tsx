@@ -1,8 +1,9 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PortalPageHeader } from "./portal-page-header";
@@ -61,5 +62,34 @@ describe("PortalPageHeader", () => {
 
     // assert
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("lets the page move focus to the heading through its ref", () => {
+    // arrange
+    const headingRef = createRef<HTMLHeadingElement>();
+    render(<PortalPageHeader headingRef={headingRef} title="Resources" />);
+
+    // act
+    act(() => headingRef.current?.focus());
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Resources" }),
+    ).toHaveFocus();
+  });
+
+  it("keeps the heading out of focus without a ref", () => {
+    // arrange
+    render(<PortalPageHeader title="Resources" />);
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Resources",
+    });
+
+    // act
+    act(() => heading.focus());
+
+    // assert
+    expect(heading).not.toHaveFocus();
   });
 });
