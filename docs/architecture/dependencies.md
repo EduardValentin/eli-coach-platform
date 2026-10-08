@@ -306,6 +306,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B2697 | ResourceClients (U3466) | C1 use-cases | the inline `ResourceClients` in U1423 (composition, C18; `exists` over U3007, `findByAuthSubjectId` over U3161), handed out as `handles.resourceClients` | U3456, U3506, U3507, U3508 | `exists(clientId)` → boolean; auth subject id in, `{ clientId, portal: "reachable" \| "unreachable" }` or null out | implementer | dependency-absence; handed by the container |
 | B2698 | ClientResourceIds (U3457) | C1 use-cases | U3437 RandomClientResourceIds (adapters, C21) | U3455 | string ids | implementer | dependency-absence |
 | B2699 | ClientResourceIncidents (U3458) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U3455, U3456, U3506, U3507, U3508, U3519, U3520 | ids, reasons, sizes; no file contents | implementer | dependency-absence |
+| B2700 | ResourceFileFormatDetector (U3523) | C1 use-cases | the C6 `./documents/server` factory `createResourceFileFormatDetector` (U3524) over `file-type`, `@file-type/cfbf`, `@tokenizer/inflate` and `strtok3` | U3455 | file bytes in, only within 25 MB; the detected type (or `null`) and a zip archive's entry names out | implementer | dependency-absence; exports |
 
 ## Entry points and composition roots
 
@@ -3731,8 +3732,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4360 | packages/domain/src/client-resources/open-resource-preview-use-case.ts | packages/domain/src/client-resources/resource-renditions.ts | import | no | yes | inward | present |
 | E4361 | packages/domain/src/client-resources/resource-document-pages.ts | packages/domain/src/client-resources/client-resource-store.ts | type-only import | no | no | lateral | present |
 | E4362 | packages/domain/src/client-resources/resource-file-intake.ts | packages/domain/src/client-resources/resource-file-kind.ts | import | no | no | lateral | present |
-| E4363 | packages/domain/src/client-resources/resource-file-intake.ts | packages/domain/src/client-resources/resource-file-signature.ts | import | no | no | lateral | present |
-| E4364 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/resource-file-kind.ts | type-only import | no | no | lateral | present |
+| E4363 | packages/domain/src/client-resources/resource-file-intake.ts | packages/domain/src/client-resources/resource-file-signature.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
+| E4364 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/resource-file-kind.ts | type-only import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
 | E4365 | packages/infrastructure/src/client-files/client-resource-layout.server.ts | packages/infrastructure/src/client-files/storage-key-segment.server.ts | import | no | no | lateral | present |
 | E4366 | packages/infrastructure/src/client-files/create-client-resource-store.server.ts | packages/infrastructure/src/client-files/filesystem/filesystem-client-resource-store.server.ts | import | no | no | lateral | present |
 | E4367 | packages/infrastructure/src/client-files/create-client-resource-store.server.ts | packages/domain/src/client-resources/index.ts | type-only import | yes | yes | inward | present |
@@ -3804,13 +3805,13 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4433 | packages/domain/src/client-resources/client-resource.ts | packages/domain/src/client-resources/resource-details.ts | type-only import | no | no | lateral | present |
 | E4434 | packages/domain/src/client-resources/client-resource.ts | packages/domain/src/client-resources/resource-file-kind.ts | import | no | no | lateral | present |
 | E4435 | packages/domain/src/client-resources/client-resource.ts | packages/domain/src/client-resources/resource-file-name.ts | import | no | no | lateral | present |
-| E4436 | packages/domain/src/client-resources/compound-file-directory.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | present |
+| E4436 | packages/domain/src/client-resources/compound-file-directory.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
 | E4437 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/client-resource.ts | import | no | yes | inward | present |
 | E4438 | packages/domain/src/client-resources/open-resource-preview-use-case.ts | packages/domain/src/client-resources/client-resource.ts | type-only import | no | yes | inward | present |
-| E4439 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | present |
-| E4440 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/compound-file-directory.ts | import | no | no | lateral | present |
-| E4441 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/zip-central-directory.ts | import | no | no | lateral | present |
-| E4442 | packages/domain/src/client-resources/zip-central-directory.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | present |
+| E4439 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
+| E4440 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/compound-file-directory.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
+| E4441 | packages/domain/src/client-resources/resource-file-signature.ts | packages/domain/src/client-resources/zip-central-directory.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
+| E4442 | packages/domain/src/client-resources/zip-central-directory.ts | packages/domain/src/client-resources/byte-view.ts | import | no | no | lateral | removed (hand-written readers deleted; detection behind U3523) |
 | E4443 | packages/infrastructure/src/client-files/create-client-resource-store.server.ts | packages/infrastructure/src/client-files/filesystem/media-root.server.ts | import | no | no | lateral | present |
 | E4444 | packages/infrastructure/src/client-files/create-progress-photo-store.server.ts | packages/infrastructure/src/client-files/filesystem/media-root.server.ts | import | no | no | lateral | present |
 | E4445 | packages/infrastructure/src/client-files/filesystem/media-root.server.ts | external:fs | import | n/a | no | lateral | present |
@@ -3894,3 +3895,12 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4525 | packages/ui/src/primitives/dropdown-menu.tsx | external:react | import | n/a | no | lateral | present |
 | E4526 | packages/ui/src/portal/portal-page-header.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E4527 | apps/platform/src/features/client-resources/ui/shared/resources/resource-grid.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E4528 | packages/domain/src/client-resources/resource-file-intake.ts | packages/domain/src/client-resources/resource-file-format-detector.ts | type-only import | no | no | lateral | present |
+| E4529 | packages/domain/src/client-resources/add-client-resource-use-case.ts | packages/domain/src/client-resources/resource-file-format-detector.ts | type-only import | no | yes | inward | present |
+| E4530 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/resource-file-format-detector.ts | type-only import | no | yes | inward | present |
+| E4531 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | packages/domain/src/client-resources/index.ts | type-only import | yes | yes | inward | present |
+| E4532 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:@file-type/cfbf | import | n/a | no | lateral | present |
+| E4533 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:@tokenizer/inflate | import | n/a | no | lateral | present |
+| E4534 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:file-type | import | n/a | no | lateral | present |
+| E4535 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:strtok3 | import | n/a | no | lateral | present |
+| E4536 | packages/infrastructure/src/documents/index.server.ts | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | re-export | no | yes | inward | present |

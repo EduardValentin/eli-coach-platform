@@ -11,6 +11,7 @@ catalog:
   "@clerk/testing": 2.2.30
   "@date-fns/tz": 1.5.0
   "@eslint/js": 9.39.1
+  "@file-type/cfbf": 0.2.2
   "@hookform/resolvers": 5.9.1
   "@lhci/cli": 0.15.1
   "@napi-rs/canvas": 1.0.10
@@ -23,6 +24,7 @@ catalog:
   "@testing-library/jest-dom": 6.9.1
   "@testing-library/react": 16.3.2
   "@testing-library/user-event": 14.6.1
+  "@tokenizer/inflate": 0.4.1
   "@types/archiver": 8.0.0
   "@types/node": 24.13.3
   "@types/pdfkit": 0.17.6
@@ -38,6 +40,7 @@ catalog:
   drizzle-orm: 0.45.2
   eslint-plugin-jsx-a11y: 6.10.2
   eslint: 9.39.1
+  file-type: 22.1.1
   globals: 17.5.0
   happy-dom: 20.11.2
   isbot: 5.1.39
@@ -60,6 +63,7 @@ catalog:
   sharp: 0.35.5
   sonner: 2.0.3
   stripe: 22.6.2
+  strtok3: 10.3.5
   tailwind-merge: 3.5.0
   tailwindcss: 4.2.4
   testcontainers: 12.1.0

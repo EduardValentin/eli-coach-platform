@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 
+import type { DetectedResourceFile } from "./resource-file-format-detector";
 import {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,
   ResourceFileIntake,
 } from "./resource-file-intake";
 
-function pdfOfLength(byteLength: number): Uint8Array {
-  const bytes = new Uint8Array(byteLength);
-  bytes.set([0x25, 0x50, 0x44, 0x46, 0x2d], 0);
-
-  return bytes;
+function detected(
+  type: string | null,
+  archiveEntries: readonly string[] = [],
+): DetectedResourceFile {
+  return { type, archiveEntries };
 }
 
 describe("ResourceFileIntake", () => {
@@ -25,55 +26,86 @@ describe("ResourceFileIntake", () => {
     expect(limits).toEqual([twentyFiveMegabytes, 50]);
   });
 
-  it("accepts a file of exactly 25 MB with its format and kind", () => {
+  it("accepts a file of exactly 25 MB", () => {
     // arrange
-    const bytes = pdfOfLength(MAX_RESOURCE_FILE_BYTES);
+    const byteLength = MAX_RESOURCE_FILE_BYTES;
 
     // act
-    const judgement = ResourceFileIntake.judge(bytes);
+    const judgement = ResourceFileIntake.judgeSize(byteLength);
 
     // assert
-    expect(judgement).toEqual({
-      status: "accepted",
-      format: "pdf",
-      kind: "pdf",
-    });
+    expect(judgement).toEqual({ status: "accepted" });
   });
 
   it("refuses a file one byte over 25 MB as too large", () => {
     // arrange
-    const bytes = pdfOfLength(MAX_RESOURCE_FILE_BYTES + 1);
+    const byteLength = MAX_RESOURCE_FILE_BYTES + 1;
 
     // act
-    const judgement = ResourceFileIntake.judge(bytes);
+    const judgement = ResourceFileIntake.judgeSize(byteLength);
 
     // assert
     expect(judgement).toEqual({ status: "refused", refusal: "too-large" });
   });
 
-  it("names the kind of an accepted image", () => {
+  it.each([
+    { type: "pdf", format: "pdf", kind: "pdf" },
+    { type: "jpg", format: "jpeg", kind: "image" },
+    { type: "png", format: "png", kind: "image" },
+    { type: "webp", format: "webp", kind: "image" },
+    { type: "docx", format: "docx", kind: "word" },
+    { type: "odt", format: "odt", kind: "word" },
+    { type: "doc", format: "doc", kind: "word" },
+    { type: "xlsx", format: "xlsx", kind: "excel" },
+    { type: "ods", format: "ods", kind: "excel" },
+    { type: "xls", format: "xls", kind: "excel" },
+  ])(
+    "accepts a detected $type as $format of kind $kind",
+    ({ type, format, kind }) => {
+      // arrange
+      const file = detected(type);
+
+      // act
+      const judgement = ResourceFileIntake.judgeFormat(file);
+
+      // assert
+      expect(judgement).toEqual({ status: "accepted", format, kind });
+    },
+  );
+
+  it.each([
+    { description: "an unidentified file", file: detected(null) },
+    {
+      description: "a Word file carrying a macro project",
+      file: detected("docx", [
+        "[Content_Types].xml",
+        "word/document.xml",
+        "word/vbaProject.bin",
+      ]),
+    },
+    {
+      description: "an Excel file carrying a macro project",
+      file: detected("xlsx", [
+        "[Content_Types].xml",
+        "xl/workbook.xml",
+        "xl/vbaProject.bin",
+      ]),
+    },
+    { description: "a macro-enabled Word file", file: detected("docm") },
+    { description: "a macro-enabled Excel file", file: detected("xlsm") },
+    { description: "a PowerPoint file", file: detected("pptx") },
+    { description: "a legacy PowerPoint file", file: detected("ppt") },
+    { description: "a Windows installer", file: detected("msi") },
+    { description: "an unrecognised compound file", file: detected("cfb") },
+    { description: "a plain zip archive", file: detected("zip") },
+    { description: "a GIF", file: detected("gif") },
+    { description: "a Windows program", file: detected("exe") },
+  ])("refuses $description as an unsupported type", ({ file }) => {
     // arrange
-    const bytes = Uint8Array.of(0xff, 0xd8, 0xff, 0xe0);
+    const detectedFile = file;
 
     // act
-    const judgement = ResourceFileIntake.judge(bytes);
-
-    // assert
-    expect(judgement).toEqual({
-      status: "accepted",
-      format: "jpeg",
-      kind: "image",
-    });
-  });
-
-  it("refuses bytes it cannot identify as an unsupported type", () => {
-    // arrange
-    const bytes = Uint8Array.from("GIF89a", (character) =>
-      character.charCodeAt(0),
-    );
-
-    // act
-    const judgement = ResourceFileIntake.judge(bytes);
+    const judgement = ResourceFileIntake.judgeFormat(detectedFile);
 
     // assert
     expect(judgement).toEqual({

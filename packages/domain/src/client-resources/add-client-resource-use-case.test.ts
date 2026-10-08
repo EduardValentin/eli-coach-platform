@@ -15,6 +15,10 @@ import type {
   ResourceDocumentPages,
   ResourceDocumentReading,
 } from "./resource-document-pages";
+import type {
+  DetectedResourceFile,
+  ResourceFileFormatDetector,
+} from "./resource-file-format-detector";
 import { MAX_RESOURCE_FILE_BYTES } from "./resource-file-intake";
 import type {
   ResourceImagePages,
@@ -30,60 +34,37 @@ function ascii(text: string): Uint8Array {
   return Uint8Array.from(text, (character) => character.charCodeAt(0));
 }
 
-function littleEndian(value: number, byteCount: 2 | 4): number[] {
-  return Array.from(
-    { length: byteCount },
-    (_, index) => (value >>> (index * 8)) & 0xff,
+const PDF_BYTES = ascii("a three page meal plan");
+const PNG_BYTES = ascii("a photo of a plate");
+const DOCX_BYTES = ascii("a Word meal plan");
+const XLSX_BYTES = ascii("an Excel shopping list");
+
+const DETECTED_FILES = new Map<Uint8Array, DetectedResourceFile>([
+  [PDF_BYTES, { type: "pdf", archiveEntries: [] }],
+  [PNG_BYTES, { type: "png", archiveEntries: [] }],
+  [
+    DOCX_BYTES,
+    {
+      type: "docx",
+      archiveEntries: ["[Content_Types].xml", "word/document.xml"],
+    },
+  ],
+  [
+    XLSX_BYTES,
+    {
+      type: "xlsx",
+      archiveEntries: ["[Content_Types].xml", "xl/workbook.xml"],
+    },
+  ],
+]);
+
+const UNIDENTIFIED: DetectedResourceFile = { type: null, archiveEntries: [] };
+
+class InTestFileFormats implements ResourceFileFormatDetector {
+  readonly detect = vi.fn(
+    async (bytes: Uint8Array) => DETECTED_FILES.get(bytes) ?? UNIDENTIFIED,
   );
 }
-
-function officeOpenXml(mainPart: string): Uint8Array {
-  const names = ["[Content_Types].xml", mainPart].map(ascii);
-  const local: number[] = [];
-  const central: number[] = [];
-
-  for (const name of names) {
-    const offset = local.length;
-    const sizes = [0, 0, 0].flatMap((value) => littleEndian(value, 4));
-
-    local.push(
-      ...littleEndian(0x04034b50, 4),
-      ...[20, 0, 8, 0, 0].flatMap((value) => littleEndian(value, 2)),
-      ...sizes,
-      ...littleEndian(name.byteLength, 2),
-      ...littleEndian(0, 2),
-      ...name,
-    );
-    central.push(
-      ...littleEndian(0x02014b50, 4),
-      ...[20, 20, 0, 8, 0, 0].flatMap((value) => littleEndian(value, 2)),
-      ...sizes,
-      ...[name.byteLength, 0, 0, 0, 0].flatMap((value) =>
-        littleEndian(value, 2),
-      ),
-      ...littleEndian(0, 4),
-      ...littleEndian(offset, 4),
-      ...name,
-    );
-  }
-
-  return Uint8Array.from([
-    ...local,
-    ...central,
-    ...littleEndian(0x06054b50, 4),
-    ...[0, 0, names.length, names.length].flatMap((value) =>
-      littleEndian(value, 2),
-    ),
-    ...littleEndian(central.length, 4),
-    ...littleEndian(local.length, 4),
-    ...littleEndian(0, 2),
-  ]);
-}
-
-const PDF_BYTES = Uint8Array.from([...ascii("%PDF-1.7\n"), 1, 2, 3]);
-const PNG_BYTES = Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
-const DOCX_BYTES = officeOpenXml("word/document.xml");
-const XLSX_BYTES = officeOpenXml("xl/workbook.xml");
 
 class InMemoryClientResources implements ClientResources {
   readonly added: ClientResource[] = [];
@@ -217,6 +198,7 @@ function createUseCase(setup: Setup = {}) {
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const clock: Clock = { now: () => NOW };
+  const fileFormats = new InTestFileFormats();
   const useCase = new AddClientResourceUseCase({
     resources,
     resourceIds: { generate: () => "resource-1" },
@@ -230,11 +212,12 @@ function createUseCase(setup: Setup = {}) {
         page: Uint8Array.of(1),
         thumbnail: Uint8Array.of(0),
       }),
+    fileFormats,
     clock,
     incidents,
   });
 
-  return { useCase, resources, store, documentPages, incidents };
+  return { useCase, resources, store, documentPages, incidents, fileFormats };
 }
 
 function addCommand(file: { originalName: string; bytes: Uint8Array }) {
@@ -501,11 +484,10 @@ describe("AddClientResourceUseCase", () => {
     });
   });
 
-  it("refuses a file over 25 MB", async () => {
+  it("refuses a file over 25 MB before detecting its format", async () => {
     // arrange
-    const { useCase, documentPages } = createUseCase();
+    const { useCase, documentPages, fileFormats } = createUseCase();
     const bytes = new Uint8Array(MAX_RESOURCE_FILE_BYTES + 1);
-    bytes.set(PDF_BYTES);
 
     // act
     const result = await useCase.execute(
@@ -514,6 +496,7 @@ describe("AddClientResourceUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "refused", refusal: "too-large" });
+    expect(fileFormats.detect).not.toHaveBeenCalled();
     expect(documentPages.received).toEqual([]);
   });
 

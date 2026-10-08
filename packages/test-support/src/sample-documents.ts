@@ -12,8 +12,25 @@ type HandWrittenPdf = {
   extraObjects: readonly Buffer[];
 };
 
+type OfficeOpenXmlPackage = {
+  mainPart: string;
+  mainContentType: string;
+  extraParts?: readonly string[];
+};
+
 const OPEN_DOCUMENT_MIMETYPE = "mimetype";
 const CONTENT_TYPES = "[Content_Types].xml";
+const WORD_MAIN_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
+const EXCEL_MAIN_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml";
+const POWERPOINT_MAIN_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml";
+const WORD_97_CLASS_ID = "00020906-0000-0000-c000-000000000046";
+const EXCEL_97_CLASS_ID = "00020820-0000-0000-c000-000000000046";
+const POWERPOINT_97_CLASS_ID = "64818d10-4f9b-11cf-86ea-00aa00b929e8";
+const WINDOWS_INSTALLER_CLASS_ID = "000c1084-0000-0000-c000-000000000046";
+const CLASS_ID_OFFSET = 0x50;
 const SECTOR_SIZE = 512;
 const FAT_SECTOR = 0xfffffffd;
 const END_OF_CHAIN = 0xfffffffe;
@@ -72,24 +89,32 @@ export function japaneseTextPdf(): Buffer {
 }
 
 export function wordDocument(): Promise<Buffer> {
-  return zipOf([
-    { name: CONTENT_TYPES, content: "<Types/>" },
-    { name: "word/document.xml", content: "<w:document/>" },
-  ]);
+  return officeOpenXml({
+    mainPart: "word/document.xml",
+    mainContentType: WORD_MAIN_CONTENT_TYPE,
+  });
+}
+
+export function macroProjectWordDocument(): Promise<Buffer> {
+  return officeOpenXml({
+    mainPart: "word/document.xml",
+    mainContentType: WORD_MAIN_CONTENT_TYPE,
+    extraParts: ["word/vbaProject.bin"],
+  });
 }
 
 export function excelWorkbook(): Promise<Buffer> {
-  return zipOf([
-    { name: CONTENT_TYPES, content: "<Types/>" },
-    { name: "xl/workbook.xml", content: "<workbook/>" },
-  ]);
+  return officeOpenXml({
+    mainPart: "xl/workbook.xml",
+    mainContentType: EXCEL_MAIN_CONTENT_TYPE,
+  });
 }
 
 export function powerPointPresentation(): Promise<Buffer> {
-  return zipOf([
-    { name: CONTENT_TYPES, content: "<Types/>" },
-    { name: "ppt/presentation.xml", content: "<p:presentation/>" },
-  ]);
+  return officeOpenXml({
+    mainPart: "ppt/presentation.xml",
+    mainContentType: POWERPOINT_MAIN_CONTENT_TYPE,
+  });
 }
 
 export function openDocumentText(): Promise<Buffer> {
@@ -101,11 +126,31 @@ export function openDocumentSpreadsheet(): Promise<Buffer> {
 }
 
 export function oldWordDocument(): Buffer {
-  return compoundFileWithStream("WordDocument");
+  return compoundFileWithStream({
+    streamName: "WordDocument",
+    classId: WORD_97_CLASS_ID,
+  });
 }
 
 export function oldExcelWorkbook(): Buffer {
-  return compoundFileWithStream("Workbook");
+  return compoundFileWithStream({
+    streamName: "Workbook",
+    classId: EXCEL_97_CLASS_ID,
+  });
+}
+
+export function oldPowerPointPresentation(): Buffer {
+  return compoundFileWithStream({
+    streamName: "PowerPoint Document",
+    classId: POWERPOINT_97_CLASS_ID,
+  });
+}
+
+export function windowsInstaller(): Buffer {
+  return compoundFileWithStream({
+    streamName: "SummaryInformation",
+    classId: WINDOWS_INSTALLER_CLASS_ID,
+  });
 }
 
 export function windowsProgram(): Buffer {
@@ -178,6 +223,18 @@ function openDocument(mimetype: string): Promise<Buffer> {
   ]);
 }
 
+function officeOpenXml(document: OfficeOpenXmlPackage): Promise<Buffer> {
+  const parts = [document.mainPart, ...(document.extraParts ?? [])];
+
+  return zipOf([
+    {
+      name: CONTENT_TYPES,
+      content: `<Types><Override PartName="/${document.mainPart}" ContentType="${document.mainContentType}"/></Types>`,
+    },
+    ...parts.map((name) => ({ name, content: "<part/>" })),
+  ]);
+}
+
 function zipOf(entries: readonly ZipEntry[]): Promise<Buffer> {
   const archive = new ZipArchive();
   const chunks: Buffer[] = [];
@@ -198,7 +255,13 @@ function zipOf(entries: readonly ZipEntry[]): Promise<Buffer> {
   });
 }
 
-function compoundFileWithStream(streamName: string): Buffer {
+function compoundFileWithStream({
+  streamName,
+  classId,
+}: {
+  streamName: string;
+  classId: string;
+}): Buffer {
   const bytes = Buffer.alloc(SECTOR_SIZE * 3, 0);
   const fatSector = 0;
   const directorySector = 1;
@@ -233,6 +296,7 @@ function compoundFileWithStream(streamName: string): Buffer {
     type: ROOT_STORAGE,
     child: 1,
   });
+  classIdBytes(classId).copy(bytes, directory + CLASS_ID_OFFSET);
   writeDirectoryEntry(bytes, directory + DIRECTORY_ENTRY_LENGTH, {
     name: streamName,
     type: STREAM,
@@ -263,4 +327,16 @@ function writeDirectoryEntry(
   bytes.writeUInt32LE(NO_STREAM, offset + 0x44);
   bytes.writeUInt32LE(NO_STREAM, offset + 0x48);
   bytes.writeUInt32LE(entry.child, offset + 0x4c);
+}
+
+function classIdBytes(classId: string): Buffer {
+  const [data1, data2, data3, data4, data5] = classId.split("-");
+  const bytes = Buffer.alloc(16);
+
+  bytes.writeUInt32LE(Number.parseInt(data1, 16), 0);
+  bytes.writeUInt16LE(Number.parseInt(data2, 16), 4);
+  bytes.writeUInt16LE(Number.parseInt(data3, 16), 6);
+  Buffer.from(`${data4}${data5}`, "hex").copy(bytes, 8);
+
+  return bytes;
 }

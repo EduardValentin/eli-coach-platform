@@ -1,4 +1,21 @@
 import {
+  excelWorkbook,
+  macroProjectWordDocument,
+  oldExcelWorkbook,
+  oldPowerPointPresentation,
+  oldWordDocument,
+  openDocumentSpreadsheet,
+  openDocumentText,
+  paddedPdfOfLength,
+  passwordProtectedPdf,
+  pdfWithPages,
+  plainText,
+  powerPointPresentation,
+  truncatedPdf,
+  windowsProgram,
+  wordDocument,
+} from "@eli-coach-platform/test-support/sample-documents";
+import {
   afterAll,
   afterEach,
   beforeAll,
@@ -32,21 +49,6 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
-import {
-  excelWorkbook,
-  oldExcelWorkbook,
-  oldWordDocument,
-  openDocumentSpreadsheet,
-  openDocumentText,
-  paddedPdfOfLength,
-  passwordProtectedPdf,
-  pdfWithPages,
-  plainText,
-  powerPointPresentation,
-  truncatedPdf,
-  windowsProgram,
-  wordDocument,
-} from "~integration-test-config/sample-documents";
 import {
   cameraJpegWithOrientationAndLocation,
   imageFactsOf,
@@ -403,6 +405,18 @@ describe.sequential("client resources integration", () => {
         name: "a PowerPoint presentation",
         fileName: "slides.pptx",
         bytes: powerPointPresentation,
+        refusal: "unsupported-type",
+      },
+      {
+        name: "an old PowerPoint presentation renamed as a Word file",
+        fileName: "slides.doc",
+        bytes: oldPowerPointPresentation,
+        refusal: "unsupported-type",
+      },
+      {
+        name: "a Word document carrying a macro project",
+        fileName: "plan.docx",
+        bytes: macroProjectWordDocument,
         refusal: "unsupported-type",
       },
       {
