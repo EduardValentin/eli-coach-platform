@@ -10,14 +10,14 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { coachingBundleIdSchema } from "~/features/coaching-sales/contracts/bundle-cards";
+import { coachingBundleIdSchema } from "~/features/coaching-sales/public/bundle-cards";
 import {
   startChoiceSchema,
   BUNDLE_PAGE_SUBSCRIPTION_NOTE,
   type BundlePage,
   type CheckoutChoice,
-} from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { BundleSelector } from "~/features/coaching-sales/ui/public/bundle-selector/bundle-selector";
 import { CallFirstBanner } from "~/features/coaching-sales/ui/public/call-first-banner";

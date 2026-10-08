@@ -6,7 +6,7 @@ import { readJsonRequestBody } from "~/features/coaching-sales/api/read-json-req
 import {
   invitationResolutionRequestSchema,
   invitationResolutionSchema,
-} from "~/features/coaching-sales/contracts/invitation";
+} from "~/features/coaching-sales/public/invitation";
 
 type InvitationsControllerOptions = {
   resolveInvitation: ResolveInvitationUseCase;

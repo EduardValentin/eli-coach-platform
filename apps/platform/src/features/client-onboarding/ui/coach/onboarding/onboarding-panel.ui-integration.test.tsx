@@ -25,8 +25,8 @@ import type {
   OnboardingReviewView,
   ReviewStage,
   SubmittedReview,
-} from "~/features/client-onboarding/contracts/onboarding-review";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+} from "~/features/client-onboarding/public/onboarding-review";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
 import { clientAction as approve } from "~/features/client-onboarding/api/coach/approvals";
 import { clientAction as requestDetails } from "~/features/client-onboarding/api/coach/detail-requests";
 import { clientAction as openReviewOnServer } from "~/features/client-onboarding/api/coach/review-openings";

@@ -11,11 +11,11 @@ import type {
   ReviewAnswer,
   ReviewForm,
   SubmittedReview,
-} from "~/features/client-onboarding/contracts/onboarding-review";
+} from "~/features/client-onboarding/public/onboarding-review";
 import {
   formatCanonicalMeasure,
   isMeasureKind,
-} from "~/features/client-profile/contracts/canonical-measure";
+} from "~/features/client-profile/public/canonical-measure";
 
 type OnboardingReviewReading = Awaited<
   ReturnType<ReadOnboardingReviewUseCase["execute"]>

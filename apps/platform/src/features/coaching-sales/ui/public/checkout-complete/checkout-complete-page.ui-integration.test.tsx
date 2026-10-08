@@ -12,8 +12,8 @@ import {
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
-import type { CheckoutConfirmation } from "~/features/coaching-sales/contracts/coaching-sales";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import type { CheckoutConfirmation } from "~/features/coaching-sales/public/coaching-sales";
 
 import CheckoutCompleteRoute from "./checkout-complete-page";
 

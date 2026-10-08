@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { StoreProduct } from "~/features/store/contracts/store";
+import type { StoreProduct } from "~/features/store/public/store";
 
 import { presentCatalog } from "./catalog-presenter";
 

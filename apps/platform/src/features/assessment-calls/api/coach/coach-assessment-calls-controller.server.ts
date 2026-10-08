@@ -10,8 +10,8 @@ import {
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
   type CoachAssessmentCall,
   type CoachAssessmentCalls,
-} from "~/features/assessment-calls/contracts/assessment-calls";
-import { assessmentCallJoinPath } from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/assessment-calls";
+import { assessmentCallJoinPath } from "~/features/assessment-calls/public/paths";
 
 type CoachAssessmentCallsControllerOptions = {
   clock: Clock;

@@ -8,7 +8,7 @@ import { useId } from "react";
 import {
   formatEuros,
   type CoachingBundleCard,
-} from "~/features/coaching-sales/contracts/bundle-cards";
+} from "~/features/coaching-sales/public/bundle-cards";
 
 type BundleChoice = {
   isDisabled: boolean;

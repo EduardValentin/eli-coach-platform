@@ -11,7 +11,7 @@ import {
   EmailText,
 } from "@eli-coach-platform/infrastructure/email/server";
 
-import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/contracts/coaching-sales";
+import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/public/coaching-sales";
 
 import {
   bodyStyle,

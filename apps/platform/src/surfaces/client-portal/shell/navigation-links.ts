@@ -1,10 +1,10 @@
 import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
 import { Activity, FolderOpen, Settings, UserCircle } from "lucide-react";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
-import { CLIENT_PROFILE_PATH } from "~/features/client-profile/contracts/paths";
-import { CLIENT_RESOURCES_PATH } from "~/features/client-resources/contracts/paths";
-import { CLIENT_SETTINGS_PATH } from "~/features/coaching-sales/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
+import { CLIENT_PROFILE_PATH } from "~/features/client-profile/public/paths";
+import { CLIENT_RESOURCES_PATH } from "~/features/client-resources/public/paths";
+import { CLIENT_SETTINGS_PATH } from "~/features/coaching-sales/public/paths";
 
 const DASHBOARD_LINK: PortalNavigationLink = {
   href: CLIENT_PORTAL_PATH,

@@ -10,7 +10,7 @@ import {
 import {
   storeAcquisitionFormSchema,
   type StoreAcquisitionForm,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 import {
   reduceAcquisitionFlow,

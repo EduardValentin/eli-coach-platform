@@ -10,7 +10,7 @@ import type {
   ProductEmailCommand,
 } from "@eli-coach-platform/infrastructure/email/server";
 
-import { assessmentCallJoinPath } from "~/features/assessment-calls/contracts/paths";
+import { assessmentCallJoinPath } from "~/features/assessment-calls/public/paths";
 
 import { buildGoogleCalendarUrl, buildIcs } from "./calendar-invite.server";
 import { createCoachNotificationEmailContent } from "./coach-notification-email.server";

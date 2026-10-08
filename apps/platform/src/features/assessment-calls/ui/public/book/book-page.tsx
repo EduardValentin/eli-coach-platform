@@ -17,7 +17,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type { OpenSlotsResponse } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { OpenSlotsResponse } from "~/features/assessment-calls/public/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";

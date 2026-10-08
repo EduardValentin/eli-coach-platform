@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ClientStatus,
   RosterClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/public/coach-clients";
 
 import {
   countsByStatus,

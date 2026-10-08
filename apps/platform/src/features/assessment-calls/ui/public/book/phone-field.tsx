@@ -9,7 +9,7 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import type { ChangeEvent } from "react";
 
-import { COUNTRIES } from "~/features/assessment-calls/contracts/countries";
+import { COUNTRIES } from "~/features/assessment-calls/public/countries";
 
 const PHONE_FIELD_LABEL = "Phone (optional)";
 const CALLING_CODE_LABEL = "Country calling code";

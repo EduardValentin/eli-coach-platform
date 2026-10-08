@@ -2,7 +2,7 @@ import { Cart } from "@eli-coach-platform/domain/cart";
 import { useEffect } from "react";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
-import type { StoreProduct } from "~/features/store/contracts/store";
+import type { StoreProduct } from "~/features/store/public/store";
 
 import { createFocusRestoreTracker } from "./cart-focus";
 import type { PersistedStoreCart } from "./cart-storage";

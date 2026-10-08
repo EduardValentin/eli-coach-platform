@@ -18,17 +18,17 @@ import {
 } from "@eli-coach-platform/ui/tabs";
 import { CalendarSearch } from "lucide-react";
 import type { ReactNode } from "react";
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/features/assessment-calls/contracts/call-moment";
-import { findCountry } from "~/features/assessment-calls/contracts/countries";
+} from "~/features/assessment-calls/public/call-moment";
+import { findCountry } from "~/features/assessment-calls/public/countries";
 import {
   formatAgeForCard,
   labelForGender,
   labelForPrimaryGoal,
-} from "~/features/assessment-calls/contracts/visitor-profile";
+} from "~/features/assessment-calls/public/visitor-profile";
 import {
   classifyCalls,
   emptyListingCopy,

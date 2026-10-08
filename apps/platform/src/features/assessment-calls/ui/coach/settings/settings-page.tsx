@@ -5,7 +5,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { AssessmentCallSettings } from "~/features/assessment-calls/contracts/assessment-call-settings";
+import type { AssessmentCallSettings } from "~/features/assessment-calls/public/assessment-call-settings";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";

@@ -22,11 +22,11 @@ import {
   type MeasurementEntryRequest,
   type MeasurementsNudge,
   type MeasurementsPage,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 import {
   progressPhotoOutcomesOf,
   receivedProgressPhotosOf,
-} from "~/features/client-profile/contracts/progress-photo-parts";
+} from "~/features/client-profile/public/progress-photo-parts";
 
 type ClientMeasurementsControllerOptions = {
   readOwnMeasurementHistory: ReadOwnMeasurementHistoryUseCase;

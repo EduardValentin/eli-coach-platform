@@ -6,8 +6,8 @@ import { Link } from "react-router";
 import {
   CLIENT_PORTAL_PATH,
   COACH_PORTAL_PATH,
-} from "~/features/accounts/contracts/paths";
-import { STORE_PATH } from "~/features/store/contracts/paths";
+} from "~/features/accounts/public/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 
 export type AccessDeniedRecovery = "client-portal" | "coach-portal" | "store";
 

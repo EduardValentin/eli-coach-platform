@@ -10,7 +10,7 @@ import { sessionContext } from "~/features/accounts/server/guards/session-contex
 import {
   clientJourneyRedirect,
   type ClientPortalStanding,
-} from "~/features/coaching-sales/contracts/client-journey";
+} from "~/features/coaching-sales/public/client-journey";
 
 import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";

@@ -30,7 +30,7 @@ vi.mock("@clerk/react-router", () => ({
 
 import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
-import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
+import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,

@@ -36,7 +36,7 @@ import { clientAction as bookAssessmentCall } from "~/features/assessment-calls/
 import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_PATH,
-} from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import BookRoute, { shouldRevalidate } from "./book-page";

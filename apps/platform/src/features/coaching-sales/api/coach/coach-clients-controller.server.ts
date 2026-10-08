@@ -22,7 +22,7 @@ import {
   resendInvitationSuccessSchema,
   type ClientRoster,
   type CoachClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/public/coach-clients";
 
 type CoachClientsControllerOptions = {
   listClients: ListClientsUseCase;

@@ -36,7 +36,7 @@ import {
   WEEKDAY_DISPLAY_ORDER,
   type AssessmentCallSettings,
   type AssessmentCallSettingsErrorCode,
-} from "~/features/assessment-calls/contracts/assessment-call-settings";
+} from "~/features/assessment-calls/public/assessment-call-settings";
 
 import { useSaveAssessmentCallSettingsFetcher } from "./api-client";
 

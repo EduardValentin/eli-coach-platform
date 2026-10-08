@@ -4,7 +4,7 @@ import {
   resourceDownloadPath,
   resourcePagePath,
   resourceThumbnailPath,
-} from "~/features/client-resources/contracts/paths";
+} from "~/features/client-resources/public/paths";
 
 export function resourceThumbnailUrl(resourceId: string): string {
   return joinBasePath(

@@ -9,7 +9,7 @@ import { requireApiAccount } from "~/features/accounts/server/guards/require-acc
 import {
   unitPreferenceRefusalSchema,
   unitPreferenceSchema,
-} from "~/features/client-profile/contracts/unit-preference";
+} from "~/features/client-profile/public/unit-preference";
 
 type UnitPreferenceControllerOptions = {
   saveUnitPreference: SaveUnitPreferenceUseCase;

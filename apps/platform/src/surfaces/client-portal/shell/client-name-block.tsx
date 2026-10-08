@@ -2,7 +2,7 @@ import { cn } from "@eli-coach-platform/ui/lib";
 import { User } from "lucide-react";
 import { Link } from "react-router";
 
-import { CLIENT_PROFILE_PATH } from "~/features/client-profile/contracts/paths";
+import { CLIENT_PROFILE_PATH } from "~/features/client-profile/public/paths";
 
 type ClientNameBlockSize = "md" | "sm";
 

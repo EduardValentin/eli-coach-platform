@@ -72,7 +72,7 @@ export default [
     files: [
       "apps/platform/src/surfaces/*/routes.ts",
       "apps/platform/src/features/*/routes.ts",
-      "apps/platform/src/features/*/contracts/paths.ts",
+      "apps/platform/src/features/*/public/paths.ts",
     ],
     rules: {
       "no-restricted-imports": "off",

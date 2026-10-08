@@ -3,7 +3,7 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   objectPronoun,
   possessivePronoun,
-} from "~/features/assessment-calls/contracts/visitor-profile";
+} from "~/features/assessment-calls/public/visitor-profile";
 
 export const PANEL_TITLE = "Onboarding";
 

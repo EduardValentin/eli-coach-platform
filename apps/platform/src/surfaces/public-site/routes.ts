@@ -5,7 +5,7 @@ import {
   assessmentCallsBookingRoutes,
   assessmentCallsJoinRoutes,
 } from "../../features/assessment-calls/routes";
-import { INVITATION_ROUTE_SEGMENT } from "../../features/coaching-sales/contracts/paths";
+import { INVITATION_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
 import { coachingSalesPublicRoutes } from "../../features/coaching-sales/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 

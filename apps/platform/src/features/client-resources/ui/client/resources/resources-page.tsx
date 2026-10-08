@@ -5,7 +5,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ClientResourceListing } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceListing } from "~/features/client-resources/public/client-resources";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 
 import { ClientResourceLibrary } from "./client-resource-library";

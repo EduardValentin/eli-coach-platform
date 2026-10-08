@@ -7,8 +7,8 @@ import {
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { storeProductPath } from "~/features/store/contracts/paths";
-import type { StoreProduct } from "~/features/store/contracts/store";
+import { storeProductPath } from "~/features/store/public/paths";
+import type { StoreProduct } from "~/features/store/public/store";
 
 import { useReconcileStoreCartCatalog } from "../cart/cart";
 import { useStoreCart } from "../cart/cart-provider";

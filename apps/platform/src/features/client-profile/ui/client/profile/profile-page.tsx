@@ -6,8 +6,8 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { MeasurementsPage } from "~/features/client-profile/contracts/measurements";
-import { CLIENT_PROFILE_PAGE_COPY } from "~/features/client-profile/contracts/profile-page-copy";
+import type { MeasurementsPage } from "~/features/client-profile/public/measurements";
+import { CLIENT_PROFILE_PAGE_COPY } from "~/features/client-profile/public/profile-page-copy";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { MeasurementsSection } from "~/features/client-profile/ui/client/measurements/measurements-section";
 

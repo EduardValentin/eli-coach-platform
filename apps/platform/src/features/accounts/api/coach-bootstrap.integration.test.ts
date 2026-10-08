@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { accountResponseSchema } from "~/features/accounts/contracts/account";
+import { accountResponseSchema } from "~/features/accounts/public/account";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 

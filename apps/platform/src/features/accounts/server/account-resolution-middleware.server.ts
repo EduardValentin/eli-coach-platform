@@ -3,7 +3,7 @@ import { buildRedirectPath } from "@eli-coach-platform/config";
 import type { ProvisionAccountResult } from "@eli-coach-platform/domain/account";
 import { redirect, type MiddlewareFunction } from "react-router";
 
-import { SIGN_IN_FAILED_PATH } from "~/features/accounts/contracts/paths";
+import { SIGN_IN_FAILED_PATH } from "~/features/accounts/public/paths";
 
 import { accountsContext } from "./guards/accounts-context.server";
 import { sessionContext } from "./guards/session-context.server";

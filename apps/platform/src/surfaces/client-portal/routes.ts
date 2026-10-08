@@ -1,6 +1,6 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
-import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
 import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
 import { clientResourcesClientRoutes } from "../../features/client-resources/routes";

@@ -29,11 +29,11 @@ import { clientAction as markOpened } from "~/features/client-resources/api/reso
 import type {
   ClientResourceListing,
   ClientResourceView,
-} from "~/features/client-resources/contracts/client-resources";
+} from "~/features/client-resources/public/client-resources";
 import {
   CLIENT_RESOURCES_API_PATHS,
   CLIENT_RESOURCES_PATH,
-} from "~/features/client-resources/contracts/paths";
+} from "~/features/client-resources/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import ClientResourcesRoute from "./resources-page";

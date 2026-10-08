@@ -25,11 +25,11 @@ import {
 } from "vitest";
 
 import { clientAction as resendInvitation } from "~/features/coaching-sales/api/coach/invitation-resends";
-import type { ClientInvitationReading } from "~/features/coaching-sales/contracts/coach-clients";
+import type { ClientInvitationReading } from "~/features/coaching-sales/public/coach-clients";
 import {
   COACHING_SALES_API_PATHS,
   coachClientPath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 

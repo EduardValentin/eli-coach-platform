@@ -3,12 +3,12 @@ import { CircleCheck } from "lucide-react";
 import type { Ref } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { Booking } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { Booking } from "~/features/assessment-calls/public/assessment-calls";
 
 import {
   formatMonthFirstDate,
   formatClockTime,
-} from "~/features/assessment-calls/contracts/call-moment";
+} from "~/features/assessment-calls/public/call-moment";
 
 type BookingConfirmationProps = {
   booking: Booking;

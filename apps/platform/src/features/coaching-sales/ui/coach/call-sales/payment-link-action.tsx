@@ -4,14 +4,14 @@ import { Send } from "lucide-react";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 
-import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
+import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import {
   PAYMENT_LINK_MESSAGES,
   sendPaymentLinkErrorSchema,
   sendPaymentLinkSuccessSchema,
   type CallSalesState,
-} from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
 
 type PaymentLinkCall = {

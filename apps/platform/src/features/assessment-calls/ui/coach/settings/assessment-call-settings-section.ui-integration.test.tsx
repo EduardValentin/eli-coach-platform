@@ -11,8 +11,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import { clientAction as saveSettings } from "~/features/assessment-calls/api/settings/settings";
-import type { AssessmentCallSettings } from "~/features/assessment-calls/contracts/assessment-call-settings";
-import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/contracts/paths";
+import type { AssessmentCallSettings } from "~/features/assessment-calls/public/assessment-call-settings";
+import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";

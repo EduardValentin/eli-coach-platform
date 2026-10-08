@@ -1,4 +1,4 @@
-import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
+import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 
 type CardExpiry = Pick<
   NonNullable<ClientSettings["card"]>,

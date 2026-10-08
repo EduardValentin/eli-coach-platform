@@ -9,17 +9,17 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { cn } from "@eli-coach-platform/ui/lib";
 
-import type { QuestionId } from "~/features/client-onboarding/contracts/onboarding";
+import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
 import type {
   ReviewAnswer,
   ReviewForm,
-} from "~/features/client-onboarding/contracts/onboarding-review";
+} from "~/features/client-onboarding/public/onboarding-review";
 import {
   ASKED_AGAIN,
   answeredCount,
   askedAgainCount,
   REVIEW_DIALOG,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
 
 import { includesQuestion } from "./question-ids";
 import { ReviewAnswerValue } from "./review-answer-value";

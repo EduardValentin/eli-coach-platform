@@ -1,6 +1,6 @@
 import { relative } from "@react-router/dev/routes";
 
-import { STORE_API_PATHS, STORE_ROUTE_SEGMENT } from "./contracts/paths";
+import { STORE_API_PATHS, STORE_ROUTE_SEGMENT } from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

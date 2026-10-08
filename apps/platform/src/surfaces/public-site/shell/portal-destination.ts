@@ -1,11 +1,11 @@
 import type { AccountRole } from "@eli-coach-platform/domain/account";
 
-import type { PortalDestination } from "~/features/accounts/contracts/account";
-import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
+import type { PortalDestination } from "~/features/accounts/public/account";
+import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/public/paths";
 import {
   clientJourneyPortalLink,
   type ClientPortalStanding,
-} from "~/features/coaching-sales/contracts/client-journey";
+} from "~/features/coaching-sales/public/client-journey";
 
 const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
   CLIENT: { href: PORTAL_PATH_BY_ROLE.CLIENT, label: "Client Portal" },

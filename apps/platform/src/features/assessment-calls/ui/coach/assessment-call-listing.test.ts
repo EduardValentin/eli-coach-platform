@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 
 import {
   PAGE_SIZE,

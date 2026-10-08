@@ -5,7 +5,7 @@ import {
 import {
   PROGRESS_PHOTO_PARTS,
   type PresentedProgressPhotoOutcomes,
-} from "~/features/client-profile/contracts/progress-photo-parts";
+} from "~/features/client-profile/public/progress-photo-parts";
 
 export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
 

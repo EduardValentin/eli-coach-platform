@@ -1,7 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 
-import { CLIENT_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/public/paths";
 
 const basePath = import.meta.env.BASE_URL;
 

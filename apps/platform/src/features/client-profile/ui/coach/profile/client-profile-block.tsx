@@ -8,15 +8,15 @@ import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { findCountry } from "~/features/assessment-calls/contracts/countries";
+import { findCountry } from "~/features/assessment-calls/public/countries";
 import {
   formatAgeForCard,
   labelForGender,
   possessivePronoun,
   subjectPronoun,
-} from "~/features/assessment-calls/contracts/visitor-profile";
-import { formatCanonicalMeasure } from "~/features/client-profile/contracts/canonical-measure";
-import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
+} from "~/features/assessment-calls/public/visitor-profile";
+import { formatCanonicalMeasure } from "~/features/client-profile/public/canonical-measure";
+import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
 
 type ClientProfileBlockProps = {
   profile: ClientProfileView;

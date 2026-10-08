@@ -2,8 +2,8 @@ import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect } from "react";
 import { useFetcher } from "react-router";
 
-import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
-import { progressPhotoPath } from "~/features/client-profile/contracts/paths";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
+import { progressPhotoPath } from "~/features/client-profile/public/paths";
 
 export function useProgressPhotoRemoval() {
   const { data, state, submit } = useFetcher<unknown>();

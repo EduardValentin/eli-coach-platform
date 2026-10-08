@@ -6,7 +6,7 @@ import {
 } from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 
 import {
   CLIENT_ENDED_PATH,

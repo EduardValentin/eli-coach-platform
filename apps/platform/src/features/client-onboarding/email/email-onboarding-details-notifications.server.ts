@@ -3,7 +3,7 @@ import type { OnboardingDetailsNotifications } from "@eli-coach-platform/domain/
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 
 import { createDetailsRequestEmailContent } from "./details-request-email.server";
 

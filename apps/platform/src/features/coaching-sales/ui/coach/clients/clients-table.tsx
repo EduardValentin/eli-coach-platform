@@ -17,9 +17,9 @@ import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 
-import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
-import type { RosterClient } from "~/features/coaching-sales/contracts/coach-clients";
-import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
+import { bundleLengthLabel } from "~/features/coaching-sales/public/bundle-cards";
+import type { RosterClient } from "~/features/coaching-sales/public/coach-clients";
+import { coachClientPath } from "~/features/coaching-sales/public/paths";
 
 import { ClientStatusBadge } from "./client-status-badge";
 import { NeedsRefundBadge } from "./needs-refund-badge";

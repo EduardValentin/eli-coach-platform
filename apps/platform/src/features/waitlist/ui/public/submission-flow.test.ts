@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { WaitlistJoinResponse } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistJoinResponse } from "~/features/waitlist/public/waitlist";
 
 import { resolveSubmissionState } from "./submission-flow";
 

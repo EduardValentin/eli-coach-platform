@@ -4,8 +4,8 @@ import {
   CLIENT_STATUS_LABELS,
   clientStatusTone,
   type ClientStatusTone,
-} from "~/features/coaching-sales/contracts/client-status";
-import type { ClientStatus } from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/public/client-status";
+import type { ClientStatus } from "~/features/coaching-sales/public/coach-clients";
 
 const BADGE_TONES = {
   neutral: "secondary",

@@ -38,15 +38,15 @@ import { clientAction as changeOrRemoveResource } from "~/features/client-resour
 import type {
   ClientResourceListing,
   ClientResourceView,
-} from "~/features/client-resources/contracts/client-resources";
+} from "~/features/client-resources/public/client-resources";
 import {
   CLIENT_RESOURCES_API_PATHS,
   clientResourcesPath,
   COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
   coachClientResourcesPath,
-} from "~/features/client-resources/contracts/paths";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
-import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/client-resources/public/paths";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
+import { coachClientPath } from "~/features/coaching-sales/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import CoachClientResourcesRoute, { ErrorBoundary } from "./client-resources";

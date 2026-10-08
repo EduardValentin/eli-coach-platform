@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { createRoutesStub, Outlet } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
+import type { ProgramStatus } from "~/features/coaching-sales/public/client-journey";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 
 import ClientHomeRoute, { type loader } from "./home";

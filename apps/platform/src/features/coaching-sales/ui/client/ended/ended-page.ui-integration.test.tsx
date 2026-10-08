@@ -6,8 +6,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ClientEnded } from "~/features/coaching-sales/contracts/client-subscription";
-import { CLIENT_ENDED_PATH } from "~/features/coaching-sales/contracts/paths";
+import type { ClientEnded } from "~/features/coaching-sales/public/client-subscription";
+import { CLIENT_ENDED_PATH } from "~/features/coaching-sales/public/paths";
 
 import EndedRoute from "./ended-page";
 

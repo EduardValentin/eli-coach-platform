@@ -18,7 +18,7 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
-import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/contracts/resource-upload-parts";
+import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/public/resource-upload-parts";
 import {
   contextEntry,
   createRequestArgs,

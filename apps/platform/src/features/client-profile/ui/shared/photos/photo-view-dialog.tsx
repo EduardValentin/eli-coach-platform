@@ -20,7 +20,7 @@ import { useState } from "react";
 import {
   MEASUREMENTS_COPY,
   type MeasurementRow,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,

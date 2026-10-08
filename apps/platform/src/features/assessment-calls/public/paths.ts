@@ -1,4 +1,4 @@
-import { COACH_PORTAL_PATH } from "../../accounts/contracts/paths";
+import { COACH_PORTAL_PATH } from "../../accounts/public/paths";
 
 export const BOOK_ROUTE_SEGMENT = "book";
 

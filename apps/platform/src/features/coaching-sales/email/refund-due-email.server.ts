@@ -2,8 +2,8 @@ import type { RefundDueNotice } from "@eli-coach-platform/domain/coaching-subscr
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatMoney } from "~/features/coaching-sales/contracts/money";
-import { REFUND_REASON_LABELS } from "~/features/coaching-sales/contracts/subscription-refunds";
+import { formatMoney } from "~/features/coaching-sales/public/money";
+import { REFUND_REASON_LABELS } from "~/features/coaching-sales/public/subscription-refunds";
 
 import {
   REFUND_DUE_EMAIL_COPY,

@@ -5,8 +5,8 @@ import {
   invitationResolutionRequestSchema,
   invitationResolutionSchema,
   type InvitationResolution,
-} from "~/features/coaching-sales/contracts/invitation";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/invitation";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import { useFragmentToken } from "~/features/coaching-sales/ui/public/fragment-token";
 
 const INVITATION_STORAGE_KEY = "coaching-sales:invitation";

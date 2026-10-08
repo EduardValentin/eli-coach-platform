@@ -16,11 +16,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ClientRoster,
   RosterClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/public/coach-clients";
 import {
   COACH_CLIENTS_PATH,
   coachClientPath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import CoachClientsRoute, { shouldRevalidate } from "./clients-page";
 

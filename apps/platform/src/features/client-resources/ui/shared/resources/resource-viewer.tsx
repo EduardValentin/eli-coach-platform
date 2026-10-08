@@ -31,7 +31,7 @@ import {
   type RefObject,
 } from "react";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 
 import { formatFileSize, RESOURCE_KIND_LABELS } from "./resource-copy";
 import { ResourceFileCover } from "./resource-file-cover";

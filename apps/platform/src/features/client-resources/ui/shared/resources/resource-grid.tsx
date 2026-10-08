@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 
 import { ResourceCard, type ResourcePerspective } from "./resource-card";
 

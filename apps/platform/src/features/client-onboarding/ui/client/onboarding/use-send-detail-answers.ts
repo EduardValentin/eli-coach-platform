@@ -6,9 +6,9 @@ import {
   submissionProblemsSchema,
   type AnswerDetailsRequest,
   type SubmissionProblem,
-} from "~/features/client-onboarding/contracts/onboarding";
-import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+} from "~/features/client-onboarding/public/onboarding";
+import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/public/onboarding-review-copy";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
 
 type AnswerDetailsOutcome =
   | { kind: "accepted"; redirectTo: string }

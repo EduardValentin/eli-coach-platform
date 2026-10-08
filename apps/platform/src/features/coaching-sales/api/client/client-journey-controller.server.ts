@@ -17,8 +17,8 @@ import {
   type ClientIdentity,
   type ProgramStatus,
   type WelcomePage,
-} from "~/features/coaching-sales/contracts/client-journey";
-import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/client-journey";
+import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/public/paths";
 import { clientJourneyContext } from "~/features/coaching-sales/server/guards/client-journey-context.server";
 
 type ClientJourneyControllerOptions = {

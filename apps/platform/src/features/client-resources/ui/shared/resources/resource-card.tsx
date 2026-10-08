@@ -2,7 +2,7 @@ import { cn } from "@eli-coach-platform/ui/lib";
 import { Badge, cardVariants } from "@eli-coach-platform/ui/primitives";
 import { useId, type ReactNode } from "react";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 
 import { pageCountLabel, RESOURCE_KIND_LABELS } from "./resource-copy";
 import { ResourceFileCover } from "./resource-file-cover";

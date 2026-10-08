@@ -2,10 +2,10 @@ import { buildRedirectPath } from "@eli-coach-platform/config";
 import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type { PublicSessionState } from "~/features/accounts/contracts/account";
+import type { PublicSessionState } from "~/features/accounts/public/account";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 import { readClientPortalStanding } from "~/features/coaching-sales/server/guards/require-client-portal-standing.server";
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 import {
   presentWaitlist,
   type WaitlistPresentation,

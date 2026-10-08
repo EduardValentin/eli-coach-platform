@@ -1,4 +1,4 @@
-import type { WelcomePage } from "~/features/coaching-sales/contracts/client-journey";
+import type { WelcomePage } from "~/features/coaching-sales/public/client-journey";
 
 export const WELCOME_OPENING = "I'm really glad you're here.";
 

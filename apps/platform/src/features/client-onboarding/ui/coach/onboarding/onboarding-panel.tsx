@@ -10,13 +10,13 @@ import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { ClipboardList, MessageSquareText } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import type { QuestionId } from "~/features/client-onboarding/contracts/onboarding";
+import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
 import type {
   OnboardingReviewView,
   OpenDetailRequest,
   ReviewStage,
   SubmittedReview,
-} from "~/features/client-onboarding/contracts/onboarding-review";
+} from "~/features/client-onboarding/public/onboarding-review";
 import {
   answersNotInLine,
   ANSWERS_HEADING,
@@ -31,7 +31,7 @@ import {
   ratioWaitingLine,
   REVIEW_ACTIONS,
   waitingLine,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
 
 import { AnswerGroups } from "./answer-groups";
 import { CycleModeInfo } from "./cycle-mode-info";

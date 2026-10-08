@@ -1,8 +1,8 @@
 import { IconHint } from "@eli-coach-platform/ui/primitives";
 import { TriangleAlert } from "lucide-react";
 
-import type { SubmittedReview } from "~/features/client-onboarding/contracts/onboarding-review";
-import { SCREENING_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
+import type { SubmittedReview } from "~/features/client-onboarding/public/onboarding-review";
+import { SCREENING_COPY } from "~/features/client-onboarding/public/onboarding-review-copy";
 
 type ScreeningWarningProps = {
   submitted: SubmittedReview;

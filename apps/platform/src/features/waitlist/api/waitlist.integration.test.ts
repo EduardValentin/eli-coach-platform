@@ -10,7 +10,7 @@ import {
 } from "@eli-coach-platform/domain/waitlist";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
+import { waitlistJoinResponseSchema } from "~/features/waitlist/public/waitlist";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 

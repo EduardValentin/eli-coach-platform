@@ -24,7 +24,7 @@ import {
   newProductMetadataSchema,
   productValidationMetadataSchema,
   productVersionMetadataSchema,
-} from "~/features/store/contracts/store-management";
+} from "~/features/store/public/store-management";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 
 type StoreProductManagementControllerOptions = {

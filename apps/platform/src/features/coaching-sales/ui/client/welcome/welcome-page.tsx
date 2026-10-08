@@ -9,7 +9,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { WelcomePage } from "~/features/coaching-sales/contracts/client-journey";
+import type { WelcomePage } from "~/features/coaching-sales/public/client-journey";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
 import {

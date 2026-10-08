@@ -13,10 +13,10 @@ import {
   addedResourceAnswerSchema,
   refusedResourceAnswerSchema,
   resourceDetailsProblemsAnswerSchema,
-} from "~/features/client-resources/contracts/client-resources";
-import { clientResourcesPath } from "~/features/client-resources/contracts/paths";
-import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/contracts/resource-upload-parts";
-import { resourceUploadProgress } from "~/features/client-resources/contracts/resource-upload-progress";
+} from "~/features/client-resources/public/client-resources";
+import { clientResourcesPath } from "~/features/client-resources/public/paths";
+import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/public/resource-upload-parts";
+import { resourceUploadProgress } from "~/features/client-resources/public/resource-upload-progress";
 
 export type ResourceUploadState =
   | { state: "idle" }

@@ -10,7 +10,7 @@ import {
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,
   type StoreAcquisitionErrorCode,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,

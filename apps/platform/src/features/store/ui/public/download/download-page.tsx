@@ -3,7 +3,7 @@ import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 
 import { DOWNLOAD_API_URL, usePrivateDownloadToken } from "./download-state";
 

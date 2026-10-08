@@ -1,7 +1,7 @@
 import { cn, VALUE_CLASS } from "@eli-coach-platform/ui/lib";
 import { CardBrandMark } from "@eli-coach-platform/ui/primitives";
 
-import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
+import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 
 import {
   cardBrandLabel,

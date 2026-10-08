@@ -13,7 +13,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(

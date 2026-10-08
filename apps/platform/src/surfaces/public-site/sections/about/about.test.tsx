@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
 import { PublicAbout } from "./about";

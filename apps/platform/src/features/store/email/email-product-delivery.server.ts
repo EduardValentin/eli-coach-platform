@@ -5,7 +5,7 @@ import type {
 } from "@eli-coach-platform/domain/acquisition";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
-import { STORE_DOWNLOAD_PATH } from "~/features/store/contracts/paths";
+import { STORE_DOWNLOAD_PATH } from "~/features/store/public/paths";
 
 import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 

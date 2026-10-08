@@ -46,7 +46,7 @@ import {
   smallWebp,
 } from "~integration-test-config/sample-images";
 import { STRIPE_CHECKOUT_SESSION_ID } from "~integration-test-config/wire-mock/expectations/stripe-api";
-import { MANUAL_SCREENING_MESSAGE } from "~/features/client-onboarding/contracts/onboarding-copy";
+import { MANUAL_SCREENING_MESSAGE } from "~/features/client-onboarding/public/onboarding-copy";
 
 type DraftRequestBody = {
   formId: string;

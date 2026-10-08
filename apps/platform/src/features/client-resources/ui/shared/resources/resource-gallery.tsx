@@ -1,6 +1,6 @@
 import { useState, type ReactNode, type RefObject } from "react";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 
 import type { ResourcePerspective } from "./resource-card";
 import { ResourceGrid } from "./resource-grid";

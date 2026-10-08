@@ -13,7 +13,7 @@ import { Link } from "react-router";
 import {
   startChoiceSchema,
   type CheckoutChoice,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 import { IMMEDIATE_START_BODY } from "~/features/coaching-sales/ui/shared/immediate-start-copy";
 
 import {

@@ -8,8 +8,8 @@ import {
   RECORD_MEASUREMENTS_FIELDS,
   recordMeasurementsResponseSchema,
   type MeasurementEntryRequest,
-} from "~/features/client-profile/contracts/measurements";
-import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+} from "~/features/client-profile/public/measurements";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
 import {
   appendProgressPhotoParts,
   refusedPhotoViewsOf,

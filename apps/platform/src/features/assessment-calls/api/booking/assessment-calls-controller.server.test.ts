@@ -12,7 +12,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
 
-import { bookAssessmentCallResponseSchema } from "~/features/assessment-calls/contracts/assessment-calls";
+import { bookAssessmentCallResponseSchema } from "~/features/assessment-calls/public/assessment-calls";
 
 import { AssessmentCallsController } from "./assessment-calls-controller.server";
 

@@ -6,7 +6,7 @@ import type {
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
-import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
+import { coachClientPath } from "~/features/coaching-sales/public/paths";
 
 import { createRefundDueEmailContent } from "./refund-due-email.server";
 

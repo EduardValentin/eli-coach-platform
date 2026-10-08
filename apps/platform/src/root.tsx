@@ -22,7 +22,7 @@ import {
   CLIENT_PORTAL_ROUTE_SEGMENT,
   portalForPathname,
   type PortalRouteSegment,
-} from "~/features/accounts/contracts/paths";
+} from "~/features/accounts/public/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,

@@ -5,7 +5,7 @@ import {
 } from "@eli-coach-platform/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
-import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/contracts/assessment-calls";
+import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/public/assessment-calls";
 
 import { CoachAssessmentCallsController } from "./coach-assessment-calls-controller.server";
 

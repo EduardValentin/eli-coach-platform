@@ -1,9 +1,9 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 
-import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/onboarding";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
-import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import type { SaveDraftRequest } from "~/features/client-onboarding/public/onboarding";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
 
 const DRAFT_API_URL = joinBasePath(
   import.meta.env.BASE_URL,

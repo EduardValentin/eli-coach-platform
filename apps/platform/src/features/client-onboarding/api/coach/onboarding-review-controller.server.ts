@@ -18,7 +18,7 @@ import {
   reviewTargetSchema,
   type OnboardingReviewView,
   type ReviewActionRefusal,
-} from "~/features/client-onboarding/contracts/onboarding-review";
+} from "~/features/client-onboarding/public/onboarding-review";
 
 import { readJsonRequestBody } from "~/features/client-onboarding/api/read-json-request-body.server";
 import { presentSubmittedReview } from "./onboarding-review-presenter.server";

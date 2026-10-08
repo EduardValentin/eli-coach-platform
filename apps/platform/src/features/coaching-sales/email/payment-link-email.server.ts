@@ -9,8 +9,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   bundleLengthLabel,
   formatEuros,
-} from "~/features/coaching-sales/contracts/bundle-cards";
-import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/bundle-cards";
+import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/public/coaching-sales";
 
 import {
   PaymentLinkEmailTemplate,

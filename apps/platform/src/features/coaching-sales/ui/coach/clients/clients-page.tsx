@@ -14,7 +14,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type { RosterClient } from "~/features/coaching-sales/contracts/coach-clients";
+import type { RosterClient } from "~/features/coaching-sales/public/coach-clients";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
 import { ClientStatusFilter } from "./client-status-filter";

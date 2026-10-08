@@ -21,7 +21,7 @@ import {
 } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import { readJsonRequestBody } from "~/features/client-onboarding/api/read-json-request-body.server";
@@ -43,11 +43,11 @@ import {
   type OpenRequestSummary,
   type QuestionId,
   type SubmitRequest,
-} from "~/features/client-onboarding/contracts/onboarding";
+} from "~/features/client-onboarding/public/onboarding";
 import {
   progressPhotoOutcomesOf,
   receivedProgressPhotosOf,
-} from "~/features/client-profile/contracts/progress-photo-parts";
+} from "~/features/client-profile/public/progress-photo-parts";
 
 type ClientOnboardingControllerOptions = {
   answerOnboardingDetails: AnswerOnboardingDetailsUseCase;

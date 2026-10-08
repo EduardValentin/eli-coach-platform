@@ -16,7 +16,7 @@ import {
   updateAssessmentCallSettingsSuccessSchema,
   type AssessmentCallSettings,
   type AssessmentCallSettingsErrorCode,
-} from "~/features/assessment-calls/contracts/assessment-call-settings";
+} from "~/features/assessment-calls/public/assessment-call-settings";
 
 type AssessmentCallSettingsControllerOptions = {
   getSettings: GetAssessmentCallSettingsUseCase;

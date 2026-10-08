@@ -7,7 +7,7 @@ import {
   callSalesSchema,
   type PricingTiers,
   type CallSales,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 
 type CoachSalesControllerOptions = {
   readCallSalesStates: ReadCallSalesStatesUseCase;

@@ -1,4 +1,4 @@
-import { CLIENT_PORTAL_PATH } from "../../accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "../../accounts/public/paths";
 
 export const CLIENT_PROFILE_ROUTE_SEGMENT = "profile";
 

@@ -5,8 +5,8 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { z } from "zod";
 
-import { progressPhotoOutcomesSchema } from "~/features/client-profile/contracts/progress-photo-parts";
-import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
+import { progressPhotoOutcomesSchema } from "~/features/client-profile/public/progress-photo-parts";
+import { unitPreferenceSchema } from "~/features/client-profile/public/unit-preference";
 
 const ANSWER_MAX_LENGTH = 2000;
 const CHOICE_MAX_LENGTH = 200;

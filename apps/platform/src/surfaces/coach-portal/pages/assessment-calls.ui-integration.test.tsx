@@ -31,17 +31,17 @@ import {
   vi,
 } from "vitest";
 
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import type {
   PricingTiers,
   CallSales,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 import {
   COACH_CLIENTS_PATH,
   COACHING_SALES_API_PATHS,
   coachClientPath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,

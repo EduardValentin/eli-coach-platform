@@ -13,13 +13,13 @@ import { Video } from "lucide-react";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/features/assessment-calls/contracts/call-moment";
-import { findCountry } from "~/features/assessment-calls/contracts/countries";
+} from "~/features/assessment-calls/public/call-moment";
+import { findCountry } from "~/features/assessment-calls/public/countries";
 import {
   labelForGender,
   labelForPrimaryGoal,
-} from "~/features/assessment-calls/contracts/visitor-profile";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/assessment-calls/public/visitor-profile";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
 
 const CALENDAR_DATE_TIME_ZONE = "UTC";
 

@@ -22,7 +22,7 @@ import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presenta
 
 import { PublicHero } from "./hero";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",

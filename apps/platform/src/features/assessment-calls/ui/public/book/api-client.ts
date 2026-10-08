@@ -6,8 +6,8 @@ import {
   openSlotsResponseSchema,
   type BookAssessmentCallResponse,
   type OpenSlotsResponse,
-} from "~/features/assessment-calls/contracts/assessment-calls";
-import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/assessment-calls";
+import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/public/paths";
 
 export const SLOTS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,

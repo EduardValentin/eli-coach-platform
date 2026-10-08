@@ -16,8 +16,8 @@ import {
 import { Image as ImageIcon, X } from "lucide-react";
 import { useEffect, useId, useState, type ChangeEvent } from "react";
 
-import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
-import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/progress-photo-consent";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
+import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/public/progress-photo-consent";
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,

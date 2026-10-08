@@ -1,7 +1,7 @@
 import {
   CLIENT_PORTAL_PATH,
   COACH_PORTAL_PATH,
-} from "../../accounts/contracts/paths";
+} from "../../accounts/public/paths";
 
 export const SELECT_BUNDLE_ROUTE_SEGMENT = "select-bundle";
 

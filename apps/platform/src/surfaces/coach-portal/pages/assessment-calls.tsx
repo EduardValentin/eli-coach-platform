@@ -15,7 +15,7 @@ import {
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
-import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
 import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/call-sales/payment-link-action";

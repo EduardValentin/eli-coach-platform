@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { BookAssessmentCallResponse } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { BookAssessmentCallResponse } from "~/features/assessment-calls/public/assessment-calls";
 
 import {
   INITIAL_BOOKING_FLOW,

@@ -6,12 +6,12 @@ import type {
 } from "@eli-coach-platform/domain/client-profile";
 import { z } from "zod";
 
-import { subjectPronoun } from "~/features/assessment-calls/contracts/visitor-profile";
+import { subjectPronoun } from "~/features/assessment-calls/public/visitor-profile";
 import {
   progressPhotoOutcomesSchema,
   progressPhotoViewSchema,
-} from "~/features/client-profile/contracts/progress-photo-parts";
-import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
+} from "~/features/client-profile/public/progress-photo-parts";
+import { unitPreferenceSchema } from "~/features/client-profile/public/unit-preference";
 
 const measurementRowSchema = z.object({
   id: z.uuid(),

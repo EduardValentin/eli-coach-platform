@@ -9,7 +9,7 @@ import { motion } from "motion/react";
 import {
   formatMonthFirstDate,
   formatClockTime,
-} from "~/features/assessment-calls/contracts/call-moment";
+} from "~/features/assessment-calls/public/call-moment";
 
 const COACH_AVATAR_URL = joinBasePath(
   import.meta.env.BASE_URL,

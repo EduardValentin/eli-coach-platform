@@ -26,12 +26,12 @@ import {
 } from "vitest";
 
 import { clientAction as cancelSubscription } from "~/features/coaching-sales/api/client/subscription-cancellation";
-import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
+import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 import {
   CLIENT_ENDED_PATH,
   CLIENT_SETTINGS_PATH,
   COACHING_SALES_API_PATHS,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import SettingsRoute from "./settings-page";

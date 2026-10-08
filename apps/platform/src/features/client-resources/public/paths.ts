@@ -1,8 +1,8 @@
-import { CLIENT_PORTAL_PATH } from "../../accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "../../accounts/public/paths";
 import {
   COACH_CLIENTS_ROUTE_SEGMENT,
   coachClientPath,
-} from "../../coaching-sales/contracts/paths";
+} from "../../coaching-sales/public/paths";
 
 const CLIENT_RESOURCES_API = "/api/client-resources";
 

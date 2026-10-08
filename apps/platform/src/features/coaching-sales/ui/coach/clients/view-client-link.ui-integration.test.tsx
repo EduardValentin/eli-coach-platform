@@ -7,11 +7,11 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider, useParams } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import {
   COACH_CLIENTS_PATH,
   coachClientPath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import { ViewClientLink } from "./view-client-link";
 

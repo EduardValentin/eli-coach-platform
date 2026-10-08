@@ -22,16 +22,16 @@ import {
 import type {
   OnboardingReviewView,
   SubmittedReview,
-} from "~/features/client-onboarding/contracts/onboarding-review";
-import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
-import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
-import { coachClientResourcesPath } from "~/features/client-resources/contracts/paths";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/client-onboarding/public/onboarding-review";
+import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
+import type { MeasurementRow } from "~/features/client-profile/public/measurements";
+import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
 import {
   COACH_CLIENTS_PATH,
   COACHING_SALES_API_PATHS,
   coachClientPath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import CoachClientRoute, { ErrorBoundary } from "./client";
 

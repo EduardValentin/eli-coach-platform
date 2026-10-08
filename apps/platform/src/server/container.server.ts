@@ -29,7 +29,7 @@ import {
   createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import {
   composeAccountsFeature,
   type AccountsFeature,

@@ -9,7 +9,7 @@ import { renderToString } from "react-dom/server";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { CheckoutChoice } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { CheckoutChoice } from "~/features/coaching-sales/public/coaching-sales";
 
 import { StartChoice } from "./start-choice";
 

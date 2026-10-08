@@ -12,7 +12,7 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import type {
   OnboardingConsentInstants,
   OnboardingWizardPage,
-} from "~/features/client-onboarding/contracts/onboarding";
+} from "~/features/client-onboarding/public/onboarding";
 import {
   DISCLAIMER_ACKNOWLEDGEMENT,
   MANUAL_SCREENING_MESSAGE,
@@ -21,7 +21,7 @@ import {
   SAVE_LABELS,
   SCREENING_CLEARED_MESSAGE,
   SPECIAL_CATEGORY_CONSENT_COPY,
-} from "~/features/client-onboarding/contracts/onboarding-copy";
+} from "~/features/client-onboarding/public/onboarding-copy";
 import { ProgressPhotoBlock } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
 import {
   NO_PROGRESS_PHOTO_PICKS,

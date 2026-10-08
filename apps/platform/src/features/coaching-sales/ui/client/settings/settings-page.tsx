@@ -6,7 +6,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
+import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
 import { SETTINGS_META_TITLE, SETTINGS_TITLE } from "./subscription-copy";

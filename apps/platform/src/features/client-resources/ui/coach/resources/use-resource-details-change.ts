@@ -5,8 +5,8 @@ import { useFetcher } from "react-router";
 import {
   changedResourceAnswerSchema,
   resourceDetailsProblemsAnswerSchema,
-} from "~/features/client-resources/contracts/client-resources";
-import { resourcePath } from "~/features/client-resources/contracts/paths";
+} from "~/features/client-resources/public/client-resources";
+import { resourcePath } from "~/features/client-resources/public/paths";
 
 export type ResourceDetailsChangeOutcome =
   | { status: "changed" }
