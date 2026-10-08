@@ -627,6 +627,9 @@ describe.sequential("client resources integration", () => {
       expect(response.headers.get("content-security-policy")).toContain(
         "sandbox",
       );
+      expect(response.headers.get("cross-origin-resource-policy")).toBe(
+        "same-origin",
+      );
       expect(Buffer.from(await response.arrayBuffer())).toEqual(pdf);
     });
 
@@ -1275,6 +1278,9 @@ function expectPrivateImageHeaders(response: Response, body: Buffer): void {
   expect(response.headers.get("cache-control")).toBe("private, no-store");
   expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   expect(response.headers.get("content-security-policy")).toContain("sandbox");
+  expect(response.headers.get("cross-origin-resource-policy")).toBe(
+    "same-origin",
+  );
   expect(response.headers.get("content-length")).toBe(String(body.byteLength));
 }
 

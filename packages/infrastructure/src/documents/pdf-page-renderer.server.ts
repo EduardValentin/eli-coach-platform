@@ -18,7 +18,7 @@ export const FIRST_PAGE = 1;
 
 type PageSize = { width: number; height: number };
 
-const MAX_IMAGE_PIXELS = 40_000_000;
+const MAX_IMAGE_PIXELS = 50_000_000;
 
 export function loadPdfDocument(bytes: Uint8Array): PDFDocumentLoadingTask {
   return getDocument({

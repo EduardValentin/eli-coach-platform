@@ -373,6 +373,9 @@ describe.sequential("client measurements integration", () => {
       expect(response.headers.get("content-security-policy")).toContain(
         "sandbox",
       );
+      expect(response.headers.get("cross-origin-resource-policy")).toBe(
+        "same-origin",
+      );
       expect((await imageFactsOf(body)).format).toBe("jpeg");
     });
 

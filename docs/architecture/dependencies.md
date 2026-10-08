@@ -3904,3 +3904,5 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4534 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:file-type | import | n/a | no | lateral | present |
 | E4535 | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | external:strtok3 | import | n/a | no | lateral | present |
 | E4536 | packages/infrastructure/src/documents/index.server.ts | packages/infrastructure/src/documents/file-type-resource-file-format-detector.server.ts | re-export | no | yes | inward | present |
+| E4537 | apps/platform/src/root.server.ts | apps/platform/src/server/cross-site-requests.server.ts | import | yes | no | lateral | present |
+| E4538 | apps/platform/src/server/cross-site-requests.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
