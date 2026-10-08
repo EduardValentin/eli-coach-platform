@@ -7,6 +7,8 @@ import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expe
 const suite = new ApiIntegrationTestSuite();
 const EMAIL = "ana@example.com";
 
+type SenderHeaders = { sender: string; headers: Record<string, string> };
+
 describe.sequential("cross-site requests", () => {
   beforeAll(async () => {
     await suite.start();
@@ -20,7 +22,7 @@ describe.sequential("cross-site requests", () => {
     await suite.stop();
   });
 
-  it.each([
+  it.each<SenderHeaders>([
     {
       sender: "a cross-site page",
       headers: { "Sec-Fetch-Site": "cross-site" },
@@ -50,7 +52,7 @@ describe.sequential("cross-site requests", () => {
     expect(await waitlistEntryCount()).toBe(0);
   });
 
-  it.each([
+  it.each<SenderHeaders>([
     {
       sender: "a page of the same origin",
       headers: { "Sec-Fetch-Site": "same-origin" },

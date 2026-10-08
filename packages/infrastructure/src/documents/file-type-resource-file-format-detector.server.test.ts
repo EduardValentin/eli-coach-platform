@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 
 import { createResourceFileFormatDetector } from "./file-type-resource-file-format-detector.server";
 
-function onePixelImage(): sharp.Sharp {
+function onePixelImage() {
   return sharp({
     create: {
       width: 1,

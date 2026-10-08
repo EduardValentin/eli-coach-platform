@@ -12,7 +12,8 @@ type PageLayout = "portrait" | "landscape";
 
 type PdfOptions = { userPassword?: string };
 
-const OVERSIZED_IMAGE = { width: 8_000, height: 5_001 };
+const IMAGE_OF_FORTY_MEGAPIXELS = { width: 8_000, height: 5_001 };
+const OVERSIZED_IMAGE = { width: 10_000, height: 5_001 };
 
 async function pdfWithOneBlackImage(size: {
   width: number;
@@ -147,6 +148,19 @@ describe("openPdfPages", () => {
     // arrange
     const pages = await openedPages(
       await pdfWithOneBlackImage({ width: 800, height: 500 }),
+    );
+
+    // act
+    const page = await pages.renderPage(1, THUMBNAIL_RENDITION);
+
+    // assert
+    expect(await meanBrightnessOf(page)).toBeLessThan(200);
+  });
+
+  it("draws a page whose image is over 40 and within 50 megapixels", async () => {
+    // arrange
+    const pages = await openedPages(
+      await pdfWithOneBlackImage(IMAGE_OF_FORTY_MEGAPIXELS),
     );
 
     // act

@@ -162,6 +162,7 @@ function createHandles() {
     clock: { now: () => new Date("2026-10-05T09:30:00.000Z") },
     database: createUnreachableDatabase(),
     documentPages: { read: vi.fn() },
+    fileFormats: { detect: vi.fn() },
     imagePages: { render: vi.fn() },
     incidents: {
       resourceStored: vi.fn(),
