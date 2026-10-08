@@ -15,7 +15,7 @@ import {
 import {
   createClientResourceStore,
   createProgressPhotoStore,
-} from "@eli-coach-platform/infrastructure/client-media/server";
+} from "@eli-coach-platform/infrastructure/client-files/server";
 import { createResourceDocumentPages } from "@eli-coach-platform/infrastructure/documents/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";

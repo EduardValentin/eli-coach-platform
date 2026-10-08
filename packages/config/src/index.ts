@@ -10,7 +10,7 @@ export type { BotDetectionSettings } from "./concerns/bot-detection";
 export { TURNSTILE_TEST_RESPONSE_TOKEN } from "./concerns/bot-detection";
 export type { ProductEmailConfig } from "./concerns/product-email";
 export type { PaymentsConfig } from "./concerns/payments";
-export type { ClientMediaConfig } from "./concerns/client-media";
+export type { ClientFilesConfig } from "./concerns/client-files";
 export type { ManagementApiConfig } from "./concerns/management-api";
 export type { AssessmentCallsConfig } from "./concerns/assessment-calls";
 export { resolveFeatureFlagOverridesMode } from "./concerns/feature-flags";

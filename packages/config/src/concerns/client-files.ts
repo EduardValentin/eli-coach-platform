@@ -5,15 +5,17 @@ import { isProductionRuntime, type AppConfig } from "./app";
 const COMMITTED_DEVELOPMENT_KEY =
   "Lhg6svmQ58XvcXGOkFUr8enaWRLPDNzkZYsAt+zWgdc=";
 const BASE64_OF_32_BYTES = /^[A-Za-z0-9+/]{43}=$/;
+const PLACEHOLDER_SECRET = "replace-me";
 
-export const clientMediaShape = {
+export const clientFilesShape = {
   CLIENT_MEDIA_PROVIDER: z.enum(["memory", "filesystem"]).default("memory"),
   CLIENT_MEDIA_ROOT: z.string().trim().min(1).optional(),
   CLIENT_MEDIA_KEY: z.string().min(1).optional(),
   CLIENT_MEDIA_KEY_ID: z.string().trim().min(1).optional(),
+  CLIENT_RESOURCE_ROOT: z.string().trim().min(1),
 };
 
-export type ClientMediaConfig = z.infer<z.ZodObject<typeof clientMediaShape>>;
+export type ClientFilesConfig = z.infer<z.ZodObject<typeof clientFilesShape>>;
 
 type FilesystemSettingName =
   "CLIENT_MEDIA_ROOT" | "CLIENT_MEDIA_KEY" | "CLIENT_MEDIA_KEY_ID";
@@ -24,8 +26,8 @@ const FILESYSTEM_SETTING_NAMES: readonly FilesystemSettingName[] = [
   "CLIENT_MEDIA_KEY_ID",
 ];
 
-export function refineClientMedia(
-  environment: ClientMediaConfig & AppConfig,
+export function refineClientFiles(
+  environment: ClientFilesConfig & AppConfig,
   context: z.RefinementCtx,
 ): void {
   if (environment.CLIENT_MEDIA_PROVIDER === "filesystem") {
@@ -36,11 +38,12 @@ export function refineClientMedia(
 
   if (isProductionRuntime(environment)) {
     refineProductionClientMedia(environment, context);
+    refineProductionClientResources(environment, context);
   }
 }
 
 function refineKeyFormat(
-  environment: ClientMediaConfig,
+  environment: ClientFilesConfig,
   context: z.RefinementCtx,
 ): void {
   const key = environment.CLIENT_MEDIA_KEY;
@@ -57,7 +60,7 @@ function refineKeyFormat(
 }
 
 function refineProductionClientMedia(
-  environment: ClientMediaConfig,
+  environment: ClientFilesConfig,
   context: z.RefinementCtx,
 ): void {
   if (environment.CLIENT_MEDIA_PROVIDER === "memory") {
@@ -79,8 +82,24 @@ function refineProductionClientMedia(
   }
 }
 
+function refineProductionClientResources(
+  environment: ClientFilesConfig,
+  context: z.RefinementCtx,
+): void {
+  if (environment.CLIENT_RESOURCE_ROOT !== PLACEHOLDER_SECRET) {
+    return;
+  }
+
+  context.addIssue({
+    code: "custom",
+    message:
+      "Production client resources require a non-placeholder CLIENT_RESOURCE_ROOT.",
+    path: ["CLIENT_RESOURCE_ROOT"],
+  });
+}
+
 function refineFilesystemSettingsPresent(
-  environment: ClientMediaConfig,
+  environment: ClientFilesConfig,
   context: z.RefinementCtx,
 ): void {
   for (const name of FILESYSTEM_SETTING_NAMES) {

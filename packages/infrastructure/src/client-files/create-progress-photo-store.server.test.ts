@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { ClientMediaConfig } from "@eli-coach-platform/config";
+import type { ClientFilesConfig } from "@eli-coach-platform/config";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createProgressPhotoStore } from "./create-progress-photo-store.server";
@@ -10,6 +10,7 @@ import { EncryptedFilesystemProgressPhotoStore } from "./filesystem/encrypted-fi
 import { InMemoryProgressPhotoStore } from "./memory/in-memory-progress-photo-store.server";
 
 const KEY = "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA=";
+const RESOURCE_ROOT = "/srv/client-resources";
 const OWNER = { clientId: "client-1", entryId: "entry-1", photoId: "photo-1" };
 const RUNS_AS_SUPERUSER = process.getuid?.() === 0;
 
@@ -25,18 +26,22 @@ describe("createProgressPhotoStore", () => {
     await rm(workspace, { recursive: true, force: true });
   });
 
-  function filesystemConfig(root: string): ClientMediaConfig {
+  function filesystemConfig(root: string): ClientFilesConfig {
     return {
       CLIENT_MEDIA_PROVIDER: "filesystem",
       CLIENT_MEDIA_ROOT: root,
       CLIENT_MEDIA_KEY: KEY,
       CLIENT_MEDIA_KEY_ID: "unit-1",
+      CLIENT_RESOURCE_ROOT: RESOURCE_ROOT,
     };
   }
 
   it("returns the in-memory double for the memory provider", () => {
     // arrange
-    const config: ClientMediaConfig = { CLIENT_MEDIA_PROVIDER: "memory" };
+    const config: ClientFilesConfig = {
+      CLIENT_MEDIA_PROVIDER: "memory",
+      CLIENT_RESOURCE_ROOT: RESOURCE_ROOT,
+    };
 
     // act
     const store = createProgressPhotoStore(config);
