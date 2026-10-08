@@ -6,7 +6,7 @@ import type {
 } from "@eli-coach-platform/domain/payment-link";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
-import { selectBundlePath } from "~/features/coaching-sales/contracts/paths";
+import { selectBundlePath } from "~/features/coaching-sales/public/paths";
 
 import { createPaymentLinkEmailContent } from "./payment-link-email.server";
 

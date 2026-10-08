@@ -1,7 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 const PAYMENT_METHOD_SESSION_URL = joinBasePath(
   import.meta.env.BASE_URL,

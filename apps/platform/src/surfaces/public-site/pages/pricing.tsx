@@ -13,7 +13,7 @@ import {
 } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { BundleSelector } from "~/features/coaching-sales/ui/public/bundle-selector/bundle-selector";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";

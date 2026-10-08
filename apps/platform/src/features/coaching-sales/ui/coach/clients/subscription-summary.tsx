@@ -7,11 +7,11 @@ import {
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { CreditCard } from "lucide-react";
 
-import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
-import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
-import type { ClientSubscription } from "~/features/coaching-sales/contracts/coach-clients";
-import { formatMoney } from "~/features/coaching-sales/contracts/money";
-import { REFUND_REASON_LABELS } from "~/features/coaching-sales/contracts/subscription-refunds";
+import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
+import { bundleLengthLabel } from "~/features/coaching-sales/public/bundle-cards";
+import type { ClientSubscription } from "~/features/coaching-sales/public/coach-clients";
+import { formatMoney } from "~/features/coaching-sales/public/money";
+import { REFUND_REASON_LABELS } from "~/features/coaching-sales/public/subscription-refunds";
 
 const IMMEDIATE_START_LABEL = "Immediate start";
 

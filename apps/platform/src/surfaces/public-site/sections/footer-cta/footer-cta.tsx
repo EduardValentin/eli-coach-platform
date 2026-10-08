@@ -17,7 +17,7 @@ import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";

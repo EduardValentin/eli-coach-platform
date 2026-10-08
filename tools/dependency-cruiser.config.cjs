@@ -1,3 +1,4 @@
+const { readdirSync } = require("node:fs");
 const path = require("node:path");
 
 const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
@@ -14,7 +15,7 @@ function flatOrInConceptFolder(patterns) {
   );
 }
 
-const FEATURE_PUBLIC_FOLDERS = "(contracts|ui/shared|server/guards)/";
+const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared|server/guards)/";
 const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
@@ -23,10 +24,49 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
+const FEATURE_ORDER = [
+  "store",
+  "accounts",
+  "waitlist",
+  "assessment-calls",
+  "coaching-sales",
+  "client-profile",
+  "client-resources",
+  "client-onboarding",
+];
+
+const unorderedFeatures = readdirSync(
+  path.join(__dirname, "../apps/platform/src/features"),
+  { withFileTypes: true },
+)
+  .filter((entry) => entry.isDirectory() && !FEATURE_ORDER.includes(entry.name))
+  .map((entry) => entry.name);
+
+if (unorderedFeatures.length > 0) {
+  throw new Error(
+    `Place every feature in FEATURE_ORDER; missing: ${unorderedFeatures.join(", ")}.`,
+  );
+}
+
+function featureOrderRule(feature, position) {
+  const earlierFeatures = FEATURE_ORDER.slice(0, position);
+
+  return {
+    name: `feature-order-${feature}`,
+    comment: `A feature imports only the features before it in FEATURE_ORDER: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"}.`,
+    severity: "error",
+    from: { path: `${FEATURES}${feature}/` },
+    to: {
+      path: FEATURES,
+      pathNot: `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
+    },
+  };
+}
+
 function surfaceToFeatureRule(surface, slice) {
   return {
     name: `surface-${surface}-to-feature`,
-    comment: `R2: surfaces/${surface} reaches a feature only through ui/${slice}/, ui/shared/, contracts/, server/guards/ and routes.ts.`,
+    comment: `R2: surfaces/${surface} reaches a feature only through ui/${slice}/, ui/shared/, public/, server/guards/ and routes.ts.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
     to: {
@@ -52,7 +92,7 @@ module.exports = {
     {
       name: "feature-internals",
       comment:
-        "R3: a feature imports another feature only through contracts/, ui/shared/ or server/guards/.",
+        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/.",
       severity: "error",
       from: {
         path: `${FEATURES}([^/]+)/`,
@@ -77,46 +117,7 @@ module.exports = {
         ],
       },
     },
-    {
-      name: "assessment-calls-never-reach-coaching-sales",
-      comment:
-        "coaching-sales builds on assessment-calls, so assessment-calls never imports coaching-sales, not even its public folders.",
-      severity: "error",
-      from: { path: `${FEATURES}assessment-calls/` },
-      to: { path: `${FEATURES}coaching-sales/` },
-    },
-    {
-      name: "coaching-sales-never-reaches-client-onboarding",
-      comment:
-        "client-onboarding builds on coaching-sales, so coaching-sales never imports client-onboarding, not even its public folders.",
-      severity: "error",
-      from: { path: `${FEATURES}coaching-sales/` },
-      to: { path: `${FEATURES}client-onboarding/` },
-    },
-    {
-      name: "coaching-sales-never-reaches-client-profile",
-      comment:
-        "client-profile builds on coaching-sales, so coaching-sales never imports client-profile, not even its public folders.",
-      severity: "error",
-      from: { path: `${FEATURES}coaching-sales/` },
-      to: { path: `${FEATURES}client-profile/` },
-    },
-    {
-      name: "coaching-sales-never-reaches-client-resources",
-      comment:
-        "client-resources builds on coaching-sales, so coaching-sales never imports client-resources, not even its public folders.",
-      severity: "error",
-      from: { path: `${FEATURES}coaching-sales/` },
-      to: { path: `${FEATURES}client-resources/` },
-    },
-    {
-      name: "client-profile-never-reaches-client-onboarding",
-      comment:
-        "client-onboarding builds on client-profile, so client-profile never imports client-onboarding, not even its public folders.",
-      severity: "error",
-      from: { path: `${FEATURES}client-profile/` },
-      to: { path: `${FEATURES}client-onboarding/` },
-    },
+    ...FEATURE_ORDER.map(featureOrderRule),
     surfaceToFeatureRule("public-site", "public"),
     surfaceToFeatureRule("client-portal", "client"),
     surfaceToFeatureRule("coach-portal", "coach"),
@@ -191,7 +192,7 @@ module.exports = {
     {
       name: "feature-server-private",
       comment:
-        "Nothing in a feature outside server/ (api/, data/, email/, contracts/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
+        "Nothing in a feature outside server/ (api/, data/, email/, public/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
       severity: "error",
       from: { path: `${FEATURES}([^/]+)/(?!server/)` },
       to: { path: `${FEATURES}$1/server/(?!guards/)` },
@@ -223,7 +224,7 @@ module.exports = {
     {
       name: "guards-construct-nothing",
       comment:
-        "A guards module imports only the framework, its feature's contracts, domain slices, config types and sibling guards; its feature type comes from the composition as a type-only import.",
+        "A guards module imports only the framework, its feature's public folder, domain slices, config types and sibling guards; its feature type comes from the composition as a type-only import.",
       severity: "error",
       from: {
         path: [
@@ -234,7 +235,7 @@ module.exports = {
       to: {
         path: "^(apps/platform/src|packages)/",
         pathNot: [
-          `${FEATURES}[^/]+/(contracts|server/guards)/`,
+          `${FEATURES}[^/]+/(public|server/guards)/`,
           "^apps/platform/src/server/guards/",
           "^packages/domain/src/",
           "^packages/config/src/(index|base-path)\\.ts$",
@@ -288,7 +289,7 @@ module.exports = {
     {
       name: "feature-api-never-imports-ui",
       comment:
-        "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in contracts/ or a package's browser entry.",
+        "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in public/ or a package's browser entry.",
       severity: "error",
       from: { path: `${FEATURES}[^/]+/api/` },
       to: { path: `${FEATURES}[^/]+/ui/` },

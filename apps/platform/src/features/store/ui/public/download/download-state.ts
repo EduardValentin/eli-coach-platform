@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useEffect, useState } from "react";
-import { STORE_API_PATHS } from "~/features/store/contracts/paths";
+import { STORE_API_PATHS } from "~/features/store/public/paths";
 
 export const DOWNLOAD_API_URL = joinBasePath(
   import.meta.env.BASE_URL,

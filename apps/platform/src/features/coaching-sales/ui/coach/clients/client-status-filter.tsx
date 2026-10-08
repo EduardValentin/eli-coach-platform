@@ -12,7 +12,7 @@ import {
 import {
   CLIENT_STATUS_GROUPS,
   CLIENT_STATUS_LABELS,
-} from "~/features/coaching-sales/contracts/client-status";
+} from "~/features/coaching-sales/public/client-status";
 
 import { ALL_STATUSES_OPTION, type RosterStatusOption } from "./roster-listing";
 

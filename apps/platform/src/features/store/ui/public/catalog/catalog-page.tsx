@@ -12,7 +12,7 @@ import { storeContext } from "~/features/store/server/guards/store-context.serve
 import {
   storeCatalogResponseSchema,
   type StoreProduct,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 import { CatalogUnavailableView, CatalogView } from "./catalog-view";
 import {

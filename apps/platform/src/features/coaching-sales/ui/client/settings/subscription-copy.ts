@@ -1,5 +1,5 @@
-import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
-import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
+import { bundleLengthLabel } from "~/features/coaching-sales/public/bundle-cards";
+import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 
 export type OfferedCancellation = NonNullable<
   ClientSettings["cancellation"]

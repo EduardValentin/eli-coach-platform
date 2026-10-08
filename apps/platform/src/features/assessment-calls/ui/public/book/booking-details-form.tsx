@@ -25,7 +25,7 @@ import { z } from "zod";
 import {
   COUNTRIES,
   findCountry,
-} from "~/features/assessment-calls/contracts/countries";
+} from "~/features/assessment-calls/public/countries";
 import {
   birthDateMessage,
   BOOKING_FIELD_MESSAGES,
@@ -35,7 +35,7 @@ import {
   normalizeVisitorPhone,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
-} from "~/features/assessment-calls/contracts/visitor-profile";
+} from "~/features/assessment-calls/public/visitor-profile";
 
 import type { BookingClientError, BookingDetails } from "./booking-flow";
 import { ChoiceSelectField } from "./choice-select-field";

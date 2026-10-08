@@ -1,6 +1,6 @@
 import { relative } from "@react-router/dev/routes";
 
-import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "./contracts/paths";
+import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

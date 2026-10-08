@@ -5,7 +5,7 @@ import { isRouteErrorResponse, useRouteError } from "react-router";
 import {
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+} from "~/features/assessment-calls/public/assessment-calls";
 
 function AssessmentCallsUnavailable() {
   return (

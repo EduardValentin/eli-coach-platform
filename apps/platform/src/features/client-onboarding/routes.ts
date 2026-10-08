@@ -3,7 +3,7 @@ import { relative } from "@react-router/dev/routes";
 import {
   CLIENT_ONBOARDING_API_PATHS,
   CLIENT_ONBOARDING_ROUTE_SEGMENT,
-} from "./contracts/paths";
+} from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

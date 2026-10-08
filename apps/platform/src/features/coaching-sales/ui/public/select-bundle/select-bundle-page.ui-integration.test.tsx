@@ -18,10 +18,10 @@ import {
   it,
 } from "vitest";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
-import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
-import type { BundlePage } from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
+import type { BundlePage } from "~/features/coaching-sales/public/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 import SelectBundleRoute from "./select-bundle-page";
 

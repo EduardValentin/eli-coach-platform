@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   ClientResourceListing,
   ClientResourceView,
-} from "~/features/client-resources/contracts/client-resources";
+} from "~/features/client-resources/public/client-resources";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import {

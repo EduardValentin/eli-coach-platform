@@ -19,8 +19,8 @@ import {
   vi,
 } from "vitest";
 
-import type { InvitationResolution } from "~/features/coaching-sales/contracts/invitation";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import type { InvitationResolution } from "~/features/coaching-sales/public/invitation";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 vi.mock("@clerk/react-router", () => ({
   SignOutButton: vi.fn(({ children }: PropsWithChildren) => children),

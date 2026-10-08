@@ -1,12 +1,12 @@
 import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
 import { LayoutDashboard, Settings, Users, Video } from "lucide-react";
 
-import { COACH_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
 import {
   COACH_ASSESSMENT_CALLS_PATH,
   COACH_SETTINGS_PATH,
-} from "~/features/assessment-calls/contracts/paths";
-import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/assessment-calls/public/paths";
+import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
 
 export const coachSurfaceLinks: readonly PortalNavigationLink[] = [
   { href: COACH_PORTAL_PATH, label: "Dashboard", icon: LayoutDashboard },

@@ -2,9 +2,9 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { Dialog, DialogContent } from "@eli-coach-platform/ui/overlays";
 import { useState } from "react";
 
-import type { QuestionId } from "~/features/client-onboarding/contracts/onboarding";
-import type { ReviewForm } from "~/features/client-onboarding/contracts/onboarding-review";
-import { REVIEW_DIALOG } from "~/features/client-onboarding/contracts/onboarding-review-copy";
+import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
+import type { ReviewForm } from "~/features/client-onboarding/public/onboarding-review";
+import { REVIEW_DIALOG } from "~/features/client-onboarding/public/onboarding-review-copy";
 
 import { AnswerGroups } from "./answer-groups";
 import { OnboardingReviewBar } from "./onboarding-review-bar";

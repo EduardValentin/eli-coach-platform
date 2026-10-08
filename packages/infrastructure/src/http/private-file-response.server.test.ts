@@ -61,6 +61,7 @@ describe("createAttachmentResponse", () => {
     expect(response.status).toBe(200);
     expect(headersOf(response)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-disposition":
         "attachment; filename=\"Meal plan.pdf\"; filename*=UTF-8''Meal%20plan.pdf",
       "content-type": "application/pdf",
@@ -203,6 +204,7 @@ describe("createSandboxedAttachmentResponse", () => {
     // assert
     expect(headersOf(response)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-disposition":
         "attachment; filename=\"Recipes.docx\"; filename*=UTF-8''Recipes.docx",
       "content-length": "2",
@@ -227,6 +229,7 @@ describe("createPrivateInlineFileResponse", () => {
     expect(response.status).toBe(200);
     expect(headersOf(response)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-length": "4",
       "content-security-policy": "sandbox; default-src 'none'",
       "content-type": "image/jpeg",

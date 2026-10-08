@@ -12,7 +12,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { CheckoutConfirmation } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { CheckoutConfirmation } from "~/features/coaching-sales/public/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import {
   CALL_FIRST_HEADING,

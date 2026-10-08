@@ -1,4 +1,4 @@
-import type { WaitlistJoinResponse } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistJoinResponse } from "~/features/waitlist/public/waitlist";
 
 import { resolveWaitlistError, type WaitlistClientError } from "./errors";
 

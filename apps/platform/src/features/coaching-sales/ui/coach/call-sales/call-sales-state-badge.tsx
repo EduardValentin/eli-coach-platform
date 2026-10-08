@@ -1,6 +1,6 @@
 import { Badge } from "@eli-coach-platform/ui/primitives";
 
-import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
 
 import { CALL_SALES_STATE_LABELS } from "./call-sales-state-labels";
 

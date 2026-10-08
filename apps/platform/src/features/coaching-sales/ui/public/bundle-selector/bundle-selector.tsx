@@ -4,7 +4,7 @@ import { Tag } from "lucide-react";
 import { motion } from "motion/react";
 import { useId, type ReactNode } from "react";
 
-import type { CoachingBundleCard } from "~/features/coaching-sales/contracts/bundle-cards";
+import type { CoachingBundleCard } from "~/features/coaching-sales/public/bundle-cards";
 
 import { BundleBenefits } from "./bundle-benefits";
 import { BundleCard } from "./bundle-card";

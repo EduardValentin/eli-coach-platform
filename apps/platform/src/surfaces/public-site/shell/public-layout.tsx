@@ -1,8 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import type { PublicSessionState } from "~/features/accounts/contracts/account";
+import type { PublicSessionState } from "~/features/accounts/public/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn, MAIN_CONTENT_ID } from "@eli-coach-platform/ui/lib";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";

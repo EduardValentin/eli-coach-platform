@@ -1,11 +1,11 @@
 import {
   CLIENT_STATUS_LABELS,
   CLIENT_STATUS_ORDER,
-} from "~/features/coaching-sales/contracts/client-status";
+} from "~/features/coaching-sales/public/client-status";
 import type {
   ClientStatus,
   RosterClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/public/coach-clients";
 
 const REVIEW_STATUSES: readonly ClientStatus[] = [
   "awaiting-review",

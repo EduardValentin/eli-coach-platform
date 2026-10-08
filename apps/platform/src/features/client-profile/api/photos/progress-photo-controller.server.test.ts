@@ -54,6 +54,7 @@ describe("ProgressPhotoController open", () => {
     expect(response.status).toBe(200);
     expect(Object.fromEntries(response.headers)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-length": String(PHOTO_BYTES.byteLength),
       "content-security-policy": "sandbox; default-src 'none'",
       "content-type": "image/jpeg",

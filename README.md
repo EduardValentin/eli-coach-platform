@@ -63,7 +63,7 @@ pnpm db:bootstrap:local           # create the local database and roles
 ## Running
 
 ```bash
-pnpm dev:all         # platform, local Postgres, and the reference prototype
+pnpm dev:all         # platform, local Postgres, the reference prototype, and the Stripe webhook relay when PAYMENTS_PROVIDER=stripe
 pnpm dev:platform    # platform only
 pnpm start:platform  # serve the built app locally, after pnpm build
 ```

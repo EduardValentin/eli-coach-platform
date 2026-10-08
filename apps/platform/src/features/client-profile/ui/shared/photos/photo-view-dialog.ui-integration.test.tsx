@@ -13,8 +13,8 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
-import { progressPhotoPath } from "~/features/client-profile/contracts/paths";
+import type { MeasurementRow } from "~/features/client-profile/public/measurements";
+import { progressPhotoPath } from "~/features/client-profile/public/paths";
 
 import { PhotoViewDialog } from "./photo-view-dialog";
 

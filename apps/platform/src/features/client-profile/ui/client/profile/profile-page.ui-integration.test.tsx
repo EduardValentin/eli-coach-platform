@@ -29,11 +29,11 @@ import {
 import type {
   MeasurementRow,
   MeasurementsPage,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 import {
   CLIENT_PROFILE_API_PATHS,
   CLIENT_PROFILE_PATH,
-} from "~/features/client-profile/contracts/paths";
+} from "~/features/client-profile/public/paths";
 import { clientAction as recordMeasurements } from "~/features/client-profile/api/client/measurements";
 import { clientAction as removePhoto } from "~/features/client-profile/api/photos/progress-photo";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";

@@ -14,8 +14,8 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import type { ClassifiedCall } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
 import {

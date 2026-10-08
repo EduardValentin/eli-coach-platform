@@ -1,0 +1,25 @@
+import { COACH_PORTAL_PATH } from "../../accounts/public/paths";
+
+export const BOOK_ROUTE_SEGMENT = "book";
+
+export const BOOK_PATH = `/${BOOK_ROUTE_SEGMENT}`;
+
+export const COACH_SETTINGS_ROUTE_SEGMENT = "settings";
+
+export const COACH_SETTINGS_PATH = `${COACH_PORTAL_PATH}/${COACH_SETTINGS_ROUTE_SEGMENT}`;
+
+export const ASSESSMENT_CALL_API_PATHS = {
+  bookings: "/api/assessment-calls",
+  slots: "/api/assessment-calls/slots",
+  settings: "/api/assessment-calls/settings",
+} as const;
+
+export function assessmentCallJoinPath(bookingId: string): string {
+  return `${BOOK_PATH}/${bookingId}/join`;
+}
+
+export const COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT = "assessment-calls";
+
+export const COACH_ASSESSMENT_CALLS_PATH = `${COACH_PORTAL_PATH}/${COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT}`;
+
+export const COACH_CALLS_PAGE_PARAM = "page";

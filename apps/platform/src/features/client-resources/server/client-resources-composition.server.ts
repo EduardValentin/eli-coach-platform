@@ -13,6 +13,7 @@ import {
   type ClientResourceStore,
   type ResourceClients,
   type ResourceDocumentPages,
+  type ResourceFileFormatDetector,
   type ResourceImagePages,
 } from "@eli-coach-platform/domain/client-resources";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -33,6 +34,7 @@ type ClientResourcesFeatureHandles = {
   clock: Clock;
   database: DatabaseClient;
   documentPages: ResourceDocumentPages;
+  fileFormats: ResourceFileFormatDetector;
   imagePages: ResourceImagePages;
   incidents: ClientResourceIncidents;
   resourceClients: ResourceClients;
@@ -56,6 +58,7 @@ export function composeClientResourcesFeature(
         resourceIds: new RandomClientResourceIds(),
         documentPages: handles.documentPages,
         imagePages: handles.imagePages,
+        fileFormats: handles.fileFormats,
         clock: handles.clock,
       }),
       openResourcePreview: new OpenResourcePreviewUseCase(servingPorts),

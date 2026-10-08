@@ -7,9 +7,9 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
-import { storeProductSchema } from "~/features/store/contracts/store";
+import { storeProductSchema } from "~/features/store/public/store";
 
 import { useStoreCart } from "../cart/cart-provider";
 

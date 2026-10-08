@@ -29,8 +29,8 @@ import {
   coachingBundleIdSchema,
   presentBundleCards,
   type CoachingBundleCard,
-} from "~/features/coaching-sales/contracts/bundle-cards";
-import { presentPaidConfirmation } from "~/features/coaching-sales/contracts/checkout-confirmation";
+} from "~/features/coaching-sales/public/bundle-cards";
+import { presentPaidConfirmation } from "~/features/coaching-sales/public/checkout-confirmation";
 import {
   bundlePageRequestSchema,
   bundlePageSchema,
@@ -38,11 +38,11 @@ import {
   checkoutConfirmationSchema,
   checkoutSessionIdSchema,
   paymentLinkTokenSchema,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 import {
   CHECKOUT_COMPLETE_PATH,
   selectBundlePath,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;

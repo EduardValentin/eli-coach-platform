@@ -2,17 +2,17 @@ import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useEffectEvent } from "react";
 import { useFetcher } from "react-router";
 
-import type { QuestionId } from "~/features/client-onboarding/contracts/onboarding";
+import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
 import {
   reviewActionAcceptedSchema,
   type DetailRequestBody,
   type ReviewTarget,
-} from "~/features/client-onboarding/contracts/onboarding-review";
+} from "~/features/client-onboarding/public/onboarding-review";
 import {
   emailSentToast,
   REVIEW_ACTION_FAILED,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
 
 type ReviewActionTarget = {
   clientId: string;

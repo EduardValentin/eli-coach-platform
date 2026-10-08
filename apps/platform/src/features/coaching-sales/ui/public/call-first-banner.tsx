@@ -2,7 +2,7 @@ import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { AlertCircle, Calendar } from "lucide-react";
 import { Link } from "react-router";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 
 export const CALL_FIRST_HEADING = "A Call Comes First";
 

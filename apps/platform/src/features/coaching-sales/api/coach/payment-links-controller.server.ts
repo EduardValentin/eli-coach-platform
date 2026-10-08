@@ -6,7 +6,7 @@ import {
   sendPaymentLinkErrorSchema,
   sendPaymentLinkRequestSchema,
   sendPaymentLinkSuccessSchema,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 
 type PaymentLinksControllerOptions = {
   sendPaymentLink: SendPaymentLinkUseCase;

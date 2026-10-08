@@ -7,7 +7,7 @@ import {
   clientResourceListSchema,
   presentClientResource,
   type ClientResourceListing,
-} from "~/features/client-resources/contracts/client-resources";
+} from "~/features/client-resources/public/client-resources";
 
 type CoachResourcesControllerOptions = {
   listClientResources: ListClientResourcesUseCase;

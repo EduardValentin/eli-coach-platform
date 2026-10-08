@@ -13,11 +13,8 @@ import {
   createAttachmentResponse,
   readFormDataRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
-import {
-  STORE_DOWNLOAD_PATH,
-  STORE_PATH,
-} from "~/features/store/contracts/paths";
-import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
+import { STORE_DOWNLOAD_PATH, STORE_PATH } from "~/features/store/public/paths";
+import { storeDownloadRequestSchema } from "~/features/store/public/store";
 
 import recoveryDocument from "./download-recovery.html?raw";
 

@@ -8,8 +8,8 @@ import { useId } from "react";
 import {
   formatClockTime,
   formatShortDay,
-} from "~/features/assessment-calls/contracts/call-moment";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/call-moment";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import {
   upcomingCalls,
   type ClassifiedCall,

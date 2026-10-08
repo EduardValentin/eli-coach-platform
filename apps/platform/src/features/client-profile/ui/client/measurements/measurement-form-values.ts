@@ -12,7 +12,7 @@ import {
   measurementEntryRequestSchema,
   type MeasurementEntryRequest,
   type MeasurementRow,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 
 type MeasurementFieldId = MeasurementField["id"];
 

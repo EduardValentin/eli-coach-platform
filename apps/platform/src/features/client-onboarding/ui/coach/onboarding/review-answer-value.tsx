@@ -1,10 +1,10 @@
 import { TriangleAlert } from "lucide-react";
 
-import type { ReviewAnswer } from "~/features/client-onboarding/contracts/onboarding-review";
+import type { ReviewAnswer } from "~/features/client-onboarding/public/onboarding-review";
 import {
   NEEDS_A_LOOK,
   NOT_ANSWERED,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
 
 type ReviewAnswerValueProps = {
   answer: ReviewAnswer;

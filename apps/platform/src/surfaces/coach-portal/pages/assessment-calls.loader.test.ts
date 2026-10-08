@@ -1,7 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 import type { AssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";

@@ -20,8 +20,8 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
-import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
+import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";

@@ -16,8 +16,8 @@ import {
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { clientAction as sendPaymentLink } from "~/features/coaching-sales/api/coach/payment-links";
-import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 

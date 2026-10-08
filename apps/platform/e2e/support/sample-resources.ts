@@ -2,8 +2,6 @@ import {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,
 } from "@eli-coach-platform/domain/client-resources";
-import sharp from "sharp";
-
 import {
   excelWorkbook,
   japaneseTextPdf,
@@ -14,7 +12,9 @@ import {
   pdfWithPages,
   plainText,
   wordDocument,
-} from "../../integration-test-config/sample-documents";
+} from "@eli-coach-platform/test-support/sample-documents";
+import sharp from "sharp";
+
 import { samplePhotoOf } from "./sample-photos";
 
 export type SampleResource = {

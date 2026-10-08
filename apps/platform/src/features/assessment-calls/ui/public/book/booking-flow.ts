@@ -1,7 +1,7 @@
 import type {
   BookAssessmentCallResponse,
   Booking,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+} from "~/features/assessment-calls/public/assessment-calls";
 
 export type BookingClientError = Extract<
   BookAssessmentCallResponse,

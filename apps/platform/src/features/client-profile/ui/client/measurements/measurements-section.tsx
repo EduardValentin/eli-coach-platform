@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   MEASUREMENTS_COPY,
   type MeasurementsPage,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 import { AddMeasurementsSheet } from "~/features/client-profile/ui/client/measurements/add-measurements-sheet";
 import { useProgressPhotoRemoval } from "~/features/client-profile/ui/client/measurements/use-progress-photo-removal";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";

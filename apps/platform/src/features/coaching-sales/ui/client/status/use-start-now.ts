@@ -1,5 +1,5 @@
-import { programStartedSchema } from "~/features/coaching-sales/contracts/client-subscription";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { programStartedSchema } from "~/features/coaching-sales/public/client-subscription";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import {
   useConfirmedFetcherDialog,
   type DialogAfterAnswer,

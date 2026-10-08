@@ -37,7 +37,7 @@ import {
   type ControllerRenderProps,
 } from "react-hook-form";
 
-import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/contracts/onboarding-copy";
+import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/public/onboarding-copy";
 import {
   MeasureField,
   type MeasureFieldDefinition,

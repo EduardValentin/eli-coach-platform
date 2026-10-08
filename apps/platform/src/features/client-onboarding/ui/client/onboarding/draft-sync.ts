@@ -4,8 +4,8 @@ import { z } from "zod";
 import {
   saveDraftRequestSchema,
   type SaveDraftRequest,
-} from "~/features/client-onboarding/contracts/onboarding";
-import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
+} from "~/features/client-onboarding/public/onboarding";
+import { unitPreferenceSchema } from "~/features/client-profile/public/unit-preference";
 
 import type { SaveOutcome } from "./draft-autosave-requests";
 

@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useId, useMemo, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 
-import type { SubmissionProblem } from "~/features/client-onboarding/contracts/onboarding";
+import type { SubmissionProblem } from "~/features/client-onboarding/public/onboarding";
 
 import { OnboardingFieldControl } from "./onboarding-field-control";
 import {

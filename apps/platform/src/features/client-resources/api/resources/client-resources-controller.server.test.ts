@@ -18,7 +18,7 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
-import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/contracts/resource-upload-parts";
+import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/public/resource-upload-parts";
 import {
   contextEntry,
   createRequestArgs,
@@ -288,6 +288,7 @@ describe("ClientResourcesController openPage", () => {
     expect(response.status).toBe(200);
     expect(Object.fromEntries(response.headers)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-length": String(PAGE_BYTES.byteLength),
       "content-security-policy": "sandbox; default-src 'none'",
       "content-type": "image/webp",
@@ -483,6 +484,7 @@ describe("ClientResourcesController download", () => {
     expect(response.status).toBe(200);
     expect(Object.fromEntries(response.headers)).toEqual({
       "cache-control": "private, no-store",
+      "cross-origin-resource-policy": "same-origin",
       "content-disposition": `attachment; filename="Plan alimentar _ s_pt_m_na 1.pdf"; filename*=UTF-8''${encodeURIComponent(
         "Plan alimentar – săptămâna 1.pdf",
       )}`,

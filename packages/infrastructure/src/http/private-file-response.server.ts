@@ -11,6 +11,12 @@ type AttachmentOptions = {
 
 const SANDBOX_POLICY = "sandbox; default-src 'none'";
 
+const PRIVATE_FILE_HEADERS = {
+  "Cache-Control": "private, no-store",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "X-Content-Type-Options": "nosniff",
+} as const;
+
 function streamOf(bytes: FileBytes): ReadableStream<Uint8Array> {
   return NodeReadableStream.from(bytes) as ReadableStream<Uint8Array>;
 }
@@ -35,10 +41,9 @@ function createContentDisposition(filename: string): string {
 
 function attachmentHeaders(options: AttachmentOptions): Record<string, string> {
   const headers: Record<string, string> = {
-    "Cache-Control": "private, no-store",
+    ...PRIVATE_FILE_HEADERS,
     "Content-Disposition": createContentDisposition(options.filename),
     "Content-Type": options.mimeType,
-    "X-Content-Type-Options": "nosniff",
   };
 
   if (options.sizeBytes !== undefined) {
@@ -75,11 +80,10 @@ export function createPrivateInlineFileResponse(
 ): Response {
   return new Response(streamOf([bytes]), {
     headers: {
-      "Cache-Control": "private, no-store",
+      ...PRIVATE_FILE_HEADERS,
       "Content-Length": String(bytes.byteLength),
       "Content-Security-Policy": SANDBOX_POLICY,
       "Content-Type": mimeType,
-      "X-Content-Type-Options": "nosniff",
     },
   });
 }

@@ -1,7 +1,7 @@
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import { describe, expect, it } from "vitest";
 
-import type { StoreAcquisitionResponse } from "~/features/store/contracts/store";
+import type { StoreAcquisitionResponse } from "~/features/store/public/store";
 
 import {
   reduceAcquisitionFlow,

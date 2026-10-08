@@ -24,11 +24,11 @@ import {
   type ClientEnded,
   type ClientSettings,
   type SubscriptionRefusalAnswer,
-} from "~/features/coaching-sales/contracts/client-subscription";
+} from "~/features/coaching-sales/public/client-subscription";
 import {
   CLIENT_ENDED_PATH,
   CLIENT_SETTINGS_PATH,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 type SubscriptionControllerOptions = {
   appBasePath: string;

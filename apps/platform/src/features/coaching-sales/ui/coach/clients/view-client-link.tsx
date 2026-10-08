@@ -1,7 +1,7 @@
 import { RowActionLink } from "@eli-coach-platform/ui/appointments";
 import { UserRound } from "lucide-react";
 
-import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
+import { coachClientPath } from "~/features/coaching-sales/public/paths";
 
 export function ViewClientLink({ clientId }: { clientId: string }) {
   return (

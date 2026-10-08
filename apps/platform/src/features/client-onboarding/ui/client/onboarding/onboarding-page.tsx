@@ -6,8 +6,8 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { OnboardingPage } from "~/features/client-onboarding/contracts/onboarding";
-import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
+import type { OnboardingPage } from "~/features/client-onboarding/public/onboarding";
+import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/public/onboarding-review-copy";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 
 import { AnswerRequestCard } from "./answer-request-card";

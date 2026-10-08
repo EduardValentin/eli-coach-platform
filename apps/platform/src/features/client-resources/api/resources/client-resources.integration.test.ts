@@ -1,4 +1,21 @@
 import {
+  excelWorkbook,
+  macroProjectWordDocument,
+  oldExcelWorkbook,
+  oldPowerPointPresentation,
+  oldWordDocument,
+  openDocumentSpreadsheet,
+  openDocumentText,
+  paddedPdfOfLength,
+  passwordProtectedPdf,
+  pdfWithPages,
+  plainText,
+  powerPointPresentation,
+  truncatedPdf,
+  windowsProgram,
+  wordDocument,
+} from "@eli-coach-platform/test-support/sample-documents";
+import {
   afterAll,
   afterEach,
   beforeAll,
@@ -32,21 +49,6 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
-import {
-  excelWorkbook,
-  oldExcelWorkbook,
-  oldWordDocument,
-  openDocumentSpreadsheet,
-  openDocumentText,
-  paddedPdfOfLength,
-  passwordProtectedPdf,
-  pdfWithPages,
-  plainText,
-  powerPointPresentation,
-  truncatedPdf,
-  windowsProgram,
-  wordDocument,
-} from "~integration-test-config/sample-documents";
 import {
   cameraJpegWithOrientationAndLocation,
   imageFactsOf,
@@ -406,6 +408,18 @@ describe.sequential("client resources integration", () => {
         refusal: "unsupported-type",
       },
       {
+        name: "an old PowerPoint presentation renamed as a Word file",
+        fileName: "slides.doc",
+        bytes: oldPowerPointPresentation,
+        refusal: "unsupported-type",
+      },
+      {
+        name: "a Word document carrying a macro project",
+        fileName: "plan.docx",
+        bytes: macroProjectWordDocument,
+        refusal: "unsupported-type",
+      },
+      {
         name: "a text file renamed as a PDF",
         fileName: "plan.pdf",
         bytes: plainText,
@@ -612,6 +626,9 @@ describe.sequential("client resources integration", () => {
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
       expect(response.headers.get("content-security-policy")).toContain(
         "sandbox",
+      );
+      expect(response.headers.get("cross-origin-resource-policy")).toBe(
+        "same-origin",
       );
       expect(Buffer.from(await response.arrayBuffer())).toEqual(pdf);
     });
@@ -1261,6 +1278,9 @@ function expectPrivateImageHeaders(response: Response, body: Buffer): void {
   expect(response.headers.get("cache-control")).toBe("private, no-store");
   expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   expect(response.headers.get("content-security-policy")).toContain("sandbox");
+  expect(response.headers.get("cross-origin-resource-policy")).toBe(
+    "same-origin",
+  );
   expect(response.headers.get("content-length")).toBe(String(body.byteLength));
 }
 

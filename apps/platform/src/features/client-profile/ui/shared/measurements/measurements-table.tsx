@@ -25,7 +25,7 @@ import type { ReactNode } from "react";
 import {
   MEASUREMENTS_COPY,
   type MeasurementRow,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 
 type CoachRatioBasis = { heightCm: number | null; ratioHidden: boolean };
 

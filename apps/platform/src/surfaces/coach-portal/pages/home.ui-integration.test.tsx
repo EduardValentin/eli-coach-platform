@@ -15,9 +15,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   CoachAssessmentCall,
   CoachAssessmentCalls,
-} from "~/features/assessment-calls/contracts/assessment-calls";
-import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
-import { COACH_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+} from "~/features/assessment-calls/public/assessment-calls";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
+import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
 
 import CoachHomeRoute, {
   ErrorBoundary as CoachHomeErrorBoundary,

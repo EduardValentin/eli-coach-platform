@@ -8,7 +8,7 @@ import { useRevalidator } from "react-router";
 import type {
   ClientResourceListing,
   ClientResourceView,
-} from "~/features/client-resources/contracts/client-resources";
+} from "~/features/client-resources/public/client-resources";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";

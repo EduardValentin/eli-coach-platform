@@ -16,7 +16,7 @@ import {
 } from "react";
 import { useFetcher, useNavigate } from "react-router";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import {
   missingConsentSchema,
   onboardingRefusalSchema,
@@ -25,10 +25,10 @@ import {
   submissionSentSchema,
   type SubmissionProblem,
   type SubmitRequest,
-} from "~/features/client-onboarding/contracts/onboarding";
-import { SUBMIT_PROBLEM } from "~/features/client-onboarding/contracts/onboarding-copy";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
-import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-onboarding/public/onboarding";
+import { SUBMIT_PROBLEM } from "~/features/client-onboarding/public/onboarding-copy";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
 import {
   appendProgressPhotoParts,
   refusedPhotoViewsOf,

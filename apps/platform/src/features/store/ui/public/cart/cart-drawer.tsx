@@ -39,7 +39,7 @@ import {
 import {
   type StoreAcquisitionForm,
   type StoreProduct,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 import { selectStoreCartProducts, useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";

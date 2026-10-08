@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { OnboardingReviewView } from "~/features/client-onboarding/contracts/onboarding-review";
+import type { OnboardingReviewView } from "~/features/client-onboarding/public/onboarding-review";
 import type { ClientOnboardingFeature } from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
-import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
-import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
+import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
+import type { MeasurementRow } from "~/features/client-profile/public/measurements";
 import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import {

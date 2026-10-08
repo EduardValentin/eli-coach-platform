@@ -1,7 +1,7 @@
 import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/onboarding";
+import type { SaveDraftRequest } from "~/features/client-onboarding/public/onboarding";
 
 import {
   createDraftSync,

@@ -16,7 +16,7 @@ import { useSearchParams } from "react-router";
 import {
   PAYMENT_METHOD_UNAVAILABLE_PARAM,
   type ClientSettings,
-} from "~/features/coaching-sales/contracts/client-subscription";
+} from "~/features/coaching-sales/public/client-subscription";
 import { PaymentCardReading } from "~/features/coaching-sales/ui/client/payment-method/payment-card-reading";
 import { ChangePaymentMethodButton } from "~/features/coaching-sales/ui/client/payment-method/change-payment-method-button";
 import {

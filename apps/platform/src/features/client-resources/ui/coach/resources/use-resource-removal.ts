@@ -2,8 +2,8 @@ import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useEffectEvent, useState } from "react";
 import { useFetcher, useFetchers, useSubmit } from "react-router";
 
-import { removedResourceAnswerSchema } from "~/features/client-resources/contracts/client-resources";
-import { resourcePath } from "~/features/client-resources/contracts/paths";
+import { removedResourceAnswerSchema } from "~/features/client-resources/public/client-resources";
+import { resourcePath } from "~/features/client-resources/public/paths";
 
 const COPY = {
   removed: "Resource deleted.",

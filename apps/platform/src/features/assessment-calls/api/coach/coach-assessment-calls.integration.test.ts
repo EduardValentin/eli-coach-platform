@@ -12,7 +12,7 @@ import {
 import {
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
   openSlotsResponseSchema,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+} from "~/features/assessment-calls/public/assessment-calls";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";

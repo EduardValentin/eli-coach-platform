@@ -14,7 +14,7 @@ import {
   MEASUREMENTS_COPY,
   PHOTO_CONSENT_GIVEN,
   type MeasurementRow,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 import {
   measurementEntryOf,
   measurementFormValuesOf,

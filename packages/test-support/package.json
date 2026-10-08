@@ -4,7 +4,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./stripe-webhook-signature": "./src/stripe-webhook-signature.ts"
+    "./stripe-webhook-signature": "./src/stripe-webhook-signature.ts",
+    "./sample-documents": "./src/sample-documents.ts"
+  },
+  "dependencies": {
+    "archiver": "catalog:",
+    "pdfkit": "catalog:"
+  },
+  "devDependencies": {
+    "@types/archiver": "catalog:",
+    "@types/pdfkit": "catalog:"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

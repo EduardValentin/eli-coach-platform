@@ -3,8 +3,8 @@ import { WidgetLink } from "@eli-coach-platform/ui/portal";
 import {
   MEASUREMENTS_COPY,
   type MeasurementsNudge as MeasurementsNudgeProps,
-} from "~/features/client-profile/contracts/measurements";
-import { CLIENT_PROFILE_PATH } from "~/features/client-profile/contracts/paths";
+} from "~/features/client-profile/public/measurements";
+import { CLIENT_PROFILE_PATH } from "~/features/client-profile/public/paths";
 
 export function MeasurementsNudge({ dueLine }: MeasurementsNudgeProps) {
   if (!dueLine) return null;

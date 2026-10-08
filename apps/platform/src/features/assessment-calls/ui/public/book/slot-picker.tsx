@@ -7,7 +7,7 @@ import { linkVariants } from "@eli-coach-platform/ui/primitives";
 import {
   formatMonthFirstDay,
   formatClockTime,
-} from "~/features/assessment-calls/contracts/call-moment";
+} from "~/features/assessment-calls/public/call-moment";
 
 import { SlotCalendar } from "./slot-calendar";
 

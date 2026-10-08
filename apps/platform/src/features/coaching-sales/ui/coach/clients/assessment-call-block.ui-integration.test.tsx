@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
+import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
 
 import { AssessmentCallBlock } from "./assessment-call-block";
 

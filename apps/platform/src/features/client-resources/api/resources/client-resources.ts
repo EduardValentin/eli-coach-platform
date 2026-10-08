@@ -9,7 +9,7 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { resourceUploadProgress } from "~/features/client-resources/contracts/resource-upload-progress";
+import { resourceUploadProgress } from "~/features/client-resources/public/resource-upload-progress";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 
 export async function action(args: ActionFunctionArgs) {

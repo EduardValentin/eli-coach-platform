@@ -5,13 +5,13 @@ import { Button } from "@eli-coach-platform/ui/primitives";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useRevalidator } from "react-router";
 
-import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
+import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import {
   resendInvitationSuccessSchema,
   type ClientInvitationReading,
   type CoachClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/coach-clients";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
 
 import { invitationStateLine } from "./invitation-state-line";

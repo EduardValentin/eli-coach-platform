@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientResourceListing } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceListing } from "~/features/client-resources/public/client-resources";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import {

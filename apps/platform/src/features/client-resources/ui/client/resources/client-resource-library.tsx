@@ -5,8 +5,8 @@ import { useFetchers, useRevalidator, useSubmit } from "react-router";
 import type {
   ClientResourceListing,
   ClientResourceView,
-} from "~/features/client-resources/contracts/client-resources";
-import { resourceOpenedPath } from "~/features/client-resources/contracts/paths";
+} from "~/features/client-resources/public/client-resources";
+import { resourceOpenedPath } from "~/features/client-resources/public/paths";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 

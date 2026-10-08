@@ -29,8 +29,8 @@ import {
   removedResourceAnswerSchema,
   resourceDetailsProblemsAnswerSchema,
   resourceDetailsRequestSchema,
-} from "~/features/client-resources/contracts/client-resources";
-import { receivedResourceUploadOf } from "~/features/client-resources/contracts/resource-upload-parts";
+} from "~/features/client-resources/public/client-resources";
+import { receivedResourceUploadOf } from "~/features/client-resources/public/resource-upload-parts";
 
 type ClientResourcesControllerOptions = {
   addClientResource: AddClientResourceUseCase;

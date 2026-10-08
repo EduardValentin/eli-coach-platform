@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 
 import BookRoute from "./book-page";
 

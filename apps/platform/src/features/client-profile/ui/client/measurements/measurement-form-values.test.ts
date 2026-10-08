@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
+import type { MeasurementRow } from "~/features/client-profile/public/measurements";
 
 import {
   measurementEntryOf,

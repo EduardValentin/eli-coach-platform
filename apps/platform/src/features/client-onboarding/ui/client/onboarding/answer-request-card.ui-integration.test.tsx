@@ -17,13 +17,13 @@ import {
   vi,
 } from "vitest";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
-import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
+import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/public/paths";
 import type {
   AnswerDetailsRequest,
   OnboardingAnswerPage,
-} from "~/features/client-onboarding/contracts/onboarding";
-import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+} from "~/features/client-onboarding/public/onboarding";
+import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
 import { clientAction } from "~/features/client-onboarding/api/client/detail-answers";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 

@@ -7,11 +7,11 @@ import {
   SelectValue,
 } from "@eli-coach-platform/ui/primitives";
 
-import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/contracts/paths";
+import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 import {
   CALL_SALES_STATES,
   type CallSalesState,
-} from "~/features/coaching-sales/contracts/coaching-sales";
+} from "~/features/coaching-sales/public/coaching-sales";
 
 import { CALL_SALES_STATE_LABELS } from "./call-sales-state-labels";
 

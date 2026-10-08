@@ -7,7 +7,7 @@ import { Link } from "react-router";
 import type {
   PortalDestination,
   PublicSessionState,
-} from "~/features/accounts/contracts/account";
+} from "~/features/accounts/public/account";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 
 type AuthNavActionsPlacement =

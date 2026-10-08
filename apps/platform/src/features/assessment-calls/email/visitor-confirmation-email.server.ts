@@ -3,7 +3,7 @@ import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-cal
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
+import { formatCallMoment } from "~/features/assessment-calls/public/call-moment";
 
 import { ASSESSMENT_CALL_ACTION_COPY } from "./assessment-call-email-actions.server";
 import {

@@ -7,7 +7,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
+import type { MeasurementRow } from "~/features/client-profile/public/measurements";
 
 import { MeasurementsTable } from "./measurements-table";
 

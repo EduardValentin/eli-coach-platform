@@ -4,7 +4,7 @@ import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_ROUTE_SEGMENT,
   COACH_SETTINGS_ROUTE_SEGMENT,
-} from "./contracts/paths";
+} from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

@@ -52,6 +52,10 @@ export {
   type ResourceDocumentReading,
 } from "./resource-document-pages";
 export {
+  type DetectedResourceFile,
+  type ResourceFileFormatDetector,
+} from "./resource-file-format-detector";
+export {
   MAX_RESOURCE_FILE_BYTES,
   MAX_RESOURCE_PAGES,
   type ResourceRefusal,

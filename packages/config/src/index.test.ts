@@ -622,7 +622,7 @@ describe("payments settings", () => {
   });
 });
 
-describe("client media settings", () => {
+describe("client files settings", () => {
   const committedDevelopmentKey = readCommittedExampleValue("CLIENT_MEDIA_KEY");
 
   it("loads the filesystem provider with its root, key and key id", () => {

@@ -1,4 +1,4 @@
-import type { PriceTier } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { PriceTier } from "~/features/coaching-sales/public/coaching-sales";
 
 export const PRICING_DETAIL_LABEL = "Pricing";
 

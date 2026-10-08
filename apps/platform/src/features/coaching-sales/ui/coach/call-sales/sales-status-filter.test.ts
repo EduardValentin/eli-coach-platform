@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
+import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
 
 import {
   countsBySalesFilter,

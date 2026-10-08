@@ -9,11 +9,11 @@ import { setupServer } from "msw/node";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import type { WelcomePage } from "~/features/coaching-sales/contracts/client-journey";
+import type { WelcomePage } from "~/features/coaching-sales/public/client-journey";
 import {
   CLIENT_ONBOARDING_PATH,
   CLIENT_WELCOME_PATH,
-} from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/paths";
 
 import WelcomeRoute from "./welcome-page";
 

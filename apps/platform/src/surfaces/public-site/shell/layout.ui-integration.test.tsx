@@ -24,7 +24,7 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/public/paths";
 
 // The shell composes AuthNavActions, which renders Clerk's SignInButton /
 // SignOutButton. Those clone their child and wire an onClick into a live

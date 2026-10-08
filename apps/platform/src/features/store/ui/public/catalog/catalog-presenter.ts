@@ -1,4 +1,4 @@
-import type { StoreProduct } from "~/features/store/contracts/store";
+import type { StoreProduct } from "~/features/store/public/store";
 
 import {
   collectFilterDimensions,

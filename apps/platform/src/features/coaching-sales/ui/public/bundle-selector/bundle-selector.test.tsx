@@ -10,7 +10,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
+import { presentBundleCards } from "~/features/coaching-sales/public/bundle-cards";
 
 import { BundleSelector } from "./bundle-selector";
 

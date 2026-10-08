@@ -1,18 +1,6 @@
 {
-  "apps/platform/src/features/assessment-calls/contracts/reaches-coaching-sales.ts": [
-    "assessment-calls-never-reach-coaching-sales"
-  ],
-  "apps/platform/src/features/client-profile/contracts/reaches-client-onboarding.ts": [
-    "client-profile-never-reaches-client-onboarding"
-  ],
-  "apps/platform/src/features/coaching-sales/contracts/reaches-client-onboarding.ts": [
-    "coaching-sales-never-reaches-client-onboarding"
-  ],
-  "apps/platform/src/features/coaching-sales/contracts/reaches-client-profile.ts": [
-    "coaching-sales-never-reaches-client-profile"
-  ],
-  "apps/platform/src/features/coaching-sales/contracts/reaches-client-resources.ts": [
-    "coaching-sales-never-reaches-client-resources"
+  "apps/platform/src/features/coaching-sales/public/reaches-client-resources.ts": [
+    "feature-order-coaching-sales"
   ],
   "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",
@@ -32,7 +20,8 @@
   "apps/platform/src/features/store/api/feature-internals.ts": [
     "feature-api-to-data",
     "feature-internals",
-    "route-thinness"
+    "route-thinness",
+    "feature-order-store"
   ],
   "apps/platform/src/features/store/api/features-never-reach-server.ts": [
     "features-never-reach-server",
@@ -67,7 +56,8 @@
     "feature-server-private"
   ],
   "apps/platform/src/features/store/data/schema.server.ts": [
-    "feature-schema-foreign-key"
+    "feature-schema-foreign-key",
+    "feature-order-store"
   ],
   "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
   "apps/platform/src/features/store/server/guards/constructs.server.ts": [

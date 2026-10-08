@@ -1,6 +1,6 @@
 import { relative } from "@react-router/dev/routes";
 
-import { WAITLIST_API_PATH } from "./contracts/paths";
+import { WAITLIST_API_PATH } from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

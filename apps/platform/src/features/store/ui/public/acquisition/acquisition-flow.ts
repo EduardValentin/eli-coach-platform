@@ -2,7 +2,7 @@ import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import type {
   StoreAcquisitionErrorCode,
   StoreAcquisitionResponse,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 type StoreAcquisitionStep = "cart" | "details" | "success";
 

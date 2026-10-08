@@ -2,7 +2,7 @@ import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import {
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
-} from "~/features/waitlist/contracts/waitlist";
+} from "~/features/waitlist/public/waitlist";
 
 export type WaitlistClientError = Extract<
   WaitlistJoinResponse,

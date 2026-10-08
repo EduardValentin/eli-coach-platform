@@ -32,7 +32,7 @@ import {
 } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
+import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 import {
   formatFileSize,
   RESOURCE_UPLOAD_HINT,

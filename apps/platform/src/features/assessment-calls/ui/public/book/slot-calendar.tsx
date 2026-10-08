@@ -1,7 +1,7 @@
 import { Calendar, type CalendarProps } from "@eli-coach-platform/ui/calendar";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { formatDayFirstDate } from "~/features/assessment-calls/contracts/call-moment";
+import { formatDayFirstDate } from "~/features/assessment-calls/public/call-moment";
 
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
 

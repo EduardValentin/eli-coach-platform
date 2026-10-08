@@ -1,11 +1,11 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
-import { WAITLIST_API_PATH } from "~/features/waitlist/contracts/paths";
+import { WAITLIST_API_PATH } from "~/features/waitlist/public/paths";
 import {
   waitlistJoinResponseSchema,
   type WaitlistJoinResponse,
-} from "~/features/waitlist/contracts/waitlist";
+} from "~/features/waitlist/public/waitlist";
 
 import { createWaitlistServerErrorResponse } from "./errors";
 

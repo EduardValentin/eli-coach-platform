@@ -1,5 +1,5 @@
-import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
-import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/contracts/paths";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
+import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
 
 export const WHEN_PARAM = "when";

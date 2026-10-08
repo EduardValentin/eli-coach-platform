@@ -9,7 +9,7 @@ import type {
   OnboardingConsentInstants,
   OnboardingWizardPage,
   SaveDraftRequest,
-} from "~/features/client-onboarding/contracts/onboarding";
+} from "~/features/client-onboarding/public/onboarding";
 
 import { readUnsentEdits } from "./draft-sync";
 import { currentStepOf } from "./onboarding-steps";

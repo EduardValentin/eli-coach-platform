@@ -13,7 +13,7 @@ import { useState } from "react";
 import {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
-} from "~/features/assessment-calls/contracts/visitor-profile";
+} from "~/features/assessment-calls/public/visitor-profile";
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
 
 const DEFAULT_YEARS_BACK = 30;

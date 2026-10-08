@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import {
   flaggedCount,
   REVIEW_DIALOG,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
 
 type OnboardingReviewBarProps = {
   flagCount: number;

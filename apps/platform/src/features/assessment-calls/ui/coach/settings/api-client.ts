@@ -7,8 +7,8 @@ import {
   updateAssessmentCallSettingsSuccessSchema,
   type AssessmentCallSettings,
   type AssessmentCallSettingsErrorCode,
-} from "~/features/assessment-calls/contracts/assessment-call-settings";
-import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/assessment-call-settings";
+import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/public/paths";
 
 export type SaveAssessmentCallSettingsResponse =
   | { settings: AssessmentCallSettings; success: true }

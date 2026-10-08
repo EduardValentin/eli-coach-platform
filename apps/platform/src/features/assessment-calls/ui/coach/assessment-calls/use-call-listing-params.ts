@@ -1,7 +1,7 @@
 import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { useLocation } from "react-router";
 
-import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/contracts/paths";
+import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 
 import {
   defaultDirectionFor,

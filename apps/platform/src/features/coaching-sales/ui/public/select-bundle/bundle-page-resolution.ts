@@ -4,8 +4,8 @@ import { useFetcher } from "react-router";
 import {
   bundlePageSchema,
   type BundlePage,
-} from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+} from "~/features/coaching-sales/public/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 import { usePaymentLinkToken } from "./payment-link-token";
 

@@ -14,12 +14,12 @@ import {
 
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
-import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
 import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
-import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
+import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
 import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
@@ -27,7 +27,7 @@ import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invi
 import { NeedsRefundBadge } from "~/features/coaching-sales/ui/coach/clients/needs-refund-badge";
 import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
 import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
-import { coachClientResourcesPath } from "~/features/client-resources/contracts/paths";
+import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;

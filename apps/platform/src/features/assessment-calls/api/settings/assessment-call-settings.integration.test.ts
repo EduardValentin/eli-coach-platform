@@ -12,12 +12,12 @@ import {
 import {
   bookAssessmentCallResponseSchema,
   openSlotsResponseSchema,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+} from "~/features/assessment-calls/public/assessment-calls";
 import {
   updateAssessmentCallSettingsErrorSchema,
   updateAssessmentCallSettingsSuccessSchema,
-} from "~/features/assessment-calls/contracts/assessment-call-settings";
-import { COACH_SETTINGS_PATH } from "~/features/assessment-calls/contracts/paths";
+} from "~/features/assessment-calls/public/assessment-call-settings";
+import { COACH_SETTINGS_PATH } from "~/features/assessment-calls/public/paths";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";

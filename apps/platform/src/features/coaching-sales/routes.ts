@@ -8,7 +8,7 @@ import {
   COACH_CLIENTS_ROUTE_SEGMENT,
   COACHING_SALES_API_PATHS,
   SELECT_BUNDLE_ROUTE_SEGMENT,
-} from "./contracts/paths";
+} from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 

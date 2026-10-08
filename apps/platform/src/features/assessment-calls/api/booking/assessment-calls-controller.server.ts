@@ -26,7 +26,7 @@ import {
   phoneFromRequest,
   type BookAssessmentCallErrorCode,
   type OpenSlotsResponse,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+} from "~/features/assessment-calls/public/assessment-calls";
 
 export type BookingPageData =
   | ({ status: "open"; botDetection: BotDetectionConfig } & OpenSlotsResponse)

@@ -9,7 +9,7 @@ import {
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
-import { INVITATION_PATH } from "~/features/coaching-sales/contracts/paths";
+import { INVITATION_PATH } from "~/features/coaching-sales/public/paths";
 import {
   AnonymousInvitation,
   SignedInInvitation,

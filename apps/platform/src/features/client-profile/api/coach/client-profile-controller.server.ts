@@ -9,12 +9,12 @@ import { requirePortalAccess } from "~/features/accounts/server/guards/require-p
 import {
   clientProfileSchema,
   type ClientProfileView,
-} from "~/features/client-profile/contracts/client-profile";
+} from "~/features/client-profile/public/client-profile";
 import {
   measurementHistorySchema,
   presentMeasurements,
   type MeasurementRow,
-} from "~/features/client-profile/contracts/measurements";
+} from "~/features/client-profile/public/measurements";
 
 type ClientProfileControllerOptions = {
   readClientMeasurementHistory: ReadClientMeasurementHistoryUseCase;

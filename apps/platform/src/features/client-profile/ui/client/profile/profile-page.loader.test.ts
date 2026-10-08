@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MeasurementsPage } from "~/features/client-profile/contracts/measurements";
+import type { MeasurementsPage } from "~/features/client-profile/public/measurements";
 import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import {

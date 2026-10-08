@@ -15,14 +15,14 @@ import { useId, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import type {
   AskedAnswers,
   OnboardingAnswerPage,
   QuestionId,
   SubmissionProblem,
-} from "~/features/client-onboarding/contracts/onboarding";
-import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding";
+import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/public/onboarding-review-copy";
 
 import { OnboardingFieldControl } from "./onboarding-field-control";
 import {

@@ -15,8 +15,11 @@ import {
 import {
   createClientResourceStore,
   createProgressPhotoStore,
-} from "@eli-coach-platform/infrastructure/client-media/server";
-import { createResourceDocumentPages } from "@eli-coach-platform/infrastructure/documents/server";
+} from "@eli-coach-platform/infrastructure/client-files/server";
+import {
+  createResourceDocumentPages,
+  createResourceFileFormatDetector,
+} from "@eli-coach-platform/infrastructure/documents/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
 import {
@@ -29,7 +32,7 @@ import {
   createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import {
   composeAccountsFeature,
   type AccountsFeature,
@@ -190,6 +193,7 @@ export function createPlatformContainer(options: {
       workerUrl: pdfPagesWorkerUrl(),
       renditions: RESOURCE_RENDITIONS,
     }),
+    fileFormats: createResourceFileFormatDetector(),
     imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
     incidents,
     resourceClients: coachingSales.handles.resourceClients,

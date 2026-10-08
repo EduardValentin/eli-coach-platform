@@ -6,7 +6,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ClientEnded } from "~/features/coaching-sales/contracts/client-subscription";
+import type { ClientEnded } from "~/features/coaching-sales/public/client-subscription";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
 import {

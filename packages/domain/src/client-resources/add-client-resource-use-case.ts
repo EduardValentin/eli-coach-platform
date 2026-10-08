@@ -23,6 +23,7 @@ import type {
   ReadableResourceDocument,
   ResourceDocumentPages,
 } from "./resource-document-pages";
+import type { ResourceFileFormatDetector } from "./resource-file-format-detector";
 import {
   ResourceFileIntake,
   type ResourceFileJudgement,
@@ -54,6 +55,7 @@ type AddClientResourceUseCaseOptions = {
   store: ClientResourceStore;
   documentPages: ResourceDocumentPages;
   imagePages: ResourceImagePages;
+  fileFormats: ResourceFileFormatDetector;
   clock: Clock;
   incidents: ClientResourceIncidents;
 };
@@ -96,7 +98,7 @@ export class AddClientResourceUseCase {
       return { status: "invalid-details", problems: details.problems };
     }
 
-    const judgement = ResourceFileIntake.judge(command.file.bytes);
+    const judgement = await this.judgeFile(command.file.bytes);
 
     if (judgement.status === "refused") {
       return this.refuse(command, judgement.refusal);
@@ -116,6 +118,16 @@ export class AddClientResourceUseCase {
     } catch (error) {
       return this.fail(owner, error);
     }
+  }
+
+  private async judgeFile(bytes: Uint8Array): Promise<ResourceFileJudgement> {
+    const size = ResourceFileIntake.judgeSize(bytes.byteLength);
+
+    if (size.status === "refused") return size;
+
+    return ResourceFileIntake.judgeFormat(
+      await this.options.fileFormats.detect(bytes),
+    );
   }
 
   private async keepAndRecord(

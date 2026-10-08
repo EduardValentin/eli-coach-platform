@@ -8,7 +8,7 @@ import {
   storeCatalogResponseSchema,
   storeProductSchema,
   type StoreProduct,
-} from "~/features/store/contracts/store";
+} from "~/features/store/public/store";
 
 type StoreCatalogControllerOptions = {
   appBasePath: string;

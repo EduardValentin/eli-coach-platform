@@ -10,7 +10,7 @@ import {
 import { buildRedirectPath } from "@eli-coach-platform/config";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
-import { STORE_PATH } from "~/features/store/contracts/paths";
+import { STORE_PATH } from "~/features/store/public/paths";
 
 export type SignInFailedLoaderData = {
   storePath: string;

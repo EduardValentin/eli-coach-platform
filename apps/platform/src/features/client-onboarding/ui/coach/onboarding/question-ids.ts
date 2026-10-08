@@ -1,4 +1,4 @@
-import type { QuestionId } from "~/features/client-onboarding/contracts/onboarding";
+import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
 
 function sameQuestion(first: QuestionId, second: QuestionId): boolean {
   return first.formId === second.formId && first.fieldId === second.fieldId;

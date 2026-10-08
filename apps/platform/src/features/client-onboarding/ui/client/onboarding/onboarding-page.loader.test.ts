@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { OnboardingPage } from "~/features/client-onboarding/contracts/onboarding";
+import type { OnboardingPage } from "~/features/client-onboarding/public/onboarding";
 import type { ClientOnboardingFeature } from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import {

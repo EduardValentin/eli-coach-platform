@@ -4,7 +4,7 @@ import { Info } from "lucide-react";
 import {
   CYCLE_MODE_INFO_LABEL,
   CYCLE_MODE_DEFINITIONS,
-} from "~/features/client-onboarding/contracts/onboarding-review-copy";
+} from "~/features/client-onboarding/public/onboarding-review-copy";
 
 export function CycleModeInfo() {
   return (
