@@ -18,10 +18,16 @@ import {
   SheetDialogHeader,
 } from '../workout/ResponsiveSheetDialog';
 
-const TITLE = 'Book your review call';
+const BOOKING_COPY = {
+  title: 'Book your review call',
+  description:
+    'Pick a time in the next two weeks and we will go through your program together.',
+};
 
-const DESCRIPTION =
-  'Pick a time in the next two weeks and we will go through your program together.';
+const MOVING_COPY = {
+  title: 'Move your review call',
+  description: 'Pick a new time in the next two weeks.',
+};
 
 type ReviewCallSchedulerProps = {
   open: boolean;
@@ -37,6 +43,8 @@ export function ReviewCallScheduler({
   const [slots, setSlots] = useState<Date[]>([]);
   const [selected, setSelected] = useState<Date | null>(null);
   const [booking, setBooking] = useState(false);
+  const currentCall = demoJourney.reviewCall;
+  const { title, description } = currentCall ? MOVING_COPY : BOOKING_COPY;
 
   useEffect(() => {
     if (!open) return;
@@ -67,6 +75,7 @@ export function ReviewCallScheduler({
     scheduleReviewCall(demoJourney.callId, {
       startsAt: scheduled.startsAt,
       scheduledAt: scheduled.scheduledAt,
+      rescheduledFrom: currentCall?.startsAt,
     });
     setBooking(false);
     onOpenChange(false);
@@ -75,13 +84,13 @@ export function ReviewCallScheduler({
   return (
     <ResponsiveSheetDialog
       contentClassName="sm:w-fit"
-      description={DESCRIPTION}
+      description={description}
       onOpenChange={onOpenChange}
       open={open}
-      title={TITLE}
+      title={title}
     >
       <SheetDialogHeader
-        description={DESCRIPTION}
+        description={description}
         eyebrow={
           <div className="mb-1.5 flex items-center gap-1.5">
             <CalendarPlus size={13} className="text-primary" aria-hidden="true" />
@@ -90,7 +99,7 @@ export function ReviewCallScheduler({
             </span>
           </div>
         }
-        title={TITLE}
+        title={title}
       />
 
       <SheetDialogBody>

@@ -1,21 +1,22 @@
 import { useState, useMemo } from 'react';
-import { CalendarDays, CalendarPlus, Clock, Video } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Clock } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
 import { CheckinCard } from '../../components/CheckinCard';
-import { EmptyState } from '../../components/EmptyState';
-import { Badge } from '../../components/ui/badge';
 import {
-  useCheckins,
+  CheckinListing,
+  type CheckinEmptyCopy,
+} from '../../components/CheckinListing';
+import { JoinMeetLink } from '../../components/JoinMeetLink';
+import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
+import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
+import {
+  canCancelApproved,
+  canPropose,
+  canWithdrawRequest,
+  proposesNewTime,
   type CheckIn,
-  MAX_RESCHEDULES,
-} from '../../context/CheckinContext';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import {
-  PROGRAM_REVIEW_LABEL,
-  upcomingReviewCall,
-} from '../../utils/reviewCallListing';
-import { browserTimeZone } from '../../utils/dateFormatters';
+} from '../../domain/checkins';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import {
@@ -25,72 +26,67 @@ import {
   to24h,
 } from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../components/ui/tabs';
-import { Button, buttonVariants } from '../../components/ui/button';
+import type { CheckinTab } from '../../utils/checkinListing';
+import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
 
-const CLIENT_ID = 'c1';
-const CLIENT_NAME = 'Jane Doe';
-const MEET_URL = 'https://meet.google.com/mock-eli-checkin';
+const CLIENT_ID = DEMO_CLIENT.id;
+const CLIENT_NAME = DEMO_CLIENT.name;
+
+const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
+  upcoming: {
+    icon: CalendarDays,
+    title: 'No upcoming check-ins',
+    description: 'Request one any time using the button above.',
+  },
+  requests: {
+    icon: CalendarPlus,
+    title: 'No open requests',
+    description: 'Requests you send and proposals from your coach show up here.',
+  },
+  past: {
+    icon: Clock,
+    title: 'No past check-ins yet',
+    description: 'Passed and cancelled check-ins will appear here.',
+  },
+};
 
 export function ClientCheckins() {
   const {
-    checkins,
+    statusOf,
     requestCheckin,
     approveCheckin,
-    declineCheckin,
-    rescheduleCheckin,
-    acceptReschedule,
+    cancelCheckin,
+    proposeNewTime,
     getUpcomingCheckins,
     getPendingCheckins,
-    hasPendingAdHoc,
+    hasOpenClientRequest,
     getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
-  const { demoJourney } = useClientJourneys();
-  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
-  const timeZone = browserTimeZone();
+  const coach = {
+    name: coachName,
+    imageUrl: coachProfile.avatarUrl ?? undefined,
+  };
+  const viewer = { party: 'client' as const, counterpartName: 'your coach' };
 
   const upcoming = getUpcomingCheckins(CLIENT_ID);
-  const pending = getPendingCheckins(CLIENT_ID); // pending + rescheduling
-  const past = useMemo(
-    () =>
-      checkins
-        .filter(
-          (c) =>
-            c.clientId === CLIENT_ID &&
-            (c.status === 'completed' ||
-              c.status === 'declined' ||
-              c.status === 'cancelled'),
-        )
-        .sort((a, b) =>
-          `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`),
-        ),
-    [checkins],
-  );
+  const pending = getPendingCheckins(CLIENT_ID);
+  const openRequest = hasOpenClientRequest(CLIENT_ID);
 
-  const needsResponseCount = pending.filter(
-    (c) => c.proposedBy === 'coach',
-  ).length;
-  const pendingExists = hasPendingAdHoc(CLIENT_ID);
-
-  // Request scheduler state
   const [showRequest, setShowRequest] = useState(false);
   const [reqDate, setReqDate] = useState<Date | undefined>();
   const [reqTime, setReqTime] = useState<string | null>(null);
 
-  // Reschedule scheduler state
   const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
   const [rsDate, setRsDate] = useState<Date | undefined>();
   const [rsTime, setRsTime] = useState<string | null>(null);
   const [rsMsg, setRsMsg] = useState('');
+
+  const [movingReview, setMovingReview] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
 
   const bookedSlots = useMemo(() => {
     if (showRequest && reqDate) return getBookedSlots(toISODate(reqDate));
@@ -104,7 +100,6 @@ export function ClientCheckins() {
     [upcoming, pending, rescheduleTarget],
   );
 
-  // ── Handlers (mirror the in-chat flow so the conversation stays in sync) ──
   const handleRequest = () => {
     if (!reqDate || !reqTime) return;
     const date = toISODate(reqDate);
@@ -116,7 +111,7 @@ export function ClientCheckins() {
       time,
     });
     if (!result) {
-      toast.error('You already have a pending check-in request');
+      toast.error('You already have a check-in request waiting');
       return;
     }
     setShowRequest(false);
@@ -137,27 +132,17 @@ export function ClientCheckins() {
       `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
       'checkin-scheduled',
     );
-    toast.success('Check-in confirmed');
-  };
-
-  const handleAcceptReschedule = (c: CheckIn) => {
-    acceptReschedule(c.id);
-    addSystemMessage(
-      CLIENT_ID,
-      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Check-in confirmed');
+    toast.success('Check-in approved');
   };
 
   const handleDecline = (c: CheckIn) => {
-    declineCheckin(c.id);
+    cancelCheckin(c.id);
     addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
     toast.success('Check-in declined');
   };
 
-  const handleCancelRequest = (c: CheckIn) => {
-    declineCheckin(c.id);
+  const handleWithdraw = (c: CheckIn) => {
+    cancelCheckin(c.id);
     addSystemMessage(
       CLIENT_ID,
       'Check-in request cancelled',
@@ -166,8 +151,20 @@ export function ClientCheckins() {
     toast.success('Request cancelled');
   };
 
-  const openReschedule = (id: string) => {
-    setRescheduleTarget(id);
+  const confirmCancel = () => {
+    if (!cancelTarget) return;
+    cancelCheckin(cancelTarget.id);
+    addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
+    toast.success('Check-in cancelled');
+    setCancelTarget(null);
+  };
+
+  const openReschedule = (c: CheckIn) => {
+    if (c.kind === 'program-review') {
+      setMovingReview(true);
+      return;
+    }
+    setRescheduleTarget(c.id);
     setRsDate(undefined);
     setRsTime(null);
     setRsMsg('');
@@ -177,10 +174,9 @@ export function ClientCheckins() {
     if (!rescheduleTarget || !rsDate || !rsTime) return;
     const date = toISODate(rsDate);
     const time = to24h(rsTime);
-    const ok = rescheduleCheckin(
+    const ok = proposeNewTime(
       rescheduleTarget,
-      date,
-      time,
+      { date, time },
       'client',
       rsMsg || undefined,
     );
@@ -194,230 +190,140 @@ export function ClientCheckins() {
       'checkin-rescheduled',
     );
     if (rsMsg) ctxSendMessage(CLIENT_ID, rsMsg, 'client');
-    toast.success('Reschedule proposed');
+    toast.success('New time proposed');
     setRescheduleTarget(null);
+  };
+
+  const requestButtonProps = {
+    type: 'button' as const,
+    onClick: () => setShowRequest(true),
+    disabled: openRequest,
+    'aria-describedby': openRequest ? 'open-request-note' : undefined,
+    variant: 'primary' as const,
+    size: 'md' as const,
+  };
+
+  const upcomingActions = (c: CheckIn) => (
+    <>
+      {canCancelApproved(c, 'client') && (
+        <Button
+          type="button"
+          onClick={() => setCancelTarget(c)}
+          variant="ghost"
+          size="sm"
+        >
+          Cancel
+        </Button>
+      )}
+      {canPropose(c) && (
+        <Button
+          type="button"
+          onClick={() => openReschedule(c)}
+          variant="outline"
+          size="sm"
+        >
+          Reschedule
+        </Button>
+      )}
+      <JoinMeetLink checkin={c} />
+    </>
+  );
+
+  const waitingActions = (c: CheckIn) =>
+    canWithdrawRequest(c, 'client') ? (
+      <Button
+        type="button"
+        onClick={() => handleWithdraw(c)}
+        variant="outline"
+        size="sm"
+      >
+        Cancel request
+      </Button>
+    ) : undefined;
+
+  const answerActions = (c: CheckIn) => (
+      <>
+        <Button
+          type="button"
+          onClick={() => handleDecline(c)}
+          variant="ghost"
+          size="sm"
+        >
+          Decline
+        </Button>
+        {canPropose(c) && (
+          <Button
+            type="button"
+            onClick={() => openReschedule(c)}
+            variant="outline"
+            size="sm"
+          >
+            Reschedule
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={() => handleApprove(c)}
+          variant="primary"
+          size="sm"
+        >
+          {proposesNewTime(c) ? 'Accept' : 'Approve'}
+        </Button>
+      </>
+  );
+
+  const actionsFor = (c: CheckIn, tab: CheckinTab) => {
+    if (tab === 'upcoming') return upcomingActions(c);
+    if (tab === 'past') return undefined;
+    return c.proposedBy === 'client' ? waitingActions(c) : answerActions(c);
   };
 
   return (
     <div className="w-full">
       <PortalPageHeader
         title="Check-ins"
-        subtitle={`Request time with ${coachName}, respond to proposals, and review past sessions.`}
-      />
-
-      <Tabs variant="segmented" defaultValue="upcoming" className="w-full">
-        <div className="mb-6 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-4">
-            <TabsList>
-              <TabsTrigger
-                value="upcoming"
-                className="px-4 sm:px-5"
-              >
-                Upcoming
-              </TabsTrigger>
-              <TabsTrigger
-                value="requests"
-                className="px-4 sm:px-5"
-              >
-                Requests
-                {needsResponseCount > 0 && (
-                  <Badge tone="count">{needsResponseCount}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="past"
-                className="px-4 sm:px-5"
-              >
-                Past
-              </TabsTrigger>
-            </TabsList>
-
-            <Button
-              type="button"
-              onClick={() => setShowRequest(true)}
-              disabled={pendingExists}
-              title={
-                pendingExists
-                  ? 'You already have a check-in request awaiting your coach'
-                  : 'Request a check-in with your coach'
-              }
-              variant="primary"
-              size="md"
-              className="hidden shrink-0 sm:inline-flex"
-            >
+        subtitle="Request a check-in, answer proposals, and look back at past sessions."
+        actions={
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Button {...requestButtonProps} className="hidden sm:inline-flex">
               <CalendarPlus size={16} aria-hidden="true" />
               Request check-in
             </Button>
+            {openRequest && (
+              <p
+                id="open-request-note"
+                className="text-xs text-text-secondary sm:text-right"
+              >
+                You can send another request once this one is answered.
+              </p>
+            )}
           </div>
-        </div>
+        }
+      />
 
-        {/* Upcoming */}
-        <TabsContent value="upcoming" className="space-y-3">
-          {reviewCall && (
-            <AppointmentCard
-              attendee={{
-                name: coachName,
-                imageUrl: coachProfile.avatarUrl ?? undefined,
-              }}
-              when={{ startsAt: reviewCall.startsAt, timeZone }}
-              badges={
-                <Badge tone="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
-              }
-              footnote={`You and ${coachName} go through your new program together.`}
-            />
-          )}
-          {upcoming.length === 0 && !reviewCall ? (
-            <EmptyState
-              icon={CalendarDays}
-              title="No upcoming check-ins"
-              description="Request one any time using the button above."
-            />
-          ) : (
-            upcoming.map((c) => (
-              <CheckinCard
-                key={c.id}
-                checkin={c}
-                viewer="client"
-                attendee={{
-                  name: coachName,
-                  imageUrl: coachProfile.avatarUrl ?? undefined,
-                }}
-                actions={
-                  <>
-                    {c.rescheduleCount < MAX_RESCHEDULES && (
-                      <Button
-                        type="button"
-                        onClick={() => openReschedule(c.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Reschedule
-                      </Button>
-                    )}
-                    <a
-                      href={MEET_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={buttonVariants({
-                        variant: 'outline',
-                        size: 'sm',
-                      })}
-                    >
-                      <Video size={14} aria-hidden="true" />
-                      Join Meet
-                    </a>
-                  </>
-                }
-              />
-            ))
-          )}
-        </TabsContent>
+      <CheckinListing
+        party="client"
+        clientId={CLIENT_ID}
+        defaultTab="upcoming"
+        waitingForLabel="Waiting for your coach"
+        emptyCopy={EMPTY_COPY}
+        renderCheckin={(c, tab) => (
+          <CheckinCard
+            checkin={c}
+            status={statusOf(c)}
+            viewer={viewer}
+            attendee={coach}
+            actions={actionsFor(c, tab)}
+          />
+        )}
+      />
 
-        {/* Requests */}
-        <TabsContent value="requests" className="space-y-3">
-          {pending.length === 0 ? (
-            <EmptyState
-              icon={CalendarPlus}
-              title="No open requests"
-              description="Requests you send and proposals from your coach show up here."
-            />
-          ) : (
-            pending.map((c) => {
-              const needsResponse = c.proposedBy === 'coach';
-              const isRescheduling = c.status === 'rescheduling';
-              const canReschedule = c.rescheduleCount < MAX_RESCHEDULES;
-              return (
-                <CheckinCard
-                  key={c.id}
-                  checkin={c}
-                  viewer="client"
-                  attendee={{
-                    name: coachName,
-                    imageUrl: coachProfile.avatarUrl ?? undefined,
-                  }}
-                  actions={
-                    needsResponse ? (
-                      <>
-                        <Button
-                          type="button"
-                          onClick={() => handleDecline(c)}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          Decline
-                        </Button>
-                        {canReschedule && (
-                          <Button
-                            type="button"
-                            onClick={() => openReschedule(c.id)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Reschedule
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          onClick={() =>
-                            isRescheduling
-                              ? handleAcceptReschedule(c)
-                              : handleApprove(c)
-                          }
-                          variant="primary"
-                          size="sm"
-                        >
-                          {isRescheduling ? 'Accept' : 'Approve'}
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => handleCancelRequest(c)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Cancel request
-                      </Button>
-                    )
-                  }
-                />
-              );
-            })
-          )}
-        </TabsContent>
-
-        {/* Past */}
-        <TabsContent value="past" className="space-y-3">
-          {past.length === 0 ? (
-            <EmptyState
-              icon={Clock}
-              title="No past check-ins yet"
-              description="Completed and cancelled check-ins will appear here."
-            />
-          ) : (
-            past.map((c) => (
-              <CheckinCard
-                key={c.id}
-                checkin={c}
-                viewer="client"
-                attendee={{
-                  name: coachName,
-                  imageUrl: coachProfile.avatarUrl ?? undefined,
-                }}
-                muted
-              />
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Request a check-in */}
       <CheckinSchedulerSheet
         open={showRequest}
         onOpenChange={setShowRequest}
         variant="request"
         title="Request a check-in"
-        description={`Pick a date and time that works for you. ${coachName} will confirm or propose another slot.`}
+        description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
         selectedDate={reqDate}
         onDateChange={setReqDate}
         selectedTime={reqTime}
@@ -427,7 +333,6 @@ export function ClientCheckins() {
         submitLabel="Request"
       />
 
-      {/* Reschedule */}
       <CheckinSchedulerSheet
         open={Boolean(rescheduleTarget)}
         onOpenChange={(open) => {
@@ -453,22 +358,28 @@ export function ClientCheckins() {
         messagePlaceholder="Add a note for your coach (optional)"
       />
 
+      <ReviewCallScheduler open={movingReview} onOpenChange={setMovingReview} />
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+        title="Cancel this check-in?"
+        description={
+          cancelTarget
+            ? `${formatCheckinDate(cancelTarget.date)} at ${formatCheckinTime(cancelTarget.time)}.`
+            : undefined
+        }
+        cancelLabel="Keep"
+        confirmLabel="Cancel check-in"
+        onConfirm={confirmCancel}
+        tone="destructive"
+      />
+
       <Button
-        type="button"
-        onClick={() => setShowRequest(true)}
-        disabled={pendingExists}
-        aria-label={
-          pendingExists
-            ? 'Check-in request pending — awaiting your coach'
-            : 'Request a check-in'
-        }
-        title={
-          pendingExists
-            ? 'You already have a check-in request awaiting your coach'
-            : 'Request a check-in with your coach'
-        }
-        variant="primary"
-        size="md"
+        {...requestButtonProps}
+        aria-label="Request a check-in"
         className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
       >
         <CalendarPlus size={18} aria-hidden="true" />

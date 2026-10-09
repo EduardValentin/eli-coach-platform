@@ -38,7 +38,7 @@ const LINKS = [
     postMvp: true,
   },
   { name: 'Clients', href: '/coach/clients', icon: Users },
-  { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
+  { name: 'Check-ins', href: '/coach/checkins', icon: CalendarDays },
   { name: 'Assessment calls', href: '/coach/assessment-calls', icon: Video },
   { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
@@ -122,7 +122,7 @@ const SidebarNavigation = ({
         >
           <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
           <span className="text-sm font-medium">{link.name}</span>
-          {link.name === 'Schedule' && pendingCheckins > 0 && (
+          {link.name === 'Check-ins' && pendingCheckins > 0 && (
             <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-micro font-bold flex items-center justify-center">
               {pendingCheckins}
             </span>
@@ -200,13 +200,13 @@ const DesktopSidebar = ({
 export function CoachSidebar() {
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion() ?? false;
-  const { getPendingCheckins } = useCheckins();
+  const { getCheckinsAwaiting } = useCheckins();
   const { coachProfile } = useCoachProfile();
   const { appState } = useAppState();
   const links = LINKS.filter(
     (link) => !('postMvp' in link) || appState.prototypeMode === 'post-mvp',
   );
-  const pendingCount = getPendingCheckins().length;
+  const pendingCount = getCheckinsAwaiting('coach').length;
   const coachAvatarUrl = coachProfile.avatarUrl;
   const [isTopBarNotificationsOpen, setIsTopBarNotificationsOpen] =
     useState(false);

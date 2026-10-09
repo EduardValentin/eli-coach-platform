@@ -84,9 +84,9 @@ function Root() {
           <NutritionProvider>
           <UnitPreferencesProvider>
           <CycleProvider>
-          <CheckinProvider>
             <AssessmentCallProvider>
             <ClientJourneyProvider>
+            <CheckinProvider>
             <MessagingProvider>
             <ResourceProvider>
               <NotificationProvider>
@@ -99,9 +99,9 @@ function Root() {
               </NotificationProvider>
             </ResourceProvider>
             </MessagingProvider>
+            </CheckinProvider>
             </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </CheckinProvider>
           </CycleProvider>
           </UnitPreferencesProvider>
           </NutritionProvider>

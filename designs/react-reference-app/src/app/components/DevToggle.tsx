@@ -85,7 +85,7 @@ import {
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
-import { useCheckins } from '../context/CheckinContext';
+import { DEMO_CLIENT, useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -253,7 +253,7 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
 
 type DashboardCallsSeed = 'none' | 'one' | 'twoLeftToday' | 'sample' | 'many';
 
-type PendingCheckinsSeed = 'seeded' | 'none';
+type PendingCheckinsSeed = 'seeded' | 'none' | 'many';
 
 function parseCoachListingControl(value: string): PrototypeCoachListingOutcome {
   if (value === 'unavailable') return value;
@@ -262,7 +262,7 @@ function parseCoachListingControl(value: string): PrototypeCoachListingOutcome {
 }
 
 function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
-  if (value === 'none') return value;
+  if (value === 'none' || value === 'many') return value;
 
   return 'seeded';
 }
@@ -408,7 +408,15 @@ export function DevToggle() {
         ]
       : []),
   ]);
-  const { clearPendingCheckins, restoreSeededCheckins } = useCheckins();
+  const {
+    clearPendingCheckins,
+    restoreSeededCheckins,
+    seedManyCheckins,
+    hasOpenClientRequest,
+    setOpenClientRequest,
+    hasLiveCheckin,
+    setLiveCheckin,
+  } = useCheckins();
 
   const seedDashboardCalls = (value: string) => {
     const seed = parseDashboardCallsControl(value);
@@ -435,6 +443,11 @@ export function DevToggle() {
 
     if (seed === 'none') {
       clearPendingCheckins();
+      return;
+    }
+
+    if (seed === 'many') {
+      seedManyCheckins();
       return;
     }
 
@@ -521,6 +534,9 @@ export function DevToggle() {
                 )}
                 <TabsTrigger value="coach" className={TAB_TRIGGER_CLASS}>
                   Coach
+                </TabsTrigger>
+                <TabsTrigger value="checkins" className={TAB_TRIGGER_CLASS}>
+                  Check-ins
                 </TabsTrigger>
                 <TabsTrigger value="journey" className={TAB_TRIGGER_CLASS}>
                   Journey
@@ -862,7 +878,7 @@ export function DevToggle() {
                 </TabsContent>
               )}
 
-              <TabsContent value="coach" className={TAB_PANEL_CLASS}>
+              <TabsContent value="checkins" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-pending-checkins"
@@ -880,9 +896,25 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Seeded check-ins</SelectItem>
                       <SelectItem value="none">None pending</SelectItem>
+                      <SelectItem value="many">Many check-ins</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                <DevCheckboxRow
+                  id="dev-open-client-request"
+                  label="Client has an open request"
+                  checked={hasOpenClientRequest(DEMO_CLIENT.id)}
+                  onCheckedChange={setOpenClientRequest}
+                />
+                <DevCheckboxRow
+                  id="dev-live-checkin"
+                  label="Client check-in live now"
+                  checked={hasLiveCheckin}
+                  onCheckedChange={setLiveCheckin}
+                />
+              </TabsContent>
+
+              <TabsContent value="coach" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-coach-calls-listing"

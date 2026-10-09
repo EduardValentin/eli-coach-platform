@@ -2,103 +2,77 @@ import type { ReactNode } from 'react';
 import { AppointmentCard } from './coach-portal/AppointmentCard';
 import type { AppointmentAttendee } from './coach-portal/appointment';
 import { Badge } from './ui/badge';
-import { CheckinTypeBadge } from './CheckinTypeBadge';
-import type { CheckIn } from '../context/CheckinContext';
-import { browserTimeZone, checkinInstant } from '../utils/dateFormatters';
+import {
+  CHECKIN_KIND_LABEL,
+  checkinNote,
+  checkinStartsAt,
+  latestMove,
+  previousSlot,
+  type CheckIn,
+  type CheckinParty,
+  type CheckinStatus,
+} from '../domain/checkins';
+import { browserTimeZone } from '../utils/dateFormatters';
 
-export type CheckinViewer = 'coach' | 'client';
+export type CheckinViewer = {
+  party: CheckinParty;
+  counterpartName: string;
+};
 
-function pendingLabel(
-  status: CheckIn['status'],
-  viewer: CheckinViewer,
-): string {
-  if (status === 'rescheduling') return 'New time proposed';
-  return viewer === 'client' ? 'From your coach' : 'Requested';
+function nameFor(party: CheckinParty, viewer: CheckinViewer): string {
+  return party === viewer.party ? 'you' : viewer.counterpartName;
 }
 
-export function CheckinStatusBadge({
-  checkin,
-  viewer,
-}: {
-  checkin: CheckIn;
-  viewer: CheckinViewer;
-}) {
-  const clientFirstName = checkin.clientName.split(' ')[0];
+function moveLabel(checkin: CheckIn, viewer: CheckinViewer): string | null {
+  const move = latestMove(checkin);
+  if (!move) return null;
 
-  switch (checkin.status) {
-    case 'confirmed':
-      return <Badge tone="success">Confirmed</Badge>;
-    case 'completed':
-      return <Badge tone="muted">Completed</Badge>;
-    case 'declined':
-      return <Badge tone="muted">Declined</Badge>;
-    case 'cancelled':
-      return <Badge tone="muted">Cancelled</Badge>;
-    case 'rescheduling':
-    case 'pending': {
-      const viewerOwesResponse = checkin.proposedBy !== viewer;
-      if (viewerOwesResponse) {
-        return (
-          <Badge tone="pending">
-            {pendingLabel(checkin.status, viewer)}
-          </Badge>
-        );
-      }
-      return viewer === 'client' ? (
-        <Badge tone="muted">Awaiting your coach</Badge>
-      ) : (
-        <Badge tone="muted">Awaiting {clientFirstName}</Badge>
-      );
-    }
-    default:
-      return null;
-  }
+  const who = nameFor(move.by, viewer);
+  return move.move === 'new-time' ? `New time from ${who}` : `Requested by ${who}`;
+}
+
+function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 export function CheckinCard({
   checkin,
+  status,
   viewer,
   attendee,
-  muted = false,
   footnote,
   actions,
 }: {
   checkin: CheckIn;
+  status: CheckinStatus;
   viewer: CheckinViewer;
   attendee: AppointmentAttendee;
-  muted?: boolean;
   footnote?: string;
   actions?: ReactNode;
 }) {
   const timeZone = browserTimeZone();
-  const isRescheduling = checkin.status === 'rescheduling';
-  const supersededWhen =
-    isRescheduling && checkin.previousDate && checkin.previousTime
-      ? {
-          startsAt: checkinInstant(checkin.previousDate, checkin.previousTime),
-          timeZone,
-        }
-      : undefined;
+  const previous = previousSlot(checkin);
+  const previousWhen = previous ? { startsAt: previous, timeZone } : undefined;
+  const awaitingNewTime = status === 'pending' && previousWhen;
+  const isOver = status === 'passed' || status === 'cancelled';
+  const whenLabel = [CHECKIN_KIND_LABEL[checkin.kind], moveLabel(checkin, viewer)]
+    .filter(Boolean)
+    .join(' · ');
+  const note = checkinNote(checkin);
 
   return (
     <AppointmentCard
       attendee={attendee}
-      when={{ startsAt: checkinInstant(checkin.date, checkin.time), timeZone }}
-      supersededWhen={supersededWhen}
-      status={muted ? 'past' : 'scheduled'}
+      when={{ startsAt: checkinStartsAt(checkin), timeZone }}
+      whenLabel={whenLabel || undefined}
+      supersededWhen={awaitingNewTime ? previousWhen : undefined}
+      rescheduledFrom={awaitingNewTime ? undefined : previousWhen}
+      status={isOver ? 'past' : 'scheduled'}
       badges={
-        <>
-          <CheckinTypeBadge type={checkin.type} />
-          <CheckinStatusBadge checkin={checkin} viewer={viewer} />
-          {checkin.rescheduleCount > 0 && !isRescheduling && (
-            <Badge tone="muted">
-              {checkin.rescheduleCount} reschedule
-              {checkin.rescheduleCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-        </>
+        status === 'cancelled' ? <Badge tone="muted">Cancelled</Badge> : undefined
       }
-      quote={checkin.rescheduleMessage || checkin.note || undefined}
+      quote={note?.text}
+      quoteAuthor={note ? capitalized(nameFor(note.by, viewer)) : undefined}
       footnote={footnote}
       actions={actions}
     />

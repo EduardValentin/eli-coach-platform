@@ -10,6 +10,8 @@ import {
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -65,12 +67,16 @@ function renderDashboard(bookings: PrototypeBooking[]) {
   render(
     <MemoryRouter initialEntries={['/coach']}>
       <AppProvider>
-        <CheckinProvider>
+        <ClientProfileProvider>
           <AssessmentCallProvider>
-            <SeedBookings bookings={bookings} />
-            <CoachDashboard />
+            <ClientJourneyProvider>
+              <CheckinProvider>
+                <SeedBookings bookings={bookings} />
+                <CoachDashboard />
+              </CheckinProvider>
+            </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </CheckinProvider>
+        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

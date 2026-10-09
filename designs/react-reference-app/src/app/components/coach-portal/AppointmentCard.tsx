@@ -1,9 +1,10 @@
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, RefreshCw } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { DateTimeLabel } from '../DateTimeLabel';
 import { LABEL_CLASS } from '../typography';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../ui/utils';
 import { getInitials } from '../../utils/clientHelpers';
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
@@ -40,13 +41,51 @@ function AttendeeAvatar({
   );
 }
 
-function AppointmentTimeRow({ when }: { when: AppointmentTime }) {
+function formatAppointmentTime({ startsAt, timeZone }: AppointmentTime) {
+  return `${formatShortDay(startsAt, timeZone)} · ${formatSlotTime(startsAt, timeZone)}`;
+}
+
+function RescheduledMarker({ from }: { from: AppointmentTime }) {
+  const label = `Rescheduled from ${formatAppointmentTime(from)}`;
+
   return (
-    <DateTimeLabel
-      size="sm"
-      startsAt={when.startsAt}
-      timeZone={when.timeZone}
-    />
+    <Tooltip>
+      <TooltipTrigger
+        type="button"
+        className="inline-flex size-5 items-center justify-center self-center rounded-control text-text-secondary hover:text-text-primary"
+      >
+        <RefreshCw aria-hidden="true" size={12} />
+        <span className="sr-only">{label}</span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function AppointmentTimeRow({
+  when,
+  rescheduledFrom,
+  label,
+}: {
+  when: AppointmentTime;
+  rescheduledFrom?: AppointmentTime;
+  label?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-1.5">
+      <DateTimeLabel
+        size="sm"
+        startsAt={when.startsAt}
+        timeZone={when.timeZone}
+      />
+      {rescheduledFrom && <RescheduledMarker from={rescheduledFrom} />}
+      {label && (
+        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+          <span className="hidden sm:inline">· </span>
+          {label}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -114,9 +153,12 @@ export function AppointmentCard({
   status = 'scheduled',
   titleElement: Title = 'p',
   badges,
+  whenLabel,
   supersededWhen,
+  rescheduledFrom,
   details = [],
   quote,
+  quoteAuthor,
   footnote,
   actions,
 }: {
@@ -125,9 +167,12 @@ export function AppointmentCard({
   status?: AppointmentStatus;
   titleElement?: AppointmentTitleElement;
   badges?: ReactNode;
+  whenLabel?: string;
   supersededWhen?: AppointmentTime;
+  rescheduledFrom?: AppointmentTime;
   details?: readonly AppointmentDetail[];
   quote?: string;
+  quoteAuthor?: string;
   footnote?: string;
   actions?: ReactNode;
 }) {
@@ -151,13 +196,15 @@ export function AppointmentCard({
 
           {supersededWhen && (
             <s className="mb-0.5 block text-xs text-text-secondary">
-              {formatShortDay(supersededWhen.startsAt, supersededWhen.timeZone)}{' '}
-              ·{' '}
-              {formatSlotTime(supersededWhen.startsAt, supersededWhen.timeZone)}
+              {formatAppointmentTime(supersededWhen)}
             </s>
           )}
 
-          <AppointmentTimeRow when={when} />
+          <AppointmentTimeRow
+            when={when}
+            rescheduledFrom={rescheduledFrom}
+            label={whenLabel}
+          />
 
           <AttendeeContactRow attendee={attendee} />
 
@@ -165,6 +212,9 @@ export function AppointmentCard({
 
           {quote && (
             <p className="text-xs text-text-secondary italic mt-2 whitespace-pre-line">
+              {quoteAuthor && (
+                <span className="not-italic font-medium">{quoteAuthor}: </span>
+              )}
               "{quote}"
             </p>
           )}

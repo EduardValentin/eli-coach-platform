@@ -1,4 +1,4 @@
-import { addDays, addMonths, set, subDays } from 'date-fns';
+import { addDays, addMonths, set, startOfHour, subDays } from 'date-fns';
 import {
   emptyOnboarding,
   isBeforeStage,
@@ -537,7 +537,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
         : { requests: [] },
     programReadyAt: reached('program-ready') ? programReadyAt : null,
     reviewCall: reached('review-call-scheduled')
-      ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
+      ? { startsAt: startOfHour(addDays(now, 1)), scheduledAt: subDays(now, 1) }
       : undefined,
     measurements,
     progressPhotosConsentedAt: null,

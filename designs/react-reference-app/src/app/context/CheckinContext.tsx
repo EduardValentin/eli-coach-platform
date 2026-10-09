@@ -1,107 +1,158 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { isUpcoming } from '../utils/dateFormatters';
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import {
+  awaitsResponseFrom,
+  canPropose,
+  checkinStartsAt,
+  checkinStatus,
+  coachingEndsAt,
+  isOpenClientRequest,
+  programReviewCheckin,
+  type CheckIn,
+  type CheckinClock,
+  type CheckinParty,
+  type CheckinStatus,
+} from '../domain/checkins';
+import { useClientJourneys } from './ClientJourneyContext';
+import { toISODate } from '../utils/dateFormatters';
 
-export type CheckinType = 'ad-hoc' | 'recurring';
-export type CheckinStatus = 'pending' | 'confirmed' | 'declined' | 'completed' | 'rescheduling' | 'cancelled';
-export type CheckinSource = 'client-request' | 'plan-schedule' | 'coach-request';
+export type { CheckIn } from '../domain/checkins';
 
-export const MAX_RESCHEDULES = 2;
+export const DEMO_CLIENT = { id: 'c1', name: 'Jane Doe' } as const;
 
-export interface CheckIn {
-  id: string;
+const LIVE_CHECKIN_ID = 'ck-live';
+const OPEN_REQUEST_ID = 'ck-open-request';
+
+type CheckinRequest = {
   clientId: string;
   clientName: string;
-  coachId: string;
-  date: string;       // ISO date 'YYYY-MM-DD'
-  time: string;        // 24h 'HH:MM'
-  type: CheckinType;
-  status: CheckinStatus;
-  source: CheckinSource;
-  planId?: string;
-  createdAt: string;
+  date: string;
+  time: string;
   note?: string;
-  initiatedBy: 'coach' | 'client';
-  proposedBy?: 'coach' | 'client';
-  rescheduleCount: number;
-  previousDate?: string;
-  previousTime?: string;
-  rescheduleMessage?: string;
-}
+};
 
 interface CheckinContextType {
   checkins: CheckIn[];
-  requestCheckin: (data: { clientId: string; clientName: string; date: string; time: string; note?: string }) => CheckIn | null;
-  coachInitiateCheckin: (data: { clientId: string; clientName: string; date: string; time: string; note?: string }) => CheckIn;
+  statusOf: (checkin: CheckIn) => CheckinStatus;
+  requestCheckin: (data: CheckinRequest) => CheckIn | null;
+  coachInitiateCheckin: (data: CheckinRequest) => CheckIn;
   approveCheckin: (checkinId: string) => void;
-  declineCheckin: (checkinId: string) => void;
-  completeCheckin: (checkinId: string) => void;
-  rescheduleCheckin: (checkinId: string, newDate: string, newTime: string, proposedBy: 'coach' | 'client', message?: string) => boolean;
-  acceptReschedule: (checkinId: string) => void;
+  cancelCheckin: (checkinId: string) => void;
+  proposeNewTime: (
+    checkinId: string,
+    slot: { date: string; time: string },
+    proposedBy: CheckinParty,
+    message?: string,
+  ) => boolean;
   getUpcomingCheckins: (clientId?: string) => CheckIn[];
   getPendingCheckins: (clientId?: string) => CheckIn[];
+  getPastCheckins: (clientId?: string) => CheckIn[];
+  getCheckinsAwaiting: (party: CheckinParty, clientId?: string) => CheckIn[];
+  hasOpenClientRequest: (clientId: string) => boolean;
+  getBookedSlots: (date: string) => string[];
   clearPendingCheckins: () => void;
   restoreSeededCheckins: () => void;
-  getActionableCheckins: (clientId: string, role: 'coach' | 'client') => CheckIn[];
-  hasPendingAdHoc: (clientId: string) => boolean;
-  getBookedSlots: (date: string) => string[];
-  generateRecurringCheckins: (planId: string, clientId: string, clientName: string) => void;
+  seedManyCheckins: () => void;
+  setOpenClientRequest: (open: boolean) => void;
+  hasLiveCheckin: boolean;
+  setLiveCheckin: (live: boolean) => void;
 }
 
 const CheckinContext = createContext<CheckinContextType | undefined>(undefined);
 
-// Helper to get upcoming dates
-function getNextWeekday(dayOfWeek: number, weeksAhead: number): string {
+function nextWeekday(dayOfWeek: number, weeksAhead: number): string {
   const d = new Date();
   const diff = (dayOfWeek - d.getDay() + 7) % 7 || 7;
   d.setDate(d.getDate() + diff + weeksAhead * 7);
-  return d.toISOString().split('T')[0];
+  return toISODate(d);
 }
 
-// Mock seed data
+function daysAgo(days: number): string {
+  return toISODate(new Date(Date.now() - 86400000 * days));
+}
+
+function createdDaysAgo(days: number): string {
+  return new Date(Date.now() - 86400000 * days).toISOString();
+}
+
+function newCheckinId(): string {
+  return 'ck-' + Math.random().toString(36).substring(2, 8);
+}
+
 const MOCK_CHECKINS: CheckIn[] = [
   {
     id: 'ck-1',
     clientId: 'c1',
     clientName: 'Jane Doe',
     coachId: 'coach-1',
-    date: getNextWeekday(3, 0),
+    date: nextWeekday(3, 0),
     time: '10:00',
-    type: 'recurring',
-    status: 'confirmed',
-    source: 'plan-schedule',
-    planId: 'p1',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    kind: 'recurring',
+    status: 'approved',
     initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(5),
     rescheduleCount: 0,
+  },
+  {
+    id: 'ck-11',
+    clientId: 'c1',
+    clientName: 'Jane Doe',
+    coachId: 'coach-1',
+    date: nextWeekday(5, 0),
+    time: '12:00',
+    kind: 'ad-hoc',
+    status: 'approved',
+    initiatedBy: 'client',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(3),
+    note: 'Want to go over my food log',
+    rescheduleCount: 1,
+    previousDate: nextWeekday(4, 0),
+    previousTime: '11:00',
   },
   {
     id: 'ck-2',
     clientId: 'c1',
     clientName: 'Jane Doe',
     coachId: 'coach-1',
-    date: getNextWeekday(3, 1),
+    date: nextWeekday(3, 1),
     time: '10:00',
-    type: 'recurring',
-    status: 'confirmed',
-    source: 'plan-schedule',
-    planId: 'p1',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    kind: 'recurring',
+    status: 'approved',
     initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(5),
     rescheduleCount: 0,
+  },
+  {
+    id: 'ck-10',
+    clientId: 'c1',
+    clientName: 'Jane Doe',
+    coachId: 'coach-1',
+    date: nextWeekday(4, 2),
+    time: '14:00',
+    kind: 'recurring',
+    status: 'pending',
+    initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(5),
+    rescheduleCount: 1,
+    previousDate: nextWeekday(3, 2),
+    previousTime: '10:00',
+    rescheduleMessage: 'I am travelling that Wednesday. Could we do Thursday at 2 PM instead?',
   },
   {
     id: 'ck-3',
     clientId: 'c2',
     clientName: 'Jessica Alba',
     coachId: 'coach-1',
-    date: getNextWeekday(4, 0),
+    date: nextWeekday(4, 0),
     time: '14:00',
-    type: 'recurring',
-    status: 'confirmed',
-    source: 'plan-schedule',
-    planId: 'p2',
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    kind: 'recurring',
+    status: 'approved',
     initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(3),
     rescheduleCount: 0,
   },
   {
@@ -109,15 +160,14 @@ const MOCK_CHECKINS: CheckIn[] = [
     clientId: 'c2',
     clientName: 'Jessica Alba',
     coachId: 'coach-1',
-    date: getNextWeekday(5, 0),
+    date: nextWeekday(5, 0),
     time: '11:00',
-    type: 'ad-hoc',
+    kind: 'ad-hoc',
     status: 'pending',
-    source: 'client-request',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    note: 'I have some questions about my macros',
     initiatedBy: 'client',
     proposedBy: 'client',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    note: 'I have some questions about my macros',
     rescheduleCount: 0,
   },
   {
@@ -125,51 +175,43 @@ const MOCK_CHECKINS: CheckIn[] = [
     clientId: 'c3',
     clientName: 'Emma Stone',
     coachId: 'coach-1',
-    date: getNextWeekday(2, 0),
+    date: nextWeekday(2, 0),
     time: '15:00',
-    type: 'ad-hoc',
+    kind: 'ad-hoc',
     status: 'pending',
-    source: 'client-request',
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    note: 'Knee feels off after lunges, want to check form',
     initiatedBy: 'client',
     proposedBy: 'client',
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+    note: 'Knee feels off after lunges, want to check form',
     rescheduleCount: 0,
   },
-  // Rescheduling demo — coach rescheduled a client-initiated check-in
   {
-    id: 'ck-10',
-    clientId: 'c1',
-    clientName: 'Jane Doe',
+    id: 'ck-13',
+    clientId: 'c3',
+    clientName: 'Emma Stone',
     coachId: 'coach-1',
-    date: getNextWeekday(4, 0),
-    time: '14:00',
-    type: 'ad-hoc',
-    status: 'rescheduling',
-    source: 'client-request',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    note: 'Want to discuss nutrition plan adjustments',
-    initiatedBy: 'client',
+    date: nextWeekday(1, 1),
+    time: '09:00',
+    kind: 'ad-hoc',
+    status: 'pending',
+    initiatedBy: 'coach',
     proposedBy: 'coach',
-    rescheduleCount: 1,
-    previousDate: getNextWeekday(3, 0),
-    previousTime: '11:00',
-    rescheduleMessage: 'That slot is taken — how about Thursday at 2 PM instead?',
+    createdAt: createdDaysAgo(1),
+    note: 'Quick look at your first two weeks',
+    rescheduleCount: 0,
   },
-  // Past — completed
   {
     id: 'ck-6',
     clientId: 'c1',
     clientName: 'Jane Doe',
     coachId: 'coach-1',
-    date: new Date(Date.now() - 86400000 * 7).toISOString().split('T')[0],
+    date: daysAgo(7),
     time: '10:00',
-    type: 'recurring',
-    status: 'completed',
-    source: 'plan-schedule',
-    planId: 'p1',
-    createdAt: new Date(Date.now() - 86400000 * 12).toISOString(),
+    kind: 'recurring',
+    status: 'approved',
     initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(12),
     rescheduleCount: 0,
   },
   {
@@ -177,14 +219,28 @@ const MOCK_CHECKINS: CheckIn[] = [
     clientId: 'c2',
     clientName: 'Jessica Alba',
     coachId: 'coach-1',
-    date: new Date(Date.now() - 86400000 * 5).toISOString().split('T')[0],
+    date: daysAgo(5),
     time: '14:00',
-    type: 'recurring',
-    status: 'completed',
-    source: 'plan-schedule',
-    planId: 'p2',
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    kind: 'recurring',
+    status: 'approved',
     initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: createdDaysAgo(10),
+    rescheduleCount: 0,
+  },
+  {
+    id: 'ck-12',
+    clientId: 'c1',
+    clientName: 'Jane Doe',
+    coachId: 'coach-1',
+    date: daysAgo(2),
+    time: '15:00',
+    kind: 'ad-hoc',
+    status: 'pending',
+    initiatedBy: 'client',
+    proposedBy: 'client',
+    createdAt: createdDaysAgo(6),
+    note: 'Can we talk about my deload week?',
     rescheduleCount: 0,
   },
   {
@@ -192,15 +248,14 @@ const MOCK_CHECKINS: CheckIn[] = [
     clientId: 'c1',
     clientName: 'Jane Doe',
     coachId: 'coach-1',
-    date: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0],
+    date: daysAgo(3),
     time: '16:00',
-    type: 'ad-hoc',
-    status: 'declined',
-    source: 'client-request',
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    note: 'Wanted to reschedule — coach was unavailable',
+    kind: 'ad-hoc',
+    status: 'cancelled',
     initiatedBy: 'client',
     proposedBy: 'client',
+    createdAt: createdDaysAgo(4),
+    note: 'Wanted to talk through travel week',
     rescheduleCount: 0,
   },
   {
@@ -208,220 +263,388 @@ const MOCK_CHECKINS: CheckIn[] = [
     clientId: 'c3',
     clientName: 'Emma Stone',
     coachId: 'coach-1',
-    date: new Date(Date.now() - 86400000 * 10).toISOString().split('T')[0],
+    date: daysAgo(10),
     time: '11:00',
-    type: 'ad-hoc',
-    status: 'completed',
-    source: 'client-request',
-    createdAt: new Date(Date.now() - 86400000 * 11).toISOString(),
+    kind: 'ad-hoc',
+    status: 'approved',
     initiatedBy: 'client',
     proposedBy: 'client',
+    createdAt: createdDaysAgo(11),
     rescheduleCount: 0,
   },
 ];
 
-function isPending(checkin: CheckIn): boolean {
-  return checkin.status === 'pending' || checkin.status === 'rescheduling';
+function openRequestSample(): CheckIn {
+  return {
+    id: OPEN_REQUEST_ID,
+    clientId: DEMO_CLIENT.id,
+    clientName: DEMO_CLIENT.name,
+    coachId: 'coach-1',
+    date: nextWeekday(1, 0),
+    time: '09:00',
+    kind: 'ad-hoc',
+    status: 'pending',
+    initiatedBy: 'client',
+    proposedBy: 'client',
+    createdAt: new Date().toISOString(),
+    note: 'Can we look at my squat form?',
+    rescheduleCount: 0,
+  };
+}
+
+function liveCheckinSample(): CheckIn {
+  const now = new Date();
+  return {
+    id: LIVE_CHECKIN_ID,
+    clientId: DEMO_CLIENT.id,
+    clientName: DEMO_CLIENT.name,
+    coachId: 'coach-1',
+    date: toISODate(now),
+    time: `${String(now.getHours()).padStart(2, '0')}:00`,
+    kind: 'recurring',
+    status: 'approved',
+    initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: now.toISOString(),
+    rescheduleCount: 0,
+  };
+}
+
+const SAMPLE_CLIENTS = [
+  { id: 'c1', name: 'Jane Doe' },
+  { id: 'c2', name: 'Jessica Alba' },
+  { id: 'c3', name: 'Emma Stone' },
+  { id: 'c4', name: 'Sarah Jenkins' },
+  { id: 'c5', name: 'Mia Thermopolis' },
+] as const;
+
+const SAMPLE_NOTES = [
+  'Can we go over my macros?',
+  'My lower back felt tight after deadlifts',
+  'Travelling next week, want to adjust the plan',
+  'Questions about my cycle and training load',
+  'Can we look at my squat depth?',
+];
+
+function manyCheckinsSample(): CheckIn[] {
+  const sample: CheckIn[] = [];
+  SAMPLE_CLIENTS.forEach((client, clientIndex) => {
+    const weeks = client.id === DEMO_CLIENT.id ? 12 : 4;
+    for (let week = 0; week < weeks; week += 1) {
+      if (week !== 2) sample.push({
+        id: `ck-many-${client.id}-recurring-${week}`,
+        clientId: client.id,
+        clientName: client.name,
+        coachId: 'coach-1',
+        date: nextWeekday(1 + clientIndex, week),
+        time: `${String(9 + clientIndex).padStart(2, '0')}:00`,
+        kind: 'recurring',
+        status: 'approved',
+        initiatedBy: 'coach',
+        proposedBy: 'coach',
+        createdAt: createdDaysAgo(20),
+        rescheduleCount: 0,
+      });
+      sample.push({
+        id: `ck-many-${client.id}-past-${week}`,
+        clientId: client.id,
+        clientName: client.name,
+        coachId: 'coach-1',
+        date: daysAgo(7 * (week + 1) - clientIndex),
+        time: `${String(9 + clientIndex).padStart(2, '0')}:00`,
+        kind: week === 2 ? 'ad-hoc' : 'recurring',
+        status: week === 3 ? 'cancelled' : 'approved',
+        initiatedBy: week === 2 ? 'client' : 'coach',
+        proposedBy: week === 2 ? 'client' : 'coach',
+        createdAt: createdDaysAgo(40),
+        rescheduleCount: 0,
+      });
+    }
+    const note = SAMPLE_NOTES[clientIndex % SAMPLE_NOTES.length];
+    const requestBase = {
+      clientId: client.id,
+      clientName: client.name,
+      coachId: 'coach-1',
+      kind: 'ad-hoc' as const,
+      status: 'pending' as const,
+      rescheduleCount: 0,
+    };
+    sample.push(
+      {
+        ...requestBase,
+        id: `ck-many-${client.id}-client-request`,
+        date: nextWeekday(1 + (clientIndex % 5), 0),
+        time: '12:00',
+        initiatedBy: 'client',
+        proposedBy: 'client',
+        createdAt: createdDaysAgo(1),
+        note,
+      },
+      {
+        ...requestBase,
+        id: `ck-many-${client.id}-coach-request`,
+        date: nextWeekday(1 + ((clientIndex + 2) % 5), 1),
+        time: '13:00',
+        initiatedBy: 'coach',
+        proposedBy: 'coach',
+        createdAt: createdDaysAgo(2),
+      },
+      {
+        ...requestBase,
+        id: `ck-many-${client.id}-new-time`,
+        kind: 'recurring',
+        date: nextWeekday(1 + ((clientIndex + 1) % 5), 2),
+        time: '15:00',
+        initiatedBy: 'coach',
+        proposedBy: 'client',
+        createdAt: createdDaysAgo(3),
+        rescheduleCount: 1,
+        previousDate: nextWeekday(1 + clientIndex, 2),
+        previousTime: `${String(9 + clientIndex).padStart(2, '0')}:00`,
+      },
+    );
+  });
+  return sample;
+}
+
+function byStartAscending(a: CheckIn, b: CheckIn): number {
+  return checkinStartsAt(a).getTime() - checkinStartsAt(b).getTime();
+}
+
+function forClient(clientId?: string) {
+  return (checkin: CheckIn) => !clientId || checkin.clientId === clientId;
 }
 
 export function CheckinProvider({ children }: { children: ReactNode }) {
-  const [checkins, setCheckins] = useState<CheckIn[]>(MOCK_CHECKINS);
+  const [stored, setStored] = useState<CheckIn[]>(MOCK_CHECKINS);
+  const { demoJourney } = useClientJourneys();
 
-  const hasPendingAdHoc = useCallback(
-    (clientId: string) => checkins.some(
-      c => c.clientId === clientId && c.type === 'ad-hoc' && isPending(c)
-    ),
-    [checkins]
+  const programReview = useMemo(
+    () => programReviewCheckin(demoJourney, DEMO_CLIENT),
+    [demoJourney],
+  );
+  const demoCoachingEndsAt = coachingEndsAt(demoJourney.subscription);
+
+  const checkins = useMemo(
+    () => (programReview ? [programReview, ...stored] : stored),
+    [programReview, stored],
+  );
+
+  const clockFor = useCallback(
+    (checkin: CheckIn): CheckinClock => ({
+      now: new Date(),
+      coachingEndsAt:
+        checkin.clientId === DEMO_CLIENT.id ? demoCoachingEndsAt : undefined,
+    }),
+    [demoCoachingEndsAt],
+  );
+
+  const statusOf = useCallback(
+    (checkin: CheckIn) => checkinStatus(checkin, clockFor(checkin)),
+    [clockFor],
+  );
+
+  const hasOpenClientRequest = useCallback(
+    (clientId: string) =>
+      checkins.some(
+        (c) => c.clientId === clientId && isOpenClientRequest(c, clockFor(c)),
+      ),
+    [checkins, clockFor],
+  );
+
+  const updateCheckin = useCallback(
+    (checkinId: string, change: (checkin: CheckIn) => CheckIn) => {
+      setStored((prev) =>
+        prev.map((c) => (c.id === checkinId ? change(c) : c)),
+      );
+    },
+    [],
   );
 
   const requestCheckin = useCallback(
-    (data: { clientId: string; clientName: string; date: string; time: string; note?: string }): CheckIn | null => {
-      if (hasPendingAdHoc(data.clientId)) return null;
-      const newCheckin: CheckIn = {
-        id: 'ck-' + Math.random().toString(36).substring(2, 8),
-        clientId: data.clientId,
-        clientName: data.clientName,
+    (data: CheckinRequest): CheckIn | null => {
+      if (hasOpenClientRequest(data.clientId)) return null;
+      const request: CheckIn = {
+        ...data,
+        id: newCheckinId(),
         coachId: 'coach-1',
-        date: data.date,
-        time: data.time,
-        type: 'ad-hoc',
+        kind: 'ad-hoc',
         status: 'pending',
-        source: 'client-request',
-        createdAt: new Date().toISOString(),
-        note: data.note,
         initiatedBy: 'client',
         proposedBy: 'client',
-        rescheduleCount: 0,
-      };
-      setCheckins(prev => [newCheckin, ...prev]);
-      return newCheckin;
-    },
-    [hasPendingAdHoc]
-  );
-
-  const coachInitiateCheckin = useCallback(
-    (data: { clientId: string; clientName: string; date: string; time: string; note?: string }): CheckIn => {
-      const newCheckin: CheckIn = {
-        id: 'ck-' + Math.random().toString(36).substring(2, 8),
-        clientId: data.clientId,
-        clientName: data.clientName,
-        coachId: 'coach-1',
-        date: data.date,
-        time: data.time,
-        type: 'ad-hoc',
-        status: 'pending',
-        source: 'coach-request',
         createdAt: new Date().toISOString(),
-        note: data.note,
-        initiatedBy: 'coach',
-        proposedBy: 'coach',
         rescheduleCount: 0,
       };
-      setCheckins(prev => [newCheckin, ...prev]);
-      return newCheckin;
+      setStored((prev) => [request, ...prev]);
+      return request;
     },
-    []
+    [hasOpenClientRequest],
   );
 
-  const approveCheckin = useCallback((checkinId: string) => {
-    setCheckins(prev => prev.map(c => c.id === checkinId ? { ...c, status: 'confirmed' as CheckinStatus } : c));
+  const coachInitiateCheckin = useCallback((data: CheckinRequest): CheckIn => {
+    const proposal: CheckIn = {
+      ...data,
+      id: newCheckinId(),
+      coachId: 'coach-1',
+      kind: 'ad-hoc',
+      status: 'pending',
+      initiatedBy: 'coach',
+      proposedBy: 'coach',
+      createdAt: new Date().toISOString(),
+      rescheduleCount: 0,
+    };
+    setStored((prev) => [proposal, ...prev]);
+    return proposal;
   }, []);
 
-  const declineCheckin = useCallback((checkinId: string) => {
-    setCheckins(prev => prev.map(c => c.id === checkinId ? { ...c, status: 'cancelled' as CheckinStatus } : c));
-  }, []);
+  const approveCheckin = useCallback(
+    (checkinId: string) => {
+      updateCheckin(checkinId, (c) => ({
+        ...c,
+        status: 'approved',
+        rescheduleMessage: undefined,
+      }));
+    },
+    [updateCheckin],
+  );
 
-  const completeCheckin = useCallback((checkinId: string) => {
-    setCheckins(prev => prev.map(c => c.id === checkinId ? { ...c, status: 'completed' as CheckinStatus } : c));
-  }, []);
+  const cancelCheckin = useCallback(
+    (checkinId: string) => {
+      updateCheckin(checkinId, (c) => ({ ...c, status: 'cancelled' }));
+    },
+    [updateCheckin],
+  );
 
-  const rescheduleCheckin = useCallback(
-    (checkinId: string, newDate: string, newTime: string, proposedBy: 'coach' | 'client', message?: string): boolean => {
-      const checkin = checkins.find(c => c.id === checkinId);
-      if (!checkin || checkin.rescheduleCount >= MAX_RESCHEDULES) return false;
+  const proposeNewTime = useCallback(
+    (
+      checkinId: string,
+      slot: { date: string; time: string },
+      proposedBy: CheckinParty,
+      message?: string,
+    ): boolean => {
+      const checkin = stored.find((c) => c.id === checkinId);
+      if (!checkin || !canPropose(checkin)) return false;
 
-      setCheckins(prev => prev.map(c =>
-        c.id === checkinId
-          ? {
-              ...c,
-              status: 'rescheduling' as CheckinStatus,
-              previousDate: c.date,
-              previousTime: c.time,
-              date: newDate,
-              time: newTime,
-              proposedBy,
-              rescheduleCount: c.rescheduleCount + 1,
-              rescheduleMessage: message || undefined,
-            }
-          : c
-      ));
+      updateCheckin(checkinId, (c) => ({
+        ...c,
+        status: 'pending',
+        previousDate: c.date,
+        previousTime: c.time,
+        date: slot.date,
+        time: slot.time,
+        proposedBy,
+        rescheduleCount: c.rescheduleCount + 1,
+        rescheduleMessage: message || undefined,
+      }));
       return true;
     },
-    [checkins]
+    [stored, updateCheckin],
   );
 
-  const acceptReschedule = useCallback((checkinId: string) => {
-    setCheckins(prev => prev.map(c =>
-      c.id === checkinId
-        ? {
-            ...c,
-            status: 'confirmed' as CheckinStatus,
-            previousDate: undefined,
-            previousTime: undefined,
-            rescheduleMessage: undefined,
-          }
-        : c
-    ));
-  }, []);
+  const withStatus = useCallback(
+    (wanted: readonly CheckinStatus[], clientId?: string) =>
+      checkins.filter(
+        (c) => forClient(clientId)(c) && wanted.includes(statusOf(c)),
+      ),
+    [checkins, statusOf],
+  );
 
   const getUpcomingCheckins = useCallback(
     (clientId?: string) =>
-      checkins
-        .filter(c => c.status === 'confirmed' && isUpcoming(c.date) && (!clientId || c.clientId === clientId))
-        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
-    [checkins]
+      withStatus(['approved'], clientId).sort(byStartAscending),
+    [withStatus],
   );
-
-  const clearPendingCheckins = useCallback(() => {
-    setCheckins((previous) => previous.filter(checkin => !isPending(checkin)));
-  }, []);
-
-  const restoreSeededCheckins = useCallback(() => {
-    setCheckins(MOCK_CHECKINS);
-  }, []);
 
   const getPendingCheckins = useCallback(
     (clientId?: string) =>
-      checkins
-        .filter(c => isPending(c) && (!clientId || c.clientId === clientId))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [checkins]
+      withStatus(['pending'], clientId).sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      ),
+    [withStatus],
   );
 
-  const getActionableCheckins = useCallback(
-    (clientId: string, role: 'coach' | 'client') =>
-      checkins.filter(c => {
-        if (c.clientId !== clientId) return false;
-        const counterparty = role === 'coach' ? 'client' : 'coach';
-        if (c.status === 'pending' && c.proposedBy === counterparty) return true;
-        if (c.status === 'rescheduling' && c.proposedBy === counterparty) return true;
-        return false;
-      }),
-    [checkins]
+  const getPastCheckins = useCallback(
+    (clientId?: string) =>
+      withStatus(['passed', 'cancelled'], clientId).sort(
+        (a, b) => byStartAscending(b, a),
+      ),
+    [withStatus],
+  );
+
+  const getCheckinsAwaiting = useCallback(
+    (party: CheckinParty, clientId?: string) =>
+      getPendingCheckins(clientId).filter(
+        (c) => awaitsResponseFrom(c) === party,
+      ),
+    [getPendingCheckins],
   );
 
   const getBookedSlots = useCallback(
     (date: string): string[] =>
       checkins
-        .filter(c => c.date === date && c.status === 'confirmed')
-        .map(c => c.time),
-    [checkins]
+        .filter((c) => c.date === date && statusOf(c) === 'approved')
+        .map((c) => c.time),
+    [checkins, statusOf],
   );
 
-  const generateRecurringCheckins = useCallback(
-    (planId: string, clientId: string, clientName: string) => {
-      const newCheckins: CheckIn[] = [];
-      for (let week = 0; week < 4; week++) {
-        newCheckins.push({
-          id: 'ck-' + Math.random().toString(36).substring(2, 8),
-          clientId,
-          clientName,
-          coachId: 'coach-1',
-          date: getNextWeekday(3, week),
-          time: '10:00',
-          type: 'recurring',
-          status: 'confirmed',
-          source: 'plan-schedule',
-          planId,
-          createdAt: new Date().toISOString(),
-          initiatedBy: 'coach',
-          rescheduleCount: 0,
-        });
-      }
-      setCheckins(prev => [...newCheckins, ...prev]);
-    },
-    []
-  );
+  const clearPendingCheckins = useCallback(() => {
+    setStored((prev) => prev.filter((c) => c.status !== 'pending'));
+  }, []);
+
+  const restoreSeededCheckins = useCallback(() => {
+    setStored(MOCK_CHECKINS);
+  }, []);
+
+  const seedManyCheckins = useCallback(() => {
+    setStored(manyCheckinsSample());
+  }, []);
+
+  const setOpenClientRequest = useCallback((open: boolean) => {
+    setStored((prev) => {
+      const withoutRequests = prev.filter(
+        (c) =>
+          !(
+            c.clientId === DEMO_CLIENT.id &&
+            c.kind === 'ad-hoc' &&
+            c.initiatedBy === 'client' &&
+            c.status === 'pending'
+          ),
+      );
+      return open ? [openRequestSample(), ...withoutRequests] : withoutRequests;
+    });
+  }, []);
+
+  const hasLiveCheckin = stored.some((c) => c.id === LIVE_CHECKIN_ID);
+
+  const setLiveCheckin = useCallback((live: boolean) => {
+    setStored((prev) => {
+      const withoutLive = prev.filter((c) => c.id !== LIVE_CHECKIN_ID);
+      return live ? [liveCheckinSample(), ...withoutLive] : withoutLive;
+    });
+  }, []);
 
   return (
     <CheckinContext.Provider
       value={{
         checkins,
+        statusOf,
         requestCheckin,
         coachInitiateCheckin,
         approveCheckin,
-        declineCheckin,
-        completeCheckin,
-        rescheduleCheckin,
-        acceptReschedule,
+        cancelCheckin,
+        proposeNewTime,
         getUpcomingCheckins,
         getPendingCheckins,
+        getPastCheckins,
+        getCheckinsAwaiting,
+        hasOpenClientRequest,
+        getBookedSlots,
         clearPendingCheckins,
         restoreSeededCheckins,
-        getActionableCheckins,
-        hasPendingAdHoc,
-        getBookedSlots,
-        generateRecurringCheckins,
+        seedManyCheckins,
+        setOpenClientRequest,
+        hasLiveCheckin,
+        setLiveCheckin,
       }}
     >
       {children}
