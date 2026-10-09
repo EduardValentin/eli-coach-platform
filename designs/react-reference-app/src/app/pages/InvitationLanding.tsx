@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, MailQuestion, UserRound } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
-import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
+import { MailQuestion, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { ErrorPage, ErrorPageLink } from '../components/ErrorPage';
 import { Button } from '../components/ThemeButton';
 import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
@@ -105,9 +105,9 @@ export function InvitationLanding() {
       title={UNAVAILABLE_TITLE}
       description={UNAVAILABLE_BODY}
     >
-      <Link className={ERROR_PAGE_ACTION_CLASS} to="/">
-        Back to home <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      <ErrorPageLink direction="back" to="/">
+        Back to home
+      </ErrorPageLink>
     </ErrorPage>
   );
 }

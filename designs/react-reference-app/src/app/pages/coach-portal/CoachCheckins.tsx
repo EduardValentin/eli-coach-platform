@@ -17,7 +17,10 @@ import {
   toISODate,
   to24h,
 } from '../../utils/dateFormatters';
-import { CheckinCard } from '../../components/CheckinCard';
+import {
+  CheckinCard,
+  type CheckinRowActions,
+} from '../../components/CheckinCard';
 import {
   CheckinListing,
   type CheckinEmptyCopy,
@@ -216,8 +219,8 @@ export function CoachCheckins() {
     setRescheduleTarget(null);
   };
 
-  const waitingActions = (c: CheckIn) =>
-    canWithdrawRequest(c, 'coach') ? (
+  const waitingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: canWithdrawRequest(c, 'coach') ? (
       <Button
         onClick={() => handleWithdraw(c)}
         disabled={answering(c)}
@@ -227,63 +230,50 @@ export function CoachCheckins() {
       >
         {busyLabel(c, 'withdraw', 'Cancel request')}
       </Button>
-    ) : undefined;
+    ) : undefined,
+  });
 
-  const answerActions = (c: CheckIn) => (
-    <>
-      <Button
-        onClick={() => handleDecline(c)}
-        disabled={answering(c)}
-        aria-busy={answerInFlight(c) === 'decline' || undefined}
-        variant="ghost"
-        size="xs"
-      >
-        {busyLabel(c, 'decline', 'Decline')}
-      </Button>
-      {canPropose(c) && (
+  const answerActions = (c: CheckIn): CheckinRowActions => ({
+    shown: (
+      <>
         <Button
-          onClick={() => openReschedule(c)}
+          onClick={() => handleDecline(c)}
           disabled={answering(c)}
-          variant="outline"
+          aria-busy={answerInFlight(c) === 'decline' || undefined}
+          variant="ghost"
           size="xs"
         >
-          Reschedule
+          {busyLabel(c, 'decline', 'Decline')}
         </Button>
-      )}
-      <Button
-        onClick={() => handleApprove(c)}
-        disabled={answering(c)}
-        aria-busy={answerInFlight(c) === 'approve' || undefined}
-        variant="primary"
-        size="xs"
-      >
-        {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
-      </Button>
-    </>
-  );
-
-  const upcomingActions = (c: CheckIn) => {
-    const reschedulable = c.kind !== 'program-review' && canPropose(c);
-    const cancellable = canCancelApproved(c, 'coach');
-
-    return (
-      <>
-        {cancellable && (
-          <Button onClick={() => setCancelTarget(c)} variant="ghost" size="xs">
-            Cancel
-          </Button>
-        )}
-        {reschedulable && (
-          <Button onClick={() => openReschedule(c)} variant="outline" size="xs">
-            Reschedule
-          </Button>
-        )}
-        <JoinMeetLink checkin={c} party="coach" size="xs" />
+        <Button
+          onClick={() => handleApprove(c)}
+          disabled={answering(c)}
+          aria-busy={answerInFlight(c) === 'approve' || undefined}
+          variant="primary"
+          size="xs"
+        >
+          {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
+        </Button>
       </>
-    );
-  };
+    ),
+    menu: {
+      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      disabled: answering(c),
+    },
+  });
 
-  const card = (c: CheckIn, actions?: ReactNode) => (
+  const upcomingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: <JoinMeetLink checkin={c} party="coach" size="xs" />,
+    menu: {
+      reschedule:
+        c.kind !== 'program-review' && canPropose(c)
+          ? () => openReschedule(c)
+          : undefined,
+      cancel: canCancelApproved(c, 'coach') ? () => setCancelTarget(c) : undefined,
+    },
+  });
+
+  const card = (c: CheckIn, actions: CheckinRowActions) => (
     <CheckinAnchor key={c.id} checkinId={c.id}>
       <CheckinCard
         checkin={c}
@@ -295,13 +285,14 @@ export function CoachCheckins() {
         }}
         footnote={c.planId ? 'Linked to training plan' : undefined}
         actions={actions}
+        actionSize="xs"
       />
     </CheckinAnchor>
   );
 
-  const actionsFor = (c: CheckIn, tab: CheckinTab) => {
+  const actionsFor = (c: CheckIn, tab: CheckinTab): CheckinRowActions => {
     if (tab === 'upcoming') return upcomingActions(c);
-    if (tab === 'past') return undefined;
+    if (tab === 'past') return {};
     return c.proposedBy === 'coach' ? waitingActions(c) : answerActions(c);
   };
 

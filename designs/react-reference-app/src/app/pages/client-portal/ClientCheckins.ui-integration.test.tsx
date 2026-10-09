@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
@@ -286,6 +286,181 @@ describe('requesting a check-in', () => {
   });
 });
 
+const MORE_ACTIONS = /^More actions for the check-in/;
+const ROW_ACTION = /^(Reschedule|Cancel|Cancel request|Decline|Accept|Approve)$/;
+const FOOD_LOG_NOTE = /Want to go over my food log/;
+const NEW_TIME_NOTE = /I am travelling that Wednesday/;
+
+function moreActionsIn(row: HTMLElement): HTMLElement {
+  return within(row).getByRole('button', { name: MORE_ACTIONS });
+}
+
+async function menuItemsBehind(trigger: HTMLElement): Promise<string[]> {
+  await userEvent.click(trigger);
+  const menu = await screen.findByRole('menu');
+  const names = within(menu)
+    .getAllByRole('menuitem')
+    .map((item) => item.textContent ?? '');
+  await userEvent.keyboard('{Escape}');
+
+  return names;
+}
+
+async function showOpenRequestOfHers() {
+  await openCheckinDevSettings();
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Client has an open request' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+  await showTab('Requests');
+}
+
+describe('the actions on her check-in rows', () => {
+  it('keeps Join Meet on an upcoming check-in and puts Reschedule then Cancel in its menu', async () => {
+    // arrange
+    renderPage();
+    const row = rowWith(FOOD_LOG_NOTE);
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(within(row).getByRole('link', { name: 'Join Meet' })).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
+    expect(moreActionsIn(row)).toHaveAccessibleName(
+      /^More actions for the check-in on \w{3}, \w{3} \d{1,2} at \d{1,2}:\d{2}\s?[AP]M$/,
+    );
+    expect(items).toEqual(['Reschedule', 'Cancel']);
+  });
+
+  it('offers only Reschedule in the menu of a recurring check-in she cannot cancel', async () => {
+    // arrange
+    renderPage();
+    const recurringRows = screen
+      .getAllByRole('listitem')
+      .filter((item) => within(item).queryByText(FOOD_LOG_NOTE) === null);
+
+    // act
+    const menus = [];
+    for (const row of recurringRows) menus.push(await menuItemsBehind(moreActionsIn(row)));
+
+    // assert
+    expect(recurringRows.length).toBeGreaterThan(0);
+    for (const items of menus) expect(items).toEqual(['Reschedule']);
+  });
+
+  it('shows Decline and Accept side by side on her coach’s new time with Reschedule in the menu', async () => {
+    // arrange
+    renderPage();
+    await showTab('Requests');
+    const row = rowWith(NEW_TIME_NOTE);
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(
+      within(row)
+        .getAllByRole('button', { name: ROW_ACTION })
+        .map((button) => button.textContent),
+    ).toEqual(['Decline', 'Accept']);
+    expect(items).toEqual(['Reschedule']);
+  });
+
+  it('keeps Cancel request on her own request with no menu', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await showOpenRequestOfHers();
+
+    // assert
+    const row = rowWith(/Can we look at my squat form\?/);
+    expect(
+      within(row)
+        .getAllByRole('button', { name: ROW_ACTION })
+        .map((button) => button.textContent),
+    ).toEqual(['Cancel request']);
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+
+  it('shows no actions on past check-ins', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await showTab('Past');
+
+    // assert
+    const list = screen.getByRole('list', { name: 'Past check-ins' });
+    expect(within(list).getAllByRole('listitem').length).toBeGreaterThan(0);
+    expect(within(list).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
+    expect(within(list).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+    expect(within(list).queryByRole('link', { name: 'Join Meet' })).not.toBeInTheDocument();
+  });
+
+  it('leaves the menu out once a check-in has nothing left to put in it', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(moreActionsIn(rowWith(FOOD_LOG_NOTE)));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
+    await userEvent.click(openDays(sheet)[0]);
+    const [time] = await within(sheet).findAllByRole('button', { name: TIME_LABEL });
+    await userEvent.click(time);
+    await userEvent.type(within(sheet).getByRole('textbox'), 'Friday works better');
+
+    // act
+    await userEvent.click(within(sheet).getByRole('button', { name: /^Propose/ }));
+    await showTab('Requests');
+
+    // assert
+    const row = rowWith(/Friday works better/);
+    expect(within(row).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+});
+
+describe('the row menu from the keyboard', () => {
+  it('opens on Enter, moves with the arrow keys and gives focus back to its button on Escape', async () => {
+    // arrange
+    renderPage();
+    const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
+    act(() => trigger.focus());
+
+    // act
+    await userEvent.keyboard('{Enter}');
+    const menu = await screen.findByRole('menu');
+    await userEvent.keyboard('{ArrowDown}');
+
+    // assert
+    expect(within(menu).getByRole('menuitem', { name: 'Cancel' })).toHaveFocus();
+    // act
+    await userEvent.keyboard('{Escape}');
+    // assert
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('asks before cancelling from the menu and gives focus back to its button when she keeps the check-in', async () => {
+    // arrange
+    renderPage();
+    const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
+    act(() => trigger.focus());
+    await userEvent.keyboard(' ');
+    await screen.findByRole('menu');
+    await userEvent.keyboard('{ArrowDown}');
+
+    // act
+    await userEvent.keyboard('{Enter}');
+    const confirm = await screen.findByRole('dialog', { name: 'Cancel this check-in?' });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Keep' }));
+
+    // assert
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(rowWith(FOOD_LOG_NOTE)).toBeInTheDocument();
+  });
+});
+
 describe('her check-ins when there is nothing to show', () => {
   it('explains the empty requests tab', async () => {
     // arrange
@@ -343,10 +518,9 @@ describe('joining her check-in', () => {
       screen.getByRole('heading', { level: 1, name: "Your check-in link isn't ready yet" }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Your check-in')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Back to check-ins/ })).toHaveAttribute(
-      'href',
-      '/portal/checkins',
-    );
+    const back = screen.getByRole('link', { name: /Back to check-ins/ });
+    expect(back).toHaveAttribute('href', '/portal/checkins');
+    expect(back.firstElementChild).toHaveClass('lucide-arrow-left');
   });
 
   it.each([

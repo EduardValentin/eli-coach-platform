@@ -1,6 +1,5 @@
-import { Link } from 'react-router';
-import { ArrowRight, Lock } from 'lucide-react';
-import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
+import { Lock } from 'lucide-react';
+import { ErrorPage, ErrorPageLink } from '../components/ErrorPage';
 import { useAppState, type PrototypeSession } from '../context/AppContext';
 
 type Recovery = {
@@ -44,9 +43,9 @@ export function AccessDenied() {
       title="You don't have access to this page"
       description={recovery.description}
     >
-      <Link to={recovery.actionHref} className={ERROR_PAGE_ACTION_CLASS}>
-        {recovery.actionLabel} <ArrowRight size={18} aria-hidden="true" />
-      </Link>
+      <ErrorPageLink direction="back" to={recovery.actionHref}>
+        {recovery.actionLabel}
+      </ErrorPageLink>
     </ErrorPage>
   );
 }

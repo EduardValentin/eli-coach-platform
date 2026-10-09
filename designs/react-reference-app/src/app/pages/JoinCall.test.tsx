@@ -117,7 +117,9 @@ describe('JoinCall', () => {
         "The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to home/i })).toHaveAttribute('href', '/');
+    const back = screen.getByRole('link', { name: /back to home/i });
+    expect(back).toHaveAttribute('href', '/');
+    expect(back.firstElementChild).toHaveClass('lucide-arrow-left');
   });
 
   it('sends the browser to the saved meeting link for a known booking', async () => {

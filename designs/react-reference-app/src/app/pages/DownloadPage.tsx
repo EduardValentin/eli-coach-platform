@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
 import { useAppState } from '../context/AppContext';
-import { Download, FileText, LinkIcon, ArrowRight } from 'lucide-react';
+import { Download, FileText, LinkIcon } from 'lucide-react';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { buttonVariants, cn } from '../components/ThemeButton';
+import { ErrorPageLink } from '../components/ErrorPage';
+import { buttonVariants } from '../components/ThemeButton';
 
 type GrantedResource = {
   title: string;
@@ -52,12 +53,9 @@ export function DownloadPage() {
               Download links stay active for seven days after each request. You
               can request your resources again from the store.
             </p>
-            <Link
-              to="/store"
-              className={cn(buttonVariants({ size: 'lg', variant: 'inverted' }), 'mt-6')}
-            >
-              Back to the Store <ArrowRight size={18} aria-hidden="true" />
-            </Link>
+            <ErrorPageLink direction="back" to="/store" className="mt-6">
+              Back to the Store
+            </ErrorPageLink>
           </div>
         ) : (
           <div className="py-8">

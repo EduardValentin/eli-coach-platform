@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { CalendarDays, CalendarPlus, Clock } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { CheckinCard } from '../../components/CheckinCard';
+import {
+  CheckinCard,
+  type CheckinRowActions,
+} from '../../components/CheckinCard';
 import {
   CheckinListing,
   type CheckinEmptyCopy,
@@ -194,34 +197,16 @@ export function ClientCheckins() {
     size: 'md' as const,
   };
 
-  const upcomingActions = (c: CheckIn) => (
-    <>
-      {canCancelApproved(c, 'client') && (
-        <Button
-          type="button"
-          onClick={() => setCancelTarget(c)}
-          variant="ghost"
-          size="sm"
-        >
-          Cancel
-        </Button>
-      )}
-      {canPropose(c) && (
-        <Button
-          type="button"
-          onClick={() => openReschedule(c)}
-          variant="outline"
-          size="sm"
-        >
-          Reschedule
-        </Button>
-      )}
-      <JoinMeetLink checkin={c} party="client" />
-    </>
-  );
+  const upcomingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: <JoinMeetLink checkin={c} party="client" />,
+    menu: {
+      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      cancel: canCancelApproved(c, 'client') ? () => setCancelTarget(c) : undefined,
+    },
+  });
 
-  const waitingActions = (c: CheckIn) =>
-    canWithdrawRequest(c, 'client') ? (
+  const waitingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: canWithdrawRequest(c, 'client') ? (
       <Button
         type="button"
         onClick={() => handleWithdraw(c)}
@@ -232,9 +217,11 @@ export function ClientCheckins() {
       >
         {busyLabel(c, 'withdraw', 'Cancel request')}
       </Button>
-    ) : undefined;
+    ) : undefined,
+  });
 
-  const answerActions = (c: CheckIn) => (
+  const answerActions = (c: CheckIn): CheckinRowActions => ({
+    shown: (
       <>
         <Button
           type="button"
@@ -246,17 +233,6 @@ export function ClientCheckins() {
         >
           {busyLabel(c, 'decline', 'Decline')}
         </Button>
-        {canPropose(c) && (
-          <Button
-            type="button"
-            onClick={() => openReschedule(c)}
-            disabled={answerInFlight(c) !== null}
-            variant="outline"
-            size="sm"
-          >
-            Reschedule
-          </Button>
-        )}
         <Button
           type="button"
           onClick={() => handleApprove(c)}
@@ -268,11 +244,16 @@ export function ClientCheckins() {
           {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
         </Button>
       </>
-  );
+    ),
+    menu: {
+      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      disabled: answerInFlight(c) !== null,
+    },
+  });
 
-  const actionsFor = (c: CheckIn, tab: CheckinTab) => {
+  const actionsFor = (c: CheckIn, tab: CheckinTab): CheckinRowActions => {
     if (tab === 'upcoming') return upcomingActions(c);
-    if (tab === 'past') return undefined;
+    if (tab === 'past') return {};
     return c.proposedBy === 'client' ? waitingActions(c) : answerActions(c);
   };
 

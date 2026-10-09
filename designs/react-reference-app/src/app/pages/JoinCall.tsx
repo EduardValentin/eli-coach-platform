@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { ArrowRight, VideoOff } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { VideoOff } from 'lucide-react';
+import { useParams } from 'react-router';
 import {
-  ERROR_PAGE_ACTION_CLASS,
   ErrorPage,
+  ErrorPageLink,
   FULL_PAGE_MESSAGE_SHELL_CLASS,
 } from '../components/ErrorPage';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
@@ -40,9 +40,9 @@ export function JoinCall() {
       description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
       landmarkLabel="Your call"
     >
-      <Link to="/" className={ERROR_PAGE_ACTION_CLASS}>
-        Back to home <ArrowRight size={18} aria-hidden="true" />
-      </Link>
+      <ErrorPageLink direction="back" to="/">
+        Back to home
+      </ErrorPageLink>
     </ErrorPage>
   );
 }

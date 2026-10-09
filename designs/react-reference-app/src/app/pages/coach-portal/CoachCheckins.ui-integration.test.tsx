@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
@@ -201,6 +201,167 @@ describe('the coach check-ins page', () => {
   });
 });
 
+const MORE_ACTIONS = /^More actions for the check-in/;
+const ROW_ACTION = /^(Reschedule|Cancel|Cancel request|Decline|Accept|Approve)$/;
+
+function rowWith(text: RegExp): HTMLElement {
+  const row = within(listedCheckins())
+    .getAllByRole('listitem')
+    .find((item) => within(item).queryByText(text) !== null);
+  if (!row) throw new Error(`No check-in row shows ${text}`);
+
+  return row;
+}
+
+function moreActionsIn(row: HTMLElement): HTMLElement {
+  return within(row).getByRole('button', { name: MORE_ACTIONS });
+}
+
+function shownRowActions(row: HTMLElement): (string | null)[] {
+  return within(row)
+    .queryAllByRole('button', { name: ROW_ACTION })
+    .map((button) => button.textContent);
+}
+
+async function menuItemsBehind(trigger: HTMLElement): Promise<string[]> {
+  await userEvent.click(trigger);
+  const menu = await screen.findByRole('menu');
+  const names = within(menu)
+    .getAllByRole('menuitem')
+    .map((item) => item.textContent ?? '');
+  await userEvent.keyboard('{Escape}');
+
+  return names;
+}
+
+describe('the actions on the coach’s check-in rows', () => {
+  it('keeps Join Meet on an upcoming check-in and puts Reschedule then Cancel in its menu', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    const row = rowFor('Jessica Alba');
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(within(row).getByRole('link', { name: 'Join Meet' })).toBeInTheDocument();
+    expect(shownRowActions(row)).toEqual([]);
+    expect(moreActionsIn(row)).toHaveAccessibleName(
+      /^More actions for the check-in on \w{3}, \w{3} \d{1,2} at \d{1,2}:\d{2}\s?[AP]M$/,
+    );
+    expect(items).toEqual(['Reschedule', 'Cancel']);
+  });
+
+  it('shows Decline and Approve side by side on a client’s request with Reschedule in the menu', async () => {
+    // arrange
+    renderPage();
+    const row = rowFor('Jessica Alba');
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(shownRowActions(row)).toEqual(['Decline', 'Approve']);
+    expect(items).toEqual(['Reschedule']);
+  });
+
+  it('keeps Cancel request on her own request with no menu', () => {
+    // arrange
+    // act
+    renderPage();
+
+    // assert
+    const row = rowWith(/Quick look at your first two weeks/);
+    expect(shownRowActions(row)).toEqual(['Cancel request']);
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+
+  it('shows no actions on past check-ins', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await showTab('Past');
+
+    // assert
+    expect(within(listedCheckins()).getAllByRole('listitem').length).toBeGreaterThan(0);
+    expect(shownRowActions(listedCheckins())).toEqual([]);
+    expect(within(listedCheckins()).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+    expect(within(listedCheckins()).queryByRole('link', { name: 'Join Meet' })).not.toBeInTheDocument();
+  });
+
+  it('leaves the menu out of a program review she can neither move nor cancel', async () => {
+    // arrange
+    renderPage('&scope=post-mvp&jstage=review-call-scheduled');
+
+    // act
+    await showTab('Upcoming');
+
+    // assert
+    const row = rowWith(/Program review/);
+    expect(within(row).getByRole('link', { name: 'Join Meet' })).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+
+  it('opens the menu on Enter, moves with the arrow keys and gives focus back to its button on Escape', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    const trigger = moreActionsIn(rowFor('Jessica Alba'));
+    act(() => trigger.focus());
+
+    // act
+    await userEvent.keyboard('{Enter}');
+    const menu = await screen.findByRole('menu');
+    await userEvent.keyboard('{ArrowDown}');
+
+    // assert
+    expect(within(menu).getByRole('menuitem', { name: 'Cancel' })).toHaveFocus();
+    // act
+    await userEvent.keyboard('{Escape}');
+    // assert
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('asks before cancelling from the menu and gives focus back to its button when she keeps the check-in', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    const trigger = moreActionsIn(rowFor('Jessica Alba'));
+    act(() => trigger.focus());
+    await userEvent.keyboard(' ');
+    await screen.findByRole('menu');
+    await userEvent.keyboard('{ArrowDown}');
+
+    // act
+    await userEvent.keyboard('{Enter}');
+    const confirm = await screen.findByRole('dialog', { name: 'Cancel this check-in?' });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Keep' }));
+
+    // assert
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(hasRowFor('Jessica Alba')).toBe(true);
+  });
+
+  it('cancels the check-in once she confirms from the menu', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    await userEvent.click(moreActionsIn(rowFor('Jessica Alba')));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Cancel' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Cancel this check-in?' });
+
+    // act
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Cancel check-in' }));
+
+    // assert
+    expect(await screen.findByText('Cancelled check-in with Jessica Alba')).toBeInTheDocument();
+    expect(hasRowFor('Jessica Alba')).toBe(false);
+  });
+});
+
 describe('the coach joining a check-in', () => {
   it('sends her to her meeting room for an approved check-in', async () => {
     // arrange
@@ -225,10 +386,9 @@ describe('the coach joining a check-in', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: "Your meeting link isn't set yet" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Go to Settings/ })).toHaveAttribute(
-      'href',
-      '/coach/settings',
-    );
+    const forward = screen.getByRole('link', { name: /Go to Settings/ });
+    expect(forward).toHaveAttribute('href', '/coach/settings');
+    expect(forward.lastElementChild).toHaveClass('lucide-arrow-right');
   });
 
   it.each([

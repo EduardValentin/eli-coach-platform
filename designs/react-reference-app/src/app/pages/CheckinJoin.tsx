@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { ArrowRight, VideoOff } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { VideoOff } from 'lucide-react';
+import { useParams } from 'react-router';
 import {
-  ERROR_PAGE_ACTION_CLASS,
   ErrorPage,
+  ErrorPageLink,
   FULL_PAGE_MESSAGE_SHELL_CLASS,
 } from '../components/ErrorPage';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
@@ -16,6 +16,7 @@ type NotReadyCopy = {
   description: string;
   actionPath: string;
   actionLabel: string;
+  actionDirection: 'back' | 'forward';
 };
 
 const NOT_READY_COPY: Record<CheckinParty, NotReadyCopy> = {
@@ -25,6 +26,7 @@ const NOT_READY_COPY: Record<CheckinParty, NotReadyCopy> = {
       "The meeting room for this check-in hasn't been set up yet. Check back closer to the time.",
     actionPath: '/portal/checkins',
     actionLabel: 'Back to check-ins',
+    actionDirection: 'back',
   },
   coach: {
     title: "Your meeting link isn't set yet",
@@ -32,6 +34,7 @@ const NOT_READY_COPY: Record<CheckinParty, NotReadyCopy> = {
       "You haven't saved a meeting link yet. Add it in Settings so you and your client can join.",
     actionPath: '/coach/settings',
     actionLabel: 'Go to Settings',
+    actionDirection: 'forward',
   },
 };
 
@@ -74,9 +77,9 @@ export function CheckinJoin({ party }: { party: CheckinParty }) {
       landmarkLabel="Your check-in"
       parityRoot="CheckinJoinNotReady"
     >
-      <Link to={copy.actionPath} className={ERROR_PAGE_ACTION_CLASS}>
-        {copy.actionLabel} <ArrowRight size={18} aria-hidden="true" />
-      </Link>
+      <ErrorPageLink direction={copy.actionDirection} to={copy.actionPath}>
+        {copy.actionLabel}
+      </ErrorPageLink>
     </ErrorPage>
   );
 }

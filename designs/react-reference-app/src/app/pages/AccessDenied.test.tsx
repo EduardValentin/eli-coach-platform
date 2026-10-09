@@ -26,6 +26,7 @@ describe('AccessDenied', () => {
     const action = screen.getByRole('link');
     expect(action).toHaveAccessibleName(/back to your portal/i);
     expect(action).toHaveAttribute('href', '/portal');
+    expect(action.firstElementChild).toHaveClass('lucide-arrow-left');
   });
 
   it('sends a coach denied client access back to the coach portal', () => {
