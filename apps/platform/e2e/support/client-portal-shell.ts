@@ -201,6 +201,18 @@ export class ClientPortalShell {
     await expect(this.tabBar.getByRole("link")).toHaveText([...names]);
   }
 
+  async expectSidebarLinks(names: readonly string[]): Promise<void> {
+    await expect(this.sidebarNavigation.getByRole("link")).toHaveText([
+      ...names,
+    ]);
+  }
+
+  async openCheckInsFromSidebar(): Promise<void> {
+    await this.sidebarNavigation
+      .getByRole("link", { name: "Check-ins" })
+      .click();
+  }
+
   async openCheckInsFromTabs(): Promise<void> {
     await this.tabBar.getByRole("link", { name: "Check-ins" }).click();
   }

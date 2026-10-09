@@ -7,8 +7,12 @@ import {
 
 import {
   checkInsListed,
+  expectCheckInsInOrder,
+  expectEmptyCheckInTab,
+  expectJoinEmphasis,
   showCheckInTab,
   type CheckInTab,
+  type JoinEmphasis,
 } from "./check-in-tabs";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -35,8 +39,12 @@ export class ClientCheckInsPage {
     return `${CHECK_INS_PATH}/${checkInId}/join`;
   }
 
-  async open(): Promise<void> {
+  async visit(): Promise<void> {
     await this.page.goto(CHECK_INS_PATH);
+  }
+
+  async open(): Promise<void> {
+    await this.visit();
     await this.expectOpen();
   }
 
@@ -53,6 +61,22 @@ export class ClientCheckInsPage {
 
   checkIn(tab: CheckInTab, note: string): Locator {
     return checkInsListed(this.page, tab).filter({ hasText: note });
+  }
+
+  async expectInOrder(
+    tab: CheckInTab,
+    notes: readonly string[],
+  ): Promise<void> {
+    await expectCheckInsInOrder(this.page, tab, notes);
+  }
+
+  async expectEmpty(tab: CheckInTab, title: string): Promise<void> {
+    await expectEmptyCheckInTab(this.page, tab, title);
+  }
+
+  async expectJoin(note: string, emphasis: JoinEmphasis): Promise<void> {
+    await this.showTab("Upcoming");
+    await expectJoinEmphasis(this.checkIn("Upcoming", note), emphasis);
   }
 
   async openRequestDialog(): Promise<void> {
@@ -100,6 +124,18 @@ export class ClientCheckInsPage {
     await this.checkIn("Requests", note)
       .getByRole("button", { name: "Cancel request" })
       .click();
+    await expect(this.page.getByText("Request cancelled")).toBeVisible();
+  }
+
+  async withdrawByKeyboard(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await tabTo(
+      this.page,
+      this.checkIn("Requests", note).getByRole("button", {
+        name: "Cancel request",
+      }),
+    );
+    await this.page.keyboard.press("Enter");
     await expect(this.page.getByText("Request cancelled")).toBeVisible();
   }
 

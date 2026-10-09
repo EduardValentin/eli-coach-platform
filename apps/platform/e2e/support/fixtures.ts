@@ -12,6 +12,7 @@ import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
 import { CheckInRecords } from "./check-in-records";
 import { CheckInRequestDialog } from "./check-in-request-dialog";
+import { CheckInRequests } from "./check-in-requests";
 import { ClientCheckInsPage } from "./client-check-ins-page";
 import { ClientDashboard } from "./client-dashboard";
 import { ClientEndedPage } from "./client-ended-page";
@@ -28,6 +29,7 @@ import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { CoachMeetingRoom } from "./coach-meeting-room";
+import { CoachSettingsPage } from "./coach-settings-page";
 import {
   insertMeasuredClientRecords,
   type MeasuredClientSeed,
@@ -119,6 +121,8 @@ type PlatformFixtures = {
   coachMeetingRoom: CoachMeetingRoom;
   coachAvailability: CoachAvailability;
   checkInRecords: CheckInRecords;
+  checkInRequests: CheckInRequests;
+  coachSettings: CoachSettingsPage;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -479,6 +483,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   checkInRecords: async ({ databasePool }, use) => {
     await use(new CheckInRecords(databasePool));
+  },
+
+  checkInRequests: async ({ page }, use) => {
+    await use(new CheckInRequests(page));
+  },
+
+  coachSettings: async ({ page }, use) => {
+    await use(new CoachSettingsPage(page));
   },
 
   addResourceDialog: async ({ page }, use) => {

@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { clockTimeOf, dayNameOf, spacedPattern } from "./check-in-moments";
+
 export type BookingVisitor = {
   email: string;
   firstName: string;
@@ -30,6 +32,26 @@ export class BookingPage {
     await this.page
       .getByRole("button", { name: "Continue to your details" })
       .click();
+  }
+
+  async expectHourNotOffered(instant: Date, timeZone: string): Promise<void> {
+    const main = this.page.getByRole("main");
+
+    await this.page.goto("/book");
+    await this.page
+      .getByRole("grid", { name: "Available days" })
+      .getByRole("button", {
+        name: new RegExp(`^${spacedPattern(dayNameOf(instant, timeZone))}`),
+      })
+      .click();
+    await expect(
+      main.getByRole("button", { name: CLOCK_TIME }),
+    ).not.toHaveCount(0);
+    await expect(
+      main.getByRole("button", {
+        name: new RegExp(`^${spacedPattern(clockTimeOf(instant, timeZone))}$`),
+      }),
+    ).toHaveCount(0);
   }
 
   async expectGenderOptions(options: readonly string[]): Promise<void> {
