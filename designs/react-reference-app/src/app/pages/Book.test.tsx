@@ -557,10 +557,9 @@ describe('Book', BOOKING_FLOW, () => {
     renderBook('?bookingslots=unavailable');
 
     // assert
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      "We couldn't load the open times just now.",
-    );
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent("We couldn't load the open times just now.");
+    expect(within(alert).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 });

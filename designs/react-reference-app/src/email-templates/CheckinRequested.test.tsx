@@ -68,7 +68,7 @@ describe('CheckinRequested', () => {
     await mountRequested(props);
 
     // assert
-    expect(screen.getByText('HER NOTE')).toBeInTheDocument();
+    expect(screen.getByText('NOTE')).toBeInTheDocument();
     expect(
       screen.getByText('My knee felt sore after Tuesday.'),
     ).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('CheckinRequested', () => {
     await mountRequested(props);
 
     // assert
-    expect(screen.queryByText('HER NOTE')).not.toBeInTheDocument();
+    expect(screen.queryByText('NOTE')).not.toBeInTheDocument();
   });
 
   it('leaves the note out when it is blank', async () => {
@@ -93,7 +93,7 @@ describe('CheckinRequested', () => {
     await mountRequested(props);
 
     // assert
-    expect(screen.queryByText('HER NOTE')).not.toBeInTheDocument();
+    expect(screen.queryByText('NOTE')).not.toBeInTheDocument();
   });
 
   it('links to the coach Check-ins page', async () => {

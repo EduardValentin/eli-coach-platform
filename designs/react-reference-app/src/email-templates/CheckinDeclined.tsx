@@ -43,7 +43,7 @@ export function CheckinDeclined({
       ]}
       footerLine={FOOTER_LINE}
     >
-      <CheckinEmailButton href={checkinsUrl}>{BUTTON_LABEL}</CheckinEmailButton>
+      <CheckinEmailButton href={checkinsUrl} label={BUTTON_LABEL} />
     </CheckinEmailLayout>
   );
 }

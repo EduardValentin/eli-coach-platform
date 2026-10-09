@@ -81,7 +81,7 @@ describe("AssessmentCallSettingsSection", () => {
     expect(screen.getByLabelText("End")).toHaveTextContent("20:00");
     expect(screen.getByLabelText("Meeting link")).toHaveValue("");
     expect(
-      screen.getByText("Visitors cannot join calls until a link is set."),
+      screen.getByText("No one can join calls or check-ins until a link is set."),
     ).toBeInTheDocument();
   });
 
@@ -160,7 +160,7 @@ describe("AssessmentCallSettingsSection", () => {
     // arrange
     const user = userEvent.setup();
     renderSection();
-    const warning = "Visitors cannot join calls until a link is set.";
+    const warning = "No one can join calls or check-ins until a link is set.";
     expect(screen.getByText(warning)).toBeInTheDocument();
 
     // act

@@ -82,7 +82,7 @@ describe('EmailPreview', () => {
     // assert
     const withNote = await previewedEmail(
       'Check-in requested — with-note',
-      'HER NOTE',
+      '>NOTE<',
     );
     expect(withNote).toContain('Review the request');
     expect(withNote).toContain('/coach/checkins');
@@ -96,7 +96,7 @@ describe('EmailPreview', () => {
       expect(frame.getAttribute('srcdoc') ?? '').toContain(
         'A new check-in request.',
       );
-      expect(frame.getAttribute('srcdoc') ?? '').not.toContain('HER NOTE');
+      expect(frame.getAttribute('srcdoc') ?? '').not.toContain('>NOTE<');
     });
   });
 
@@ -144,6 +144,8 @@ describe('EmailPreview', () => {
     );
     expect(markup).toContain('Join Meet');
     expect(markup).toContain('/client/checkins/ci-demo/join');
+    expect(markup).toContain('Add to Google Calendar');
+    expect(markup).toContain('text=Check-in+with+Eli');
   });
 
   it('previews the declined check-in', async () => {

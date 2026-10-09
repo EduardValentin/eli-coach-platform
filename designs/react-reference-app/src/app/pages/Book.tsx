@@ -8,7 +8,7 @@ import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { BookingDetailsStep, FIELD_IDS } from '../components/booking/BookingDetailsStep';
 import { firstInvalidField, useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
-import { Alert } from '../components/ui/alert';
+import { Alert, AlertAction } from '../components/ui/alert';
 import { Button, buttonVariants, cn } from '../components/ThemeButton';
 import { Card, cardVariants } from '../components/ui/card';
 import { useAppState } from '../context/AppContext';
@@ -226,14 +226,9 @@ export function Book() {
                     )}
 
                     {slotsUnavailable ? (
-                      <>
-                        <Alert>
-                          <p>We couldn&apos;t load the open times just now.</p>
-                        </Alert>
-                        <Button onClick={reloadSlots} className="mt-6" weight="semibold" width="full">
-                          Try again
-                        </Button>
-                      </>
+                      <Alert action={<AlertAction onClick={reloadSlots}>Try again</AlertAction>}>
+                        <p>We couldn&apos;t load the open times just now.</p>
+                      </Alert>
                     ) : (
                       <>
                         <AssessmentSlotPicker

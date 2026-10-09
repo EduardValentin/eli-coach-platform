@@ -223,7 +223,9 @@ describe('requesting a check-in', () => {
     await within(dialog).findByText("We couldn't load the open times just now.", {}, SERVICE_TIMEOUT);
 
     // act
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Try again' }));
+    await userEvent.click(
+      within(within(dialog).getByRole('alert')).getByRole('button', { name: 'Try again' }),
+    );
 
     // assert
     expect(within(dialog).getByRole('status')).toHaveTextContent('Loading open times…');
@@ -340,6 +342,7 @@ describe('joining her check-in', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: "Your check-in link isn't ready yet" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Your check-in')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Back to check-ins/ })).toHaveAttribute(
       'href',
       '/portal/checkins',

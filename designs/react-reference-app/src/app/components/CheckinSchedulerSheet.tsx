@@ -1,14 +1,10 @@
 import { useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { motion } from 'motion/react';
-import { CalendarPlus, RefreshCw } from 'lucide-react';
 import { ResponsiveSheetDialog } from './workout/ResponsiveSheetDialog';
 import { DateTimePicker } from './DateTimePicker';
 import { AssessmentSlotPicker } from './AssessmentSlotPicker';
-import { Alert } from './ui/alert';
-import { Button } from './ui/button';
+import { Alert, AlertAction } from './ui/alert';
 import { formatSlotTime } from '../utils/dateFormatters';
-
-type SheetVariant = 'request' | 'reschedule' | 'schedule';
 
 export type OpenTimesListing =
   | { status: 'loading' }
@@ -55,12 +51,6 @@ type RequestSheetProps = SheetBase & {
 
 type CheckinSchedulerSheetProps = PickerSheetProps | RequestSheetProps;
 
-const VARIANT_META: Record<SheetVariant, { Icon: typeof CalendarPlus; eyebrow: string; tint: string }> = {
-  request: { Icon: CalendarPlus, eyebrow: 'Check-in request', tint: 'var(--primary)' },
-  reschedule: { Icon: RefreshCw, eyebrow: 'Reschedule proposal', tint: 'var(--primary)' },
-  schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: 'var(--primary)' },
-};
-
 const NOTE_LABEL = 'Add a note for your coach (optional)';
 
 function stepLabel(dayChosen: boolean, time: string | null, submitLabel: string): string {
@@ -70,31 +60,21 @@ function stepLabel(dayChosen: boolean, time: string | null, submitLabel: string)
 }
 
 function SchedulerFrame({
-  variant,
   title,
   description,
   titleRef,
   footer,
   children,
 }: {
-  variant: SheetVariant;
   title: string;
   description?: string;
   titleRef?: RefObject<HTMLHeadingElement>;
   footer: ReactNode;
   children: ReactNode;
 }) {
-  const { Icon, eyebrow, tint } = VARIANT_META[variant];
-
   return (
     <div data-parity-root="CheckinSchedulerSheet" className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100 rounded-field">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <Icon size={13} style={{ color: tint }} aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: tint }}>
-            {eyebrow}
-          </span>
-        </div>
         <h3
           ref={titleRef}
           tabIndex={titleRef ? -1 : undefined}
@@ -183,14 +163,9 @@ function OpenTimes({
 
   if (openTimes.status === 'failed') {
     return (
-      <div className="flex flex-col gap-4">
-        <Alert>
-          <p>We couldn&apos;t load the open times just now.</p>
-        </Alert>
-        <Button type="button" variant="outline" size="sm" onClick={onRetry} className="self-start">
-          Try again
-        </Button>
-      </div>
+      <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>
+        <p>We couldn&apos;t load the open times just now.</p>
+      </Alert>
     );
   }
 
@@ -223,7 +198,6 @@ function RequestSheetContent({
 
   return (
     <SchedulerFrame
-      variant="request"
       title={props.title}
       description={props.description}
       titleRef={titleRef}
@@ -255,7 +229,6 @@ function RequestSheetContent({
 }
 
 function PickerSheetContent({
-  variant,
   title,
   description,
   selectedDate,
@@ -272,7 +245,6 @@ function PickerSheetContent({
 }: PickerSheetProps) {
   return (
     <SchedulerFrame
-      variant={variant}
       title={title}
       description={description}
       footer={

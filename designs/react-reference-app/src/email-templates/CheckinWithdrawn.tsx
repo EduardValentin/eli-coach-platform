@@ -19,7 +19,7 @@ const FOOTER_LINE =
   'You received this email because a client withdrew a check-in request on the Evoa site.';
 
 export function checkinWithdrawnSubject(clientName: string): string {
-  return `${clientName} withdrew her check-in request`;
+  return `${clientName} withdrew the check-in request`;
 }
 
 export function CheckinWithdrawn({
@@ -32,7 +32,7 @@ export function CheckinWithdrawn({
       subject={checkinWithdrawnSubject(clientName)}
       eyebrow={EYEBROW}
       heading={HEADING}
-      subhead={`${clientName} withdrew her check-in request.`}
+      subhead={`${clientName} withdrew the check-in request.`}
       details={[
         { label: 'WHEN', value: formatCallMoment(startsAt, coachTimeZone) },
       ]}

@@ -69,7 +69,6 @@ export function CheckinJoin({ party }: { party: CheckinParty }) {
   return (
     <ErrorPage
       icon={VideoOff}
-      eyebrow="Your check-in"
       title={copy.title}
       description={copy.description}
       landmarkLabel="Your check-in"

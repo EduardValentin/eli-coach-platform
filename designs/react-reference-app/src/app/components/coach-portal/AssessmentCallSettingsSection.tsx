@@ -383,7 +383,7 @@ export function AssessmentCallSettingsSection() {
             {showLinkWarning && (
               <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
                 <TriangleAlert aria-hidden="true" size={14} />
-                Visitors cannot join calls until a link is set.
+                No one can join calls or check-ins until a link is set.
               </p>
             )}
           </SettingsRow>

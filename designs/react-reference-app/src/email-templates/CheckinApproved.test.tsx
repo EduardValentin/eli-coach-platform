@@ -7,6 +7,8 @@ import {
 } from './CheckinApproved';
 
 const JOIN_URL = 'https://evoa.fit/client/checkins/ci-1/join';
+const CALENDAR_URL =
+  'https://calendar.google.com/calendar/render?action=TEMPLATE&text=Check-in+with+Eli';
 const STARTS_AT = new Date('2026-10-12T14:00:00.000Z');
 const CLIENT_ZONE = 'Europe/London';
 
@@ -14,6 +16,7 @@ async function mountApproved(props: CheckinApprovedProps = {}) {
   const html = await renderEmail(
     <CheckinApproved
       joinUrl={JOIN_URL}
+      googleCalendarUrl={CALENDAR_URL}
       startsAt={STARTS_AT}
       clientTimeZone={CLIENT_ZONE}
       {...props}
@@ -78,6 +81,24 @@ describe('CheckinApproved', () => {
     expect(
       screen.getByText(
         'Use the button to join when it is time.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('offers the check-in to her calendar by link and by the attached invite', async () => {
+    // arrange
+    const props: CheckinApprovedProps = {};
+
+    // act
+    await mountApproved(props);
+
+    // assert
+    expect(
+      screen.getByRole('link', { name: 'Add to Google Calendar' }),
+    ).toHaveAttribute('href', CALENDAR_URL);
+    expect(
+      screen.getByText(
+        'A calendar file is attached to this email, so you can add the check-in to any calendar you use.',
       ),
     ).toBeInTheDocument();
   });

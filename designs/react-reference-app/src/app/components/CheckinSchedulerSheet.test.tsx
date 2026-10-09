@@ -62,6 +62,19 @@ function dayButton(isoDay: string): HTMLButtonElement {
 }
 
 describe('the check-in request sheet', () => {
+  it('heads the sheet with its title alone', () => {
+    // arrange
+    const times = [THURSDAY_EVENING];
+
+    // act
+    render(requestSheet(times));
+
+    // assert
+    const dialog = screen.getByRole('dialog', { name: 'Request a check-in' });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.queryByText('Check-in request')).not.toBeInTheDocument();
+  });
+
   it('asks for a date again when the chosen day loses its last open time', async () => {
     // arrange
     const user = userEvent.setup();

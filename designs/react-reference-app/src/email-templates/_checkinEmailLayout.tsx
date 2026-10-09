@@ -97,16 +97,19 @@ export function CheckinEmailLayout({
 
 export function CheckinEmailButton({
   href,
+  label,
   children,
 }: {
   href: string;
-  children: string;
+  label: string;
+  children?: ReactNode;
 }) {
   return (
     <EmailSection style={buttonSectionStyle}>
       <EmailLink href={href} style={primaryButtonStyle}>
-        {children}
+        {label}
       </EmailLink>
+      {children}
     </EmailSection>
   );
 }

@@ -36,7 +36,6 @@ export function JoinCall() {
   return (
     <ErrorPage
       icon={VideoOff}
-      eyebrow="Your call"
       title="Your call link isn't ready yet"
       description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
       landmarkLabel="Your call"

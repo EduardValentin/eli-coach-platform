@@ -38,7 +38,7 @@ export function CheckinRequested({
     { label: 'WHEN', value: formatCallMoment(startsAt, coachTimeZone) },
   ];
   if (note && note.trim().length > 0) {
-    details.push({ label: 'HER NOTE', value: note });
+    details.push({ label: 'NOTE', value: note });
   }
 
   return (
@@ -50,7 +50,7 @@ export function CheckinRequested({
       details={details}
       footerLine={FOOTER_LINE}
     >
-      <CheckinEmailButton href={reviewUrl}>{BUTTON_LABEL}</CheckinEmailButton>
+      <CheckinEmailButton href={reviewUrl} label={BUTTON_LABEL} />
     </CheckinEmailLayout>
   );
 }

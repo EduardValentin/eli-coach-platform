@@ -33,7 +33,7 @@ describe('CheckinWithdrawn', () => {
     const parsed = await mountWithdrawn(props);
 
     // assert
-    expect(parsed.title).toBe('Sofia Marin withdrew her check-in request');
+    expect(parsed.title).toBe('Sofia Marin withdrew the check-in request');
   });
 
   it('says which hour she withdrew, in the coach zone, and that it is free again', async () => {
@@ -51,7 +51,7 @@ describe('CheckinWithdrawn', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Sofia Marin withdrew her check-in request.'),
+      screen.getByText('Sofia Marin withdrew the check-in request.'),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Monday, 12 October 2026 at 5:00\s?[AaPp][Mm]/),

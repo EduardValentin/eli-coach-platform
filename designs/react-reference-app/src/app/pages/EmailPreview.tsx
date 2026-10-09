@@ -70,6 +70,22 @@ function sampleCheckinStart(): Date {
 }
 
 const SAMPLE_CHECKIN_START = sampleCheckinStart();
+const SAMPLE_CHECKIN_MINUTES = 60;
+
+function googleCalendarStamp(instant: Date): string {
+  return instant.toISOString().replace(/[-:]|\.\d{3}/g, '');
+}
+
+function sampleCheckinCalendarUrl(): string {
+  const endsAt = new Date(SAMPLE_CHECKIN_START.getTime() + SAMPLE_CHECKIN_MINUTES * 60_000);
+  const query = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: 'Check-in with Eli',
+    dates: `${googleCalendarStamp(SAMPLE_CHECKIN_START)}/${googleCalendarStamp(endsAt)}`,
+  });
+
+  return `https://calendar.google.com/calendar/render?${query}`;
+}
 
 const TEMPLATES: TemplateOption[] = [
   {
@@ -257,6 +273,7 @@ export function EmailPreview() {
           startsAt={SAMPLE_CHECKIN_START}
           clientTimeZone="Europe/London"
           joinUrl={`${window.location.origin}/client/checkins/ci-demo/join`}
+          googleCalendarUrl={sampleCheckinCalendarUrl()}
         />
       );
     }
