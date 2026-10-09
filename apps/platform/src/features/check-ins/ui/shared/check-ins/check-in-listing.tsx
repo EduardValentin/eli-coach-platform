@@ -82,9 +82,18 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
               <TabsTrigger className="px-4 sm:px-5" key={value} value={value}>
                 {TAB_LABELS[value]}
                 {value === "requests" && awaitingViewer > 0 && (
-                  <Badge data-parity="requests-count" tone="count">
-                    {awaitingViewer}
-                  </Badge>
+                  <>
+                    <Badge
+                      aria-hidden="true"
+                      data-parity="requests-count"
+                      tone="count"
+                    >
+                      {awaitingViewer}
+                    </Badge>
+                    <span className="sr-only">
+                      {awaitingViewer} waiting on you
+                    </span>
+                  </>
                 )}
               </TabsTrigger>
             ))}

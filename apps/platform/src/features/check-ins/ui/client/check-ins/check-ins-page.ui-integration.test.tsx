@@ -502,7 +502,7 @@ describe("the client asking for a check-in", () => {
 
     // assert
     const buttons = screen.getAllByRole("button", {
-      name: /Request (a )?check-in/,
+      name: "Request check-in",
     });
     expect(buttons).toHaveLength(2);
     for (const button of buttons) {
@@ -654,7 +654,11 @@ function answerRequests(answer: () => Response): unknown[] {
 }
 
 function desktopRequestButton(): HTMLElement {
-  return screen.getByRole("button", { name: "Request check-in" });
+  const [desktopButton] = screen.getAllByRole("button", {
+    name: "Request check-in",
+  });
+
+  return desktopButton;
 }
 
 function stepButton(dialog: HTMLElement): HTMLElement {

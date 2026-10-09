@@ -141,7 +141,9 @@ describe("the coach's check-ins page", () => {
     expect(
       screen.getByText("Manage all client check-ins in one place."),
     ).toBeInTheDocument();
-    const requestsTab = screen.getByRole("tab", { name: /^Requests\s*2$/ });
+    const requestsTab = screen.getByRole("tab", {
+      name: /^Requests\s*2 waiting on you$/,
+    });
     expect(requestsTab).toHaveAttribute("aria-selected", "true");
     const rows = within(
       screen.getByRole("list", { name: "Requests check-ins" }),
@@ -253,7 +255,7 @@ describe("the coach's check-ins page", () => {
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.getByRole("tab", { name: /^Requests\s*1$/ }),
+        screen.getByRole("tab", { name: /^Requests\s*1 waiting on you$/ }),
       ).toBeInTheDocument();
     });
     await user.click(screen.getByRole("tab", { name: "Upcoming" }));

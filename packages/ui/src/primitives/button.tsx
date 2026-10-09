@@ -41,6 +41,7 @@ const buttonClasses = cva(
         sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3",
         md: "h-(--size-control-md) px-6 text-base has-[>svg]:px-5",
         "md-wide": "h-(--size-control-md) px-6 text-base",
+        "md-grow": "min-h-(--size-control-md) px-6 text-base",
         lg: "h-(--size-control-lg) px-8 text-base",
         "lg-tight": "h-(--size-control-lg) px-4 text-base",
         xl: "h-(--size-control-xl) px-12 text-lg",
@@ -77,7 +78,7 @@ const buttonClasses = cva(
       },
       press: {
         none: "",
-        scale: "transition-all active:scale-[0.98]",
+        scale: "transition-all motion-safe:active:scale-[0.98]",
       },
     },
     defaultVariants: {

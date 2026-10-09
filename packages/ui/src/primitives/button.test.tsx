@@ -222,6 +222,32 @@ describe("button call-to-action options", () => {
     expect(classes.some((name) => name.startsWith("has-"))).toBe(false);
   });
 
+  it("lets the medium grow size outgrow its minimum height", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "md-grow" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "min-h-(--size-control-md)",
+        "px-6",
+        "text-base",
+      ]),
+    );
+    expect(classes).not.toContain("h-(--size-control-md)");
+  });
+
+  it("presses a scale button down only when motion is welcome", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ press: "scale" }).split(" ");
+
+    // assert
+    expect(classes).toContain("motion-safe:active:scale-[0.98]");
+    expect(classes).not.toContain("active:scale-[0.98]");
+  });
+
   it("fills an ink button with the text colour and turns it brand on hover", () => {
     // arrange
     // act

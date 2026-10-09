@@ -148,7 +148,6 @@ export default function ClientCheckInsRoute() {
 
       <Button
         {...requestButton}
-        aria-label="Request a check-in"
         className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 z-40 shadow-action-hover sm:hidden"
       >
         <CalendarPlus aria-hidden="true" size={16} />

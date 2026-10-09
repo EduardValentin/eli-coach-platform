@@ -149,6 +149,8 @@ export function CheckInRequestDialog({
               submitting
             }
             onClick={submit}
+            press="scale"
+            size="md-grow"
             textSize="sm"
             weight="semibold"
             width="full"
