@@ -1,3 +1,4 @@
+import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -21,13 +22,11 @@ type ClientInvitationEmailOptions = {
   firstName: string;
 };
 
-const COACH_NAME = "Eli";
-
 function invitationCopy(firstName: string): ClientInvitationEmailCopy {
   return {
     buttonLabel: "Create your account",
     eyebrow: "Invitation — 1-on-1 coaching",
-    footer: `You received this email because ${COACH_NAME} invited you to 1-on-1 coaching.`,
+    footer: `You received this email because ${COACH_DISPLAY_NAME} invited you to 1-on-1 coaching.`,
     greeting: `Hi ${firstName},`,
     heading: "Your place is booked.",
     letter: [
@@ -43,7 +42,7 @@ function invitationCopy(firstName: string): ClientInvitationEmailCopy {
     previewText: "Your place is booked — create your account.",
     reassurance:
       "This is your personal invitation — please don't forward it. It belongs to your email address alone.",
-    signoff: `— ${COACH_NAME}`,
+    signoff: `— ${COACH_DISPLAY_NAME}`,
     subhead: "Let's get you set up.",
   };
 }

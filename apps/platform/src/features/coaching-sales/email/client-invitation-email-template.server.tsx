@@ -1,4 +1,6 @@
 import {
+  EMAIL_FRAME_STYLES,
+  EMAIL_PRIMARY_BUTTON_STYLE,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -13,15 +15,10 @@ import {
 
 import {
   acceptButtonSectionStyle,
-  bodyStyle,
-  cardStyle,
   contactLineStyle,
   contactLinkStyle,
   dividerStyle,
-  footerCreditStyle,
-  footerLineStyle,
   footerLinkStyle,
-  footerSectionStyle,
   heroAccentRuleStyle,
   heroEyebrowStyle,
   heroHeadingStyle,
@@ -36,13 +33,8 @@ import {
   nextStepsCardStyle,
   nextStepsEyebrowStyle,
   nextStepsOuterStyle,
-  outerContainerStyle,
-  primaryButtonStyle,
   reassuranceTextStyle,
   signoffStyle,
-  wordmarkSectionStyle,
-  wordmarkStyle,
-  wordmarkSubStyle,
 } from "./coaching-sales-email-styles.server";
 
 export type ClientInvitationEmailCopy = {
@@ -80,15 +72,20 @@ export function ClientInvitationEmailTemplate({
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
       </EmailHead>
-      <EmailBody style={bodyStyle}>
+      <EmailBody style={EMAIL_FRAME_STYLES.body}>
         <EmailPreviewText>{copy.previewText}</EmailPreviewText>
-        <EmailContainer maxWidth={600} style={outerContainerStyle}>
-          <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+        <EmailContainer
+          maxWidth={600}
+          style={EMAIL_FRAME_STYLES.outerContainer}
+        >
+          <EmailSection style={EMAIL_FRAME_STYLES.wordmarkSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmark}>EVOA</EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmarkSub}>
+              Coaching for women
+            </EmailText>
           </EmailSection>
 
-          <EmailContainer maxWidth={568} style={cardStyle}>
+          <EmailContainer maxWidth={568} style={EMAIL_FRAME_STYLES.card}>
             <EmailSection style={heroSectionStyle}>
               <EmailText style={heroEyebrowStyle}>
                 {copy.eyebrow.toUpperCase()}
@@ -113,7 +110,7 @@ export function ClientInvitationEmailTemplate({
             </EmailSection>
 
             <EmailSection style={acceptButtonSectionStyle}>
-              <EmailLink href={acceptUrl} style={primaryButtonStyle}>
+              <EmailLink href={acceptUrl} style={EMAIL_PRIMARY_BUTTON_STYLE}>
                 {copy.buttonLabel}
               </EmailLink>
             </EmailSection>
@@ -153,9 +150,11 @@ export function ClientInvitationEmailTemplate({
             </EmailSection>
           </EmailContainer>
 
-          <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>{copy.footer}</EmailText>
-            <EmailText style={footerLineStyle}>
+          <EmailSection style={EMAIL_FRAME_STYLES.footerSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
+              {copy.footer}
+            </EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
               <EmailLink
                 href={`mailto:${contactEmail}`}
                 style={footerLinkStyle}
@@ -163,7 +162,7 @@ export function ClientInvitationEmailTemplate({
                 Contact
               </EmailLink>
             </EmailText>
-            <EmailText style={footerCreditStyle}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerCredit}>
               © {currentYear} Evoa Fitness
             </EmailText>
           </EmailSection>

@@ -1,6 +1,7 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/public/paths";
+import { checkInsClientJoinRoutes } from "../../features/check-ins/routes";
 import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
 import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
@@ -22,6 +23,7 @@ export const clientPortalRoutes = [
       ]),
       ...coachingSalesClientRoutes,
       ...clientOnboardingClientRoutes,
+      ...checkInsClientJoinRoutes,
     ]),
   ]),
   // Deploy healthchecks and PWA installs read these without a session, so

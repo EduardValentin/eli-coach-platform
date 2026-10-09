@@ -125,6 +125,11 @@ export class CoachingSalesJourney {
   async bookCall(visitor: Visitor = ANA): Promise<string> {
     await this.rig.holdClock(BOOKING_INSTANT);
     const [startsAt] = await this.openSlots();
+
+    return this.bookCallAt(visitor, startsAt);
+  }
+
+  async bookCallAt(visitor: Visitor, startsAt: string): Promise<string> {
     const response = await this.rig.suite.request(
       new Request(this.rig.suite.url("/api/assessment-calls"), {
         body: bookingForm(visitor, startsAt),
@@ -326,7 +331,7 @@ export class CoachingSalesJourney {
     return client.id;
   }
 
-  private async openSlots(): Promise<string[]> {
+  async openSlots(): Promise<string[]> {
     const response = await this.rig.suite.request(
       new Request(this.rig.suite.url("/api/assessment-calls/slots")),
     );

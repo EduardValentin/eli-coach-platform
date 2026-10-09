@@ -1,4 +1,5 @@
 import {
+  EMAIL_FRAME_STYLES,
   EmailBody,
   EmailContainer,
   EmailHead,
@@ -12,24 +13,15 @@ import {
 
 import {
   answerButtonStyle,
-  bodyStyle,
   buttonSectionStyle,
-  cardStyle,
-  footerCreditStyle,
-  footerLineStyle,
   footerLinkStyle,
-  footerSectionStyle,
   heroAccentRuleStyle,
   heroHeadingStyle,
   heroSectionStyle,
   letterParagraphStyle,
   letterSectionStyle,
-  outerContainerStyle,
   signoffSectionStyle,
   signoffStyle,
-  wordmarkSectionStyle,
-  wordmarkStyle,
-  wordmarkSubStyle,
 } from "./details-request-email-styles.server";
 
 export type DetailsRequestEmailCopy = {
@@ -61,15 +53,20 @@ export function DetailsRequestEmailTemplate({
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
       </EmailHead>
-      <EmailBody style={bodyStyle}>
+      <EmailBody style={EMAIL_FRAME_STYLES.body}>
         <EmailPreviewText>{copy.subject}</EmailPreviewText>
-        <EmailContainer maxWidth={600} style={outerContainerStyle}>
-          <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+        <EmailContainer
+          maxWidth={600}
+          style={EMAIL_FRAME_STYLES.outerContainer}
+        >
+          <EmailSection style={EMAIL_FRAME_STYLES.wordmarkSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmark}>EVOA</EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmarkSub}>
+              Coaching for women
+            </EmailText>
           </EmailSection>
 
-          <EmailContainer maxWidth={568} style={cardStyle}>
+          <EmailContainer maxWidth={568} style={EMAIL_FRAME_STYLES.card}>
             <EmailSection style={heroSectionStyle}>
               <EmailHeading level="h1" style={heroHeadingStyle}>
                 {copy.heading}
@@ -95,8 +92,8 @@ export function DetailsRequestEmailTemplate({
             </EmailSection>
           </EmailContainer>
 
-          <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>
+          <EmailSection style={EMAIL_FRAME_STYLES.footerSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
               <EmailLink
                 href={`mailto:${contactEmail}`}
                 style={footerLinkStyle}
@@ -104,7 +101,7 @@ export function DetailsRequestEmailTemplate({
                 Contact
               </EmailLink>
             </EmailText>
-            <EmailText style={footerCreditStyle}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerCredit}>
               © {currentYear} Evoa Fitness
             </EmailText>
           </EmailSection>

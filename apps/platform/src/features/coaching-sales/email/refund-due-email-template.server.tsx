@@ -1,4 +1,6 @@
 import {
+  EMAIL_FRAME_STYLES,
+  EMAIL_PRIMARY_BUTTON_STYLE,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -12,13 +14,8 @@ import {
 } from "@eli-coach-platform/infrastructure/email/server";
 
 import {
-  bodyStyle,
   buttonSectionStyle,
-  cardStyle,
   dividerStyle,
-  footerCreditStyle,
-  footerLineStyle,
-  footerSectionStyle,
   heroAccentRuleStyle,
   heroEyebrowStyle,
   heroHeadingStyle,
@@ -30,11 +27,6 @@ import {
   detailsLabelStyle,
   detailsSectionStyle,
   detailsValueStyle,
-  outerContainerStyle,
-  primaryButtonStyle,
-  wordmarkSectionStyle,
-  wordmarkStyle,
-  wordmarkSubStyle,
 } from "./coaching-sales-email-styles.server";
 
 export type RefundDueEmailDetail = {
@@ -74,15 +66,20 @@ export function RefundDueEmailTemplate({
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
       </EmailHead>
-      <EmailBody style={bodyStyle}>
+      <EmailBody style={EMAIL_FRAME_STYLES.body}>
         <EmailPreviewText>{subject}</EmailPreviewText>
-        <EmailContainer maxWidth={600} style={outerContainerStyle}>
-          <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+        <EmailContainer
+          maxWidth={600}
+          style={EMAIL_FRAME_STYLES.outerContainer}
+        >
+          <EmailSection style={EMAIL_FRAME_STYLES.wordmarkSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmark}>EVOA</EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmarkSub}>
+              Coaching for women
+            </EmailText>
           </EmailSection>
 
-          <EmailContainer maxWidth={568} style={cardStyle}>
+          <EmailContainer maxWidth={568} style={EMAIL_FRAME_STYLES.card}>
             <EmailSection style={heroSectionStyle}>
               <EmailText style={heroEyebrowStyle}>
                 {REFUND_DUE_EMAIL_COPY.eyebrow.toUpperCase()}
@@ -116,7 +113,10 @@ export function RefundDueEmailTemplate({
             </EmailSection>
 
             <EmailSection style={buttonSectionStyle}>
-              <EmailLink href={clientPageUrl} style={primaryButtonStyle}>
+              <EmailLink
+                href={clientPageUrl}
+                style={EMAIL_PRIMARY_BUTTON_STYLE}
+              >
                 {REFUND_DUE_EMAIL_COPY.buttonLabel}
               </EmailLink>
             </EmailSection>
@@ -130,11 +130,11 @@ export function RefundDueEmailTemplate({
             </EmailSection>
           </EmailContainer>
 
-          <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>
+          <EmailSection style={EMAIL_FRAME_STYLES.footerSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
               {REFUND_DUE_EMAIL_COPY.footer}
             </EmailText>
-            <EmailText style={footerCreditStyle}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerCredit}>
               © {currentYear} Evoa Fitness
             </EmailText>
           </EmailSection>

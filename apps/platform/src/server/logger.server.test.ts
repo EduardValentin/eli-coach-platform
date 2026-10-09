@@ -148,6 +148,27 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a failed check-in notification with the check-in and the event, without the recipient", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInNotificationFailed({
+      checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      notification: "approved",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith("Check-in notification failed.", {
+      checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      errorCategory: "check_in_notification_failure",
+      notification: "approved",
+    });
+  });
+
   it("logs unreadable assessment call slots", () => {
     // arrange
     const consoleError = vi

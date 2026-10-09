@@ -1,4 +1,5 @@
 import {
+  EMAIL_FRAME_STYLES,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -15,28 +16,19 @@ import type { ReactNode } from "react";
 
 import { AssessmentCallEmailActions } from "./assessment-call-email-actions.server";
 import {
-  bodyStyle,
   calendarLinkStyle,
-  cardStyle,
   detailsCardStyle,
   detailsEyebrowStyle,
   detailsOuterStyle,
   detailsValueStyle,
   dividerStyle,
-  footerCreditStyle,
-  footerLineStyle,
-  footerSectionStyle,
   heroAccentRuleStyle,
   heroEyebrowStyle,
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
-  outerContainerStyle,
   reassuranceSectionStyle,
   reassuranceTextStyle,
-  wordmarkSectionStyle,
-  wordmarkStyle,
-  wordmarkSubStyle,
 } from "./assessment-call-email-styles.server";
 
 export type CoachNotificationEmailViewModel = {
@@ -94,15 +86,20 @@ export function CoachNotificationEmailTemplate({
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
       </EmailHead>
-      <EmailBody style={bodyStyle}>
+      <EmailBody style={EMAIL_FRAME_STYLES.body}>
         <EmailPreviewText>{content.previewText}</EmailPreviewText>
-        <EmailContainer maxWidth={600} style={outerContainerStyle}>
-          <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+        <EmailContainer
+          maxWidth={600}
+          style={EMAIL_FRAME_STYLES.outerContainer}
+        >
+          <EmailSection style={EMAIL_FRAME_STYLES.wordmarkSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmark}>EVOA</EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmarkSub}>
+              Coaching for women
+            </EmailText>
           </EmailSection>
 
-          <EmailContainer maxWidth={568} style={cardStyle}>
+          <EmailContainer maxWidth={568} style={EMAIL_FRAME_STYLES.card}>
             <EmailSection style={heroSectionStyle}>
               <EmailText style={heroEyebrowStyle}>
                 {content.eyebrow.toUpperCase()}
@@ -161,12 +158,12 @@ export function CoachNotificationEmailTemplate({
             </EmailSection>
           </EmailContainer>
 
-          <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>
+          <EmailSection style={EMAIL_FRAME_STYLES.footerSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
               You received this email because someone booked a free assessment
               call on the Evoa site.
             </EmailText>
-            <EmailText style={footerCreditStyle}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerCredit}>
               © {currentYear} Evoa Fitness
             </EmailText>
           </EmailSection>

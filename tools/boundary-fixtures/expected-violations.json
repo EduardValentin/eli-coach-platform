@@ -59,6 +59,14 @@
     "feature-schema-foreign-key",
     "feature-order-store"
   ],
+  "apps/platform/src/features/store/email/design-system-browser-only.server.tsx": [
+    "design-system-browser-only",
+    "workspace-by-name-app"
+  ],
+  "apps/platform/src/features/store/public/design-system-browser-only.ts": [
+    "design-system-browser-only",
+    "workspace-by-name-app"
+  ],
   "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
   "apps/platform/src/features/store/server/guards/constructs.server.ts": [
     "guards-construct-nothing"
@@ -79,6 +87,9 @@
   ],
   "apps/platform/src/features/store/ui/public/composition-root.tsx": [
     "features-never-reach-server"
+  ],
+  "apps/platform/src/features/store/ui/public/design-system-in-browser-ui.tsx": [
+    "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/ui/public/loader.server.ts": [
     "browser-half",

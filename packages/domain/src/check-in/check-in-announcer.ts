@@ -23,7 +23,7 @@ export class CheckInAnnouncer {
     const delivery = await this.deliver(notification, checkIn);
 
     if (delivery !== "sent") {
-      this.options.incidents.notificationFailed({
+      this.options.incidents.checkInNotificationFailed({
         checkInId: checkIn.id,
         notification,
       });

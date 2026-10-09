@@ -1,4 +1,6 @@
 import {
+  EMAIL_FRAME_STYLES,
+  EMAIL_PRIMARY_BUTTON_STYLE,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -14,21 +16,15 @@ import {
 import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/public/coaching-sales";
 
 import {
-  bodyStyle,
   bundleCardStyle,
   bundlePriceStyle,
   bundlesOuterStyle,
   bundleTitleStyle,
   bundleTotalStyle,
   buttonSectionStyle,
-  cardStyle,
-  primaryButtonStyle,
   contactLineStyle,
   contactLinkStyle,
   dividerStyle,
-  footerCreditStyle,
-  footerLineStyle,
-  footerSectionStyle,
   heroAccentRuleStyle,
   heroEyebrowStyle,
   heroHeadingStyle,
@@ -39,12 +35,8 @@ import {
   noteLinkStyle,
   noteSectionStyle,
   noteTextStyle,
-  outerContainerStyle,
   reassuranceSectionStyle,
   signoffStyle,
-  wordmarkSectionStyle,
-  wordmarkStyle,
-  wordmarkSubStyle,
 } from "./coaching-sales-email-styles.server";
 
 export type PaymentLinkEmailBundleViewModel = {
@@ -87,15 +79,20 @@ export function PaymentLinkEmailTemplate({
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
       </EmailHead>
-      <EmailBody style={bodyStyle}>
+      <EmailBody style={EMAIL_FRAME_STYLES.body}>
         <EmailPreviewText>{content.previewText}</EmailPreviewText>
-        <EmailContainer maxWidth={600} style={outerContainerStyle}>
-          <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+        <EmailContainer
+          maxWidth={600}
+          style={EMAIL_FRAME_STYLES.outerContainer}
+        >
+          <EmailSection style={EMAIL_FRAME_STYLES.wordmarkSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmark}>EVOA</EmailText>
+            <EmailText style={EMAIL_FRAME_STYLES.wordmarkSub}>
+              Coaching for women
+            </EmailText>
           </EmailSection>
 
-          <EmailContainer maxWidth={568} style={cardStyle}>
+          <EmailContainer maxWidth={568} style={EMAIL_FRAME_STYLES.card}>
             <EmailSection style={heroSectionStyle}>
               <EmailText style={heroEyebrowStyle}>
                 {EYEBROW.toUpperCase()}
@@ -134,7 +131,7 @@ export function PaymentLinkEmailTemplate({
             </EmailSection>
 
             <EmailSection style={buttonSectionStyle}>
-              <EmailLink href={chooseUrl} style={primaryButtonStyle}>
+              <EmailLink href={chooseUrl} style={EMAIL_PRIMARY_BUTTON_STYLE}>
                 {BUTTON_LABEL}
               </EmailLink>
             </EmailSection>
@@ -165,12 +162,12 @@ export function PaymentLinkEmailTemplate({
             </EmailSection>
           </EmailContainer>
 
-          <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>
+          <EmailSection style={EMAIL_FRAME_STYLES.footerSection}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerLine}>
               You received this email because you had an assessment call with
               Eli.
             </EmailText>
-            <EmailText style={footerCreditStyle}>
+            <EmailText style={EMAIL_FRAME_STYLES.footerCredit}>
               © {currentYear} Evoa Fitness
             </EmailText>
           </EmailSection>

@@ -1,7 +1,7 @@
 import type { CheckInNotification } from "./check-in-notifications";
 
 export interface CheckInIncidents {
-  notificationFailed(incident: {
+  checkInNotificationFailed(incident: {
     checkInId: string;
     notification: CheckInNotification;
   }): void;

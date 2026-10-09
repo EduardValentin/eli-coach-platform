@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
@@ -23,6 +24,7 @@ describe("createFeatureContextMiddleware", () => {
         feature: { kind: "assessment-calls" },
         handles: { kind: "assessment-calls-handles" },
       },
+      checkIns: { kind: "check-ins" },
       clientOnboarding: { kind: "client-onboarding" },
       clientProfile: {
         feature: { kind: "client-profile" },
@@ -67,6 +69,7 @@ describe("createFeatureContextMiddleware", () => {
     expect(context.get(assessmentCallsContext)).toBe(
       container.assessmentCalls.feature,
     );
+    expect(context.get(checkInsContext)).toBe(container.checkIns);
     expect(context.get(clientOnboardingContext)).toBe(
       container.clientOnboarding,
     );

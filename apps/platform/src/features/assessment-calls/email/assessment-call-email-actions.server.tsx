@@ -1,4 +1,5 @@
 import {
+  EMAIL_PRIMARY_BUTTON_STYLE,
   EmailLink,
   EmailSection,
   EmailText,
@@ -9,7 +10,6 @@ import {
   buttonSectionStyle,
   calendarLineStyle,
   calendarLinkStyle,
-  primaryButtonStyle,
 } from "./assessment-call-email-styles.server";
 
 export const ASSESSMENT_CALL_ACTION_COPY = {
@@ -30,7 +30,7 @@ export function AssessmentCallEmailActions({
 }: AssessmentCallEmailActionsViewModel) {
   return (
     <EmailSection style={buttonSectionStyle}>
-      <EmailLink href={joinUrl} style={primaryButtonStyle}>
+      <EmailLink href={joinUrl} style={EMAIL_PRIMARY_BUTTON_STYLE}>
         {ASSESSMENT_CALL_ACTION_COPY.joinLabel}
       </EmailLink>
       <EmailText style={calendarLineStyle}>

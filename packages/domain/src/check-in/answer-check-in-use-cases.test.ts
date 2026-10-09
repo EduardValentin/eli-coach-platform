@@ -76,7 +76,7 @@ function createPorts(options?: {
     checkIns,
     clients,
     clock: { now: () => now },
-    incidents: { notificationFailed: vi.fn() },
+    incidents: { checkInNotificationFailed: vi.fn() },
     notifications,
   };
 }
@@ -207,7 +207,7 @@ describe.each(ANSWERS)(
 
       // assert
       expect(result.status).toBe(notification);
-      expect(ports.incidents.notificationFailed).toHaveBeenCalledWith({
+      expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
         checkInId: "check-in-1",
         notification,
       });
@@ -344,7 +344,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
     // assert
     expect(result.status).toBe("withdrawn");
-    expect(ports.incidents.notificationFailed).toHaveBeenCalledWith({
+    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "withdrawn",
     });
@@ -363,7 +363,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
     // assert
     expect(result.status).toBe("withdrawn");
     expect(ports.notifications.withdrawn).not.toHaveBeenCalled();
-    expect(ports.incidents.notificationFailed).toHaveBeenCalledWith({
+    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "withdrawn",
     });
