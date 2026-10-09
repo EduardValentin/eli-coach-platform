@@ -1,7 +1,5 @@
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, Lock } from "lucide-react";
-import { Link } from "react-router";
+import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { Lock } from "lucide-react";
 
 import {
   CLIENT_PORTAL_PATH,
@@ -65,13 +63,9 @@ export function AccessDeniedPage({ recovery }: AccessDeniedPageProps) {
       landmarkLabel="Access denied"
       title="You don't have access to this page"
     >
-      <Link
-        className={buttonVariants({ size: "lg", variant: "inverted" })}
-        to={copy.to}
-      >
+      <DeadEndLink direction="back" to={copy.to}>
         {copy.actionLabel}
-        <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      </DeadEndLink>
     </DeadEndPage>
   );
 }

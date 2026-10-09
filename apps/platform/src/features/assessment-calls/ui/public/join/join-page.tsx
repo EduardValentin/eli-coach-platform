@@ -1,9 +1,7 @@
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, VideoOff } from "lucide-react";
+import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { VideoOff } from "lucide-react";
 import {
   redirect,
-  Link,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "react-router";
@@ -43,13 +41,9 @@ export default function AssessmentCallJoinRoute() {
         landmarkLabel="Your call"
         title="Your call link isn't ready yet"
       >
-        <Link
-          className={buttonVariants({ size: "lg", variant: "inverted" })}
-          to="/"
-        >
+        <DeadEndLink direction="back" to="/">
           Back to home
-          <ArrowRight aria-hidden="true" size={18} />
-        </Link>
+        </DeadEndLink>
       </DeadEndPage>
     </div>
   );

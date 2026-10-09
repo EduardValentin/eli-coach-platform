@@ -228,10 +228,9 @@ describe("InvitationRoute", () => {
         "It may have expired or already been used. Ask your coach for a new one.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute(
-      "href",
-      "/",
-    );
+    const backLink = screen.getByRole("link", { name: "Back to home" });
+    expect(backLink).toHaveAttribute("href", "/");
+    expect(backLink.firstElementChild).toHaveClass("lucide-arrow-left");
     expect(handOffToHostedSignUp).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,5 @@
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, Compass } from "lucide-react";
-import { Link } from "react-router";
+import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { Compass } from "lucide-react";
 
 type RootErrorPageProps = {
   description: string;
@@ -20,13 +18,9 @@ export function RootErrorPage(props: RootErrorPageProps) {
       landmarkLabel="Error"
       title={heading}
     >
-      <Link
-        className={buttonVariants({ size: "lg", variant: "inverted" })}
-        to="/"
-      >
+      <DeadEndLink direction="back" to="/">
         Back to home
-        <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      </DeadEndLink>
     </DeadEndPage>
   );
 }

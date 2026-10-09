@@ -55,6 +55,7 @@ describe("AccessDeniedPage", () => {
       expect(link).toBeInTheDocument();
       expect(link.getAttribute("href")).toBe(to);
       expect(link.tabIndex).not.toBe(-1);
+      expect(link.firstElementChild).toHaveClass("lucide-arrow-left");
     },
   );
 });
