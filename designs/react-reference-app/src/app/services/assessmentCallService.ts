@@ -1,4 +1,5 @@
 import type { VisitorGender, VisitorPrimaryGoal } from './visitorProfile';
+import { heldCheckinSpan, spansOverlap, timeSpanFrom } from '../domain/checkins';
 
 export type PrototypeBookingOutcome =
   | 'success'
@@ -102,6 +103,15 @@ export const DEFAULT_COACH_AVAILABILITY: CoachAvailability = {
 };
 
 export const DEFAULT_MEETING_LINK: string | null = null;
+
+export const PROTOTYPE_MEETING_LINK = 'https://meet.google.com/evoa-coach-room';
+
+export const PROTOTYPE_MEETING_LINK_STATES = ['none', 'set'] as const;
+export type PrototypeMeetingLinkState = (typeof PROTOTYPE_MEETING_LINK_STATES)[number];
+
+export function prototypeMeetingLink(state: PrototypeMeetingLinkState): string | null {
+  return state === 'set' ? PROTOTYPE_MEETING_LINK : DEFAULT_MEETING_LINK;
+}
 
 export type AssessmentCallSettings = CoachAvailability & {
   meetingLink: string | null;
@@ -273,17 +283,21 @@ function startHours(availability: CoachAvailability): number[] {
 export type OpenSlotsRequest = {
   now: Date;
   bookedStarts: Date[];
+  heldCheckinStarts?: readonly Date[];
   availability?: CoachAvailability;
 };
 
 export async function listOpenSlots({
   now,
   bookedStarts,
+  heldCheckinStarts = [],
   availability = DEFAULT_COACH_AVAILABILITY,
 }: OpenSlotsRequest): Promise<Date[]> {
   const earliest = now.getTime() + BOOKING_LEAD_MINUTES * MINUTE_MS;
   const latest = now.getTime() + BOOKING_HORIZON_DAYS * DAY_MS;
   const taken = new Set(bookedStarts.map((start) => start.getTime()));
+  const heldSpans = heldCheckinStarts.map(heldCheckinSpan);
+  const callOccupies = ASSESSMENT_CALL_DURATION_MINUTES + ASSESSMENT_CALL_BUFFER_MINUTES;
   const hours = startHours(availability);
   const firstDay = civilDateOf(now, availability.timeZone);
 
@@ -296,6 +310,8 @@ export async function listOpenSlots({
       const start = instantAt(day, hour, availability.timeZone);
       const time = start.getTime();
       if (time < earliest || time > latest || taken.has(time)) continue;
+      const call = timeSpanFrom(start, callOccupies);
+      if (heldSpans.some((held) => spansOverlap(held, call))) continue;
       slots.push(start);
     }
   }

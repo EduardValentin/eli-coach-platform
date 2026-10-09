@@ -24,6 +24,8 @@ import {
 } from '../../components/CheckinListing';
 import type { CheckinTab } from '../../utils/checkinListing';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { JoinMeetLink } from '../../components/JoinMeetLink';
+import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { checkinAnchorId, checkinIdFromSearch } from '../../utils/checkinLinks';
 import { Button } from '../../components/ui/button';
@@ -54,6 +56,12 @@ const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
     title: 'No past check-ins yet',
     description: 'Passed and cancelled check-ins show up here.',
   },
+};
+
+const BUSY_LABEL: Record<CheckinAnswer, string> = {
+  approve: 'Approving…',
+  decline: 'Declining…',
+  withdraw: 'Cancelling…',
 };
 
 function tabHoldingCheckin(
@@ -92,13 +100,13 @@ export function CoachCheckins() {
     getPendingCheckins,
     getUpcomingCheckins,
     getPastCheckins,
-    approveCheckin,
     cancelCheckin,
     proposeNewTime,
     getBookedSlots,
   } = useCheckins();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { answer, answerInFlight } = useCheckinAnswers();
 
   const pending = getPendingCheckins();
   const upcoming = getUpcomingCheckins();
@@ -128,32 +136,37 @@ export function CoachCheckins() {
     [rescheduleDate, getBookedSlots],
   );
 
-  const handleApprove = (c: CheckIn) => {
-    approveCheckin(c.id);
-    addSystemMessage(
-      c.clientId,
-      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success(`Approved check-in with ${c.clientName}`);
-    addNotification({
-      title: 'Check-in Approved',
-      message: `${c.clientName}'s check-in on ${formatCheckinDate(c.date)} has been confirmed.`,
-      link: '/coach/checkins',
+  const handleApprove = (c: CheckIn) =>
+    answer(c, 'approve', () => {
+      addSystemMessage(
+        c.clientId,
+        `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
+        'checkin-scheduled',
+      );
+      toast.success(`Approved check-in with ${c.clientName}`);
+      addNotification({
+        title: 'Check-in Approved',
+        message: `${c.clientName}'s check-in on ${formatCheckinDate(c.date)} has been confirmed.`,
+        link: '/coach/checkins',
+      });
     });
-  };
 
-  const handleDecline = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(c.clientId, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in declined');
-  };
+  const handleDecline = (c: CheckIn) =>
+    answer(c, 'decline', () => {
+      addSystemMessage(c.clientId, 'Check-in cancelled', 'checkin-cancelled');
+      toast.success('Check-in declined');
+    });
 
-  const handleWithdraw = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(c.clientId, 'Check-in request cancelled', 'checkin-cancelled');
-    toast.success('Request cancelled');
-  };
+  const handleWithdraw = (c: CheckIn) =>
+    answer(c, 'withdraw', () => {
+      addSystemMessage(c.clientId, 'Check-in request cancelled', 'checkin-cancelled');
+      toast.success('Request cancelled');
+    });
+
+  const answering = (c: CheckIn) => answerInFlight(c) !== null;
+
+  const busyLabel = (c: CheckIn, action: CheckinAnswer, label: string) =>
+    answerInFlight(c) === action ? BUSY_LABEL[action] : label;
 
   const confirmCancel = () => {
     if (!cancelTarget) return;
@@ -205,23 +218,46 @@ export function CoachCheckins() {
 
   const waitingActions = (c: CheckIn) =>
     canWithdrawRequest(c, 'coach') ? (
-      <Button onClick={() => handleWithdraw(c)} variant="outline" size="xs">
-        Cancel request
+      <Button
+        onClick={() => handleWithdraw(c)}
+        disabled={answering(c)}
+        aria-busy={answerInFlight(c) === 'withdraw' || undefined}
+        variant="outline"
+        size="xs"
+      >
+        {busyLabel(c, 'withdraw', 'Cancel request')}
       </Button>
     ) : undefined;
 
   const answerActions = (c: CheckIn) => (
     <>
-      <Button onClick={() => handleDecline(c)} variant="ghost" size="xs">
-        Decline
+      <Button
+        onClick={() => handleDecline(c)}
+        disabled={answering(c)}
+        aria-busy={answerInFlight(c) === 'decline' || undefined}
+        variant="ghost"
+        size="xs"
+      >
+        {busyLabel(c, 'decline', 'Decline')}
       </Button>
       {canPropose(c) && (
-        <Button onClick={() => openReschedule(c)} variant="outline" size="xs">
+        <Button
+          onClick={() => openReschedule(c)}
+          disabled={answering(c)}
+          variant="outline"
+          size="xs"
+        >
           Reschedule
         </Button>
       )}
-      <Button onClick={() => handleApprove(c)} variant="primary" size="xs">
-        {proposesNewTime(c) ? 'Accept' : 'Approve'}
+      <Button
+        onClick={() => handleApprove(c)}
+        disabled={answering(c)}
+        aria-busy={answerInFlight(c) === 'approve' || undefined}
+        variant="primary"
+        size="xs"
+      >
+        {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
       </Button>
     </>
   );
@@ -229,7 +265,6 @@ export function CoachCheckins() {
   const upcomingActions = (c: CheckIn) => {
     const reschedulable = c.kind !== 'program-review' && canPropose(c);
     const cancellable = canCancelApproved(c, 'coach');
-    if (!reschedulable && !cancellable) return undefined;
 
     return (
       <>
@@ -243,6 +278,7 @@ export function CoachCheckins() {
             Reschedule
           </Button>
         )}
+        <JoinMeetLink checkin={c} party="coach" size="xs" />
       </>
     );
   };
@@ -270,7 +306,7 @@ export function CoachCheckins() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="CoachCheckins">
       <PortalPageHeader
         title="Check-ins"
         subtitle="Manage all client check-ins in one place."

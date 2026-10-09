@@ -39,11 +39,11 @@ describe('CoachSettings', () => {
 
     // assert
     expect(
-      screen.getByText('Manage how you take assessment calls and how measurements are shown.'),
+      screen.getByText('Manage when you take calls and check-ins and how measurements are shown.'),
     ).toBeInTheDocument();
   });
 
-  it('places Assessment calls before Units & Measurements', () => {
+  it('places Calls and check-ins before Units & Measurements', () => {
     // arrange
     // act
     renderPage();
@@ -51,7 +51,7 @@ describe('CoachSettings', () => {
     // assert
     const sectionHeadings = screen.getAllByRole('heading', { level: 2 });
     expect(sectionHeadings.map((heading) => heading.textContent)).toEqual([
-      'Assessment calls',
+      'Calls and check-ins',
       'Units & Measurements',
     ]);
   });

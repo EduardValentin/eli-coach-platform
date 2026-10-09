@@ -61,7 +61,7 @@ describe("AssessmentCallSettingsSection", () => {
 
     // assert
     expect(
-      screen.getByRole("group", { name: "Days I take calls" }),
+      screen.getByRole("group", { name: "Days I'm available" }),
     ).toBeInTheDocument();
   });
 

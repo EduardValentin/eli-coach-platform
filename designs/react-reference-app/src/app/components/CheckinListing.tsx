@@ -256,7 +256,9 @@ export function CheckinListing({
               <TabsTrigger key={value} value={value} className="px-4 sm:px-5">
                 {TAB_LABELS[value]}
                 {value === 'requests' && awaitingViewer > 0 && (
-                  <Badge tone="count">{awaitingViewer}</Badge>
+                  <Badge tone="count" data-parity="requests-count">
+                    {awaitingViewer}
+                  </Badge>
                 )}
               </TabsTrigger>
             ))}

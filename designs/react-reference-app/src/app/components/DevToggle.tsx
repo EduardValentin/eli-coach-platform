@@ -71,12 +71,15 @@ import type {
   SubscriptionStartPath,
   SubscriptionStatus,
 } from '../domain/coachingSubscription';
-import type {
-  PrototypeBooking,
-  PrototypeBookingOutcome,
-  PrototypeCallSettingsSaveOutcome,
-  PrototypeCoachListingOutcome,
+import {
+  prototypeMeetingLink,
+  type PrototypeBooking,
+  type PrototypeBookingOutcome,
+  type PrototypeCallSettingsSaveOutcome,
+  type PrototypeCoachListingOutcome,
+  type PrototypeMeetingLinkState,
 } from '../services/assessmentCallService';
+import { CHECKIN_SERVICE_OUTCOMES } from '../services/checkinService';
 import {
   sampleDashboardBookings,
   sampleImminentBookings,
@@ -373,7 +376,8 @@ export function DevToggle() {
       isPostMvp ||
       (stage !== 'program-ready' && stage !== 'review-call-scheduled'),
   );
-  const { replaceBookings } = useAssessmentCalls();
+  const { replaceBookings, settings: callSettings, replaceMeetingLink } =
+    useAssessmentCalls();
   const { journeys } = useClientJourneys();
   const { search } = useLocation();
   const withDevParams = (path: string) => {
@@ -911,6 +915,38 @@ export function DevToggle() {
                   label="Client check-in live now"
                   checked={hasLiveCheckin}
                   onCheckedChange={setLiveCheckin}
+                />
+                <div className="space-y-2">
+                  <Label htmlFor="dev-checkin-service" className={DEV_LABEL_CLASS}>
+                    Check-in service
+                  </Label>
+                  <Select
+                    value={appState.checkinService}
+                    onValueChange={(value) =>
+                      setAppState({
+                        checkinService: optionOrDefault(CHECKIN_SERVICE_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-checkin-service" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="time-taken">Time taken</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <DevCheckboxRow
+                  id="dev-meeting-link-set"
+                  label="Meeting link set"
+                  checked={callSettings.meetingLink !== null}
+                  onCheckedChange={(checked) => {
+                    const meetingLink: PrototypeMeetingLinkState = checked ? 'set' : 'none';
+                    setAppState({ meetingLink });
+                    replaceMeetingLink(prototypeMeetingLink(meetingLink));
+                  }}
                 />
               </TabsContent>
 

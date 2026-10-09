@@ -2,9 +2,11 @@ import { createContext, useContext, useState, useCallback, useMemo, ReactNode } 
 import {
   awaitsResponseFrom,
   canPropose,
+  checkinSlotAt,
   checkinStartsAt,
   checkinStatus,
   coachingEndsAt,
+  holdsCoachTime,
   isOpenClientRequest,
   programReviewCheckin,
   type CheckIn,
@@ -12,6 +14,19 @@ import {
   type CheckinParty,
   type CheckinStatus,
 } from '../domain/checkins';
+import {
+  answerCheckinRequest,
+  requestCheckinTime,
+  listOpenCheckinTimes,
+  withdrawCheckinRequest,
+  type CheckinRequestDecision,
+  type CheckinSchedule,
+  type CheckinServiceOutcome,
+  type CheckinSettlement,
+  type PendingRequestAnswer,
+} from '../services/checkinService';
+import { useAppState } from './AppContext';
+import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientJourneys } from './ClientJourneyContext';
 import { toISODate } from '../utils/dateFormatters';
 
@@ -22,7 +37,7 @@ export const DEMO_CLIENT = { id: 'c1', name: 'Jane Doe' } as const;
 const LIVE_CHECKIN_ID = 'ck-live';
 const OPEN_REQUEST_ID = 'ck-open-request';
 
-type CheckinRequest = {
+type CoachCheckinProposal = {
   clientId: string;
   clientName: string;
   date: string;
@@ -30,12 +45,34 @@ type CheckinRequest = {
   note?: string;
 };
 
+export type CheckinRequester = { id: string; name: string };
+
+export type NewCheckinRequest = {
+  client: CheckinRequester;
+  startsAt: Date;
+  note: string;
+};
+
+export type CheckinRequestResult =
+  | { status: 'requested'; checkin: CheckIn }
+  | { status: Exclude<CheckinRequestDecision, 'requested'> };
+
+type RequestSettler = (
+  answer: PendingRequestAnswer,
+  outcome: CheckinServiceOutcome,
+) => Promise<CheckinSettlement>;
+
 interface CheckinContextType {
   checkins: CheckIn[];
   statusOf: (checkin: CheckIn) => CheckinStatus;
-  requestCheckin: (data: CheckinRequest) => CheckIn | null;
-  coachInitiateCheckin: (data: CheckinRequest) => CheckIn;
-  approveCheckin: (checkinId: string) => void;
+  findCheckin: (checkinId: string) => CheckIn | undefined;
+  heldCheckinStarts: () => Date[];
+  loadOpenTimes: () => Promise<Date[]>;
+  requestCheckin: (request: NewCheckinRequest) => Promise<CheckinRequestResult>;
+  coachInitiateCheckin: (data: CoachCheckinProposal) => CheckIn;
+  approveCheckin: (checkinId: string) => Promise<CheckinSettlement>;
+  declineCheckin: (checkinId: string) => Promise<CheckinSettlement>;
+  withdrawCheckinRequest: (checkinId: string) => Promise<CheckinSettlement>;
   cancelCheckin: (checkinId: string) => void;
   proposeNewTime: (
     checkinId: string,
@@ -415,9 +452,18 @@ function forClient(clientId?: string) {
   return (checkin: CheckIn) => !clientId || checkin.clientId === clientId;
 }
 
+function noteOrNothing(note: string): string | undefined {
+  const trimmed = note.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export function CheckinProvider({ children }: { children: ReactNode }) {
   const [stored, setStored] = useState<CheckIn[]>(MOCK_CHECKINS);
+  const [takenElsewhere, setTakenElsewhere] = useState<Date[]>([]);
   const { demoJourney } = useClientJourneys();
+  const { settings, bookedStarts } = useAssessmentCalls();
+  const { appState } = useAppState();
+  const serviceOutcome = appState.checkinService;
 
   const programReview = useMemo(
     () => programReviewCheckin(demoJourney, DEMO_CLIENT),
@@ -461,27 +507,74 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const findCheckin = useCallback(
+    (checkinId: string) => checkins.find((c) => c.id === checkinId),
+    [checkins],
+  );
+
+  const heldCheckinStarts = useCallback(
+    () => [
+      ...checkins.filter((c) => holdsCoachTime(statusOf(c))).map(checkinStartsAt),
+      ...takenElsewhere,
+    ],
+    [checkins, statusOf, takenElsewhere],
+  );
+
+  const scheduleNow = useCallback(
+    (): CheckinSchedule => ({
+      now: new Date(),
+      availability: settings,
+      callStarts: bookedStarts,
+      heldCheckinStarts: heldCheckinStarts(),
+    }),
+    [settings, bookedStarts, heldCheckinStarts],
+  );
+
+  const loadOpenTimes = useCallback(
+    () => listOpenCheckinTimes(scheduleNow(), serviceOutcome),
+    [scheduleNow, serviceOutcome],
+  );
+
   const requestCheckin = useCallback(
-    (data: CheckinRequest): CheckIn | null => {
-      if (hasOpenClientRequest(data.clientId)) return null;
+    async ({
+      client,
+      startsAt,
+      note,
+    }: NewCheckinRequest): Promise<CheckinRequestResult> => {
+      const decision = await requestCheckinTime(
+        {
+          startsAt,
+          schedule: scheduleNow(),
+          waitingRequest: hasOpenClientRequest(client.id),
+        },
+        serviceOutcome,
+      );
+      if (decision === 'time_taken') {
+        setTakenElsewhere((taken) => [...taken, startsAt]);
+      }
+      if (decision !== 'requested') return { status: decision };
+
       const request: CheckIn = {
-        ...data,
+        ...checkinSlotAt(startsAt),
         id: newCheckinId(),
+        clientId: client.id,
+        clientName: client.name,
         coachId: 'coach-1',
         kind: 'ad-hoc',
         status: 'pending',
         initiatedBy: 'client',
         proposedBy: 'client',
         createdAt: new Date().toISOString(),
+        note: noteOrNothing(note),
         rescheduleCount: 0,
       };
       setStored((prev) => [request, ...prev]);
-      return request;
+      return { status: 'requested', checkin: request };
     },
-    [hasOpenClientRequest],
+    [scheduleNow, hasOpenClientRequest, serviceOutcome],
   );
 
-  const coachInitiateCheckin = useCallback((data: CheckinRequest): CheckIn => {
+  const coachInitiateCheckin = useCallback((data: CoachCheckinProposal): CheckIn => {
     const proposal: CheckIn = {
       ...data,
       id: newCheckinId(),
@@ -497,15 +590,47 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     return proposal;
   }, []);
 
+  const settleRequest = useCallback(
+    async (
+      checkinId: string,
+      settle: RequestSettler,
+      change: (checkin: CheckIn) => CheckIn,
+    ): Promise<CheckinSettlement> => {
+      const checkin = checkins.find((c) => c.id === checkinId);
+      const status = checkin ? statusOf(checkin) : 'cancelled';
+      const settlement = await settle({ status }, serviceOutcome);
+      if (settlement === 'settled') updateCheckin(checkinId, change);
+      return settlement;
+    },
+    [checkins, statusOf, serviceOutcome, updateCheckin],
+  );
+
   const approveCheckin = useCallback(
-    (checkinId: string) => {
-      updateCheckin(checkinId, (c) => ({
+    (checkinId: string) =>
+      settleRequest(checkinId, answerCheckinRequest, (c) => ({
         ...c,
         status: 'approved',
         rescheduleMessage: undefined,
-      }));
-    },
-    [updateCheckin],
+      })),
+    [settleRequest],
+  );
+
+  const declineCheckin = useCallback(
+    (checkinId: string) =>
+      settleRequest(checkinId, answerCheckinRequest, (c) => ({
+        ...c,
+        status: 'cancelled',
+      })),
+    [settleRequest],
+  );
+
+  const withdrawCheckinRequestById = useCallback(
+    (checkinId: string) =>
+      settleRequest(checkinId, withdrawCheckinRequest, (c) => ({
+        ...c,
+        status: 'cancelled',
+      })),
+    [settleRequest],
   );
 
   const cancelCheckin = useCallback(
@@ -582,7 +707,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
   const getBookedSlots = useCallback(
     (date: string): string[] =>
       checkins
-        .filter((c) => c.date === date && statusOf(c) === 'approved')
+        .filter((c) => c.date === date && holdsCoachTime(statusOf(c)))
         .map((c) => c.time),
     [checkins, statusOf],
   );
@@ -628,9 +753,14 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       value={{
         checkins,
         statusOf,
+        findCheckin,
+        heldCheckinStarts,
+        loadOpenTimes,
         requestCheckin,
         coachInitiateCheckin,
         approveCheckin,
+        declineCheckin,
+        withdrawCheckinRequest: withdrawCheckinRequestById,
         cancelCheckin,
         proposeNewTime,
         getUpcomingCheckins,

@@ -26,12 +26,20 @@ import {
   to24h,
 } from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
+import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
 import type { CheckinTab } from '../../utils/checkinListing';
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
 
 const CLIENT_ID = DEMO_CLIENT.id;
 const CLIENT_NAME = DEMO_CLIENT.name;
+
+const BUSY_LABEL: Record<CheckinAnswer, string> = {
+  approve: 'Approving…',
+  decline: 'Declining…',
+  withdraw: 'Cancelling…',
+};
 
 const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
   upcoming: {
@@ -54,8 +62,6 @@ const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
 export function ClientCheckins() {
   const {
     statusOf,
-    requestCheckin,
-    approveCheckin,
     cancelCheckin,
     proposeNewTime,
     getUpcomingCheckins,
@@ -64,6 +70,7 @@ export function ClientCheckins() {
     getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { answer, answerInFlight } = useCheckinAnswers();
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
   const coach = {
@@ -77,8 +84,6 @@ export function ClientCheckins() {
   const openRequest = hasOpenClientRequest(CLIENT_ID);
 
   const [showRequest, setShowRequest] = useState(false);
-  const [reqDate, setReqDate] = useState<Date | undefined>();
-  const [reqTime, setReqTime] = useState<string | null>(null);
 
   const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
   const [rsDate, setRsDate] = useState<Date | undefined>();
@@ -88,11 +93,10 @@ export function ClientCheckins() {
   const [movingReview, setMovingReview] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
 
-  const bookedSlots = useMemo(() => {
-    if (showRequest && reqDate) return getBookedSlots(toISODate(reqDate));
-    if (rescheduleTarget && rsDate) return getBookedSlots(toISODate(rsDate));
-    return [];
-  }, [showRequest, reqDate, rescheduleTarget, rsDate, getBookedSlots]);
+  const bookedSlots = useMemo(
+    () => (rescheduleTarget && rsDate ? getBookedSlots(toISODate(rsDate)) : []),
+    [rescheduleTarget, rsDate, getBookedSlots],
+  );
 
   const rescheduleTargetCheckin = useMemo(
     () =>
@@ -100,56 +104,43 @@ export function ClientCheckins() {
     [upcoming, pending, rescheduleTarget],
   );
 
-  const handleRequest = () => {
-    if (!reqDate || !reqTime) return;
-    const date = toISODate(reqDate);
-    const time = to24h(reqTime);
-    const result = requestCheckin({
-      clientId: CLIENT_ID,
-      clientName: CLIENT_NAME,
-      date,
-      time,
-    });
-    if (!result) {
-      toast.error('You already have a check-in request waiting');
-      return;
-    }
-    setShowRequest(false);
-    setReqDate(undefined);
-    setReqTime(null);
+  const handleRequested = (c: CheckIn) => {
     ctxSendMessage(
       CLIENT_ID,
-      `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      `Check-in requested: ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
       'client',
     );
-    toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
+    toast.success(`Check-in requested for ${formatCheckinDate(c.date)}`);
   };
 
-  const handleApprove = (c: CheckIn) => {
-    approveCheckin(c.id);
-    addSystemMessage(
-      CLIENT_ID,
-      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Check-in approved');
-  };
+  const handleApprove = (c: CheckIn) =>
+    answer(c, 'approve', () => {
+      addSystemMessage(
+        CLIENT_ID,
+        `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
+        'checkin-scheduled',
+      );
+      toast.success('Check-in approved');
+    });
 
-  const handleDecline = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in declined');
-  };
+  const handleDecline = (c: CheckIn) =>
+    answer(c, 'decline', () => {
+      addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
+      toast.success('Check-in declined');
+    });
 
-  const handleWithdraw = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(
-      CLIENT_ID,
-      'Check-in request cancelled',
-      'checkin-cancelled',
-    );
-    toast.success('Request cancelled');
-  };
+  const handleWithdraw = (c: CheckIn) =>
+    answer(c, 'withdraw', () => {
+      addSystemMessage(
+        CLIENT_ID,
+        'Check-in request cancelled',
+        'checkin-cancelled',
+      );
+      toast.success('Request cancelled');
+    });
+
+  const busyLabel = (c: CheckIn, action: CheckinAnswer, label: string) =>
+    answerInFlight(c) === action ? BUSY_LABEL[action] : label;
 
   const confirmCancel = () => {
     if (!cancelTarget) return;
@@ -225,7 +216,7 @@ export function ClientCheckins() {
           Reschedule
         </Button>
       )}
-      <JoinMeetLink checkin={c} />
+      <JoinMeetLink checkin={c} party="client" />
     </>
   );
 
@@ -234,10 +225,12 @@ export function ClientCheckins() {
       <Button
         type="button"
         onClick={() => handleWithdraw(c)}
+        disabled={answerInFlight(c) !== null}
+        aria-busy={answerInFlight(c) === 'withdraw' || undefined}
         variant="outline"
         size="sm"
       >
-        Cancel request
+        {busyLabel(c, 'withdraw', 'Cancel request')}
       </Button>
     ) : undefined;
 
@@ -246,15 +239,18 @@ export function ClientCheckins() {
         <Button
           type="button"
           onClick={() => handleDecline(c)}
+          disabled={answerInFlight(c) !== null}
+          aria-busy={answerInFlight(c) === 'decline' || undefined}
           variant="ghost"
           size="sm"
         >
-          Decline
+          {busyLabel(c, 'decline', 'Decline')}
         </Button>
         {canPropose(c) && (
           <Button
             type="button"
             onClick={() => openReschedule(c)}
+            disabled={answerInFlight(c) !== null}
             variant="outline"
             size="sm"
           >
@@ -264,10 +260,12 @@ export function ClientCheckins() {
         <Button
           type="button"
           onClick={() => handleApprove(c)}
+          disabled={answerInFlight(c) !== null}
+          aria-busy={answerInFlight(c) === 'approve' || undefined}
           variant="primary"
           size="sm"
         >
-          {proposesNewTime(c) ? 'Accept' : 'Approve'}
+          {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
         </Button>
       </>
   );
@@ -279,7 +277,7 @@ export function ClientCheckins() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="ClientCheckins">
       <PortalPageHeader
         title="Check-ins"
         subtitle="Request a check-in, answer proposals, and look back at past sessions."
@@ -318,19 +316,11 @@ export function ClientCheckins() {
         )}
       />
 
-      <CheckinSchedulerSheet
+      <CheckinRequestDialog
         open={showRequest}
         onOpenChange={setShowRequest}
-        variant="request"
-        title="Request a check-in"
-        description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
-        selectedDate={reqDate}
-        onDateChange={setReqDate}
-        selectedTime={reqTime}
-        onTimeChange={setReqTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleRequest}
-        submitLabel="Request"
+        client={DEMO_CLIENT}
+        onRequested={handleRequested}
       />
 
       <CheckinSchedulerSheet

@@ -7,7 +7,7 @@ export function CoachSettings() {
     <div className="w-full max-w-3xl space-y-6 sm:space-y-8">
       <PortalPageHeader
         title="Settings"
-        subtitle="Manage how you take assessment calls and how measurements are shown."
+        subtitle="Manage when you take calls and check-ins and how measurements are shown."
       />
 
       <AssessmentCallSettingsSection />

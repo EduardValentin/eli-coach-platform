@@ -36,7 +36,7 @@ export function NextCheckinCard() {
         </WidgetLink>
       }
     >
-      <JoinMeetLink checkin={nextCheckin} className="mt-3 w-full" />
+      <JoinMeetLink checkin={nextCheckin} party="client" className="mt-3 w-full" />
     </ClientWidget>
   );
 }

@@ -240,7 +240,7 @@ export function AssessmentCallSettingsSection() {
   return (
     <SettingsSection
       headingId="assessment-call-heading"
-      title="Assessment calls"
+      title="Calls and check-ins"
       icon={
         <CalendarClock
           aria-hidden="true"
@@ -248,7 +248,7 @@ export function AssessmentCallSettingsSection() {
           size={18}
         />
       }
-      description="Visitors book inside the days and hours you set here."
+      description="Visitors book calls and clients pick check-in times inside the days and hours you set here."
       footer={
         <Button
           type="submit"
@@ -282,8 +282,8 @@ export function AssessmentCallSettingsSection() {
           <SettingsRow
             as="fieldset"
             labelId="assessment-call-weekdays-label"
-            title="Days I take calls"
-            description="Visitors can pick a slot on these days."
+            title="Days I'm available"
+            description="Calls and check-ins can be booked on these days."
             layout="stacked"
             aria-describedby={weekdaysErrorId}
           >

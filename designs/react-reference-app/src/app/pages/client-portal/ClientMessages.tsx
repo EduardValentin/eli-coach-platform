@@ -27,6 +27,9 @@ import {
 } from '../../utils/dateFormatters';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
+import { useCheckinAnswers } from '../../hooks/useCheckinAnswers';
+import type { CheckIn } from '../../domain/checkins';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -54,8 +57,9 @@ import { cn } from '../../components/ui/utils';
 
 const COACH_DEFAULT_PHOTO = ELI_PORTRAIT_SMALL;
 
-const CLIENT_ID = 'c1';
-const CLIENT_NAME = 'Jane Doe';
+const CLIENT = { id: 'c1', name: 'Jane Doe' } as const;
+const CLIENT_ID = CLIENT.id;
+const CLIENT_NAME = CLIENT.name;
 
 export function ClientMessages() {
   const [message, setMessage] = useState('');
@@ -71,8 +75,6 @@ export function ClientMessages() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showCheckinPicker, setShowCheckinPicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Reschedule state
   const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
@@ -83,15 +85,13 @@ export function ClientMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useNotifications();
   const {
-    requestCheckin,
     hasOpenClientRequest,
     getUpcomingCheckins,
     getCheckinsAwaiting,
     getBookedSlots,
-    approveCheckin,
-    cancelCheckin,
     proposeNewTime,
   } = useCheckins();
+  const { answer } = useCheckinAnswers();
 
   const pendingExists = hasOpenClientRequest(CLIENT_ID);
   const nextCheckin = getUpcomingCheckins(CLIENT_ID)[0];
@@ -100,19 +100,13 @@ export function ClientMessages() {
     [getCheckinsAwaiting],
   );
 
-  const bookedSlots = useMemo(() => {
-    if (showCheckinPicker && selectedDate)
-      return getBookedSlots(toISODate(selectedDate));
-    if (rescheduleTarget && rescheduleDate)
-      return getBookedSlots(toISODate(rescheduleDate));
-    return [];
-  }, [
-    showCheckinPicker,
-    selectedDate,
-    rescheduleTarget,
-    rescheduleDate,
-    getBookedSlots,
-  ]);
+  const bookedSlots = useMemo(
+    () =>
+      rescheduleTarget && rescheduleDate
+        ? getBookedSlots(toISODate(rescheduleDate))
+        : [],
+    [rescheduleTarget, rescheduleDate, getBookedSlots],
+  );
 
   const rescheduleTargetCheckin = useMemo(
     () => actionableCheckins.find((c) => c.id === rescheduleTarget) ?? null,
@@ -127,31 +121,13 @@ export function ClientMessages() {
     scrollToBottom();
   }, [messages, actionableCheckins]);
 
-  const handleScheduleCheckin = () => {
-    if (!selectedDate || !selectedTime) return;
-    const date = toISODate(selectedDate);
-    const time = to24h(selectedTime);
-    const result = requestCheckin({
-      clientId: CLIENT_ID,
-      clientName: CLIENT_NAME,
-      date,
-      time,
-    });
-    if (!result) {
-      toast.error('You already have a pending check-in request');
-      return;
-    }
-
-    setShowCheckinPicker(false);
-    setSelectedDate(undefined);
-    setSelectedTime(null);
-
+  const handleCheckinRequested = (checkin: CheckIn) => {
     ctxSendMessage(
       CLIENT_ID,
-      `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      `Check-in requested: ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
       'client',
     );
-    toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
+    toast.success(`Check-in requested for ${formatCheckinDate(checkin.date)}`);
   };
 
   const handleReschedule = (checkinId: string) => {
@@ -192,34 +168,32 @@ export function ClientMessages() {
     setRescheduleMsg('');
   };
 
-  const handleAcceptReschedule = (checkinId: string) => {
+  const approveWithConfirmation = (checkinId: string, confirmation: string) => {
     const checkin = actionableCheckins.find((c) => c.id === checkinId);
     if (!checkin) return;
-    approveCheckin(checkinId);
-    addSystemMessage(
-      CLIENT_ID,
-      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Check-in confirmed');
+    void answer(checkin, 'approve', () => {
+      addSystemMessage(
+        CLIENT_ID,
+        `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
+        'checkin-scheduled',
+      );
+      toast.success(confirmation);
+    });
   };
+
+  const handleAcceptReschedule = (checkinId: string) =>
+    approveWithConfirmation(checkinId, 'Check-in confirmed');
+
+  const handleApproveCheckin = (checkinId: string) =>
+    approveWithConfirmation(checkinId, 'Check-in approved');
 
   const handleDeclineCheckin = (checkinId: string) => {
-    cancelCheckin(checkinId);
-    addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in cancelled');
-  };
-
-  const handleApproveCheckin = (checkinId: string) => {
     const checkin = actionableCheckins.find((c) => c.id === checkinId);
     if (!checkin) return;
-    approveCheckin(checkinId);
-    addSystemMessage(
-      CLIENT_ID,
-      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Check-in approved');
+    void answer(checkin, 'decline', () => {
+      addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
+      toast.success('Check-in cancelled');
+    });
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -538,19 +512,11 @@ export function ClientMessages() {
       </div>
 
       {/* Request a check-in */}
-      <CheckinSchedulerSheet
+      <CheckinRequestDialog
         open={showCheckinPicker}
         onOpenChange={setShowCheckinPicker}
-        variant="request"
-        title="Request a check-in"
-        description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        selectedTime={selectedTime}
-        onTimeChange={setSelectedTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleScheduleCheckin}
-        submitLabel="Request"
+        client={CLIENT}
+        onRequested={handleCheckinRequested}
       />
 
       {/* Reschedule a check-in */}

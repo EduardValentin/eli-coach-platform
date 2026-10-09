@@ -43,6 +43,28 @@ export interface CheckIn {
   rescheduleMessage?: string;
 }
 
+export type TimeSpan = { start: number; end: number };
+
+const MINUTE_MS = 60 * 1000;
+
+const HOLDING_STATUSES: readonly CheckinStatus[] = ['pending', 'approved'];
+
+export function timeSpanFrom(start: Date, minutes: number): TimeSpan {
+  return { start: start.getTime(), end: start.getTime() + minutes * MINUTE_MS };
+}
+
+export function spansOverlap(first: TimeSpan, second: TimeSpan): boolean {
+  return first.start < second.end && second.start < first.end;
+}
+
+export function heldCheckinSpan(start: Date): TimeSpan {
+  return timeSpanFrom(start, CHECKIN_DURATION_MINUTES);
+}
+
+export function holdsCoachTime(status: CheckinStatus): boolean {
+  return HOLDING_STATUSES.includes(status);
+}
+
 export type CheckinClock = {
   now: Date;
   coachingEndsAt?: Date;
@@ -185,6 +207,10 @@ function toTime24(instant: Date): string {
   return `${hours}:${minutes}`;
 }
 
+export function checkinSlotAt(instant: Date): Pick<CheckIn, 'date' | 'time'> {
+  return { date: toISODate(instant), time: toTime24(instant) };
+}
+
 export function programReviewCheckin(
   journey: ClientJourney,
   client: { id: string; name: string },
@@ -199,15 +225,14 @@ export function programReviewCheckin(
     clientId: client.id,
     clientName: client.name,
     coachId: 'coach-1',
-    date: toISODate(reviewCall.startsAt),
-    time: toTime24(reviewCall.startsAt),
+    ...checkinSlotAt(reviewCall.startsAt),
     kind: 'program-review',
     status: 'approved',
     initiatedBy: 'client',
     proposedBy: 'client',
     createdAt: reviewCall.scheduledAt.toISOString(),
     rescheduleCount: rescheduledFrom ? 1 : 0,
-    previousDate: rescheduledFrom ? toISODate(rescheduledFrom) : undefined,
-    previousTime: rescheduledFrom ? toTime24(rescheduledFrom) : undefined,
+    previousDate: rescheduledFrom ? checkinSlotAt(rescheduledFrom).date : undefined,
+    previousTime: rescheduledFrom ? checkinSlotAt(rescheduledFrom).time : undefined,
   };
 }

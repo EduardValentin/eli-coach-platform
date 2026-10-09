@@ -159,8 +159,10 @@ export function AppointmentCard({
   details = [],
   quote,
   quoteAuthor,
+  quoteParity,
   footnote,
   actions,
+  parityRoot,
 }: {
   attendee: AppointmentAttendee;
   when: AppointmentTime;
@@ -173,8 +175,10 @@ export function AppointmentCard({
   details?: readonly AppointmentDetail[];
   quote?: string;
   quoteAuthor?: string;
+  quoteParity?: string;
   footnote?: string;
   actions?: ReactNode;
+  parityRoot?: string;
 }) {
   const prefersReducedMotion = useReducedMotion() ?? false;
 
@@ -184,6 +188,7 @@ export function AppointmentCard({
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className={cn(CARD_CLASS, CARD_TONE[status])}
+      data-parity-root={parityRoot}
     >
       <div className="flex items-start gap-4 flex-1 min-w-0">
         <AttendeeAvatar attendee={attendee} status={status} />
@@ -211,7 +216,10 @@ export function AppointmentCard({
           <AppointmentDetails details={details} />
 
           {quote && (
-            <p className="text-xs text-text-secondary italic mt-2 whitespace-pre-line">
+            <p
+              className="text-xs text-text-secondary italic mt-2 whitespace-pre-line"
+              data-parity={quoteParity}
+            >
               {quoteAuthor && (
                 <span className="not-italic font-medium">{quoteAuthor}: </span>
               )}

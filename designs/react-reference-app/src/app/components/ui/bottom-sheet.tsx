@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/react';
-import { useRef, type ReactNode } from 'react';
+import { useRef, type ReactNode, type RefObject } from 'react';
 
 import type { DialogDismissal } from './dialog';
 import { cn } from './utils';
@@ -13,6 +13,7 @@ interface BottomSheetProps {
   description?: string;
   className?: string;
   dismissal?: DialogDismissal;
+  initialFocus?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 
@@ -37,13 +38,19 @@ export function BottomSheet({
   description,
   className,
   dismissal = 'allowed',
+  initialFocus,
   children,
 }: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotion() === true;
   const opener = useRef<HTMLElement | null>(null);
 
-  const rememberOpener = () => {
+  const rememberOpener = (event: Event) => {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const target = initialFocus?.current;
+    if (!target) return;
+
+    event.preventDefault();
+    target.focus();
   };
   const returnFocusToOpener = (event: Event) => {
     event.preventDefault();

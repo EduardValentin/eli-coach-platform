@@ -1,11 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
-import type {
-  PrototypeBookingOutcome,
-  PrototypeCallSettingsSaveOutcome,
-  PrototypeCoachListingOutcome,
+import {
+  PROTOTYPE_MEETING_LINK_STATES,
+  type PrototypeBookingOutcome,
+  type PrototypeCallSettingsSaveOutcome,
+  type PrototypeCoachListingOutcome,
+  type PrototypeMeetingLinkState,
 } from '../services/assessmentCallService';
+import {
+  CHECKIN_SERVICE_OUTCOMES,
+  type CheckinServiceOutcome,
+} from '../services/checkinService';
 import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
@@ -150,6 +156,8 @@ type AppState = {
   resourceUpload: ResourceUpload;
   resourceMark: ResourceMark;
   resourceWrite: ResourceWrite;
+  checkinService: CheckinServiceOutcome;
+  meetingLink: PrototypeMeetingLinkState;
 };
 
 type AppContextType = {
@@ -204,6 +212,8 @@ const defaultState: AppState = {
   resourceUpload: 'works',
   resourceMark: 'works',
   resourceWrite: 'works',
+  checkinService: 'works',
+  meetingLink: 'none',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -524,6 +534,16 @@ function parseDevParamsFromURL(): AppState {
     params.get('rwrite'),
     defaultState.resourceWrite,
   );
+  state.checkinService = optionOrDefault(
+    CHECKIN_SERVICE_OUTCOMES,
+    params.get('ckservice'),
+    defaultState.checkinService,
+  );
+  state.meetingLink = optionOrDefault(
+    PROTOTYPE_MEETING_LINK_STATES,
+    params.get('meetlink'),
+    defaultState.meetingLink,
+  );
 
   return state;
 }
@@ -587,6 +607,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('rupload');
     url.searchParams.delete('rmark');
     url.searchParams.delete('rwrite');
+    url.searchParams.delete('ckservice');
+    url.searchParams.delete('meetlink');
 
     if (appState.prototypeMode === 'post-mvp') {
       url.searchParams.set('scope', 'post-mvp');
@@ -726,6 +748,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.resourceWrite !== defaultState.resourceWrite) {
       url.searchParams.set('rwrite', appState.resourceWrite);
+    }
+    if (appState.checkinService !== defaultState.checkinService) {
+      url.searchParams.set('ckservice', appState.checkinService);
+    }
+    if (appState.meetingLink !== defaultState.meetingLink) {
+      url.searchParams.set('meetlink', appState.meetingLink);
     }
 
     const target = url.pathname + url.search + url.hash;

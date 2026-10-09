@@ -1,31 +1,57 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { Video } from 'lucide-react';
-import { isJoinable, type CheckIn } from '../domain/checkins';
+import { isJoinable, type CheckIn, type CheckinParty } from '../domain/checkins';
 import { buttonVariants } from './ui/button';
 
-const MEET_URL = 'https://meet.google.com/mock-eli-checkin';
+const MINUTE_MS = 60 * 1000;
+
+const PORTAL_CHECKINS_PATH: Record<CheckinParty, string> = {
+  client: '/portal/checkins',
+  coach: '/coach/checkins',
+};
+
+function joinPathOf(checkin: CheckIn, party: CheckinParty): string {
+  return `${PORTAL_CHECKINS_PATH[party]}/${encodeURIComponent(checkin.id)}/join`;
+}
+
+function useMinuteTick(): Date {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), MINUTE_MS);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return now;
+}
 
 export function JoinMeetLink({
   checkin,
+  party,
+  size = 'sm',
   className,
 }: {
   checkin: CheckIn;
+  party: CheckinParty;
+  size?: 'xs' | 'sm';
   className?: string;
 }) {
-  const live = isJoinable(checkin, new Date());
+  const now = useMinuteTick();
+  const live = isJoinable(checkin, now);
 
   return (
-    <a
-      href={MEET_URL}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      to={joinPathOf(checkin, party)}
+      data-parity="join-meet"
       className={buttonVariants({
         variant: live ? 'primary' : 'outline',
-        size: 'sm',
+        size,
         className,
       })}
     >
       <Video size={14} aria-hidden="true" />
       Join Meet
-    </a>
+    </Link>
   );
 }

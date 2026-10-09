@@ -70,4 +70,96 @@ describe('EmailPreview', () => {
     );
     expect(markup).toContain('A refund is due.');
   });
+
+  it('previews the check-in request to the coach with and without a note', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in requested' }));
+
+    // assert
+    const withNote = await previewedEmail(
+      'Check-in requested — with-note',
+      'HER NOTE',
+    );
+    expect(withNote).toContain('Review the request');
+    expect(withNote).toContain('/coach/checkins');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Without a note' }));
+
+    // assert
+    const frame = await screen.findByTitle('Check-in requested — without-note');
+    await waitFor(() => {
+      expect(frame.getAttribute('srcdoc') ?? '').toContain(
+        'A new check-in request.',
+      );
+      expect(frame.getAttribute('srcdoc') ?? '').not.toContain('HER NOTE');
+    });
+  });
+
+  it('samples a check-in at 6 PM on a weekday inside the coach hours', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in withdrawn' }));
+
+    // assert
+    const markup = await previewedEmail('Check-in withdrawn — withdrawn', 'Europe/Bucharest');
+    expect(markup).toMatch(/(Monday|Tuesday|Wednesday|Thursday|Friday), \d{1,2} \w+ \d{4} at 6:00\s?PM/);
+  });
+
+  it('previews the withdrawn check-in to the coach', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in withdrawn' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in withdrawn — withdrawn',
+      'That hour is free again.',
+    );
+    expect(markup).toContain('A request was withdrawn.');
+  });
+
+  it('previews the approved check-in with its join link', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in approved' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in approved — approved',
+      'Use the button to join when it is time.',
+    );
+    expect(markup).toContain('Join Meet');
+    expect(markup).toContain('/client/checkins/ci-demo/join');
+  });
+
+  it('previews the declined check-in', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in declined' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in declined — declined',
+      'You can pick another time on your Check-ins page.',
+    );
+    expect(markup).toContain('Pick another time');
+    expect(markup).toContain('/client/checkins');
+  });
 });

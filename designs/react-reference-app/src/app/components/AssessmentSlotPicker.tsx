@@ -14,6 +14,7 @@ type AssessmentSlotPickerProps = {
   timeZone: string;
   selectedSlot: Date | null;
   onSelectSlot: (slot: Date | null) => void;
+  onSelectDay?: (day: Date | undefined) => void;
 };
 
 const TODAY_PREFIX = 'Today';
@@ -44,6 +45,7 @@ export function AssessmentSlotPicker({
   timeZone,
   selectedSlot,
   onSelectSlot,
+  onSelectDay,
 }: AssessmentSlotPickerProps) {
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
@@ -62,6 +64,12 @@ export function AssessmentSlotPicker({
     if (!selectedSlot) return;
     setSelectedDayKey(dayKeyOf(selectedSlot, timeZone));
   }, [selectedSlot, timeZone]);
+
+  useEffect(() => {
+    if (!selectedDayKey || slotsByDay.has(selectedDayKey)) return;
+    setSelectedDayKey(null);
+    onSelectDay?.(undefined);
+  }, [selectedDayKey, slotsByDay, onSelectDay]);
 
   const today = useMemo(() => new Date(), []);
   const dayLabels = useMemo<Partial<Labels>>(
@@ -89,6 +97,7 @@ export function AssessmentSlotPicker({
   const selectDay = (date: Date | undefined) => {
     setSelectedDayKey(date ? dayKeyOf(date, timeZone) : null);
     onSelectSlot(null);
+    onSelectDay?.(date);
   };
 
   return (

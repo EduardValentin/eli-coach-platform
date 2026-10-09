@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, type RefObject } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ interface ResponsiveSheetDialogProps {
   description?: string;
   contentClassName?: string;
   dismissal?: DialogDismissal;
+  initialFocus?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 
@@ -27,15 +28,25 @@ export function ResponsiveSheetDialog({
   description,
   contentClassName,
   dismissal = 'allowed',
+  initialFocus,
   children,
 }: ResponsiveSheetDialogProps) {
   const isMobile = useIsMobile();
+
+  const focusInitialTarget = (event: Event) => {
+    const target = initialFocus?.current;
+    if (!target) return;
+
+    event.preventDefault();
+    target.focus();
+  };
 
   if (isMobile) {
     return (
       <BottomSheet
         description={description}
         dismissal={dismissal}
+        initialFocus={initialFocus}
         onOpenChange={onOpenChange}
         open={open}
         title={title}
@@ -49,6 +60,7 @@ export function ResponsiveSheetDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         dismissal={dismissal}
+        onOpenAutoFocus={focusInitialTarget}
         size="md"
         className={cn(
           'gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',

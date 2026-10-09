@@ -73,8 +73,10 @@ export function CheckinCard({
       }
       quote={note?.text}
       quoteAuthor={note ? capitalized(nameFor(note.by, viewer)) : undefined}
+      quoteParity="checkin-note"
       footnote={footnote}
       actions={actions}
+      parityRoot="CheckinCard"
     />
   );
 }

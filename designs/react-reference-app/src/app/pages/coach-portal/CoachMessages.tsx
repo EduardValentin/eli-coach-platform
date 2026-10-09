@@ -29,6 +29,8 @@ import {
 } from '../../utils/dateFormatters';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { useCheckinAnswers } from '../../hooks/useCheckinAnswers';
+import type { CheckIn } from '../../domain/checkins';
 import { SearchField } from '../../components/SearchField';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -84,12 +86,11 @@ export function CoachMessages() {
     getPendingCheckins,
     getUpcomingCheckins,
     getCheckinsAwaiting,
-    approveCheckin,
-    cancelCheckin,
     proposeNewTime,
     coachInitiateCheckin,
     getBookedSlots,
   } = useCheckins();
+  const { answer } = useCheckinAnswers();
 
   const messages = getMessages(activeClient);
   const activeConversation = conversations.find((c) => c.id === activeClient);
@@ -191,22 +192,35 @@ export function CoachMessages() {
     setScheduleNote('');
   };
 
-  const handleApprove = (checkinId: string) => {
+  const approveWithConfirmation = (
+    checkinId: string,
+    confirmation: (checkin: CheckIn) => string,
+  ) => {
     const checkin = actionableForClient.find((c) => c.id === checkinId);
     if (!checkin) return;
-    approveCheckin(checkinId);
-    addSystemMessage(
-      activeClient,
-      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success(`Check-in approved for ${checkin.clientName}`);
+    void answer(checkin, 'approve', () => {
+      addSystemMessage(
+        activeClient,
+        `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
+        'checkin-scheduled',
+      );
+      toast.success(confirmation(checkin));
+    });
   };
 
+  const handleApprove = (checkinId: string) =>
+    approveWithConfirmation(
+      checkinId,
+      (checkin) => `Check-in approved for ${checkin.clientName}`,
+    );
+
   const handleDecline = (checkinId: string) => {
-    cancelCheckin(checkinId);
-    addSystemMessage(activeClient, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in cancelled');
+    const checkin = actionableForClient.find((c) => c.id === checkinId);
+    if (!checkin) return;
+    void answer(checkin, 'decline', () => {
+      addSystemMessage(activeClient, 'Check-in cancelled', 'checkin-cancelled');
+      toast.success('Check-in cancelled');
+    });
   };
 
   const handleReschedule = (checkinId: string) => {
@@ -247,17 +261,8 @@ export function CoachMessages() {
     setRescheduleMsg('');
   };
 
-  const handleAcceptReschedule = (checkinId: string) => {
-    const checkin = actionableForClient.find((c) => c.id === checkinId);
-    if (!checkin) return;
-    approveCheckin(checkinId);
-    addSystemMessage(
-      activeClient,
-      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Reschedule accepted');
-  };
+  const handleAcceptReschedule = (checkinId: string) =>
+    approveWithConfirmation(checkinId, () => 'Reschedule accepted');
 
   const filteredConversations = conversations.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
