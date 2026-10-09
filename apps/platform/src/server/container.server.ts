@@ -209,6 +209,7 @@ export function createPlatformContainer(options: {
     checkInClients: coachingSales.handles.checkInClients,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     incidents,
     productEmail,

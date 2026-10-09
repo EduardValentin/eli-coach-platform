@@ -12,6 +12,8 @@ import { EmailCheckInNotifications } from "./email-check-in-notifications.server
 
 const CHECK_IN_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
 const COACH_EMAIL = "eli@evoa.fit";
+const CONTACT_EMAIL = "hello@evoa.fit";
+const JOIN_URL = `https://evoa.fit/eli-coach-platform/client/checkins/${CHECK_IN_ID}/join`;
 
 const NOTICE: CheckInNotice = {
   checkIn: CheckIn.reconstitute({
@@ -41,6 +43,7 @@ function createNotifications(productEmail: ProductEmail) {
     appBasePath: "/eli-coach-platform",
     clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
     coachEmail: COACH_EMAIL,
+    contactEmail: CONTACT_EMAIL,
     publicAppUrl: "https://evoa.fit",
   });
 }
@@ -77,7 +80,99 @@ describe("EmailCheckInNotifications", () => {
       expect(productEmail.sent[0]?.idempotencyKey).toBe(
         `check-in:${CHECK_IN_ID}:${notification}`,
       );
+    },
+  );
+
+  it.each(["requested", "withdrawn", "declined"] as const)(
+    "attaches no calendar invite to the %s email",
+    async (notification) => {
+      // arrange
+      const productEmail = new InMemoryProductEmail();
+      const notifications = createNotifications(productEmail);
+
+      // act
+      await notifications[notification](NOTICE);
+
+      // assert
       expect(productEmail.sent[0]?.attachments).toBeUndefined();
+    },
+  );
+
+  it("attaches the approved check-in to the client's email as a calendar invite", async () => {
+    // arrange
+    const productEmail = new InMemoryProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.approved(NOTICE);
+
+    // assert
+    const [invite, ...others] = productEmail.sent[0]?.attachments ?? [];
+    expect(others).toEqual([]);
+    expect(invite?.filename).toBe("invite.ics");
+    expect(invite?.contentType).toBe(
+      "text/calendar; charset=utf-8; method=PUBLISH",
+    );
+    const ics = new TextDecoder()
+      .decode(invite?.content)
+      .replaceAll("\r\n ", "");
+    expect(ics).toContain("SUMMARY:Check-in with Eli");
+    expect(ics).toContain("DTSTART:20261022T140000Z");
+    expect(ics).toContain("DTEND:20261022T150000Z");
+    expect(ics).toContain("DTSTAMP:20261019T080000Z");
+    expect(ics).toContain(`UID:${CHECK_IN_ID}@evoa.fit`);
+    expect(ics).toContain(`ORGANIZER;CN=Evoa Fitness:mailto:${CONTACT_EMAIL}`);
+    expect(ics).toContain(`URL:${JOIN_URL}`);
+  });
+
+  it("links the client's approval email to Google Calendar in her own zone", async () => {
+    // arrange
+    const productEmail = new InMemoryProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.approved(NOTICE);
+
+    // assert
+    const calendarUrl = new URL(
+      /Add to Google Calendar: (\S+)/.exec(
+        productEmail.sent[0]?.text ?? "",
+      )?.[1] ?? "",
+    );
+    expect(calendarUrl.origin + calendarUrl.pathname).toBe(
+      "https://calendar.google.com/calendar/render",
+    );
+    expect(calendarUrl.searchParams.get("text")).toBe("Check-in with Eli");
+    expect(calendarUrl.searchParams.get("dates")).toBe(
+      "20261022T140000Z/20261022T150000Z",
+    );
+    expect(calendarUrl.searchParams.get("ctz")).toBe("Europe/London");
+    expect(calendarUrl.searchParams.get("location")).toBe(JOIN_URL);
+    expect(calendarUrl.searchParams.get("details")).toContain(JOIN_URL);
+  });
+
+  it.each(["requested", "withdrawn"] as const)(
+    "names the client on one line in the %s email's subject",
+    async (notification) => {
+      // arrange
+      const productEmail = new InMemoryProductEmail();
+      const notifications = createNotifications(productEmail);
+      const notice: CheckInNotice = {
+        ...NOTICE,
+        client: {
+          ...NOTICE.client,
+          firstName: "Ana\r\nBcc: someone@example.com",
+          lastName: "  Popescu\t",
+        },
+      };
+
+      // act
+      await notifications[notification](notice);
+
+      // assert
+      expect(productEmail.sent[0]?.subject).toMatch(
+        /^Ana Bcc: someone@example\.com Popescu (asked|withdrew)/,
+      );
     },
   );
 
@@ -104,9 +199,7 @@ describe("EmailCheckInNotifications", () => {
     await notifications.approved(NOTICE);
 
     // assert
-    expect(productEmail.sent[0]?.html).toContain(
-      `href="https://evoa.fit/eli-coach-platform/client/checkins/${CHECK_IN_ID}/join"`,
-    );
+    expect(productEmail.sent[0]?.html).toContain(`href="${JOIN_URL}"`);
   });
 
   it("links the client's decline email to her Check-ins page on the public origin", async () => {

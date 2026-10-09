@@ -37,6 +37,7 @@ type CheckInsFeatureHandles = {
   checkInClients: CheckInClients;
   clock: Clock;
   coachEmail: string;
+  contactEmail: string;
   database: DatabaseClient;
   incidents: CheckInIncidents;
   productEmail: ProductEmail;
@@ -60,6 +61,7 @@ export function composeCheckInsFeature(
       appBasePath: handles.appBasePath,
       clock,
       coachEmail: handles.coachEmail,
+      contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
     }),
   };

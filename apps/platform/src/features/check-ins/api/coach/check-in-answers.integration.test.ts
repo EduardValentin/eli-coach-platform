@@ -72,7 +72,7 @@ describe.sequential("check-in answers integration", () => {
     delete process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID;
   });
 
-  it("approves a request, keeps its hour and emails the client her join link", async () => {
+  it("approves a request, keeps its hour and emails the client her join link and calendar invite", async () => {
     // arrange
     const { clientId, checkInId } = await anaAskedForThursday();
     await rig.holdClock(ANSWERED_AT);
@@ -101,6 +101,16 @@ describe.sequential("check-in answers integration", () => {
     expect(approved?.html).toContain(
       `href="${PUBLIC_ORIGIN}${suite.path(`/client/checkins/${checkInId}/join`)}"`,
     );
+    expect(approved?.html).toContain(
+      'href="https://calendar.google.com/calendar/render?',
+    );
+    const [invite, ...otherAttachments] = approved?.attachments ?? [];
+    expect(otherAttachments).toEqual([]);
+    expect(invite?.filename).toBe("invite.ics");
+    expect(invite?.contentText).toContain("SUMMARY:Check-in with Eli");
+    expect(invite?.contentText).toContain("DTSTART:20261022T140000Z");
+    expect(invite?.contentText).toContain("DTEND:20261022T150000Z");
+    expect(invite?.contentText).toContain("DTSTAMP:20261021T093000Z");
   });
 
   it("declines a request, frees its hour and emails the client her Check-ins page", async () => {
@@ -131,6 +141,7 @@ describe.sequential("check-in answers integration", () => {
     expect(declined?.html).toContain(
       `href="${PUBLIC_ORIGIN}${suite.path("/client/checkins")}"`,
     );
+    expect(declined?.attachments).toEqual([]);
   });
 
   it.each<{ answer: Answer; status: string }>([

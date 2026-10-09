@@ -1,13 +1,21 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type {
-  CheckInClientIdentity,
-  CheckInDelivery,
-  CheckInNotice,
-  CheckInNotification,
-  CheckInNotifications,
+import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
+import {
+  CHECK_IN_RULES,
+  type CheckInClientIdentity,
+  type CheckInDelivery,
+  type CheckInNotice,
+  type CheckInNotification,
+  type CheckInNotifications,
 } from "@eli-coach-platform/domain/check-in";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import {
+  buildGoogleCalendarUrl,
+  buildIcs,
+  type CalendarEvent,
+  type EmailAttachment,
+  type ProductEmail,
+} from "@eli-coach-platform/infrastructure/email/server";
 import type { ReactElement } from "react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -44,6 +52,7 @@ export type EmailCheckInNotificationsOptions = {
   appBasePath: string;
   clock: Clock;
   coachEmail: string;
+  contactEmail: string;
   publicAppUrl: string;
 };
 
@@ -52,10 +61,17 @@ type CheckInEmail = {
   notification: CheckInNotification;
   to: string;
   replyTo?: string;
+  attachments?: readonly EmailAttachment[];
   subject: string;
   text: string;
   body: ReactElement;
 };
+
+const CALENDAR_TITLE = `Check-in with ${COACH_DISPLAY_NAME}`;
+const INVITE_PRODUCT_NAME = "Check-in";
+const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
+const INVITE_FILENAME = "invite.ics";
+const NAME_UNSAFE_RUNS = /[\p{Cc}\s]+/gu;
 
 export class EmailCheckInNotifications implements CheckInNotifications {
   constructor(
@@ -108,12 +124,21 @@ export class EmailCheckInNotifications implements CheckInNotifications {
   }
 
   approved(notice: CheckInNotice): Promise<CheckInDelivery> {
+    const joinUrl = this.publicUrlOf(clientCheckInJoinPath(notice.checkIn.id));
+    const event = EmailCheckInNotifications.toCalendarEvent(
+      notice.checkIn,
+      joinUrl,
+    );
     const props = {
       when: formatCallMoment(
         notice.checkIn.startsAt,
         notice.checkIn.clientTimeZone,
       ),
-      joinUrl: this.publicUrlOf(clientCheckInJoinPath(notice.checkIn.id)),
+      joinUrl,
+      googleCalendarUrl: buildGoogleCalendarUrl(
+        event,
+        notice.checkIn.clientTimeZone,
+      ),
       currentYear: this.currentYear(),
     };
 
@@ -121,7 +146,8 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       checkInId: notice.checkIn.id,
       notification: "approved",
       to: notice.client.email,
-      subject: checkInApprovedSubject(props),
+      attachments: [this.inviteFor(event)],
+      subject: checkInApprovedSubject(),
       text: checkInApprovedText(props),
       body: createElement(CheckInApprovedEmail, props),
     });
@@ -141,7 +167,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       checkInId: notice.checkIn.id,
       notification: "declined",
       to: notice.client.email,
-      subject: checkInDeclinedSubject(props),
+      subject: checkInDeclinedSubject(),
       text: checkInDeclinedText(props),
       body: createElement(CheckInDeclinedEmail, props),
     });
@@ -152,12 +178,26 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       html: `<!doctype html>${renderToStaticMarkup(email.body)}`,
       idempotencyKey: `check-in:${email.checkInId}:${email.notification}`,
       ...(email.replyTo ? { replyTo: email.replyTo } : {}),
+      ...(email.attachments ? { attachments: email.attachments } : {}),
       subject: email.subject,
       text: email.text,
       to: email.to,
     });
 
     return delivery.kind === "sent" ? "sent" : "failed";
+  }
+
+  private inviteFor(event: CalendarEvent): EmailAttachment {
+    return {
+      content: buildIcs(event, {
+        issuedAt: this.options.clock.now(),
+        organizerEmail: this.options.contactEmail,
+        productName: INVITE_PRODUCT_NAME,
+        uidHost: new URL(this.options.publicAppUrl).host,
+      }),
+      contentType: INVITE_CONTENT_TYPE,
+      filename: INVITE_FILENAME,
+    };
   }
 
   private publicUrlOf(path: string): string {
@@ -171,7 +211,26 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     return this.options.clock.now().getUTCFullYear();
   }
 
+  private static toCalendarEvent(
+    checkIn: CheckInNotice["checkIn"],
+    joinUrl: string,
+  ): CalendarEvent {
+    return {
+      description: [
+        `A ${CHECK_IN_RULES.durationMinutes}-minute check-in with ${COACH_DISPLAY_NAME}.`,
+        `Join the check-in: ${joinUrl}`,
+      ].join("\n"),
+      endsAt: checkIn.endsAt,
+      id: checkIn.id,
+      joinUrl,
+      startsAt: checkIn.startsAt,
+      title: CALENDAR_TITLE,
+    };
+  }
+
   private static fullNameOf(client: CheckInClientIdentity): string {
-    return `${client.firstName} ${client.lastName}`;
+    return `${client.firstName} ${client.lastName}`
+      .replace(NAME_UNSAFE_RUNS, " ")
+      .trim();
   }
 }
