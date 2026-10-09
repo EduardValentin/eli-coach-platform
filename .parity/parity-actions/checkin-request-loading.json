@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity-root=\"ClientCheckins\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"status\"]"},
+  {"wait": 250}
+]

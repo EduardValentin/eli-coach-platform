@@ -1,0 +1,6 @@
+[
+  {"waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"},
+  {"wait": 600},
+  {"click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"},
+  {"wait": 600}
+]

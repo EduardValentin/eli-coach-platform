@@ -1,0 +1,15 @@
+[
+  {"waitFor": "[data-parity-root=\"ClientCheckins\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"fill": ["[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=\"Add a note for your coach (optional)\"]", "Can we look at my squat form?"]},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Request /]"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"},
+  {"wait": 600}
+]

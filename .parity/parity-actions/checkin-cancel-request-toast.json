@@ -1,0 +1,9 @@
+[
+  {"waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"},
+  {"wait": 600},
+  {"click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Cancel request\" s]"},
+  {"waitFor": "[data-sonner-toast]"},
+  {"wait": 600}
+]
