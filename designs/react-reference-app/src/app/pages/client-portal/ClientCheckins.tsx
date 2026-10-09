@@ -350,7 +350,6 @@ export function ClientCheckins() {
 
       <Button
         {...requestButtonProps}
-        aria-label="Request a check-in"
         className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
       >
         <CalendarPlus size={18} aria-hidden="true" />

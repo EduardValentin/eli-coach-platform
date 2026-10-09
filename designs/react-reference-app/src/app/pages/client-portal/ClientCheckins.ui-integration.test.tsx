@@ -83,14 +83,11 @@ function renderPage(devParams = '') {
 }
 
 function requestButtons(): HTMLElement[] {
-  return [
-    screen.getByRole('button', { name: 'Request check-in' }),
-    screen.getByRole('button', { name: 'Request a check-in' }),
-  ];
+  return screen.getAllByRole('button', { name: 'Request check-in' });
 }
 
 async function openRequestDialog() {
-  await userEvent.click(screen.getByRole('button', { name: 'Request check-in' }));
+  await userEvent.click(requestButtons()[0]);
 
   return screen.findByRole('dialog', { name: 'Request a check-in' });
 }
@@ -243,6 +240,7 @@ describe('requesting a check-in', () => {
     await sendRequest();
 
     // assert
+    expect(requestButtons()).toHaveLength(2);
     for (const button of requestButtons()) {
       expect(button).toBeDisabled();
       expect(button).toHaveAccessibleDescription(WAITING_EXPLANATION);
@@ -261,6 +259,7 @@ describe('requesting a check-in', () => {
     // assert
     expect(await screen.findByText('Request cancelled', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(NOTE))).not.toBeInTheDocument();
+    expect(requestButtons()).toHaveLength(2);
     for (const button of requestButtons()) expect(button).toBeEnabled();
   });
 

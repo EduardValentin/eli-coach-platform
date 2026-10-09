@@ -110,7 +110,7 @@ describe('the coach check-ins page', () => {
     const requestsTab = screen.getByRole('tab', { name: /^Requests/ });
 
     expect(requestsTab).toHaveAttribute('aria-selected', 'true');
-    expect(requestsTab).toHaveAccessibleName('Requests 2');
+    expect(requestsTab).toHaveAccessibleName('Requests 2 waiting on you');
     expect(within(rowFor('Jessica Alba')).getByText(/I have some questions about my macros/)).toBeInTheDocument();
   });
 
@@ -128,7 +128,7 @@ describe('the coach check-ins page', () => {
     expect(
       await screen.findByText('Approved check-in with Jessica Alba', {}, SERVICE_TIMEOUT),
     ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 1');
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 1 waiting on you');
     // act
     await showTab('Upcoming');
     // assert
@@ -165,7 +165,7 @@ describe('the coach check-ins page', () => {
       await screen.findByText("The check-in wasn't approved. Try again.", {}, SERVICE_TIMEOUT),
     ).toBeInTheDocument();
     expect(within(row).getByRole('button', { name: 'Approve' })).toBeEnabled();
-    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2');
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
   });
 
   it('explains the empty requests tab', async () => {
