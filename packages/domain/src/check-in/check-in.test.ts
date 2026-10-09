@@ -439,42 +439,160 @@ describe("CheckIn#settled", () => {
   });
 });
 
-describe("CheckIn#viewAt", () => {
+describe("CheckIn#isWaitingRequestAt", () => {
+  const beforeStart = new Date("2026-06-02T09:00:00.000Z");
+
+  it.each([
+    {
+      situation: "her pending request before it starts",
+      at: beforeStart,
+      waiting: true,
+    },
+    {
+      situation: "her pending request once its start has come",
+      at: STARTS_AT,
+      waiting: false,
+    },
+    {
+      situation: "her approved check-in",
+      props: { recordedStatus: "approved" },
+      at: beforeStart,
+      waiting: false,
+    },
+    {
+      situation: "a pending time the coach initiated",
+      props: { initiatedBy: "coach", proposedBy: "coach" },
+      at: beforeStart,
+      waiting: false,
+    },
+  ] as const)(
+    "holds $situation as waiting: $waiting",
+    ({ props, at, waiting }) => {
+      // arrange
+      const candidate = checkIn(props);
+
+      // act
+      const isWaiting = candidate.isWaitingRequestAt(at);
+
+      // assert
+      expect(isWaiting).toBe(waiting);
+    },
+  );
+});
+
+describe("CheckIn#viewFor", () => {
+  const beforeStart = new Date("2026-06-02T09:00:00.000Z");
+
   it("shows the snapshot with the status at that instant", () => {
     // arrange
     const requested = checkIn();
 
     // act
-    const view = requested.viewAt(new Date("2026-06-03T09:00:00.000Z"));
+    const view = requested.viewFor({ party: "client", at: STARTS_AT });
 
     // assert
-    expect(view).toEqual({ ...requested.toSnapshot(), status: "cancelled" });
+    expect(view).toEqual({
+      ...requested.toSnapshot(),
+      status: "cancelled",
+      awaitsViewer: false,
+      viewerMayWithdraw: false,
+      isWaitingRequest: false,
+    });
   });
+
+  it("shows her waiting request as hers to withdraw and the coach's to answer", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const clientView = requested.viewFor({ party: "client", at: beforeStart });
+    const coachView = requested.viewFor({ party: "coach", at: beforeStart });
+
+    // assert
+    expect([clientView, coachView].map(turnOf)).toEqual([
+      {
+        awaitsViewer: false,
+        viewerMayWithdraw: true,
+        isWaitingRequest: true,
+      },
+      {
+        awaitsViewer: true,
+        viewerMayWithdraw: false,
+        isWaitingRequest: true,
+      },
+    ]);
+  });
+
+  it("shows an approved check-in as nobody's turn", () => {
+    // arrange
+    const approved = approvedCheckIn();
+
+    // act
+    const view = approved.viewFor({ party: "coach", at: beforeStart });
+
+    // assert
+    expect(turnOf(view)).toEqual({
+      awaitsViewer: false,
+      viewerMayWithdraw: false,
+      isWaitingRequest: false,
+    });
+  });
+
+  function turnOf(view: ReturnType<CheckIn["viewFor"]>) {
+    return {
+      awaitsViewer: view.awaitsViewer,
+      viewerMayWithdraw: view.viewerMayWithdraw,
+      isWaitingRequest: view.isWaitingRequest,
+    };
+  }
 });
 
 describe("CheckIn.decideRequest", () => {
+  const at = new Date("2026-06-02T09:00:00.000Z");
   const waitingRequest = checkIn({ id: "check-in-0" });
+  const startedRequest = checkIn({
+    id: "check-in-0",
+    startsAt: new Date("2026-06-02T08:00:00.000Z"),
+  });
+  const approved = approvedCheckIn();
 
   it.each([
-    ["the hour reserved and nothing waiting", "reserved", null, "requested"],
-    [
-      "the hour reserved and a request waiting",
-      "reserved",
-      waitingRequest,
-      "request_waiting",
-    ],
-    ["the hour taken and nothing waiting", "taken", null, "time_taken"],
-    [
-      "the hour taken and a request waiting",
-      "taken",
-      waitingRequest,
-      "request_waiting",
-    ],
+    {
+      situation: "the hour reserved and nothing waiting",
+      coachTime: "reserved",
+      clientCheckIns: [],
+      expected: "requested",
+    },
+    {
+      situation: "the hour reserved and a request waiting",
+      coachTime: "reserved",
+      clientCheckIns: [waitingRequest],
+      expected: "request_waiting",
+    },
+    {
+      situation:
+        "the hour reserved beside a request that has started and an approved check-in",
+      coachTime: "reserved",
+      clientCheckIns: [startedRequest, approved],
+      expected: "requested",
+    },
+    {
+      situation: "the hour taken and nothing waiting",
+      coachTime: "taken",
+      clientCheckIns: [],
+      expected: "time_taken",
+    },
+    {
+      situation: "the hour taken and a request waiting",
+      coachTime: "taken",
+      clientCheckIns: [approved, waitingRequest],
+      expected: "request_waiting",
+    },
   ] as const)(
-    "decides %s as %s",
-    (_situation, coachTime, waiting, expected) => {
+    "decides $situation as $expected",
+    ({ coachTime, clientCheckIns, expected }) => {
       // arrange
-      const learned = { coachTime, waitingRequest: waiting };
+      const learned = { coachTime, clientCheckIns, at };
 
       // act
       const decision = CheckIn.decideRequest(learned);

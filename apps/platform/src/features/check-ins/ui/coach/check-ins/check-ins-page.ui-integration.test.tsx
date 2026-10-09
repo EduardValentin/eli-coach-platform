@@ -49,7 +49,9 @@ const ANDREEA_REQUEST: CoachCheckIn = {
   kind: "ad_hoc",
   status: "pending",
   initiatedBy: "client",
-  proposedBy: "client",
+  awaitsViewer: true,
+  viewerMayWithdraw: false,
+  isWaitingRequest: true,
   startsAt: "2026-10-16T09:00:00.000Z",
   endsAt: "2026-10-16T10:00:00.000Z",
   joinEmphasisFrom: "2026-10-16T08:50:00.000Z",
@@ -70,12 +72,16 @@ const MARIA_REQUEST: CoachCheckIn = {
 const ANDREEA_APPROVED: CoachCheckIn = {
   ...ANDREEA_REQUEST,
   status: "approved",
+  awaitsViewer: false,
+  isWaitingRequest: false,
 };
 
 const ELENA_UPCOMING: CoachCheckIn = {
   ...ANDREEA_REQUEST,
   id: "2c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f",
   status: "approved",
+  awaitsViewer: false,
+  isWaitingRequest: false,
   startsAt: "2026-10-13T07:00:00.000Z",
   endsAt: "2026-10-13T08:00:00.000Z",
   joinEmphasisFrom: "2026-10-13T06:50:00.000Z",

@@ -161,7 +161,7 @@ export function PortalShell(props: PortalShellProps) {
         className={cn(
           "min-w-0 pt-[calc(env(safe-area-inset-top)+4rem)] lg:pt-0 lg:pl-64",
           {
-            "pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0":
+            "[--portal-tab-bar-clearance:calc(env(safe-area-inset-bottom)+5rem)] pb-(--portal-tab-bar-clearance) lg:pb-0":
               mobileNavigation.kind === "tabs",
           },
         )}

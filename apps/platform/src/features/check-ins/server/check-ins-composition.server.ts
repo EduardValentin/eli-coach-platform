@@ -24,7 +24,7 @@ import { CoachCheckInsController } from "~/features/check-ins/api/coach/coach-ch
 import { CheckInJoinController } from "~/features/check-ins/api/join/check-in-join-controller.server";
 import { PostgresCheckIns } from "~/features/check-ins/data/check-ins/postgres-check-ins.server";
 import { RandomCheckInIds } from "~/features/check-ins/data/check-ins/random-check-in-ids.server";
-import { createCheckInNotifications } from "~/features/check-ins/email/create-check-in-notifications.server";
+import { EmailCheckInNotifications } from "~/features/check-ins/email/email-check-in-notifications.server";
 
 export type CheckInsFeature = {
   checkInJoin: CheckInJoinController;
@@ -57,7 +57,7 @@ export function composeCheckInsFeature(
   const answerPorts = {
     ...readPorts,
     incidents: handles.incidents,
-    notifications: createCheckInNotifications(handles.productEmail, {
+    notifications: new EmailCheckInNotifications(handles.productEmail, {
       appBasePath: handles.appBasePath,
       clock,
       coachEmail: handles.coachEmail,

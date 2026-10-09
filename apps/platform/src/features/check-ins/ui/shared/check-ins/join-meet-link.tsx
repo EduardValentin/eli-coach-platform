@@ -13,17 +13,17 @@ const MINUTE_MS = 60 * 1000;
 
 export function JoinMeetLink({ checkIn, size, to }: JoinMeetLinkProps) {
   const now = useMinuteTick();
-  const emphasis =
+  const isJoinNear =
     now >= Date.parse(checkIn.joinEmphasisFrom) &&
     now < Date.parse(checkIn.endsAt);
 
   return (
     <JoinLink
       data-parity="join-meet"
-      emphasis={emphasis}
       label="Join Meet"
       size={size}
       to={to}
+      tone={isJoinNear ? "primary" : "quiet"}
     />
   );
 }

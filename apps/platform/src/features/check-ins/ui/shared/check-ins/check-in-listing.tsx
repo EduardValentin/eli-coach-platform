@@ -13,7 +13,7 @@ import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 
 export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 
-export type CheckInParty = ListedCheckIn["proposedBy"];
+export type CheckInParty = ListedCheckIn["initiatedBy"];
 
 export type CheckInTab = "upcoming" | "requests" | "past";
 
@@ -28,7 +28,6 @@ type CheckInListingProps<CheckIn extends ListedCheckIn> = {
   defaultTab: CheckInTab;
   emptyCopy: Record<CheckInTab, CheckInEmptyCopy>;
   renderCheckIn: (checkIn: CheckIn, tab: CheckInTab) => ReactNode;
-  viewer: CheckInParty;
 };
 
 const CHECK_IN_TABS: readonly CheckInTab[] = ["upcoming", "requests", "past"];
@@ -46,25 +45,19 @@ const TAB_OF_STATUS: Record<ListedCheckIn["status"], CheckInTab> = {
   cancelled: "past",
 };
 
-function awaitsAnswerFrom(checkIn: ListedCheckIn): CheckInParty {
-  return checkIn.proposedBy === "coach" ? "client" : "coach";
-}
-
 export function CheckInListing<CheckIn extends ListedCheckIn>({
   checkIns,
   defaultTab,
   emptyCopy,
   renderCheckIn,
-  viewer,
 }: CheckInListingProps<CheckIn>) {
   const [tab, setTab] = useState(defaultTab);
   const shown = ordered(
     checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
-    { tab, viewer },
+    tab,
   );
-  const awaitingViewer = checkIns.filter(
-    (checkIn) =>
-      checkIn.status === "pending" && awaitsAnswerFrom(checkIn) === viewer,
+  const awaitingViewerCount = checkIns.filter(
+    (checkIn) => checkIn.awaitsViewer,
   ).length;
   const empty = emptyCopy[tab];
 
@@ -81,17 +74,17 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
             {CHECK_IN_TABS.map((value) => (
               <TabsTrigger className="px-4 sm:px-5" key={value} value={value}>
                 {TAB_LABELS[value]}
-                {value === "requests" && awaitingViewer > 0 && (
+                {value === "requests" && awaitingViewerCount > 0 && (
                   <>
                     <Badge
                       aria-hidden="true"
                       data-parity="requests-count"
                       tone="count"
                     >
-                      {awaitingViewer}
+                      {awaitingViewerCount}
                     </Badge>
                     <span className="sr-only">
-                      {awaitingViewer} waiting on you
+                      {awaitingViewerCount} waiting on you
                     </span>
                   </>
                 )}
@@ -126,13 +119,11 @@ function tabNamed(name: string, fallback: CheckInTab): CheckInTab {
 
 function ordered<CheckIn extends ListedCheckIn>(
   checkIns: readonly CheckIn[],
-  order: { tab: CheckInTab; viewer: CheckInParty },
+  tab: CheckInTab,
 ): CheckIn[] {
-  const direction = order.tab === "past" ? -1 : 1;
+  const direction = tab === "past" ? -1 : 1;
   const answerRank = (checkIn: CheckIn) =>
-    order.tab === "requests" && awaitsAnswerFrom(checkIn) === order.viewer
-      ? 0
-      : 1;
+    tab === "requests" && checkIn.awaitsViewer ? 0 : 1;
   const byStart = (first: CheckIn, second: CheckIn) =>
     direction * (Date.parse(first.startsAt) - Date.parse(second.startsAt));
 

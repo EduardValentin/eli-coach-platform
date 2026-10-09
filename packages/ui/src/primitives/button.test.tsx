@@ -222,7 +222,7 @@ describe("button call-to-action options", () => {
     expect(classes.some((name) => name.startsWith("has-"))).toBe(false);
   });
 
-  it("lets the medium grow size outgrow its minimum height", () => {
+  it("lets the medium grow size wrap its label and outgrow its minimum height", () => {
     // arrange
     // act
     const classes = buttonVariants({ size: "md-grow" }).split(" ");
@@ -231,11 +231,23 @@ describe("button call-to-action options", () => {
     expect(classes).toEqual(
       expect.arrayContaining([
         "min-h-(--size-control-md)",
-        "px-6",
+        "px-5",
         "text-base",
+        "whitespace-normal",
       ]),
     );
     expect(classes).not.toContain("h-(--size-control-md)");
+    expect(classes).not.toContain("whitespace-nowrap");
+  });
+
+  it("rests a card elevation button on the card shadow without a hover lift", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ elevation: "card" }).split(" ");
+
+    // assert
+    expect(classes).toContain("shadow-card");
+    expect(classes.some((name) => name.startsWith("hover:shadow"))).toBe(false);
   });
 
   it("presses a scale button down only when motion is welcome", () => {

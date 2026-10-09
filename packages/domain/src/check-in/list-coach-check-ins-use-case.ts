@@ -36,7 +36,7 @@ export class ListCoachCheckInsUseCase {
 
       return [
         {
-          ...checkIn.viewAt(now),
+          ...checkIn.viewFor({ party: "coach", at: now }),
           client: {
             firstName: identity.firstName,
             lastName: identity.lastName,

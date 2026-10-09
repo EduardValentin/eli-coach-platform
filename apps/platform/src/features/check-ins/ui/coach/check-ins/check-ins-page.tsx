@@ -1,6 +1,5 @@
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -22,7 +21,12 @@ import {
 } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
-import { useCheckInAnswers } from "~/features/check-ins/ui/shared/check-ins/use-check-in-answers";
+import {
+  CheckInDecisionButton,
+  CheckInDecisionOutcomes,
+  useCheckInDecisions,
+  type CheckInDecisions,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -51,7 +55,7 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
 export default function CoachCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
-  const answers = useCheckInAnswers();
+  const decisions = useCheckInDecisions();
 
   return (
     <div className="w-full" data-parity-root="CoachCheckins">
@@ -66,7 +70,7 @@ export default function CoachCheckInsRoute() {
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
-            actions={coachActionsFor(checkIn, tab, answers)}
+            actions={coachActionsFor(checkIn, tab, decisions)}
             attendee={{ name: fullNameOf(checkIn) }}
             checkIn={checkIn}
             timeZone={timeZone}
@@ -76,20 +80,17 @@ export default function CoachCheckInsRoute() {
             }}
           />
         )}
-        viewer="coach"
       />
 
-      {answers.outcomes}
+      <CheckInDecisionOutcomes decisions={decisions} />
     </div>
   );
 }
 
-type CheckInAnswers = ReturnType<typeof useCheckInAnswers>;
-
 function coachActionsFor(
   checkIn: CoachCheckIn,
   tab: CheckInTab,
-  answers: CheckInAnswers,
+  decisions: CheckInDecisions,
 ): ReactNode | undefined {
   if (tab === "upcoming") {
     return (
@@ -101,53 +102,43 @@ function coachActionsFor(
     );
   }
 
-  if (tab === "requests" && checkIn.proposedBy === "client") {
-    return <RequestAnswers answers={answers} checkIn={checkIn} />;
+  if (checkIn.awaitsViewer) {
+    return <RequestAnswers checkIn={checkIn} decisions={decisions} />;
   }
 
   return undefined;
 }
 
 function RequestAnswers({
-  answers,
   checkIn,
+  decisions,
 }: {
-  answers: CheckInAnswers;
   checkIn: CoachCheckIn;
+  decisions: CheckInDecisions;
 }) {
-  const answering = answers.answering(checkIn.id);
-
   return (
     <>
-      <Button
-        aria-busy={answering === "decline" || undefined}
-        disabled={answering !== null}
-        onClick={() =>
-          answers.answer({
-            checkInId: checkIn.id,
-            kind: "decline",
-            success: "Check-in declined",
-          })
-        }
+      <CheckInDecisionButton
+        decision={{
+          checkInId: checkIn.id,
+          kind: "decline",
+          successMessage: "Check-in declined",
+        }}
+        decisions={decisions}
+        label="Decline"
         size="xs"
         variant="ghost"
-      >
-        {answers.labelFor(checkIn.id, { kind: "decline", label: "Decline" })}
-      </Button>
-      <Button
-        aria-busy={answering === "approve" || undefined}
-        disabled={answering !== null}
-        onClick={() =>
-          answers.answer({
-            checkInId: checkIn.id,
-            kind: "approve",
-            success: `Approved check-in with ${fullNameOf(checkIn)}`,
-          })
-        }
+      />
+      <CheckInDecisionButton
+        decision={{
+          checkInId: checkIn.id,
+          kind: "approve",
+          successMessage: `Approved check-in with ${fullNameOf(checkIn)}`,
+        }}
+        decisions={decisions}
+        label="Approve"
         size="xs"
-      >
-        {answers.labelFor(checkIn.id, { kind: "approve", label: "Approve" })}
-      </Button>
+      />
     </>
   );
 }

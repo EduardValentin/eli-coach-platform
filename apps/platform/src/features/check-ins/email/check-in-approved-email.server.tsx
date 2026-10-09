@@ -5,7 +5,7 @@ import {
 } from "@eli-coach-platform/infrastructure/email/server";
 
 import {
-  CheckInEmailButton,
+  CheckInEmailActionSection,
   CheckInEmailClosingLine,
   CheckInEmailLayout,
   checkInEmailText,
@@ -38,14 +38,14 @@ export function checkInApprovedSubject(): string {
 export function CheckInApprovedEmail(props: CheckInApprovedEmailProps) {
   return (
     <CheckInEmailLayout content={contentOf(props)}>
-      <CheckInEmailButton href={props.joinUrl} label={BUTTON_LABEL}>
+      <CheckInEmailActionSection href={props.joinUrl} label={BUTTON_LABEL}>
         <EmailText style={calendarLineStyle}>
           <EmailLink href={props.googleCalendarUrl} style={calendarLinkStyle}>
             {CALENDAR_LABEL}
           </EmailLink>
         </EmailText>
         <EmailText style={attachmentLineStyle}>{ATTACHMENT_LINE}</EmailText>
-      </CheckInEmailButton>
+      </CheckInEmailActionSection>
       <CheckInEmailClosingLine>{CLOSING_LINE}</CheckInEmailClosingLine>
     </CheckInEmailLayout>
   );

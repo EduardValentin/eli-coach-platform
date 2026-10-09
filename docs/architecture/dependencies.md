@@ -130,7 +130,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C22 check-ins | C5 ui | 9 | `./calendar` (`SlotPicker`), `./appointments` (`AppointmentCard`, `JoinLink`), `./layout` (`ResponsiveSheetDialog`, `DeadEndPage`, `DeadEndLink`), `./primitives` (incl. `Alert`, `AlertAction`), `./portal`, `./tabs`, `./lib`, `./toast` |
 | C22 check-ins | C6 infrastructure | 14 | `./coach-calendar/server` (`PostgresCoachAvailability`, `PostgresCoachCalendar`, `reserveCoachTime`, `releaseCoachTime`), `./coach-meeting-room/server`, `./email/server` (`ProductEmail`, the Email* primitives, `EMAIL_FRAME_STYLES`, `EMAIL_PRIMARY_BUTTON_STYLE`, `buildIcs`, `buildGoogleCalendarUrl`), `./http/server`, `./http` (`fetcherOutcomeOf`), `./pwa` |
 | C22 check-ins | C9 accounts | 4 | `server/guards/` (`requirePortalAccess`) from the three controllers; `public/paths.ts` (`CLIENT_PORTAL_PATH`, `COACH_PORTAL_PATH`) |
-| C22 check-ins | C17 assessment-calls | 5 | `public/call-moment.ts` (`formatCallMoment` for the emails, the day and time wording on the rows), `public/paths.ts` (`COACH_SETTINGS_PATH` on the coach's not-ready join page), `ui/shared/slot-picker-days.ts` (the request dialog's picker days and wording) |
+| C22 check-ins | C17 assessment-calls | 5 | `public/call-moment.ts` (`formatCallMoment` for the emails, the day and time wording on the rows), `public/paths.ts` (`COACH_SETTINGS_PATH` on the coach's not-ready join page), `ui/shared/slot-picker-props.ts` (the request dialog's picker days and wording) |
 | C22 check-ins | C18 coaching-sales | 3 | `data/schema.server.ts` (`clientsTable`) for the foreign key; `server/guards/` (`requireOpenClientPortal`) from the request and withdrawal routes |
 | C21 client-resources | C18 coaching-sales | 2 | `data/schema.server.ts` references `clients` (foreign key only); `public/paths.ts` extends the coach client path |
 
@@ -3913,16 +3913,16 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4538 | apps/platform/src/server/cross-site-requests.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E4539 | apps/platform/src/features/assessment-calls/ui/coach/settings/assessment-call-settings-section.tsx | external:@hookform/resolvers/zod | import | n/a | no | lateral | present |
 | E4540 | apps/platform/src/features/assessment-calls/ui/coach/settings/assessment-call-settings-section.tsx | external:react-hook-form | import | n/a | no | lateral | present |
-| E4541 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | import | no | no | lateral | present |
+| E4541 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | import | no | no | lateral | present |
 | E4542 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | external:motion/react | import | n/a | no | lateral | present |
 | E4543 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | external:react-router | import | n/a | no | lateral | present |
 | E4544 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
 | E4545 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | external:motion/react | import | n/a | no | lateral | present |
 | E4546 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | external:react-router | import | n/a | no | lateral | present |
-| E4547 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | no | yes | inward | present |
-| E4548 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
-| E4549 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | external:react | import | n/a | no | lateral | present |
-| E4550 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | packages/ui/src/calendar/index.ts | type-only import | yes | no | lateral | present |
+| E4547 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | no | yes | inward | present |
+| E4548 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E4549 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | external:react | import | n/a | no | lateral | present |
+| E4550 | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | packages/ui/src/calendar/index.ts | type-only import | yes | no | lateral | present |
 | E4551 | apps/platform/src/features/check-ins/api/check-in-transport.server.ts | apps/platform/src/features/check-ins/public/check-ins.ts | import | no | no | lateral | present |
 | E4552 | apps/platform/src/features/check-ins/api/check-in-transport.server.ts | external:zod | import | n/a | no | lateral | present |
 | E4553 | apps/platform/src/features/check-ins/api/client/client-check-ins-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | yes | outward | present |
@@ -4023,7 +4023,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4648 | apps/platform/src/features/check-ins/server/guards/check-ins-context.server.ts | apps/platform/src/features/check-ins/server/check-ins-composition.server.ts | type-only import | no | yes | inward | present |
 | E4649 | apps/platform/src/features/check-ins/server/guards/check-ins-context.server.ts | external:react-router | import | n/a | no | lateral | present |
 | E4650 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | yes | inward | present |
-| E4651 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-days.ts | import | yes | no | lateral | present |
+| E4651 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | apps/platform/src/features/assessment-calls/ui/shared/slot-picker-props.ts | import | yes | no | lateral | present |
 | E4652 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | apps/platform/src/features/check-ins/public/check-ins.ts | import | no | yes | inward | present |
 | E4653 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | apps/platform/src/features/check-ins/public/paths.ts | import | no | yes | inward | present |
 | E4654 | apps/platform/src/features/check-ins/ui/client/check-ins/check-in-request-dialog.tsx | external:react | import | n/a | no | lateral | present |

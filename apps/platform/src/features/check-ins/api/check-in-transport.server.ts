@@ -1,25 +1,25 @@
 import { z } from "zod";
 
 import {
-  checkInAnswerSchema,
+  checkInOutcomeSchema,
   checkInRefusalSchema,
-  type CheckInAnswer,
-  type CheckInRefusalAnswer,
+  type CheckInOutcomeReply,
+  type CheckInRefusalReply,
 } from "~/features/check-ins/public/check-ins";
 
 const CONFLICT = 409;
 
 export const checkInIdSchema = z.uuid();
 
-export function answeredCheckIn(
-  answer: CheckInAnswer,
+export function checkInOutcomeResponse(
+  outcome: CheckInOutcomeReply,
   init: { status: number },
 ): Response {
-  return Response.json(checkInAnswerSchema.parse(answer), init);
+  return Response.json(checkInOutcomeSchema.parse(outcome), init);
 }
 
 export function refusedCheckIn(
-  error: CheckInRefusalAnswer["error"],
+  error: CheckInRefusalReply["error"],
   init: { status: number } = { status: CONFLICT },
 ): Response {
   return Response.json(checkInRefusalSchema.parse({ error }), init);

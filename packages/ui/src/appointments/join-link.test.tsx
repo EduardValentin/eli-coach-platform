@@ -20,7 +20,7 @@ describe("join link", () => {
     // act
     render(
       <MemoryRouter>
-        <JoinLink emphasis={false} label="Join Meet" to={JOIN_PATH} />
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />
       </MemoryRouter>,
     );
 
@@ -31,12 +31,12 @@ describe("join link", () => {
     );
   });
 
-  it("stays an outline action until it is emphasised", () => {
+  it("stays an outline action in its quiet tone", () => {
     // arrange
     // act
     render(
       <MemoryRouter>
-        <JoinLink emphasis={false} label="Join Meet" to={JOIN_PATH} />
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />
       </MemoryRouter>,
     );
 
@@ -46,12 +46,12 @@ describe("join link", () => {
     expect(link).not.toHaveClass("bg-primary");
   });
 
-  it("fills with the portal interaction colour when emphasised", () => {
+  it("fills with the portal interaction colour in its primary tone", () => {
     // arrange
     // act
     render(
       <MemoryRouter>
-        <JoinLink emphasis label="Join Meet" to={JOIN_PATH} />
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="primary" />
       </MemoryRouter>,
     );
 
@@ -67,8 +67,8 @@ describe("join link", () => {
     // act
     render(
       <MemoryRouter>
-        <JoinLink emphasis={false} label="Join Meet" to={JOIN_PATH} />
-        <JoinLink emphasis={false} label="Join row" size="xs" to={JOIN_PATH} />
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />
+        <JoinLink label="Join row" size="xs" to={JOIN_PATH} tone="quiet" />
       </MemoryRouter>,
     );
 
@@ -86,7 +86,7 @@ describe("join link", () => {
     // act
     render(
       <MemoryRouter>
-        <JoinLink emphasis={false} label="Join Meet" to={JOIN_PATH} />
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />
       </MemoryRouter>,
     );
 

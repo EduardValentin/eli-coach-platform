@@ -7,5 +7,6 @@ export { ResponsiveSheetDialog } from "./responsive-sheet-dialog";
 export {
   SheetDialogActions,
   SheetDialogBody,
+  SheetDialogFooter,
   SheetDialogHeader,
 } from "./sheet-dialog-parts";

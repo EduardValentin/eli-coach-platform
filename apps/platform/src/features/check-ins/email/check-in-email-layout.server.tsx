@@ -53,7 +53,7 @@ type CheckInEmailLayoutProps = {
   children: ReactNode;
 };
 
-type CheckInEmailButtonProps = {
+type CheckInEmailActionSectionProps = {
   href: string;
   label: string;
   children?: ReactNode;
@@ -129,11 +129,11 @@ export function CheckInEmailLayout({
   );
 }
 
-export function CheckInEmailButton({
+export function CheckInEmailActionSection({
   href,
   label,
   children,
-}: CheckInEmailButtonProps) {
+}: CheckInEmailActionSectionProps) {
   return (
     <EmailSection style={buttonSectionStyle}>
       <EmailLink href={href} style={EMAIL_PRIMARY_BUTTON_STYLE}>

@@ -55,7 +55,7 @@ describe("CoachCheckInsController loadCheckIns", () => {
     const { controller } = createController({
       listed: [
         {
-          ...PENDING.viewAt(NOW),
+          ...PENDING.viewFor({ party: "coach", at: NOW }),
           client: { firstName: "Ana", lastName: "Popescu" },
         },
       ],
@@ -72,7 +72,9 @@ describe("CoachCheckInsController loadCheckIns", () => {
           kind: "ad_hoc",
           status: "pending",
           initiatedBy: "client",
-          proposedBy: "client",
+          awaitsViewer: true,
+          viewerMayWithdraw: false,
+          isWaitingRequest: true,
           startsAt: "2026-10-22T14:00:00.000Z",
           endsAt: "2026-10-22T15:00:00.000Z",
           joinEmphasisFrom: "2026-10-22T13:50:00.000Z",

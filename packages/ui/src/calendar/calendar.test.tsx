@@ -653,7 +653,7 @@ describe("calendar year range", () => {
 describe("calendar range selection", () => {
   const march12 = new Date("2026-03-12T12:00:00Z");
 
-  it("fills the ends of the range in the brand colour and tints the days between", () => {
+  it("fills the ends of the range in the interaction colour and tints the days between", () => {
     // arrange
     const onSelect = vi.fn();
 
@@ -673,7 +673,7 @@ describe("calendar range selection", () => {
     const start = screen.getByRole("button", { name: /March 10th, 2026/ });
     const middle = screen.getByRole("button", { name: /March 11th, 2026/ });
     expect(start).toHaveClass("bg-primary", "text-text-inverted");
-    expect(middle).toHaveClass("bg-brand-primary-soft", "text-brand-primary");
+    expect(middle).toHaveClass("bg-primary-soft", "text-primary");
     expect(middle).not.toHaveClass("bg-primary", "text-text-inverted");
   });
 

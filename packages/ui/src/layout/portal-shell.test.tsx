@@ -304,6 +304,19 @@ describe("PortalShell content width", () => {
   });
 });
 
+describe("PortalShell tab bar clearance", () => {
+  it("keeps its content and anything floating in it clear of the tab bar by one shared clearance", () => {
+    // arrange, act
+    renderClientShell();
+
+    // assert
+    expect(screen.getByRole("main")).toHaveClass(
+      "[--portal-tab-bar-clearance:calc(env(safe-area-inset-bottom)+5rem)]",
+      "pb-(--portal-tab-bar-clearance)",
+    );
+  });
+});
+
 describe("PortalShell mobile menu", () => {
   it("opens through the keyboard-operable toggle and moves focus into the menu", async () => {
     // arrange

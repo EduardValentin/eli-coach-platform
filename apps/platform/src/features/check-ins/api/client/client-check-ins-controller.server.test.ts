@@ -57,7 +57,10 @@ describe("ClientCheckInsController loadCheckIns", () => {
   it("hands the client her check-ins as instants with their status at the moment of reading", async () => {
     // arrange
     const { controller, listClientCheckIns } = createController({
-      listed: { status: "listed", checkIns: [PENDING.viewAt(NOW)] },
+      listed: {
+        status: "listed",
+        checkIns: [PENDING.viewFor({ party: "client", at: NOW })],
+      },
     });
 
     // act
@@ -72,7 +75,9 @@ describe("ClientCheckInsController loadCheckIns", () => {
           kind: "ad_hoc",
           status: "pending",
           initiatedBy: "client",
-          proposedBy: "client",
+          awaitsViewer: false,
+          viewerMayWithdraw: true,
+          isWaitingRequest: true,
           startsAt: "2026-10-22T14:00:00.000Z",
           endsAt: "2026-10-22T15:00:00.000Z",
           joinEmphasisFrom: "2026-10-22T13:50:00.000Z",

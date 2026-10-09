@@ -10,8 +10,8 @@ import {
 } from "@eli-coach-platform/domain/check-in";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
+  buildCalendarInvite,
   buildGoogleCalendarUrl,
-  buildIcs,
   type CalendarEvent,
   type EmailAttachment,
   type ProductEmail,
@@ -48,7 +48,7 @@ import {
   checkInWithdrawnText,
 } from "./check-in-withdrawn-email.server";
 
-export type EmailCheckInNotificationsOptions = {
+type EmailCheckInNotificationsOptions = {
   appBasePath: string;
   clock: Clock;
   coachEmail: string;
@@ -69,8 +69,6 @@ type CheckInEmail = {
 
 const CALENDAR_TITLE = `Check-in with ${COACH_DISPLAY_NAME}`;
 const INVITE_PRODUCT_NAME = "Check-in";
-const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
-const INVITE_FILENAME = "invite.ics";
 const NAME_UNSAFE_RUNS = /[\p{Cc}\s]+/gu;
 
 export class EmailCheckInNotifications implements CheckInNotifications {
@@ -188,16 +186,12 @@ export class EmailCheckInNotifications implements CheckInNotifications {
   }
 
   private inviteFor(event: CalendarEvent): EmailAttachment {
-    return {
-      content: buildIcs(event, {
-        issuedAt: this.options.clock.now(),
-        organizerEmail: this.options.contactEmail,
-        productName: INVITE_PRODUCT_NAME,
-        uidHost: new URL(this.options.publicAppUrl).host,
-      }),
-      contentType: INVITE_CONTENT_TYPE,
-      filename: INVITE_FILENAME,
-    };
+    return buildCalendarInvite(event, {
+      issuedAt: this.options.clock.now(),
+      organizerEmail: this.options.contactEmail,
+      productName: INVITE_PRODUCT_NAME,
+      uidHost: new URL(this.options.publicAppUrl).host,
+    });
   }
 
   private publicUrlOf(path: string): string {

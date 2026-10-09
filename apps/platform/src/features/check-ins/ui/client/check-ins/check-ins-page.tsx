@@ -31,7 +31,12 @@ import {
   type CheckInViewer,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
-import { useCheckInAnswers } from "~/features/check-ins/ui/shared/check-ins/use-check-in-answers";
+import {
+  CheckInDecisionButton,
+  CheckInDecisionOutcomes,
+  useCheckInDecisions,
+  type CheckInDecisions,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
 
 import { CheckInRequestDialog } from "./check-in-request-dialog";
 
@@ -76,17 +81,16 @@ const COACH = {
 export default function ClientCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
-  const answers = useCheckInAnswers();
+  const decisions = useCheckInDecisions();
   const [requesting, setRequesting] = useState(false);
   const [openings, setOpenings] = useState(0);
-  const openRequestNoteId = useId();
-  const openRequest = checkIns.some(
-    (checkIn) =>
-      checkIn.status === "pending" && checkIn.initiatedBy === "client",
+  const waitingRequestNoteId = useId();
+  const hasWaitingRequest = checkIns.some(
+    (checkIn) => checkIn.isWaitingRequest,
   );
   const requestButton = {
-    "aria-describedby": openRequest ? openRequestNoteId : undefined,
-    disabled: openRequest,
+    "aria-describedby": hasWaitingRequest ? waitingRequestNoteId : undefined,
+    disabled: hasWaitingRequest,
     onClick: () => {
       setOpenings((count) => count + 1);
       setRequesting(true);
@@ -102,10 +106,10 @@ export default function ClientCheckInsRoute() {
               <CalendarPlus aria-hidden="true" size={16} />
               Request check-in
             </Button>
-            {openRequest && (
+            {hasWaitingRequest && (
               <p
                 className="text-xs text-text-secondary sm:text-right"
-                id={openRequestNoteId}
+                id={waitingRequestNoteId}
               >
                 You can send another request once this one is answered.
               </p>
@@ -122,14 +126,13 @@ export default function ClientCheckInsRoute() {
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
-            actions={clientActionsFor(checkIn, tab, answers)}
+            actions={clientActionsFor(checkIn, tab, decisions)}
             attendee={COACH}
             checkIn={checkIn}
             timeZone={timeZone}
             viewer={VIEWER}
           />
         )}
-        viewer="client"
       />
 
       <CheckInRequestDialog
@@ -144,11 +147,11 @@ export default function ClientCheckInsRoute() {
         timeZone={timeZone}
       />
 
-      {answers.outcomes}
+      <CheckInDecisionOutcomes decisions={decisions} />
 
       <Button
         {...requestButton}
-        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 z-40 shadow-action-hover sm:hidden"
+        className="fixed bottom-(--portal-tab-bar-clearance) left-4 z-40 shadow-action-hover sm:hidden"
       >
         <CalendarPlus aria-hidden="true" size={16} />
         Request check-in
@@ -157,12 +160,10 @@ export default function ClientCheckInsRoute() {
   );
 }
 
-type CheckInAnswers = ReturnType<typeof useCheckInAnswers>;
-
 function clientActionsFor(
   checkIn: ListedCheckIn,
   tab: CheckInTab,
-  answers: CheckInAnswers,
+  decisions: CheckInDecisions,
 ): ReactNode | undefined {
   if (tab === "upcoming") {
     return (
@@ -170,40 +171,21 @@ function clientActionsFor(
     );
   }
 
-  if (tab === "requests" && checkIn.proposedBy === "client") {
-    return <CancelRequestButton answers={answers} checkInId={checkIn.id} />;
+  if (checkIn.viewerMayWithdraw) {
+    return (
+      <CheckInDecisionButton
+        decision={{
+          checkInId: checkIn.id,
+          kind: "withdraw",
+          successMessage: "Request cancelled",
+        }}
+        decisions={decisions}
+        label="Cancel request"
+        size="sm"
+        variant="outline"
+      />
+    );
   }
 
   return undefined;
-}
-
-function CancelRequestButton({
-  answers,
-  checkInId,
-}: {
-  answers: CheckInAnswers;
-  checkInId: string;
-}) {
-  const answering = answers.answering(checkInId);
-
-  return (
-    <Button
-      aria-busy={answering === "withdraw" || undefined}
-      disabled={answering !== null}
-      onClick={() =>
-        answers.answer({
-          checkInId,
-          kind: "withdraw",
-          success: "Request cancelled",
-        })
-      }
-      size="sm"
-      variant="outline"
-    >
-      {answers.labelFor(checkInId, {
-        kind: "withdraw",
-        label: "Cancel request",
-      })}
-    </Button>
-  );
 }

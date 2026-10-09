@@ -78,10 +78,10 @@ export class PostgresCheckIns implements CheckIns {
       sql`select pg_advisory_xact_lock(hashtext(${CLIENT_REQUEST_LOCK_PREFIX + checkIn.clientId}))`,
     );
 
-    const waitingRequest = await PostgresCheckIns.findWaitingRequest(
-      transaction,
-      { clientId: checkIn.clientId, at },
-    );
+    const clientRows = await transaction
+      .select()
+      .from(checkInsTable)
+      .where(eq(checkInsTable.clientId, checkIn.clientId));
     const appointment = {
       appointmentKind: "check_in",
       appointmentId: checkIn.id,
@@ -92,7 +92,8 @@ export class PostgresCheckIns implements CheckIns {
     });
     const decision = CheckIn.decideRequest({
       coachTime: coachTime.status,
-      waitingRequest,
+      clientCheckIns: clientRows.map(PostgresCheckIns.toCheckIn),
+      at,
     });
 
     if (decision === "requested") {
@@ -108,26 +109,6 @@ export class PostgresCheckIns implements CheckIns {
     }
 
     return { status: decision };
-  }
-
-  private static async findWaitingRequest(
-    transaction: DatabaseTransaction,
-    { clientId, at }: { clientId: string; at: Date },
-  ): Promise<CheckIn | null> {
-    const [row] = await transaction
-      .select()
-      .from(checkInsTable)
-      .where(
-        and(
-          eq(checkInsTable.clientId, clientId),
-          eq(checkInsTable.status, "pending"),
-          eq(checkInsTable.initiatedBy, "client"),
-          gt(checkInsTable.startsAt, at),
-        ),
-      )
-      .limit(1);
-
-    return row ? PostgresCheckIns.toCheckIn(row) : null;
   }
 
   private static async settleWhilePending(

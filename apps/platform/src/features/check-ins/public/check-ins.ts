@@ -8,7 +8,7 @@ import { z } from "zod";
 
 const CHECK_IN_STATUSES = [...RECORDED_CHECK_IN_STATUSES, "passed"] as const;
 
-const CHECK_IN_ANSWERS = [
+const CHECK_IN_OUTCOMES = [
   "requested",
   "withdrawn",
   "approved",
@@ -30,7 +30,9 @@ const checkInSchema = z.object({
   kind: z.enum(CHECK_IN_KINDS),
   status: z.enum(CHECK_IN_STATUSES),
   initiatedBy: z.enum(CHECK_IN_PARTIES),
-  proposedBy: z.enum(CHECK_IN_PARTIES),
+  awaitsViewer: z.boolean(),
+  viewerMayWithdraw: z.boolean(),
+  isWaitingRequest: z.boolean(),
   startsAt: z.iso.datetime(),
   endsAt: z.iso.datetime(),
   joinEmphasisFrom: z.iso.datetime(),
@@ -65,18 +67,18 @@ export const checkInRequestSchema = z.object({
   note: z.string().nullish(),
 });
 
-export const checkInAnswerSchema = z.object({
-  status: z.enum(CHECK_IN_ANSWERS),
+export const checkInOutcomeSchema = z.object({
+  status: z.enum(CHECK_IN_OUTCOMES),
   checkInId: z.uuid(),
 });
 
-export type CheckInAnswer = z.infer<typeof checkInAnswerSchema>;
+export type CheckInOutcomeReply = z.infer<typeof checkInOutcomeSchema>;
 
 export const checkInRefusalSchema = z.object({
   error: z.enum(CHECK_IN_REFUSALS),
 });
 
-export type CheckInRefusalAnswer = z.infer<typeof checkInRefusalSchema>;
+export type CheckInRefusalReply = z.infer<typeof checkInRefusalSchema>;
 
 export function presentCheckIn(
   view: CheckInView,
@@ -86,7 +88,9 @@ export function presentCheckIn(
     kind: view.kind,
     status: view.status,
     initiatedBy: view.initiatedBy,
-    proposedBy: view.proposedBy,
+    awaitsViewer: view.awaitsViewer,
+    viewerMayWithdraw: view.viewerMayWithdraw,
+    isWaitingRequest: view.isWaitingRequest,
     startsAt: view.startsAt.toISOString(),
     endsAt: view.endsAt.toISOString(),
     joinEmphasisFrom: view.joinEmphasisFrom.toISOString(),

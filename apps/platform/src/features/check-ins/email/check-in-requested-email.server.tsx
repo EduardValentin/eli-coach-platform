@@ -1,5 +1,5 @@
 import {
-  CheckInEmailButton,
+  CheckInEmailActionSection,
   CheckInEmailLayout,
   checkInEmailText,
   type CheckInEmailContent,
@@ -24,7 +24,7 @@ export function checkInRequestedSubject({
 export function CheckInRequestedEmail(props: CheckInRequestedEmailProps) {
   return (
     <CheckInEmailLayout content={contentOf(props)}>
-      <CheckInEmailButton href={props.reviewUrl} label={BUTTON_LABEL} />
+      <CheckInEmailActionSection href={props.reviewUrl} label={BUTTON_LABEL} />
     </CheckInEmailLayout>
   );
 }

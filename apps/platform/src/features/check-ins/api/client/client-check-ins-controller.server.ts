@@ -11,7 +11,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
-  answeredCheckIn,
+  checkInOutcomeResponse,
   checkInIdSchema,
   refusedCheckIn,
   unknownCheckIn,
@@ -108,7 +108,7 @@ export class ClientCheckInsController {
   private static requestResponse(result: RequestCheckInResult): Response {
     switch (result.status) {
       case "requested":
-        return answeredCheckIn(
+        return checkInOutcomeResponse(
           { status: "requested", checkInId: result.checkIn.id },
           { status: CREATED },
         );
@@ -127,7 +127,7 @@ export class ClientCheckInsController {
   ): Response {
     switch (result.status) {
       case "withdrawn":
-        return answeredCheckIn(
+        return checkInOutcomeResponse(
           { status: "withdrawn", checkInId: result.checkIn.id },
           { status: 200 },
         );

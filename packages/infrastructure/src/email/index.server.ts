@@ -1,5 +1,8 @@
 export type { CalendarEvent } from "./calendar-invite.server";
-export { buildGoogleCalendarUrl, buildIcs } from "./calendar-invite.server";
+export {
+  buildCalendarInvite,
+  buildGoogleCalendarUrl,
+} from "./calendar-invite.server";
 export { createProductEmail } from "./create-product-email.server";
 export { InMemoryProductEmail } from "./in-memory-product-email.server";
 export type {

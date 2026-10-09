@@ -1,6 +1,11 @@
 import { MAX_CHECK_IN_NOTE_LENGTH } from "@eli-coach-platform/domain/check-in";
 import { SlotPicker } from "@eli-coach-platform/ui/calendar";
-import { ResponsiveSheetDialog } from "@eli-coach-platform/ui/layout";
+import {
+  ResponsiveSheetDialog,
+  SheetDialogBody,
+  SheetDialogFooter,
+  SheetDialogHeader,
+} from "@eli-coach-platform/ui/layout";
 import { Alert, AlertAction, Button } from "@eli-coach-platform/ui/primitives";
 import {
   useEffect,
@@ -9,14 +14,13 @@ import {
   useRef,
   useState,
   type ReactNode,
-  type RefObject,
 } from "react";
 import { useFetcher } from "react-router";
 
 import { formatClockTime } from "~/features/assessment-calls/public/call-moment";
-import { useSlotPickerDays } from "~/features/assessment-calls/ui/shared/slot-picker-days";
+import { useSlotPickerProps } from "~/features/assessment-calls/ui/shared/slot-picker-props";
 import {
-  checkInAnswerSchema,
+  checkInOutcomeSchema,
   checkInRefusalSchema,
   openCheckInTimesSchema,
 } from "~/features/check-ins/public/check-ins";
@@ -35,6 +39,17 @@ type OpenTimes =
   | { status: "loading" }
   | { status: "failed" }
   | { status: "ready"; times: readonly string[] };
+
+type CheckInRequest = {
+  note: string;
+  startsAt: string;
+};
+
+type RequestSubmissionOptions = {
+  onRequested: (startsAt: string) => void;
+  onTimeTaken: () => void;
+  timeZone: string;
+};
 
 const TITLE = "Request a check-in";
 
@@ -59,62 +74,40 @@ export function CheckInRequestDialog({
   timeZone,
 }: CheckInRequestDialogProps) {
   const title = useRef<HTMLHeadingElement>(null);
-  const openTimes = useOpenTimes(open);
-  const request = useFetcher<unknown>();
+  const openTimes = useOpenTimes();
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [note, setNote] = useState("");
-  const [problem, setProblem] = useState<RequestProblem | null>(null);
-  const [requestedSlot, setRequestedSlot] = useState<string | null>(null);
-  const submitting = request.state !== "idle";
+  const submission = useCheckInRequestSubmission({
+    onRequested: (startsAt) => {
+      onOpenChange(false);
+      onRequested(startsAt);
+    },
+    onTimeTaken: () => {
+      setSelectedSlot(null);
+      openTimes.load();
+    },
+    timeZone,
+  });
   const times =
     openTimes.listing.status === "ready" ? openTimes.listing.times : NO_TIMES;
-  const pickerDays = useSlotPickerDays(times, timeZone);
+  const slotPickerProps = useSlotPickerProps(times, timeZone);
   const dayKey =
-    selectedDayKey && pickerDays.days.has(selectedDayKey)
+    selectedDayKey && slotPickerProps.days.has(selectedDayKey)
       ? selectedDayKey
       : null;
-
-  const refuse = (refusal: RequestProblem) => {
-    setProblem(refusal);
-    if (refusal !== "time_taken") return;
-
-    setSelectedSlot(null);
-    openTimes.reload();
-  };
-
-  const settle = useEffectEvent((answer: unknown) => {
-    if (!requestedSlot) return;
-
-    if (checkInAnswerSchema.safeParse(answer).success) {
-      onOpenChange(false);
-      onRequested(requestedSlot);
-      return;
-    }
-
-    const refusal = checkInRefusalSchema.safeParse(answer);
-    refuse(refusal.success ? problemOf(refusal.data.error) : "failed");
-  });
+  const loadOpenTimesOnOpen = useEffectEvent(openTimes.load);
 
   useEffect(() => {
-    if (request.data !== undefined) {
-      settle(request.data);
+    if (open) {
+      loadOpenTimesOnOpen();
     }
-  }, [request.data]);
+  }, [open]);
 
   const submit = () => {
     if (!selectedSlot) return;
 
-    setProblem(null);
-    setRequestedSlot(selectedSlot);
-    void request.submit(
-      { note, startsAt: selectedSlot, timeZone },
-      {
-        action: CHECK_INS_API_PATHS.requests,
-        encType: "application/json",
-        method: "post",
-      },
-    );
+    submission.submit({ note, startsAt: selectedSlot });
   };
 
   const chooseDay = (chosen: string | null) => {
@@ -124,30 +117,56 @@ export function CheckInRequestDialog({
 
   const chooseSlot = (slot: string) => {
     setSelectedSlot(slot);
-    setProblem(null);
+    submission.clearProblem();
   };
 
   return (
     <ResponsiveSheetDialog
       description={DESCRIPTION}
-      dismissal={submitting ? "locked" : "allowed"}
+      dismissal={submission.submitting ? "locked" : "allowed"}
       initialFocus={title}
       onOpenChange={onOpenChange}
       open={open}
       title={TITLE}
       width="fit"
     >
-      <SchedulerFrame
-        footer={
+      <div
+        className="flex min-h-0 flex-1 flex-col"
+        data-parity-root="CheckinSchedulerSheet"
+      >
+        <SheetDialogHeader
+          description={DESCRIPTION}
+          rule="faint"
+          title={TITLE}
+          titleRef={title}
+        />
+        <SheetDialogBody>
+          {submission.problem && (
+            <Alert className="mb-6">
+              <p>{PROBLEM_COPY[submission.problem]}</p>
+            </Alert>
+          )}
+          <OpenTimesPicker listing={openTimes.listing} onRetry={openTimes.load}>
+            <SlotPicker
+              {...slotPickerProps}
+              onSelectDay={chooseDay}
+              onSelectSlot={chooseSlot}
+              selectedDayKey={dayKey}
+              selectedSlot={selectedSlot}
+            />
+          </OpenTimesPicker>
+          <NoteField note={note} onNoteChange={setNote} />
+        </SheetDialogBody>
+        <SheetDialogFooter rule="faint">
           <Button
-            aria-busy={submitting || undefined}
-            className="px-5 shadow-card"
+            aria-busy={submission.submitting || undefined}
             corner="control"
             disabled={
               openTimes.listing.status !== "ready" ||
               !selectedSlot ||
-              submitting
+              submission.submitting
             }
+            elevation="card"
             onClick={submit}
             press="scale"
             size="md-grow"
@@ -155,7 +174,7 @@ export function CheckInRequestDialog({
             weight="semibold"
             width="full"
           >
-            {submitting
+            {submission.submitting
               ? "Requesting…"
               : stepLabel(
                   dayKey,
@@ -163,43 +182,76 @@ export function CheckInRequestDialog({
                     formatClockTime(new Date(selectedSlot), timeZone),
                 )}
           </Button>
-        }
-        titleRef={title}
-      >
-        {problem && (
-          <Alert className="mb-6">
-            <p>{PROBLEM_COPY[problem]}</p>
-          </Alert>
-        )}
-        <OpenTimesPicker listing={openTimes.listing} onRetry={openTimes.reload}>
-          <SlotPicker
-            {...pickerDays}
-            onSelectDay={chooseDay}
-            onSelectSlot={chooseSlot}
-            selectedDayKey={dayKey}
-            selectedSlot={selectedSlot}
-          />
-        </OpenTimesPicker>
-        <NoteField note={note} onNoteChange={setNote} />
-      </SchedulerFrame>
+        </SheetDialogFooter>
+      </div>
     </ResponsiveSheetDialog>
   );
 }
 
-function useOpenTimes(open: boolean) {
+function useOpenTimes() {
   const { data, load, state } = useFetcher<unknown>();
-  const reload = () => {
-    void load(CHECK_INS_API_PATHS.openTimes);
+
+  return {
+    listing: openTimesOf(data, state),
+    load: () => {
+      void load(CHECK_INS_API_PATHS.openTimes);
+    },
   };
-  const loadOnOpen = useEffectEvent(reload);
+}
+
+function useCheckInRequestSubmission({
+  onRequested,
+  onTimeTaken,
+  timeZone,
+}: RequestSubmissionOptions) {
+  const request = useFetcher<unknown>();
+  const [requestedSlot, setRequestedSlot] = useState<string | null>(null);
+  const [problem, setProblem] = useState<RequestProblem | null>(null);
+
+  const showProblem = (shown: RequestProblem) => {
+    setProblem(shown);
+    if (shown === "time_taken") {
+      onTimeTaken();
+    }
+  };
+
+  const applyRequestReply = useEffectEvent((reply: unknown) => {
+    if (!requestedSlot) return;
+
+    if (checkInOutcomeSchema.safeParse(reply).success) {
+      onRequested(requestedSlot);
+      return;
+    }
+
+    const refusal = checkInRefusalSchema.safeParse(reply);
+    showProblem(refusal.success ? problemOf(refusal.data.error) : "failed");
+  });
 
   useEffect(() => {
-    if (open) {
-      loadOnOpen();
+    if (request.data !== undefined) {
+      applyRequestReply(request.data);
     }
-  }, [open]);
+  }, [request.data]);
 
-  return { listing: openTimesOf(data, state), reload };
+  const submit = ({ note, startsAt }: CheckInRequest) => {
+    setProblem(null);
+    setRequestedSlot(startsAt);
+    void request.submit(
+      { note, startsAt, timeZone },
+      {
+        action: CHECK_INS_API_PATHS.requests,
+        encType: "application/json",
+        method: "post",
+      },
+    );
+  };
+
+  return {
+    clearProblem: () => setProblem(null),
+    problem,
+    submit,
+    submitting: request.state !== "idle",
+  };
 }
 
 function openTimesOf(data: unknown, state: string): OpenTimes {
@@ -225,44 +277,6 @@ function stepLabel(dayKey: string | null, time: string | null): string {
   if (!time) return "Select a time";
 
   return `Request ${time}`;
-}
-
-function SchedulerFrame({
-  children,
-  footer,
-  titleRef,
-}: {
-  children: ReactNode;
-  footer: ReactNode;
-  titleRef: RefObject<HTMLHeadingElement | null>;
-}) {
-  return (
-    <div
-      className="flex min-h-0 flex-1 flex-col"
-      data-parity-root="CheckinSchedulerSheet"
-    >
-      <div className="shrink-0 rounded-field border-b border-stroke-faint px-5 pt-6 pb-4 md:px-8 md:pt-8">
-        <h3
-          className="pr-10 text-lg leading-snug font-semibold text-text-primary focus:outline-none md:text-xl"
-          ref={titleRef}
-          tabIndex={-1}
-        >
-          {TITLE}
-        </h3>
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
-          {DESCRIPTION}
-        </p>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
-        {children}
-      </div>
-
-      <div className="shrink-0 border-t border-stroke-faint bg-surface-base px-5 py-3 md:px-8 md:py-4">
-        {footer}
-      </div>
-    </div>
-  );
 }
 
 function OpenTimesPicker({

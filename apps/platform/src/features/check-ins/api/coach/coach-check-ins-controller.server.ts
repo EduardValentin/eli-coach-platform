@@ -10,7 +10,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
-  answeredCheckIn,
+  checkInOutcomeResponse,
   checkInIdSchema,
   refusedCheckIn,
   unknownCheckIn,
@@ -81,7 +81,7 @@ export class CoachCheckInsController {
     switch (result.status) {
       case "approved":
       case "declined":
-        return answeredCheckIn(
+        return checkInOutcomeResponse(
           { status: result.status, checkInId: result.checkIn.id },
           { status: 200 },
         );

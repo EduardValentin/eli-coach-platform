@@ -19,7 +19,7 @@ import {
 
 import type { OpenSlotsResponse } from "~/features/assessment-calls/public/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
-import { useSlotPickerDays } from "~/features/assessment-calls/ui/shared/slot-picker-days";
+import { useSlotPickerProps } from "~/features/assessment-calls/ui/shared/slot-picker-props";
 
 import { useRefreshSlotsFetcher } from "./api-client";
 import { BookingConfirmation } from "./booking-confirmation";
@@ -234,7 +234,10 @@ function SlotSelectionStep(props: {
 }) {
   const { dispatch, flow, headingRef, onRetry, openSlots, timeZone } = props;
   const { error, selectedDayKey, selectedSlot } = flow;
-  const pickerDays = useSlotPickerDays(openSlots?.slots ?? NO_SLOTS, timeZone);
+  const slotPickerProps = useSlotPickerProps(
+    openSlots?.slots ?? NO_SLOTS,
+    timeZone,
+  );
   const selectDay = useCallback(
     (dayKey: string | null) => dispatch({ dayKey, type: "select-day" }),
     [dispatch],
@@ -255,7 +258,7 @@ function SlotSelectionStep(props: {
       {openSlots ? (
         <>
           <SlotPicker
-            {...pickerDays}
+            {...slotPickerProps}
             onSelectDay={selectDay}
             onSelectSlot={(slot) => dispatch({ slot, type: "select-slot" })}
             selectedDayKey={selectedDayKey}

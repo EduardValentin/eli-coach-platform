@@ -38,7 +38,12 @@ export type CheckInSnapshot = CheckInProps & {
   joinEmphasisFrom: Date;
 };
 
-export type CheckInView = CheckInSnapshot & { status: CheckInStatus };
+export type CheckInView = CheckInSnapshot & {
+  status: CheckInStatus;
+  awaitsViewer: boolean;
+  viewerMayWithdraw: boolean;
+  isWaitingRequest: boolean;
+};
 
 type ClientRequest = {
   id: string;
@@ -103,9 +108,14 @@ export class CheckIn {
 
   static decideRequest(learned: {
     coachTime: "reserved" | "taken";
-    waitingRequest: CheckIn | null;
+    clientCheckIns: readonly CheckIn[];
+    at: Date;
   }): CheckInRequestDecision {
-    if (learned.waitingRequest) {
+    if (
+      learned.clientCheckIns.some((checkIn) =>
+        checkIn.isWaitingRequestAt(learned.at),
+      )
+    ) {
       return "request_waiting";
     }
 
@@ -148,6 +158,10 @@ export class CheckIn {
     return this.recordedStatus === "pending" && this.proposedBy === party;
   }
 
+  isWaitingRequestAt(at: Date): boolean {
+    return this.initiatedBy === "client" && this.statusAt(at) === "pending";
+  }
+
   isJoinableAt(now: Date): boolean {
     return this.statusAt(now) === "approved";
   }
@@ -173,8 +187,14 @@ export class CheckIn {
     });
   }
 
-  viewAt(now: Date): CheckInView {
-    return { ...this.toSnapshot(), status: this.statusAt(now) };
+  viewFor(viewer: PartyAtInstant): CheckInView {
+    return {
+      ...this.toSnapshot(),
+      status: this.statusAt(viewer.at),
+      awaitsViewer: this.answerRefusalFor(viewer) === null,
+      viewerMayWithdraw: this.withdrawalRefusalFor(viewer) === null,
+      isWaitingRequest: this.isWaitingRequestAt(viewer.at),
+    };
   }
 
   toSnapshot(): CheckInSnapshot {

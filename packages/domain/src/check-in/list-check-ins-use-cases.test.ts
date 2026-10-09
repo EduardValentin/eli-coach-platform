@@ -91,11 +91,46 @@ describe("ListClientCheckInsUseCase", () => {
     expect(result).toEqual({
       status: "listed",
       checkIns: [
-        { ...unanswered.toSnapshot(), status: "cancelled" },
-        { ...approved.toSnapshot(), status: "approved" },
+        {
+          ...unanswered.toSnapshot(),
+          status: "cancelled",
+          awaitsViewer: false,
+          viewerMayWithdraw: false,
+          isWaitingRequest: false,
+        },
+        {
+          ...approved.toSnapshot(),
+          status: "approved",
+          awaitsViewer: false,
+          viewerMayWithdraw: false,
+          isWaitingRequest: false,
+        },
       ],
     });
     expect(ports.checkIns.listForClient).toHaveBeenCalledWith("client-1");
+  });
+
+  it("shows her waiting request as hers to withdraw, not hers to answer", async () => {
+    // arrange
+    const waiting = checkIn({ startsAt: new Date("2026-06-05T09:00:00.000Z") });
+    const ports = createPorts({ checkIns: [waiting] });
+
+    // act
+    const result = await new ListClientCheckInsUseCase(ports).execute(
+      "user_ana",
+    );
+
+    // assert
+    expect(result).toMatchObject({
+      checkIns: [
+        {
+          status: "pending",
+          awaitsViewer: false,
+          viewerMayWithdraw: true,
+          isWaitingRequest: true,
+        },
+      ],
+    });
   });
 
   it.each([
@@ -139,12 +174,37 @@ describe("ListCoachCheckInsUseCase", () => {
       {
         ...anas.toSnapshot(),
         status: "cancelled",
+        awaitsViewer: false,
+        viewerMayWithdraw: false,
+        isWaitingRequest: false,
         client: { firstName: "Ana", lastName: "Popescu" },
       },
       {
         ...marias.toSnapshot(),
         status: "approved",
+        awaitsViewer: false,
+        viewerMayWithdraw: false,
+        isWaitingRequest: false,
         client: { firstName: "Maria", lastName: "Ionescu" },
+      },
+    ]);
+  });
+
+  it("shows a client's waiting request as the coach's to answer, not hers to withdraw", async () => {
+    // arrange
+    const waiting = checkIn({ startsAt: new Date("2026-06-05T09:00:00.000Z") });
+    const ports = createPorts({ checkIns: [waiting], identities: [ANA] });
+
+    // act
+    const listed = await new ListCoachCheckInsUseCase(ports).execute();
+
+    // assert
+    expect(listed).toMatchObject([
+      {
+        status: "pending",
+        awaitsViewer: true,
+        viewerMayWithdraw: false,
+        isWaitingRequest: true,
       },
     ]);
   });

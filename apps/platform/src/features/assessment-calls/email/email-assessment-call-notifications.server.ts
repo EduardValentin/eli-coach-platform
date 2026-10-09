@@ -7,13 +7,12 @@ import type {
 import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 import type {
   CalendarEvent,
-  EmailAttachment,
   ProductEmail,
   ProductEmailCommand,
 } from "@eli-coach-platform/infrastructure/email/server";
 import {
+  buildCalendarInvite,
   buildGoogleCalendarUrl,
-  buildIcs,
 } from "@eli-coach-platform/infrastructure/email/server";
 
 import { assessmentCallJoinPath } from "~/features/assessment-calls/public/paths";
@@ -32,8 +31,6 @@ type Delivery = AssessmentCallNotificationResult["visitor"];
 
 const CALENDAR_TITLE = "Free assessment call with Eli";
 const INVITE_PRODUCT_NAME = "Assessment Call";
-const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
-const INVITE_FILENAME = "invite.ics";
 
 export class EmailAssessmentCallNotifications implements AssessmentCallNotifications {
   constructor(
@@ -49,16 +46,12 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
       call,
       joinUrl,
     );
-    const invite: EmailAttachment = {
-      content: buildIcs(event, {
-        issuedAt: call.bookedAt,
-        organizerEmail: this.options.contactEmail,
-        productName: INVITE_PRODUCT_NAME,
-        uidHost: this.uidHost(),
-      }),
-      contentType: INVITE_CONTENT_TYPE,
-      filename: INVITE_FILENAME,
-    };
+    const invite = buildCalendarInvite(event, {
+      issuedAt: call.bookedAt,
+      organizerEmail: this.options.contactEmail,
+      productName: INVITE_PRODUCT_NAME,
+      uidHost: this.uidHost(),
+    });
     const visitorContent = createVisitorConfirmationEmailContent({
       call,
       contactEmail: this.options.contactEmail,

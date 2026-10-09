@@ -64,7 +64,7 @@ const dayModifierClassNames: Record<string, string> = {
   selected:
     "bg-primary text-text-inverted hover:bg-primary-hover hover:text-text-inverted",
   range_middle:
-    "bg-brand-primary-soft text-brand-primary hover:bg-brand-primary-soft hover:text-brand-primary",
+    "bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary",
   today: "ring-2 ring-primary/30",
   outside: "text-text-secondary hover:bg-surface-quiet",
   disabled: "opacity-50 hover:bg-transparent",

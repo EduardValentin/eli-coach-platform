@@ -20,7 +20,7 @@ const SLOT_PICKER_WORDING: SlotPickerWording = {
   today: "Today",
 };
 
-export function useSlotPickerDays(slots: readonly string[], timeZone: string) {
+export function useSlotPickerProps(slots: readonly string[], timeZone: string) {
   const days = useMemo(
     () => slotPickerDaysOf(slots, timeZone),
     [slots, timeZone],

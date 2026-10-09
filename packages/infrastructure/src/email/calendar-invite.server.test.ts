@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { CalendarEvent } from "./calendar-invite.server";
-import { buildGoogleCalendarUrl, buildIcs } from "./calendar-invite.server";
+import type { EmailAttachment } from "./product-email-contract.server";
+import {
+  buildCalendarInvite,
+  buildGoogleCalendarUrl,
+} from "./calendar-invite.server";
 
 const JOIN_URL = "https://evoa.fit/appointments/apt-demo/join";
 const INVITE_OPTIONS = {
@@ -23,8 +27,8 @@ function createEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   };
 }
 
-function decode(invite: Uint8Array): string {
-  return new TextDecoder().decode(invite);
+function decode(invite: EmailAttachment): string {
+  return new TextDecoder().decode(invite.content);
 }
 
 function unfold(invite: string): string {
@@ -35,13 +39,27 @@ function contentLines(invite: string): string[] {
   return invite.split("\r\n").slice(0, -1);
 }
 
-describe("buildIcs", () => {
+describe("buildCalendarInvite", () => {
+  it("attaches the calendar as invite.ics with a PUBLISH calendar content type", () => {
+    // arrange
+    const event = createEvent();
+
+    // act
+    const invite = buildCalendarInvite(event, INVITE_OPTIONS);
+
+    // assert
+    expect(invite.filename).toBe("invite.ics");
+    expect(invite.contentType).toBe(
+      "text/calendar; charset=utf-8; method=PUBLISH",
+    );
+  });
+
   it("writes a PUBLISH calendar whose event names its organizer, is pinned to UTC and is stamped at issue", () => {
     // arrange
     const event = createEvent();
 
     // act
-    const invite = buildIcs(event, INVITE_OPTIONS);
+    const invite = buildCalendarInvite(event, INVITE_OPTIONS);
 
     // assert
     expect(decode(invite)).toBe(
@@ -74,11 +92,11 @@ describe("buildIcs", () => {
     const event = createEvent({ description: "With: Ștefania Mureșan" });
 
     // act
-    const invite = buildIcs(event, INVITE_OPTIONS);
+    const invite = buildCalendarInvite(event, INVITE_OPTIONS);
 
     // assert
-    expect(invite).toBeInstanceOf(Uint8Array);
-    expect(invite).toEqual(new TextEncoder().encode(decode(invite)));
+    expect(invite.content).toBeInstanceOf(Uint8Array);
+    expect(invite.content).toEqual(new TextEncoder().encode(decode(invite)));
   });
 
   it("escapes backslashes, semicolons, commas and newlines in text values", () => {
@@ -89,7 +107,7 @@ describe("buildIcs", () => {
     });
 
     // act
-    const invite = unfold(decode(buildIcs(event, INVITE_OPTIONS)));
+    const invite = unfold(decode(buildCalendarInvite(event, INVITE_OPTIONS)));
 
     // assert
     expect(invite).toContain(
@@ -105,7 +123,7 @@ describe("buildIcs", () => {
     });
 
     // act
-    const invite = unfold(decode(buildIcs(event, INVITE_OPTIONS)));
+    const invite = unfold(decode(buildCalendarInvite(event, INVITE_OPTIONS)));
 
     // assert
     const lines = invite.split(/\r\n|\r|\n/);
@@ -123,7 +141,7 @@ describe("buildIcs", () => {
     const event = createEvent({ description: "Ștefania".repeat(20) });
 
     // act
-    const invite = decode(buildIcs(event, INVITE_OPTIONS));
+    const invite = decode(buildCalendarInvite(event, INVITE_OPTIONS));
 
     // assert
     for (const line of contentLines(invite)) {
@@ -142,7 +160,7 @@ describe("buildIcs", () => {
     });
 
     // act
-    const invite = decode(buildIcs(event, INVITE_OPTIONS));
+    const invite = decode(buildCalendarInvite(event, INVITE_OPTIONS));
 
     // assert
     expect(invite).toContain("DTSTART:20261025T050000Z\r\n");

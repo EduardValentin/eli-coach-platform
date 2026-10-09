@@ -1,3 +1,5 @@
+import type { EmailAttachment } from "./product-email-contract.server";
+
 export type CalendarEvent = {
   description: string;
   endsAt: Date;
@@ -15,14 +17,16 @@ type CalendarInviteOptions = {
 };
 
 const ORGANIZER_NAME = "Evoa Fitness";
+const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
+const INVITE_FILENAME = "invite.ics";
 const LINE_BREAKS_IN_TEXT = /\r\n|\r|\n/g;
 const LINE_BREAK = "\r\n";
 const MAX_LINE_OCTETS = 75;
 
-export function buildIcs(
+export function buildCalendarInvite(
   event: CalendarEvent,
   options: CalendarInviteOptions,
-): Uint8Array {
+): EmailAttachment {
   const contentLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -43,9 +47,13 @@ export function buildIcs(
     "END:VCALENDAR",
   ];
 
-  return new TextEncoder().encode(
-    contentLines.map(foldContentLine).join(LINE_BREAK) + LINE_BREAK,
-  );
+  return {
+    content: new TextEncoder().encode(
+      contentLines.map(foldContentLine).join(LINE_BREAK) + LINE_BREAK,
+    ),
+    contentType: INVITE_CONTENT_TYPE,
+    filename: INVITE_FILENAME,
+  };
 }
 
 export function buildGoogleCalendarUrl(

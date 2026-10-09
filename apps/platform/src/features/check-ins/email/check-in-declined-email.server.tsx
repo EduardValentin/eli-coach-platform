@@ -1,7 +1,7 @@
 import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
 
 import {
-  CheckInEmailButton,
+  CheckInEmailActionSection,
   CheckInEmailLayout,
   checkInEmailText,
   type CheckInEmailContent,
@@ -23,7 +23,10 @@ export function checkInDeclinedSubject(): string {
 export function CheckInDeclinedEmail(props: CheckInDeclinedEmailProps) {
   return (
     <CheckInEmailLayout content={contentOf(props)}>
-      <CheckInEmailButton href={props.checkInsUrl} label={BUTTON_LABEL} />
+      <CheckInEmailActionSection
+        href={props.checkInsUrl}
+        label={BUTTON_LABEL}
+      />
     </CheckInEmailLayout>
   );
 }
