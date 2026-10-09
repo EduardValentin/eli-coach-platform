@@ -83,11 +83,10 @@ export function CoachMessages() {
   const {
     getPendingCheckins,
     getUpcomingCheckins,
-    getActionableCheckins,
+    getCheckinsAwaiting,
     approveCheckin,
-    declineCheckin,
-    rescheduleCheckin,
-    acceptReschedule,
+    cancelCheckin,
+    proposeNewTime,
     coachInitiateCheckin,
     getBookedSlots,
   } = useCheckins();
@@ -96,8 +95,8 @@ export function CoachMessages() {
   const activeConversation = conversations.find((c) => c.id === activeClient);
 
   const actionableForClient = useMemo(
-    () => getActionableCheckins(activeClient, 'coach'),
-    [getActionableCheckins, activeClient],
+    () => getCheckinsAwaiting('coach', activeClient),
+    [getCheckinsAwaiting, activeClient],
   );
   const nextCheckin = useMemo(
     () => getUpcomingCheckins(activeClient)[0],
@@ -205,7 +204,7 @@ export function CoachMessages() {
   };
 
   const handleDecline = (checkinId: string) => {
-    declineCheckin(checkinId);
+    cancelCheckin(checkinId);
     addSystemMessage(activeClient, 'Check-in cancelled', 'checkin-cancelled');
     toast.success('Check-in cancelled');
   };
@@ -221,10 +220,9 @@ export function CoachMessages() {
     if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
     const date = toISODate(rescheduleDate);
     const time = to24h(rescheduleTime);
-    const ok = rescheduleCheckin(
+    const ok = proposeNewTime(
       rescheduleTarget,
-      date,
-      time,
+      { date, time },
       'coach',
       rescheduleMsg || undefined,
     );
@@ -252,7 +250,7 @@ export function CoachMessages() {
   const handleAcceptReschedule = (checkinId: string) => {
     const checkin = actionableForClient.find((c) => c.id === checkinId);
     if (!checkin) return;
-    acceptReschedule(checkinId);
+    approveCheckin(checkinId);
     addSystemMessage(
       activeClient,
       `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
@@ -476,7 +474,7 @@ export function CoachMessages() {
                       {formatCheckinTime(nextCheckin.time)}
                     </span>
                   </span>
-                  {nextCheckin.type === 'recurring' && (
+                  {nextCheckin.kind === 'recurring' && (
                     <Badge tone="muted" className="ml-auto">
                       Weekly
                     </Badge>

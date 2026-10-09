@@ -189,6 +189,7 @@ export function withoutPhotoAt(
 export type ReviewCall = {
   startsAt: Date;
   scheduledAt: Date;
+  rescheduledFrom?: Date;
 };
 
 export type ClientJourney = {

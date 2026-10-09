@@ -9,10 +9,7 @@ import {
   filterCalls,
   hasActiveFilters,
   orderCallsBy,
-  pageOfCalls,
-  paginationSteps,
   parseJourneyStep,
-  parsePage,
   parseSortDirection,
   parseSortKey,
   upcomingCalls,
@@ -23,6 +20,7 @@ import {
   type ListedCall,
   type ListingSelection,
 } from './assessmentCallListing';
+import { pageOf, paginationSteps, parsePage } from './listPaging';
 import {
   visitorFullName,
   type PrototypeBooking,
@@ -744,10 +742,10 @@ describe('paging the assessment call list', () => {
     const calls = classifyMany(43);
 
     // act
-    const view = pageOfCalls(calls, { page: 1, perPage: 10 });
+    const view = pageOf(calls, { page: 1, perPage: 10 });
 
     // assert
-    expect(view.calls).toHaveLength(10);
+    expect(view.items).toHaveLength(10);
     expect(view.page).toBe(1);
     expect(view.pageCount).toBe(5);
     expect(view.firstShown).toBe(1);
@@ -760,10 +758,10 @@ describe('paging the assessment call list', () => {
     const calls = classifyMany(43);
 
     // act
-    const view = pageOfCalls(calls, { page: 5, perPage: 10 });
+    const view = pageOf(calls, { page: 5, perPage: 10 });
 
     // assert
-    expect(view.calls).toHaveLength(3);
+    expect(view.items).toHaveLength(3);
     expect(view.firstShown).toBe(41);
     expect(view.lastShown).toBe(43);
   });
@@ -773,11 +771,11 @@ describe('paging the assessment call list', () => {
     const calls = classifyMany(43);
 
     // act
-    const view = pageOfCalls(calls, { page: 99, perPage: 10 });
+    const view = pageOf(calls, { page: 99, perPage: 10 });
 
     // assert
     expect(view.page).toBe(5);
-    expect(view.calls).toHaveLength(3);
+    expect(view.items).toHaveLength(3);
   });
 
   it('stays on one page when nothing is booked', () => {
@@ -785,7 +783,7 @@ describe('paging the assessment call list', () => {
     const calls = classifyMany(0);
 
     // act
-    const view = pageOfCalls(calls, { page: 3, perPage: 10 });
+    const view = pageOf(calls, { page: 3, perPage: 10 });
 
     // assert
     expect(view.page).toBe(1);

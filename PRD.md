@@ -120,16 +120,16 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 
 ## Check-ins
 
-A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recurring`), a status (`pending`, `confirmed`, `rescheduling`, `declined`, `cancelled`, or `completed`), a source (`client-request`, `coach-request`, or `plan-schedule`), who initiated it, an optional linked plan, an optional note from either party, a reschedule count, and, while rescheduling, who proposed the new time.
+A **Check-in** has a client, a coach, a date and time, a kind (`recurring`, `ad-hoc`, or, Post-MVP, `program review`), a status (`pending`, `approved`, `passed`, or `cancelled`), who initiated it, who proposed its current time, an optional linked plan, an optional note from either party, and a reschedule count. A check-in is pending until the other party agrees to its time, approved once agreed, and passed once its approved time is over; whether the meeting actually took place is not tracked. A check-in that was moved keeps its earlier time and is shown as rescheduled.
 
-42. **Recurring check-ins are auto-confirmed.** In the MVP, recurring check-ins are managed independently of a training program. Post-MVP, assigning a plan generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval.
+42. **Recurring check-ins are auto-approved.** In the MVP, recurring check-ins are managed independently of a training program. Post-MVP, assigning a plan generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval. Post-MVP, a program review is a mandatory check-in the client books when her program is ready; booking approves it, and she can move it to another open time but neither party can cancel it.
 43. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate them from the client profile or Check-ins page. Post-MVP, they can also initiate them from the messaging area or chat.
-44. **A client has at most one pending ad-hoc request at a time.** While one is pending, the client cannot submit another and the action is disabled. A client can cancel her own pending request; a cancelled request can no longer be approved.
+44. **A client has at most one pending ad-hoc request at a time.** Only an ad-hoc check-in she requested that is still pending counts; a new time the coach proposes for another check-in does not. While one is pending, the client cannot submit another, and the action is disabled with an explanation of why.
 45. **Scheduling uses coach availability.** Slots are hourly from 9 AM to 4 PM, past dates are disabled, and already-booked slots are unavailable, for new check-ins and reschedules alike.
-46. **Either party can propose a reschedule for a confirmed check-in.** The original slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional note. Post-MVP, that note also appears in the chat thread.
-47. **Declining a reschedule cancels the check-in.** It never reverts to the original time.
+46. **Either party can propose a new time for an approved check-in.** The original slot is released and the check-in is pending again. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional note. Post-MVP, that note also appears in the chat thread.
+47. **Cancellation is final.** Declining a request or a new time cancels the check-in; it never reverts to the original time. The party who sent a new request can withdraw it while it is pending. The coach can cancel any approved check-in except a program review; the client can cancel only an approved ad-hoc check-in. A pending check-in that reaches its time unanswered is cancelled automatically, and so is every check-in that falls after the client's coaching ends.
 48. **At most 2 reschedule rounds per check-in.** Without agreement after 2 rounds the check-in is automatically cancelled.
-49. **Check-ins meet on Google Meet.** The client portal offers a "Join Meet" link for the next confirmed check-in.
+49. **Check-ins meet on Google Meet.** The client portal offers a "Join Meet" link for every approved check-in; it becomes the main action from 10 minutes before the start until the check-in ends.
 
 ## Menstrual Cycle
 
@@ -269,13 +269,13 @@ Per Business Rule 53.
 
 10. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
 11. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
-12. An upcoming check-in banner at the top of the chat shows the next confirmed check-in's date, time, and type.
+12. An upcoming check-in banner at the top of the chat shows the next approved check-in's date, time, and kind.
 13. The sidebar has a "Next Check-in" widget with date, time, a "Join Meet" button, and a link to the Check-ins page.
 
 ### Check-ins (`/client/checkins`)
 
-14. Organized into Upcoming (confirmed check-ins with Join Meet and the option to propose a new time), Requests (coach-proposed check-ins the client can approve, reschedule, or decline; the client's own pending request, which she can cancel), and Past (completed, declined, and cancelled).
-15. New ad-hoc requests can be made from this page under the one-pending limit. The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
+14. Organized into Upcoming (approved check-ins with Join Meet, the option to propose a new time, and cancellation where Business Rule 47 allows it), Requests (check-ins awaiting her answer first, which she can approve, reschedule, or decline; then those waiting for the coach: her own pending request, which she can withdraw, and new times she proposed), and Past (passed and cancelled). On both portals, a check-in shows its kind unless it is recurring, who requested an ad-hoc check-in or proposed a pending new time, and who wrote its note. Each tab can be narrowed by kind, and Requests also by whose answer is awaited, each option showing how many check-ins it matches; Requests lists the check-ins awaiting the viewer's answer first. Every tab sorts by check-in date with a direction toggle (Upcoming and Requests start soonest first, Past newest first), shows ten check-ins per page with page controls and a "Showing a–b of n" line, keeps its tab, filters, sort, and page across a reload, and offers to clear the filters when they hide every check-in.
+15. New ad-hoc requests can be made from this page under the one-pending limit (Business Rule 44). The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
 
 ### Menstrual cycle tracking (`/client/cycle`)
 
@@ -298,7 +298,7 @@ Per Business Rule 53.
 ### Dashboard
 
 1. Opens to a greeting stating how many assessment calls the coach still has today (calls dated today that have not ended) and an "Upcoming calls" widget listing her next three calls that have not ended, soonest first, each with the visitor's name, the call's date and time, a Today badge when it is today, and its join link, plus a link to the full assessment calls list. With no upcoming call the widget says so and still links to the list.
-2. Managed clients, pending check-ins, and important client information. The "Pending Check-ins" card reads from the check-in system, its subtitle reflects the actual pending count, and its "Review" action opens the Schedule page.
+2. Managed clients, pending check-ins, and important client information. The "Pending Check-ins" card lists the check-ins awaiting the coach's answer, the subtitle states how many there are, and each "Review" action opens that check-in on the coach's Check-ins page.
 
 ### Assessment calls (`/coach/assessment-calls`)
 
@@ -312,7 +312,7 @@ Per Business Rule 53.
 
 5. A conversation list with client avatar (photo or initial), online status, unread count, and last message preview. Each conversation has a menu with Pin/Unpin, Mute/Unmute, Flag for follow-up, Archive, and Delete; delete confirmation uses a styled modal with a warning icon. There is no call or video button. The coach can navigate from a conversation directly to that client's profile.
 6. Send and attach actions are visually centered and polished. Notification UI adapts to available space and never renders outside the viewport.
-7. An upcoming check-in banner at the top of the active chat shows the next confirmed check-in for that client. The coach can initiate an ad-hoc check-in from here.
+7. An upcoming check-in banner at the top of the active chat shows the next approved check-in for that client. The coach can initiate an ad-hoc check-in from here.
 8. Pending requests and reschedule proposals appear as action cards in the message stream with client name, requested date and time, optional note, and Accept and Decline buttons. Acting updates the check-in immediately and fires a notification.
 
 ### Workout review and history — Post-MVP
@@ -320,9 +320,9 @@ Per Business Rule 53.
 9. Completed workouts are grouped by subscription, then plan, then week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
 10. Each workout review shows logged against prescribed weight and reps per set, rest taken against prescribed, swaps made, compliance percentage, duration, and volume. Volumes use the coach's unit setting.
 
-### Schedule (`/coach/checkins`)
+### Check-ins (`/coach/checkins`)
 
-11. Reached from the sidebar "Schedule" link, which carries a badge with the pending count. Three tabs: Pending (all ad-hoc requests and reschedule proposals across clients, each card showing client, type, date, time, note, and who initiated it, with Accept and Decline and an empty state), Upcoming (confirmed recurring and ad-hoc check-ins sorted by date with a type badge and Confirmed status), and Past (completed, declined, cancelled, with status and any client notes).
+11. Reached from the sidebar "Check-ins" link, whose badge counts the check-ins awaiting the coach's answer, and opens on Requests. Three tabs, as on the client's page: Upcoming (approved check-ins sorted by date, each offering a new time and cancellation per Business Rule 47), Requests (every pending check-in across clients, those awaiting the coach's answer first, each with approve or accept, reschedule, and decline, then those waiting for clients, where she can withdraw her own new request), and Past (passed and cancelled). Each tab has an empty state. Filtering, sorting, and paging work as on the client's Check-ins page, and the coach can also search by client name.
 
 ### Settings (`/coach/settings`)
 
@@ -382,7 +382,7 @@ Per Business Rule 53.
 
 1. A notification bell in both portals' sidebar headers. Notifications are role-aware. In the MVP, check-in notifications link to the appropriate Check-ins page. Post-MVP, message and program notifications link to routes such as `/client/messages` and `/coach/messages?client=id`.
 2. Toasts carry a "View" action that navigates without losing app state. Clicking a notification marks it read and navigates.
-3. Types: new message; check-in requested (by client or coach); check-in approved; reschedule proposed; check-in cancelled (by decline or auto-cancel). The requesting party is notified on approval; both parties on cancellation.
+3. Types: new message; check-in requested (by client or coach); check-in approved; reschedule proposed; check-in cancelled (by decline, withdrawal, cancellation, or auto-cancel). The requesting party is notified on approval; both parties on cancellation.
 
 ## 8. Shared Requirements
 
@@ -401,6 +401,7 @@ Per Business Rule 53.
 - Rich analytics and reporting; advanced search across clients
 - Plan version history or changelog
 - Per-client configurable check-in frequency (default weekly today)
+- Mandatory end-of-block review check-ins, introduced with training programs
 - Reminders and calendar writes for assessment calls and check-ins. The add-to-calendar action and calendar file in the booking emails (Business Rule 13) are in scope; writing to the coach's calendar is not
 - Visitor rescheduling or cancellation of an assessment call, and coach actions on a booked call (cancel, reschedule, mark as done, edit notes)
 - Per-day hour intervals, blackout dates, and vacations in the coach's availability

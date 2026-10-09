@@ -84,21 +84,20 @@ export function ClientMessages() {
   const { addNotification } = useNotifications();
   const {
     requestCheckin,
-    hasPendingAdHoc,
+    hasOpenClientRequest,
     getUpcomingCheckins,
-    getActionableCheckins,
+    getCheckinsAwaiting,
     getBookedSlots,
     approveCheckin,
-    declineCheckin,
-    rescheduleCheckin,
-    acceptReschedule,
+    cancelCheckin,
+    proposeNewTime,
   } = useCheckins();
 
-  const pendingExists = hasPendingAdHoc(CLIENT_ID);
+  const pendingExists = hasOpenClientRequest(CLIENT_ID);
   const nextCheckin = getUpcomingCheckins(CLIENT_ID)[0];
   const actionableCheckins = useMemo(
-    () => getActionableCheckins(CLIENT_ID, 'client'),
-    [getActionableCheckins],
+    () => getCheckinsAwaiting('client', CLIENT_ID),
+    [getCheckinsAwaiting],
   );
 
   const bookedSlots = useMemo(() => {
@@ -166,10 +165,9 @@ export function ClientMessages() {
     if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
     const date = toISODate(rescheduleDate);
     const time = to24h(rescheduleTime);
-    const ok = rescheduleCheckin(
+    const ok = proposeNewTime(
       rescheduleTarget,
-      date,
-      time,
+      { date, time },
       'client',
       rescheduleMsg || undefined,
     );
@@ -197,7 +195,7 @@ export function ClientMessages() {
   const handleAcceptReschedule = (checkinId: string) => {
     const checkin = actionableCheckins.find((c) => c.id === checkinId);
     if (!checkin) return;
-    acceptReschedule(checkinId);
+    approveCheckin(checkinId);
     addSystemMessage(
       CLIENT_ID,
       `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
@@ -207,7 +205,7 @@ export function ClientMessages() {
   };
 
   const handleDeclineCheckin = (checkinId: string) => {
-    declineCheckin(checkinId);
+    cancelCheckin(checkinId);
     addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
     toast.success('Check-in cancelled');
   };
@@ -395,7 +393,7 @@ export function ClientMessages() {
                 {formatCheckinTime(nextCheckin.time)}
               </span>
             </span>
-            {nextCheckin.type === 'recurring' && (
+            {nextCheckin.kind === 'recurring' && (
               <span className={cn(LABEL_CLASS, 'shrink-0 text-primary')}>
                 Weekly
               </span>
@@ -545,7 +543,7 @@ export function ClientMessages() {
         onOpenChange={setShowCheckinPicker}
         variant="request"
         title="Request a check-in"
-        description={`Pick a date and time that works for you. ${coachName} will confirm or propose another slot.`}
+        description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
         selectedTime={selectedTime}

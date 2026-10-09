@@ -1,8 +1,5 @@
 import { Link } from 'react-router';
-import {
-  paginationSteps,
-  type CallPageView,
-} from '../../utils/assessmentCallListing';
+import { paginationSteps, type ListPage } from '../utils/listPaging';
 import {
   Pagination,
   PaginationContent,
@@ -11,13 +8,13 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '../ui/pagination';
+} from './ui/pagination';
 
-export function CallListPager({
+export function ListPager<Item>({
   view,
   pathForPage,
 }: {
-  view: CallPageView;
+  view: ListPage<Item>;
   pathForPage: (page: number) => string;
 }) {
   return (

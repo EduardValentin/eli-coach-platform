@@ -115,7 +115,7 @@ function ActiveClientRow({
 const DASHBOARD_CHECKIN_LIMIT = 3;
 
 export function CoachDashboard() {
-  const { getPendingCheckins } = useCheckins();
+  const { getCheckinsAwaiting } = useCheckins();
   const { bookings } = useAssessmentCalls();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
@@ -125,7 +125,7 @@ export function CoachDashboard() {
     return <AssessmentCallsUnavailable />;
   }
 
-  const pendingCheckins = getPendingCheckins();
+  const pendingCheckins = getCheckinsAwaiting('coach');
   const now = new Date();
   const timeZone = browserTimeZone();
   const callsLeftToday = countCallsLeftToday(

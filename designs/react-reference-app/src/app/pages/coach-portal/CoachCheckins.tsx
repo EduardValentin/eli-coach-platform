@@ -1,17 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
-import { CalendarDays, CalendarPlus, Clock, X } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Clock } from 'lucide-react';
+import { useCheckins } from '../../context/CheckinContext';
 import {
-  useCheckins,
+  canCancelApproved,
+  canPropose,
+  canWithdrawRequest,
+  proposesNewTime,
   type CheckIn,
-  MAX_RESCHEDULES,
-} from '../../context/CheckinContext';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import {
-  PROGRAM_REVIEW_LABEL,
-  upcomingReviewCall,
-} from '../../utils/reviewCallListing';
-import { browserTimeZone } from '../../utils/dateFormatters';
+} from '../../domain/checkins';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import {
@@ -20,26 +17,17 @@ import {
   toISODate,
   to24h,
 } from '../../utils/dateFormatters';
-import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
 import { CheckinCard } from '../../components/CheckinCard';
+import {
+  CheckinListing,
+  type CheckinEmptyCopy,
+} from '../../components/CheckinListing';
+import type { CheckinTab } from '../../utils/checkinListing';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { EmptyState } from '../../components/EmptyState';
 import { checkinAnchorId, checkinIdFromSearch } from '../../utils/checkinLinks';
-import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/dialog';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { toast } from 'sonner';
 
 const CLIENT_AVATARS: Record<string, string | null> = {
@@ -50,16 +38,33 @@ const CLIENT_AVATARS: Record<string, string | null> = {
   c5: null,
 };
 
-type CheckinTab = 'pending' | 'upcoming' | 'past';
+const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
+  upcoming: {
+    icon: CalendarDays,
+    title: 'No upcoming check-ins',
+    description: 'Approved check-ins with your clients show up here.',
+  },
+  requests: {
+    icon: CalendarPlus,
+    title: 'No open requests',
+    description: 'Requests from your clients and the ones you send show up here.',
+  },
+  past: {
+    icon: Clock,
+    title: 'No past check-ins yet',
+    description: 'Passed and cancelled check-ins show up here.',
+  },
+};
 
 function tabHoldingCheckin(
   checkinId: string | null,
   groups: Record<CheckinTab, CheckIn[]>,
 ): CheckinTab {
-  if (!checkinId) return 'pending';
+  if (!checkinId) return 'requests';
   const tabs = Object.keys(groups) as CheckinTab[];
   return (
-    tabs.find((tab) => groups[tab].some((c) => c.id === checkinId)) ?? 'pending'
+    tabs.find((tab) => groups[tab].some((c) => c.id === checkinId)) ??
+    'requests'
   );
 }
 
@@ -77,36 +82,32 @@ function CheckinAnchor({
   );
 }
 
+function firstName(fullName: string): string {
+  return fullName.split(' ')[0];
+}
+
 export function CoachCheckins() {
   const {
-    checkins,
+    statusOf,
     getPendingCheckins,
     getUpcomingCheckins,
+    getPastCheckins,
     approveCheckin,
-    declineCheckin,
-    rescheduleCheckin,
-    acceptReschedule,
+    cancelCheckin,
+    proposeNewTime,
     getBookedSlots,
   } = useCheckins();
-  const { demoJourney } = useClientJourneys();
-  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const pending = getPendingCheckins();
-  const awaitingCoach = pending.filter((c) => c.proposedBy === 'client').length;
   const upcoming = getUpcomingCheckins();
-  const past = checkins.filter(
-    (c) =>
-      c.status === 'completed' ||
-      c.status === 'declined' ||
-      c.status === 'cancelled',
-  );
+  const past = getPastCheckins();
 
   const [searchParams] = useSearchParams();
   const focusedCheckinId = checkinIdFromSearch(searchParams);
-  const [tab, setTab] = useState<CheckinTab>(() =>
-    tabHoldingCheckin(focusedCheckinId, { pending, upcoming, past }),
+  const [focusedTab] = useState<CheckinTab>(() =>
+    tabHoldingCheckin(focusedCheckinId, { upcoming, requests: pending, past }),
   );
 
   useEffect(() => {
@@ -116,11 +117,11 @@ export function CoachCheckins() {
     card?.focus({ preventScroll: true });
   }, [focusedCheckinId]);
 
-  // Reschedule state
-  const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<CheckIn | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
   const [rescheduleTime, setRescheduleTime] = useState<string | null>(null);
   const [rescheduleMsg, setRescheduleMsg] = useState('');
+  const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
 
   const bookedSlots = useMemo(
     () => (rescheduleDate ? getBookedSlots(toISODate(rescheduleDate)) : []),
@@ -134,7 +135,7 @@ export function CoachCheckins() {
       `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
       'checkin-scheduled',
     );
-    toast.success(`Approved check-in for ${c.clientName}`);
+    toast.success(`Approved check-in with ${c.clientName}`);
     addNotification({
       title: 'Check-in Approved',
       message: `${c.clientName}'s check-in on ${formatCheckinDate(c.date)} has been confirmed.`,
@@ -143,28 +144,27 @@ export function CoachCheckins() {
   };
 
   const handleDecline = (c: CheckIn) => {
-    declineCheckin(c.id);
+    cancelCheckin(c.id);
     addSystemMessage(c.clientId, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in cancelled');
+    toast.success('Check-in declined');
   };
 
-  const handleAcceptReschedule = (c: CheckIn) => {
-    acceptReschedule(c.id);
-    addSystemMessage(
-      c.clientId,
-      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Reschedule accepted');
-    addNotification({
-      title: 'Check-in Confirmed',
-      message: `Check-in with ${c.clientName} confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}.`,
-      link: '/coach/checkins',
-    });
+  const handleWithdraw = (c: CheckIn) => {
+    cancelCheckin(c.id);
+    addSystemMessage(c.clientId, 'Check-in request cancelled', 'checkin-cancelled');
+    toast.success('Request cancelled');
   };
 
-  const openReschedule = (checkinId: string) => {
-    setRescheduleTarget(checkinId);
+  const confirmCancel = () => {
+    if (!cancelTarget) return;
+    cancelCheckin(cancelTarget.id);
+    addSystemMessage(cancelTarget.clientId, 'Check-in cancelled', 'checkin-cancelled');
+    toast.success(`Cancelled check-in with ${cancelTarget.clientName}`);
+    setCancelTarget(null);
+  };
+
+  const openReschedule = (c: CheckIn) => {
+    setRescheduleTarget(c);
     setRescheduleDate(undefined);
     setRescheduleTime(null);
     setRescheduleMsg('');
@@ -172,14 +172,12 @@ export function CoachCheckins() {
 
   const handleSubmitReschedule = () => {
     if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
-    const checkin = pending.find((c) => c.id === rescheduleTarget);
-    if (!checkin) return;
+    const checkin = rescheduleTarget;
     const date = toISODate(rescheduleDate);
     const time = to24h(rescheduleTime);
-    const ok = rescheduleCheckin(
-      rescheduleTarget,
-      date,
-      time,
+    const ok = proposeNewTime(
+      checkin.id,
+      { date, time },
       'coach',
       rescheduleMsg || undefined,
     );
@@ -195,7 +193,7 @@ export function CoachCheckins() {
     if (rescheduleMsg) {
       ctxSendMessage(checkin.clientId, rescheduleMsg, 'coach');
     }
-    toast.success('Reschedule proposed');
+    toast.success('New time proposed');
     addNotification({
       title: 'Reschedule Proposed',
       message: `Coach proposed rescheduling ${checkin.clientName}'s check-in to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
@@ -205,43 +203,70 @@ export function CoachCheckins() {
     setRescheduleTarget(null);
   };
 
-  const renderPendingActions = (c: CheckIn) => {
-    const isRescheduling = c.status === 'rescheduling';
-    const canReschedule = c.rescheduleCount < MAX_RESCHEDULES;
-    const proposedByClient = c.proposedBy === 'client';
+  const waitingActions = (c: CheckIn) =>
+    canWithdrawRequest(c, 'coach') ? (
+      <Button onClick={() => handleWithdraw(c)} variant="outline" size="xs">
+        Cancel request
+      </Button>
+    ) : undefined;
 
-    // The status badge already says Awaiting {clientFirstName} when the coach proposed.
-    if (!proposedByClient) return undefined;
+  const answerActions = (c: CheckIn) => (
+    <>
+      <Button onClick={() => handleDecline(c)} variant="ghost" size="xs">
+        Decline
+      </Button>
+      {canPropose(c) && (
+        <Button onClick={() => openReschedule(c)} variant="outline" size="xs">
+          Reschedule
+        </Button>
+      )}
+      <Button onClick={() => handleApprove(c)} variant="primary" size="xs">
+        {proposesNewTime(c) ? 'Accept' : 'Approve'}
+      </Button>
+    </>
+  );
+
+  const upcomingActions = (c: CheckIn) => {
+    const reschedulable = c.kind !== 'program-review' && canPropose(c);
+    const cancellable = canCancelApproved(c, 'coach');
+    if (!reschedulable && !cancellable) return undefined;
 
     return (
       <>
-        <Button onClick={() => handleDecline(c)} variant="ghost" size="xs">
-          Decline
-        </Button>
-        {canReschedule && (
-          <Button
-            onClick={() => openReschedule(c.id)}
-            variant="outline"
-            size="xs"
-          >
-            Reschedule
+        {cancellable && (
+          <Button onClick={() => setCancelTarget(c)} variant="ghost" size="xs">
+            Cancel
           </Button>
         )}
-        {isRescheduling ? (
-          <Button
-            onClick={() => handleAcceptReschedule(c)}
-            variant="primary"
-            size="xs"
-          >
-            Accept
-          </Button>
-        ) : (
-          <Button onClick={() => handleApprove(c)} variant="primary" size="xs">
-            Approve
+        {reschedulable && (
+          <Button onClick={() => openReschedule(c)} variant="outline" size="xs">
+            Reschedule
           </Button>
         )}
       </>
     );
+  };
+
+  const card = (c: CheckIn, actions?: ReactNode) => (
+    <CheckinAnchor key={c.id} checkinId={c.id}>
+      <CheckinCard
+        checkin={c}
+        status={statusOf(c)}
+        viewer={{ party: 'coach', counterpartName: firstName(c.clientName) }}
+        attendee={{
+          name: c.clientName,
+          imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+        }}
+        footnote={c.planId ? 'Linked to training plan' : undefined}
+        actions={actions}
+      />
+    </CheckinAnchor>
+  );
+
+  const actionsFor = (c: CheckIn, tab: CheckinTab) => {
+    if (tab === 'upcoming') return upcomingActions(c);
+    if (tab === 'past') return undefined;
+    return c.proposedBy === 'coach' ? waitingActions(c) : answerActions(c);
   };
 
   return (
@@ -251,125 +276,27 @@ export function CoachCheckins() {
         subtitle="Manage all client check-ins in one place."
       />
 
-      <Tabs
-        variant="segmented"
-        value={tab}
-        onValueChange={(value) => setTab(value as CheckinTab)}
-        className="w-full"
-      >
-        <div className="mb-6 flex flex-col gap-2">
-          <TabsList>
-            <TabsTrigger value="pending">
-              Pending
-              {awaitingCoach > 0 && (
-                <Badge tone="count">{awaitingCoach}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="upcoming">
-              Upcoming
-            </TabsTrigger>
-            <TabsTrigger value="past">
-              Past
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="pending" className="space-y-3">
-          {pending.length === 0 ? (
-            <EmptyState
-              icon={CalendarPlus}
-              title="No pending check-ins"
-              description="All requests have been reviewed."
-            />
-          ) : (
-            pending.map((c) => (
-              <CheckinAnchor key={c.id} checkinId={c.id}>
-                <CheckinCard
-                  checkin={c}
-                  viewer="coach"
-                  attendee={{
-                    name: c.clientName,
-                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                  }}
-                  footnote={c.planId ? 'Linked to training plan' : undefined}
-                  actions={renderPendingActions(c)}
-                />
-              </CheckinAnchor>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="upcoming" className="space-y-3">
-          {reviewCall && (
-            <AppointmentCard
-              attendee={{
-                name: `${demoJourney.identity.firstName} ${demoJourney.identity.lastName}`.trim(),
-              }}
-              when={{
-                startsAt: reviewCall.startsAt,
-                timeZone: browserTimeZone(),
-              }}
-              badges={
-                <Badge tone="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
-              }
-            />
-          )}
-          {upcoming.length === 0 && !reviewCall ? (
-            <EmptyState
-              icon={CalendarDays}
-              title="No upcoming check-ins"
-              description="Confirmed check-ins with your clients show up here."
-            />
-          ) : (
-            upcoming.map((c) => (
-              <CheckinAnchor key={c.id} checkinId={c.id}>
-                <CheckinCard
-                  checkin={c}
-                  viewer="coach"
-                  attendee={{
-                    name: c.clientName,
-                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                  }}
-                  footnote={c.planId ? 'Linked to training plan' : undefined}
-                />
-              </CheckinAnchor>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="past" className="space-y-3">
-          {past.length === 0 ? (
-            <EmptyState
-              icon={Clock}
-              title="No past check-ins yet"
-              description="Completed, declined and cancelled check-ins show up here."
-            />
-          ) : (
-            past.map((c) => (
-              <CheckinAnchor key={c.id} checkinId={c.id}>
-                <CheckinCard
-                  checkin={c}
-                  viewer="coach"
-                  attendee={{
-                    name: c.clientName,
-                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                  }}
-                  footnote={c.planId ? 'Linked to training plan' : undefined}
-                  muted
-                />
-              </CheckinAnchor>
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+      <CheckinListing
+        party="coach"
+        defaultTab={focusedTab}
+        waitingForLabel="Waiting for clients"
+        search={{ placeholder: 'Search by client name' }}
+        emptyCopy={EMPTY_COPY}
+        renderCheckin={(c, tab) => card(c, actionsFor(c, tab))}
+      />
 
       <CheckinSchedulerSheet
-        open={!!rescheduleTarget}
+        open={rescheduleTarget !== null}
         onOpenChange={(open) => {
           if (!open) setRescheduleTarget(null);
         }}
         variant="reschedule"
         title="Propose a new time"
+        description={
+          rescheduleTarget
+            ? `Currently set for ${formatCheckinDate(rescheduleTarget.date)} · ${formatCheckinTime(rescheduleTarget.time)}`
+            : undefined
+        }
         selectedDate={rescheduleDate}
         onDateChange={setRescheduleDate}
         selectedTime={rescheduleTime}
@@ -381,6 +308,23 @@ export function CoachCheckins() {
         message={rescheduleMsg}
         onMessageChange={setRescheduleMsg}
         messagePlaceholder="Add a note for the client (optional)"
+      />
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+        title="Cancel this check-in?"
+        description={
+          cancelTarget
+            ? `${formatCheckinDate(cancelTarget.date)} at ${formatCheckinTime(cancelTarget.time)} with ${cancelTarget.clientName}.`
+            : undefined
+        }
+        cancelLabel="Keep"
+        confirmLabel="Cancel check-in"
+        onConfirm={confirmCancel}
+        tone="destructive"
       />
     </div>
   );

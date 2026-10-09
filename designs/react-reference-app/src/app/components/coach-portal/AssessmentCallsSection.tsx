@@ -20,9 +20,7 @@ import {
   filterCalls,
   hasActiveFilters,
   orderCallsBy,
-  pageOfCalls,
   parseJourneyStep,
-  parsePage,
   parseSortDirection,
   parseSortKey,
   parseStatus,
@@ -53,7 +51,8 @@ import { PRICING_LABELS } from '../../utils/journeyLabels';
 import { AppointmentCard } from './AppointmentCard';
 import { CallJourneyActions } from './CallJourneyActions';
 import { CallStageBadge } from './CallStageBadge';
-import { CallListPager } from './CallListPager';
+import { ListPager } from '../ListPager';
+import { pageOf, parsePage } from '../../utils/listPaging';
 import { JoinCallLink } from './JoinCallLink';
 import { SortControl, type SortOption } from '../SortControl';
 
@@ -305,7 +304,7 @@ export function AssessmentCallsSection({
     (callId) => journeyForCall(callId)?.stage ?? null,
   );
   const matching = orderCallsBy(filterCalls(calls, selection), sort);
-  const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
+  const view = pageOf(matching, { page, perPage: CALLS_PER_PAGE });
   const counts = countsByJourneyStep(calls, selection);
   const emptyCopy = emptyCallsCopy(selection, calls.length);
 
@@ -423,7 +422,7 @@ export function AssessmentCallsSection({
         </div>
 
         <TabsContent value={status}>
-          {view.calls.length === 0 ? (
+          {view.items.length === 0 ? (
             <EmptyState
               icon={CalendarSearch}
               title={emptyCopy.title}
@@ -438,10 +437,10 @@ export function AssessmentCallsSection({
             />
           ) : (
             <>
-              <CallList calls={view.calls} now={now} timeZone={timeZone} />
+              <CallList calls={view.items} now={now} timeZone={timeZone} />
 
               {view.pageCount > 1 && (
-                <CallListPager view={view} pathForPage={pathForPage} />
+                <ListPager view={view} pathForPage={pathForPage} />
               )}
             </>
           )}

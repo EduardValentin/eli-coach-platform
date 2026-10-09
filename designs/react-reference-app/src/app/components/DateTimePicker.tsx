@@ -90,7 +90,7 @@ export function SlotPickerFrame({
             <button
               type="button"
               onClick={handleChangeDate}
-              className="lg:hidden text-xs font-semibold text-brand underline-offset-4 transition-colors duration-150 ease-out hover:text-brand-hover hover:underline"
+              className="lg:hidden text-xs font-semibold text-primary underline-offset-4 transition-colors duration-150 ease-out hover:text-primary-hover hover:underline"
             >
               Change date
             </button>
@@ -123,10 +123,10 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }
       onClick={onSelect}
       className={`w-full py-3 px-4 rounded-control text-sm font-medium transition-all duration-200 border ${
         isBooked
-          ? 'bg-surface-base border-brand/30 text-brand pointer-events-none opacity-50'
+          ? 'bg-surface-base border-primary/30 text-primary pointer-events-none opacity-50'
           : isSelected
             ? 'bg-primary border-primary text-primary-foreground shadow-card'
-            : 'bg-surface-base border-brand/30 text-brand hover:border-brand hover:bg-brand/5'
+            : 'bg-surface-base border-primary/30 text-primary hover:border-primary hover:bg-primary/5'
       }`}
     >
       <span className={isBooked ? 'line-through' : ''}>{label}</span>
