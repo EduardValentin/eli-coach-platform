@@ -197,6 +197,14 @@ export class ClientPortalShell {
     await expect(this.moreButton).toHaveAttribute("aria-expanded", "false");
   }
 
+  async expectTabLinks(names: readonly string[]): Promise<void> {
+    await expect(this.tabBar.getByRole("link")).toHaveText([...names]);
+  }
+
+  async openCheckInsFromTabs(): Promise<void> {
+    await this.tabBar.getByRole("link", { name: "Check-ins" }).click();
+  }
+
   async openMore(): Promise<void> {
     await this.moreButton.click();
   }

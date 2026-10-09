@@ -42,6 +42,7 @@
     "test:unit": "pnpm typecheck && vitest run --project unit --project tools",
     "test:integration": "vitest run --project integration",
     "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e",
+    "test:e2e:critical": "pnpm --filter @eli-coach-platform/platform test:e2e:critical",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "validate": "pnpm validate:unit && pnpm test:integration",

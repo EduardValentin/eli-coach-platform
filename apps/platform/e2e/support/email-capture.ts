@@ -14,6 +14,7 @@ const EMAILS_PATH = "/emails";
 const REFUSALS_PATH = "/refusals";
 
 type SentEmail = {
+  attachmentNames: string[];
   html: string;
   id: string;
   subject: string;
@@ -22,6 +23,7 @@ type SentEmail = {
 };
 
 export type CapturedEmail = {
+  attachmentNames: string[];
   html: string;
   links: string[];
   subject: string;
@@ -75,6 +77,7 @@ export async function latestEmailTo(address: string): Promise<CapturedEmail> {
   }
 
   return {
+    attachmentNames: latest.attachmentNames,
     html: latest.html,
     links: linksIn(latest),
     subject: latest.subject,
@@ -168,12 +171,16 @@ function listEmailsSentTo(
 }
 
 function toSentEmail(payload: {
+  attachments?: { filename?: string }[];
   html?: string;
   subject?: string;
   text?: string;
   to: string | string[];
 }): SentEmail {
   return {
+    attachmentNames: (payload.attachments ?? []).flatMap(({ filename }) =>
+      filename ? [filename] : [],
+    ),
     html: payload.html ?? "",
     id: randomUUID(),
     subject: payload.subject ?? "",

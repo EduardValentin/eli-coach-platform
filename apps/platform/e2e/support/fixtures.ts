@@ -10,6 +10,9 @@ import type pg from "pg";
 import { AccountPortal } from "./account-portal";
 import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
+import { CheckInRecords } from "./check-in-records";
+import { CheckInRequestDialog } from "./check-in-request-dialog";
+import { ClientCheckInsPage } from "./client-check-ins-page";
 import { ClientDashboard } from "./client-dashboard";
 import { ClientEndedPage } from "./client-ended-page";
 import { ClientOnboarding } from "./client-onboarding";
@@ -18,10 +21,13 @@ import { ClientProfilePage } from "./client-profile-page";
 import { ClientResourcesPage } from "./client-resources-page";
 import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
+import { CoachAvailability } from "./coach-availability";
+import { CoachCheckInsPage } from "./coach-check-ins-page";
 import { CoachClientPage } from "./coach-client-page";
 import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
+import { CoachMeetingRoom } from "./coach-meeting-room";
 import {
   insertMeasuredClientRecords,
   type MeasuredClientSeed,
@@ -91,6 +97,8 @@ type PlatformFixtures = {
   clientSettings: ClientSettingsPage;
   clientEnded: ClientEndedPage;
   clientResources: ClientResourcesPage;
+  clientCheckIns: ClientCheckInsPage;
+  checkInRequestDialog: CheckInRequestDialog;
   privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
@@ -107,6 +115,10 @@ type PlatformFixtures = {
   coachClients: CoachClientsPage;
   coachClient: CoachClientPage;
   coachClientResources: CoachClientResourcesPage;
+  coachCheckIns: CoachCheckInsPage;
+  coachMeetingRoom: CoachMeetingRoom;
+  coachAvailability: CoachAvailability;
+  checkInRecords: CheckInRecords;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -351,6 +363,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new ClientResourcesPage(page));
   },
 
+  clientCheckIns: async ({ page }, use) => {
+    await use(new ClientCheckInsPage(page));
+  },
+
+  checkInRequestDialog: async ({ page }, use) => {
+    await use(new CheckInRequestDialog(page));
+  },
+
   measurementsSheet: async ({ page }, use) => {
     await use(new MeasurementsSheet(page));
   },
@@ -433,6 +453,32 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   coachClientResources: async ({ page }, use) => {
     await use(new CoachClientResourcesPage(page));
+  },
+
+  coachCheckIns: async ({ page }, use) => {
+    await use(new CoachCheckInsPage(page));
+  },
+
+  coachMeetingRoom: async ({ databasePool, page, scenarioTag }, use) => {
+    const room = await CoachMeetingRoom.heldIn({
+      page,
+      pool: databasePool,
+      scenarioTag,
+    });
+
+    await use(room);
+    await room.restore();
+  },
+
+  coachAvailability: async ({ databasePool }, use) => {
+    const availability = await CoachAvailability.heldIn(databasePool);
+
+    await use(availability);
+    await availability.restore();
+  },
+
+  checkInRecords: async ({ databasePool }, use) => {
+    await use(new CheckInRecords(databasePool));
   },
 
   addResourceDialog: async ({ page }, use) => {

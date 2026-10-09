@@ -52,6 +52,21 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   clientOwnedRows("onboarding reviews", "client_onboarding_reviews"),
   clientOwnedRows("client profiles", "client_profiles"),
   {
+    rows: "check-in reservations",
+    statement: `
+      delete from app.coach_time_reservations
+      where appointment_kind = 'check_in'
+        and appointment_id in (
+          select id from app.check_ins
+          where client_id in (
+            select id from app.clients
+            where assessment_call_id = any($1::uuid[])
+          )
+        )
+    `,
+  },
+  clientOwnedRows("check-ins", "check_ins"),
+  {
     rows: "clients",
     statement: `
       delete from app.clients

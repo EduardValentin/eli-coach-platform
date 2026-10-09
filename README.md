@@ -120,10 +120,12 @@ The suite starts its own dev server on `localhost:3100` with e2e-only settings (
 - Install Google Chrome; the journeys run in it rather than Playwright's bundled Chromium.
 - Keep the real Clerk Development keys, `CLERK_SIGN_IN_URL` and `CLERK_SIGN_UP_URL` in `/.env`, with the local database bootstrapped and migrated.
 - Copy `.env.e2e.example` to `/.env.e2e` (gitignored) and fill in its two keys. `STRIPE_SECRET_KEY` is a test-mode key (`sk_test_…` or `rk_test_…`) of the Stripe account the app's checkout is configured for, because the journeys pay on the hosted Checkout with the test card. `STRIPE_WEBHOOK_SIGNING_SECRET` is a random `whsec_…` value you make up: the journeys deliver Stripe's webhooks themselves, signed with it, so no Stripe CLI is needed. They read the event Stripe recorded for a checkout, subscription or charge and post it to the app; the one exception is a failed renewal, which the renewal hold makes impossible to cause in Stripe, so that event pair is built from the real subscription instead. Optionally set `STRIPE_PORTAL_CONFIGURATION_ID` to the account's test-mode customer-portal configuration (`bpc_…`) so the payment-method journey opens the same portal TEST serves. The suite reads both files, and a value in `/.env.e2e` takes precedence over the same value in `/.env`.
-- A shared local database is safe: the journeys book every call under a run-scoped `e2e-<run>-…+clerk_test@evoa.fit` address and remove only those calls, with their reservations, payment links, checkout sessions, clients, invitations and subscriptions. A run cut short is cleaned up when a later run starts, once it is two hours old.
+- A shared local database is safe: the journeys book every call under a run-scoped `e2e-<run>-…+clerk_test@evoa.fit` address and remove only those calls, with their reservations, payment links, checkout sessions, clients, check-ins and the hours they held, invitations and subscriptions. A run cut short is cleaned up when a later run starts, once it is two hours old.
 - Leave port `3199` free. The suite answers the app's Resend calls there and reads the payment-link and invitation emails from what it captured; nothing is sent.
 
 Journeys that need a client who has already paid seed her with a real test-mode customer and subscription, held the way a recorded payment holds it, so cancelling, refunding and the payment-method page act on real Stripe objects; the subscription's product is one shared `e2e_coaching_subscription` product that stays in the test account. Each journey deletes the Clerk users it created and revokes their pending invitations as it ends; the suite then cancels the Stripe subscription and deletes the Stripe customer each purchase created, and deletes every seeded customer with its subscription. [docs/CLERK.md](docs/CLERK.md) describes the Clerk side.
+
+Every new e2e test carries exactly one tag in its title. `@critical` marks the main path that must keep proving itself; `pnpm test:e2e:critical` runs only those. `@completeness` marks a check written to cover acceptance criteria; it is not part of the critical run. `pnpm test:e2e` runs everything, and the journeys that existed before the tags stay untagged. A browser check made during QA is a journey with page objects in `apps/platform/e2e`, never a scratch script.
 
 ## Checks
 
@@ -137,6 +139,7 @@ pnpm validate        # lint, boundaries, unit and integration tests, and build: 
 pnpm validate:unit   # the same without the integration suites; CI runs them as a parallel job (pnpm test:integration)
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
 pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (see End-to-End Journeys)
+pnpm test:e2e:critical # only the journeys tagged @critical
 ```
 
 The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
