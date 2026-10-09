@@ -115,8 +115,10 @@ type AppointmentCardProps = {
   attendee: AppointmentAttendee;
   badges?: ReactNode;
   details?: ReadonlyArray<AppointmentDetail>;
+  parityRoot?: string;
   quote?: string;
   quoteAuthor?: string;
+  quoteParity?: string;
   status?: AppointmentStatus;
   titleElement?: AppointmentTitleElement;
   when: AppointmentTime;
@@ -128,8 +130,10 @@ export function AppointmentCard({
   attendee,
   badges,
   details = [],
+  parityRoot,
   quote,
   quoteAuthor,
+  quoteParity,
   status = "scheduled",
   titleElement: Title = "p",
   when,
@@ -141,9 +145,15 @@ export function AppointmentCard({
         "flex flex-col gap-4 rounded-card border border-border-subtle bg-surface-base p-5 md:flex-row md:items-start",
         CARD_TONE[status],
       )}
+      data-parity-root={parityRoot}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">
-        <Avatar name={attendee.name} size="md" tone={AVATAR_TONE[status]} />
+        <Avatar
+          imageUrl={attendee.imageUrl}
+          name={attendee.name}
+          size="md"
+          tone={AVATAR_TONE[status]}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -158,7 +168,10 @@ export function AppointmentCard({
           <AppointmentDetails details={details} />
 
           {quote && (
-            <p className="mt-2 text-xs text-text-secondary italic whitespace-pre-line">
+            <p
+              className="mt-2 text-xs text-text-secondary italic whitespace-pre-line"
+              data-parity={quoteParity}
+            >
               {quoteAuthor && (
                 <span className="font-medium not-italic">{quoteAuthor}: </span>
               )}

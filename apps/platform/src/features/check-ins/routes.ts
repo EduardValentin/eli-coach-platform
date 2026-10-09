@@ -3,9 +3,18 @@ import { relative } from "@react-router/dev/routes";
 import {
   CHECK_IN_JOIN_ROUTE_SEGMENT,
   CHECK_INS_API_PATHS,
+  CHECK_INS_ROUTE_SEGMENT,
 } from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
+
+export const checkInsClientRoutes = [
+  route(CHECK_INS_ROUTE_SEGMENT, "./ui/client/check-ins/check-ins-page.tsx"),
+];
+
+export const checkInsCoachRoutes = [
+  route(CHECK_INS_ROUTE_SEGMENT, "./ui/coach/check-ins/check-ins-page.tsx"),
+];
 
 export const checkInsClientJoinRoutes = [
   route(CHECK_IN_JOIN_ROUTE_SEGMENT, "./ui/client/join/join-page.tsx"),

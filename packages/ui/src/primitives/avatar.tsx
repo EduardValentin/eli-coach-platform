@@ -26,6 +26,7 @@ const avatarClasses = cva(
 );
 
 type AvatarProps = VariantProps<typeof avatarClasses> & {
+  imageUrl?: string;
   name: string;
 };
 
@@ -38,16 +39,25 @@ function initialsOf(name: string): string {
     .join("");
 }
 
-export function Avatar({ name, size, tone }: AvatarProps) {
+export function Avatar({ imageUrl, name, size, tone }: AvatarProps) {
   return (
     <span className={cn(avatarClasses({ size, tone }))}>
-      <span
-        aria-hidden="true"
-        className="flex size-full shrink-0 items-center justify-center rounded-full bg-surface-neutral font-medium text-text-primary"
-        data-slot="avatar-fallback"
-      >
-        {initialsOf(name)}
-      </span>
+      {imageUrl ? (
+        <img
+          alt=""
+          className="aspect-square size-full"
+          data-slot="avatar-image"
+          src={imageUrl}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="flex size-full shrink-0 items-center justify-center rounded-full bg-surface-neutral font-medium text-text-primary"
+          data-slot="avatar-fallback"
+        >
+          {initialsOf(name)}
+        </span>
+      )}
     </span>
   );
 }

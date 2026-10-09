@@ -6,6 +6,7 @@ export type AppointmentStatus = "scheduled" | "past";
 
 export type AppointmentAttendee = {
   email?: string;
+  imageUrl?: string;
   name: string;
   phone?: string;
 };

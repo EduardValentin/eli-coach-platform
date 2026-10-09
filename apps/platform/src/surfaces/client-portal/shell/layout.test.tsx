@@ -46,6 +46,7 @@ function renderClientLayout(
     {
       children: [
         { Component: () => <p>Dashboard page</p>, index: true },
+        { Component: () => <h1>Her check-ins</h1>, path: "checkins" },
         { Component: ProfilePage, path: "profile" },
         { Component: () => <h1>Her resources</h1>, path: "resources" },
         { Component: () => <h1>Her settings</h1>, path: "settings" },
@@ -98,21 +99,24 @@ describe("ClientLayoutRoute", () => {
 
     expect(links.map((link) => link.textContent)).toEqual([
       "Dashboard",
+      "Check-ins",
       "Profile",
       "Resources",
       "Settings",
     ]);
     expect(links[0]).toHaveAttribute("href", "/client");
     expect(links[0]).toHaveAttribute("aria-current", "page");
-    expect(links[1]).toHaveAttribute("href", "/client/profile");
+    expect(links[1]).toHaveAttribute("href", "/client/checkins");
     expect(links[1]).not.toHaveAttribute("aria-current");
-    expect(links[2]).toHaveAttribute("href", "/client/resources");
+    expect(links[2]).toHaveAttribute("href", "/client/profile");
     expect(links[2]).not.toHaveAttribute("aria-current");
-    expect(links[3]).toHaveAttribute("href", "/client/settings");
+    expect(links[3]).toHaveAttribute("href", "/client/resources");
     expect(links[3]).not.toHaveAttribute("aria-current");
+    expect(links[4]).toHaveAttribute("href", "/client/settings");
+    expect(links[4]).not.toHaveAttribute("aria-current");
   });
 
-  it("puts the dashboard and her profile in the tab bar and leaves her resources and settings to the More sheet", async () => {
+  it("puts the dashboard, her check-ins and her profile in the tab bar and leaves her resources and settings to the More sheet", async () => {
     // arrange, act
     renderClientLayout();
 
@@ -122,8 +126,16 @@ describe("ClientLayoutRoute", () => {
     });
 
     expect(
+      within(tabs)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Dashboard", "Check-ins", "Profile"]);
+    expect(
       within(tabs).getByRole("link", { name: "Dashboard" }),
     ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(tabs).getByRole("link", { name: "Check-ins" }),
+    ).toHaveAttribute("href", "/client/checkins");
     expect(within(tabs).getByRole("link", { name: "Profile" })).toHaveAttribute(
       "href",
       "/client/profile",
@@ -190,6 +202,20 @@ describe("ClientLayoutRoute", () => {
       ).getByRole("link", { name: "Resources" }),
     ).toHaveTextContent(/^Resources$/);
     expect(screen.queryByText(/\(new\)/)).not.toBeInTheDocument();
+  });
+
+  it("marks her check-ins as the page being read on the check-ins page", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client/checkins");
+
+    // assert
+    const navigation = await screen.findByRole("navigation", {
+      name: "Client portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Check-ins" }),
+    ).toHaveAttribute("aria-current", "page");
   });
 
   it("marks her profile as the page being read on the profile page", async () => {

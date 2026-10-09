@@ -4,8 +4,6 @@ import { Outlet, type MetaFunction } from "react-router";
 
 import { coachSurfaceLinks } from "./navigation-links";
 
-export { middleware } from "./layout.server";
-
 const COACH_PORTAL_TITLE = "Coach Portal | Evoa";
 const COACH_PORTAL_DESCRIPTION =
   "Coach-facing workspace for client management, planning, scheduling, and communication.";

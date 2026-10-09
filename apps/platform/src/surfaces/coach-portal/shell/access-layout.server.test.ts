@@ -13,7 +13,7 @@ import {
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
 
-const { middleware } = await import("./layout.server");
+const { middleware } = await import("./access-layout.server");
 
 const [guardCoachPortal] = middleware;
 

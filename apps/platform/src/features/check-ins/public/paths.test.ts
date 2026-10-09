@@ -7,6 +7,7 @@ import {
   CLIENT_CHECK_INS_PATH,
   clientCheckInJoinPath,
   COACH_CHECK_INS_PATH,
+  coachCheckInJoinPath,
 } from "./paths";
 
 const CHECK_IN_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
@@ -18,6 +19,17 @@ describe("check-ins paths", () => {
 
     // act
     const match = matchPath(`/client/${CHECK_IN_JOIN_ROUTE_SEGMENT}`, link);
+
+    // assert
+    expect(match?.params.checkInId).toBe(CHECK_IN_ID);
+  });
+
+  it("links the coach to the join route the coach portal registers", () => {
+    // arrange
+    const link = coachCheckInJoinPath(CHECK_IN_ID);
+
+    // act
+    const match = matchPath(`/coach/${CHECK_IN_JOIN_ROUTE_SEGMENT}`, link);
 
     // assert
     expect(match?.params.checkInId).toBe(CHECK_IN_ID);

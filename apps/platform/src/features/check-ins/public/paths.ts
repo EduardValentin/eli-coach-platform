@@ -5,7 +5,7 @@ import {
 
 const CHECK_INS_API = "/api/check-ins";
 
-const CHECK_INS_ROUTE_SEGMENT = "checkins";
+export const CHECK_INS_ROUTE_SEGMENT = "checkins";
 
 export const CHECK_INS_API_PATHS = {
   requests: CHECK_INS_API,
@@ -23,4 +23,8 @@ export const COACH_CHECK_INS_PATH = `${COACH_PORTAL_PATH}/${CHECK_INS_ROUTE_SEGM
 
 export function clientCheckInJoinPath(checkInId: string): string {
   return `${CLIENT_CHECK_INS_PATH}/${encodeURIComponent(checkInId)}/join`;
+}
+
+export function coachCheckInJoinPath(checkInId: string): string {
+  return `${COACH_CHECK_INS_PATH}/${encodeURIComponent(checkInId)}/join`;
 }

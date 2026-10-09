@@ -5,10 +5,11 @@ import {
   type PanInfo,
 } from "motion/react";
 import { Dialog as RadixDialog } from "radix-ui";
-import { useRef, type ReactNode } from "react";
+import { useRef, type ReactNode, type RefObject } from "react";
 
 import { cn } from "../lib/cn";
 import {
+  focusOnOpen,
   preventDismissalWhenLocked,
   type DialogDismissal,
 } from "../lib/dialog-frame";
@@ -19,6 +20,7 @@ type BottomSheetProps = {
   description?: string;
   dismissal?: DialogDismissal;
   id?: string;
+  initialFocus?: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   title: string;
@@ -53,6 +55,7 @@ export function BottomSheet(props: BottomSheetProps) {
     description,
     dismissal = "allowed",
     id,
+    initialFocus,
     onOpenChange,
     open,
     title,
@@ -60,11 +63,12 @@ export function BottomSheet(props: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotionConfig() === true;
   const opener = useRef<HTMLElement | null>(null);
 
-  const rememberOpener = () => {
+  const rememberOpener = (event: Event) => {
     opener.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    focusOnOpen(initialFocus, event);
   };
   const returnFocusToOpener = (event: Event) => {
     event.preventDefault();

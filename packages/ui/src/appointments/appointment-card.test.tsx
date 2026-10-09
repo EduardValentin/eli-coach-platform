@@ -219,4 +219,20 @@ describe("appointment card", () => {
       screen.getByRole("button", { name: "Join call" }),
     ).toBeInTheDocument();
   });
+
+  it("shows the attendee's picture in place of her initials when there is one", () => {
+    // arrange, act
+    const { container } = render(
+      <AppointmentCard
+        attendee={{ imageUrl: "/media/eli/eli-portrait-192.webp", name: "Eli" }}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      "/media/eli/eli-portrait-192.webp",
+    );
+  });
 });

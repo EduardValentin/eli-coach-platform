@@ -61,7 +61,9 @@ describe("assessment call settings section", () => {
     );
     expect(screen.getByLabelText("Meeting link")).toHaveValue("");
     expect(
-      screen.getByText("Visitors cannot join calls until a link is set."),
+      screen.getByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -135,7 +137,9 @@ describe("assessment call settings section", () => {
 
     // assert
     expect(
-      screen.queryByText("Visitors cannot join calls until a link is set."),
+      screen.queryByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
     ).not.toBeInTheDocument();
 
     // act
@@ -143,7 +147,9 @@ describe("assessment call settings section", () => {
 
     // assert
     expect(
-      screen.getByText("Visitors cannot join calls until a link is set."),
+      screen.getByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -445,5 +451,5 @@ async function renderSection(
 
   render(<RouterProvider router={router} />);
 
-  await screen.findByRole("heading", { name: "Assessment calls" });
+  await screen.findByRole("heading", { name: "Calls and check-ins" });
 }

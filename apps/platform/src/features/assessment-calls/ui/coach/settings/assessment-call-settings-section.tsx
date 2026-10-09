@@ -154,7 +154,7 @@ export function AssessmentCallSettingsSection(
   return (
     <div data-parity-root="AssessmentCallSettingsSection">
       <SettingsSection
-        description="Visitors book inside the days and hours you set here."
+        description="Visitors book calls and clients pick check-in times inside the days and hours you set here."
         footer={
           <Button
             aria-busy={isSubmitting || undefined}
@@ -175,7 +175,7 @@ export function AssessmentCallSettingsSection(
             size={18}
           />
         }
-        title="Assessment calls"
+        title="Calls and check-ins"
       >
         <form
           id={FORM_ID}
@@ -229,10 +229,10 @@ function WeekdaysRow({ error, register, selected }: WeekdaysRowProps) {
     <SettingsRow
       aria-describedby={error ? errorId : undefined}
       as="fieldset"
-      description="Visitors can pick a slot on these days."
+      description="Calls and check-ins can be booked on these days."
       labelId={labelId}
       layout="stacked"
-      title="Days I take calls"
+      title="Days I'm available"
     >
       <div className="flex flex-wrap gap-2">
         {WEEKDAY_DISPLAY_ORDER.map((weekday) => (
@@ -328,7 +328,7 @@ function MeetingLinkRow({ error, register, value }: MeetingLinkRowProps) {
       {value ? null : (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
           <TriangleAlert aria-hidden="true" size={14} />
-          Visitors cannot join calls until a link is set.
+          No one can join calls or check-ins until a link is set.
         </p>
       )}
     </SettingsRow>

@@ -99,4 +99,18 @@ describe("avatar", () => {
     expect(fallback).toHaveClass("text-text-primary");
     expect(fallback).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("shows the picture when there is one, hidden from assistive technology since the name is beside it", () => {
+    // arrange, act
+    const { root } = renderAvatar(
+      <Avatar imageUrl="/media/eli/eli-portrait-192.webp" name="Eli" />,
+    );
+
+    // assert
+    const picture = root?.querySelector("img");
+    expect(picture).toHaveAttribute("src", "/media/eli/eli-portrait-192.webp");
+    expect(picture).toHaveAttribute("alt", "");
+    expect(picture).toHaveClass("aspect-square", "size-full");
+    expect(root?.textContent).toBe("");
+  });
 });
