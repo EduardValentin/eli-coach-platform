@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 import type pg from "pg";
 
 export type MeetingRoomScene = {
@@ -23,6 +23,7 @@ const ROOM_ORIGIN = "https://meet.e2e.invalid";
 const ROOM_REDIRECT = 302;
 const ROOM_HEADING = "Meeting room";
 const ROOM_PAGE = `<!doctype html><title>${ROOM_HEADING}</title><h1>${ROOM_HEADING}</h1>`;
+const JOIN_PATHS = "**/checkins/*/join";
 
 export class CoachMeetingRoom {
   readonly url: string;
@@ -42,11 +43,32 @@ export class CoachMeetingRoom {
 
   async set(): Promise<void> {
     await this.scene.pool.query(SAVE_ROOM, [this.url, new Date()]);
-    await this.scene.page
-      .context()
-      .route(`${ROOM_ORIGIN}/**`, (route) =>
-        route.fulfill({ body: ROOM_PAGE, contentType: "text/html" }),
-      );
+    const context = this.scene.page.context();
+    await context.route(`${ROOM_ORIGIN}/**`, (route) =>
+      route.fulfill({ body: ROOM_PAGE, contentType: "text/html" }),
+    );
+    await context.route(JOIN_PATHS, (route) =>
+      this.followRedirectToRoom(route),
+    );
+  }
+
+  // Playwright never routes the target of a server redirect, so the browser
+  // is sent on to the room by a navigation of its own once the app chose it.
+  private async followRedirectToRoom(route: Route): Promise<void> {
+    const response = await route.fetch({ maxRedirects: 0 });
+
+    if (
+      response.status() !== ROOM_REDIRECT ||
+      response.headers().location !== this.url
+    ) {
+      await route.fulfill({ response });
+      return;
+    }
+
+    await route.fulfill({
+      body: `<!doctype html><script>location.replace(${JSON.stringify(this.url)})</script>`,
+      contentType: "text/html",
+    });
   }
 
   async unset(): Promise<void> {

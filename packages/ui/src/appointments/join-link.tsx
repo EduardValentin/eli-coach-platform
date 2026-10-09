@@ -7,7 +7,10 @@ type JoinLinkSize = "sm" | "xs";
 
 type JoinLinkTone = "primary" | "quiet";
 
-type JoinLinkProps = Omit<LinkProps, "children" | "className"> & {
+type JoinLinkProps = Omit<
+  LinkProps,
+  "children" | "className" | "reloadDocument"
+> & {
   label: string;
   size?: JoinLinkSize;
   tone: JoinLinkTone;
@@ -28,6 +31,7 @@ export function JoinLink({
     <Link
       className={buttonVariants({ size, variant: TONE_VARIANTS[tone] })}
       {...props}
+      reloadDocument
     >
       <Video aria-hidden="true" className="size-4" />
       {label}

@@ -10,6 +10,8 @@ import {
 } from "./check-in-tabs";
 
 const CHECK_INS_PATH = "/coach/checkins";
+const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
+const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
 export class CoachCheckInsPage {
@@ -17,6 +19,13 @@ export class CoachCheckInsPage {
 
   private static joinPathOf(checkInId: string): string {
     return `${CHECK_INS_PATH}/${checkInId}/join`;
+  }
+
+  private async responseFinished(path: RegExp): Promise<void> {
+    const response = await this.page.waitForResponse((candidate) =>
+      path.test(new URL(candidate.url()).pathname),
+    );
+    await response.finished();
   }
 
   private get navigation() {
@@ -82,12 +91,15 @@ export class CoachCheckInsPage {
 
   async approve(clientName: string): Promise<void> {
     await this.showTab("Requests");
+    const approvalSettled = this.responseFinished(APPROVAL_DATA_PATH);
+    const revalidationSettled = this.responseFinished(CHECK_INS_DATA_PATH);
     await this.checkIn("Requests", clientName)
       .getByRole("button", { name: "Approve" })
       .click();
     await expect(
       this.page.getByText(`Approved check-in with ${clientName}`),
     ).toBeVisible();
+    await Promise.all([approvalSettled, revalidationSettled]);
   }
 
   async decline(clientName: string): Promise<void> {

@@ -3,7 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { JoinLink } from "./join-link";
@@ -29,6 +30,38 @@ describe("join link", () => {
       "href",
       JOIN_PATH,
     );
+  });
+
+  it("hands the click to the browser so the join page loads as a whole document", async () => {
+    // arrange
+    const user = userEvent.setup();
+    let isLeftToBrowser = false;
+    window.addEventListener(
+      "click",
+      (event) => {
+        isLeftToBrowser = !event.defaultPrevented;
+        event.preventDefault();
+      },
+      { once: true },
+    );
+    render(
+      <MemoryRouter initialEntries={["/client/checkins"]}>
+        <Routes>
+          <Route
+            element={<JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />}
+            path="/client/checkins"
+          />
+          <Route element={<p>Joined inside the app</p>} path={JOIN_PATH} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // act
+    await user.click(screen.getByRole("link", { name: "Join Meet" }));
+
+    // assert
+    expect(isLeftToBrowser).toBe(true);
+    expect(screen.queryByText("Joined inside the app")).toBeNull();
   });
 
   it("stays an outline action in its quiet tone", () => {
