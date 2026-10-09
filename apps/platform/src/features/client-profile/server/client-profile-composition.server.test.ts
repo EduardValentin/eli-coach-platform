@@ -120,7 +120,10 @@ describe("composeClientProfileFeature", () => {
 
 function createHandles() {
   return {
-    clientIdentities: { findByClientId: vi.fn().mockResolvedValue(null) },
+    clientIdentities: {
+      findByClientId: vi.fn().mockResolvedValue(null),
+      findByClientIds: vi.fn().mockResolvedValue([]),
+    },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
     incidents: {

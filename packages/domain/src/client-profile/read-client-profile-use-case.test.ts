@@ -48,6 +48,7 @@ function createUseCase(stored: {
   const ports = {
     identities: {
       findByClientId: vi.fn().mockResolvedValue(stored.identity),
+      findByClientIds: vi.fn().mockResolvedValue([]),
     } satisfies ClientIdentities,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(stored.profile),

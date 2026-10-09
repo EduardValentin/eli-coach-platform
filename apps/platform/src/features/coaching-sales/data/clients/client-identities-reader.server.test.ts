@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 
 import { PostgresClientIdentities } from "./client-identities-reader.server";
 
@@ -51,25 +51,67 @@ describe("PostgresClientIdentities#findByClientId", () => {
   });
 });
 
+describe("PostgresClientIdentities#findByClientIds", () => {
+  it("reads every found client's identity in one query", async () => {
+    // arrange
+    const maria = {
+      ...CLIENT_ROW,
+      clientId: "3f1a8f0e-2b1c-4c55-9b5e-0d6c7e8f9a10",
+      firstName: "Maria",
+      email: "maria@example.com",
+    };
+    const database = createDatabaseAnswering([CLIENT_ROW, maria]);
+    const identities = new PostgresClientIdentities(database);
+
+    // act
+    const found = await identities.findByClientIds([CLIENT_ID, maria.clientId]);
+
+    // assert
+    expect(found).toEqual([
+      IDENTITY,
+      {
+        ...IDENTITY,
+        clientId: maria.clientId,
+        firstName: "Maria",
+        email: "maria@example.com",
+      },
+    ]);
+    expect(database.select).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads nothing for no clients", async () => {
+    // arrange
+    const database = createDatabaseAnswering([CLIENT_ROW]);
+    const identities = new PostgresClientIdentities(database);
+
+    // act
+    const found = await identities.findByClientIds([]);
+
+    // assert
+    expect(found).toEqual([]);
+    expect(database.select).not.toHaveBeenCalled();
+  });
+});
+
 function createDatabaseAnswering(
   rows: readonly Record<string, unknown>[],
-): DatabaseClient {
+): DatabaseClient & { select: Mock } {
   return {
-    select: (columns: Record<string, unknown>) => {
+    select: vi.fn((columns: Record<string, unknown>) => {
+      const projected = rows.map((row) =>
+        Object.fromEntries(
+          Object.keys(columns).map((column) => [column, row[column]]),
+        ),
+      );
       const selection = {
         from: () => selection,
         where: () => selection,
-        limit: () =>
-          Promise.resolve(
-            rows.map((row) =>
-              Object.fromEntries(
-                Object.keys(columns).map((column) => [column, row[column]]),
-              ),
-            ),
-          ),
+        limit: () => Promise.resolve(projected),
+        then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+          Promise.resolve(projected).then(onFulfilled),
       };
 
       return selection;
-    },
-  } as unknown as DatabaseClient;
+    }),
+  } as unknown as DatabaseClient & { select: Mock };
 }

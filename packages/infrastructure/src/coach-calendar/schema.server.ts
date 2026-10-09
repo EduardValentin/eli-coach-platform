@@ -9,7 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-const APPOINTMENT_KINDS = ["assessment_call"] as const;
+const APPOINTMENT_KINDS = ["assessment_call", "check_in"] as const;
 
 export type AppointmentKind = (typeof APPOINTMENT_KINDS)[number];
 

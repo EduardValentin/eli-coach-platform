@@ -13,4 +13,5 @@ export type ClientIdentity = {
 
 export interface ClientIdentities {
   findByClientId(clientId: string): Promise<ClientIdentity | null>;
+  findByClientIds(clientIds: readonly string[]): Promise<ClientIdentity[]>;
 }

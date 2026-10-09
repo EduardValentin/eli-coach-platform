@@ -1,0 +1,486 @@
+import { describe, expect, it } from "vitest";
+
+import { CheckIn, type CheckInProps } from "./check-in";
+import { CheckInNote } from "./check-in-note";
+
+const STARTS_AT = new Date("2026-06-03T09:00:00.000Z");
+const ENDS_AT = new Date("2026-06-03T10:00:00.000Z");
+
+const CLIENT_REQUEST = {
+  id: "check-in-1",
+  clientId: "client-1",
+  startsAt: STARTS_AT,
+  clientTimeZone: "Europe/London",
+  coachTimeZone: "Europe/Bucharest",
+  kind: "ad_hoc",
+  recordedStatus: "pending",
+  initiatedBy: "client",
+  proposedBy: "client",
+  note: "Can we look at my squat?",
+  requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+  answeredAt: null,
+} satisfies CheckInProps;
+
+function checkIn(props?: Partial<CheckInProps>): CheckIn {
+  return CheckIn.reconstitute({ ...CLIENT_REQUEST, ...props });
+}
+
+function approvedCheckIn(): CheckIn {
+  return checkIn({
+    recordedStatus: "approved",
+    answeredAt: new Date("2026-06-01T12:00:00.000Z"),
+  });
+}
+
+function noteOf(raw: string): CheckInNote | null {
+  const written = CheckInNote.from(raw);
+
+  if (written.status !== "accepted") {
+    throw new Error(`expected an accepted note, got ${written.status}`);
+  }
+
+  return written.note;
+}
+
+describe("CheckIn.requestedByClient", () => {
+  it("records a pending ad-hoc check-in the client initiated and proposed", () => {
+    // arrange
+    const request = {
+      id: "check-in-2",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      note: noteOf("  Can we look at my squat?  "),
+      requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+    };
+
+    // act
+    const requested = CheckIn.requestedByClient(request);
+
+    // assert
+    expect(requested.toSnapshot()).toEqual({
+      id: "check-in-2",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      endsAt: ENDS_AT,
+      joinEmphasisFrom: new Date("2026-06-03T08:50:00.000Z"),
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      kind: "ad_hoc",
+      recordedStatus: "pending",
+      initiatedBy: "client",
+      proposedBy: "client",
+      note: "Can we look at my squat?",
+      requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+      answeredAt: null,
+    });
+  });
+
+  it("records no note when the client wrote none", () => {
+    // arrange
+    const request = {
+      id: "check-in-2",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      note: null,
+      requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+    };
+
+    // act
+    const requested = CheckIn.requestedByClient(request);
+
+    // assert
+    expect(requested.note).toBeNull();
+  });
+});
+
+describe("CheckIn#endsAt and #joinEmphasisFrom", () => {
+  it("ends one check-in duration after its start", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const endsAt = requested.endsAt();
+
+    // assert
+    expect(endsAt).toEqual(ENDS_AT);
+  });
+
+  it("emphasises joining from ten minutes before the start", () => {
+    // arrange
+    const approved = approvedCheckIn();
+
+    // act
+    const emphasisFrom = approved.joinEmphasisFrom();
+
+    // assert
+    expect(emphasisFrom).toEqual(new Date("2026-06-03T08:50:00.000Z"));
+  });
+});
+
+describe("CheckIn#statusAt", () => {
+  it.each([
+    [
+      "a pending request before its start",
+      checkIn(),
+      "2026-06-03T08:59:59.999Z",
+      "pending",
+    ],
+    [
+      "a pending request at its start",
+      checkIn(),
+      "2026-06-03T09:00:00.000Z",
+      "cancelled",
+    ],
+    [
+      "a pending request after its start",
+      checkIn(),
+      "2026-06-03T09:30:00.000Z",
+      "cancelled",
+    ],
+    [
+      "an approved check-in before its end",
+      approvedCheckIn(),
+      "2026-06-03T09:59:59.999Z",
+      "approved",
+    ],
+    [
+      "an approved check-in at its end",
+      approvedCheckIn(),
+      "2026-06-03T10:00:00.000Z",
+      "passed",
+    ],
+    [
+      "a cancelled check-in before its start",
+      checkIn({ recordedStatus: "cancelled" }),
+      "2026-06-02T09:00:00.000Z",
+      "cancelled",
+    ],
+    [
+      "a cancelled check-in after its end",
+      checkIn({ recordedStatus: "cancelled" }),
+      "2026-06-04T09:00:00.000Z",
+      "cancelled",
+    ],
+  ])("reads %s as %s", (_situation, subject, instant, expected) => {
+    // arrange
+    const now = new Date(instant);
+
+    // act
+    const status = subject.statusAt(now);
+
+    // assert
+    expect(status).toBe(expected);
+  });
+});
+
+describe("CheckIn#awaits", () => {
+  it("awaits the coach on a request the client proposed", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const awaitsCoach = requested.awaits("coach");
+    const awaitsClient = requested.awaits("client");
+
+    // assert
+    expect({ awaitsCoach, awaitsClient }).toEqual({
+      awaitsCoach: true,
+      awaitsClient: false,
+    });
+  });
+
+  it("awaits the client on a time the coach proposed", () => {
+    // arrange
+    const proposed = checkIn({ initiatedBy: "coach", proposedBy: "coach" });
+
+    // act
+    const awaitsCoach = proposed.awaits("coach");
+    const awaitsClient = proposed.awaits("client");
+
+    // assert
+    expect({ awaitsCoach, awaitsClient }).toEqual({
+      awaitsCoach: false,
+      awaitsClient: true,
+    });
+  });
+
+  it("awaits nobody once the check-in is approved", () => {
+    // arrange
+    const approved = approvedCheckIn();
+
+    // act
+    const awaitsCoach = approved.awaits("coach");
+    const awaitsClient = approved.awaits("client");
+
+    // assert
+    expect({ awaitsCoach, awaitsClient }).toEqual({
+      awaitsCoach: false,
+      awaitsClient: false,
+    });
+  });
+});
+
+describe("CheckIn#mayWithdraw", () => {
+  it("lets the party who proposed a pending check-in withdraw it", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const clientMay = requested.mayWithdraw("client");
+    const coachMay = requested.mayWithdraw("coach");
+
+    // assert
+    expect({ clientMay, coachMay }).toEqual({
+      clientMay: true,
+      coachMay: false,
+    });
+  });
+
+  it("lets nobody withdraw an approved check-in", () => {
+    // arrange
+    const approved = approvedCheckIn();
+
+    // act
+    const clientMay = approved.mayWithdraw("client");
+
+    // assert
+    expect(clientMay).toBe(false);
+  });
+});
+
+describe("CheckIn#isJoinableAt", () => {
+  it.each([
+    [
+      "an approved check-in a day before its start",
+      approvedCheckIn(),
+      "2026-06-02T09:00:00.000Z",
+      true,
+    ],
+    [
+      "an approved check-in during the meeting",
+      approvedCheckIn(),
+      "2026-06-03T09:30:00.000Z",
+      true,
+    ],
+    [
+      "an approved check-in at its end",
+      approvedCheckIn(),
+      "2026-06-03T10:00:00.000Z",
+      false,
+    ],
+    [
+      "a pending request before its start",
+      checkIn(),
+      "2026-06-03T08:55:00.000Z",
+      false,
+    ],
+    [
+      "a cancelled check-in before its start",
+      checkIn({ recordedStatus: "cancelled" }),
+      "2026-06-03T08:55:00.000Z",
+      false,
+    ],
+  ])("judges %s joinable: %s", (_situation, subject, instant, expected) => {
+    // arrange
+    const now = new Date(instant);
+
+    // act
+    const joinable = subject.isJoinableAt(now);
+
+    // assert
+    expect(joinable).toBe(expected);
+  });
+});
+
+describe("CheckIn#answerRefusalFor", () => {
+  it("lets the coach answer a request awaiting her before its start", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const refusal = requested.answerRefusalFor({
+      party: "coach",
+      at: new Date("2026-06-02T09:00:00.000Z"),
+    });
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+
+  it.each([
+    [
+      "an approved check-in",
+      approvedCheckIn(),
+      "coach",
+      "2026-06-02T09:00:00.000Z",
+      "not_pending",
+    ],
+    [
+      "a cancelled check-in",
+      checkIn({ recordedStatus: "cancelled" }),
+      "coach",
+      "2026-06-02T09:00:00.000Z",
+      "not_pending",
+    ],
+    [
+      "a request that reached its start unanswered",
+      checkIn(),
+      "coach",
+      "2026-06-03T09:00:00.000Z",
+      "expired",
+    ],
+    [
+      "her own request",
+      checkIn(),
+      "client",
+      "2026-06-02T09:00:00.000Z",
+      "not_your_turn",
+    ],
+  ] as const)(
+    "refuses an answer to %s",
+    (_situation, subject, party, instant, expected) => {
+      // arrange
+      const at = new Date(instant);
+
+      // act
+      const refusal = subject.answerRefusalFor({ party, at });
+
+      // assert
+      expect(refusal).toBe(expected);
+    },
+  );
+});
+
+describe("CheckIn#withdrawalRefusalFor", () => {
+  it("lets the client withdraw her pending request before its start", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const refusal = requested.withdrawalRefusalFor({
+      party: "client",
+      at: new Date("2026-06-02T09:00:00.000Z"),
+    });
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+
+  it.each([
+    [
+      "an approved check-in",
+      approvedCheckIn(),
+      "client",
+      "2026-06-02T09:00:00.000Z",
+      "not_pending",
+    ],
+    [
+      "a request that reached its start",
+      checkIn(),
+      "client",
+      "2026-06-03T09:00:00.000Z",
+      "expired",
+    ],
+    [
+      "a request the other party proposed",
+      checkIn(),
+      "coach",
+      "2026-06-02T09:00:00.000Z",
+      "not_your_turn",
+    ],
+  ] as const)(
+    "refuses withdrawing %s",
+    (_situation, subject, party, instant, expected) => {
+      // arrange
+      const at = new Date(instant);
+
+      // act
+      const refusal = subject.withdrawalRefusalFor({ party, at });
+
+      // assert
+      expect(refusal).toBe(expected);
+    },
+  );
+});
+
+describe("CheckIn#settled", () => {
+  it("records the approval and when it was given", () => {
+    // arrange
+    const requested = checkIn();
+    const at = new Date("2026-06-02T09:00:00.000Z");
+
+    // act
+    const approved = requested.settled({ outcome: "approved", at });
+
+    // assert
+    expect({
+      recordedStatus: approved.recordedStatus,
+      answeredAt: approved.answeredAt,
+    }).toEqual({ recordedStatus: "approved", answeredAt: at });
+  });
+
+  it("records a cancellation and when it was made", () => {
+    // arrange
+    const requested = checkIn();
+    const at = new Date("2026-06-02T09:00:00.000Z");
+
+    // act
+    const cancelled = requested.settled({ outcome: "cancelled", at });
+
+    // assert
+    expect({
+      recordedStatus: cancelled.recordedStatus,
+      answeredAt: cancelled.answeredAt,
+    }).toEqual({ recordedStatus: "cancelled", answeredAt: at });
+  });
+});
+
+describe("CheckIn#viewAt", () => {
+  it("shows the snapshot with the status at that instant", () => {
+    // arrange
+    const requested = checkIn();
+
+    // act
+    const view = requested.viewAt(new Date("2026-06-03T09:00:00.000Z"));
+
+    // assert
+    expect(view).toEqual({ ...requested.toSnapshot(), status: "cancelled" });
+  });
+});
+
+describe("CheckIn.decideRequest", () => {
+  const waitingRequest = checkIn({ id: "check-in-0" });
+
+  it.each([
+    ["the hour reserved and nothing waiting", "reserved", null, "requested"],
+    [
+      "the hour reserved and a request waiting",
+      "reserved",
+      waitingRequest,
+      "request_waiting",
+    ],
+    ["the hour taken and nothing waiting", "taken", null, "time_taken"],
+    [
+      "the hour taken and a request waiting",
+      "taken",
+      waitingRequest,
+      "request_waiting",
+    ],
+  ] as const)(
+    "decides %s as %s",
+    (_situation, coachTime, waiting, expected) => {
+      // arrange
+      const learned = { coachTime, waitingRequest: waiting };
+
+      // act
+      const decision = CheckIn.decideRequest(learned);
+
+      // assert
+      expect(decision).toBe(expected);
+    },
+  );
+});

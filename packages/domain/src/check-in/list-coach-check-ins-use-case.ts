@@ -1,0 +1,52 @@
+import type { Clock } from "../shared";
+
+import type { CheckIn, CheckInView } from "./check-in";
+import type { CheckInClientIdentity, CheckInClients } from "./check-in-clients";
+import type { CheckIns } from "./check-ins";
+
+export type CoachCheckInView = CheckInView & {
+  client: Pick<CheckInClientIdentity, "firstName" | "lastName">;
+};
+
+type ListCoachCheckInsUseCaseOptions = {
+  checkIns: CheckIns;
+  clients: CheckInClients;
+  clock: Clock;
+};
+
+export class ListCoachCheckInsUseCase {
+  constructor(private readonly options: ListCoachCheckInsUseCaseOptions) {}
+
+  async execute(): Promise<CoachCheckInView[]> {
+    const checkIns = await this.options.checkIns.listAll();
+    const identities = await this.options.clients.identitiesOf(
+      ListCoachCheckInsUseCase.clientIdsOf(checkIns),
+    );
+    const identityByClientId = new Map(
+      identities.map((identity) => [identity.clientId, identity]),
+    );
+    const now = this.options.clock.now();
+
+    return checkIns.flatMap((checkIn) => {
+      const identity = identityByClientId.get(checkIn.clientId);
+
+      if (!identity) {
+        return [];
+      }
+
+      return [
+        {
+          ...checkIn.viewAt(now),
+          client: {
+            firstName: identity.firstName,
+            lastName: identity.lastName,
+          },
+        },
+      ];
+    });
+  }
+
+  private static clientIdsOf(checkIns: readonly CheckIn[]): string[] {
+    return [...new Set(checkIns.map((checkIn) => checkIn.clientId))];
+  }
+}
