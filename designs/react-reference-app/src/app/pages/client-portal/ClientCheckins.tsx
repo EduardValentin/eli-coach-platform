@@ -350,7 +350,7 @@ export function ClientCheckins() {
 
       <Button
         {...requestButtonProps}
-        className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
+        className="fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden"
       >
         <CalendarPlus size={18} aria-hidden="true" />
         Request check-in
