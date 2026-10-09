@@ -52,8 +52,7 @@ export class CoachMeetingRoom {
     );
   }
 
-  // Playwright never routes the target of a server redirect, so the browser
-  // is sent on to the room by a navigation of its own once the app chose it.
+  // Playwright cannot route a server redirect's target, so the room is reached by a second navigation.
   private async followRedirectToRoom(route: Route): Promise<void> {
     const response = await route.fetch({ maxRedirects: 0 });
 
