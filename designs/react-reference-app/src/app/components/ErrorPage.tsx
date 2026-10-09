@@ -10,14 +10,14 @@ import { cn } from './ui/utils';
 // and offers exactly one way out.
 export const ERROR_PAGE_ACTION_CLASS = buttonVariants({ size: 'lg', variant: 'inverted' });
 
-type ErrorPageLinkProps = {
+type DeadEndLinkProps = {
   to: LinkProps['to'];
   direction: 'back' | 'forward';
   className?: string;
   children: ReactNode;
 };
 
-export function ErrorPageLink({ to, direction, className, children }: ErrorPageLinkProps) {
+export function DeadEndLink({ to, direction, className, children }: DeadEndLinkProps) {
   return (
     <Link to={to} className={cn(ERROR_PAGE_ACTION_CLASS, className)}>
       {direction === 'back' ? <ArrowLeft size={18} aria-hidden="true" /> : null}

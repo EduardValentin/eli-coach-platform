@@ -3,7 +3,7 @@ import { VideoOff } from 'lucide-react';
 import { useParams } from 'react-router';
 import {
   ErrorPage,
-  ErrorPageLink,
+  DeadEndLink,
   FULL_PAGE_MESSAGE_SHELL_CLASS,
 } from '../components/ErrorPage';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
@@ -77,9 +77,9 @@ export function CheckinJoin({ party }: { party: CheckinParty }) {
       landmarkLabel="Your check-in"
       parityRoot="CheckinJoinNotReady"
     >
-      <ErrorPageLink direction={copy.actionDirection} to={copy.actionPath}>
+      <DeadEndLink direction={copy.actionDirection} to={copy.actionPath}>
         {copy.actionLabel}
-      </ErrorPageLink>
+      </DeadEndLink>
     </ErrorPage>
   );
 }

@@ -1,5 +1,5 @@
 import { Compass } from 'lucide-react';
-import { ErrorPage, ErrorPageLink } from '../components/ErrorPage';
+import { ErrorPage, DeadEndLink } from '../components/ErrorPage';
 
 export function NotFound() {
   return (
@@ -9,9 +9,9 @@ export function NotFound() {
       title="Page not found"
       description="The page you asked for doesn't exist, or it has moved somewhere else."
     >
-      <ErrorPageLink direction="back" to="/">
+      <DeadEndLink direction="back" to="/">
         Back to home
-      </ErrorPageLink>
+      </DeadEndLink>
     </ErrorPage>
   );
 }

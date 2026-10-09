@@ -3,7 +3,7 @@ import { Navbar } from '../components/Navbar';
 import { useAppState } from '../context/AppContext';
 import { Download, FileText, LinkIcon } from 'lucide-react';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { ErrorPageLink } from '../components/ErrorPage';
+import { DeadEndLink } from '../components/ErrorPage';
 import { buttonVariants } from '../components/ThemeButton';
 
 type GrantedResource = {
@@ -53,9 +53,9 @@ export function DownloadPage() {
               Download links stay active for seven days after each request. You
               can request your resources again from the store.
             </p>
-            <ErrorPageLink direction="back" to="/store" className="mt-6">
+            <DeadEndLink direction="back" to="/store" className="mt-6">
               Back to the Store
-            </ErrorPageLink>
+            </DeadEndLink>
           </div>
         ) : (
           <div className="py-8">

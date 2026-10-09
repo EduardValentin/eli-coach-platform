@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MailQuestion, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { ErrorPage, ErrorPageLink } from '../components/ErrorPage';
+import { ErrorPage, DeadEndLink } from '../components/ErrorPage';
 import { Button } from '../components/ThemeButton';
 import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
@@ -105,9 +105,9 @@ export function InvitationLanding() {
       title={UNAVAILABLE_TITLE}
       description={UNAVAILABLE_BODY}
     >
-      <ErrorPageLink direction="back" to="/">
+      <DeadEndLink direction="back" to="/">
         Back to home
-      </ErrorPageLink>
+      </DeadEndLink>
     </ErrorPage>
   );
 }

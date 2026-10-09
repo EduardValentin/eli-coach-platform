@@ -15,6 +15,7 @@ import { Button } from '../ui/button';
 import {
   ResponsiveSheetDialog,
   SheetDialogBody,
+  SheetDialogFooter,
   SheetDialogHeader,
 } from '../workout/ResponsiveSheetDialog';
 
@@ -83,11 +84,11 @@ export function ReviewCallScheduler({
 
   return (
     <ResponsiveSheetDialog
-      contentClassName="sm:w-fit"
       description={description}
       onOpenChange={onOpenChange}
       open={open}
       title={title}
+      width="fit"
     >
       <SheetDialogHeader
         description={description}
@@ -117,7 +118,7 @@ export function ReviewCallScheduler({
         )}
       </SheetDialogBody>
 
-      <div className="shrink-0 border-t border-border-subtle bg-surface-base px-5 py-3 md:px-8 md:py-4">
+      <SheetDialogFooter>
         <Button
           disabled={!selected || booking}
           onClick={() => void confirm()}
@@ -129,7 +130,7 @@ export function ReviewCallScheduler({
             ? `Book ${formatCallSchedule(selected, browserTimeZone())}`
             : 'Pick a time'}
         </Button>
-      </div>
+      </SheetDialogFooter>
     </ResponsiveSheetDialog>
   );
 }

@@ -1,21 +1,21 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { ErrorPageLink } from './ErrorPage';
+import { DeadEndLink } from './ErrorPage';
 
 function renderLink(direction: 'back' | 'forward') {
   render(
     <MemoryRouter>
-      <ErrorPageLink direction={direction} to="/somewhere">
+      <DeadEndLink direction={direction} to="/somewhere">
         Take me there
-      </ErrorPageLink>
+      </DeadEndLink>
     </MemoryRouter>,
   );
 
   return screen.getByRole('link', { name: 'Take me there' });
 }
 
-describe('ErrorPageLink', () => {
+describe('DeadEndLink', () => {
   it('points a back action left, before the label', () => {
     // arrange
     // act

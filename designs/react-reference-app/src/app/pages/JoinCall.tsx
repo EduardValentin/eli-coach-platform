@@ -3,7 +3,7 @@ import { VideoOff } from 'lucide-react';
 import { useParams } from 'react-router';
 import {
   ErrorPage,
-  ErrorPageLink,
+  DeadEndLink,
   FULL_PAGE_MESSAGE_SHELL_CLASS,
 } from '../components/ErrorPage';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
@@ -40,9 +40,9 @@ export function JoinCall() {
       description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
       landmarkLabel="Your call"
     >
-      <ErrorPageLink direction="back" to="/">
+      <DeadEndLink direction="back" to="/">
         Back to home
-      </ErrorPageLink>
+      </DeadEndLink>
     </ErrorPage>
   );
 }

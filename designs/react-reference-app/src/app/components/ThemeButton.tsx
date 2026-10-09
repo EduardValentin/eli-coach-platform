@@ -29,6 +29,7 @@ const buttonVariants = cva(
         xs: 'h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5',
         md: 'h-(--size-control-md) px-6 text-base has-[>svg]:px-5',
         'md-wide': 'h-(--size-control-md) px-6 text-base',
+        'md-grow': 'min-h-(--size-control-md) px-5 text-base whitespace-normal',
         lg: 'h-(--size-control-lg) px-8 text-base',
         'lg-tight': 'h-(--size-control-lg) px-4 text-base',
         xl: 'h-(--size-control-xl) px-12 text-lg',
@@ -55,6 +56,7 @@ const buttonVariants = cva(
       },
       elevation: {
         flat: '',
+        card: 'shadow-card',
         raised: 'shadow-action transition-all hover:shadow-action-hover',
       },
       press: {

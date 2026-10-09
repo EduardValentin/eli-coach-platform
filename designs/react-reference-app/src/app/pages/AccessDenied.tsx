@@ -1,5 +1,5 @@
 import { Lock } from 'lucide-react';
-import { ErrorPage, ErrorPageLink } from '../components/ErrorPage';
+import { ErrorPage, DeadEndLink } from '../components/ErrorPage';
 import { useAppState, type PrototypeSession } from '../context/AppContext';
 
 type Recovery = {
@@ -43,9 +43,9 @@ export function AccessDenied() {
       title="You don't have access to this page"
       description={recovery.description}
     >
-      <ErrorPageLink direction="back" to={recovery.actionHref}>
+      <DeadEndLink direction="back" to={recovery.actionHref}>
         {recovery.actionLabel}
-      </ErrorPageLink>
+      </DeadEndLink>
     </ErrorPage>
   );
 }
