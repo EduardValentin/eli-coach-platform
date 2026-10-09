@@ -1,3 +1,8 @@
+import {
+  SlotPicker,
+  type SlotPickerDays,
+  type SlotPickerWording,
+} from "@eli-coach-platform/ui/calendar";
 import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
 import { Alert, Button } from "@eli-coach-platform/ui/primitives";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
@@ -18,7 +23,14 @@ import {
 } from "react-router";
 
 import type { OpenSlotsResponse } from "~/features/assessment-calls/public/assessment-calls";
+import {
+  formatClockTime,
+  formatDayFirstDate,
+  formatMonthFirstDay,
+} from "~/features/assessment-calls/public/call-moment";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
+import { groupSlotsByDay } from "~/features/assessment-calls/ui/shared/slot-grouping";
 
 import { useRefreshSlotsFetcher } from "./api-client";
 import { BookingConfirmation } from "./booking-confirmation";
@@ -31,8 +43,6 @@ import {
   type BookingFlowState,
 } from "./booking-flow";
 import { CallOverview } from "./call-overview";
-import { groupSlotsByDay } from "./slot-grouping";
-import { SlotPicker } from "./slot-picker";
 import { useStepHeadingFocus } from "./step-heading-focus";
 import { useBookAssessmentCallSubmission } from "./submission";
 import { UnavailableSlots } from "./unavailable-slots";
@@ -64,6 +74,15 @@ export const meta: MetaFunction = () => [
 export const handle = { publicContentFrame: "full-bleed" } as const;
 
 type BotDetection = Awaited<ReturnType<typeof loader>>["botDetection"];
+
+const SLOT_PICKER_WORDING: SlotPickerWording = {
+  availableDays: "Available days",
+  changeDate: "Change date",
+  noOpenSlots: "No open slots",
+  pastDay: "Past day",
+  selected: "selected",
+  today: "Today",
+};
 
 const STEP_TRANSITION = {
   animate: { opacity: 1, x: 0 },
@@ -234,9 +253,17 @@ function SlotSelectionStep(props: {
   const { dispatch, flow, headingRef, onRetry, openSlots, timeZone } = props;
   const { error, selectedDayKey, selectedSlot } = flow;
   const slots = openSlots?.slots;
-  const slotsByDay = useMemo(
-    () => groupSlotsByDay(slots ?? [], timeZone),
+  const days = useMemo(
+    () => slotPickerDaysOf(slots ?? [], timeZone),
     [slots, timeZone],
+  );
+  const dayKeyInZone = useCallback(
+    (date: Date) => dayKeyOf(date, timeZone),
+    [timeZone],
+  );
+  const dayNameInZone = useCallback(
+    (date: Date) => formatDayFirstDate(date, timeZone),
+    [timeZone],
   );
   const selectDay = useCallback(
     (dayKey: string | null) => dispatch({ dayKey, type: "select-day" }),
@@ -258,12 +285,15 @@ function SlotSelectionStep(props: {
       {openSlots ? (
         <>
           <SlotPicker
+            dayKeyOf={dayKeyInZone}
+            dayNameOf={dayNameInZone}
+            days={days}
             onSelectDay={selectDay}
             onSelectSlot={(slot) => dispatch({ slot, type: "select-slot" })}
             selectedDayKey={selectedDayKey}
             selectedSlot={selectedSlot}
-            slotsByDay={slotsByDay}
             timeZone={timeZone}
+            wording={SLOT_PICKER_WORDING}
           />
 
           <div className="mt-auto">
@@ -285,5 +315,23 @@ function SlotSelectionStep(props: {
         <UnavailableSlots onRetry={onRetry} />
       )}
     </>
+  );
+}
+
+function slotPickerDaysOf(
+  slots: readonly string[],
+  timeZone: string,
+): SlotPickerDays {
+  return new Map(
+    [...groupSlotsByDay(slots, timeZone)].map(([dayKey, daySlots]) => [
+      dayKey,
+      {
+        heading: formatMonthFirstDay(new Date(daySlots[0]), timeZone),
+        slots: daySlots.map((startsAt) => ({
+          label: formatClockTime(new Date(startsAt), timeZone),
+          startsAt,
+        })),
+      },
+    ]),
   );
 }

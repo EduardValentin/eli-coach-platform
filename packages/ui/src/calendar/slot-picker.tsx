@@ -1,43 +1,46 @@
 import { motion } from "motion/react";
 import { useEffect, useRef, type RefObject } from "react";
 
-import { cn } from "@eli-coach-platform/ui/lib";
-import { linkVariants } from "@eli-coach-platform/ui/primitives";
-
-import {
-  formatMonthFirstDay,
-  formatClockTime,
-} from "~/features/assessment-calls/public/call-moment";
-
+import { cn } from "../lib/cn";
 import { SlotCalendar } from "./slot-calendar";
+import type {
+  CalendarDayReader,
+  SlotPickerDays,
+  SlotPickerWording,
+} from "./slot-picker-model";
 
 type SlotPickerProps = {
+  dayKeyOf: CalendarDayReader;
+  dayNameOf: CalendarDayReader;
+  days: SlotPickerDays;
   onSelectDay: (dayKey: string | null) => void;
-  onSelectSlot: (slot: string) => void;
+  onSelectSlot: (startsAt: string) => void;
   selectedDayKey: string | null;
   selectedSlot: string | null;
-  slotsByDay: ReadonlyMap<string, readonly string[]>;
   timeZone: string;
+  wording: SlotPickerWording;
 };
 
 export function SlotPicker(props: SlotPickerProps) {
   const {
+    dayKeyOf,
+    dayNameOf,
+    days,
     onSelectDay,
     onSelectSlot,
     selectedDayKey,
     selectedSlot,
-    slotsByDay,
     timeZone,
+    wording,
   } = props;
   const calendarRef = useRef<HTMLDivElement>(null);
   const slotsRef = useRef<HTMLDivElement>(null);
-  const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
-  const selectedDay = daySlots[0] ? new Date(daySlots[0]) : null;
-  const dayHeading = selectedDay
-    ? formatMonthFirstDay(selectedDay, timeZone)
-    : null;
+  const selectedDay = selectedDayKey ? days.get(selectedDayKey) : undefined;
 
-  useScrollDaySlotsIntoView(dayHeading, { calendarRef, slotsRef });
+  useScrollDaySlotsIntoView(selectedDay?.heading ?? null, {
+    calendarRef,
+    slotsRef,
+  });
 
   return (
     <div
@@ -49,14 +52,17 @@ export function SlotPicker(props: SlotPickerProps) {
         ref={calendarRef}
       >
         <SlotCalendar
+          dayKeyOf={dayKeyOf}
+          dayNameOf={dayNameOf}
+          days={days}
           onSelectDay={onSelectDay}
           selectedDayKey={selectedDayKey}
-          slotsByDay={slotsByDay}
           timeZone={timeZone}
+          wording={wording}
         />
       </div>
 
-      {dayHeading ? (
+      {selectedDay ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="mx-auto w-full max-w-[340px] scroll-mt-24 lg:mx-0 lg:w-[240px] lg:max-w-none"
@@ -67,14 +73,11 @@ export function SlotPicker(props: SlotPickerProps) {
           <div className="mb-3 flex items-baseline justify-between">
             <div>
               <h3 className="text-base font-semibold text-text-primary">
-                {dayHeading}
+                {selectedDay.heading}
               </h3>
             </div>
             <button
-              className={cn(
-                linkVariants({ variant: "inline" }),
-                "text-xs font-semibold lg:hidden",
-              )}
+              className="text-xs font-semibold text-primary underline-offset-4 transition-colors duration-150 ease-out hover:text-primary-hover hover:underline lg:hidden"
               onClick={() =>
                 calendarRef.current?.scrollIntoView({
                   behavior: "smooth",
@@ -83,17 +86,17 @@ export function SlotPicker(props: SlotPickerProps) {
               }
               type="button"
             >
-              Change date
+              {wording.changeDate}
             </button>
           </div>
 
           <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-1">
-            {daySlots.map((slot) => (
+            {selectedDay.slots.map((slot) => (
               <TimeSlotButton
-                isSelected={selectedSlot === slot}
-                key={slot}
-                label={formatClockTime(new Date(slot), timeZone)}
-                onSelect={() => onSelectSlot(slot)}
+                isSelected={selectedSlot === slot.startsAt}
+                key={slot.startsAt}
+                label={slot.label}
+                onSelect={() => onSelectSlot(slot.startsAt)}
               />
             ))}
           </div>
@@ -116,9 +119,9 @@ function TimeSlotButton(props: {
       className={cn(
         "w-full rounded-control border px-4 py-3 text-sm font-medium transition-all duration-200",
         {
-          "border-brand-primary/30 bg-surface-base text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5":
+          "border-primary/30 bg-surface-base text-primary hover:border-primary hover:bg-primary/5":
             !isSelected,
-          "border-surface-strong bg-surface-strong text-text-inverted shadow-card":
+          "border-primary bg-primary text-primary-foreground shadow-card":
             isSelected,
         },
       )}

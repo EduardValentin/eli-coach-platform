@@ -1,5 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { ELI_PORTRAIT_PATHS } from "@eli-coach-platform/content";
+import {
+  COACH_DISPLAY_NAME,
+  ELI_PORTRAIT_PATHS,
+} from "@eli-coach-platform/content";
 import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { cardVariants } from "@eli-coach-platform/ui/primitives";
@@ -28,7 +31,7 @@ export function CallOverview(props: {
       className="flex w-full flex-col border-b border-stroke-faint bg-surface-quiet/50 p-8 md:w-[35%] md:border-r md:border-b-0 md:p-10"
     >
       <img
-        alt="Eli"
+        alt={COACH_DISPLAY_NAME}
         className="mb-6 size-24 rounded-full border border-control-border-soft object-cover shadow-card"
         height={96}
         src={COACH_AVATAR_URL}

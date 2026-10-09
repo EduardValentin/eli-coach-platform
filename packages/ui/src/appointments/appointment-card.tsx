@@ -64,6 +64,26 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
   );
 }
 
+function AppointmentTimeRow({
+  label,
+  when,
+}: {
+  label?: string;
+  when: AppointmentTime;
+}) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-1.5">
+      <DateTimeLabel size="sm" when={when} />
+      {label && (
+        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+          <span className="hidden sm:inline">· </span>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function AppointmentDetails({
   details,
 }: {
@@ -96,9 +116,11 @@ type AppointmentCardProps = {
   badges?: ReactNode;
   details?: ReadonlyArray<AppointmentDetail>;
   quote?: string;
+  quoteAuthor?: string;
   status?: AppointmentStatus;
   titleElement?: AppointmentTitleElement;
   when: AppointmentTime;
+  whenLabel?: string;
 };
 
 export function AppointmentCard({
@@ -107,9 +129,11 @@ export function AppointmentCard({
   badges,
   details = [],
   quote,
+  quoteAuthor,
   status = "scheduled",
   titleElement: Title = "p",
   when,
+  whenLabel,
 }: AppointmentCardProps) {
   return (
     <div
@@ -127,7 +151,7 @@ export function AppointmentCard({
             {badges}
           </div>
 
-          <DateTimeLabel size="sm" when={when} />
+          <AppointmentTimeRow label={whenLabel} when={when} />
 
           <AttendeeContactRow attendee={attendee} />
 
@@ -135,6 +159,9 @@ export function AppointmentCard({
 
           {quote && (
             <p className="mt-2 text-xs text-text-secondary italic whitespace-pre-line">
+              {quoteAuthor && (
+                <span className="font-medium not-italic">{quoteAuthor}: </span>
+              )}
               &quot;{quote}&quot;
             </p>
           )}

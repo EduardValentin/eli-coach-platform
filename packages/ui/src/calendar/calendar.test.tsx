@@ -207,7 +207,7 @@ describe("calendar day marks", () => {
       "rounded-control",
       "font-medium",
       "ring-2",
-      "ring-brand-primary/30",
+      "ring-primary/30",
     );
     expect(dayButton).not.toHaveClass("rounded-full", "text-brand-primary");
   });
@@ -279,7 +279,7 @@ describe("calendar weekdays and weeks", () => {
     const selectedDay = screen.getByRole("button", {
       name: /March 10th, 2026/,
     });
-    expect(selectedDay).toHaveClass("hover:bg-brand-primary-hover");
+    expect(selectedDay).toHaveClass("hover:bg-primary-hover");
     expect(selectedDay).not.toHaveClass(
       "hover:bg-surface-muted",
       "focus:bg-brand-primary",
@@ -672,9 +672,9 @@ describe("calendar range selection", () => {
     // assert
     const start = screen.getByRole("button", { name: /March 10th, 2026/ });
     const middle = screen.getByRole("button", { name: /March 11th, 2026/ });
-    expect(start).toHaveClass("bg-brand-primary", "text-text-inverted");
+    expect(start).toHaveClass("bg-primary", "text-text-inverted");
     expect(middle).toHaveClass("bg-brand-primary-soft", "text-brand-primary");
-    expect(middle).not.toHaveClass("bg-brand-primary", "text-text-inverted");
+    expect(middle).not.toHaveClass("bg-primary", "text-text-inverted");
   });
 
   it("extends a one-day range to the day the visitor picks next", async () => {

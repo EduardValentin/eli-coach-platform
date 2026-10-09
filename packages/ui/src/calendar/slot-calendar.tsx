@@ -1,43 +1,51 @@
-import { Calendar, type CalendarProps } from "@eli-coach-platform/ui/calendar";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { formatDayFirstDate } from "~/features/assessment-calls/public/call-moment";
-
-import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
+import { Calendar, type CalendarProps } from "./calendar";
+import type {
+  CalendarDayReader,
+  SlotPickerDays,
+  SlotPickerWording,
+} from "./slot-picker-model";
 
 type SlotCalendarProps = {
+  dayKeyOf: CalendarDayReader;
+  dayNameOf: CalendarDayReader;
+  days: SlotPickerDays;
   onSelectDay: (dayKey: string | null) => void;
   selectedDayKey: string | null;
-  slotsByDay: ReadonlyMap<string, readonly string[]>;
   timeZone: string;
+  wording: SlotPickerWording;
 };
-
-const TODAY_PREFIX = "Today";
-const PAST_DAY_REASON = "Past day";
-const NO_OPEN_SLOTS_REASON = "No open slots";
-const SELECTED_STATE = "selected";
 
 export const SlotCalendar = memo(function SlotCalendar(
   props: SlotCalendarProps,
 ) {
-  const { onSelectDay, selectedDayKey, slotsByDay, timeZone } = props;
+  const {
+    dayKeyOf,
+    dayNameOf,
+    days,
+    onSelectDay,
+    selectedDayKey,
+    timeZone,
+    wording,
+  } = props;
   const [now] = useState(() => new Date());
-  const todayKey = dayKeyOf(now, timeZone);
+  const todayKey = dayKeyOf(now);
   const firstOpenSlot = useMemo(
-    () => slotsByDay.values().next().value?.[0],
-    [slotsByDay],
+    () => days.values().next().value?.slots[0]?.startsAt,
+    [days],
   );
   const selectedDaySlot = selectedDayKey
-    ? slotsByDay.get(selectedDayKey)?.[0]
+    ? days.get(selectedDayKey)?.slots[0]?.startsAt
     : undefined;
 
   const hasOpenSlots = useCallback(
-    (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone)),
-    [slotsByDay, timeZone],
+    (date: Date) => days.has(dayKeyOf(date)),
+    [dayKeyOf, days],
   );
   const isPastDay = useCallback(
-    (date: Date) => dayKeyOf(date, timeZone) < todayKey,
-    [timeZone, todayKey],
+    (date: Date) => dayKeyOf(date) < todayKey,
+    [dayKeyOf, todayKey],
   );
   const hasNoOpenSlots = useCallback(
     (date: Date) => !hasOpenSlots(date),
@@ -54,21 +62,20 @@ export const SlotCalendar = memo(function SlotCalendar(
     () => ({
       labelDayButton: (date, dayModifiers) =>
         [
-          dayModifiers.today && TODAY_PREFIX,
-          formatDayFirstDate(date, timeZone),
-          dayModifiers.pastDay && PAST_DAY_REASON,
-          dayModifiers.noOpenSlots && NO_OPEN_SLOTS_REASON,
-          dayModifiers.selected && SELECTED_STATE,
+          dayModifiers.today && wording.today,
+          dayNameOf(date),
+          dayModifiers.pastDay && wording.pastDay,
+          dayModifiers.noOpenSlots && wording.noOpenSlots,
+          dayModifiers.selected && wording.selected,
         ]
           .filter(Boolean)
           .join(", "),
     }),
-    [timeZone],
+    [dayNameOf, wording],
   );
   const selectDay = useCallback(
-    (date: Date | undefined) =>
-      onSelectDay(date ? dayKeyOf(date, timeZone) : null),
-    [onSelectDay, timeZone],
+    (date: Date | undefined) => onSelectDay(date ? dayKeyOf(date) : null),
+    [dayKeyOf, onSelectDay],
   );
   const selected = useMemo(
     () => (selectedDaySlot ? new Date(selectedDaySlot) : undefined),
@@ -81,7 +88,7 @@ export const SlotCalendar = memo(function SlotCalendar(
 
   return (
     <Calendar
-      aria-label="Available days"
+      aria-label={wording.availableDays}
       defaultMonth={selected ?? firstOpenInstant}
       disabled={hasNoOpenSlots}
       labels={dayLabels}
