@@ -4,15 +4,20 @@ import type {
   AssessmentCallNotifications,
   AssessmentCallSnapshot,
 } from "@eli-coach-platform/domain/assessment-call";
+import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 import type {
+  CalendarEvent,
   EmailAttachment,
   ProductEmail,
   ProductEmailCommand,
 } from "@eli-coach-platform/infrastructure/email/server";
+import {
+  buildGoogleCalendarUrl,
+  buildIcs,
+} from "@eli-coach-platform/infrastructure/email/server";
 
 import { assessmentCallJoinPath } from "~/features/assessment-calls/public/paths";
 
-import { buildGoogleCalendarUrl, buildIcs } from "./calendar-invite.server";
 import { createCoachNotificationEmailContent } from "./coach-notification-email.server";
 import { createVisitorConfirmationEmailContent } from "./visitor-confirmation-email.server";
 
@@ -25,6 +30,8 @@ export type EmailAssessmentCallNotificationsOptions = {
 
 type Delivery = AssessmentCallNotificationResult["visitor"];
 
+const CALENDAR_TITLE = "Free assessment call with Eli";
+const INVITE_PRODUCT_NAME = "Assessment Call";
 const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
 const INVITE_FILENAME = "invite.ics";
 
@@ -38,10 +45,15 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
     call: AssessmentCallSnapshot,
   ): Promise<AssessmentCallNotificationResult> {
     const joinUrl = this.buildJoinUrl(call.id);
+    const event = EmailAssessmentCallNotifications.toCalendarEvent(
+      call,
+      joinUrl,
+    );
     const invite: EmailAttachment = {
-      content: buildIcs(call, {
-        joinUrl,
+      content: buildIcs(event, {
+        issuedAt: call.bookedAt,
         organizerEmail: this.options.contactEmail,
+        productName: INVITE_PRODUCT_NAME,
         uidHost: this.uidHost(),
       }),
       contentType: INVITE_CONTENT_TYPE,
@@ -50,18 +62,12 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
     const visitorContent = createVisitorConfirmationEmailContent({
       call,
       contactEmail: this.options.contactEmail,
-      googleCalendarUrl: buildGoogleCalendarUrl(call, {
-        joinUrl,
-        timeZone: call.visitorTimeZone,
-      }),
+      googleCalendarUrl: buildGoogleCalendarUrl(event, call.visitorTimeZone),
       joinUrl,
     });
     const coachContent = createCoachNotificationEmailContent({
       call,
-      googleCalendarUrl: buildGoogleCalendarUrl(call, {
-        joinUrl,
-        timeZone: call.coachTimeZone,
-      }),
+      googleCalendarUrl: buildGoogleCalendarUrl(event, call.coachTimeZone),
       joinUrl,
     });
     const [visitor, coach] = await Promise.allSettled([
@@ -85,6 +91,24 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
     ]);
 
     return { coach: toDelivery(coach), visitor: toDelivery(visitor) };
+  }
+
+  private static toCalendarEvent(
+    call: AssessmentCallSnapshot,
+    joinUrl: string,
+  ): CalendarEvent {
+    return {
+      description: [
+        `A free ${ASSESSMENT_CALL_RULES.durationMinutes}-minute assessment call with Eli.`,
+        `Booked by: ${call.fullName}`,
+        `Join the call: ${joinUrl}`,
+      ].join("\n"),
+      endsAt: call.endsAt,
+      id: call.id,
+      joinUrl,
+      startsAt: call.startsAt,
+      title: CALENDAR_TITLE,
+    };
   }
 
   private async send(command: ProductEmailCommand): Promise<Delivery> {

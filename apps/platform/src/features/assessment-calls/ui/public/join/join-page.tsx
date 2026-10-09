@@ -39,7 +39,6 @@ export default function AssessmentCallJoinRoute() {
     <div data-parity-root="JoinCall">
       <DeadEndPage
         description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
-        eyebrow="Your call"
         icon={<VideoOff aria-hidden="true" size={36} />}
         landmarkLabel="Your call"
         title="Your call link isn't ready yet"

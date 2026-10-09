@@ -152,6 +152,32 @@ describe("EmailAssessmentCallNotifications", () => {
     expect(attachments[0]?.content).toEqual(attachments[1]?.content);
   });
 
+  it("names the invite after the assessment call, stamps it at booking and says who booked it", async () => {
+    // arrange
+    const productEmail = createProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.notifyBooked(createCall());
+
+    // assert
+    const invite = new TextDecoder()
+      .decode(
+        sentTo(productEmail, "sofia@example.com").attachments?.[0]?.content,
+      )
+      .replaceAll("\r\n ", "");
+
+    expect(invite).toContain("PRODID:-//Evoa Fitness//Assessment Call//EN\r\n");
+    expect(invite).toContain("DTSTAMP:20260220T094107Z\r\n");
+    expect(invite).toContain("SUMMARY:Free assessment call with Eli\r\n");
+    expect(invite).toContain(
+      "DESCRIPTION:A free 30-minute assessment call with Eli.\\nBooked by: Sofia Marin\\nJoin the call: https://evoa.fit/book/ac-demo/join\r\n",
+    );
+    expect(sentTo(productEmail, "sofia@example.com").html).toContain(
+      "text=Free+assessment+call+with+Eli",
+    );
+  });
+
   it("routes the coach's reply to the visitor and leaves the visitor's on the default", async () => {
     // arrange
     const productEmail = createProductEmail();

@@ -34,5 +34,6 @@ describe("AssessmentCallJoinRoute", () => {
     const backLink = screen.getByRole("link", { name: "Back to home" });
 
     expect(backLink).toHaveAttribute("href", "/");
+    expect(screen.queryByText("Your call")).not.toBeInTheDocument();
   });
 });

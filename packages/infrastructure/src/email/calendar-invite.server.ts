@@ -1,44 +1,44 @@
-import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
+export type CalendarEvent = {
+  description: string;
+  endsAt: Date;
+  id: string;
+  joinUrl: string;
+  startsAt: Date;
+  title: string;
+};
 
 type CalendarInviteOptions = {
-  joinUrl: string;
+  issuedAt: Date;
   organizerEmail: string;
+  productName: string;
   uidHost: string;
 };
 
-type GoogleCalendarOptions = {
-  joinUrl: string;
-  timeZone: string;
-};
-
-const CALENDAR_SUMMARY = "Free assessment call with Eli";
 const ORGANIZER_NAME = "Evoa Fitness";
-const PRODUCT_IDENTIFIER = "-//Evoa Fitness//Assessment Call//EN";
 const LINE_BREAKS_IN_TEXT = /\r\n|\r|\n/g;
 const LINE_BREAK = "\r\n";
 const MAX_LINE_OCTETS = 75;
 
 export function buildIcs(
-  call: AssessmentCallSnapshot,
+  event: CalendarEvent,
   options: CalendarInviteOptions,
 ): Uint8Array {
   const contentLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    `PRODID:${PRODUCT_IDENTIFIER}`,
+    `PRODID:-//${ORGANIZER_NAME}//${options.productName}//EN`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:${call.id}@${options.uidHost}`,
-    `DTSTAMP:${toUtcStamp(call.bookedAt)}`,
+    `UID:${event.id}@${options.uidHost}`,
+    `DTSTAMP:${toUtcStamp(options.issuedAt)}`,
     `ORGANIZER;CN=${ORGANIZER_NAME}:mailto:${options.organizerEmail}`,
-    `DTSTART:${toUtcStamp(call.startsAt)}`,
-    `DTEND:${toUtcStamp(call.endsAt)}`,
-    `SUMMARY:${escapeText(CALENDAR_SUMMARY)}`,
-    `DESCRIPTION:${escapeText(describeCall(call, options.joinUrl))}`,
-    `LOCATION:${escapeText(options.joinUrl)}`,
-    `URL:${options.joinUrl}`,
+    `DTSTART:${toUtcStamp(event.startsAt)}`,
+    `DTEND:${toUtcStamp(event.endsAt)}`,
+    `SUMMARY:${escapeText(event.title)}`,
+    `DESCRIPTION:${escapeText(event.description)}`,
+    `LOCATION:${escapeText(event.joinUrl)}`,
+    `URL:${event.joinUrl}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];
@@ -49,30 +49,22 @@ export function buildIcs(
 }
 
 export function buildGoogleCalendarUrl(
-  call: AssessmentCallSnapshot,
-  options: GoogleCalendarOptions,
+  event: CalendarEvent,
+  timeZone: string,
 ): string {
   const url = new URL("https://calendar.google.com/calendar/render");
 
   url.searchParams.set("action", "TEMPLATE");
-  url.searchParams.set("text", CALENDAR_SUMMARY);
+  url.searchParams.set("text", event.title);
   url.searchParams.set(
     "dates",
-    `${toUtcStamp(call.startsAt)}/${toUtcStamp(call.endsAt)}`,
+    `${toUtcStamp(event.startsAt)}/${toUtcStamp(event.endsAt)}`,
   );
-  url.searchParams.set("details", describeCall(call, options.joinUrl));
-  url.searchParams.set("location", options.joinUrl);
-  url.searchParams.set("ctz", options.timeZone);
+  url.searchParams.set("details", event.description);
+  url.searchParams.set("location", event.joinUrl);
+  url.searchParams.set("ctz", timeZone);
 
   return url.toString();
-}
-
-function describeCall(call: AssessmentCallSnapshot, joinUrl: string): string {
-  return [
-    `A free ${ASSESSMENT_CALL_RULES.durationMinutes}-minute assessment call with Eli.`,
-    `Booked by: ${call.fullName}`,
-    `Join the call: ${joinUrl}`,
-  ].join("\n");
 }
 
 function toUtcStamp(instant: Date): string {
