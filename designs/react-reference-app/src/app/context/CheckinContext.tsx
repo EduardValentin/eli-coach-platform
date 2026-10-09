@@ -87,6 +87,7 @@ interface CheckinContextType {
   hasOpenClientRequest: (clientId: string) => boolean;
   getBookedSlots: (date: string) => string[];
   clearPendingCheckins: () => void;
+  clearAllCheckins: () => void;
   restoreSeededCheckins: () => void;
   seedManyCheckins: () => void;
   setOpenClientRequest: (open: boolean) => void;
@@ -716,6 +717,10 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     setStored((prev) => prev.filter((c) => c.status !== 'pending'));
   }, []);
 
+  const clearAllCheckins = useCallback(() => {
+    setStored([]);
+  }, []);
+
   const restoreSeededCheckins = useCallback(() => {
     setStored(MOCK_CHECKINS);
   }, []);
@@ -770,6 +775,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         hasOpenClientRequest,
         getBookedSlots,
         clearPendingCheckins,
+        clearAllCheckins,
         restoreSeededCheckins,
         seedManyCheckins,
         setOpenClientRequest,

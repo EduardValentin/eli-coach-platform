@@ -263,7 +263,10 @@ export function CheckinListing({
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="grid gap-3 sm:grid-flow-col sm:auto-cols-fr">
+          <div
+            className="grid gap-3 sm:grid-flow-col sm:auto-cols-fr"
+            data-parity="checkin-filters"
+          >
             <CountedSelect
               label="Kind"
               value={selection.kind}
@@ -285,7 +288,10 @@ export function CheckinListing({
           </div>
         </div>
 
-        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+        <div
+          className="grid w-full gap-3 sm:w-fit sm:max-w-full"
+          data-parity="checkin-search-sort"
+        >
           {search && (
             <SearchField
               aria-label="Search check-ins"

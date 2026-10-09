@@ -123,7 +123,10 @@ const SidebarNavigation = ({
           <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
           <span className="text-sm font-medium">{link.name}</span>
           {link.name === 'Check-ins' && pendingCheckins > 0 && (
-            <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-micro font-bold flex items-center justify-center">
+            <span
+              className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-micro font-bold flex items-center justify-center"
+              data-parity="checkins-count"
+            >
               {pendingCheckins}
             </span>
           )}

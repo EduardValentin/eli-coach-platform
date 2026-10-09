@@ -256,7 +256,7 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
 
 type DashboardCallsSeed = 'none' | 'one' | 'twoLeftToday' | 'sample' | 'many';
 
-type PendingCheckinsSeed = 'seeded' | 'none' | 'many';
+type PendingCheckinsSeed = 'seeded' | 'none' | 'empty' | 'many';
 
 function parseCoachListingControl(value: string): PrototypeCoachListingOutcome {
   if (value === 'unavailable') return value;
@@ -265,7 +265,7 @@ function parseCoachListingControl(value: string): PrototypeCoachListingOutcome {
 }
 
 function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
-  if (value === 'none' || value === 'many') return value;
+  if (value === 'none' || value === 'empty' || value === 'many') return value;
 
   return 'seeded';
 }
@@ -414,6 +414,7 @@ export function DevToggle() {
   ]);
   const {
     clearPendingCheckins,
+    clearAllCheckins,
     restoreSeededCheckins,
     seedManyCheckins,
     hasOpenClientRequest,
@@ -447,6 +448,11 @@ export function DevToggle() {
 
     if (seed === 'none') {
       clearPendingCheckins();
+      return;
+    }
+
+    if (seed === 'empty') {
+      clearAllCheckins();
       return;
     }
 
@@ -900,6 +906,7 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Seeded check-ins</SelectItem>
                       <SelectItem value="none">None pending</SelectItem>
+                      <SelectItem value="empty">No check-ins</SelectItem>
                       <SelectItem value="many">Many check-ins</SelectItem>
                     </SelectContent>
                   </Select>
