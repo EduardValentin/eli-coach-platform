@@ -8,6 +8,8 @@ const CALL_ID = "0b3a7f6e-6c2c-4a1e-9f47-2d0c1f6f9a01";
 const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 const CHECK_IN_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
+const RESERVED_START = "2026-10-20T15:00:00Z";
+const RESERVED_END = "2026-10-20T16:00:00Z";
 
 const insertCallSql = `
   insert into app.assessment_calls
@@ -98,12 +100,7 @@ describe.sequential("coach time reservations schema", () => {
     // act
     await transaction.executeSql({
       sql: reserveSql,
-      values: [
-        "2026-10-20T15:00:00Z",
-        "2026-10-20T16:00:00Z",
-        null,
-        CHECK_IN_ID,
-      ],
+      values: reserveValues({ assessmentCallId: null, checkInId: CHECK_IN_ID }),
     });
     await transaction.executeSql({
       sql: insertCheckInSql,
@@ -154,19 +151,25 @@ async function insertCheckIn(): Promise<void> {
   });
 }
 
-async function reserve(owners: {
+type ReservationOwners = {
   assessmentCallId: string | null;
   checkInId: string | null;
-}): Promise<void> {
+};
+
+async function reserve(owners: ReservationOwners): Promise<void> {
   await suite.postgres.executeSql({
     sql: reserveSql,
-    values: [
-      "2026-10-20T15:00:00Z",
-      "2026-10-20T16:00:00Z",
-      owners.assessmentCallId,
-      owners.checkInId,
-    ],
+    values: reserveValues(owners),
   });
+}
+
+function reserveValues(owners: ReservationOwners): unknown[] {
+  return [
+    RESERVED_START,
+    RESERVED_END,
+    owners.assessmentCallId,
+    owners.checkInId,
+  ];
 }
 
 async function countReservations(): Promise<number> {

@@ -446,7 +446,7 @@ describe.sequential("assessment call booking integration", () => {
   it("keeps a start the coach is busy for off the list and refuses to book it", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
-    await occupyCoachTimeWithAnotherCall({
+    await bookAnotherCallAt({
       startsAt: "2026-10-19T14:15:00.000Z",
       endsAt: "2026-10-19T14:45:00.000Z",
     });
@@ -475,7 +475,7 @@ describe.sequential("assessment call booking integration", () => {
   it("refuses a start whose buffer runs into time the coach is busy for", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
-    await occupyCoachTimeWithAnotherCall({
+    await bookAnotherCallAt({
       startsAt: "2026-10-19T14:45:00.000Z",
       endsAt: "2026-10-19T15:00:00.000Z",
     });
@@ -864,7 +864,7 @@ async function insertCallDirectly(columns: {
   });
 }
 
-async function occupyCoachTimeWithAnotherCall(occupied: {
+async function bookAnotherCallAt(occupied: {
   startsAt: string;
   endsAt: string;
 }): Promise<void> {

@@ -33,7 +33,7 @@ export async function reserveCoachTime(
       savepoint.insert(coachTimeReservationsTable).values({
         startsAt: reservation.start,
         endsAt: reservation.end,
-        ...appointmentColumnsOf(reservation),
+        ...ownerValuesOf(reservation),
       }),
     );
   } catch (error) {
@@ -53,10 +53,10 @@ export async function releaseCoachTime(
 ): Promise<void> {
   await transaction
     .delete(coachTimeReservationsTable)
-    .where(eq(appointmentColumnOf(appointment), appointment.appointmentId));
+    .where(eq(ownerColumnOf(appointment), appointment.appointmentId));
 }
 
-function appointmentColumnsOf(appointment: Appointment) {
+function ownerValuesOf(appointment: Appointment) {
   switch (appointment.appointmentKind) {
     case "assessment_call":
       return { assessmentCallId: appointment.appointmentId };
@@ -65,7 +65,7 @@ function appointmentColumnsOf(appointment: Appointment) {
   }
 }
 
-function appointmentColumnOf(appointment: Appointment) {
+function ownerColumnOf(appointment: Appointment) {
   switch (appointment.appointmentKind) {
     case "assessment_call":
       return coachTimeReservationsTable.assessmentCallId;

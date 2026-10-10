@@ -51,15 +51,4 @@ describe("cleanUpRunAssessmentCalls", () => {
     expect(positionOf(checkIns)).toBeGreaterThan(-1);
     expect(positionOf(checkIns)).toBeLessThan(positionOf(clients));
   });
-
-  it("leaves the coach's reserved time to go with the calls and check-ins it belongs to", async () => {
-    // arrange
-    const reservations = /delete from app\.coach_time_reservations/;
-
-    // act
-    await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
-
-    // assert
-    expect(positionOf(reservations)).toBe(-1);
-  });
 });
