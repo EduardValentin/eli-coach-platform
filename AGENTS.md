@@ -61,6 +61,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Bind every dynamic SQL value through ORM or tagged-template parameters; allowlist dynamic identifiers.
 - SQL does persistence, filtering, joins, ordering, constraints, and necessary aggregation. Map rows into API and domain shapes in TypeScript unless a documented performance, atomicity, or database-native need says otherwise.
 - Query every table through Drizzle's core query builder, never `db.query.*`. Tables live in a feature's `data/schema.server.ts` or a package's own `*schema*.server.ts`; `apps/platform/db/drizzle.config.ts` finds them.
+- A feature's `data/schema.server.ts` may reference any feature's tables, whatever the feature order; code imports still follow it, and only the owning feature's `data/` adapters write a table. Declare foreign keys in the schema; hand-write migration SQL only for what Drizzle cannot declare.
 
 ## Tests
 
