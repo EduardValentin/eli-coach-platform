@@ -100,7 +100,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
     command: CreateCheckoutSessionCommand,
   ): Promise<{ id: string; url: string }> {
     const session = await this.client.checkout.sessions.create(
-      StripePaymentCheckout.checkoutSessionRequest(command),
+      this.checkoutSessionRequest(command),
     );
 
     if (!session.url) {
@@ -130,11 +130,11 @@ export class StripePaymentCheckout implements PaymentCheckout {
     }
 
     try {
-      return StripePaymentCheckout.readCoachingCompletion(
+      return this.readCoachingCompletion(
         await this.client.checkout.sessions.retrieve(id, COMPLETION_EXPANSION),
       );
     } catch (error) {
-      if (StripePaymentCheckout.isMissingResource(error)) {
+      if (this.isMissingResource(error)) {
         return null;
       }
 
@@ -152,9 +152,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
     return closedSessionSchema.safeParse(session).success;
   }
 
-  private static readCoachingCompletion(
-    session: unknown,
-  ): CheckoutCompletion | null {
+  private readCoachingCompletion(session: unknown): CheckoutCompletion | null {
     const expanded = expandedSubscriptionSchema.safeParse(session);
 
     if (!expanded.success) {
@@ -166,10 +164,10 @@ export class StripePaymentCheckout implements PaymentCheckout {
       expanded.data.subscription.created,
     );
 
-    return paid ? StripePaymentCheckout.toCheckoutCompletion(paid) : null;
+    return paid ? this.toCheckoutCompletion(paid) : null;
   }
 
-  private static toCheckoutCompletion(
+  private toCheckoutCompletion(
     session: PaidCheckoutSession,
   ): CheckoutCompletion | null {
     const { customerId, subscriptionId } = session;
@@ -192,17 +190,17 @@ export class StripePaymentCheckout implements PaymentCheckout {
     };
   }
 
-  private static isMissingResource(error: unknown): boolean {
+  private isMissingResource(error: unknown): boolean {
     return (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
       error.code === RESOURCE_MISSING_CODE
     );
   }
 
-  private static checkoutSessionRequest(
+  private checkoutSessionRequest(
     command: CreateCheckoutSessionCommand,
   ): Stripe.Checkout.SessionCreateParams {
-    const metadata = StripePaymentCheckout.coachingCheckoutMetadata(command);
+    const metadata = this.coachingCheckoutMetadata(command);
 
     return {
       mode: "subscription",
@@ -229,7 +227,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
     };
   }
 
-  private static coachingCheckoutMetadata(
+  private coachingCheckoutMetadata(
     command: CreateCheckoutSessionCommand,
   ): Record<string, string> {
     return {

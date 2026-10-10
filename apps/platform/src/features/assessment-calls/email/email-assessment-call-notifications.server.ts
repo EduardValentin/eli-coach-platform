@@ -42,10 +42,7 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
     call: AssessmentCallSnapshot,
   ): Promise<AssessmentCallNotificationResult> {
     const joinUrl = this.buildJoinUrl(call.id);
-    const event = EmailAssessmentCallNotifications.toCalendarEvent(
-      call,
-      joinUrl,
-    );
+    const event = this.toCalendarEvent(call, joinUrl);
     const invite = buildCalendarInvite(event, {
       issuedAt: call.bookedAt,
       organizerEmail: this.options.contactEmail,
@@ -86,7 +83,7 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
     return { coach: toDelivery(coach), visitor: toDelivery(visitor) };
   }
 
-  private static toCalendarEvent(
+  private toCalendarEvent(
     call: AssessmentCallSnapshot,
     joinUrl: string,
   ): CalendarEvent {

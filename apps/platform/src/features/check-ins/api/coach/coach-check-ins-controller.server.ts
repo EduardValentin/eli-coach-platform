@@ -39,7 +39,7 @@ export class CoachCheckInsController {
     const checkIns = await this.options.listCoachCheckIns.execute();
 
     return coachCheckInsSchema.parse({
-      checkIns: checkIns.map(CoachCheckInsController.present),
+      checkIns: checkIns.map((view) => this.present(view)),
     });
   }
 
@@ -55,7 +55,7 @@ export class CoachCheckInsController {
       return unknownCheckIn();
     }
 
-    return CoachCheckInsController.respondToAnswer(
+    return this.respondToAnswer(
       await this.options.approveCheckIn.execute(id.data),
     );
   }
@@ -72,12 +72,12 @@ export class CoachCheckInsController {
       return unknownCheckIn();
     }
 
-    return CoachCheckInsController.respondToAnswer(
+    return this.respondToAnswer(
       await this.options.declineCheckIn.execute(id.data),
     );
   }
 
-  private static respondToAnswer(result: CoachAnswer): Response {
+  private respondToAnswer(result: CoachAnswer): Response {
     switch (result.status) {
       case "approved":
       case "declined":
@@ -94,7 +94,7 @@ export class CoachCheckInsController {
     }
   }
 
-  private static present(view: CoachCheckInView): CoachCheckIn {
+  private present(view: CoachCheckInView): CoachCheckIn {
     return {
       ...presentCheckIn(view),
       client: {

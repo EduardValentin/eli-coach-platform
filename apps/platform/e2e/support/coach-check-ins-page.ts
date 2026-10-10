@@ -17,7 +17,7 @@ const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 export class CoachCheckInsPage {
   constructor(private readonly page: Page) {}
 
-  private static joinPathOf(checkInId: string): string {
+  private joinPathOf(checkInId: string): string {
     return `${CHECK_INS_PATH}/${checkInId}/join`;
   }
 
@@ -118,7 +118,7 @@ export class CoachCheckInsPage {
   }
 
   async openJoinLink(checkInId: string): Promise<void> {
-    await this.page.goto(CoachCheckInsPage.joinPathOf(checkInId));
+    await this.page.goto(this.joinPathOf(checkInId));
   }
 
   async expectMeetingLinkNotSet(): Promise<void> {

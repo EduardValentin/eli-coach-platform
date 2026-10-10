@@ -39,7 +39,7 @@ export class ClientCheckInsPage {
     return this.page.getByText(WAITING_REASON, { exact: true });
   }
 
-  private static joinPathOf(checkInId: string): string {
+  private joinPathOf(checkInId: string): string {
     return `${CHECK_INS_PATH}/${checkInId}/join`;
   }
 
@@ -198,7 +198,7 @@ export class ClientCheckInsPage {
   }
 
   async openJoinLink(checkInId: string): Promise<Response | null> {
-    return this.page.goto(ClientCheckInsPage.joinPathOf(checkInId));
+    return this.page.goto(this.joinPathOf(checkInId));
   }
 
   async expectNotFound(response: Response | null): Promise<void> {
@@ -209,7 +209,7 @@ export class ClientCheckInsPage {
   }
 
   async expectJoinNotReady(checkInId: string): Promise<void> {
-    await expect(this.page).toHaveURL(ClientCheckInsPage.joinPathOf(checkInId));
+    await expect(this.page).toHaveURL(this.joinPathOf(checkInId));
     await expect(
       this.page.getByRole("heading", {
         level: 1,

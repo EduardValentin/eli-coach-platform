@@ -11,7 +11,7 @@ const OK = 200;
 export class CheckInRequests {
   constructor(private readonly page: Page) {}
 
-  private static approvalPathOf(checkInId: string): string {
+  private approvalPathOf(checkInId: string): string {
     return `${REQUESTS_PATH}/${checkInId}/approval`;
   }
 
@@ -37,6 +37,6 @@ export class CheckInRequests {
   }
 
   async approve(checkInId: string): Promise<CheckInAnswer> {
-    return this.answerOf(CheckInRequests.approvalPathOf(checkInId), {});
+    return this.answerOf(this.approvalPathOf(checkInId), {});
   }
 }

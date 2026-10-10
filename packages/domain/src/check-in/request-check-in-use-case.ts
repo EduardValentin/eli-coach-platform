@@ -55,9 +55,7 @@ export class RequestCheckInUseCase {
       return { status: "note_too_long" };
     }
 
-    const clientTimeZone = RequestCheckInUseCase.namedTimeZoneOf(
-      command.clientTimeZone,
-    );
+    const clientTimeZone = this.namedTimeZoneOf(command.clientTimeZone);
 
     if (!clientTimeZone) {
       return { status: "invalid_time_zone" };
@@ -106,7 +104,7 @@ export class RequestCheckInUseCase {
     return { status: "requested", checkIn: requested.checkIn.toSnapshot() };
   }
 
-  private static namedTimeZoneOf(candidate: string): string | null {
+  private namedTimeZoneOf(candidate: string): string | null {
     try {
       const { timeZone } = new Intl.DateTimeFormat(undefined, {
         timeZone: candidate,

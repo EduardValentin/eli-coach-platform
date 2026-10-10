@@ -69,7 +69,7 @@ export class ClientCheckInsController {
   async request(args: ActionFunctionArgs): Promise<Response> {
     const client = requirePortalAccess(args, { role: "CLIENT" });
     const submission = checkInRequestSchema.safeParse(
-      await ClientCheckInsController.readJsonBody(args.request),
+      await this.readJsonBody(args.request),
     );
 
     if (!submission.success) {
@@ -83,7 +83,7 @@ export class ClientCheckInsController {
       note: submission.data.note ?? null,
     });
 
-    return ClientCheckInsController.respondToCheckInRequest(result);
+    return this.respondToCheckInRequest(result);
   }
 
   async withdraw(
@@ -102,12 +102,10 @@ export class ClientCheckInsController {
       checkInId: id.data,
     });
 
-    return ClientCheckInsController.respondToWithdrawal(result);
+    return this.respondToWithdrawal(result);
   }
 
-  private static respondToCheckInRequest(
-    result: RequestCheckInResult,
-  ): Response {
+  private respondToCheckInRequest(result: RequestCheckInResult): Response {
     switch (result.status) {
       case "requested":
         return checkInOutcomeResponse(
@@ -124,9 +122,7 @@ export class ClientCheckInsController {
     }
   }
 
-  private static respondToWithdrawal(
-    result: WithdrawCheckInRequestResult,
-  ): Response {
+  private respondToWithdrawal(result: WithdrawCheckInRequestResult): Response {
     switch (result.status) {
       case "withdrawn":
         return checkInOutcomeResponse(
@@ -144,7 +140,7 @@ export class ClientCheckInsController {
     }
   }
 
-  private static async readJsonBody(request: Request): Promise<unknown> {
+  private async readJsonBody(request: Request): Promise<unknown> {
     const body = await readTextRequestBody(request, {
       maxBytes: CHECK_IN_REQUEST_MAX_BYTES,
     });

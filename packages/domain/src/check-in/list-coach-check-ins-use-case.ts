@@ -20,7 +20,7 @@ export class ListCoachCheckInsUseCase {
   async execute(): Promise<CoachCheckInView[]> {
     const checkIns = await this.options.checkIns.listAll();
     const identities = await this.options.clients.identitiesOf(
-      ListCoachCheckInsUseCase.clientIdsOf(checkIns),
+      this.clientIdsOf(checkIns),
     );
     const identityByClientId = new Map(
       identities.map((identity) => [identity.clientId, identity]),
@@ -46,7 +46,7 @@ export class ListCoachCheckInsUseCase {
     });
   }
 
-  private static clientIdsOf(checkIns: readonly CheckIn[]): string[] {
+  private clientIdsOf(checkIns: readonly CheckIn[]): string[] {
     return [...new Set(checkIns.map((checkIn) => checkIn.clientId))];
   }
 }

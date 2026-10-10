@@ -79,7 +79,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
 
   requested(notice: CheckInNotice): Promise<CheckInDelivery> {
     const props = {
-      clientName: EmailCheckInNotifications.fullNameOf(notice.client),
+      clientName: this.fullNameOf(notice.client),
       note: notice.checkIn.note,
       when: formatCallMoment(
         notice.checkIn.startsAt,
@@ -102,7 +102,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
 
   withdrawn(notice: CheckInNotice): Promise<CheckInDelivery> {
     const props = {
-      clientName: EmailCheckInNotifications.fullNameOf(notice.client),
+      clientName: this.fullNameOf(notice.client),
       when: formatCallMoment(
         notice.checkIn.startsAt,
         notice.checkIn.coachTimeZone,
@@ -123,10 +123,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
 
   approved(notice: CheckInNotice): Promise<CheckInDelivery> {
     const joinUrl = this.publicUrlOf(clientCheckInJoinPath(notice.checkIn.id));
-    const event = EmailCheckInNotifications.toCalendarEvent(
-      notice.checkIn,
-      joinUrl,
-    );
+    const event = this.toCalendarEvent(notice.checkIn, joinUrl);
     const props = {
       when: formatCallMoment(
         notice.checkIn.startsAt,
@@ -205,7 +202,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     return this.options.clock.now().getUTCFullYear();
   }
 
-  private static toCalendarEvent(
+  private toCalendarEvent(
     checkIn: CheckInNotice["checkIn"],
     joinUrl: string,
   ): CalendarEvent {
@@ -222,7 +219,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
   }
 
-  private static fullNameOf(client: CheckInClientIdentity): string {
+  private fullNameOf(client: CheckInClientIdentity): string {
     return `${client.firstName} ${client.lastName}`
       .replace(NAME_UNSAFE_RUNS, " ")
       .trim();

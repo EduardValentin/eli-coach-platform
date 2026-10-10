@@ -21,15 +21,14 @@ class FileTypeResourceFileFormatDetector implements ResourceFileFormatDetector {
 
     if (!fileType) return UNIDENTIFIED;
 
-    const archiveEntries =
-      await FileTypeResourceFileFormatDetector.archiveEntriesOf(bytes);
+    const archiveEntries = await this.archiveEntriesOf(bytes);
 
     if (!archiveEntries) return UNIDENTIFIED;
 
     return { type: fileType.ext, archiveEntries };
   }
 
-  private static async archiveEntriesOf(
+  private async archiveEntriesOf(
     bytes: Uint8Array,
   ): Promise<readonly string[] | null> {
     const archive = new ZipHandler(fromBuffer(bytes));

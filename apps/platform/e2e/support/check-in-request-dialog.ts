@@ -22,7 +22,7 @@ export class CheckInRequestDialog {
     return this.dialog.getByRole("grid", { name: /^Available days/ });
   }
 
-  private static isCheckInRequest(request: Request): boolean {
+  private isCheckInRequest(request: Request): boolean {
     return (
       request.method() === "POST" &&
       REQUESTS_API.test(new URL(request.url()).pathname)
@@ -60,8 +60,8 @@ export class CheckInRequestDialog {
   }
 
   async send(): Promise<RequestedCheckIn> {
-    const sent = this.page.waitForRequest(
-      CheckInRequestDialog.isCheckInRequest,
+    const sent = this.page.waitForRequest((request) =>
+      this.isCheckInRequest(request),
     );
     await this.dialog.getByRole("button", { name: REQUEST_STEP }).click();
     const body = (await sent).postDataJSON() as RequestedCheckInBody;
@@ -96,8 +96,8 @@ export class CheckInRequestDialog {
       this.page,
       this.dialog.getByRole("button", { name: REQUEST_STEP }),
     );
-    const sent = this.page.waitForRequest(
-      CheckInRequestDialog.isCheckInRequest,
+    const sent = this.page.waitForRequest((request) =>
+      this.isCheckInRequest(request),
     );
     await keyboard.press("Enter");
     const body = (await sent).postDataJSON() as RequestedCheckInBody;

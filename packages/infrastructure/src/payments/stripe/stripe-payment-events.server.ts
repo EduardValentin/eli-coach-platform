@@ -37,7 +37,7 @@ export class StripePaymentEvents implements PaymentEvents {
         ),
       );
     } catch (error) {
-      if (StripePaymentEvents.isUnverifiableEvent(error)) {
+      if (this.isUnverifiableEvent(error)) {
         return { kind: "invalid" };
       }
 
@@ -45,7 +45,7 @@ export class StripePaymentEvents implements PaymentEvents {
     }
   }
 
-  private static isUnverifiableEvent(error: unknown): boolean {
+  private isUnverifiableEvent(error: unknown): boolean {
     return (
       error instanceof Stripe.errors.StripeSignatureVerificationError ||
       error instanceof SyntaxError

@@ -31,7 +31,7 @@ export class PostgresCheckIns implements CheckIns {
 
   request(command: CheckInRequest): Promise<CheckInRequestResult> {
     return this.database.transaction((transaction) =>
-      PostgresCheckIns.requestUnderClientLock(transaction, command),
+      this.requestUnderClientLock(transaction, command),
     );
   }
 
@@ -42,7 +42,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(eq(checkInsTable.id, id))
       .limit(1);
 
-    return row ? PostgresCheckIns.toCheckIn(row) : null;
+    return row ? this.toCheckIn(row) : null;
   }
 
   async listForClient(clientId: string): Promise<CheckIn[]> {
@@ -52,7 +52,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(eq(checkInsTable.clientId, clientId))
       .orderBy(asc(checkInsTable.startsAt));
 
-    return rows.map(PostgresCheckIns.toCheckIn);
+    return rows.map((row) => this.toCheckIn(row));
   }
 
   async listAll(): Promise<CheckIn[]> {
@@ -61,16 +61,16 @@ export class PostgresCheckIns implements CheckIns {
       .from(checkInsTable)
       .orderBy(asc(checkInsTable.startsAt));
 
-    return rows.map(PostgresCheckIns.toCheckIn);
+    return rows.map((row) => this.toCheckIn(row));
   }
 
   settle(settlement: Settlement): Promise<CheckInSettlement> {
     return this.database.transaction((transaction) =>
-      PostgresCheckIns.settleWhilePending(transaction, settlement),
+      this.settleWhilePending(transaction, settlement),
     );
   }
 
-  private static async requestUnderClientLock(
+  private async requestUnderClientLock(
     transaction: DatabaseTransaction,
     { checkIn, at }: CheckInRequest,
   ): Promise<CheckInRequestResult> {
@@ -92,14 +92,12 @@ export class PostgresCheckIns implements CheckIns {
     });
     const decision = CheckIn.decideRequest({
       coachTime: coachTime.status,
-      clientCheckIns: clientRows.map(PostgresCheckIns.toCheckIn),
+      clientCheckIns: clientRows.map((row) => this.toCheckIn(row)),
       at,
     });
 
     if (decision === "requested") {
-      await transaction
-        .insert(checkInsTable)
-        .values(PostgresCheckIns.toRow(checkIn));
+      await transaction.insert(checkInsTable).values(this.toRow(checkIn));
 
       return { status: "requested", checkIn };
     }
@@ -111,7 +109,7 @@ export class PostgresCheckIns implements CheckIns {
     return { status: decision };
   }
 
-  private static async settleWhilePending(
+  private async settleWhilePending(
     transaction: DatabaseTransaction,
     { id, outcome, at }: Settlement,
   ): Promise<CheckInSettlement> {
@@ -141,7 +139,7 @@ export class PostgresCheckIns implements CheckIns {
     return "settled";
   }
 
-  private static toRow(checkIn: CheckIn): typeof checkInsTable.$inferInsert {
+  private toRow(checkIn: CheckIn): typeof checkInsTable.$inferInsert {
     const snapshot = checkIn.toSnapshot();
 
     return {
@@ -160,7 +158,7 @@ export class PostgresCheckIns implements CheckIns {
     };
   }
 
-  private static toCheckIn(row: CheckInRow): CheckIn {
+  private toCheckIn(row: CheckInRow): CheckIn {
     return CheckIn.reconstitute({
       id: row.id,
       clientId: row.clientId,

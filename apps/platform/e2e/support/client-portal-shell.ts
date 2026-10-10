@@ -9,7 +9,7 @@ const ANY_RESOURCES_LINK = /^Resources( \(new\))?$/;
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
 
-  private static markedName(name: string, mark: NavigationMark): string {
+  private markedName(name: string, mark: NavigationMark): string {
     return mark === "marked" ? `${name} (new)` : name;
   }
 
@@ -123,18 +123,18 @@ export class ClientPortalShell {
   async expectSidebarResources(mark: NavigationMark): Promise<void> {
     await expect(
       this.resourcesLinkIn(this.sidebarNavigation),
-    ).toHaveAccessibleName(ClientPortalShell.markedName(RESOURCES, mark));
+    ).toHaveAccessibleName(this.markedName(RESOURCES, mark));
   }
 
   async expectMoreButton(mark: NavigationMark): Promise<void> {
     await expect(this.moreButton).toHaveAccessibleName(
-      ClientPortalShell.markedName(MORE, mark),
+      this.markedName(MORE, mark),
     );
   }
 
   async expectSheetResources(mark: NavigationMark): Promise<void> {
     await expect(this.resourcesLinkIn(this.moreSheet)).toHaveAccessibleName(
-      ClientPortalShell.markedName(RESOURCES, mark),
+      this.markedName(RESOURCES, mark),
     );
   }
 
