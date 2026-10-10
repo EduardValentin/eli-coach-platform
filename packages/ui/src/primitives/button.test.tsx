@@ -93,7 +93,7 @@ describe("button ladder", () => {
     expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
       "bg-primary",
       "text-primary-foreground",
-      "hover:bg-primary-hover",
+      "not-aria-disabled:hover:bg-primary-hover",
     );
   });
 
@@ -105,8 +105,8 @@ describe("button ladder", () => {
     // assert
     expect(screen.getByRole("button", { name: "Clear" })).toHaveClass(
       "text-text-label",
-      "hover:bg-surface-quiet",
-      "hover:text-text-primary",
+      "not-aria-disabled:hover:bg-surface-quiet",
+      "not-aria-disabled:hover:text-text-primary",
     );
   });
 
@@ -119,8 +119,8 @@ describe("button ladder", () => {
     const button = screen.getByRole("button", { name: "Sign out" });
     expect(button).toHaveClass(
       "text-text-secondary",
-      "hover:bg-surface-quiet",
-      "hover:text-text-primary",
+      "not-aria-disabled:hover:bg-surface-quiet",
+      "not-aria-disabled:hover:text-text-primary",
     );
     expect(button).not.toHaveClass("text-text-label");
   });
@@ -247,7 +247,7 @@ describe("button call-to-action options", () => {
 
     // assert
     expect(classes).toContain("shadow-card");
-    expect(classes.some((name) => name.startsWith("hover:shadow"))).toBe(false);
+    expect(classes.some((name) => name.includes("hover:shadow"))).toBe(false);
   });
 
   it("presses a scale button down only when motion is welcome", () => {
@@ -256,7 +256,9 @@ describe("button call-to-action options", () => {
     const classes = buttonVariants({ press: "scale" }).split(" ");
 
     // assert
-    expect(classes).toContain("motion-safe:active:scale-[0.98]");
+    expect(classes).toContain(
+      "motion-safe:not-aria-disabled:active:scale-[0.98]",
+    );
     expect(classes).not.toContain("active:scale-[0.98]");
   });
 
@@ -270,7 +272,7 @@ describe("button call-to-action options", () => {
       expect.arrayContaining([
         "bg-text-primary",
         "text-surface-base",
-        "hover:bg-brand-primary",
+        "not-aria-disabled:hover:bg-brand-primary",
       ]),
     );
   });
@@ -284,11 +286,11 @@ describe("button call-to-action options", () => {
     expect(classes).toEqual(
       expect.arrayContaining([
         "text-text-label",
-        "hover:bg-text-primary",
-        "hover:text-surface-base",
+        "not-aria-disabled:hover:bg-text-primary",
+        "not-aria-disabled:hover:text-surface-base",
       ]),
     );
-    expect(classes).not.toContain("hover:bg-surface-quiet");
+    expect(classes).not.toContain("not-aria-disabled:hover:bg-surface-quiet");
   });
 
   it("fills an on-brand button with the base surface and brand text", () => {
@@ -301,8 +303,58 @@ describe("button call-to-action options", () => {
       expect.arrayContaining([
         "bg-surface-base",
         "text-brand-primary",
-        "hover:bg-surface-subtle",
+        "not-aria-disabled:hover:bg-surface-subtle",
       ]),
     );
+  });
+});
+
+describe("button marked aria-disabled", () => {
+  it("keeps the disabled look while staying focusable", async () => {
+    // arrange
+    render(<Button aria-disabled="true">Request check-in</Button>);
+    const button = screen.getByRole("button", { name: "Request check-in" });
+
+    // act
+    button.focus();
+
+    // assert
+    expect(button).toHaveFocus();
+    expect(button).toHaveClass(
+      "aria-disabled:opacity-50",
+      "aria-disabled:cursor-not-allowed",
+    );
+  });
+
+  it("changes on hover only while it is not aria-disabled", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({
+      elevation: "raised",
+      variant: "outline",
+    }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "not-aria-disabled:hover:bg-surface-quiet",
+        "not-aria-disabled:hover:text-text-primary",
+        "not-aria-disabled:hover:shadow-action-hover",
+      ]),
+    );
+    expect(classes.filter((name) => name.startsWith("hover:"))).toEqual([]);
+  });
+
+  it("lets a caller's hover replace the variant's", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({
+      className: "hover:bg-surface-muted",
+      variant: "outline",
+    }).split(" ");
+
+    // assert
+    expect(classes).toContain("hover:bg-surface-muted");
+    expect(classes).not.toContain("not-aria-disabled:hover:bg-surface-quiet");
   });
 });

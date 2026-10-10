@@ -262,6 +262,8 @@ test(
 
     // assert
     await clientCheckIns.expectRequestBlocked();
+    await clientCheckIns.expectBlockedReasonOnHover();
+    await clientCheckIns.expectBlockedReasonOnFocus();
 
     // act
     await clientCheckIns.withdraw(WITHDRAWN_NOTE);
@@ -853,6 +855,7 @@ test(
 
     // assert
     await clientCheckIns.expectRequestBlocked();
+    await clientCheckIns.expectBlockedReasonOnFocus();
     await clientCheckIns.showTab("Requests");
     await expect(
       clientCheckIns.checkIn("Requests", KEYBOARD_NOTE),

@@ -6,10 +6,10 @@ import {
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { Button, DisabledActionHint } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   useLoaderData,
   type LoaderFunctionArgs,
@@ -68,6 +68,9 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   },
 };
 
+const WAITING_REQUEST_REASON =
+  "You can send another request once this one is answered.";
+
 const VIEWER: CheckInViewer = {
   counterpartName: "your coach",
   party: "client",
@@ -84,38 +87,36 @@ export default function ClientCheckInsRoute() {
   const decisions = useCheckInDecisions();
   const [requesting, setRequesting] = useState(false);
   const [openings, setOpenings] = useState(0);
-  const waitingRequestNoteId = useId();
   const hasWaitingRequest = checkIns.some(
     (checkIn) => checkIn.isWaitingRequest,
   );
-  const requestButton = {
-    "aria-describedby": hasWaitingRequest ? waitingRequestNoteId : undefined,
-    disabled: hasWaitingRequest,
-    onClick: () => {
-      setOpenings((count) => count + 1);
-      setRequesting(true);
-    },
+  const requestButton = (className: string) => {
+    const button = (
+      <Button
+        className={className}
+        onClick={() => {
+          setOpenings((count) => count + 1);
+          setRequesting(true);
+        }}
+      >
+        <CalendarPlus aria-hidden="true" size={16} />
+        Request check-in
+      </Button>
+    );
+
+    return hasWaitingRequest ? (
+      <DisabledActionHint reason={WAITING_REQUEST_REASON}>
+        {button}
+      </DisabledActionHint>
+    ) : (
+      button
+    );
   };
 
   return (
     <div className="w-full" data-parity-root="ClientCheckins">
       <PortalPageHeader
-        actions={
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Button {...requestButton} className="hidden sm:inline-flex">
-              <CalendarPlus aria-hidden="true" size={16} />
-              Request check-in
-            </Button>
-            {hasWaitingRequest && (
-              <p
-                className="text-xs text-text-secondary sm:text-right"
-                id={waitingRequestNoteId}
-              >
-                You can send another request once this one is answered.
-              </p>
-            )}
-          </div>
-        }
+        actions={requestButton("hidden sm:inline-flex")}
         subtitle="Request a check-in and look back at past sessions."
         title="Check-ins"
       />
@@ -149,13 +150,9 @@ export default function ClientCheckInsRoute() {
 
       <CheckInDecisionOutcomes decisions={decisions} />
 
-      <Button
-        {...requestButton}
-        className="fixed bottom-(--portal-tab-bar-clearance) left-4 z-40 shadow-action-hover sm:hidden"
-      >
-        <CalendarPlus aria-hidden="true" size={16} />
-        Request check-in
-      </Button>
+      {requestButton(
+        "fixed bottom-(--portal-tab-bar-clearance) left-4 z-40 shadow-action-hover sm:hidden",
+      )}
     </div>
   );
 }

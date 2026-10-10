@@ -4,33 +4,35 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const buttonClasses = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        primary:
+          "bg-primary text-primary-foreground not-aria-disabled:hover:bg-primary-hover",
         secondary:
-          "bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover",
+          "bg-brand-secondary text-brand-secondary-foreground not-aria-disabled:hover:bg-brand-secondary-hover",
         inverted:
-          "bg-surface-inverted text-text-inverted hover:bg-brand-primary",
+          "bg-surface-inverted text-text-inverted not-aria-disabled:hover:bg-brand-primary",
         outline:
-          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary",
+          "border border-control-border-soft bg-surface-base text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "outline-brand":
-          "border border-brand-primary text-brand-primary hover:bg-brand-primary/5",
-        ghost: "text-text-label hover:bg-surface-quiet hover:text-text-primary",
+          "border border-brand-primary text-brand-primary not-aria-disabled:hover:bg-brand-primary/5",
+        ghost:
+          "text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "ghost-ink":
-          "text-text-label hover:bg-text-primary hover:text-surface-base",
+          "text-text-label not-aria-disabled:hover:bg-text-primary not-aria-disabled:hover:text-surface-base",
         "ghost-muted":
-          "text-text-secondary hover:bg-surface-quiet hover:text-text-primary",
+          "text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         destructive:
-          "bg-feedback-danger text-text-inverted hover:bg-feedback-danger/90",
+          "bg-feedback-danger text-text-inverted not-aria-disabled:hover:bg-feedback-danger/90",
         "destructive-outline":
-          "border border-feedback-danger/30 bg-surface-base text-feedback-danger hover:bg-feedback-danger/10",
+          "border border-feedback-danger/30 bg-surface-base text-feedback-danger not-aria-disabled:hover:bg-feedback-danger/10",
         glass:
-          "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm hover:bg-text-inverted/25",
-        ink: "bg-text-primary text-surface-base hover:bg-brand-primary",
+          "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm not-aria-disabled:hover:bg-text-inverted/25",
+        ink: "bg-text-primary text-surface-base not-aria-disabled:hover:bg-brand-primary",
         "on-brand":
-          "bg-surface-base text-brand-primary hover:bg-surface-subtle",
+          "bg-surface-base text-brand-primary not-aria-disabled:hover:bg-surface-subtle",
       },
       corner: {
         field: "rounded-field",
@@ -75,11 +77,13 @@ const buttonClasses = cva(
       elevation: {
         flat: "",
         card: "shadow-card",
-        raised: "shadow-action transition-all hover:shadow-action-hover",
+        raised:
+          "shadow-action transition-all not-aria-disabled:hover:shadow-action-hover",
       },
       press: {
         none: "",
-        scale: "transition-all motion-safe:active:scale-[0.98]",
+        scale:
+          "transition-all motion-safe:not-aria-disabled:active:scale-[0.98]",
       },
     },
     defaultVariants: {

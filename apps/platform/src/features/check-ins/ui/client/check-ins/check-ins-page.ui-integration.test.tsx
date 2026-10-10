@@ -109,6 +109,9 @@ const THURSDAY_EVENING = "2026-10-15T15:00:00.000Z";
 const FRIDAY_AFTERNOON = "2026-10-16T14:00:00.000Z";
 const OPEN_TIMES = [THURSDAY_AFTERNOON, THURSDAY_EVENING, FRIDAY_AFTERNOON];
 
+const WAITING_REASON =
+  "You can send another request once this one is answered.";
+
 const OPEN_TIMES_URL = `*${CHECK_INS_API_PATHS.openTimes}`;
 const REQUESTS_URL = `*${CHECK_INS_API_PATHS.requests}`;
 const WITHDRAWAL_URL = `*${CHECK_INS_API_PATHS.withdrawal}`;
@@ -375,7 +378,7 @@ describe("the client asking for a check-in", () => {
         timeZone: TIME_ZONE,
       },
     ]);
-    expect(desktopRequestButton()).toBeDisabled();
+    expect(desktopRequestButton()).toHaveAttribute("aria-disabled", "true");
   });
 
   it("shows the times loading while they are on their way", async () => {
@@ -499,24 +502,6 @@ describe("the client asking for a check-in", () => {
     expect(reads).toBe(2);
   });
 
-  it("keeps the request closed while one waits for an answer and says why", async () => {
-    // arrange, act
-    listing = { checkIns: [WAITING_REQUEST, APPROVED_SOON] };
-    await renderCheckInsPage();
-
-    // assert
-    const buttons = screen.getAllByRole("button", {
-      name: "Request check-in",
-    });
-    expect(buttons).toHaveLength(2);
-    for (const button of buttons) {
-      expect(button).toBeDisabled();
-      expect(button).toHaveAccessibleDescription(
-        "You can send another request once this one is answered.",
-      );
-    }
-  });
-
   it("can be reached and dismissed by keyboard, handing focus back to the request button", async () => {
     // arrange
     answerOpenTimes();
@@ -557,6 +542,163 @@ describe("the client asking for a check-in", () => {
 
     // assert
     expect(results.violations).toEqual([]);
+  });
+});
+
+describe("the request button while her request waits", () => {
+  it("holds back a second request without a line explaining it", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST, APPROVED_SOON] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    const buttons = requestButtons();
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) {
+      expect(button).toBeEnabled();
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      expect(button).not.toHaveAccessibleDescription(WAITING_REASON);
+    }
+    expect(screen.queryByText(WAITING_REASON)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["header", 0],
+    ["floating", 1],
+  ])("explains itself when she hovers the %s button", async (_where, index) => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+    const button = requestButtons()[index];
+
+    // act
+    await user.hover(button);
+
+    // assert
+    expect(await screen.findByText(WAITING_REASON)).toBeVisible();
+    expect(button).toHaveAccessibleDescription(WAITING_REASON);
+  });
+
+  it.each([
+    ["header", 0],
+    ["floating", 1],
+  ])("explains itself when she taps the %s button", async (_where, index) => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.pointer({ keys: "[TouchA]", target: requestButtons()[index] });
+
+    // assert
+    expect(await screen.findByText(WAITING_REASON)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Request a check-in" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("explains itself when she tabs to the header button", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.tab();
+
+    // assert
+    const [headerButton] = requestButtons();
+    expect(headerButton).toHaveFocus();
+    expect(headerButton).toHaveAccessibleDescription(WAITING_REASON);
+  });
+
+  it("explains itself when she reaches the floating button from the keyboard", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.tab({ shift: true });
+
+    // assert
+    const [, floatingButton] = requestButtons();
+    expect(floatingButton).toHaveFocus();
+    expect(floatingButton).toHaveAccessibleDescription(WAITING_REASON);
+  });
+
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Space", " "],
+  ])("does not open the request on %s", async (_key, keys) => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+    await user.tab();
+
+    // act
+    await user.keyboard(keys);
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Request a check-in" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(WAITING_REASON)).toBeInTheDocument();
+  });
+
+  it("does not open the request on a click", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const user = await renderCheckInsPage();
+    const [headerButton, floatingButton] = requestButtons();
+
+    // act
+    await user.click(headerButton);
+    await user.click(floatingButton);
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Request a check-in" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes the axe checks with the reason open", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+    await user.hover(desktopRequestButton());
+    await screen.findByText(WAITING_REASON);
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+
+  it("lets her ask again once the request is cancelled", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST] };
+    server.use(
+      http.post(WITHDRAWAL_URL, () => {
+        listing = { checkIns: [] };
+        return HttpResponse.json({
+          status: "withdrawn",
+          checkInId: WAITING_REQUEST.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("tab", { name: "Requests" }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cancel request" }));
+
+    // assert
+    expect(await screen.findByText("No open requests")).toBeInTheDocument();
+    for (const button of requestButtons()) {
+      expect(button).not.toHaveAttribute("aria-disabled");
+    }
   });
 });
 
@@ -657,10 +799,12 @@ function answerRequests(answer: () => Response): unknown[] {
   return received;
 }
 
+function requestButtons(): HTMLElement[] {
+  return screen.getAllByRole("button", { name: "Request check-in" });
+}
+
 function desktopRequestButton(): HTMLElement {
-  const [desktopButton] = screen.getAllByRole("button", {
-    name: "Request check-in",
-  });
+  const [desktopButton] = requestButtons();
 
   return desktopButton;
 }

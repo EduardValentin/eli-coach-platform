@@ -14,7 +14,7 @@ import {
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
-import { tabTo } from "./keyboard";
+import { isFocused, tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 const CHECK_INS_PATH = "/client/checkins";
@@ -33,6 +33,10 @@ export class ClientCheckInsPage {
 
   private get requestDialog() {
     return this.page.getByRole("dialog", { name: "Request a check-in" });
+  }
+
+  private get waitingReason() {
+    return this.page.getByText(WAITING_REASON, { exact: true });
   }
 
   private static joinPathOf(checkInId: string): string {
@@ -108,7 +112,39 @@ export class ClientCheckInsPage {
   }
 
   async expectRequestBlocked(): Promise<void> {
+    await expect(this.requestButton).toHaveAttribute("aria-disabled", "true");
     await expect(this.requestButton).toBeDisabled();
+  }
+
+  async expectBlockedReasonOnHover(): Promise<void> {
+    await expect(async () => {
+      await this.requestButton.hover();
+      await expect(this.waitingReason).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.expectWaitingReasonDescribesRequest();
+    await this.requestButton.click({ force: true });
+    await expect(this.requestDialog).toBeHidden();
+    await this.page.mouse.move(0, 0);
+    await expect(this.waitingReason).toBeHidden();
+  }
+
+  async expectBlockedReasonOnFocus(): Promise<void> {
+    if (await isFocused(this.requestButton)) {
+      await this.page.keyboard.press("Shift+Tab");
+    }
+    await tabTo(this.page, this.requestButton);
+    await expect(this.waitingReason).toBeVisible();
+    await this.expectWaitingReasonDescribesRequest();
+    await this.page.keyboard.press("Enter");
+    await expect(this.requestDialog).toBeHidden();
+    await this.page.keyboard.press("Escape");
+    await expect(this.waitingReason).toBeHidden();
+    await expect(this.requestButton).toBeFocused();
+  }
+
+  private async expectWaitingReasonDescribesRequest(): Promise<void> {
     await expect(this.requestButton).toHaveAccessibleDescription(
       WAITING_REASON,
     );
@@ -116,7 +152,8 @@ export class ClientCheckInsPage {
 
   async expectRequestAllowed(): Promise<void> {
     await expect(this.requestButton).toBeEnabled();
-    await expect(this.page.getByText(WAITING_REASON)).toBeHidden();
+    await expect(this.requestButton).not.toHaveAttribute("aria-disabled");
+    await expect(this.waitingReason).toBeHidden();
   }
 
   async withdraw(note: string): Promise<void> {
