@@ -1677,10 +1677,11 @@ async function renderResourcesRouter(load: () => ResourcesPageData) {
     { initialEntries: [coachClientResourcesPath(CLIENT_ID)] },
   );
 
-  render(<RouterProvider router={router} />);
+  const { container } = render(<RouterProvider router={router} />);
   await waitFor(() => {
     expect(router.state.navigation.state).toBe("idle");
     expect(router.state.initialized).toBe(true);
+    expect(container).not.toBeEmptyDOMElement();
   });
 
   return { router, user };
