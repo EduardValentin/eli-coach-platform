@@ -16,8 +16,8 @@ import {
   type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { resolveFieldErrorCode } from "@eli-coach-platform/infrastructure/http/server";
 
-import { resolveFieldErrorCode } from "~/features/assessment-calls/api/resolve-field-error-code";
 import {
   bookAssessmentCallErrorSchema,
   bookAssessmentCallSuccessSchema,

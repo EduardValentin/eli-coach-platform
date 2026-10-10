@@ -151,7 +151,7 @@ describe.sequential("assessment calls during the waitlist", () => {
   it("still sends a visitor whose call was booked before the waitlist to the meeting room", async () => {
     // arrange
     const bookingId = await seedAssessmentCall();
-    await saveAssessmentCallSettings({ meetingLink: SAVED_MEETING_LINK });
+    await saveCoachScheduleSettings({ meetingLink: SAVED_MEETING_LINK });
 
     // act
     const response = await suite.request(
@@ -179,11 +179,11 @@ function createBookingBody(): URLSearchParams {
   });
 }
 
-async function saveAssessmentCallSettings(options: {
+async function saveCoachScheduleSettings(options: {
   meetingLink: string;
 }): Promise<void> {
   await suite.request(
-    new Request(suite.url("/api/assessment-calls/settings"), {
+    new Request(suite.url("/api/coach-schedule/settings"), {
       body: JSON.stringify({
         endHour: 20,
         meetingLink: options.meetingLink,

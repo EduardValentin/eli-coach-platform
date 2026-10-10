@@ -1,4 +1,10 @@
 {
+  "apps/platform/src/features/client-resources/data/schema.server.ts": [
+    "feature-schema-imports-schemas-only"
+  ],
+  "apps/platform/src/features/coaching-sales/data/schema.server.ts": [
+    "feature-schema-foreign-key"
+  ],
   "apps/platform/src/features/coaching-sales/public/reaches-client-resources.ts": [
     "feature-order-coaching-sales"
   ],
@@ -55,8 +61,8 @@
   "apps/platform/src/features/store/data/imports-composition.server.ts": [
     "feature-server-private"
   ],
-  "apps/platform/src/features/store/data/schema.server.ts": [
-    "feature-schema-foreign-key",
+  "apps/platform/src/features/store/data/reaches-later-schema.server.ts": [
+    "feature-internals",
     "feature-order-store"
   ],
   "apps/platform/src/features/store/email/design-system-browser-only.server.tsx": [
