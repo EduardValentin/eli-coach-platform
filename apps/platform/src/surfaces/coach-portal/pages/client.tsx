@@ -94,7 +94,9 @@ export default function CoachClientRoute() {
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
               {client.needsRefund && <NeedsRefundBadge parity="needs-refund" />}
             </div>
-            <p className="text-text-secondary">{client.email}</p>
+            <p className="text-text-secondary" data-parity="client-email">
+              {client.email}
+            </p>
           </div>
         </div>
         <div

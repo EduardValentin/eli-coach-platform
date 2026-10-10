@@ -162,6 +162,7 @@ export function AppointmentCard({
   quoteParity,
   footnote,
   actions,
+  parity,
   parityRoot,
 }: {
   attendee: AppointmentAttendee;
@@ -178,6 +179,7 @@ export function AppointmentCard({
   quoteParity?: string;
   footnote?: string;
   actions?: ReactNode;
+  parity?: string;
   parityRoot?: string;
 }) {
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -188,6 +190,7 @@ export function AppointmentCard({
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className={cn(CARD_CLASS, CARD_TONE[status])}
+      data-parity={parity}
       data-parity-root={parityRoot}
     >
       <div className="flex items-start gap-4 flex-1 min-w-0">

@@ -48,7 +48,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
               {refundDue && <NeedsRefundBadge parity="needs-refund" />}
             </div>
-            <p className="text-text-secondary">{journey.identity.email}</p>
+            <p className="text-text-secondary" data-parity="client-email">{journey.identity.email}</p>
           </div>
         </div>
         <div

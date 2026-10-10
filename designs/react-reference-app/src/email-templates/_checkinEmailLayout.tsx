@@ -64,7 +64,7 @@ export function CheckinEmailLayout({
             </EmailSection>
 
             <EmailSection style={detailsOuterStyle}>
-              <div style={detailsCardStyle}>
+              <div data-parity="email-details" style={detailsCardStyle}>
                 {details.map((detail) => (
                   <div key={detail.label}>
                     <EmailText style={detailsEyebrowStyle}>
@@ -134,7 +134,7 @@ export function CheckinEmailCalendarOffer({ googleCalendarUrl }: { googleCalenda
 export function CheckinEmailClosingLine({ children }: { children: string }) {
   return (
     <>
-      <EmailDivider style={dividerStyle} />
+      <EmailDivider parity="email-divider" style={dividerStyle} />
       <EmailSection style={closingSectionStyle}>
         <EmailText style={closingTextStyle}>{children}</EmailText>
       </EmailSection>

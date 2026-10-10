@@ -103,7 +103,7 @@ export function CheckInEmailLayout({
             </EmailSection>
 
             <EmailSection style={detailsOuterStyle}>
-              <div style={detailsCardStyle}>
+              <div data-parity="email-details" style={detailsCardStyle}>
                 {content.details.map((detail) => (
                   <div key={detail.label}>
                     <EmailText style={detailsEyebrowStyle}>
@@ -177,7 +177,7 @@ export function checkInEmailCalendarOfferLines(
 export function CheckInEmailClosingLine({ children }: { children: string }) {
   return (
     <>
-      <EmailDivider style={dividerStyle} />
+      <EmailDivider parity="email-divider" style={dividerStyle} />
       <EmailSection style={closingSectionStyle}>
         <EmailText style={closingTextStyle}>{children}</EmailText>
       </EmailSection>
