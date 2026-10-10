@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10, coach-schedule follow-up (domain slice and renames).
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit fd96a2d5, change review.
 
 ## Component graph
 
@@ -605,7 +605,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1572 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-192): `ArrowRight`, `VideoOff` |
 | E1504 | apps/platform/src/features/coach-schedule/api/coach-schedule-settings-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | new (GEN-192): `requireApiAccount` — this feature's first cross-feature consumer of that guard; changed (coach-schedule ad hoc, path only); crosses-component corrected |
 | E1506 | apps/platform/src/features/coach-schedule/api/coach-schedule-settings-controller.server.ts | apps/platform/src/features/coach-schedule/public/coach-schedule-settings.ts | import | no | no | lateral | new (GEN-192); changed (coach-schedule ad hoc, path only) |
-| E1511 | apps/platform/src/features/coach-schedule/api/coach-schedule-settings-controller.server.ts | packages/domain/src/coach-schedule/index.ts | type-only import | yes | no | lateral | new (GEN-192); changed (coach-schedule ad hoc, path only); kind corrected; changed (coach-schedule follow-up): target moved to `/coach-schedule` |
+| E1511 | apps/platform/src/features/coach-schedule/api/coach-schedule-settings-controller.server.ts | packages/domain/src/coach-schedule/index.ts | type-only import | yes | no | lateral | new (GEN-192); changed (coach-schedule ad hoc, path only); kind corrected |
 | E1513 | apps/platform/src/features/coach-schedule/api/settings.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | new (GEN-192); changed (coach-schedule ad hoc, path only) |
 | E1515 | apps/platform/src/features/coach-schedule/ui/coach/api-client.ts | apps/platform/src/features/coach-schedule/public/coach-schedule-settings.ts | import | no | no | lateral | new (GEN-192); changed (coach-schedule ad hoc, path only) |
 | E1517 | apps/platform/src/features/coach-schedule/ui/coach/api-client.ts | external:react | import | n/a | no | lateral | new (GEN-192); changed (coach-schedule ad hoc, path only) |
@@ -4255,7 +4255,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4896 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | apps/platform/src/features/coach-schedule/data/reservations/coach-time-reservations.server.ts | import | no | yes | inward | new (coach-schedule ad hoc) |
 | E4897 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | apps/platform/src/features/coach-schedule/data/reservations/postgres-coach-calendar.server.ts | import | no | yes | inward | new (coach-schedule ad hoc) |
 | E4898 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/db/src/index.ts | type-only import | yes | yes | inward | new (coach-schedule ad hoc) |
-| E4899 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/domain/src/coach-schedule/index.ts | import | yes | yes | inward | new (coach-schedule ad hoc); changed (coach-schedule follow-up): target moved to `/coach-schedule` |
+| E4899 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/domain/src/coach-schedule/index.ts | import | yes | yes | inward | new (coach-schedule ad hoc) |
 | E4900 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/domain/src/coach-availability/index.ts | type-only import | yes | yes | inward | new (coach-schedule ad hoc) |
 | E4901 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/domain/src/coach-meeting-room/index.ts | type-only import | yes | yes | inward | new (coach-schedule ad hoc) |
 | E4902 | apps/platform/src/features/coach-schedule/server/coach-schedule-composition.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | new (coach-schedule ad hoc) |

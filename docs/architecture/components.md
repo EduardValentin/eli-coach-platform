@@ -1,6 +1,6 @@
 # Components
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10, coach-schedule follow-up (domain slice and renames).
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit fd96a2d5, change review.
 
 | ID | Path | Published surface | Enforcement | Ring | Actors | Release unit |
 |---|---|---|---|---|---|---|
