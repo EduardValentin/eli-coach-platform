@@ -697,7 +697,7 @@ describe.sequential("assessment call booking integration", () => {
       throw new Error("Expected a confirmed booking.");
     }
 
-    await saveAssessmentCallSettings({
+    await saveCoachScheduleSettings({
       issuedAt: MONDAY_MORNING,
       meetingLink: MEETING_LINK,
     });
@@ -743,12 +743,12 @@ async function requestJoin(bookingId: string): Promise<Response> {
   return suite.request(new Request(suite.url(`/book/${bookingId}/join`)));
 }
 
-async function saveAssessmentCallSettings(options: {
+async function saveCoachScheduleSettings(options: {
   issuedAt: Date;
   meetingLink: string;
 }): Promise<void> {
   await suite.request(
-    new Request(suite.url("/api/assessment-calls/settings"), {
+    new Request(suite.url("/api/coach-schedule/settings"), {
       body: JSON.stringify({
         endHour: 20,
         meetingLink: options.meetingLink,

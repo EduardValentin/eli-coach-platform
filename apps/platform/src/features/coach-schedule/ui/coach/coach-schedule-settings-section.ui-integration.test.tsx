@@ -1,0 +1,455 @@
+// @vitest-environment happy-dom
+
+import "@testing-library/jest-dom/vitest";
+
+import { Toaster } from "@eli-coach-platform/ui/toast";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+
+import { clientAction as saveSettings } from "~/features/coach-schedule/api/settings";
+import type { CoachScheduleSettings } from "~/features/coach-schedule/public/coach-schedule-settings";
+import { COACH_SETTINGS_API_PATH } from "~/features/coach-schedule/public/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+
+import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section";
+
+const SETTINGS_URL = COACH_SETTINGS_API_PATH;
+
+const DEFAULT_SETTINGS: CoachScheduleSettings = {
+  timeZone: "Europe/Bucharest",
+  weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+  startHour: 17,
+  endHour: 20,
+  meetingLink: null,
+};
+
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+afterEach(() => {
+  cleanup();
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+describe("coach schedule settings section", () => {
+  it("shows the loaded defaults", async () => {
+    // arrange, act
+    await renderSection();
+
+    // assert
+    expect(screen.getByRole("checkbox", { name: "Monday" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Friday" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Saturday" }),
+    ).not.toBeChecked();
+    expect(screen.getByRole("combobox", { name: "Start" })).toHaveTextContent(
+      "17:00",
+    );
+    expect(screen.getByRole("combobox", { name: "End" })).toHaveTextContent(
+      "20:00",
+    );
+    expect(screen.getByLabelText("Meeting link")).toHaveValue("");
+    expect(
+      screen.getByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps Save disabled until a setting changes", async () => {
+    // arrange, act
+    await renderSection();
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("enables Save once a setting changes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+  });
+
+  it("disables Save again when a change is undone", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+    await user.clear(link);
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("disables Save again after a successful save", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, async ({ request }) =>
+        HttpResponse.json({ success: true, settings: await request.json() }),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.type(
+      screen.getByLabelText("Meeting link"),
+      "https://meet.example/eli-room",
+    );
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Settings saved")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByLabelText("Meeting link")).toHaveValue(
+      "https://meet.example/eli-room",
+    );
+  });
+
+  it("shows and hides the no-link warning as the link field changes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+
+    // assert
+    expect(
+      screen.queryByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
+    ).not.toBeInTheDocument();
+
+    // act
+    await user.clear(link);
+
+    // assert
+    expect(
+      screen.getByText(
+        "No one can join calls or check-ins until a link is set.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("refuses to submit with every weekday unchecked, keeping the rest of the form", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    for (const day of [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+    ]) {
+      await user.click(screen.getByRole("checkbox", { name: day }));
+    }
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Pick at least one day.")).toHaveAttribute(
+      "role",
+      "alert",
+    );
+    expect(screen.getByRole("combobox", { name: "Start" })).toHaveTextContent(
+      "17:00",
+    );
+  });
+
+  it("refuses an https-only meeting link and keeps the entered value", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "ftp://meet.example/eli");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Enter a full https:// link, or leave it empty.",
+    );
+    expect(link).toHaveValue("ftp://meet.example/eli");
+  });
+
+  it("shows the server's ordering refusal beside the hours and keeps every entered value", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: "invalid_hours",
+              message: "The start hour must be before the end hour.",
+            },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The start hour must be before the end hour.",
+    );
+    expect(link).toHaveValue("https://meet.example/eli-room");
+    expect(screen.getByRole("checkbox", { name: "Monday" })).toBeChecked();
+  });
+
+  it("focuses the start hour after an hours refusal submitted with the keyboard", async () => {
+    // arrange
+    let sentSettings: unknown;
+    server.use(
+      http.put(SETTINGS_URL, async ({ request }) => {
+        sentSettings = await request.json();
+
+        return HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: "invalid_hours",
+              message: "The start hour must be before the end hour.",
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+    const startHour = screen.getByRole("combobox", { name: "Start" });
+
+    // act
+    startHour.focus();
+    await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}");
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(
+      await screen.findByText("The start hour must be before the end hour."),
+    ).toHaveAttribute("role", "alert");
+    expect(sentSettings).toMatchObject({ startHour: 20, endHour: 20 });
+    expect(startHour).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(startHour);
+    });
+  });
+
+  it("saves valid values, sends the browser zone, and shows the success toast", async () => {
+    // arrange
+    let sentBody: unknown;
+    server.use(
+      http.put(SETTINGS_URL, async ({ request }) => {
+        sentBody = await request.json();
+
+        return HttpResponse.json({
+          success: true,
+          settings: sentBody,
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByText("Settings saved")).toBeInTheDocument();
+    });
+    expect(sentBody).toMatchObject({
+      meetingLink: "https://meet.example/eli-room",
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+  });
+
+  it("shows an error toast and keeps entered values on a server failure", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: "server_error",
+              message: "We couldn't save your settings. Try again in a moment.",
+            },
+          },
+          { status: 500 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "We couldn't save your settings. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+    });
+    expect(link).toHaveValue("https://meet.example/eli-room");
+  });
+
+  it.each([
+    {
+      failure: "the server refuses the save without an answer",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "shows an error toast and keeps entered values when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.put(SETTINGS_URL, answer));
+      const user = userEvent.setup();
+      await renderSection();
+      const link = screen.getByLabelText("Meeting link");
+
+      // act
+      await user.type(link, "https://meet.example/eli-room");
+      await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "We couldn't save your settings. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+      expect(link).toHaveValue("https://meet.example/eli-room");
+    },
+  );
+
+  it("surfaces a forbidden save as an error toast", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, () =>
+        HttpResponse.json({ error: "forbidden" }, { status: 403 }),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "We couldn't save your settings. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("surfaces an unauthenticated save as an error toast", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, () =>
+        HttpResponse.json({ error: "unauthenticated" }, { status: 401 }),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "We couldn't save your settings. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+async function renderSection(
+  settings: CoachScheduleSettings = DEFAULT_SETTINGS,
+) {
+  const router = createMemoryRouter(
+    [
+      {
+        Component: () => (
+          <>
+            <Outlet />
+            <Toaster />
+          </>
+        ),
+        children: [
+          {
+            Component: () => (
+              <CoachScheduleSettingsSection settings={settings} />
+            ),
+            index: true,
+            loader: () => settings,
+          },
+        ],
+        path: "/coach/settings",
+      },
+      {
+        action: frameworkModeAction(saveSettings),
+        path: SETTINGS_URL,
+      },
+    ],
+    { initialEntries: ["/coach/settings"] },
+  );
+
+  render(<RouterProvider router={router} />);
+
+  await screen.findByRole("heading", { name: "Calls and check-ins" });
+}

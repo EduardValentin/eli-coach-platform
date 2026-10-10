@@ -1,9 +1,11 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import {
+  CoachAvailability,
+  type CoachAvailabilitySource,
+} from "@eli-coach-platform/domain/coach-availability";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
-
-import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
 
 import {
   composeAssessmentCallsFeature,
@@ -41,11 +43,12 @@ describe("composeAssessmentCallsFeature", () => {
     await expect(loading).rejects.toMatchObject({ status: 404 });
   });
 
-  it("reports unreadable availability when the database is unreachable", async () => {
+  it("reports unreadable availability when the coach's availability cannot be read", async () => {
     // arrange
-    const { feature } = composeAssessmentCallsFeature(
-      createHandles({ WAITLIST_MODE: false }),
-    );
+    const { feature } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      availability: createUnreadableAvailability(),
+    });
 
     // act
     const page = await feature.assessmentCalls.loadBookingPage();
@@ -61,7 +64,7 @@ describe("composeAssessmentCallsFeature", () => {
     // arrange
     const { feature } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
+      database: createDatabaseWithBookedCalls([BOOKED_ROW]),
     });
 
     // act
@@ -117,7 +120,7 @@ describe("composeAssessmentCallsFeature assessment call reader", () => {
     // arrange
     const { handles } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
+      database: createDatabaseWithBookedCalls([BOOKED_ROW]),
     });
 
     // act
@@ -136,7 +139,7 @@ describe("composeAssessmentCallsFeature assessment call reader", () => {
     // arrange
     const { handles } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseWithoutSavedAvailability([]),
+      database: createDatabaseWithBookedCalls([]),
     });
 
     // act
@@ -156,9 +159,12 @@ function createHandles(
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
     },
+    availability: createBucharestEveningAvailability(),
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
     botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
+    calendar: { busyFrom: async () => [] },
     clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
+    coachTime: { reserve: async () => ({ status: "reserved" }) },
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
     featureFlags: { execute: async () => featureFlags },
@@ -168,12 +174,13 @@ function createHandles(
       notificationFailed: () => {},
       slotsReadFailed: () => {},
     },
+    meetingRoom: { current: async () => null },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };
 }
 
-function createDatabaseWithoutSavedAvailability(
+function createDatabaseWithBookedCalls(
   bookedCallRows: readonly unknown[],
 ): DatabaseClient {
   function chainResolving(resolvedRows: readonly unknown[]) {
@@ -188,10 +195,32 @@ function createDatabaseWithoutSavedAvailability(
 
   return {
     select: () => ({
-      from: (table: unknown) =>
-        chainResolving(table === assessmentCallsTable ? bookedCallRows : []),
+      from: () => chainResolving(bookedCallRows),
     }),
   } as unknown as DatabaseClient;
+}
+
+function createBucharestEveningAvailability(): CoachAvailabilitySource {
+  const result = CoachAvailability.from({
+    timeZone: "Europe/Bucharest",
+    weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    startHour: 17,
+    endHour: 20,
+  });
+
+  if (result.status !== "configured") {
+    throw new Error("Expected a configured availability.");
+  }
+
+  return { current: async () => result.availability };
+}
+
+function createUnreadableAvailability(): CoachAvailabilitySource {
+  return {
+    current: async () => {
+      throw new Error("database down");
+    },
+  };
 }
 
 function createDatabaseStub(): DatabaseClient {

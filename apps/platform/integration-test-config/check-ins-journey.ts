@@ -38,7 +38,7 @@ export type HeldCheckInHour = {
 };
 
 const CHECK_INS_API = "/api/check-ins";
-const SETTINGS_API = "/api/assessment-calls/settings";
+const SETTINGS_API = "/api/coach-schedule/settings";
 const CLIENT_TIME_ZONE = "Europe/London";
 
 const COACH_DEFAULT_AVAILABILITY = {

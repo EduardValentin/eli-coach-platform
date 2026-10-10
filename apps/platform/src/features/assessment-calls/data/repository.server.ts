@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   ASSESSMENT_CALL_RULES,
   AssessmentCall,
@@ -7,43 +5,60 @@ import {
   type ReservationResult,
   type ReserveAssessmentCallCommand,
 } from "@eli-coach-platform/domain/assessment-call";
+import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
   type DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import {
-  releaseCoachTime,
-  reserveCoachTime,
-} from "@eli-coach-platform/infrastructure/coach-calendar/server";
 import { and, eq, gt, sql } from "drizzle-orm";
 
 import { assessmentCallsTable } from "./schema.server";
 
 type AssessmentCallRow = typeof assessmentCallsTable.$inferSelect;
 
+type AssessmentCallAppointment = {
+  appointmentKind: "assessment_call";
+  appointmentId: string;
+};
+
+export type AssessmentCallCoachTime = {
+  reserve: (
+    transaction: DatabaseTransaction,
+    reservation: AssessmentCallAppointment & TimeInterval,
+  ) => Promise<{ status: "reserved" | "taken" }>;
+};
+
+type PostgresAssessmentCallRepositoryOptions = {
+  database: DatabaseClient;
+  coachTime: AssessmentCallCoachTime;
+};
+
 const UNREADABLE_IDENTIFIER_CODE = "22P02";
+const RESERVATION_SAVEPOINT = sql.identifier("assessment_call_reservation");
 
 export class PostgresAssessmentCallRepository implements AssessmentCallReservations {
-  constructor(private readonly database: DatabaseClient) {}
+  constructor(
+    private readonly options: PostgresAssessmentCallRepositoryOptions,
+  ) {}
 
   reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult> {
-    return this.database.transaction((transaction) =>
-      reserveUnderEmailLock(transaction, command),
+    return this.options.database.transaction((transaction) =>
+      this.reserveUnderEmailLock(transaction, command),
     );
   }
 
   async findById(id: string): Promise<AssessmentCall | null> {
     try {
-      const [row] = await this.database
+      const [row] = await this.options.database
         .select()
         .from(assessmentCallsTable)
         .where(eq(assessmentCallsTable.id, id))
         .limit(1);
 
-      return row ? toAssessmentCall(row) : null;
+      return row ? this.toAssessmentCall(row) : null;
     } catch (error) {
-      if (isUnreadableIdentifier(error)) {
+      if (this.isUnreadableIdentifier(error)) {
         return null;
       }
 
@@ -52,126 +67,123 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
   }
 
   async listAll(): Promise<AssessmentCall[]> {
-    const rows = await this.database
+    const rows = await this.options.database
       .select()
       .from(assessmentCallsTable)
       .orderBy(assessmentCallsTable.startsAt);
 
-    return rows.map(toAssessmentCall);
-  }
-}
-
-async function reserveUnderEmailLock(
-  transaction: DatabaseTransaction,
-  command: ReserveAssessmentCallCommand,
-): Promise<ReservationResult> {
-  await transaction.execute(
-    sql`select pg_advisory_xact_lock(hashtext(${command.normalizedEmail}))`,
-  );
-
-  const appointment = {
-    appointmentKind: "assessment_call",
-    appointmentId: randomUUID(),
-  } as const;
-  const coachTime = await reserveCoachTime(transaction, {
-    ...ASSESSMENT_CALL_RULES.coachTimeFrom(command.startsAt),
-    ...appointment,
-  });
-  const decision = AssessmentCall.decideReservation({
-    coachTime: coachTime.status,
-    upcomingCallForEmail: await findUpcomingCallForEmail(transaction, command),
-  });
-
-  if (decision.status === "reserved") {
-    return {
-      status: "reserved",
-      call: await insertCall(transaction, {
-        id: appointment.appointmentId,
-        command,
-      }),
-    };
+    return rows.map((row) => this.toAssessmentCall(row));
   }
 
-  if (coachTime.status === "reserved") {
-    await releaseCoachTime(transaction, appointment);
+  private async reserveUnderEmailLock(
+    transaction: DatabaseTransaction,
+    command: ReserveAssessmentCallCommand,
+  ): Promise<ReservationResult> {
+    await transaction.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${command.normalizedEmail}))`,
+    );
+
+    const upcomingCallForEmail = await this.findUpcomingCallForEmail(
+      transaction,
+      command,
+    );
+
+    await transaction.execute(sql`savepoint ${RESERVATION_SAVEPOINT}`);
+
+    const call = await this.insertCall(transaction, command);
+    const coachTime = await this.options.coachTime.reserve(transaction, {
+      ...ASSESSMENT_CALL_RULES.coachTimeFrom(command.startsAt),
+      appointmentKind: "assessment_call",
+      appointmentId: call.id,
+    });
+    const decision = AssessmentCall.decideReservation({
+      coachTime: coachTime.status,
+      upcomingCallForEmail,
+    });
+
+    if (decision.status === "reserved") {
+      return { status: "reserved", call };
+    }
+
+    await transaction.execute(
+      sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
+    );
+
+    return decision;
   }
 
-  return decision;
-}
+  private async findUpcomingCallForEmail(
+    transaction: DatabaseTransaction,
+    command: ReserveAssessmentCallCommand,
+  ): Promise<AssessmentCall | null> {
+    const [row] = await transaction
+      .select()
+      .from(assessmentCallsTable)
+      .where(
+        and(
+          eq(assessmentCallsTable.visitorEmail, command.normalizedEmail),
+          gt(assessmentCallsTable.startsAt, command.now),
+        ),
+      )
+      .orderBy(assessmentCallsTable.startsAt)
+      .limit(1);
 
-async function findUpcomingCallForEmail(
-  transaction: DatabaseTransaction,
-  command: ReserveAssessmentCallCommand,
-): Promise<AssessmentCall | null> {
-  const [row] = await transaction
-    .select()
-    .from(assessmentCallsTable)
-    .where(
-      and(
-        eq(assessmentCallsTable.visitorEmail, command.normalizedEmail),
-        gt(assessmentCallsTable.startsAt, command.now),
-      ),
-    )
-    .orderBy(assessmentCallsTable.startsAt)
-    .limit(1);
-
-  return row ? toAssessmentCall(row) : null;
-}
-
-async function insertCall(
-  transaction: DatabaseTransaction,
-  newCall: { id: string; command: ReserveAssessmentCallCommand },
-): Promise<AssessmentCall> {
-  const { id, command } = newCall;
-  const [row] = await transaction
-    .insert(assessmentCallsTable)
-    .values({
-      id,
-      firstName: command.firstName,
-      lastName: command.lastName,
-      visitorEmail: command.normalizedEmail,
-      visitorNotes: command.notes,
-      dateOfBirth: command.dateOfBirth,
-      gender: command.gender,
-      primaryGoal: command.primaryGoal,
-      country: command.country,
-      phone: command.phone,
-      startsAt: command.startsAt,
-      visitorTimeZone: command.visitorTimeZone,
-      coachTimeZone: command.coachTimeZone,
-      bookedAt: command.bookedAt,
-    })
-    .returning();
-
-  if (!row) {
-    throw new Error("Assessment call reservation returned no row.");
+    return row ? this.toAssessmentCall(row) : null;
   }
 
-  return toAssessmentCall(row);
-}
+  private async insertCall(
+    transaction: DatabaseTransaction,
+    command: ReserveAssessmentCallCommand,
+  ): Promise<AssessmentCall> {
+    const [row] = await transaction
+      .insert(assessmentCallsTable)
+      .values({
+        firstName: command.firstName,
+        lastName: command.lastName,
+        visitorEmail: command.normalizedEmail,
+        visitorNotes: command.notes,
+        dateOfBirth: command.dateOfBirth,
+        gender: command.gender,
+        primaryGoal: command.primaryGoal,
+        country: command.country,
+        phone: command.phone,
+        startsAt: command.startsAt,
+        visitorTimeZone: command.visitorTimeZone,
+        coachTimeZone: command.coachTimeZone,
+        bookedAt: command.bookedAt,
+      })
+      .returning();
 
-function toAssessmentCall(row: AssessmentCallRow): AssessmentCall {
-  return AssessmentCall.reconstitute({
-    id: row.id,
-    firstName: row.firstName,
-    lastName: row.lastName,
-    visitorEmail: row.visitorEmail,
-    visitorNotes: row.visitorNotes,
-    dateOfBirth: row.dateOfBirth,
-    gender: row.gender,
-    primaryGoal: row.primaryGoal,
-    country: row.country,
-    phone: row.phone,
-    startsAt: row.startsAt,
-    visitorTimeZone: row.visitorTimeZone,
-    coachTimeZone: row.coachTimeZone,
-    bookedAt: row.bookedAt,
-  });
-}
+    if (!row) {
+      throw new Error("Assessment call reservation returned no row.");
+    }
 
-function isUnreadableIdentifier(error: unknown): boolean {
-  return isCausedByDatabaseError(
-    error,
-    ({ code }) => code === UNREADABLE_IDENTIFIER_CODE,
-  );
+    return this.toAssessmentCall(row);
+  }
+
+  private toAssessmentCall(row: AssessmentCallRow): AssessmentCall {
+    return AssessmentCall.reconstitute({
+      id: row.id,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      visitorEmail: row.visitorEmail,
+      visitorNotes: row.visitorNotes,
+      dateOfBirth: row.dateOfBirth,
+      gender: row.gender,
+      primaryGoal: row.primaryGoal,
+      country: row.country,
+      phone: row.phone,
+      startsAt: row.startsAt,
+      visitorTimeZone: row.visitorTimeZone,
+      coachTimeZone: row.coachTimeZone,
+      bookedAt: row.bookedAt,
+    });
+  }
+
+  private isUnreadableIdentifier(error: unknown): boolean {
+    return isCausedByDatabaseError(
+      error,
+      ({ code }) => code === UNREADABLE_IDENTIFIER_CODE,
+    );
+  }
 }

@@ -8,11 +8,9 @@ import {
 } from "lucide-react";
 
 import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
-import {
-  COACH_ASSESSMENT_CALLS_PATH,
-  COACH_SETTINGS_PATH,
-} from "~/features/assessment-calls/public/paths";
+import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import { COACH_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
+import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
 
 export const coachSurfaceLinks: readonly PortalNavigationLink[] = [

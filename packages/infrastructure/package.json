@@ -15,8 +15,6 @@
     "./bot-detection": "./src/bot-detection/index.ts",
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
     "./client-files/server": "./src/client-files/index.server.ts",
-    "./coach-calendar/server": "./src/coach-calendar/index.server.ts",
-    "./coach-meeting-room/server": "./src/coach-meeting-room/index.server.ts",
     "./documents/pdf-pages-worker": "./src/documents/pdf-pages-worker.server.ts",
     "./documents/server": "./src/documents/index.server.ts",
     "./email/server": "./src/email/index.server.ts",

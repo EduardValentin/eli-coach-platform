@@ -2,8 +2,8 @@ import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
 import { VideoOff } from "lucide-react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { COACH_SETTINGS_PATH } from "~/features/assessment-calls/public/paths";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
 
 export async function loader(args: LoaderFunctionArgs) {
   return args.context

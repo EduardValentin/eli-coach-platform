@@ -31,7 +31,7 @@ describe("PostgresCheckIns#find", () => {
   it("maps a stored row into the check-in the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      createDatabaseReturning([PENDING_ROW]),
+      repositoryOptions(createDatabaseReturning([PENDING_ROW])),
     );
 
     // act
@@ -58,7 +58,9 @@ describe("PostgresCheckIns#find", () => {
 
   it("finds no check-in for an identifier that matches no row", async () => {
     // arrange
-    const checkIns = new PostgresCheckIns(createDatabaseReturning([]));
+    const checkIns = new PostgresCheckIns(
+      repositoryOptions(createDatabaseReturning([])),
+    );
 
     // act
     const checkIn = await checkIns.find(PENDING_ROW.id);
@@ -72,7 +74,7 @@ describe("PostgresCheckIns#listForClient", () => {
   it("maps every stored row of the client into the check-ins the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
+      repositoryOptions(createDatabaseReturning([PENDING_ROW, APPROVED_ROW])),
     );
 
     // act
@@ -105,7 +107,9 @@ describe("PostgresCheckIns#listForClient", () => {
 describe("PostgresCheckIns#listAll", () => {
   it("lists nothing when no check-in is stored", async () => {
     // arrange
-    const checkIns = new PostgresCheckIns(createDatabaseReturning([]));
+    const checkIns = new PostgresCheckIns(
+      repositoryOptions(createDatabaseReturning([])),
+    );
 
     // act
     const listed = await checkIns.listAll();
@@ -117,7 +121,7 @@ describe("PostgresCheckIns#listAll", () => {
   it("maps every stored row into the check-ins the domain reads", async () => {
     // arrange
     const checkIns = new PostgresCheckIns(
-      createDatabaseReturning([PENDING_ROW, APPROVED_ROW]),
+      repositoryOptions(createDatabaseReturning([PENDING_ROW, APPROVED_ROW])),
     );
 
     // act
@@ -130,6 +134,16 @@ describe("PostgresCheckIns#listAll", () => {
     ]);
   });
 });
+
+function repositoryOptions(database: DatabaseClient) {
+  return {
+    coachTime: {
+      release: vi.fn(),
+      reserve: vi.fn(),
+    },
+    database,
+  };
+}
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {

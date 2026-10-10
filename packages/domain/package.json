@@ -22,6 +22,7 @@
     "./client-roster": "./src/client-roster/index.ts",
     "./coach-availability": "./src/coach-availability/index.ts",
     "./coach-meeting-room": "./src/coach-meeting-room/index.ts",
+    "./coach-schedule": "./src/coach-schedule/index.ts",
     "./coaching-bundle": "./src/coaching-bundle/index.ts",
     "./coaching-subscription": "./src/coaching-subscription/index.ts",
     "./download-grant": "./src/download-grant/index.ts",

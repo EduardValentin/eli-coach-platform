@@ -24,7 +24,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps a stored row into the assessment call the domain reads", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([STORED_ROW]),
+      repositoryOptions(createDatabaseReturning([STORED_ROW])),
     );
 
     // act
@@ -54,7 +54,9 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps an absent note to no note", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
+      repositoryOptions(
+        createDatabaseReturning([{ ...STORED_ROW, visitorNotes: null }]),
+      ),
     );
 
     // act
@@ -67,7 +69,9 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("maps an absent phone to no phone", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
+      repositoryOptions(
+        createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
+      ),
     );
 
     // act
@@ -80,7 +84,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("finds no call for an identifier that matches no row", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([]),
+      repositoryOptions(createDatabaseReturning([])),
     );
 
     // act
@@ -93,7 +97,9 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   it("finds no call for an identifier Postgres cannot read", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
+      repositoryOptions(
+        createDatabaseRejecting(createDatabaseError({ code: "22P02" })),
+      ),
     );
 
     // act
@@ -113,7 +119,7 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
       startsAt: new Date("2026-10-02T14:00:00.000Z"),
     };
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([STORED_ROW, laterRow]),
+      repositoryOptions(createDatabaseReturning([STORED_ROW, laterRow])),
     );
 
     // act
@@ -163,7 +169,7 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
   it("lists nothing when no call is booked", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([]),
+      repositoryOptions(createDatabaseReturning([])),
     );
 
     // act
@@ -173,6 +179,13 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
     expect(calls).toEqual([]);
   });
 });
+
+function repositoryOptions(database: DatabaseClient) {
+  return {
+    coachTime: { reserve: vi.fn() },
+    database,
+  };
+}
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {
