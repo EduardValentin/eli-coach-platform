@@ -3,7 +3,7 @@ import type { Clock } from "../shared";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import { CheckInClientReach } from "./check-in-client-reach";
+import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
@@ -25,10 +25,10 @@ type ResolveCheckInJoinUseCaseOptions = {
 };
 
 export class ResolveCheckInJoinUseCase {
-  private readonly reach: CheckInClientReach;
+  private readonly reach: CheckInActorReach;
 
   constructor(private readonly options: ResolveCheckInJoinUseCaseOptions) {
-    this.reach = new CheckInClientReach(options);
+    this.reach = new CheckInActorReach(options);
   }
 
   async execute(

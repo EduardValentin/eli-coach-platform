@@ -6,19 +6,19 @@ import { escapedPattern } from "./locator-text";
 
 export type PickedCheckIn = { startsAt: Date; timeZone: string };
 
-export type CheckInPickerWording = {
+export type CheckInPickerKind = {
   title: string | RegExp;
   stepVerb: string;
   endpoint: string;
 };
 
-export const CHECK_IN_REQUEST_WORDING: CheckInPickerWording = {
+export const CHECK_IN_REQUEST_PICKER: CheckInPickerKind = {
   title: "Request a check-in",
   stepVerb: "Request",
   endpoint: "/api/check-ins",
 };
 
-export const CHECK_IN_SCHEDULE_WORDING: CheckInPickerWording = {
+export const CHECK_IN_SCHEDULE_PICKER: CheckInPickerKind = {
   title: /^Schedule a check-in with \S+$/,
   stepVerb: "Schedule",
   endpoint: "/api/check-ins/schedule",
@@ -37,18 +37,18 @@ export class CheckInPickerDialog {
 
   constructor(
     private readonly page: Page,
-    private readonly wording: CheckInPickerWording,
+    private readonly kind: CheckInPickerKind,
   ) {
     this.stepButtonName = new RegExp(
-      `^${escapedPattern(wording.stepVerb)} \\d{1,2}:\\d{2}`,
+      `^${escapedPattern(kind.stepVerb)} \\d{1,2}:\\d{2}`,
     );
     this.submissionPath = new RegExp(
-      `^${escapedPattern(wording.endpoint)}(\\.data)?$`,
+      `^${escapedPattern(kind.endpoint)}(\\.data)?$`,
     );
   }
 
   private get dialog() {
-    return this.page.getByRole("dialog", { name: this.wording.title });
+    return this.page.getByRole("dialog", { name: this.kind.title });
   }
 
   private get days() {
@@ -82,7 +82,7 @@ export class CheckInPickerDialog {
   async expectOpen(): Promise<void> {
     await expect(this.dialog).toBeVisible();
     await expect(
-      this.dialog.getByRole("heading", { level: 3, name: this.wording.title }),
+      this.dialog.getByRole("heading", { level: 3, name: this.kind.title }),
     ).toBeFocused();
     await expect(this.days).toBeVisible();
   }

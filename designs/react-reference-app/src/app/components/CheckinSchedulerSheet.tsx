@@ -122,7 +122,7 @@ function NoteField({
         onChange={(event) => onNoteChange(event.target.value)}
         maxLength={CHECKIN_NOTE_MAX_LENGTH}
         rows={3}
-        className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-control focus:outline-none bg-neutral-50 resize-none"
+        className="w-full px-3 py-2.5 text-sm border border-control-border-soft rounded-control focus:outline-none bg-surface-quiet resize-none"
       />
     </div>
   );

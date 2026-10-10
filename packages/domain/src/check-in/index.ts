@@ -10,8 +10,7 @@ export {
   type CheckInOutcome,
   type CheckInView,
 } from "./check-in";
-export { type CheckInActor } from "./check-in-actor";
-export { type CheckInActorCommand } from "./check-in-client-reach";
+export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export {
   type CheckInClientIdentity,
   type CheckInClients,

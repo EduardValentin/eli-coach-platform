@@ -58,7 +58,7 @@ type CheckInProposal = {
 
 type PartyAtInstant = { party: CheckInParty; at: Date };
 
-type CheckInSettlement = {
+type SettledAnswer = {
   outcome: CheckInOutcome;
   at: Date;
   clientTimeZone?: CheckInTimeZone | null;
@@ -202,7 +202,7 @@ export class CheckIn {
     );
   }
 
-  settled(settlement: CheckInSettlement): CheckIn {
+  settled(settlement: SettledAnswer): CheckIn {
     return new CheckIn({
       ...this.toProps(),
       clientTimeZone: settlement.clientTimeZone?.name ?? this.clientTimeZone,

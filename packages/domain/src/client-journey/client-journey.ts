@@ -4,6 +4,10 @@ import {
   reviewStageOf,
   type ReviewStamps,
 } from "../client-onboarding";
+import {
+  CoachingSubscription,
+  type CoachingSubscriptionSnapshot,
+} from "../coaching-subscription";
 
 export type ClientJourneyStep =
   | "welcome"
@@ -70,6 +74,23 @@ export class ClientJourney {
     step: ClientJourneyStep,
   ): step is StepAfterSubmission {
     return STEPS_AFTER_SUBMISSION.some((submitted) => submitted === step);
+  }
+
+  static coachingStandingOf(reading: {
+    subscription: Pick<
+      CoachingSubscriptionSnapshot,
+      "status" | "accessEndsAt"
+    > | null;
+    at: Date;
+  }): CoachingStanding {
+    if (!reading.subscription) {
+      return "active";
+    }
+
+    return CoachingSubscription.statusOf(reading.subscription, reading.at) ===
+      "ended"
+      ? "ended"
+      : "active";
   }
 
   static portalReachOf(standing: {

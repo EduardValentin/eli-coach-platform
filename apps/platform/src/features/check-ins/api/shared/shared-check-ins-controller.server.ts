@@ -51,7 +51,7 @@ export class SharedCheckInsController {
   constructor(private readonly options: SharedCheckInsControllerOptions) {}
 
   async listOpenTimes(args: LoaderFunctionArgs): Promise<Response> {
-    this.actorOf(args);
+    this.requireCheckInActor(args);
 
     const times = await this.options.listOpenCheckInTimes.execute();
 
@@ -101,7 +101,7 @@ export class SharedCheckInsController {
     checkInId,
     decision,
   }: DecisionRequest): Promise<Response> {
-    const actor = this.actorOf(args);
+    const actor = this.requireCheckInActor(args);
     const id = checkInIdSchema.safeParse(checkInId);
 
     if (!id.success) {
@@ -147,7 +147,7 @@ export class SharedCheckInsController {
     }
   }
 
-  private actorOf(args: LoaderFunctionArgs): CheckInActor {
+  private requireCheckInActor(args: LoaderFunctionArgs): CheckInActor {
     const account = requireApiAccount(args);
 
     requirePortalAccess(args, { role: account.role });

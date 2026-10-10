@@ -93,7 +93,7 @@ describe("SharedCheckInsController listOpenTimes", () => {
 });
 
 describe("SharedCheckInsController approve", () => {
-  it("approves as the coach and ignores any zone she sends", async () => {
+  it("approves as the coach and hands the use case any zone the body names", async () => {
     // arrange
     const { controller, approveCheckIn } = createController({
       approved: { status: "approved", checkIn: PENDING.toSnapshot() },

@@ -38,11 +38,10 @@ export class ReadClientPortalStandingUseCase {
     const subscription = await this.options.subscriptions.findCurrentForClient(
       journey.clientId,
     );
-    const ended =
-      subscription !== null &&
-      !subscription.hasPortalAccessAt(this.options.clock.now());
-
-    const coaching = ended ? "ended" : "active";
+    const coaching = ClientJourney.coachingStandingOf({
+      subscription,
+      at: this.options.clock.now(),
+    });
 
     return {
       journey,

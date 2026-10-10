@@ -12,8 +12,8 @@ import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
 import { CheckInRecords } from "./check-in-records";
 import {
-  CHECK_IN_REQUEST_WORDING,
-  CHECK_IN_SCHEDULE_WORDING,
+  CHECK_IN_REQUEST_PICKER,
+  CHECK_IN_SCHEDULE_PICKER,
   CheckInPickerDialog,
 } from "./check-in-picker-dialog";
 import { CheckInRequests } from "./check-in-requests";
@@ -377,11 +377,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   },
 
   checkInRequestDialog: async ({ page }, use) => {
-    await use(new CheckInPickerDialog(page, CHECK_IN_REQUEST_WORDING));
+    await use(new CheckInPickerDialog(page, CHECK_IN_REQUEST_PICKER));
   },
 
   checkInScheduleDialog: async ({ page }, use) => {
-    await use(new CheckInPickerDialog(page, CHECK_IN_SCHEDULE_WORDING));
+    await use(new CheckInPickerDialog(page, CHECK_IN_SCHEDULE_PICKER));
   },
 
   measurementsSheet: async ({ page }, use) => {

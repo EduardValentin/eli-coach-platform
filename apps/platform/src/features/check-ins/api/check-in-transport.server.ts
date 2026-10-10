@@ -31,6 +31,10 @@ export function unknownCheckIn(): Response {
   return new Response("Not Found", { status: 404 });
 }
 
+export function unknownClient(): Response {
+  return new Response("Not Found", { status: 404 });
+}
+
 export async function readCheckInBody(request: Request): Promise<unknown> {
   const body = await readTextRequestBody(request, {
     maxBytes: CHECK_IN_BODY_MAX_BYTES,

@@ -34,7 +34,6 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
-  CoachingSubscription,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
@@ -331,27 +330,27 @@ export function composeCoachingSalesFeature(
     findByAuthSubjectId: portalClientOf,
     findById: async (clientId) => {
       const entry = await roster.findById(clientId);
-      const call = entry
-        ? await handles.assessmentCallReader.findById(
-            entry.booking.assessmentCallId,
-          )
-        : null;
 
-      if (!entry || !call) {
+      if (!entry) {
         return null;
       }
 
-      const coachingEnded =
-        entry.subscription !== null &&
-        !CoachingSubscription.reconstitute(
-          entry.subscription,
-        ).hasPortalAccessAt(clock.now());
+      const call = await handles.assessmentCallReader.findById(
+        entry.booking.assessmentCallId,
+      );
+
+      if (!call) {
+        return null;
+      }
 
       return {
         clientId: entry.journey.clientId,
         portal: ClientJourney.portalReachOf({
           step: ClientJourney.from(entry.journey).step(),
-          coaching: coachingEnded ? "ended" : "active",
+          coaching: ClientJourney.coachingStandingOf({
+            subscription: entry.subscription,
+            at: clock.now(),
+          }),
         }),
         bookingTimeZone: call.visitorTimeZone,
       };

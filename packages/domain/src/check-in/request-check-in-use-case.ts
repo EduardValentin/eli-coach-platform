@@ -3,7 +3,7 @@ import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import { CheckInClientReach } from "./check-in-client-reach";
+import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -40,11 +40,11 @@ type RequestCheckInUseCaseOptions = {
 
 export class RequestCheckInUseCase {
   private readonly announcer: CheckInAnnouncer;
-  private readonly reach: CheckInClientReach;
+  private readonly reach: CheckInActorReach;
 
   constructor(private readonly options: RequestCheckInUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
-    this.reach = new CheckInClientReach(options);
+    this.reach = new CheckInActorReach(options);
   }
 
   async execute(command: RequestCheckInCommand): Promise<RequestCheckInResult> {

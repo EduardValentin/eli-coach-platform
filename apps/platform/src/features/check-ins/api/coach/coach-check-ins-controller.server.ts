@@ -13,7 +13,7 @@ import {
   checkInOutcomeResponse,
   readCheckInBody,
   refusedCheckIn,
-  unknownCheckIn,
+  unknownClient,
 } from "~/features/check-ins/api/check-in-transport.server";
 import {
   checkInScheduleSchema,
@@ -57,7 +57,7 @@ export class CoachCheckInsController {
     const id = clientIdSchema.safeParse(clientId);
 
     if (!id.success) {
-      throw unknownCheckIn();
+      throw unknownClient();
     }
 
     const scheduling = await this.options.readClientCheckInScheduling.execute(
@@ -65,7 +65,7 @@ export class CoachCheckInsController {
     );
 
     if (scheduling === "unknown") {
-      throw unknownCheckIn();
+      throw unknownClient();
     }
 
     return scheduling;
@@ -99,7 +99,7 @@ export class CoachCheckInsController {
           { status: CREATED },
         );
       case "unknown_client":
-        return unknownCheckIn();
+        return unknownClient();
       case "note_too_long":
       case "invalid_time_zone":
         return refusedCheckIn(result.status, { status: UNPROCESSABLE });

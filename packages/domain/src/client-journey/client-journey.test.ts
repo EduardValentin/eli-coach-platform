@@ -133,6 +133,53 @@ describe("ClientJourney.isAfterSubmission", () => {
   });
 });
 
+describe("ClientJourney.coachingStandingOf", () => {
+  const AT = new Date("2026-10-20T10:00:00.000Z");
+  const EARLIER = new Date("2026-10-19T10:00:00.000Z");
+  const LATER = new Date("2026-10-21T10:00:00.000Z");
+
+  it.each([
+    { situation: "no subscription", subscription: null, standing: "active" },
+    {
+      situation: "a subscription not started yet",
+      subscription: { status: "not-started", accessEndsAt: null },
+      standing: "active",
+    },
+    {
+      situation: "an active subscription",
+      subscription: { status: "active", accessEndsAt: null },
+      standing: "active",
+    },
+    {
+      situation: "a cancelled subscription before its access ends",
+      subscription: { status: "cancelled", accessEndsAt: LATER },
+      standing: "active",
+    },
+    {
+      situation: "a cancelled subscription once its access ended",
+      subscription: { status: "cancelled", accessEndsAt: EARLIER },
+      standing: "ended",
+    },
+    {
+      situation: "an ended subscription",
+      subscription: { status: "ended", accessEndsAt: EARLIER },
+      standing: "ended",
+    },
+  ] as const)(
+    "reads $situation as coaching $standing",
+    ({ subscription, standing }) => {
+      // arrange
+      const input = { subscription, at: AT };
+
+      // act
+      const coaching = ClientJourney.coachingStandingOf(input);
+
+      // assert
+      expect(coaching).toBe(standing);
+    },
+  );
+});
+
 describe("ClientJourney.portalReachOf", () => {
   it.each([
     { step: "submitted", coaching: "active", reach: "reachable" },
