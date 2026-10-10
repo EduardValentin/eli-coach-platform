@@ -1,4 +1,4 @@
-export type CoachMeetingRoomResult =
+type CoachMeetingRoomResult =
   | { status: "set"; room: CoachMeetingRoom }
   | { status: "unset" }
   | { status: "invalid" };

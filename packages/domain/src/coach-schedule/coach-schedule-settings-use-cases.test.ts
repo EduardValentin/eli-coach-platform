@@ -12,9 +12,9 @@ import {
   type CoachMeetingRoomSource,
 } from "../coach-meeting-room";
 
-import type { AssessmentCallSettingsSnapshot } from "./assessment-call-settings";
-import { GetAssessmentCallSettingsUseCase } from "./get-assessment-call-settings-use-case";
-import { UpdateAssessmentCallSettingsUseCase } from "./update-assessment-call-settings-use-case";
+import type { CoachScheduleSettingsSnapshot } from "./coach-schedule";
+import { GetCoachScheduleSettingsUseCase } from "./get-coach-schedule-settings-use-case";
+import { UpdateCoachScheduleSettingsUseCase } from "./update-coach-schedule-settings-use-case";
 
 const CONFIGURED_AVAILABILITY = {
   timeZone: "Europe/Bucharest",
@@ -87,10 +87,10 @@ function createMeetingRoomChanges(
   };
 }
 
-describe("GetAssessmentCallSettingsUseCase", () => {
+describe("GetCoachScheduleSettingsUseCase", () => {
   it("composes the availability and the meeting room into one snapshot", async () => {
     // arrange
-    const getSettings = new GetAssessmentCallSettingsUseCase({
+    const getSettings = new GetCoachScheduleSettingsUseCase({
       availability: createAvailabilitySource(),
       meetingRoom: createMeetingRoomSource({
         current: vi
@@ -114,7 +114,7 @@ describe("GetAssessmentCallSettingsUseCase", () => {
 
   it("answers no meeting link while the coach has saved no room", async () => {
     // arrange
-    const getSettings = new GetAssessmentCallSettingsUseCase({
+    const getSettings = new GetCoachScheduleSettingsUseCase({
       availability: createAvailabilitySource(),
       meetingRoom: createMeetingRoomSource(),
     });
@@ -127,20 +127,20 @@ describe("GetAssessmentCallSettingsUseCase", () => {
   });
 });
 
-describe("UpdateAssessmentCallSettingsUseCase", () => {
+describe("UpdateCoachScheduleSettingsUseCase", () => {
   const validCommand = {
     timeZone: "Europe/Bucharest",
     weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
     startHour: 9,
     endHour: 12,
     meetingLink: "https://meet.example.com/room",
-  } satisfies AssessmentCallSettingsSnapshot;
+  } satisfies CoachScheduleSettingsSnapshot;
 
   it("saves the availability and then the room when both are valid", async () => {
     // arrange
     const availabilityChanges = createAvailabilityChanges();
     const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateAssessmentCallSettingsUseCase({
+    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
       availabilityChanges,
       meetingRoomChanges,
     });
@@ -174,7 +174,7 @@ describe("UpdateAssessmentCallSettingsUseCase", () => {
   it("saves an empty meeting link as no room", async () => {
     // arrange
     const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateAssessmentCallSettingsUseCase({
+    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
       availabilityChanges: createAvailabilityChanges(),
       meetingRoomChanges,
     });
@@ -197,7 +197,7 @@ describe("UpdateAssessmentCallSettingsUseCase", () => {
     // arrange
     const availabilityChanges = createAvailabilityChanges();
     const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateAssessmentCallSettingsUseCase({
+    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
       availabilityChanges,
       meetingRoomChanges,
     });
@@ -218,7 +218,7 @@ describe("UpdateAssessmentCallSettingsUseCase", () => {
     // arrange
     const availabilityChanges = createAvailabilityChanges();
     const meetingRoomChanges = createMeetingRoomChanges();
-    const updateSettings = new UpdateAssessmentCallSettingsUseCase({
+    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
       availabilityChanges,
       meetingRoomChanges,
     });
@@ -240,7 +240,7 @@ describe("UpdateAssessmentCallSettingsUseCase", () => {
 
   it("collects every problem when the availability and the link are both invalid", async () => {
     // arrange
-    const updateSettings = new UpdateAssessmentCallSettingsUseCase({
+    const updateSettings = new UpdateCoachScheduleSettingsUseCase({
       availabilityChanges: createAvailabilityChanges(),
       meetingRoomChanges: createMeetingRoomChanges(),
     });

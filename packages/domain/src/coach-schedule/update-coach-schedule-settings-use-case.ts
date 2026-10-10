@@ -8,28 +8,28 @@ import {
 } from "../coach-meeting-room";
 
 import {
-  assessmentCallSettingsOf,
-  type AssessmentCallSettingsProblem,
-  type AssessmentCallSettingsSnapshot,
-} from "./assessment-call-settings";
+  coachScheduleSettingsOf,
+  type CoachScheduleSettingsProblem,
+  type CoachScheduleSettingsSnapshot,
+} from "./coach-schedule";
 
-export type UpdateAssessmentCallSettingsResult =
-  | { status: "saved"; settings: AssessmentCallSettingsSnapshot }
-  | { status: "invalid"; problems: AssessmentCallSettingsProblem[] };
+type UpdateCoachScheduleSettingsResult =
+  | { status: "saved"; settings: CoachScheduleSettingsSnapshot }
+  | { status: "invalid"; problems: CoachScheduleSettingsProblem[] };
 
-type UpdateAssessmentCallSettingsUseCaseOptions = {
+type UpdateCoachScheduleSettingsUseCaseOptions = {
   availabilityChanges: CoachAvailabilityChanges;
   meetingRoomChanges: CoachMeetingRoomChanges;
 };
 
-export class UpdateAssessmentCallSettingsUseCase {
+export class UpdateCoachScheduleSettingsUseCase {
   constructor(
-    private readonly options: UpdateAssessmentCallSettingsUseCaseOptions,
+    private readonly options: UpdateCoachScheduleSettingsUseCaseOptions,
   ) {}
 
   async execute(
-    command: AssessmentCallSettingsSnapshot,
-  ): Promise<UpdateAssessmentCallSettingsResult> {
+    command: CoachScheduleSettingsSnapshot,
+  ): Promise<UpdateCoachScheduleSettingsResult> {
     const availabilityResult = CoachAvailability.from(command);
     const roomResult = CoachMeetingRoom.from(command.meetingLink);
 
@@ -60,7 +60,7 @@ export class UpdateAssessmentCallSettingsUseCase {
 
     return {
       status: "saved",
-      settings: assessmentCallSettingsOf(availabilityResult.availability, room),
+      settings: coachScheduleSettingsOf(availabilityResult.availability, room),
     };
   }
 }

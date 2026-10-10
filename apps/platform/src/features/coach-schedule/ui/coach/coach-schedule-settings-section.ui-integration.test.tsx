@@ -11,15 +11,15 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import { clientAction as saveSettings } from "~/features/coach-schedule/api/settings";
-import type { AssessmentCallSettings } from "~/features/coach-schedule/public/assessment-call-settings";
+import type { CoachScheduleSettings } from "~/features/coach-schedule/public/coach-schedule-settings";
 import { COACH_SETTINGS_API_PATH } from "~/features/coach-schedule/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
-import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
+import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section";
 
 const SETTINGS_URL = COACH_SETTINGS_API_PATH;
 
-const DEFAULT_SETTINGS: AssessmentCallSettings = {
+const DEFAULT_SETTINGS: CoachScheduleSettings = {
   timeZone: "Europe/Bucharest",
   weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
   startHour: 17,
@@ -42,7 +42,7 @@ afterAll(() => {
   server.close();
 });
 
-describe("assessment call settings section", () => {
+describe("coach schedule settings section", () => {
   it("shows the loaded defaults", async () => {
     // arrange, act
     await renderSection();
@@ -419,7 +419,7 @@ describe("assessment call settings section", () => {
 });
 
 async function renderSection(
-  settings: AssessmentCallSettings = DEFAULT_SETTINGS,
+  settings: CoachScheduleSettings = DEFAULT_SETTINGS,
 ) {
   const router = createMemoryRouter(
     [
@@ -433,7 +433,7 @@ async function renderSection(
         children: [
           {
             Component: () => (
-              <AssessmentCallSettingsSection settings={settings} />
+              <CoachScheduleSettingsSection settings={settings} />
             ),
             index: true,
             loader: () => settings,

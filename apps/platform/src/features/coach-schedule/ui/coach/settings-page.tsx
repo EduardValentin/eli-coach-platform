@@ -5,15 +5,15 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { AssessmentCallSettings } from "~/features/coach-schedule/public/assessment-call-settings";
+import type { CoachScheduleSettings } from "~/features/coach-schedule/public/coach-schedule-settings";
 import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 
-import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
+import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return context
     .get(coachScheduleContext)
-    .assessmentCallSettings.loadSettingsPage();
+    .coachScheduleSettings.loadSettingsPage();
 }
 
 export const meta: MetaFunction = () => [{ title: "Settings | Evoa" }];
@@ -24,7 +24,7 @@ export default function CoachSettingsRoute() {
   return <CoachSettingsPage settings={settings} />;
 }
 
-function CoachSettingsPage(props: { settings: AssessmentCallSettings }) {
+function CoachSettingsPage(props: { settings: CoachScheduleSettings }) {
   return (
     <div
       className="w-full max-w-3xl space-y-6 sm:space-y-8"
@@ -35,7 +35,7 @@ function CoachSettingsPage(props: { settings: AssessmentCallSettings }) {
         title="Settings"
       />
 
-      <AssessmentCallSettingsSection settings={props.settings} />
+      <CoachScheduleSettingsSection settings={props.settings} />
     </div>
   );
 }

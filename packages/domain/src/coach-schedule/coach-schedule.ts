@@ -5,7 +5,7 @@ import type {
 } from "../coach-availability";
 import type { CoachMeetingRoom } from "../coach-meeting-room";
 
-export type AssessmentCallSettingsSnapshot = {
+export type CoachScheduleSettingsSnapshot = {
   timeZone: string;
   weekdays: readonly Weekday[];
   startHour: number;
@@ -13,13 +13,13 @@ export type AssessmentCallSettingsSnapshot = {
   meetingLink: string | null;
 };
 
-export type AssessmentCallSettingsProblem =
+export type CoachScheduleSettingsProblem =
   CoachAvailabilityProblem | "invalid_meeting_link";
 
-export function assessmentCallSettingsOf(
+export function coachScheduleSettingsOf(
   availability: CoachAvailability,
   room: CoachMeetingRoom | null,
-): AssessmentCallSettingsSnapshot {
+): CoachScheduleSettingsSnapshot {
   return {
     timeZone: availability.timeZone,
     weekdays: availability.weekdays,

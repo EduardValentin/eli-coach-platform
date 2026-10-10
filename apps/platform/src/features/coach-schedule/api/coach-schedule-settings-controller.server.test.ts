@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 
-import { AssessmentCallSettingsController } from "./assessment-call-settings-controller.server";
+import { CoachScheduleSettingsController } from "./coach-schedule-settings-controller.server";
 
 const VALID_SETTINGS = {
   timeZone: "Europe/Bucharest",
@@ -14,14 +14,14 @@ const VALID_SETTINGS = {
   meetingLink: null,
 };
 
-describe("AssessmentCallSettingsController", () => {
+describe("CoachScheduleSettingsController", () => {
   describe("loadSettingsPage", () => {
     it("parses the use case snapshot through the wire contract", async () => {
       // arrange
       const getSettings = {
         execute: vi.fn().mockResolvedValue(VALID_SETTINGS),
       };
-      const controller = new AssessmentCallSettingsController({
+      const controller = new CoachScheduleSettingsController({
         getSettings: getSettings as never,
         updateSettings: { execute: vi.fn() } as never,
       });
@@ -147,7 +147,7 @@ describe("AssessmentCallSettingsController", () => {
           .fn()
           .mockResolvedValue({ problems: ["no_weekday"], status: "invalid" }),
       };
-      const controller = new AssessmentCallSettingsController({
+      const controller = new CoachScheduleSettingsController({
         getSettings: { execute: vi.fn() } as never,
         updateSettings: updateSettings as never,
       });
@@ -170,7 +170,7 @@ describe("AssessmentCallSettingsController", () => {
           .fn()
           .mockResolvedValue({ settings: VALID_SETTINGS, status: "saved" }),
       };
-      const controller = new AssessmentCallSettingsController({
+      const controller = new CoachScheduleSettingsController({
         getSettings: { execute: vi.fn() } as never,
         updateSettings: updateSettings as never,
       });
@@ -193,7 +193,7 @@ describe("AssessmentCallSettingsController", () => {
       const updateSettings = {
         execute: vi.fn().mockRejectedValue(new Error("database down")),
       };
-      const controller = new AssessmentCallSettingsController({
+      const controller = new CoachScheduleSettingsController({
         getSettings: { execute: vi.fn() } as never,
         updateSettings: updateSettings as never,
       });
@@ -211,8 +211,8 @@ describe("AssessmentCallSettingsController", () => {
   });
 });
 
-function createController(): AssessmentCallSettingsController {
-  return new AssessmentCallSettingsController({
+function createController(): CoachScheduleSettingsController {
+  return new CoachScheduleSettingsController({
     getSettings: { execute: vi.fn() } as never,
     updateSettings: { execute: vi.fn() } as never,
   });
@@ -240,7 +240,7 @@ function createActionArgs(options: {
   return {
     context,
     params: {},
-    request: new Request("https://eli.example/api/assessment-calls/settings", {
+    request: new Request("https://eli.example/api/coach-schedule/settings", {
       body: JSON.stringify(options.body),
       headers: { "Content-Type": "application/json" },
       method: "PUT",

@@ -18,11 +18,11 @@ const SETTINGS = {
 };
 
 describe("coach settings page loader", () => {
-  it("loads the coach's saved assessment call settings", async () => {
+  it("loads the coach's saved coach schedule settings", async () => {
     // arrange
     const loadSettingsPage = vi.fn().mockResolvedValue(SETTINGS);
     const feature = {
-      assessmentCallSettings: { loadSettingsPage },
+      coachScheduleSettings: { loadSettingsPage },
     } as unknown as CoachScheduleFeature;
 
     // act

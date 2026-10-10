@@ -2,14 +2,14 @@ import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
 import { describe, expect, it } from "vitest";
 
 import {
-  ASSESSMENT_CALL_SETTINGS_MESSAGES,
-  ASSESSMENT_CALL_SETTINGS_TOASTS,
+  COACH_SCHEDULE_SETTINGS_MESSAGES,
+  COACH_SCHEDULE_SETTINGS_TOASTS,
   HOUR_OPTIONS,
   WEEKDAY_DISPLAY_ORDER,
-  assessmentCallSettingsSchema,
-  updateAssessmentCallSettingsErrorSchema,
-  updateAssessmentCallSettingsSuccessSchema,
-} from "./assessment-call-settings";
+  coachScheduleSettingsSchema,
+  updateCoachScheduleSettingsErrorSchema,
+  updateCoachScheduleSettingsSuccessSchema,
+} from "./coach-schedule-settings";
 
 const VALID_SETTINGS = {
   timeZone: "Europe/Bucharest",
@@ -19,11 +19,11 @@ const VALID_SETTINGS = {
   meetingLink: null,
 };
 
-describe("assessmentCallSettingsSchema", () => {
+describe("coachScheduleSettingsSchema", () => {
   it("accepts the coach's saved window with no meeting link", () => {
     // arrange
     // act
-    const result = assessmentCallSettingsSchema.safeParse(VALID_SETTINGS);
+    const result = coachScheduleSettingsSchema.safeParse(VALID_SETTINGS);
 
     // assert
     expect(result.success).toBe(true);
@@ -38,7 +38,7 @@ describe("assessmentCallSettingsSchema", () => {
     };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(true);
@@ -49,7 +49,7 @@ describe("assessmentCallSettingsSchema", () => {
     const settings = { ...VALID_SETTINGS, meetingLink: "" };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(true);
@@ -60,7 +60,7 @@ describe("assessmentCallSettingsSchema", () => {
     const settings = { ...VALID_SETTINGS, weekdays: [] };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(false);
@@ -72,7 +72,7 @@ describe("assessmentCallSettingsSchema", () => {
     const settings = { ...VALID_SETTINGS, weekdays: ["someday"] };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(false);
@@ -84,7 +84,7 @@ describe("assessmentCallSettingsSchema", () => {
     const settings = { ...VALID_SETTINGS, weekdays: [...WEEKDAYS] };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(true);
@@ -97,7 +97,7 @@ describe("assessmentCallSettingsSchema", () => {
       const settings = { ...VALID_SETTINGS, startHour };
 
       // act
-      const result = assessmentCallSettingsSchema.safeParse(settings);
+      const result = coachScheduleSettingsSchema.safeParse(settings);
 
       // assert
       expect(result.success).toBe(false);
@@ -112,7 +112,7 @@ describe("assessmentCallSettingsSchema", () => {
       const settings = { ...VALID_SETTINGS, endHour };
 
       // act
-      const result = assessmentCallSettingsSchema.safeParse(settings);
+      const result = coachScheduleSettingsSchema.safeParse(settings);
 
       // assert
       expect(result.success).toBe(false);
@@ -128,7 +128,7 @@ describe("assessmentCallSettingsSchema", () => {
     };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(false);
@@ -143,7 +143,7 @@ describe("assessmentCallSettingsSchema", () => {
     };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(false);
@@ -155,7 +155,7 @@ describe("assessmentCallSettingsSchema", () => {
     const settings = { ...VALID_SETTINGS, timeZone: "Mars/Olympus_Mons" };
 
     // act
-    const result = assessmentCallSettingsSchema.safeParse(settings);
+    const result = coachScheduleSettingsSchema.safeParse(settings);
 
     // assert
     expect(result.success).toBe(false);
@@ -163,21 +163,20 @@ describe("assessmentCallSettingsSchema", () => {
   });
 });
 
-describe("updateAssessmentCallSettingsSuccessSchema", () => {
+describe("updateCoachScheduleSettingsSuccessSchema", () => {
   it("publishes the saved settings", () => {
     // arrange
     const response = { success: true, settings: VALID_SETTINGS };
 
     // act
-    const result =
-      updateAssessmentCallSettingsSuccessSchema.safeParse(response);
+    const result = updateCoachScheduleSettingsSuccessSchema.safeParse(response);
 
     // assert
     expect(result.success).toBe(true);
   });
 });
 
-describe("updateAssessmentCallSettingsErrorSchema", () => {
+describe("updateCoachScheduleSettingsErrorSchema", () => {
   it.each([
     "no_weekday",
     "invalid_hours",
@@ -189,7 +188,7 @@ describe("updateAssessmentCallSettingsErrorSchema", () => {
     const response = { success: false, error: { code, message: "opaque" } };
 
     // act
-    const result = updateAssessmentCallSettingsErrorSchema.safeParse(response);
+    const result = updateCoachScheduleSettingsErrorSchema.safeParse(response);
 
     // assert
     expect(result.success).toBe(true);
@@ -203,19 +202,19 @@ describe("updateAssessmentCallSettingsErrorSchema", () => {
     };
 
     // act
-    const result = updateAssessmentCallSettingsErrorSchema.safeParse(response);
+    const result = updateCoachScheduleSettingsErrorSchema.safeParse(response);
 
     // assert
     expect(result.success).toBe(false);
   });
 });
 
-describe("ASSESSMENT_CALL_SETTINGS_MESSAGES", () => {
+describe("COACH_SCHEDULE_SETTINGS_MESSAGES", () => {
   it("words each save problem the coach can cause", () => {
     // arrange
     // act
     // assert
-    expect(ASSESSMENT_CALL_SETTINGS_MESSAGES).toEqual({
+    expect(COACH_SCHEDULE_SETTINGS_MESSAGES).toEqual({
       no_weekday: "Pick at least one day.",
       invalid_hours: "The start hour must be before the end hour.",
       invalid_meeting_link: "Enter a full https:// link, or leave it empty.",
@@ -225,14 +224,14 @@ describe("ASSESSMENT_CALL_SETTINGS_MESSAGES", () => {
   });
 });
 
-describe("ASSESSMENT_CALL_SETTINGS_TOASTS", () => {
+describe("COACH_SCHEDULE_SETTINGS_TOASTS", () => {
   it("words the save outcomes, reusing the server error for a failed save", () => {
     // arrange
     // act
     // assert
-    expect(ASSESSMENT_CALL_SETTINGS_TOASTS).toEqual({
+    expect(COACH_SCHEDULE_SETTINGS_TOASTS).toEqual({
       saved: "Settings saved",
-      failed: ASSESSMENT_CALL_SETTINGS_MESSAGES.server_error,
+      failed: COACH_SCHEDULE_SETTINGS_MESSAGES.server_error,
     });
   });
 });

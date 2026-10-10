@@ -6,8 +6,8 @@ import {
   checkInsCoachJoinRoutes,
   checkInsCoachRoutes,
 } from "../../features/check-ins/routes";
-import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
 import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/public/paths";
+import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
 import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
 import { coachingSalesCoachRoutes } from "../../features/coaching-sales/routes";
 

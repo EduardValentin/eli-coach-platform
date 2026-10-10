@@ -1,7 +1,6 @@
 import {
   CoachMeetingRoom,
   type CoachMeetingRoomChanges,
-  type CoachMeetingRoomResult,
   type CoachMeetingRoomSource,
 } from "@eli-coach-platform/domain/coach-meeting-room";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -34,8 +33,7 @@ export class PostgresCoachMeetingRoom
       return null;
     }
 
-    // Named type keeps the domain's published result type referenced (knip).
-    const result: CoachMeetingRoomResult = CoachMeetingRoom.from(row.url);
+    const result = CoachMeetingRoom.from(row.url);
 
     return result.status === "set" ? result.room : null;
   }

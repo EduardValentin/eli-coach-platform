@@ -14,9 +14,9 @@ import {
   openSlotsResponseSchema,
 } from "~/features/assessment-calls/public/assessment-calls";
 import {
-  updateAssessmentCallSettingsErrorSchema,
-  updateAssessmentCallSettingsSuccessSchema,
-} from "~/features/coach-schedule/public/assessment-call-settings";
+  updateCoachScheduleSettingsErrorSchema,
+  updateCoachScheduleSettingsSuccessSchema,
+} from "~/features/coach-schedule/public/coach-schedule-settings";
 import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
@@ -78,7 +78,7 @@ const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
 const MONDAY_EVENING_START = "2026-10-19T14:00:00.000Z";
 const TUESDAY_EVENING_START = "2026-10-20T14:00:00.000Z";
 
-describe.sequential("assessment call settings integration", () => {
+describe.sequential("coach schedule settings integration", () => {
   beforeAll(async () => {
     await suite.start();
   });
@@ -127,7 +127,7 @@ describe.sequential("assessment call settings integration", () => {
     // assert
     expect(response.status).toBe(400);
     expect(
-      updateAssessmentCallSettingsErrorSchema.parse(await response.json()).error
+      updateCoachScheduleSettingsErrorSchema.parse(await response.json()).error
         .code,
     ).toBe("no_weekday");
   });
@@ -142,7 +142,7 @@ describe.sequential("assessment call settings integration", () => {
     // assert
     expect(response.status).toBe(400);
     expect(
-      updateAssessmentCallSettingsErrorSchema.parse(await response.json()).error
+      updateCoachScheduleSettingsErrorSchema.parse(await response.json()).error
         .code,
     ).toBe("invalid_hours");
   });
@@ -157,7 +157,7 @@ describe.sequential("assessment call settings integration", () => {
     // assert
     expect(response.status).toBe(400);
     expect(
-      updateAssessmentCallSettingsErrorSchema.parse(await response.json()).error
+      updateCoachScheduleSettingsErrorSchema.parse(await response.json()).error
         .code,
     ).toBe("invalid_meeting_link");
   });
@@ -172,7 +172,7 @@ describe.sequential("assessment call settings integration", () => {
     // assert
     expect(response.status).toBe(400);
     expect(
-      updateAssessmentCallSettingsErrorSchema.parse(await response.json()).error
+      updateCoachScheduleSettingsErrorSchema.parse(await response.json()).error
         .code,
     ).toBe("invalid_time_zone");
   });
@@ -191,7 +191,7 @@ describe.sequential("assessment call settings integration", () => {
     // assert
     expect(response.status).toBe(200);
 
-    const body = updateAssessmentCallSettingsSuccessSchema.parse(
+    const body = updateCoachScheduleSettingsSuccessSchema.parse(
       await response.json(),
     );
 
@@ -276,7 +276,7 @@ describe.sequential("assessment call settings integration", () => {
     expect(slots[0]).toBe(TUESDAY_EVENING_START);
   });
 
-  it("shows the coach her saved assessment call settings on /coach/settings", async () => {
+  it("shows the coach her saved coach schedule settings on /coach/settings", async () => {
     // arrange
     const savedAt = new Date("2026-10-12T09:00:00.000Z");
     await suite.setServerClock(savedAt);
@@ -400,7 +400,7 @@ async function requestSettingsUpdate(options: {
   body: unknown;
 }): Promise<Response> {
   return suite.request(
-    new Request(suite.url("/api/assessment-calls/settings"), {
+    new Request(suite.url("/api/coach-schedule/settings"), {
       body: JSON.stringify(options.body),
       headers: {
         "content-type": "application/json",

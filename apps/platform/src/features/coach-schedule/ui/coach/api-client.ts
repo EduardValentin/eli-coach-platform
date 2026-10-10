@@ -2,22 +2,22 @@ import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
 
 import {
-  ASSESSMENT_CALL_SETTINGS_MESSAGES,
-  updateAssessmentCallSettingsErrorSchema,
-  updateAssessmentCallSettingsSuccessSchema,
-  type AssessmentCallSettings,
-  type AssessmentCallSettingsErrorCode,
-} from "~/features/coach-schedule/public/assessment-call-settings";
+  COACH_SCHEDULE_SETTINGS_MESSAGES,
+  updateCoachScheduleSettingsErrorSchema,
+  updateCoachScheduleSettingsSuccessSchema,
+  type CoachScheduleSettings,
+  type CoachScheduleSettingsErrorCode,
+} from "~/features/coach-schedule/public/coach-schedule-settings";
 import { COACH_SETTINGS_API_PATH } from "~/features/coach-schedule/public/paths";
 
-export type SaveAssessmentCallSettingsResponse =
-  | { settings: AssessmentCallSettings; success: true }
+export type SaveCoachScheduleSettingsResponse =
+  | { settings: CoachScheduleSettings; success: true }
   | {
-      error: { code: AssessmentCallSettingsErrorCode; message: string };
+      error: { code: CoachScheduleSettingsErrorCode; message: string };
       success: false;
     };
 
-export function useSaveAssessmentCallSettingsFetcher() {
+export function useSaveCoachScheduleSettingsFetcher() {
   const fetcher = useFetcher<unknown>();
   const { data, state, submit: fetcherSubmit } = fetcher;
   const isSubmitting = state === "submitting";
@@ -27,7 +27,7 @@ export function useSaveAssessmentCallSettingsFetcher() {
     [data, isSubmitting],
   );
   const submit = useCallback(
-    (settings: AssessmentCallSettings) => {
+    (settings: CoachScheduleSettings) => {
       void fetcherSubmit(settings, {
         action: COACH_SETTINGS_API_PATH,
         encType: "application/json",
@@ -42,21 +42,21 @@ export function useSaveAssessmentCallSettingsFetcher() {
 
 function parseSettingsResponse(
   data: unknown,
-): SaveAssessmentCallSettingsResponse {
-  const success = updateAssessmentCallSettingsSuccessSchema.safeParse(data);
+): SaveCoachScheduleSettingsResponse {
+  const success = updateCoachScheduleSettingsSuccessSchema.safeParse(data);
 
   if (success.success) {
     return success.data;
   }
 
-  const failure = updateAssessmentCallSettingsErrorSchema.safeParse(data);
+  const failure = updateCoachScheduleSettingsErrorSchema.safeParse(data);
 
   return failure.success
     ? failure.data
     : {
         error: {
           code: "server_error",
-          message: ASSESSMENT_CALL_SETTINGS_MESSAGES.server_error,
+          message: COACH_SCHEDULE_SETTINGS_MESSAGES.server_error,
         },
         success: false,
       };

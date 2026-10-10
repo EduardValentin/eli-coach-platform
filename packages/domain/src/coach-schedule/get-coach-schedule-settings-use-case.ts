@@ -2,26 +2,26 @@ import type { CoachAvailabilitySource } from "../coach-availability";
 import type { CoachMeetingRoomSource } from "../coach-meeting-room";
 
 import {
-  assessmentCallSettingsOf,
-  type AssessmentCallSettingsSnapshot,
-} from "./assessment-call-settings";
+  coachScheduleSettingsOf,
+  type CoachScheduleSettingsSnapshot,
+} from "./coach-schedule";
 
-type GetAssessmentCallSettingsUseCaseOptions = {
+type GetCoachScheduleSettingsUseCaseOptions = {
   availability: CoachAvailabilitySource;
   meetingRoom: CoachMeetingRoomSource;
 };
 
-export class GetAssessmentCallSettingsUseCase {
+export class GetCoachScheduleSettingsUseCase {
   constructor(
-    private readonly options: GetAssessmentCallSettingsUseCaseOptions,
+    private readonly options: GetCoachScheduleSettingsUseCaseOptions,
   ) {}
 
-  async execute(): Promise<AssessmentCallSettingsSnapshot> {
+  async execute(): Promise<CoachScheduleSettingsSnapshot> {
     const [availability, room] = await Promise.all([
       this.options.availability.current(),
       this.options.meetingRoom.current(),
     ]);
 
-    return assessmentCallSettingsOf(availability, room);
+    return coachScheduleSettingsOf(availability, room);
   }
 }

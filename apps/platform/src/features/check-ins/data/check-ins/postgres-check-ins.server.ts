@@ -43,6 +43,7 @@ type PostgresCheckInsOptions = {
 };
 
 const CLIENT_REQUEST_LOCK_PREFIX = "check-in-request:";
+const REQUEST_SAVEPOINT = sql.identifier("check_in_request");
 
 export class PostgresCheckIns implements CheckIns {
   constructor(private readonly options: PostgresCheckInsOptions) {}
@@ -101,7 +102,7 @@ export class PostgresCheckIns implements CheckIns {
       .from(checkInsTable)
       .where(eq(checkInsTable.clientId, checkIn.clientId));
 
-    await transaction.execute(sql`savepoint check_in_request`);
+    await transaction.execute(sql`savepoint ${REQUEST_SAVEPOINT}`);
     await transaction.insert(checkInsTable).values(this.toRow(checkIn));
 
     const coachTime = await this.options.coachTime.reserve(transaction, {
@@ -119,7 +120,7 @@ export class PostgresCheckIns implements CheckIns {
       return { status: "requested", checkIn };
     }
 
-    await transaction.execute(sql`rollback to savepoint check_in_request`);
+    await transaction.execute(sql`rollback to savepoint ${REQUEST_SAVEPOINT}`);
 
     return { status: decision };
   }

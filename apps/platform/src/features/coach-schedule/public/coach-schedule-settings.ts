@@ -8,7 +8,7 @@ import { timeZoneSchema } from "./time-zone";
 
 const MAX_MEETING_LINK_LENGTH = 2048;
 
-export const ASSESSMENT_CALL_SETTINGS_MESSAGES = {
+export const COACH_SCHEDULE_SETTINGS_MESSAGES = {
   no_weekday: "Pick at least one day.",
   invalid_hours: "The start hour must be before the end hour.",
   invalid_meeting_link: "Enter a full https:// link, or leave it empty.",
@@ -16,9 +16,9 @@ export const ASSESSMENT_CALL_SETTINGS_MESSAGES = {
   server_error: "We couldn't save your settings. Try again in a moment.",
 } as const;
 
-export const ASSESSMENT_CALL_SETTINGS_TOASTS = {
+export const COACH_SCHEDULE_SETTINGS_TOASTS = {
   saved: "Settings saved",
-  failed: ASSESSMENT_CALL_SETTINGS_MESSAGES.server_error,
+  failed: COACH_SCHEDULE_SETTINGS_MESSAGES.server_error,
 } as const;
 
 export const WEEKDAY_DISPLAY_ORDER = [
@@ -58,44 +58,42 @@ function isEmptyOrHttpsUrl(link: string | null): boolean {
   }
 }
 
-export const assessmentCallSettingsSchema = z.object({
+export const coachScheduleSettingsSchema = z.object({
   timeZone: timeZoneSchema,
   weekdays: z
     .array(z.enum(WEEKDAYS))
-    .min(1, ASSESSMENT_CALL_SETTINGS_MESSAGES.no_weekday),
+    .min(1, COACH_SCHEDULE_SETTINGS_MESSAGES.no_weekday),
   startHour: z
     .number()
-    .int(ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours)
-    .min(0, ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours)
-    .max(23, ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours),
+    .int(COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours)
+    .min(0, COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours)
+    .max(23, COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours),
   endHour: z
     .number()
-    .int(ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours)
-    .min(1, ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours)
-    .max(24, ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_hours),
+    .int(COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours)
+    .min(1, COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours)
+    .max(24, COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_hours),
   meetingLink: z
     .string()
     .max(
       MAX_MEETING_LINK_LENGTH,
-      ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_meeting_link,
+      COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_meeting_link,
     )
     .nullable()
     .refine(
       isEmptyOrHttpsUrl,
-      ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_meeting_link,
+      COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_meeting_link,
     ),
 });
 
-export type AssessmentCallSettings = z.infer<
-  typeof assessmentCallSettingsSchema
->;
+export type CoachScheduleSettings = z.infer<typeof coachScheduleSettingsSchema>;
 
-export const updateAssessmentCallSettingsSuccessSchema = z.object({
+export const updateCoachScheduleSettingsSuccessSchema = z.object({
   success: z.literal(true),
-  settings: assessmentCallSettingsSchema,
+  settings: coachScheduleSettingsSchema,
 });
 
-const assessmentCallSettingsErrorCodeSchema = z.enum([
+const coachScheduleSettingsErrorCodeSchema = z.enum([
   "no_weekday",
   "invalid_hours",
   "invalid_meeting_link",
@@ -103,14 +101,14 @@ const assessmentCallSettingsErrorCodeSchema = z.enum([
   "server_error",
 ]);
 
-export type AssessmentCallSettingsErrorCode = z.infer<
-  typeof assessmentCallSettingsErrorCodeSchema
+export type CoachScheduleSettingsErrorCode = z.infer<
+  typeof coachScheduleSettingsErrorCodeSchema
 >;
 
-export const updateAssessmentCallSettingsErrorSchema = z.object({
+export const updateCoachScheduleSettingsErrorSchema = z.object({
   success: z.literal(false),
   error: z.object({
-    code: assessmentCallSettingsErrorCodeSchema,
+    code: coachScheduleSettingsErrorCodeSchema,
     message: z.string().min(1),
   }),
 });

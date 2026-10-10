@@ -1,8 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
-  GetAssessmentCallSettingsUseCase,
-  UpdateAssessmentCallSettingsUseCase,
-} from "@eli-coach-platform/domain/assessment-call";
+  GetCoachScheduleSettingsUseCase,
+  UpdateCoachScheduleSettingsUseCase,
+} from "@eli-coach-platform/domain/coach-schedule";
 import type {
   CoachAvailabilitySource,
   CoachCalendar,
@@ -10,7 +10,7 @@ import type {
 import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 
-import { AssessmentCallSettingsController } from "~/features/coach-schedule/api/assessment-call-settings-controller.server";
+import { CoachScheduleSettingsController } from "~/features/coach-schedule/api/coach-schedule-settings-controller.server";
 import { PostgresCoachAvailability } from "~/features/coach-schedule/data/availability/postgres-coach-availability.server";
 import { PostgresCoachMeetingRoom } from "~/features/coach-schedule/data/meeting-room/postgres-coach-meeting-room.server";
 import {
@@ -20,7 +20,7 @@ import {
 import { PostgresCoachCalendar } from "~/features/coach-schedule/data/reservations/postgres-coach-calendar.server";
 
 export type CoachScheduleFeature = {
-  assessmentCallSettings: AssessmentCallSettingsController;
+  coachScheduleSettings: CoachScheduleSettingsController;
 };
 
 type CoachScheduleComposition = {
@@ -49,12 +49,12 @@ export function composeCoachScheduleFeature(
 
   return {
     feature: {
-      assessmentCallSettings: new AssessmentCallSettingsController({
-        getSettings: new GetAssessmentCallSettingsUseCase({
+      coachScheduleSettings: new CoachScheduleSettingsController({
+        getSettings: new GetCoachScheduleSettingsUseCase({
           availability,
           meetingRoom,
         }),
-        updateSettings: new UpdateAssessmentCallSettingsUseCase({
+        updateSettings: new UpdateCoachScheduleSettingsUseCase({
           availabilityChanges: availability,
           meetingRoomChanges: meetingRoom,
         }),

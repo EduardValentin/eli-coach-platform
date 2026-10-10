@@ -35,6 +35,7 @@ type PostgresAssessmentCallRepositoryOptions = {
 };
 
 const UNREADABLE_IDENTIFIER_CODE = "22P02";
+const RESERVATION_SAVEPOINT = sql.identifier("assessment_call_reservation");
 
 export class PostgresAssessmentCallRepository implements AssessmentCallReservations {
   constructor(
@@ -87,7 +88,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       command,
     );
 
-    await transaction.execute(sql`savepoint assessment_call_reservation`);
+    await transaction.execute(sql`savepoint ${RESERVATION_SAVEPOINT}`);
 
     const call = await this.insertCall(transaction, command);
     const coachTime = await this.options.coachTime.reserve(transaction, {
@@ -105,7 +106,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
     }
 
     await transaction.execute(
-      sql`rollback to savepoint assessment_call_reservation`,
+      sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
     );
 
     return decision;

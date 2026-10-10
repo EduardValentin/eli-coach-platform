@@ -29,18 +29,18 @@ import {
 } from "react-hook-form";
 
 import {
-  ASSESSMENT_CALL_SETTINGS_MESSAGES,
-  ASSESSMENT_CALL_SETTINGS_TOASTS,
-  assessmentCallSettingsSchema,
+  COACH_SCHEDULE_SETTINGS_MESSAGES,
+  COACH_SCHEDULE_SETTINGS_TOASTS,
+  coachScheduleSettingsSchema,
   HOUR_OPTIONS,
   WEEKDAY_DISPLAY_ORDER,
-  type AssessmentCallSettings,
-  type AssessmentCallSettingsErrorCode,
-} from "~/features/coach-schedule/public/assessment-call-settings";
+  type CoachScheduleSettings,
+  type CoachScheduleSettingsErrorCode,
+} from "~/features/coach-schedule/public/coach-schedule-settings";
 
-import { useSaveAssessmentCallSettingsFetcher } from "./api-client";
+import { useSaveCoachScheduleSettingsFetcher } from "./api-client";
 
-type Weekday = AssessmentCallSettings["weekdays"][number];
+type Weekday = CoachScheduleSettings["weekdays"][number];
 type HourField = "endHour" | "startHour";
 
 const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> = {
@@ -54,10 +54,7 @@ const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> = {
 };
 
 const FIELD_BY_ERROR_CODE: Partial<
-  Record<
-    AssessmentCallSettingsErrorCode,
-    HourField | "meetingLink" | "weekdays"
-  >
+  Record<CoachScheduleSettingsErrorCode, HourField | "meetingLink" | "weekdays">
 > = {
   invalid_hours: "endHour",
   invalid_meeting_link: "meetingLink",
@@ -71,24 +68,24 @@ const END_HOUR_FIELD_ID = "end-hour";
 const MEETING_LINK_FIELD_ID = "meeting-link";
 
 const REFUSED_FIELD_SELECTOR_BY_ERROR_CODE: Partial<
-  Record<AssessmentCallSettingsErrorCode, string>
+  Record<CoachScheduleSettingsErrorCode, string>
 > = {
   no_weekday: 'input[name="weekdays"]',
   invalid_hours: `#${START_HOUR_FIELD_ID}`,
   invalid_meeting_link: 'input[name="meetingLink"]',
 };
 
-type AssessmentCallSettingsSectionProps = {
-  settings: AssessmentCallSettings;
+type CoachScheduleSettingsSectionProps = {
+  settings: CoachScheduleSettings;
 };
 
-export function AssessmentCallSettingsSection(
-  props: AssessmentCallSettingsSectionProps,
+export function CoachScheduleSettingsSection(
+  props: CoachScheduleSettingsSectionProps,
 ) {
   const { settings } = props;
   const headingId = useId();
   const { isSubmitting, response, submit } =
-    useSaveAssessmentCallSettingsFetcher();
+    useSaveCoachScheduleSettingsFetcher();
   const formRef = useRef<HTMLFormElement>(null);
   const {
     control,
@@ -98,9 +95,9 @@ export function AssessmentCallSettingsSection(
     reset,
     setError,
     watch,
-  } = useForm<AssessmentCallSettings>({
+  } = useForm<CoachScheduleSettings>({
     defaultValues: settings,
-    resolver: zodResolver(assessmentCallSettingsSchema),
+    resolver: zodResolver(coachScheduleSettingsSchema),
   });
   const weekdays = watch("weekdays");
   const meetingLink = watch("meetingLink");
@@ -117,7 +114,7 @@ export function AssessmentCallSettingsSection(
 
     if (response.success) {
       reset(response.settings);
-      toast.success(ASSESSMENT_CALL_SETTINGS_TOASTS.saved);
+      toast.success(COACH_SCHEDULE_SETTINGS_TOASTS.saved);
       return;
     }
 
@@ -126,7 +123,7 @@ export function AssessmentCallSettingsSection(
     }
 
     if (errorCode === "server_error") {
-      toast.error(ASSESSMENT_CALL_SETTINGS_TOASTS.failed);
+      toast.error(COACH_SCHEDULE_SETTINGS_TOASTS.failed);
       return;
     }
 
@@ -147,7 +144,7 @@ export function AssessmentCallSettingsSection(
     }
   }, [reset, response, setError]);
 
-  const submitSettings: SubmitHandler<AssessmentCallSettings> = (values) => {
+  const submitSettings: SubmitHandler<CoachScheduleSettings> = (values) => {
     submit({ ...values, timeZone: readBrowserTimeZone() });
   };
 
@@ -186,7 +183,7 @@ export function AssessmentCallSettingsSection(
           {timeZoneUnreadable ? (
             <div className="px-5 pt-5 sm:px-6">
               <Alert>
-                <p>{ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_time_zone}</p>
+                <p>{COACH_SCHEDULE_SETTINGS_MESSAGES.invalid_time_zone}</p>
               </Alert>
             </div>
           ) : null}
@@ -213,7 +210,7 @@ export function AssessmentCallSettingsSection(
   );
 }
 
-type SettingsFieldRegister = UseFormRegister<AssessmentCallSettings>;
+type SettingsFieldRegister = UseFormRegister<CoachScheduleSettings>;
 
 type WeekdaysRowProps = {
   error: string | undefined;
@@ -253,7 +250,7 @@ function WeekdaysRow({ error, register, selected }: WeekdaysRowProps) {
 }
 
 type HoursRowProps = {
-  control: Control<AssessmentCallSettings>;
+  control: Control<CoachScheduleSettings>;
   error: string | undefined;
 };
 
@@ -336,7 +333,7 @@ function MeetingLinkRow({ error, register, value }: MeetingLinkRowProps) {
 }
 
 function HourSelectField(props: {
-  control: Control<AssessmentCallSettings>;
+  control: Control<CoachScheduleSettings>;
   errorId: string | null;
   id: string;
   label: string;
