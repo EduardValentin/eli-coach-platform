@@ -1,0 +1,9 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"fill": ["[data-parity-root=\"CoachResourceLibrary\"] >> role=searchbox[name=\"Search resources\"]", "zzz"]},
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] >> text=No matches"},
+  {"wait": 1000},
+  {"hover": "[data-parity-root=\"CoachResourceLibrary\"] h1"},
+  {"wait": 400}
+]
