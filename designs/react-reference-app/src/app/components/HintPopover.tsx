@@ -69,6 +69,7 @@ export function HintPopover({
         side={side}
         align={align}
         collisionPadding={16}
+        aria-labelledby={hintId}
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
         data-parity={contentParity}
