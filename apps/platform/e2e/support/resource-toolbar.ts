@@ -36,7 +36,7 @@ export class ResourceToolbar {
     });
   }
 
-  private get sortFilter() {
+  private get sortControl() {
     return this.page.getByRole("combobox", { name: "Sort by", exact: true });
   }
 
@@ -112,9 +112,9 @@ export class ResourceToolbar {
   }
 
   async chooseSort(key: ResourceSortKey): Promise<void> {
-    await this.openMenu(this.sortFilter);
+    await this.openMenu(this.sortControl);
     await this.page.getByRole("option", { name: key, exact: true }).click();
-    await expect(this.sortFilter).toHaveText(new RegExp(`^${key}: `));
+    await expect(this.sortControl).toHaveText(new RegExp(`^${key}: `));
   }
 
   async toggleDirection(): Promise<void> {
@@ -125,7 +125,7 @@ export class ResourceToolbar {
   }
 
   async expectSort({ key, direction }: ResourceSort): Promise<void> {
-    await expect(this.sortFilter).toHaveText(
+    await expect(this.sortControl).toHaveText(
       `${key}: ${direction.toLowerCase()}`,
     );
     await expect(this.directionToggle).toHaveAccessibleName(direction);
@@ -154,12 +154,12 @@ export class ResourceToolbar {
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(this.tagFilter).toHaveCount(0);
     await expect(this.searchField).toHaveCount(0);
-    await expect(this.sortFilter).toHaveCount(0);
+    await expect(this.sortControl).toHaveCount(0);
   }
 
   async expectNoSort(): Promise<void> {
     await expect(this.tagFilter).toBeVisible();
-    await expect(this.sortFilter).toHaveCount(0);
+    await expect(this.sortControl).toHaveCount(0);
     await expect(this.directionToggle).toHaveCount(0);
   }
 }
