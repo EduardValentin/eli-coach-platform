@@ -277,6 +277,10 @@ export class PostgresTestEnvironment {
           this.migrationDatabaseConnection,
         ),
       });
+      this.migrationPool.on(
+        "error",
+        PostgresTestEnvironment.ignoreIdleConnectionLoss,
+      );
     }
 
     return this.migrationPool;
@@ -295,6 +299,8 @@ export class PostgresTestEnvironment {
       }
     }
   }
+
+  private static ignoreIdleConnectionLoss(): void {}
 
   private async resetMigrationPool(): Promise<void> {
     if (!this.migrationPool) {
