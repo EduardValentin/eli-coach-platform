@@ -6,8 +6,8 @@ export function normalizeTag(text: string): string {
 
 export function sameTag(one: string, other: string): boolean {
   return (
-    normalizeTag(one).toLocaleLowerCase() ===
-    normalizeTag(other).toLocaleLowerCase()
+    normalizeTag(one).toLowerCase() ===
+    normalizeTag(other).toLowerCase()
   );
 }
 
@@ -51,13 +51,13 @@ export function tagSuggestions(
   vocabulary: readonly string[],
   chosen: readonly string[],
 ): string[] {
-  const needle = normalizeTag(query).toLocaleLowerCase();
+  const needle = normalizeTag(query).toLowerCase();
   const available = vocabulary.filter((tag) => !hasTag(chosen, tag));
   const matching = available.filter((tag) =>
-    tag.toLocaleLowerCase().includes(needle),
+    tag.toLowerCase().includes(needle),
   );
   const startsWithNeedle = (tag: string) =>
-    tag.toLocaleLowerCase().startsWith(needle) ? 0 : 1;
+    tag.toLowerCase().startsWith(needle) ? 0 : 1;
 
   return [...matching].sort(
     (one, other) =>
