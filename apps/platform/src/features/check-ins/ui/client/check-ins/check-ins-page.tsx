@@ -90,7 +90,7 @@ export default function ClientCheckInsRoute() {
   const hasWaitingRequest = checkIns.some(
     (checkIn) => checkIn.isWaitingRequest,
   );
-  const requestButton = (className: string) => {
+  const renderRequestButton = (className: string) => {
     const button = (
       <Button
         className={className}
@@ -116,7 +116,7 @@ export default function ClientCheckInsRoute() {
   return (
     <div className="w-full" data-parity-root="ClientCheckins">
       <PortalPageHeader
-        actions={requestButton("hidden sm:inline-flex")}
+        actions={renderRequestButton("hidden sm:inline-flex")}
         subtitle="Request a check-in and look back at past sessions."
         title="Check-ins"
       />
@@ -150,7 +150,7 @@ export default function ClientCheckInsRoute() {
 
       <CheckInDecisionOutcomes decisions={decisions} />
 
-      {requestButton(
+      {renderRequestButton(
         "fixed bottom-(--portal-tab-bar-clearance) left-4 z-40 shadow-action-hover sm:hidden",
       )}
     </div>
