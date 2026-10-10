@@ -181,6 +181,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
               { 'border-destructive': invalid === true },
             )}
             data-field-frame=""
+            data-parity="tag-input-frame"
             onMouseDown={focusEntry}
             ref={frame}
             role="presentation"

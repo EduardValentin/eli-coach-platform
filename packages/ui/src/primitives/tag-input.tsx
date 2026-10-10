@@ -274,6 +274,7 @@ export const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               { "border-feedback-danger": invalid === true },
             )}
             data-field-frame=""
+            data-parity="tag-input-frame"
             onMouseDown={focusEntry}
             ref={frame}
             role="presentation"
