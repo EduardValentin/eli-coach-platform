@@ -55,7 +55,7 @@ export class CoachCheckInsController {
       return unknownCheckIn();
     }
 
-    return CoachCheckInsController.answerResponse(
+    return CoachCheckInsController.respondToAnswer(
       await this.options.approveCheckIn.execute(id.data),
     );
   }
@@ -72,12 +72,12 @@ export class CoachCheckInsController {
       return unknownCheckIn();
     }
 
-    return CoachCheckInsController.answerResponse(
+    return CoachCheckInsController.respondToAnswer(
       await this.options.declineCheckIn.execute(id.data),
     );
   }
 
-  private static answerResponse(result: CoachAnswer): Response {
+  private static respondToAnswer(result: CoachAnswer): Response {
     switch (result.status) {
       case "approved":
       case "declined":

@@ -83,7 +83,7 @@ export class ClientCheckInsController {
       note: submission.data.note ?? null,
     });
 
-    return ClientCheckInsController.requestResponse(result);
+    return ClientCheckInsController.respondToCheckInRequest(result);
   }
 
   async withdraw(
@@ -102,10 +102,12 @@ export class ClientCheckInsController {
       checkInId: id.data,
     });
 
-    return ClientCheckInsController.withdrawalResponse(result);
+    return ClientCheckInsController.respondToWithdrawal(result);
   }
 
-  private static requestResponse(result: RequestCheckInResult): Response {
+  private static respondToCheckInRequest(
+    result: RequestCheckInResult,
+  ): Response {
     switch (result.status) {
       case "requested":
         return checkInOutcomeResponse(
@@ -122,7 +124,7 @@ export class ClientCheckInsController {
     }
   }
 
-  private static withdrawalResponse(
+  private static respondToWithdrawal(
     result: WithdrawCheckInRequestResult,
   ): Response {
     switch (result.status) {
