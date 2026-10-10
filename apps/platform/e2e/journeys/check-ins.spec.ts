@@ -28,6 +28,7 @@ const DECLINED_NOTE = "Could we look at my progress photos?";
 const PRIVATE_NOTE = "A quick word about my knee.";
 const APPROVED_SUBJECT = "Your check-in is approved";
 const DECLINED_SUBJECT = `${COACH_DISPLAY_NAME} could not make your check-in time`;
+const PHONE_NOTE = "Sent from my phone.";
 const KEYBOARD_NOTE = "Asked without a mouse.";
 const TAKEN_NOTE = "Can we talk about my training split?";
 const FIRST_NOTE = "First check-in of the month.";
@@ -868,3 +869,37 @@ test(
     await clientCheckIns.expectRequestAllowed();
   },
 );
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true });
+
+  test(
+    "a client with a request waiting taps Request check-in on her phone and is told why it waits",
+    { tag: "@completeness" },
+    async ({
+      checkInRequestDialog,
+      clientCheckIns,
+      coachAvailability,
+      page,
+      provisionSubmittedClient,
+      signIn,
+    }) => {
+      // arrange
+      await coachAvailability.openEveryDay();
+      await provisionSubmittedClient("waiting");
+      await page.goto("/store");
+      await signIn();
+      await setPhoneViewport(page);
+      await clientCheckIns.open();
+      await clientCheckIns.expectFloatingRequestButton();
+      await clientCheckIns.openRequestDialog();
+      await checkInRequestDialog.requestSoonest(PHONE_NOTE);
+
+      // assert
+      await clientCheckIns.expectRequestBlocked();
+
+      // act + assert
+      await clientCheckIns.expectBlockedReasonOnTap();
+    },
+  );
+});

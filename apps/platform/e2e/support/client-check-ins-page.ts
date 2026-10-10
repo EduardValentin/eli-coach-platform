@@ -144,6 +144,20 @@ export class ClientCheckInsPage {
     await expect(this.requestButton).toBeFocused();
   }
 
+  async expectBlockedReasonOnTap(): Promise<void> {
+    await expect(async () => {
+      await this.requestButton.tap({ force: true });
+      await expect(this.waitingReason).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.expectWaitingReasonDescribesRequest();
+    await expect(this.requestDialog).toBeHidden();
+    await this.requestButton.tap({ force: true });
+    await expect(this.waitingReason).toBeHidden();
+    await expect(this.requestDialog).toBeHidden();
+  }
+
   private async expectWaitingReasonDescribesRequest(): Promise<void> {
     await expect(this.requestButton).toHaveAccessibleDescription(
       WAITING_REASON,
