@@ -79,7 +79,7 @@ describe('buttonVariants', () => {
 
     // assert
     expect(classes).toEqual(
-      expect.arrayContaining(['bg-foreground', 'text-background', 'hover:bg-brand']),
+      expect.arrayContaining(['bg-foreground', 'text-background', 'not-aria-disabled:hover:bg-brand']),
     );
   });
 
@@ -90,7 +90,7 @@ describe('buttonVariants', () => {
 
     // assert
     expect(classes).toEqual(
-      expect.arrayContaining(['bg-card', 'text-brand', 'hover:bg-surface-subtle']),
+      expect.arrayContaining(['bg-card', 'text-brand', 'not-aria-disabled:hover:bg-surface-subtle']),
     );
   });
 });

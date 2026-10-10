@@ -191,7 +191,13 @@ export function ClientCheckins() {
     setRescheduleTarget(null);
   };
 
-  const requestButton = (className: string, iconSize: number) => {
+  const renderRequestButton = ({
+    className,
+    iconSize,
+  }: {
+    className: string;
+    iconSize: number;
+  }) => {
     const button = (
       <Button
         type="button"
@@ -277,7 +283,7 @@ export function ClientCheckins() {
       <PortalPageHeader
         title="Check-ins"
         subtitle="Request a check-in, answer proposals, and look back at past sessions."
-        actions={requestButton('hidden sm:inline-flex', 16)}
+        actions={renderRequestButton({ className: 'hidden sm:inline-flex', iconSize: 16 })}
       />
 
       <CheckinListing
@@ -348,10 +354,10 @@ export function ClientCheckins() {
         tone="destructive"
       />
 
-      {requestButton(
-        'fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden',
-        18,
-      )}
+      {renderRequestButton({
+        className: 'fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden',
+        iconSize: 18,
+      })}
     </div>
   );
 }
