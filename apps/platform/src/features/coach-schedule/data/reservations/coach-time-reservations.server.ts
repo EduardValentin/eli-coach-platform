@@ -2,7 +2,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import {
   COACH_TIME_RESERVATIONS_NO_OVERLAP,
@@ -23,11 +23,16 @@ type CoachTimeReservation = Appointment & {
 type CoachTimeReservationResult = { status: "reserved" } | { status: "taken" };
 
 const EXCLUSION_VIOLATION_CODE = "23P01";
+const COACH_TIME_LOCK = "coach-time-reservations";
 
 export async function reserveCoachTime(
   transaction: DatabaseTransaction,
   reservation: CoachTimeReservation,
 ): Promise<CoachTimeReservationResult> {
+  await transaction.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${COACH_TIME_LOCK}))`,
+  );
+
   try {
     await transaction.transaction((savepoint) =>
       savepoint.insert(coachTimeReservationsTable).values({
