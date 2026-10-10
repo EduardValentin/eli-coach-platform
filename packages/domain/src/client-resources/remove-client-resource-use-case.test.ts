@@ -4,9 +4,10 @@ import { ClientResource, type ClientResourceOwner } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import { RemoveClientResourceUseCase } from "./remove-client-resource-use-case";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
 const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
@@ -21,6 +22,7 @@ const STORED = ClientResource.reconstitute({
   clientId: "client-ana",
   title: "Meal plan",
   description: "",
+  tags: [],
   file: {
     originalName: "plan.pdf",
     format: "pdf",
@@ -53,7 +55,15 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
     return [];
   }
 

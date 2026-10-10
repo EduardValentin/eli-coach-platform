@@ -1,19 +1,31 @@
-import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
+import {
+  ResourceBrowse,
+  type ResourceBrowseInput,
+  type ResourceBrowseSnapshot,
+} from "./resource-browse";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 type ListClientResourcesCommand = {
   requester: ResourceRequester;
   clientId: string;
+  browse: ResourceBrowseInput;
+};
+
+type ClientResourceListing = {
+  browsing: BrowsedResources;
+  browse: ResourceBrowseSnapshot;
+  vocabulary: ResourceTagSnapshot[];
 };
 
 export type ListClientResourcesResult =
-  | { status: "listed"; resources: ClientResource[] }
+  | ({ status: "listed" } & ClientResourceListing)
   | { status: "not-found" }
   | { status: "unavailable" };
 
@@ -39,20 +51,31 @@ export class ListClientResourcesUseCase {
       return { status: "not-found" };
     }
 
-    const resources = await this.readResources(command.clientId);
+    const listing = await this.readListing(command);
 
-    if (!resources) {
+    if (!listing) {
       return { status: "unavailable" };
     }
 
-    return { status: "listed", resources };
+    return { status: "listed", ...listing };
   }
 
-  private async readResources(
-    clientId: string,
-  ): Promise<ClientResource[] | null> {
+  private async readListing({
+    clientId,
+    browse: input,
+  }: ListClientResourcesCommand): Promise<ClientResourceListing | null> {
+    const { resources } = this.options;
+
     try {
-      return await this.options.resources.listForClient(clientId);
+      const browse = ResourceBrowse.from(input)
+        .withTagAmong(await resources.tagsHeldBy(clientId))
+        .toSnapshot();
+      const [browsing, vocabulary] = await Promise.all([
+        resources.browseForClient(clientId, browse),
+        resources.tagVocabulary(),
+      ]);
+
+      return { browsing, browse, vocabulary };
     } catch (error) {
       this.options.incidents.resourceListingFailed({ clientId, error });
 

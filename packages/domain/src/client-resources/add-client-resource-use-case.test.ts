@@ -9,7 +9,7 @@ import type {
   ClientResourceStore,
   ResourcePageImage,
 } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
 import type {
   ResourceDocumentPages,
@@ -24,10 +24,15 @@ import type {
   ResourceImagePages,
   ResourceImageRendering,
 } from "./resource-image-pages";
+import {
+  MAX_RESOURCE_TAG_LENGTH,
+  type ResourceTagSnapshot,
+} from "./resource-tags";
 
 const NOW = new Date("2026-10-05T09:00:00.000Z");
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
-const DETAILS = { title: " Meal plan ", description: "Week one" };
+const DETAILS = { title: " Meal plan ", description: "Week one", tags: [] };
+const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };
 const OWNER = { clientId: "client-ana", resourceId: "resource-1" };
 
 function ascii(text: string): Uint8Array {
@@ -83,9 +88,17 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
-    return [...this.added];
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
   }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  readonly tagVocabulary = vi.fn(async (): Promise<ResourceTagSnapshot[]> => [
+    MEAL_PREP,
+  ]);
 
   async findById(): Promise<ClientResource | null> {
     return null;
@@ -243,6 +256,7 @@ describe("AddClientResourceUseCase", () => {
         clientId: "client-ana",
         title: "Meal plan",
         description: "Week one",
+        tags: [],
         file: {
           originalName: "Meal plan.pdf",
           format: "pdf",
@@ -507,7 +521,7 @@ describe("AddClientResourceUseCase", () => {
     // act
     const result = await useCase.execute({
       ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
-      details: { title: "  ", description: "" },
+      details: { title: "  ", description: "", tags: [] },
     });
 
     // assert
@@ -516,6 +530,69 @@ describe("AddClientResourceUseCase", () => {
       problems: { title: "missing" },
     });
     expect(store.storedNames()).toEqual([]);
+  });
+
+  it("tags the resource in the spelling the coach already uses and keeps a new tag as typed", async () => {
+    // arrange
+    const { useCase, resources } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
+      details: { ...DETAILS, tags: ["MEAL  prep", " Recovery ", "meal prep"] },
+    });
+
+    // assert
+    expect(result.status).toBe("added");
+    expect(resources.added[0].toSnapshot().tags).toEqual([
+      MEAL_PREP,
+      { tag: "Recovery", folded: "recovery" },
+    ]);
+  });
+
+  it("names a tag that is too long with the details' problems, reading nothing and keeping nothing", async () => {
+    // arrange
+    const { useCase, resources, store, fileFormats } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ...addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
+      details: {
+        title: "",
+        description: "",
+        tags: ["t".repeat(MAX_RESOURCE_TAG_LENGTH + 1)],
+      },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid-details",
+      problems: { title: "missing", tags: "too-long" },
+    });
+    expect(fileFormats.detect).not.toHaveBeenCalled();
+    expect(resources.tagVocabulary).not.toHaveBeenCalled();
+    expect(store.storedNames()).toEqual([]);
+  });
+
+  it("removes the stored files when the tag vocabulary cannot be read, reporting why", async () => {
+    // arrange
+    const { useCase, resources, store, incidents } = createUseCase();
+    const failure = new Error("database down");
+    resources.tagVocabulary.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute(
+      addCommand({ originalName: "plan.pdf", bytes: PDF_BYTES }),
+    );
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(store.storedNames()).toEqual([]);
+    expect(resources.added).toEqual([]);
+    expect(incidents.resourceStorageFailed).toHaveBeenCalledWith({
+      ...OWNER,
+      error: failure,
+    });
   });
 
   it("finds no client who does not exist", async () => {

@@ -6,9 +6,10 @@ import type {
   ClientResourceStore,
   StoredResourceOriginal,
 } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import { DownloadClientResourceUseCase } from "./download-client-resource-use-case";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ORIGINAL_BYTES = Uint8Array.of(0xd0, 0xcf, 0x11, 0xe0);
 const RESOURCE = ClientResource.reconstitute({
@@ -16,6 +17,7 @@ const RESOURCE = ClientResource.reconstitute({
   clientId: "client-ana",
   title: "Shopping list",
   description: "",
+  tags: [],
   file: {
     originalName: "Shopping list.txt",
     format: "xls",
@@ -52,7 +54,15 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
     return [];
   }
 
