@@ -142,10 +142,8 @@ describe("the coach scheduling a check-in", () => {
     const afterDay = stepButton(dialog).textContent;
     await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
     const afterTime = stepButton(dialog).textContent;
-    await user.type(
-      within(dialog).getByRole("textbox", { name: NOTE_LABEL }),
-      "Let's look at your first two weeks",
-    );
+    await user.click(within(dialog).getByRole("textbox", { name: NOTE_LABEL }));
+    await user.paste("Let's look at your first two weeks");
     await user.click(stepButton(dialog));
 
     // assert
