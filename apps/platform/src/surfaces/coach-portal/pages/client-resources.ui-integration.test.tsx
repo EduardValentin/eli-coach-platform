@@ -36,8 +36,8 @@ import {
 import { clientAction as uploadResource } from "~/features/client-resources/api/resources/client-resources";
 import { clientAction as changeOrRemoveResource } from "~/features/client-resources/api/resources/resource";
 import type {
-  ClientResourceListing,
   ClientResourceView,
+  CoachResourceListing,
 } from "~/features/client-resources/public/client-resources";
 import {
   CLIENT_RESOURCES_API_PATHS,
@@ -89,6 +89,7 @@ const PLATE_GUIDE: ClientResourceView = {
   id: "0f1e2d3c-4b5a-4968-8776-655443322110",
   title: "Plate portions guide",
   description: "Half the plate vegetables, a quarter protein, a quarter carbs.",
+  tags: [],
   file: {
     originalName: "plate-portions.png",
     downloadName: "plate-portions.png",
@@ -105,6 +106,7 @@ const WARM_UP: ClientResourceView = {
   title: "Glute activation warm-up",
   description:
     "Run through this before every lower-body session. Ten minutes is enough.",
+  tags: [],
   file: {
     originalName: "glute-activation-warm-up.pdf",
     downloadName: "glute-activation-warm-up.pdf",
@@ -120,6 +122,7 @@ const FOOD_DIARY: ClientResourceView = {
   id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
   title: "Food diary template",
   description: "",
+  tags: [],
   file: {
     originalName: "food-diary-template.docm",
     downloadName: "food-diary-template.docx",
@@ -135,6 +138,7 @@ const MACRO_TRACKER: ClientResourceView = {
   id: "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
   title: "Weekly macro tracker",
   description: "Fill in one row a day. Totals add up on their own.",
+  tags: [],
   file: {
     originalName: "weekly-macro-tracker.xlsx",
     downloadName: "weekly-macro-tracker.xlsx",
@@ -152,6 +156,7 @@ const ADDED: ClientResourceView = {
   id: "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a",
   title: "Meal plan week one",
   description: "Start on Monday.",
+  tags: [],
   file: {
     originalName: "meal-plan-week-one.pdf",
     downloadName: "meal-plan-week-one.pdf",
@@ -363,9 +368,7 @@ describe("the coach's client resources page", () => {
       return {
         client: CLIENT,
         listing:
-          reads === 1
-            ? { status: "unavailable" }
-            : { status: "ready", resources: LIBRARY },
+          reads === 1 ? { status: "unavailable" } : readyListing(LIBRARY),
       };
     });
 
@@ -1129,7 +1132,11 @@ describe("editing a resource's details", () => {
     expect(sent).toEqual([
       {
         resourceId: WARM_UP.id,
-        details: { title: "Glute warm-up", description: WARM_UP.description },
+        details: {
+          title: "Glute warm-up",
+          description: WARM_UP.description,
+          tags: [],
+        },
       },
     ]);
 
@@ -1406,12 +1413,16 @@ describe("deleting a resource", () => {
 
 type ResourcesPageData = {
   client: CoachClient;
-  listing: ClientResourceListing;
+  listing: CoachResourceListing;
 };
 
 type SentUpload = { fileName: string; title: string; description: string };
 
-type ResourceDetails = { title: string; description: string };
+type ResourceDetails = {
+  title: string;
+  description: string;
+  tags: string[];
+};
 
 type SentDetailsChange = { resourceId: string; details: ResourceDetails };
 
@@ -1433,7 +1444,7 @@ function libraryStore(resources: ClientResourceView[]) {
     resources: [...resources],
     load: (): ResourcesPageData => ({
       client: CLIENT,
-      listing: { status: "ready", resources: [...store.resources] },
+      listing: readyListing([...store.resources]),
     }),
     change: (resourceId: string, details: ResourceDetails) => {
       const changed = {
@@ -1691,4 +1702,16 @@ async function renderResourcesPage(
   options: { resources?: ClientResourceView[] } = {},
 ) {
   return renderResourcesRouter(libraryStore(options.resources ?? LIBRARY).load);
+}
+
+function readyListing(resources: ClientResourceView[]): CoachResourceListing {
+  return {
+    status: "ready",
+    resources,
+    tagOptions: [],
+    browse: { tag: null, search: "", sort: "added", direction: "desc" },
+    searched: resources.length,
+    total: resources.length,
+    vocabulary: [],
+  };
 }

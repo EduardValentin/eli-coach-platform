@@ -493,6 +493,7 @@ function EditResourceDetailsForm({
     change({
       title: values.title.trim(),
       description: values.description.trim(),
+      tags: resource.tags,
     });
   });
 

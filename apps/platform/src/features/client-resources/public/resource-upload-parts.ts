@@ -2,10 +2,11 @@ export const RESOURCE_UPLOAD_PARTS = {
   file: "file",
   title: "title",
   description: "description",
+  tags: "tags",
 } as const;
 
 type ReceivedResourceUpload = {
-  details: { title: string; description: string };
+  details: { title: string; description: string; tags: string[] };
   file: { originalName: string; bytes: Uint8Array };
 };
 
@@ -22,6 +23,9 @@ export async function receivedResourceUploadOf(
     details: {
       title: textPartOf(formData, RESOURCE_UPLOAD_PARTS.title),
       description: textPartOf(formData, RESOURCE_UPLOAD_PARTS.description),
+      tags: formData
+        .getAll(RESOURCE_UPLOAD_PARTS.tags)
+        .filter((part) => typeof part === "string"),
     },
     file: {
       originalName: file.name,

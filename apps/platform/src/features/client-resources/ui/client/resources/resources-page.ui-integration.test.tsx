@@ -46,6 +46,7 @@ const WARM_UP: ClientResourceView = {
   title: "Glute activation warm-up",
   description:
     "Run through this before every lower-body session. Ten minutes is enough.",
+  tags: [],
   file: {
     originalName: "glute-activation-warm-up.pdf",
     downloadName: "glute-activation-warm-up.pdf",
@@ -61,6 +62,7 @@ const PLATE_GUIDE: ClientResourceView = {
   id: "0f1e2d3c-4b5a-4968-8776-655443322110",
   title: "Plate portions guide",
   description: "Half the plate vegetables, a quarter protein, a quarter carbs.",
+  tags: [],
   file: {
     originalName: "plate-portions.png",
     downloadName: "plate-portions.png",
@@ -76,6 +78,7 @@ const FOOD_DIARY: ClientResourceView = {
   id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
   title: "Food diary template",
   description: "",
+  tags: [],
   file: {
     originalName: "food-diary-template.docm",
     downloadName: "food-diary-template.docx",
@@ -104,7 +107,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  listing = { status: "ready", resources: [...LIBRARY] };
+  listing = readyListing([...LIBRARY]);
 });
 
 afterEach(() => {
@@ -176,7 +179,7 @@ describe("the client's resources page", () => {
 
   it("tells her when nothing has been shared yet", async () => {
     // arrange
-    listing = { status: "ready", resources: [] };
+    listing = readyListing([]);
 
     // act
     await renderResourcesPage();
@@ -217,7 +220,7 @@ describe("the client's resources page", () => {
     // arrange
     listing = { status: "unavailable" };
     const user = await renderResourcesPage();
-    listing = { status: "ready", resources: [...LIBRARY] };
+    listing = readyListing([...LIBRARY]);
 
     // act
     await user.click(screen.getByRole("button", { name: "Try again" }));
@@ -412,7 +415,7 @@ function stampOpened(resourceId: string) {
   if (listing.status !== "ready") return;
 
   listing = {
-    status: "ready",
+    ...listing,
     resources: listing.resources.map((resource) =>
       resource.id === resourceId && resource.openedAt === null
         ? { ...resource, openedAt: STAMPED_AT }
@@ -496,4 +499,15 @@ async function renderResourcesPage() {
   await screen.findByRole("heading", { level: 1 });
 
   return user;
+}
+
+function readyListing(resources: ClientResourceView[]): ClientResourceListing {
+  return {
+    status: "ready",
+    resources,
+    tagOptions: [],
+    browse: { tag: null, search: "", sort: "added", direction: "desc" },
+    searched: resources.length,
+    total: resources.length,
+  };
 }

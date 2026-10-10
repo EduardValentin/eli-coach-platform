@@ -93,6 +93,7 @@ const FIRST_ADDED = new Date(
   CALL_ENDED_INSTANT.getTime() + 60 * MINUTE_IN_MILLISECONDS,
 );
 const SECOND_ADDED = new Date(FIRST_ADDED.getTime() + MINUTE_IN_MILLISECONDS);
+const THIRD_ADDED = new Date(SECOND_ADDED.getTime() + MINUTE_IN_MILLISECONDS);
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_UUID = "not-a-resource-id";
 const NON_ASCII_NAME = "Plan alimentar – săptămâna 1.pdf";
@@ -122,6 +123,13 @@ type OfficeOrImageCase = {
   pageCount: number | null;
   storedFiles: string[];
 };
+
+const GLUTE_WARM_UP = "Glute warm-up";
+const MEAL_PLAN = "Meal plan 50% carbs";
+const BATCH_COOKING = "Batch cooking";
+const LIBRARY_TITLES = [GLUTE_WARM_UP, MEAL_PLAN, BATCH_COOKING];
+
+type TaggedLibrary = { clientId: string; warmUp: AddedResource };
 
 const ORIGINAL_ONLY = ["original"];
 const ONE_PAGE_FILES = ["original", "page-1", "thumbnail"];
@@ -246,6 +254,7 @@ describe.sequential("client resources integration", () => {
         id: expect.any(String),
         title: "Meal plan",
         description: "Week one",
+        tags: [],
         file: {
           originalName: "Meal plan.pdf",
           downloadName: "Meal plan.pdf",
@@ -261,6 +270,7 @@ describe.sequential("client resources integration", () => {
           id: resource.id,
           title: "Meal plan",
           description: "Week one",
+          tags: [],
           originalName: "Meal plan.pdf",
           format: "pdf",
           sizeBytes: pdf.byteLength,
@@ -503,6 +513,11 @@ describe.sequential("client resources integration", () => {
         name: "a description over 2,000 characters",
         details: { title: "Meal plan", description: "d".repeat(2_001) },
         problems: { description: "too-long" },
+      },
+      {
+        name: "a tag over 30 characters",
+        details: { title: "Meal plan", tags: ["Meals", "t".repeat(31)] },
+        problems: { tags: "too-long" },
       },
     ])("refuses $name and keeps nothing", async ({ details, problems }) => {
       // arrange
@@ -926,7 +941,11 @@ describe.sequential("client resources integration", () => {
       const response = await resources.changeDetails(
         COACH_SESSION,
         resource.id,
-        { title: "  Week two plan  ", description: "  Swap the oats  " },
+        {
+          title: "  Week two plan  ",
+          description: "  Swap the oats  ",
+          tags: [],
+        },
       );
 
       // assert
@@ -970,7 +989,7 @@ describe.sequential("client resources integration", () => {
       const response = await resources.changeDetails(
         COACH_SESSION,
         resource.id,
-        { title: "   ", description: "Swap the oats" },
+        { title: "   ", description: "Swap the oats", tags: [] },
       );
 
       // assert
@@ -981,6 +1000,201 @@ describe.sequential("client resources integration", () => {
       expect(await resources.resourceRowsOf(clientId)).toEqual([
         expect.objectContaining({ title: "Meal plan.pdf", description: "" }),
       ]);
+    });
+  });
+
+  describe("tagging a resource", () => {
+    it("keeps the tags she chose in her order, tidied, and answers them on the resource", async () => {
+      // arrange
+      const clientId = await admitAna();
+
+      // act
+      const resource = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Meal plan.docx",
+        tags: ["Meals", "  week   one ", "MEALS", " "],
+      });
+
+      // assert
+      expect(resource.tags).toEqual(["Meals", "week one"]);
+      expect(await resources.resourceRowsOf(clientId)).toEqual([
+        expect.objectContaining({ tags: ["Meals", "week one"] }),
+      ]);
+    });
+
+    it("attaches the spelling she used first to a tag typed in another casing, across her clients", async () => {
+      // arrange
+      const anaId = await admitAna();
+      const mariaId = await admitMaria();
+      await resources.uploadAccepted(COACH_SESSION, anaId, {
+        bytes: await wordDocument(),
+        fileName: "Batch cooking.docx",
+        tags: ["Meal prep"],
+      });
+
+      // act
+      const resource = await resources.uploadAccepted(COACH_SESSION, mariaId, {
+        bytes: await wordDocument(),
+        fileName: "Sunday prep.docx",
+        tags: ["MEAL PREP", "Mobility"],
+      });
+
+      // assert
+      expect(resource.tags).toEqual(["Meal prep", "Mobility"]);
+      expect(await resources.resourceRowsOf(mariaId)).toEqual([
+        expect.objectContaining({ tags: ["Meal prep", "Mobility"] }),
+      ]);
+    });
+
+    it("matches a tag by the fold the domain gives it alone, so a casing the database would lower differently still attaches and narrows", async () => {
+      // arrange
+      const clientId = await submittedAna();
+      await rig.holdClock(FIRST_ADDED);
+      await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Travel snacks.docx",
+        title: "Travel snacks",
+        tags: ["İzmir"],
+      });
+      await rig.holdClock(SECOND_ADDED);
+      const second = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Hotel workouts.docx",
+        title: "Hotel workouts",
+        tags: ["İZMIR"],
+      });
+      await rig.holdClock(THIRD_ADDED);
+      await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Food diary.docx",
+        title: "Food diary",
+      });
+
+      // act
+      const response = await openCoachResourcesPage(
+        clientId,
+        `?tag=${encodeURIComponent("İZMIR")}`,
+      );
+
+      // assert
+      expect(second.tags).toEqual(["İzmir"]);
+      expect(response.status).toBe(200);
+      expect(
+        titlesListedIn(await pageTextOf(response), [
+          "Food diary",
+          "Hotel workouts",
+          "Travel snacks",
+        ]),
+      ).toEqual(["Hotel workouts", "Travel snacks"]);
+    });
+
+    it("replaces the tags when she edits them, with the spelling she used before", async () => {
+      // arrange
+      const clientId = await admitAna();
+      await rig.holdClock(FIRST_ADDED);
+      await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Batch cooking.docx",
+        tags: ["Meals"],
+      });
+      await rig.holdClock(SECOND_ADDED);
+      const resource = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Breakfasts.docx",
+        tags: ["Week one", "Snacks"],
+      });
+
+      // act
+      const response = await resources.changeDetails(
+        COACH_SESSION,
+        resource.id,
+        {
+          title: resource.title,
+          description: "",
+          tags: ["Breakfast", "meals", "week ONE"],
+        },
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      const { resource: changed } = (await response.json()) as {
+        resource: AddedResource;
+      };
+      expect(changed.tags).toEqual(["Breakfast", "Meals", "Week one"]);
+      expect(
+        (await resources.resourceRowsOf(clientId)).map(({ tags }) => tags),
+      ).toEqual([["Breakfast", "Meals", "Week one"], ["Meals"]]);
+    });
+
+    it("removes every tag of a resource she saves without tags", async () => {
+      // arrange
+      const clientId = await admitAna();
+      const resource = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Breakfasts.docx",
+        tags: ["Meals"],
+      });
+
+      // act
+      const response = await resources.changeDetails(
+        COACH_SESSION,
+        resource.id,
+        { title: resource.title, description: "", tags: [] },
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await resources.resourceRowsOf(clientId)).toEqual([
+        expect.objectContaining({ tags: [] }),
+      ]);
+    });
+
+    it("refuses a tag over 30 characters on an edit and keeps the tags she had", async () => {
+      // arrange
+      const clientId = await admitAna();
+      const resource = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Breakfasts.docx",
+        tags: ["Meals"],
+      });
+
+      // act
+      const response = await resources.changeDetails(
+        COACH_SESSION,
+        resource.id,
+        { title: resource.title, description: "", tags: ["t".repeat(31)] },
+      );
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        problems: { tags: "too-long" },
+      });
+      expect(await resources.resourceRowsOf(clientId)).toEqual([
+        expect.objectContaining({ tags: ["Meals"] }),
+      ]);
+    });
+
+    it("forgets a tag once its last resource is removed, so it narrows nothing and the next spelling is kept", async () => {
+      // arrange
+      const { clientId, warmUp } = await anaWithTaggedLibrary();
+      await resources.remove(COACH_SESSION, warmUp.id);
+
+      // act
+      const page = await openCoachResourcesPage(clientId, "?tag=Warm-ups");
+      const retagged = await resources.uploadAccepted(COACH_SESSION, clientId, {
+        bytes: await wordDocument(),
+        fileName: "Mobility flow.docx",
+        tags: ["WARM-UPS"],
+      });
+
+      // assert
+      expect(page.status).toBe(200);
+      expect(titlesListedIn(await pageTextOf(page), LIBRARY_TITLES)).toEqual([
+        BATCH_COOKING,
+        MEAL_PLAN,
+      ]);
+      expect(retagged.tags).toEqual(["WARM-UPS"]);
     });
   });
 
@@ -1040,6 +1254,7 @@ describe.sequential("client resources integration", () => {
           resources.changeDetails(requester, resource.id, {
             title: "Week two plan",
             description: "",
+            tags: [],
           }),
           resources.remove(requester, resource.id),
         ]);
@@ -1058,7 +1273,7 @@ describe.sequential("client resources integration", () => {
     it("answers not found to a resource that does not exist or an id that is not a uuid", async () => {
       // arrange
       await anaWithPdf();
-      const details = { title: "Week two plan", description: "" };
+      const details = { title: "Week two plan", description: "", tags: [] };
 
       // act
       const answers = await Promise.all([
@@ -1198,6 +1413,118 @@ describe.sequential("client resources integration", () => {
       },
     );
   });
+
+  describe("finding a resource", () => {
+    it.each([
+      {
+        name: "her resources holding a tag, whatever its casing",
+        query: "?tag=MEALS",
+        titles: [BATCH_COOKING, MEAL_PLAN],
+      },
+      {
+        name: "her resources whose title holds a search with a percent sign",
+        query: `?q=${encodeURIComponent("50%")}`,
+        titles: [MEAL_PLAN],
+      },
+      {
+        name: "only her resource whose title holds a percent sign for a search of one",
+        query: `?q=${encodeURIComponent("%")}`,
+        titles: [MEAL_PLAN],
+      },
+      {
+        name: "her resources holding a tag whose title holds the search",
+        query: "?tag=Meals&q=cook",
+        titles: [BATCH_COOKING],
+      },
+      {
+        name: "her resources by title from A to Z",
+        query: "?sort=title",
+        titles: [BATCH_COOKING, GLUTE_WARM_UP, MEAL_PLAN],
+      },
+      {
+        name: "her resources by title from Z to A",
+        query: "?sort=title&dir=desc",
+        titles: [MEAL_PLAN, GLUTE_WARM_UP, BATCH_COOKING],
+      },
+      {
+        name: "her resources the newest first",
+        query: "",
+        titles: [BATCH_COOKING, MEAL_PLAN, GLUTE_WARM_UP],
+      },
+      {
+        name: "her resources the oldest first",
+        query: "?dir=asc",
+        titles: [GLUTE_WARM_UP, MEAL_PLAN, BATCH_COOKING],
+      },
+      {
+        name: "every resource of hers for a tag none of them holds",
+        query: "?tag=Nonexistent",
+        titles: [BATCH_COOKING, MEAL_PLAN, GLUTE_WARM_UP],
+      },
+      {
+        name: "every resource of hers for a sort and direction it does not know",
+        query: "?sort=size&dir=sideways",
+        titles: [BATCH_COOKING, MEAL_PLAN, GLUTE_WARM_UP],
+      },
+    ])("lists the coach $name", async ({ query, titles }) => {
+      // arrange
+      const { clientId } = await anaWithTaggedLibrary();
+
+      // act
+      const response = await openCoachResourcesPage(clientId, query);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(
+        titlesListedIn(await pageTextOf(response), LIBRARY_TITLES),
+      ).toEqual(titles);
+    });
+
+    it("narrows her own page by her tags and her search", async () => {
+      // arrange
+      await anaWithTaggedLibrary();
+
+      // act
+      const response = await resources.openResourcesPage(
+        ANA_SESSION,
+        "?tag=meals&q=PLAN",
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(
+        titlesListedIn(await pageTextOf(response), LIBRARY_TITLES),
+      ).toEqual([MEAL_PLAN]);
+    });
+
+    it("lists her every resource for a tag only another client's resources hold", async () => {
+      // arrange
+      await anaWithTaggedLibrary();
+      const mariaId = await submittedMaria();
+      await resources.uploadAccepted(COACH_SESSION, mariaId, {
+        bytes: await wordDocument(),
+        fileName: "Hip mobility.docx",
+        title: "Hip mobility",
+        tags: ["Mobility"],
+      });
+
+      // act
+      const response = await resources.openResourcesPage(
+        ANA_SESSION,
+        "?tag=Mobility",
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(titlesListedIn(page, LIBRARY_TITLES)).toEqual([
+        BATCH_COOKING,
+        MEAL_PLAN,
+        GLUTE_WARM_UP,
+      ]);
+      expect(page).not.toContain("Hip mobility");
+    });
+  });
 });
 
 async function admitAna(): Promise<string> {
@@ -1244,6 +1571,49 @@ async function pdfFor(clientId: string): Promise<ClientWithPdf> {
     pdf,
     resource: await resources.uploadAccepted(COACH_SESSION, clientId, upload),
   };
+}
+
+async function anaWithTaggedLibrary(): Promise<TaggedLibrary> {
+  const clientId = await submittedAna();
+  await rig.holdClock(FIRST_ADDED);
+  const warmUp = await resources.uploadAccepted(COACH_SESSION, clientId, {
+    bytes: await wordDocument(),
+    fileName: "Glute warm-up.docx",
+    title: GLUTE_WARM_UP,
+    tags: ["Warm-ups"],
+  });
+  await rig.holdClock(SECOND_ADDED);
+  await resources.uploadAccepted(COACH_SESSION, clientId, {
+    bytes: await wordDocument(),
+    fileName: "Meal plan.docx",
+    title: MEAL_PLAN,
+    tags: ["Meals"],
+  });
+  await rig.holdClock(THIRD_ADDED);
+  await resources.uploadAccepted(COACH_SESSION, clientId, {
+    bytes: await wordDocument(),
+    fileName: "Batch cooking.docx",
+    title: BATCH_COOKING,
+    tags: ["Meals", "Week one"],
+  });
+
+  return { clientId, warmUp };
+}
+
+function openCoachResourcesPage(
+  clientId: string,
+  query: string,
+): Promise<Response> {
+  return rig.requestAs(
+    COACH_SESSION,
+    `/coach/clients/${clientId}/resources${query}`,
+  );
+}
+
+function titlesListedIn(page: string, titles: readonly string[]): string[] {
+  return titles
+    .filter((title) => page.includes(title))
+    .sort((one, other) => page.indexOf(one) - page.indexOf(other));
 }
 
 async function endAnasCoaching(): Promise<void> {
