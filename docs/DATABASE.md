@@ -16,8 +16,8 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 - `apps/platform/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
 - Commit both directories together when schema changes land
 - Prefer readable SQL migration file names before merge and keep the matching tag in `apps/platform/db/drizzle/meta/_journal.json` aligned with the SQL file name
-- Migrations own structure only. Reference rows the application needs (the `WAITLIST_MODE` flag, the store's product types and goals) live in `apps/platform/db/seeds/*.sql`: idempotent plain statements, each file ending its last statement with `;`, applied in filename order by the one runner `apps/platform/db/apply-seeds.ts` after every migrate
-- A seed inserts a missing row and never overwrites a stored one, so a release never flips an operator's toggle; changing a seeded row's label or order is a migration's job
+- Migrations own the schema and every change to a stored row. Reference rows the application needs (the `WAITLIST_MODE` flag, the store's product types and goals) are inserted by `apps/platform/db/seeds/*.sql`: idempotent plain statements, each file ending its last statement with `;`, applied in filename order by the one runner `apps/platform/db/apply-seeds.ts` after every migrate
+- A seed inserts a missing row and never overwrites a stored one, so a release never flips an operator's toggle; changing a seeded row's label or order takes a migration
 
 ## Connection Roles
 

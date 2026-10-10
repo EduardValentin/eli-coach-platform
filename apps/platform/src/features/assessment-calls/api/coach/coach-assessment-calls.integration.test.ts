@@ -213,9 +213,10 @@ describe.sequential("coach assessment calls integration", () => {
     await makeAssessmentCallsUnreadable();
 
     // act
-    const dashboard = await requestAsCoach(DASHBOARD);
-    const calls = await requestAsCoach(CALLS_PAGE);
-    await makeAssessmentCallsReadable();
+    const [dashboard, calls] = await Promise.all([
+      requestAsCoach(DASHBOARD),
+      requestAsCoach(CALLS_PAGE),
+    ]).finally(makeAssessmentCallsReadable);
 
     // assert
     expect(dashboard.status).toBe(503);
