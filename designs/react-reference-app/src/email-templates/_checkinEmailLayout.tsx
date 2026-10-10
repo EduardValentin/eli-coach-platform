@@ -114,6 +114,23 @@ export function CheckinEmailButton({
   );
 }
 
+const CALENDAR_LABEL = 'Add to Google Calendar';
+const ATTACHMENT_LINE =
+  'A calendar file is attached to this email, so you can add the check-in to any calendar you use.';
+
+export function CheckinEmailCalendarOffer({ googleCalendarUrl }: { googleCalendarUrl: string }) {
+  return (
+    <>
+      <EmailText style={calendarLineStyle}>
+        <EmailLink href={googleCalendarUrl} style={calendarLinkStyle}>
+          {CALENDAR_LABEL}
+        </EmailLink>
+      </EmailText>
+      <EmailText style={attachmentLineStyle}>{ATTACHMENT_LINE}</EmailText>
+    </>
+  );
+}
+
 export function CheckinEmailClosingLine({ children }: { children: string }) {
   return (
     <>
@@ -317,4 +334,27 @@ const closingTextStyle: CSSProperties = {
 
 const cardEndStyle: CSSProperties = {
   height: '36px',
+};
+
+const calendarLineStyle: CSSProperties = {
+  margin: '18px 0 0',
+  fontFamily: FONT_SANS,
+  fontSize: '14px',
+  lineHeight: 1.55,
+  fontWeight: 500,
+};
+
+const calendarLinkStyle: CSSProperties = {
+  color: BRAND.pink,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
+};
+
+const attachmentLineStyle: CSSProperties = {
+  margin: '12px 0 0',
+  fontFamily: FONT_SANS,
+  fontSize: '13px',
+  lineHeight: 1.55,
+  color: BRAND.muted,
+  fontWeight: 400,
 };

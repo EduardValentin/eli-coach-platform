@@ -941,6 +941,7 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="time-taken">Time taken</SelectItem>
+                      <SelectItem value="cannot-answer">Client can't answer</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
                     </SelectContent>
                   </Select>

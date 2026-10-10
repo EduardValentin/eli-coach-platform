@@ -9,6 +9,7 @@ import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
+import { ScheduleCheckinAction } from './ScheduleCheckinAction';
 import { PortalBackLink } from '../PortalBackLink';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { needsRefund } from '../../domain/coachingSubscription';
@@ -61,6 +62,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
             <FolderOpen aria-hidden="true" size={16} />
             Resources
           </Link>
+          <ScheduleCheckinAction journey={journey} />
         </div>
       </header>
 

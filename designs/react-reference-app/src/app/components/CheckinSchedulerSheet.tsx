@@ -18,6 +18,8 @@ export type OpenTimesListing =
 
 export const CHECKIN_NOTE_MAX_LENGTH = 500;
 
+export const TIME_TAKEN_COPY = 'That time is no longer free. Pick another one.';
+
 type SheetBase = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,8 +42,15 @@ type PickerSheetProps = SheetBase & {
   messagePlaceholder?: string;
 };
 
+export type CheckinPickerWording = {
+  noteLabel: string;
+  stepVerb: string;
+  busyLabel: string;
+};
+
 type RequestSheetProps = SheetBase & {
   variant: 'request';
+  wording: CheckinPickerWording;
   openTimes: OpenTimesListing;
   onRetry: () => void;
   timeZone: string;
@@ -55,8 +64,6 @@ type RequestSheetProps = SheetBase & {
 };
 
 type CheckinSchedulerSheetProps = PickerSheetProps | RequestSheetProps;
-
-const NOTE_LABEL = 'Add a note for your coach (optional)';
 
 function stepLabel(dayChosen: boolean, time: string | null, submitLabel: string): string {
   if (!dayChosen) return 'Select a date';
@@ -93,13 +100,21 @@ function StepButton({
   );
 }
 
-function NoteField({ note, onNoteChange }: { note: string; onNoteChange: (note: string) => void }) {
+function NoteField({
+  label,
+  note,
+  onNoteChange,
+}: {
+  label: string;
+  note: string;
+  onNoteChange: (note: string) => void;
+}) {
   const fieldId = useId();
 
   return (
     <div data-parity="checkin-note-field" className="mt-6">
       <label htmlFor={fieldId} className="mb-2 block text-sm font-medium text-text-primary">
-        {NOTE_LABEL}
+        {label}
       </label>
       <textarea
         id={fieldId}
@@ -162,7 +177,7 @@ function RequestSheetContent({
   ...props
 }: RequestSheetProps & { titleRef: RefObject<HTMLHeadingElement> }) {
   const [dayChosen, setDayChosen] = useState(false);
-  const { selectedSlot, timeZone, submitting, problem } = props;
+  const { selectedSlot, timeZone, submitting, problem, wording } = props;
   const time = selectedSlot ? formatSlotTime(selectedSlot, timeZone) : null;
   const ready = props.openTimes.status === 'ready';
 
@@ -188,11 +203,11 @@ function RequestSheetContent({
           onSelectSlot={props.onSelectSlot}
           onSelectDay={(day) => setDayChosen(day !== undefined)}
         />
-        <NoteField note={props.note} onNoteChange={props.onNoteChange} />
+        <NoteField label={wording.noteLabel} note={props.note} onNoteChange={props.onNoteChange} />
       </SheetDialogBody>
       <SheetDialogFooter rule="faint">
         <StepButton
-          label={submitting ? 'Requesting…' : stepLabel(dayChosen, time, 'Request')}
+          label={submitting ? wording.busyLabel : stepLabel(dayChosen, time, wording.stepVerb)}
           disabled={!ready || !selectedSlot}
           busy={submitting}
           onSubmit={props.onSubmit}

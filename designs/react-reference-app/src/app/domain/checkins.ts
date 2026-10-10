@@ -1,6 +1,6 @@
 import { addMinutes, subMinutes } from 'date-fns';
 import type { CoachingSubscription } from './coachingSubscription';
-import type { ClientJourney } from './journey';
+import { isBeforeStage, type ClientJourney } from './journey';
 import { checkinInstant, toISODate } from '../utils/dateFormatters';
 
 export type CheckinKind = 'recurring' | 'ad-hoc' | 'program-review';
@@ -199,6 +199,16 @@ export function coachingEndsAt(
   }
 
   return subscription.periodEndsAt;
+}
+
+export type CheckinScheduling = 'allowed' | 'awaiting_onboarding' | 'ended';
+
+export function checkinSchedulingFor(journey: ClientJourney, now: Date): CheckinScheduling {
+  const endsAt = coachingEndsAt(journey.subscription);
+  if (endsAt && now.getTime() >= endsAt.getTime()) return 'ended';
+  if (isBeforeStage(journey.stage, 'submitted')) return 'awaiting_onboarding';
+
+  return 'allowed';
 }
 
 function toTime24(instant: Date): string {

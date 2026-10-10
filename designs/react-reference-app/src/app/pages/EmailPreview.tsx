@@ -25,6 +25,10 @@ import { CheckinRequested } from '../../email-templates/CheckinRequested';
 import { CheckinWithdrawn } from '../../email-templates/CheckinWithdrawn';
 import { CheckinApproved } from '../../email-templates/CheckinApproved';
 import { CheckinDeclined } from '../../email-templates/CheckinDeclined';
+import { CheckinScheduled } from '../../email-templates/CheckinScheduled';
+import { CheckinScheduleCancelled } from '../../email-templates/CheckinScheduleCancelled';
+import { CheckinApprovedByClient } from '../../email-templates/CheckinApprovedByClient';
+import { CheckinDeclinedByClient } from '../../email-templates/CheckinDeclinedByClient';
 
 type TemplateKey =
   | 'waitlist-confirmation'
@@ -38,7 +42,11 @@ type TemplateKey =
   | 'checkin-requested'
   | 'checkin-withdrawn'
   | 'checkin-approved'
-  | 'checkin-declined';
+  | 'checkin-declined'
+  | 'checkin-scheduled'
+  | 'checkin-schedule-cancelled'
+  | 'checkin-approved-by-client'
+  | 'checkin-declined-by-client';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -48,7 +56,9 @@ type TemplateOption = {
 
 const SAMPLE_VISITOR_PHONE = '+40712345678';
 const SAMPLE_CHECKIN_NOTE = 'My knee felt sore after Tuesday.';
+const SAMPLE_COACH_NOTE = 'How is the training feeling so far?';
 const SAMPLE_COACH_TIME_ZONE = 'Europe/Bucharest';
+const SAMPLE_CLIENT_TIME_ZONE = 'Europe/London';
 const SAMPLE_CHECKIN_HOUR = 18;
 const SAMPLE_CHECKIN_DAYS_AHEAD = 3;
 const WEEKEND_DAYS = [0, 6];
@@ -76,11 +86,11 @@ function googleCalendarStamp(instant: Date): string {
   return instant.toISOString().replace(/[-:]|\.\d{3}/g, '');
 }
 
-function sampleCheckinCalendarUrl(): string {
+function sampleCheckinCalendarUrl(withWhom: string): string {
   const endsAt = new Date(SAMPLE_CHECKIN_START.getTime() + SAMPLE_CHECKIN_MINUTES * 60_000);
   const query = new URLSearchParams({
     action: 'TEMPLATE',
-    text: 'Check-in with Eli',
+    text: `Check-in with ${withWhom}`,
     dates: `${googleCalendarStamp(SAMPLE_CHECKIN_START)}/${googleCalendarStamp(endsAt)}`,
   });
 
@@ -164,6 +174,29 @@ const TEMPLATES: TemplateOption[] = [
   {
     key: 'checkin-declined',
     label: 'Check-in declined',
+    variants: [{ value: 'declined', label: 'Declined' }],
+  },
+  {
+    key: 'checkin-scheduled',
+    label: 'Check-in scheduled',
+    variants: [
+      { value: 'with-note', label: 'With a note' },
+      { value: 'without-note', label: 'Without a note' },
+    ],
+  },
+  {
+    key: 'checkin-schedule-cancelled',
+    label: 'Check-in request cancelled',
+    variants: [{ value: 'cancelled', label: 'Cancelled' }],
+  },
+  {
+    key: 'checkin-approved-by-client',
+    label: 'Check-in approved — coach',
+    variants: [{ value: 'approved', label: 'Approved' }],
+  },
+  {
+    key: 'checkin-declined-by-client',
+    label: 'Check-in declined — coach',
     variants: [{ value: 'declined', label: 'Declined' }],
   },
 ];
@@ -271,9 +304,9 @@ export function EmailPreview() {
         <CheckinApproved
           coachName="Eli"
           startsAt={SAMPLE_CHECKIN_START}
-          clientTimeZone="Europe/London"
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
           joinUrl={`${window.location.origin}/client/checkins/ci-demo/join`}
-          googleCalendarUrl={sampleCheckinCalendarUrl()}
+          googleCalendarUrl={sampleCheckinCalendarUrl('Eli')}
         />
       );
     }
@@ -282,8 +315,48 @@ export function EmailPreview() {
         <CheckinDeclined
           coachName="Eli"
           startsAt={SAMPLE_CHECKIN_START}
-          clientTimeZone="Europe/London"
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
           checkinsUrl={`${window.location.origin}/client/checkins`}
+        />
+      );
+    }
+    if (template === 'checkin-scheduled') {
+      return (
+        <CheckinScheduled
+          coachName="Eli"
+          note={variant === 'with-note' ? SAMPLE_COACH_NOTE : null}
+          startsAt={SAMPLE_CHECKIN_START}
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
+          checkinsUrl={`${window.location.origin}/portal/checkins`}
+        />
+      );
+    }
+    if (template === 'checkin-schedule-cancelled') {
+      return (
+        <CheckinScheduleCancelled
+          coachName="Eli"
+          startsAt={SAMPLE_CHECKIN_START}
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
+        />
+      );
+    }
+    if (template === 'checkin-approved-by-client') {
+      return (
+        <CheckinApprovedByClient
+          clientName="Jane Doe"
+          startsAt={SAMPLE_CHECKIN_START}
+          coachTimeZone={SAMPLE_COACH_TIME_ZONE}
+          joinUrl={`${window.location.origin}/coach/checkins/ci-demo/join`}
+          googleCalendarUrl={sampleCheckinCalendarUrl('Jane Doe')}
+        />
+      );
+    }
+    if (template === 'checkin-declined-by-client') {
+      return (
+        <CheckinDeclinedByClient
+          clientName="Jane Doe"
+          startsAt={SAMPLE_CHECKIN_START}
+          coachTimeZone={SAMPLE_COACH_TIME_ZONE}
         />
       );
     }

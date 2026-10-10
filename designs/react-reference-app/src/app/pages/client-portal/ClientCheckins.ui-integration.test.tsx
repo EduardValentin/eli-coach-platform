@@ -411,6 +411,62 @@ async function showOpenRequestOfHers() {
   await showTab('Requests');
 }
 
+const COACH_REQUEST_NOTE = /How is the training feeling so far\?/;
+
+describe('a check-in her coach scheduled', () => {
+  it('comes first under Requests, marked as her coach’s, with the note and the count', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await showTab('Requests');
+
+    // assert
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
+    const [first] = within(screen.getByRole('list', { name: 'Requests check-ins' })).getAllByRole('listitem');
+    expect(within(first).getByText(/Requested by your coach$/)).toBeInTheDocument();
+    expect(within(first).getByText(COACH_REQUEST_NOTE)).toBeInTheDocument();
+    expect(
+      within(first)
+        .getAllByRole('button', { name: ROW_ACTION })
+        .map((button) => button.textContent),
+    ).toEqual(['Decline', 'Approve']);
+  });
+
+  it('moves to Upcoming once she approves it', async () => {
+    // arrange
+    renderPage();
+    await showTab('Requests');
+
+    // act
+    await userEvent.click(within(rowWith(COACH_REQUEST_NOTE)).getByRole('button', { name: 'Approve' }));
+
+    // assert
+    expect(await screen.findByText('Check-in approved', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 1 waiting on you');
+    // act
+    await showTab('Upcoming');
+    // assert
+    expect(within(rowWith(COACH_REQUEST_NOTE)).getByRole('link', { name: 'Join Meet' })).toBeInTheDocument();
+  });
+
+  it('moves to Past as cancelled once she declines it', async () => {
+    // arrange
+    renderPage();
+    await showTab('Requests');
+
+    // act
+    await userEvent.click(within(rowWith(COACH_REQUEST_NOTE)).getByRole('button', { name: 'Decline' }));
+
+    // assert
+    expect(await screen.findByText('Check-in declined', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    // act
+    await showTab('Past');
+    // assert
+    expect(within(rowWith(COACH_REQUEST_NOTE)).getByText('Cancelled')).toBeInTheDocument();
+  });
+});
+
 describe('the actions on her check-in rows', () => {
   it('keeps Join Meet on an upcoming check-in and puts Reschedule then Cancel in its menu', async () => {
     // arrange
