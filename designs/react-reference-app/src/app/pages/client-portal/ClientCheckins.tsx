@@ -33,10 +33,13 @@ import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
 import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
 import type { CheckinTab } from '../../utils/checkinListing';
 import { Button } from '../../components/ui/button';
+import { DisabledActionHint } from '../../components/DisabledActionHint';
 import { toast } from 'sonner';
 
 const CLIENT_ID = DEMO_CLIENT.id;
 const CLIENT_NAME = DEMO_CLIENT.name;
+
+const OPEN_REQUEST_REASON = 'You can send another request once this one is answered.';
 
 const BUSY_LABEL: Record<CheckinAnswer, string> = {
   approve: 'Approving…',
@@ -188,13 +191,25 @@ export function ClientCheckins() {
     setRescheduleTarget(null);
   };
 
-  const requestButtonProps = {
-    type: 'button' as const,
-    onClick: () => setShowRequest(true),
-    disabled: openRequest,
-    'aria-describedby': openRequest ? 'open-request-note' : undefined,
-    variant: 'primary' as const,
-    size: 'md' as const,
+  const requestButton = (className: string, iconSize: number) => {
+    const button = (
+      <Button
+        type="button"
+        onClick={() => setShowRequest(true)}
+        variant="primary"
+        size="md"
+        className={className}
+      >
+        <CalendarPlus size={iconSize} aria-hidden="true" />
+        Request check-in
+      </Button>
+    );
+
+    return openRequest ? (
+      <DisabledActionHint reason={OPEN_REQUEST_REASON}>{button}</DisabledActionHint>
+    ) : (
+      button
+    );
   };
 
   const upcomingActions = (c: CheckIn): CheckinRowActions => ({
@@ -262,22 +277,7 @@ export function ClientCheckins() {
       <PortalPageHeader
         title="Check-ins"
         subtitle="Request a check-in, answer proposals, and look back at past sessions."
-        actions={
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Button {...requestButtonProps} className="hidden sm:inline-flex">
-              <CalendarPlus size={16} aria-hidden="true" />
-              Request check-in
-            </Button>
-            {openRequest && (
-              <p
-                id="open-request-note"
-                className="text-xs text-text-secondary sm:text-right"
-              >
-                You can send another request once this one is answered.
-              </p>
-            )}
-          </div>
-        }
+        actions={requestButton('hidden sm:inline-flex', 16)}
       />
 
       <CheckinListing
@@ -348,13 +348,10 @@ export function ClientCheckins() {
         tone="destructive"
       />
 
-      <Button
-        {...requestButtonProps}
-        className="fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden"
-      >
-        <CalendarPlus size={18} aria-hidden="true" />
-        Request check-in
-      </Button>
+      {requestButton(
+        'fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden',
+        18,
+      )}
     </div>
   );
 }

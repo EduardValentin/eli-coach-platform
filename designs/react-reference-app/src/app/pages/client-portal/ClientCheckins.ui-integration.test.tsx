@@ -232,7 +232,7 @@ describe('requesting a check-in', () => {
     expect(within(dialog).getByRole('button', { name: 'Select a date' })).toBeDisabled();
   });
 
-  it('holds back a second request while one waits, with the reason', async () => {
+  it('holds back a second request while one waits, without a line explaining it', async () => {
     // arrange
     renderPage();
 
@@ -242,9 +242,10 @@ describe('requesting a check-in', () => {
     // assert
     expect(requestButtons()).toHaveLength(2);
     for (const button of requestButtons()) {
-      expect(button).toBeDisabled();
-      expect(button).toHaveAccessibleDescription(WAITING_EXPLANATION);
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+      expect(button).not.toHaveAccessibleDescription(WAITING_EXPLANATION);
     }
+    expect(screen.queryByText(WAITING_EXPLANATION)).not.toBeInTheDocument();
   });
 
   it('withdraws her waiting request and lets her ask again', async () => {
@@ -260,7 +261,10 @@ describe('requesting a check-in', () => {
     expect(await screen.findByText('Request cancelled', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(NOTE))).not.toBeInTheDocument();
     expect(requestButtons()).toHaveLength(2);
-    for (const button of requestButtons()) expect(button).toBeEnabled();
+    for (const button of requestButtons()) {
+      expect(button).toBeEnabled();
+      expect(button).not.toHaveAttribute('aria-disabled');
+    }
   });
 
   it('keeps her request when withdrawing it fails', async () => {
@@ -282,6 +286,101 @@ describe('requesting a check-in', () => {
       await screen.findByText("Your request wasn't cancelled. Try again.", {}, SERVICE_TIMEOUT),
     ).toBeInTheDocument();
     expect(within(row).getByRole('button', { name: 'Cancel request' })).toBeEnabled();
+  });
+});
+
+async function waitWithAnOpenRequest() {
+  renderPage();
+  await openCheckinDevSettings();
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Client has an open request' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+  const [headerButton, floatingButton] = requestButtons();
+
+  return { headerButton, floatingButton };
+}
+
+describe('the request button while her request waits', () => {
+  it.each([
+    ['header', 'headerButton'],
+    ['floating', 'floatingButton'],
+  ] as const)('explains itself when she hovers the %s button', async (_where, which) => {
+    // arrange
+    const buttons = await waitWithAnOpenRequest();
+
+    // act
+    await userEvent.hover(buttons[which]);
+
+    // assert
+    expect(await screen.findByText(WAITING_EXPLANATION)).toBeVisible();
+    expect(buttons[which]).toHaveAccessibleDescription(WAITING_EXPLANATION);
+  });
+
+  it.each([
+    ['header', 'headerButton'],
+    ['floating', 'floatingButton'],
+  ] as const)('explains itself when she taps the %s button', async (_where, which) => {
+    // arrange
+    const buttons = await waitWithAnOpenRequest();
+
+    // act
+    await userEvent.pointer({ keys: '[TouchA]', target: buttons[which] });
+
+    // assert
+    expect(await screen.findByText(WAITING_EXPLANATION)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Request a check-in' })).not.toBeInTheDocument();
+  });
+
+  it('explains itself when she tabs to the header button', async () => {
+    // arrange
+    const { headerButton } = await waitWithAnOpenRequest();
+    act(() => (document.activeElement as HTMLElement).blur());
+
+    // act
+    await userEvent.tab();
+
+    // assert
+    expect(headerButton).toHaveFocus();
+    expect(headerButton).toHaveAccessibleDescription(WAITING_EXPLANATION);
+  });
+
+  it('explains itself when she reaches the floating button from the keyboard', async () => {
+    // arrange
+    const { floatingButton } = await waitWithAnOpenRequest();
+    act(() => screen.getByRole('button', { name: 'Open Dev Toggle' }).focus());
+
+    // act
+    await userEvent.tab({ shift: true });
+
+    // assert
+    expect(floatingButton).toHaveFocus();
+    expect(floatingButton).toHaveAccessibleDescription(WAITING_EXPLANATION);
+  });
+
+  it.each([['Enter', '{Enter}'], ['Space', ' ']])(
+    'does not open the request dialog on %s',
+    async (_key, keys) => {
+      // arrange
+      const { headerButton } = await waitWithAnOpenRequest();
+      act(() => headerButton.focus());
+
+      // act
+      await userEvent.keyboard(keys);
+
+      // assert
+      expect(screen.queryByRole('dialog', { name: 'Request a check-in' })).not.toBeInTheDocument();
+    },
+  );
+
+  it('does not open the request dialog on a click', async () => {
+    // arrange
+    const { headerButton, floatingButton } = await waitWithAnOpenRequest();
+
+    // act
+    await userEvent.click(headerButton);
+    await userEvent.click(floatingButton);
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Request a check-in' })).not.toBeInTheDocument();
   });
 });
 
