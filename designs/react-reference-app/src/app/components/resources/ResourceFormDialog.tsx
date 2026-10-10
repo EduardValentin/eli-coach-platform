@@ -13,6 +13,7 @@ import {
   type ResourceFileKind,
   type ServerDecidedRefusal,
 } from '../../domain/resources';
+import { MAX_TAG_LENGTH } from '../../domain/tags';
 import type { NewResourceUpload } from '../../hooks/useClientResources';
 import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
 import {
@@ -363,6 +364,7 @@ function ResourceForm({
                   </FormLabel>
                   <FormControl>
                     <TagInput
+                      maxLength={MAX_TAG_LENGTH}
                       onChange={field.onChange}
                       placeholder="Add a tag"
                       ref={field.ref}

@@ -1,3 +1,5 @@
+export const MAX_TAG_LENGTH = 30;
+
 export function normalizeTag(text: string): string {
   return text.trim().replace(/\s+/g, ' ');
 }

@@ -29,6 +29,7 @@ type TagInputProps = {
   onChange: (tags: string[]) => void;
   vocabulary: readonly string[];
   placeholder?: string;
+  maxLength?: number;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean;
 };
@@ -72,6 +73,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
       onChange,
       vocabulary,
       placeholder,
+      maxLength,
       'aria-describedby': describedBy,
       'aria-invalid': invalid,
     },
@@ -210,6 +212,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
               data-field-entry=""
               enterKeyHint="enter"
               id={id}
+              maxLength={maxLength}
               onBlur={() => {
                 commitText();
                 setExpanded(false);
