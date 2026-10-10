@@ -12,6 +12,8 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import { ScheduleCheckInAction } from "~/features/check-ins/ui/coach/schedule/schedule-check-in-action";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
 import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
@@ -40,18 +42,23 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const { coachProfile } = args.context.get(clientProfileContext);
-  const [client, review, profile, measurements] = await Promise.all([
-    args.context
-      .get(coachingSalesContext)
-      .coachClients.loadClient(args, clientId),
-    args.context
-      .get(clientOnboardingContext)
-      .coachReview.loadReview(args, clientId),
-    coachProfile.load(args, clientId),
-    coachProfile.loadMeasurements(args, clientId),
-  ]);
+  const [client, review, profile, measurements, scheduling] = await Promise.all(
+    [
+      args.context
+        .get(coachingSalesContext)
+        .coachClients.loadClient(args, clientId),
+      args.context
+        .get(clientOnboardingContext)
+        .coachReview.loadReview(args, clientId),
+      coachProfile.load(args, clientId),
+      coachProfile.loadMeasurements(args, clientId),
+      args.context
+        .get(checkInsContext)
+        .coachCheckIns.loadClientScheduling(args, clientId),
+    ],
+  );
 
-  return { client, review, profile, measurements };
+  return { client, review, profile, measurements, scheduling };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -69,7 +76,7 @@ export function ErrorBoundary() {
 }
 
 export default function CoachClientRoute() {
-  const { client, review, profile, measurements } =
+  const { client, review, profile, measurements, scheduling } =
     useLoaderData<typeof loader>();
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
@@ -101,6 +108,7 @@ export default function CoachClientRoute() {
             <FolderOpen aria-hidden="true" size={16} />
             Resources
           </Link>
+          <ScheduleCheckInAction client={client} scheduling={scheduling} />
         </div>
       </header>
 

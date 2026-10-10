@@ -29,6 +29,10 @@ type CheckInDecision = {
   successMessage: string;
 };
 
+type CheckInDecisionsOptions = {
+  timeZone?: string;
+};
+
 export type CheckInDecisions = ReturnType<typeof useCheckInDecisions>;
 
 type CheckInDecisionButtonProps = Pick<
@@ -38,6 +42,15 @@ type CheckInDecisionButtonProps = Pick<
   decision: CheckInDecision;
   decisions: CheckInDecisions;
   label: string;
+};
+
+type CheckInWithdrawalProps = Pick<ComponentProps<typeof Button>, "size"> & {
+  checkInId: string;
+  decisions: CheckInDecisions;
+};
+
+type CheckInAnswersProps = CheckInWithdrawalProps & {
+  approvedMessage: string;
 };
 
 const DECISION_PATHS: Record<CheckInDecisionKind, string> = {
@@ -60,10 +73,14 @@ const FAILURE_COPY: Record<CheckInDecisionKind, string> = {
 
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
-export function useCheckInDecisions() {
+export function useCheckInDecisions({
+  timeZone,
+}: CheckInDecisionsOptions = {}) {
   const submit = useSubmit();
   const [sent, setSent] = useState<readonly CheckInDecision[]>([]);
   const inFlight = new Set(useFetchers().map((fetcher) => fetcher.key));
+  const answer: Record<string, string> =
+    timeZone === undefined ? {} : { timeZone };
 
   return {
     decide: (decision: CheckInDecision) => {
@@ -71,10 +88,11 @@ export function useCheckInDecisions() {
         ...current.filter(({ checkInId }) => checkInId !== decision.checkInId),
         decision,
       ]);
-      void submit(null, {
+      void submit(answer, {
         action: generatePath(DECISION_PATHS[decision.kind], {
           checkInId: decision.checkInId,
         }),
+        encType: "application/json",
         fetcherKey: fetcherKeyOf(decision.checkInId),
         method: "post",
         navigate: false,
@@ -91,7 +109,7 @@ export function useCheckInDecisions() {
   };
 }
 
-export function CheckInDecisionButton({
+function CheckInDecisionButton({
   decision,
   decisions,
   label,
@@ -111,6 +129,59 @@ export function CheckInDecisionButton({
     >
       {isBusy ? BUSY_LABELS[decision.kind] : label}
     </Button>
+  );
+}
+
+export function CheckInWithdrawal({
+  checkInId,
+  decisions,
+  size,
+}: CheckInWithdrawalProps) {
+  return (
+    <CheckInDecisionButton
+      decision={{
+        checkInId,
+        kind: "withdraw",
+        successMessage: "Request cancelled",
+      }}
+      decisions={decisions}
+      label="Cancel request"
+      size={size}
+      variant="outline"
+    />
+  );
+}
+
+export function CheckInAnswers({
+  approvedMessage,
+  checkInId,
+  decisions,
+  size,
+}: CheckInAnswersProps) {
+  return (
+    <>
+      <CheckInDecisionButton
+        decision={{
+          checkInId,
+          kind: "decline",
+          successMessage: "Check-in declined",
+        }}
+        decisions={decisions}
+        label="Decline"
+        size={size}
+        variant="ghost"
+      />
+      <CheckInDecisionButton
+        decision={{
+          checkInId,
+          kind: "approve",
+          successMessage: approvedMessage,
+        }}
+        decisions={decisions}
+        label="Approve"
+        size={size}
+      />
+    </>
   );
 }
 

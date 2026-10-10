@@ -19,6 +19,7 @@ import {
   vi,
 } from "vitest";
 
+import type { CheckInScheduling } from "~/features/check-ins/public/check-ins";
 import type {
   OnboardingReviewView,
   SubmittedReview,
@@ -261,6 +262,53 @@ describe("the coach's client page", () => {
         name: "Resources",
       }),
     ).toHaveAttribute("href", coachClientResourcesPath(CLIENT_ID));
+  });
+
+  it("puts Schedule check-in after Resources in her header once she can answer", async () => {
+    // arrange, act
+    await renderClientPage({ scheduling: "allowed" });
+
+    // assert
+    const header = screen
+      .getByRole("heading", { level: 1, name: "Ana Popescu" })
+      .closest("header") as HTMLElement;
+    const resources = within(header).getByRole("link", { name: "Resources" });
+    const schedule = within(header).getByRole("button", {
+      name: "Schedule check-in",
+    });
+    expect(
+      resources.compareDocumentPosition(schedule) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(schedule).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("holds Schedule check-in back before she sends her onboarding and says why on hover", async () => {
+    // arrange
+    const user = await renderClientPage({ scheduling: "awaiting_onboarding" });
+    const schedule = screen.getByRole("button", { name: "Schedule check-in" });
+
+    // act
+    await user.hover(schedule);
+
+    // assert
+    expect(schedule).toHaveAttribute("aria-disabled", "true");
+    expect(
+      await screen.findByText(
+        "She can answer a check-in once she has sent her onboarding.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves Schedule check-in out once her coaching has ended", async () => {
+    // arrange, act
+    await renderClientPage({ scheduling: "ended" });
+
+    // assert
+    expect(
+      screen.queryByRole("button", { name: "Schedule check-in" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Resources" })).toBeInTheDocument();
   });
 
   it("lays out her profile, invitation, onboarding, subscription, measurements and assessment call in that order", async () => {
@@ -649,6 +697,7 @@ type ClientPageData = {
   review: OnboardingReviewView;
   profile: ClientProfileView;
   measurements: MeasurementRow[];
+  scheduling: CheckInScheduling;
 };
 
 function clientNotFound(): never {
@@ -661,6 +710,7 @@ async function renderClientRouter(
     review: NOT_SUBMITTED,
     profile: AWAITING_ONBOARDING_PROFILE,
     measurements: [],
+    scheduling: "awaiting_onboarding",
   }),
 ) {
   const user = userEvent.setup();
@@ -707,6 +757,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
     review: options.review ?? NOT_SUBMITTED,
     profile: options.profile ?? AWAITING_ONBOARDING_PROFILE,
     measurements: options.measurements ?? [],
+    scheduling: options.scheduling ?? "awaiting_onboarding",
   }));
 
   return user;

@@ -33,6 +33,8 @@ import {
   shouldRevalidate as shouldRevalidateOpenTimes,
 } from "~/features/check-ins/api/shared/open-times";
 import { clientAction as requestCheckIn } from "~/features/check-ins/api/client/requests";
+import { clientAction as approveCheckIn } from "~/features/check-ins/api/shared/approval";
+import { clientAction as declineCheckIn } from "~/features/check-ins/api/shared/decline";
 import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/shared/withdrawal";
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 import {
@@ -85,6 +87,24 @@ const WAITING_REQUEST: ClientCheckIn = {
   note: "Can we look at my squat form?",
 };
 
+const COACH_REQUEST: ClientCheckIn = {
+  ...APPROVED_SOON,
+  id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
+  status: "pending",
+  initiatedBy: "coach",
+  awaitsViewer: true,
+  startsAt: "2026-10-19T09:00:00.000Z",
+  endsAt: "2026-10-19T10:00:00.000Z",
+  joinEmphasisFrom: "2026-10-19T08:50:00.000Z",
+  note: "Let's look at your first two weeks",
+};
+
+const COACH_REQUEST_APPROVED: ClientCheckIn = {
+  ...COACH_REQUEST,
+  status: "approved",
+  awaitsViewer: false,
+};
+
 const PASSED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
@@ -115,6 +135,8 @@ const WAITING_REASON =
 const OPEN_TIMES_URL = `*${CHECK_INS_API_PATHS.openTimes}`;
 const REQUESTS_URL = `*${CHECK_INS_API_PATHS.requests}`;
 const WITHDRAWAL_URL = `*${CHECK_INS_API_PATHS.withdrawal}`;
+const APPROVAL_URL = `*${CHECK_INS_API_PATHS.approval}`;
+const DECLINE_URL = `*${CHECK_INS_API_PATHS.decline}`;
 
 const server = setupServer();
 const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
@@ -180,7 +202,9 @@ describe("the client's check-ins page", () => {
         .map(({ textContent }) => textContent),
     ).toEqual(["Check-ins"]);
     expect(
-      screen.getByText("Request a check-in and look back at past sessions."),
+      screen.getByText(
+        "Request a check-in, answer proposals, and look back at past sessions.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
       "aria-selected",
@@ -258,7 +282,11 @@ describe("the client's check-ins page", () => {
       "No upcoming check-ins",
       "Request one any time using the button above.",
     ],
-    ["Requests", "No open requests", "Requests you send show up here."],
+    [
+      "Requests",
+      "No open requests",
+      "Requests you send and proposals from your coach show up here.",
+    ],
     [
       "Past",
       "No past check-ins yet",
@@ -305,6 +333,164 @@ describe("the client's check-ins page", () => {
   it("passes the axe checks with her check-ins listed", async () => {
     // arrange, act
     const { baseElement } = await renderCheckInsPageWithView();
+
+    // assert
+    expect((await axe(baseElement)).violations).toEqual([]);
+  });
+});
+
+describe("the client answering her coach's request", () => {
+  it("shows her coach's request first under Requests, counted on the tab, with the coach's note and a way to approve or decline it", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST, COACH_REQUEST] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(
+      screen.getByRole("tab", { name: /^Requests\s*1 waiting on you$/ }),
+    );
+
+    // assert
+    const rows = within(
+      screen.getByRole("list", { name: "Requests check-ins" }),
+    ).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("Ad-hoc · Requested by your coach");
+    expect(rows[0]).toHaveTextContent(
+      'Your coach: "Let\'s look at your first two weeks"',
+    );
+    expect(
+      within(rows[0])
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Decline", "Approve"]);
+    expect(rows[1]).toHaveTextContent("Ad-hoc · Requested by you");
+    expect(
+      within(rows[1]).getByRole("button", { name: "Cancel request" }),
+    ).toBeEnabled();
+  });
+
+  it("approves it from her time zone, showing the work in progress, and moves it to Upcoming", async () => {
+    // arrange
+    listing = { checkIns: [COACH_REQUEST] };
+    let release: () => void = () => {};
+    const approvals: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(APPROVAL_URL, async ({ params, request }) => {
+        approvals.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        listing = { checkIns: [COACH_REQUEST_APPROVED] };
+        return HttpResponse.json({
+          status: "approved",
+          checkInId: COACH_REQUEST.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Approve" }));
+    const busy = await screen.findByRole("button", { name: "Approving…" });
+    const busyState = [
+      busy.hasAttribute("disabled"),
+      screen.getByRole("button", { name: "Decline" }).hasAttribute("disabled"),
+    ];
+    release();
+
+    // assert
+    expect(busyState).toEqual([true, true]);
+    expect(await screen.findByText("Check-in approved")).toBeInTheDocument();
+    expect(await screen.findByText("No open requests")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Requests" })).not.toHaveTextContent(
+      /\d/,
+    );
+    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    expect(
+      within(
+        screen.getByRole("list", { name: "Upcoming check-ins" }),
+      ).getByRole("link", { name: "Join Meet" }),
+    ).toHaveAttribute("href", `/client/checkins/${COACH_REQUEST.id}/join`);
+    expect(approvals).toEqual([
+      { checkInId: COACH_REQUEST.id, body: { timeZone: TIME_ZONE } },
+    ]);
+  });
+
+  it("declines it from her time zone and confirms it", async () => {
+    // arrange
+    listing = { checkIns: [COACH_REQUEST] };
+    const declines: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(DECLINE_URL, async ({ params, request }) => {
+        declines.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        listing = { checkIns: [] };
+        return HttpResponse.json({
+          status: "declined",
+          checkInId: COACH_REQUEST.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Decline" }));
+
+    // assert
+    expect(await screen.findByText("Check-in declined")).toBeInTheDocument();
+    expect(await screen.findByText("No open requests")).toBeInTheDocument();
+    expect(declines).toEqual([
+      { checkInId: COACH_REQUEST.id, body: { timeZone: TIME_ZONE } },
+    ]);
+  });
+
+  it.each([
+    ["Approve", APPROVAL_URL],
+    ["Decline", DECLINE_URL],
+  ])(
+    "says the request is no longer waiting when she answers it too late on %s, and reads her check-ins again",
+    async (action, url) => {
+      // arrange
+      listing = { checkIns: [COACH_REQUEST] };
+      server.use(
+        http.post(url, () =>
+          HttpResponse.json({ error: "ended" }, { status: 409 }),
+        ),
+      );
+      const user = await renderCheckInsPage();
+      await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+      const readsBefore = listingReads;
+
+      // act
+      await user.click(screen.getByRole("button", { name: action }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "This request is no longer waiting for an answer.",
+        ),
+      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(listingReads).toBeGreaterThan(readsBefore);
+      });
+    },
+  );
+
+  it("passes the axe checks with her coach's request waiting", async () => {
+    // arrange
+    listing = { checkIns: [COACH_REQUEST] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+
+    // act
+    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
 
     // assert
     expect((await axe(baseElement)).violations).toEqual([]);
@@ -707,10 +893,13 @@ describe("the client cancelling her waiting request", () => {
     // arrange
     listing = { checkIns: [WAITING_REQUEST] };
     let release: () => void = () => {};
-    const withdrawn: string[] = [];
+    const withdrawn: { checkInId: string; body: unknown }[] = [];
     server.use(
-      http.post(WITHDRAWAL_URL, async ({ params }) => {
-        withdrawn.push(String(params.checkInId));
+      http.post(WITHDRAWAL_URL, async ({ params, request }) => {
+        withdrawn.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
         await new Promise<void>((resolve) => {
           release = resolve;
         });
@@ -734,7 +923,9 @@ describe("the client cancelling her waiting request", () => {
     expect(busyWhileWaiting).toBe(true);
     expect(await screen.findByText("Request cancelled")).toBeInTheDocument();
     expect(await screen.findByText("No open requests")).toBeInTheDocument();
-    expect(withdrawn).toEqual([WAITING_REQUEST.id]);
+    expect(withdrawn).toEqual([
+      { checkInId: WAITING_REQUEST.id, body: { timeZone: TIME_ZONE } },
+    ]);
   });
 
   it("says the request was already answered and reads her check-ins again", async () => {
@@ -849,6 +1040,14 @@ async function renderCheckInsPageWithView() {
       {
         action: frameworkModeAction(withdrawCheckIn),
         path: CHECK_INS_API_PATHS.withdrawal,
+      },
+      {
+        action: frameworkModeAction(approveCheckIn),
+        path: CHECK_INS_API_PATHS.approval,
+      },
+      {
+        action: frameworkModeAction(declineCheckIn),
+        path: CHECK_INS_API_PATHS.decline,
       },
     ],
     { initialEntries: [CLIENT_CHECK_INS_PATH] },

@@ -290,6 +290,27 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Approve answers");
       expect(texts).not.toContain("Re-send invitation");
       expect(texts).not.toContain("Her answers are not in yet.");
+      expect(scheduleActionOf(page)).toBeDefined();
+      expect(scheduleActionOf(page)).not.toContain('aria-disabled="true"');
+    });
+
+    it("holds Schedule check-in back for a client whose coaching runs but who has not sent her onboarding", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}`,
+      );
+
+      // assert
+      const page = await visibleDocument(response);
+
+      expect(response.status).toBe(200);
+      expect(textNodesOf(page)).toContain("Schedule check-in");
+      expect(scheduleActionOf(page)).toContain('aria-disabled="true"');
     });
 
     it("keeps a submitted client's answers readable but offers no review step once her coaching has ended", async () => {
@@ -322,6 +343,8 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Answers");
       expect(texts).not.toContain("Review answers");
       expect(texts).not.toContain("Approve answers");
+      expect(texts).toContain("Resources");
+      expect(texts).not.toContain("Schedule check-in");
     });
 
     it("offers no invitation re-send for an invited client whose coaching has ended", async () => {
@@ -406,6 +429,10 @@ describe.sequential("coach clients pages integration", () => {
     });
   });
 });
+
+function scheduleActionOf(page: string): string | undefined {
+  return /<button(?:(?!<\/button>)[\s\S])*Schedule check-in/.exec(page)?.[0];
+}
 
 function readingOf(page: string, parity: string): string | undefined {
   return new RegExp(`data-parity="${parity}"[^>]*>([^<]*)<`).exec(page)?.[1];
