@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit b6a5ea5b, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 2cdf3fac, change review.
 
 ## Component graph
 
@@ -400,6 +400,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | `app.coach_availability` and `app.coach_meeting_room` (the two one-row singleton tables migration `0024_create_coach_availability_and_meeting_room.sql` creates) | C6 declares both (`coach-calendar/schema.server.ts`'s `availability/`-adjacent table and the new `coach-meeting-room/schema.server.ts`) and reads/writes them through `PostgresCoachAvailability`/`PostgresCoachMeetingRoom`; C1's `CoachAvailabilitySource`/`CoachAvailabilityChanges` and `CoachMeetingRoomSource`/`CoachMeetingRoomChanges` ports are the only way any other component reaches them; C17's composition constructs both adapters and its two settings use cases are the sole consumers | C6 owns the tables; C1 owns the ports and the validation |
 | `app.waitlist_entries.reduced_slot` and its constraints | C8 declares them in U304 and migration 0019 (U1212); U303 allocates slots; U1211 reads the constraint names | C8 owns the table; N is U911's `WAITLIST_REDUCED_PRICING_CAP`, and changing it is a migration in the same PR (b3eb2653) |
 | `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15's seed folder inserts `WAITLIST_MODE=true` after every migrate and never overwrites it; C14 constructs the generic reader and, in `browser` mode, overlays the request's overrides on the read without writing the table; integration tests write it only for test arrangement; the Playwright suite reaches the flag only through the public `ff.WAITLIST_MODE` override | C6 owns the table; U963 owns the waitlist-mode interpretation and U1300 the booking one, both through `WAITLIST_MODE_FEATURE_FLAG` |
+| `app.product_types` and `app.product_goals` reference rows (three product types, four product goals) | C7 declares and reads both tables; C15's seed file `db/seeds/store-taxonomy.sql` inserts the rows after every migrate and never overwrites a stored one, so a change to a seeded row's columns edits the C7 schema, a migration and the seed file | C7 |
 | store zod contracts (public/store.ts, store-management.ts) | C7 server half and C7 ui half; C11 through `public/` | C7 |
 | waitlist zod contracts (public/waitlist.ts) | C8; C11 | C8 |
 | assessment-call zod contracts (public/assessment-calls.ts, and since GEN-192 public/assessment-call-settings.ts) | C17 server half and C17 ui half only; no other component reads them | C17 |
@@ -4228,4 +4229,4 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4865 | packages/ui/src/primitives/hint-popover.tsx | packages/ui/src/primitives/popover.tsx | import | no | no | lateral | present |
 | E4866 | packages/ui/src/primitives/hint-popover.tsx | external:react | import | n/a | no | lateral | present |
 | E4867 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/primitives/hint-popover.tsx | import | no | no | lateral | present |
-| E4868 | apps/platform/integration-test-config/postgres-test-environment.ts | apps/platform/db/apply-seeds.ts | import | yes | yes | inward | new (GEN-217): the rig's reset applies the seed folder through C15's runner |
+| E4868 | apps/platform/integration-test-config/postgres-test-environment.ts | apps/platform/db/apply-seeds.ts | import | yes | yes | inward | present |

@@ -1,6 +1,6 @@
 # Decisions
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit b6a5ea5b, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 2cdf3fac, change review.
 
 ## Deferred decisions
 
