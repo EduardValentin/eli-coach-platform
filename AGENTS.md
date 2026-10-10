@@ -57,7 +57,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 
 ## Data and SQL
 
-- Database state is reproducible from migrations (`pnpm db:generate`, `pnpm db:migrate`) and application code. Never depend on manual schema edits or one-off data mutations. Migrations get no tests; applying one is its verification.
+- Database state is reproducible from migrations (`pnpm db:generate`, `pnpm db:migrate`), the reference rows in `apps/platform/db/seeds/` that `pnpm db:migrate` applies after them, and application code. Never depend on manual schema edits or one-off data mutations. Migrations get no tests; applying one is its verification.
 - Bind every dynamic SQL value through ORM or tagged-template parameters; allowlist dynamic identifiers.
 - SQL does persistence, filtering, joins, ordering, constraints, and necessary aggregation. Map rows into API and domain shapes in TypeScript unless a documented performance, atomicity, or database-native need says otherwise.
 - Query every table through Drizzle's core query builder, never `db.query.*`. Tables live in a feature's `data/schema.server.ts` or a package's own `*schema*.server.ts`; `apps/platform/db/drizzle.config.ts` finds them.

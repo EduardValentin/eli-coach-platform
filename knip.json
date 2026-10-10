@@ -26,6 +26,7 @@
         "src/surfaces/*/shell/layout.tsx",
         "src/surfaces/*/api/*.ts",
         "db/drizzle.config.ts",
+        "db/apply-seeds.ts",
         "react-router.config.ts",
         "vite.config.ts",
         "e2e/**/*.ts",

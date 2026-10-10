@@ -8,7 +8,8 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 
 ```text
 /apps/platform
-  /db            Drizzle config and the migrations CI checks for drift
+  /db            Drizzle config, the migrations CI checks for drift, and the
+                 seed folder applied after them
   /integration-test-config
                  the containers integration suites run against, the contracts
                  they serve, and how a suite spawns the built server it drives
@@ -150,7 +151,7 @@ The reference prototype is covered by its own `npm test` — which typechecks wi
 pnpm db:bootstrap:local  # create the local database and roles
 pnpm db:setup:local      # re-run local setup
 pnpm db:generate         # generate a Drizzle migration from schema changes
-pnpm db:migrate          # apply migrations
+pnpm db:migrate          # apply migrations and seeds
 pnpm docker:local:up     # start local Postgres
 pnpm docker:local:down   # stop it
 ```

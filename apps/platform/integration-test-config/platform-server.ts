@@ -164,6 +164,10 @@ export class PlatformServer {
 
     this.child = null;
 
+    if (child?.connected) {
+      child.disconnect();
+    }
+
     if (child && this.exit === null) {
       child.kill("SIGTERM");
       await this.waitUntilStopped(child);
@@ -356,8 +360,6 @@ export class PlatformServer {
   private async waitUntilStopped(child: ChildProcess): Promise<void> {
     const deadline = Date.now() + SHUTDOWN_GRACE_MS;
 
-    // The server closes its listener on SIGTERM but waits for open keep-alive
-    // connections, which the suite's own client holds — hence the deadline.
     while (this.exit === null && Date.now() < deadline) {
       await wait(READINESS_POLL_INTERVAL_MS);
     }

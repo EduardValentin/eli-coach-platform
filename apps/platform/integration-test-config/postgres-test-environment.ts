@@ -17,7 +17,14 @@ import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { Pool, PoolClient, QueryResultRow } from "pg";
+import {
+  escapeIdentifier,
+  type Pool,
+  type PoolClient,
+  type QueryResultRow,
+} from "pg";
+
+import { applySeeds } from "../db/apply-seeds";
 
 const postgresRuntimeBaseImagePath = "docker/postgres-runtime-base-image.txt";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
@@ -82,6 +89,7 @@ function readDefaultPostgresImage(workspaceRootPath: string): string {
 
 export class PostgresTestEnvironment {
   private applicationDatabaseConnection: DatabaseConnection | null = null;
+  private applicationTables: readonly string[] = [];
   private container: StartedPostgreSqlContainer | null = null;
   private migrationDatabaseConnection: DatabaseConnection | null = null;
   private migrationPool: Pool | null = null;
@@ -146,14 +154,16 @@ export class PostgresTestEnvironment {
 
   async resetToBaselineState(): Promise<void> {
     await this.rollBackOpenTransactions();
-    await this.dropApplicationSchema();
-    await this.reconcileBootstrapState();
-    await this.applyApplicationMigrations();
+    await this.executeSql({
+      sql: `truncate ${this.applicationTables.join(", ")} restart identity cascade`,
+    });
+    await applySeeds(this.getMigrationPool());
   }
 
   async start(): Promise<void> {
     await this.startWithoutApplicationMigrations();
     await this.applyApplicationMigrations();
+    this.applicationTables = await this.readApplicationTables();
   }
 
   async startWithoutApplicationMigrations(): Promise<void> {
@@ -252,6 +262,7 @@ export class PostgresTestEnvironment {
 
     this.applicationDatabaseConnection = null;
     this.migrationDatabaseConnection = null;
+    this.applicationTables = [];
   }
 
   private getMigrationPool(): Pool {
@@ -266,6 +277,10 @@ export class PostgresTestEnvironment {
           this.migrationDatabaseConnection,
         ),
       });
+      this.migrationPool.on(
+        "error",
+        PostgresTestEnvironment.ignoreIdleConnectionLoss,
+      );
     }
 
     return this.migrationPool;
@@ -285,6 +300,8 @@ export class PostgresTestEnvironment {
     }
   }
 
+  private static ignoreIdleConnectionLoss(): void {}
+
   private async resetMigrationPool(): Promise<void> {
     if (!this.migrationPool) {
       return;
@@ -294,21 +311,16 @@ export class PostgresTestEnvironment {
     this.migrationPool = null;
   }
 
-  private async dropApplicationSchema(): Promise<void> {
+  private async readApplicationTables(): Promise<string[]> {
     const schemaName = this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA;
-
-    await this.executeSql({
-      sql: `drop schema if exists "${schemaName}" cascade`,
+    const tables = await this.queryRows<{ tablename: string }>({
+      sql: "select tablename from pg_tables where schemaname = $1 and tablename <> '__drizzle_migrations'",
+      values: [schemaName],
     });
-  }
 
-  private async reconcileBootstrapState(): Promise<void> {
-    if (!this.container) {
-      throw new Error("Postgres test environment has not been started.");
-    }
-
-    await this.resetMigrationPool();
-
-    await this.container.exec(["/docker-entrypoint-initdb.d/01-bootstrap.sh"]);
+    return tables.map(
+      ({ tablename }) =>
+        `${escapeIdentifier(schemaName)}.${escapeIdentifier(tablename)}`,
+    );
   }
 }

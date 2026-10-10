@@ -5,7 +5,7 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 ## Rules
 
 - Generate migrations with `pnpm db:generate`
-- Apply migrations with `pnpm db:migrate`
+- Apply migrations and seeds with `pnpm db:migrate`
 - Never use `drizzle-kit push`
 - Runtime route modules must depend on services, not direct database calls
 - Keep server wiring in app-level container modules, not feature modules or route files
@@ -16,7 +16,8 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 - `apps/platform/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
 - Commit both directories together when schema changes land
 - Prefer readable SQL migration file names before merge and keep the matching tag in `apps/platform/db/drizzle/meta/_journal.json` aligned with the SQL file name
-- Baseline data should live in Drizzle custom migrations under `apps/platform/db/drizzle`, not in separate seed runners
+- Migrations own the schema and every change to a stored row. Reference rows the application needs (the `WAITLIST_MODE` flag, the store's product types and goals) are inserted by `apps/platform/db/seeds/*.sql`: idempotent plain statements, each file ending its last statement with `;`, applied in filename order by the one runner `apps/platform/db/apply-seeds.ts` after every migrate
+- A seed inserts a missing row and never overwrites a stored one, so a release never flips an operator's toggle; changing a seeded row's label or order takes a migration
 
 ## Connection Roles
 
@@ -52,6 +53,7 @@ Local Postgres binds to `127.0.0.1:55437` by default. Override it with `LOCAL_PO
 1. start Docker Postgres
 2. reconcile roles and grants
 3. run Drizzle migrations
+4. apply the seed folder
 
 Fresh Docker volumes also run bootstrap automatically through the Postgres init hook in `docker-compose.local.yml`.
 
@@ -74,8 +76,9 @@ TEST deploys run the same sequence before the application starts:
 
 1. bootstrap/reconcile roles and grants
 2. run `drizzle-kit migrate`
+3. apply the seed folder with `node db/apply-seeds.ts`
 
-The migration runner executes against the migration user and blocks deploy completion on failure.
+The migration image runs both steps as its default command. The migration runner executes against the migration user and blocks deploy completion on failure.
 
 For deployed environments, keep the runtime and migration credentials separate:
 

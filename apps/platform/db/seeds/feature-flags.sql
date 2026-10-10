@@ -3,4 +3,5 @@ VALUES (
   'WAITLIST_MODE',
   true,
   'Controls pre-launch waitlist mode for the public landing page.'
-);
+)
+ON CONFLICT (name) DO NOTHING;
