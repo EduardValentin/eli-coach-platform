@@ -2,7 +2,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import {
   COACH_TIME_RESERVATIONS_NO_OVERLAP,
@@ -33,8 +33,7 @@ export async function reserveCoachTime(
       savepoint.insert(coachTimeReservationsTable).values({
         startsAt: reservation.start,
         endsAt: reservation.end,
-        appointmentKind: reservation.appointmentKind,
-        appointmentId: reservation.appointmentId,
+        ...appointmentColumnsOf(reservation),
       }),
     );
   } catch (error) {
@@ -54,15 +53,25 @@ export async function releaseCoachTime(
 ): Promise<void> {
   await transaction
     .delete(coachTimeReservationsTable)
-    .where(
-      and(
-        eq(
-          coachTimeReservationsTable.appointmentKind,
-          appointment.appointmentKind,
-        ),
-        eq(coachTimeReservationsTable.appointmentId, appointment.appointmentId),
-      ),
-    );
+    .where(eq(appointmentColumnOf(appointment), appointment.appointmentId));
+}
+
+function appointmentColumnsOf(appointment: Appointment) {
+  switch (appointment.appointmentKind) {
+    case "assessment_call":
+      return { assessmentCallId: appointment.appointmentId };
+    case "check_in":
+      return { checkInId: appointment.appointmentId };
+  }
+}
+
+function appointmentColumnOf(appointment: Appointment) {
+  switch (appointment.appointmentKind) {
+    case "assessment_call":
+      return coachTimeReservationsTable.assessmentCallId;
+    case "check_in":
+      return coachTimeReservationsTable.checkInId;
+  }
 }
 
 function isOverlapViolation(error: unknown): boolean {

@@ -213,7 +213,7 @@ describe.sequential("check-in requests integration", () => {
       ]);
       expect(await checkIns.heldCheckInHours()).toEqual([
         {
-          appointmentId: checkInId,
+          checkInId,
           startsAt: new Date(THURSDAY_FIRST_HOUR),
           endsAt: new Date(THURSDAY_SECOND_HOUR),
         },
@@ -334,9 +334,7 @@ describe.sequential("check-in requests integration", () => {
         (await checkIns.checkInRowsOf(clientId)).map(({ id }) => id),
       ).toEqual([first]);
       expect(
-        (await checkIns.heldCheckInHours()).map(
-          ({ appointmentId }) => appointmentId,
-        ),
+        (await checkIns.heldCheckInHours()).map((hour) => hour.checkInId),
       ).toEqual([first]);
     });
 

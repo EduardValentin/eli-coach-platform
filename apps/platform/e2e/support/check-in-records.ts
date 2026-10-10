@@ -25,7 +25,7 @@ const MOVE_CHECK_IN_RESERVATION = `
   update app.coach_time_reservations
   set starts_at = now() + make_interval(mins => $2),
       ends_at = now() + make_interval(mins => $2) + (ends_at - starts_at)
-  where appointment_kind = 'check_in' and appointment_id = $1
+  where check_in_id = $1
 `;
 const HOLD_HOUR = `
   with held as (
@@ -39,10 +39,8 @@ const HOLD_HOUR = `
     )
     returning id, starts_at
   )
-  insert into app.coach_time_reservations (
-    starts_at, ends_at, appointment_kind, appointment_id
-  )
-  select starts_at, starts_at + interval '1 hour', 'check_in', id from held
+  insert into app.coach_time_reservations (starts_at, ends_at, check_in_id)
+  select starts_at, starts_at + interval '1 hour', id from held
 `;
 
 export class CheckInRecords {

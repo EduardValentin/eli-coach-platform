@@ -46,7 +46,7 @@ type AssessmentCallRow = {
 type CoachTimeReservationRow = {
   startsAt: Date;
   endsAt: Date;
-  appointmentId: string;
+  assessmentCallId: string;
 };
 
 const COACH_SESSION = {
@@ -489,7 +489,7 @@ async function readCalls(): Promise<AssessmentCallRow[]> {
 async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
   return suite.postgres.queryRows<CoachTimeReservationRow>({
     sql: `
-      select starts_at as "startsAt", ends_at as "endsAt", appointment_id as "appointmentId"
+      select starts_at as "startsAt", ends_at as "endsAt", assessment_call_id as "assessmentCallId"
       from app.coach_time_reservations
       order by starts_at
     `,

@@ -45,6 +45,7 @@ describe("reserveCoachTime", () => {
   it.each([
     [{ code: "23P01", constraint: "another_exclusion" }],
     [{ code: "23514", constraint: COACH_TIME_RESERVATIONS_NO_OVERLAP }],
+    [{ code: "23503", constraint: "coach_time_reservations_check_in_id_fk" }],
     [{ code: "08006" }],
   ])("rethrows the database error %o", async (fields) => {
     // arrange

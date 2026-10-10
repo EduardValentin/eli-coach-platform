@@ -6,7 +6,6 @@ import { createE2eDatabasePool } from "./database";
 import { removeProgressPhotoFilesOf } from "./progress-photo-files";
 import { runEmailPrefix } from "./run-id";
 
-const ASSESSMENT_CALL_APPOINTMENT_KIND = "assessment_call";
 const FIND_CALLS_BOOKED_BY = `
   select id from app.assessment_calls
   where visitor_email = any($1::text[])
@@ -51,20 +50,6 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   clientOwnedRows("detail requests", "client_onboarding_detail_requests"),
   clientOwnedRows("onboarding reviews", "client_onboarding_reviews"),
   clientOwnedRows("client profiles", "client_profiles"),
-  {
-    rows: "check-in reservations",
-    statement: `
-      delete from app.coach_time_reservations
-      where appointment_kind = 'check_in'
-        and appointment_id in (
-          select id from app.check_ins
-          where client_id in (
-            select id from app.clients
-            where assessment_call_id = any($1::uuid[])
-          )
-        )
-    `,
-  },
   clientOwnedRows("check-ins", "check_ins"),
   {
     rows: "clients",
@@ -91,14 +76,6 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
     `,
   },
   {
-    rows: "coach time reservations",
-    statement: `
-      delete from app.coach_time_reservations
-      where appointment_kind = 'assessment_call'
-        and appointment_id = any($1::uuid[])
-    `,
-  },
-  {
     rows: "assessment calls",
     statement: `
       delete from app.assessment_calls
@@ -121,7 +98,7 @@ const MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST = `
   update app.coach_time_reservations
   set starts_at = now() - interval '2 hours',
       ends_at = now() - interval '2 hours' + (ends_at - starts_at)
-  where appointment_kind = $1 and appointment_id = $2
+  where assessment_call_id = $1
 `;
 
 type RowRemoval = { rows: string; statement: string };
@@ -252,10 +229,7 @@ export async function endCall(callId: string): Promise<void> {
 
   try {
     await pool.query(MOVE_CALL_TWO_HOURS_INTO_THE_PAST, [callId]);
-    await pool.query(MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST, [
-      ASSESSMENT_CALL_APPOINTMENT_KIND,
-      callId,
-    ]);
+    await pool.query(MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST, [callId]);
   } finally {
     await pool.end();
   }

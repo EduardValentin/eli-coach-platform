@@ -37,8 +37,8 @@ type AssessmentCallRow = {
 type CoachTimeReservationRow = {
   startsAt: Date;
   endsAt: Date;
-  appointmentKind: string;
-  appointmentId: string;
+  assessmentCallId: string | null;
+  checkInId: string | null;
 };
 
 const COACH_EMAIL = "coach@evoa.fit";
@@ -400,8 +400,8 @@ describe.sequential("assessment call booking integration", () => {
       {
         startsAt: new Date(FIRST_EVENING_START),
         endsAt: new Date(SECOND_EVENING_START),
-        appointmentKind: "assessment_call",
-        appointmentId: body.booking.id,
+        assessmentCallId: body.booking.id,
+        checkInId: null,
       },
     ]);
     expect(slots).not.toContain(FIRST_EVENING_START);
@@ -440,16 +440,15 @@ describe.sequential("assessment call booking integration", () => {
     expect(await readCoachTimeReservations()).toHaveLength(1);
     expect(await readCalls()).toHaveLength(1);
     expect(call?.visitorEmail).toBe(winner);
-    expect(reservation?.appointmentId).toBe(call?.id);
+    expect(reservation?.assessmentCallId).toBe(call?.id);
   });
 
   it("keeps a start the coach is busy for off the list and refuses to book it", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
-    await reserveCoachTimeDirectly({
+    await occupyCoachTimeWithAnotherCall({
       startsAt: "2026-10-19T14:15:00.000Z",
       endsAt: "2026-10-19T14:45:00.000Z",
-      appointmentKind: "check_in",
     });
 
     // act
@@ -468,7 +467,7 @@ describe.sequential("assessment call booking integration", () => {
       success: false,
       error: { code: "slot_unavailable" },
     });
-    expect(await readCalls()).toHaveLength(0);
+    expect(await readCalls()).toHaveLength(1);
     expect(await readCoachTimeReservations()).toHaveLength(1);
     expect(await suite.sentEmails()).toHaveLength(0);
   });
@@ -476,10 +475,9 @@ describe.sequential("assessment call booking integration", () => {
   it("refuses a start whose buffer runs into time the coach is busy for", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
-    await reserveCoachTimeDirectly({
+    await occupyCoachTimeWithAnotherCall({
       startsAt: "2026-10-19T14:45:00.000Z",
       endsAt: "2026-10-19T15:00:00.000Z",
-      appointmentKind: "program_review",
     });
 
     // act
@@ -549,7 +547,7 @@ describe.sequential("assessment call booking integration", () => {
     expect(text).not.toContain("/join");
     expect(await readCalls()).toHaveLength(1);
     expect(await readCoachTimeReservations()).toEqual([
-      expect.objectContaining({ appointmentId: first.booking.id }),
+      expect.objectContaining({ assessmentCallId: first.booking.id }),
     ]);
   });
 
@@ -588,7 +586,7 @@ describe.sequential("assessment call booking integration", () => {
     );
     expect(other.status).toBe(201);
     expect(reservationsForTheStart).toEqual([
-      expect.objectContaining({ appointmentId: otherBody.booking.id }),
+      expect.objectContaining({ assessmentCallId: otherBody.booking.id }),
     ]);
     expect(await readCalls()).toEqual([
       expect.objectContaining({ id: otherBody.booking.id }),
@@ -830,8 +828,8 @@ async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
       select
         starts_at as "startsAt",
         ends_at as "endsAt",
-        appointment_kind as "appointmentKind",
-        appointment_id as "appointmentId"
+        assessment_call_id as "assessmentCallId",
+        check_in_id as "checkInId"
       from app.coach_time_reservations
       order by starts_at
     `,
@@ -866,22 +864,24 @@ async function insertCallDirectly(columns: {
   });
 }
 
-async function reserveCoachTimeDirectly(reservation: {
+async function occupyCoachTimeWithAnotherCall(occupied: {
   startsAt: string;
   endsAt: string;
-  appointmentKind: string;
 }): Promise<void> {
   await suite.postgres.executeSql({
     sql: `
-      insert into app.coach_time_reservations
-        (starts_at, ends_at, appointment_kind, appointment_id)
-      values ($1, $2, $3, gen_random_uuid())
+      with call as (
+        insert into app.assessment_calls
+          (first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+           country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
+        values ('Irina', 'Dobre', 'irina@example.com', '1990-06-02', 'female',
+                'build_strength', 'RO', $1, 'Europe/Bucharest', 'Europe/Bucharest', $3)
+        returning id
+      )
+      insert into app.coach_time_reservations (starts_at, ends_at, assessment_call_id)
+      select $1, $2, id from call
     `,
-    values: [
-      reservation.startsAt,
-      reservation.endsAt,
-      reservation.appointmentKind,
-    ],
+    values: [occupied.startsAt, occupied.endsAt, MONDAY_MORNING.toISOString()],
   });
 }
 

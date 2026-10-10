@@ -91,9 +91,7 @@ describe.sequential("check-in answers integration", () => {
       }),
     ]);
     expect(
-      (await checkIns.heldCheckInHours()).map(
-        ({ appointmentId }) => appointmentId,
-      ),
+      (await checkIns.heldCheckInHours()).map((hour) => hour.checkInId),
     ).toEqual([checkInId]);
     const [approved, ...others] = await emailsFor(checkInId, "approved");
     expect(others).toEqual([]);

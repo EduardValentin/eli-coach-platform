@@ -32,7 +32,7 @@ export type CheckInRow = {
 };
 
 export type HeldCheckInHour = {
-  appointmentId: string;
+  checkInId: string;
   startsAt: Date;
   endsAt: Date;
 };
@@ -159,7 +159,7 @@ export class CheckInsJourney {
 
   heldCheckInHours(): Promise<HeldCheckInHour[]> {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
-      sql: 'select appointment_id as "appointmentId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where appointment_kind = \'check_in\' order by starts_at',
+      sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
       values: [],
     });
   }

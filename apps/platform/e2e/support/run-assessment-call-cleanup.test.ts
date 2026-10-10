@@ -38,10 +38,8 @@ describe("cleanUpRunAssessmentCalls", () => {
     issued.statements.length = 0;
   });
 
-  it("deletes the run's check-in reservations, then its check-ins, before any client", async () => {
+  it("deletes the run's check-ins before any client", async () => {
     // arrange
-    const reservations =
-      /delete from app\.coach_time_reservations[\s\S]*'check_in'/;
     const checkIns = /delete from app\.check_ins/;
     const clients = /delete from app\.clients/;
 
@@ -50,36 +48,18 @@ describe("cleanUpRunAssessmentCalls", () => {
 
     // assert
     expect(result).toEqual({ allCleaned: true });
-    expect(positionOf(reservations)).toBeGreaterThan(-1);
-    expect(positionOf(reservations)).toBeLessThan(positionOf(checkIns));
+    expect(positionOf(checkIns)).toBeGreaterThan(-1);
     expect(positionOf(checkIns)).toBeLessThan(positionOf(clients));
   });
 
-  it("removes only check_in reservations of the run's clients' check-ins", async () => {
+  it("leaves the coach's reserved time to go with the calls and check-ins it belongs to", async () => {
     // arrange
-    const reservations =
-      /delete from app\.coach_time_reservations[\s\S]*'check_in'/;
+    const reservations = /delete from app\.coach_time_reservations/;
 
     // act
     await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
 
     // assert
-    const statement = issued.statements[positionOf(reservations)] ?? "";
-    expect(statement).toMatch(/appointment_kind = 'check_in'/);
-    expect(statement).toMatch(/from app\.check_ins/);
-    expect(statement).toMatch(/assessment_call_id = any\(\$1::uuid\[\]\)/);
-  });
-
-  it("still deletes the assessment-call reservations after the clients", async () => {
-    // arrange
-    const callReservations =
-      /delete from app\.coach_time_reservations[\s\S]*'assessment_call'/;
-    const clients = /delete from app\.clients/;
-
-    // act
-    await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
-
-    // assert
-    expect(positionOf(callReservations)).toBeGreaterThan(positionOf(clients));
+    expect(positionOf(reservations)).toBe(-1);
   });
 });
