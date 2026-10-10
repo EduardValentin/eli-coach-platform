@@ -1,6 +1,6 @@
 # Conventions
 
-Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (run 8 baseline e8690f45); last update 2026-10-10 at commit 594bb0ab, change review.
+Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (run 8 baseline e8690f45); last update 2026-10-10 at commit b6a5ea5b, change review.
 
 Where a file goes and what it may import. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 51 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability` and the nine generated `feature-order-*` rules, which share one backward fixture that must trip and one forward fixture that must pass. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`; all six checks have fixtures, including a missing `index.ts` and a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
@@ -19,7 +19,7 @@ Three surfaces, one folder each under `apps/platform/src/surfaces/`:
 `apps/platform/src` is organized feature-first, with surfaces as the layer that assembles features into products:
 
 ```text
-/features   one folder per thing the product does for a user
+/features   one folder per bounded context, with or without a page of its own
 /surfaces   the three places people meet the product
 /server     composition root, feature-context middleware, runtime wiring, the app's own server/guards/ entry, resource routes no surface owns, and feature-flag-overrides/, importable only by the container
 /types      ambient type declarations
