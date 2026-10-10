@@ -42,6 +42,7 @@ export function AccessDenied() {
       eyebrow="Error 403"
       title="You don't have access to this page"
       description={recovery.description}
+      landmarkLabel="Access denied"
     >
       <DeadEndLink direction="back" to={recovery.actionHref}>
         {recovery.actionLabel}

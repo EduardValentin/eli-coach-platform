@@ -55,6 +55,15 @@ describe('AccessDenied', () => {
     expect(screen.getByText(/not signed in/i)).toBeInTheDocument();
   });
 
+  it('names its main landmark as an access denial', () => {
+    // arrange
+    // act
+    renderAt('?session=client');
+
+    // assert
+    expect(screen.getByRole('main')).toHaveAccessibleName('Access denied');
+  });
+
   it('offers exactly one recovery action', () => {
     // arrange
     // act
