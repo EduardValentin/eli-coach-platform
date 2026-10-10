@@ -1,7 +1,5 @@
-import type {
-  ResourceSortDirection,
-  ResourceSortKey,
-} from "@eli-coach-platform/domain/client-resources";
+import type { ResourceSortKey } from "@eli-coach-platform/domain/client-resources";
+import type { SortChoice } from "@eli-coach-platform/ui/filters";
 import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { useEffect, useEffectEvent, useState } from "react";
 
@@ -15,11 +13,6 @@ const SEARCH_WRITE_PAUSE_MS = 300;
 type RequestedBrowse = {
   answered: ResourceBrowseView;
   view: ResourceBrowseView;
-};
-
-type ResourceSortChoice = {
-  key: ResourceSortKey;
-  direction: ResourceSortDirection;
 };
 
 export function useResourceBrowse(browse: ResourceBrowseView) {
@@ -53,9 +46,10 @@ export function useResourceBrowse(browse: ResourceBrowseView) {
 
   return {
     browse: requested.view,
-    search: { typed: typedSearch, type: setTypedSearch },
+    typedSearch,
+    typeSearch: setTypedSearch,
     chooseTag: (tag: string | null) => request({ ...requested.view, tag }),
-    chooseSort: ({ key, direction }: ResourceSortChoice) =>
+    chooseSort: ({ key, direction }: SortChoice<ResourceSortKey>) =>
       request({ ...requested.view, sort: key, direction }),
     clearFilters: () => {
       setTypedSearch("");

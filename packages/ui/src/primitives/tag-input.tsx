@@ -5,7 +5,7 @@ import { cn } from "../lib/cn";
 import { FIELD_FRAME_CLASS } from "./field-frame";
 import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 
-type TagOption = { kind: "existing" | "create"; tag: string };
+type TagSuggestion = { kind: "existing" | "create"; tag: string };
 
 type TagInputProps = {
   "aria-describedby"?: string;
@@ -23,10 +23,7 @@ function normalizeTag(text: string): string {
 }
 
 function sameTag(one: string, other: string): boolean {
-  return (
-    normalizeTag(one).toLocaleLowerCase() ===
-    normalizeTag(other).toLocaleLowerCase()
-  );
+  return normalizeTag(one).toLowerCase() === normalizeTag(other).toLowerCase();
 }
 
 function hasTag(tags: readonly string[], tag: string): boolean {
@@ -60,12 +57,12 @@ function tagSuggestions(
   vocabulary: readonly string[],
   chosen: readonly string[],
 ): string[] {
-  const needle = normalizeTag(query).toLocaleLowerCase();
+  const needle = normalizeTag(query).toLowerCase();
   const matching = vocabulary.filter(
-    (tag) => !hasTag(chosen, tag) && tag.toLocaleLowerCase().includes(needle),
+    (tag) => !hasTag(chosen, tag) && tag.toLowerCase().includes(needle),
   );
   const startsWithNeedle = (tag: string) =>
-    tag.toLocaleLowerCase().startsWith(needle) ? 0 : 1;
+    tag.toLowerCase().startsWith(needle) ? 0 : 1;
 
   return matching.sort(
     (one, other) =>
@@ -78,9 +75,9 @@ function optionsFor(
   text: string,
   vocabulary: readonly string[],
   chosen: readonly string[],
-): TagOption[] {
+): TagSuggestion[] {
   const existing = tagSuggestions(text, vocabulary, chosen).map(
-    (tag): TagOption => ({ kind: "existing", tag }),
+    (tag): TagSuggestion => ({ kind: "existing", tag }),
   );
   const tag = normalizeTag(text);
   const creatable =
@@ -102,6 +99,52 @@ function TagChip({ onRemove, tag }: { onRemove: () => void; tag: string }) {
         <X aria-hidden="true" className="size-3.5" />
       </button>
     </li>
+  );
+}
+
+type SuggestionOptionProps = {
+  active: boolean;
+  id: string;
+  onChoose: () => void;
+  onHover: () => void;
+  suggestion: TagSuggestion;
+};
+
+function SuggestionOption({
+  active,
+  id,
+  onChoose,
+  onHover,
+  suggestion,
+}: SuggestionOptionProps) {
+  return (
+    <div
+      aria-selected={active}
+      className={cn(
+        "flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm text-text-primary select-none",
+        { "bg-primary-soft text-primary": active },
+      )}
+      id={id}
+      onMouseDown={(event) => {
+        event.preventDefault();
+        onChoose();
+      }}
+      onMouseMove={onHover}
+      role="option"
+      tabIndex={-1}
+    >
+      {suggestion.kind === "create" ? (
+        <>
+          <Plus
+            aria-hidden="true"
+            className="size-4 shrink-0 text-text-secondary"
+          />
+          <span className="truncate">Create “{suggestion.tag}”</span>
+        </>
+      ) : (
+        <span className="truncate">{suggestion.tag}</span>
+      )}
+    </div>
   );
 }
 
@@ -295,34 +338,14 @@ export const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
         >
           <div aria-label="Tag suggestions" id={listboxId} role="listbox">
             {options.map((option, index) => (
-              <div
-                aria-selected={index === activeIndex}
-                className={cn(
-                  "flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm text-text-primary select-none",
-                  { "bg-primary-soft text-primary": index === activeIndex },
-                )}
+              <SuggestionOption
+                active={index === activeIndex}
                 id={`${optionIdPrefix}-${index}`}
                 key={`${option.kind}-${option.tag}`}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  choose(option.tag);
-                }}
-                onMouseMove={() => setActiveIndex(index)}
-                role="option"
-                tabIndex={-1}
-              >
-                {option.kind === "create" ? (
-                  <>
-                    <Plus
-                      aria-hidden="true"
-                      className="size-4 shrink-0 text-text-secondary"
-                    />
-                    <span className="truncate">Create “{option.tag}”</span>
-                  </>
-                ) : (
-                  <span className="truncate">{option.tag}</span>
-                )}
-              </div>
+                onChoose={() => choose(option.tag)}
+                onHover={() => setActiveIndex(index)}
+                suggestion={option}
+              />
             ))}
           </div>
         </PopoverContent>

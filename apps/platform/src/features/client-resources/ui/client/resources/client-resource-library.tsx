@@ -1,6 +1,5 @@
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
-import { FolderOpen, SearchX } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { useFetchers, useRevalidator, useSubmit } from "react-router";
 
 import type {
@@ -8,8 +7,8 @@ import type {
   ClientResourceView,
 } from "~/features/client-resources/public/client-resources";
 import { resourceOpenedPath } from "~/features/client-resources/public/paths";
-import { RESOURCE_NO_MATCHES_COPY } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
+import { ResourceNoMatches } from "~/features/client-resources/ui/shared/resources/resource-no-matches";
 import { ResourceToolbar } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 import { useResourceBrowse } from "~/features/client-resources/ui/shared/resources/use-resource-browse";
@@ -48,20 +47,7 @@ function ReadyClientResourceLibrary({
       {listing.total > 0 ? (
         <ResourceGallery
           noMatches={
-            <EmptyState
-              action={
-                <Button
-                  onClick={browsing.clearFilters}
-                  size="sm"
-                  variant="outline"
-                >
-                  {RESOURCE_NO_MATCHES_COPY.clearFilters}
-                </Button>
-              }
-              description={RESOURCE_NO_MATCHES_COPY.description}
-              icon={SearchX}
-              title={RESOURCE_NO_MATCHES_COPY.title}
-            />
+            <ResourceNoMatches onClearFilters={browsing.clearFilters} />
           }
           onOpenUnopened={openings.record}
           openingsBeingRecorded={openings.openingsBeingRecorded}
@@ -71,10 +57,10 @@ function ReadyClientResourceLibrary({
             <ResourceToolbar
               browse={browsing.browse}
               onChooseTag={browsing.chooseTag}
-              onSearch={browsing.search.type}
+              onSearch={browsing.typeSearch}
               searched={listing.searched}
               tagOptions={listing.tagOptions}
-              typedSearch={browsing.search.typed}
+              typedSearch={browsing.typedSearch}
             />
           }
         />

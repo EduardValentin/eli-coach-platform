@@ -1,7 +1,7 @@
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { FolderOpen, Plus, SearchX } from "lucide-react";
+import { FolderOpen, Plus } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useRevalidator } from "react-router";
 
@@ -9,11 +9,9 @@ import type {
   ClientResourceView,
   CoachResourceListing,
 } from "~/features/client-resources/public/client-resources";
-import {
-  possessive,
-  RESOURCE_NO_MATCHES_COPY,
-} from "~/features/client-resources/ui/shared/resources/resource-copy";
+import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
+import { ResourceNoMatches } from "~/features/client-resources/ui/shared/resources/resource-no-matches";
 import { ResourceToolbar } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
 import { useResourceBrowse } from "~/features/client-resources/ui/shared/resources/use-resource-browse";
@@ -129,20 +127,7 @@ function ReadyResourceLibrary({
             />
           )}
           noMatches={
-            <EmptyState
-              action={
-                <Button
-                  onClick={browsing.clearFilters}
-                  size="sm"
-                  variant="outline"
-                >
-                  {RESOURCE_NO_MATCHES_COPY.clearFilters}
-                </Button>
-              }
-              description={RESOURCE_NO_MATCHES_COPY.description}
-              icon={SearchX}
-              title={RESOURCE_NO_MATCHES_COPY.title}
-            />
+            <ResourceNoMatches onClearFilters={browsing.clearFilters} />
           }
           perspective="coach"
           resources={listed}
@@ -151,7 +136,7 @@ function ReadyResourceLibrary({
             <ResourceToolbar
               browse={browsing.browse}
               onChooseTag={browsing.chooseTag}
-              onSearch={browsing.search.type}
+              onSearch={browsing.typeSearch}
               searched={listing.searched}
               sort={(size) => (
                 <ResourceSortControl
@@ -164,7 +149,7 @@ function ReadyResourceLibrary({
                 />
               )}
               tagOptions={listing.tagOptions}
-              typedSearch={browsing.search.typed}
+              typedSearch={browsing.typedSearch}
             />
           }
         />

@@ -61,29 +61,21 @@ export class PostgresClientResources implements ClientResources {
   ): Promise<BrowsedResources> {
     const ofClient = eq(clientResourcesTable.clientId, clientId);
     const titled = this.titleMatching(browse.search);
-    const [rows, tagOptions, counts] = await Promise.all([
+    const [rows, tagOptions, { searched, total }] = await Promise.all([
       this.database
         .select()
         .from(clientResourcesTable)
         .where(and(ofClient, titled, this.taggedWith(browse.tag)))
         .orderBy(...this.orderOf(browse)),
       this.tagOptionsOf(ofClient, titled),
-      this.database
-        .select({
-          searched: sql<number>`count(*) filter (where ${titled})`.mapWith(
-            Number,
-          ),
-          total: count(),
-        })
-        .from(clientResourcesTable)
-        .where(ofClient),
+      this.searchCountsOf(ofClient, titled),
     ]);
 
     return {
       resources: await this.withTags(rows),
       tagOptions,
-      searched: counts[0]?.searched ?? 0,
-      total: counts[0]?.total ?? 0,
+      searched,
+      total,
     };
   }
 
@@ -229,6 +221,23 @@ export class PostgresClientResources implements ClientResources {
       tag: { tag, folded },
       count: held,
     }));
+  }
+
+  private async searchCountsOf(
+    ofClient: SQL,
+    titled: SQL,
+  ): Promise<{ searched: number; total: number }> {
+    const [counts] = await this.database
+      .select({
+        searched: sql<number>`count(*) filter (where ${titled})`.mapWith(
+          Number,
+        ),
+        total: count(),
+      })
+      .from(clientResourcesTable)
+      .where(ofClient);
+
+    return { searched: counts?.searched ?? 0, total: counts?.total ?? 0 };
   }
 
   private async oldestSpellings(holders?: SQL): Promise<ResourceTagSnapshot[]> {

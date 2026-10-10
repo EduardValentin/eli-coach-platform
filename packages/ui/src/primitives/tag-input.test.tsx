@@ -20,9 +20,11 @@ afterEach(() => {
 function TagField({
   initial = [],
   maxLength = TAG_LENGTH_LIMIT,
+  vocabulary = VOCABULARY,
 }: {
   initial?: string[];
   maxLength?: number;
+  vocabulary?: string[];
 }) {
   const [tags, setTags] = useState<string[]>(initial);
 
@@ -34,7 +36,7 @@ function TagField({
         maxLength={maxLength}
         onChange={setTags}
         value={tags}
-        vocabulary={VOCABULARY}
+        vocabulary={vocabulary}
       />
     </>
   );
@@ -82,6 +84,18 @@ describe("TagInput suggestions", () => {
 
     // assert
     expect(suggestionNames()).toEqual(["Nutrition"]);
+  });
+
+  it("matches tags the same way whatever the device language", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<TagField vocabulary={["İzmir"]} />);
+
+    // act
+    await user.type(tagsField(), "İzmir".toLowerCase());
+
+    // assert
+    expect(suggestionNames()).toEqual(["İzmir"]);
   });
 
   it("reports whether its suggestions are showing", async () => {
