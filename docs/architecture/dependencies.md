@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 334c331b, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 8e7c7df2, change review.
 
 ## Component graph
 
@@ -3050,7 +3050,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3676 | packages/ui/src/primitives/field-hint.tsx | external:react | type-only import | n/a | no | lateral | present |
 | E3677 | packages/ui/src/primitives/icon-hint.tsx | external:react | import | n/a | no | lateral | present |
 | E3678 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E3679 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/primitives/popover.tsx | import | no | no | lateral | present |
 | E3680 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/accordion.tsx | re-export | no | no | lateral | present |
 | E3681 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/avatar.tsx | re-export | no | no | lateral | present |
 | E3682 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/checkbox-field.tsx | re-export | no | no | lateral | present |
@@ -4223,3 +4222,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4859 | packages/ui/src/layout/sheet-dialog-parts.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E4860 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/features/accounts/public/paths.ts | import | yes | no | lateral | present |
 | E4861 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | apps/platform/src/features/accounts/public/paths.ts | import | yes | no | lateral | present |
+| E4862 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/disabled-action-hint.tsx | re-export | no | no | lateral | present |
+| E4863 | packages/ui/src/primitives/disabled-action-hint.tsx | packages/ui/src/primitives/hint-popover.tsx | import | no | no | lateral | present |
+| E4864 | packages/ui/src/primitives/disabled-action-hint.tsx | external:react | import | n/a | no | lateral | present |
+| E4865 | packages/ui/src/primitives/hint-popover.tsx | packages/ui/src/primitives/popover.tsx | import | no | no | lateral | present |
+| E4866 | packages/ui/src/primitives/hint-popover.tsx | external:react | import | n/a | no | lateral | present |
+| E4867 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/primitives/hint-popover.tsx | import | no | no | lateral | present |
