@@ -65,5 +65,5 @@ export {
   TableRow,
   type TableSort,
 } from "./table";
-export { TagInput, type TagInputProps } from "./tag-input";
+export { TagInput } from "./tag-input";
 export { Textarea } from "./textarea";

@@ -1,17 +1,22 @@
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { FolderOpen, Plus } from "lucide-react";
+import { FolderOpen, Plus, SearchX } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useRevalidator } from "react-router";
 
 import type {
-  ClientResourceListing,
   ClientResourceView,
+  CoachResourceListing,
 } from "~/features/client-resources/public/client-resources";
-import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
+import {
+  possessive,
+  RESOURCE_NO_MATCHES_COPY,
+} from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
+import { ResourceToolbar } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
+import { useResourceBrowse } from "~/features/client-resources/ui/shared/resources/use-resource-browse";
 
 import {
   ResourceActionsMenu,
@@ -22,6 +27,7 @@ import {
   ResourceFormDialog,
   type ResourceFormMode,
 } from "./resource-form-dialog";
+import { ResourceSortControl } from "./resource-sort-control";
 import {
   useResourceRemoval,
   useResourceRemovalAnswer,
@@ -37,8 +43,13 @@ type PendingDeletion = {
 type CoachResourceLibraryProps = {
   clientId: string;
   firstName: string;
-  listing: ClientResourceListing;
+  listing: CoachResourceListing;
 };
+
+type ReadyCoachResourceListing = Extract<
+  CoachResourceListing,
+  { status: "ready" }
+>;
 
 export function CoachResourceLibrary({
   clientId,
@@ -57,7 +68,7 @@ export function CoachResourceLibrary({
     <ReadyResourceLibrary
       clientId={clientId}
       firstName={firstName}
-      resources={listing.resources}
+      listing={listing}
     />
   );
 }
@@ -65,22 +76,24 @@ export function CoachResourceLibrary({
 type ReadyResourceLibraryProps = {
   clientId: string;
   firstName: string;
-  resources: readonly ClientResourceView[];
+  listing: ReadyCoachResourceListing;
 };
 
 function ReadyResourceLibrary({
   clientId,
   firstName,
-  resources,
+  listing,
 }: ReadyResourceLibraryProps) {
   const [formMode, setFormMode] = useState<ResourceFormMode | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const removal = useResourceRemoval();
   const deletion = useResourceDeletion(removal, heading);
-  const listed = resources.filter(
+  const browsing = useResourceBrowse(listing.browse);
+  const listed = listing.resources.filter(
     (resource) => !removal.isBeingRemoved(resource.id),
   );
-  const populated = listed.length > 0;
+  const removing = listing.resources.length - listed.length;
+  const populated = listing.total - removing > 0;
 
   const startAdding = () => setFormMode({ kind: "add", clientId });
 
@@ -115,9 +128,45 @@ function ReadyResourceLibrary({
               title={resource.title}
             />
           )}
+          noMatches={
+            <EmptyState
+              action={
+                <Button
+                  onClick={browsing.clearFilters}
+                  size="sm"
+                  variant="outline"
+                >
+                  {RESOURCE_NO_MATCHES_COPY.clearFilters}
+                </Button>
+              }
+              description={RESOURCE_NO_MATCHES_COPY.description}
+              icon={SearchX}
+              title={RESOURCE_NO_MATCHES_COPY.title}
+            />
+          }
           perspective="coach"
           resources={listed}
           returnFocusTo={deletion.viewerFocusTarget}
+          toolbar={
+            <ResourceToolbar
+              browse={browsing.browse}
+              onChooseTag={browsing.chooseTag}
+              onSearch={browsing.search.type}
+              searched={listing.searched}
+              sort={(size) => (
+                <ResourceSortControl
+                  onChange={browsing.chooseSort}
+                  size={size}
+                  sort={{
+                    direction: browsing.browse.direction,
+                    key: browsing.browse.sort,
+                  }}
+                />
+              )}
+              tagOptions={listing.tagOptions}
+              typedSearch={browsing.search.typed}
+            />
+          }
         />
       ) : (
         <EmptyState
@@ -133,7 +182,11 @@ function ReadyResourceLibrary({
         />
       )}
 
-      <ResourceFormDialog mode={formMode} onClose={() => setFormMode(null)} />
+      <ResourceFormDialog
+        mode={formMode}
+        onClose={() => setFormMode(null)}
+        vocabulary={listing.vocabulary}
+      />
 
       <ConfirmDialog
         cancelLabel="Keep"

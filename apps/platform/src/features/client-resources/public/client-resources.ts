@@ -35,7 +35,7 @@ const clientResourceSchema = z.object({
 
 export type ClientResourceView = z.infer<typeof clientResourceSchema>;
 
-type ResourceTagOptionView = { tag: string; count: number };
+export type ResourceTagOptionView = { tag: string; count: number };
 
 type ReadyResourceListing = {
   status: "ready";

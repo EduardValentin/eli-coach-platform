@@ -46,7 +46,7 @@ const WARM_UP: ClientResourceView = {
   title: "Glute activation warm-up",
   description:
     "Run through this before every lower-body session. Ten minutes is enough.",
-  tags: [],
+  tags: ["Glutes", "Warm-up", "Mobility"],
   file: {
     originalName: "glute-activation-warm-up.pdf",
     downloadName: "glute-activation-warm-up.pdf",
@@ -62,7 +62,7 @@ const PLATE_GUIDE: ClientResourceView = {
   id: "0f1e2d3c-4b5a-4968-8776-655443322110",
   title: "Plate portions guide",
   description: "Half the plate vegetables, a quarter protein, a quarter carbs.",
-  tags: [],
+  tags: ["Nutrition"],
   file: {
     originalName: "plate-portions.png",
     downloadName: "plate-portions.png",
@@ -102,12 +102,22 @@ const server = setupServer();
 
 let listing: ClientResourceListing;
 
+let answerListing: (url: URL) => ClientResourceListing;
+
+let requestedUrls: URL[];
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
 });
 
 beforeEach(() => {
   listing = readyListing([...LIBRARY]);
+  requestedUrls = [];
+  answerListing = (url) => {
+    requestedUrls.push(url);
+
+    return listing;
+  };
 });
 
 afterEach(() => {
@@ -134,13 +144,16 @@ describe("the client's resources page", () => {
     const grid = screen.getByRole("region", { name: "Resources" });
     const cards = within(grid).getAllByRole("button");
     expect(cards.map((card) => card.textContent)).toEqual([
-      "PDF3 pagesNewGlute activation warm-up",
-      "IMGPlate portions guide",
+      "PDF3 pagesNewGlute activation warm-upGlutesWarm-up+1",
+      "IMGPlate portions guideNutrition",
       "DOCNewFood diary template",
     ]);
     expect(cards[0]).toHaveAccessibleName("Glute activation warm-up");
-    expect(cards[0]).toHaveAccessibleDescription("PDF 3 pages New");
-    expect(cards[1]).toHaveAccessibleDescription("IMG");
+    expect(cards[0]).toHaveAccessibleDescription(
+      "PDF 3 pages New Glutes Warm-up +1",
+    );
+    expect(cards[1]).toHaveAccessibleDescription("IMG Nutrition");
+    expect(cards[2]).toHaveAccessibleDescription("DOC New");
   });
 
   it("offers her nothing to add, edit or delete", async () => {
@@ -198,6 +211,12 @@ describe("the client's resources page", () => {
       screen.queryByRole("region", { name: "Resources" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "Tag" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("searchbox", { name: "Search resources" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says her resources did not load, without the page header", async () => {
@@ -236,6 +255,144 @@ describe("the client's resources page", () => {
   });
 });
 
+describe("finding a resource", () => {
+  it("offers a tag filter and a search above her resources and no sort", async () => {
+    // arrange, act
+    await renderResourcesPage();
+
+    // assert
+    const grid = screen.getByRole("region", { name: "Resources" });
+    expect(
+      within(grid).getByRole("combobox", { name: "Tag" }),
+    ).toHaveTextContent("All tags");
+    expect(
+      within(grid).getByRole("searchbox", { name: "Search resources" }),
+    ).toHaveAttribute("placeholder", "Search by title");
+    expect(
+      screen.queryByRole("combobox", { name: "Sort by" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lists every tag she holds with its count and All tags with the count under her search", async () => {
+    // arrange
+    browseTheLibrary();
+    const { user } = await renderBrowsedPage("?q=guide");
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Tag" }));
+
+    // assert
+    const options = await screen.findAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual([
+      "All tags 1",
+      "Glutes 0",
+      "Mobility 0",
+      "Nutrition 1",
+      "Warm-up 0",
+    ]);
+  });
+
+  it("writes the chosen tag to the address and lists what the server answers for it", async () => {
+    // arrange
+    browseTheLibrary();
+    const { router, user } = await renderBrowsedPage();
+
+    // act
+    await chooseTag(user, "Nutrition 1");
+
+    // assert
+    await waitFor(() => {
+      expect(shownTitles()).toEqual(["Plate portions guide"]);
+    });
+    expect(locationOf(router)).toEqual({ tag: "Nutrition" });
+    expect(screen.getByRole("combobox", { name: "Tag" })).toHaveTextContent(
+      "Nutrition",
+    );
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
+  it("writes her search to the address once she pauses typing", async () => {
+    // arrange
+    browseTheLibrary();
+    const { router, user } = await renderBrowsedPage();
+
+    // act
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search resources" }),
+      "warm",
+    );
+
+    // assert
+    expect(locationOf(router)).toEqual({});
+    await waitFor(() => {
+      expect(locationOf(router)).toEqual({ q: "warm" });
+    });
+    await waitFor(() => {
+      expect(shownTitles()).toEqual(["Glute activation warm-up"]);
+    });
+    expect(searchesSent()).toEqual(["warm"]);
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
+  it("offers Clear filters when nothing matches, which drops the tag and the search and keeps the order", async () => {
+    // arrange
+    browseTheLibrary();
+    const { router, user } = await renderBrowsedPage(
+      "?tag=Nutrition&q=warm&sort=title&dir=desc",
+    );
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(screen.getByText("Try another tag or search.")).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    // assert
+    await waitFor(() => {
+      expect(locationOf(router)).toEqual({ sort: "title", dir: "desc" });
+    });
+    await waitFor(() => {
+      expect(shownTitles()).toHaveLength(LIBRARY.length);
+    });
+    expect(
+      screen.getByRole("searchbox", { name: "Search resources" }),
+    ).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Tag" })).toHaveTextContent(
+      "All tags",
+    );
+  });
+
+  it("lists a resource's tags in its details", async () => {
+    // arrange
+    stampMarks();
+    const user = await renderResourcesPage();
+
+    // act
+    const viewer = await openResource(user, "Glute activation warm-up");
+
+    // assert
+    const tags = within(viewer).getByRole("list", { name: "Tags" });
+    expect(
+      within(tags)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Glutes", "Warm-up", "Mobility"]);
+  });
+
+  it("lists no tags in the details of a resource without any", async () => {
+    // arrange
+    stampMarks();
+    const user = await renderResourcesPage();
+
+    // act
+    const viewer = await openResource(user, "Food diary template");
+
+    // assert
+    expect(
+      within(viewer).queryByRole("list", { name: "Tags" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("opening a resource", () => {
   it("records that she opened it and leaves it unmarked once she closes it", async () => {
     // arrange
@@ -252,13 +409,13 @@ describe("opening a resource", () => {
     });
     expect(
       screen.getByRole("button", { name: "Glute activation warm-up" }),
-    ).toHaveAccessibleDescription("PDF 3 pages");
+    ).toHaveAccessibleDescription("PDF 3 pages Glutes Warm-up +1");
     await waitFor(() => {
       expect(listedAsOpened(WARM_UP.id)).toBe(true);
     });
     expect(
       screen.getByRole("button", { name: "Glute activation warm-up" }),
-    ).toHaveAccessibleDescription("PDF 3 pages");
+    ).toHaveAccessibleDescription("PDF 3 pages Glutes Warm-up +1");
   });
 
   it("takes the mark off while the record is still on its way", async () => {
@@ -276,7 +433,7 @@ describe("opening a resource", () => {
     });
     expect(
       screen.getByRole("button", { name: "Glute activation warm-up" }),
-    ).toHaveAccessibleDescription("PDF 3 pages");
+    ).toHaveAccessibleDescription("PDF 3 pages Glutes Warm-up +1");
   });
 
   it("records nothing for a resource she has already opened", async () => {
@@ -366,7 +523,7 @@ describe("opening a resource", () => {
       await waitFor(() => {
         expect(
           screen.getByRole("button", { name: "Glute activation warm-up" }),
-        ).toHaveAccessibleDescription("PDF 3 pages New");
+        ).toHaveAccessibleDescription("PDF 3 pages New Glutes Warm-up +1");
       });
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
@@ -475,12 +632,18 @@ async function openResource(
 }
 
 async function renderResourcesPage() {
+  const { user } = await renderBrowsedPage();
+
+  return user;
+}
+
+async function renderBrowsedPage(search = "") {
   const user = userEvent.setup();
   const router = createMemoryRouter(
     [
       {
         Component: ClientResourcesRoute,
-        loader: () => listing,
+        loader: ({ request }) => answerListing(new URL(request.url)),
         path: CLIENT_RESOURCES_PATH,
       },
       {
@@ -488,7 +651,7 @@ async function renderResourcesPage() {
         path: OPENED_URL,
       },
     ],
-    { initialEntries: [CLIENT_RESOURCES_PATH] },
+    { initialEntries: [`${CLIENT_RESOURCES_PATH}${search}`] },
   );
 
   render(
@@ -498,7 +661,80 @@ async function renderResourcesPage() {
   );
   await screen.findByRole("heading", { level: 1 });
 
-  return user;
+  return { router, user };
+}
+
+function browsedListing(url: URL): ClientResourceListing {
+  const params = url.searchParams;
+  const search = (params.get("q") ?? "").trim().toLowerCase();
+  const searched = LIBRARY.filter((resource) =>
+    resource.title.toLowerCase().includes(search),
+  );
+  const held = [...new Set(LIBRARY.flatMap((resource) => resource.tags))];
+  const tag = held.find((candidate) => candidate === params.get("tag")) ?? null;
+  const tagOptions = held
+    .map((candidate) => ({
+      tag: candidate,
+      count: searched.filter((resource) => resource.tags.includes(candidate))
+        .length,
+    }))
+    .sort((one, other) => one.tag.localeCompare(other.tag));
+
+  return {
+    status: "ready",
+    resources: searched.filter(
+      (resource) => tag === null || resource.tags.includes(tag),
+    ),
+    tagOptions,
+    browse: {
+      tag,
+      search,
+      sort: params.get("sort") === "title" ? "title" : "added",
+      direction: params.get("dir") === "asc" ? "asc" : "desc",
+    },
+    searched: searched.length,
+    total: LIBRARY.length,
+  };
+}
+
+function browseTheLibrary() {
+  answerListing = (url) => {
+    requestedUrls.push(url);
+
+    return browsedListing(url);
+  };
+}
+
+function searchesSent(): string[] {
+  return requestedUrls
+    .map(({ searchParams }) => searchParams.get("q"))
+    .filter((search) => search !== null);
+}
+
+function locationOf(
+  router: Awaited<ReturnType<typeof renderBrowsedPage>>["router"],
+) {
+  return Object.fromEntries(new URLSearchParams(router.state.location.search));
+}
+
+function shownTitles(): string[] {
+  const grid = screen.getByRole("region", { name: "Resources" });
+
+  return within(grid)
+    .queryAllByRole("button")
+    .map((card) => card.getAttribute("aria-labelledby") ?? "")
+    .filter((labelledBy) => labelledBy !== "")
+    .map(
+      (labelledBy) => document.getElementById(labelledBy)?.textContent ?? "",
+    );
+}
+
+async function chooseTag(
+  user: ReturnType<typeof userEvent.setup>,
+  option: string,
+) {
+  await user.click(screen.getByRole("combobox", { name: "Tag" }));
+  await user.click(await screen.findByRole("option", { name: option }));
 }
 
 function readyListing(resources: ClientResourceView[]): ClientResourceListing {

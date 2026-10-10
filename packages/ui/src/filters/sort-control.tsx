@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "../primitives/select";
 
-export type SortDirection = "asc" | "desc";
+type SortDirection = "asc" | "desc";
 
 type SortOrder = "chronological" | "alphabetical";
 

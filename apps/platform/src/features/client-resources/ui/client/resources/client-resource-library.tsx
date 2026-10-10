@@ -1,5 +1,6 @@
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { FolderOpen } from "lucide-react";
+import { Button } from "@eli-coach-platform/ui/primitives";
+import { FolderOpen, SearchX } from "lucide-react";
 import { useFetchers, useRevalidator, useSubmit } from "react-router";
 
 import type {
@@ -7,8 +8,11 @@ import type {
   ClientResourceView,
 } from "~/features/client-resources/public/client-resources";
 import { resourceOpenedPath } from "~/features/client-resources/public/paths";
+import { RESOURCE_NO_MATCHES_COPY } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
+import { ResourceToolbar } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
+import { useResourceBrowse } from "~/features/client-resources/ui/shared/resources/use-resource-browse";
 
 type ClientResourceLibraryProps = {
   listing: ClientResourceListing;
@@ -23,28 +27,56 @@ export function ClientResourceLibrary({ listing }: ClientResourceLibraryProps) {
     );
   }
 
-  return <ReadyClientResourceLibrary resources={listing.resources} />;
+  return <ReadyClientResourceLibrary listing={listing} />;
 }
 
 type ReadyClientResourceLibraryProps = {
-  resources: readonly ClientResourceView[];
+  listing: Extract<ClientResourceListing, { status: "ready" }>;
 };
 
 function ReadyClientResourceLibrary({
-  resources,
+  listing,
 }: ReadyClientResourceLibraryProps) {
+  const { resources } = listing;
   const openings = useResourceOpenings(resources);
+  const browsing = useResourceBrowse(listing.browse);
 
   return (
     <>
       <PortalPageHeader title="Resources" />
 
-      {resources.length > 0 ? (
+      {listing.total > 0 ? (
         <ResourceGallery
+          noMatches={
+            <EmptyState
+              action={
+                <Button
+                  onClick={browsing.clearFilters}
+                  size="sm"
+                  variant="outline"
+                >
+                  {RESOURCE_NO_MATCHES_COPY.clearFilters}
+                </Button>
+              }
+              description={RESOURCE_NO_MATCHES_COPY.description}
+              icon={SearchX}
+              title={RESOURCE_NO_MATCHES_COPY.title}
+            />
+          }
           onOpenUnopened={openings.record}
           openingsBeingRecorded={openings.openingsBeingRecorded}
           perspective="client"
           resources={resources}
+          toolbar={
+            <ResourceToolbar
+              browse={browsing.browse}
+              onChooseTag={browsing.chooseTag}
+              onSearch={browsing.search.type}
+              searched={listing.searched}
+              tagOptions={listing.tagOptions}
+              typedSearch={browsing.search.typed}
+            />
+          }
         />
       ) : (
         <EmptyState

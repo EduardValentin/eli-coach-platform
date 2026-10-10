@@ -7,7 +7,7 @@ import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 
 type TagOption = { kind: "existing" | "create"; tag: string };
 
-export type TagInputProps = {
+type TagInputProps = {
   "aria-describedby"?: string;
   "aria-invalid"?: boolean;
   id?: string;

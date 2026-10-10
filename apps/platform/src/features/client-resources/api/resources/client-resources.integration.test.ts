@@ -1333,7 +1333,7 @@ describe.sequential("client resources integration", () => {
       expect(response.status).toBe(200);
       const page = await pageTextOf(response);
       expect(page).toContain(
-        "Resources XLS New Macro tracker DOC New Food diary",
+        "Resources All tags XLS New Macro tracker DOC New Food diary",
       );
       expect(page).not.toContain("For Maria");
     });
