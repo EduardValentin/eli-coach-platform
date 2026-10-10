@@ -464,9 +464,10 @@ test(
 );
 
 test(
-  "the tag filter falls back to All tags when its last holder is edited and when it is deleted",
+  "a tag whose last holder is edited or deleted leaves the filter, which falls back to All tags, and the suggestions",
   { tag: "@completeness" },
   async ({
+    addResourceDialog,
     coachClientResources,
     page,
     provisionClientInState,
@@ -540,6 +541,13 @@ test(
     await resourceToolbar.expectChosenTag("All tags");
     await coachClientResources.expectCards([MEALS.title, POSTURE.title]);
     await resourceToolbar.expectTagOptions(2, []);
+
+    // act
+    await coachClientResources.openAdd();
+    await addResourceDialog.tags.type(scenarioTag);
+
+    // assert
+    await addResourceDialog.tags.expectSuggestions([`Create “${scenarioTag}”`]);
   },
 );
 
@@ -800,5 +808,269 @@ test(
     await clientResources.expectCards([POSTURE.title, MEALS.title]);
     await resourceToolbar.expectChosenTag(tags.mobility);
     await expectNoHorizontalScroll(page);
+  },
+);
+
+test(
+  "the coach tags while editing through a combobox that announces its suggestions, the active one, the chosen tags and their remove buttons, and keeps each tag to 30 characters",
+  { tag: "@completeness" },
+  async ({
+    coachClientResources,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    resourceDetailsDialog,
+    resourceRequests,
+    resourceViewer,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    const tags = scenarioTagsOf(scenarioTag);
+    const longestTag = "x".repeat(30);
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await resourceRequests.add(client.clientId, postureGuideImage(), {
+      ...POSTURE,
+      tags: [tags.glutes],
+    });
+    await resourceRequests.add(client.clientId, recipesDoc(), {
+      ...RECIPES,
+      tags: [tags.gluteActivation, tags.mobility],
+    });
+    const problems = collectPageProblems(page);
+    await coachClientResources.open(client.clientId);
+
+    // act
+    await coachClientResources.chooseAction(POSTURE.title, "Edit details");
+
+    // assert
+    await resourceDetailsDialog.tags.expectChips([tags.glutes]);
+    await resourceDetailsDialog.tags.expectRemoveButtons([tags.glutes]);
+    await resourceDetailsDialog.tags.expectCollapsedCombobox();
+
+    // act
+    await resourceDetailsDialog.tags.type(scenarioTag);
+
+    // assert
+    await resourceDetailsDialog.tags.expectSuggestions([
+      tags.gluteActivation,
+      tags.mobility,
+      `Create “${scenarioTag}”`,
+    ]);
+    await resourceDetailsDialog.tags.expectActiveSuggestion(
+      tags.gluteActivation,
+    );
+
+    // act
+    await resourceDetailsDialog.tags.moveDown();
+
+    // assert
+    await resourceDetailsDialog.tags.expectActiveSuggestion(tags.mobility);
+
+    // act
+    await resourceDetailsDialog.tags.commitWithEnter();
+
+    // assert
+    await resourceDetailsDialog.tags.expectChips([tags.glutes, tags.mobility]);
+    await resourceDetailsDialog.tags.expectEntry("");
+
+    // act
+    await resourceDetailsDialog.tags.type(tags.gluteActivation.toUpperCase());
+
+    // assert
+    await resourceDetailsDialog.tags.expectSuggestions([tags.gluteActivation]);
+
+    // act
+    await resourceDetailsDialog.tags.commitWithComma();
+
+    // assert
+    await resourceDetailsDialog.tags.expectChips([
+      tags.glutes,
+      tags.mobility,
+      tags.gluteActivation,
+    ]);
+    await resourceDetailsDialog.tags.expectRemoveButtons([
+      tags.glutes,
+      tags.mobility,
+      tags.gluteActivation,
+    ]);
+
+    // act
+    await resourceDetailsDialog.tags.type("x".repeat(35));
+
+    // assert
+    await resourceDetailsDialog.tags.expectEntry(longestTag);
+
+    // act
+    await resourceDetailsDialog.tags.commitWithComma();
+    await resourceDetailsDialog.tags.remove(longestTag);
+
+    // assert
+    await resourceDetailsDialog.tags.expectChips([
+      tags.glutes,
+      tags.mobility,
+      tags.gluteActivation,
+    ]);
+    await resourceDetailsDialog.tags.expectEntry("");
+
+    // act
+    await resourceDetailsDialog.tags.leave();
+    await resourceDetailsDialog.save();
+
+    // assert
+    await resourceDetailsDialog.expectClosed();
+    await coachClientResources.expectToast("Changes saved.");
+    await coachClientResources.expectCard({
+      title: POSTURE.title,
+      type: "IMG",
+      tags: [tags.glutes, tags.mobility, tags.gluteActivation],
+    });
+
+    // act
+    await coachClientResources.openResource(POSTURE.title);
+
+    // assert
+    await resourceViewer.expectTags([
+      tags.glutes,
+      tags.mobility,
+      tags.gluteActivation,
+    ]);
+    expect(problems).toEqual([]);
+
+    // act
+    const refusal = await resourceRequests.uploadAnswer(
+      client.clientId,
+      recipesDoc(),
+      { ...MEALS, tags: [`${longestTag}x`] },
+    );
+
+    // assert
+    expect(refusal).toEqual({
+      status: 400,
+      body: { problems: { tags: "too-long" } },
+    });
+  },
+);
+
+test(
+  "the coach orders by date added and by title in both directions, searches titles literally ignoring case, and a tag no longer held reads as All tags",
+  { tag: "@completeness" },
+  async ({
+    coachClientResources,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    resourceRequests,
+    resourceToolbar,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    const tags = scenarioTagsOf(scenarioTag);
+    const underscored = { title: "Warm_up drills", description: "" };
+    const percent = { title: "100% protein shake", description: "" };
+    const lowercase = { title: "apple stretches", description: "" };
+    const spaced = { title: "Warm up circuit", description: "" };
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await resourceRequests.add(client.clientId, postureGuideImage(), {
+      ...underscored,
+      tags: [tags.warmUp],
+    });
+    await resourceRequests.add(client.clientId, recipesDoc(), percent);
+    await resourceRequests.add(client.clientId, postureGuideImage(), lowercase);
+    await resourceRequests.add(client.clientId, recipesDoc(), {
+      ...spaced,
+      tags: [tags.warmUp],
+    });
+    const problems = collectPageProblems(page);
+
+    // act
+    await coachClientResources.openWithTag(
+      client.clientId,
+      `Gone ${scenarioTag}`,
+    );
+
+    // assert
+    await resourceToolbar.expectChosenTag("All tags");
+    await resourceToolbar.expectSort({
+      key: "Date added",
+      direction: "Newest first",
+    });
+    await coachClientResources.expectCards([
+      spaced.title,
+      lowercase.title,
+      percent.title,
+      underscored.title,
+    ]);
+
+    // act
+    await resourceToolbar.toggleDirection();
+
+    // assert
+    await resourceToolbar.expectSort({
+      key: "Date added",
+      direction: "Oldest first",
+    });
+    await coachClientResources.expectCards([
+      underscored.title,
+      percent.title,
+      lowercase.title,
+      spaced.title,
+    ]);
+
+    // act
+    await resourceToolbar.chooseSort("Title");
+
+    // assert
+    await resourceToolbar.expectSort({ key: "Title", direction: "A to Z" });
+    await coachClientResources.expectCards([
+      percent.title,
+      lowercase.title,
+      spaced.title,
+      underscored.title,
+    ]);
+
+    // act
+    await resourceToolbar.toggleDirection();
+
+    // assert
+    await resourceToolbar.expectSort({ key: "Title", direction: "Z to A" });
+    await coachClientResources.expectCards([
+      underscored.title,
+      spaced.title,
+      lowercase.title,
+      percent.title,
+    ]);
+
+    // act
+    await resourceToolbar.search("_");
+
+    // assert
+    await coachClientResources.expectCards([underscored.title]);
+    await resourceToolbar.expectTagOptions(1, [{ tag: tags.warmUp, count: 1 }]);
+
+    // act
+    await resourceToolbar.search("%");
+
+    // assert
+    await coachClientResources.expectCards([percent.title]);
+
+    // act
+    await resourceToolbar.search("WARM");
+
+    // assert
+    await coachClientResources.expectCards([underscored.title, spaced.title]);
+    await resourceToolbar.expectTagOptions(2, [{ tag: tags.warmUp, count: 2 }]);
+    expect(problems).toEqual([]);
   },
 );

@@ -32,6 +32,14 @@ export class TagField {
     return this.suggestions.getByRole("option", { name, exact: true });
   }
 
+  private async idOf(locator: Locator): Promise<string> {
+    const id = await locator.getAttribute("id");
+
+    if (!id) throw new Error("The tag field's element carries no id.");
+
+    return id;
+  }
+
   async focusWithKeyboard(): Promise<void> {
     await tabTo(this.page, this.entry);
   }
@@ -84,6 +92,54 @@ export class TagField {
     await this.dialog.getByRole("heading", { level: 3 }).click();
     await expect(this.suggestions).toBeHidden();
     await expect(this.entry).not.toBeFocused();
+  }
+
+  async moveDown(): Promise<void> {
+    await this.page.keyboard.press("ArrowDown");
+  }
+
+  async expectCollapsedCombobox(): Promise<void> {
+    await expect(this.entry).toHaveAttribute("aria-autocomplete", "list");
+    await expect(this.entry).toHaveAttribute("aria-expanded", "false");
+    await expect(this.entry).not.toHaveAttribute("aria-controls");
+    await expect(this.entry).not.toHaveAttribute("aria-activedescendant");
+    await expect(this.suggestions).toHaveCount(0);
+  }
+
+  async expectActiveSuggestion(name: string): Promise<void> {
+    await expect(this.entry).toHaveAttribute("aria-expanded", "true");
+    await expect(this.entry).toHaveAttribute(
+      "aria-controls",
+      await this.idOf(this.suggestions),
+    );
+    await expect(this.entry).toHaveAttribute(
+      "aria-activedescendant",
+      await this.idOf(this.suggestion(name)),
+    );
+    await expect(this.suggestion(name)).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(
+      this.suggestions.locator('[role="option"][aria-selected="true"]'),
+    ).toHaveCount(1);
+  }
+
+  async expectRemoveButtons(tags: readonly string[]): Promise<void> {
+    const removeButtons = this.chips.getByRole("button");
+
+    await expect(removeButtons).toHaveCount(tags.length);
+
+    for (const [position, tag] of tags.entries()) {
+      await expect(removeButtons.nth(position)).toHaveAccessibleName(
+        `Remove ${tag}`,
+      );
+    }
+  }
+
+  async expectEntry(text: string): Promise<void> {
+    await expect(this.entry).toHaveValue(text);
+    await expect(this.entry).toBeFocused();
   }
 
   async closeSuggestions(): Promise<void> {

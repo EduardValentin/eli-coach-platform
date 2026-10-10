@@ -38,6 +38,12 @@ export class CoachClientResourcesPage {
     await this.page.goto(`/coach/clients/${clientId}/resources`);
   }
 
+  async openWithTag(clientId: string, tag: string): Promise<void> {
+    await this.page.goto(
+      `/coach/clients/${clientId}/resources?${new URLSearchParams({ tag })}`,
+    );
+  }
+
   async expectOpenFor(owner: ResourcesOwner): Promise<void> {
     await expect(this.page).toHaveURL(
       new RegExp(`/coach/clients/${owner.clientId}/resources$`),
