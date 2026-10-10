@@ -1,21 +1,14 @@
 import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
-import {
-  EmailLink,
-  EmailText,
-} from "@eli-coach-platform/infrastructure/email/server";
 
 import {
   CheckInEmailActionSection,
+  CheckInEmailCalendarOffer,
+  checkInEmailCalendarOfferLines,
   CheckInEmailClosingLine,
   CheckInEmailLayout,
   checkInEmailText,
   type CheckInEmailContent,
 } from "./check-in-email-layout.server";
-import {
-  attachmentLineStyle,
-  calendarLineStyle,
-  calendarLinkStyle,
-} from "./check-in-email-styles.server";
 
 export type CheckInApprovedEmailProps = {
   when: string;
@@ -26,9 +19,6 @@ export type CheckInApprovedEmailProps = {
 
 const SUBJECT = "Your check-in is approved";
 const BUTTON_LABEL = "Join Meet";
-const CALENDAR_LABEL = "Add to Google Calendar";
-const ATTACHMENT_LINE =
-  "A calendar file is attached to this email, so you can add the check-in to any calendar you use.";
 const CLOSING_LINE = "Use the button to join when it is time.";
 
 export function checkInApprovedSubject(): string {
@@ -39,12 +29,9 @@ export function CheckInApprovedEmail(props: CheckInApprovedEmailProps) {
   return (
     <CheckInEmailLayout content={contentOf(props)}>
       <CheckInEmailActionSection href={props.joinUrl} label={BUTTON_LABEL}>
-        <EmailText style={calendarLineStyle}>
-          <EmailLink href={props.googleCalendarUrl} style={calendarLinkStyle}>
-            {CALENDAR_LABEL}
-          </EmailLink>
-        </EmailText>
-        <EmailText style={attachmentLineStyle}>{ATTACHMENT_LINE}</EmailText>
+        <CheckInEmailCalendarOffer
+          googleCalendarUrl={props.googleCalendarUrl}
+        />
       </CheckInEmailActionSection>
       <CheckInEmailClosingLine>{CLOSING_LINE}</CheckInEmailClosingLine>
     </CheckInEmailLayout>
@@ -55,8 +42,7 @@ export function checkInApprovedText(props: CheckInApprovedEmailProps): string {
   return checkInEmailText(contentOf(props), {
     actionLines: [
       `${BUTTON_LABEL}: ${props.joinUrl}`,
-      `${CALENDAR_LABEL}: ${props.googleCalendarUrl}`,
-      ATTACHMENT_LINE,
+      ...checkInEmailCalendarOfferLines(props.googleCalendarUrl),
     ],
     closingLine: CLOSING_LINE,
   });

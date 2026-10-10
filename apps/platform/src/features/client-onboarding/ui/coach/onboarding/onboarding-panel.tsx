@@ -228,7 +228,10 @@ function SubmittedOnboarding({
         submitted={submitted}
       />
 
-      <div className="space-y-3 border-t border-border-subtle pt-6">
+      <div
+        className="space-y-3 border-t border-border-subtle pt-6"
+        data-parity="answers-section"
+      >
         <h3 className="text-sm font-medium text-text-primary">
           {ANSWERS_HEADING}
         </h3>

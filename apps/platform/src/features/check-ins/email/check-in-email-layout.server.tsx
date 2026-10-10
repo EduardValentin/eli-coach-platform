@@ -15,7 +15,10 @@ import {
 import type { ReactNode } from "react";
 
 import {
+  attachmentLineStyle,
   buttonSectionStyle,
+  calendarLineStyle,
+  calendarLinkStyle,
   cardEndStyle,
   closingSectionStyle,
   closingTextStyle,
@@ -32,6 +35,10 @@ import {
 } from "./check-in-email-styles.server";
 
 type CheckInEmailDetail = { label: string; value: string };
+
+const CALENDAR_LABEL = "Add to Google Calendar";
+const ATTACHMENT_LINE =
+  "A calendar file is attached to this email, so you can add the check-in to any calendar you use.";
 
 export type CheckInEmailContent = {
   subject: string;
@@ -96,7 +103,7 @@ export function CheckInEmailLayout({
             </EmailSection>
 
             <EmailSection style={detailsOuterStyle}>
-              <div style={detailsCardStyle}>
+              <div data-parity="email-details" style={detailsCardStyle}>
                 {content.details.map((detail) => (
                   <div key={detail.label}>
                     <EmailText style={detailsEyebrowStyle}>
@@ -144,10 +151,33 @@ export function CheckInEmailActionSection({
   );
 }
 
+export function CheckInEmailCalendarOffer({
+  googleCalendarUrl,
+}: {
+  googleCalendarUrl: string;
+}) {
+  return (
+    <>
+      <EmailText style={calendarLineStyle}>
+        <EmailLink href={googleCalendarUrl} style={calendarLinkStyle}>
+          {CALENDAR_LABEL}
+        </EmailLink>
+      </EmailText>
+      <EmailText style={attachmentLineStyle}>{ATTACHMENT_LINE}</EmailText>
+    </>
+  );
+}
+
+export function checkInEmailCalendarOfferLines(
+  googleCalendarUrl: string,
+): string[] {
+  return [`${CALENDAR_LABEL}: ${googleCalendarUrl}`, ATTACHMENT_LINE];
+}
+
 export function CheckInEmailClosingLine({ children }: { children: string }) {
   return (
     <>
-      <EmailDivider style={dividerStyle} />
+      <EmailDivider parity="email-divider" style={dividerStyle} />
       <EmailSection style={closingSectionStyle}>
         <EmailText style={closingTextStyle}>{children}</EmailText>
       </EmailSection>

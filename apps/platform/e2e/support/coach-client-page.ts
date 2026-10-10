@@ -2,6 +2,7 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { clientPronouns } from "./client-pronouns";
+import { DisabledAction } from "./disabled-action";
 import {
   expectAccessRefused,
   expectAvailability,
@@ -29,6 +30,8 @@ export type AnsweredQuestion = {
 };
 
 const FOCUS_TRAP_TAB_STOPS = 60;
+
+const SCHEDULE_DIALOG_TITLE = /^Schedule a check-in with \S+$/;
 
 const ABSENT_READING = "—";
 
@@ -98,6 +101,31 @@ export class CoachClientPage {
     await expect(confirmation).toBeHidden();
   }
 
+  private get scheduleButton() {
+    return this.page.getByRole("button", {
+      name: "Schedule check-in",
+      exact: true,
+    });
+  }
+
+  private get scheduleDialog() {
+    return this.page.getByRole("dialog", { name: SCHEDULE_DIALOG_TITLE });
+  }
+
+  private get resourcesLink() {
+    return this.page.getByRole("link", { name: "Resources", exact: true });
+  }
+
+  private scheduleActionFor(gender: VisitorGender): DisabledAction {
+    const { possessive, subject, subjectHas } = clientPronouns(gender);
+
+    return new DisabledAction(this.page, {
+      button: this.scheduleButton,
+      opens: this.scheduleDialog,
+      reason: `${subject} can answer a check-in once ${subjectHas.toLowerCase()} sent ${possessive} onboarding.`,
+    });
+  }
+
   private headerOf(fullName: string): Locator {
     return this.page
       .getByRole("heading", { level: 1, name: fullName })
@@ -155,9 +183,51 @@ export class CoachClientPage {
   }
 
   async openResources(): Promise<void> {
-    await this.page
-      .getByRole("link", { name: "Resources", exact: true })
-      .click();
+    await this.resourcesLink.click();
+  }
+
+  async openScheduleDialog(): Promise<void> {
+    await this.openDialogWith(this.scheduleButton, this.scheduleDialog);
+  }
+
+  async openScheduleDialogWithKeyboard(): Promise<void> {
+    await expect(async () => {
+      await tabTo(this.page, this.scheduleButton);
+      await this.page.keyboard.press("Enter");
+      await expect(this.scheduleDialog).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  async expectScheduleButtonFocused(): Promise<void> {
+    await expect(this.scheduleButton).toBeFocused();
+  }
+
+  async expectScheduleBlocked(gender: VisitorGender): Promise<void> {
+    await this.scheduleActionFor(gender).expectBlocked();
+  }
+
+  async expectScheduleReasonOnHover(gender: VisitorGender): Promise<void> {
+    await this.scheduleActionFor(gender).expectReasonOnHover();
+  }
+
+  async expectScheduleReasonOnFocus(gender: VisitorGender): Promise<void> {
+    await this.scheduleActionFor(gender).expectReasonOnFocus();
+  }
+
+  async expectScheduleReasonOnTap(gender: VisitorGender): Promise<void> {
+    await this.scheduleActionFor(gender).expectReasonOnTap();
+  }
+
+  async expectNoScheduleAction(): Promise<void> {
+    await expect(this.resourcesLink).toBeVisible();
+    await expect(this.scheduleButton).toHaveCount(0);
+  }
+
+  async expectHeaderActionsInView(): Promise<void> {
+    await expect(this.resourcesLink).toBeInViewport({ ratio: 1 });
+    await expect(this.scheduleButton).toBeInViewport({ ratio: 1 });
   }
 
   async expectOpen(clientId: string): Promise<void> {

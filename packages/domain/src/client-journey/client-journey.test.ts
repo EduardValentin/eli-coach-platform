@@ -133,6 +133,77 @@ describe("ClientJourney.isAfterSubmission", () => {
   });
 });
 
+describe("ClientJourney.coachingStandingOf", () => {
+  const AT = new Date("2026-10-20T10:00:00.000Z");
+  const EARLIER = new Date("2026-10-19T10:00:00.000Z");
+  const LATER = new Date("2026-10-21T10:00:00.000Z");
+
+  it.each([
+    { situation: "no subscription", subscription: null, standing: "active" },
+    {
+      situation: "a subscription not started yet",
+      subscription: { status: "not-started", accessEndsAt: null },
+      standing: "active",
+    },
+    {
+      situation: "an active subscription",
+      subscription: { status: "active", accessEndsAt: null },
+      standing: "active",
+    },
+    {
+      situation: "a cancelled subscription before its access ends",
+      subscription: { status: "cancelled", accessEndsAt: LATER },
+      standing: "active",
+    },
+    {
+      situation: "a cancelled subscription once its access ended",
+      subscription: { status: "cancelled", accessEndsAt: EARLIER },
+      standing: "ended",
+    },
+    {
+      situation: "an ended subscription",
+      subscription: { status: "ended", accessEndsAt: EARLIER },
+      standing: "ended",
+    },
+  ] as const)(
+    "reads $situation as coaching $standing",
+    ({ subscription, standing }) => {
+      // arrange
+      const input = { subscription, at: AT };
+
+      // act
+      const coaching = ClientJourney.coachingStandingOf(input);
+
+      // assert
+      expect(coaching).toBe(standing);
+    },
+  );
+});
+
+describe("ClientJourney.portalReachOf", () => {
+  it.each([
+    { step: "submitted", coaching: "active", reach: "reachable" },
+    { step: "needs-details", coaching: "active", reach: "reachable" },
+    { step: "approved", coaching: "active", reach: "reachable" },
+    { step: "welcome", coaching: "active", reach: "awaiting_onboarding" },
+    { step: "onboarding", coaching: "active", reach: "awaiting_onboarding" },
+    { step: "approved", coaching: "ended", reach: "ended" },
+    { step: "onboarding", coaching: "ended", reach: "ended" },
+  ] as const)(
+    "reads a $step client whose coaching is $coaching as $reach",
+    ({ step, coaching, reach }) => {
+      // arrange
+      const standing = { step, coaching };
+
+      // act
+      const portal = ClientJourney.portalReachOf(standing);
+
+      // assert
+      expect(portal).toBe(reach);
+    },
+  );
+});
+
 describe("ClientJourney#welcomeWording", () => {
   it.each([
     ["female", "five-part"],

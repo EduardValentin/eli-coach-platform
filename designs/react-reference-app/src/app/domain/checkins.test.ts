@@ -4,6 +4,7 @@ import {
   canPropose,
   canWithdrawRequest,
   checkinNote,
+  checkinSchedulingFor,
   checkinSlotAt,
   checkinStartsAt,
   checkinStatus,
@@ -157,6 +158,62 @@ describe('when coaching ends', () => {
 
     // assert
     expect(endsAt).toEqual(periodEndsAt);
+  });
+});
+
+describe('whether the coach can schedule a check-in for a client', () => {
+  function journeyAt(
+    stage: ClientJourney['stage'],
+    coaching: Partial<CoachingSubscription> = {},
+  ): ClientJourney {
+    return { stage, subscription: subscription(coaching) } as ClientJourney;
+  }
+
+  it('allows it once she has sent her onboarding', () => {
+    // arrange
+    const journey = journeyAt('submitted');
+
+    // act
+    const scheduling = checkinSchedulingFor(journey, NOW);
+
+    // assert
+    expect(scheduling).toBe('allowed');
+  });
+
+  it('waits for her onboarding before she has sent it', () => {
+    // arrange
+    const journey = journeyAt('onboarding');
+
+    // act
+    const scheduling = checkinSchedulingFor(journey, NOW);
+
+    // assert
+    expect(scheduling).toBe('awaiting_onboarding');
+  });
+
+  it('still allows it while a cancelled coaching keeps her access', () => {
+    // arrange
+    const journey = journeyAt('submitted', {
+      status: 'cancelled',
+      periodEndsAt: new Date(2026, 9, 31),
+    });
+
+    // act
+    const scheduling = checkinSchedulingFor(journey, NOW);
+
+    // assert
+    expect(scheduling).toBe('allowed');
+  });
+
+  it('ends once her coaching has ended, even before she sent her onboarding', () => {
+    // arrange
+    const journey = journeyAt('onboarding', { status: 'ended', periodEndsAt: NOW });
+
+    // act
+    const scheduling = checkinSchedulingFor(journey, NOW);
+
+    // assert
+    expect(scheduling).toBe('ended');
   });
 });
 

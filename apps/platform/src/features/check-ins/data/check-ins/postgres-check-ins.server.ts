@@ -19,7 +19,12 @@ type CheckInRow = typeof checkInsTable.$inferSelect;
 
 type CheckInRequest = { checkIn: CheckIn; at: Date };
 
-type Settlement = { id: string; outcome: CheckInOutcome; at: Date };
+type Settlement = {
+  id: string;
+  outcome: CheckInOutcome;
+  at: Date;
+  clientTimeZone?: string;
+};
 
 type CheckInAppointment = {
   appointmentKind: "check_in";
@@ -111,6 +116,7 @@ export class PostgresCheckIns implements CheckIns {
       appointmentId: checkIn.id,
     });
     const decision = CheckIn.decideRequest({
+      initiatedBy: checkIn.initiatedBy,
       coachTime: coachTime.status,
       clientCheckIns: clientRows.map((row) => this.toCheckIn(row)),
       at,
@@ -127,11 +133,11 @@ export class PostgresCheckIns implements CheckIns {
 
   private async settleWhilePending(
     transaction: DatabaseTransaction,
-    { id, outcome, at }: Settlement,
+    { id, outcome, at, clientTimeZone }: Settlement,
   ): Promise<CheckInSettlement> {
     const settled = await transaction
       .update(checkInsTable)
-      .set({ status: outcome, answeredAt: at })
+      .set({ status: outcome, answeredAt: at, clientTimeZone })
       .where(
         and(
           eq(checkInsTable.id, id),

@@ -83,7 +83,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
                     >
                       {awaitingViewerCount}
                     </Badge>
-                    <span className="sr-only">
+                    <span className="sr-only" data-parity="requests-count-sr">
                       {awaitingViewerCount} waiting on you
                     </span>
                   </>

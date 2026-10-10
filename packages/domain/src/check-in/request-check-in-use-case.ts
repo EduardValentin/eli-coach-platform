@@ -3,13 +3,14 @@ import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import { CheckInClientReach } from "./check-in-client-reach";
+import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
+import { CheckInTimeZone } from "./check-in-time-zone";
 import type { CheckIns } from "./check-ins";
 
 export type RequestCheckInCommand = {
@@ -30,22 +31,20 @@ export type RequestCheckInResult =
 type RequestCheckInUseCaseOptions = {
   availability: CoachAvailabilitySource;
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
   clock: Clock;
   ids: CheckInIds;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };
 
-const OFFSET_ZONE_SIGNS = ["+", "-"];
-
 export class RequestCheckInUseCase {
   private readonly announcer: CheckInAnnouncer;
-  private readonly reach: CheckInClientReach;
+  private readonly reach: CheckInActorReach;
 
   constructor(private readonly options: RequestCheckInUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
-    this.reach = new CheckInClientReach(options);
+    this.reach = new CheckInActorReach(options);
   }
 
   async execute(command: RequestCheckInCommand): Promise<RequestCheckInResult> {
@@ -55,9 +54,9 @@ export class RequestCheckInUseCase {
       return { status: "note_too_long" };
     }
 
-    const clientTimeZone = this.namedTimeZoneOf(command.clientTimeZone);
+    const zone = CheckInTimeZone.from(command.clientTimeZone);
 
-    if (!clientTimeZone) {
+    if (zone.status === "invalid") {
       return { status: "invalid_time_zone" };
     }
 
@@ -87,7 +86,7 @@ export class RequestCheckInUseCase {
         id: this.options.ids.generate(),
         clientId,
         startsAt: command.startsAt,
-        clientTimeZone,
+        clientTimeZone: zone.timeZone,
         coachTimeZone: availability.timeZone,
         note: written.note,
         requestedAt: now,
@@ -99,20 +98,8 @@ export class RequestCheckInUseCase {
       return requested;
     }
 
-    await this.announcer.announce("requested", requested.checkIn);
+    await this.announcer.announce("requested", requested.checkIn, "client");
 
     return { status: "requested", checkIn: requested.checkIn.toSnapshot() };
-  }
-
-  private namedTimeZoneOf(candidate: string): string | null {
-    try {
-      const { timeZone } = new Intl.DateTimeFormat(undefined, {
-        timeZone: candidate,
-      }).resolvedOptions();
-
-      return OFFSET_ZONE_SIGNS.includes(timeZone.charAt(0)) ? null : timeZone;
-    } catch {
-      return null;
-    }
   }
 }

@@ -40,6 +40,11 @@ function requestSheet(times: Date[]) {
       open
       onOpenChange={() => {}}
       title="Request a check-in"
+      wording={{
+        noteLabel: 'Add a note for your coach (optional)',
+        stepVerb: 'Request',
+        busyLabel: 'Requesting…',
+      }}
       openTimes={openTimes}
       onRetry={() => {}}
       timeZone={TIME_ZONE}

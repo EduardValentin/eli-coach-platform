@@ -27,6 +27,10 @@ const MOVE_CHECK_IN_RESERVATION = `
       ends_at = now() + make_interval(mins => $2) + (ends_at - starts_at)
   where check_in_id = $1
 `;
+const MOVE_BOOKING_ZONE = `
+  update app.assessment_calls set visitor_time_zone = $2
+  where id = (select assessment_call_id from app.clients where id = $1)
+`;
 const HOLD_HOUR = `
   with held as (
     insert into app.check_ins (
@@ -87,6 +91,10 @@ export class CheckInRecords {
     timeZone: string,
   ): Promise<void> {
     await this.pool.query(HOLD_HOUR, [clientId, startsAt, timeZone]);
+  }
+
+  async moveBookingZone(clientId: string, timeZone: string): Promise<void> {
+    await this.pool.query(MOVE_BOOKING_ZONE, [clientId, timeZone]);
   }
 
   async waitingRequestCount(): Promise<number> {

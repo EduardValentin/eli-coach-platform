@@ -6,6 +6,8 @@ import {
   type ServerResponse,
 } from "node:http";
 
+import { expect } from "@playwright/test";
+
 export const EMAIL_CAPTURE_PORT = 3199;
 export const EMAIL_CAPTURE_URL = `http://127.0.0.1:${EMAIL_CAPTURE_PORT}`;
 export const COACH_NOTIFICATION_EMAIL = "coach-notifications@e2e.invalid";
@@ -85,6 +87,23 @@ export async function latestEmailTo(address: string): Promise<CapturedEmail> {
   };
 }
 
+export async function latestSubjectTo(address: string): Promise<string | null> {
+  try {
+    return (await latestEmailTo(address)).subject;
+  } catch {
+    return null;
+  }
+}
+
+export async function emailTo(
+  address: string,
+  subject: string,
+): Promise<CapturedEmail> {
+  await expect.poll(() => latestSubjectTo(address)).toBe(subject);
+
+  return latestEmailTo(address);
+}
+
 export async function refuseEmailsTo(address: string): Promise<void> {
   const response = await fetch(`${EMAIL_CAPTURE_URL}${REFUSALS_PATH}`, {
     body: JSON.stringify({ to: address }),
@@ -94,6 +113,18 @@ export async function refuseEmailsTo(address: string): Promise<void> {
 
   if (!response.ok) {
     throw new Error(`The email capture did not refuse ${address}.`);
+  }
+}
+
+export async function acceptEmailsTo(address: string): Promise<void> {
+  const response = await fetch(`${EMAIL_CAPTURE_URL}${REFUSALS_PATH}`, {
+    body: JSON.stringify({ to: address }),
+    headers: { "Content-Type": "application/json" },
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`The email capture still refuses ${address}.`);
   }
 }
 
@@ -109,6 +140,11 @@ async function answerCaptureRequest(exchange: CaptureExchange): Promise<void> {
 
   if (url.pathname === REFUSALS_PATH && exchange.request.method === "POST") {
     await recordRefusal(exchange);
+    return;
+  }
+
+  if (url.pathname === REFUSALS_PATH && exchange.request.method === "DELETE") {
+    await liftRefusal(exchange);
     return;
   }
 
@@ -157,6 +193,12 @@ async function captureSentEmail(exchange: CaptureExchange): Promise<void> {
 async function recordRefusal(exchange: CaptureExchange): Promise<void> {
   const { to } = JSON.parse(await readBody(exchange.request)) as { to: string };
   exchange.refusedRecipients.add(to);
+  respondWithJson(exchange.response, { status: 200, body: { to } });
+}
+
+async function liftRefusal(exchange: CaptureExchange): Promise<void> {
+  const { to } = JSON.parse(await readBody(exchange.request)) as { to: string };
+  exchange.refusedRecipients.delete(to);
   respondWithJson(exchange.response, { status: 200, body: { to } });
 }
 

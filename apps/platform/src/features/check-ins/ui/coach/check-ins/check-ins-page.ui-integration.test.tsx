@@ -27,8 +27,9 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as approveCheckIn } from "~/features/check-ins/api/coach/approval";
-import { clientAction as declineCheckIn } from "~/features/check-ins/api/coach/decline";
+import { clientAction as approveCheckIn } from "~/features/check-ins/api/shared/approval";
+import { clientAction as declineCheckIn } from "~/features/check-ins/api/shared/decline";
+import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/shared/withdrawal";
 import type {
   CoachCheckIn,
   CoachCheckIns,
@@ -89,7 +90,22 @@ const ELENA_UPCOMING: CoachCheckIn = {
   client: { firstName: "Elena", lastName: "Dumitru" },
 };
 
+const IOANA_OWN_REQUEST: CoachCheckIn = {
+  ...ANDREEA_REQUEST,
+  id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
+  initiatedBy: "coach",
+  awaitsViewer: false,
+  viewerMayWithdraw: true,
+  isWaitingRequest: false,
+  startsAt: "2026-10-13T12:00:00.000Z",
+  endsAt: "2026-10-13T13:00:00.000Z",
+  joinEmphasisFrom: "2026-10-13T11:50:00.000Z",
+  note: "Let's look at your first two weeks",
+  client: { firstName: "Ioana", lastName: "Stan" },
+};
+
 const APPROVAL_URL = `*${CHECK_INS_API_PATHS.approval}`;
+const WITHDRAWAL_URL = `*${CHECK_INS_API_PATHS.withdrawal}`;
 const DECLINE_URL = `*${CHECK_INS_API_PATHS.decline}`;
 
 const server = setupServer();
@@ -197,7 +213,7 @@ describe("the coach's check-ins page", () => {
     [
       "Requests",
       "No open requests",
-      "Requests from your clients show up here.",
+      "Requests from your clients and the ones you send show up here.",
     ],
     [
       "Past",
@@ -379,6 +395,97 @@ describe("the coach's check-ins page", () => {
     expect(await screen.findByText("Check-in declined")).toBeInTheDocument();
   });
 
+  it("lists her own request after the ones waiting for her, marked as hers with her note, and offers only to cancel it", async () => {
+    // arrange
+    listing = { checkIns: [IOANA_OWN_REQUEST, ANDREEA_REQUEST, MARIA_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    const rows = within(
+      screen.getByRole("list", { name: "Requests check-ins" }),
+    ).getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Maria Popescu"),
+      expect.stringContaining("Andreea Ionescu"),
+      expect.stringContaining("Ioana Stan"),
+    ]);
+    expect(rows[2]).toHaveTextContent("Ad-hoc · Requested by you");
+    expect(rows[2]).toHaveTextContent(
+      'You: "Let\'s look at your first two weeks"',
+    );
+    expect(
+      within(rows[2])
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Cancel request"]);
+    expect(
+      screen.getByRole("tab", { name: /^Requests\s*2 waiting on you$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("cancels her own request, showing the work in progress, and drops it from Requests", async () => {
+    // arrange
+    listing = { checkIns: [IOANA_OWN_REQUEST] };
+    let release: () => void = () => {};
+    const withdrawn: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(WITHDRAWAL_URL, async ({ params, request }) => {
+        withdrawn.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        listing = { checkIns: [] };
+        return HttpResponse.json({
+          status: "withdrawn",
+          checkInId: IOANA_OWN_REQUEST.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cancel request" }));
+    const busy = await screen.findByRole("button", { name: "Cancelling…" });
+    const busyWhileWaiting = busy.hasAttribute("disabled");
+    release();
+
+    // assert
+    expect(busyWhileWaiting).toBe(true);
+    expect(await screen.findByText("Request cancelled")).toBeInTheDocument();
+    expect(await screen.findByText("No open requests")).toBeInTheDocument();
+    expect(withdrawn).toEqual([{ checkInId: IOANA_OWN_REQUEST.id, body: {} }]);
+  });
+
+  it("says her request is no longer waiting when the client answered it first, and reads the check-ins again", async () => {
+    // arrange
+    listing = { checkIns: [IOANA_OWN_REQUEST] };
+    server.use(
+      http.post(WITHDRAWAL_URL, () =>
+        HttpResponse.json({ error: "not_pending" }, { status: 409 }),
+      ),
+    );
+    const user = await renderCheckInsPage();
+    const readsBefore = listingReads;
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cancel request" }));
+
+    // assert
+    expect(
+      await screen.findByText(
+        "This request is no longer waiting for an answer.",
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listingReads).toBeGreaterThan(readsBefore);
+    });
+  });
+
   it("passes the axe checks with requests waiting", async () => {
     // arrange, act
     const { baseElement } = await renderCheckInsPageWithView();
@@ -425,6 +532,10 @@ async function renderCheckInsPageWithView() {
       {
         action: frameworkModeAction(declineCheckIn),
         path: CHECK_INS_API_PATHS.decline,
+      },
+      {
+        action: frameworkModeAction(withdrawCheckIn),
+        path: CHECK_INS_API_PATHS.withdrawal,
       },
     ],
     { initialEntries: [COACH_CHECK_INS_PATH] },

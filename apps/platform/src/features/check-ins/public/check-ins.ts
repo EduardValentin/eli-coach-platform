@@ -3,6 +3,7 @@ import {
   CHECK_IN_PARTIES,
   RECORDED_CHECK_IN_STATUSES,
   type CheckInView,
+  type ClientCheckInScheduling,
 } from "@eli-coach-platform/domain/check-in";
 import { z } from "zod";
 
@@ -10,6 +11,7 @@ const CHECK_IN_STATUSES = [...RECORDED_CHECK_IN_STATUSES, "passed"] as const;
 
 const CHECK_IN_OUTCOMES = [
   "requested",
+  "scheduled",
   "withdrawn",
   "approved",
   "declined",
@@ -20,6 +22,7 @@ const CHECK_IN_REFUSALS = [
   "note_too_long",
   "invalid_time_zone",
   "request_waiting",
+  "client_cannot_answer",
   "time_taken",
   "not_pending",
   "ended",
@@ -66,6 +69,18 @@ export const checkInRequestSchema = z.object({
   timeZone: z.string().min(1),
   note: z.string().nullish(),
 });
+
+export const checkInScheduleSchema = z.object({
+  clientId: z.uuid(),
+  startsAt: z.iso.datetime(),
+  note: z.string().nullish(),
+});
+
+export const checkInAnswerSchema = z.object({
+  timeZone: z.string().min(1).optional(),
+});
+
+export type CheckInScheduling = Exclude<ClientCheckInScheduling, "unknown">;
 
 export const checkInOutcomeSchema = z.object({
   status: z.enum(CHECK_IN_OUTCOMES),

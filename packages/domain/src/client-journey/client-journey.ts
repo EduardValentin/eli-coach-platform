@@ -4,6 +4,10 @@ import {
   reviewStageOf,
   type ReviewStamps,
 } from "../client-onboarding";
+import {
+  CoachingSubscription,
+  type CoachingSubscriptionSnapshot,
+} from "../coaching-subscription";
 
 export type ClientJourneyStep =
   | "welcome"
@@ -23,6 +27,10 @@ export const STEPS_AFTER_SUBMISSION = [
 export type StepAfterSubmission = (typeof STEPS_AFTER_SUBMISSION)[number];
 
 export type WelcomeWording = "five-part" | "four-part";
+
+export type CoachingStanding = "active" | "ended";
+
+export type PortalReach = "reachable" | "awaiting_onboarding" | "ended";
 
 export type ClientJourneySnapshot = ReviewStamps & {
   clientId: string;
@@ -66,6 +74,36 @@ export class ClientJourney {
     step: ClientJourneyStep,
   ): step is StepAfterSubmission {
     return STEPS_AFTER_SUBMISSION.some((submitted) => submitted === step);
+  }
+
+  static coachingStandingOf(reading: {
+    subscription: Pick<
+      CoachingSubscriptionSnapshot,
+      "status" | "accessEndsAt"
+    > | null;
+    at: Date;
+  }): CoachingStanding {
+    if (!reading.subscription) {
+      return "active";
+    }
+
+    return CoachingSubscription.statusOf(reading.subscription, reading.at) ===
+      "ended"
+      ? "ended"
+      : "active";
+  }
+
+  static portalReachOf(standing: {
+    step: ClientJourneyStep;
+    coaching: CoachingStanding;
+  }): PortalReach {
+    if (standing.coaching === "ended") {
+      return "ended";
+    }
+
+    return ClientJourney.isAfterSubmission(standing.step)
+      ? "reachable"
+      : "awaiting_onboarding";
   }
 
   step(): ClientJourneyStep {

@@ -25,9 +25,10 @@ export const checkInsCoachJoinRoutes = [
 ];
 
 export const checkInsApiRoutes = [
-  route(CHECK_INS_API_PATHS.openTimes.slice(1), "./api/client/open-times.ts"),
   route(CHECK_INS_API_PATHS.requests.slice(1), "./api/client/requests.ts"),
-  route(CHECK_INS_API_PATHS.withdrawal.slice(1), "./api/client/withdrawal.ts"),
-  route(CHECK_INS_API_PATHS.approval.slice(1), "./api/coach/approval.ts"),
-  route(CHECK_INS_API_PATHS.decline.slice(1), "./api/coach/decline.ts"),
+  route(CHECK_INS_API_PATHS.schedule.slice(1), "./api/coach/schedule.ts"),
+  route(CHECK_INS_API_PATHS.openTimes.slice(1), "./api/shared/open-times.ts"),
+  route(CHECK_INS_API_PATHS.withdrawal.slice(1), "./api/shared/withdrawal.ts"),
+  route(CHECK_INS_API_PATHS.approval.slice(1), "./api/shared/approval.ts"),
+  route(CHECK_INS_API_PATHS.decline.slice(1), "./api/shared/decline.ts"),
 ];

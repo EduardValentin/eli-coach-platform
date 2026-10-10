@@ -1,5 +1,6 @@
 import type { CheckInNote } from "./check-in-note";
 import { CHECK_IN_RULES } from "./check-in-rules";
+import type { CheckInTimeZone } from "./check-in-time-zone";
 
 export const CHECK_IN_PARTIES = ["client", "coach"] as const;
 export const CHECK_IN_KINDS = ["ad_hoc"] as const;
@@ -45,17 +46,23 @@ export type CheckInView = CheckInSnapshot & {
   isWaitingRequest: boolean;
 };
 
-type ClientRequest = {
+type CheckInProposal = {
   id: string;
   clientId: string;
   startsAt: Date;
-  clientTimeZone: string;
+  clientTimeZone: CheckInTimeZone;
   coachTimeZone: string;
   note: CheckInNote | null;
   requestedAt: Date;
 };
 
 type PartyAtInstant = { party: CheckInParty; at: Date };
+
+type SettledAnswer = {
+  outcome: CheckInOutcome;
+  at: Date;
+  clientTimeZone?: CheckInTimeZone | null;
+};
 
 const MILLISECONDS_PER_MINUTE = 60_000;
 const DURATION_MS = CHECK_IN_RULES.durationMinutes * MILLISECONDS_PER_MINUTE;
@@ -94,9 +101,10 @@ export class CheckIn {
     return new CheckIn(props);
   }
 
-  static requestedByClient(request: ClientRequest): CheckIn {
+  static requestedByClient(request: CheckInProposal): CheckIn {
     return new CheckIn({
       ...request,
+      clientTimeZone: request.clientTimeZone.name,
       kind: "ad_hoc",
       recordedStatus: "pending",
       initiatedBy: "client",
@@ -106,12 +114,27 @@ export class CheckIn {
     });
   }
 
+  static scheduledByCoach(schedule: CheckInProposal): CheckIn {
+    return new CheckIn({
+      ...schedule,
+      clientTimeZone: schedule.clientTimeZone.name,
+      kind: "ad_hoc",
+      recordedStatus: "pending",
+      initiatedBy: "coach",
+      proposedBy: "coach",
+      note: schedule.note?.text ?? null,
+      answeredAt: null,
+    });
+  }
+
   static decideRequest(learned: {
+    initiatedBy: CheckInParty;
     coachTime: "reserved" | "taken";
     clientCheckIns: readonly CheckIn[];
     at: Date;
   }): CheckInRequestDecision {
     if (
+      learned.initiatedBy === "client" &&
       learned.clientCheckIns.some((checkIn) =>
         checkIn.isWaitingRequestAt(learned.at),
       )
@@ -179,9 +202,10 @@ export class CheckIn {
     );
   }
 
-  settled(settlement: { outcome: CheckInOutcome; at: Date }): CheckIn {
+  settled(settlement: SettledAnswer): CheckIn {
     return new CheckIn({
       ...this.toProps(),
+      clientTimeZone: settlement.clientTimeZone?.name ?? this.clientTimeZone,
       recordedStatus: settlement.outcome,
       answeredAt: settlement.at,
     });

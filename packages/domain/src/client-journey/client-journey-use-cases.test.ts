@@ -379,7 +379,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     ["has not seen welcome", journey(null)],
     ["has not submitted onboarding", journey(WELCOME_SEEN_AT)],
   ])(
-    "keeps the portal unreachable to a client who %s, though her coaching is active",
+    "answers her portal awaiting onboarding to a client who %s, though her coaching is active",
     async (_label, found) => {
       // arrange
       const { useCase } = standingUseCase({
@@ -395,7 +395,7 @@ describe("ReadClientPortalStandingUseCase", () => {
       expect(standing).toEqual({
         journey: found,
         coaching: "active",
-        portal: "unreachable",
+        portal: "awaiting_onboarding",
       });
     },
   );
@@ -413,7 +413,7 @@ describe("ReadClientPortalStandingUseCase", () => {
       ACCESS_END,
     ],
   ])(
-    "answers her coaching ended and her portal unreachable to a submitted client whose subscription is %s",
+    "answers her coaching and her portal ended to a submitted client whose subscription is %s",
     async (_label, subscription, now) => {
       // arrange
       const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
@@ -426,7 +426,7 @@ describe("ReadClientPortalStandingUseCase", () => {
       expect(standing).toEqual({
         journey: found,
         coaching: "ended",
-        portal: "unreachable",
+        portal: "ended",
       });
     },
   );
@@ -447,7 +447,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     expect(standing).toEqual({
       journey: found,
       coaching: "ended",
-      portal: "unreachable",
+      portal: "ended",
     });
   });
 

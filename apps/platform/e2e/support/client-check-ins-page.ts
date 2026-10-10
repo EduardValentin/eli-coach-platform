@@ -10,19 +10,32 @@ import {
   expectCheckInsInOrder,
   expectEmptyCheckInTab,
   expectJoinEmphasis,
+  expectWaitingOnViewer,
   showCheckInTab,
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
-import { isFocused, tabTo } from "./keyboard";
+import { DisabledAction } from "./disabled-action";
+import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 const CHECK_INS_PATH = "/client/checkins";
+const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
+const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
 const WAITING_REASON =
   "You can send another request once this one is answered.";
+const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
 export class ClientCheckInsPage {
-  constructor(private readonly page: Page) {}
+  private readonly requestAction: DisabledAction;
+
+  constructor(private readonly page: Page) {
+    this.requestAction = new DisabledAction(page, {
+      button: this.requestButton,
+      opens: this.requestDialog,
+      reason: WAITING_REASON,
+    });
+  }
 
   private get requestButton() {
     return this.page.getByRole("button", {
@@ -35,8 +48,11 @@ export class ClientCheckInsPage {
     return this.page.getByRole("dialog", { name: "Request a check-in" });
   }
 
-  private get waitingReason() {
-    return this.page.getByText(WAITING_REASON, { exact: true });
+  private async responseFinished(path: RegExp): Promise<void> {
+    const response = await this.page.waitForResponse((candidate) =>
+      path.test(new URL(candidate.url()).pathname),
+    );
+    await response.finished();
   }
 
   private joinPathOf(checkInId: string): string {
@@ -112,62 +128,91 @@ export class ClientCheckInsPage {
   }
 
   async expectRequestBlocked(): Promise<void> {
-    await expect(this.requestButton).toHaveAttribute("aria-disabled", "true");
-    await expect(this.requestButton).toBeDisabled();
+    await this.requestAction.expectBlocked();
   }
 
   async expectBlockedReasonOnHover(): Promise<void> {
-    await expect(async () => {
-      await this.requestButton.hover();
-      await expect(this.waitingReason).toBeVisible({
-        timeout: HYDRATION_RETRY_TIMEOUT_MS,
-      });
-    }).toPass();
-    await this.expectWaitingReasonDescribesRequest();
-    await this.requestButton.click({ force: true });
-    await expect(this.requestDialog).toBeHidden();
-    await this.page.mouse.move(0, 0);
-    await expect(this.waitingReason).toBeHidden();
+    await this.requestAction.expectReasonOnHover();
   }
 
   async expectBlockedReasonOnFocus(): Promise<void> {
-    if (await isFocused(this.requestButton)) {
-      await this.page.keyboard.press("Shift+Tab");
-    }
-    await tabTo(this.page, this.requestButton);
-    await expect(this.waitingReason).toBeVisible();
-    await this.expectWaitingReasonDescribesRequest();
-    await this.page.keyboard.press("Enter");
-    await expect(this.requestDialog).toBeHidden();
-    await this.page.keyboard.press("Escape");
-    await expect(this.waitingReason).toBeHidden();
-    await expect(this.requestButton).toBeFocused();
+    await this.requestAction.expectReasonOnFocus();
   }
 
   async expectBlockedReasonOnTap(): Promise<void> {
-    await expect(async () => {
-      await this.requestButton.tap({ force: true });
-      await expect(this.waitingReason).toBeVisible({
-        timeout: HYDRATION_RETRY_TIMEOUT_MS,
-      });
-    }).toPass();
-    await this.expectWaitingReasonDescribesRequest();
-    await expect(this.requestDialog).toBeHidden();
-    await this.requestButton.tap({ force: true });
-    await expect(this.waitingReason).toBeHidden();
-    await expect(this.requestDialog).toBeHidden();
-  }
-
-  private async expectWaitingReasonDescribesRequest(): Promise<void> {
-    await expect(this.requestButton).toHaveAccessibleDescription(
-      WAITING_REASON,
-    );
+    await this.requestAction.expectReasonOnTap();
   }
 
   async expectRequestAllowed(): Promise<void> {
-    await expect(this.requestButton).toBeEnabled();
-    await expect(this.requestButton).not.toHaveAttribute("aria-disabled");
-    await expect(this.waitingReason).toBeHidden();
+    await this.requestAction.expectAllowed();
+  }
+
+  async expectWaitingCount(count: number): Promise<void> {
+    await expectWaitingOnViewer(this.page, count);
+  }
+
+  async expectRequestedByCoach(note: string): Promise<void> {
+    const first = checkInsListed(this.page, "Requests").first();
+
+    await this.showTab("Requests");
+    await expect(first).toContainText(note);
+    await expect(first).toContainText("Requested by your coach");
+  }
+
+  async expectAnswerOffered(note: string): Promise<void> {
+    const row = this.checkIn("Requests", note);
+
+    await this.showTab("Requests");
+    await expect(row.getByRole("button", { name: "Approve" })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Decline" })).toBeVisible();
+    await expect(
+      row.getByRole("button", { name: "Cancel request" }),
+    ).toHaveCount(0);
+  }
+
+  async approve(note: string): Promise<void> {
+    await this.showTab("Requests");
+    const approvalSettled = this.responseFinished(APPROVAL_DATA_PATH);
+    const revalidationSettled = this.responseFinished(CHECK_INS_DATA_PATH);
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Approve" })
+      .click();
+    await expect(this.page.getByText("Check-in approved")).toBeVisible();
+    await Promise.all([approvalSettled, revalidationSettled]);
+  }
+
+  async decline(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Decline" })
+      .click();
+    await expect(this.page.getByText("Check-in declined")).toBeVisible();
+  }
+
+  async approveNoLongerWaiting(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Approve" })
+      .click();
+    await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
+  }
+
+  async declineNoLongerWaiting(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Decline" })
+      .click();
+    await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
+  }
+
+  async approveByKeyboard(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await tabTo(
+      this.page,
+      this.checkIn("Requests", note).getByRole("button", { name: "Approve" }),
+    );
+    await this.page.keyboard.press("Enter");
+    await expect(this.page.getByText("Check-in approved")).toBeVisible();
   }
 
   async withdraw(note: string): Promise<void> {

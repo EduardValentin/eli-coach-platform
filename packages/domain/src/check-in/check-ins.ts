@@ -19,5 +19,6 @@ export interface CheckIns {
     id: string;
     outcome: CheckInOutcome;
     at: Date;
+    clientTimeZone?: string;
   }): Promise<CheckInSettlement>;
 }

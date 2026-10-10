@@ -1,11 +1,8 @@
 import {
   CheckIn,
   type ListClientCheckInsUseCase,
-  type ListOpenCheckInTimesUseCase,
   type RequestCheckInResult,
   type RequestCheckInUseCase,
-  type WithdrawCheckInRequestResult,
-  type WithdrawCheckInRequestUseCase,
 } from "@eli-coach-platform/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
@@ -35,8 +32,6 @@ const COACH_SESSION: ResolvedSession = {
   account: { authSubjectId: "user_eli", id: "acct_eli", role: "COACH" },
   kind: "authenticated",
 };
-
-const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
 const PENDING = CheckIn.reconstitute({
   id: CHECK_IN_ID,
@@ -112,39 +107,6 @@ describe("ClientCheckInsController loadCheckIns", () => {
     // assert
     expect((thrown as Response).status).toBe(403);
     expect(listClientCheckIns).not.toHaveBeenCalled();
-  });
-});
-
-describe("ClientCheckInsController listOpenTimes", () => {
-  it("answers the open times as instants, never cached", async () => {
-    // arrange
-    const { controller } = createController({
-      openTimes: [STARTS_AT, new Date("2026-10-22T15:00:00.000Z")],
-    });
-
-    // act
-    const response = await controller.listOpenTimes(clientArgs());
-
-    // assert
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({
-      times: ["2026-10-22T14:00:00.000Z", "2026-10-22T15:00:00.000Z"],
-    });
-  });
-
-  it("sends a visitor who is not signed in to sign in without reading the times", async () => {
-    // arrange
-    const { controller, listOpenCheckInTimes } = createController();
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.listOpenTimes(clientArgs({ session: ANONYMOUS_SESSION })),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(302);
-    expect(listOpenCheckInTimes).not.toHaveBeenCalled();
   });
 });
 
@@ -278,128 +240,34 @@ describe("ClientCheckInsController request", () => {
   });
 });
 
-describe("ClientCheckInsController withdraw", () => {
-  it("withdraws her request and names it in the answer", async () => {
-    // arrange
-    const { controller, withdrawCheckInRequest } = createController({
-      withdrawn: {
-        status: "withdrawn",
-        checkIn: PENDING.settled({
-          outcome: "cancelled",
-          at: NOW,
-        }).toSnapshot(),
-      },
-    });
-
-    // act
-    const response = await controller.withdraw(clientArgs(), CHECK_IN_ID);
-
-    // assert
-    expect(withdrawCheckInRequest).toHaveBeenCalledWith({
-      authSubjectId: "user_ana",
-      checkInId: CHECK_IN_ID,
-    });
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      status: "withdrawn",
-      checkInId: CHECK_IN_ID,
-    });
-  });
-
-  it.each<{
-    result: WithdrawCheckInRequestResult;
-    status: number;
-    error: string;
-  }>([
-    { result: { status: "not_pending" }, status: 409, error: "not_pending" },
-    { result: { status: "expired" }, status: 409, error: "not_pending" },
-    { result: { status: "not_your_turn" }, status: 409, error: "not_pending" },
-    { result: { status: "ended" }, status: 409, error: "ended" },
-  ])(
-    "answers $status $error when the withdrawal is refused as $result.status",
-    async ({ result, status, error }) => {
-      // arrange
-      const { controller } = createController({ withdrawn: result });
-
-      // act
-      const response = await controller.withdraw(clientArgs(), CHECK_IN_ID);
-
-      // assert
-      expect(response.status).toBe(status);
-      expect(await response.json()).toEqual({ error });
-    },
-  );
-
-  it("answers not found to a check-in she cannot reach", async () => {
-    // arrange
-    const { controller } = createController({
-      withdrawn: { status: "unknown" },
-    });
-
-    // act
-    const response = await controller.withdraw(clientArgs(), CHECK_IN_ID);
-
-    // assert
-    expect(response.status).toBe(404);
-  });
-
-  it("answers not found to an id that is not a uuid without withdrawing anything", async () => {
-    // arrange
-    const { controller, withdrawCheckInRequest } = createController();
-
-    // act
-    const response = await controller.withdraw(clientArgs(), "../other");
-
-    // assert
-    expect(response.status).toBe(404);
-    expect(withdrawCheckInRequest).not.toHaveBeenCalled();
-  });
-});
-
 function createController(
   answers: {
     listed?: Awaited<ReturnType<ListClientCheckInsUseCase["execute"]>>;
-    openTimes?: Date[];
     requested?: RequestCheckInResult;
-    withdrawn?: WithdrawCheckInRequestResult;
   } = {},
 ) {
   const listClientCheckIns = vi
     .fn()
     .mockResolvedValue(answers.listed ?? { status: "listed", checkIns: [] });
-  const listOpenCheckInTimes = vi
-    .fn()
-    .mockResolvedValue(answers.openTimes ?? []);
   const requestCheckIn = vi.fn().mockResolvedValue(
     answers.requested ?? {
       status: "requested",
       checkIn: PENDING.toSnapshot(),
     },
   );
-  const withdrawCheckInRequest = vi
-    .fn()
-    .mockResolvedValue(answers.withdrawn ?? { status: "unknown" });
   const controller = new ClientCheckInsController({
     listClientCheckIns: {
       execute: listClientCheckIns,
     } as unknown as ListClientCheckInsUseCase,
-    listOpenCheckInTimes: {
-      execute: listOpenCheckInTimes,
-    } as unknown as ListOpenCheckInTimesUseCase,
     requestCheckIn: {
       execute: requestCheckIn,
     } as unknown as RequestCheckInUseCase,
-    withdrawCheckInRequest: {
-      execute: withdrawCheckInRequest,
-    } as unknown as WithdrawCheckInRequestUseCase,
   });
 
   return {
     controller,
     listClientCheckIns,
-    listOpenCheckInTimes,
     requestCheckIn,
-    withdrawCheckInRequest,
   };
 }
 

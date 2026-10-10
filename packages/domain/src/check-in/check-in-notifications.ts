@@ -1,9 +1,10 @@
-import type { CheckInSnapshot } from "./check-in";
+import type { CheckInParty, CheckInSnapshot } from "./check-in";
 import type { CheckInClientIdentity } from "./check-in-clients";
 
 export type CheckInNotice = {
   checkIn: CheckInSnapshot;
   client: CheckInClientIdentity;
+  recipient: CheckInParty;
 };
 
 export type CheckInDelivery = "sent" | "failed";
