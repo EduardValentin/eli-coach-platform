@@ -45,6 +45,7 @@ import { PortalRequests } from "./portal-requests";
 import { PrivacyPolicyPage } from "./privacy-policy-page";
 import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
+import { ResourceToolbar } from "./resource-toolbar";
 import { ResourceViewer } from "./resource-viewer";
 import {
   insertInvitedClientRecords,
@@ -126,6 +127,7 @@ type PlatformFixtures = {
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
+  resourceToolbar: ResourceToolbar;
   clientResourcesOutage: ClientResourcesOutage;
   coachEmail: string;
   scenarioTag: string;
@@ -503,6 +505,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   resourceViewer: async ({ page }, use) => {
     await use(new ResourceViewer(page));
+  },
+
+  resourceToolbar: async ({ page }, use) => {
+    await use(new ResourceToolbar(page));
   },
 
   // eslint-disable-next-line no-empty-pattern

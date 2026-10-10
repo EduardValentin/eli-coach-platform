@@ -54,6 +54,11 @@ export class CoachClientResourcesPage {
     );
   }
 
+  async reload(): Promise<void> {
+    await this.page.reload();
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+  }
+
   async goBack(fullName: string): Promise<void> {
     await this.backLinkTo(fullName).click();
   }
@@ -79,6 +84,10 @@ export class CoachClientResourcesPage {
 
   async expectCard(facts: ResourceCardFacts): Promise<void> {
     await this.cards.expectCard(facts);
+  }
+
+  async expectMetaRowOnOneLine(title: string): Promise<void> {
+    await this.cards.expectMetaRowOnOneLine(title);
   }
 
   async expectThumbnail(title: string): Promise<void> {

@@ -7,7 +7,12 @@ export type ResourceCardFacts = {
   title: string;
   type: string;
   pages?: number;
+  tags?: readonly string[];
 };
+
+type LineBox = { top: number; bottom: number };
+
+const SHOWN_TAGS = 2;
 
 export class ResourceCards {
   constructor(private readonly page: Page) {}
@@ -22,6 +27,41 @@ export class ResourceCards {
 
   private card(title: string): Locator {
     return this.region.getByRole("button", { name: title, exact: true });
+  }
+
+  private async metaRowOf(title: string): Promise<Locator> {
+    const [metaId] =
+      (await this.card(title).getAttribute("aria-describedby"))?.split(" ") ??
+      [];
+
+    if (!metaId) throw new Error(`The card ${title} describes no meta row.`);
+
+    return this.page.locator(`[id="${metaId}"]`);
+  }
+
+  private async metaItemsShareOneLine(title: string): Promise<boolean> {
+    const metaRow = await this.metaRowOf(title);
+    const lineBoxes = await metaRow.locator("> *").evaluateAll((items) =>
+      items.map((item): LineBox => {
+        const { top, bottom } = item.getBoundingClientRect();
+
+        return { top, bottom };
+      }),
+    );
+
+    return (
+      lineBoxes.length > 0 &&
+      lineBoxes.every((one) =>
+        lineBoxes.every((other) => one.top < other.bottom),
+      )
+    );
+  }
+
+  private shownTagsOf(tags: readonly string[]): string[] {
+    const hidden = tags.length - SHOWN_TAGS;
+    const shown = tags.slice(0, SHOWN_TAGS);
+
+    return hidden > 0 ? [...shown, `+${hidden}`] : shown;
   }
 
   private viewerFor(title: string): Locator {
@@ -45,14 +85,18 @@ export class ResourceCards {
   }
 
   async expectCard(
-    { title, type, pages }: ResourceCardFacts,
+    { title, type, pages, tags = [] }: ResourceCardFacts,
     marks: readonly string[] = [],
   ): Promise<void> {
     const meta = pages ? [type, `${pages} pages`] : [type];
 
     await expect(this.card(title)).toHaveAccessibleDescription(
-      [...meta, ...marks].join(" "),
+      [...meta, ...marks, ...this.shownTagsOf(tags)].join(" "),
     );
+  }
+
+  async expectMetaRowOnOneLine(title: string): Promise<void> {
+    await expect.poll(() => this.metaItemsShareOneLine(title)).toBe(true);
   }
 
   async expectThumbnail(title: string): Promise<void> {
