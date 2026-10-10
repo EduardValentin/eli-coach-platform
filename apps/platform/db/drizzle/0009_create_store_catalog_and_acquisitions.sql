@@ -188,17 +188,6 @@ CREATE INDEX "product_versions_publication_idx" ON "app"."product_versions" USIN
 CREATE UNIQUE INDEX "products_slug_unique" ON "app"."products" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "products_publication_order_idx" ON "app"."products" USING btree ("lifecycle_status","display_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "store_recipients_normalized_email_unique" ON "app"."store_recipients" USING btree ("normalized_email");--> statement-breakpoint
-INSERT INTO "app"."product_types" ("slug", "display_label", "display_order")
-VALUES
-  ('workouts', 'Workouts', 1),
-  ('nutrition-plans', 'Nutrition Plans', 2),
-  ('e-books', 'E-Books', 3);--> statement-breakpoint
-INSERT INTO "app"."product_goals" ("slug", "display_label", "display_order")
-VALUES
-  ('muscle-building', 'Muscle Building', 1),
-  ('fat-loss', 'Fat Loss', 2),
-  ('wellness', 'Wellness', 3),
-  ('hormonal-balance', 'Hormonal Balance', 4);--> statement-breakpoint
 CREATE FUNCTION "app"."reject_published_product_version_mutation"()
 RETURNS trigger
 LANGUAGE plpgsql
