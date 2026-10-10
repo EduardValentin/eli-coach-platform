@@ -161,7 +161,7 @@ bootstrap_database() {
 }
 
 run_drizzle_migrations() {
-  log "applying drizzle migrations"
+  log "applying migrations and seeds"
 
   docker run --rm \
     --network "${INTERNAL_NETWORK}" \

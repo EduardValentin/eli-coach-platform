@@ -10,7 +10,7 @@
     "dev:e2e": "node --env-file=../../.env ./node_modules/@react-router/dev/bin.js dev --host localhost --port 3100",
     "build": "react-router build",
     "db:generate": "drizzle-kit generate --config=db/drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config=db/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=db/drizzle.config.ts && node db/apply-seeds.ts",
     "store:cover": "tsx tooling/render-product-cover-cli.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
