@@ -13,6 +13,20 @@ const RESERVATION = {
 } as const;
 
 describe("reserveCoachTime", () => {
+  it("queues behind every other reservation of the coach's time before inserting its own", async () => {
+    // arrange
+    const transaction = createTransactionSettling(Promise.resolve());
+
+    // act
+    await reserveCoachTime(transaction, RESERVATION);
+
+    // assert
+    const [lockOrder] = vi.mocked(transaction.execute).mock.invocationCallOrder;
+    const [insertOrder] = vi.mocked(transaction.transaction).mock
+      .invocationCallOrder;
+    expect(lockOrder).toBeLessThan(insertOrder ?? 0);
+  });
+
   it("reserves the coach's time when nothing overlaps it", async () => {
     // arrange
     const transaction = createTransactionSettling(Promise.resolve());
@@ -69,6 +83,7 @@ function createTransactionSettling(outcome: Promise<unknown>): Transaction {
   outcome.catch(() => undefined);
 
   return {
+    execute: vi.fn().mockResolvedValue(undefined),
     transaction: vi.fn().mockReturnValue(outcome),
   } as unknown as Transaction;
 }
