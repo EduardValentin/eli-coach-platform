@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 492ce059, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit bf7a695a, change review.
 
 ## Component graph
 
@@ -74,7 +74,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C17 assessment-calls | C6 infrastructure | 12 | bot-detection (browser and server), email/server (the notification contract, the Email* primitives and the email theme), http/server (incl. `resolveFieldErrorCode` for the booking controller), http (`fetcherOutcomeOf`, the booking route's `clientAction`) |
 | C17 assessment-calls | C9 accounts | 1 | `public/paths.ts` takes `COACH_PORTAL_PATH` from `public/paths.ts` |
 | C17 assessment-calls | C23 coach-schedule | 1 | `public/assessment-calls.ts` takes `timeZoneSchema` and `isFormattableTimeZone` from `public/time-zone.ts` |
-| C18 coaching-sales | C1 domain | 46 | `/payment-link`, `/coaching-subscription` (the lifecycle use cases, `CoachingSubscriptions`, `RefundNotifications`, `PaymentCards`, `PaymentCard` and the card mirror and refresh use cases, `CoachingSubscription.isCancelledOrEnded`, `RefundDueSnapshot`, `OFFERED_CANCELLATION_RULES`, `START_NOW_REFUSALS`, `WITHDRAWAL_WINDOW_DAYS`), `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/client`, `/client-invitation`, `/client-journey`, `/client-roster`, `/account` (`InvitationAcceptance`, type), the port types its adapters implement from `/client-onboarding`, `/client-profile` and `/unit-preference`, `/shared` |
+| C18 coaching-sales | C1 domain | 46 | `/payment-link`, `/coaching-subscription` (the lifecycle use cases, `CoachingSubscriptions`, `RefundNotifications`, `PaymentCards`, `PaymentCard` and the card mirror and refresh use cases, `CoachingSubscription.isCancelledOrEnded`, `RefundDueSnapshot`, `OFFERED_CANCELLATION_RULES`, `START_NOW_REFUSALS`, `WITHDRAWAL_WINDOW_DAYS`), `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/client`, `/client-invitation`, `/client-journey` (`ClientJourney.coachingStandingOf` and `ClientJourney.portalReachOf` for `checkInClients.findById`), `/client-roster`, `/account` (`InvitationAcceptance`, type), the port types its adapters implement from `/client-onboarding`, `/client-profile` and `/unit-preference`, `/shared` |
 | C18 coaching-sales | C2 db | 15 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` (through `data/unique-violation.server.ts`) |
 | C18 coaching-sales | C3 config | 8 | `joinBasePath`, `buildRedirectPath`, `normalizeBasePath` |
 | C18 coaching-sales | C5 ui | 36 | `./primitives` (incl. `InlineProblem`, `CardBrandMark`), `./overlays` (`ConfirmDialog`), `./lib` (incl. the calendar-day format and `PhoneLink`), `./motion`, `./toast`, `./portal` (incl. `SettingsSection`, `SettingsRow`, `Reading`), `./appointments` (`RowActionButton`, `RowActionLink`), `./layout` (`DeadEndPage`, `DeadEndPanel`) |
@@ -4093,7 +4093,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4746 | packages/domain/src/check-in/check-in-announcer.ts | packages/domain/src/check-in/check-in-incidents.ts | type-only import | no | no | lateral | present |
 | E4747 | packages/domain/src/check-in/check-in-announcer.ts | packages/domain/src/check-in/check-in-notifications.ts | type-only import | no | no | lateral | present |
 | E4748 | packages/domain/src/check-in/check-in-announcer.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
-| E4749 | packages/domain/src/check-in/check-in-client-reach.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
+| E4749 | packages/domain/src/check-in/check-in-actor-reach.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4750 | packages/domain/src/check-in/check-in-incidents.ts | packages/domain/src/check-in/check-in-notifications.ts | type-only import | no | no | lateral | present |
 | E4751 | packages/domain/src/check-in/check-in-notifications.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4752 | packages/domain/src/check-in/check-in-notifications.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
@@ -4130,7 +4130,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4783 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/request-check-in-use-case.ts | re-export | no | no | lateral | present |
 | E4784 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | re-export | no | no | lateral | present |
 | E4785 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | re-export | no | no | lateral | present |
-| E4786 | packages/domain/src/check-in/list-client-check-ins-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
+| E4786 | packages/domain/src/check-in/list-client-check-ins-use-case.ts | packages/domain/src/check-in/check-in-actor-reach.ts | import | no | no | lateral | present |
 | E4787 | packages/domain/src/check-in/list-client-check-ins-use-case.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4788 | packages/domain/src/check-in/list-client-check-ins-use-case.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
 | E4789 | packages/domain/src/check-in/list-client-check-ins-use-case.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
@@ -4143,7 +4143,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4796 | packages/domain/src/check-in/list-open-check-in-times-use-case.ts | packages/domain/src/coach-availability/index.ts | type-only import | no | no | lateral | present |
 | E4797 | packages/domain/src/check-in/list-open-check-in-times-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
 | E4798 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-announcer.ts | import | no | no | lateral | present |
-| E4799 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
+| E4799 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-actor-reach.ts | import | no | no | lateral | present |
 | E4800 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4801 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-ids.ts | type-only import | no | no | lateral | present |
 | E4802 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-in-incidents.ts | type-only import | no | no | lateral | present |
@@ -4154,13 +4154,12 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4807 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
 | E4808 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/coach-availability/index.ts | type-only import | no | no | lateral | present |
 | E4809 | packages/domain/src/check-in/request-check-in-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
-| E4810 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
+| E4810 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/check-in/check-in-actor-reach.ts | import | no | no | lateral | present |
 | E4811 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4812 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
 | E4813 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
 | E4814 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/coach-meeting-room/index.ts | type-only import | no | no | lateral | present |
 | E4815 | packages/domain/src/check-in/resolve-check-in-join-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
-| E4816 | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
 | E4817 | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
 | E4818 | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | packages/domain/src/check-in/check-in-incidents.ts | type-only import | no | no | lateral | present |
 | E4819 | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | packages/domain/src/check-in/check-in-notifications.ts | type-only import | no | no | lateral | present |
@@ -4294,9 +4293,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4947 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | yes | inward | present |
 | E4948 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/assessment-calls/public/visitor-profile.ts | import | yes | yes | inward | present |
 | E4949 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/check-ins/public/check-ins.ts | type-only import | no | yes | inward | present |
-| E4950 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-dialog.tsx | import | no | no | lateral | present |
-| E4951 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-dialog.tsx | apps/platform/src/features/check-ins/public/paths.ts | import | no | yes | inward | present |
-| E4952 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | import | no | no | lateral | present |
+| E4951 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/check-ins/public/paths.ts | import | no | yes | inward | present |
+| E4952 | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | import | no | no | lateral | present |
 | E4953 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | packages/domain/src/check-in/index.ts | import | yes | yes | inward | present |
 | E4954 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
 | E4955 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
@@ -4309,16 +4307,12 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4962 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | apps/platform/src/features/check-ins/public/paths.ts | import | no | yes | inward | present |
 | E4963 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/check-ins/server/guards/check-ins-context.server.ts | import | yes | yes | outward | present |
 | E4964 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/check-ins/ui/coach/schedule/schedule-check-in-action.tsx | import | yes | no | lateral | present |
-| E4965 | packages/domain/src/check-in/approve-check-in-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
-| E4966 | packages/domain/src/check-in/check-in-client-reach.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
-| E4967 | packages/domain/src/check-in/check-in-client-reach.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
-| E4968 | packages/domain/src/check-in/check-in-client-reach.ts | packages/domain/src/check-in/check-in-time-zone.ts | import | no | yes | inward | present |
-| E4969 | packages/domain/src/check-in/check-in-client-reach.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
-| E4970 | packages/domain/src/check-in/check-in-settler.ts | packages/domain/src/check-in/check-in-time-zone.ts | type-only import | no | yes | inward | present |
+| E4966 | packages/domain/src/check-in/check-in-actor-reach.ts | packages/domain/src/check-in/check-in.ts | type-only import | no | yes | inward | present |
+| E4967 | packages/domain/src/check-in/check-in-actor-reach.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
+| E4969 | packages/domain/src/check-in/check-in-actor-reach.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
+| E4970 | packages/domain/src/check-in/check-in-settler.ts | packages/domain/src/check-in/check-in-time-zone.ts | import | no | yes | inward | present |
 | E4971 | packages/domain/src/check-in/check-in.ts | packages/domain/src/check-in/check-in-time-zone.ts | type-only import | no | no | lateral | present |
-| E4972 | packages/domain/src/check-in/decline-check-in-use-case.ts | packages/domain/src/check-in/check-in-client-reach.ts | import | no | no | lateral | present |
 | E4973 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/check-in-actor.ts | re-export | no | no | lateral | present |
-| E4974 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/check-in-client-reach.ts | re-export | no | no | lateral | present |
 | E4975 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/read-client-check-in-scheduling-use-case.ts | re-export | no | no | lateral | present |
 | E4976 | packages/domain/src/check-in/index.ts | packages/domain/src/check-in/schedule-check-in-use-case.ts | re-export | no | no | lateral | present |
 | E4977 | packages/domain/src/check-in/read-client-check-in-scheduling-use-case.ts | packages/domain/src/check-in/check-in-clients.ts | type-only import | no | no | lateral | present |
@@ -4334,3 +4328,10 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4987 | packages/domain/src/check-in/schedule-check-in-use-case.ts | packages/domain/src/check-in/check-in-rules.ts | import | no | no | lateral | present |
 | E4988 | packages/domain/src/check-in/schedule-check-in-use-case.ts | packages/domain/src/check-in/check-in-time-zone.ts | import | no | yes | inward | present |
 | E4989 | packages/domain/src/check-in/schedule-check-in-use-case.ts | packages/domain/src/check-in/check-ins.ts | type-only import | no | no | lateral | present |
+| E4990 | packages/domain/src/check-in/approve-check-in-use-case.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
+| E4991 | packages/domain/src/check-in/decline-check-in-use-case.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
+| E4992 | packages/domain/src/check-in/withdraw-check-in-request-use-case.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
+| E4993 | packages/domain/src/check-in/check-in-settler.ts | packages/domain/src/check-in/check-in-actor.ts | type-only import | no | no | lateral | present |
+| E4994 | packages/domain/src/check-in/check-in-settler.ts | packages/domain/src/check-in/check-in-actor-reach.ts | import | no | no | lateral | present |
+| E4995 | packages/domain/src/check-in/check-in-settler.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E4996 | packages/domain/src/client-journey/client-journey.ts | packages/domain/src/coaching-subscription/index.ts | import | no | no | lateral | present |
