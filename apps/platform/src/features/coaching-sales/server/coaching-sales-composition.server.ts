@@ -12,6 +12,7 @@ import {
   type IdentityInvitations,
 } from "@eli-coach-platform/domain/client-invitation";
 import {
+  ClientJourney,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
@@ -33,6 +34,7 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
+  CoachingSubscription,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
@@ -313,11 +315,47 @@ export function composeCoachingSalesFeature(
 
   const resourceClients: ResourceClients = {
     exists: (clientId) => onboardingClients.exists(clientId),
-    findByAuthSubjectId: portalClientOf,
+    findByAuthSubjectId: async (authSubjectId) => {
+      const client = await portalClientOf(authSubjectId);
+
+      return client
+        ? {
+            clientId: client.clientId,
+            portal: client.portal === "reachable" ? "reachable" : "unreachable",
+          }
+        : null;
+    },
   };
 
   const checkInClients: CheckInClients = {
     findByAuthSubjectId: portalClientOf,
+    findById: async (clientId) => {
+      const entry = await roster.findById(clientId);
+      const call = entry
+        ? await handles.assessmentCallReader.findById(
+            entry.booking.assessmentCallId,
+          )
+        : null;
+
+      if (!entry || !call) {
+        return null;
+      }
+
+      const coachingEnded =
+        entry.subscription !== null &&
+        !CoachingSubscription.reconstitute(
+          entry.subscription,
+        ).hasPortalAccessAt(clock.now());
+
+      return {
+        clientId: entry.journey.clientId,
+        portal: ClientJourney.portalReachOf({
+          step: ClientJourney.from(entry.journey).step(),
+          coaching: coachingEnded ? "ended" : "active",
+        }),
+        bookingTimeZone: call.visitorTimeZone,
+      };
+    },
     identitiesOf: async (clientIds) =>
       (await clientIdentities.findByClientIds(clientIds)).map(
         ({ clientId, firstName, lastName, email }) => ({

@@ -1,5 +1,5 @@
 import type {
-  CheckInRequester,
+  CheckInActor,
   ResolveCheckInJoinUseCase,
 } from "@eli-coach-platform/domain/check-in";
 import { redirect, type LoaderFunctionArgs } from "react-router";
@@ -43,7 +43,7 @@ export class CheckInJoinController {
   }
 
   private async resolve(
-    requester: CheckInRequester,
+    actor: CheckInActor,
     checkInId: string | undefined,
   ): Promise<RoomNotReady> {
     const id = checkInIdSchema.safeParse(checkInId);
@@ -53,7 +53,7 @@ export class CheckInJoinController {
     }
 
     const room = await this.options.resolveCheckInJoin.execute({
-      requester,
+      actor,
       checkInId: id.data,
     });
 

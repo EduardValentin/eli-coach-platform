@@ -31,9 +31,9 @@ import { configureAxe } from "vitest-axe";
 import {
   clientLoader as openTimesLoader,
   shouldRevalidate as shouldRevalidateOpenTimes,
-} from "~/features/check-ins/api/client/open-times";
+} from "~/features/check-ins/api/shared/open-times";
 import { clientAction as requestCheckIn } from "~/features/check-ins/api/client/requests";
-import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/client/withdrawal";
+import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/shared/withdrawal";
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 import {
   CHECK_INS_API_PATHS,

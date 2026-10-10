@@ -16,6 +16,14 @@ export type CheckInAsk = {
   note?: string | null;
 };
 
+export type CheckInSchedule = {
+  clientId: string;
+  startsAt: string;
+  note?: string | null;
+};
+
+export type CheckInAnswer = { timeZone?: string };
+
 export type CheckInRow = {
   id: string;
   clientId: string;
@@ -51,6 +59,10 @@ const COACH_DEFAULT_AVAILABILITY = {
 const openTimesSchema = z.object({ times: z.array(z.string()) });
 const requestedSchema = z.object({
   status: z.literal("requested"),
+  checkInId: z.uuid(),
+});
+const scheduledSchema = z.object({
+  status: z.literal("scheduled"),
   checkInId: z.uuid(),
 });
 
@@ -91,28 +103,48 @@ export class CheckInsJourney {
     return requestedSchema.parse(await response.json()).checkInId;
   }
 
-  withdraw(requester: Requester, checkInId: string): Promise<Response> {
-    return this.send(requester, `${CHECK_INS_API}/${checkInId}/withdrawal`, {
+  schedule(requester: Requester, schedule: CheckInSchedule): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/schedule`, {
+      body: JSON.stringify(schedule),
+      headers: { "Content-Type": "application/json" },
       method: "POST",
     });
+  }
+
+  async scheduled(schedule: CheckInSchedule): Promise<string> {
+    const response = await this.schedule(COACH_SESSION, schedule);
+
+    if (response.status !== 201) {
+      throw new Error(
+        `Scheduling a check-in answered ${response.status}: ${await response.text()}`,
+      );
+    }
+
+    return scheduledSchema.parse(await response.json()).checkInId;
+  }
+
+  withdraw(
+    requester: Requester,
+    checkInId: string,
+    answer?: CheckInAnswer,
+  ): Promise<Response> {
+    return this.answer(requester, `${checkInId}/withdrawal`, answer);
   }
 
   approve(
     checkInId: string,
     requester: Requester = COACH_SESSION,
+    answer?: CheckInAnswer,
   ): Promise<Response> {
-    return this.send(requester, `${CHECK_INS_API}/${checkInId}/approval`, {
-      method: "POST",
-    });
+    return this.answer(requester, `${checkInId}/approval`, answer);
   }
 
   decline(
     checkInId: string,
     requester: Requester = COACH_SESSION,
+    answer?: CheckInAnswer,
   ): Promise<Response> {
-    return this.send(requester, `${CHECK_INS_API}/${checkInId}/decline`, {
-      method: "POST",
-    });
+    return this.answer(requester, `${checkInId}/decline`, answer);
   }
 
   async approved(checkInId: string): Promise<void> {
@@ -161,6 +193,20 @@ export class CheckInsJourney {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
       sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
       values: [],
+    });
+  }
+
+  private answer(
+    requester: Requester,
+    target: string,
+    answer: CheckInAnswer | undefined,
+  ): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/${target}`, {
+      ...(answer && {
+        body: JSON.stringify(answer),
+        headers: { "Content-Type": "application/json" },
+      }),
+      method: "POST",
     });
   }
 

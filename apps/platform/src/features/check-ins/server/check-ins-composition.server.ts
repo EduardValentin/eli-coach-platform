@@ -5,8 +5,10 @@ import {
   ListClientCheckInsUseCase,
   ListCoachCheckInsUseCase,
   ListOpenCheckInTimesUseCase,
+  ReadClientCheckInSchedulingUseCase,
   RequestCheckInUseCase,
   ResolveCheckInJoinUseCase,
+  ScheduleCheckInUseCase,
   WithdrawCheckInRequestUseCase,
   type CheckInClients,
   type CheckInIncidents,
@@ -22,6 +24,7 @@ import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/serv
 import { ClientCheckInsController } from "~/features/check-ins/api/client/client-check-ins-controller.server";
 import { CoachCheckInsController } from "~/features/check-ins/api/coach/coach-check-ins-controller.server";
 import { CheckInJoinController } from "~/features/check-ins/api/join/check-in-join-controller.server";
+import { SharedCheckInsController } from "~/features/check-ins/api/shared/shared-check-ins-controller.server";
 import {
   PostgresCheckIns,
   type CheckInCoachTime,
@@ -33,6 +36,7 @@ export type CheckInsFeature = {
   checkInJoin: CheckInJoinController;
   clientCheckIns: ClientCheckInsController;
   coachCheckIns: CoachCheckInsController;
+  sharedCheckIns: SharedCheckInsController;
 };
 
 type CheckInsFeatureHandles = {
@@ -75,6 +79,12 @@ export function composeCheckInsFeature(
     }),
   };
 
+  const requestPorts = {
+    ...answerPorts,
+    availability,
+    ids: new RandomCheckInIds(),
+  };
+
   return {
     checkInJoin: new CheckInJoinController({
       resolveCheckInJoin: new ResolveCheckInJoinUseCase({
@@ -84,22 +94,24 @@ export function composeCheckInsFeature(
     }),
     clientCheckIns: new ClientCheckInsController({
       listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
+      requestCheckIn: new RequestCheckInUseCase(requestPorts),
+    }),
+    coachCheckIns: new CoachCheckInsController({
+      listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
+      readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
+        readPorts,
+      ),
+      scheduleCheckIn: new ScheduleCheckInUseCase(requestPorts),
+    }),
+    sharedCheckIns: new SharedCheckInsController({
+      approveCheckIn: new ApproveCheckInUseCase(answerPorts),
+      declineCheckIn: new DeclineCheckInUseCase(answerPorts),
       listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
         availability,
         calendar: handles.calendar,
         clock,
       }),
-      requestCheckIn: new RequestCheckInUseCase({
-        ...answerPorts,
-        availability,
-        ids: new RandomCheckInIds(),
-      }),
       withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
-    }),
-    coachCheckIns: new CoachCheckInsController({
-      approveCheckIn: new ApproveCheckInUseCase(answerPorts),
-      declineCheckIn: new DeclineCheckInUseCase(answerPorts),
-      listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
     }),
   };
 }

@@ -27,8 +27,8 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as approveCheckIn } from "~/features/check-ins/api/coach/approval";
-import { clientAction as declineCheckIn } from "~/features/check-ins/api/coach/decline";
+import { clientAction as approveCheckIn } from "~/features/check-ins/api/shared/approval";
+import { clientAction as declineCheckIn } from "~/features/check-ins/api/shared/decline";
 import type {
   CoachCheckIn,
   CoachCheckIns,
