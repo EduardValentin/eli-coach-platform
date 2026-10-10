@@ -92,26 +92,6 @@ describe.sequential("coach time reservations schema", () => {
     expect(await countReservations()).toBe(0);
   });
 
-  it("lets the time be reserved before its check-in is written in the same transaction", async () => {
-    // arrange
-    await insertClient();
-    const transaction = await suite.postgres.beginTransaction();
-
-    // act
-    await transaction.executeSql({
-      sql: reserveSql,
-      values: reserveValues({ assessmentCallId: null, checkInId: CHECK_IN_ID }),
-    });
-    await transaction.executeSql({
-      sql: insertCheckInSql,
-      values: [CHECK_IN_ID, CLIENT_ID],
-    });
-    await transaction.commit();
-
-    // assert
-    expect(await countReservations()).toBe(1);
-  });
-
   it.each([
     [{ assessmentCallId: null, checkInId: null }],
     [{ assessmentCallId: CALL_ID, checkInId: CHECK_IN_ID }],

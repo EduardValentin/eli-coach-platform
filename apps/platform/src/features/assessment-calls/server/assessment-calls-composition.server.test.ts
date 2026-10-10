@@ -164,10 +164,7 @@ function createHandles(
     botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
     calendar: { busyFrom: async () => [] },
     clock: { now: () => new Date("2026-10-19T08:00:00.000Z") },
-    coachTime: {
-      release: async () => {},
-      reserve: async () => ({ status: "reserved" }),
-    },
+    coachTime: { reserve: async () => ({ status: "reserved" }) },
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
     featureFlags: { execute: async () => featureFlags },

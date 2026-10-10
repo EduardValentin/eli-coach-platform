@@ -10,6 +10,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
+import { checkInsTable } from "~/features/check-ins/data/schema.server";
+
 export type AppointmentKind = "assessment_call" | "check_in";
 
 export const COACH_TIME_RESERVATIONS_NO_OVERLAP =
@@ -21,8 +24,13 @@ export const coachTimeReservationsTable = appSchema.table(
     id: uuid("id").primaryKey().defaultRandom(),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
-    assessmentCallId: uuid("assessment_call_id"),
-    checkInId: uuid("check_in_id"),
+    assessmentCallId: uuid("assessment_call_id").references(
+      () => assessmentCallsTable.id,
+      { onDelete: "cascade" },
+    ),
+    checkInId: uuid("check_in_id").references(() => checkInsTable.id, {
+      onDelete: "cascade",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

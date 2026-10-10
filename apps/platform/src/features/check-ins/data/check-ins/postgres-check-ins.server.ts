@@ -100,13 +100,14 @@ export class PostgresCheckIns implements CheckIns {
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.clientId, checkIn.clientId));
-    const appointment = {
-      appointmentKind: "check_in",
-      appointmentId: checkIn.id,
-    } as const;
+
+    await transaction.execute(sql`savepoint check_in_request`);
+    await transaction.insert(checkInsTable).values(this.toRow(checkIn));
+
     const coachTime = await this.options.coachTime.reserve(transaction, {
       ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
-      ...appointment,
+      appointmentKind: "check_in",
+      appointmentId: checkIn.id,
     });
     const decision = CheckIn.decideRequest({
       coachTime: coachTime.status,
@@ -115,14 +116,10 @@ export class PostgresCheckIns implements CheckIns {
     });
 
     if (decision === "requested") {
-      await transaction.insert(checkInsTable).values(this.toRow(checkIn));
-
       return { status: "requested", checkIn };
     }
 
-    if (coachTime.status === "reserved") {
-      await this.options.coachTime.release(transaction, appointment);
-    }
+    await transaction.execute(sql`rollback to savepoint check_in_request`);
 
     return { status: decision };
   }

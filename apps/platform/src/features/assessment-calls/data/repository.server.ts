@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   ASSESSMENT_CALL_RULES,
   AssessmentCall,
@@ -29,10 +27,6 @@ export type AssessmentCallCoachTime = {
     transaction: DatabaseTransaction,
     reservation: AssessmentCallAppointment & TimeInterval,
   ) => Promise<{ status: "reserved" | "taken" }>;
-  release: (
-    transaction: DatabaseTransaction,
-    appointment: AssessmentCallAppointment,
-  ) => Promise<void>;
 };
 
 type PostgresAssessmentCallRepositoryOptions = {
@@ -88,35 +82,31 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       sql`select pg_advisory_xact_lock(hashtext(${command.normalizedEmail}))`,
     );
 
-    const appointment = {
-      appointmentKind: "assessment_call",
-      appointmentId: randomUUID(),
-    } as const;
+    const upcomingCallForEmail = await this.findUpcomingCallForEmail(
+      transaction,
+      command,
+    );
+
+    await transaction.execute(sql`savepoint assessment_call_reservation`);
+
+    const call = await this.insertCall(transaction, command);
     const coachTime = await this.options.coachTime.reserve(transaction, {
       ...ASSESSMENT_CALL_RULES.coachTimeFrom(command.startsAt),
-      ...appointment,
+      appointmentKind: "assessment_call",
+      appointmentId: call.id,
     });
     const decision = AssessmentCall.decideReservation({
       coachTime: coachTime.status,
-      upcomingCallForEmail: await this.findUpcomingCallForEmail(
-        transaction,
-        command,
-      ),
+      upcomingCallForEmail,
     });
 
     if (decision.status === "reserved") {
-      return {
-        status: "reserved",
-        call: await this.insertCall(transaction, {
-          id: appointment.appointmentId,
-          command,
-        }),
-      };
+      return { status: "reserved", call };
     }
 
-    if (coachTime.status === "reserved") {
-      await this.options.coachTime.release(transaction, appointment);
-    }
+    await transaction.execute(
+      sql`rollback to savepoint assessment_call_reservation`,
+    );
 
     return decision;
   }
@@ -142,13 +132,11 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
 
   private async insertCall(
     transaction: DatabaseTransaction,
-    newCall: { id: string; command: ReserveAssessmentCallCommand },
+    command: ReserveAssessmentCallCommand,
   ): Promise<AssessmentCall> {
-    const { id, command } = newCall;
     const [row] = await transaction
       .insert(assessmentCallsTable)
       .values({
-        id,
         firstName: command.firstName,
         lastName: command.lastName,
         visitorEmail: command.normalizedEmail,

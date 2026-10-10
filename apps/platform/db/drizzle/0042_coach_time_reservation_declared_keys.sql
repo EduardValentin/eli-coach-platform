@@ -1,0 +1,4 @@
+ALTER TABLE "app"."coach_time_reservations" DROP CONSTRAINT "coach_time_reservations_assessment_call_id_assessment_calls_id_fk";--> statement-breakpoint
+ALTER TABLE "app"."coach_time_reservations" DROP CONSTRAINT "coach_time_reservations_check_in_id_check_ins_id_fk";--> statement-breakpoint
+ALTER TABLE "app"."coach_time_reservations" ADD CONSTRAINT "coach_time_reservations_assessment_call_id_assessment_calls_id_fk" FOREIGN KEY ("assessment_call_id") REFERENCES "app"."assessment_calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "app"."coach_time_reservations" ADD CONSTRAINT "coach_time_reservations_check_in_id_check_ins_id_fk" FOREIGN KEY ("check_in_id") REFERENCES "app"."check_ins"("id") ON DELETE cascade ON UPDATE no action;

@@ -182,10 +182,7 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
 
 function repositoryOptions(database: DatabaseClient) {
   return {
-    coachTime: {
-      release: vi.fn(),
-      reserve: vi.fn(),
-    },
+    coachTime: { reserve: vi.fn() },
     database,
   };
 }
