@@ -7,6 +7,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import type { ComponentType } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryRouter,
@@ -90,6 +91,39 @@ function renderLayoutInCoachRoutesAt(pathname: string) {
   return render(<RoutesStub initialEntries={[pathname]} />);
 }
 
+function renderCoachShellThroughRootLayout(pageRoute: {
+  ErrorBoundary?: ComponentType;
+  loader: () => never;
+}) {
+  const RoutesStub = createRoutesStub([
+    {
+      children: [
+        {
+          children: [
+            { Component: () => <p>Page</p>, index: true, ...pageRoute },
+          ],
+          handle: { portal: COACH_PORTAL_ROUTE_SEGMENT },
+        },
+      ],
+      Component: () => (
+        <Layout>
+          <Outlet />
+        </Layout>
+      ),
+      ErrorBoundary: () => (
+        <Layout>
+          <ErrorBoundary />
+        </Layout>
+      ),
+      path: `/${COACH_PORTAL_ROUTE_SEGMENT}`,
+    },
+  ]);
+
+  return render(
+    <RoutesStub initialEntries={[`/${COACH_PORTAL_ROUTE_SEGMENT}`]} />,
+  );
+}
+
 function SendingPage() {
   const navigate = useNavigate();
 
@@ -167,6 +201,42 @@ describe("root Layout", () => {
     // assert
     expect(screen.getByText("Page")).toBeInTheDocument();
     expect(document.documentElement).not.toHaveAttribute("data-portal");
+  });
+
+  it("leaves the document unmarked when a portal denial replaces the coach shell", async () => {
+    // arrange
+    const deniedByThePortalGuard = () => {
+      throw Response.json({ recovery: "client-portal" }, { status: 403 });
+    };
+
+    // act
+    renderCoachShellThroughRootLayout({ loader: deniedByThePortalGuard });
+
+    // assert
+    expect(
+      await screen.findByRole("link", { name: "Back to your portal" }),
+    ).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveAttribute("data-portal");
+  });
+
+  it("keeps the coach portal mark when a page inside the coach shell shows its own error", async () => {
+    // arrange
+    const failingLoader = () => {
+      throw new Response("Service Unavailable", { status: 503 });
+    };
+
+    // act
+    renderCoachShellThroughRootLayout({
+      ErrorBoundary: () => <p>Page failed</p>,
+      loader: failingLoader,
+    });
+
+    // assert
+    expect(await screen.findByText("Page failed")).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute(
+      "data-portal",
+      COACH_PORTAL_ROUTE_SEGMENT,
+    );
   });
 
   it("leaves the document unmarked on a public page", () => {

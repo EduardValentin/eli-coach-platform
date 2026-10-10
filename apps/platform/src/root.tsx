@@ -102,17 +102,13 @@ export const links: LinksFunction = () => [
 // "Unhandled Thrown Response!" page.
 export function Layout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
-  const shellPortal = useMatches()
-    .map(({ handle }) => handle)
-    .find(isPortalRouteHandle)?.portal;
+  const shellPortal = useRenderedShellPortal();
+  const pathPortal = portalForPathname(pathname);
   return (
     <html className="relative" data-portal={shellPortal} lang="en">
       <head>
         <meta charSet="utf-8" />
-        <meta
-          name="viewport"
-          content={viewportContentFor(portalForPathname(pathname))}
-        />
+        <meta name="viewport" content={viewportContentFor(pathPortal)} />
         <Meta />
         <Links />
       </head>
@@ -166,6 +162,17 @@ export function ErrorBoundary() {
       statusLabel={resolveErrorStatusLabel(error)}
     />
   );
+}
+
+function useRenderedShellPortal() {
+  const matches = useMatches();
+  const rootBoundaryError = useRouteError();
+
+  if (rootBoundaryError !== null) {
+    return undefined;
+  }
+
+  return matches.map(({ handle }) => handle).find(isPortalRouteHandle)?.portal;
 }
 
 function viewportContentFor(portal: PortalRouteSegment | undefined) {
