@@ -27,3 +27,16 @@ export function portalForPathname(
   const firstSegment = pathname.split("/")[1];
   return PORTAL_ROUTE_SEGMENTS.find((segment) => segment === firstSegment);
 }
+
+export type PortalRouteHandle = { portal: PortalRouteSegment };
+
+export function isPortalRouteHandle(
+  handle: unknown,
+): handle is PortalRouteHandle {
+  return (
+    typeof handle === "object" &&
+    handle !== null &&
+    "portal" in handle &&
+    PORTAL_ROUTE_SEGMENTS.some((segment) => segment === handle.portal)
+  );
+}

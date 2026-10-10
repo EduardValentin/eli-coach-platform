@@ -28,7 +28,11 @@ export function PortalPageHeader({
         >
           {title}
         </h1>
-        {subtitle && <p className="text-text-secondary">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-text-secondary" data-parity="page-subtitle">
+            {subtitle}
+          </p>
+        )}
       </div>
       {actions && (
         <div className="flex flex-wrap items-center gap-3 md:shrink-0">

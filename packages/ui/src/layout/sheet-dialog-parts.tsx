@@ -28,6 +28,7 @@ export function SheetDialogHeader({
         "shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8",
         RULE_COLOR_CLASS[rule],
       )}
+      data-parity="sheet-header"
     >
       <h3
         className="pr-10 text-lg leading-snug font-semibold text-text-primary outline-none md:text-xl"
@@ -37,7 +38,10 @@ export function SheetDialogHeader({
         {title}
       </h3>
       {description && (
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
+        <p
+          className="mt-1 text-xs text-text-secondary sm:text-sm"
+          data-parity="sheet-description"
+        >
           {description}
         </p>
       )}

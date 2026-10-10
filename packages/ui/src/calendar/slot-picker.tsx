@@ -45,6 +45,7 @@ export function SlotPicker(props: SlotPickerProps) {
   return (
     <div
       className="flex flex-col gap-8 lg:flex-row lg:justify-start"
+      data-parity="slot-picker"
       data-parity-root="SlotPicker"
     >
       <div

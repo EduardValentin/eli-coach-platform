@@ -13,6 +13,7 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
+  useMatches,
   useRouteError,
   type LinksFunction,
   type MetaFunction,
@@ -20,6 +21,7 @@ import {
 
 import {
   CLIENT_PORTAL_ROUTE_SEGMENT,
+  isPortalRouteHandle,
   portalForPathname,
   type PortalRouteSegment,
 } from "~/features/accounts/public/paths";
@@ -100,12 +102,17 @@ export const links: LinksFunction = () => [
 // "Unhandled Thrown Response!" page.
 export function Layout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
-  const portal = portalForPathname(pathname);
+  const shellPortal = useMatches()
+    .map(({ handle }) => handle)
+    .find(isPortalRouteHandle)?.portal;
   return (
-    <html className="relative" data-portal={portal} lang="en">
+    <html className="relative" data-portal={shellPortal} lang="en">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content={viewportContentFor(portal)} />
+        <meta
+          name="viewport"
+          content={viewportContentFor(portalForPathname(pathname))}
+        />
         <Meta />
         <Links />
       </head>

@@ -2,12 +2,21 @@ import { PortalShell } from "@eli-coach-platform/ui/layout";
 import { Dumbbell } from "lucide-react";
 import { Outlet, type MetaFunction } from "react-router";
 
+import {
+  COACH_PORTAL_ROUTE_SEGMENT,
+  type PortalRouteHandle,
+} from "~/features/accounts/public/paths";
+
 import { coachSurfaceLinks } from "./navigation-links";
 
 const COACH_PORTAL_TITLE = "Coach Portal | Evoa";
 const COACH_PORTAL_DESCRIPTION =
   "Coach-facing workspace for client management, planning, scheduling, and communication.";
 const COACH_PORTAL_THEME_COLOR = "#17212f";
+
+export const handle = {
+  portal: COACH_PORTAL_ROUTE_SEGMENT,
+} satisfies PortalRouteHandle;
 
 export const meta: MetaFunction = () => [
   { title: COACH_PORTAL_TITLE },

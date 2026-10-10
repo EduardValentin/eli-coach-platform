@@ -68,6 +68,28 @@ function renderLayoutAt(pathname: string) {
   return render(<RoutesStub initialEntries={[pathname]} />);
 }
 
+function renderLayoutInCoachRoutesAt(pathname: string) {
+  const RoutesStub = createRoutesStub([
+    {
+      children: [
+        {
+          children: [{ Component: () => <p>Page</p>, path: "settings" }],
+          handle: { portal: COACH_PORTAL_ROUTE_SEGMENT },
+        },
+        { Component: () => <p>Page</p>, path: "check-ins/:checkInId/join" },
+      ],
+      Component: () => (
+        <Layout>
+          <Outlet />
+        </Layout>
+      ),
+      path: `/${COACH_PORTAL_ROUTE_SEGMENT}`,
+    },
+  ]);
+
+  return render(<RoutesStub initialEntries={[pathname]} />);
+}
+
 function SendingPage() {
   const navigate = useNavigate();
 
@@ -120,12 +142,12 @@ afterEach(() => {
 });
 
 describe("root Layout", () => {
-  it("marks the document with the coach portal on a coach page", () => {
+  it("marks the document with the coach portal on a page inside the coach shell", () => {
     // arrange
     const coachPage = "/coach/settings";
 
     // act
-    renderLayoutAt(coachPage);
+    renderLayoutInCoachRoutesAt(coachPage);
 
     // assert
     expect(screen.getByText("Page")).toBeInTheDocument();
@@ -133,6 +155,18 @@ describe("root Layout", () => {
       "data-portal",
       COACH_PORTAL_ROUTE_SEGMENT,
     );
+  });
+
+  it("leaves the document unmarked on a coach page outside the coach shell", () => {
+    // arrange
+    const joinPage = "/coach/check-ins/check-in-1/join";
+
+    // act
+    renderLayoutInCoachRoutesAt(joinPage);
+
+    // assert
+    expect(screen.getByText("Page")).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveAttribute("data-portal");
   });
 
   it("leaves the document unmarked on a public page", () => {

@@ -94,17 +94,20 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
         </div>
       </div>
 
-      <TabsContent value={tab}>
+      <TabsContent data-parity="checkins-tab-panel" value={tab}>
         {shown.length === 0 ? (
           <EmptyState
             description={empty.description}
+            descriptionParity="checkins-empty-description"
             icon={empty.icon}
             title={empty.title}
           />
         ) : (
           <ul aria-label={`${TAB_LABELS[tab]} check-ins`} className="space-y-3">
             {shown.map((checkIn) => (
-              <li key={checkIn.id}>{renderCheckIn(checkIn, tab)}</li>
+              <li data-parity="checkin-row" key={checkIn.id}>
+                {renderCheckIn(checkIn, tab)}
+              </li>
             ))}
           </ul>
         )}

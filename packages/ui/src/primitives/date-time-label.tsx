@@ -30,8 +30,12 @@ export function DateTimeLabel({
         className,
       )}
     >
-      <span className={DATE_CLASS[size]}>{when.date}</span>
-      <span className="text-sm text-text-secondary">· {when.time}</span>
+      <span className={DATE_CLASS[size]} data-parity="when-date">
+        {when.date}
+      </span>
+      <span className="text-sm text-text-secondary" data-parity="when-time">
+        · {when.time}
+      </span>
     </span>
   );
 }

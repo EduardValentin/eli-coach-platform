@@ -13,6 +13,10 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import {
+  CLIENT_PORTAL_ROUTE_SEGMENT,
+  type PortalRouteHandle,
+} from "~/features/accounts/public/paths";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
@@ -47,6 +51,10 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
       .ownResources.countUnopened(args),
   };
 }
+
+export const handle = {
+  portal: CLIENT_PORTAL_ROUTE_SEGMENT,
+} satisfies PortalRouteHandle;
 
 export const meta: MetaFunction = () =>
   clientPortalPageMeta(pwaSurfaceDefinitions.client.name);
