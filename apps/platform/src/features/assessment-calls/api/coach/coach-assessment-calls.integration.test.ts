@@ -215,6 +215,7 @@ describe.sequential("coach assessment calls integration", () => {
     // act
     const dashboard = await requestAsCoach(DASHBOARD);
     const calls = await requestAsCoach(CALLS_PAGE);
+    await makeAssessmentCallsReadable();
 
     // assert
     expect(dashboard.status).toBe(503);
@@ -391,11 +392,15 @@ async function provisionClient(): Promise<void> {
   });
 }
 
-// The schema is dropped and remigrated between cases, so the rename lives
-// only as long as the case that asks for it.
 async function makeAssessmentCallsUnreadable(): Promise<void> {
   await suite.postgres.executeSql({
     sql: "alter table app.assessment_calls rename to assessment_calls_unreadable",
+  });
+}
+
+async function makeAssessmentCallsReadable(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: "alter table app.assessment_calls_unreadable rename to assessment_calls",
   });
 }
 
