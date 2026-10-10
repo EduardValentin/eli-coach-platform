@@ -4,6 +4,7 @@ import {
   checkInsListed,
   checkInTab,
   expectJoinEmphasis,
+  expectWaitingOnViewer,
   showCheckInTab,
   type CheckInTab,
   type JoinEmphasis,
@@ -80,9 +81,7 @@ export class CoachCheckInsPage {
   }
 
   async expectWaitingCount(count: number): Promise<void> {
-    await expect(checkInTab(this.page, "Requests")).toHaveAccessibleName(
-      new RegExp(`^Requests\\b.*\\b${count}\\b`),
-    );
+    await expectWaitingOnViewer(this.page, count);
   }
 
   checkIn(tab: CheckInTab, showing: string): Locator {
@@ -108,6 +107,26 @@ export class CoachCheckInsPage {
       .getByRole("button", { name: "Decline" })
       .click();
     await expect(this.page.getByText("Check-in declined")).toBeVisible();
+  }
+
+  async expectRequestedByYou(note: string): Promise<void> {
+    const row = this.checkIn("Requests", note);
+
+    await this.showTab("Requests");
+    await expect(row).toContainText("Requested by you");
+    await expect(
+      row.getByRole("button", { name: "Cancel request" }),
+    ).toBeVisible();
+    await expect(row.getByRole("button", { name: "Approve" })).toHaveCount(0);
+    await expect(row.getByRole("button", { name: "Decline" })).toHaveCount(0);
+  }
+
+  async cancelRequest(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Cancel request" })
+      .click();
+    await expect(this.page.getByText("Request cancelled")).toBeVisible();
   }
 
   async joinFromRow(clientName: string): Promise<void> {

@@ -6,6 +6,8 @@ import {
   type ServerResponse,
 } from "node:http";
 
+import { expect } from "@playwright/test";
+
 export const EMAIL_CAPTURE_PORT = 3199;
 export const EMAIL_CAPTURE_URL = `http://127.0.0.1:${EMAIL_CAPTURE_PORT}`;
 export const COACH_NOTIFICATION_EMAIL = "coach-notifications@e2e.invalid";
@@ -83,6 +85,23 @@ export async function latestEmailTo(address: string): Promise<CapturedEmail> {
     subject: latest.subject,
     text: latest.text,
   };
+}
+
+export async function latestSubjectTo(address: string): Promise<string | null> {
+  try {
+    return (await latestEmailTo(address)).subject;
+  } catch {
+    return null;
+  }
+}
+
+export async function emailTo(
+  address: string,
+  subject: string,
+): Promise<CapturedEmail> {
+  await expect.poll(() => latestSubjectTo(address)).toBe(subject);
+
+  return latestEmailTo(address);
 }
 
 export async function refuseEmailsTo(address: string): Promise<void> {

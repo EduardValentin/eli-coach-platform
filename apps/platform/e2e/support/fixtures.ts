@@ -11,7 +11,11 @@ import { AccountPortal } from "./account-portal";
 import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
 import { CheckInRecords } from "./check-in-records";
-import { CheckInRequestDialog } from "./check-in-request-dialog";
+import {
+  CHECK_IN_REQUEST_WORDING,
+  CHECK_IN_SCHEDULE_WORDING,
+  CheckInPickerDialog,
+} from "./check-in-picker-dialog";
 import { CheckInRequests } from "./check-in-requests";
 import { ClientCheckInsPage } from "./client-check-ins-page";
 import { ClientDashboard } from "./client-dashboard";
@@ -100,7 +104,8 @@ type PlatformFixtures = {
   clientEnded: ClientEndedPage;
   clientResources: ClientResourcesPage;
   clientCheckIns: ClientCheckInsPage;
-  checkInRequestDialog: CheckInRequestDialog;
+  checkInRequestDialog: CheckInPickerDialog;
+  checkInScheduleDialog: CheckInPickerDialog;
   privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
@@ -372,7 +377,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   },
 
   checkInRequestDialog: async ({ page }, use) => {
-    await use(new CheckInRequestDialog(page));
+    await use(new CheckInPickerDialog(page, CHECK_IN_REQUEST_WORDING));
+  },
+
+  checkInScheduleDialog: async ({ page }, use) => {
+    await use(new CheckInPickerDialog(page, CHECK_IN_SCHEDULE_WORDING));
   },
 
   measurementsSheet: async ({ page }, use) => {
