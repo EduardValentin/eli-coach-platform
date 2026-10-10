@@ -1,27 +1,26 @@
 import type { Clock } from "../shared";
 
 import type { CheckInRefusal, CheckInSnapshot } from "./check-in";
-import { CheckInClientReach } from "./check-in-client-reach";
+import {
+  CheckInClientReach,
+  type CheckInActorCommand,
+} from "./check-in-client-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSettler } from "./check-in-settler";
 import type { CheckIns } from "./check-ins";
 
-export type WithdrawCheckInRequestCommand = {
-  authSubjectId: string;
-  checkInId: string;
-};
-
 export type WithdrawCheckInRequestResult =
   | { status: "withdrawn"; checkIn: CheckInSnapshot }
   | { status: "unknown" }
   | { status: "ended" }
+  | { status: "invalid_time_zone" }
   | { status: CheckInRefusal };
 
 type WithdrawCheckInRequestUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
   clock: Clock;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
@@ -37,24 +36,18 @@ export class WithdrawCheckInRequestUseCase {
   }
 
   async execute(
-    command: WithdrawCheckInRequestCommand,
+    command: CheckInActorCommand,
   ): Promise<WithdrawCheckInRequestResult> {
-    const clientId = await this.reach.reachableClientIdOf(
-      command.authSubjectId,
-    );
+    const reached = await this.reach.checkInReachedBy(command);
 
-    if (!clientId) {
-      return { status: "ended" };
+    if (reached.status !== "reached") {
+      return reached;
     }
 
-    const checkIn = await this.options.checkIns.find(command.checkInId);
-
-    if (!checkIn?.isFor(clientId)) {
-      return { status: "unknown" };
-    }
-
+    const { checkIn, clientTimeZone } = reached;
+    const party = command.actor.party;
     const at = this.options.clock.now();
-    const refusal = checkIn.withdrawalRefusalFor({ party: "client", at });
+    const refusal = checkIn.withdrawalRefusalFor({ party, at });
 
     if (refusal) {
       return { status: refusal };
@@ -64,6 +57,8 @@ export class WithdrawCheckInRequestUseCase {
       checkIn,
       outcome: "cancelled",
       notification: "withdrawn",
+      actedBy: party,
+      clientTimeZone,
       at,
     });
 

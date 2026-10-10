@@ -1,6 +1,12 @@
+export type CheckInPortalReach = "reachable" | "awaiting_onboarding" | "ended";
+
 export type CheckInClient = {
   clientId: string;
-  portal: "reachable" | "unreachable";
+  portal: CheckInPortalReach;
+};
+
+export type CheckInClientReference = CheckInClient & {
+  bookingTimeZone: string;
 };
 
 export type CheckInClientIdentity = {
@@ -12,5 +18,6 @@ export type CheckInClientIdentity = {
 
 export interface CheckInClients {
   findByAuthSubjectId(authSubjectId: string): Promise<CheckInClient | null>;
+  findById(clientId: string): Promise<CheckInClientReference | null>;
   identitiesOf(clientIds: readonly string[]): Promise<CheckInClientIdentity[]>;
 }

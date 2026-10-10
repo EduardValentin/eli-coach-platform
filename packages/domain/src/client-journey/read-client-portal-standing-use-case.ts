@@ -1,12 +1,12 @@
 import type { CoachingSubscriptions } from "../coaching-subscription";
 import type { Clock } from "../shared";
 
-import { ClientJourney } from "./client-journey";
+import {
+  ClientJourney,
+  type CoachingStanding,
+  type PortalReach,
+} from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
-
-export type CoachingStanding = "active" | "ended";
-
-export type PortalReach = "reachable" | "unreachable";
 
 type ClientPortalStandingReading = {
   journey: ClientJourney;
@@ -47,17 +47,7 @@ export class ReadClientPortalStandingUseCase {
     return {
       journey,
       coaching,
-      portal: this.portalReachOf(journey, coaching),
+      portal: ClientJourney.portalReachOf({ step: journey.step(), coaching }),
     };
-  }
-
-  private portalReachOf(
-    journey: ClientJourney,
-    coaching: CoachingStanding,
-  ): PortalReach {
-    const reachable =
-      coaching === "active" && ClientJourney.isAfterSubmission(journey.step());
-
-    return reachable ? "reachable" : "unreachable";
   }
 }

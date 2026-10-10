@@ -3,7 +3,6 @@ import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import { CheckInClientReach } from "./check-in-client-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -13,59 +12,60 @@ import { CHECK_IN_RULES } from "./check-in-rules";
 import { CheckInTimeZone } from "./check-in-time-zone";
 import type { CheckIns } from "./check-ins";
 
-export type RequestCheckInCommand = {
-  authSubjectId: string;
+export type ScheduleCheckInCommand = {
+  clientId: string;
   startsAt: Date;
-  clientTimeZone: string;
   note: string | null;
 };
 
-export type RequestCheckInResult =
-  | { status: "requested"; checkIn: CheckInSnapshot }
-  | { status: "request_waiting" }
+export type ScheduleCheckInResult =
+  | { status: "scheduled"; checkIn: CheckInSnapshot }
+  | { status: "unknown_client" }
+  | { status: "client_cannot_answer" }
   | { status: "time_taken" }
-  | { status: "ended" }
   | { status: "note_too_long" }
   | { status: "invalid_time_zone" };
 
-type RequestCheckInUseCaseOptions = {
+type ScheduleCheckInUseCaseOptions = {
   availability: CoachAvailabilitySource;
-  checkIns: CheckIns;
-  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+  checkIns: Pick<CheckIns, "request">;
+  clients: Pick<CheckInClients, "findById" | "identitiesOf">;
   clock: Clock;
   ids: CheckInIds;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };
 
-export class RequestCheckInUseCase {
+export class ScheduleCheckInUseCase {
   private readonly announcer: CheckInAnnouncer;
-  private readonly reach: CheckInClientReach;
 
-  constructor(private readonly options: RequestCheckInUseCaseOptions) {
+  constructor(private readonly options: ScheduleCheckInUseCaseOptions) {
     this.announcer = new CheckInAnnouncer(options);
-    this.reach = new CheckInClientReach(options);
   }
 
-  async execute(command: RequestCheckInCommand): Promise<RequestCheckInResult> {
+  async execute(
+    command: ScheduleCheckInCommand,
+  ): Promise<ScheduleCheckInResult> {
     const written = CheckInNote.from(command.note);
 
     if (written.status === "too_long") {
       return { status: "note_too_long" };
     }
 
-    const zone = CheckInTimeZone.from(command.clientTimeZone);
+    const client = await this.options.clients.findById(command.clientId);
+
+    if (!client) {
+      return { status: "unknown_client" };
+    }
+
+    if (client.portal !== "reachable") {
+      return { status: "client_cannot_answer" };
+    }
+
+    const zone = CheckInTimeZone.from(client.bookingTimeZone);
 
     if (zone.status === "invalid") {
       return { status: "invalid_time_zone" };
-    }
-
-    const clientId = await this.reach.reachableClientIdOf(
-      command.authSubjectId,
-    );
-
-    if (!clientId) {
-      return { status: "ended" };
     }
 
     const now = this.options.clock.now();
@@ -82,9 +82,9 @@ export class RequestCheckInUseCase {
     }
 
     const requested = await this.options.checkIns.request({
-      checkIn: CheckIn.requestedByClient({
+      checkIn: CheckIn.scheduledByCoach({
         id: this.options.ids.generate(),
-        clientId,
+        clientId: client.clientId,
         startsAt: command.startsAt,
         clientTimeZone: zone.timeZone,
         coachTimeZone: availability.timeZone,
@@ -95,11 +95,11 @@ export class RequestCheckInUseCase {
     });
 
     if (requested.status !== "requested") {
-      return requested;
+      return { status: "time_taken" };
     }
 
-    await this.announcer.announce("requested", requested.checkIn, "client");
+    await this.announcer.announce("requested", requested.checkIn, "coach");
 
-    return { status: "requested", checkIn: requested.checkIn.toSnapshot() };
+    return { status: "scheduled", checkIn: requested.checkIn.toSnapshot() };
   }
 }

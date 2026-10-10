@@ -6,12 +6,10 @@ import {
 } from "../coach-meeting-room";
 
 import { CheckIn, type CheckInProps } from "./check-in";
+import type { CheckInActor } from "./check-in-actor";
 import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
-import {
-  ResolveCheckInJoinUseCase,
-  type CheckInRequester,
-} from "./resolve-check-in-join-use-case";
+import { ResolveCheckInJoinUseCase } from "./resolve-check-in-join-use-case";
 
 const NOW = new Date("2026-06-03T08:55:00.000Z");
 const ROOM_URL = "https://meet.google.com/abc-defg-hij";
@@ -31,8 +29,8 @@ const APPROVED = {
   answeredAt: new Date("2026-06-01T12:00:00.000Z"),
 } satisfies CheckInProps;
 
-const ANA: CheckInRequester = { party: "client", authSubjectId: "user_ana" };
-const COACH: CheckInRequester = { party: "coach" };
+const ANA: CheckInActor = { party: "client", authSubjectId: "user_ana" };
+const COACH: CheckInActor = { party: "coach" };
 
 function checkIn(props?: Partial<CheckInProps>): CheckIn {
   return CheckIn.reconstitute({ ...APPROVED, ...props });
@@ -74,7 +72,7 @@ function createResolveJoin(options?: {
           : options.client,
       ),
     identitiesOf: vi.fn(),
-  } satisfies CheckInClients;
+  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
   const meetingRoom: CoachMeetingRoomSource = {
     current: vi
       .fn()
@@ -96,13 +94,13 @@ describe("ResolveCheckInJoinUseCase", () => {
   it.each([
     ["the client whose check-in it is", ANA],
     ["the coach", COACH],
-  ])("sends %s to the coach's meeting room", async (_situation, requester) => {
+  ])("sends %s to the coach's meeting room", async (_situation, actor) => {
     // arrange
     const resolveJoin = createResolveJoin();
 
     // act
     const result = await resolveJoin.execute({
-      requester,
+      actor,
       checkInId: "check-in-1",
     });
 
@@ -118,7 +116,7 @@ describe("ResolveCheckInJoinUseCase", () => {
 
     // act
     const result = await resolveJoin.execute({
-      requester: COACH,
+      actor: COACH,
       checkInId: "check-in-1",
     });
 
@@ -132,7 +130,7 @@ describe("ResolveCheckInJoinUseCase", () => {
 
     // act
     const result = await resolveJoin.execute({
-      requester: ANA,
+      actor: ANA,
       checkInId: "check-in-1",
     });
 
@@ -157,7 +155,7 @@ describe("ResolveCheckInJoinUseCase", () => {
     ["a check-in that does not exist", { found: null }],
     [
       "a client whose coaching ended",
-      { client: { clientId: "client-1", portal: "unreachable" } as const },
+      { client: { clientId: "client-1", portal: "ended" } as const },
     ],
   ])("answers unknown to the client for %s", async (_situation, options) => {
     // arrange
@@ -165,7 +163,7 @@ describe("ResolveCheckInJoinUseCase", () => {
 
     // act
     const result = await resolveJoin.execute({
-      requester: ANA,
+      actor: ANA,
       checkInId: "check-in-1",
     });
 
@@ -192,7 +190,7 @@ describe("ResolveCheckInJoinUseCase", () => {
 
     // act
     const result = await resolveJoin.execute({
-      requester: COACH,
+      actor: COACH,
       checkInId: "check-in-1",
     });
 

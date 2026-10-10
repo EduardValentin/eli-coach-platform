@@ -10,7 +10,7 @@ export type CoachCheckInView = CheckInView & {
 
 type ListCoachCheckInsUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "identitiesOf">;
   clock: Clock;
 };
 

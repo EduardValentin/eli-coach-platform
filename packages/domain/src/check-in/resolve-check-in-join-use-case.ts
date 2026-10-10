@@ -2,15 +2,13 @@ import type { CoachMeetingRoomSource } from "../coach-meeting-room";
 import type { Clock } from "../shared";
 
 import type { CheckIn } from "./check-in";
+import type { CheckInActor } from "./check-in-actor";
 import { CheckInClientReach } from "./check-in-client-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
-export type CheckInRequester =
-  { party: "coach" } | { party: "client"; authSubjectId: string };
-
 export type ResolveCheckInJoinCommand = {
-  requester: CheckInRequester;
+  actor: CheckInActor;
   checkInId: string;
 };
 
@@ -21,7 +19,7 @@ export type CheckInJoinResult =
 
 type ResolveCheckInJoinUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId">;
   clock: Clock;
   meetingRoom: CoachMeetingRoomSource;
 };
@@ -42,7 +40,7 @@ export class ResolveCheckInJoinUseCase {
       return { status: "unknown" };
     }
 
-    if (!(await this.reaches(command.requester, checkIn))) {
+    if (!(await this.reaches(command.actor, checkIn))) {
       return { status: "unknown" };
     }
 
@@ -56,16 +54,14 @@ export class ResolveCheckInJoinUseCase {
   }
 
   private async reaches(
-    requester: CheckInRequester,
+    actor: CheckInActor,
     checkIn: CheckIn,
   ): Promise<boolean> {
-    if (requester.party === "coach") {
+    if (actor.party === "coach") {
       return true;
     }
 
-    const clientId = await this.reach.reachableClientIdOf(
-      requester.authSubjectId,
-    );
+    const clientId = await this.reach.reachableClientIdOf(actor.authSubjectId);
 
     return clientId !== null && checkIn.isFor(clientId);
   }

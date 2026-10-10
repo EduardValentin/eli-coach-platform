@@ -133,6 +133,30 @@ describe("ClientJourney.isAfterSubmission", () => {
   });
 });
 
+describe("ClientJourney.portalReachOf", () => {
+  it.each([
+    { step: "submitted", coaching: "active", reach: "reachable" },
+    { step: "needs-details", coaching: "active", reach: "reachable" },
+    { step: "approved", coaching: "active", reach: "reachable" },
+    { step: "welcome", coaching: "active", reach: "awaiting_onboarding" },
+    { step: "onboarding", coaching: "active", reach: "awaiting_onboarding" },
+    { step: "approved", coaching: "ended", reach: "ended" },
+    { step: "onboarding", coaching: "ended", reach: "ended" },
+  ] as const)(
+    "reads a $step client whose coaching is $coaching as $reach",
+    ({ step, coaching, reach }) => {
+      // arrange
+      const standing = { step, coaching };
+
+      // act
+      const portal = ClientJourney.portalReachOf(standing);
+
+      // assert
+      expect(portal).toBe(reach);
+    },
+  );
+});
+
 describe("ClientJourney#welcomeWording", () => {
   it.each([
     ["female", "five-part"],

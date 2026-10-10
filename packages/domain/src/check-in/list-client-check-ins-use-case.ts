@@ -10,7 +10,7 @@ export type ListClientCheckInsResult =
 
 type ListClientCheckInsUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId">;
   clock: Clock;
 };
 
