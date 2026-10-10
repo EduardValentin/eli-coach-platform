@@ -7,8 +7,8 @@ import {
   updateAssessmentCallSettingsSuccessSchema,
   type AssessmentCallSettings,
   type AssessmentCallSettingsErrorCode,
-} from "~/features/assessment-calls/public/assessment-call-settings";
-import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/public/paths";
+} from "~/features/coach-schedule/public/assessment-call-settings";
+import { COACH_SETTINGS_API_PATH } from "~/features/coach-schedule/public/paths";
 
 export type SaveAssessmentCallSettingsResponse =
   | { settings: AssessmentCallSettings; success: true }
@@ -29,7 +29,7 @@ export function useSaveAssessmentCallSettingsFetcher() {
   const submit = useCallback(
     (settings: AssessmentCallSettings) => {
       void fetcherSubmit(settings, {
-        action: ASSESSMENT_CALL_API_PATHS.settings,
+        action: COACH_SETTINGS_API_PATH,
         encType: "application/json",
         method: "put",
       });

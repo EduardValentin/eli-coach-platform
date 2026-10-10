@@ -9,7 +9,7 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -18,7 +18,7 @@ export async function action(args: ActionFunctionArgs) {
     }
 
     return args.context
-      .get(assessmentCallsContext)
+      .get(coachScheduleContext)
       .assessmentCallSettings.updateSettings(args);
   });
 }

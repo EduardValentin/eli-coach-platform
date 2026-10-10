@@ -51,6 +51,7 @@ import {
   composeClientResourcesFeature,
   type ClientResourcesFeature,
 } from "~/features/client-resources/server/client-resources-composition.server";
+import { composeCoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeStoreFeature,
@@ -79,6 +80,7 @@ export type PlatformContainer = {
   clientProfile: ReturnType<typeof composeClientProfileFeature>;
   clientResources: ClientResourcesFeature;
   closeDatabase: () => Promise<void>;
+  coachSchedule: ReturnType<typeof composeCoachScheduleFeature>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
   platform: PlatformFeature;
@@ -128,17 +130,25 @@ export function createPlatformContainer(options: {
     productEmail,
     waitlist: environment,
   });
+  const coachSchedule = composeCoachScheduleFeature({
+    clock,
+    database: database.client,
+  });
   const assessmentCalls = composeAssessmentCallsFeature({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallsConfig: environment,
+    availability: coachSchedule.handles.availability,
     botDetection,
     botVerifier,
+    calendar: coachSchedule.handles.calendar,
     clock,
+    coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     emailSubaddresses,
     featureFlags,
     incidents,
+    meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
@@ -206,12 +216,16 @@ export function createPlatformContainer(options: {
   });
   const checkIns = composeCheckInsFeature({
     appBasePath: environment.APP_BASE_PATH,
+    availability: coachSchedule.handles.availability,
+    calendar: coachSchedule.handles.calendar,
     checkInClients: coachingSales.handles.checkInClients,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
+    coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     incidents,
+    meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
@@ -249,6 +263,7 @@ export function createPlatformContainer(options: {
     clientProfile,
     clientResources,
     closeDatabase: () => database.close(),
+    coachSchedule,
     coachingSales,
     featureFlagOverrides,
     platform,

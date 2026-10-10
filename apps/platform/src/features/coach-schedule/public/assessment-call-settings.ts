@@ -4,7 +4,7 @@ import {
 } from "@eli-coach-platform/domain/coach-availability";
 import { z } from "zod";
 
-import { timeZoneSchema } from "./assessment-calls";
+import { timeZoneSchema } from "./time-zone";
 
 const MAX_MEETING_LINK_LENGTH = 2048;
 

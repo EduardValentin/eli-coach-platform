@@ -29,6 +29,7 @@ const FEATURE_ORDER = [
   "store",
   "accounts",
   "waitlist",
+  "coach-schedule",
   "assessment-calls",
   "coaching-sales",
   "client-profile",

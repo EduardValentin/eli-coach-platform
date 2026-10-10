@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
@@ -31,6 +32,10 @@ describe("createFeatureContextMiddleware", () => {
         handles: { kind: "client-profile-handles" },
       },
       clientResources: { kind: "client-resources" },
+      coachSchedule: {
+        feature: { kind: "coach-schedule" },
+        handles: { kind: "coach-schedule-handles" },
+      },
       coachingSales: {
         feature: { kind: "coaching-sales" },
         handles: { kind: "coaching-sales-handles" },
@@ -77,6 +82,9 @@ describe("createFeatureContextMiddleware", () => {
       container.clientProfile.feature,
     );
     expect(context.get(clientResourcesContext)).toBe(container.clientResources);
+    expect(context.get(coachScheduleContext)).toBe(
+      container.coachSchedule.feature,
+    );
     expect(context.get(coachingSalesContext)).toBe(
       container.coachingSales.feature,
     );

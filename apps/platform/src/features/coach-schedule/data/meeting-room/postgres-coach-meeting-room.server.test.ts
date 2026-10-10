@@ -3,7 +3,7 @@ import { CoachMeetingRoom } from "@eli-coach-platform/domain/coach-meeting-room"
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCoachMeetingRoom } from "./postgres-coach-meeting-room.server";
-import { coachMeetingRoomTable } from "./schema.server";
+import { coachMeetingRoomTable } from "../schema.server";
 
 const NOW = new Date("2026-09-19T12:00:00.000Z");
 const clock = { now: () => NOW };

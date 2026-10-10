@@ -16,8 +16,8 @@ import {
 import {
   updateAssessmentCallSettingsErrorSchema,
   updateAssessmentCallSettingsSuccessSchema,
-} from "~/features/assessment-calls/public/assessment-call-settings";
-import { COACH_SETTINGS_PATH } from "~/features/assessment-calls/public/paths";
+} from "~/features/coach-schedule/public/assessment-call-settings";
+import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";

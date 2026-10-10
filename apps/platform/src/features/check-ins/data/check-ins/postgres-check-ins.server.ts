@@ -6,14 +6,11 @@ import {
   type CheckIns,
   type CheckInSettlement,
 } from "@eli-coach-platform/domain/check-in";
+import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
 import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import {
-  releaseCoachTime,
-  reserveCoachTime,
-} from "@eli-coach-platform/infrastructure/coach-calendar/server";
 import { and, asc, eq, gt, sql } from "drizzle-orm";
 
 import { checkInsTable } from "~/features/check-ins/data/schema.server";
@@ -24,19 +21,40 @@ type CheckInRequest = { checkIn: CheckIn; at: Date };
 
 type Settlement = { id: string; outcome: CheckInOutcome; at: Date };
 
+type CheckInAppointment = {
+  appointmentKind: "check_in";
+  appointmentId: string;
+};
+
+export type CheckInCoachTime = {
+  reserve: (
+    transaction: DatabaseTransaction,
+    reservation: CheckInAppointment & TimeInterval,
+  ) => Promise<{ status: "reserved" | "taken" }>;
+  release: (
+    transaction: DatabaseTransaction,
+    appointment: CheckInAppointment,
+  ) => Promise<void>;
+};
+
+type PostgresCheckInsOptions = {
+  database: DatabaseClient;
+  coachTime: CheckInCoachTime;
+};
+
 const CLIENT_REQUEST_LOCK_PREFIX = "check-in-request:";
 
 export class PostgresCheckIns implements CheckIns {
-  constructor(private readonly database: DatabaseClient) {}
+  constructor(private readonly options: PostgresCheckInsOptions) {}
 
   request(command: CheckInRequest): Promise<CheckInRequestResult> {
-    return this.database.transaction((transaction) =>
+    return this.options.database.transaction((transaction) =>
       this.requestUnderClientLock(transaction, command),
     );
   }
 
   async find(id: string): Promise<CheckIn | null> {
-    const [row] = await this.database
+    const [row] = await this.options.database
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.id, id))
@@ -46,7 +64,7 @@ export class PostgresCheckIns implements CheckIns {
   }
 
   async listForClient(clientId: string): Promise<CheckIn[]> {
-    const rows = await this.database
+    const rows = await this.options.database
       .select()
       .from(checkInsTable)
       .where(eq(checkInsTable.clientId, clientId))
@@ -56,7 +74,7 @@ export class PostgresCheckIns implements CheckIns {
   }
 
   async listAll(): Promise<CheckIn[]> {
-    const rows = await this.database
+    const rows = await this.options.database
       .select()
       .from(checkInsTable)
       .orderBy(asc(checkInsTable.startsAt));
@@ -65,7 +83,7 @@ export class PostgresCheckIns implements CheckIns {
   }
 
   settle(settlement: Settlement): Promise<CheckInSettlement> {
-    return this.database.transaction((transaction) =>
+    return this.options.database.transaction((transaction) =>
       this.settleWhilePending(transaction, settlement),
     );
   }
@@ -86,7 +104,7 @@ export class PostgresCheckIns implements CheckIns {
       appointmentKind: "check_in",
       appointmentId: checkIn.id,
     } as const;
-    const coachTime = await reserveCoachTime(transaction, {
+    const coachTime = await this.options.coachTime.reserve(transaction, {
       ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
       ...appointment,
     });
@@ -103,7 +121,7 @@ export class PostgresCheckIns implements CheckIns {
     }
 
     if (coachTime.status === "reserved") {
-      await releaseCoachTime(transaction, appointment);
+      await this.options.coachTime.release(transaction, appointment);
     }
 
     return { status: decision };
@@ -130,7 +148,7 @@ export class PostgresCheckIns implements CheckIns {
     }
 
     if (outcome === "cancelled") {
-      await releaseCoachTime(transaction, {
+      await this.options.coachTime.release(transaction, {
         appointmentKind: "check_in",
         appointmentId: id,
       });

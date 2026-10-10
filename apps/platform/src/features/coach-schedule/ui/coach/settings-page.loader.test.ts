@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { AssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import type { CoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
+import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -23,12 +23,12 @@ describe("coach settings page loader", () => {
     const loadSettingsPage = vi.fn().mockResolvedValue(SETTINGS);
     const feature = {
       assessmentCallSettings: { loadSettingsPage },
-    } as unknown as AssessmentCallsFeature;
+    } as unknown as CoachScheduleFeature;
 
     // act
     const settings = await loader(
       createRequestArgs({
-        contexts: [contextEntry(assessmentCallsContext, feature)],
+        contexts: [contextEntry(coachScheduleContext, feature)],
         request: new Request("http://localhost/coach/settings"),
       }),
     );

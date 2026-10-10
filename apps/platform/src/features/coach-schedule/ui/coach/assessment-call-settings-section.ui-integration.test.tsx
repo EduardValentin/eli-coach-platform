@@ -10,14 +10,14 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
-import { clientAction as saveSettings } from "~/features/assessment-calls/api/settings/settings";
-import type { AssessmentCallSettings } from "~/features/assessment-calls/public/assessment-call-settings";
-import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/public/paths";
+import { clientAction as saveSettings } from "~/features/coach-schedule/api/settings";
+import type { AssessmentCallSettings } from "~/features/coach-schedule/public/assessment-call-settings";
+import { COACH_SETTINGS_API_PATH } from "~/features/coach-schedule/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
 
-const SETTINGS_URL = ASSESSMENT_CALL_API_PATHS.settings;
+const SETTINGS_URL = COACH_SETTINGS_API_PATH;
 
 const DEFAULT_SETTINGS: AssessmentCallSettings = {
   timeZone: "Europe/Bucharest",

@@ -5,10 +5,10 @@ import type {
   UpdateAssessmentCallSettingsResult,
   UpdateAssessmentCallSettingsUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
+import { resolveFieldErrorCode } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
-import { resolveFieldErrorCode } from "~/features/assessment-calls/api/resolve-field-error-code";
 import {
   ASSESSMENT_CALL_SETTINGS_MESSAGES,
   assessmentCallSettingsSchema,
@@ -16,7 +16,7 @@ import {
   updateAssessmentCallSettingsSuccessSchema,
   type AssessmentCallSettings,
   type AssessmentCallSettingsErrorCode,
-} from "~/features/assessment-calls/public/assessment-call-settings";
+} from "~/features/coach-schedule/public/assessment-call-settings";
 
 type AssessmentCallSettingsControllerOptions = {
   getSettings: GetAssessmentCallSettingsUseCase;

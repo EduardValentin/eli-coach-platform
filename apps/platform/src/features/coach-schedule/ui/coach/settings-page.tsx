@@ -5,14 +5,14 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { AssessmentCallSettings } from "~/features/assessment-calls/public/assessment-call-settings";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import type { AssessmentCallSettings } from "~/features/coach-schedule/public/assessment-call-settings";
+import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return context
-    .get(assessmentCallsContext)
+    .get(coachScheduleContext)
     .assessmentCallSettings.loadSettingsPage();
 }
 

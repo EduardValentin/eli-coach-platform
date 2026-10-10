@@ -3,6 +3,7 @@ import type { RouteConfig } from "@react-router/dev/routes";
 import { accountsApiRoutes } from "./features/accounts/routes";
 import { assessmentCallsApiRoutes } from "./features/assessment-calls/routes";
 import { checkInsApiRoutes } from "./features/check-ins/routes";
+import { coachScheduleApiRoutes } from "./features/coach-schedule/routes";
 import { clientOnboardingApiRoutes } from "./features/client-onboarding/routes";
 import { clientProfileApiRoutes } from "./features/client-profile/routes";
 import { clientResourcesApiRoutes } from "./features/client-resources/routes";
@@ -18,6 +19,7 @@ export default [
   ...publicSiteRoutes,
   ...platformApiRoutes,
   ...accountsApiRoutes,
+  ...coachScheduleApiRoutes,
   ...assessmentCallsApiRoutes,
   ...coachingSalesApiRoutes,
   ...clientOnboardingApiRoutes,

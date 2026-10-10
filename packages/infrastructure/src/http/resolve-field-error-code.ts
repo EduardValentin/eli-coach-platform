@@ -1,4 +1,4 @@
-export type FieldValidationIssue = {
+type FieldValidationIssue = {
   path: PropertyKey[];
 };
 

@@ -5,6 +5,11 @@ import {
 } from "@eli-coach-platform/domain/assessment-call";
 import { z } from "zod";
 
+import {
+  isFormattableTimeZone,
+  timeZoneSchema,
+} from "~/features/coach-schedule/public/time-zone";
+
 import { findCountry } from "./countries";
 import {
   birthDateMessage,
@@ -14,28 +19,6 @@ import {
   nameSchema,
   normalizeVisitorPhone,
 } from "./visitor-profile";
-
-const MAX_TIME_ZONE_LENGTH = 64;
-
-function isFormattableTimeZone(timeZone: string): boolean {
-  try {
-    new Intl.DateTimeFormat(undefined, { timeZone });
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export const timeZoneSchema = z
-  .string()
-  .max(MAX_TIME_ZONE_LENGTH, "Please choose a known time zone.")
-  .refine(isFormattableTimeZone, "Please choose a known time zone.")
-  .transform(
-    (timeZone) =>
-      new Intl.DateTimeFormat(undefined, { timeZone }).resolvedOptions()
-        .timeZone,
-  );
 
 export const openSlotsResponseSchema = z.object({
   coachTimeZone: z.string().min(1),

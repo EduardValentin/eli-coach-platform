@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm";
 import {
   coachMeetingRoomTable,
   SINGLETON_COACH_MEETING_ROOM_ID,
-} from "./schema.server";
+} from "../schema.server";
 
 type PostgresCoachMeetingRoomOptions = {
   database: DatabaseClient;
