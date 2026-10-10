@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 594bb0ab, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-10 at commit 334c331b, change review.
 
 ## Component graph
 
@@ -47,7 +47,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C12 client-portal | C20 client-profile | 4 | `routes.ts` spreads `clientProfileClientRoutes` inside the shell; the shell links the client's name to `CLIENT_PROFILE_PATH`; `pages/home.tsx` reads `clientProfileContext` and renders `ui/client/nudge/measurements-nudge.tsx` |
 | C12 client-portal | C21 client-resources | 3 | `routes.ts` spreads `clientResourcesClientRoutes` inside the sidebar shell; the shell layout's loader reads `clientResourcesContext` for the unopened count; `navigation-links.ts` reads `CLIENT_RESOURCES_PATH` |
 | C13 coach-portal | C5 ui | 7 | the shell and its navigation links; the dashboard, the assessment-calls page and the client page compose portal, appointment, layout and primitive modules |
-| C13 coach-portal | C9 accounts | 3 | portal guard and paths |
+| C13 coach-portal | C9 accounts | 4 | portal guard and paths; the shell layout's `PortalRouteHandle` |
 | C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
 | C13 coach-portal | C18 coaching-sales | 5 | `routes.ts` spreads `coachingSalesCoachRoutes` (the clients page) and takes the clients path; `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/call-sales/`; `pages/client.tsx` reads the client record and composes `ui/coach/clients/` blocks, the needs-refund badge among them |
 | C13 coach-portal | C19 client-onboarding | 1 | `pages/client.tsx` reads `clientOnboardingContext` and renders `ui/coach/onboarding/onboarding-panel.tsx` |
@@ -4221,3 +4221,5 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4857 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
 | E4858 | packages/infrastructure/src/email/calendar-invite.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | type-only import | no | no | lateral | present |
 | E4859 | packages/ui/src/layout/sheet-dialog-parts.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E4860 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/features/accounts/public/paths.ts | import | yes | no | lateral | present |
+| E4861 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | apps/platform/src/features/accounts/public/paths.ts | import | yes | no | lateral | present |
