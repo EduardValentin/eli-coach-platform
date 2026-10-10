@@ -886,7 +886,11 @@ describe("booking an assessment call: unreadable open slots", () => {
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
 
     // act
-    await user.click(screen.getByRole("button", { name: "Try again" }));
+    await user.click(
+      within(screen.getByRole("alert")).getByRole("button", {
+        name: "Try again",
+      }),
+    );
 
     // assert
     expect(await screen.findByRole("grid")).toBeInTheDocument();

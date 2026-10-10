@@ -64,6 +64,26 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
   );
 }
 
+function AppointmentTimeRow({
+  label,
+  when,
+}: {
+  label?: string;
+  when: AppointmentTime;
+}) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-1.5">
+      <DateTimeLabel size="sm" when={when} />
+      {label && (
+        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+          <span className="hidden sm:inline">· </span>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function AppointmentDetails({
   details,
 }: {
@@ -95,10 +115,14 @@ type AppointmentCardProps = {
   attendee: AppointmentAttendee;
   badges?: ReactNode;
   details?: ReadonlyArray<AppointmentDetail>;
+  parityRoot?: string;
   quote?: string;
+  quoteAuthor?: string;
+  quoteParity?: string;
   status?: AppointmentStatus;
   titleElement?: AppointmentTitleElement;
   when: AppointmentTime;
+  whenLabel?: string;
 };
 
 export function AppointmentCard({
@@ -106,10 +130,14 @@ export function AppointmentCard({
   attendee,
   badges,
   details = [],
+  parityRoot,
   quote,
+  quoteAuthor,
+  quoteParity,
   status = "scheduled",
   titleElement: Title = "p",
   when,
+  whenLabel,
 }: AppointmentCardProps) {
   return (
     <div
@@ -117,9 +145,15 @@ export function AppointmentCard({
         "flex flex-col gap-4 rounded-card border border-border-subtle bg-surface-base p-5 md:flex-row md:items-start",
         CARD_TONE[status],
       )}
+      data-parity-root={parityRoot}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">
-        <Avatar name={attendee.name} size="md" tone={AVATAR_TONE[status]} />
+        <Avatar
+          imageUrl={attendee.imageUrl}
+          name={attendee.name}
+          size="md"
+          tone={AVATAR_TONE[status]}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -127,14 +161,20 @@ export function AppointmentCard({
             {badges}
           </div>
 
-          <DateTimeLabel size="sm" when={when} />
+          <AppointmentTimeRow label={whenLabel} when={when} />
 
           <AttendeeContactRow attendee={attendee} />
 
           <AppointmentDetails details={details} />
 
           {quote && (
-            <p className="mt-2 text-xs text-text-secondary italic whitespace-pre-line">
+            <p
+              className="mt-2 text-xs text-text-secondary italic whitespace-pre-line"
+              data-parity={quoteParity}
+            >
+              {quoteAuthor && (
+                <span className="font-medium not-italic">{quoteAuthor}: </span>
+              )}
               &quot;{quote}&quot;
             </p>
           )}

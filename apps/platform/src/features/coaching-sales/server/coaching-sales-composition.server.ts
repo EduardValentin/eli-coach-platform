@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
+import type { CheckInClients } from "@eli-coach-platform/domain/check-in";
 import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AcceptInvitationUseCase,
@@ -118,6 +119,7 @@ export type CoachingSalesFeature = {
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
   handles: {
+    checkInClients: CheckInClients;
     clientIdentities: ClientIdentities;
     invitationAcceptance: InvitationAcceptance;
     measurementClients: MeasurementClients;
@@ -298,18 +300,33 @@ export function composeCoachingSalesFeature(
     }),
   };
 
+  const portalClientOf = async (authSubjectId: string) => {
+    const standing =
+      await clientJourneyUseCases.readClientPortalStanding.execute(
+        authSubjectId,
+      );
+
+    return standing
+      ? { clientId: standing.journey.clientId, portal: standing.portal }
+      : null;
+  };
+
   const resourceClients: ResourceClients = {
     exists: (clientId) => onboardingClients.exists(clientId),
-    findByAuthSubjectId: async (authSubjectId) => {
-      const standing =
-        await clientJourneyUseCases.readClientPortalStanding.execute(
-          authSubjectId,
-        );
+    findByAuthSubjectId: portalClientOf,
+  };
 
-      return standing
-        ? { clientId: standing.journey.clientId, portal: standing.portal }
-        : null;
-    },
+  const checkInClients: CheckInClients = {
+    findByAuthSubjectId: portalClientOf,
+    identitiesOf: async (clientIds) =>
+      (await clientIdentities.findByClientIds(clientIds)).map(
+        ({ clientId, firstName, lastName, email }) => ({
+          clientId,
+          firstName,
+          lastName,
+          email,
+        }),
+      ),
   };
 
   const paidClientAdmission: PaidClientAdmission = {
@@ -401,6 +418,7 @@ export function composeCoachingSalesFeature(
       }),
     },
     handles: {
+      checkInClients,
       clientIdentities,
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),

@@ -298,6 +298,68 @@ describe("composeCoachingSalesFeature resource clients", () => {
   });
 });
 
+describe("composeCoachingSalesFeature check-in clients", () => {
+  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [
+          journeyRow({
+            onboardingSubmittedAt: new Date("2026-10-15T10:00:00.000Z"),
+          }),
+        ],
+        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "reachable",
+    });
+  });
+
+  it("names each client and gives her email, and nothing else of her identity", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [
+          {
+            clientId: RESOURCE_CLIENT_ID,
+            firstName: "Ana",
+            lastName: "Popescu",
+            email: "ana@example.com",
+            dateOfBirth: "1994-03-14",
+            gender: "female",
+            country: "RO",
+            phone: "+40712345678",
+          },
+        ],
+      ]),
+    });
+
+    // act
+    const identities = await handles.checkInClients.identitiesOf([
+      RESOURCE_CLIENT_ID,
+    ]);
+
+    // assert
+    expect(identities).toEqual([
+      {
+        clientId: RESOURCE_CLIENT_ID,
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+      },
+    ]);
+  });
+});
+
 describe("composeCoachingSalesFeature coach clients", () => {
   it("answers no clients and reports the failure when the roster cannot be read", async () => {
     // arrange
@@ -551,6 +613,8 @@ function createDatabaseAnswering(
         where: () => selection,
         orderBy: () => selection,
         limit: () => Promise.resolve(rows),
+        then: (onFulfilled: (value: typeof rows) => unknown) =>
+          Promise.resolve(rows).then(onFulfilled),
       };
 
       return selection;

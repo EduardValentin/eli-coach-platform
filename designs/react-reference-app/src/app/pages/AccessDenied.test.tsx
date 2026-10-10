@@ -26,6 +26,7 @@ describe('AccessDenied', () => {
     const action = screen.getByRole('link');
     expect(action).toHaveAccessibleName(/back to your portal/i);
     expect(action).toHaveAttribute('href', '/portal');
+    expect(action.firstElementChild).toHaveClass('lucide-arrow-left');
   });
 
   it('sends a coach denied client access back to the coach portal', () => {
@@ -52,6 +53,15 @@ describe('AccessDenied', () => {
     expect(action).toHaveAccessibleName(/back to the store/i);
     expect(action).toHaveAttribute('href', '/store');
     expect(screen.getByText(/not signed in/i)).toBeInTheDocument();
+  });
+
+  it('names its main landmark as an access denial', () => {
+    // arrange
+    // act
+    renderAt('?session=client');
+
+    // assert
+    expect(screen.getByRole('main')).toHaveAccessibleName('Access denied');
   });
 
   it('offers exactly one recovery action', () => {

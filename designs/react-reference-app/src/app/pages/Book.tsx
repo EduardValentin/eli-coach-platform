@@ -8,11 +8,12 @@ import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { BookingDetailsStep, FIELD_IDS } from '../components/booking/BookingDetailsStep';
 import { firstInvalidField, useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
-import { Alert } from '../components/ui/alert';
+import { Alert, AlertAction } from '../components/ui/alert';
 import { Button, buttonVariants, cn } from '../components/ThemeButton';
 import { Card, cardVariants } from '../components/ui/card';
 import { useAppState } from '../context/AppContext';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
+import { useCheckins } from '../context/CheckinContext';
 import {
   ASSESSMENT_CALL_DURATION_MINUTES,
   AssessmentCallError,
@@ -39,6 +40,7 @@ const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
 export function Book() {
   const { appState } = useAppState();
   const { bookedStarts, addBooking, settings } = useAssessmentCalls();
+  const { heldCheckinStarts } = useCheckins();
 
   const [step, setStep] = useState<Step>('date-time');
   const [slots, setSlots] = useState<Date[]>([]);
@@ -65,7 +67,12 @@ export function Book() {
     }
 
     let cancelled = false;
-    listOpenSlots({ now: new Date(), bookedStarts, availability: settings }).then(
+    listOpenSlots({
+      now: new Date(),
+      bookedStarts,
+      heldCheckinStarts: heldCheckinStarts(),
+      availability: settings,
+    }).then(
       (open) => {
         if (!cancelled) setSlots(open);
       },
@@ -74,7 +81,7 @@ export function Book() {
     return () => {
       cancelled = true;
     };
-  }, [slotsUnavailable, bookedStarts, slotReloadCount, settings]);
+  }, [slotsUnavailable, bookedStarts, heldCheckinStarts, slotReloadCount, settings]);
 
   const focusStepHeading = useCallback((heading: HTMLHeadingElement | null) => {
     if (!heading || !shouldFocusStepHeading.current) return;
@@ -219,14 +226,9 @@ export function Book() {
                     )}
 
                     {slotsUnavailable ? (
-                      <>
-                        <Alert>
-                          <p>We couldn&apos;t load the open times just now.</p>
-                        </Alert>
-                        <Button onClick={reloadSlots} className="mt-6" weight="semibold" width="full">
-                          Try again
-                        </Button>
-                      </>
+                      <Alert action={<AlertAction onClick={reloadSlots}>Try again</AlertAction>}>
+                        <p>We couldn&apos;t load the open times just now.</p>
+                      </Alert>
                     ) : (
                       <>
                         <AssessmentSlotPicker

@@ -74,15 +74,17 @@ describe("CoachLayoutRoute", () => {
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
     expect(links[0]).toHaveAccessibleName("Dashboard");
     expect(links[0]).toHaveAttribute("href", "/coach");
     expect(links[1]).toHaveAccessibleName("Clients");
     expect(links[1]).toHaveAttribute("href", "/coach/clients");
-    expect(links[2]).toHaveAccessibleName("Assessment calls");
-    expect(links[2]).toHaveAttribute("href", "/coach/assessment-calls");
-    expect(links[3]).toHaveAccessibleName("Settings");
-    expect(links[3]).toHaveAttribute("href", "/coach/settings");
+    expect(links[2]).toHaveAccessibleName("Check-ins");
+    expect(links[2]).toHaveAttribute("href", "/coach/checkins");
+    expect(links[3]).toHaveAccessibleName("Assessment calls");
+    expect(links[3]).toHaveAttribute("href", "/coach/assessment-calls");
+    expect(links[4]).toHaveAccessibleName("Settings");
+    expect(links[4]).toHaveAttribute("href", "/coach/settings");
   });
 
   it("marks the clients entry as the page being read on a client's page", () => {
@@ -102,6 +104,24 @@ describe("CoachLayoutRoute", () => {
 
     expect(
       within(navigation).getByRole("link", { name: "Clients" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks the check-ins entry as the page being read", () => {
+    // arrange, act
+    render(
+      <MemoryRouter initialEntries={["/coach/checkins"]}>
+        <CoachLayoutRoute />
+      </MemoryRouter>,
+    );
+
+    // assert
+    const navigation = screen.getByRole("navigation", {
+      name: "Coach portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Check-ins" }),
     ).toHaveAttribute("aria-current", "page");
   });
 

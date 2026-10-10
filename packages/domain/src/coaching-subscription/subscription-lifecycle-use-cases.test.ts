@@ -131,6 +131,7 @@ const ana: ClientIdentity = {
 function createClients(found: ClientIdentity | null = ana) {
   return {
     findByClientId: vi.fn().mockResolvedValue(found),
+    findByClientIds: vi.fn().mockResolvedValue([]),
   } satisfies ClientIdentities;
 }
 

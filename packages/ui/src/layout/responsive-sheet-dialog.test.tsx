@@ -12,7 +12,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -82,6 +82,31 @@ function AddMeasurements() {
           Weight
           <input type="text" />
         </label>
+      </ResponsiveSheetDialog>
+    </MotionConfig>
+  );
+}
+
+function RequestCheckIn() {
+  const [open, setOpen] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  return (
+    <MotionConfig reducedMotion="always">
+      <button onClick={() => setOpen(true)} type="button">
+        Request
+      </button>
+      <ResponsiveSheetDialog
+        initialFocus={heading}
+        onOpenChange={setOpen}
+        open={open}
+        title="Request a check-in"
+        width="fit"
+      >
+        <h3 ref={heading} tabIndex={-1}>
+          Request a check-in
+        </h3>
+        <button type="button">Select a date</button>
       </ResponsiveSheetDialog>
     </MotionConfig>
   );
@@ -221,5 +246,42 @@ describe("ResponsiveSheetDialog", () => {
 
     // assert
     expect(html).toContain("Add");
+  });
+
+  it.each([
+    ["a wide screen", DESKTOP_WIDTH],
+    ["a phone", PHONE_WIDTH],
+  ])(
+    "opens with focus on the element the caller names on %s",
+    async (_viewport, width) => {
+      // arrange
+      viewportIs(width);
+      const user = userEvent.setup();
+      render(<RequestCheckIn />);
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Request" }));
+
+      // assert
+      await screen.findByRole("dialog", { name: "Request a check-in" });
+      expect(
+        screen.getByRole("heading", { level: 3, name: "Request a check-in" }),
+      ).toHaveFocus();
+    },
+  );
+
+  it("fits its content's width on a wide screen when the caller asks for it", async () => {
+    // arrange
+    viewportIs(DESKTOP_WIDTH);
+    const user = userEvent.setup();
+    render(<RequestCheckIn />);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Request" }));
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", { name: "Request a check-in" }),
+    ).toHaveClass("sm:max-w-2xl", "sm:w-fit");
   });
 });

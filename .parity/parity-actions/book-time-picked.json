@@ -1,0 +1,9 @@
+[
+  {"waitFor": "td[data-day] button:not([disabled])"},
+  {"wait": 600},
+  {"click": "td[data-day] button:not([disabled])"},
+  {"waitFor": "button[aria-pressed]"},
+  {"wait": 600},
+  {"click": "button[aria-pressed]"},
+  {"wait": 600}
+]

@@ -1,3 +1,8 @@
+export type { CalendarEvent } from "./calendar-invite.server";
+export {
+  buildCalendarInvite,
+  buildGoogleCalendarUrl,
+} from "./calendar-invite.server";
 export { createProductEmail } from "./create-product-email.server";
 export { InMemoryProductEmail } from "./in-memory-product-email.server";
 export type {
@@ -17,4 +22,8 @@ export {
   EmailSection,
   EmailText,
 } from "./email-primitives.server";
+export {
+  EMAIL_FRAME_STYLES,
+  EMAIL_PRIMARY_BUTTON_STYLE,
+} from "./email-frame-styles.server";
 export { EMAIL_COLORS, EMAIL_FONTS } from "./email-theme.server";

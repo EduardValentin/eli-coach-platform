@@ -4,22 +4,22 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './ui/utils';
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+        primary: 'bg-primary text-primary-foreground not-aria-disabled:hover:bg-primary-hover',
         secondary:
-          'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover',
+          'bg-brand-secondary text-brand-secondary-foreground not-aria-disabled:hover:bg-brand-secondary-hover',
         inverted:
-          'bg-surface-inverted text-surface-inverted-foreground hover:bg-primary',
+          'bg-surface-inverted text-surface-inverted-foreground not-aria-disabled:hover:bg-primary',
         outline:
-          'border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary',
-        'outline-brand': 'border border-primary text-primary hover:bg-primary/5',
+          'border border-control-border-soft bg-surface-base text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary',
+        'outline-brand': 'border border-primary text-primary not-aria-disabled:hover:bg-primary/5',
         glass:
-          'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted-foreground/25',
-        ink: 'bg-foreground text-background hover:bg-brand',
-        'on-brand': 'bg-card text-brand hover:bg-surface-subtle',
+          'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm not-aria-disabled:hover:bg-surface-inverted-foreground/25',
+        ink: 'bg-foreground text-background not-aria-disabled:hover:bg-brand',
+        'on-brand': 'bg-card text-brand not-aria-disabled:hover:bg-surface-subtle',
       },
       corner: {
         field: 'rounded-field',
@@ -29,6 +29,7 @@ const buttonVariants = cva(
         xs: 'h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5',
         md: 'h-(--size-control-md) px-6 text-base has-[>svg]:px-5',
         'md-wide': 'h-(--size-control-md) px-6 text-base',
+        'md-grow': 'min-h-(--size-control-md) px-5 text-base whitespace-normal',
         lg: 'h-(--size-control-lg) px-8 text-base',
         'lg-tight': 'h-(--size-control-lg) px-4 text-base',
         xl: 'h-(--size-control-xl) px-12 text-lg',
@@ -55,11 +56,12 @@ const buttonVariants = cva(
       },
       elevation: {
         flat: '',
-        raised: 'shadow-action transition-all hover:shadow-action-hover',
+        card: 'shadow-card',
+        raised: 'shadow-action transition-all not-aria-disabled:hover:shadow-action-hover',
       },
       press: {
         none: '',
-        scale: 'transition-all active:scale-[0.98]',
+        scale: 'transition-all motion-safe:not-aria-disabled:active:scale-[0.98]',
       },
     },
     defaultVariants: {

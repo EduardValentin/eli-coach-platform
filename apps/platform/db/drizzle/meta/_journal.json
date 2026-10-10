@@ -281,6 +281,20 @@
       "when": 1791301761324,
       "tag": "0039_client_resource_opened_at",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791569906019,
+      "tag": "0040_check_ins",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791634359935,
+      "tag": "0041_coach_time_reservation_appointments",
+      "breakpoints": true
     }
   ]
 }

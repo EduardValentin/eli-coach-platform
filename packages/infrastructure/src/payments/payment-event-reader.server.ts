@@ -133,9 +133,9 @@ export class PaymentEventReader {
 
     switch (parsed.data.type) {
       case CHECKOUT_COMPLETED_EVENT:
-        return PaymentEventReader.readCheckoutCompleted(parsed.data);
+        return this.readCheckoutCompleted(parsed.data);
       case CHARGE_REFUNDED_EVENT:
-        return PaymentEventReader.readChargeRefunded(parsed.data);
+        return this.readChargeRefunded(parsed.data);
       default:
         return this.vocabulary.cardChangeOf(parsed.data.type)
           ? this.readPaymentMethodChanged(parsed.data)
@@ -143,9 +143,7 @@ export class PaymentEventReader {
     }
   }
 
-  private static readCheckoutCompleted(
-    event: PaymentEvent,
-  ): PaymentEventVerdict {
+  private readCheckoutCompleted(event: PaymentEvent): PaymentEventVerdict {
     const session = readPaidCheckoutSession(event.data.object, event.created);
 
     return session
@@ -153,7 +151,7 @@ export class PaymentEventReader {
       : IGNORED;
   }
 
-  private static readChargeRefunded(event: PaymentEvent): PaymentEventVerdict {
+  private readChargeRefunded(event: PaymentEvent): PaymentEventVerdict {
     const parsed = chargeSchema.safeParse(event.data.object);
 
     if (!parsed.success) {
@@ -177,7 +175,7 @@ export class PaymentEventReader {
   private readPaymentMethodChanged(event: PaymentEvent): PaymentEventVerdict {
     const kind = this.vocabulary.cardChangeOf(event.type);
     const details = readCardDetails(event.data.object, this.vocabulary);
-    const customerId = PaymentEventReader.ownerOf(event);
+    const customerId = this.ownerOf(event);
 
     if (!kind || !details || !customerId) {
       return IGNORED;
@@ -266,7 +264,7 @@ export class PaymentEventReader {
     };
   }
 
-  private static ownerOf(event: PaymentEvent): string | null {
+  private ownerOf(event: PaymentEvent): string | null {
     const customer = paymentMethodSchema.safeParse(event.data.object).data
       ?.customer;
     const formerCustomer = referencedIdSchema.safeParse(

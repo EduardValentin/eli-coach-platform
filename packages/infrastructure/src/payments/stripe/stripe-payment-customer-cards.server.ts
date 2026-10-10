@@ -41,7 +41,7 @@ export class StripePaymentCustomerCards implements PaymentCustomerCards {
   async readDefaultCard(
     paymentCustomerId: string,
   ): Promise<PaymentCard | null> {
-    const paymentMethodId = StripePaymentCustomerCards.defaultPaymentMethodOf(
+    const paymentMethodId = this.defaultPaymentMethodOf(
       await this.client.customers.retrieve(
         paymentCustomerId,
         SUBSCRIPTIONS_EXPANSION,
@@ -60,7 +60,7 @@ export class StripePaymentCustomerCards implements PaymentCustomerCards {
     return details ? PaymentCard.of(details) : null;
   }
 
-  private static defaultPaymentMethodOf(customer: unknown): string | null {
+  private defaultPaymentMethodOf(customer: unknown): string | null {
     const parsed = customerSchema.safeParse(customer);
 
     if (!parsed.success) {

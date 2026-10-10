@@ -1,3 +1,4 @@
+import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -20,16 +21,14 @@ type DetailsRequestEmailOptions = {
   portalUrl: string;
 };
 
-const COACH_NAME = "Eli";
-
 function detailsRequestCopy(firstName: string): DetailsRequestEmailCopy {
   return {
     body: "I've gone through your answers and need a few more details before I build your program. Open your portal and you'll see what I asked.",
     buttonLabel: "Answer now",
     greeting: `Hi ${firstName},`,
     heading: "A few more details",
-    signoff: `— ${COACH_NAME}`,
-    subject: `${COACH_NAME} needs a few more details`,
+    signoff: `— ${COACH_DISPLAY_NAME}`,
+    subject: `${COACH_DISPLAY_NAME} needs a few more details`,
   };
 }
 

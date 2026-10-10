@@ -47,11 +47,11 @@ export class ReadClientPortalStandingUseCase {
     return {
       journey,
       coaching,
-      portal: ReadClientPortalStandingUseCase.portalReachOf(journey, coaching),
+      portal: this.portalReachOf(journey, coaching),
     };
   }
 
-  private static portalReachOf(
+  private portalReachOf(
     journey: ClientJourney,
     coaching: CoachingStanding,
   ): PortalReach {

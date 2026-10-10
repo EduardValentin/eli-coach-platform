@@ -4,7 +4,7 @@ export {
   AccordionItem,
   AccordionTrigger,
 } from "./accordion";
-export { Alert } from "./alert";
+export { Alert, AlertAction } from "./alert";
 export { Avatar } from "./avatar";
 export { Badge } from "./badge";
 export { Button, buttonVariants } from "./button";
@@ -14,6 +14,7 @@ export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
 export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
+export { DisabledActionHint } from "./disabled-action-hint";
 export {
   DropdownMenu,
   DropdownMenuContent,

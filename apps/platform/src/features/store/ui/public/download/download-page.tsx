@@ -1,6 +1,6 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, Download, LinkIcon } from "lucide-react";
+import { DeadEndLink } from "@eli-coach-platform/ui/layout";
+import { Button } from "@eli-coach-platform/ui/primitives";
+import { Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
 import { STORE_PATH } from "~/features/store/public/paths";
@@ -96,16 +96,9 @@ function UnavailableDownload() {
         Download links stay active for seven days after each request. You can
         request your resources again from the store.
       </p>
-      <Link
-        className={cn(
-          buttonVariants({ size: "lg", variant: "inverted" }),
-          "mt-7",
-        )}
-        to={STORE_PATH}
-      >
+      <DeadEndLink className="mt-7" direction="back" to={STORE_PATH}>
         Back to the store
-        <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      </DeadEndLink>
     </div>
   );
 }

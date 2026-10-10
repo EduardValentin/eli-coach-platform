@@ -9,7 +9,7 @@ const ANY_RESOURCES_LINK = /^Resources( \(new\))?$/;
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
 
-  private static markedName(name: string, mark: NavigationMark): string {
+  private markedName(name: string, mark: NavigationMark): string {
     return mark === "marked" ? `${name} (new)` : name;
   }
 
@@ -123,18 +123,18 @@ export class ClientPortalShell {
   async expectSidebarResources(mark: NavigationMark): Promise<void> {
     await expect(
       this.resourcesLinkIn(this.sidebarNavigation),
-    ).toHaveAccessibleName(ClientPortalShell.markedName(RESOURCES, mark));
+    ).toHaveAccessibleName(this.markedName(RESOURCES, mark));
   }
 
   async expectMoreButton(mark: NavigationMark): Promise<void> {
     await expect(this.moreButton).toHaveAccessibleName(
-      ClientPortalShell.markedName(MORE, mark),
+      this.markedName(MORE, mark),
     );
   }
 
   async expectSheetResources(mark: NavigationMark): Promise<void> {
     await expect(this.resourcesLinkIn(this.moreSheet)).toHaveAccessibleName(
-      ClientPortalShell.markedName(RESOURCES, mark),
+      this.markedName(RESOURCES, mark),
     );
   }
 
@@ -195,6 +195,26 @@ export class ClientPortalShell {
       this.tabBar.getByRole("link", { name: "Dashboard" }),
     ).toBeVisible();
     await expect(this.moreButton).toHaveAttribute("aria-expanded", "false");
+  }
+
+  async expectTabLinks(names: readonly string[]): Promise<void> {
+    await expect(this.tabBar.getByRole("link")).toHaveText([...names]);
+  }
+
+  async expectSidebarLinks(names: readonly string[]): Promise<void> {
+    await expect(this.sidebarNavigation.getByRole("link")).toHaveText([
+      ...names,
+    ]);
+  }
+
+  async openCheckInsFromSidebar(): Promise<void> {
+    await this.sidebarNavigation
+      .getByRole("link", { name: "Check-ins" })
+      .click();
+  }
+
+  async openCheckInsFromTabs(): Promise<void> {
+    await this.tabBar.getByRole("link", { name: "Check-ins" }).click();
   }
 
   async openMore(): Promise<void> {

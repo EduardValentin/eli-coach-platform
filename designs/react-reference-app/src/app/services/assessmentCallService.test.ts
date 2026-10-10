@@ -79,6 +79,25 @@ describe('listOpenSlots', () => {
     expect(isoStarts(slots)).toContain('2026-03-02T17:00:00.000Z');
   });
 
+  it('withholds the start of every hour a held check-in occupies', async () => {
+    // arrange
+    const now = new Date('2026-03-02T06:00:00.000Z');
+    const heldCheckinStarts = [
+      new Date('2026-03-02T15:00:00.000Z'),
+      new Date('2026-03-03T16:30:00.000Z'),
+    ];
+
+    // act
+    const slots = await listOpenSlots({ now, bookedStarts: [], heldCheckinStarts });
+
+    // assert
+    expect(isoStarts(slots)).not.toContain('2026-03-02T15:00:00.000Z');
+    expect(isoStarts(slots)).toContain('2026-03-02T16:00:00.000Z');
+    expect(isoStarts(slots)).toContain('2026-03-03T15:00:00.000Z');
+    expect(isoStarts(slots)).not.toContain('2026-03-03T16:00:00.000Z');
+    expect(isoStarts(slots)).not.toContain('2026-03-03T17:00:00.000Z');
+  });
+
   it('keeps the coach evening at 17:00 Bucharest across the October change', async () => {
     // arrange
     const now = new Date('2026-10-19T06:00:00.000Z');

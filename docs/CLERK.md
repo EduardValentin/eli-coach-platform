@@ -210,6 +210,14 @@ it as-is; nothing in this path ever updates `role` on an existing row. So:
 port 3100 with the e2e-only settings and keys described in the README's
 "End-to-End Journeys" section.
 
+Every test carries exactly one tag in its options: `@critical` for the main
+path that must keep proving itself, or `@completeness` for a check that covers
+variants, refusals, layouts and edge states. `pnpm test:e2e:critical` runs the
+`@critical` tests; `pnpm test:e2e` runs everything. `tools/e2e-tags.test.mjs`
+fails `pnpm validate` when a journey test has no tag, more than one, or another
+tag. QA browser checks are journeys and page objects under
+`apps/platform/e2e`, never scratch scripts.
+
 Prerequisites:
 
 - Real Google Chrome installed. The suite pins `channel: "chrome"` rather

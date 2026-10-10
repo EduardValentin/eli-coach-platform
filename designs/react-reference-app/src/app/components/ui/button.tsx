@@ -5,21 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "./utils";
 
 const buttonClasses = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-field font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 aria-invalid:border-destructive",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-field font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        primary: "bg-primary text-primary-foreground not-aria-disabled:hover:bg-primary-hover",
         outline:
-          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary",
-        ghost: "text-text-label hover:bg-surface-quiet hover:text-text-primary",
+          "border border-control-border-soft bg-surface-base text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+        ghost: "text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "ghost-muted":
-          "text-text-secondary hover:bg-surface-quiet hover:text-text-primary",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+        link: "text-primary underline-offset-4 not-aria-disabled:hover:underline",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground not-aria-disabled:hover:bg-destructive/90",
         "destructive-outline":
-          "border border-destructive/30 bg-surface-base text-destructive hover:bg-destructive/10",
+          "border border-destructive/30 bg-surface-base text-destructive not-aria-disabled:hover:bg-destructive/10",
       },
       size: {
         xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5",

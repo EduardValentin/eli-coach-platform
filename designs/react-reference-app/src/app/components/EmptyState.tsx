@@ -5,11 +5,13 @@ export function EmptyState({
   icon: Icon,
   title,
   description,
+  descriptionParity,
   action,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
+  descriptionParity?: string;
   action?: ReactNode;
 }) {
   return (
@@ -21,7 +23,9 @@ export function EmptyState({
         <Icon className="size-5" aria-hidden="true" />
       </div>
       <p className="text-base font-semibold text-text-primary">{title}</p>
-      <p className="max-w-sm text-sm text-text-secondary">{description}</p>
+      <p className="max-w-sm text-sm text-text-secondary" data-parity={descriptionParity}>
+        {description}
+      </p>
       {action && <div className="mt-1">{action}</div>}
     </div>
   );

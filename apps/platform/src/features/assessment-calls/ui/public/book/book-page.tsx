@@ -1,10 +1,10 @@
+import { SlotPicker } from "@eli-coach-platform/ui/calendar";
 import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
 import { Alert, Button } from "@eli-coach-platform/ui/primitives";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useReducer,
   useState,
   type Dispatch,
@@ -19,6 +19,7 @@ import {
 
 import type { OpenSlotsResponse } from "~/features/assessment-calls/public/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { useSlotPickerProps } from "~/features/assessment-calls/ui/shared/slot-picker-props";
 
 import { useRefreshSlotsFetcher } from "./api-client";
 import { BookingConfirmation } from "./booking-confirmation";
@@ -31,8 +32,6 @@ import {
   type BookingFlowState,
 } from "./booking-flow";
 import { CallOverview } from "./call-overview";
-import { groupSlotsByDay } from "./slot-grouping";
-import { SlotPicker } from "./slot-picker";
 import { useStepHeadingFocus } from "./step-heading-focus";
 import { useBookAssessmentCallSubmission } from "./submission";
 import { UnavailableSlots } from "./unavailable-slots";
@@ -64,6 +63,8 @@ export const meta: MetaFunction = () => [
 export const handle = { publicContentFrame: "full-bleed" } as const;
 
 type BotDetection = Awaited<ReturnType<typeof loader>>["botDetection"];
+
+const NO_SLOTS: readonly string[] = [];
 
 const STEP_TRANSITION = {
   animate: { opacity: 1, x: 0 },
@@ -233,10 +234,9 @@ function SlotSelectionStep(props: {
 }) {
   const { dispatch, flow, headingRef, onRetry, openSlots, timeZone } = props;
   const { error, selectedDayKey, selectedSlot } = flow;
-  const slots = openSlots?.slots;
-  const slotsByDay = useMemo(
-    () => groupSlotsByDay(slots ?? [], timeZone),
-    [slots, timeZone],
+  const slotPickerProps = useSlotPickerProps(
+    openSlots?.slots ?? NO_SLOTS,
+    timeZone,
   );
   const selectDay = useCallback(
     (dayKey: string | null) => dispatch({ dayKey, type: "select-day" }),
@@ -258,12 +258,11 @@ function SlotSelectionStep(props: {
       {openSlots ? (
         <>
           <SlotPicker
+            {...slotPickerProps}
             onSelectDay={selectDay}
             onSelectSlot={(slot) => dispatch({ slot, type: "select-slot" })}
             selectedDayKey={selectedDayKey}
             selectedSlot={selectedSlot}
-            slotsByDay={slotsByDay}
-            timeZone={timeZone}
           />
 
           <div className="mt-auto">

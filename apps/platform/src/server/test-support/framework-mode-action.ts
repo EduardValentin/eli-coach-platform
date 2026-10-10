@@ -2,6 +2,9 @@ import type {
   ActionFunctionArgs,
   ClientActionFunction,
   ClientActionFunctionArgs,
+  ClientLoaderFunction,
+  ClientLoaderFunctionArgs,
+  LoaderFunctionArgs,
 } from "react-router";
 
 const NO_CONTENT = 204;
@@ -14,7 +17,7 @@ function wasThrownByTheServer(response: Response): boolean {
   return response.status >= FIRST_ERROR_STATUS && !isJson;
 }
 
-async function serverActionAnswer(request: Request): Promise<unknown> {
+async function serverAnswer(request: Request): Promise<unknown> {
   const response = await fetch(request);
 
   if (wasThrownByTheServer(response)) throw response;
@@ -28,8 +31,15 @@ export function frameworkModeAction(clientAction: ClientActionFunction) {
     clientAction({
       ...args,
       serverAction: (() =>
-        serverActionAnswer(
-          args.request,
-        )) as ClientActionFunctionArgs["serverAction"],
+        serverAnswer(args.request)) as ClientActionFunctionArgs["serverAction"],
+    });
+}
+
+export function frameworkModeLoader(clientLoader: ClientLoaderFunction) {
+  return (args: LoaderFunctionArgs) =>
+    clientLoader({
+      ...args,
+      serverLoader: (() =>
+        serverAnswer(args.request)) as ClientLoaderFunctionArgs["serverLoader"],
     });
 }

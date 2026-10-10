@@ -3,6 +3,7 @@ import { Toaster } from "./components/ui/sonner";
 import { Home } from "./pages/Home";
 import { Book } from "./pages/Book";
 import { JoinCall } from "./pages/JoinCall";
+import { CheckinJoin } from "./pages/CheckinJoin";
 import { DevToggle } from "./components/DevToggle";
 import { AppProvider } from "./context/AppContext";
 import { StoreProvider } from "./context/StoreContext";
@@ -160,6 +161,7 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
+        { path: "portal/checkins/:checkinId/join", element: <CheckinJoin party="client" /> },
         { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
         { path: "portal/ended", Component: PortalEnded },
@@ -199,6 +201,7 @@ export const router = createBrowserRouter(
             { path: "settings", Component: CoachSettings },
           ]
         },
+        { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
           ]
         },
         { path: "403", Component: AccessDenied },

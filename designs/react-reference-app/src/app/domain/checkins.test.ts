@@ -4,8 +4,14 @@ import {
   canPropose,
   canWithdrawRequest,
   checkinNote,
+  checkinSlotAt,
+  checkinStartsAt,
   checkinStatus,
   coachingEndsAt,
+  heldCheckinSpan,
+  holdsCoachTime,
+  spansOverlap,
+  timeSpanFrom,
   isJoinable,
   isOpenClientRequest,
   latestMove,
@@ -488,5 +494,69 @@ describe('the note on a check-in', () => {
 
     // assert
     expect(note).toEqual({ text: 'Questions about macros', by: 'client' });
+  });
+});
+
+describe('the slot a picked time lands on', () => {
+  it('records the picked instant as the browser-zone date and time it starts at', () => {
+    // arrange
+    const picked = new Date(2026, 9, 16, 17, 0);
+
+    // act
+    const slot = checkinSlotAt(picked);
+
+    // assert
+    expect(slot).toEqual({ date: '2026-10-16', time: '17:00' });
+  });
+
+  it('starts the check-in at the instant that was picked', () => {
+    // arrange
+    const picked = new Date(2026, 9, 16, 9, 0);
+
+    // act
+    const startsAt = checkinStartsAt(checkin(checkinSlotAt(picked)));
+
+    // assert
+    expect(startsAt.getTime()).toBe(picked.getTime());
+  });
+});
+
+describe('the coach time a check-in holds', () => {
+  it.each([
+    ['pending', true],
+    ['approved', true],
+    ['passed', false],
+    ['cancelled', false],
+  ] as const)('holds the coach time while %s: %s', (status, holds) => {
+    // arrange
+    // act
+    const held = holdsCoachTime(status);
+
+    // assert
+    expect(held).toBe(holds);
+  });
+
+  it('holds the whole hour from its start', () => {
+    // arrange
+    const start = new Date('2026-03-02T15:00:00.000Z');
+
+    // act
+    const span = heldCheckinSpan(start);
+
+    // assert
+    expect(span).toEqual(timeSpanFrom(start, 60));
+  });
+
+  it('overlaps a span that starts before it ends', () => {
+    // arrange
+    const held = heldCheckinSpan(new Date('2026-03-02T15:00:00.000Z'));
+
+    // act
+    const overlapping = spansOverlap(held, timeSpanFrom(new Date('2026-03-02T15:59:00.000Z'), 30));
+    const touching = spansOverlap(held, timeSpanFrom(new Date('2026-03-02T16:00:00.000Z'), 30));
+
+    // assert
+    expect(overlapping).toBe(true);
+    expect(touching).toBe(false);
   });
 });

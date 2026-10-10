@@ -9,6 +9,7 @@ import {
 import { useAppState } from './AppContext';
 import {
   DEFAULT_ASSESSMENT_CALL_SETTINGS,
+  prototypeMeetingLink,
   saveAssessmentCallSettings,
   type AssessmentCallSettings,
   type PrototypeBooking,
@@ -21,6 +22,7 @@ type AssessmentCallContextType = {
   replaceBookings: (bookings: PrototypeBooking[]) => void;
   settings: AssessmentCallSettings;
   saveSettings: (next: AssessmentCallSettings) => Promise<void>;
+  replaceMeetingLink: (meetingLink: string | null) => void;
   findBooking: (id: string) => PrototypeBooking | undefined;
 };
 
@@ -31,9 +33,10 @@ const AssessmentCallContext = createContext<
 export function AssessmentCallProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
   const [bookings, setBookings] = useState<PrototypeBooking[]>([]);
-  const [settings, setSettings] = useState<AssessmentCallSettings>(
-    DEFAULT_ASSESSMENT_CALL_SETTINGS,
-  );
+  const [settings, setSettings] = useState<AssessmentCallSettings>(() => ({
+    ...DEFAULT_ASSESSMENT_CALL_SETTINGS,
+    meetingLink: prototypeMeetingLink(appState.meetingLink),
+  }));
 
   const bookedStarts = useMemo(
     () => bookings.map((booking) => booking.startsAt),
@@ -64,6 +67,10 @@ export function AssessmentCallProvider({ children }: { children: ReactNode }) {
     [appState.callSettingsSaveOutcome],
   );
 
+  const replaceMeetingLink = useCallback((meetingLink: string | null) => {
+    setSettings((current) => ({ ...current, meetingLink }));
+  }, []);
+
   return (
     <AssessmentCallContext.Provider
       value={{
@@ -73,6 +80,7 @@ export function AssessmentCallProvider({ children }: { children: ReactNode }) {
         replaceBookings,
         settings,
         saveSettings,
+        replaceMeetingLink,
         findBooking,
       }}
     >

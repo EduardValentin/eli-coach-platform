@@ -3,9 +3,10 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { DeadEndPage, DeadEndPanel } from "./dead-end-page";
+import { DeadEndLink, DeadEndPage, DeadEndPanel } from "./dead-end-page";
 
 afterEach(() => {
   cleanup();
@@ -86,6 +87,59 @@ describe("DeadEndPage", () => {
     );
     expect(line.previousElementSibling).toHaveTextContent(
       "It was good to train together.",
+    );
+  });
+});
+
+describe("DeadEndLink", () => {
+  function renderLink(direction: "back" | "forward") {
+    render(
+      <MemoryRouter>
+        <DeadEndLink direction={direction} to="/somewhere">
+          Take me there
+        </DeadEndLink>
+      </MemoryRouter>,
+    );
+
+    return screen.getByRole("link", { name: "Take me there" });
+  }
+
+  it("points a back action left, before its label", () => {
+    // arrange
+    // act
+    const link = renderLink("back");
+
+    // assert
+    expect(link).toHaveAttribute("href", "/somewhere");
+    expect(link.firstElementChild).toHaveClass("lucide-arrow-left");
+    expect(link.querySelector(".lucide-arrow-right")).toBeNull();
+  });
+
+  it("points a forward action right, after its label", () => {
+    // arrange
+    // act
+    const link = renderLink("forward");
+
+    // assert
+    expect(link.lastElementChild).toHaveClass("lucide-arrow-right");
+    expect(link.querySelector(".lucide-arrow-left")).toBeNull();
+  });
+
+  it("wears the inverted large action look and takes extra classes from its caller", () => {
+    // arrange
+    // act
+    render(
+      <MemoryRouter>
+        <DeadEndLink className="mt-7" direction="back" to="/">
+          Back
+        </DeadEndLink>
+      </MemoryRouter>,
+    );
+
+    // assert
+    expect(screen.getByRole("link", { name: "Back" })).toHaveClass(
+      "mt-7",
+      "bg-surface-inverted",
     );
   });
 });

@@ -24,12 +24,12 @@ function responseOf(response: APIResponse): ResourceResponse {
 export class ResourceRequests {
   constructor(private readonly request: APIRequestContext) {}
 
-  private static resourcePathOf(resourceId: string): string {
+  private resourcePathOf(resourceId: string): string {
     return `${CLIENT_RESOURCES_PATH}/${resourceId}`;
   }
 
-  private static openedPathOf(resourceId: string): string {
-    return `${ResourceRequests.resourcePathOf(resourceId)}/opened`;
+  private openedPathOf(resourceId: string): string {
+    return `${this.resourcePathOf(resourceId)}/opened`;
   }
 
   private post(
@@ -139,36 +139,27 @@ export class ResourceRequests {
     resourceId: string,
     details: ResourceDetails,
   ): Promise<number> {
-    const response = await this.request.patch(
-      ResourceRequests.resourcePathOf(resourceId),
-      {
-        data: details,
-      },
-    );
+    const response = await this.request.patch(this.resourcePathOf(resourceId), {
+      data: details,
+    });
 
     return response.status();
   }
 
   async remove(resourceId: string): Promise<number> {
-    const response = await this.request.delete(
-      ResourceRequests.resourcePathOf(resourceId),
-    );
+    const response = await this.request.delete(this.resourcePathOf(resourceId));
 
     return response.status();
   }
 
   async markOpened(resourceId: string): Promise<number> {
-    const response = await this.request.post(
-      ResourceRequests.openedPathOf(resourceId),
-    );
+    const response = await this.request.post(this.openedPathOf(resourceId));
 
     return response.status();
   }
 
   async readOpened(resourceId: string): Promise<number> {
-    const response = await this.request.get(
-      ResourceRequests.openedPathOf(resourceId),
-    );
+    const response = await this.request.get(this.openedPathOf(resourceId));
 
     return response.status();
   }

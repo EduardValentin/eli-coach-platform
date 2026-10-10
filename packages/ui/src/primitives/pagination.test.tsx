@@ -76,7 +76,7 @@ describe("pagination", () => {
     // assert
     const otherPage = screen.getByRole("link", { name: "Go to page 1" });
     expect(otherPage).toHaveClass(
-      "hover:bg-surface-quiet",
+      "not-aria-disabled:hover:bg-surface-quiet",
       "size-(--size-control-xs)",
       "rounded-full",
     );
@@ -90,7 +90,7 @@ describe("pagination", () => {
     // assert
     const previous = screen.getByRole("link", { name: "Go to previous page" });
     expect(previous).toHaveClass(
-      "hover:bg-surface-quiet",
+      "not-aria-disabled:hover:bg-surface-quiet",
       "h-(--size-control-xs)",
       "gap-1",
       "px-2.5",

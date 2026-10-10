@@ -39,6 +39,10 @@ import {
 } from "~/features/accounts/server/accounts-composition.server";
 import { composeAssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
 import {
+  composeCheckInsFeature,
+  type CheckInsFeature,
+} from "~/features/check-ins/server/check-ins-composition.server";
+import {
   composeClientOnboardingFeature,
   type ClientOnboardingFeature,
 } from "~/features/client-onboarding/server/client-onboarding-composition.server";
@@ -70,6 +74,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 export type PlatformContainer = {
   accounts: AccountsFeature;
   assessmentCalls: ReturnType<typeof composeAssessmentCallsFeature>;
+  checkIns: CheckInsFeature;
   clientOnboarding: ClientOnboardingFeature;
   clientProfile: ReturnType<typeof composeClientProfileFeature>;
   clientResources: ClientResourcesFeature;
@@ -199,6 +204,17 @@ export function createPlatformContainer(options: {
     resourceClients: coachingSales.handles.resourceClients,
     store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
   });
+  const checkIns = composeCheckInsFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    checkInClients: coachingSales.handles.checkInClients,
+    clock,
+    coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    incidents,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
@@ -228,6 +244,7 @@ export function createPlatformContainer(options: {
       },
     }),
     assessmentCalls,
+    checkIns,
     clientOnboarding,
     clientProfile,
     clientResources,

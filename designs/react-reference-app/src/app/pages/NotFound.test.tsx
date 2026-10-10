@@ -24,5 +24,6 @@ describe('NotFound', () => {
     const actions = screen.getAllByRole('link');
     expect(actions).toHaveLength(1);
     expect(actions[0]).toHaveAttribute('href', '/');
+    expect(actions[0].firstElementChild).toHaveClass('lucide-arrow-left');
   });
 });

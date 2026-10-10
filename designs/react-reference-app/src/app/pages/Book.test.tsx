@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { UserEvent } from '@testing-library/user-event';
@@ -9,6 +10,9 @@ import { StoreProvider } from '../context/StoreContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../context/ClientProfileContext';
+import { CheckinProvider, useCheckins } from '../context/CheckinContext';
+import { checkinSlotAt } from '../domain/checkins';
+import { formatSlotTime } from '../utils/dateFormatters';
 
 const TODAY = new Date('2026-03-02T06:00:00.000Z');
 const VISITOR_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -26,7 +30,17 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function renderBook(search = '') {
+function HoldCheckinAt({ startsAt }: { startsAt: Date }) {
+  const { coachInitiateCheckin } = useCheckins();
+
+  useEffect(() => {
+    coachInitiateCheckin({ clientId: 'c2', clientName: 'Jessica Alba', ...checkinSlotAt(startsAt) });
+  }, [coachInitiateCheckin, startsAt]);
+
+  return null;
+}
+
+function renderBook(search = '', heldCheckinAt?: Date) {
   window.history.replaceState({}, '', `/book${search}`);
   const user = userEvent.setup();
 
@@ -37,7 +51,10 @@ function renderBook(search = '') {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <Book />
+                <CheckinProvider>
+                  {heldCheckinAt && <HoldCheckinAt startsAt={heldCheckinAt} />}
+                  <Book />
+                </CheckinProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>
@@ -116,6 +133,24 @@ async function fillDetails(user: UserEvent) {
 }
 
 describe('Book', BOOKING_FLOW, () => {
+  it('does not offer an hour a check-in holds', async () => {
+    // arrange
+    const held = new Date('2026-03-02T15:00:00.000Z');
+    const user = renderBook('', held);
+
+    // act
+    await pickFirstOpenDay(user);
+
+    // assert
+    const times = (await screen.findAllByRole('button', { name: TIME_NAME })).map(
+      (time) => time.textContent,
+    );
+    expect(times).not.toContain(formatSlotTime(held, VISITOR_TIME_ZONE));
+    expect(times).toContain(
+      formatSlotTime(new Date('2026-03-02T16:00:00.000Z'), VISITOR_TIME_ZONE),
+    );
+  });
+
   it('sends the visitor to the not-found page while the site is in waitlist mode', async () => {
     // arrange
     // act
@@ -522,10 +557,9 @@ describe('Book', BOOKING_FLOW, () => {
     renderBook('?bookingslots=unavailable');
 
     // assert
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      "We couldn't load the open times just now.",
-    );
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent("We couldn't load the open times just now.");
+    expect(within(alert).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 });

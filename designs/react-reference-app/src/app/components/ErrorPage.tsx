@@ -1,12 +1,31 @@
 import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react';
+import { Link, type LinkProps } from 'react-router';
 import { SectionEyebrow } from './SectionEyebrow';
 import { buttonVariants } from './ThemeButton';
+import { cn } from './ui/utils';
 
 // Shared by every dead end (404, 403, failed sign-in). Production replaces the
 // whole route tree for these, so the page carries no navigation bar or footer
 // and offers exactly one way out.
 export const ERROR_PAGE_ACTION_CLASS = buttonVariants({ size: 'lg', variant: 'inverted' });
+
+type DeadEndLinkProps = {
+  to: LinkProps['to'];
+  direction: 'back' | 'forward';
+  className?: string;
+  children: ReactNode;
+};
+
+export function DeadEndLink({ to, direction, className, children }: DeadEndLinkProps) {
+  return (
+    <Link to={to} className={cn(ERROR_PAGE_ACTION_CLASS, className)}>
+      {direction === 'back' ? <ArrowLeft size={18} aria-hidden="true" /> : null}
+      {children}
+      {direction === 'forward' ? <ArrowRight size={18} aria-hidden="true" /> : null}
+    </Link>
+  );
+}
 
 export const FULL_PAGE_MESSAGE_SHELL_CLASS =
   'w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center';

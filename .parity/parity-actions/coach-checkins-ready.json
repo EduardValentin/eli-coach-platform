@@ -1,0 +1,4 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachCheckins\"] [data-parity-root=\"CheckinCard\"]"},
+  {"wait": 600}
+]

@@ -32,10 +32,10 @@ export function DateTimeLabel({
         className,
       )}
     >
-      <span className={DAY_CLASS[size]}>
+      <span className={DAY_CLASS[size]} data-parity="when-date">
         {formatShortDay(startsAt, timeZone)}
       </span>
-      <span className="text-sm text-text-secondary">
+      <span className="text-sm text-text-secondary" data-parity="when-time">
         · {formatSlotTime(startsAt, timeZone)}
       </span>
     </span>

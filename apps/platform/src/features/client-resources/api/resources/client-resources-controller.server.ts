@@ -110,7 +110,7 @@ export class ClientResourcesController {
     }
 
     const details = resourceDetailsRequestSchema.safeParse(
-      await ClientResourcesController.readJsonBody(args.request),
+      await this.readJsonBody(args.request),
     );
 
     if (!details.success) {
@@ -246,7 +246,7 @@ export class ClientResourcesController {
     return createPrivateInlineFileResponse(result.bytes, result.mimeType);
   }
 
-  private static async readJsonBody(request: Request): Promise<unknown> {
+  private async readJsonBody(request: Request): Promise<unknown> {
     const body = await readTextRequestBody(request, {
       maxBytes: RESOURCE_DETAILS_MAX_BYTES,
     });

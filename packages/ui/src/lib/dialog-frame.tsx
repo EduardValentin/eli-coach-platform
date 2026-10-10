@@ -14,9 +14,21 @@ type DialogFrameProps = Omit<
   "onCloseAutoFocus" | "onOpenAutoFocus"
 > & {
   dismissal?: DialogDismissal;
+  initialFocus?: RefObject<HTMLElement | null>;
   placement?: DialogFramePlacement;
   returnFocusTo?: RefObject<HTMLElement | null>;
 };
+
+export function focusOnOpen(
+  initialFocus: RefObject<HTMLElement | null> | undefined,
+  event: Event,
+) {
+  const target = initialFocus?.current;
+  if (!target) return;
+
+  event.preventDefault();
+  target.focus();
+}
 
 export function preventDismissalWhenLocked(dismissal: DialogDismissal) {
   return (event: Event) => {
@@ -46,6 +58,7 @@ export function DialogFrame({
   children,
   className,
   dismissal = "allowed",
+  initialFocus,
   onEscapeKeyDown,
   onInteractOutside,
   placement = "centred",
@@ -70,7 +83,10 @@ export function DialogFrame({
           onInteractOutside?.(event);
           preventWhenLocked(event);
         }}
-        onOpenAutoFocus={rememberOpener}
+        onOpenAutoFocus={(event) => {
+          rememberOpener();
+          focusOnOpen(initialFocus, event);
+        }}
         {...props}
       >
         {children}

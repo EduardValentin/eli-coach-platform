@@ -1,0 +1,11 @@
+[
+  {"waitFor": "[data-parity-root$=\"Checkins\"]"},
+  {"click": "[aria-label=\"Open Dev Toggle\"]"},
+  {"click": "role=tab[name=\"Check-ins\"]"},
+  {"click": "#dev-open-client-request"},
+  {"click": "[aria-label=\"Close Dev Settings\"]"},
+  {"wait": 600},
+  {"hover": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Request check-in\"] >> nth=0"},
+  {"waitFor": "[data-parity=\"disabled-action-hint\"]"},
+  {"wait": 400}
+]

@@ -1,5 +1,6 @@
 import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisition";
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
+import type { CheckInIncidents } from "@eli-coach-platform/domain/check-in";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
@@ -12,6 +13,7 @@ import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure
 
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
+  CheckInIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
   ClientResourceIncidents &
@@ -32,6 +34,13 @@ export function createConsoleLogger(): ConsoleLogger {
     callsReadFailed: () => {
       console.error("Assessment calls could not be read.", {
         errorCategory: "assessment_call_listing_failure",
+      });
+    },
+    checkInNotificationFailed: ({ checkInId, notification }) => {
+      console.error("Check-in notification failed.", {
+        checkInId,
+        errorCategory: "check_in_notification_failure",
+        notification,
       });
     },
     paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {

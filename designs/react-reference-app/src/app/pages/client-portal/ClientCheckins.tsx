@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { CalendarDays, CalendarPlus, Clock } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { CheckinCard } from '../../components/CheckinCard';
+import {
+  CheckinCard,
+  type CheckinRowActions,
+} from '../../components/CheckinCard';
 import {
   CheckinListing,
   type CheckinEmptyCopy,
@@ -26,12 +29,23 @@ import {
   to24h,
 } from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
+import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
 import type { CheckinTab } from '../../utils/checkinListing';
 import { Button } from '../../components/ui/button';
+import { DisabledActionHint } from '../../components/DisabledActionHint';
 import { toast } from 'sonner';
 
 const CLIENT_ID = DEMO_CLIENT.id;
 const CLIENT_NAME = DEMO_CLIENT.name;
+
+const OPEN_REQUEST_REASON = 'You can send another request once this one is answered.';
+
+const BUSY_LABEL: Record<CheckinAnswer, string> = {
+  approve: 'Approving…',
+  decline: 'Declining…',
+  withdraw: 'Cancelling…',
+};
 
 const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
   upcoming: {
@@ -54,8 +68,6 @@ const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
 export function ClientCheckins() {
   const {
     statusOf,
-    requestCheckin,
-    approveCheckin,
     cancelCheckin,
     proposeNewTime,
     getUpcomingCheckins,
@@ -64,6 +76,7 @@ export function ClientCheckins() {
     getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { answer, answerInFlight } = useCheckinAnswers();
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
   const coach = {
@@ -77,8 +90,6 @@ export function ClientCheckins() {
   const openRequest = hasOpenClientRequest(CLIENT_ID);
 
   const [showRequest, setShowRequest] = useState(false);
-  const [reqDate, setReqDate] = useState<Date | undefined>();
-  const [reqTime, setReqTime] = useState<string | null>(null);
 
   const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
   const [rsDate, setRsDate] = useState<Date | undefined>();
@@ -88,11 +99,10 @@ export function ClientCheckins() {
   const [movingReview, setMovingReview] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
 
-  const bookedSlots = useMemo(() => {
-    if (showRequest && reqDate) return getBookedSlots(toISODate(reqDate));
-    if (rescheduleTarget && rsDate) return getBookedSlots(toISODate(rsDate));
-    return [];
-  }, [showRequest, reqDate, rescheduleTarget, rsDate, getBookedSlots]);
+  const bookedSlots = useMemo(
+    () => (rescheduleTarget && rsDate ? getBookedSlots(toISODate(rsDate)) : []),
+    [rescheduleTarget, rsDate, getBookedSlots],
+  );
 
   const rescheduleTargetCheckin = useMemo(
     () =>
@@ -100,56 +110,43 @@ export function ClientCheckins() {
     [upcoming, pending, rescheduleTarget],
   );
 
-  const handleRequest = () => {
-    if (!reqDate || !reqTime) return;
-    const date = toISODate(reqDate);
-    const time = to24h(reqTime);
-    const result = requestCheckin({
-      clientId: CLIENT_ID,
-      clientName: CLIENT_NAME,
-      date,
-      time,
-    });
-    if (!result) {
-      toast.error('You already have a check-in request waiting');
-      return;
-    }
-    setShowRequest(false);
-    setReqDate(undefined);
-    setReqTime(null);
+  const handleRequested = (c: CheckIn) => {
     ctxSendMessage(
       CLIENT_ID,
-      `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      `Check-in requested: ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
       'client',
     );
-    toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
+    toast.success(`Check-in requested for ${formatCheckinDate(c.date)}`);
   };
 
-  const handleApprove = (c: CheckIn) => {
-    approveCheckin(c.id);
-    addSystemMessage(
-      CLIENT_ID,
-      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      'checkin-scheduled',
-    );
-    toast.success('Check-in approved');
-  };
+  const handleApprove = (c: CheckIn) =>
+    answer(c, 'approve', () => {
+      addSystemMessage(
+        CLIENT_ID,
+        `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
+        'checkin-scheduled',
+      );
+      toast.success('Check-in approved');
+    });
 
-  const handleDecline = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
-    toast.success('Check-in declined');
-  };
+  const handleDecline = (c: CheckIn) =>
+    answer(c, 'decline', () => {
+      addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
+      toast.success('Check-in declined');
+    });
 
-  const handleWithdraw = (c: CheckIn) => {
-    cancelCheckin(c.id);
-    addSystemMessage(
-      CLIENT_ID,
-      'Check-in request cancelled',
-      'checkin-cancelled',
-    );
-    toast.success('Request cancelled');
-  };
+  const handleWithdraw = (c: CheckIn) =>
+    answer(c, 'withdraw', () => {
+      addSystemMessage(
+        CLIENT_ID,
+        'Check-in request cancelled',
+        'checkin-cancelled',
+      );
+      toast.success('Request cancelled');
+    });
+
+  const busyLabel = (c: CheckIn, action: CheckinAnswer, label: string) =>
+    answerInFlight(c) === action ? BUSY_LABEL[action] : label;
 
   const confirmCancel = () => {
     if (!cancelTarget) return;
@@ -194,111 +191,99 @@ export function ClientCheckins() {
     setRescheduleTarget(null);
   };
 
-  const requestButtonProps = {
-    type: 'button' as const,
-    onClick: () => setShowRequest(true),
-    disabled: openRequest,
-    'aria-describedby': openRequest ? 'open-request-note' : undefined,
-    variant: 'primary' as const,
-    size: 'md' as const,
+  const renderRequestButton = ({
+    className,
+    iconSize,
+  }: {
+    className: string;
+    iconSize: number;
+  }) => {
+    const button = (
+      <Button
+        type="button"
+        onClick={() => setShowRequest(true)}
+        variant="primary"
+        size="md"
+        className={className}
+      >
+        <CalendarPlus size={iconSize} aria-hidden="true" />
+        Request check-in
+      </Button>
+    );
+
+    return openRequest ? (
+      <DisabledActionHint reason={OPEN_REQUEST_REASON}>{button}</DisabledActionHint>
+    ) : (
+      button
+    );
   };
 
-  const upcomingActions = (c: CheckIn) => (
-    <>
-      {canCancelApproved(c, 'client') && (
-        <Button
-          type="button"
-          onClick={() => setCancelTarget(c)}
-          variant="ghost"
-          size="sm"
-        >
-          Cancel
-        </Button>
-      )}
-      {canPropose(c) && (
-        <Button
-          type="button"
-          onClick={() => openReschedule(c)}
-          variant="outline"
-          size="sm"
-        >
-          Reschedule
-        </Button>
-      )}
-      <JoinMeetLink checkin={c} />
-    </>
-  );
+  const upcomingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: <JoinMeetLink checkin={c} party="client" />,
+    menu: {
+      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      cancel: canCancelApproved(c, 'client') ? () => setCancelTarget(c) : undefined,
+    },
+  });
 
-  const waitingActions = (c: CheckIn) =>
-    canWithdrawRequest(c, 'client') ? (
+  const waitingActions = (c: CheckIn): CheckinRowActions => ({
+    shown: canWithdrawRequest(c, 'client') ? (
       <Button
         type="button"
         onClick={() => handleWithdraw(c)}
+        disabled={answerInFlight(c) !== null}
+        aria-busy={answerInFlight(c) === 'withdraw' || undefined}
         variant="outline"
         size="sm"
       >
-        Cancel request
+        {busyLabel(c, 'withdraw', 'Cancel request')}
       </Button>
-    ) : undefined;
+    ) : undefined,
+  });
 
-  const answerActions = (c: CheckIn) => (
+  const answerActions = (c: CheckIn): CheckinRowActions => ({
+    shown: (
       <>
         <Button
           type="button"
           onClick={() => handleDecline(c)}
+          disabled={answerInFlight(c) !== null}
+          aria-busy={answerInFlight(c) === 'decline' || undefined}
           variant="ghost"
           size="sm"
         >
-          Decline
+          {busyLabel(c, 'decline', 'Decline')}
         </Button>
-        {canPropose(c) && (
-          <Button
-            type="button"
-            onClick={() => openReschedule(c)}
-            variant="outline"
-            size="sm"
-          >
-            Reschedule
-          </Button>
-        )}
         <Button
           type="button"
           onClick={() => handleApprove(c)}
+          disabled={answerInFlight(c) !== null}
+          aria-busy={answerInFlight(c) === 'approve' || undefined}
           variant="primary"
           size="sm"
         >
-          {proposesNewTime(c) ? 'Accept' : 'Approve'}
+          {busyLabel(c, 'approve', proposesNewTime(c) ? 'Accept' : 'Approve')}
         </Button>
       </>
-  );
+    ),
+    menu: {
+      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      disabled: answerInFlight(c) !== null,
+    },
+  });
 
-  const actionsFor = (c: CheckIn, tab: CheckinTab) => {
+  const actionsFor = (c: CheckIn, tab: CheckinTab): CheckinRowActions => {
     if (tab === 'upcoming') return upcomingActions(c);
-    if (tab === 'past') return undefined;
+    if (tab === 'past') return {};
     return c.proposedBy === 'client' ? waitingActions(c) : answerActions(c);
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="ClientCheckins">
       <PortalPageHeader
         title="Check-ins"
         subtitle="Request a check-in, answer proposals, and look back at past sessions."
-        actions={
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Button {...requestButtonProps} className="hidden sm:inline-flex">
-              <CalendarPlus size={16} aria-hidden="true" />
-              Request check-in
-            </Button>
-            {openRequest && (
-              <p
-                id="open-request-note"
-                className="text-xs text-text-secondary sm:text-right"
-              >
-                You can send another request once this one is answered.
-              </p>
-            )}
-          </div>
-        }
+        actions={renderRequestButton({ className: 'hidden sm:inline-flex', iconSize: 16 })}
       />
 
       <CheckinListing
@@ -318,19 +303,11 @@ export function ClientCheckins() {
         )}
       />
 
-      <CheckinSchedulerSheet
+      <CheckinRequestDialog
         open={showRequest}
         onOpenChange={setShowRequest}
-        variant="request"
-        title="Request a check-in"
-        description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
-        selectedDate={reqDate}
-        onDateChange={setReqDate}
-        selectedTime={reqTime}
-        onTimeChange={setReqTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleRequest}
-        submitLabel="Request"
+        client={DEMO_CLIENT}
+        onRequested={handleRequested}
       />
 
       <CheckinSchedulerSheet
@@ -377,14 +354,10 @@ export function ClientCheckins() {
         tone="destructive"
       />
 
-      <Button
-        {...requestButtonProps}
-        aria-label="Request a check-in"
-        className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
-      >
-        <CalendarPlus size={18} aria-hidden="true" />
-        Request check-in
-      </Button>
+      {renderRequestButton({
+        className: 'fixed left-4 bottom-(--portal-tab-bar-clearance) z-40 shadow-lg sm:hidden',
+        iconSize: 18,
+      })}
     </div>
   );
 }

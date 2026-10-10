@@ -63,7 +63,7 @@ export function SlotPickerFrame({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row lg:justify-start gap-8">
+    <div className="flex flex-col lg:flex-row lg:justify-start gap-8" data-parity="slot-picker">
       <div ref={calendarRef} className={`w-full max-w-[340px] mx-auto lg:mx-0 lg:w-[320px] lg:max-w-none shrink-0 ${revealScrollMargin}`}>
         {calendar}
         {timeZoneNote && (

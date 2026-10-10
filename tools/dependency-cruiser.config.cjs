@@ -33,6 +33,7 @@ const FEATURE_ORDER = [
   "client-profile",
   "client-resources",
   "client-onboarding",
+  "check-ins",
 ];
 
 const unorderedFeatures = readdirSync(
@@ -330,6 +331,19 @@ module.exports = {
       severity: "error",
       from: { path: `${FEATURES}[^/]+/ui/` },
       to: { path: `${FEATURES}[^/]+/(data/|api/|email/|server/(?!guards/))` },
+    },
+    {
+      name: "design-system-browser-only",
+      comment:
+        "A feature's public/ is read by its server half, and a .server module never reaches a browser: neither imports the design system.",
+      severity: "error",
+      from: {
+        path: [
+          "^apps/platform/src/features/[^/]+/public/",
+          "\\.server\\.tsx?$",
+        ],
+      },
+      to: { path: "^packages/ui/" },
     },
     {
       name: "route-thinness",

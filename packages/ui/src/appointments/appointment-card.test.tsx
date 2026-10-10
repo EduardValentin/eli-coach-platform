@@ -142,6 +142,56 @@ describe("appointment card", () => {
     expect(quote).toHaveClass("whitespace-pre-line");
   });
 
+  it("follows the time with the caller's label for the appointment", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        when={WHEN}
+        whenLabel="Ad-hoc · Requested by you"
+      />,
+    );
+
+    // assert
+    expect(screen.getByText("Ad-hoc · Requested by you")).toBeInTheDocument();
+  });
+
+  it("names who wrote a quoted note before the note", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        quote="Can we talk about my squats?"
+        quoteAuthor="You"
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    const author = screen.getByText("You:");
+
+    expect(author.parentElement).toHaveTextContent(
+      'You: "Can we talk about my squats?"',
+    );
+    expect(author).toHaveClass("not-italic", "font-medium");
+  });
+
+  it("quotes a note without an author line when no author is named", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        quote="Can we talk about my squats?"
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(screen.getByText(/Can we talk/)).toHaveTextContent(
+      /^"Can we talk about my squats\?"$/,
+    );
+  });
+
   it("mutes a card whose appointment has already happened", () => {
     // arrange, act
     const { container } = render(
@@ -168,5 +218,21 @@ describe("appointment card", () => {
     expect(
       screen.getByRole("button", { name: "Join call" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the attendee's picture in place of her initials when there is one", () => {
+    // arrange, act
+    const { container } = render(
+      <AppointmentCard
+        attendee={{ imageUrl: "/media/eli/eli-portrait-192.webp", name: "Eli" }}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      "/media/eli/eli-portrait-192.webp",
+    );
   });
 });

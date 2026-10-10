@@ -1,8 +1,6 @@
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, MailQuestion, UserRound } from "lucide-react";
+import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { MailQuestion, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 
 import {
   useHandOffToHostedSignUp,
@@ -60,13 +58,9 @@ function UnavailableInvitation() {
       landmarkLabel="Error"
       title="This invitation isn't available"
     >
-      <Link
-        className={buttonVariants({ size: "lg", variant: "inverted" })}
-        to="/"
-      >
+      <DeadEndLink direction="back" to="/">
         Back to home
-        <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      </DeadEndLink>
     </DeadEndPage>
   );
 }

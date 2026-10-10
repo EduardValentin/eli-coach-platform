@@ -44,6 +44,34 @@ describe('buttonVariants', () => {
     expect(classes.some((name) => name.startsWith('has-'))).toBe(false);
   });
 
+  it('lets the medium grow size wrap its label and outgrow its minimum height', () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: 'md-grow' }).split(' ');
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        'min-h-(--size-control-md)',
+        'px-5',
+        'text-base',
+        'whitespace-normal',
+      ]),
+    );
+    expect(classes).not.toContain('h-(--size-control-md)');
+    expect(classes).not.toContain('whitespace-nowrap');
+  });
+
+  it('rests a card elevation button on the card shadow without a hover lift', () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ elevation: 'card' }).split(' ');
+
+    // assert
+    expect(classes).toContain('shadow-card');
+    expect(classes.some((name) => name.startsWith('hover:shadow'))).toBe(false);
+  });
+
   it('fills an ink button with the foreground and turns it brand on hover', () => {
     // arrange
     // act
@@ -51,7 +79,7 @@ describe('buttonVariants', () => {
 
     // assert
     expect(classes).toEqual(
-      expect.arrayContaining(['bg-foreground', 'text-background', 'hover:bg-brand']),
+      expect.arrayContaining(['bg-foreground', 'text-background', 'not-aria-disabled:hover:bg-brand']),
     );
   });
 
@@ -62,7 +90,7 @@ describe('buttonVariants', () => {
 
     // assert
     expect(classes).toEqual(
-      expect.arrayContaining(['bg-card', 'text-brand', 'hover:bg-surface-subtle']),
+      expect.arrayContaining(['bg-card', 'text-brand', 'not-aria-disabled:hover:bg-surface-subtle']),
     );
   });
 });

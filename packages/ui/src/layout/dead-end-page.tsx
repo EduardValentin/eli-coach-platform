@@ -1,8 +1,10 @@
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link, type LinkProps } from "react-router";
 
 import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
-import { cardVariants, SectionEyebrow } from "../primitives";
+import { buttonVariants, cardVariants, SectionEyebrow } from "../primitives";
 
 const DEAD_END_BODY_CLASS_NAME =
   "flex flex-col items-center px-6 py-16 text-center";
@@ -85,6 +87,34 @@ export function DeadEndPage({
         {children}
       </DeadEndContent>
     </main>
+  );
+}
+
+type DeadEndLinkProps = Omit<LinkProps, "className"> & {
+  className?: string;
+  direction: "back" | "forward";
+};
+
+export function DeadEndLink({
+  children,
+  className,
+  direction,
+  ...props
+}: DeadEndLinkProps) {
+  return (
+    <Link
+      className={cn(
+        buttonVariants({ size: "lg", variant: "inverted" }),
+        className,
+      )}
+      {...props}
+    >
+      {direction === "back" ? <ArrowLeft aria-hidden="true" size={18} /> : null}
+      {children}
+      {direction === "forward" ? (
+        <ArrowRight aria-hidden="true" size={18} />
+      ) : null}
+    </Link>
   );
 }
 

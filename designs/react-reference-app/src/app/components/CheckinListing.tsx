@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
-import { useLocation, useSearchParams } from 'react-router';
-import { CalendarSearch, type LucideIcon } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
-import { useCheckins } from '../context/CheckinContext';
-import type { CheckIn, CheckinParty } from '../domain/checkins';
+import type { ReactNode } from "react";
+import { useLocation, useSearchParams } from "react-router";
+import { CalendarSearch, type LucideIcon } from "lucide-react";
+import { useAppState } from "../context/AppContext";
+import { useCheckins } from "../context/CheckinContext";
+import type { CheckIn, CheckinParty } from "../domain/checkins";
 import {
   countsByKind,
   countsByWaiting,
@@ -19,46 +19,46 @@ import {
   type CheckinTab,
   type KindFilter,
   type WaitingFilter,
-} from '../utils/checkinListing';
-import { pageOf, parsePage } from '../utils/listPaging';
-import { EmptyState } from './EmptyState';
-import { ListPager } from './ListPager';
-import { SearchField } from './SearchField';
-import { SortControl, type SortChoice, type SortOption } from './SortControl';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+} from "../utils/checkinListing";
+import { pageOf, parsePage } from "../utils/listPaging";
+import { EmptyState } from "./EmptyState";
+import { ListPager } from "./ListPager";
+import { SearchField } from "./SearchField";
+import { SortControl, type SortChoice, type SortOption } from "./SortControl";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+} from "./ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
-const TAB_PARAM = 'view';
-const KIND_PARAM = 'kind';
-const WAITING_PARAM = 'waiting';
-const QUERY_PARAM = 'q';
-const DIRECTION_PARAM = 'dir';
-const PAGE_PARAM = 'page';
+const TAB_PARAM = "view";
+const KIND_PARAM = "kind";
+const WAITING_PARAM = "waiting";
+const QUERY_PARAM = "q";
+const DIRECTION_PARAM = "dir";
+const PAGE_PARAM = "page";
 const CHECKINS_PER_PAGE = 10;
 
 const TAB_LABELS: Record<CheckinTab, string> = {
-  upcoming: 'Upcoming',
-  requests: 'Requests',
-  past: 'Past',
+  upcoming: "Upcoming",
+  requests: "Requests",
+  past: "Past",
 };
 
 const KIND_LABELS: Record<KindFilter, string> = {
-  any: 'All kinds',
-  recurring: 'Recurring',
-  'ad-hoc': 'Ad-hoc',
-  'program-review': 'Program review',
+  any: "All kinds",
+  recurring: "Recurring",
+  "ad-hoc": "Ad-hoc",
+  "program-review": "Program review",
 };
 
-const MVP_KINDS: readonly KindFilter[] = ['any', 'recurring', 'ad-hoc'];
-const POST_MVP_KINDS: readonly KindFilter[] = [...MVP_KINDS, 'program-review'];
+const MVP_KINDS: readonly KindFilter[] = ["any", "recurring", "ad-hoc"];
+const POST_MVP_KINDS: readonly KindFilter[] = [...MVP_KINDS, "program-review"];
 
 export type CheckinEmptyCopy = {
   icon: LucideIcon;
@@ -66,14 +66,14 @@ export type CheckinEmptyCopy = {
   description: string;
 };
 
-function dateSortOptions(tab: CheckinTab): readonly SortOption<'date'>[] {
+function dateSortOptions(tab: CheckinTab): readonly SortOption<"date">[] {
   return [
     {
-      key: 'date',
-      label: 'Check-in date',
-      order: 'chronological',
+      key: "date",
+      label: "Check-in date",
+      order: "chronological",
       defaultDirection: defaultDirectionFor(tab),
-      directionLabels: { asc: 'Soonest first', desc: 'Latest first' },
+      directionLabels: { asc: "Soonest first", desc: "Latest first" },
     },
   ];
 }
@@ -94,10 +94,7 @@ function CountedSelect<Value extends string>({
   onChoose: (value: Value) => void;
 }) {
   return (
-    <Select
-      value={value}
-      onValueChange={(chosen) => onChoose(chosen as Value)}
-    >
+    <Select value={value} onValueChange={(chosen) => onChoose(chosen as Value)}>
       <SelectTrigger aria-label={label} size="sm" className="w-full">
         <SelectValue>{labels[value]}</SelectValue>
       </SelectTrigger>
@@ -145,10 +142,10 @@ export function CheckinListing({
   const selection: CheckinSelection = {
     kind: parseKindFilter(searchParams.get(KIND_PARAM)),
     waiting:
-      tab === 'requests'
+      tab === "requests"
         ? parseWaitingFilter(searchParams.get(WAITING_PARAM))
-        : 'any',
-    query: search ? (searchParams.get(QUERY_PARAM) ?? '') : '',
+        : "any",
+    query: search ? (searchParams.get(QUERY_PARAM) ?? "") : "",
   };
   const direction = parseDirection(searchParams.get(DIRECTION_PARAM), tab);
   const page = parsePage(searchParams.get(PAGE_PARAM));
@@ -166,10 +163,11 @@ export function CheckinListing({
   });
   const view = pageOf(shown, { page, perPage: CHECKINS_PER_PAGE });
   const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
-  const kinds = appState.prototypeMode === 'post-mvp' ? POST_MVP_KINDS : MVP_KINDS;
+  const kinds =
+    appState.prototypeMode === "post-mvp" ? POST_MVP_KINDS : MVP_KINDS;
   const waitingLabels: Record<WaitingFilter, string> = {
-    any: 'All requests',
-    you: 'Needs your answer',
+    any: "All requests",
+    you: "Needs your answer",
     them: waitingForLabel,
   };
 
@@ -199,23 +197,28 @@ export function CheckinListing({
   };
 
   const chooseKind = (kind: KindFilter) => {
-    updateSearchParams((params) => setOrClear(params, KIND_PARAM, kind, 'any'));
+    updateSearchParams((params) => setOrClear(params, KIND_PARAM, kind, "any"));
   };
 
   const chooseWaiting = (waiting: WaitingFilter) => {
     updateSearchParams((params) =>
-      setOrClear(params, WAITING_PARAM, waiting, 'any'),
+      setOrClear(params, WAITING_PARAM, waiting, "any"),
     );
   };
 
-  const chooseSort = (sort: SortChoice<'date'>) => {
+  const chooseSort = (sort: SortChoice<"date">) => {
     updateSearchParams((params) =>
-      setOrClear(params, DIRECTION_PARAM, sort.direction, defaultDirectionFor(tab)),
+      setOrClear(
+        params,
+        DIRECTION_PARAM,
+        sort.direction,
+        defaultDirectionFor(tab),
+      ),
     );
   };
 
   const changeQuery = (value: string) => {
-    updateSearchParams((params) => setOrClear(params, QUERY_PARAM, value, ''));
+    updateSearchParams((params) => setOrClear(params, QUERY_PARAM, value, ""));
   };
 
   const clearFilters = () => {
@@ -228,7 +231,7 @@ export function CheckinListing({
 
   const pathForPage = (chosen: number) => {
     const params = new URLSearchParams(searchParams);
-    setOrClear(params, PAGE_PARAM, String(chosen), '1');
+    setOrClear(params, PAGE_PARAM, String(chosen), "1");
     const query = params.toString();
     return query.length > 0 ? `${pathname}?${query}` : pathname;
   };
@@ -238,8 +241,8 @@ export function CheckinListing({
       ? emptyCopy[tab]
       : {
           icon: CalendarSearch,
-          title: 'No check-ins match',
-          description: 'Try another filter or search.',
+          title: "No check-ins match",
+          description: "Try another filter or search.",
         };
 
   return (
@@ -252,16 +255,30 @@ export function CheckinListing({
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
           <TabsList>
-            {(['upcoming', 'requests', 'past'] as const).map((value) => (
+            {(["upcoming", "requests", "past"] as const).map((value) => (
               <TabsTrigger key={value} value={value} className="px-4 sm:px-5">
                 {TAB_LABELS[value]}
-                {value === 'requests' && awaitingViewer > 0 && (
-                  <Badge tone="count">{awaitingViewer}</Badge>
+                {value === "requests" && awaitingViewer > 0 && (
+                  <>
+                    <Badge
+                      tone="count"
+                      data-parity="requests-count"
+                      aria-hidden="true"
+                    >
+                      {awaitingViewer}
+                    </Badge>
+                    <span className="sr-only">
+                      {awaitingViewer} waiting on you
+                    </span>
+                  </>
                 )}
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="grid gap-3 sm:grid-flow-col sm:auto-cols-fr">
+          <div
+            className="grid gap-3 sm:grid-flow-col sm:auto-cols-fr"
+            data-parity="checkin-filters"
+          >
             <CountedSelect
               label="Kind"
               value={selection.kind}
@@ -270,11 +287,11 @@ export function CheckinListing({
               counts={countsByKind(inTab, selection, party)}
               onChoose={chooseKind}
             />
-            {tab === 'requests' && (
+            {tab === "requests" && (
               <CountedSelect
                 label="Waiting on"
                 value={selection.waiting}
-                options={['any', 'you', 'them']}
+                options={["any", "you", "them"]}
                 labels={waitingLabels}
                 counts={countsByWaiting(inTab, selection, party)}
                 onChoose={chooseWaiting}
@@ -283,7 +300,10 @@ export function CheckinListing({
           </div>
         </div>
 
-        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+        <div
+          className="grid w-full gap-3 sm:w-fit sm:max-w-full"
+          data-parity="checkin-search-sort"
+        >
           {search && (
             <SearchField
               aria-label="Search check-ins"
@@ -296,19 +316,20 @@ export function CheckinListing({
           )}
           <SortControl
             options={dateSortOptions(tab)}
-            sort={{ key: 'date', direction }}
+            sort={{ key: "date", direction }}
             onChange={chooseSort}
             className="sm:w-72"
           />
         </div>
       </div>
 
-      <TabsContent value={tab}>
+      <TabsContent value={tab} data-parity="checkins-tab-panel">
         {view.items.length === 0 ? (
           <EmptyState
             icon={empty.icon}
             title={empty.title}
             description={empty.description}
+            descriptionParity="checkins-empty-description"
             action={
               inTab.length > 0 && hasActiveFilters(selection) ? (
                 <Button variant="outline" onClick={clearFilters}>
@@ -319,9 +340,14 @@ export function CheckinListing({
           />
         ) : (
           <>
-            <ul aria-label={`${TAB_LABELS[tab]} check-ins`} className="space-y-3">
+            <ul
+              aria-label={`${TAB_LABELS[tab]} check-ins`}
+              className="space-y-3"
+            >
               {view.items.map((checkin) => (
-                <li key={checkin.id}>{renderCheckin(checkin, tab)}</li>
+                <li key={checkin.id} data-parity="checkin-row">
+                  {renderCheckin(checkin, tab)}
+                </li>
               ))}
             </ul>
             {view.pageCount > 1 && (

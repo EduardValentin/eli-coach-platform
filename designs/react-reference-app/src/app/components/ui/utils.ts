@@ -1,7 +1,17 @@
 import { clsx, type ClassValue } from 'clsx';
 import { extendTailwindMerge } from 'tailwind-merge';
 
+const ENABLED_ONLY_MODIFIER = 'not-aria-disabled';
+
 const twMerge = extendTailwindMerge({
+  experimentalParseClassName: ({ className, parseClassName }) => {
+    const parsed = parseClassName(className);
+
+    return {
+      ...parsed,
+      modifiers: parsed.modifiers.filter((modifier) => modifier !== ENABLED_ONLY_MODIFIER),
+    };
+  },
   extend: {
     theme: {
       text: [
