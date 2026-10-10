@@ -16,6 +16,7 @@ function flatOrInConceptFolder(patterns) {
 }
 
 const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared|server/guards)/";
+const FEATURE_SCHEMA = `${FEATURES}[^/]+/data/schema\\.server\\.ts$`;
 const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
@@ -54,9 +55,9 @@ function featureOrderRule(feature, position) {
 
   return {
     name: `feature-order-${feature}`,
-    comment: `A feature imports only the features before it in FEATURE_ORDER: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"}.`,
+    comment: `A feature imports only the features before it in FEATURE_ORDER: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"}. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
     severity: "error",
-    from: { path: `${FEATURES}${feature}/` },
+    from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
     to: {
       path: FEATURES,
       pathNot: `${FEATURES}(${[...earlierFeatures, feature].join("|")})/`,
@@ -97,7 +98,7 @@ module.exports = {
       severity: "error",
       from: {
         path: `${FEATURES}([^/]+)/`,
-        pathNot: `${FEATURES}[^/]+/data/schema\\.server\\.ts$`,
+        pathNot: FEATURE_SCHEMA,
       },
       to: {
         path: `${FEATURES}(?!$1/)[^/]+/`,
@@ -107,16 +108,21 @@ module.exports = {
     {
       name: "feature-schema-foreign-key",
       comment:
-        "R3 carve-out: data/schema.server.ts may import another feature's data/schema.server.ts for a foreign key and nothing else private.",
+        "R3 carve-out: data/schema.server.ts may import any feature's data/schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and nothing else private.",
       severity: "error",
       from: { path: `${FEATURES}([^/]+)/data/schema\\.server\\.ts$` },
       to: {
         path: `${FEATURES}(?!$1/)[^/]+/`,
-        pathNot: [
-          `${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`,
-          `${FEATURES}[^/]+/data/schema\\.server\\.ts$`,
-        ],
+        pathNot: [`${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`, FEATURE_SCHEMA],
       },
+    },
+    {
+      name: "feature-schema-imports-schemas-only",
+      comment:
+        "A schema file sits outside FEATURE_ORDER, so another feature's data/schema.server.ts is the only thing of that feature it imports: not even its public folders.",
+      severity: "error",
+      from: { path: `${FEATURES}([^/]+)/data/schema\\.server\\.ts$` },
+      to: { path: `${FEATURES}(?!$1/)[^/]+/${FEATURE_PUBLIC_FOLDERS}` },
     },
     ...FEATURE_ORDER.map(featureOrderRule),
     surfaceToFeatureRule("public-site", "public"),
