@@ -197,6 +197,24 @@ export class ClientCheckInsPage {
     await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
   }
 
+  async declineNoLongerWaiting(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await this.checkIn("Requests", note)
+      .getByRole("button", { name: "Decline" })
+      .click();
+    await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
+  }
+
+  async approveByKeyboard(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await tabTo(
+      this.page,
+      this.checkIn("Requests", note).getByRole("button", { name: "Approve" }),
+    );
+    await this.page.keyboard.press("Enter");
+    await expect(this.page.getByText("Check-in approved")).toBeVisible();
+  }
+
   async withdraw(note: string): Promise<void> {
     await this.showTab("Requests");
     await this.checkIn("Requests", note)

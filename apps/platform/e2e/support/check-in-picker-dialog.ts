@@ -1,4 +1,9 @@
-import { expect, type Page, type Request } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+} from "@playwright/test";
 
 import { clockTimeOf, dayNameOf, spacedPattern } from "./check-in-moments";
 import { tabTo } from "./keyboard";
@@ -193,7 +198,7 @@ export class CheckInPickerDialog {
     ).toBeDisabled();
   }
 
-  async expectOffers(picked: PickedCheckIn): Promise<void> {
+  private async timeOn(picked: PickedCheckIn): Promise<Locator> {
     const { startsAt, timeZone } = picked;
     const day = this.days.getByRole("gridcell", {
       name: new RegExp(`^${spacedPattern(dayNameOf(startsAt, timeZone))}`),
@@ -203,9 +208,19 @@ export class CheckInPickerDialog {
       await day.getByRole("button").click();
     }
     await expect(
-      this.dialog.getByRole("button", {
-        name: new RegExp(`^${spacedPattern(clockTimeOf(startsAt, timeZone))}$`),
-      }),
+      this.dialog.getByRole("button", { name: CLOCK_TIME }).first(),
     ).toBeVisible();
+
+    return this.dialog.getByRole("button", {
+      name: new RegExp(`^${spacedPattern(clockTimeOf(startsAt, timeZone))}$`),
+    });
+  }
+
+  async expectOffers(picked: PickedCheckIn): Promise<void> {
+    await expect(await this.timeOn(picked)).toBeVisible();
+  }
+
+  async expectNotOffered(picked: PickedCheckIn): Promise<void> {
+    await expect(await this.timeOn(picked)).toHaveCount(0);
   }
 }

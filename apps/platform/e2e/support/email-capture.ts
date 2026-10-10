@@ -116,6 +116,18 @@ export async function refuseEmailsTo(address: string): Promise<void> {
   }
 }
 
+export async function acceptEmailsTo(address: string): Promise<void> {
+  const response = await fetch(`${EMAIL_CAPTURE_URL}${REFUSALS_PATH}`, {
+    body: JSON.stringify({ to: address }),
+    headers: { "Content-Type": "application/json" },
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`The email capture still refuses ${address}.`);
+  }
+}
+
 type CaptureExchange = {
   request: IncomingMessage;
   response: ServerResponse;
@@ -128,6 +140,11 @@ async function answerCaptureRequest(exchange: CaptureExchange): Promise<void> {
 
   if (url.pathname === REFUSALS_PATH && exchange.request.method === "POST") {
     await recordRefusal(exchange);
+    return;
+  }
+
+  if (url.pathname === REFUSALS_PATH && exchange.request.method === "DELETE") {
+    await liftRefusal(exchange);
     return;
   }
 
@@ -176,6 +193,12 @@ async function captureSentEmail(exchange: CaptureExchange): Promise<void> {
 async function recordRefusal(exchange: CaptureExchange): Promise<void> {
   const { to } = JSON.parse(await readBody(exchange.request)) as { to: string };
   exchange.refusedRecipients.add(to);
+  respondWithJson(exchange.response, { status: 200, body: { to } });
+}
+
+async function liftRefusal(exchange: CaptureExchange): Promise<void> {
+  const { to } = JSON.parse(await readBody(exchange.request)) as { to: string };
+  exchange.refusedRecipients.delete(to);
   respondWithJson(exchange.response, { status: 200, body: { to } });
 }
 

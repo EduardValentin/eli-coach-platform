@@ -9,10 +9,12 @@ import {
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
+import { tabTo } from "./keyboard";
 
 const CHECK_INS_PATH = "/coach/checkins";
 const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
 const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
+const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
 export class CoachCheckInsPage {
@@ -127,6 +129,34 @@ export class CoachCheckInsPage {
       .getByRole("button", { name: "Cancel request" })
       .click();
     await expect(this.page.getByText("Request cancelled")).toBeVisible();
+  }
+
+  async cancelRequestByKeyboard(note: string): Promise<void> {
+    await this.showTab("Requests");
+    await tabTo(
+      this.page,
+      this.checkIn("Requests", note).getByRole("button", {
+        name: "Cancel request",
+      }),
+    );
+    await this.page.keyboard.press("Enter");
+    await expect(this.page.getByText("Request cancelled")).toBeVisible();
+  }
+
+  async expectWaitingOnYouBeforeYourOwn(
+    waitingNote: string,
+    ownNote: string,
+  ): Promise<void> {
+    await this.showTab("Requests");
+    await expect(this.checkIn("Requests", ownNote)).toBeVisible();
+    await expect(this.checkIn("Requests", waitingNote)).toBeVisible();
+    const listed = await checkInsListed(this.page, "Requests").allInnerTexts();
+    const isOwn = listed.map((text) => text.includes(REQUESTED_BY_YOU));
+
+    expect(isOwn[listed.findIndex((text) => text.includes(waitingNote))]).toBe(
+      false,
+    );
+    expect(isOwn.lastIndexOf(false)).toBeLessThan(isOwn.indexOf(true));
   }
 
   async joinFromRow(clientName: string): Promise<void> {
