@@ -103,7 +103,10 @@ export function SheetDialogHeader({
   titleRef?: RefObject<HTMLHeadingElement>;
 }) {
   return (
-    <div className={cn('shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8', RULE_COLOR_CLASS[rule])}>
+    <div
+      data-parity="sheet-header"
+      className={cn('shrink-0 border-b px-5 pt-6 pb-4 md:px-8 md:pt-8', RULE_COLOR_CLASS[rule])}
+    >
       {eyebrow}
       <h3
         ref={titleRef}
@@ -113,7 +116,9 @@ export function SheetDialogHeader({
         {title}
       </h3>
       {description && (
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">{description}</p>
+        <p data-parity="sheet-description" className="mt-1 text-xs text-text-secondary sm:text-sm">
+          {description}
+        </p>
       )}
     </div>
   );
