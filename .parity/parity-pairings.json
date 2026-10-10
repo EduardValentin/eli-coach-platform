@@ -2,5 +2,12 @@
   "C36": {
     "div > div:nth-of-type(2) > div:nth-of-type(1) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)": "div > div:nth-of-type(2) > div:nth-of-type(1) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(1) > div:nth-of-type(1) > span:nth-of-type(1) > span:nth-of-type(1)",
     "div > div:nth-of-type(2) > div:nth-of-type(1) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(2) > td:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)": "div > div:nth-of-type(2) > div:nth-of-type(1) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(2) > td:nth-of-type(1) > div:nth-of-type(1) > span:nth-of-type(1) > span:nth-of-type(1)"
+  },
+  "C98": {
+    "div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)": "div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)",
+    "div > header:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)": "div > header:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)"
+  },
+  "C105": {
+    "div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)": "div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)"
   }
 }
