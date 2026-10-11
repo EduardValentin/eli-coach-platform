@@ -12,11 +12,13 @@ import { AddResourceDialog } from "./add-resource-dialog";
 import { BookingPage } from "./booking-page";
 import { CheckInRecords } from "./check-in-records";
 import {
+  CHECK_IN_PROPOSE_PICKER,
   CHECK_IN_REQUEST_PICKER,
   CHECK_IN_SCHEDULE_PICKER,
   CheckInPickerDialog,
 } from "./check-in-picker-dialog";
 import { CheckInRequests } from "./check-in-requests";
+import { CANCEL_CHECK_IN_LABELS } from "./check-in-rows";
 import { ClientCheckInsPage } from "./client-check-ins-page";
 import { ClientDashboard } from "./client-dashboard";
 import { ClientEndedPage } from "./client-ended-page";
@@ -34,6 +36,7 @@ import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
+import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   insertMeasuredClientRecords,
   type MeasuredClientSeed,
@@ -107,6 +110,8 @@ type PlatformFixtures = {
   clientCheckIns: ClientCheckInsPage;
   checkInRequestDialog: CheckInPickerDialog;
   checkInScheduleDialog: CheckInPickerDialog;
+  checkInProposeDialog: CheckInPickerDialog;
+  cancelCheckInDialog: ConfirmationDialog;
   privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
@@ -384,6 +389,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   checkInScheduleDialog: async ({ page }, use) => {
     await use(new CheckInPickerDialog(page, CHECK_IN_SCHEDULE_PICKER));
+  },
+
+  checkInProposeDialog: async ({ page }, use) => {
+    await use(new CheckInPickerDialog(page, CHECK_IN_PROPOSE_PICKER));
+  },
+
+  cancelCheckInDialog: async ({ page }, use) => {
+    await use(new ConfirmationDialog(page, CANCEL_CHECK_IN_LABELS));
   },
 
   measurementsSheet: async ({ page }, use) => {

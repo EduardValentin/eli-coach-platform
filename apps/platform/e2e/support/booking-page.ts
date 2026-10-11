@@ -22,6 +22,8 @@ export const BOOKING_PROFILE = {
 } as const;
 
 const CLOCK_TIME = /^\d{1,2}:\d{2}/;
+const NEXT_MONTH = /next month/i;
+const MONTHS_AHEAD = 2;
 
 export class BookingPage {
   constructor(private readonly page: Page) {}
@@ -35,13 +37,22 @@ export class BookingPage {
   }
 
   private async showDayOf(instant: Date, timeZone: string): Promise<void> {
+    const days = this.page.getByRole("grid", { name: "Available days" });
+    const day = days.getByRole("button", {
+      name: new RegExp(`^${spacedPattern(dayNameOf(instant, timeZone))}`),
+    });
+
     await this.page.goto("/book");
-    await this.page
-      .getByRole("grid", { name: "Available days" })
-      .getByRole("button", {
-        name: new RegExp(`^${spacedPattern(dayNameOf(instant, timeZone))}`),
-      })
-      .click();
+    await expect(days.getByRole("button").first()).toBeVisible();
+    for (
+      let shown = 0;
+      shown < MONTHS_AHEAD &&
+      ((await day.count()) === 0 || (await day.isDisabled()));
+      shown += 1
+    ) {
+      await this.page.getByRole("button", { name: NEXT_MONTH }).click();
+    }
+    await day.click();
     await expect(this.times).not.toHaveCount(0);
   }
 

@@ -87,7 +87,9 @@ test(
     await page.goto("/store");
     await signInAsCoach();
     const coachProblems = collectPageProblems(page);
-    const latestOpenTime = (await checkInRequests.openTimes()).at(-1);
+    const latestOpenTime = (
+      await checkInRequests.openTimesFor(client.clientId)
+    ).at(-1);
     await checkInRecords.holdHourFor(
       client.clientId,
       latestOpenTime!,
@@ -333,7 +335,7 @@ test.describe("on a touch screen", () => {
       await coachClient.expectScheduleReasonOnTap(onboarding.gender);
 
       // act
-      const [soonest] = await checkInRequests.openTimes();
+      const [soonest] = await checkInRequests.openTimesFor(onboarding.clientId);
       const onboardingAnswer = await checkInRequests.schedule(
         onboarding.clientId,
         soonest!,
@@ -394,7 +396,7 @@ test(
     await coachClient.open(client.clientId);
     await coachClient.openScheduleDialog();
     const first = await checkInScheduleDialog.sendSoonest(OWN_NOTE);
-    const [nextOpenTime] = await checkInRequests.openTimes();
+    const [nextOpenTime] = await checkInRequests.openTimesFor(client.clientId);
 
     // act
     const secondAnswer = await checkInRequests.schedule(
@@ -479,7 +481,7 @@ test(
     const client = await provisionSubmittedClient("waiting");
     await page.goto("/store");
     await signInAsCoach();
-    const [soonest, next] = await checkInRequests.openTimes();
+    const [soonest, next] = await checkInRequests.openTimesFor(client.clientId);
     const scheduledAnswers = [
       await checkInRequests.schedule(
         client.clientId,
@@ -751,7 +753,9 @@ test(
     const client = await provisionSubmittedClient("waiting");
     await page.goto("/store");
     await signInAsCoach();
-    const [declinedTime, approvedTime] = await checkInRequests.openTimes();
+    const [declinedTime, approvedTime] = await checkInRequests.openTimesFor(
+      client.clientId,
+    );
     await checkInRequests.schedule(
       client.clientId,
       declinedTime!,
@@ -839,7 +843,9 @@ test(
     await checkInRecords.moveBookingZone(client.clientId, BOOKING_TIME_ZONE);
     await page.goto("/store");
     await signInAsCoach();
-    const [cancelledTime, approvedTime] = await checkInRequests.openTimes();
+    const [cancelledTime, approvedTime] = await checkInRequests.openTimesFor(
+      client.clientId,
+    );
     await checkInRequests.schedule(
       client.clientId,
       cancelledTime!,
@@ -903,7 +909,7 @@ test(
     const client = await provisionSubmittedClient("waiting");
     await page.goto("/store");
     await signInAsCoach();
-    const [taken, next] = await checkInRequests.openTimes();
+    const [taken, next] = await checkInRequests.openTimesFor(client.clientId);
     await coachClient.open(client.clientId);
     await coachClient.openScheduleDialog();
     await checkInScheduleDialog.chooseSoonest(TAKEN_NOTE);

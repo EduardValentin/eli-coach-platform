@@ -5,7 +5,12 @@ import {
   type Request,
 } from "@playwright/test";
 
-import { clockTimeOf, dayNameOf, spacedPattern } from "./check-in-moments";
+import {
+  clockTimeOf,
+  dayNameOf,
+  shortMomentOf,
+  spacedPattern,
+} from "./check-in-moments";
 import { tabTo } from "./keyboard";
 import { escapedPattern } from "./locator-text";
 
@@ -14,31 +19,38 @@ export type PickedCheckIn = { startsAt: Date; timeZone: string };
 export type CheckInPickerKind = {
   title: string | RegExp;
   stepVerb: string;
-  endpoint: string;
+  endpoint: RegExp;
 };
 
 export const CHECK_IN_REQUEST_PICKER: CheckInPickerKind = {
   title: "Request a check-in",
   stepVerb: "Request",
-  endpoint: "/api/check-ins",
+  endpoint: /^\/api\/check-ins(\.data)?$/,
 };
 
 export const CHECK_IN_SCHEDULE_PICKER: CheckInPickerKind = {
   title: /^Schedule a check-in with \S+$/,
   stepVerb: "Schedule",
-  endpoint: "/api/check-ins/schedule",
+  endpoint: /^\/api\/check-ins\/schedule(\.data)?$/,
+};
+
+export const CHECK_IN_PROPOSE_PICKER: CheckInPickerKind = {
+  title: "Propose a new time",
+  stepVerb: "Propose",
+  endpoint: /^\/api\/check-ins\/[^/]+\/new-time(\.data)?$/,
 };
 
 const CLOCK_TIME = /^\d{1,2}:\d{2}/;
 const NOTE_FIELD = /^Add a note for .+ \(optional\)$/;
 const TIME_TAKEN = "That time is no longer free. Pick another one.";
 const SHEET_HANDLE = '[data-parity="sheet-handle"]';
+const NEXT_MONTH = /next month/i;
+const MONTHS_AHEAD = 2;
 
 type PickedCheckInBody = { startsAt: string };
 
 export class CheckInPickerDialog {
   private readonly stepButtonName: RegExp;
-  private readonly submissionPath: RegExp;
 
   constructor(
     private readonly page: Page,
@@ -46,9 +58,6 @@ export class CheckInPickerDialog {
   ) {
     this.stepButtonName = new RegExp(
       `^${escapedPattern(kind.stepVerb)} \\d{1,2}:\\d{2}`,
-    );
-    this.submissionPath = new RegExp(
-      `^${escapedPattern(kind.endpoint)}(\\.data)?$`,
     );
   }
 
@@ -71,7 +80,7 @@ export class CheckInPickerDialog {
   private isSubmission(request: Request): boolean {
     return (
       request.method() === "POST" &&
-      this.submissionPath.test(new URL(request.url()).pathname)
+      this.kind.endpoint.test(new URL(request.url()).pathname)
     );
   }
 
@@ -114,6 +123,14 @@ export class CheckInPickerDialog {
         exact: true,
       }),
     ).toBeVisible();
+  }
+
+  async expectCurrentTime(current: PickedCheckIn): Promise<void> {
+    await expect(this.dialog).toContainText(
+      new RegExp(
+        `Currently set for ${spacedPattern(shortMomentOf(current.startsAt, current.timeZone))}`,
+      ),
+    );
   }
 
   async expectClosed(): Promise<void> {
@@ -190,12 +207,25 @@ export class CheckInPickerDialog {
     await expect(this.noteField).toHaveValue(note);
   }
 
+  private async showMonthOf(day: Locator): Promise<void> {
+    await expect(this.days.getByRole("button").first()).toBeVisible();
+
+    for (
+      let shown = 0;
+      shown < MONTHS_AHEAD && (await day.count()) === 0;
+      shown += 1
+    ) {
+      await this.dialog.getByRole("button", { name: NEXT_MONTH }).click();
+    }
+  }
+
   async expectDayUnavailable(instant: Date, timeZone: string): Promise<void> {
-    await expect(
-      this.days.getByRole("button", {
-        name: new RegExp(spacedPattern(dayNameOf(instant, timeZone))),
-      }),
-    ).toBeDisabled();
+    const day = this.days.getByRole("button", {
+      name: new RegExp(spacedPattern(dayNameOf(instant, timeZone))),
+    });
+
+    await this.showMonthOf(day);
+    await expect(day).toBeDisabled();
   }
 
   private async timeOn(picked: PickedCheckIn): Promise<Locator> {

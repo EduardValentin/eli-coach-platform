@@ -2,6 +2,12 @@ import { expect, type Page } from "@playwright/test";
 
 export type CheckInAnswer = { status: number; body: unknown };
 
+type CheckInNewTime = {
+  startsAt: Date;
+  note?: string;
+  timeZone?: string;
+};
+
 type OpenTimesBody = { times: string[] };
 
 const REQUESTS_PATH = "/api/check-ins";
@@ -22,12 +28,22 @@ export class CheckInRequests {
     return { status: response.status(), body: await response.json() };
   }
 
-  async openTimes(): Promise<Date[]> {
-    const response = await this.page.request.get(OPEN_TIMES_PATH);
+  private async openTimesAt(path: string): Promise<Date[]> {
+    const response = await this.page.request.get(path);
     expect(response.status()).toBe(OK);
     const { times } = (await response.json()) as OpenTimesBody;
 
     return times.map((time) => new Date(time));
+  }
+
+  async openTimes(): Promise<Date[]> {
+    return this.openTimesAt(OPEN_TIMES_PATH);
+  }
+
+  async openTimesFor(clientId: string): Promise<Date[]> {
+    return this.openTimesAt(
+      `${OPEN_TIMES_PATH}?${new URLSearchParams({ clientId })}`,
+    );
   }
 
   async ask(startsAt: Date, timeZone: string): Promise<CheckInAnswer> {
@@ -59,5 +75,19 @@ export class CheckInRequests {
 
   async withdraw(checkInId: string): Promise<CheckInAnswer> {
     return this.answerOf(this.answerPathOf(checkInId, "withdrawal"), {});
+  }
+
+  async proposeNewTime(
+    checkInId: string,
+    newTime: CheckInNewTime,
+  ): Promise<CheckInAnswer> {
+    return this.answerOf(this.answerPathOf(checkInId, "new-time"), {
+      ...newTime,
+      startsAt: newTime.startsAt.toISOString(),
+    });
+  }
+
+  async cancel(checkInId: string): Promise<CheckInAnswer> {
+    return this.answerOf(this.answerPathOf(checkInId, "cancellation"), {});
   }
 }

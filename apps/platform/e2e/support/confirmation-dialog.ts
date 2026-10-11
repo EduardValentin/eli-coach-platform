@@ -87,6 +87,25 @@ export class ConfirmationDialog {
     await expect(this.dialog.getByRole("alert")).toHaveCount(0);
   }
 
+  async expectWithinViewport(): Promise<void> {
+    await expect(this.dialog).toBeVisible();
+    await expect
+      .poll(async () => {
+        const box = await this.dialog.boundingBox();
+        const viewport = this.page.viewportSize();
+
+        return (
+          box !== null &&
+          viewport !== null &&
+          box.x >= 0 &&
+          box.y >= 0 &&
+          box.x + box.width <= viewport.width &&
+          box.y + box.height <= viewport.height
+        );
+      })
+      .toBe(true);
+  }
+
   async expectClosed(): Promise<void> {
     await expect(this.dialog).toBeHidden();
   }
