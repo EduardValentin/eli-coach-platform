@@ -8,7 +8,10 @@ import type {
 } from "~/features/client-resources/public/client-resources";
 import { resourceOpenedPath } from "~/features/client-resources/public/paths";
 import { ResourceGallery } from "~/features/client-resources/ui/shared/resources/resource-gallery";
+import { ResourceNoMatches } from "~/features/client-resources/ui/shared/resources/resource-no-matches";
+import { ResourceToolbar } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 import { ResourcesUnavailable } from "~/features/client-resources/ui/shared/resources/resources-unavailable";
+import { useResourceBrowse } from "~/features/client-resources/ui/shared/resources/use-resource-browse";
 
 type ClientResourceLibraryProps = {
   listing: ClientResourceListing;
@@ -23,28 +26,43 @@ export function ClientResourceLibrary({ listing }: ClientResourceLibraryProps) {
     );
   }
 
-  return <ReadyClientResourceLibrary resources={listing.resources} />;
+  return <ReadyClientResourceLibrary listing={listing} />;
 }
 
 type ReadyClientResourceLibraryProps = {
-  resources: readonly ClientResourceView[];
+  listing: Extract<ClientResourceListing, { status: "ready" }>;
 };
 
 function ReadyClientResourceLibrary({
-  resources,
+  listing,
 }: ReadyClientResourceLibraryProps) {
+  const { resources } = listing;
   const openings = useResourceOpenings(resources);
+  const browsing = useResourceBrowse(listing.browse);
 
   return (
     <>
       <PortalPageHeader title="Resources" />
 
-      {resources.length > 0 ? (
+      {listing.total > 0 ? (
         <ResourceGallery
+          noMatches={
+            <ResourceNoMatches onClearFilters={browsing.clearFilters} />
+          }
           onOpenUnopened={openings.record}
           openingsBeingRecorded={openings.openingsBeingRecorded}
           perspective="client"
           resources={resources}
+          toolbar={
+            <ResourceToolbar
+              browse={browsing.browse}
+              onChooseTag={browsing.chooseTag}
+              onSearch={browsing.typeSearch}
+              searched={listing.searched}
+              tagOptions={listing.tagOptions}
+              typedSearch={browsing.typedSearch}
+            />
+          }
         />
       ) : (
         <EmptyState

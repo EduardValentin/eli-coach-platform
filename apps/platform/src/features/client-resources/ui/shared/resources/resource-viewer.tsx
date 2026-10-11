@@ -13,7 +13,11 @@ import {
   useIsDesktopViewport,
 } from "@eli-coach-platform/ui/lib";
 import { Reading } from "@eli-coach-platform/ui/portal";
-import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
+import {
+  Badge,
+  Button,
+  buttonVariants,
+} from "@eli-coach-platform/ui/primitives";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -181,6 +185,19 @@ function ResourceDetailsPanel({
         <p className="text-sm leading-relaxed whitespace-pre-line text-text-primary">
           {resource.description}
         </p>
+      )}
+      {resource.tags.length > 0 && (
+        <ul
+          aria-label="Tags"
+          className="flex flex-wrap gap-1.5"
+          data-parity="viewer-tags"
+        >
+          {resource.tags.map((tag) => (
+            <li key={tag}>
+              <Badge tone="brand-secondary">{tag}</Badge>
+            </li>
+          ))}
+        </ul>
       )}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
         <Reading

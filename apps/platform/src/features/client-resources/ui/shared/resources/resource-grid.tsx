@@ -10,6 +10,8 @@ type ResourceGridProps = {
   unopenedIds: ReadonlySet<string>;
   onOpen: (resource: ClientResourceView) => void;
   menuFor?: (resource: ClientResourceView) => ReactNode;
+  toolbar?: ReactNode;
+  noMatches?: ReactNode;
 };
 
 export function ResourceGrid({
@@ -18,21 +20,28 @@ export function ResourceGrid({
   unopenedIds,
   onOpen,
   menuFor,
+  toolbar,
+  noMatches,
 }: ResourceGridProps) {
   return (
     <section aria-label="Resources">
-      <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
-        {resources.map((resource) => (
-          <ResourceCard
-            key={resource.id}
-            menu={menuFor?.(resource)}
-            onOpen={() => onOpen(resource)}
-            perspective={perspective}
-            resource={resource}
-            unopened={unopenedIds.has(resource.id)}
-          />
-        ))}
-      </ul>
+      {toolbar}
+      {resources.length === 0 ? (
+        noMatches
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+          {resources.map((resource) => (
+            <ResourceCard
+              key={resource.id}
+              menu={menuFor?.(resource)}
+              onOpen={() => onOpen(resource)}
+              perspective={perspective}
+              resource={resource}
+              unopened={unopenedIds.has(resource.id)}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

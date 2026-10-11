@@ -1,5 +1,6 @@
 import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
+  MAX_RESOURCE_TAG_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,
   type ResourceDetailsProblems,
   type ResourceFileKind,
@@ -19,6 +20,7 @@ import {
   FilePickerButton,
   Input,
   Progress,
+  TagInput,
   Textarea,
 } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
@@ -30,7 +32,12 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  useWatch,
+  type UseFormReturn,
+} from "react-hook-form";
 
 import type { ClientResourceView } from "~/features/client-resources/public/client-resources";
 import {
@@ -63,7 +70,11 @@ type Dismissal = NonNullable<
   ComponentProps<typeof ResponsiveSheetDialog>["dismissal"]
 >;
 
-type ResourceFormValues = { title: string; description: string };
+type ResourceFormValues = {
+  title: string;
+  description: string;
+  tags: string[];
+};
 
 type ChosenUpload = { file: File; kind: ResourceFileKind };
 
@@ -90,6 +101,8 @@ const FIELD_COPY = {
   noTitle: "Give it a title.",
   titleTooLong: `Keep the title to ${MAX_RESOURCE_TITLE_LENGTH} characters.`,
   descriptionTooLong: `Keep the description to ${MAX_RESOURCE_DESCRIPTION_LENGTH.toLocaleString("en-GB")} characters.`,
+  tagTooLong: `Keep each tag to ${MAX_RESOURCE_TAG_LENGTH} characters.`,
+  tagPlaceholder: "Add a tag",
 } as const;
 
 const CANCEL = "Cancel";
@@ -106,7 +119,10 @@ const OPTIONAL_SUFFIX = [
   { parity: "description-optional", text: "(optional)" },
 ];
 
+const TAGS_OPTIONAL_SUFFIX = [{ text: "(optional)" }];
+
 type ResourceFormProps = {
+  vocabulary: readonly string[];
   onClose: () => void;
   onDismissalChange: (dismissal: Dismissal) => void;
 };
@@ -129,6 +145,9 @@ function showDetailsProblems(
   }
   if (problems.description) {
     form.setError("description", { message: FIELD_COPY.descriptionTooLong });
+  }
+  if (problems.tags) {
+    form.setError("tags", { message: FIELD_COPY.tagTooLong });
   }
 }
 
@@ -198,8 +217,10 @@ function ResourceFileRow({
 
 function ResourceDetailsFields({
   form,
+  vocabulary,
 }: {
   form: UseFormReturn<ResourceFormValues>;
+  vocabulary: readonly string[];
 }) {
   return (
     <>
@@ -232,6 +253,31 @@ function ResourceDetailsFields({
             {...form.register("description")}
             className="min-h-24"
             maxLength={MAX_RESOURCE_DESCRIPTION_LENGTH}
+          />
+        )}
+      </FieldLayout>
+
+      <FieldLayout
+        data-parity="resource-tags-field"
+        error={form.formState.errors.tags?.message}
+        label="Tags"
+        suffixes={TAGS_OPTIONAL_SUFFIX}
+      >
+        {(controlAttributes) => (
+          <Controller
+            control={form.control}
+            name="tags"
+            render={({ field }) => (
+              <TagInput
+                {...controlAttributes}
+                maxLength={MAX_RESOURCE_TAG_LENGTH}
+                onChange={field.onChange}
+                placeholder={FIELD_COPY.tagPlaceholder}
+                ref={field.ref}
+                value={field.value}
+                vocabulary={vocabulary}
+              />
+            )}
           />
         )}
       </FieldLayout>
@@ -342,13 +388,14 @@ function useChosenResourceFile(form: UseFormReturn<ResourceFormValues>) {
 
 function AddResourceForm({
   clientId,
+  vocabulary,
   onClose,
   onDismissalChange,
 }: ResourceFormProps & { clientId: string }) {
   const fileErrorId = useId();
   const [failed, setFailed] = useState(false);
   const form = useForm<ResourceFormValues>({
-    defaultValues: { title: "", description: "" },
+    defaultValues: { title: "", description: "", tags: [] },
   });
   const { chosen, fileError, chooseFile, showFileError } =
     useChosenResourceFile(form);
@@ -386,6 +433,7 @@ function AddResourceForm({
       file: chosen.file,
       title: values.title.trim(),
       description: values.description.trim(),
+      tags: values.tags,
     });
   });
 
@@ -427,7 +475,7 @@ function AddResourceForm({
         <FieldError id={fileErrorId} message={fileError ?? undefined} />
       </div>
 
-      <ResourceDetailsFields form={form} />
+      <ResourceDetailsFields form={form} vocabulary={vocabulary} />
 
       {failed && <Alert>{COPY.add.failed}</Alert>}
 
@@ -440,30 +488,46 @@ function AddResourceForm({
   );
 }
 
+function sameTagsInOrder(
+  tags: readonly string[],
+  stored: readonly string[],
+): boolean {
+  return (
+    tags.length === stored.length &&
+    tags.every((tag, index) => tag === stored[index])
+  );
+}
+
 function saveGateOf(
   resource: ClientResourceView,
-  [title, description]: readonly [string, string],
+  [title, description, tags]: readonly [string, string, string[]],
 ): ResourceFormState {
   const trimmedTitle = title.trim();
   const changed =
     trimmedTitle !== resource.title ||
-    description.trim() !== resource.description;
+    description.trim() !== resource.description ||
+    !sameTagsInOrder(tags, resource.tags);
 
   return trimmedTitle !== "" && changed ? "ready" : "blocked";
 }
 
 function EditResourceDetailsForm({
   resource,
+  vocabulary,
   onClose,
   onDismissalChange,
 }: ResourceFormProps & { resource: ClientResourceView }) {
   const [failed, setFailed] = useState(false);
   const form = useForm<ResourceFormValues>({
-    defaultValues: { title: resource.title, description: resource.description },
+    defaultValues: {
+      title: resource.title,
+      description: resource.description,
+      tags: [...resource.tags],
+    },
   });
   const typed = useWatch({
     control: form.control,
-    name: ["title", "description"],
+    name: ["title", "description", "tags"],
   });
 
   const settle = (outcome: ResourceDetailsChangeOutcome) => {
@@ -493,6 +557,7 @@ function EditResourceDetailsForm({
     change({
       title: values.title.trim(),
       description: values.description.trim(),
+      tags: values.tags,
     });
   });
 
@@ -506,7 +571,7 @@ function EditResourceDetailsForm({
         />
       </div>
 
-      <ResourceDetailsFields form={form} />
+      <ResourceDetailsFields form={form} vocabulary={vocabulary} />
 
       {failed && <Alert>{COPY.edit.failed}</Alert>}
 
@@ -534,10 +599,15 @@ function ResourceForm({
 
 type ResourceFormDialogProps = {
   mode: ResourceFormMode | null;
+  vocabulary: readonly string[];
   onClose: () => void;
 };
 
-export function ResourceFormDialog({ mode, onClose }: ResourceFormDialogProps) {
+export function ResourceFormDialog({
+  mode,
+  vocabulary,
+  onClose,
+}: ResourceFormDialogProps) {
   const [shown, setShown] = useState<ShownForm | null>(null);
   const [dismissal, setDismissal] = useState<Dismissal>("allowed");
 
@@ -560,6 +630,7 @@ export function ResourceFormDialog({ mode, onClose }: ResourceFormDialogProps) {
           mode={shown.mode}
           onClose={onClose}
           onDismissalChange={setDismissal}
+          vocabulary={vocabulary}
         />
       )}
     </ResponsiveSheetDialog>

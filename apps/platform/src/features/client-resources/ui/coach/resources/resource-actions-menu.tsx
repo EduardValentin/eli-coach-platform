@@ -40,6 +40,7 @@ export function ResourceActionsMenu({
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={`Actions for ${title}`}
+          data-parity="row-actions-trigger"
           size="icon-sm"
           variant="ghost"
         >

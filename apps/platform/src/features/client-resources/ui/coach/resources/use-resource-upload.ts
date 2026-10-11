@@ -33,6 +33,7 @@ export type ResourceUploadRequest = {
   file: File;
   title: string;
   description: string;
+  tags: readonly string[];
 };
 
 const IDLE_UPLOAD: ResourceUploadState = { state: "idle" };
@@ -82,6 +83,9 @@ function uploadFormData(request: ResourceUploadRequest): FormData {
   formData.append(RESOURCE_UPLOAD_PARTS.file, request.file);
   formData.append(RESOURCE_UPLOAD_PARTS.title, request.title);
   formData.append(RESOURCE_UPLOAD_PARTS.description, request.description);
+  request.tags.forEach((tag) => {
+    formData.append(RESOURCE_UPLOAD_PARTS.tags, tag);
+  });
 
   return formData;
 }

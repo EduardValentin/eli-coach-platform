@@ -1,4 +1,5 @@
 import {
+  matchesSearch,
   tagCounts,
   type Resource,
   type ResourceFilter,
@@ -39,15 +40,21 @@ export const RESOURCE_SORT_OPTIONS: readonly SortOption<ResourceSortKey>[] = [
 
 function TagFilter({
   resources,
+  search,
   chosen,
   onChoose,
   size,
 }: {
   resources: readonly Resource[];
+  search: string;
   chosen: string | null;
   onChoose: (tag: string | null) => void;
   size: 'sm' | 'md';
 }) {
+  const searchedCount = resources.filter((resource) =>
+    matchesSearch(resource, search),
+  ).length;
+
   return (
     <Select
       onValueChange={(value) => onChoose(value === ALL_TAGS ? null : value)}
@@ -59,10 +66,10 @@ function TagFilter({
       <SelectContent>
         <SelectItem value={ALL_TAGS}>
           <span className="flex items-center gap-2">
-            All tags <Badge tone="count">{resources.length}</Badge>
+            All tags <Badge tone="count">{searchedCount}</Badge>
           </span>
         </SelectItem>
-        {tagCounts(resources).map(({ tag, count }) => (
+        {tagCounts(resources, search).map(({ tag, count }) => (
           <SelectItem key={tag} value={tag}>
             <span className="flex items-center gap-2">
               {tag} <Badge tone="count">{count}</Badge>
@@ -77,14 +84,18 @@ function TagFilter({
 export function ResourceToolbar({
   resources,
   filter,
-  onFilterChange,
+  typedSearch,
+  onTagChange,
+  onSearchChange,
   sort,
   onSortChange,
   perspective,
 }: {
   resources: readonly Resource[];
   filter: ResourceFilter;
-  onFilterChange: (filter: ResourceFilter) => void;
+  typedSearch: string;
+  onTagChange: (tag: string | null) => void;
+  onSearchChange: (search: string) => void;
   sort: ResourceSort;
   onSortChange: (sort: ResourceSort) => void;
   perspective: ResourcePerspective;
@@ -96,18 +107,19 @@ export function ResourceToolbar({
       <div className="min-w-0 md:mr-auto">
         <TagFilter
           chosen={filter.tag}
-          onChoose={(tag) => onFilterChange({ ...filter, tag })}
+          onChoose={onTagChange}
           resources={resources}
+          search={filter.query}
           size={size}
         />
       </div>
       <SearchField
         aria-label="Search resources"
         className="min-w-0 md:w-64"
-        onChange={(event) => onFilterChange({ ...filter, query: event.target.value })}
+        onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search by title"
         size={size}
-        value={filter.query}
+        value={typedSearch}
       />
       {perspective === 'coach' && (
         <SortControl

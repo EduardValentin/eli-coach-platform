@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import { MarkResourceOpenedUseCase } from "./mark-resource-opened-use-case";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
 const FIRST_OPENED_AT = new Date("2026-10-06T09:00:00.000Z");
@@ -19,6 +20,7 @@ function resource(
     clientId: options.clientId,
     title: id,
     description: "",
+    tags: [],
     file: {
       originalName: `${id}.docx`,
       format: "docx",
@@ -56,7 +58,15 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
     return [];
   }
 

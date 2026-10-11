@@ -4,17 +4,23 @@ import { ChangeResourceDetailsUseCase } from "./change-resource-details-use-case
 import { ClientResource } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
 import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,
 } from "./resource-details";
+import {
+  MAX_RESOURCE_TAG_LENGTH,
+  type ResourceTagSnapshot,
+} from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
 const OPENED_AT = new Date("2026-10-06T09:00:00.000Z");
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
 const ANA = { role: "CLIENT", authSubjectId: "user_ana" } as const;
+const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };
+const CARDIO = { tag: "Cardio", folded: "cardio" };
 const ACCOUNT_WITHOUT_RESOURCE_ROLE = {
   role: "USER",
   authSubjectId: "user_ana",
@@ -25,6 +31,7 @@ const STORED = ClientResource.reconstitute({
   clientId: "client-ana",
   title: "Meal plan",
   description: "Week one",
+  tags: [CARDIO],
   file: {
     originalName: "plan.pdf",
     format: "pdf",
@@ -54,9 +61,18 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
     return [];
   }
+
+  readonly tagVocabulary = vi.fn(async (): Promise<ResourceTagSnapshot[]> => [
+    CARDIO,
+    MEAL_PREP,
+  ]);
 
   async findById(resourceId: string): Promise<ClientResource | null> {
     return this.stored.get(resourceId) ?? null;
@@ -97,7 +113,7 @@ function createUseCase() {
 }
 
 describe("ChangeResourceDetailsUseCase", () => {
-  it("saves the trimmed title and description, keeps the moment she opened it and every other field, and answers the changed resource", async () => {
+  it("saves the trimmed title, description and tags, keeps the moment she opened it and every other field, and answers the changed resource", async () => {
     // arrange
     const { useCase, resources } = createUseCase();
 
@@ -105,7 +121,11 @@ describe("ChangeResourceDetailsUseCase", () => {
     const result = await useCase.execute({
       requester: COACH,
       resourceId: "resource-1",
-      details: { title: "  Meal plan v2 ", description: " Week two  " },
+      details: {
+        title: "  Meal plan v2 ",
+        description: " Week two  ",
+        tags: ["meal PREP", "Recovery"],
+      },
     });
 
     // assert
@@ -113,6 +133,7 @@ describe("ChangeResourceDetailsUseCase", () => {
       ...STORED.toSnapshot(),
       title: "Meal plan v2",
       description: "Week two",
+      tags: [MEAL_PREP, { tag: "Recovery", folded: "recovery" }],
     };
     expect(result).toEqual({
       status: "changed",
@@ -124,12 +145,16 @@ describe("ChangeResourceDetailsUseCase", () => {
   it.each([
     [
       "a blank title",
-      { title: "   ", description: "Week two" },
+      { title: "   ", description: "Week two", tags: [] },
       { title: "missing" },
     ],
     [
       "an overlong title",
-      { title: "a".repeat(MAX_RESOURCE_TITLE_LENGTH + 1), description: "" },
+      {
+        title: "a".repeat(MAX_RESOURCE_TITLE_LENGTH + 1),
+        description: "",
+        tags: [],
+      },
       { title: "too-long" },
     ],
     [
@@ -137,8 +162,18 @@ describe("ChangeResourceDetailsUseCase", () => {
       {
         title: "Meal plan",
         description: "a".repeat(MAX_RESOURCE_DESCRIPTION_LENGTH + 1),
+        tags: [],
       },
       { description: "too-long" },
+    ],
+    [
+      "an overlong tag",
+      {
+        title: "Meal plan",
+        description: "",
+        tags: ["a".repeat(MAX_RESOURCE_TAG_LENGTH + 1)],
+      },
+      { tags: "too-long" },
     ],
   ])("refuses %s without a write", async (_case, details, problems) => {
     // arrange
@@ -173,7 +208,7 @@ describe("ChangeResourceDetailsUseCase", () => {
       const result = await useCase.execute({
         requester,
         resourceId: "resource-1",
-        details: { title: "Meal plan v2", description: "" },
+        details: { title: "Meal plan v2", description: "", tags: [] },
       });
 
       // assert
@@ -191,12 +226,50 @@ describe("ChangeResourceDetailsUseCase", () => {
     const result = await useCase.execute({
       requester: COACH,
       resourceId: "resource-404",
-      details: { title: "Meal plan v2", description: "" },
+      details: { title: "Meal plan v2", description: "", tags: [] },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
     expect(resources.saveDetails).not.toHaveBeenCalled();
+  });
+
+  it("clears every tag when none is given", async () => {
+    // arrange
+    const { useCase, resources } = createUseCase();
+
+    // act
+    await useCase.execute({
+      requester: COACH,
+      resourceId: "resource-1",
+      details: { title: "Meal plan", description: "Week one", tags: [] },
+    });
+
+    // assert
+    expect(resources.snapshotOf("resource-1")?.tags).toEqual([]);
+  });
+
+  it("reports a failed read of the tag vocabulary and answers that the change failed without a write", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const { useCase, resources, incidents } = createUseCase();
+    resources.tagVocabulary.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({
+      requester: COACH,
+      resourceId: "resource-1",
+      details: { title: "Meal plan v2", description: "", tags: ["Cardio"] },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(resources.saveDetails).not.toHaveBeenCalled();
+    expect(incidents.resourceChangeFailed).toHaveBeenCalledWith({
+      clientId: "client-ana",
+      resourceId: "resource-1",
+      error: failure,
+    });
   });
 
   it("reports a failed write and answers that the change failed", async () => {
@@ -209,7 +282,7 @@ describe("ChangeResourceDetailsUseCase", () => {
     const result = await useCase.execute({
       requester: COACH,
       resourceId: "resource-1",
-      details: { title: "Meal plan v2", description: "" },
+      details: { title: "Meal plan v2", description: "", tags: [] },
     });
 
     // assert

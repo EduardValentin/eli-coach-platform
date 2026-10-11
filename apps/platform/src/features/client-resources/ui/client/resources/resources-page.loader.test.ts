@@ -17,6 +17,7 @@ const LISTING: ClientResourceListing = {
       id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
       title: "Glute activation warm-up",
       description: "",
+      tags: [],
       file: {
         originalName: "glute-activation-warm-up.pdf",
         downloadName: "glute-activation-warm-up.pdf",
@@ -28,10 +29,14 @@ const LISTING: ClientResourceListing = {
       openedAt: null,
     },
   ],
+  tagOptions: [{ tag: "Warm-ups", count: 1 }],
+  browse: { tag: "Warm-ups", search: "glute", sort: "added", direction: "asc" },
+  searched: 1,
+  total: 3,
 };
 
 describe("client resources loader", () => {
-  it("loads her own resources", async () => {
+  it("loads her own resources as the address narrows them", async () => {
     // arrange
     const load = vi.fn().mockResolvedValue(LISTING);
     const args = createRequestArgs({
@@ -40,7 +45,9 @@ describe("client resources loader", () => {
           ownResources: { load },
         } as unknown as ClientResourcesFeature),
       ],
-      request: new Request("https://evoa.fit/client/resources"),
+      request: new Request(
+        "https://evoa.fit/client/resources?tag=Warm-ups&q=glute&dir=asc",
+      ),
     });
 
     // act

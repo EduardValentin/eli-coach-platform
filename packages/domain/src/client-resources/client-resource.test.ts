@@ -9,6 +9,7 @@ function details(): ResourceDetails {
   const result = ResourceDetails.from({
     title: "Meal plan",
     description: "Week one",
+    tags: ["Meal Prep"],
   });
 
   if (result.status !== "valid") throw new Error("invalid sample details");
@@ -283,6 +284,7 @@ describe("ClientResource", () => {
       clientId: "client-1",
       title: "Meal plan",
       description: "Week one",
+      tags: [{ tag: "Meal Prep", folded: "meal prep" }],
       file: {
         originalName: "plan.pdf",
         format: "pdf",
@@ -302,6 +304,7 @@ describe("ClientResource", () => {
       clientId: "client-1",
       title: "Meal plan",
       description: "",
+      tags: [],
       file: {
         originalName: "plan.xlsx",
         format: "xlsx",
@@ -334,6 +337,7 @@ describe("ClientResource", () => {
         clientId: "client-1",
         title: "Meal plan",
         description: "",
+        tags: [],
         file: {
           originalName: "plan.pdf",
           format: "pdf",
@@ -373,13 +377,14 @@ describe("ClientResource", () => {
   describe("changing its details", () => {
     const OPENED_AT = new Date("2026-10-06T08:00:00.000Z");
 
-    it("answers a copy with the new title and description and everything else unchanged", () => {
+    it("answers a copy with the new title, description and tags and everything else unchanged", () => {
       // arrange
       const resource = ClientResource.reconstitute({
         id: "resource-1",
         clientId: "client-1",
         title: "Old plan",
         description: "Old notes",
+        tags: [{ tag: "Cardio", folded: "cardio" }],
         file: {
           originalName: "plan.pdf",
           format: "pdf",
@@ -399,6 +404,7 @@ describe("ClientResource", () => {
         clientId: "client-1",
         title: "Meal plan",
         description: "Week one",
+        tags: [{ tag: "Meal Prep", folded: "meal prep" }],
         file: {
           originalName: "plan.pdf",
           format: "pdf",
@@ -408,7 +414,10 @@ describe("ClientResource", () => {
         addedAt: ADDED_AT,
         openedAt: OPENED_AT,
       });
-      expect(resource.toSnapshot().title).toBe("Old plan");
+      expect(resource.toSnapshot()).toMatchObject({
+        title: "Old plan",
+        tags: [{ tag: "Cardio", folded: "cardio" }],
+      });
     });
   });
 });

@@ -1,0 +1,11 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"},
+  {"waitFor": "[role=\"dialog\"] >> text=Drop a file here or choose one"},
+  {"wait": 1200},
+  {"click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"},
+  {"fill": ["[role=\"dialog\"] >> role=combobox[name=/^Tags/]", "Meal prep"]},
+  {"waitFor": "role=listbox[name=\"Tag suggestions\"]"},
+  {"wait": 400}
+]

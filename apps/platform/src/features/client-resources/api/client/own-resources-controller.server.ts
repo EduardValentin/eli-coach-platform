@@ -12,10 +12,10 @@ import { requireApiAccount } from "~/features/accounts/server/guards/require-acc
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 import {
-  clientResourceListSchema,
-  presentClientResource,
+  presentResourceListing,
   type ClientResourceListing,
 } from "~/features/client-resources/public/client-resources";
+import { resourceBrowseInputOf } from "~/features/client-resources/public/resource-browse";
 
 type OwnResourcesControllerOptions = {
   listOwnResources: ListOwnResourcesUseCase;
@@ -35,9 +35,10 @@ export class OwnResourcesController {
 
   async load(args: LoaderFunctionArgs): Promise<ClientResourceListing> {
     const client = requirePortalAccess(args, { role: "CLIENT" });
-    const listing = await this.options.listOwnResources.execute(
-      requesterOf(client),
-    );
+    const listing = await this.options.listOwnResources.execute({
+      requester: requesterOf(client),
+      browse: resourceBrowseInputOf(new URL(args.request.url).searchParams),
+    });
 
     if (listing.status === "not-found") {
       throw notFoundResponse();
@@ -47,12 +48,7 @@ export class OwnResourcesController {
       return UNAVAILABLE_LISTING;
     }
 
-    return {
-      status: "ready",
-      resources: clientResourceListSchema.parse(
-        listing.resources.map(presentClientResource),
-      ),
-    };
+    return presentResourceListing(listing);
   }
 
   async countUnopened(args: LoaderFunctionArgs): Promise<number> {

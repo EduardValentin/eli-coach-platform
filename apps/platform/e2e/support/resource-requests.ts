@@ -7,7 +7,11 @@ export type ResourceResponse = {
   headers: Record<string, string>;
 };
 
-export type ResourceDetails = { title: string; description: string };
+export type ResourceDetails = {
+  title: string;
+  description: string;
+  tags?: readonly string[];
+};
 
 export type UploadAnswer = { status: number; body: unknown };
 
@@ -28,6 +32,25 @@ export class ResourceRequests {
     return `${CLIENT_RESOURCES_PATH}/${resourceId}`;
   }
 
+  private uploadPartsOf(
+    sample: SampleResource,
+    { title, description, tags = [] }: ResourceDetails,
+  ): FormData {
+    const parts = new FormData();
+
+    parts.append(
+      "file",
+      new File([new Uint8Array(sample.buffer)], sample.name, {
+        type: sample.mimeType,
+      }),
+    );
+    parts.append("title", title);
+    parts.append("description", description);
+    tags.forEach((tag) => parts.append("tags", tag));
+
+    return parts;
+  }
+
   private openedPathOf(resourceId: string): string {
     return `${this.resourcePathOf(resourceId)}/opened`;
   }
@@ -39,7 +62,7 @@ export class ResourceRequests {
   ): Promise<APIResponse> {
     return this.request.post(
       `${CLIENT_RESOURCES_PATH}/clients/${clientId}/resources`,
-      { multipart: { file: sample, ...details } },
+      { multipart: this.uploadPartsOf(sample, details) },
     );
   }
 
@@ -140,7 +163,7 @@ export class ResourceRequests {
     details: ResourceDetails,
   ): Promise<number> {
     const response = await this.request.patch(this.resourcePathOf(resourceId), {
-      data: details,
+      data: { ...details, tags: details.tags ?? [] },
     });
 
     return response.status();

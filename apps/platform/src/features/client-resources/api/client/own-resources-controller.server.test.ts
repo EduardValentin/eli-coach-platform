@@ -4,6 +4,7 @@ import {
   type CountUnopenedResourcesUseCase,
   type ListOwnResourcesUseCase,
   type MarkResourceOpenedUseCase,
+  type ResourceBrowseSnapshot,
 } from "@eli-coach-platform/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
@@ -39,11 +40,21 @@ const COACH_SESSION: ResolvedSession = {
 
 const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
+const EMPTY_LISTING = {
+  status: "listed",
+  browsing: { resources: [], tagOptions: [], searched: 0, total: 0 },
+  browse: { tag: null, search: "", sort: "added", direction: "desc" },
+} satisfies Awaited<ReturnType<ListOwnResourcesUseCase["execute"]>>;
+
 const NEW_PDF = ClientResource.reconstitute({
   id: NEW_ID,
   clientId: CLIENT_ID,
   title: "Meal plan",
   description: "Week one",
+  tags: [
+    { tag: "Meals", folded: "meals" },
+    { tag: "Week one", folded: "week one" },
+  ],
   file: {
     originalName: "Meal plan.pdf",
     format: "pdf",
@@ -59,6 +70,7 @@ const OPENED_DOCUMENT = ClientResource.reconstitute({
   clientId: CLIENT_ID,
   title: "Recipes",
   description: "",
+  tags: [],
   file: {
     originalName: "Recipes.docx",
     format: "docx",
@@ -69,11 +81,30 @@ const OPENED_DOCUMENT = ClientResource.reconstitute({
   openedAt: new Date("2026-10-04T18:00:00.000Z"),
 });
 
+const NARROWED_BROWSE: ResourceBrowseSnapshot = {
+  tag: { tag: "Meals", folded: "meals" },
+  search: "plan",
+  sort: "title",
+  direction: "desc",
+};
+
 describe("OwnResourcesController load", () => {
-  it("hands the client her own resources in the order they were listed, each with the moment she opened it", async () => {
+  it("hands the client her own resources narrowed as listed, with her tag options, the browse it applied and the counts", async () => {
     // arrange
-    const { controller, listOwnResources } = createController({
-      listed: { status: "listed", resources: [NEW_PDF, OPENED_DOCUMENT] },
+    const { controller } = createController({
+      listed: {
+        status: "listed",
+        browsing: {
+          resources: [NEW_PDF, OPENED_DOCUMENT],
+          tagOptions: [
+            { tag: { tag: "Meals", folded: "meals" }, count: 1 },
+            { tag: { tag: "Week one", folded: "week one" }, count: 0 },
+          ],
+          searched: 2,
+          total: 5,
+        },
+        browse: NARROWED_BROWSE,
+      },
     });
 
     // act
@@ -87,6 +118,7 @@ describe("OwnResourcesController load", () => {
           id: NEW_ID,
           title: "Meal plan",
           description: "Week one",
+          tags: ["Meals", "Week one"],
           file: {
             originalName: "Meal plan.pdf",
             downloadName: "Meal plan.pdf",
@@ -101,6 +133,7 @@ describe("OwnResourcesController load", () => {
           id: OPENED_ID,
           title: "Recipes",
           description: "",
+          tags: [],
           file: {
             originalName: "Recipes.docx",
             downloadName: "Recipes.docx",
@@ -112,10 +145,58 @@ describe("OwnResourcesController load", () => {
           openedAt: "2026-10-04T18:00:00.000Z",
         },
       ],
+      tagOptions: [
+        { tag: "Meals", count: 1 },
+        { tag: "Week one", count: 0 },
+      ],
+      browse: {
+        tag: "Meals",
+        search: "plan",
+        sort: "title",
+        direction: "desc",
+      },
+      searched: 2,
+      total: 5,
     });
+  });
+
+  it("lists her resources as the address narrows them, read raw", async () => {
+    // arrange
+    const { controller, listOwnResources } = createController();
+
+    // act
+    await controller.load(
+      clientArgs({
+        url: "https://evoa.fit/client/resources?tag=MEALS&q=50%25&sort=title&dir=up",
+      }),
+    );
+
+    // assert
     expect(listOwnResources).toHaveBeenCalledWith({
-      role: "CLIENT",
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
+      browse: { tag: "MEALS", search: "50%", sort: "title", direction: "up" },
+    });
+  });
+
+  it("lists every resource of hers when the address narrows nothing", async () => {
+    // arrange
+    const { controller, listOwnResources } = createController();
+
+    // act
+    const listing = await controller.load(clientArgs());
+
+    // assert
+    expect(listOwnResources).toHaveBeenCalledWith({
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
+      browse: { tag: null, search: null, sort: null, direction: null },
+    });
+    expect(listing).toEqual({
+      status: "ready",
+      resources: [],
+      tagOptions: [],
+      browse: { tag: null, search: "", sort: "added", direction: "desc" },
+      searched: 0,
+      total: 0,
     });
   });
 
@@ -295,7 +376,7 @@ function createController(
 ) {
   const listOwnResources = vi
     .fn()
-    .mockResolvedValue(answers.listed ?? { status: "listed", resources: [] });
+    .mockResolvedValue(answers.listed ?? EMPTY_LISTING);
   const countUnopenedResources = vi
     .fn()
     .mockResolvedValue(answers.unopened ?? 0);
@@ -322,10 +403,10 @@ function createController(
   };
 }
 
-function clientArgs(options: { session?: ResolvedSession } = {}) {
+function clientArgs(options: { session?: ResolvedSession; url?: string } = {}) {
   return argsFor({
     session: options.session ?? CLIENT_SESSION,
-    request: new Request("https://evoa.fit/client/resources"),
+    request: new Request(options.url ?? "https://evoa.fit/client/resources"),
   });
 }
 

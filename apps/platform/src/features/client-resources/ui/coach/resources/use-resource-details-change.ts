@@ -16,6 +16,7 @@ export type ResourceDetailsChangeOutcome =
 export type ResourceDetailsChange = {
   title: string;
   description: string;
+  tags: string[];
 };
 
 function outcomeOf(answer: unknown): ResourceDetailsChangeOutcome {

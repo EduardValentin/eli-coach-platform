@@ -4,6 +4,7 @@ import { tabTo } from "./keyboard";
 import { escapedPattern } from "./locator-text";
 import type { ResourceDetails } from "./resource-requests";
 import type { SampleResource } from "./sample-resources";
+import { TagField } from "./tag-field";
 
 export type ResourceRefusalMessage =
   | "Choose a file to add."
@@ -20,7 +21,11 @@ const PREPARING_TIMEOUT_MS = 60_000;
 const UPLOAD_ROUTE = "**/api/client-resources/clients/*/resources";
 
 export class AddResourceDialog {
-  constructor(private readonly page: Page) {}
+  readonly tags: TagField;
+
+  constructor(private readonly page: Page) {
+    this.tags = new TagField(page, this.dialog);
+  }
 
   private get dialog() {
     return this.page.getByRole("dialog", { name: DIALOG_NAME });
@@ -131,6 +136,11 @@ export class AddResourceDialog {
 
   async submit(): Promise<void> {
     await this.submitButton.click();
+  }
+
+  async expectOpen(): Promise<void> {
+    await expect(this.dialog).toBeVisible();
+    await expect(this.submitButton).toBeEnabled();
   }
 
   async submitWithKeyboard(): Promise<void> {

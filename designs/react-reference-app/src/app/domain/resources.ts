@@ -153,12 +153,25 @@ export function coachTagVocabulary(resources: readonly Resource[]): string[] {
   );
 }
 
+export function matchesSearch(resource: Resource, search: string): boolean {
+  return resource.title
+    .toLocaleLowerCase()
+    .includes(search.trim().toLocaleLowerCase());
+}
+
 export type TagCount = { tag: string; count: number };
 
-export function tagCounts(resources: readonly Resource[]): TagCount[] {
+export function tagCounts(
+  resources: readonly Resource[],
+  search: string,
+): TagCount[] {
+  const searched = resources.filter((resource) =>
+    matchesSearch(resource, search),
+  );
+
   return coachTagVocabulary(resources).map((tag) => ({
     tag,
-    count: resources.filter((resource) =>
+    count: searched.filter((resource) =>
       resource.tags.some((held) => sameTag(held, tag)),
     ).length,
   }));
@@ -186,19 +199,16 @@ export function defaultResourceSortDirection(
 
 export type ResourceFilter = { tag: string | null; query: string };
 
-export const NO_RESOURCE_FILTER: ResourceFilter = { tag: null, query: '' };
-
 export function isFiltering(filter: ResourceFilter): boolean {
   return filter.tag !== null || filter.query.trim().length > 0;
 }
 
 function matchesFilter(resource: Resource, filter: ResourceFilter): boolean {
-  const query = filter.query.trim().toLocaleLowerCase();
   const tagMatches =
     filter.tag === null ||
     resource.tags.some((tag) => sameTag(tag, filter.tag ?? ''));
 
-  return tagMatches && resource.title.toLocaleLowerCase().includes(query);
+  return tagMatches && matchesSearch(resource, filter.query);
 }
 
 function orderedByDefaultDirection(

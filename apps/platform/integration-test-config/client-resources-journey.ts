@@ -12,11 +12,13 @@ export type ResourceUpload = {
   fileName: string;
   title?: string;
   description?: string;
+  tags?: string[];
 };
 
 export type ResourceDetails = {
   title: string;
   description: string;
+  tags: string[];
 };
 
 export type ResourceFileKind = "pdf" | "image" | "word" | "excel";
@@ -25,6 +27,7 @@ export type AddedResource = {
   id: string;
   title: string;
   description: string;
+  tags: string[];
   file: {
     originalName: string;
     downloadName: string;
@@ -40,6 +43,7 @@ export type ClientResourceRow = {
   id: string;
   title: string;
   description: string;
+  tags: string[];
   originalName: string;
   format: string;
   sizeBytes: number;
@@ -139,13 +143,16 @@ export class ClientResourcesJourney {
     });
   }
 
-  openResourcesPage(requester: AccountSession): Promise<Response> {
-    return this.rig.requestAs(requester, CLIENT_RESOURCES_PAGE);
+  openResourcesPage(requester: AccountSession, query = ""): Promise<Response> {
+    return this.rig.requestAs(requester, `${CLIENT_RESOURCES_PAGE}${query}`);
   }
 
   resourceRowsOf(clientId: string): Promise<ClientResourceRow[]> {
     return this.rig.suite.postgres.queryRows<ClientResourceRow>({
-      sql: 'select id, title, description, original_name as "originalName", format, size_bytes as "sizeBytes", page_count as "pageCount", added_at as "addedAt", opened_at as "openedAt" from app.client_resources where client_id = $1 order by added_at desc, id desc',
+      sql: `select r.id, r.title, r.description,
+        array(select t.tag from app.client_resource_tags t where t.resource_id = r.id order by t.position) as tags,
+        r.original_name as "originalName", r.format, r.size_bytes as "sizeBytes", r.page_count as "pageCount", r.added_at as "addedAt", r.opened_at as "openedAt"
+        from app.client_resources r where r.client_id = $1 order by r.added_at desc, r.id desc`,
       values: [clientId],
     });
   }
@@ -206,6 +213,10 @@ function resourceForm(upload: ResourceUpload): FormData {
 
   if (upload.description !== undefined) {
     form.set("description", upload.description);
+  }
+
+  for (const tag of upload.tags ?? []) {
+    form.append("tags", tag);
   }
 
   return form;
