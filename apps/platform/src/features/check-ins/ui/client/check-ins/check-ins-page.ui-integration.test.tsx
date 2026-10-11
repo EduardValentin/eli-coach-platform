@@ -239,7 +239,7 @@ describe("the client's check-ins page", () => {
 
     // assert
     const row = within(
-      screen.getByRole("list", { name: "Requests check-ins" }),
+      await screen.findByRole("list", { name: "Requests check-ins" }),
     ).getByRole("listitem");
     expect(row).toHaveTextContent('You: "Can we look at my squat form?"');
     expect(
@@ -262,7 +262,7 @@ describe("the client's check-ins page", () => {
 
     // assert
     const rows = within(
-      screen.getByRole("list", { name: "Past check-ins" }),
+      await screen.findByRole("list", { name: "Past check-ins" }),
     ).getAllByRole("listitem");
     expect(rows.map((row) => row.textContent)).toEqual([
       expect.stringContaining("Thu, Oct 8"),
@@ -302,7 +302,7 @@ describe("the client's check-ins page", () => {
     await showTab(user, tab);
 
     // assert
-    expect(screen.getByText(title)).toBeInTheDocument();
+    expect(await screen.findByText(title)).toBeInTheDocument();
     expect(screen.getByText(description)).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
@@ -399,13 +399,11 @@ describe("the client answering her coach's request", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(
-      screen.getByRole("tab", { name: /^Requests\s*1 waiting on you$/ }),
-    );
+    await showTab(user, /^Requests\s*1 waiting on you$/);
 
     // assert
     const rows = within(
-      screen.getByRole("list", { name: "Requests check-ins" }),
+      await screen.findByRole("list", { name: "Requests check-ins" }),
     ).getAllByRole("listitem");
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent("Ad-hoc · Requested by your coach");
@@ -466,7 +464,7 @@ describe("the client answering her coach's request", () => {
     await showTab(user, "Upcoming");
     expect(
       within(
-        screen.getByRole("list", { name: "Upcoming check-ins" }),
+        await screen.findByRole("list", { name: "Upcoming check-ins" }),
       ).getByRole("link", { name: "Join Meet" }),
     ).toHaveAttribute("href", `/client/checkins/${COACH_REQUEST.id}/join`);
     expect(approvals).toEqual([

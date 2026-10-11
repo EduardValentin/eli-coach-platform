@@ -196,7 +196,7 @@ describe("the coach's check-ins page", () => {
 
     // assert
     const row = within(
-      screen.getByRole("list", { name: "Upcoming check-ins" }),
+      await screen.findByRole("list", { name: "Upcoming check-ins" }),
     ).getByRole("listitem");
     expect(row).toHaveTextContent("Elena Dumitru");
     expect(
@@ -230,7 +230,7 @@ describe("the coach's check-ins page", () => {
     await showTab(user, tab);
 
     // assert
-    expect(screen.getByText(title)).toBeInTheDocument();
+    expect(await screen.findByText(title)).toBeInTheDocument();
     expect(screen.getByText(description)).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Requests" })).not.toHaveTextContent(
       /\d/,
@@ -284,7 +284,7 @@ describe("the coach's check-ins page", () => {
     await showTab(user, "Upcoming");
     expect(
       within(
-        screen.getByRole("list", { name: "Upcoming check-ins" }),
+        await screen.findByRole("list", { name: "Upcoming check-ins" }),
       ).getByText("Andreea Ionescu"),
     ).toBeInTheDocument();
     expect(approved).toEqual([ANDREEA_REQUEST.id]);
