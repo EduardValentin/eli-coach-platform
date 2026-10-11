@@ -257,6 +257,14 @@ export class ClientCheckInsPage {
     );
   }
 
+  async cancelByKeyboard(tab: CheckInTab, note: string): Promise<void> {
+    await this.rows.chooseByKeyboard(await this.shownRow(tab, note), "Cancel");
+  }
+
+  async expectNoRowMenu(tab: CheckInTab, note: string): Promise<void> {
+    await this.rows.expectNoMenu(await this.shownRow(tab, note));
+  }
+
   async cancel(tab: CheckInTab, note: string): Promise<void> {
     await this.rows.choose(await this.shownRow(tab, note), "Cancel");
   }
@@ -349,6 +357,17 @@ export class ClientCheckInsPage {
     const revalidationSettled = this.responseFinished(CHECK_INS_DATA_PATH);
 
     await row.getByRole("button", { name: "Accept" }).click();
+    await expect(this.page.getByText("Check-in approved")).toBeVisible();
+    await Promise.all([approvalSettled, revalidationSettled]);
+  }
+
+  async acceptByKeyboard(note: string): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+    const approvalSettled = this.responseFinished(APPROVAL_DATA_PATH);
+    const revalidationSettled = this.responseFinished(CHECK_INS_DATA_PATH);
+
+    await tabTo(this.page, row.getByRole("button", { name: "Accept" }));
+    await this.page.keyboard.press("Enter");
     await expect(this.page.getByText("Check-in approved")).toBeVisible();
     await Promise.all([approvalSettled, revalidationSettled]);
   }

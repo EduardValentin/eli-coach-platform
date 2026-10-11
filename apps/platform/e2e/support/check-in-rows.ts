@@ -23,7 +23,7 @@ export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
 const MENU_TRIGGER = /^More actions for the check-in on /;
 const MOVES_EXHAUSTED_REASON = "This check-in has already been moved twice.";
 const PROPOSE_DIALOG_TITLE = "Propose a new time";
-const MAX_ARROW_STOPS = 6;
+const ARROW_SETTLE_MS = 250;
 
 export class CheckInRows {
   constructor(private readonly page: Page) {}
@@ -83,12 +83,12 @@ export class CheckInRows {
     await this.openMenuByKeyboard(row);
     const target = this.itemNamed(item);
 
-    for (let stop = 0; stop < MAX_ARROW_STOPS; stop += 1) {
-      if (await isFocused(target)) return;
-      await this.page.keyboard.press("ArrowDown");
-    }
-
-    throw new Error(`The keyboard never reached ${item} in the row menu.`);
+    await expect(async () => {
+      if (!(await isFocused(target))) {
+        await this.page.keyboard.press("ArrowDown");
+      }
+      expect(await isFocused(target)).toBe(true);
+    }).toPass({ intervals: [ARROW_SETTLE_MS] });
   }
 
   private async closeMenu(row: Locator): Promise<void> {
@@ -133,6 +133,11 @@ export class CheckInRows {
 
   async expectMenuFocused(row: Locator): Promise<void> {
     await expect(this.triggerOf(row)).toBeFocused();
+  }
+
+  async expectNoMenu(row: Locator): Promise<void> {
+    await expect(row).toBeVisible();
+    await expect(this.triggerOf(row)).toHaveCount(0);
   }
 
   async expectNoActions(row: Locator): Promise<void> {

@@ -22,6 +22,12 @@ const MARK_MOVED = `
   set moves = $2, earlier_starts_at = starts_at - interval '1 day'
   where id = $1
 `;
+const MARK_CANCELLED = `
+  update app.check_ins set status = 'cancelled' where id = $1
+`;
+const FREE_HOUR = `
+  delete from app.coach_time_reservations where check_in_id = $1
+`;
 const FIND_MOVES = `
   select moves, earlier_starts_at from app.check_ins where id = $1
 `;
@@ -85,6 +91,11 @@ export class CheckInRecords {
 
   async markApproved(checkInId: string): Promise<void> {
     await this.pool.query(MARK_APPROVED, [checkInId]);
+  }
+
+  async markCancelled(checkInId: string): Promise<void> {
+    await this.pool.query(MARK_CANCELLED, [checkInId]);
+    await this.pool.query(FREE_HOUR, [checkInId]);
   }
 
   async markMoved(checkInId: string, times: number): Promise<void> {

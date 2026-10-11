@@ -182,6 +182,17 @@ export class CoachCheckInsPage {
     );
   }
 
+  async cancelByKeyboard(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.chooseByKeyboard(
+      await this.shownRow(tab, showing),
+      "Cancel",
+    );
+  }
+
+  async expectNoRowMenu(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.expectNoMenu(await this.shownRow(tab, showing));
+  }
+
   async cancel(tab: CheckInTab, showing: string): Promise<void> {
     await this.rows.choose(await this.shownRow(tab, showing), "Cancel");
   }
@@ -290,6 +301,13 @@ export class CoachCheckInsPage {
       this.page.getByText(`Approved check-in with ${clientName}`),
     ).toBeVisible();
     await Promise.all([approvalSettled, revalidationSettled]);
+  }
+
+  async acceptNoLongerWaiting(showing: string): Promise<void> {
+    const row = await this.shownRow("Requests", showing);
+
+    await row.getByRole("button", { name: "Accept" }).click();
+    await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
   }
 
   async joinFromRow(clientName: string): Promise<void> {

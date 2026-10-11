@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { isFocused } from "./keyboard";
+import { isFocused, tabTo } from "./keyboard";
 
 const TRAP_PROBE_KEYS = [
   "Tab",
@@ -48,6 +48,17 @@ export class ConfirmationDialog {
     await this.dialog
       .getByRole("button", { name: this.labels.confirm, exact: true })
       .click();
+  }
+
+  async confirmByKeyboard(): Promise<void> {
+    await tabTo(
+      this.page,
+      this.dialog.getByRole("button", {
+        name: this.labels.confirm,
+        exact: true,
+      }),
+    );
+    await this.page.keyboard.press("Enter");
   }
 
   async dismiss(): Promise<void> {

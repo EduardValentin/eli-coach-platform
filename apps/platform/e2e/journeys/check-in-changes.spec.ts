@@ -47,6 +47,15 @@ const LATE_NOTE = "This new time was answered too late.";
 const KEYBOARD_NOTE = "Moved without a mouse.";
 const KEYBOARD_NEW_NOTE = "Proposed by keyboard alone.";
 const PHONE_NOTE = "Moved from my phone.";
+const CLIENT_REQUEST_NOTE = "Could we talk about my squat depth?";
+const COACH_REQUEST_NOTE = "Let's plan your next block.";
+const COACH_COUNTER_NOTE = "That hour is gone, how about this one?";
+const CLIENT_COUNTER_NOTE = "I work then, could we meet at this time?";
+const ANSWERED_ELSEWHERE_NOTE = "This new time was answered elsewhere.";
+const CANCELLED_ELSEWHERE_NOTE = "This new time was cancelled elsewhere.";
+const KEYBOARD_MOVED_NOTE = "A review moved by the coach's keyboard.";
+const KEYBOARD_COACH_NOTE = "Proposed with the keyboard only.";
+const KEYBOARD_CANCELLED_NOTE = "A review cancelled by the coach's keyboard.";
 const OK = 200;
 const CONFLICT = 409;
 const MOVES_EXHAUSTED = { error: "moves_exhausted" };
@@ -831,5 +840,357 @@ test(
     );
     await cancelCheckInDialog.expectWithinViewport();
     await expectNoHorizontalScroll(page);
+  },
+);
+
+test(
+  "each side proposes a new time for a request awaiting its answer, and while each new time waits its earlier hour is offered again and the new one is not",
+  { tag: "@completeness" },
+  async ({
+    bookingPage,
+    checkInProposeDialog,
+    checkInRequestDialog,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionCoach,
+    provisionSubmittedClient,
+    publicNav,
+    signIn,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await clientCheckIns.open();
+    await clientCheckIns.openRequestDialog();
+    const requested =
+      await checkInRequestDialog.sendSoonest(CLIENT_REQUEST_NOTE);
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+    const [coachRequestTime] = await checkInRequests.openTimesFor(
+      client.clientId,
+    );
+    await checkInRequests.schedule(
+      client.clientId,
+      coachRequestTime!,
+      COACH_REQUEST_NOTE,
+    );
+    const coachRequest = shownIn(coachRequestTime!);
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectNoRowMenu("Requests", COACH_REQUEST_NOTE);
+
+    // act
+    await coachCheckIns.reschedule("Requests", CLIENT_REQUEST_NOTE);
+
+    // assert
+    await checkInProposeDialog.expectOpen();
+    await checkInProposeDialog.expectCurrentTime(requested);
+
+    // act
+    const coachTime =
+      await checkInProposeDialog.sendSoonest(COACH_COUNTER_NOTE);
+
+    // assert
+    await expect(page.getByText(NEW_TIME_PROPOSED)).toBeVisible();
+    await coachCheckIns.expectOwnNewTime(COACH_COUNTER_NOTE);
+    await coachCheckIns.expectEarlierTimeStruck(COACH_COUNTER_NOTE, requested);
+    const coachOffers = await checkInRequests.openTimesFor(client.clientId);
+    expect(coachOffers).toContainEqual(requested.startsAt);
+    expect(coachOffers).not.toContainEqual(coachTime.startsAt);
+
+    // arrange
+    await page.goto("/");
+    await publicNav.signOut();
+
+    // act + assert
+    await bookingPage.expectHourOffered(requested.startsAt, CLIENT_TIME_ZONE);
+    await bookingPage.expectHourNotOffered(
+      coachTime.startsAt,
+      CLIENT_TIME_ZONE,
+    );
+
+    // arrange
+    await page.goto("/store");
+    await signIn();
+
+    // act
+    await clientCheckIns.open();
+
+    // assert
+    await clientCheckIns.expectNewTimeFromCoach(COACH_COUNTER_NOTE);
+    await clientCheckIns.expectEarlierTimeStruck(COACH_COUNTER_NOTE, requested);
+
+    // act
+    await clientCheckIns.reschedule("Requests", COACH_REQUEST_NOTE);
+
+    // assert
+    await checkInProposeDialog.expectCurrentTime(coachRequest);
+
+    // act
+    const clientTime =
+      await checkInProposeDialog.sendSoonest(CLIENT_COUNTER_NOTE);
+
+    // assert
+    await expect(page.getByText(NEW_TIME_PROPOSED)).toBeVisible();
+    await clientCheckIns.expectOwnNewTime(CLIENT_COUNTER_NOTE);
+    const clientOffers = await checkInRequests.openTimes();
+    expect(clientOffers).toContainEqual(coachRequestTime);
+    expect(clientOffers).not.toContainEqual(clientTime.startsAt);
+
+    // arrange
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+
+    // act
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectNewTimeFromClient(
+      CLIENT_COUNTER_NOTE,
+      client.firstName,
+    );
+    await coachCheckIns.expectEarlierTimeStruck(
+      CLIENT_COUNTER_NOTE,
+      coachRequest,
+    );
+  },
+);
+
+test(
+  "answering a new time that was answered or cancelled meanwhile is refused with a message and the page shows where the check-in stands",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionCoach,
+    provisionSubmittedClient,
+    publicNav,
+    signIn,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signInAsCoach();
+    const [answeredTime, cancelledTime, answeredNewTime, cancelledNewTime] =
+      await checkInRequests.openTimesFor(client.clientId);
+    await checkInRequests.schedule(
+      client.clientId,
+      answeredTime!,
+      ORIGINAL_NOTE,
+    );
+    await checkInRequests.schedule(
+      client.clientId,
+      cancelledTime!,
+      ORIGINAL_NOTE,
+    );
+    const answeredId = await checkInRecords.idOf(
+      client.clientId,
+      answeredTime!,
+    );
+    const cancelledId = await checkInRecords.idOf(
+      client.clientId,
+      cancelledTime!,
+    );
+    await checkInRecords.markApproved(answeredId);
+    await checkInRecords.markApproved(cancelledId);
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signIn();
+    await checkInRequests.proposeNewTime(answeredId, {
+      startsAt: answeredNewTime!,
+      note: ANSWERED_ELSEWHERE_NOTE,
+      timeZone: CLIENT_TIME_ZONE,
+    });
+    await checkInRequests.proposeNewTime(cancelledId, {
+      startsAt: cancelledNewTime!,
+      note: CANCELLED_ELSEWHERE_NOTE,
+      timeZone: CLIENT_TIME_ZONE,
+    });
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachCheckIns.open();
+    await coachCheckIns.expectNewTimeFromClient(
+      ANSWERED_ELSEWHERE_NOTE,
+      client.firstName,
+    );
+    await coachCheckIns.expectNewTimeFromClient(
+      CANCELLED_ELSEWHERE_NOTE,
+      client.firstName,
+    );
+    const elsewhereAnswer = await checkInRequests.decline(answeredId, {});
+
+    // act
+    await coachCheckIns.acceptNoLongerWaiting(ANSWERED_ELSEWHERE_NOTE);
+
+    // assert
+    expect(elsewhereAnswer.status).toBe(OK);
+    await expect(
+      coachCheckIns.checkIn("Requests", ANSWERED_ELSEWHERE_NOTE),
+    ).toHaveCount(0);
+    await coachCheckIns.showTab("Past");
+    await expect(
+      coachCheckIns.checkIn("Past", ANSWERED_ELSEWHERE_NOTE),
+    ).toContainText("Cancelled");
+
+    // arrange
+    await coachCheckIns.expectNewTimeFromClient(
+      CANCELLED_ELSEWHERE_NOTE,
+      client.firstName,
+    );
+    await checkInRecords.markCancelled(cancelledId);
+
+    // act
+    await coachCheckIns.declineAnsweredElsewhere(CANCELLED_ELSEWHERE_NOTE);
+
+    // assert
+    await expect(
+      coachCheckIns.checkIn("Requests", CANCELLED_ELSEWHERE_NOTE),
+    ).toHaveCount(0);
+    await coachCheckIns.showTab("Past");
+    await expect(
+      coachCheckIns.checkIn("Past", CANCELLED_ELSEWHERE_NOTE),
+    ).toContainText("Cancelled");
+  },
+);
+
+test(
+  "the coach proposes a new time and cancels a check-in by keyboard alone with focus back on the row's menu whenever a dialog closes, and the client accepts by keyboard",
+  { tag: "@completeness" },
+  async ({
+    cancelCheckInDialog,
+    checkInProposeDialog,
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionCoach,
+    provisionSubmittedClient,
+    publicNav,
+    signIn,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signInAsCoach();
+    const [movedTime, cancelledTime] = await checkInRequests.openTimesFor(
+      client.clientId,
+    );
+    await checkInRequests.schedule(
+      client.clientId,
+      movedTime!,
+      KEYBOARD_MOVED_NOTE,
+    );
+    await checkInRequests.schedule(
+      client.clientId,
+      cancelledTime!,
+      KEYBOARD_CANCELLED_NOTE,
+    );
+    await checkInRecords.markApproved(
+      await checkInRecords.idOf(client.clientId, movedTime!),
+    );
+    await checkInRecords.markApproved(
+      await checkInRecords.idOf(client.clientId, cancelledTime!),
+    );
+    await coachCheckIns.open();
+    await coachCheckIns.showTab("Upcoming");
+
+    // act
+    await coachCheckIns.rescheduleByKeyboard("Upcoming", KEYBOARD_MOVED_NOTE);
+
+    // assert
+    await checkInProposeDialog.expectOpen();
+
+    // act
+    await checkInProposeDialog.closeWithEscape();
+
+    // assert
+    await checkInProposeDialog.expectClosed();
+    await coachCheckIns.expectRowMenuFocused("Upcoming", KEYBOARD_MOVED_NOTE);
+
+    // act
+    await coachCheckIns.rescheduleByKeyboard("Upcoming", KEYBOARD_MOVED_NOTE);
+    const coachTime =
+      await checkInProposeDialog.sendSoonestByKeyboard(KEYBOARD_COACH_NOTE);
+
+    // assert
+    await expect(page.getByText(NEW_TIME_PROPOSED)).toBeVisible();
+    await coachCheckIns.expectOwnNewTime(KEYBOARD_COACH_NOTE);
+
+    // act
+    await coachCheckIns.cancelByKeyboard("Upcoming", KEYBOARD_CANCELLED_NOTE);
+
+    // assert
+    await cancelCheckInDialog.expectOpen(
+      `${dayAndTimeOf(cancelledTime!)} with ${client.fullName}.`,
+    );
+
+    // act
+    await cancelCheckInDialog.closeWithEscape();
+
+    // assert
+    await coachCheckIns.expectRowMenuFocused(
+      "Upcoming",
+      KEYBOARD_CANCELLED_NOTE,
+    );
+
+    // act
+    await coachCheckIns.cancelByKeyboard("Upcoming", KEYBOARD_CANCELLED_NOTE);
+    await cancelCheckInDialog.confirmByKeyboard();
+
+    // assert
+    await coachCheckIns.expectCancelledToast(client.fullName);
+    await coachCheckIns.showTab("Past");
+    await expect(
+      coachCheckIns.checkIn("Past", KEYBOARD_CANCELLED_NOTE),
+    ).toContainText("Cancelled");
+
+    // arrange
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signIn();
+    await clientCheckIns.open();
+
+    // act
+    await clientCheckIns.acceptByKeyboard(KEYBOARD_COACH_NOTE);
+
+    // assert
+    await clientCheckIns.expectUpcomingAt(KEYBOARD_COACH_NOTE, coachTime);
+    await clientCheckIns.expectRescheduledFrom(
+      KEYBOARD_COACH_NOTE,
+      shownIn(movedTime!),
+    );
   },
 );

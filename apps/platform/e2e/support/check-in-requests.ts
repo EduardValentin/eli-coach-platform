@@ -40,6 +40,12 @@ export class CheckInRequests {
     return this.openTimesAt(OPEN_TIMES_PATH);
   }
 
+  async openTimesAnswer(): Promise<CheckInAnswer> {
+    const response = await this.page.request.get(OPEN_TIMES_PATH);
+
+    return { status: response.status(), body: await response.json() };
+  }
+
   async openTimesFor(clientId: string): Promise<Date[]> {
     return this.openTimesAt(
       `${OPEN_TIMES_PATH}?${new URLSearchParams({ clientId })}`,
