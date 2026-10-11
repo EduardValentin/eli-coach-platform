@@ -18,6 +18,18 @@ export class PrivacyPolicyPage {
     ).toBeVisible();
   }
 
+  async expectSection(heading: string): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", { level: 2, name: heading }),
+    ).toBeVisible();
+  }
+
+  async expectDataEntry(term: string): Promise<void> {
+    await expect(
+      this.page.getByRole("term").filter({ hasText: term }),
+    ).toBeVisible();
+  }
+
   async expectSentenceCount(sentence: string, count: number): Promise<void> {
     await expect(this.page.getByText(sentence)).toHaveCount(count);
   }

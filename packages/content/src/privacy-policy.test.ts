@@ -19,6 +19,7 @@ const EXPECTED_SECTION_IDS = [
   "accounts-and-authentication",
   "waitlist-and-marketing",
   "coaching-platform",
+  "measurements-photos-and-shared-files",
   "cycle-and-health-data",
   "store-purchases-and-payments",
   "free-store-resources",
@@ -52,6 +53,34 @@ function documentLinks(document: LegalDocument): LegalLink[] {
   );
 }
 
+function readableText(text: LegalText): string {
+  return text
+    .map((fragment) =>
+      typeof fragment === "string" ? fragment : fragment.label,
+    )
+    .join("");
+}
+
+function sectionText(sectionId: string): string {
+  const sections: readonly LegalDocumentSection[] = PRIVACY_POLICY.sections;
+
+  return sections
+    .filter((section) => section.id === sectionId)
+    .flatMap((section) => section.blocks)
+    .flatMap((block) => {
+      if (block.kind === "paragraph") {
+        return [readableText(block.content)];
+      }
+
+      return block.items.map((item) =>
+        "term" in item
+          ? `${item.term}: ${readableText(item.description)}`
+          : readableText(item),
+      );
+    })
+    .join(" ");
+}
+
 function hasOnlyNonEmptyFragments(text: LegalText): boolean {
   return (
     text.length > 0 &&
@@ -68,8 +97,8 @@ describe("privacy policy content", () => {
     // arrange
     const expectedIdentity = {
       id: "privacy-policy",
-      version: "2.1",
-      effectiveDate: "2026-10-04",
+      version: "2.2",
+      effectiveDate: "2026-10-11",
     };
 
     // act
@@ -82,7 +111,7 @@ describe("privacy policy content", () => {
 
     // assert
     expect(identity).toEqual(expectedIdentity);
-    expect(PRIVACY_POLICY_VERSION).toBe("2.1");
+    expect(PRIVACY_POLICY_VERSION).toBe("2.2");
     expect(PRIVACY_POLICY.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
     expect(new Set(sectionIds).size).toBe(sectionIds.length);
@@ -123,8 +152,78 @@ describe("privacy policy content", () => {
 
     // assert
     expect(text).toContain(
-      "It is Privacy Policy version 2.1, effective 4 October 2026.",
+      "It is Privacy Policy version 2.2, effective 11 October 2026.",
     );
+  });
+
+  test("names body measurements, progress photos and coach-shared files among the data it stores", () => {
+    // arrange
+    const measurementsAndPhotos =
+      "Body measurements and progress photos: For clients: height, weight, and waist, hip, thigh and arm measurements, each with the date you recorded it. Only with your explicit consent: progress photos (front, side and back views) that you attach to a measurement entry.";
+    const sharedFiles =
+      "Files shared by your coach: For clients: each file your coach adds to your record (a PDF, an image, or a Word or Excel document), with its title, description, tags, file name, type, size, the date it was added, and when you first opened it.";
+
+    // act
+    const storedData = sectionText("personal-data-and-purposes");
+
+    // assert
+    expect(storedData).toContain(measurementsAndPhotos);
+    expect(storedData).toContain(sharedFiles);
+  });
+
+  test("says why measurements, photos and shared files are kept, that only the client and her coach see them, and how photo consent is given and withdrawn", () => {
+    // arrange
+    const expectedStatements = [
+      "Your body measurements are processed to follow your progress and adapt your coaching, as part of the coaching service you purchased under Article 6(1)(b) GDPR. They are visible only to you and your coach.",
+      "Progress photos are optional. Evoa Fitness stores them only with your explicit consent under Article 6(1)(a) GDPR, which you give in the app before you add your first photo, and uses them only so that you and your coach can follow your progress. They are visible only to you and your coach and are never used for marketing. You receive the same level of coaching without them.",
+      `You can remove any progress photo yourself in the app at any time; it is deleted for you and your coach at once. You can also withdraw your consent by emailing ${EVOA_FITNESS_PRIVACY_EMAIL}. Withdrawal deletes your progress photos and does not affect processing that was lawful before withdrawal.`,
+      "Your coach can share files with you, such as guides or plans prepared for you. They are stored so that you can read and download them in the app, as part of the coaching service under Article 6(1)(b) GDPR. Each file is visible only to you and your coach. When you first open a file, the platform records it so the file is no longer marked as new.",
+    ];
+
+    // act
+    const section = sectionText("measurements-photos-and-shared-files");
+    const protection = sectionText("security");
+
+    // assert
+    for (const statement of expectedStatements) {
+      expect(section).toContain(statement);
+    }
+    expect(protection).toContain(
+      "Coaching, cycle, and health data, including your measurements, progress photos, and shared files, is accessible only to you and your coach. Progress photos are encrypted where they are stored.",
+    );
+  });
+
+  test("keeps measurements, photos and shared files with the host of the application and database, adding no provider", () => {
+    // arrange
+    const sameHost =
+      "Measurements, progress photos, and shared files are stored on the same Hetzner infrastructure in Germany that hosts the application and database. No additional provider stores or processes them.";
+    const hetzner =
+      "Hetzner: The application, the PostgreSQL database, and the files stored on the platform (progress photos and files shared by your coach) are hosted on Hetzner infrastructure in Germany.";
+
+    // act
+    const section = sectionText("measurements-photos-and-shared-files");
+    const hosting = sectionText("hosting-recipients-and-transfers");
+
+    // assert
+    expect(section).toContain(sameHost);
+    expect(hosting).toContain(hetzner);
+  });
+
+  test("says how long measurements, photos and shared files are kept and how each goes", () => {
+    // arrange
+    const expectedRules = [
+      "Body measurements are kept with your coaching data and removed with it: within 24 months after the coaching relationship ends, or earlier when your account data is erased.",
+      "A progress photo is deleted when you remove it in the app, when you withdraw your consent, or when your account data is erased, and at the latest with the rest of your coaching data.",
+      "A file shared by your coach is deleted when your coach removes it or when your account data is erased, and at the latest with the rest of your coaching data. After your coaching ends you can no longer open shared files in the app, and they stay on your coach's record of you until they are deleted.",
+    ];
+
+    // act
+    const retention = sectionText("retention");
+
+    // assert
+    for (const rule of expectedRules) {
+      expect(retention).toContain(rule);
+    }
   });
 
   test("keeps every section and structured content item non-empty", () => {
