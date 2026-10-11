@@ -29,6 +29,10 @@ import { CheckinScheduled } from '../../email-templates/CheckinScheduled';
 import { CheckinScheduleCancelled } from '../../email-templates/CheckinScheduleCancelled';
 import { CheckinApprovedByClient } from '../../email-templates/CheckinApprovedByClient';
 import { CheckinDeclinedByClient } from '../../email-templates/CheckinDeclinedByClient';
+import { CheckinNewTime } from '../../email-templates/CheckinNewTime';
+import { CheckinNewTimeAccepted } from '../../email-templates/CheckinNewTimeAccepted';
+import { CheckinNewTimeDeclined } from '../../email-templates/CheckinNewTimeDeclined';
+import { CheckinCancelled } from '../../email-templates/CheckinCancelled';
 
 type TemplateKey =
   | 'waitlist-confirmation'
@@ -46,7 +50,11 @@ type TemplateKey =
   | 'checkin-scheduled'
   | 'checkin-schedule-cancelled'
   | 'checkin-approved-by-client'
-  | 'checkin-declined-by-client';
+  | 'checkin-declined-by-client'
+  | 'checkin-new-time'
+  | 'checkin-new-time-accepted'
+  | 'checkin-new-time-declined'
+  | 'checkin-cancelled';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -96,6 +104,43 @@ function sampleCheckinCalendarUrl(withWhom: string): string {
 
   return `https://calendar.google.com/calendar/render?${query}`;
 }
+
+const SAMPLE_EARLIER_CHECKIN_START = new Date(SAMPLE_CHECKIN_START.getTime() - 24 * 60 * 60_000);
+const SAMPLE_NEW_TIME_NOTE = 'I am travelling that Wednesday. Could we do Thursday instead?';
+
+type SampleRecipient = {
+  who: string;
+  timeZone: string;
+  checkinsUrl: string;
+  joinUrl: string;
+  googleCalendarUrl: string;
+};
+
+function sampleRecipient(variant: string): SampleRecipient {
+  const origin = window.location.origin;
+  if (variant === 'to-coach') {
+    return {
+      who: 'Jane Doe',
+      timeZone: SAMPLE_COACH_TIME_ZONE,
+      checkinsUrl: `${origin}/coach/checkins`,
+      joinUrl: `${origin}/coach/checkins/ci-demo/join`,
+      googleCalendarUrl: sampleCheckinCalendarUrl('Jane Doe'),
+    };
+  }
+
+  return {
+    who: 'Eli',
+    timeZone: SAMPLE_CLIENT_TIME_ZONE,
+    checkinsUrl: `${origin}/portal/checkins`,
+    joinUrl: `${origin}/portal/checkins/ci-demo/join`,
+    googleCalendarUrl: sampleCheckinCalendarUrl('Eli'),
+  };
+}
+
+const RECIPIENT_VARIANTS = [
+  { value: 'to-client', label: 'To the client' },
+  { value: 'to-coach', label: 'To the coach' },
+];
 
 const TEMPLATES: TemplateOption[] = [
   {
@@ -198,6 +243,29 @@ const TEMPLATES: TemplateOption[] = [
     key: 'checkin-declined-by-client',
     label: 'Check-in declined — coach',
     variants: [{ value: 'declined', label: 'Declined' }],
+  },
+  {
+    key: 'checkin-new-time',
+    label: 'Check-in new time',
+    variants: [
+      { value: 'to-client', label: 'To the client, with a note' },
+      { value: 'to-coach', label: 'To the coach, without a note' },
+    ],
+  },
+  {
+    key: 'checkin-new-time-accepted',
+    label: 'Check-in new time accepted',
+    variants: RECIPIENT_VARIANTS,
+  },
+  {
+    key: 'checkin-new-time-declined',
+    label: 'Check-in new time declined',
+    variants: RECIPIENT_VARIANTS,
+  },
+  {
+    key: 'checkin-cancelled',
+    label: 'Check-in cancelled',
+    variants: RECIPIENT_VARIANTS,
   },
 ];
 
@@ -357,6 +425,48 @@ export function EmailPreview() {
           clientName="Jane Doe"
           startsAt={SAMPLE_CHECKIN_START}
           coachTimeZone={SAMPLE_COACH_TIME_ZONE}
+        />
+      );
+    }
+    const recipient = sampleRecipient(variant);
+    if (template === 'checkin-new-time') {
+      return (
+        <CheckinNewTime
+          who={recipient.who}
+          note={variant === 'to-client' ? SAMPLE_NEW_TIME_NOTE : null}
+          earlierStartsAt={SAMPLE_EARLIER_CHECKIN_START}
+          startsAt={SAMPLE_CHECKIN_START}
+          timeZone={recipient.timeZone}
+          checkinsUrl={recipient.checkinsUrl}
+        />
+      );
+    }
+    if (template === 'checkin-new-time-accepted') {
+      return (
+        <CheckinNewTimeAccepted
+          who={recipient.who}
+          startsAt={SAMPLE_CHECKIN_START}
+          timeZone={recipient.timeZone}
+          joinUrl={recipient.joinUrl}
+          googleCalendarUrl={recipient.googleCalendarUrl}
+        />
+      );
+    }
+    if (template === 'checkin-new-time-declined') {
+      return (
+        <CheckinNewTimeDeclined
+          who={recipient.who}
+          startsAt={SAMPLE_CHECKIN_START}
+          timeZone={recipient.timeZone}
+        />
+      );
+    }
+    if (template === 'checkin-cancelled') {
+      return (
+        <CheckinCancelled
+          who={recipient.who}
+          startsAt={SAMPLE_CHECKIN_START}
+          timeZone={recipient.timeZone}
         />
       );
     }

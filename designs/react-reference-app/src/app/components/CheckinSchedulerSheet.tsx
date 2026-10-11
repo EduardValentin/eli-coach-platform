@@ -28,7 +28,7 @@ type SheetBase = {
 };
 
 type PickerSheetProps = SheetBase & {
-  variant: 'reschedule' | 'schedule';
+  variant: 'schedule';
   selectedDate: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   selectedTime: string | null;

@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { CalendarPlus, CalendarDays, Clock, RefreshCw } from 'lucide-react';
 import {
   MAX_RESCHEDULES,
-  canPropose,
+  canProposeFor,
   proposesNewTime,
   type CheckIn,
 } from '../domain/checkins';
@@ -27,7 +27,7 @@ export function CheckinActionCard({
   onAcceptReschedule,
 }: CheckinActionCardProps) {
   const isRescheduling = proposesNewTime(checkin);
-  const canReschedule = canPropose(checkin);
+  const canReschedule = canProposeFor(checkin, role);
   const proposedByOther = checkin.proposedBy !== role;
 
   const proposerLabel =
@@ -40,7 +40,7 @@ export function CheckinActionCard({
     : 'var(--status-pending)';
   const HeaderIcon = isRescheduling ? RefreshCw : CalendarPlus;
 
-  const message = checkin.rescheduleMessage || checkin.note;
+  const message = checkin.newTimeNote || checkin.note;
   const primaryAction = isRescheduling ? onAcceptReschedule : onApprove;
   const primaryLabel = isRescheduling ? 'Accept' : 'Approve';
 

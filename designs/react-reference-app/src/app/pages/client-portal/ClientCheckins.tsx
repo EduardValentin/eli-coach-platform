@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { CalendarDays, CalendarPlus, Clock } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import {
   CheckinCard,
+  rescheduleAction,
   type CheckinRowActions,
 } from '../../components/CheckinCard';
 import {
@@ -15,8 +16,8 @@ import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
 import {
   canCancelApproved,
-  canPropose,
   canWithdrawRequest,
+  proposalFor,
   proposesNewTime,
   type CheckIn,
 } from '../../domain/checkins';
@@ -25,10 +26,8 @@ import { useCoachProfile } from '../../context/CoachProfileContext';
 import {
   formatCheckinDate,
   formatCheckinTime,
-  toISODate,
-  to24h,
 } from '../../utils/dateFormatters';
-import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { CheckinProposeTimeDialog } from '../../components/CheckinProposeTimeDialog';
 import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
 import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
 import type { CheckinTab } from '../../utils/checkinListing';
@@ -68,12 +67,9 @@ const EMPTY_COPY: Record<CheckinTab, CheckinEmptyCopy> = {
 export function ClientCheckins() {
   const {
     statusOf,
+    findCheckin,
     cancelCheckin,
-    proposeNewTime,
-    getUpcomingCheckins,
-    getPendingCheckins,
     hasOpenClientRequest,
-    getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { answer, answerInFlight } = useCheckinAnswers();
@@ -85,30 +81,14 @@ export function ClientCheckins() {
   };
   const viewer = { party: 'client' as const, counterpartName: 'your coach' };
 
-  const upcoming = getUpcomingCheckins(CLIENT_ID);
-  const pending = getPendingCheckins(CLIENT_ID);
   const openRequest = hasOpenClientRequest(CLIENT_ID);
 
   const [showRequest, setShowRequest] = useState(false);
-
-  const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
-  const [rsDate, setRsDate] = useState<Date | undefined>();
-  const [rsTime, setRsTime] = useState<string | null>(null);
-  const [rsMsg, setRsMsg] = useState('');
-
+  const [proposingFor, setProposingFor] = useState<string | null>(null);
   const [movingReview, setMovingReview] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
 
-  const bookedSlots = useMemo(
-    () => (rescheduleTarget && rsDate ? getBookedSlots(toISODate(rsDate)) : []),
-    [rescheduleTarget, rsDate, getBookedSlots],
-  );
-
-  const rescheduleTargetCheckin = useMemo(
-    () =>
-      [...upcoming, ...pending].find((c) => c.id === rescheduleTarget) ?? null,
-    [upcoming, pending, rescheduleTarget],
-  );
+  const proposingCheckin = proposingFor ? findCheckin(proposingFor) ?? null : null;
 
   const handleRequested = (c: CheckIn) => {
     ctxSendMessage(
@@ -161,34 +141,17 @@ export function ClientCheckins() {
       setMovingReview(true);
       return;
     }
-    setRescheduleTarget(c.id);
-    setRsDate(undefined);
-    setRsTime(null);
-    setRsMsg('');
+    setProposingFor(c.id);
   };
 
-  const handleSubmitReschedule = () => {
-    if (!rescheduleTarget || !rsDate || !rsTime) return;
-    const date = toISODate(rsDate);
-    const time = to24h(rsTime);
-    const ok = proposeNewTime(
-      rescheduleTarget,
-      { date, time },
-      'client',
-      rsMsg || undefined,
-    );
-    if (!ok) {
-      toast.error('Maximum reschedule limit reached');
-      return;
-    }
+  const handleProposed = (c: CheckIn) => {
     addSystemMessage(
       CLIENT_ID,
-      `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
       'checkin-rescheduled',
     );
-    if (rsMsg) ctxSendMessage(CLIENT_ID, rsMsg, 'client');
+    if (c.newTimeNote) ctxSendMessage(CLIENT_ID, c.newTimeNote, 'client');
     toast.success('New time proposed');
-    setRescheduleTarget(null);
   };
 
   const renderRequestButton = ({
@@ -221,8 +184,8 @@ export function ClientCheckins() {
   const upcomingActions = (c: CheckIn): CheckinRowActions => ({
     shown: <JoinMeetLink checkin={c} party="client" />,
     menu: {
-      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
-      cancel: canCancelApproved(c, 'client') ? () => setCancelTarget(c) : undefined,
+      reschedule: rescheduleAction(proposalFor(c, 'client'), () => openReschedule(c)),
+      cancel: canCancelApproved(c, 'client') ? { onSelect: () => setCancelTarget(c) } : undefined,
     },
   });
 
@@ -267,7 +230,7 @@ export function ClientCheckins() {
       </>
     ),
     menu: {
-      reschedule: canPropose(c) ? () => openReschedule(c) : undefined,
+      reschedule: rescheduleAction(proposalFor(c, 'client'), () => openReschedule(c)),
       disabled: answerInFlight(c) !== null,
     },
   });
@@ -310,29 +273,14 @@ export function ClientCheckins() {
         onRequested={handleRequested}
       />
 
-      <CheckinSchedulerSheet
-        open={Boolean(rescheduleTarget)}
+      <CheckinProposeTimeDialog
+        checkin={proposingCheckin}
+        party="client"
+        noteLabel="Add a note for your coach (optional)"
         onOpenChange={(open) => {
-          if (!open) setRescheduleTarget(null);
+          if (!open) setProposingFor(null);
         }}
-        variant="reschedule"
-        title="Propose a new time"
-        description={
-          rescheduleTargetCheckin
-            ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
-            : undefined
-        }
-        selectedDate={rsDate}
-        onDateChange={setRsDate}
-        selectedTime={rsTime}
-        onTimeChange={setRsTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleSubmitReschedule}
-        submitLabel="Propose"
-        showMessageField
-        message={rsMsg}
-        onMessageChange={setRsMsg}
-        messagePlaceholder="Add a note for your coach (optional)"
+        onProposed={handleProposed}
       />
 
       <ReviewCallScheduler open={movingReview} onOpenChange={setMovingReview} />

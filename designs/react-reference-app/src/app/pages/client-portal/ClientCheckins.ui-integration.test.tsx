@@ -388,6 +388,22 @@ const MORE_ACTIONS = /^More actions for the check-in/;
 const ROW_ACTION = /^(Reschedule|Cancel|Cancel request|Decline|Accept|Approve)$/;
 const FOOD_LOG_NOTE = /Want to go over my food log/;
 const NEW_TIME_NOTE = /I am travelling that Wednesday/;
+const OWN_NEW_TIME_NOTE = /I have a work call that morning/;
+const MOVED_TWICE_NOTE = /Thursday afternoon suits me better/;
+const MOVED_TWICE_REASON = 'This check-in has already been moved twice.';
+
+async function proposeNewTimeFor(rowText: RegExp, note: string) {
+  await userEvent.click(moreActionsIn(rowWith(rowText)));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+  const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
+  const time = await pickFirstOpenTime(sheet);
+  await userEvent.type(within(sheet).getByLabelText('Add a note for your coach (optional)'), note);
+  await userEvent.click(within(sheet).getByRole('button', { name: `Propose ${time}` }));
+  await waitFor(
+    () => expect(screen.queryByRole('dialog', { name: 'Propose a new time' })).not.toBeInTheDocument(),
+    SERVICE_TIMEOUT,
+  );
+}
 
 function moreActionsIn(row: HTMLElement): HTMLElement {
   return within(row).getByRole('button', { name: MORE_ACTIONS });
@@ -490,7 +506,7 @@ describe('the actions on her check-in rows', () => {
     renderPage();
     const recurringRows = screen
       .getAllByRole('listitem')
-      .filter((item) => within(item).queryByText(FOOD_LOG_NOTE) === null);
+      .filter((item) => within(item).queryByText(/^Ad-hoc/) === null);
 
     // act
     const menus = [];
@@ -554,22 +570,175 @@ describe('the actions on her check-in rows', () => {
   it('leaves the menu out once a check-in has nothing left to put in it', async () => {
     // arrange
     renderPage();
-    await userEvent.click(moreActionsIn(rowWith(FOOD_LOG_NOTE)));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
-    await userEvent.click(openDays(sheet)[0]);
-    const [time] = await within(sheet).findAllByRole('button', { name: TIME_LABEL });
-    await userEvent.click(time);
-    await userEvent.type(within(sheet).getByRole('textbox'), 'Friday works better');
+    await proposeNewTimeFor(FOOD_LOG_NOTE, 'Friday works better');
 
     // act
-    await userEvent.click(within(sheet).getByRole('button', { name: /^Propose/ }));
     await showTab('Requests');
 
     // assert
     const row = rowWith(/Friday works better/);
     expect(within(row).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
     expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+
+  it('shows nothing to do on her own new time, marked as hers with her note', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await showTab('Requests');
+
+    // assert
+    const row = rowWith(OWN_NEW_TIME_NOTE);
+    expect(within(row).getByText(/New time from you$/)).toBeInTheDocument();
+    expect(within(row).getByText(/^You:/)).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+});
+
+describe('a check-in moved twice', () => {
+  it('keeps Reschedule in its menu, marked disabled', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
+
+    // act
+    const reschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
+
+    // assert
+    expect(reschedule).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('menuitem', { name: 'Cancel' })).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('says why when she hovers Reschedule', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
+
+    // act
+    await userEvent.hover(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+
+    // assert
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+  });
+
+  it('says why when she reaches Reschedule from the keyboard', async () => {
+    // arrange
+    renderPage();
+    act(() => moreActionsIn(rowWith(MOVED_TWICE_NOTE)).focus());
+    await userEvent.keyboard('{Enter}');
+    await screen.findByRole('menu');
+
+    // act
+    await userEvent.keyboard('{ArrowDown}{ArrowUp}');
+
+    // assert
+    const reschedule = screen.getByRole('menuitem', { name: 'Reschedule' });
+    expect(reschedule).toHaveFocus();
+    await waitFor(() => expect(reschedule).toHaveAccessibleDescription(MOVED_TWICE_REASON));
+  });
+
+  it('says why on a tap and opens no dialog', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
+    const reschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
+
+    // act
+    await userEvent.pointer({ keys: '[TouchA]', target: reschedule });
+
+    // assert
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Propose a new time' })).not.toBeInTheDocument();
+  });
+
+  it('shows the time it was moved from', () => {
+    // arrange
+    // act
+    renderPage();
+
+    // assert
+    expect(
+      within(rowWith(MOVED_TWICE_NOTE)).getByRole('button', { name: /^Rescheduled from / }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('proposing a new time', () => {
+  it('says when the check-in is set for now and asks for a note for her coach', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(moreActionsIn(rowWith(FOOD_LOG_NOTE)));
+
+    // act
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+
+    // assert
+    const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
+    expect(sheet).toHaveAccessibleDescription(/^Currently set for \w{3}, \w{3} \d{1,2} · \d{1,2}:\d{2} [AP]M$/);
+    expect(within(sheet).getByLabelText('Add a note for your coach (optional)')).toBeInTheDocument();
+  });
+
+  it('moves the check-in under Requests with the earlier time struck through and her note', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await proposeNewTimeFor(FOOD_LOG_NOTE, 'Friday works better');
+
+    // assert
+    expect(screen.getByText('New time proposed')).toBeInTheDocument();
+    // act
+    await showTab('Requests');
+    // assert
+    const row = rowWith(/Friday works better/);
+    expect(within(row).getByText(/New time from you$/)).toBeInTheDocument();
+    expect(row.querySelector('s')).not.toBeNull();
+  });
+
+  it('answers her coach’s new time with a counter-proposal', async () => {
+    // arrange
+    renderPage();
+    await showTab('Requests');
+
+    // act
+    await proposeNewTimeFor(NEW_TIME_NOTE, 'Could we do Monday instead?');
+
+    // assert
+    const row = rowWith(/Could we do Monday instead\?/);
+    expect(within(row).getByText(/New time from you$/)).toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: ROW_ACTION })).not.toBeInTheDocument();
+  });
+
+  it('gives focus back to the row menu button when she closes the dialog', async () => {
+    // arrange
+    renderPage();
+    const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
+    await userEvent.click(trigger);
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+    await screen.findByRole('dialog', { name: 'Propose a new time' });
+
+    // act
+    await userEvent.keyboard('{Escape}');
+
+    // assert
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('offers no time once her coaching has ended', async () => {
+    // arrange
+    renderPage('&jstage=submitted&jsub=ended');
+
+    // act
+    const dialog = await openRequestDialog();
+
+    // assert
+    expect(
+      await within(dialog).findByText('There are no open times in the next 30 days.', {}, SERVICE_TIMEOUT),
+    ).toBeInTheDocument();
+    expect(openDays(dialog)).toHaveLength(0);
   });
 });
 

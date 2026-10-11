@@ -14,7 +14,7 @@ const FAILURE_COPY: Record<CheckinAnswer, string> = {
   withdraw: "Your request wasn't cancelled. Try again.",
 };
 
-const NO_LONGER_WAITING = 'This request is no longer waiting for an answer.';
+export const NO_LONGER_WAITING = 'This request is no longer waiting for an answer.';
 
 export function useCheckinAnswers() {
   const { approveCheckin, declineCheckin, withdrawCheckinRequest } = useCheckins();

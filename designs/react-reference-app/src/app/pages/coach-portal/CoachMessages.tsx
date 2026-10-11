@@ -29,6 +29,7 @@ import {
 } from '../../utils/dateFormatters';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { CheckinProposeTimeDialog } from '../../components/CheckinProposeTimeDialog';
 import { useCheckinAnswers } from '../../hooks/useCheckinAnswers';
 import type { CheckIn } from '../../domain/checkins';
 import { SearchField } from '../../components/SearchField';
@@ -86,7 +87,7 @@ export function CoachMessages() {
     getPendingCheckins,
     getUpcomingCheckins,
     getCheckinsAwaiting,
-    proposeNewTime,
+    findCheckin,
     coachInitiateCheckin,
     getBookedSlots,
   } = useCheckins();
@@ -110,30 +111,14 @@ export function CoachMessages() {
   const [scheduleTime, setScheduleTime] = useState<string | null>(null);
   const [scheduleNote, setScheduleNote] = useState('');
 
-  // Reschedule state
-  const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
-  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
-  const [rescheduleTime, setRescheduleTime] = useState<string | null>(null);
-  const [rescheduleMsg, setRescheduleMsg] = useState('');
+  const [proposingFor, setProposingFor] = useState<string | null>(null);
 
-  const bookedSlots = useMemo(() => {
-    if (showSchedulePicker && scheduleDate)
-      return getBookedSlots(toISODate(scheduleDate));
-    if (rescheduleTarget && rescheduleDate)
-      return getBookedSlots(toISODate(rescheduleDate));
-    return [];
-  }, [
-    showSchedulePicker,
-    scheduleDate,
-    rescheduleTarget,
-    rescheduleDate,
-    getBookedSlots,
-  ]);
-
-  const rescheduleTargetCheckin = useMemo(
-    () => actionableForClient.find((c) => c.id === rescheduleTarget) ?? null,
-    [actionableForClient, rescheduleTarget],
+  const bookedSlots = useMemo(
+    () => (showSchedulePicker && scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : []),
+    [showSchedulePicker, scheduleDate, getBookedSlots],
   );
+
+  const proposingCheckin = proposingFor ? findCheckin(proposingFor) ?? null : null;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -223,42 +208,16 @@ export function CoachMessages() {
     });
   };
 
-  const handleReschedule = (checkinId: string) => {
-    setRescheduleTarget(checkinId);
-    setRescheduleDate(undefined);
-    setRescheduleTime(null);
-    setRescheduleMsg('');
-  };
-
-  const handleSubmitReschedule = () => {
-    if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
-    const date = toISODate(rescheduleDate);
-    const time = to24h(rescheduleTime);
-    const ok = proposeNewTime(
-      rescheduleTarget,
-      { date, time },
-      'coach',
-      rescheduleMsg || undefined,
-    );
-    if (!ok) {
-      toast.error('Maximum reschedule limit reached');
-      return;
-    }
-
+  const handleProposed = (checkin: CheckIn) => {
     addSystemMessage(
-      activeClient,
-      `Coach proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      checkin.clientId,
+      `Coach proposed rescheduling to ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
       'checkin-rescheduled',
     );
-    if (rescheduleMsg) {
-      ctxSendMessage(activeClient, rescheduleMsg, 'coach');
+    if (checkin.newTimeNote) {
+      ctxSendMessage(checkin.clientId, checkin.newTimeNote, 'coach');
     }
     toast.success('Reschedule proposed');
-
-    setRescheduleTarget(null);
-    setRescheduleDate(undefined);
-    setRescheduleTime(null);
-    setRescheduleMsg('');
   };
 
   const handleAcceptReschedule = (checkinId: string) =>
@@ -294,7 +253,7 @@ export function CoachMessages() {
                 key={conv.id}
                 onClick={() => {
                   setActiveClient(conv.id);
-                  setRescheduleTarget(null);
+                  setProposingFor(null);
                   setShowSchedulePicker(false);
                 }}
                 className={`w-full text-left p-4 flex items-start gap-3 border-b border-border-subtle transition-colors ${
@@ -368,7 +327,7 @@ export function CoachMessages() {
                   <Button
                     onClick={() => {
                       setShowSchedulePicker(!showSchedulePicker);
-                      setRescheduleTarget(null);
+                      setProposingFor(null);
                     }}
                     variant={showSchedulePicker ? 'primary' : 'outline'}
                     size="xs"
@@ -583,7 +542,7 @@ export function CoachMessages() {
                     role="coach"
                     onApprove={() => handleApprove(checkin.id)}
                     onDecline={() => handleDecline(checkin.id)}
-                    onReschedule={() => handleReschedule(checkin.id)}
+                    onReschedule={() => setProposingFor(checkin.id)}
                     onAcceptReschedule={() =>
                       handleAcceptReschedule(checkin.id)
                     }
@@ -660,30 +619,18 @@ export function CoachMessages() {
           messagePlaceholder="Add a note (optional)"
         />
 
-        {/* Reschedule a check-in */}
-        <CheckinSchedulerSheet
-          open={Boolean(rescheduleTarget)}
-          onOpenChange={(open) => {
-            if (!open) setRescheduleTarget(null);
-          }}
-          variant="reschedule"
-          title="Propose a new time"
-          description={
-            rescheduleTargetCheckin
-              ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
-              : undefined
+        <CheckinProposeTimeDialog
+          checkin={proposingCheckin}
+          party="coach"
+          noteLabel={
+            proposingCheckin
+              ? `Add a note for ${proposingCheckin.clientName.split(' ')[0]} (optional)`
+              : ''
           }
-          selectedDate={rescheduleDate}
-          onDateChange={setRescheduleDate}
-          selectedTime={rescheduleTime}
-          onTimeChange={setRescheduleTime}
-          bookedSlots={bookedSlots}
-          onSubmit={handleSubmitReschedule}
-          submitLabel="Propose"
-          showMessageField
-          message={rescheduleMsg}
-          onMessageChange={setRescheduleMsg}
-          messagePlaceholder="Add a note for the client (optional)"
+          onOpenChange={(open) => {
+            if (!open) setProposingFor(null);
+          }}
+          onProposed={handleProposed}
         />
 
         {/* Delete Confirmation */}

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { MoreHorizontal, type LucideIcon } from 'lucide-react';
+import { DisabledActionHint } from './DisabledActionHint';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ export type RowMenuAction = {
   icon: LucideIcon;
   tone?: 'default' | 'destructive';
   disabled?: boolean;
+  disabledReason?: string;
   onSelect: () => void;
 };
 
@@ -64,20 +66,34 @@ export function RowActionsMenu({
         data-parity-root={parityRoot}
         onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
       >
-        {actions.map(({ name, label: itemLabel, icon: Icon, tone, disabled, onSelect }) => (
-          <DropdownMenuItem
-            key={name}
-            data-parity={`row-action-${name}`}
-            disabled={disabled}
-            onSelect={() => {
-              chosenAction.current = onSelect;
-            }}
-            variant={tone}
-          >
-            <Icon aria-hidden="true" />
-            {itemLabel}
-          </DropdownMenuItem>
-        ))}
+        {actions.map(({ name, label: itemLabel, icon: Icon, tone, disabled, disabledReason, onSelect }) => {
+          const item = (
+            <DropdownMenuItem
+              key={name}
+              data-parity={`row-action-${name}`}
+              disabled={disabled}
+              onSelect={(event) => {
+                if (disabledReason) {
+                  event.preventDefault();
+                  return;
+                }
+                chosenAction.current = onSelect;
+              }}
+              variant={tone}
+            >
+              <Icon aria-hidden="true" />
+              {itemLabel}
+            </DropdownMenuItem>
+          );
+
+          return disabledReason ? (
+            <DisabledActionHint key={name} reason={disabledReason}>
+              {item}
+            </DisabledActionHint>
+          ) : (
+            item
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
