@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-11 at commit c64ec9ed, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-11 at commit e547cf8f, change review.
 
 ## Component graph
 
@@ -134,7 +134,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C22 check-ins | C5 ui | 12 | `./calendar` (`SlotPicker`), `./appointments` (`AppointmentCard`, `JoinLink`), `./layout` (`ResponsiveSheetDialog`, `DeadEndPage`, `DeadEndLink`), `./overlays` (`ConfirmDialog`), `./primitives` (incl. `Alert`, `AlertAction`, `RowActionsMenu`), `./portal`, `./tabs`, `./lib`, `./toast` |
 | C22 check-ins | C6 infrastructure | 14 | `./email/server` (`ProductEmail`, the Email* primitives, `EMAIL_FRAME_STYLES`, `EMAIL_PRIMARY_BUTTON_STYLE`, `buildCalendarInvite`, `buildGoogleCalendarUrl`), `./http/server`, `./http` (`fetcherOutcomeOf`), `./pwa` |
 | C22 check-ins | C9 accounts | 5 | `server/guards/` (`requirePortalAccess` from the four controllers, `requireApiAccount` from the shared controller); `public/paths.ts` (`CLIENT_PORTAL_PATH`, `COACH_PORTAL_PATH`) |
-| C22 check-ins | C17 assessment-calls | 7 | `public/call-moment.ts` (`formatCallMoment` for the emails, the day and time wording on the rows, in the picker and in the propose and cancel dialogs, the scheduled day in the coach's toast), `public/visitor-profile.ts` (the pronouns of the schedule action's disabled reason), `ui/shared/slot-picker-props.ts` (the shared picker's days and wording) |
+| C22 check-ins | C17 assessment-calls | 5 | `public/call-moment.ts` (`formatCallMoment` for the emails, the day and time wording through the listing's `checkInMomentOf` and in the picker, the scheduled day in the coach's toast), `public/visitor-profile.ts` (the pronouns of the schedule action's disabled reason), `ui/shared/slot-picker-props.ts` (the shared picker's days and wording) |
 | C22 check-ins | C23 coach-schedule | 1 | `ui/coach/join/join-page.tsx` takes `COACH_SETTINGS_PATH` from `public/paths.ts` for the coach's not-ready join page |
 | C23 coach-schedule | C1 domain | 6 | `/coach-availability` (`CoachAvailability`, `WEEKDAYS`, the source, changes and calendar ports the adapters implement), `/coach-meeting-room` (`CoachMeetingRoom` and its ports), `/coach-schedule` (`GetCoachScheduleSettingsUseCase`, `UpdateCoachScheduleSettingsUseCase` and the settings problem type), `/shared` (`Clock`) |
 | C23 coach-schedule | C2 db | 6 | `appSchema` (the three tables), `DatabaseClient`, `DatabaseTransaction` and `isCausedByDatabaseError` (the reservation writers) |
@@ -335,7 +335,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B2697 | ResourceClients (U3466) | C1 use-cases | the inline `ResourceClients` in U1423 (composition, C18; `exists` over U3007, `findByAuthSubjectId` over U3161), handed out as `handles.resourceClients` | U3456, U3506, U3507, U3508 | `exists(clientId)` → boolean; auth subject id in, `{ clientId, portal: "reachable" \| "unreachable" }` or null out | implementer | dependency-absence; handed by the container |
 | B2698 | ClientResourceIds (U3457) | C1 use-cases | U3437 RandomClientResourceIds (adapters, C21) | U3455 | string ids | implementer | dependency-absence |
 | B2699 | ClientResourceIncidents (U3458) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U3455, U3456, U3506, U3507, U3508, U3519, U3520 | ids, reasons, sizes; no file contents | implementer | dependency-absence |
-| B2701 | CheckIns (U3533) | C1 use-cases | U3556 PostgresCheckIns (adapters, C22) | U3538–U3546, U3600, U3623, U3625 | the `CheckIn` instance in (`request`, `move`) and out (`find`, the lists); `{ id, outcome, at, from, clientTimeZone? }` in (`settle`), `{ checkIn, expected: { recordedStatus, startsAt }, at }` in (`move`), `{ clientId, from, at }` in (`cancelFrom`), `at` always the use case's `Clock` instant; `requested \| request_waiting \| time_taken`, `settled \| not_pending`, `moved \| time_taken \| not_pending` and the cancelled ids out | implementer | dependency-absence; `feature-api-to-data` and `feature-internals`; the composition hands it in |
+| B2701 | CheckIns (U3533) | C1 use-cases | U3556 PostgresCheckIns (adapters, C22) | U3538–U3546, U3600, U3623, U3625 | the `CheckIn` instance in (`request`, `move`) and out (`find`, the lists); `{ id, outcome, at, expectedStatus, clientTimeZone? }` in (`settle`), `{ checkIn, expected: { recordedStatus, startsAt }, at }` in (`move`), `{ clientId, startsFrom, at }` in (`cancelStartingFrom`), `at` always the use case's `Clock` instant; `requested \| request_waiting \| time_taken`, `settled \| changed_meanwhile`, `moved \| time_taken \| changed_meanwhile` and the cancelled ids out | implementer | dependency-absence; `feature-api-to-data` and `feature-internals`; the composition hands it in |
 | B2702 | CheckInIds (U3534) | C1 use-cases | U3557 RandomCheckInIds (adapters, C22) | U3539 | string ids | implementer | dependency-absence |
 | B2703 | CheckInIncidents (U3535) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U3537 | the check-in id and the notification name; no personal data | implementer | dependency-absence |
 | B2704 | CheckInNotifications (U3531) | C1 use-cases | U3559 EmailCheckInNotifications (adapters, C22) | U3537 | `CheckInNotice` (the recipient, the snapshot with its moves, earlier start and new-time note, and the client's names and email) in; `sent \| failed` out | implementer | dependency-absence |
@@ -3051,7 +3051,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3674 | packages/ui/src/primitives/choice-group.tsx | packages/ui/src/primitives/radio-group.tsx | import | no | no | lateral | present |
 | E3675 | packages/ui/src/primitives/field-error.tsx | external:react | type-only import | n/a | no | lateral | present |
 | E3676 | packages/ui/src/primitives/field-hint.tsx | external:react | type-only import | n/a | no | lateral | present |
-| E3677 | packages/ui/src/primitives/icon-hint.tsx | external:react | import | n/a | no | lateral | present |
+| E3677 | packages/ui/src/primitives/icon-hint.tsx | external:react | type-only import | n/a | no | lateral | present |
 | E3678 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E3680 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/accordion.tsx | re-export | no | no | lateral | present |
 | E3681 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/avatar.tsx | re-export | no | no | lateral | present |
@@ -4056,7 +4056,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4705 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
 | E4706 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E4707 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | packages/ui/src/tabs/index.ts | import | yes | no | lateral | present |
-| E4708 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-row.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | yes | inward | present |
 | E4709 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-row.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | import | no | no | lateral | present |
 | E4710 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-row.tsx | external:react | type-only import | n/a | no | lateral | present |
 | E4711 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-row.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
@@ -4398,27 +4397,13 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E5059 | apps/platform/src/features/check-ins/email/email-check-in-notifications.server.ts | apps/platform/src/features/check-ins/email/check-in-new-time-declined-email.server.tsx | import | no | no | lateral | present |
 | E5060 | apps/platform/src/features/check-ins/email/email-check-in-notifications.server.ts | apps/platform/src/features/check-ins/email/check-in-new-time-email.server.tsx | import | no | no | lateral | present |
 | E5061 | apps/platform/src/features/check-ins/server/check-ins-composition.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
-| E5062 | apps/platform/src/features/check-ins/ui/client/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | import | no | no | lateral | present |
-| E5063 | apps/platform/src/features/check-ins/ui/client/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | import | no | no | lateral | present |
-| E5064 | apps/platform/src/features/check-ins/ui/client/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | import | no | no | lateral | present |
-| E5065 | apps/platform/src/features/check-ins/ui/coach/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | import | no | no | lateral | present |
-| E5066 | apps/platform/src/features/check-ins/ui/coach/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | import | no | no | lateral | present |
-| E5067 | apps/platform/src/features/check-ins/ui/coach/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | import | no | no | lateral | present |
-| E5068 | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | no | lateral | present |
 | E5069 | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | type-only import | no | no | lateral | present |
-| E5070 | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | type-only import | no | no | lateral | present |
 | E5071 | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
-| E5072 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | import | no | no | lateral | present |
+| E5072 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | type-only import | no | no | lateral | present |
 | E5073 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E5074 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | type-only import | no | no | lateral | present |
-| E5075 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | type-only import | no | no | lateral | present |
-| E5076 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | external:lucide-react | import | n/a | no | lateral | present |
-| E5077 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | external:react | import | n/a | no | lateral | present |
-| E5078 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.ts | packages/ui/src/primitives/index.ts | type-only import | yes | no | lateral | present |
-| E5079 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | no | lateral | present |
 | E5080 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/check-ins/public/paths.ts | import | no | no | lateral | present |
 | E5081 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | import | no | no | lateral | present |
-| E5082 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | type-only import | no | no | lateral | present |
+| E5082 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | import | no | no | lateral | present |
 | E5083 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-picker.tsx | import | no | no | lateral | present |
 | E5084 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | external:react-router | import | n/a | no | lateral | present |
 | E5085 | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
@@ -4476,3 +4461,13 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E5137 | packages/ui/src/primitives/row-actions-menu.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
 | E5138 | packages/ui/src/primitives/row-actions-menu.tsx | packages/ui/src/primitives/disabled-action-hint.tsx | import | no | no | lateral | present |
 | E5139 | packages/ui/src/primitives/row-actions-menu.tsx | packages/ui/src/primitives/dropdown-menu.tsx | import | no | no | lateral | present |
+| E5140 | apps/platform/src/features/check-ins/ui/client/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | import | no | no | lateral | present |
+| E5141 | apps/platform/src/features/check-ins/ui/coach/check-ins/check-ins-page.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | import | no | no | lateral | present |
+| E5142 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | apps/platform/src/features/assessment-calls/public/call-moment.ts | import | yes | no | lateral | present |
+| E5143 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog.tsx | import | no | no | lateral | present |
+| E5144 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-decisions.tsx | type-only import | no | no | lateral | present |
+| E5145 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-listing.tsx | import | no | no | lateral | present |
+| E5146 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | apps/platform/src/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog.tsx | import | no | no | lateral | present |
+| E5147 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E5148 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | external:react | import | n/a | no | lateral | present |
+| E5149 | apps/platform/src/features/check-ins/ui/shared/check-ins/check-in-menu.tsx | packages/ui/src/primitives/index.ts | type-only import | yes | no | lateral | present |
