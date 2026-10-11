@@ -80,6 +80,30 @@ describe("DropdownMenu", () => {
     ).toHaveAttribute("data-variant", "default");
   });
 
+  it("dims an item marked aria-disabled and shows it cannot be chosen", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger>Actions for Meal plan</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem aria-disabled>Reschedule</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Meal plan" }),
+    );
+
+    // assert
+    expect(screen.getByRole("menuitem", { name: "Reschedule" })).toHaveClass(
+      "aria-disabled:cursor-not-allowed",
+      "aria-disabled:opacity-50",
+    );
+  });
+
   it("closes on Escape and returns focus to the trigger", async () => {
     // arrange
     const user = userEvent.setup();
