@@ -16,6 +16,8 @@ type ResourceGalleryProps = {
   menuFor?: (resource: ClientResourceView) => ReactNode;
   detailsActionsFor?: (resource: ClientResourceView) => ReactNode;
   returnFocusTo?: RefObject<HTMLElement | null>;
+  toolbar?: ReactNode;
+  noMatches?: ReactNode;
 };
 
 export function ResourceGallery({
@@ -26,6 +28,8 @@ export function ResourceGallery({
   menuFor,
   detailsActionsFor,
   returnFocusTo,
+  toolbar,
+  noMatches,
 }: ResourceGalleryProps) {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewing = resources.find((resource) => resource.id === viewingId);
@@ -54,9 +58,11 @@ export function ResourceGallery({
     <>
       <ResourceGrid
         menuFor={menuFor}
+        noMatches={noMatches}
         onOpen={open}
         perspective={perspective}
         resources={resources}
+        toolbar={toolbar}
         unopenedIds={unopenedIds}
       />
       <ResourceViewer

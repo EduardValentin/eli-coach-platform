@@ -38,6 +38,12 @@ export class CoachClientResourcesPage {
     await this.page.goto(`/coach/clients/${clientId}/resources`);
   }
 
+  async openWithTag(clientId: string, tag: string): Promise<void> {
+    await this.page.goto(
+      `/coach/clients/${clientId}/resources?${new URLSearchParams({ tag })}`,
+    );
+  }
+
   async expectOpenFor(owner: ResourcesOwner): Promise<void> {
     await expect(this.page).toHaveURL(
       new RegExp(`/coach/clients/${owner.clientId}/resources$`),
@@ -52,6 +58,11 @@ export class CoachClientResourcesPage {
       "href",
       `/coach/clients/${owner.clientId}`,
     );
+  }
+
+  async reload(): Promise<void> {
+    await this.page.reload();
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
   }
 
   async goBack(fullName: string): Promise<void> {
@@ -79,6 +90,10 @@ export class CoachClientResourcesPage {
 
   async expectCard(facts: ResourceCardFacts): Promise<void> {
     await this.cards.expectCard(facts);
+  }
+
+  async expectMetaRowOnOneLine(title: string): Promise<void> {
+    await this.cards.expectMetaRowOnOneLine(title);
   }
 
   async expectThumbnail(title: string): Promise<void> {

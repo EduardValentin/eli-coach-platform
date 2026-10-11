@@ -52,6 +52,10 @@ const ADDED_PDF = ClientResource.reconstitute({
   clientId: CLIENT_ID,
   title: "Meal plan",
   description: "Week one",
+  tags: [
+    { tag: "Meals", folded: "meals" },
+    { tag: "Week one", folded: "week one" },
+  ],
   file: {
     originalName: "Meal plan.pdf",
     format: "pdf",
@@ -66,11 +70,12 @@ const CHANGED_PDF = ClientResource.reconstitute({
   ...ADDED_PDF.toSnapshot(),
   title: "Week two plan",
   description: "Swap the oats",
+  tags: [{ tag: "Breakfast", folded: "breakfast" }],
   openedAt: new Date("2026-10-06T07:15:00.000Z"),
 });
 
 describe("ClientResourcesController add", () => {
-  it("adds the file she sent with her title and description and answers the resource as the page shows it", async () => {
+  it("adds the file she sent with her title, description and tags and answers the resource as the page shows it", async () => {
     // arrange
     const { controller, addClientResource } = createController({
       added: { status: "added", resource: ADDED_PDF },
@@ -89,6 +94,7 @@ describe("ClientResourcesController add", () => {
         id: RESOURCE_ID,
         title: "Meal plan",
         description: "Week one",
+        tags: ["Meals", "Week one"],
         file: {
           originalName: "Meal plan.pdf",
           downloadName: "Meal plan.pdf",
@@ -103,7 +109,11 @@ describe("ClientResourcesController add", () => {
     expect(addClientResource).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       clientId: CLIENT_ID,
-      details: { title: "Meal plan", description: "Week one" },
+      details: {
+        title: "Meal plan",
+        description: "Week one",
+        tags: ["meals", "Week one"],
+      },
       file: { originalName: "Meal plan.pdf", bytes: PDF_BYTES },
     });
   });
@@ -138,7 +148,11 @@ describe("ClientResourcesController add", () => {
     const { controller } = createController({
       added: {
         status: "invalid-details",
-        problems: { title: "missing", description: "too-long" },
+        problems: {
+          title: "missing",
+          description: "too-long",
+          tags: "too-long",
+        },
       },
     });
 
@@ -151,7 +165,7 @@ describe("ClientResourcesController add", () => {
     // assert
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
-      problems: { title: "missing", description: "too-long" },
+      problems: { title: "missing", description: "too-long", tags: "too-long" },
     });
   });
 
@@ -568,7 +582,11 @@ describe("ClientResourcesController changeDetails", () => {
     // act
     const response = await controller.changeDetails(
       detailsArgs({
-        body: { title: "  Week two plan ", description: "Swap the oats  " },
+        body: {
+          title: "  Week two plan ",
+          description: "Swap the oats  ",
+          tags: [" breakfast "],
+        },
       }),
       RESOURCE_ID,
     );
@@ -580,6 +598,7 @@ describe("ClientResourcesController changeDetails", () => {
         id: RESOURCE_ID,
         title: "Week two plan",
         description: "Swap the oats",
+        tags: ["Breakfast"],
         file: {
           originalName: "Meal plan.pdf",
           downloadName: "Meal plan.pdf",
@@ -594,7 +613,11 @@ describe("ClientResourcesController changeDetails", () => {
     expect(changeResourceDetails).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: RESOURCE_ID,
-      details: { title: "  Week two plan ", description: "Swap the oats  " },
+      details: {
+        title: "  Week two plan ",
+        description: "Swap the oats  ",
+        tags: [" breakfast "],
+      },
     });
   });
 
@@ -603,7 +626,11 @@ describe("ClientResourcesController changeDetails", () => {
     const { controller } = createController({
       changed: {
         status: "invalid-details",
-        problems: { title: "missing", description: "too-long" },
+        problems: {
+          title: "missing",
+          description: "too-long",
+          tags: "too-long",
+        },
       },
     });
 
@@ -613,7 +640,7 @@ describe("ClientResourcesController changeDetails", () => {
     // assert
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
-      problems: { title: "missing", description: "too-long" },
+      problems: { title: "missing", description: "too-long", tags: "too-long" },
     });
   });
 
@@ -660,11 +687,23 @@ describe("ClientResourcesController changeDetails", () => {
     { name: "not JSON", body: "title=Week two plan" },
     {
       name: "without a description",
-      body: JSON.stringify({ title: "Week two plan" }),
+      body: JSON.stringify({ title: "Week two plan", tags: [] }),
+    },
+    {
+      name: "without tags",
+      body: JSON.stringify({ title: "Week two plan", description: "" }),
+    },
+    {
+      name: "with a tag that is not text",
+      body: JSON.stringify({
+        title: "Week two plan",
+        description: "",
+        tags: [3],
+      }),
     },
     {
       name: "with a title that is not text",
-      body: JSON.stringify({ title: 2, description: "" }),
+      body: JSON.stringify({ title: 2, description: "", tags: [] }),
     },
   ])(
     "answers a bad request to a body $name without changing anything",
@@ -848,6 +887,8 @@ function uploadForm(): FormData {
   );
   form.set(RESOURCE_UPLOAD_PARTS.title, "Meal plan");
   form.set(RESOURCE_UPLOAD_PARTS.description, "Week one");
+  form.append(RESOURCE_UPLOAD_PARTS.tags, "meals");
+  form.append(RESOURCE_UPLOAD_PARTS.tags, "Week one");
 
   return form;
 }
@@ -869,7 +910,7 @@ function uploadArgs(
 
 function detailsArgs(
   options: {
-    body?: { title: string; description: string };
+    body?: { title: string; description: string; tags: string[] };
     request?: Request;
     session?: ResolvedSession;
   } = {},
@@ -880,7 +921,11 @@ function detailsArgs(
       options.request ??
       new Request(RESOURCE_URL, {
         body: JSON.stringify(
-          options.body ?? { title: "Week two plan", description: "" },
+          options.body ?? {
+            title: "Week two plan",
+            description: "",
+            tags: [],
+          },
         ),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",

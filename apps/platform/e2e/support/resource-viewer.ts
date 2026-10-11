@@ -185,6 +185,14 @@ export class ResourceViewer {
     await expect(this.definitionOf("Pages")).toHaveText(String(readings.pages));
   }
 
+  async expectTags(tags: readonly string[]): Promise<void> {
+    await expect(
+      this.dialog
+        .getByRole("list", { name: "Tags", exact: true })
+        .getByRole("listitem"),
+    ).toHaveText([...tags]);
+  }
+
   async expectDownloadOf(fileName: string): Promise<void> {
     await expect(this.downloadLink).toHaveAttribute("download", fileName);
     await expect(this.downloadLink).toHaveAttribute("href", DOWNLOAD_PATH);

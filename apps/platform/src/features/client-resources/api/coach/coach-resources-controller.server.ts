@@ -4,16 +4,16 @@ import { z } from "zod";
 
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
-  clientResourceListSchema,
-  presentClientResource,
-  type ClientResourceListing,
+  presentResourceListing,
+  type CoachResourceListing,
 } from "~/features/client-resources/public/client-resources";
+import { resourceBrowseInputOf } from "~/features/client-resources/public/resource-browse";
 
 type CoachResourcesControllerOptions = {
   listClientResources: ListClientResourcesUseCase;
 };
 
-const UNAVAILABLE_LISTING: ClientResourceListing = { status: "unavailable" };
+const UNAVAILABLE_LISTING: CoachResourceListing = { status: "unavailable" };
 
 const clientIdSchema = z.uuid();
 
@@ -23,7 +23,7 @@ export class CoachResourcesController {
   async load(
     args: LoaderFunctionArgs,
     clientId: string,
-  ): Promise<ClientResourceListing> {
+  ): Promise<CoachResourceListing> {
     const coach = requirePortalAccess(args, { role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
@@ -34,6 +34,7 @@ export class CoachResourcesController {
     const listing = await this.options.listClientResources.execute({
       requester: { role: coach.role, authSubjectId: coach.authSubjectId },
       clientId: target.data,
+      browse: resourceBrowseInputOf(new URL(args.request.url).searchParams),
     });
 
     if (listing.status === "not-found") {
@@ -45,10 +46,8 @@ export class CoachResourcesController {
     }
 
     return {
-      status: "ready",
-      resources: clientResourceListSchema.parse(
-        listing.resources.map(presentClientResource),
-      ),
+      ...presentResourceListing(listing),
+      vocabulary: listing.vocabulary.map(({ tag }) => tag),
     };
   }
 }

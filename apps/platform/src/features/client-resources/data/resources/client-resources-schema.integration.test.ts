@@ -30,6 +30,11 @@ const insertResourceSql = `
     ($1, $2, 'Meal plan', 'Meal plan.pdf', $3, 182431, $4, '2026-10-05T09:30:00Z')
 `;
 
+const insertTagSql = `
+  insert into app.client_resource_tags (resource_id, tag, folded, position)
+  values ($1, $2, $3, $4)
+`;
+
 type ResourceRow = {
   clientId?: string;
   format: string;
@@ -131,6 +136,37 @@ describe.sequential("client resources schema", () => {
     );
     expect(await countResources()).toBe(0);
   });
+
+  it("refuses the same tag twice on one resource, whatever its spelling", async () => {
+    // arrange
+    await insertClient();
+    await insertResource({ format: "pdf", pageCount: 3 });
+    await insertTag({ tag: "Meals", folded: "meals", position: 0 });
+
+    // act
+    const again = insertTag({ tag: "MEALS", folded: "meals", position: 1 });
+
+    // assert
+    await expect(again).rejects.toThrow(/client_resource_tags_pkey/);
+    expect(await countTags()).toBe(1);
+  });
+
+  it("removes a resource's tags with the resource", async () => {
+    // arrange
+    await insertClient();
+    await insertResource({ format: "pdf", pageCount: 3 });
+    await insertTag({ tag: "Meals", folded: "meals", position: 0 });
+    await insertTag({ tag: "Week one", folded: "week one", position: 1 });
+
+    // act
+    await suite.postgres.executeSql({
+      sql: "delete from app.client_resources where id = $1",
+      values: [RESOURCE_ID],
+    });
+
+    // assert
+    expect(await countTags()).toBe(0);
+  });
 });
 
 async function insertClient(): Promise<void> {
@@ -151,6 +187,25 @@ function insertResource(row: ResourceRow): Promise<unknown> {
 function countResources(): Promise<number> {
   return suite.postgres.countRows({
     tableName: "app.client_resources",
+    values: [],
+    whereClause: "true",
+  });
+}
+
+function insertTag(row: {
+  tag: string;
+  folded: string;
+  position: number;
+}): Promise<unknown> {
+  return suite.postgres.executeSql({
+    sql: insertTagSql,
+    values: [RESOURCE_ID, row.tag, row.folded, row.position],
+  });
+}
+
+function countTags(): Promise<number> {
+  return suite.postgres.countRows({
+    tableName: "app.client_resource_tags",
     values: [],
     whereClause: "true",
   });

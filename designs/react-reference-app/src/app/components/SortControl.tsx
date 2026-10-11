@@ -64,7 +64,7 @@ export function SortControl<Key extends string>({
   };
 
   return (
-    <div className={cn('flex w-full items-center gap-2', className)}>
+    <div className={cn('flex w-full items-center gap-2', className)} data-parity-root="SortControl">
       <Select value={sort.key} onValueChange={chooseKey}>
         <SelectTrigger
           aria-label="Sort by"

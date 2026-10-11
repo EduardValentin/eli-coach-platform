@@ -7,9 +7,10 @@ import {
 } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import { OpenResourcePreviewUseCase } from "./open-resource-preview-use-case";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
 
@@ -19,6 +20,7 @@ function resource(id: string, file: ResourceFileSnapshot): ClientResource {
     clientId: "client-ana",
     title: id,
     description: "",
+    tags: [],
     file,
     addedAt: new Date("2026-10-05T09:00:00.000Z"),
     openedAt: null,
@@ -53,7 +55,15 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(): Promise<ClientResource[]> {
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
     return [];
   }
 

@@ -3,6 +3,7 @@ import {
   type AppointmentDetail,
 } from "@eli-coach-platform/ui/appointments";
 import { cn } from "@eli-coach-platform/ui/lib";
+import { SortControl, type SortOption } from "@eli-coach-platform/ui/filters";
 import { EmptyState } from "@eli-coach-platform/ui/portal";
 import {
   Badge,
@@ -31,6 +32,7 @@ import {
 } from "~/features/assessment-calls/public/visitor-profile";
 import {
   classifyCalls,
+  defaultDirectionFor,
   emptyListingCopy,
   filterCalls,
   hasActiveFilters,
@@ -38,17 +40,20 @@ import {
   orderCallsBy,
   pageOfCalls,
   PAGE_SIZE,
+  SORT_KEYS,
   type CallPageView,
+  type CallSort,
   type ClassifiedCall,
   type CoachCallWhen,
   type EmptyListingCopy,
   type ListingMoment,
   type ListingSelection,
+  type SortDirection,
+  type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { JoinCallLink } from "~/features/assessment-calls/ui/coach/join-call-link";
 
 import { CallListPager } from "./call-list-pager";
-import { SortControl } from "./sort-control";
 import { useCallListingParams } from "./use-call-listing-params";
 
 const WHEN_TABS: readonly { label: string; when: CoachCallWhen }[] = [
@@ -57,6 +62,41 @@ const WHEN_TABS: readonly { label: string; when: CoachCallWhen }[] = [
   { label: "Upcoming", when: "upcoming" },
   { label: "Past", when: "past" },
 ];
+
+const SORT_KEY_LABELS: Record<SortKey, string> = {
+  booked: "Booking date",
+  email: "Email",
+  name: "Name",
+  scheduled: "Scheduled date",
+};
+
+const TEXT_DIRECTION_LABELS: Record<SortDirection, string> = {
+  asc: "A to Z",
+  desc: "Z to A",
+};
+
+const SORT_PRESENTATION: Record<
+  SortKey,
+  Pick<SortOption<SortKey>, "directionLabels" | "order">
+> = {
+  booked: {
+    directionLabels: { asc: "Oldest first", desc: "Newest first" },
+    order: "chronological",
+  },
+  email: { directionLabels: TEXT_DIRECTION_LABELS, order: "alphabetical" },
+  name: { directionLabels: TEXT_DIRECTION_LABELS, order: "alphabetical" },
+  scheduled: {
+    directionLabels: { asc: "Latest first", desc: "Soonest first" },
+    order: "chronological",
+  },
+};
+
+const SORT_OPTIONS: readonly SortOption<SortKey>[] = SORT_KEYS.map((key) => ({
+  ...SORT_PRESENTATION[key],
+  defaultDirection: defaultDirectionFor(key),
+  key,
+  label: SORT_KEY_LABELS[key],
+}));
 
 export type ToolbarFilter = {
   control: (scopedCalls: readonly ClassifiedCall[]) => ReactNode;
@@ -112,6 +152,13 @@ export function AssessmentCallsSection({
     size: PAGE_SIZE,
   });
   const emptyCopy = emptyListingCopy(selection, toolbarFilter);
+  const changeSort = (next: CallSort) => {
+    if (next.key !== sort.key) {
+      chooseSortKey(next.key);
+      return;
+    }
+    if (next.direction !== sort.direction) toggleSortDirection();
+  };
   const canClearFilters = hasActiveFilters(selection, toolbarFilter);
 
   return (
@@ -147,8 +194,8 @@ export function AssessmentCallsSection({
               value={query}
             />
             <SortControl
-              onChooseKey={chooseSortKey}
-              onToggleDirection={toggleSortDirection}
+              onChange={changeSort}
+              options={SORT_OPTIONS}
               sort={sort}
             />
           </div>

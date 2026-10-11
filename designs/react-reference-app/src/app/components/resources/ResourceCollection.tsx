@@ -1,15 +1,17 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { CloudOff, SearchX } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import {
   browseResources,
   coachTagVocabulary,
   DEFAULT_RESOURCE_SORT,
-  NO_RESOURCE_FILTER,
+  defaultResourceSortDirection,
   type Resource,
   type ResourceFilter,
   type ResourceSort,
+  type ResourceSortKey,
 } from '../../domain/resources';
-import { hasTag } from '../../domain/tags';
+import { sameTag } from '../../domain/tags';
 import { EmptyState } from '../EmptyState';
 import { DeadEndPanel } from '../ErrorPage';
 import { Button } from '../ui/button';
@@ -22,6 +24,15 @@ import { ResourceToolbar } from './ResourceToolbar';
 const GRID_CLASS = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4';
 
 const SKELETON_CARDS = 8;
+
+const BROWSE_PARAMS = {
+  tag: 'tag',
+  search: 'q',
+  sort: 'sort',
+  direction: 'dir',
+} as const;
+
+const SEARCH_WRITE_PAUSE_MS = 300;
 
 export function ResourceGridSkeleton() {
   return (
@@ -64,6 +75,82 @@ export function ResourcesUnavailable({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+function writeParam(params: URLSearchParams, name: string, value: string | null) {
+  if (value === null || value.trim().length === 0) params.delete(name);
+  else params.set(name, value);
+}
+
+function writeSort(params: URLSearchParams, sort: ResourceSort) {
+  const isDefaultKey = sort.key === DEFAULT_RESOURCE_SORT.key;
+  const isDefaultDirection = sort.direction === defaultResourceSortDirection(sort.key);
+  writeParam(params, BROWSE_PARAMS.sort, isDefaultKey ? null : sort.key);
+  writeParam(params, BROWSE_PARAMS.direction, isDefaultDirection ? null : sort.direction);
+}
+
+function sortFrom(params: URLSearchParams): ResourceSort {
+  const key: ResourceSortKey =
+    params.get(BROWSE_PARAMS.sort) === 'title' ? 'title' : DEFAULT_RESOURCE_SORT.key;
+  const direction = params.get(BROWSE_PARAMS.direction);
+
+  return {
+    key,
+    direction:
+      direction === 'asc' || direction === 'desc' ? direction : defaultResourceSortDirection(key),
+  };
+}
+
+function heldTagFrom(params: URLSearchParams, resources: readonly Resource[]): string | null {
+  const addressed = params.get(BROWSE_PARAMS.tag);
+  if (addressed === null) return null;
+
+  return coachTagVocabulary(resources).find((held) => sameTag(held, addressed)) ?? null;
+}
+
+function useAddressedBrowse(resources: readonly Resource[]) {
+  const [params, setParams] = useSearchParams();
+  const addressedSearch = params.get(BROWSE_PARAMS.search) ?? '';
+  const [typedSearch, setTypedSearch] = useState(addressedSearch);
+
+  const rewrite = useCallback(
+    (edit: (next: URLSearchParams) => void) => {
+      const next = new URLSearchParams(params);
+      edit(next);
+      setParams(next, { replace: true });
+    },
+    [params, setParams],
+  );
+
+  useEffect(() => {
+    if (typedSearch.trim() === addressedSearch.trim()) return;
+
+    const pause = window.setTimeout(
+      () => rewrite((next) => writeParam(next, BROWSE_PARAMS.search, typedSearch)),
+      SEARCH_WRITE_PAUSE_MS,
+    );
+
+    return () => window.clearTimeout(pause);
+  }, [typedSearch, addressedSearch, rewrite]);
+
+  const filter: ResourceFilter = { tag: heldTagFrom(params, resources), query: addressedSearch };
+
+  return {
+    filter,
+    sort: sortFrom(params),
+    typedSearch,
+    typeSearch: setTypedSearch,
+    chooseTag: (tag: string | null) =>
+      rewrite((next) => writeParam(next, BROWSE_PARAMS.tag, tag)),
+    chooseSort: (sort: ResourceSort) => rewrite((next) => writeSort(next, sort)),
+    clearFilters: () => {
+      setTypedSearch('');
+      rewrite((next) => {
+        next.delete(BROWSE_PARAMS.tag);
+        next.delete(BROWSE_PARAMS.search);
+      });
+    },
+  };
+}
+
 export function ResourceCollection({
   resources,
   perspective,
@@ -75,29 +162,27 @@ export function ResourceCollection({
   onOpen: (resource: Resource) => void;
   menuFor?: (resource: Resource) => ReactNode;
 }) {
-  const [chosenFilter, setFilter] = useState<ResourceFilter>(NO_RESOURCE_FILTER);
-  const [sort, setSort] = useState<ResourceSort>(DEFAULT_RESOURCE_SORT);
-  const tagStillHeld =
-    chosenFilter.tag === null || hasTag(coachTagVocabulary(resources), chosenFilter.tag);
-  const filter = tagStillHeld ? chosenFilter : { ...chosenFilter, tag: null };
-  const shown = browseResources(resources, filter, sort);
+  const browse = useAddressedBrowse(resources);
+  const shown = browseResources(resources, browse.filter, browse.sort);
 
   return (
     <section aria-label="Resources">
       <ResourceToolbar
-        filter={filter}
-        onFilterChange={setFilter}
-        onSortChange={setSort}
+        filter={browse.filter}
+        onSearchChange={browse.typeSearch}
+        onSortChange={browse.chooseSort}
+        onTagChange={browse.chooseTag}
         perspective={perspective}
         resources={resources}
-        sort={sort}
+        sort={browse.sort}
+        typedSearch={browse.typedSearch}
       />
 
       {shown.length === 0 ? (
         <EmptyState
           action={
             <Button
-              onClick={() => setFilter(NO_RESOURCE_FILTER)}
+              onClick={browse.clearFilters}
               size="sm"
               type="button"
               variant="outline"

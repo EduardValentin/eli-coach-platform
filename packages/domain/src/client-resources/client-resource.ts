@@ -8,6 +8,7 @@ import {
   type ResourceFileKind,
 } from "./resource-file-kind";
 import { pinnedFileName } from "./resource-file-name";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 export type ClientResourceOwner = { clientId: string; resourceId: string };
 
@@ -23,6 +24,7 @@ export type ClientResourceSnapshot = {
   clientId: string;
   title: string;
   description: string;
+  tags: ResourceTagSnapshot[];
   file: ResourceFileSnapshot;
   addedAt: Date;
   openedAt: Date | null;
@@ -98,7 +100,11 @@ export class ClientResource {
   }
 
   static reconstitute(snapshot: ClientResourceSnapshot): ClientResource {
-    return new ClientResource({ ...snapshot, file: { ...snapshot.file } });
+    return new ClientResource({
+      ...snapshot,
+      tags: snapshot.tags.map((tag) => ({ ...tag })),
+      file: { ...snapshot.file },
+    });
   }
 
   get file(): ResourceFile {
@@ -131,6 +137,10 @@ export class ClientResource {
   }
 
   toSnapshot(): ClientResourceSnapshot {
-    return { ...this.snapshot, file: { ...this.snapshot.file } };
+    return {
+      ...this.snapshot,
+      tags: this.snapshot.tags.map((tag) => ({ ...tag })),
+      file: { ...this.snapshot.file },
+    };
   }
 }

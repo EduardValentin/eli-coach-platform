@@ -2,17 +2,24 @@ import { useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { MAX_TAG_LENGTH } from '../domain/tags';
 import { TagInput } from './TagInput';
 
 const VOCABULARY = ['Cycle', 'Nutrition', 'Tracking', 'Training'];
 
-function TagField({ initial = [] }: { initial?: string[] }) {
+function TagField({ initial = [], maxLength }: { initial?: string[]; maxLength?: number }) {
   const [tags, setTags] = useState<string[]>(initial);
 
   return (
     <>
       <label htmlFor="tags">Tags</label>
-      <TagInput id="tags" onChange={setTags} value={tags} vocabulary={VOCABULARY} />
+      <TagInput
+        id="tags"
+        maxLength={maxLength}
+        onChange={setTags}
+        value={tags}
+        vocabulary={VOCABULARY}
+      />
     </>
   );
 }
@@ -137,5 +144,17 @@ describe('TagInput', () => {
     // assert
     expect(field).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('stops a tag at 30 characters', async () => {
+    // arrange
+    render(<TagField maxLength={MAX_TAG_LENGTH} />);
+    const field = screen.getByRole('combobox', { name: 'Tags' });
+
+    // act
+    await userEvent.type(field, `${'a'.repeat(MAX_TAG_LENGTH)}bcd{Enter}`);
+
+    // assert
+    expect(chosenTags()).toEqual(['a'.repeat(30)]);
   });
 });

@@ -4,6 +4,7 @@ import {
   type ClientResourceSnapshot,
   type ListClientResourcesResult,
   type ListClientResourcesUseCase,
+  type ResourceBrowseSnapshot,
 } from "@eli-coach-platform/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
@@ -42,6 +43,7 @@ const NEWER_PDF: ClientResourceSnapshot = {
   clientId: CLIENT_ID,
   title: "Meal plan",
   description: "Week one",
+  tags: [{ tag: "Meals", folded: "meals" }],
   file: {
     originalName: "Meal plan.pdf",
     format: "pdf",
@@ -57,6 +59,7 @@ const OLDER_SPREADSHEET: ClientResourceSnapshot = {
   clientId: CLIENT_ID,
   title: "Macros",
   description: "",
+  tags: [],
   file: {
     originalName: "macros",
     format: "ods",
@@ -67,14 +70,38 @@ const OLDER_SPREADSHEET: ClientResourceSnapshot = {
   openedAt: null,
 };
 
+const NARROWED_BROWSE: ResourceBrowseSnapshot = {
+  tag: null,
+  search: "ma",
+  sort: "added",
+  direction: "asc",
+};
+
+const EMPTY_LISTING = {
+  status: "listed",
+  browsing: { resources: [], tagOptions: [], searched: 0, total: 0 },
+  browse: { tag: null, search: "", sort: "added", direction: "desc" },
+  vocabulary: [],
+} satisfies ListClientResourcesResult;
+
 describe("CoachResourcesController load", () => {
-  it("hands the coach the client's resources in the order they were listed, as the page reads them, each named for its real format", async () => {
+  it("hands the coach the client's resources narrowed as listed, each named for its real format, with the client's tag options, the browse it applied, the counts and every tag she has used", async () => {
     // arrange
-    const { controller, listClientResources } = createController({
+    const { controller } = createController({
       status: "listed",
-      resources: [NEWER_PDF, OLDER_SPREADSHEET].map(
-        ClientResource.reconstitute,
-      ),
+      browsing: {
+        resources: [NEWER_PDF, OLDER_SPREADSHEET].map(
+          ClientResource.reconstitute,
+        ),
+        tagOptions: [{ tag: { tag: "Meals", folded: "meals" }, count: 1 }],
+        searched: 2,
+        total: 3,
+      },
+      browse: NARROWED_BROWSE,
+      vocabulary: [
+        { tag: "Meals", folded: "meals" },
+        { tag: "Mobility", folded: "mobility" },
+      ],
     });
 
     // act
@@ -88,6 +115,7 @@ describe("CoachResourcesController load", () => {
           id: NEWER_ID,
           title: "Meal plan",
           description: "Week one",
+          tags: ["Meals"],
           file: {
             originalName: "Meal plan.pdf",
             downloadName: "Meal plan.pdf",
@@ -102,6 +130,7 @@ describe("CoachResourcesController load", () => {
           id: OLDER_ID,
           title: "Macros",
           description: "",
+          tags: [],
           file: {
             originalName: "macros",
             downloadName: "macros.ods",
@@ -113,10 +142,51 @@ describe("CoachResourcesController load", () => {
           openedAt: null,
         },
       ],
+      tagOptions: [{ tag: "Meals", count: 1 }],
+      browse: { tag: null, search: "ma", sort: "added", direction: "asc" },
+      searched: 2,
+      total: 3,
+      vocabulary: ["Meals", "Mobility"],
     });
+  });
+
+  it("lists the client's resources as the address narrows them, read raw", async () => {
+    // arrange
+    const { controller, listClientResources } = createController();
+
+    // act
+    await controller.load(
+      coachArgs({
+        url: `https://evoa.fit/coach/clients/${CLIENT_ID}/resources?tag=Meals&q=+plan+&sort=title&dir=desc`,
+      }),
+      CLIENT_ID,
+    );
+
+    // assert
     expect(listClientResources).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       clientId: CLIENT_ID,
+      browse: {
+        tag: "Meals",
+        search: " plan ",
+        sort: "title",
+        direction: "desc",
+      },
+    });
+  });
+
+  it("lists every resource of the client when the address narrows nothing", async () => {
+    // arrange
+    const { controller, listClientResources } = createController();
+
+    // act
+    await controller.load(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(listClientResources).toHaveBeenCalledWith({
+      requester: { role: "COACH", authSubjectId: "user_eli" },
+      clientId: CLIENT_ID,
+      browse: { tag: null, search: null, sort: null, direction: null },
     });
   });
 
@@ -187,9 +257,7 @@ describe("CoachResourcesController load", () => {
   });
 });
 
-function createController(
-  listed: ListClientResourcesResult = { status: "listed", resources: [] },
-) {
+function createController(listed: ListClientResourcesResult = EMPTY_LISTING) {
   const listClientResources = vi.fn().mockResolvedValue(listed);
   const controller = new CoachResourcesController({
     listClientResources: {
@@ -200,7 +268,7 @@ function createController(
   return { controller, listClientResources };
 }
 
-function coachArgs(options: { session?: ResolvedSession } = {}) {
+function coachArgs(options: { session?: ResolvedSession; url?: string } = {}) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -218,7 +286,7 @@ function coachArgs(options: { session?: ResolvedSession } = {}) {
       ),
     ],
     request: new Request(
-      `https://evoa.fit/coach/clients/${CLIENT_ID}/resources`,
+      options.url ?? `https://evoa.fit/coach/clients/${CLIENT_ID}/resources`,
     ),
   });
 }

@@ -43,3 +43,16 @@ export function pageCountLabel(pageCount: number): string {
 export function possessive(name: string): string {
   return `${name}’s`;
 }
+
+export const RESOURCE_TOOLBAR_COPY = {
+  tag: "Tag",
+  allTags: "All tags",
+  search: "Search resources",
+  searchPlaceholder: "Search by title",
+} as const;
+
+export const RESOURCE_NO_MATCHES_COPY = {
+  title: "No matches",
+  description: "Try another tag or search.",
+  clearFilters: "Clear filters",
+} as const;

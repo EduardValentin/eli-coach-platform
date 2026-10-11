@@ -478,11 +478,13 @@
   }
 }
 
-/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline. */
+/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline.
+   [data-field-frame] is a field that draws its own frame around a bare text entry marked [data-field-entry], such as the tag input's chips and typing area. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
-  ):not([role="menuitemradio"]):not([tabindex="-1"]),
-[data-chip-control]:has(:focus-visible) {
+  ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]),
+[data-chip-control]:has(:focus-visible),
+[data-field-frame]:has([data-field-entry]:focus-visible) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--color-focus-ring);
