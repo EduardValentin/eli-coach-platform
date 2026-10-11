@@ -31,6 +31,10 @@ type CheckInListingProps<CheckIn extends ListedCheckIn> = {
   renderCheckIn: (checkIn: CheckIn, tab: CheckInTab) => ReactNode;
 };
 
+export function hasPendingNewTime(checkIn: ListedCheckIn): boolean {
+  return checkIn.status === "pending" && checkIn.earlierStartsAt !== null;
+}
+
 const CHECK_IN_TABS: readonly CheckInTab[] = ["upcoming", "requests", "past"];
 
 const TAB_PARAM = "view";

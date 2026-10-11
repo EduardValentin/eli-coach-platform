@@ -21,7 +21,9 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
-type CheckInDecisionKind = "approve" | "decline" | "withdraw";
+import { hasPendingNewTime, type ListedCheckIn } from "./check-in-listing";
+
+type CheckInDecisionKind = "approve" | "cancel" | "decline" | "withdraw";
 
 type CheckInDecision = {
   checkInId: string;
@@ -49,29 +51,42 @@ type CheckInWithdrawalProps = Pick<ComponentProps<typeof Button>, "size"> & {
   decisions: CheckInDecisions;
 };
 
-type CheckInAnswersProps = CheckInWithdrawalProps & {
+type CheckInAnswersProps = Pick<ComponentProps<typeof Button>, "size"> & {
   approvedMessage: string;
+  checkIn: ListedCheckIn;
+  decisions: CheckInDecisions;
 };
 
 const DECISION_PATHS: Record<CheckInDecisionKind, string> = {
   approve: CHECK_INS_API_PATHS.approval,
+  cancel: CHECK_INS_API_PATHS.cancellation,
   decline: CHECK_INS_API_PATHS.decline,
   withdraw: CHECK_INS_API_PATHS.withdrawal,
 };
 
 const BUSY_LABELS: Record<CheckInDecisionKind, string> = {
   approve: "Approving…",
+  cancel: "Cancelling…",
   decline: "Declining…",
   withdraw: "Cancelling…",
 };
 
 const FAILURE_COPY: Record<CheckInDecisionKind, string> = {
   approve: "The check-in wasn't approved. Try again.",
+  cancel: "The check-in wasn't cancelled. Try again.",
   decline: "The check-in wasn't declined. Try again.",
   withdraw: "Your request wasn't cancelled. Try again.",
 };
 
-const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
+export const NO_LONGER_WAITING =
+  "This request is no longer waiting for an answer.";
+
+const REFUSAL_COPY: Record<CheckInDecisionKind, string> = {
+  approve: NO_LONGER_WAITING,
+  cancel: "This check-in is no longer upcoming.",
+  decline: NO_LONGER_WAITING,
+  withdraw: NO_LONGER_WAITING,
+};
 
 export function useCheckInDecisions({
   timeZone,
@@ -154,10 +169,12 @@ export function CheckInWithdrawal({
 
 export function CheckInAnswers({
   approvedMessage,
-  checkInId,
+  checkIn,
   decisions,
   size,
 }: CheckInAnswersProps) {
+  const checkInId = checkIn.id;
+
   return (
     <>
       <CheckInDecisionButton
@@ -178,7 +195,7 @@ export function CheckInAnswers({
           successMessage: approvedMessage,
         }}
         decisions={decisions}
-        label="Approve"
+        label={hasPendingNewTime(checkIn) ? "Accept" : "Approve"}
         size={size}
       />
     </>
@@ -216,7 +233,7 @@ function CheckInDecisionOutcome({
     if (checkInOutcomeSchema.safeParse(reply).success) {
       toast.success(decision.successMessage);
     } else if (checkInRefusalSchema.safeParse(reply).success) {
-      toast.error(NO_LONGER_WAITING);
+      toast.error(REFUSAL_COPY[decision.kind]);
       void revalidate();
     } else {
       toast.error(FAILURE_COPY[decision.kind]);

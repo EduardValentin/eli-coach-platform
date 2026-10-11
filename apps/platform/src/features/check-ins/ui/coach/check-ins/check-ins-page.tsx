@@ -28,6 +28,12 @@ import {
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
+import { useCheckInMenu } from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
+import {
+  CancelCheckInDialog,
+  dayAndTimeOf,
+} from "~/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog";
+import { ProposeCheckInTimeDialog } from "~/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -58,6 +64,7 @@ export default function CoachCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
   const decisions = useCheckInDecisions();
+  const menu = useCheckInMenu<CoachCheckIn>(decisions);
 
   return (
     <div className="w-full" data-parity-root="CoachCheckins">
@@ -75,6 +82,8 @@ export default function CoachCheckInsRoute() {
             actions={coachActionsFor(checkIn, tab, decisions)}
             attendee={{ name: fullNameOf(checkIn) }}
             checkIn={checkIn}
+            menu={menu.menuOf(checkIn)}
+            menuSize="xs"
             timeZone={timeZone}
             viewer={{
               counterpartName: checkIn.client.firstName,
@@ -83,6 +92,34 @@ export default function CoachCheckInsRoute() {
           />
         )}
       />
+
+      {menu.proposal && (
+        <ProposeCheckInTimeDialog
+          checkIn={menu.proposal.checkIn}
+          key={menu.proposal.opening}
+          onOpenChange={menu.onDialogOpenChange}
+          open={menu.proposal.open}
+          proposer={{
+            noteLabel: `Add a note for ${menu.proposal.checkIn.client.firstName} (optional)`,
+            openTimesQuery: { clientId: menu.proposal.checkIn.clientId },
+          }}
+          timeZone={timeZone}
+        />
+      )}
+
+      {menu.cancellation && (
+        <CancelCheckInDialog
+          cancellation={{
+            checkInId: menu.cancellation.checkIn.id,
+            description: `${dayAndTimeOf(menu.cancellation.checkIn, timeZone)} with ${fullNameOf(menu.cancellation.checkIn)}.`,
+            successMessage: `Cancelled check-in with ${fullNameOf(menu.cancellation.checkIn)}`,
+          }}
+          decisions={decisions}
+          key={menu.cancellation.opening}
+          onOpenChange={menu.onDialogOpenChange}
+          open={menu.cancellation.open}
+        />
+      )}
 
       <CheckInDecisionOutcomes decisions={decisions} />
     </div>
@@ -108,7 +145,7 @@ function coachActionsFor(
     return (
       <CheckInAnswers
         approvedMessage={`Approved check-in with ${fullNameOf(checkIn)}`}
-        checkInId={checkIn.id}
+        checkIn={checkIn}
         decisions={decisions}
         size="xs"
       />

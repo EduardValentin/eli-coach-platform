@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"},
+  {"wait": 600},
+  {"waitFor": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"]"},
+  {"hover": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"] >> nth=0"},
+  {"wait": 600}
+]

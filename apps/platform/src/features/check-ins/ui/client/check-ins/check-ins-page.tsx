@@ -38,6 +38,12 @@ import {
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
+import { useCheckInMenu } from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
+import {
+  CancelCheckInDialog,
+  dayAndTimeOf,
+} from "~/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog";
+import { ProposeCheckInTimeDialog } from "~/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog";
 
 import { CheckInRequestDialog } from "./check-in-request-dialog";
 
@@ -87,6 +93,7 @@ export default function ClientCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
   const decisions = useCheckInDecisions({ timeZone });
+  const menu = useCheckInMenu<ListedCheckIn>(decisions);
   const [requesting, setRequesting] = useState(false);
   const [openings, setOpenings] = useState(0);
   const hasWaitingRequest = checkIns.some(
@@ -132,6 +139,7 @@ export default function ClientCheckInsRoute() {
             actions={clientActionsFor(checkIn, tab, decisions)}
             attendee={COACH}
             checkIn={checkIn}
+            menu={menu.menuOf(checkIn)}
             timeZone={timeZone}
             viewer={VIEWER}
           />
@@ -149,6 +157,34 @@ export default function ClientCheckInsRoute() {
         open={requesting}
         timeZone={timeZone}
       />
+
+      {menu.proposal && (
+        <ProposeCheckInTimeDialog
+          checkIn={menu.proposal.checkIn}
+          key={menu.proposal.opening}
+          onOpenChange={menu.onDialogOpenChange}
+          open={menu.proposal.open}
+          proposer={{
+            clientTimeZone: timeZone,
+            noteLabel: "Add a note for your coach (optional)",
+          }}
+          timeZone={timeZone}
+        />
+      )}
+
+      {menu.cancellation && (
+        <CancelCheckInDialog
+          cancellation={{
+            checkInId: menu.cancellation.checkIn.id,
+            description: `${dayAndTimeOf(menu.cancellation.checkIn, timeZone)}.`,
+            successMessage: "Check-in cancelled",
+          }}
+          decisions={decisions}
+          key={menu.cancellation.opening}
+          onOpenChange={menu.onDialogOpenChange}
+          open={menu.cancellation.open}
+        />
+      )}
 
       <CheckInDecisionOutcomes decisions={decisions} />
 
@@ -174,7 +210,7 @@ function clientActionsFor(
     return (
       <CheckInAnswers
         approvedMessage="Check-in approved"
-        checkInId={checkIn.id}
+        checkIn={checkIn}
         decisions={decisions}
         size="sm"
       />

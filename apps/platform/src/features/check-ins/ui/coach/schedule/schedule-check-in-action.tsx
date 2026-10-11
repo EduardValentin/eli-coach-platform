@@ -93,6 +93,7 @@ function ScheduleCheckInDialog({
       onOpenChange={onOpenChange}
       onSubmitted={onScheduled}
       open={open}
+      openTimesQuery={{ clientId }}
       submission={{
         action: CHECK_INS_API_PATHS.schedule,
         bodyOf: ({ note, startsAt }) => ({ clientId, note, startsAt }),
