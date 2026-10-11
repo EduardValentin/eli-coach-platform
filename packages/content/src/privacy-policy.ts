@@ -5,7 +5,7 @@ import {
 } from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
-export const PRIVACY_POLICY_VERSION = "2.1";
+export const PRIVACY_POLICY_VERSION = "2.2";
 export const WAITLIST_MARKETING_CONSENT_VERSION = "1.1";
 
 export const WAITLIST_MARKETING_CONSENT = {
@@ -117,8 +117,8 @@ const privacyPageLink = {
 export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
-  effectiveDate: "2026-10-04",
-  effectiveDateLabel: formatEffectiveDate("2026-10-04"),
+  effectiveDate: "2026-10-11",
+  effectiveDateLabel: formatEffectiveDate("2026-10-11"),
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, digital Store, and 1-on-1 coaching platform.",
@@ -130,7 +130,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.1, effective 4 October 2026.",
+            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.2, effective 11 October 2026.",
           ],
         },
         {
@@ -202,6 +202,18 @@ export const PRIVACY_POLICY = {
               term: "Coaching and training data",
               description: [
                 "For clients: the onboarding profile (name, age, gender), unit preferences, calorie and macro targets, training goals, assigned plans, logged workouts (weights, repetitions, rest times, exercise swaps, personal records), check-in schedules, and messages exchanged with the coach.",
+              ],
+            },
+            {
+              term: "Body measurements and progress photos",
+              description: [
+                "For clients: height, weight, and waist, hip, thigh and arm measurements, each with the date you recorded it. Only with your explicit consent: progress photos (front, side and back views) that you attach to a measurement entry.",
+              ],
+            },
+            {
+              term: "Files shared by your coach",
+              description: [
+                "For clients: each file your coach adds to your record (a PDF, an image, or a Word or Excel document), with its title, description, tags, file name, type, size, the date it was added, and when you first opened it.",
               ],
             },
             {
@@ -344,6 +356,50 @@ export const PRIVACY_POLICY = {
           kind: "paragraph",
           content: [
             "Scheduled check-in calls take place over a third-party video service. Evoa Fitness shares the meeting link in the app; the video provider is identified in the app when you join a call and processes call data under its own privacy terms.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "measurements-photos-and-shared-files",
+      heading: "Body measurements, progress photos, and shared files",
+      blocks: [
+        {
+          kind: "paragraph",
+          content: [
+            "Your body measurements are processed to follow your progress and adapt your coaching, as part of the coaching service you purchased under ",
+            gdprContractLink,
+            ". They are visible only to you and your coach.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Progress photos are optional. Evoa Fitness stores them only with your explicit consent under ",
+            gdprConsentLink,
+            ", which you give in the app before you add your first photo, and uses them only so that you and your coach can follow your progress. They are visible only to you and your coach and are never used for marketing. You receive the same level of coaching without them.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "You can remove any progress photo yourself in the app at any time; it is deleted for you and your coach at once. You can also withdraw your consent by emailing ",
+            privacyEmailLink,
+            ". Withdrawal deletes your progress photos and does not affect processing that was lawful before withdrawal.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Your coach can share files with you, such as guides or plans prepared for you. They are stored so that you can read and download them in the app, as part of the coaching service under ",
+            gdprContractLink,
+            ". Each file is visible only to you and your coach. When you first open a file, the platform records it so the file is no longer marked as new.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Measurements, progress photos, and shared files are stored on the same Hetzner infrastructure in Germany that hosts the application and database. No additional provider stores or processes them.",
           ],
         },
       ],
@@ -520,7 +576,7 @@ export const PRIVACY_POLICY = {
             {
               term: "Hetzner",
               description: [
-                "The application and PostgreSQL database are hosted on Hetzner infrastructure in Germany.",
+                "The application, the PostgreSQL database, and the files stored on the platform (progress photos and files shared by your coach) are hosted on Hetzner infrastructure in Germany.",
               ],
             },
             {
@@ -597,6 +653,15 @@ export const PRIVACY_POLICY = {
               "Menstrual cycle and health data is deleted when you withdraw consent or when the account data is erased.",
             ],
             [
+              "Body measurements are kept with your coaching data and removed with it: within 24 months after the coaching relationship ends, or earlier when your account data is erased.",
+            ],
+            [
+              "A progress photo is deleted when you remove it in the app, when you withdraw your consent, or when your account data is erased, and at the latest with the rest of your coaching data.",
+            ],
+            [
+              "A file shared by your coach is deleted when your coach removes it or when your account data is erased, and at the latest with the rest of your coaching data. After your coaching ends you can no longer open shared files in the app, and they stay on your coach's record of you until they are deleted.",
+            ],
+            [
               "Order, invoice, and accounting records are kept for the period required by Romanian accounting and fiscal law.",
             ],
             ["Operational logs use a 30-day retention period."],
@@ -632,7 +697,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "Evoa Fitness never stores sign-in passwords or card numbers; authentication is handled by Clerk and payments by Stripe. Coaching, cycle, and health data is accessible only to you and your coach. Access to personal data is restricted to what is needed to operate the service, and processors listed in this policy handle data under their data processing agreements.",
+            "Evoa Fitness never stores sign-in passwords or card numbers; authentication is handled by Clerk and payments by Stripe. Coaching, cycle, and health data, including your measurements, progress photos, and shared files, is accessible only to you and your coach. Progress photos are encrypted where they are stored. Access to personal data is restricted to what is needed to operate the service, and processors listed in this policy handle data under their data processing agreements.",
           ],
         },
       ],
