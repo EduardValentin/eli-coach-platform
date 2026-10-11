@@ -124,7 +124,7 @@ describe.sequential("client check-in answers integration", () => {
     expect(
       (await checkIns.heldCheckInHours()).map((hour) => hour.checkInId),
     ).toEqual([checkInId]);
-    const [approved, ...others] = await emailsFor(checkInId, "approved");
+    const [approved, ...others] = await emailsFor(checkInId, "0:approved");
     expect(others).toEqual([]);
     expect(approved?.to).toBe(COACH_EMAIL);
     expect(approved?.replyTo).toBe(ANA.email);
@@ -167,7 +167,7 @@ describe.sequential("client check-in answers integration", () => {
     expect(await checkIns.openTimesOf(ANA_SESSION)).toContain(
       THURSDAY_FIRST_HOUR,
     );
-    const [declined, ...others] = await emailsFor(checkInId, "declined");
+    const [declined, ...others] = await emailsFor(checkInId, "0:declined");
     expect(others).toEqual([]);
     expect(declined?.to).toBe(COACH_EMAIL);
     expect(declined?.subject).toBe("Ana Popescu declined the check-in");
@@ -195,7 +195,7 @@ describe.sequential("client check-in answers integration", () => {
       }),
     ]);
     expect(await checkIns.heldCheckInHours()).toEqual([]);
-    const [cancelled, ...others] = await emailsFor(checkInId, "withdrawn");
+    const [cancelled, ...others] = await emailsFor(checkInId, "0:withdrawn");
     expect(others).toEqual([]);
     expect(cancelled?.to).toBe(ANA.email);
     expect(cancelled?.subject).toBe("Eli cancelled the check-in request");
@@ -320,7 +320,7 @@ describe.sequential("client check-in answers integration", () => {
       ]);
       expect(
         (await emailsFor(checkInId)).map(({ idempotencyKey }) =>
-          idempotencyKey?.includes(`check-in:${checkInId}:requested`),
+          idempotencyKey?.includes(`check-in:${checkInId}:0:requested`),
         ),
       ).toEqual([true]);
     },
@@ -341,7 +341,7 @@ describe.sequential("client check-in answers integration", () => {
       expect(await response.json()).toEqual({ error: "ended" });
       expect(
         (await checkIns.checkInRowsOf(clientId)).map(({ status }) => status),
-      ).toEqual(["pending"]);
+      ).toEqual(["cancelled"]);
     },
   );
 

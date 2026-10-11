@@ -89,7 +89,7 @@ type CoachingEndCut = { startsAt: Date; coachingEndsAt: Date | null };
 const MILLISECONDS_PER_MINUTE = 60_000;
 const DURATION_MS = CHECK_IN_RULES.durationMinutes * MILLISECONDS_PER_MINUTE;
 const JOIN_EMPHASIS_LEAD_MS = 10 * MILLISECONDS_PER_MINUTE;
-const MAX_CHECK_IN_MOVES = 2;
+export const MAX_CHECK_IN_MOVES = 2;
 
 export class CheckIn {
   readonly id: string;

@@ -46,6 +46,9 @@ const PENDING = CheckIn.reconstitute({
   note: "Can we talk about my knees?",
   requestedAt: NOW,
   answeredAt: null,
+  earlierStartsAt: null,
+  moves: 0,
+  newTimeNote: null,
 });
 
 describe("ClientCheckInsController loadCheckIns", () => {
@@ -70,13 +73,19 @@ describe("ClientCheckInsController loadCheckIns", () => {
           kind: "ad_hoc",
           status: "pending",
           initiatedBy: "client",
+          proposedBy: "client",
           awaitsViewer: false,
           viewerMayWithdraw: true,
+          viewerProposal: "none",
+          viewerMayCancel: false,
           isWaitingRequest: true,
           startsAt: "2026-10-22T14:00:00.000Z",
           endsAt: "2026-10-22T15:00:00.000Z",
           joinEmphasisFrom: "2026-10-22T13:50:00.000Z",
+          earlierStartsAt: null,
+          moves: 0,
           note: "Can we talk about my knees?",
+          newTimeNote: null,
         },
       ],
     });

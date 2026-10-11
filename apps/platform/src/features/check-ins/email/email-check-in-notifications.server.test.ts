@@ -30,6 +30,9 @@ const NOTICE: CheckInNotice = {
     note: "Can we talk about my knees?",
     requestedAt: new Date("2026-10-19T08:00:00.000Z"),
     answeredAt: null,
+    earlierStartsAt: null,
+    moves: 0,
+    newTimeNote: null,
   }).toSnapshot(),
   client: {
     clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
@@ -41,6 +44,82 @@ const NOTICE: CheckInNotice = {
 };
 
 const NOTICE_TO_CLIENT: CheckInNotice = { ...NOTICE, recipient: "client" };
+
+const MOVED_CHECK_IN = {
+  ...NOTICE.checkIn,
+  startsAt: new Date("2026-10-23T14:00:00.000Z"),
+  endsAt: new Date("2026-10-23T15:00:00.000Z"),
+  earlierStartsAt: new Date("2026-10-22T14:00:00.000Z"),
+  moves: 1,
+  newTimeNote: "Friday suits me better.",
+};
+
+const NEW_TIME_NOTICES = [
+  {
+    notification: "newTimeProposed",
+    recipient: "coach",
+    to: COACH_EMAIL,
+    replyTo: "ana@example.com",
+    subject: "Ana Popescu proposed a new time for your check-in",
+    zoneLine: "Europe/Bucharest",
+  },
+  {
+    notification: "newTimeProposed",
+    recipient: "client",
+    to: "ana@example.com",
+    replyTo: undefined,
+    subject: "Eli proposed a new time for your check-in",
+    zoneLine: "Europe/London",
+  },
+  {
+    notification: "newTimeAccepted",
+    recipient: "coach",
+    to: COACH_EMAIL,
+    replyTo: "ana@example.com",
+    subject: "Ana Popescu accepted the new time",
+    zoneLine: "Europe/Bucharest",
+  },
+  {
+    notification: "newTimeAccepted",
+    recipient: "client",
+    to: "ana@example.com",
+    replyTo: undefined,
+    subject: "Eli accepted the new time",
+    zoneLine: "Europe/London",
+  },
+  {
+    notification: "newTimeDeclined",
+    recipient: "coach",
+    to: COACH_EMAIL,
+    replyTo: "ana@example.com",
+    subject: "Ana Popescu declined the new time",
+    zoneLine: "Europe/Bucharest",
+  },
+  {
+    notification: "newTimeDeclined",
+    recipient: "client",
+    to: "ana@example.com",
+    replyTo: undefined,
+    subject: "Eli declined the new time",
+    zoneLine: "Europe/London",
+  },
+  {
+    notification: "cancelled",
+    recipient: "coach",
+    to: COACH_EMAIL,
+    replyTo: "ana@example.com",
+    subject: "Ana Popescu cancelled the check-in",
+    zoneLine: "Europe/Bucharest",
+  },
+  {
+    notification: "cancelled",
+    recipient: "client",
+    to: "ana@example.com",
+    replyTo: undefined,
+    subject: "Eli cancelled the check-in",
+    zoneLine: "Europe/London",
+  },
+] as const;
 
 const COACH_REQUEST_NOTICE: CheckInNotice = {
   ...NOTICE,
@@ -116,7 +195,7 @@ describe("EmailCheckInNotifications", () => {
       subject: "Ana Popescu declined the check-in",
     },
   ] as const)(
-    "sends the $notification email for the $recipient to $to, keyed by the check-in and the event",
+    "sends the $notification email for the $recipient to $to, keyed by the check-in, its moves and the event",
     async ({ notification, recipient, to, replyTo, subject }) => {
       // arrange
       const productEmail = new InMemoryProductEmail();
@@ -135,8 +214,117 @@ describe("EmailCheckInNotifications", () => {
       expect(productEmail.sent[0]?.replyTo).toBe(replyTo);
       expect(productEmail.sent[0]?.subject).toBe(subject);
       expect(productEmail.sent[0]?.idempotencyKey).toBe(
-        `check-in:${CHECK_IN_ID}:${notification}`,
+        `check-in:${CHECK_IN_ID}:0:${notification}`,
       );
+    },
+  );
+
+  it.each(NEW_TIME_NOTICES)(
+    "sends the $notification email for the $recipient to $to in that recipient's zone, keyed by the move",
+    async ({ notification, recipient, to, replyTo, subject, zoneLine }) => {
+      // arrange
+      const productEmail = new InMemoryProductEmail();
+      const notifications = createNotifications(productEmail);
+
+      // act
+      const delivery = await notifications[notification]({
+        ...NOTICE,
+        checkIn: MOVED_CHECK_IN,
+        recipient,
+      });
+
+      // assert
+      expect(delivery).toBe("sent");
+      const [sent, ...others] = productEmail.sent;
+      expect(others).toEqual([]);
+      expect(sent?.to).toBe(to);
+      expect(sent?.replyTo).toBe(replyTo);
+      expect(sent?.subject).toBe(subject);
+      expect(sent?.text).toContain(zoneLine);
+      expect(sent?.idempotencyKey).toBe(
+        `check-in:${CHECK_IN_ID}:1:${notification}`,
+      );
+    },
+  );
+
+  it("names both times and the proposer's note in the new-time email, linking the recipient's Check-ins page", async () => {
+    // arrange
+    const productEmail = new InMemoryProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.newTimeProposed({
+      ...NOTICE_TO_CLIENT,
+      checkIn: MOVED_CHECK_IN,
+    });
+
+    // assert
+    const sent = productEmail.sent[0];
+    expect(sent?.text).toContain(
+      "EARLIER: Thursday, 22 October 2026 at 3:00 PM",
+    );
+    expect(sent?.text).toContain(
+      "NEW TIME: Friday, 23 October 2026 at 3:00 PM",
+    );
+    expect(sent?.text).toContain("NOTE: Friday suits me better.");
+    expect(sent?.html).toContain(
+      'href="https://evoa.fit/eli-coach-platform/client/checkins"',
+    );
+  });
+
+  it("leaves the note out of the new-time email when the proposer wrote none", async () => {
+    // arrange
+    const productEmail = new InMemoryProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.newTimeProposed({
+      ...NOTICE,
+      checkIn: { ...MOVED_CHECK_IN, newTimeNote: null },
+    });
+
+    // assert
+    expect(productEmail.sent[0]?.text).not.toContain("NOTE:");
+  });
+
+  it("attaches the accepted new time to the proposer's email as a calendar invite with her join link", async () => {
+    // arrange
+    const productEmail = new InMemoryProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.newTimeAccepted({
+      ...NOTICE,
+      checkIn: MOVED_CHECK_IN,
+    });
+
+    // assert
+    const sent = productEmail.sent[0];
+    expect(sent?.html).toContain(`href="${COACH_JOIN_URL}"`);
+    const [invite, ...others] = sent?.attachments ?? [];
+    expect(others).toEqual([]);
+    const ics = new TextDecoder()
+      .decode(invite?.content)
+      .replaceAll("\r\n ", "");
+    expect(ics).toContain("SUMMARY:Check-in with Ana Popescu");
+    expect(ics).toContain("DTSTART:20261023T140000Z");
+  });
+
+  it.each(["newTimeDeclined", "cancelled"] as const)(
+    "attaches no calendar invite to the %s email",
+    async (notification) => {
+      // arrange
+      const productEmail = new InMemoryProductEmail();
+      const notifications = createNotifications(productEmail);
+
+      // act
+      await notifications[notification]({
+        ...NOTICE_TO_CLIENT,
+        checkIn: MOVED_CHECK_IN,
+      });
+
+      // assert
+      expect(productEmail.sent[0]?.attachments).toBeUndefined();
     },
   );
 

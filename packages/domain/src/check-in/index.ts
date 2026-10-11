@@ -9,6 +9,7 @@ export {
 export { CancelCheckInsAfterCoachingEndUseCase } from "./cancel-check-ins-after-coaching-end-use-case";
 export {
   CheckIn,
+  MAX_CHECK_IN_MOVES,
   RECORDED_CHECK_IN_STATUSES,
   type CheckInOutcome,
   type CheckInView,

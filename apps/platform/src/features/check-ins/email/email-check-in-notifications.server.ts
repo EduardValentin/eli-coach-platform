@@ -29,6 +29,26 @@ import {
 } from "~/features/check-ins/public/paths";
 
 import {
+  CheckInCancelledEmail,
+  checkInCancelledSubject,
+  checkInCancelledText,
+} from "./check-in-cancelled-email.server";
+import {
+  CheckInNewTimeAcceptedEmail,
+  checkInNewTimeAcceptedSubject,
+  checkInNewTimeAcceptedText,
+} from "./check-in-new-time-accepted-email.server";
+import {
+  CheckInNewTimeDeclinedEmail,
+  checkInNewTimeDeclinedSubject,
+  checkInNewTimeDeclinedText,
+} from "./check-in-new-time-declined-email.server";
+import {
+  CheckInNewTimeEmail,
+  checkInNewTimeSubject,
+  checkInNewTimeText,
+} from "./check-in-new-time-email.server";
+import {
   CheckInApprovedByClientEmail,
   checkInApprovedByClientSubject,
   checkInApprovedByClientText,
@@ -78,7 +98,7 @@ type EmailCheckInNotificationsOptions = {
 };
 
 type CheckInEmail = {
-  checkInId: string;
+  checkIn: CheckInNotice["checkIn"];
   notification: CheckInNotification;
   to: string;
   replyTo?: string;
@@ -86,6 +106,15 @@ type CheckInEmail = {
   subject: string;
   text: string;
   body: ReactElement;
+};
+
+type CheckInAudience = {
+  to: string;
+  replyTo?: string;
+  timeZone: string;
+  otherParty: string;
+  checkInsPath: string;
+  joinPath: string;
 };
 
 const INVITE_PRODUCT_NAME = "Check-in";
@@ -121,6 +150,98 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       : this.sendClientDeclineToCoach(notice);
   }
 
+  newTimeProposed(notice: CheckInNotice): Promise<CheckInDelivery> {
+    const audience = this.audienceOf(notice);
+    const { checkIn } = notice;
+    const props = {
+      who: audience.otherParty,
+      earlier: formatCallMoment(
+        checkIn.earlierStartsAt ?? checkIn.startsAt,
+        audience.timeZone,
+      ),
+      when: formatCallMoment(checkIn.startsAt, audience.timeZone),
+      note: checkIn.newTimeNote,
+      checkInsUrl: this.publicUrlOf(audience.checkInsPath),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkIn,
+      notification: "newTimeProposed",
+      to: audience.to,
+      replyTo: audience.replyTo,
+      subject: checkInNewTimeSubject(props),
+      text: checkInNewTimeText(props),
+      body: createElement(CheckInNewTimeEmail, props),
+    });
+  }
+
+  newTimeAccepted(notice: CheckInNotice): Promise<CheckInDelivery> {
+    const audience = this.audienceOf(notice);
+    const joinUrl = this.publicUrlOf(audience.joinPath);
+    const event = this.toCalendarEvent({
+      checkIn: notice.checkIn,
+      joinUrl,
+      withWhom: audience.otherParty,
+    });
+    const props = {
+      who: audience.otherParty,
+      when: formatCallMoment(notice.checkIn.startsAt, audience.timeZone),
+      joinUrl,
+      googleCalendarUrl: buildGoogleCalendarUrl(event, audience.timeZone),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkIn: notice.checkIn,
+      notification: "newTimeAccepted",
+      to: audience.to,
+      replyTo: audience.replyTo,
+      attachments: [this.inviteFor(event)],
+      subject: checkInNewTimeAcceptedSubject(props),
+      text: checkInNewTimeAcceptedText(props),
+      body: createElement(CheckInNewTimeAcceptedEmail, props),
+    });
+  }
+
+  newTimeDeclined(notice: CheckInNotice): Promise<CheckInDelivery> {
+    const audience = this.audienceOf(notice);
+    const props = {
+      who: audience.otherParty,
+      when: formatCallMoment(notice.checkIn.startsAt, audience.timeZone),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkIn: notice.checkIn,
+      notification: "newTimeDeclined",
+      to: audience.to,
+      replyTo: audience.replyTo,
+      subject: checkInNewTimeDeclinedSubject(props),
+      text: checkInNewTimeDeclinedText(props),
+      body: createElement(CheckInNewTimeDeclinedEmail, props),
+    });
+  }
+
+  cancelled(notice: CheckInNotice): Promise<CheckInDelivery> {
+    const audience = this.audienceOf(notice);
+    const props = {
+      who: audience.otherParty,
+      when: formatCallMoment(notice.checkIn.startsAt, audience.timeZone),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkIn: notice.checkIn,
+      notification: "cancelled",
+      to: audience.to,
+      replyTo: audience.replyTo,
+      subject: checkInCancelledSubject(props),
+      text: checkInCancelledText(props),
+      body: createElement(CheckInCancelledEmail, props),
+    });
+  }
+
   private sendClientRequestToCoach(
     notice: CheckInNotice,
   ): Promise<CheckInDelivery> {
@@ -133,7 +254,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "requested",
       to: this.options.coachEmail,
       replyTo: notice.client.email,
@@ -154,7 +275,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "requested",
       to: notice.client.email,
       subject: checkInScheduledSubject(),
@@ -173,7 +294,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "withdrawn",
       to: this.options.coachEmail,
       replyTo: notice.client.email,
@@ -192,7 +313,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "withdrawn",
       to: notice.client.email,
       subject: checkInScheduleCancelledSubject(),
@@ -221,7 +342,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "approved",
       to: notice.client.email,
       attachments: [this.inviteFor(event)],
@@ -253,7 +374,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "approved",
       to: this.options.coachEmail,
       replyTo: notice.client.email,
@@ -274,7 +395,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "declined",
       to: notice.client.email,
       subject: checkInDeclinedSubject(),
@@ -293,7 +414,7 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
 
     return this.send({
-      checkInId: notice.checkIn.id,
+      checkIn: notice.checkIn,
       notification: "declined",
       to: this.options.coachEmail,
       replyTo: notice.client.email,
@@ -303,10 +424,31 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     });
   }
 
+  private audienceOf(notice: CheckInNotice): CheckInAudience {
+    const { checkIn, client } = notice;
+
+    return notice.recipient === "client"
+      ? {
+          to: client.email,
+          timeZone: checkIn.clientTimeZone,
+          otherParty: COACH_DISPLAY_NAME,
+          checkInsPath: CLIENT_CHECK_INS_PATH,
+          joinPath: clientCheckInJoinPath(checkIn.id),
+        }
+      : {
+          to: this.options.coachEmail,
+          replyTo: client.email,
+          timeZone: checkIn.coachTimeZone,
+          otherParty: this.fullNameOf(client),
+          checkInsPath: COACH_CHECK_INS_PATH,
+          joinPath: coachCheckInJoinPath(checkIn.id),
+        };
+  }
+
   private async send(email: CheckInEmail): Promise<CheckInDelivery> {
     const delivery = await this.productEmail.send({
       html: `<!doctype html>${renderToStaticMarkup(email.body)}`,
-      idempotencyKey: `check-in:${email.checkInId}:${email.notification}`,
+      idempotencyKey: `check-in:${email.checkIn.id}:${email.checkIn.moves}:${email.notification}`,
       ...(email.replyTo ? { replyTo: email.replyTo } : {}),
       ...(email.attachments ? { attachments: email.attachments } : {}),
       subject: email.subject,

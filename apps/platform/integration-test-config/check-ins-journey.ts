@@ -24,6 +24,12 @@ export type CheckInSchedule = {
 
 export type CheckInAnswer = { timeZone?: string };
 
+export type CheckInNewTime = {
+  startsAt: string;
+  note?: string | null;
+  timeZone?: string;
+};
+
 export type CheckInRow = {
   id: string;
   clientId: string;
@@ -36,6 +42,17 @@ export type CheckInRow = {
   proposedBy: string;
   note: string | null;
   requestedAt: Date;
+  answeredAt: Date | null;
+};
+
+export type MovedCheckInRow = {
+  status: string;
+  startsAt: Date;
+  earlierStartsAt: Date | null;
+  moves: number;
+  newTimeNote: string | null;
+  proposedBy: string;
+  clientTimeZone: string;
   answeredAt: Date | null;
 };
 
@@ -73,14 +90,19 @@ export class CheckInsJourney {
     return this.send(requester, `${CHECK_INS_API}/open-times`);
   }
 
+  openTimesFor(requester: Requester, clientId: string): Promise<Response> {
+    return this.send(
+      requester,
+      `${CHECK_INS_API}/open-times?${new URLSearchParams({ clientId })}`,
+    );
+  }
+
   async openTimesOf(session: AccountSession): Promise<string[]> {
-    const response = await this.openTimes(session);
+    return this.timesOf(await this.openTimes(session));
+  }
 
-    if (response.status !== 200) {
-      throw new Error(`Reading the open times answered ${response.status}.`);
-    }
-
-    return openTimesSchema.parse(await response.json()).times;
+  async openTimesOfClient(clientId: string): Promise<string[]> {
+    return this.timesOf(await this.openTimesFor(COACH_SESSION, clientId));
   }
 
   request(requester: Requester, ask: CheckInAsk): Promise<Response> {
@@ -147,6 +169,40 @@ export class CheckInsJourney {
     return this.answer(requester, `${checkInId}/decline`, answer);
   }
 
+  proposeNewTime(
+    requester: Requester,
+    checkInId: string,
+    newTime: CheckInNewTime,
+  ): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/${checkInId}/new-time`, {
+      body: JSON.stringify(newTime),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  async proposedNewTime(
+    requester: AccountSession,
+    checkInId: string,
+    newTime: CheckInNewTime,
+  ): Promise<void> {
+    const response = await this.proposeNewTime(requester, checkInId, newTime);
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Proposing a new time answered ${response.status}: ${await response.text()}`,
+      );
+    }
+  }
+
+  cancel(
+    requester: Requester,
+    checkInId: string,
+    answer?: CheckInAnswer,
+  ): Promise<Response> {
+    return this.answer(requester, `${checkInId}/cancellation`, answer);
+  }
+
   async approved(checkInId: string): Promise<void> {
     const response = await this.approve(checkInId);
 
@@ -189,11 +245,32 @@ export class CheckInsJourney {
     });
   }
 
+  async movedRowOf(checkInId: string): Promise<MovedCheckInRow> {
+    const [row] = await this.rig.suite.postgres.queryRows<MovedCheckInRow>({
+      sql: 'select status, starts_at as "startsAt", earlier_starts_at as "earlierStartsAt", moves, new_time_note as "newTimeNote", proposed_by as "proposedBy", client_time_zone as "clientTimeZone", answered_at as "answeredAt" from app.check_ins where id = $1',
+      values: [checkInId],
+    });
+
+    if (!row) {
+      throw new Error(`No check-in ${checkInId} is stored.`);
+    }
+
+    return row;
+  }
+
   heldCheckInHours(): Promise<HeldCheckInHour[]> {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
       sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
       values: [],
     });
+  }
+
+  private async timesOf(response: Response): Promise<string[]> {
+    if (response.status !== 200) {
+      throw new Error(`Reading the open times answered ${response.status}.`);
+    }
+
+    return openTimesSchema.parse(await response.json()).times;
   }
 
   private answer(

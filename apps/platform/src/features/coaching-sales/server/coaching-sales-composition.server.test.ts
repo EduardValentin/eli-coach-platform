@@ -322,6 +322,7 @@ describe("composeCoachingSalesFeature check-in clients", () => {
     expect(client).toEqual({
       clientId: RESOURCE_CLIENT_ID,
       portal: "reachable",
+      coachingEndsAt: null,
     });
   });
 
@@ -391,6 +392,7 @@ describe("composeCoachingSalesFeature check-in client references", () => {
       clientId: RESOURCE_CLIENT_ID,
       portal: "reachable",
       bookingTimeZone: "America/New_York",
+      coachingEndsAt: null,
     });
   });
 
@@ -498,7 +500,61 @@ describe("composeCoachingSalesFeature check-in client references", () => {
     expect(client).toEqual({
       clientId: RESOURCE_CLIENT_ID,
       portal: "awaiting_onboarding",
+      coachingEndsAt: null,
     });
+  });
+
+  it("answers a signed-in client's coaching end once her current subscription is cancelled", async () => {
+    // arrange
+    const endsAt = new Date("2027-01-21T08:00:00.000Z");
+    const cancelled = subscriptionRow({
+      status: "cancelled",
+      cancelledAt: SUBMITTED_AT,
+      accessEndsAt: endsAt,
+    });
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
+        [cancelled],
+        [cancelled],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client?.coachingEndsAt).toEqual(endsAt);
+  });
+
+  it("answers a referenced client's coaching end once her current subscription is cancelled", async () => {
+    // arrange
+    const endsAt = new Date("2027-01-21T08:00:00.000Z");
+    const cancelled = subscriptionRow({
+      status: "cancelled",
+      cancelledAt: SUBMITTED_AT,
+      accessEndsAt: endsAt,
+    });
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      assessmentCallReader: callIn("Europe/London"),
+      database: createDatabaseAnswering([
+        [
+          rosterRow({
+            onboardingSubmittedAt: SUBMITTED_AT,
+            subscription: cancelled,
+          }),
+        ],
+        [cancelled],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client?.coachingEndsAt).toEqual(endsAt);
   });
 });
 
@@ -649,6 +705,7 @@ function createHandles(
     assessmentCallReader: { findById: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
+    coachingEndHandler: { coachingEnds: async () => undefined },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
@@ -677,6 +734,7 @@ function createHandles(
 function createIncidents() {
   return {
     paymentCardRefreshFailed: vi.fn(),
+    coachingEndNotPropagated: vi.fn(),
     invitationEmailFailed: vi.fn(),
     invitationResendFailed: vi.fn(),
     invitationResent: vi.fn(),

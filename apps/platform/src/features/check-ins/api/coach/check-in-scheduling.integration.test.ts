@@ -170,7 +170,7 @@ describe.sequential("check-in scheduling integration", () => {
     expect(others).toEqual([]);
     expect(sent?.to).toBe(ANA.email);
     expect(sent?.subject).toBe("Eli scheduled a check-in with you");
-    expect(sent?.idempotencyKey).toContain(`check-in:${checkInId}:requested`);
+    expect(sent?.idempotencyKey).toContain(`check-in:${checkInId}:0:requested`);
     expect(sent?.text).toContain("Europe/London");
     expect(sent?.text).not.toContain("Europe/Bucharest");
     expect(sent?.text).toContain(`NOTE: ${NOTE}`);

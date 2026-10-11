@@ -14,6 +14,8 @@ export const CHECK_INS_API_PATHS = {
   withdrawal: `${CHECK_INS_API}/:checkInId/withdrawal`,
   approval: `${CHECK_INS_API}/:checkInId/approval`,
   decline: `${CHECK_INS_API}/:checkInId/decline`,
+  newTime: `${CHECK_INS_API}/:checkInId/new-time`,
+  cancellation: `${CHECK_INS_API}/:checkInId/cancellation`,
 } as const;
 
 export const CHECK_IN_JOIN_ROUTE_SEGMENT = `${CHECK_INS_ROUTE_SEGMENT}/:checkInId/join`;

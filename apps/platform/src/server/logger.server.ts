@@ -43,6 +43,18 @@ export function createConsoleLogger(): ConsoleLogger {
         notification,
       });
     },
+    coachingEndNotPropagated: ({ clientId, endsAt, error, subscriptionId }) => {
+      console.error(
+        "Coaching end did not reach the client's check-ins; their later check-ins stay booked.",
+        {
+          clientId,
+          endsAt: endsAt.toISOString(),
+          errorCategory: "coaching_end_propagation_failure",
+          errorClass: errorClassOf(error),
+          subscriptionId,
+        },
+      );
+    },
     paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {
       console.error(
         "Payment card could not be refreshed; Stripe will redeliver.",

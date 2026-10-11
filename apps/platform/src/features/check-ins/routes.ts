@@ -31,4 +31,9 @@ export const checkInsApiRoutes = [
   route(CHECK_INS_API_PATHS.withdrawal.slice(1), "./api/shared/withdrawal.ts"),
   route(CHECK_INS_API_PATHS.approval.slice(1), "./api/shared/approval.ts"),
   route(CHECK_INS_API_PATHS.decline.slice(1), "./api/shared/decline.ts"),
+  route(CHECK_INS_API_PATHS.newTime.slice(1), "./api/shared/new-time.ts"),
+  route(
+    CHECK_INS_API_PATHS.cancellation.slice(1),
+    "./api/shared/cancellation.ts",
+  ),
 ];

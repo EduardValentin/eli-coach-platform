@@ -9,6 +9,7 @@ import {
 } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { CheckInsJourney } from "~integration-test-config/check-ins-journey";
 import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";
 import {
   ANA,
@@ -50,6 +51,7 @@ const rig = new PlatformRig(suite);
 const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
+const checkIns = new CheckInsJourney(rig);
 
 const CANCELLATION_API = "/api/coaching-sales/subscription-cancellation";
 const PROGRAM_START_API = "/api/coaching-sales/program-start";
@@ -68,6 +70,12 @@ const DAY_14 = new Date(
 );
 const REFUND_DUE_BY = new Date(DAY_13.getTime() + 14 * DAY_IN_MILLISECONDS);
 const PAID_THROUGH = new Date("2027-01-21T08:00:00.000Z");
+const WEEK_BEFORE_PAID_THROUGH = new Date("2027-01-14T09:00:00.000Z");
+const CHECK_IN_BEFORE_PAID_THROUGH = "2027-01-20T15:00:00.000Z";
+const CHECK_IN_ON_PAID_THROUGH_DAY = "2027-01-21T15:00:00.000Z";
+const CHECK_IN_AFTER_PAID_THROUGH = "2027-01-22T15:00:00.000Z";
+const CHECK_IN_AFTER_DAY_13 = "2026-11-05T15:00:00.000Z";
+const LATER_CHECK_IN_AFTER_DAY_13 = "2026-11-06T15:00:00.000Z";
 
 const ANA_SESSION: AccountSession = {
   sessionId: "sess_subscription_ana",
@@ -698,6 +706,153 @@ describe.sequential("client subscription integration", () => {
       );
     });
   });
+
+  describe("her check-ins once her coaching end is set", () => {
+    it("cancels her check-ins at and after the paid-through end when she cancels without a refund, freeing their hours and keeping the earlier one", async () => {
+      // arrange
+      const { clientId, before, onEndDay, after } =
+        await anaWithCheckInsAroundPaidThrough();
+
+      // act
+      await cancel(ANA_SESSION);
+
+      // assert
+      expect(await checkInStatusesOf(clientId)).toEqual([
+        { id: before, status: "pending" },
+        { id: onEndDay, status: "cancelled" },
+        { id: after, status: "cancelled" },
+      ]);
+      expect(
+        (await checkIns.heldCheckInHours()).map(({ checkInId }) => checkInId),
+      ).toEqual([before]);
+    });
+
+    it("sends no check-in email for the check-ins her cancellation cancels", async () => {
+      // arrange
+      await anaWithCheckInsAroundPaidThrough();
+      const sentBefore = await checkInEmailKeys();
+
+      // act
+      await cancel(ANA_SESSION);
+
+      // assert
+      expect(await checkInEmailKeys()).toEqual(sentBefore);
+    });
+
+    it("cancels every check-in still to come when she cancels with a full refund", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await rig.holdClock(DAY_13);
+      await onboarding.submit(ANA_SESSION);
+      const clientId = await onboarding.clientIdOf(ANA_SESSION);
+      await checkIns.scheduled({ clientId, startsAt: CHECK_IN_AFTER_DAY_13 });
+      await checkIns.scheduled({
+        clientId,
+        startsAt: LATER_CHECK_IN_AFTER_DAY_13,
+      });
+
+      // act
+      await cancel(ANA_SESSION);
+
+      // assert
+      expect(
+        (await checkInStatusesOf(clientId)).map(({ status }) => status),
+      ).toEqual(["cancelled", "cancelled"]);
+      expect(await checkIns.heldCheckInHours()).toEqual([]);
+    });
+
+    it("cancels her check-ins at and after the end Stripe scheduled", async () => {
+      // arrange
+      const { clientId, before, onEndDay, after } =
+        await anaWithCheckInsAroundPaidThrough();
+
+      // act
+      await scheduleEndInStripe("evt_check_ins_end_scheduled");
+
+      // assert
+      expect(await checkInStatusesOf(clientId)).toEqual([
+        { id: before, status: "pending" },
+        { id: onEndDay, status: "cancelled" },
+        { id: after, status: "cancelled" },
+      ]);
+      expect(
+        (await checkIns.heldCheckInHours()).map(({ checkInId }) => checkInId),
+      ).toEqual([before]);
+    });
+
+    it("cancels every check-in still to come when Stripe deletes her subscription", async () => {
+      // arrange
+      const { clientId } = await anaWithCheckInsAroundPaidThrough();
+
+      // act
+      await lifecycle.deliverEvent({
+        id: "evt_check_ins_subscription_deleted",
+        type: "customer.subscription.deleted",
+        object: stripeSubscriptionObject({
+          status: "canceled",
+          ended_at: toUnixSeconds(WEEK_BEFORE_PAID_THROUGH),
+        }),
+      });
+
+      // assert
+      expect(
+        (await checkInStatusesOf(clientId)).map(({ status }) => status),
+      ).toEqual(["cancelled", "cancelled", "cancelled"]);
+      expect(await checkIns.heldCheckInHours()).toEqual([]);
+    });
+
+    it("leaves her check-ins cancelled when Stripe lifts the end it scheduled", async () => {
+      // arrange
+      const { clientId, before, onEndDay, after } =
+        await anaWithCheckInsAroundPaidThrough();
+      await scheduleEndInStripe("evt_check_ins_end_scheduled");
+
+      // act
+      await lifecycle.deliverEvent({
+        id: "evt_check_ins_end_lifted",
+        type: "customer.subscription.updated",
+        object: stripeSubscriptionObject(),
+        previousAttributes: { cancel_at: toUnixSeconds(PAID_THROUGH) },
+      });
+
+      // assert
+      expect(await checkInStatusesOf(clientId)).toEqual([
+        { id: before, status: "pending" },
+        { id: onEndDay, status: "cancelled" },
+        { id: after, status: "cancelled" },
+      ]);
+    });
+
+    it("stops her open times before the paid-through end", async () => {
+      // arrange
+      await anaWithCheckInsAroundPaidThrough();
+      await cancel(ANA_SESSION);
+
+      // act
+      const times = await checkIns.openTimesOf(ANA_SESSION);
+
+      // assert
+      expect(times).toContain("2027-01-20T16:00:00.000Z");
+      expect(times.filter((time) => new Date(time) >= PAID_THROUGH)).toEqual(
+        [],
+      );
+    });
+
+    it("stops the coach's open times for her before the paid-through end", async () => {
+      // arrange
+      const { clientId } = await anaWithCheckInsAroundPaidThrough();
+      await cancel(ANA_SESSION);
+
+      // act
+      const times = await checkIns.openTimesOfClient(clientId);
+
+      // assert
+      expect(times).toContain("2027-01-20T16:00:00.000Z");
+      expect(times.filter((time) => new Date(time) >= PAID_THROUGH)).toEqual(
+        [],
+      );
+    });
+  });
 });
 
 function cancel(session: AccountSession): Promise<Response> {
@@ -731,6 +886,63 @@ async function refundDueEmails() {
   return (await suite.sentEmails()).filter(
     (email) => email.to === COACH_EMAIL && email.subject.includes("refund due"),
   );
+}
+
+async function anaWithCheckInsAroundPaidThrough(): Promise<{
+  clientId: string;
+  before: string;
+  onEndDay: string;
+  after: string;
+}> {
+  await onboarding.admit(ANA, ANA_SESSION, FIRST_PURCHASE);
+  await rig.holdClock(WEEK_BEFORE_PAID_THROUGH);
+  await onboarding.submit(ANA_SESSION);
+  const clientId = await onboarding.clientIdOf(ANA_SESSION);
+  const before = await checkIns.scheduled({
+    clientId,
+    startsAt: CHECK_IN_BEFORE_PAID_THROUGH,
+  });
+  const onEndDay = await checkIns.scheduled({
+    clientId,
+    startsAt: CHECK_IN_ON_PAID_THROUGH_DAY,
+  });
+  const after = await checkIns.scheduled({
+    clientId,
+    startsAt: CHECK_IN_AFTER_PAID_THROUGH,
+  });
+  const approval = await checkIns.approve(onEndDay, ANA_SESSION);
+
+  if (approval.status !== 200) {
+    throw new Error(`Approving her check-in answered ${approval.status}.`);
+  }
+
+  return { clientId, before, onEndDay, after };
+}
+
+async function scheduleEndInStripe(eventId: string): Promise<void> {
+  await lifecycle.deliverEvent({
+    id: eventId,
+    type: "customer.subscription.updated",
+    object: stripeSubscriptionObject({
+      cancel_at: toUnixSeconds(PAID_THROUGH),
+    }),
+    previousAttributes: { cancel_at: null },
+  });
+}
+
+async function checkInStatusesOf(
+  clientId: string,
+): Promise<{ id: string; status: string }[]> {
+  return (await checkIns.checkInRowsOf(clientId)).map(({ id, status }) => ({
+    id,
+    status,
+  }));
+}
+
+async function checkInEmailKeys(): Promise<(string | null)[]> {
+  return (await suite.sentEmails())
+    .map(({ idempotencyKey }) => idempotencyKey)
+    .filter((key) => key?.includes("check-in:"));
 }
 
 async function portalSessionRequests(): Promise<URLSearchParams[]> {

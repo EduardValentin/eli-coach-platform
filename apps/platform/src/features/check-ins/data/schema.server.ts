@@ -2,6 +2,7 @@ import { appSchema } from "@eli-coach-platform/db";
 import {
   CHECK_IN_KINDS,
   CHECK_IN_PARTIES,
+  MAX_CHECK_IN_MOVES,
   MAX_CHECK_IN_NOTE_LENGTH,
   RECORDED_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
@@ -9,6 +10,7 @@ import { sql, type SQL } from "drizzle-orm";
 import {
   check,
   index,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -43,6 +45,9 @@ export const checkInsTable = appSchema.table(
     note: text("note"),
     requestedAt: timestamp("requested_at", { withTimezone: true }).notNull(),
     answeredAt: timestamp("answered_at", { withTimezone: true }),
+    earlierStartsAt: timestamp("earlier_starts_at", { withTimezone: true }),
+    moves: smallint("moves").notNull().default(0),
+    newTimeNote: text("new_time_note"),
   },
   (table) => [
     index("check_ins_client_id_starts_at_idx").on(
@@ -68,6 +73,14 @@ export const checkInsTable = appSchema.table(
     check(
       "check_ins_note_length_check",
       sql`${table.note} is null or char_length(${table.note}) <= ${sql.raw(String(MAX_CHECK_IN_NOTE_LENGTH))}`,
+    ),
+    check(
+      "check_ins_new_time_note_length_check",
+      sql`${table.newTimeNote} is null or char_length(${table.newTimeNote}) <= ${sql.raw(String(MAX_CHECK_IN_NOTE_LENGTH))}`,
+    ),
+    check(
+      "check_ins_moves_check",
+      sql`${table.moves} between 0 and ${sql.raw(String(MAX_CHECK_IN_MOVES))}`,
     ),
   ],
 );

@@ -134,6 +134,11 @@ export function createPlatformContainer(options: {
     clock,
     database: database.client,
   });
+  const checkInsComposition = composeCheckInsFeature({
+    clock,
+    coachTime: coachSchedule.handles.coachTime,
+    database: database.client,
+  });
   const assessmentCalls = composeAssessmentCallsFeature({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallsConfig: environment,
@@ -157,6 +162,7 @@ export function createPlatformContainer(options: {
     assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
+    coachingEndHandler: checkInsComposition.handles.coachingEndHandler,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
@@ -214,16 +220,13 @@ export function createPlatformContainer(options: {
     resourceClients: coachingSales.handles.resourceClients,
     store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
   });
-  const checkIns = composeCheckInsFeature({
+  const checkIns = checkInsComposition.complete({
     appBasePath: environment.APP_BASE_PATH,
     availability: coachSchedule.handles.availability,
     calendar: coachSchedule.handles.calendar,
     checkInClients: coachingSales.handles.checkInClients,
-    clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
-    database: database.client,
     incidents,
     meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,

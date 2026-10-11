@@ -112,6 +112,7 @@ export class CoachCheckInsController {
   private present(view: CoachCheckInView): CoachCheckIn {
     return {
       ...presentCheckIn(view),
+      clientId: view.clientId,
       client: {
         firstName: view.client.firstName,
         lastName: view.client.lastName,

@@ -59,13 +59,19 @@ const APPROVED_SOON: ClientCheckIn = {
   kind: "ad_hoc",
   status: "approved",
   initiatedBy: "client",
+  proposedBy: "client",
   awaitsViewer: false,
   viewerMayWithdraw: false,
+  viewerProposal: "allowed",
+  viewerMayCancel: true,
   isWaitingRequest: false,
   startsAt: "2026-10-14T07:00:00.000Z",
   endsAt: "2026-10-14T08:00:00.000Z",
   joinEmphasisFrom: "2026-10-14T06:50:00.000Z",
+  earlierStartsAt: null,
+  moves: 0,
   note: null,
+  newTimeNote: null,
 };
 
 const APPROVED_LATER: ClientCheckIn = {
@@ -93,6 +99,7 @@ const COACH_REQUEST: ClientCheckIn = {
   id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
   status: "pending",
   initiatedBy: "coach",
+  proposedBy: "coach",
   awaitsViewer: true,
   startsAt: "2026-10-19T09:00:00.000Z",
   endsAt: "2026-10-19T10:00:00.000Z",
