@@ -11,6 +11,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { UserEvent } from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -191,7 +192,7 @@ describe("the coach's check-ins page", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await showTab(user, "Upcoming");
 
     // assert
     const row = within(
@@ -226,7 +227,7 @@ describe("the coach's check-ins page", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: tab }));
+    await showTab(user, tab);
 
     // assert
     expect(screen.getByText(title)).toBeInTheDocument();
@@ -280,7 +281,7 @@ describe("the coach's check-ins page", () => {
         screen.getByRole("tab", { name: /^Requests\s*1 waiting on you$/ }),
       ).toBeInTheDocument();
     });
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await showTab(user, "Upcoming");
     expect(
       within(
         screen.getByRole("list", { name: "Upcoming check-ins" }),
@@ -513,14 +514,14 @@ describe("the coach's check-ins tab in the address", () => {
     const { router, user } = await renderCheckInsPageWithView();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await showTab(user, "Upcoming");
 
     // assert
     expect(router.state.location.search).toBe("?view=upcoming");
     expect(router.state.historyAction).toBe("REPLACE");
 
     // act
-    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+    await showTab(user, /^Requests/);
 
     // assert
     expect(router.state.location.search).toBe("");
@@ -551,6 +552,11 @@ function rowNaming(name: string): HTMLElement {
   if (!row) throw new Error(`No check-in row names ${name}`);
 
   return row;
+}
+
+async function showTab(user: UserEvent, name: string | RegExp): Promise<void> {
+  await user.click(screen.getByRole("tab", { name }));
+  await screen.findByRole("tab", { name, selected: true });
 }
 
 async function renderCheckInsPage() {

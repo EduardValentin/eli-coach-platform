@@ -12,6 +12,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { UserEvent } from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -234,7 +235,7 @@ describe("the client's check-ins page", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Requests" }));
+    await showTab(user, "Requests");
 
     // assert
     const row = within(
@@ -257,7 +258,7 @@ describe("the client's check-ins page", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Past" }));
+    await showTab(user, "Past");
 
     // assert
     const rows = within(
@@ -298,7 +299,7 @@ describe("the client's check-ins page", () => {
     const user = await renderCheckInsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: tab }));
+    await showTab(user, tab);
 
     // assert
     expect(screen.getByText(title)).toBeInTheDocument();
@@ -359,14 +360,14 @@ describe("the client's check-ins tab in the address", () => {
     const { router, user } = await renderCheckInsPageWithView();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Past" }));
+    await showTab(user, "Past");
 
     // assert
     expect(router.state.location.search).toBe("?view=past");
     expect(router.state.historyAction).toBe("REPLACE");
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await showTab(user, "Upcoming");
 
     // assert
     expect(router.state.location.search).toBe("");
@@ -444,7 +445,7 @@ describe("the client answering her coach's request", () => {
       }),
     );
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+    await showTab(user, /^Requests/);
 
     // act
     await user.click(screen.getByRole("button", { name: "Approve" }));
@@ -462,7 +463,7 @@ describe("the client answering her coach's request", () => {
     expect(screen.getByRole("tab", { name: "Requests" })).not.toHaveTextContent(
       /\d/,
     );
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await showTab(user, "Upcoming");
     expect(
       within(
         screen.getByRole("list", { name: "Upcoming check-ins" }),
@@ -491,7 +492,7 @@ describe("the client answering her coach's request", () => {
       }),
     );
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+    await showTab(user, /^Requests/);
 
     // act
     await user.click(screen.getByRole("button", { name: "Decline" }));
@@ -518,7 +519,7 @@ describe("the client answering her coach's request", () => {
         ),
       );
       const user = await renderCheckInsPage();
-      await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+      await showTab(user, /^Requests/);
       const readsBefore = listingReads;
 
       // act
@@ -542,7 +543,7 @@ describe("the client answering her coach's request", () => {
     const { baseElement, user } = await renderCheckInsPageWithView();
 
     // act
-    await user.click(screen.getByRole("tab", { name: /^Requests/ }));
+    await showTab(user, /^Requests/);
 
     // assert
     expect((await axe(baseElement)).violations).toEqual([]);
@@ -927,7 +928,7 @@ describe("the request button while her request waits", () => {
       }),
     );
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: "Requests" }));
+    await showTab(user, "Requests");
 
     // act
     await user.click(screen.getByRole("button", { name: "Cancel request" }));
@@ -963,7 +964,7 @@ describe("the client cancelling her waiting request", () => {
       }),
     );
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: "Requests" }));
+    await showTab(user, "Requests");
 
     // act
     await user.click(screen.getByRole("button", { name: "Cancel request" }));
@@ -989,7 +990,7 @@ describe("the client cancelling her waiting request", () => {
       ),
     );
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: "Requests" }));
+    await showTab(user, "Requests");
     const readsBefore = listingReads;
 
     // act
@@ -1011,7 +1012,7 @@ describe("the client cancelling her waiting request", () => {
     listing = { checkIns: [WAITING_REQUEST] };
     server.use(http.post(WITHDRAWAL_URL, () => HttpResponse.error()));
     const user = await renderCheckInsPage();
-    await user.click(screen.getByRole("tab", { name: "Requests" }));
+    await showTab(user, "Requests");
 
     // act
     await user.click(screen.getByRole("button", { name: "Cancel request" }));
@@ -1056,6 +1057,11 @@ function stepButton(dialog: HTMLElement): HTMLElement {
   return within(dialog).getByRole("button", {
     name: /^(Select a date|Select a time|Request .+|Requesting…)$/,
   });
+}
+
+async function showTab(user: UserEvent, name: string | RegExp): Promise<void> {
+  await user.click(screen.getByRole("tab", { name }));
+  await screen.findByRole("tab", { name, selected: true });
 }
 
 async function renderCheckInsPage() {
