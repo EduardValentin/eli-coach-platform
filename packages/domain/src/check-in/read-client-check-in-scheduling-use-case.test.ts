@@ -29,6 +29,7 @@ describe("ReadClientCheckInSchedulingUseCase", () => {
       const { readScheduling, clients } = createReadScheduling({
         clientId: "client-1",
         portal,
+        coachingEndsAt: null,
         bookingTimeZone: "Europe/London",
       });
 

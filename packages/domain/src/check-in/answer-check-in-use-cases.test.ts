@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ApproveCheckInUseCase } from "./approve-check-in-use-case";
+import { CancelCheckInUseCase } from "./cancel-check-in-use-case";
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import type { CheckInClient, CheckInClients } from "./check-in-clients";
@@ -35,6 +36,9 @@ const ANAS_REQUEST = {
   note: null,
   requestedAt: new Date("2026-06-01T08:30:00.000Z"),
   answeredAt: null,
+  earlierStartsAt: null,
+  moves: 0,
+  newTimeNote: null,
 } satisfies CheckInProps;
 
 function checkIn(props?: Partial<CheckInProps>): CheckIn {
@@ -43,6 +47,24 @@ function checkIn(props?: Partial<CheckInProps>): CheckIn {
 
 function coachRequest(props?: Partial<CheckInProps>): CheckIn {
   return checkIn({ initiatedBy: "coach", proposedBy: "coach", ...props });
+}
+
+function newTimeFromCoach(props?: Partial<CheckInProps>): CheckIn {
+  return checkIn({
+    proposedBy: "coach",
+    earlierStartsAt: new Date("2026-06-02T15:00:00.000Z"),
+    moves: 1,
+    newTimeNote: "Could we do Wednesday instead?",
+    ...props,
+  });
+}
+
+function approvedCheckIn(props?: Partial<CheckInProps>): CheckIn {
+  return checkIn({
+    recordedStatus: "approved",
+    answeredAt: new Date("2026-06-01T12:00:00.000Z"),
+    ...props,
+  });
 }
 
 function createPorts(options?: {
@@ -61,13 +83,15 @@ function createPorts(options?: {
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue(options?.settlement ?? "settled"),
+    move: vi.fn().mockResolvedValue("moved"),
+    cancelFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(
         options?.client === undefined
-          ? { clientId: "client-1", portal: "reachable" }
+          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
           : options.client,
       ),
     identitiesOf: vi.fn().mockResolvedValue([ANA]),
@@ -77,6 +101,10 @@ function createPorts(options?: {
     withdrawn: vi.fn().mockResolvedValue("sent"),
     approved: vi.fn().mockResolvedValue("sent"),
     declined: vi.fn().mockResolvedValue("sent"),
+    newTimeProposed: vi.fn().mockResolvedValue("sent"),
+    newTimeAccepted: vi.fn().mockResolvedValue("sent"),
+    newTimeDeclined: vi.fn().mockResolvedValue("sent"),
+    cancelled: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const now = options?.now ?? NOW;
 
@@ -94,6 +122,7 @@ const ANSWERS = [
     answer: "approve",
     outcome: "approved",
     notification: "approved",
+    newTimeNotification: "newTimeAccepted",
     create: (ports: ReturnType<typeof createPorts>) =>
       new ApproveCheckInUseCase(ports),
   },
@@ -101,6 +130,7 @@ const ANSWERS = [
     answer: "decline",
     outcome: "cancelled",
     notification: "declined",
+    newTimeNotification: "newTimeDeclined",
     create: (ports: ReturnType<typeof createPorts>) =>
       new DeclineCheckInUseCase(ports),
   },
@@ -131,6 +161,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
+        from: "pending",
       });
     });
 
@@ -168,6 +199,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
+        from: "pending",
       });
     });
 
@@ -252,6 +284,66 @@ describe.each(ANSWERS)(
 );
 
 describe.each(ANSWERS)(
+  "the $answer of a new time",
+  ({ outcome, notification, newTimeNotification, create }) => {
+    const command = {
+      checkInId: "check-in-1",
+      actor: ANA_ACTOR,
+      clientTimeZone: "Europe/London",
+    };
+
+    it(`settles the new time as ${outcome} and keeps its earlier time`, async () => {
+      // arrange
+      const ports = createPorts({ found: newTimeFromCoach() });
+
+      // act
+      const result = await create(ports).execute(command);
+
+      // assert
+      expect(result).toEqual({
+        status: notification,
+        checkIn: expect.objectContaining({
+          recordedStatus: outcome,
+          earlierStartsAt: new Date("2026-06-02T15:00:00.000Z"),
+          moves: 1,
+        }),
+      });
+    });
+
+    it(`emails the coach who proposed it with ${newTimeNotification}`, async () => {
+      // arrange
+      const ports = createPorts({ found: newTimeFromCoach() });
+
+      // act
+      await create(ports).execute(command);
+
+      // assert
+      expect(ports.notifications[newTimeNotification]).toHaveBeenCalledWith({
+        checkIn: expect.objectContaining({ id: "check-in-1" }),
+        client: ANA,
+        recipient: "coach",
+      });
+      expect(ports.notifications[notification]).not.toHaveBeenCalled();
+    });
+
+    it("refuses the coach answering the new time she proposed", async () => {
+      // arrange
+      const ports = createPorts({ found: newTimeFromCoach() });
+
+      // act
+      const result = await create(ports).execute({
+        checkInId: "check-in-1",
+        actor: COACH,
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not_your_turn" });
+      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+    });
+  },
+);
+
+describe.each(ANSWERS)(
   "the client's $answer of the coach's request",
   ({ outcome, notification, create }) => {
     const command = {
@@ -283,6 +375,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
+        from: "pending",
         clientTimeZone: "Asia/Tokyo",
       });
     });
@@ -317,6 +410,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
+        from: "pending",
       });
     });
 
@@ -352,7 +446,7 @@ describe.each(ANSWERS)(
         // arrange
         const ports = createPorts({
           found: coachRequest(),
-          client: { clientId: "client-1", portal },
+          client: { clientId: "client-1", portal, coachingEndsAt: null },
         });
 
         // act
@@ -402,6 +496,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
       id: "check-in-1",
       outcome: "cancelled",
       at: NOW,
+      from: "pending",
     });
     expect(ports.notifications.withdrawn).toHaveBeenCalledWith({
       checkIn: expect.objectContaining({ id: "check-in-1" }),
@@ -481,6 +576,21 @@ describe("WithdrawCheckInRequestUseCase", () => {
     },
   );
 
+  it("refuses the coach taking back a new time she proposed", async () => {
+    // arrange
+    const ports = createPorts({ found: newTimeFromCoach() });
+
+    // act
+    const result = await new WithdrawCheckInRequestUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: COACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_your_turn" });
+    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+  });
+
   it("answers unknown for another client's request", async () => {
     // arrange
     const ports = createPorts({ found: checkIn({ clientId: "client-2" }) });
@@ -511,7 +621,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
   it("refuses a client whose coaching ended", async () => {
     // arrange
     const ports = createPorts({
-      client: { clientId: "client-1", portal: "ended" },
+      client: { clientId: "client-1", portal: "ended", coachingEndsAt: null },
     });
 
     // act
@@ -572,6 +682,131 @@ describe("WithdrawCheckInRequestUseCase", () => {
     expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
       checkInId: "check-in-1",
       notification: "withdrawn",
+    });
+  });
+});
+
+describe("CancelCheckInUseCase", () => {
+  it.each([
+    { canceller: "client", actor: ANA_ACTOR, recipient: "coach" },
+    { canceller: "coach", actor: COACH, recipient: "client" },
+  ] as const)(
+    "cancels an approved check-in for the $canceller from approved and emails the $recipient",
+    async ({ actor, recipient }) => {
+      // arrange
+      const ports = createPorts({ found: approvedCheckIn() });
+
+      // act
+      const result = await new CancelCheckInUseCase(ports).execute({
+        checkInId: "check-in-1",
+        actor,
+      });
+
+      // assert
+      expect(result).toEqual({
+        status: "cancelled",
+        checkIn: expect.objectContaining({
+          recordedStatus: "cancelled",
+          answeredAt: NOW,
+        }),
+      });
+      expect(ports.checkIns.settle).toHaveBeenCalledWith({
+        id: "check-in-1",
+        outcome: "cancelled",
+        at: NOW,
+        from: "approved",
+      });
+      expect(ports.notifications.cancelled).toHaveBeenCalledWith({
+        checkIn: expect.objectContaining({ id: "check-in-1" }),
+        client: ANA,
+        recipient,
+      });
+    },
+  );
+
+  it.each([
+    ["a waiting request", checkIn(), NOW, "not_approved"],
+    [
+      "a cancelled check-in",
+      checkIn({ recordedStatus: "cancelled" }),
+      NOW,
+      "not_approved",
+    ],
+    [
+      "an approved check-in that has started",
+      approvedCheckIn(),
+      STARTS_AT,
+      "expired",
+    ],
+  ] as const)(
+    "refuses cancelling %s without settling or emailing",
+    async (_situation, found, now, refusal) => {
+      // arrange
+      const ports = createPorts({ found, now });
+
+      // act
+      const result = await new CancelCheckInUseCase(ports).execute({
+        checkInId: "check-in-1",
+        actor: COACH,
+      });
+
+      // assert
+      expect(result).toEqual({ status: refusal });
+      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses when the check-in stopped being approved meanwhile", async () => {
+    // arrange
+    const ports = createPorts({
+      found: approvedCheckIn(),
+      settlement: "not_pending",
+    });
+
+    // act
+    const result = await new CancelCheckInUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: ANA_ACTOR,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_pending" });
+    expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+  });
+
+  it("answers unknown for another client's check-in", async () => {
+    // arrange
+    const ports = createPorts({
+      found: approvedCheckIn({ clientId: "client-2" }),
+    });
+
+    // act
+    const result = await new CancelCheckInUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: ANA_ACTOR,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unknown" });
+  });
+
+  it("keeps the cancellation and reports the email the provider refused", async () => {
+    // arrange
+    const ports = createPorts({ found: approvedCheckIn() });
+    ports.notifications.cancelled.mockResolvedValue("failed");
+
+    // act
+    const result = await new CancelCheckInUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: COACH,
+    });
+
+    // assert
+    expect(result.status).toBe("cancelled");
+    expect(ports.incidents.checkInNotificationFailed).toHaveBeenCalledWith({
+      checkInId: "check-in-1",
+      notification: "cancelled",
     });
   });
 });

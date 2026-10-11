@@ -39,6 +39,9 @@ const REQUEST = {
   note: null,
   requestedAt: new Date("2026-06-01T08:30:00.000Z"),
   answeredAt: null,
+  earlierStartsAt: null,
+  moves: 0,
+  newTimeNote: null,
 } satisfies CheckInProps;
 
 function checkIn(props?: Partial<CheckInProps>): CheckIn {
@@ -56,13 +59,15 @@ function createPorts(options: {
     listForClient: vi.fn().mockResolvedValue(options.checkIns),
     listAll: vi.fn().mockResolvedValue(options.checkIns),
     settle: vi.fn(),
+    move: vi.fn(),
+    cancelFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(
         options.client === undefined
-          ? { clientId: "client-1", portal: "reachable" }
+          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
           : options.client,
       ),
     identitiesOf: vi.fn().mockResolvedValue(options.identities ?? []),
@@ -97,6 +102,8 @@ describe("ListClientCheckInsUseCase", () => {
           awaitsViewer: false,
           viewerMayWithdraw: false,
           isWaitingRequest: false,
+          viewerProposal: "none",
+          viewerMayCancel: false,
         },
         {
           ...approved.toSnapshot(),
@@ -104,6 +111,8 @@ describe("ListClientCheckInsUseCase", () => {
           awaitsViewer: false,
           viewerMayWithdraw: false,
           isWaitingRequest: false,
+          viewerProposal: "allowed",
+          viewerMayCancel: true,
         },
       ],
     });
@@ -134,7 +143,10 @@ describe("ListClientCheckInsUseCase", () => {
   });
 
   it.each([
-    ["whose coaching ended", { clientId: "client-1", portal: "ended" }],
+    [
+      "whose coaching ended",
+      { clientId: "client-1", portal: "ended", coachingEndsAt: null },
+    ],
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
     // arrange
@@ -177,6 +189,8 @@ describe("ListCoachCheckInsUseCase", () => {
         awaitsViewer: false,
         viewerMayWithdraw: false,
         isWaitingRequest: false,
+        viewerProposal: "none",
+        viewerMayCancel: false,
         client: { firstName: "Ana", lastName: "Popescu" },
       },
       {
@@ -185,6 +199,8 @@ describe("ListCoachCheckInsUseCase", () => {
         awaitsViewer: false,
         viewerMayWithdraw: false,
         isWaitingRequest: false,
+        viewerProposal: "none",
+        viewerMayCancel: false,
         client: { firstName: "Maria", lastName: "Ionescu" },
       },
     ]);

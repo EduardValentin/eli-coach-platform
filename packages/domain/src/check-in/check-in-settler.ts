@@ -3,11 +3,11 @@ import type { Clock } from "../shared";
 import type {
   CheckIn,
   CheckInOutcome,
-  CheckInParty,
   CheckInRefusal,
   CheckInSnapshot,
+  RecordedCheckInStatus,
 } from "./check-in";
-import type { CheckInActorCommand } from "./check-in-actor";
+import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import type { CheckInClients } from "./check-in-clients";
@@ -16,7 +16,7 @@ import type {
   CheckInNotification,
   CheckInNotifications,
 } from "./check-in-notifications";
-import { CheckInTimeZone } from "./check-in-time-zone";
+import type { CheckInParty } from "./check-in-party";
 import type { CheckIns } from "./check-ins";
 
 type CheckInSettlerOptions = {
@@ -29,22 +29,20 @@ type CheckInSettlerOptions = {
 
 type CheckInTurn = { party: CheckInParty; at: Date };
 
-type CheckInAnswer = {
+type CheckInAnswer<Refusal extends CheckInRefusal> = {
   command: CheckInActorCommand;
-  refusalOf: (checkIn: CheckIn, turn: CheckInTurn) => CheckInRefusal | null;
+  refusalOf: (checkIn: CheckIn, turn: CheckInTurn) => Refusal | null;
   outcome: CheckInOutcome;
-  notification: CheckInNotification;
+  from: RecordedCheckInStatus;
+  notificationOf: (checkIn: CheckIn) => CheckInNotification;
 };
 
-type AnsweringZone =
-  { status: "valid"; timeZone: CheckInTimeZone | null } | { status: "invalid" };
-
-export type SettledCheckIn =
+export type SettledCheckIn<Refusal extends CheckInRefusal> =
   | { status: "settled"; checkIn: CheckInSnapshot }
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInRefusal };
+  | { status: Refusal | "not_pending" };
 
 export class CheckInSettler {
   private readonly announcer: CheckInAnnouncer;
@@ -55,9 +53,11 @@ export class CheckInSettler {
     this.reach = new CheckInActorReach(options);
   }
 
-  async settle(answer: CheckInAnswer): Promise<SettledCheckIn> {
-    const { command, outcome, notification } = answer;
-    const zone = this.answeringZoneOf(command);
+  async settle<Refusal extends CheckInRefusal>(
+    answer: CheckInAnswer<Refusal>,
+  ): Promise<SettledCheckIn<Refusal>> {
+    const { command, outcome, from } = answer;
+    const zone = actingClientZoneOf(command);
 
     if (zone.status === "invalid") {
       return { status: "invalid_time_zone" };
@@ -82,6 +82,7 @@ export class CheckInSettler {
       id: checkIn.id,
       outcome,
       at,
+      from,
       ...(zone.timeZone && { clientTimeZone: zone.timeZone.name }),
     });
 
@@ -95,19 +96,12 @@ export class CheckInSettler {
       clientTimeZone: zone.timeZone,
     });
 
-    await this.announcer.announce(notification, settled, party);
+    await this.announcer.announce(
+      answer.notificationOf(checkIn),
+      settled,
+      party,
+    );
 
     return { status: "settled", checkIn: settled.toSnapshot() };
-  }
-
-  private answeringZoneOf(command: CheckInActorCommand): AnsweringZone {
-    if (
-      command.actor.party === "coach" ||
-      command.clientTimeZone === undefined
-    ) {
-      return { status: "valid", timeZone: null };
-    }
-
-    return CheckInTimeZone.from(command.clientTimeZone);
   }
 }

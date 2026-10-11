@@ -7,6 +7,11 @@ import {
   type TimeInterval,
 } from "../coach-availability";
 
+import type { CheckInActor } from "./check-in-actor";
+import type {
+  CheckInClientReference,
+  CheckInClients,
+} from "./check-in-clients";
 import { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
 
 const MONDAY_LATE_MORNING = new Date("2026-06-01T08:30:00.000Z");
@@ -30,16 +35,47 @@ function calendarBusyWith(busy: TimeInterval[]): CoachCalendar {
   return { busyFrom: vi.fn().mockResolvedValue(busy) };
 }
 
-async function openTimes(busy: TimeInterval[] = []): Promise<string[]> {
-  const listOpenTimes = new ListOpenCheckInTimesUseCase({
+const ANA_ACTOR: CheckInActor = { party: "client", authSubjectId: "user_ana" };
+const COACH: CheckInActor = { party: "coach" };
+
+const ANA: CheckInClientReference = {
+  clientId: "client-1",
+  portal: "reachable",
+  coachingEndsAt: null,
+  bookingTimeZone: "Europe/London",
+};
+
+function createListOpenTimes(options?: {
+  busy?: TimeInterval[];
+  client?: CheckInClientReference | null;
+}) {
+  const client = options?.client === undefined ? ANA : options.client;
+  const ports = {
     availability: workingDays(),
-    calendar: calendarBusyWith(busy),
+    calendar: calendarBusyWith(options?.busy ?? []),
+    clients: {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(client),
+      findById: vi.fn().mockResolvedValue(client),
+    } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "findById">,
     clock: { now: () => MONDAY_LATE_MORNING },
-  });
+  };
 
-  const times = await listOpenTimes.execute();
+  return { ports, listOpenTimes: new ListOpenCheckInTimesUseCase(ports) };
+}
 
-  return times.map((time) => time.toISOString());
+async function openTimes(options?: {
+  busy?: TimeInterval[];
+  client?: CheckInClientReference;
+}): Promise<string[]> {
+  const { listOpenTimes } = createListOpenTimes(options);
+
+  const result = await listOpenTimes.execute({ actor: ANA_ACTOR });
+
+  if (result.status !== "listed") {
+    throw new Error(`expected open times, got ${result.status}`);
+  }
+
+  return result.times.map((time) => time.toISOString());
 }
 
 describe("ListOpenCheckInTimesUseCase", () => {
@@ -80,7 +116,7 @@ describe("ListOpenCheckInTimesUseCase", () => {
     };
 
     // act
-    const times = await openTimes([bookedCall]);
+    const times = await openTimes({ busy: [bookedCall] });
 
     // assert
     expect(times).not.toContain("2026-06-02T10:00:00.000Z");
@@ -89,18 +125,13 @@ describe("ListOpenCheckInTimesUseCase", () => {
 
   it("reads the coach's schedule from the instant it lists", async () => {
     // arrange
-    const calendar = calendarBusyWith([]);
-    const listOpenTimes = new ListOpenCheckInTimesUseCase({
-      availability: workingDays(),
-      calendar,
-      clock: { now: () => MONDAY_LATE_MORNING },
-    });
+    const { listOpenTimes, ports } = createListOpenTimes();
 
     // act
-    await listOpenTimes.execute();
+    await listOpenTimes.execute({ actor: ANA_ACTOR });
 
     // assert
-    expect(calendar.busyFrom).toHaveBeenCalledWith(MONDAY_LATE_MORNING);
+    expect(ports.calendar.busyFrom).toHaveBeenCalledWith(MONDAY_LATE_MORNING);
   });
 
   it("offers times up to 30 days ahead and none after", async () => {
@@ -114,5 +145,96 @@ describe("ListOpenCheckInTimesUseCase", () => {
     // assert
     expect(times.at(-1)).toBe(`${lastDay}T13:00:00.000Z`);
     expect(times.some((time) => time.startsWith(dayAfter))).toBe(false);
+  });
+
+  it("offers no start at or after her coaching end", async () => {
+    // arrange
+    const coachingEndsAt = new Date("2026-06-02T11:00:00.000Z");
+
+    // act
+    const times = await openTimes({ client: { ...ANA, coachingEndsAt } });
+
+    // assert
+    expect(times).toEqual([
+      "2026-06-02T09:00:00.000Z",
+      "2026-06-02T10:00:00.000Z",
+    ]);
+  });
+
+  it("lists the client's own times by her sign-in, ignoring a client named in the request", async () => {
+    // arrange
+    const { listOpenTimes, ports } = createListOpenTimes();
+
+    // act
+    const result = await listOpenTimes.execute({
+      actor: ANA_ACTOR,
+      clientId: "client-2",
+    });
+
+    // assert
+    expect(result.status).toBe("listed");
+    expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
+    expect(ports.clients.findById).not.toHaveBeenCalled();
+  });
+
+  it("answers ended to a signed-in client with no client record", async () => {
+    // arrange
+    const { listOpenTimes, ports } = createListOpenTimes({ client: null });
+
+    // act
+    const result = await listOpenTimes.execute({ actor: ANA_ACTOR });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(ports.calendar.busyFrom).not.toHaveBeenCalled();
+  });
+
+  it("stops the coach's times at the coaching end of the client she names", async () => {
+    // arrange
+    const { listOpenTimes, ports } = createListOpenTimes({
+      client: {
+        ...ANA,
+        coachingEndsAt: new Date("2026-06-02T10:00:00.000Z"),
+      },
+    });
+
+    // act
+    const result = await listOpenTimes.execute({
+      actor: COACH,
+      clientId: "client-1",
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "listed",
+      times: [new Date("2026-06-02T09:00:00.000Z")],
+    });
+    expect(ports.clients.findById).toHaveBeenCalledWith("client-1");
+  });
+
+  it("requires the coach to name the client", async () => {
+    // arrange
+    const { listOpenTimes, ports } = createListOpenTimes();
+
+    // act
+    const result = await listOpenTimes.execute({ actor: COACH });
+
+    // assert
+    expect(result).toEqual({ status: "client_required" });
+    expect(ports.calendar.busyFrom).not.toHaveBeenCalled();
+  });
+
+  it("answers unknown_client when the coach names a client with no record", async () => {
+    // arrange
+    const { listOpenTimes } = createListOpenTimes({ client: null });
+
+    // act
+    const result = await listOpenTimes.execute({
+      actor: COACH,
+      clientId: "client-404",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unknown_client" });
   });
 });

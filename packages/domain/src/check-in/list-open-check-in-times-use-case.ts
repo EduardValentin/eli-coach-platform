@@ -4,24 +4,80 @@ import type {
 } from "../coach-availability";
 import type { Clock } from "../shared";
 
+import { CheckIn } from "./check-in";
+import type { CheckInActor } from "./check-in-actor";
+import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import { CHECK_IN_RULES } from "./check-in-rules";
+
+export type ListOpenCheckInTimesCommand = {
+  actor: CheckInActor;
+  clientId?: string;
+};
+
+export type ListOpenCheckInTimesResult =
+  | { status: "listed"; times: Date[] }
+  | { status: "client_required" }
+  | { status: "unknown_client" }
+  | { status: "ended" };
+
+type OpenTimesClient =
+  | { status: "found"; client: CheckInClient }
+  | Exclude<ListOpenCheckInTimesResult, { status: "listed" }>;
 
 type ListOpenCheckInTimesUseCaseOptions = {
   availability: CoachAvailabilitySource;
   calendar: CoachCalendar;
+  clients: Pick<CheckInClients, "findByAuthSubjectId" | "findById">;
   clock: Clock;
 };
 
 export class ListOpenCheckInTimesUseCase {
   constructor(private readonly options: ListOpenCheckInTimesUseCaseOptions) {}
 
-  async execute(): Promise<Date[]> {
+  async execute(
+    command: ListOpenCheckInTimesCommand,
+  ): Promise<ListOpenCheckInTimesResult> {
+    const found = await this.clientFor(command);
+
+    if (found.status !== "found") {
+      return found;
+    }
+
     const now = this.options.clock.now();
     const [availability, busy] = await Promise.all([
       this.options.availability.current(),
       this.options.calendar.busyFrom(now),
     ]);
+    const { coachingEndsAt } = found.client;
 
-    return availability.openSlotStarts({ now, policy: CHECK_IN_RULES, busy });
+    return {
+      status: "listed",
+      times: availability
+        .openSlotStarts({ now, policy: CHECK_IN_RULES, busy })
+        .filter((startsAt) =>
+          CheckIn.startsBeforeCoachingEnd({ startsAt, coachingEndsAt }),
+        ),
+    };
+  }
+
+  private async clientFor({
+    actor,
+    clientId,
+  }: ListOpenCheckInTimesCommand): Promise<OpenTimesClient> {
+    if (actor.party === "client") {
+      const client = await this.options.clients.findByAuthSubjectId(
+        actor.authSubjectId,
+      );
+
+      return client ? { status: "found", client } : { status: "ended" };
+    }
+
+    if (clientId === undefined) {
+      return { status: "client_required" };
+    }
+
+    const client = await this.options.clients.findById(clientId);
+
+    return client ? { status: "found", client } : { status: "unknown_client" };
   }
 }

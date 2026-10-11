@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClientIdentities, ClientIdentity } from "../client";
 
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
+import type { CoachingEndHandler } from "./coaching-end-handler";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
@@ -108,6 +109,7 @@ function createIncidents() {
     paymentEventRejected: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
     paymentCardRefreshFailed: vi.fn(),
+    coachingEndNotPropagated: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 
@@ -135,9 +137,16 @@ function createClients(found: ClientIdentity | null = ana) {
   } satisfies ClientIdentities;
 }
 
+function createCoachingEnd() {
+  return {
+    coachingEnds: vi.fn().mockResolvedValue(undefined),
+  } satisfies CoachingEndHandler;
+}
+
 function cancelUseCase(options: {
   now: Date;
   subscriptions: ReturnType<typeof createSubscriptions>;
+  coachingEnd?: ReturnType<typeof createCoachingEnd>;
   paymentSubscriptions?: ReturnType<typeof createPaymentSubscriptions>;
   incidents?: ReturnType<typeof createIncidents>;
   notifications?: ReturnType<typeof createNotifications>;
@@ -146,6 +155,7 @@ function cancelUseCase(options: {
   return new CancelSubscriptionUseCase({
     clients: options.clients ?? createClients(),
     clock: clockAt(options.now),
+    coachingEnd: options.coachingEnd ?? createCoachingEnd(),
     incidents: options.incidents ?? createIncidents(),
     notifications: options.notifications ?? createNotifications(),
     paymentSubscriptions:
@@ -570,6 +580,95 @@ describe("CancelSubscriptionUseCase", () => {
     },
   );
 
+  it.each([
+    { rule: "full-refund", now: DAY_13, endsAt: DAY_13 },
+    { rule: "no-refund", now: DAY_14, endsAt: ACCESS_END },
+  ])(
+    "tells check-ins her coaching ends at $endsAt on the $rule rule",
+    async ({ now, endsAt }) => {
+      // arrange
+      const coachingEnd = createCoachingEnd();
+      const useCase = cancelUseCase({
+        now,
+        subscriptions: createSubscriptions(subscriptionOf()),
+        coachingEnd,
+      });
+
+      // act
+      await useCase.execute(AUTH_SUBJECT_ID);
+
+      // assert
+      expect(coachingEnd.coachingEnds).toHaveBeenCalledWith({
+        clientId: "client-1",
+        endsAt,
+      });
+    },
+  );
+
+  it("keeps the cancellation and reports it when the coaching end cannot be propagated", async () => {
+    // arrange
+    const failure = new Error("check-ins down");
+    const coachingEnd = createCoachingEnd();
+    coachingEnd.coachingEnds.mockRejectedValue(failure);
+    const incidents = createIncidents();
+    const useCase = cancelUseCase({
+      now: DAY_14,
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingEnd,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: "client-1",
+      endsAt: ACCESS_END,
+      error: failure,
+    });
+  });
+
+  it.each([
+    [
+      "the provider fails",
+      () => {
+        const paymentSubscriptions = createPaymentSubscriptions();
+        paymentSubscriptions.endNow.mockRejectedValue(new Error("down"));
+        return { subscription: subscriptionOf(), paymentSubscriptions };
+      },
+    ],
+    [
+      "there is nothing to cancel",
+      () => ({
+        subscription: subscriptionOf({
+          status: "ended",
+          cancelledAt: DAY_13,
+          accessEndsAt: DAY_13,
+        }),
+        paymentSubscriptions: createPaymentSubscriptions(),
+      }),
+    ],
+  ])("tells check-ins nothing when %s", async (_situation, arrange) => {
+    // arrange
+    const { subscription, paymentSubscriptions } = arrange();
+    const coachingEnd = createCoachingEnd();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions: createSubscriptions(subscription),
+      paymentSubscriptions,
+      coachingEnd,
+    });
+
+    // act
+    await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
+  });
+
   it("reports the refund email as failed when the client cannot be read", async () => {
     // arrange
     const incidents = createIncidents();
@@ -952,8 +1051,10 @@ describe("ReconcileSubscriptionEventUseCase", () => {
   function reconcileUseCase(options: {
     subscriptions: ReturnType<typeof createSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
+    coachingEnd?: ReturnType<typeof createCoachingEnd>;
   }) {
     return new ReconcileSubscriptionEventUseCase({
+      coachingEnd: options.coachingEnd ?? createCoachingEnd(),
       incidents: options.incidents ?? createIncidents(),
       subscriptions: options.subscriptions,
     });
@@ -1243,6 +1344,163 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       eventId: "evt_4",
       subscription: cancelled.flagPaymentProblem(OCCURRED_AT),
       previous: cancelled,
+    });
+  });
+
+  it.each<[string, CoachingSubscription, SubscriptionEvent, Date]>([
+    [
+      "a scheduled end",
+      subscriptionOf(),
+      {
+        kind: "end-scheduled",
+        paymentSubscriptionId: "sub_1",
+        endsAt: ACCESS_END,
+        occurredAt: OCCURRED_AT,
+      },
+      ACCESS_END,
+    ],
+    [
+      "an end",
+      subscriptionOf(),
+      { kind: "ended", paymentSubscriptionId: "sub_1", endedAt: OCCURRED_AT },
+      OCCURRED_AT,
+    ],
+    [
+      "the provider's echo of her own cancellation",
+      subscriptionOf({
+        status: "cancelled",
+        cancelledAt: DAY_14,
+        accessEndsAt: ACCESS_END,
+      }),
+      {
+        kind: "end-scheduled",
+        paymentSubscriptionId: "sub_1",
+        endsAt: ACCESS_END,
+        occurredAt: OCCURRED_AT,
+      },
+      ACCESS_END,
+    ],
+  ])(
+    "tells check-ins her coaching end once %s is recorded",
+    async (_label, current, event, endsAt) => {
+      // arrange
+      const coachingEnd = createCoachingEnd();
+      const useCase = reconcileUseCase({
+        subscriptions: createSubscriptions(current),
+        coachingEnd,
+      });
+
+      // act
+      await useCase.execute({ eventId: "evt_1", event });
+
+      // assert
+      expect(coachingEnd.coachingEnds).toHaveBeenCalledWith({
+        clientId: "client-1",
+        endsAt,
+      });
+    },
+  );
+
+  it("tells check-ins nothing when a scheduled end is lifted", async () => {
+    // arrange
+    const coachingEnd = createCoachingEnd();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(
+        subscriptionOf({
+          status: "cancelled",
+          cancelledAt: DAY_14,
+          accessEndsAt: ACCESS_END,
+        }),
+      ),
+      coachingEnd,
+    });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "end-lifted",
+        paymentSubscriptionId: "sub_1",
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
+  });
+
+  it("tells check-ins nothing for a redelivered end", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    subscriptions.saveForEvent.mockResolvedValue("duplicate");
+    const coachingEnd = createCoachingEnd();
+    const useCase = reconcileUseCase({ subscriptions, coachingEnd });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "ended",
+        paymentSubscriptionId: "sub_1",
+        endedAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
+  });
+
+  it("tells check-ins nothing for an event on coaching that has no end", async () => {
+    // arrange
+    const coachingEnd = createCoachingEnd();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingEnd,
+    });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "payment-problem",
+        paymentSubscriptionId: "sub_1",
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
+  });
+
+  it("keeps the recorded end and reports it when the coaching end cannot be propagated", async () => {
+    // arrange
+    const failure = new Error("check-ins down");
+    const coachingEnd = createCoachingEnd();
+    coachingEnd.coachingEnds.mockRejectedValue(failure);
+    const incidents = createIncidents();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingEnd,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "ended",
+        paymentSubscriptionId: "sub_1",
+        endedAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "recorded" });
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: "client-1",
+      endsAt: OCCURRED_AT,
+      error: failure,
     });
   });
 

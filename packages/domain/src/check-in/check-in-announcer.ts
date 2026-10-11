@@ -1,4 +1,5 @@
-import type { CheckIn, CheckInParty } from "./check-in";
+import type { CheckIn } from "./check-in";
+import type { CheckInParty } from "./check-in-party";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type {

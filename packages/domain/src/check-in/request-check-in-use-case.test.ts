@@ -24,6 +24,12 @@ const ANA = {
   email: "ana@example.com",
 };
 
+const REACHABLE_ANA: CheckInClient = {
+  clientId: "client-1",
+  portal: "reachable",
+  coachingEndsAt: null,
+};
+
 const COMMAND = {
   authSubjectId: "user_ana",
   startsAt: OPEN_START,
@@ -56,6 +62,8 @@ function createCheckIns(answer?: CheckInRequestResult) {
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue("settled"),
+    move: vi.fn().mockResolvedValue("moved"),
+    cancelFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
 }
 
@@ -72,6 +80,10 @@ function createNotifications() {
     withdrawn: vi.fn().mockResolvedValue("sent"),
     approved: vi.fn().mockResolvedValue("sent"),
     declined: vi.fn().mockResolvedValue("sent"),
+    newTimeProposed: vi.fn().mockResolvedValue("sent"),
+    newTimeAccepted: vi.fn().mockResolvedValue("sent"),
+    newTimeDeclined: vi.fn().mockResolvedValue("sent"),
+    cancelled: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
 }
 
@@ -85,9 +97,7 @@ function createRequestCheckIn(options?: {
     availability: workingDays(),
     checkIns: options?.checkIns ?? createCheckIns(),
     clients: createClients(
-      options?.client === undefined
-        ? { clientId: "client-1", portal: "reachable" }
-        : options.client,
+      options?.client === undefined ? REACHABLE_ANA : options.client,
     ),
     clock: { now: () => NOW },
     ids: { generate: () => "check-in-1" },
@@ -195,10 +205,10 @@ describe("RequestCheckInUseCase", () => {
   );
 
   it.each([
-    ["whose coaching ended", { clientId: "client-1", portal: "ended" }],
+    ["whose coaching ended", { ...REACHABLE_ANA, portal: "ended" }],
     [
       "who has not sent her onboarding",
-      { clientId: "client-1", portal: "awaiting_onboarding" },
+      { ...REACHABLE_ANA, portal: "awaiting_onboarding" },
     ],
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
@@ -211,6 +221,42 @@ describe("RequestCheckInUseCase", () => {
     // assert
     expect(result).toEqual({ status: "ended" });
     expect(ports.checkIns.request).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["at her coaching end", OPEN_START],
+    ["after her coaching end", new Date("2026-06-02T09:00:00.000Z")],
+  ])(
+    "refuses a time when her coaching ends %s without holding it",
+    async (_situation, coachingEndsAt) => {
+      // arrange
+      const { requestCheckIn, ports } = createRequestCheckIn({
+        client: { ...REACHABLE_ANA, coachingEndsAt },
+      });
+
+      // act
+      const result = await requestCheckIn.execute(COMMAND);
+
+      // assert
+      expect(result).toEqual({ status: "time_taken" });
+      expect(ports.checkIns.request).not.toHaveBeenCalled();
+    },
+  );
+
+  it("requests a time that starts before her coaching end", async () => {
+    // arrange
+    const { requestCheckIn } = createRequestCheckIn({
+      client: {
+        ...REACHABLE_ANA,
+        coachingEndsAt: new Date("2026-06-03T09:00:00.001Z"),
+      },
+    });
+
+    // act
+    const result = await requestCheckIn.execute(COMMAND);
+
+    // assert
+    expect(result.status).toBe("requested");
   });
 
   it("refuses a note longer than 500 characters", async () => {

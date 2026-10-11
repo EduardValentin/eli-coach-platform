@@ -1,23 +1,27 @@
+import { CHECK_IN_KIND_POLICIES, type CheckInKind } from "./check-in-kind";
 import type { CheckInNote } from "./check-in-note";
+import type { CheckInParty } from "./check-in-party";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckInTimeZone } from "./check-in-time-zone";
 
-export const CHECK_IN_PARTIES = ["client", "coach"] as const;
-export const CHECK_IN_KINDS = ["ad_hoc"] as const;
 export const RECORDED_CHECK_IN_STATUSES = [
   "pending",
   "approved",
   "cancelled",
 ] as const;
 
-export type CheckInParty = (typeof CHECK_IN_PARTIES)[number];
-export type CheckInKind = (typeof CHECK_IN_KINDS)[number];
 export type RecordedCheckInStatus = (typeof RECORDED_CHECK_IN_STATUSES)[number];
 export type CheckInStatus = RecordedCheckInStatus | "passed";
 export type CheckInOutcome = Exclude<RecordedCheckInStatus, "pending">;
-export type CheckInRefusal = "not_pending" | "expired" | "not_your_turn";
+export type CheckInAnswerRefusal = "not_pending" | "expired" | "not_your_turn";
+export type CheckInProposalRefusal = CheckInAnswerRefusal | "moves_exhausted";
+export type CheckInCancellationRefusal =
+  "not_approved" | "expired" | "not_allowed";
+export type CheckInRefusal =
+  CheckInProposalRefusal | CheckInCancellationRefusal;
 export type CheckInRequestDecision =
   "requested" | "request_waiting" | "time_taken";
+export type CheckInViewerProposal = "allowed" | "exhausted" | "none";
 
 export type CheckInProps = {
   id: string;
@@ -32,6 +36,9 @@ export type CheckInProps = {
   note: string | null;
   requestedAt: Date;
   answeredAt: Date | null;
+  earlierStartsAt: Date | null;
+  moves: number;
+  newTimeNote: string | null;
 };
 
 export type CheckInSnapshot = CheckInProps & {
@@ -44,7 +51,20 @@ export type CheckInView = CheckInSnapshot & {
   awaitsViewer: boolean;
   viewerMayWithdraw: boolean;
   isWaitingRequest: boolean;
+  viewerProposal: CheckInViewerProposal;
+  viewerMayCancel: boolean;
 };
+
+export type CheckInNewTime = {
+  party: CheckInParty;
+  startsAt: Date;
+  note: CheckInNote | null;
+  at: Date;
+  clientTimeZone?: CheckInTimeZone | null;
+};
+
+export type ProposedNewTime =
+  { status: "proposed"; checkIn: CheckIn } | { status: CheckInProposalRefusal };
 
 type CheckInProposal = {
   id: string;
@@ -64,9 +84,12 @@ type SettledAnswer = {
   clientTimeZone?: CheckInTimeZone | null;
 };
 
+type CoachingEndCut = { startsAt: Date; coachingEndsAt: Date | null };
+
 const MILLISECONDS_PER_MINUTE = 60_000;
 const DURATION_MS = CHECK_IN_RULES.durationMinutes * MILLISECONDS_PER_MINUTE;
 const JOIN_EMPHASIS_LEAD_MS = 10 * MILLISECONDS_PER_MINUTE;
+const MAX_CHECK_IN_MOVES = 2;
 
 export class CheckIn {
   readonly id: string;
@@ -81,6 +104,9 @@ export class CheckIn {
   readonly note: string | null;
   readonly requestedAt: Date;
   readonly answeredAt: Date | null;
+  readonly earlierStartsAt: Date | null;
+  readonly moves: number;
+  readonly newTimeNote: string | null;
 
   private constructor(props: CheckInProps) {
     this.id = props.id;
@@ -95,6 +121,9 @@ export class CheckIn {
     this.note = props.note;
     this.requestedAt = props.requestedAt;
     this.answeredAt = props.answeredAt;
+    this.earlierStartsAt = props.earlierStartsAt;
+    this.moves = props.moves;
+    this.newTimeNote = props.newTimeNote;
   }
 
   static reconstitute(props: CheckInProps): CheckIn {
@@ -102,29 +131,11 @@ export class CheckIn {
   }
 
   static requestedByClient(request: CheckInProposal): CheckIn {
-    return new CheckIn({
-      ...request,
-      clientTimeZone: request.clientTimeZone.name,
-      kind: "ad_hoc",
-      recordedStatus: "pending",
-      initiatedBy: "client",
-      proposedBy: "client",
-      note: request.note?.text ?? null,
-      answeredAt: null,
-    });
+    return CheckIn.proposedBy("client", request);
   }
 
   static scheduledByCoach(schedule: CheckInProposal): CheckIn {
-    return new CheckIn({
-      ...schedule,
-      clientTimeZone: schedule.clientTimeZone.name,
-      kind: "ad_hoc",
-      recordedStatus: "pending",
-      initiatedBy: "coach",
-      proposedBy: "coach",
-      note: schedule.note?.text ?? null,
-      answeredAt: null,
-    });
+    return CheckIn.proposedBy("coach", schedule);
   }
 
   static decideRequest(learned: {
@@ -147,6 +158,32 @@ export class CheckIn {
     }
 
     return "requested";
+  }
+
+  static startsBeforeCoachingEnd({
+    startsAt,
+    coachingEndsAt,
+  }: CoachingEndCut): boolean {
+    return coachingEndsAt === null || startsAt < coachingEndsAt;
+  }
+
+  private static proposedBy(
+    party: CheckInParty,
+    proposal: CheckInProposal,
+  ): CheckIn {
+    return new CheckIn({
+      ...proposal,
+      clientTimeZone: proposal.clientTimeZone.name,
+      kind: "ad_hoc",
+      recordedStatus: "pending",
+      initiatedBy: party,
+      proposedBy: party,
+      note: proposal.note?.text ?? null,
+      answeredAt: null,
+      earlierStartsAt: null,
+      moves: 0,
+      newTimeNote: null,
+    });
   }
 
   endsAt(): Date {
@@ -177,29 +214,84 @@ export class CheckIn {
     return this.recordedStatus === "pending" && this.proposedBy !== party;
   }
 
+  hasPendingNewTime(): boolean {
+    return this.recordedStatus === "pending" && this.wasMoved();
+  }
+
   mayWithdraw(party: CheckInParty): boolean {
-    return this.recordedStatus === "pending" && this.proposedBy === party;
+    return (
+      this.recordedStatus === "pending" &&
+      this.proposedBy === party &&
+      !this.wasMoved()
+    );
   }
 
   isWaitingRequestAt(at: Date): boolean {
-    return this.initiatedBy === "client" && this.statusAt(at) === "pending";
+    return (
+      this.initiatedBy === "client" &&
+      !this.wasMoved() &&
+      this.statusAt(at) === "pending"
+    );
   }
 
   isJoinableAt(now: Date): boolean {
     return this.statusAt(now) === "approved";
   }
 
-  answerRefusalFor({ party, at }: PartyAtInstant): CheckInRefusal | null {
+  answerRefusalFor({ party, at }: PartyAtInstant): CheckInAnswerRefusal | null {
     return (
       this.pendingRefusalAt(at) ?? (this.awaits(party) ? null : "not_your_turn")
     );
   }
 
-  withdrawalRefusalFor({ party, at }: PartyAtInstant): CheckInRefusal | null {
+  withdrawalRefusalFor({
+    party,
+    at,
+  }: PartyAtInstant): CheckInAnswerRefusal | null {
     return (
       this.pendingRefusalAt(at) ??
       (this.mayWithdraw(party) ? null : "not_your_turn")
     );
+  }
+
+  proposeNewTime(newTime: CheckInNewTime): ProposedNewTime {
+    const refusal = this.proposalRefusalFor(newTime);
+
+    if (refusal) {
+      return { status: refusal };
+    }
+
+    return {
+      status: "proposed",
+      checkIn: new CheckIn({
+        ...this.toProps(),
+        startsAt: newTime.startsAt,
+        clientTimeZone: newTime.clientTimeZone?.name ?? this.clientTimeZone,
+        recordedStatus: "pending",
+        proposedBy: newTime.party,
+        answeredAt: null,
+        earlierStartsAt: this.startsAt,
+        moves: this.moves + 1,
+        newTimeNote: newTime.note?.text ?? null,
+      }),
+    };
+  }
+
+  cancellationRefusalFor({
+    party,
+    at,
+  }: PartyAtInstant): CheckInCancellationRefusal | null {
+    if (this.recordedStatus !== "approved") {
+      return "not_approved";
+    }
+
+    if (this.upcomingRefusalAt(at)) {
+      return "expired";
+    }
+
+    return CHECK_IN_KIND_POLICIES[this.kind].mayCancelApproved(party)
+      ? null
+      : "not_allowed";
   }
 
   settled(settlement: SettledAnswer): CheckIn {
@@ -218,6 +310,8 @@ export class CheckIn {
       awaitsViewer: this.answerRefusalFor(viewer) === null,
       viewerMayWithdraw: this.withdrawalRefusalFor(viewer) === null,
       isWaitingRequest: this.isWaitingRequestAt(viewer.at),
+      viewerProposal: this.proposalOpenTo(viewer),
+      viewerMayCancel: this.cancellationRefusalFor(viewer) === null,
     };
   }
 
@@ -229,7 +323,40 @@ export class CheckIn {
     };
   }
 
-  private pendingRefusalAt(at: Date): CheckInRefusal | null {
+  private wasMoved(): boolean {
+    return this.earlierStartsAt !== null;
+  }
+
+  private proposalRefusalFor(
+    turn: PartyAtInstant,
+  ): CheckInProposalRefusal | null {
+    const refusal =
+      this.recordedStatus === "approved"
+        ? this.upcomingRefusalAt(turn.at)
+        : this.answerRefusalFor(turn);
+
+    if (refusal) {
+      return refusal;
+    }
+
+    return this.moves < MAX_CHECK_IN_MOVES ? null : "moves_exhausted";
+  }
+
+  private proposalOpenTo(viewer: PartyAtInstant): CheckInViewerProposal {
+    const refusal = this.proposalRefusalFor(viewer);
+
+    if (refusal === null) {
+      return "allowed";
+    }
+
+    return refusal === "moves_exhausted" ? "exhausted" : "none";
+  }
+
+  private upcomingRefusalAt(at: Date): "expired" | null {
+    return this.startsAt <= at ? "expired" : null;
+  }
+
+  private pendingRefusalAt(at: Date): CheckInAnswerRefusal | null {
     if (this.recordedStatus !== "pending") {
       return "not_pending";
     }
@@ -255,6 +382,9 @@ export class CheckIn {
       note: this.note,
       requestedAt: this.requestedAt,
       answeredAt: this.answeredAt,
+      earlierStartsAt: this.earlierStartsAt,
+      moves: this.moves,
+      newTimeNote: this.newTimeNote,
     };
   }
 }

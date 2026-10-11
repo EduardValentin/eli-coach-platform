@@ -3,13 +3,18 @@ export {
   type ApproveCheckInResult,
 } from "./approve-check-in-use-case";
 export {
-  CHECK_IN_KINDS,
-  CHECK_IN_PARTIES,
+  CancelCheckInUseCase,
+  type CancelCheckInResult,
+} from "./cancel-check-in-use-case";
+export { CancelCheckInsAfterCoachingEndUseCase } from "./cancel-check-ins-after-coaching-end-use-case";
+export {
   CheckIn,
   RECORDED_CHECK_IN_STATUSES,
   type CheckInOutcome,
   type CheckInView,
 } from "./check-in";
+export { CHECK_IN_KINDS } from "./check-in-kind";
+export { CHECK_IN_PARTIES } from "./check-in-party";
 export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export {
   type CheckInClientIdentity,
@@ -26,6 +31,7 @@ export {
 } from "./check-in-notifications";
 export { CHECK_IN_RULES } from "./check-in-rules";
 export {
+  type CheckInMove,
   type CheckInRequestResult,
   type CheckIns,
   type CheckInSettlement,
@@ -39,7 +45,14 @@ export {
   ListCoachCheckInsUseCase,
   type CoachCheckInView,
 } from "./list-coach-check-ins-use-case";
-export { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
+export {
+  ListOpenCheckInTimesUseCase,
+  type ListOpenCheckInTimesResult,
+} from "./list-open-check-in-times-use-case";
+export {
+  ProposeCheckInTimeUseCase,
+  type ProposeCheckInTimeResult,
+} from "./propose-check-in-time-use-case";
 export {
   ReadClientCheckInSchedulingUseCase,
   type ClientCheckInScheduling,

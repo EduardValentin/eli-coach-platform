@@ -3,6 +3,7 @@ export type CheckInPortalReach = "reachable" | "awaiting_onboarding" | "ended";
 export type CheckInClient = {
   clientId: string;
   portal: CheckInPortalReach;
+  coachingEndsAt: Date | null;
 };
 
 export type CheckInClientReference = CheckInClient & {

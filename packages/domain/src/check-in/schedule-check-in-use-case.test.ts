@@ -28,6 +28,7 @@ const ANA = {
 const ANA_REFERENCE: CheckInClientReference = {
   clientId: "client-1",
   portal: "reachable",
+  coachingEndsAt: null,
   bookingTimeZone: "America/New_York",
 };
 
@@ -65,6 +66,8 @@ function createScheduleCheckIn(options?: {
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue("settled"),
+    move: vi.fn().mockResolvedValue("moved"),
+    cancelFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
   const clients = {
     findById: vi
@@ -79,6 +82,10 @@ function createScheduleCheckIn(options?: {
     withdrawn: vi.fn().mockResolvedValue("sent"),
     approved: vi.fn().mockResolvedValue("sent"),
     declined: vi.fn().mockResolvedValue("sent"),
+    newTimeProposed: vi.fn().mockResolvedValue("sent"),
+    newTimeAccepted: vi.fn().mockResolvedValue("sent"),
+    newTimeDeclined: vi.fn().mockResolvedValue("sent"),
+    cancelled: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const ports = {
     availability: workingDays(),
@@ -210,6 +217,20 @@ describe("ScheduleCheckInUseCase", () => {
     // assert
     expect(result).toEqual({ status: "time_taken" });
     expect(ports.notifications.requested).not.toHaveBeenCalled();
+  });
+
+  it("refuses a time at or after the client's coaching end without holding it", async () => {
+    // arrange
+    const { scheduleCheckIn, ports } = createScheduleCheckIn({
+      client: { ...ANA_REFERENCE, coachingEndsAt: OPEN_START },
+    });
+
+    // act
+    const result = await scheduleCheckIn.execute(COMMAND);
+
+    // assert
+    expect(result).toEqual({ status: "time_taken" });
+    expect(ports.checkIns.request).not.toHaveBeenCalled();
   });
 
   it("refuses a note longer than 500 characters", async () => {

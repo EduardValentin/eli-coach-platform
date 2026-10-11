@@ -1,6 +1,8 @@
 import type { ClientIdentities } from "../client";
 import type { Clock } from "../shared";
 
+import type { CoachingEndHandler } from "./coaching-end-handler";
+import { CoachingEndPropagation } from "./coaching-end-propagation";
 import type {
   CancellationRule,
   CoachingSubscription,
@@ -35,6 +37,7 @@ type RecordedCancellation = Extract<
 type CancelSubscriptionUseCaseOptions = {
   clients: ClientIdentities;
   clock: Clock;
+  coachingEnd: CoachingEndHandler;
   incidents: CoachingSubscriptionIncidents;
   notifications: RefundNotifications;
   paymentSubscriptions: PaymentSubscriptions;
@@ -48,7 +51,11 @@ type CancellationRecording = {
 };
 
 export class CancelSubscriptionUseCase {
-  constructor(private readonly options: CancelSubscriptionUseCaseOptions) {}
+  private readonly coachingEnd: CoachingEndPropagation;
+
+  constructor(private readonly options: CancelSubscriptionUseCaseOptions) {
+    this.coachingEnd = new CoachingEndPropagation(options);
+  }
 
   async execute(authSubjectId: string): Promise<CancelSubscriptionResult> {
     const current =
@@ -93,6 +100,7 @@ export class CancelSubscriptionUseCase {
       rule: recorded.rule,
       refundDueCents: recorded.subscription.refund?.amountCents ?? 0,
     });
+    await this.coachingEnd.propagate(recorded.subscription);
     await this.notifyCoach(recorded.subscription);
 
     return {

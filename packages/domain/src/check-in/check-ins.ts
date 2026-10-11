@@ -1,4 +1,8 @@
-import type { CheckIn, CheckInOutcome } from "./check-in";
+import type {
+  CheckIn,
+  CheckInOutcome,
+  RecordedCheckInStatus,
+} from "./check-in";
 
 export type CheckInRequestResult =
   | { status: "requested"; checkIn: CheckIn }
@@ -6,6 +10,8 @@ export type CheckInRequestResult =
   | { status: "time_taken" };
 
 export type CheckInSettlement = "settled" | "not_pending";
+
+export type CheckInMove = "moved" | "time_taken" | "not_pending";
 
 export interface CheckIns {
   request(command: {
@@ -19,6 +25,17 @@ export interface CheckIns {
     id: string;
     outcome: CheckInOutcome;
     at: Date;
+    from: RecordedCheckInStatus;
     clientTimeZone?: string;
   }): Promise<CheckInSettlement>;
+  move(command: {
+    checkIn: CheckIn;
+    expected: { recordedStatus: RecordedCheckInStatus; startsAt: Date };
+    at: Date;
+  }): Promise<CheckInMove>;
+  cancelFrom(command: {
+    clientId: string;
+    from: Date;
+    at: Date;
+  }): Promise<{ cancelled: string[] }>;
 }
