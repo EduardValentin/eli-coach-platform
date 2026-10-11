@@ -267,7 +267,7 @@ export function CheckinListing({
                     >
                       {awaitingViewer}
                     </Badge>
-                    <span className="sr-only">
+                    <span className="sr-only" data-parity="requests-count-sr">
                       {awaitingViewer} waiting on you
                     </span>
                   </>

@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(checkInsContext)
-      .coachCheckIns.approve(args, args.params.checkInId);
+      .sharedCheckIns.decline(args, args.params.checkInId);
   });
 }
 

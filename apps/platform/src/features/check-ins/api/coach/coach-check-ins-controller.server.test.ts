@@ -1,10 +1,10 @@
 import {
   CheckIn,
-  type ApproveCheckInResult,
-  type ApproveCheckInUseCase,
-  type DeclineCheckInResult,
-  type DeclineCheckInUseCase,
+  type ClientCheckInScheduling,
   type ListCoachCheckInsUseCase,
+  type ReadClientCheckInSchedulingUseCase,
+  type ScheduleCheckInResult,
+  type ScheduleCheckInUseCase,
 } from "@eli-coach-platform/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
@@ -22,6 +22,7 @@ import {
 import { CoachCheckInsController } from "./coach-check-ins-controller.server";
 
 const CHECK_IN_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
+const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 const NOW = new Date("2026-10-19T08:00:00.000Z");
 
 const COACH_SESSION: ResolvedSession = {
@@ -36,7 +37,7 @@ const CLIENT_SESSION: ResolvedSession = {
 
 const PENDING = CheckIn.reconstitute({
   id: CHECK_IN_ID,
-  clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
+  clientId: CLIENT_ID,
   startsAt: new Date("2026-10-22T14:00:00.000Z"),
   clientTimeZone: "Europe/London",
   coachTimeZone: "Europe/Bucharest",
@@ -91,7 +92,7 @@ describe("CoachCheckInsController loadCheckIns", () => {
 
     // act
     const thrown = await captureThrown(() =>
-      controller.loadCheckIns(coachArgs(CLIENT_SESSION)),
+      controller.loadCheckIns(coachArgs({ session: CLIENT_SESSION })),
     );
 
     // assert
@@ -100,153 +101,254 @@ describe("CoachCheckInsController loadCheckIns", () => {
   });
 });
 
-describe("CoachCheckInsController approve", () => {
-  it("approves the request and names it in the answer", async () => {
+describe("CoachCheckInsController schedule", () => {
+  it("schedules the check-in for the client at the chosen instant with the coach's note", async () => {
     // arrange
-    const { controller, approveCheckIn } = createController({
-      approved: { status: "approved", checkIn: PENDING.toSnapshot() },
+    const { controller, scheduleCheckIn } = createController({
+      scheduled: { status: "scheduled", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.approve(coachArgs(), CHECK_IN_ID);
+    const response = await controller.schedule(
+      coachArgs({
+        body: {
+          clientId: CLIENT_ID,
+          startsAt: "2026-10-22T14:00:00.000Z",
+          note: "Let's review your first month.",
+        },
+      }),
+    );
 
     // assert
-    expect(approveCheckIn).toHaveBeenCalledWith(CHECK_IN_ID);
-    expect(response.status).toBe(200);
+    expect(scheduleCheckIn).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      startsAt: new Date("2026-10-22T14:00:00.000Z"),
+      note: "Let's review your first month.",
+    });
+    expect(response.status).toBe(201);
     expect(await response.json()).toEqual({
-      status: "approved",
+      status: "scheduled",
       checkInId: CHECK_IN_ID,
     });
   });
 
-  it.each<ApproveCheckInResult>([
-    { status: "not_pending" },
-    { status: "expired" },
-    { status: "not_your_turn" },
-  ])(
-    "answers 409 not_pending when the approval is refused as $status",
-    async (result) => {
-      // arrange
-      const { controller } = createController({ approved: result });
-
-      // act
-      const response = await controller.approve(coachArgs(), CHECK_IN_ID);
-
-      // assert
-      expect(response.status).toBe(409);
-      expect(await response.json()).toEqual({ error: "not_pending" });
-    },
-  );
-
-  it("answers not found to a check-in that does not exist", async () => {
+  it("schedules without a note when the coach wrote none", async () => {
     // arrange
-    const { controller } = createController({
-      approved: { status: "unknown" },
+    const { controller, scheduleCheckIn } = createController({
+      scheduled: { status: "scheduled", checkIn: PENDING.toSnapshot() },
     });
 
     // act
-    const response = await controller.approve(coachArgs(), CHECK_IN_ID);
+    await controller.schedule(
+      coachArgs({
+        body: { clientId: CLIENT_ID, startsAt: "2026-10-22T14:00:00.000Z" },
+      }),
+    );
+
+    // assert
+    expect(scheduleCheckIn).toHaveBeenCalledWith(
+      expect.objectContaining({ note: null }),
+    );
+  });
+
+  it.each<{ result: ScheduleCheckInResult; status: number; error: string }>([
+    {
+      result: { status: "client_cannot_answer" },
+      status: 409,
+      error: "client_cannot_answer",
+    },
+    { result: { status: "time_taken" }, status: 409, error: "time_taken" },
+    {
+      result: { status: "note_too_long" },
+      status: 422,
+      error: "note_too_long",
+    },
+    {
+      result: { status: "invalid_time_zone" },
+      status: 422,
+      error: "invalid_time_zone",
+    },
+  ])(
+    "answers $status $error when scheduling is refused as $result.status",
+    async ({ result, status, error }) => {
+      // arrange
+      const { controller } = createController({ scheduled: result });
+
+      // act
+      const response = await controller.schedule(
+        coachArgs({
+          body: { clientId: CLIENT_ID, startsAt: "2026-10-22T14:00:00.000Z" },
+        }),
+      );
+
+      // assert
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual({ error });
+    },
+  );
+
+  it("answers not found for a client with no record", async () => {
+    // arrange
+    const { controller } = createController({
+      scheduled: { status: "unknown_client" },
+    });
+
+    // act
+    const response = await controller.schedule(
+      coachArgs({
+        body: { clientId: CLIENT_ID, startsAt: "2026-10-22T14:00:00.000Z" },
+      }),
+    );
 
     // assert
     expect(response.status).toBe(404);
   });
 
-  it("refuses a client without approving anything", async () => {
+  it.each([
+    [
+      "a client id that is not a uuid",
+      { clientId: "ana", startsAt: "2026-10-22T14:00:00.000Z" },
+    ],
+    [
+      "a time that is not an instant",
+      { clientId: CLIENT_ID, startsAt: "Thursday" },
+    ],
+  ])("refuses %s without scheduling anything", async (_what, body) => {
     // arrange
-    const { controller, approveCheckIn } = createController();
+    const { controller, scheduleCheckIn } = createController();
+
+    // act
+    const response = await controller.schedule(coachArgs({ body }));
+
+    // assert
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ error: "invalid_request" });
+    expect(scheduleCheckIn).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client without scheduling anything", async () => {
+    // arrange
+    const { controller, scheduleCheckIn } = createController();
 
     // act
     const thrown = await captureThrown(() =>
-      controller.approve(coachArgs(CLIENT_SESSION), CHECK_IN_ID),
+      controller.schedule(
+        coachArgs({
+          session: CLIENT_SESSION,
+          body: { clientId: CLIENT_ID, startsAt: "2026-10-22T14:00:00.000Z" },
+        }),
+      ),
     );
 
     // assert
     expect((thrown as Response).status).toBe(403);
-    expect(approveCheckIn).not.toHaveBeenCalled();
+    expect(scheduleCheckIn).not.toHaveBeenCalled();
   });
 });
 
-describe("CoachCheckInsController decline", () => {
-  it("declines the request and names it in the answer", async () => {
-    // arrange
-    const { controller, declineCheckIn } = createController({
-      declined: { status: "declined", checkIn: PENDING.toSnapshot() },
-    });
-
-    // act
-    const response = await controller.decline(coachArgs(), CHECK_IN_ID);
-
-    // assert
-    expect(declineCheckIn).toHaveBeenCalledWith(CHECK_IN_ID);
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      status: "declined",
-      checkInId: CHECK_IN_ID,
-    });
-  });
-
-  it.each<DeclineCheckInResult>([
-    { status: "not_pending" },
-    { status: "expired" },
-    { status: "not_your_turn" },
-  ])(
-    "answers 409 not_pending when the decline is refused as $status",
-    async (result) => {
+describe("CoachCheckInsController loadClientScheduling", () => {
+  it.each(["allowed", "awaiting_onboarding", "ended"] as const)(
+    "hands the coach the client's scheduling state %s",
+    async (scheduling) => {
       // arrange
-      const { controller } = createController({ declined: result });
+      const { controller, readClientCheckInScheduling } = createController({
+        scheduling,
+      });
 
       // act
-      const response = await controller.decline(coachArgs(), CHECK_IN_ID);
+      const read = await controller.loadClientScheduling(
+        coachArgs(),
+        CLIENT_ID,
+      );
 
       // assert
-      expect(response.status).toBe(409);
-      expect(await response.json()).toEqual({ error: "not_pending" });
+      expect(read).toBe(scheduling);
+      expect(readClientCheckInScheduling).toHaveBeenCalledWith(CLIENT_ID);
     },
   );
 
-  it("answers not found to an id that is not a uuid without declining anything", async () => {
+  it("answers not found for a client with no record", async () => {
     // arrange
-    const { controller, declineCheckIn } = createController();
+    const { controller } = createController({ scheduling: "unknown" });
 
     // act
-    const response = await controller.decline(coachArgs(), "not-an-id");
+    const thrown = await captureThrown(() =>
+      controller.loadClientScheduling(coachArgs(), CLIENT_ID),
+    );
 
     // assert
-    expect(response.status).toBe(404);
-    expect(declineCheckIn).not.toHaveBeenCalled();
+    expect((thrown as Response).status).toBe(404);
+  });
+
+  it("answers not found for a client id that is not a uuid without reading", async () => {
+    // arrange
+    const { controller, readClientCheckInScheduling } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadClientScheduling(coachArgs(), "ana"),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+    expect(readClientCheckInScheduling).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client without reading", async () => {
+    // arrange
+    const { controller, readClientCheckInScheduling } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadClientScheduling(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readClientCheckInScheduling).not.toHaveBeenCalled();
   });
 });
 
 function createController(
   answers: {
     listed?: Awaited<ReturnType<ListCoachCheckInsUseCase["execute"]>>;
-    approved?: ApproveCheckInResult;
-    declined?: DeclineCheckInResult;
+    scheduled?: ScheduleCheckInResult;
+    scheduling?: ClientCheckInScheduling;
   } = {},
 ) {
   const listCoachCheckIns = vi.fn().mockResolvedValue(answers.listed ?? []);
-  const approveCheckIn = vi
+  const scheduleCheckIn = vi
     .fn()
-    .mockResolvedValue(answers.approved ?? { status: "unknown" });
-  const declineCheckIn = vi
+    .mockResolvedValue(answers.scheduled ?? { status: "unknown_client" });
+  const readClientCheckInScheduling = vi
     .fn()
-    .mockResolvedValue(answers.declined ?? { status: "unknown" });
+    .mockResolvedValue(answers.scheduling ?? "allowed");
   const controller = new CoachCheckInsController({
-    approveCheckIn: {
-      execute: approveCheckIn,
-    } as unknown as ApproveCheckInUseCase,
-    declineCheckIn: {
-      execute: declineCheckIn,
-    } as unknown as DeclineCheckInUseCase,
     listCoachCheckIns: {
       execute: listCoachCheckIns,
     } as unknown as ListCoachCheckInsUseCase,
+    readClientCheckInScheduling: {
+      execute: readClientCheckInScheduling,
+    } as unknown as ReadClientCheckInSchedulingUseCase,
+    scheduleCheckIn: {
+      execute: scheduleCheckIn,
+    } as unknown as ScheduleCheckInUseCase,
   });
 
-  return { controller, approveCheckIn, declineCheckIn, listCoachCheckIns };
+  return {
+    controller,
+    listCoachCheckIns,
+    readClientCheckInScheduling,
+    scheduleCheckIn,
+  };
 }
 
-function coachArgs(session: ResolvedSession = COACH_SESSION) {
+function coachArgs(
+  options: { session?: ResolvedSession; body?: Record<string, unknown> } = {},
+) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -258,9 +360,13 @@ function coachArgs(session: ResolvedSession = COACH_SESSION) {
   return createRequestArgs({
     contexts: [
       contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, session),
+      contextEntry(sessionContext, options.session ?? COACH_SESSION),
     ],
-    request: new Request("https://evoa.fit/api/check-ins", { method: "POST" }),
+    request: new Request("https://evoa.fit/api/check-ins/schedule", {
+      body: options.body ? JSON.stringify(options.body) : null,
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
   });
 }
 

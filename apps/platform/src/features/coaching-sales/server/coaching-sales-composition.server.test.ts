@@ -1,6 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
 import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
+import type { AssessmentCallReader } from "@eli-coach-platform/domain/payment-link";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
@@ -360,6 +362,146 @@ describe("composeCoachingSalesFeature check-in clients", () => {
   });
 });
 
+describe("composeCoachingSalesFeature check-in client references", () => {
+  const SUBMITTED_AT = new Date("2026-10-15T10:00:00.000Z");
+
+  it("answers her portal reach and the zone she booked her assessment call from", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      assessmentCallReader: callIn("America/New_York"),
+      database: createDatabaseAnswering([
+        [
+          rosterRow({
+            onboardingSubmittedAt: SUBMITTED_AT,
+            subscription: subscriptionRow({
+              status: "not-started",
+              accessEndsAt: null,
+            }),
+          }),
+        ],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "reachable",
+      bookingTimeZone: "America/New_York",
+    });
+  });
+
+  it("answers her portal awaiting onboarding while her coaching runs and she has not sent it", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      assessmentCallReader: callIn("Europe/London"),
+      database: createDatabaseAnswering([
+        [
+          rosterRow({
+            onboardingSubmittedAt: null,
+            subscription: subscriptionRow({
+              status: "active",
+              accessEndsAt: null,
+            }),
+          }),
+        ],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client?.portal).toBe("awaiting_onboarding");
+  });
+
+  it("answers her portal ended once her coaching ended", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      assessmentCallReader: callIn("Europe/London"),
+      database: createDatabaseAnswering([
+        [
+          rosterRow({
+            onboardingSubmittedAt: SUBMITTED_AT,
+            subscription: subscriptionRow({
+              status: "ended",
+              cancelledAt: SUBMITTED_AT,
+              accessEndsAt: SUBMITTED_AT,
+            }),
+          }),
+        ],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client?.portal).toBe("ended");
+  });
+
+  it("answers no client when the roster holds none", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      assessmentCallReader: callIn("Europe/London"),
+      database: createDatabaseAnswering([[]]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client).toBeNull();
+  });
+
+  it("answers no client when her assessment call cannot be found", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [
+          rosterRow({
+            onboardingSubmittedAt: SUBMITTED_AT,
+            subscription: null,
+          }),
+        ],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
+
+    // assert
+    expect(client).toBeNull();
+  });
+
+  it("answers a signed-in client's portal awaiting onboarding as it is", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      database: createDatabaseAnswering([
+        [journeyRow({ onboardingSubmittedAt: null })],
+        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+      ]),
+    });
+
+    // act
+    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    expect(client).toEqual({
+      clientId: RESOURCE_CLIENT_ID,
+      portal: "awaiting_onboarding",
+    });
+  });
+});
+
 describe("composeCoachingSalesFeature coach clients", () => {
   it("answers no clients and reports the failure when the roster cannot be read", async () => {
     // arrange
@@ -600,6 +742,28 @@ function subscriptionRow(lifecycle: {
   };
 }
 
+function rosterRow(options: {
+  onboardingSubmittedAt: Date | null;
+  subscription: ReturnType<typeof subscriptionRow> | null;
+}) {
+  return {
+    ...journeyRow({ onboardingSubmittedAt: options.onboardingSubmittedAt }),
+    authSubjectId: "user_ana",
+    email: "ana@example.com",
+    assessmentCallId: CALL_ID,
+    subscription: options.subscription,
+  };
+}
+
+function callIn(visitorTimeZone: string): AssessmentCallReader {
+  return {
+    findById: async (id) =>
+      id === CALL_ID
+        ? ({ id: CALL_ID, visitorTimeZone } as AssessmentCallSnapshot)
+        : null,
+  };
+}
+
 function createDatabaseAnswering(
   answers: readonly (readonly Record<string, unknown>[])[],
 ): DatabaseClient {
@@ -610,6 +774,7 @@ function createDatabaseAnswering(
       const rows = pending.shift() ?? [];
       const selection = {
         from: () => selection,
+        leftJoin: () => selection,
         where: () => selection,
         orderBy: () => selection,
         limit: () => Promise.resolve(rows),

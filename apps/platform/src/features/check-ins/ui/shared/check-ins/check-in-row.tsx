@@ -57,6 +57,7 @@ export function CheckInRow({
           <Badge tone="muted">Cancelled</Badge>
         ) : undefined
       }
+      parity="checkin-card-body"
       parityRoot="CheckinCard"
       quote={checkIn.note ?? undefined}
       quoteAuthor={checkIn.note ? capitalized(requester) : undefined}

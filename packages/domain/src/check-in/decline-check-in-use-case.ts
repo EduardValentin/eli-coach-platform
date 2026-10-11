@@ -1,6 +1,7 @@
 import type { Clock } from "../shared";
 
 import type { CheckInRefusal, CheckInSnapshot } from "./check-in";
+import type { CheckInActorCommand } from "./check-in-actor";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
@@ -10,11 +11,13 @@ import type { CheckIns } from "./check-ins";
 export type DeclineCheckInResult =
   | { status: "declined"; checkIn: CheckInSnapshot }
   | { status: "unknown" }
+  | { status: "ended" }
+  | { status: "invalid_time_zone" }
   | { status: CheckInRefusal };
 
 type DeclineCheckInUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
   clock: Clock;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
@@ -23,35 +26,20 @@ type DeclineCheckInUseCaseOptions = {
 export class DeclineCheckInUseCase {
   private readonly settler: CheckInSettler;
 
-  constructor(private readonly options: DeclineCheckInUseCaseOptions) {
+  constructor(options: DeclineCheckInUseCaseOptions) {
     this.settler = new CheckInSettler(options);
   }
 
-  async execute(checkInId: string): Promise<DeclineCheckInResult> {
-    const checkIn = await this.options.checkIns.find(checkInId);
-
-    if (!checkIn) {
-      return { status: "unknown" };
-    }
-
-    const at = this.options.clock.now();
-    const refusal = checkIn.answerRefusalFor({ party: "coach", at });
-
-    if (refusal) {
-      return { status: refusal };
-    }
-
+  async execute(command: CheckInActorCommand): Promise<DeclineCheckInResult> {
     const settled = await this.settler.settle({
-      checkIn,
+      command,
+      refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "cancelled",
       notification: "declined",
-      at,
     });
 
-    if (settled.status === "not_pending") {
-      return settled;
-    }
-
-    return { status: "declined", checkIn: settled.checkIn };
+    return settled.status === "settled"
+      ? { status: "declined", checkIn: settled.checkIn }
+      : settled;
   }
 }

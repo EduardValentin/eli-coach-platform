@@ -47,7 +47,7 @@ describe("CheckInJoinController resolveForClient", () => {
 
     // assert
     expect(resolveCheckInJoin).toHaveBeenCalledWith({
-      requester: { party: "client", authSubjectId: "user_ana" },
+      actor: { party: "client", authSubjectId: "user_ana" },
       checkInId: CHECK_IN_ID,
     });
     expect((thrown as Response).status).toBe(302);
@@ -136,7 +136,7 @@ describe("CheckInJoinController resolveForCoach", () => {
 
     // assert
     expect(resolveCheckInJoin).toHaveBeenCalledWith({
-      requester: { party: "coach" },
+      actor: { party: "coach" },
       checkInId: CHECK_IN_ID,
     });
     expect((thrown as Response).headers.get("location")).toBe(ROOM_URL);

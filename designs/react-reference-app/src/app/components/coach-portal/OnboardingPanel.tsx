@@ -501,7 +501,7 @@ function SubmittedOnboarding({
     <div className="space-y-6">
       <OnboardingFacts journey={journey} heightCm={heightCm} />
 
-      <div className="space-y-3 border-t border-border-subtle pt-6">
+      <div className="space-y-3 border-t border-border-subtle pt-6" data-parity="answers-section">
         <h3 className={WIDGET_SUBHEADING_CLASS}>Answers</h3>
         {request && <RequestStatus request={request} />}
         <AnswerGroups

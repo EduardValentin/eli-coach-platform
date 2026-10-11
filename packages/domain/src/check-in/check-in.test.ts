@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import { CheckInNote } from "./check-in-note";
+import { CheckInTimeZone } from "./check-in-time-zone";
 
 const STARTS_AT = new Date("2026-06-03T09:00:00.000Z");
 const ENDS_AT = new Date("2026-06-03T10:00:00.000Z");
@@ -32,6 +33,16 @@ function approvedCheckIn(): CheckIn {
   });
 }
 
+function zoneOf(name: string): CheckInTimeZone {
+  const result = CheckInTimeZone.from(name);
+
+  if (result.status !== "valid") {
+    throw new Error(`expected a named zone, got ${name}`);
+  }
+
+  return result.timeZone;
+}
+
 function noteOf(raw: string): CheckInNote | null {
   const written = CheckInNote.from(raw);
 
@@ -49,7 +60,7 @@ describe("CheckIn.requestedByClient", () => {
       id: "check-in-2",
       clientId: "client-1",
       startsAt: STARTS_AT,
-      clientTimeZone: "Europe/London",
+      clientTimeZone: zoneOf("Europe/London"),
       coachTimeZone: "Europe/Bucharest",
       note: noteOf("  Can we look at my squat?  "),
       requestedAt: new Date("2026-06-01T08:30:00.000Z"),
@@ -83,7 +94,7 @@ describe("CheckIn.requestedByClient", () => {
       id: "check-in-2",
       clientId: "client-1",
       startsAt: STARTS_AT,
-      clientTimeZone: "Europe/London",
+      clientTimeZone: zoneOf("Europe/London"),
       coachTimeZone: "Europe/Bucharest",
       note: null,
       requestedAt: new Date("2026-06-01T08:30:00.000Z"),
@@ -94,6 +105,42 @@ describe("CheckIn.requestedByClient", () => {
 
     // assert
     expect(requested.note).toBeNull();
+  });
+});
+
+describe("CheckIn.scheduledByCoach", () => {
+  it("records a pending ad-hoc check-in the coach initiated and proposed, in the client's zone", () => {
+    // arrange
+    const schedule = {
+      id: "check-in-3",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      clientTimeZone: zoneOf("America/New_York"),
+      coachTimeZone: "Europe/Bucharest",
+      note: noteOf("Let's review your first month."),
+      requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+    };
+
+    // act
+    const scheduled = CheckIn.scheduledByCoach(schedule);
+
+    // assert
+    expect(scheduled.toSnapshot()).toEqual({
+      id: "check-in-3",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      endsAt: ENDS_AT,
+      joinEmphasisFrom: new Date("2026-06-03T08:50:00.000Z"),
+      clientTimeZone: "America/New_York",
+      coachTimeZone: "Europe/Bucharest",
+      kind: "ad_hoc",
+      recordedStatus: "pending",
+      initiatedBy: "coach",
+      proposedBy: "coach",
+      note: "Let's review your first month.",
+      requestedAt: new Date("2026-06-01T08:30:00.000Z"),
+      answeredAt: null,
+    });
   });
 });
 
@@ -439,6 +486,36 @@ describe("CheckIn#settled", () => {
   });
 });
 
+describe("CheckIn#settled with the answering client's zone", () => {
+  it("replaces the client's zone with the one she answered from", () => {
+    // arrange
+    const proposed = checkIn({ initiatedBy: "coach", proposedBy: "coach" });
+    const at = new Date("2026-06-02T09:00:00.000Z");
+
+    // act
+    const declined = proposed.settled({
+      outcome: "cancelled",
+      at,
+      clientTimeZone: zoneOf("Asia/Tokyo"),
+    });
+
+    // assert
+    expect(declined.clientTimeZone).toBe("Asia/Tokyo");
+  });
+
+  it("keeps the recorded zone when no zone comes with the answer", () => {
+    // arrange
+    const requested = checkIn();
+    const at = new Date("2026-06-02T09:00:00.000Z");
+
+    // act
+    const approved = requested.settled({ outcome: "approved", at });
+
+    // assert
+    expect(approved.clientTimeZone).toBe("Europe/London");
+  });
+});
+
 describe("CheckIn#isWaitingRequestAt", () => {
   const beforeStart = new Date("2026-06-02T09:00:00.000Z");
 
@@ -577,6 +654,18 @@ describe("CheckIn.decideRequest", () => {
       expected: "requested",
     },
     {
+      situation: "the hour reserved and only a coach request waiting",
+      coachTime: "reserved",
+      clientCheckIns: [
+        checkIn({
+          id: "check-in-4",
+          initiatedBy: "coach",
+          proposedBy: "coach",
+        }),
+      ],
+      expected: "requested",
+    },
+    {
       situation: "the hour taken and nothing waiting",
       coachTime: "taken",
       clientCheckIns: [],
@@ -589,10 +678,15 @@ describe("CheckIn.decideRequest", () => {
       expected: "request_waiting",
     },
   ] as const)(
-    "decides $situation as $expected",
+    "decides her request with $situation as $expected",
     ({ coachTime, clientCheckIns, expected }) => {
       // arrange
-      const learned = { coachTime, clientCheckIns, at };
+      const learned = {
+        initiatedBy: "client" as const,
+        coachTime,
+        clientCheckIns,
+        at,
+      };
 
       // act
       const decision = CheckIn.decideRequest(learned);
@@ -601,4 +695,65 @@ describe("CheckIn.decideRequest", () => {
       expect(decision).toBe(expected);
     },
   );
+
+  it.each([
+    {
+      situation: "a client request waiting",
+      clientCheckIns: [waitingRequest],
+      coachTime: "reserved",
+      expected: "requested",
+    },
+    {
+      situation: "her own earlier request waiting",
+      clientCheckIns: [checkIn({ initiatedBy: "coach", proposedBy: "coach" })],
+      coachTime: "reserved",
+      expected: "requested",
+    },
+    {
+      situation: "the hour taken",
+      clientCheckIns: [],
+      coachTime: "taken",
+      expected: "time_taken",
+    },
+  ] as const)(
+    "decides the coach's request with $situation as $expected",
+    ({ coachTime, clientCheckIns, expected }) => {
+      // arrange
+      const learned = {
+        initiatedBy: "coach" as const,
+        coachTime,
+        clientCheckIns,
+        at,
+      };
+
+      // act
+      const decision = CheckIn.decideRequest(learned);
+
+      // assert
+      expect(decision).toBe(expected);
+    },
+  );
+
+  it("still refuses her request while a coach request and her own request wait", () => {
+    // arrange
+    const learned = {
+      initiatedBy: "client" as const,
+      coachTime: "reserved" as const,
+      clientCheckIns: [
+        checkIn({
+          id: "check-in-5",
+          initiatedBy: "coach",
+          proposedBy: "coach",
+        }),
+        waitingRequest,
+      ],
+      at,
+    };
+
+    // act
+    const decision = CheckIn.decideRequest(learned);
+
+    // assert
+    expect(decision).toBe("request_waiting");
+  });
 });

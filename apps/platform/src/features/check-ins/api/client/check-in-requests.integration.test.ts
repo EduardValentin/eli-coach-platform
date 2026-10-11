@@ -169,7 +169,7 @@ describe.sequential("check-in requests integration", () => {
       expect(slots).toContain(THURSDAY_SECOND_HOUR);
     });
 
-    it("sends a visitor who is not signed in to sign in", async () => {
+    it("answers a visitor who is not signed in as unauthenticated", async () => {
       // arrange
       await rig.holdClock(NOW);
 
@@ -177,7 +177,18 @@ describe.sequential("check-in requests integration", () => {
       const response = await checkIns.openTimes(SIGNED_OUT);
 
       // assert
-      expect(response.status).toBe(302);
+      expect(response.status).toBe(401);
+    });
+
+    it("offers the coach the same open times", async () => {
+      // arrange
+      await submittedAna();
+
+      // act
+      const times = await checkIns.openTimesOf(COACH_SESSION);
+
+      // assert
+      expect(times).toEqual(await checkIns.openTimesOf(ANA_SESSION));
     });
   });
 

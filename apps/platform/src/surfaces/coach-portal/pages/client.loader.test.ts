@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import type { OnboardingReviewView } from "~/features/client-onboarding/public/onboarding-review";
 import type { ClientOnboardingFeature } from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
@@ -83,10 +85,16 @@ const PROFILE: ClientProfileView = {
 };
 
 describe("coach client page loader", () => {
-  it("reads her record, her onboarding review, her profile and her measurements for this request, side by side", async () => {
+  it("reads her record, her onboarding review, her profile, her measurements and whether a check-in can be scheduled for this request, side by side", async () => {
     // arrange
-    const { args, loadClient, loadMeasurements, loadProfile, loadReview } =
-      routeArguments();
+    const {
+      args,
+      loadClient,
+      loadClientScheduling,
+      loadMeasurements,
+      loadProfile,
+      loadReview,
+    } = routeArguments();
 
     // act
     const loaded = await loader(args);
@@ -97,8 +105,10 @@ describe("coach client page loader", () => {
       review: REVIEW,
       profile: PROFILE,
       measurements: MEASUREMENTS,
+      scheduling: "awaiting_onboarding",
     });
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
+    expect(loadClientScheduling).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadReview).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadProfile).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadMeasurements).toHaveBeenCalledWith(args, CLIENT_ID);
@@ -155,6 +165,7 @@ describe("coach client page meta", () => {
       review: REVIEW,
       profile: PROFILE,
       measurements: MEASUREMENTS,
+      scheduling: "awaiting_onboarding" as const,
     };
 
     // act
@@ -170,6 +181,7 @@ function routeArguments() {
   const loadReview = vi.fn().mockResolvedValue(REVIEW);
   const loadProfile = vi.fn().mockResolvedValue(PROFILE);
   const loadMeasurements = vi.fn().mockResolvedValue(MEASUREMENTS);
+  const loadClientScheduling = vi.fn().mockResolvedValue("awaiting_onboarding");
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {
@@ -181,10 +193,20 @@ function routeArguments() {
       contextEntry(clientProfileContext, {
         coachProfile: { load: loadProfile, loadMeasurements },
       } as unknown as ClientProfileFeature),
+      contextEntry(checkInsContext, {
+        coachCheckIns: { loadClientScheduling },
+      } as unknown as CheckInsFeature),
     ],
     params: { clientId: CLIENT_ID },
     request: new Request(`http://localhost/coach/clients/${CLIENT_ID}`),
   });
 
-  return { args, loadClient, loadMeasurements, loadProfile, loadReview };
+  return {
+    args,
+    loadClient,
+    loadClientScheduling,
+    loadMeasurements,
+    loadProfile,
+    loadReview,
+  };
 }

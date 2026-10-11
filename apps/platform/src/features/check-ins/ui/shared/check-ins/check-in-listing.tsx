@@ -1,3 +1,4 @@
+import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { EmptyState } from "@eli-coach-platform/ui/portal";
 import { Badge } from "@eli-coach-platform/ui/primitives";
 import {
@@ -7,7 +8,7 @@ import {
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
 import type { LucideIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 
@@ -32,6 +33,8 @@ type CheckInListingProps<CheckIn extends ListedCheckIn> = {
 
 const CHECK_IN_TABS: readonly CheckInTab[] = ["upcoming", "requests", "past"];
 
+const TAB_PARAM = "view";
+
 const TAB_LABELS: Record<CheckInTab, string> = {
   upcoming: "Upcoming",
   requests: "Requests",
@@ -51,7 +54,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   emptyCopy,
   renderCheckIn,
 }: CheckInListingProps<CheckIn>) {
-  const [tab, setTab] = useState(defaultTab);
+  const { chooseTab, tab } = useCheckInTabParam(defaultTab);
   const shown = ordered(
     checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
     tab,
@@ -64,7 +67,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   return (
     <Tabs
       className="w-full"
-      onValueChange={(chosen) => setTab(tabNamed(chosen, defaultTab))}
+      onValueChange={chooseTab}
       value={tab}
       variant="segmented"
     >
@@ -83,7 +86,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
                     >
                       {awaitingViewerCount}
                     </Badge>
-                    <span className="sr-only">
+                    <span className="sr-only" data-parity="requests-count-sr">
                       {awaitingViewerCount} waiting on you
                     </span>
                   </>
@@ -116,7 +119,26 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   );
 }
 
-function tabNamed(name: string, fallback: CheckInTab): CheckInTab {
+function useCheckInTabParam(defaultTab: CheckInTab) {
+  const { replaceSearchParams, searchParams } = useSearchParamsWriter();
+
+  const chooseTab = (value: string) => {
+    const chosen = tabNamed(value, defaultTab);
+
+    replaceSearchParams((params) => {
+      if (chosen === defaultTab) {
+        params.delete(TAB_PARAM);
+        return;
+      }
+
+      params.set(TAB_PARAM, chosen);
+    });
+  };
+
+  return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
+}
+
+function tabNamed(name: string | null, fallback: CheckInTab): CheckInTab {
   return CHECK_IN_TABS.find((tab) => tab === name) ?? fallback;
 }
 

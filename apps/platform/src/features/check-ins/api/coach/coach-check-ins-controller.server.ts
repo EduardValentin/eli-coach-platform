@@ -1,34 +1,39 @@
 import type {
-  ApproveCheckInResult,
-  ApproveCheckInUseCase,
   CoachCheckInView,
-  DeclineCheckInResult,
-  DeclineCheckInUseCase,
   ListCoachCheckInsUseCase,
+  ReadClientCheckInSchedulingUseCase,
+  ScheduleCheckInResult,
+  ScheduleCheckInUseCase,
 } from "@eli-coach-platform/domain/check-in";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
   checkInOutcomeResponse,
-  checkInIdSchema,
+  readCheckInBody,
   refusedCheckIn,
-  unknownCheckIn,
+  unknownClient,
 } from "~/features/check-ins/api/check-in-transport.server";
 import {
+  checkInScheduleSchema,
   coachCheckInsSchema,
   presentCheckIn,
+  type CheckInScheduling,
   type CoachCheckIn,
   type CoachCheckIns,
 } from "~/features/check-ins/public/check-ins";
 
 type CoachCheckInsControllerOptions = {
-  approveCheckIn: ApproveCheckInUseCase;
-  declineCheckIn: DeclineCheckInUseCase;
   listCoachCheckIns: ListCoachCheckInsUseCase;
+  readClientCheckInScheduling: ReadClientCheckInSchedulingUseCase;
+  scheduleCheckIn: ScheduleCheckInUseCase;
 };
 
-type CoachAnswer = ApproveCheckInResult | DeclineCheckInResult;
+const CREATED = 201;
+const UNPROCESSABLE = 422;
+
+const clientIdSchema = z.uuid();
 
 export class CoachCheckInsController {
   constructor(private readonly options: CoachCheckInsControllerOptions) {}
@@ -43,54 +48,64 @@ export class CoachCheckInsController {
     });
   }
 
-  async approve(
-    args: ActionFunctionArgs,
-    checkInId: string | undefined,
-  ): Promise<Response> {
+  async loadClientScheduling(
+    args: LoaderFunctionArgs,
+    clientId: string | undefined,
+  ): Promise<CheckInScheduling> {
     requirePortalAccess(args, { role: "COACH" });
 
-    const id = checkInIdSchema.safeParse(checkInId);
+    const id = clientIdSchema.safeParse(clientId);
 
     if (!id.success) {
-      return unknownCheckIn();
+      throw unknownClient();
     }
 
-    return this.respondToAnswer(
-      await this.options.approveCheckIn.execute(id.data),
+    const scheduling = await this.options.readClientCheckInScheduling.execute(
+      id.data,
     );
+
+    if (scheduling === "unknown") {
+      throw unknownClient();
+    }
+
+    return scheduling;
   }
 
-  async decline(
-    args: ActionFunctionArgs,
-    checkInId: string | undefined,
-  ): Promise<Response> {
+  async schedule(args: ActionFunctionArgs): Promise<Response> {
     requirePortalAccess(args, { role: "COACH" });
 
-    const id = checkInIdSchema.safeParse(checkInId);
+    const submission = checkInScheduleSchema.safeParse(
+      await readCheckInBody(args.request),
+    );
 
-    if (!id.success) {
-      return unknownCheckIn();
+    if (!submission.success) {
+      return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
     }
 
-    return this.respondToAnswer(
-      await this.options.declineCheckIn.execute(id.data),
-    );
+    const result = await this.options.scheduleCheckIn.execute({
+      clientId: submission.data.clientId,
+      startsAt: new Date(submission.data.startsAt),
+      note: submission.data.note ?? null,
+    });
+
+    return this.respondToSchedule(result);
   }
 
-  private respondToAnswer(result: CoachAnswer): Response {
+  private respondToSchedule(result: ScheduleCheckInResult): Response {
     switch (result.status) {
-      case "approved":
-      case "declined":
+      case "scheduled":
         return checkInOutcomeResponse(
-          { status: result.status, checkInId: result.checkIn.id },
-          { status: 200 },
+          { status: "scheduled", checkInId: result.checkIn.id },
+          { status: CREATED },
         );
-      case "unknown":
-        return unknownCheckIn();
-      case "not_pending":
-      case "expired":
-      case "not_your_turn":
-        return refusedCheckIn("not_pending");
+      case "unknown_client":
+        return unknownClient();
+      case "note_too_long":
+      case "invalid_time_zone":
+        return refusedCheckIn(result.status, { status: UNPROCESSABLE });
+      case "client_cannot_answer":
+      case "time_taken":
+        return refusedCheckIn(result.status);
     }
   }
 

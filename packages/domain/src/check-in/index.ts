@@ -10,6 +10,7 @@ export {
   type CheckInOutcome,
   type CheckInView,
 } from "./check-in";
+export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export {
   type CheckInClientIdentity,
   type CheckInClients,
@@ -40,14 +41,21 @@ export {
 } from "./list-coach-check-ins-use-case";
 export { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
 export {
+  ReadClientCheckInSchedulingUseCase,
+  type ClientCheckInScheduling,
+} from "./read-client-check-in-scheduling-use-case";
+export {
   RequestCheckInUseCase,
   type RequestCheckInResult,
 } from "./request-check-in-use-case";
 export {
   ResolveCheckInJoinUseCase,
   type CheckInJoinResult,
-  type CheckInRequester,
 } from "./resolve-check-in-join-use-case";
+export {
+  ScheduleCheckInUseCase,
+  type ScheduleCheckInResult,
+} from "./schedule-check-in-use-case";
 export {
   WithdrawCheckInRequestUseCase,
   type WithdrawCheckInRequestResult,

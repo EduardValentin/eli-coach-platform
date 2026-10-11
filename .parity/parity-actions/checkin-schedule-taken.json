@@ -1,0 +1,15 @@
+[
+  {"waitFor": "[data-parity=\"client-header-actions\"]"},
+  {"wait": 600},
+  {"click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"fill": ["[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=/^Add a note for /]", "Let's look at your first two weeks"]},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Schedule /]"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"},
+  {"wait": 600}
+]

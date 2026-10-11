@@ -13,7 +13,7 @@ import {
   type CoachAvailability,
 } from './assessmentCallService';
 
-export const CHECKIN_SERVICE_OUTCOMES = ['works', 'time-taken', 'fails'] as const;
+export const CHECKIN_SERVICE_OUTCOMES = ['works', 'time-taken', 'cannot-answer', 'fails'] as const;
 export type CheckinServiceOutcome = (typeof CHECKIN_SERVICE_OUTCOMES)[number];
 
 export const CHECKIN_SERVICE_LATENCY_MS = 600;
@@ -32,12 +32,19 @@ export type CheckinSchedule = {
 
 export type CheckinRequestDecision = 'requested' | 'request_waiting' | 'time_taken';
 
+export type CheckinScheduleDecision = 'scheduled' | 'client_cannot_answer' | 'time_taken';
+
 export type CheckinSettlement = 'settled' | 'not_pending';
 
 export type CheckinTimeRequest = {
   startsAt: Date;
   schedule: CheckinSchedule;
   waitingRequest: boolean;
+};
+
+export type CheckinTimeSchedule = {
+  startsAt: Date;
+  schedule: CheckinSchedule;
 };
 
 export type PendingRequestAnswer = { status: CheckinStatus };
@@ -126,6 +133,18 @@ export async function requestCheckinTime(
   if (outcome === 'time-taken' || !isOpenTime(startsAt, schedule)) return 'time_taken';
 
   return 'requested';
+}
+
+export async function scheduleCheckinTime(
+  { startsAt, schedule }: CheckinTimeSchedule,
+  outcome: CheckinServiceOutcome,
+): Promise<CheckinScheduleDecision> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+  if (outcome === 'cannot-answer') return 'client_cannot_answer';
+  if (outcome === 'time-taken' || !isOpenTime(startsAt, schedule)) return 'time_taken';
+
+  return 'scheduled';
 }
 
 async function settlePendingRequest(

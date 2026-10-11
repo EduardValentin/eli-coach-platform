@@ -34,9 +34,7 @@ export class BookingPage {
       .click();
   }
 
-  async expectHourNotOffered(instant: Date, timeZone: string): Promise<void> {
-    const main = this.page.getByRole("main");
-
+  private async showDayOf(instant: Date, timeZone: string): Promise<void> {
     await this.page.goto("/book");
     await this.page
       .getByRole("grid", { name: "Available days" })
@@ -44,14 +42,29 @@ export class BookingPage {
         name: new RegExp(`^${spacedPattern(dayNameOf(instant, timeZone))}`),
       })
       .click();
-    await expect(
-      main.getByRole("button", { name: CLOCK_TIME }),
-    ).not.toHaveCount(0);
-    await expect(
-      main.getByRole("button", {
-        name: new RegExp(`^${spacedPattern(clockTimeOf(instant, timeZone))}$`),
-      }),
-    ).toHaveCount(0);
+    await expect(this.times).not.toHaveCount(0);
+  }
+
+  private get times() {
+    return this.page
+      .getByRole("main")
+      .getByRole("button", { name: CLOCK_TIME });
+  }
+
+  private timeOf(instant: Date, timeZone: string) {
+    return this.page.getByRole("main").getByRole("button", {
+      name: new RegExp(`^${spacedPattern(clockTimeOf(instant, timeZone))}$`),
+    });
+  }
+
+  async expectHourNotOffered(instant: Date, timeZone: string): Promise<void> {
+    await this.showDayOf(instant, timeZone);
+    await expect(this.timeOf(instant, timeZone)).toHaveCount(0);
+  }
+
+  async expectHourOffered(instant: Date, timeZone: string): Promise<void> {
+    await this.showDayOf(instant, timeZone);
+    await expect(this.timeOf(instant, timeZone)).toBeVisible();
   }
 
   async expectGenderOptions(options: readonly string[]): Promise<void> {

@@ -66,7 +66,7 @@ function createPorts(options: {
           : options.client,
       ),
     identitiesOf: vi.fn().mockResolvedValue(options.identities ?? []),
-  } satisfies CheckInClients;
+  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
 
   return { checkIns, clients, clock: { now: () => NOW } };
 }
@@ -134,7 +134,7 @@ describe("ListClientCheckInsUseCase", () => {
   });
 
   it.each([
-    ["whose coaching ended", { clientId: "client-1", portal: "unreachable" }],
+    ["whose coaching ended", { clientId: "client-1", portal: "ended" }],
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
     // arrange

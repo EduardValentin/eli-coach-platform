@@ -12,6 +12,7 @@ import {
   type IdentityInvitations,
 } from "@eli-coach-platform/domain/client-invitation";
 import {
+  ClientJourney,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
@@ -313,11 +314,47 @@ export function composeCoachingSalesFeature(
 
   const resourceClients: ResourceClients = {
     exists: (clientId) => onboardingClients.exists(clientId),
-    findByAuthSubjectId: portalClientOf,
+    findByAuthSubjectId: async (authSubjectId) => {
+      const client = await portalClientOf(authSubjectId);
+
+      return client
+        ? {
+            clientId: client.clientId,
+            portal: client.portal === "reachable" ? "reachable" : "unreachable",
+          }
+        : null;
+    },
   };
 
   const checkInClients: CheckInClients = {
     findByAuthSubjectId: portalClientOf,
+    findById: async (clientId) => {
+      const entry = await roster.findById(clientId);
+
+      if (!entry) {
+        return null;
+      }
+
+      const call = await handles.assessmentCallReader.findById(
+        entry.booking.assessmentCallId,
+      );
+
+      if (!call) {
+        return null;
+      }
+
+      return {
+        clientId: entry.journey.clientId,
+        portal: ClientJourney.portalReachOf({
+          step: ClientJourney.from(entry.journey).step(),
+          coaching: ClientJourney.coachingStandingOf({
+            subscription: entry.subscription,
+            at: clock.now(),
+          }),
+        }),
+        bookingTimeZone: call.visitorTimeZone,
+      };
+    },
     identitiesOf: async (clientIds) =>
       (await clientIdentities.findByClientIds(clientIds)).map(
         ({ clientId, firstName, lastName, email }) => ({

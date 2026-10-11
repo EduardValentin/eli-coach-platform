@@ -159,6 +159,7 @@ export function CheckinCard({
           />
         )
       }
+      parity="checkin-card-body"
       parityRoot="CheckinCard"
     />
   );

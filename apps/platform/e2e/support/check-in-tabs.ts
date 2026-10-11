@@ -62,6 +62,15 @@ export async function expectEmptyCheckInTab(
   await expect(checkInsListed(page, tab)).toHaveCount(0);
 }
 
+export async function expectWaitingOnViewer(
+  page: Page,
+  count: number,
+): Promise<void> {
+  await expect(checkInTab(page, "Requests")).toHaveAccessibleName(
+    new RegExp(`^Requests\\b.*\\b${count}\\b`),
+  );
+}
+
 export async function expectJoinEmphasis(
   row: Locator,
   emphasis: JoinEmphasis,

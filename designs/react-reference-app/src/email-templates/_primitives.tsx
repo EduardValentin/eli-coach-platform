@@ -162,12 +162,12 @@ export function EmailLink({
   );
 }
 
-export function EmailDivider({ style }: StyleProps) {
+export function EmailDivider({ parity, style }: StyleProps & { parity?: string }) {
   const mergedStyle: CSSProperties = {
     border: 'none',
     borderTop: '1px solid #eaeaea',
     width: '100%',
     ...style,
   };
-  return <hr style={mergedStyle} />;
+  return <hr data-parity={parity} style={mergedStyle} />;
 }
