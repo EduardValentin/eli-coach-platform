@@ -339,6 +339,58 @@ describe("the client's check-ins page", () => {
   });
 });
 
+describe("the client's check-ins tab in the address", () => {
+  it("opens on Past when the address names it", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(`${CLIENT_CHECK_INS_PATH}?view=past`);
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Past" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("list", { name: "Past check-ins" }),
+    ).toBeInTheDocument();
+  });
+
+  it("writes the chosen tab into the address in place, and leaves Upcoming out of it", async () => {
+    // arrange
+    const { router, user } = await renderCheckInsPageWithView();
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Past" }));
+
+    // assert
+    expect(router.state.location.search).toBe("?view=past");
+    expect(router.state.historyAction).toBe("REPLACE");
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+
+    // assert
+    expect(router.state.location.search).toBe("");
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("opens on Upcoming when the address names a tab that doesn't exist", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(`${CLIENT_CHECK_INS_PATH}?view=archive`);
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("the client answering her coach's request", () => {
   it("shows her coach's request first under Requests, counted on the tab, with the coach's note and a way to approve or decline it", async () => {
     // arrange
@@ -1012,7 +1064,7 @@ async function renderCheckInsPage() {
   return user;
 }
 
-async function renderCheckInsPageWithView() {
+async function renderCheckInsPageWithView(entry = CLIENT_CHECK_INS_PATH) {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   const router = createMemoryRouter(
     [
@@ -1050,7 +1102,7 @@ async function renderCheckInsPageWithView() {
         path: CHECK_INS_API_PATHS.decline,
       },
     ],
-    { initialEntries: [CLIENT_CHECK_INS_PATH] },
+    { initialEntries: [entry] },
   );
 
   const view = render(
@@ -1061,5 +1113,5 @@ async function renderCheckInsPageWithView() {
   );
   await screen.findByRole("heading", { level: 1, name: "Check-ins" });
 
-  return { ...view, user };
+  return { ...view, router, user };
 }
