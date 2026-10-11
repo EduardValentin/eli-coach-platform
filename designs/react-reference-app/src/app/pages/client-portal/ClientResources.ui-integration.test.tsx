@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../context/AppContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
@@ -30,8 +30,14 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function renderPage(devParams = '') {
-  const url = `/portal/resources?session=client${devParams}`;
+function LocationProbe() {
+  const { search } = useLocation();
+
+  return <p data-testid="location-probe">{search}</p>;
+}
+
+function renderPageAt(search: string) {
+  const url = `/portal/resources${search}`;
   window.history.replaceState({}, '', url);
 
   render(
@@ -40,6 +46,7 @@ function renderPage(devParams = '') {
         <ClientProfileProvider>
           <ResourceProvider>
             <ClientResources />
+            <LocationProbe />
           </ResourceProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -47,8 +54,33 @@ function renderPage(devParams = '') {
   );
 }
 
+function renderPage(devParams = '') {
+  renderPageAt(`?session=client${devParams}`);
+}
+
+function currentAddress(): string {
+  return screen.getByTestId('location-probe').textContent ?? '';
+}
+
 async function resourceCard(title: string): Promise<HTMLElement> {
   return screen.findByRole('button', { name: title }, SERVICE_TIMEOUT);
+}
+
+function shownTitles(): string[] {
+  const region = screen.getByRole('region', { name: 'Resources' });
+
+  return within(region)
+    .queryAllByRole('button')
+    .filter((button) => button.hasAttribute('aria-labelledby'))
+    .map((button) => {
+      const titleId = button.getAttribute('aria-labelledby') ?? '';
+      return document.getElementById(titleId)?.textContent ?? '';
+    });
+}
+
+async function chooseTag(tag: string) {
+  await userEvent.click(screen.getByRole('combobox', { name: 'Tag' }));
+  await userEvent.click(await screen.findByRole('option', { name: new RegExp(`^${tag}`) }));
 }
 
 describe('client resources page', () => {
@@ -203,6 +235,83 @@ describe('client resources page', () => {
 
     // assert
     await waitFor(() => expect(tracker).toHaveFocus());
+  });
+
+  it('writes her tag to the address at once and her search once she pauses typing', async () => {
+    // arrange
+    renderPage();
+    await resourceCard('Plate portions guide');
+    await chooseTag('Nutrition');
+    const afterTag = currentAddress();
+
+    // act
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'meal');
+    const whileTyping = currentAddress();
+
+    // assert
+    expect(afterTag).toBe('?session=client&tag=Nutrition');
+    expect(whileTyping).toBe('?session=client&tag=Nutrition');
+    await waitFor(() => expect(currentAddress()).toBe('?session=client&tag=Nutrition&q=meal'));
+    expect(shownTitles()).toEqual(['Luteal phase meal ideas']);
+  });
+
+  it('keeps her tag and search when the page opens again at the same address', async () => {
+    // arrange
+    renderPage();
+    await resourceCard('Plate portions guide');
+    await chooseTag('Nutrition');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'te');
+    await waitFor(() => expect(currentAddress()).toContain('q=te'));
+    const address = currentAddress();
+    cleanup();
+
+    // act
+    renderPageAt(address);
+    await resourceCard('Plate portions guide');
+
+    // assert
+    expect(shownTitles()).toEqual(['Plate portions guide', 'Luteal phase meal ideas']);
+    expect(screen.getByRole('searchbox', { name: 'Search resources' })).toHaveValue('te');
+    expect(screen.getByRole('combobox', { name: 'Tag' })).toHaveTextContent('Nutrition');
+    expect(screen.queryByRole('combobox', { name: 'Sort by' })).not.toBeInTheDocument();
+  });
+
+  it('counts “All tags” and each tag over the resources her search matches', async () => {
+    // arrange
+    renderPage();
+    await resourceCard('Plate portions guide');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'meal');
+    await waitFor(() => expect(currentAddress()).toContain('q=meal'));
+
+    // act
+    await userEvent.click(screen.getByRole('combobox', { name: 'Tag' }));
+
+    // assert
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'All tags 1',
+      'Cycle 1',
+      'Form 0',
+      'Glutes 0',
+      'Habits 0',
+      'Nutrition 1',
+      'Recovery 0',
+      'Sleep 0',
+      'Tracking 0',
+      'Training 0',
+    ]);
+  });
+
+  it('shows every resource under “All tags” when the address names a tag none of hers holds', async () => {
+    // arrange
+    renderPage('&tag=Mobility');
+
+    // act
+    await resourceCard('Plate portions guide');
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Tag' })).toHaveTextContent('All tags');
+    expect(shownTitles()).toHaveLength(6);
+    expect(currentAddress()).toBe('?session=client&tag=Mobility');
   });
 
   it('says plainly when nothing has been shared yet', async () => {

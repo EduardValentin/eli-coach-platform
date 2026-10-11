@@ -6,8 +6,9 @@ import {
   type ResourceRequester,
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type { ClientResources } from "./client-resources";
+import type { BrowsedResources, ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
+import type { ResourceTagSnapshot } from "./resource-tags";
 
 function resourceOf(id: string, clientId: string): ClientResource {
   return ClientResource.reconstitute({
@@ -15,6 +16,7 @@ function resourceOf(id: string, clientId: string): ClientResource {
     clientId,
     title: "Meal plan",
     description: "",
+    tags: [],
     file: {
       originalName: "plan.pdf",
       format: "pdf",
@@ -44,8 +46,16 @@ class InMemoryClientResources implements ClientResources {
     return 0;
   }
 
-  async listForClient(clientId: string): Promise<ClientResource[]> {
-    return this.stored.filter((resource) => resource.isFor(clientId));
+  async browseForClient(): Promise<BrowsedResources> {
+    return { resources: [], tagOptions: [], searched: 0, total: 0 };
+  }
+
+  async tagsHeldBy(): Promise<ResourceTagSnapshot[]> {
+    return [];
+  }
+
+  async tagVocabulary(): Promise<ResourceTagSnapshot[]> {
+    return [];
   }
 
   async findById(resourceId: string): Promise<ClientResource | null> {

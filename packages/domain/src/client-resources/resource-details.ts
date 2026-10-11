@@ -1,11 +1,20 @@
+import { ResourceTags, type ResourceTagSnapshot } from "./resource-tags";
+
 export const MAX_RESOURCE_TITLE_LENGTH = 120;
 export const MAX_RESOURCE_DESCRIPTION_LENGTH = 2_000;
 
-export type ResourceDetailsSnapshot = { title: string; description: string };
+type ResourceText = { title: string; description: string };
+
+export type ResourceDetailsInput = ResourceText & { tags: string[] };
+
+export type ResourceDetailsSnapshot = ResourceText & {
+  tags: ResourceTagSnapshot[];
+};
 
 export type ResourceDetailsProblems = {
   title?: "missing" | "too-long";
   description?: "too-long";
+  tags?: "too-long";
 };
 
 export type ResourceDetailsResult =
@@ -13,28 +22,45 @@ export type ResourceDetailsResult =
   | { status: "invalid"; problems: ResourceDetailsProblems };
 
 export class ResourceDetails {
-  private constructor(private readonly snapshot: ResourceDetailsSnapshot) {}
+  private constructor(
+    private readonly text: ResourceText,
+    private readonly tags: ResourceTags,
+  ) {}
 
-  static from(input: ResourceDetailsSnapshot): ResourceDetailsResult {
+  static from(input: ResourceDetailsInput): ResourceDetailsResult {
     const title = input.title.trim();
     const description = input.description.trim();
-    const problems = problemsOf({ title, description });
+    const tags = ResourceTags.from(input.tags);
+    const problems: ResourceDetailsProblems = {
+      ...problemsOf({ title, description }),
+      ...(tags.status === "invalid" && { tags: tags.problem }),
+    };
 
-    if (Object.keys(problems).length > 0)
+    if (tags.status === "invalid" || Object.keys(problems).length > 0) {
       return { status: "invalid", problems };
+    }
 
     return {
       status: "valid",
-      details: new ResourceDetails({ title, description }),
+      details: new ResourceDetails({ title, description }, tags.tags),
     };
   }
 
+  withStoredSpellings(
+    vocabulary: readonly ResourceTagSnapshot[],
+  ): ResourceDetails {
+    return new ResourceDetails(
+      this.text,
+      this.tags.withStoredSpellings(vocabulary),
+    );
+  }
+
   toSnapshot(): ResourceDetailsSnapshot {
-    return { ...this.snapshot };
+    return { ...this.text, tags: this.tags.toSnapshot() };
   }
 }
 
-function problemsOf(trimmed: ResourceDetailsSnapshot): ResourceDetailsProblems {
+function problemsOf(trimmed: ResourceText): ResourceDetailsProblems {
   const problems: ResourceDetailsProblems = {};
 
   if (trimmed.title.length === 0) problems.title = "missing";

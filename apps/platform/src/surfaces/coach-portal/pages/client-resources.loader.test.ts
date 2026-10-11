@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type {
-  ClientResourceListing,
   ClientResourceView,
+  CoachResourceListing,
 } from "~/features/client-resources/public/client-resources";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
@@ -48,6 +48,7 @@ const RESOURCES: ClientResourceView[] = [
     id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
     title: "Glute activation warm-up",
     description: "Run through this before every lower-body session.",
+    tags: [],
     file: {
       originalName: "glute-activation-warm-up.pdf",
       downloadName: "glute-activation-warm-up.pdf",
@@ -60,19 +61,31 @@ const RESOURCES: ClientResourceView[] = [
   },
 ];
 
+const LISTING: CoachResourceListing = {
+  status: "ready",
+  resources: RESOURCES,
+  tagOptions: [{ tag: "Warm-ups", count: 1 }],
+  browse: { tag: "Warm-ups", search: "glute", sort: "title", direction: "asc" },
+  searched: 1,
+  total: 4,
+  vocabulary: ["Meals", "Warm-ups"],
+};
+
+const NARROWED_URL = `http://localhost/coach/clients/${CLIENT_ID}/resources?tag=Warm-ups&q=glute&sort=title`;
+
 describe("coach client resources page loader", () => {
-  it("reads her record and her resources for this request, side by side", async () => {
+  it("reads her record and her resources as the address narrows them, side by side", async () => {
     // arrange
-    const { args, loadClient, loadResources } = routeArguments();
+    const { args, loadClient, loadResources } = routeArguments({
+      url: NARROWED_URL,
+    });
 
     // act
     const loaded = await loader(args);
 
     // assert
-    expect(loaded).toEqual({
-      client: CLIENT,
-      listing: { status: "ready", resources: RESOURCES },
-    });
+    expect(loaded).toEqual({ client: CLIENT, listing: LISTING });
+    expect(args.request.url).toBe(NARROWED_URL);
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadResources).toHaveBeenCalledWith(args, CLIENT_ID);
   });
@@ -144,13 +157,7 @@ describe("coach client resources page loader", () => {
 describe("coach client resources page meta", () => {
   it("titles the page with her first name's resources", () => {
     // arrange
-    const data = {
-      client: CLIENT,
-      listing: {
-        status: "ready",
-        resources: RESOURCES,
-      } as ClientResourceListing,
-    };
+    const data = { client: CLIENT, listing: LISTING };
 
     // act
     const descriptors = meta({ data } as Parameters<typeof meta>[0]);
@@ -160,11 +167,11 @@ describe("coach client resources page meta", () => {
   });
 });
 
-function routeArguments(options: { params?: Record<string, string> } = {}) {
+function routeArguments(
+  options: { params?: Record<string, string>; url?: string } = {},
+) {
   const loadClient = vi.fn().mockResolvedValue(CLIENT);
-  const loadResources = vi
-    .fn()
-    .mockResolvedValue({ status: "ready", resources: RESOURCES });
+  const loadResources = vi.fn().mockResolvedValue(LISTING);
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {
@@ -176,7 +183,7 @@ function routeArguments(options: { params?: Record<string, string> } = {}) {
     ],
     params: options.params ?? { clientId: CLIENT_ID },
     request: new Request(
-      `http://localhost/coach/clients/${CLIENT_ID}/resources`,
+      options.url ?? `http://localhost/coach/clients/${CLIENT_ID}/resources`,
     ),
   });
 

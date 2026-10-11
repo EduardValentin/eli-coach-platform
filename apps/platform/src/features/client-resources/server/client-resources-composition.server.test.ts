@@ -64,7 +64,11 @@ describe("composeClientResourcesFeature", () => {
     const request = new Request(
       `https://evoa.fit/api/client-resources/${RESOURCE_ID}`,
       {
-        body: JSON.stringify({ title: "Week two plan", description: "" }),
+        body: JSON.stringify({
+          title: "Week two plan",
+          description: "",
+          tags: [],
+        }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       },
@@ -192,10 +196,13 @@ function createHandles() {
 }
 
 function createUnreachableDatabase(): DatabaseClient {
+  const unreachable = () => {
+    throw new Error("database down");
+  };
+
   return {
-    select: () => {
-      throw new Error("database down");
-    },
+    select: unreachable,
+    selectDistinctOn: unreachable,
   } as unknown as DatabaseClient;
 }
 

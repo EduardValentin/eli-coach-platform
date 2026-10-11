@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=combobox[name=\"Sort by\"]"},
+  {"waitFor": "role=option[name=\"Title\"]"},
+  {"wait": 400}
+]

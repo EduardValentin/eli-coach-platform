@@ -1,0 +1,12 @@
+[
+  {"waitFor": "[data-parity-root=\"ClientResources\"] [data-parity=\"resource-card\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"ClientResources\"] >> role=combobox[name=\"Tag\"]"},
+  {"waitFor": "role=option[name=/^All tags/]"},
+  {"wait": 400},
+  {"click": "role=option[name=/^Nutrition/]"},
+  {"waitFor": "[data-parity-root=\"ClientResources\"] >> role=combobox[name=\"Tag\"] >> text=Nutrition"},
+  {"wait": 1000},
+  {"hover": "[data-parity-root=\"ClientResources\"] h1"},
+  {"wait": 400}
+]

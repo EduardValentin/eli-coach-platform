@@ -213,12 +213,47 @@ describe('the coach-wide tag vocabulary', () => {
     ];
 
     // act
-    const counts = tagCounts(resources);
+    const counts = tagCounts(resources, '');
 
     // assert
     expect(counts).toEqual([
       { tag: 'Glutes', count: 1 },
       { tag: 'Training', count: 2 },
+    ]);
+  });
+
+  it('counts only the resources whose title matches the search', () => {
+    // arrange
+    const resources = [
+      resource({ id: 'r-1', title: 'Glute activation warm-up', tags: ['Training', 'Glutes'] }),
+      resource({ id: 'r-2', title: 'Hip thrust form checklist', tags: ['training'] }),
+      resource({ id: 'r-3', title: 'Glute bridge progressions', tags: ['Glutes'] }),
+    ];
+
+    // act
+    const counts = tagCounts(resources, '  GLUTE ');
+
+    // assert
+    expect(counts).toEqual([
+      { tag: 'Glutes', count: 2 },
+      { tag: 'Training', count: 1 },
+    ]);
+  });
+
+  it('keeps a tag no searched resource holds, counted as none', () => {
+    // arrange
+    const resources = [
+      resource({ id: 'r-1', title: 'Glute activation warm-up', tags: ['Training'] }),
+      resource({ id: 'r-2', title: 'Weekly macro tracker', tags: ['Tracking'] }),
+    ];
+
+    // act
+    const counts = tagCounts(resources, 'macro');
+
+    // assert
+    expect(counts).toEqual([
+      { tag: 'Tracking', count: 1 },
+      { tag: 'Training', count: 0 },
     ]);
   });
 });

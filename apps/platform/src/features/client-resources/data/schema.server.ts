@@ -8,6 +8,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -47,6 +48,25 @@ export const clientResourcesTable = appSchema.table(
       "client_resources_page_count_check",
       sql`${table.pageCount} is null or ${table.pageCount} >= 1`,
     ),
+  ],
+);
+
+export const clientResourceTagsTable = appSchema.table(
+  "client_resource_tags",
+  {
+    resourceId: uuid("resource_id")
+      .notNull()
+      .references(() => clientResourcesTable.id, { onDelete: "cascade" }),
+    tag: text("tag").notNull(),
+    folded: text("folded").notNull(),
+    position: integer("position").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "client_resource_tags_pkey",
+      columns: [table.resourceId, table.folded],
+    }),
+    index("client_resource_tags_folded_idx").on(table.folded),
   ],
 );
 

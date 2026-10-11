@@ -19,7 +19,11 @@ export {
   type ResourcePageImage,
   type StoredResourceOriginal,
 } from "./client-resource-store";
-export { type ClientResources } from "./client-resources";
+export {
+  type BrowsedResources,
+  type ClientResources,
+  type TagOption,
+} from "./client-resources";
 export { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
 export {
   DownloadClientResourceUseCase,
@@ -40,6 +44,10 @@ export {
   RemoveClientResourceUseCase,
   type RemoveClientResourceResult,
 } from "./remove-client-resource-use-case";
+export {
+  type ResourceBrowseInput,
+  type ResourceBrowseSnapshot,
+} from "./resource-browse";
 export { type ResourceClients } from "./resource-clients";
 export {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
@@ -77,3 +85,13 @@ export {
   RESOURCE_RENDITIONS,
   type ResourceRenditions,
 } from "./resource-renditions";
+export {
+  RESOURCE_SORT_KEYS,
+  defaultResourceSortDirection,
+  type ResourceSortDirection,
+  type ResourceSortKey,
+} from "./resource-sorts";
+export {
+  MAX_RESOURCE_TAG_LENGTH,
+  type ResourceTagSnapshot,
+} from "./resource-tags";

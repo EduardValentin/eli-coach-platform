@@ -2,11 +2,15 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   ClientResource,
   type ClientResourceSnapshot,
+  type ResourceBrowseSnapshot,
 } from "@eli-coach-platform/domain/client-resources";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { clientResourcesTable } from "~/features/client-resources/data/schema.server";
+import {
+  clientResourcesTable,
+  clientResourceTagsTable,
+} from "~/features/client-resources/data/schema.server";
 
 import { PostgresClientResources } from "./client-resources-repository.server";
 
@@ -17,11 +21,15 @@ const PDF_ADDED_AT = new Date("2026-10-05T09:30:00.000Z");
 const SPREADSHEET_ADDED_AT = new Date("2026-10-04T08:00:00.000Z");
 const SPREADSHEET_OPENED_AT = new Date("2026-10-06T07:15:00.000Z");
 
+const MEALS = { tag: "Meals", folded: "meals" };
+const WEEK_ONE = { tag: "Week one", folded: "week one" };
+
 const PDF_SNAPSHOT: ClientResourceSnapshot = {
   id: PDF_ID,
   clientId: CLIENT_ID,
   title: "Meal plan",
   description: "Week one",
+  tags: [WEEK_ONE, MEALS],
   file: {
     originalName: "Meal plan.pdf",
     format: "pdf",
@@ -30,6 +38,22 @@ const PDF_SNAPSHOT: ClientResourceSnapshot = {
   },
   addedAt: PDF_ADDED_AT,
   openedAt: null,
+};
+
+const SPREADSHEET_SNAPSHOT: ClientResourceSnapshot = {
+  id: SPREADSHEET_ID,
+  clientId: CLIENT_ID,
+  title: "Macros",
+  description: "",
+  tags: [],
+  file: {
+    originalName: "macros.ods",
+    format: "ods",
+    sizeBytes: 9_120,
+    pageCount: null,
+  },
+  addedAt: SPREADSHEET_ADDED_AT,
+  openedAt: SPREADSHEET_OPENED_AT,
 };
 
 const PDF_ROW = {
@@ -58,10 +82,22 @@ const SPREADSHEET_ROW = {
   openedAt: SPREADSHEET_OPENED_AT,
 };
 
+const PDF_TAG_ROWS = [
+  { resourceId: PDF_ID, ...WEEK_ONE },
+  { resourceId: PDF_ID, ...MEALS },
+];
+
+const EVERY_RESOURCE: ResourceBrowseSnapshot = {
+  tag: null,
+  search: "",
+  sort: "added",
+  direction: "desc",
+};
+
 describe("PostgresClientResources#add", () => {
-  it("inserts the resource with its file facts spread into columns", async () => {
+  it("inserts the resource with its file facts spread into columns and its tags in her order, in one transaction", async () => {
     // arrange
-    const database = createDatabaseRecordingWrites();
+    const database = createDatabase();
     const resources = new PostgresClientResources(database.client);
 
     // act
@@ -69,52 +105,175 @@ describe("PostgresClientResources#add", () => {
 
     // assert
     expect(database.writes).toEqual([
-      { table: clientResourcesTable, row: PDF_ROW },
+      "begin",
+      { insert: clientResourcesTable, rows: PDF_ROW },
+      {
+        insert: clientResourceTagsTable,
+        rows: [
+          { resourceId: PDF_ID, ...WEEK_ONE, position: 0 },
+          { resourceId: PDF_ID, ...MEALS, position: 1 },
+        ],
+      },
+      "commit",
+    ]);
+  });
+
+  it("inserts no tag rows for a resource without tags", async () => {
+    // arrange
+    const database = createDatabase();
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    await resources.add(ClientResource.reconstitute(SPREADSHEET_SNAPSHOT));
+
+    // assert
+    expect(database.writes).toEqual([
+      "begin",
+      { insert: clientResourcesTable, rows: SPREADSHEET_ROW },
+      "commit",
     ]);
   });
 });
 
-describe("PostgresClientResources#listForClient", () => {
-  it("reads only that client's resources, newest first and by id within one instant", async () => {
+describe("PostgresClientResources#browseForClient", () => {
+  it("rebuilds the listed resources with their tags in her order, beside the tag options and the counts", async () => {
     // arrange
-    const database = createDatabaseAnswering([PDF_ROW, SPREADSHEET_ROW]);
+    const database = createDatabase([
+      [PDF_ROW, SPREADSHEET_ROW],
+      [
+        { tag: "Meals", folded: "meals", count: 1 },
+        { tag: "Week one", folded: "week one", count: 0 },
+      ],
+      [{ searched: 2, total: 3 }],
+      PDF_TAG_ROWS,
+    ]);
     const resources = new PostgresClientResources(database.client);
 
     // act
-    const listed = await resources.listForClient(CLIENT_ID);
+    const browsed = await resources.browseForClient(CLIENT_ID, EVERY_RESOURCE);
 
     // assert
-    expect(listed.map((resource) => resource.toSnapshot())).toEqual([
-      PDF_SNAPSHOT,
-      {
-        id: SPREADSHEET_ID,
-        clientId: CLIENT_ID,
-        title: "Macros",
-        description: "",
-        file: {
-          originalName: "macros.ods",
-          format: "ods",
-          sizeBytes: 9_120,
-          pageCount: null,
-        },
-        addedAt: SPREADSHEET_ADDED_AT,
-        openedAt: SPREADSHEET_OPENED_AT,
-      },
-    ]);
-    expect(database.query).toEqual({
-      filter: eq(clientResourcesTable.clientId, CLIENT_ID),
+    expect({
+      ...browsed,
+      resources: browsed.resources.map((resource) => resource.toSnapshot()),
+    }).toEqual({
+      resources: [PDF_SNAPSHOT, SPREADSHEET_SNAPSHOT],
+      tagOptions: [
+        { tag: MEALS, count: 1 },
+        { tag: WEEK_ONE, count: 0 },
+      ],
+      searched: 2,
+      total: 3,
+    });
+  });
+
+  it("answers no resources and reads no tags when nothing is listed", async () => {
+    // arrange
+    const database = createDatabase([[], [], [{ searched: 0, total: 0 }]]);
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    const browsed = await resources.browseForClient(CLIENT_ID, EVERY_RESOURCE);
+
+    // assert
+    expect(browsed).toEqual({
+      resources: [],
+      tagOptions: [],
+      searched: 0,
+      total: 0,
+    });
+    expect(database.reads).toHaveLength(3);
+  });
+
+  it.each([
+    {
+      name: "the newest first",
+      sort: "added",
+      direction: "desc",
       order: [
         desc(clientResourcesTable.addedAt),
         desc(clientResourcesTable.id),
       ],
+    },
+    {
+      name: "the oldest first",
+      sort: "added",
+      direction: "asc",
+      order: [asc(clientResourcesTable.addedAt), asc(clientResourcesTable.id)],
+    },
+    {
+      name: "by title from A to Z, the newest first within one title",
+      sort: "title",
+      direction: "asc",
+      order: [
+        asc(sql`lower(${clientResourcesTable.title})`),
+        desc(clientResourcesTable.addedAt),
+        desc(clientResourcesTable.id),
+      ],
+    },
+    {
+      name: "by title from Z to A, the newest first within one title",
+      sort: "title",
+      direction: "desc",
+      order: [
+        desc(sql`lower(${clientResourcesTable.title})`),
+        desc(clientResourcesTable.addedAt),
+        desc(clientResourcesTable.id),
+      ],
+    },
+  ] as const)("lists $name", async ({ sort, direction, order }) => {
+    // arrange
+    const database = createDatabase([[], [], [{ searched: 0, total: 0 }]]);
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    await resources.browseForClient(CLIENT_ID, {
+      ...EVERY_RESOURCE,
+      sort,
+      direction,
     });
+
+    // assert
+    expect(database.reads[0]?.order).toEqual(order);
+  });
+});
+
+describe("PostgresClientResources#tagsHeldBy", () => {
+  it("answers each tag the client's resources hold once, in the spelling it was read", async () => {
+    // arrange
+    const database = createDatabase([[MEALS, WEEK_ONE]]);
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    const held = await resources.tagsHeldBy(CLIENT_ID);
+
+    // assert
+    expect(held).toEqual([MEALS, WEEK_ONE]);
+    expect(database.reads[0]?.filter).toEqual(
+      eq(clientResourcesTable.clientId, CLIENT_ID),
+    );
+  });
+});
+
+describe("PostgresClientResources#tagVocabulary", () => {
+  it("answers every tag the coach has used once, across her clients", async () => {
+    // arrange
+    const database = createDatabase([[MEALS, WEEK_ONE]]);
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    const vocabulary = await resources.tagVocabulary();
+
+    // assert
+    expect(vocabulary).toEqual([MEALS, WEEK_ONE]);
+    expect(database.reads[0]?.filter).toBeUndefined();
   });
 });
 
 describe("PostgresClientResources#findById", () => {
-  it("rebuilds the resource from its row", async () => {
+  it("rebuilds the resource from its row and its tags", async () => {
     // arrange
-    const database = createDatabaseAnswering([PDF_ROW]);
+    const database = createDatabase([[PDF_ROW], PDF_TAG_ROWS]);
     const resources = new PostgresClientResources(database.client);
 
     // act
@@ -122,14 +281,14 @@ describe("PostgresClientResources#findById", () => {
 
     // assert
     expect(resource?.toSnapshot()).toEqual(PDF_SNAPSHOT);
-    expect(database.query.filter).toEqual(eq(clientResourcesTable.id, PDF_ID));
+    expect(database.reads[0]?.filter).toEqual(
+      eq(clientResourcesTable.id, PDF_ID),
+    );
   });
 
   it("answers no resource for an id it does not hold", async () => {
     // arrange
-    const resources = new PostgresClientResources(
-      createDatabaseAnswering([]).client,
-    );
+    const resources = new PostgresClientResources(createDatabase([[]]).client);
 
     // act
     const resource = await resources.findById(PDF_ID);
@@ -142,7 +301,7 @@ describe("PostgresClientResources#findById", () => {
 describe("PostgresClientResources#recordOpened", () => {
   it("stamps the moment she opened it only on a resource not opened before", async () => {
     // arrange
-    const database = createDatabaseRecordingUpdates();
+    const database = createDatabase();
     const resources = new PostgresClientResources(database.client);
     const opened = ClientResource.reconstitute(PDF_SNAPSHOT).opened(
       SPREADSHEET_OPENED_AT,
@@ -152,9 +311,9 @@ describe("PostgresClientResources#recordOpened", () => {
     await resources.recordOpened(opened);
 
     // assert
-    expect(database.updates).toEqual([
+    expect(database.writes).toEqual([
       {
-        table: clientResourcesTable,
+        update: clientResourcesTable,
         values: { openedAt: SPREADSHEET_OPENED_AT },
         filter: and(
           eq(clientResourcesTable.id, PDF_ID),
@@ -166,14 +325,15 @@ describe("PostgresClientResources#recordOpened", () => {
 });
 
 describe("PostgresClientResources#saveDetails", () => {
-  it("writes only the title and description of that resource", async () => {
+  it("writes the title and description of that resource and replaces its tags, in one transaction", async () => {
     // arrange
-    const database = createDatabaseRecordingUpdates();
+    const database = createDatabase();
     const resources = new PostgresClientResources(database.client);
     const changed = ClientResource.reconstitute({
       ...PDF_SNAPSHOT,
       title: "Week two plan",
       description: "Swap the oats",
+      tags: [MEALS],
       openedAt: SPREADSHEET_OPENED_AT,
     });
 
@@ -181,12 +341,44 @@ describe("PostgresClientResources#saveDetails", () => {
     await resources.saveDetails(changed);
 
     // assert
-    expect(database.updates).toEqual([
+    expect(database.writes).toEqual([
+      "begin",
       {
-        table: clientResourcesTable,
+        update: clientResourcesTable,
         values: { title: "Week two plan", description: "Swap the oats" },
         filter: eq(clientResourcesTable.id, PDF_ID),
       },
+      {
+        delete: clientResourceTagsTable,
+        filter: eq(clientResourceTagsTable.resourceId, PDF_ID),
+      },
+      {
+        insert: clientResourceTagsTable,
+        rows: [{ resourceId: PDF_ID, ...MEALS, position: 0 }],
+      },
+      "commit",
+    ]);
+  });
+
+  it("removes every tag of a resource saved without tags", async () => {
+    // arrange
+    const database = createDatabase();
+    const resources = new PostgresClientResources(database.client);
+
+    // act
+    await resources.saveDetails(
+      ClientResource.reconstitute({ ...PDF_SNAPSHOT, tags: [] }),
+    );
+
+    // assert
+    expect(database.writes).toEqual([
+      "begin",
+      expect.objectContaining({ update: clientResourcesTable }),
+      {
+        delete: clientResourceTagsTable,
+        filter: eq(clientResourceTagsTable.resourceId, PDF_ID),
+      },
+      "commit",
     ]);
   });
 });
@@ -194,16 +386,16 @@ describe("PostgresClientResources#saveDetails", () => {
 describe("PostgresClientResources#remove", () => {
   it("deletes that resource's row only", async () => {
     // arrange
-    const database = createDatabaseRecordingDeletes();
+    const database = createDatabase();
     const resources = new PostgresClientResources(database.client);
 
     // act
     await resources.remove(PDF_ID);
 
     // assert
-    expect(database.deletes).toEqual([
+    expect(database.writes).toEqual([
       {
-        table: clientResourcesTable,
+        delete: clientResourcesTable,
         filter: eq(clientResourcesTable.id, PDF_ID),
       },
     ]);
@@ -213,7 +405,7 @@ describe("PostgresClientResources#remove", () => {
 describe("PostgresClientResources#countUnopenedForClient", () => {
   it("counts that client's resources she has not opened", async () => {
     // arrange
-    const database = createDatabaseCounting(2);
+    const database = createDatabase([[{ unopened: 2 }]]);
     const resources = new PostgresClientResources(database.client);
 
     // act
@@ -221,7 +413,7 @@ describe("PostgresClientResources#countUnopenedForClient", () => {
 
     // assert
     expect(unopened).toBe(2);
-    expect(database.query).toEqual({
+    expect(database.reads[0]).toEqual({
       selection: { unopened: count() },
       filter: and(
         eq(clientResourcesTable.clientId, CLIENT_ID),
@@ -231,88 +423,76 @@ describe("PostgresClientResources#countUnopenedForClient", () => {
   });
 });
 
-function createDatabaseCounting(unopened: number) {
-  const query: { selection?: unknown; filter?: unknown } = {};
-  const client = {
-    select: (selection: unknown) => {
-      query.selection = selection;
+type RecordedRead = {
+  selection?: unknown;
+  filter?: unknown;
+  order?: unknown[];
+};
 
-      return {
-        from: () => ({
-          where: (filter: unknown) => {
-            query.filter = filter;
+function createDatabase(answers: readonly (readonly unknown[])[] = []) {
+  const pending = [...answers];
+  const reads: RecordedRead[] = [];
+  const writes: unknown[] = [];
 
-            return Promise.resolve([{ unopened }]);
-          },
-        }),
-      };
-    },
-  } as unknown as DatabaseClient;
+  const read = (selection?: unknown) => {
+    const recorded: RecordedRead = selection ? { selection } : {};
+    const rows = pending.shift() ?? [];
+    const chain = {
+      from: () => chain,
+      innerJoin: () => chain,
+      where: (filter: unknown) => {
+        recorded.filter = filter;
+        return chain;
+      },
+      groupBy: () => chain,
+      orderBy: (...order: unknown[]) => {
+        recorded.order = order;
+        return chain;
+      },
+      limit: () => chain,
+      then: (
+        onFulfilled: (value: readonly unknown[]) => unknown,
+        onRejected?: (reason: unknown) => unknown,
+      ) => Promise.resolve(rows).then(onFulfilled, onRejected),
+    };
 
-  return { client, query };
-}
+    reads.push(recorded);
 
-function createDatabaseRecordingUpdates() {
-  const updates: unknown[] = [];
-  const client = {
+    return chain;
+  };
+
+  const writer = {
+    insert: (table: unknown) => ({
+      values: async (rows: unknown) => {
+        writes.push({ insert: table, rows });
+      },
+    }),
     update: (table: unknown) => ({
       set: (values: unknown) => ({
         where: async (filter: unknown) => {
-          updates.push({ table, values, filter });
+          writes.push({ update: table, values, filter });
         },
       }),
     }),
-  } as unknown as DatabaseClient;
-
-  return { client, updates };
-}
-
-function createDatabaseRecordingDeletes() {
-  const deletes: unknown[] = [];
-  const client = {
     delete: (table: unknown) => ({
       where: async (filter: unknown) => {
-        deletes.push({ table, filter });
+        writes.push({ delete: table, filter });
       },
     }),
-  } as unknown as DatabaseClient;
+  };
 
-  return { client, deletes };
-}
-
-function createDatabaseAnswering(rows: readonly unknown[]) {
-  const query: { filter?: unknown; order?: unknown[] } = {};
   const client = {
-    select: () => ({
-      from: () => ({
-        where: (filter: unknown) => {
-          query.filter = filter;
+    ...writer,
+    select: read,
+    selectDistinctOn: (_on: unknown, selection: unknown) => read(selection),
+    transaction: async (work: (transaction: typeof writer) => unknown) => {
+      writes.push("begin");
+      const result = await work(writer);
+      writes.push("commit");
 
-          return {
-            orderBy: (...order: unknown[]) => {
-              query.order = order;
-
-              return Promise.resolve(rows);
-            },
-            limit: () => Promise.resolve(rows),
-          };
-        },
-      }),
-    }),
+      return result;
+    },
   } as unknown as DatabaseClient;
 
-  return { client, query };
-}
-
-function createDatabaseRecordingWrites() {
-  const writes: unknown[] = [];
-  const client = {
-    insert: (table: unknown) => ({
-      values: async (row: unknown) => {
-        writes.push({ table, row });
-      },
-    }),
-  } as unknown as DatabaseClient;
-
-  return { client, writes };
+  return { client, reads, writes };
 }

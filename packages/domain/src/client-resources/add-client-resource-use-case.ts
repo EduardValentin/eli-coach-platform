@@ -16,8 +16,8 @@ import type { ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
 import {
   ResourceDetails,
+  type ResourceDetailsInput,
   type ResourceDetailsProblems,
-  type ResourceDetailsSnapshot,
 } from "./resource-details";
 import type {
   ReadableResourceDocument,
@@ -37,7 +37,7 @@ type ReceivedResourceFile = { originalName: string; bytes: Uint8Array };
 type AddClientResourceCommand = {
   requester: ResourceRequester;
   clientId: string;
-  details: ResourceDetailsSnapshot;
+  details: ResourceDetailsInput;
   file: ReceivedResourceFile;
 };
 
@@ -139,10 +139,11 @@ export class AddClientResourceUseCase {
 
     if (kept.status === "refused") return this.refuse(command, kept.refusal);
 
+    const vocabulary = await this.options.resources.tagVocabulary();
     const resource = ClientResource.added({
       id: owner.resourceId,
       clientId: owner.clientId,
-      details,
+      details: details.withStoredSpellings(vocabulary),
       file: ResourceFile.of({
         originalName,
         format: judgement.format,

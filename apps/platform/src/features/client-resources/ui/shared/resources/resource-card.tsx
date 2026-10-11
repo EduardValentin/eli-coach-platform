@@ -10,6 +10,34 @@ import { resourceThumbnailUrl } from "./resource-urls";
 
 export type ResourcePerspective = "coach" | "client";
 
+const SHOWN_TAGS = 2;
+
+function TagPreview({ tags, id }: { tags: readonly string[]; id: string }) {
+  const hidden = tags.length - SHOWN_TAGS;
+
+  return (
+    <span
+      className="flex min-w-0 flex-wrap items-center gap-1 self-start px-0.5"
+      data-parity="resource-tags"
+      id={id}
+    >
+      {tags.slice(0, SHOWN_TAGS).map((tag) => (
+        <Badge className="max-w-full" key={tag} tone="brand-secondary">
+          <span className="truncate">{tag}</span>
+        </Badge>
+      ))}
+      {hidden > 0 && (
+        <span
+          className="text-sm text-text-secondary"
+          data-parity="resource-more-tags"
+        >
+          +{hidden}
+        </span>
+      )}
+    </span>
+  );
+}
+
 type ResourceCardProps = {
   resource: ClientResourceView;
   perspective: ResourcePerspective;
@@ -27,8 +55,10 @@ export function ResourceCard({
 }: ResourceCardProps) {
   const titleId = useId();
   const metaId = useId();
-  const { file } = resource;
+  const tagsId = useId();
+  const { file, tags } = resource;
   const showsNew = perspective === "client" && unopened;
+  const hasTags = tags.length > 0;
 
   return (
     <li
@@ -36,7 +66,7 @@ export function ResourceCard({
       data-parity="resource-card"
     >
       <button
-        aria-describedby={metaId}
+        aria-describedby={hasTags ? `${metaId} ${tagsId}` : metaId}
         aria-labelledby={titleId}
         className={cn(
           cardVariants({ variant: "card" }),
@@ -91,6 +121,7 @@ export function ResourceCard({
         >
           {resource.title}
         </span>
+        {hasTags && <TagPreview id={tagsId} tags={tags} />}
       </button>
       {menu !== undefined && (
         <div

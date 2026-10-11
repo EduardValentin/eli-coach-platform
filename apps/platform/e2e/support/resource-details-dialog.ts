@@ -1,11 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 
 import type { ResourceDetails } from "./resource-requests";
+import { TagField } from "./tag-field";
 
 const DIALOG_NAME = "Edit details";
 
 export class ResourceDetailsDialog {
-  constructor(private readonly page: Page) {}
+  readonly tags: TagField;
+
+  constructor(private readonly page: Page) {
+    this.tags = new TagField(page, this.dialog);
+  }
 
   private get dialog() {
     return this.page.getByRole("dialog", { name: DIALOG_NAME, exact: true });

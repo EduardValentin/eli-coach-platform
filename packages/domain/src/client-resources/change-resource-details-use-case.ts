@@ -8,14 +8,14 @@ import type { ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
 import {
   ResourceDetails,
+  type ResourceDetailsInput,
   type ResourceDetailsProblems,
-  type ResourceDetailsSnapshot,
 } from "./resource-details";
 
 type ChangeResourceDetailsCommand = {
   requester: ResourceRequester;
   resourceId: string;
-  details: ResourceDetailsSnapshot;
+  details: ResourceDetailsInput;
 };
 
 export type ChangeResourceDetailsResult =
@@ -53,19 +53,26 @@ export class ChangeResourceDetailsUseCase {
       return { status: "invalid-details", problems: details.problems };
     }
 
-    return this.save(resource.withDetails(details.details));
+    return this.save(resource, details.details);
   }
 
   private async save(
-    changed: ClientResource,
+    resource: ClientResource,
+    details: ResourceDetails,
   ): Promise<ChangeResourceDetailsResult> {
+    const { resources } = this.options;
+
     try {
-      await this.options.resources.saveDetails(changed);
+      const changed = resource.withDetails(
+        details.withStoredSpellings(await resources.tagVocabulary()),
+      );
+
+      await resources.saveDetails(changed);
 
       return { status: "changed", resource: changed };
     } catch (error) {
       this.options.incidents.resourceChangeFailed({
-        ...changed.storageOwner(),
+        ...resource.storageOwner(),
         error,
       });
 

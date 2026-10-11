@@ -48,6 +48,10 @@ export class ClientResourcesPage {
     await this.cards.expectCard(facts);
   }
 
+  async expectMetaRowOnOneLine(title: string): Promise<void> {
+    await this.cards.expectMetaRowOnOneLine(title);
+  }
+
   async expectThumbnail(title: string): Promise<void> {
     await this.cards.expectThumbnail(title);
   }

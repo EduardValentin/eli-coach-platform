@@ -29,6 +29,7 @@ type TagInputProps = {
   onChange: (tags: string[]) => void;
   vocabulary: readonly string[];
   placeholder?: string;
+  maxLength?: number;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean;
 };
@@ -72,6 +73,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
       onChange,
       vocabulary,
       placeholder,
+      maxLength,
       'aria-describedby': describedBy,
       'aria-invalid': invalid,
     },
@@ -179,8 +181,10 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
               { 'border-destructive': invalid === true },
             )}
             data-field-frame=""
+            data-parity="tag-input-frame"
             onMouseDown={focusEntry}
             ref={frame}
+            role="presentation"
           >
             {value.length > 0 && (
               <ul aria-label="Chosen tags" className="contents">
@@ -210,6 +214,7 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
               data-field-entry=""
               enterKeyHint="enter"
               id={id}
+              maxLength={maxLength}
               onBlur={() => {
                 commitText();
                 setExpanded(false);
@@ -235,9 +240,9 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
-          <ul aria-label="Tag suggestions" id={listboxId} role="listbox">
+          <div aria-label="Tag suggestions" id={listboxId} role="listbox">
             {options.map((option, index) => (
-              <li
+              <div
                 aria-selected={index === activeIndex}
                 className={cn(
                   'flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm text-text-primary select-none',
@@ -245,10 +250,13 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
                 )}
                 id={`${optionIdPrefix}-${index}`}
                 key={`${option.kind}-${option.tag}`}
-                onClick={() => choose(option.tag)}
-                onMouseDown={(event) => event.preventDefault()}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  choose(option.tag);
+                }}
                 onMouseMove={() => setActiveIndex(index)}
                 role="option"
+                tabIndex={-1}
               >
                 {option.kind === 'create' ? (
                   <>
@@ -258,9 +266,9 @@ export const TagInput = forwardRef<HTMLInputElement, TagInputProps>(
                 ) : (
                   <span className="truncate">{option.tag}</span>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </PopoverContent>
       </Popover>
     );

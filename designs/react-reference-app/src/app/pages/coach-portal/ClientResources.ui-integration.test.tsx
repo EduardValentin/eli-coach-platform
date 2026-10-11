@@ -1,7 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DevToggle } from '../../components/DevToggle';
@@ -70,6 +70,29 @@ function renderPageTree(url: string, beside: ReactNode) {
 
 function renderPage(devParams = '', clientId = 'c1') {
   renderPageTree(`/coach/clients/${clientId}/resources?session=coach${devParams}`, null);
+}
+
+function LocationProbe() {
+  const { search } = useLocation();
+
+  return <p data-testid="location-probe">{search}</p>;
+}
+
+function renderPageAt(search: string) {
+  renderPageTree(`/coach/clients/c1/resources${search}`, <LocationProbe />);
+}
+
+function currentAddress(): string {
+  return screen.getByTestId('location-probe').textContent ?? '';
+}
+
+async function chooseSort(label: string) {
+  await userEvent.click(screen.getByRole('combobox', { name: 'Sort by' }));
+  await userEvent.click(await screen.findByRole('option', { name: label }));
+}
+
+function optionNames(): string[] {
+  return screen.getAllByRole('option').map((option) => option.textContent ?? '');
 }
 
 function renderPageBesideDevToggle(devParams: string) {
@@ -179,15 +202,149 @@ describe('coach resources page', () => {
     renderPage();
     await waitForResources();
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'GLUTE');
+    await waitFor(() => expect(shownTitles()).toHaveLength(1));
     const narrowed = shownTitles();
 
     // act
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'zzz');
-    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Clear filters' }));
 
     // assert
     expect(narrowed).toEqual(['Glute activation warm-up']);
     expect(shownTitles()).toHaveLength(6);
+  });
+
+  it('writes the tag and the sort to the address at once, leaving the defaults out', async () => {
+    // arrange
+    renderPageAt('?session=coach');
+    await waitForResources();
+    await chooseTag('Training');
+    await chooseSort('Title');
+    const titleAscending = currentAddress();
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'A to Z' }));
+
+    // assert
+    expect(titleAscending).toBe('?session=coach&tag=Training&sort=title');
+    expect(currentAddress()).toBe('?session=coach&tag=Training&sort=title&dir=desc');
+    expect(shownTitles()).toEqual(['Hip thrust form checklist', 'Glute activation warm-up']);
+  });
+
+  it('writes the search to the address once she pauses typing', async () => {
+    // arrange
+    renderPageAt('?session=coach');
+    await waitForResources();
+    const search = screen.getByRole('searchbox', { name: 'Search resources' });
+
+    // act
+    await userEvent.type(search, 'glute');
+    const whileTyping = currentAddress();
+
+    // assert
+    expect(search).toHaveValue('glute');
+    expect(whileTyping).toBe('?session=coach');
+    await waitFor(() => expect(currentAddress()).toBe('?session=coach&q=glute'));
+    expect(shownTitles()).toEqual(['Glute activation warm-up']);
+  });
+
+  it('keeps the tag, search and sort when the page opens again at the same address', async () => {
+    // arrange
+    renderPageAt('?session=coach');
+    await waitForResources();
+    await chooseTag('Nutrition');
+    await chooseSort('Title');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'te');
+    await waitFor(() => expect(currentAddress()).toContain('q=te'));
+    const address = currentAddress();
+    cleanup();
+
+    // act
+    renderPageAt(address);
+    await waitForResources();
+
+    // assert
+    expect(address).toBe('?session=coach&tag=Nutrition&sort=title&q=te');
+    expect(shownTitles()).toEqual(['Luteal phase meal ideas', 'Plate portions guide']);
+    expect(screen.getByRole('searchbox', { name: 'Search resources' })).toHaveValue('te');
+    expect(screen.getByRole('combobox', { name: 'Tag' })).toHaveTextContent('Nutrition');
+    expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveTextContent('Title: a to z');
+  });
+
+  it('counts “All tags” and each tag over the resources the search matches', async () => {
+    // arrange
+    renderPageAt('?session=coach');
+    await waitForResources();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'meal');
+    await waitFor(() => expect(currentAddress()).toContain('q=meal'));
+
+    // act
+    await userEvent.click(screen.getByRole('combobox', { name: 'Tag' }));
+
+    // assert
+    expect(optionNames()).toEqual([
+      'All tags 1',
+      'Cycle 1',
+      'Form 0',
+      'Glutes 0',
+      'Habits 0',
+      'Nutrition 1',
+      'Recovery 0',
+      'Sleep 0',
+      'Tracking 0',
+      'Training 0',
+    ]);
+  });
+
+  it('clears the tag and the search but keeps the sort', async () => {
+    // arrange
+    renderPageAt('?session=coach&tag=Training&q=zzz&sort=title&dir=desc');
+    const clear = await screen.findByRole('button', { name: 'Clear filters' }, SERVICE_TIMEOUT);
+
+    // act
+    await userEvent.click(clear);
+
+    // assert
+    expect(currentAddress()).toBe('?session=coach&sort=title&dir=desc');
+    expect(screen.getByRole('searchbox', { name: 'Search resources' })).toHaveValue('');
+    expect(shownTitles()).toEqual([
+      'Weekly macro tracker',
+      'Sleep and recovery basics',
+      'Plate portions guide',
+      'Luteal phase meal ideas',
+      'Hip thrust form checklist',
+      'Glute activation warm-up',
+    ]);
+  });
+
+  it('reads an unknown sort or direction in the address as newest first', async () => {
+    // arrange
+    renderPageAt('?session=coach&sort=size&dir=sideways');
+
+    // act
+    await waitForResources();
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveTextContent(
+      'Date added: newest first',
+    );
+    expect(shownTitles()[0]).toBe('Plate portions guide');
+  });
+
+  it('stops a tag at 30 characters in the add dialog', async () => {
+    // arrange
+    renderPage();
+    await waitForResources();
+    await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
+    await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
+    const tags = within(dialog).getByRole('combobox', { name: /^Tags/ });
+
+    // act
+    await userEvent.type(tags, 'm'.repeat(35));
+
+    // assert
+    expect(tags).toHaveValue('m'.repeat(30));
   });
 
   it('adds a resource whose tags resolve to the coach’s existing tags', async () => {
