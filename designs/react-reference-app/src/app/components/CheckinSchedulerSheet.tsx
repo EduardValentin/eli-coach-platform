@@ -84,6 +84,7 @@ function StepButton({
 }) {
   return (
     <Button
+      data-parity="checkin-picker-step"
       onClick={onSubmit}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
@@ -191,7 +192,7 @@ function RequestSheetContent({
       />
       <SheetDialogBody>
         {problem && (
-          <Alert className="mb-6">
+          <Alert data-parity="checkin-picker-problem" className="mb-6">
             <p>{problem}</p>
           </Alert>
         )}

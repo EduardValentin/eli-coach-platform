@@ -191,12 +191,6 @@ export function CoachCheckins() {
     );
     if (c.newTimeNote) ctxSendMessage(c.clientId, c.newTimeNote, "coach");
     toast.success("New time proposed");
-    addNotification({
-      title: "Reschedule Proposed",
-      message: `Coach proposed rescheduling ${c.clientName}'s check-in to ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}.`,
-      link: "/portal/messages",
-      mvpLink: "/portal/checkins",
-    });
   };
 
   const waitingActions = (c: CheckIn): CheckinRowActions => ({

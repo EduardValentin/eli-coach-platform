@@ -162,7 +162,7 @@ export function CheckInPicker({
         />
         <SheetDialogBody>
           {sending.problem && (
-            <Alert className="mb-6">
+            <Alert className="mb-6" data-parity="checkin-picker-problem">
               <p>{problemCopyOf(sending.problem, wording)}</p>
             </Alert>
           )}
@@ -185,6 +185,7 @@ export function CheckInPicker({
           <Button
             aria-busy={sending.submitting || undefined}
             corner="control"
+            data-parity="checkin-picker-step"
             disabled={
               openTimes.listing.status !== "ready" ||
               !selectedSlot ||

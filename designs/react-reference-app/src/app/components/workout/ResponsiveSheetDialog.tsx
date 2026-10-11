@@ -140,7 +140,10 @@ export function SheetDialogFooter({
   children: ReactNode;
 }) {
   return (
-    <div className={cn('shrink-0 border-t bg-surface-base px-5 py-3 md:px-8 md:py-4', RULE_COLOR_CLASS[rule])}>
+    <div
+      className={cn('shrink-0 border-t bg-surface-base px-5 py-3 md:px-8 md:py-4', RULE_COLOR_CLASS[rule])}
+      data-parity="sheet-footer"
+    >
       {children}
     </div>
   );

@@ -91,7 +91,10 @@ export function SlotPicker(props: SlotPickerProps) {
             </button>
           </div>
 
-          <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-1">
+          <div
+            className="flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-1"
+            data-parity="slot-picker-times"
+          >
             {selectedDay.slots.map((slot) => (
               <TimeSlotButton
                 isSelected={selectedSlot === slot.startsAt}

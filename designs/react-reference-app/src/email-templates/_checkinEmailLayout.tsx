@@ -59,7 +59,7 @@ export function CheckinEmailLayout({
               <EmailHeading level="h1" style={heroHeadingStyle}>
                 {heading}
               </EmailHeading>
-              <div style={heroAccentRuleStyle} />
+              <div data-parity="email-hero-rule" style={heroAccentRuleStyle} />
               <EmailText style={heroSubheadStyle}>{subhead}</EmailText>
             </EmailSection>
 

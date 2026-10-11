@@ -101,7 +101,10 @@ function AppointmentTimeRow({
       <DateTimeLabel size="sm" when={when} />
       {rescheduledFrom && <RescheduledMarker from={rescheduledFrom} />}
       {label && (
-        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+        <span
+          data-parity="appointment-when-label"
+          className="basis-full text-sm text-text-secondary sm:basis-auto"
+        >
           <span className="hidden sm:inline">· </span>
           {label}
         </span>
