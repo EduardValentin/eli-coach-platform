@@ -28,6 +28,7 @@ export type ProposeCheckInTimeResult =
   | { status: "invalid_time_zone" }
   | { status: "note_too_long" }
   | { status: "time_taken" }
+  | { status: "changed_meanwhile" }
   | { status: CheckInProposalRefusal };
 
 type OpenStartCheck = {
@@ -99,13 +100,13 @@ export class ProposeCheckInTimeUseCase {
       return { status: "unknown" };
     }
 
-    if (
-      !(await this.isOpenStart({
-        startsAt: command.startsAt,
-        coachingEndsAt: client.coachingEndsAt,
-        at,
-      }))
-    ) {
+    const open = await this.isOpenStart({
+      startsAt: command.startsAt,
+      coachingEndsAt: client.coachingEndsAt,
+      at,
+    });
+
+    if (!open) {
       return { status: "time_taken" };
     }
 

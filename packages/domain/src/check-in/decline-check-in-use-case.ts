@@ -13,7 +13,7 @@ export type DeclineCheckInResult =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInAnswerRefusal };
+  | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type DeclineCheckInUseCaseOptions = {
   checkIns: CheckIns;
@@ -35,7 +35,7 @@ export class DeclineCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "cancelled",
-      from: "pending",
+      expectedStatus: "pending",
       notificationOf: (checkIn) =>
         checkIn.hasPendingNewTime() ? "newTimeDeclined" : "declined",
     });

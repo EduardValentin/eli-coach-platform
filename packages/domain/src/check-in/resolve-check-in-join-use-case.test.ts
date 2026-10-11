@@ -66,7 +66,7 @@ function createResolveJoin(options?: {
     listAll: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
-    cancelFrom: vi.fn(),
+    cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi

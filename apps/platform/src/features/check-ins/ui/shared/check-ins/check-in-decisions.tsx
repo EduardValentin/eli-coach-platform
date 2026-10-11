@@ -21,7 +21,7 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
-import { hasPendingNewTime, type ListedCheckIn } from "./check-in-listing";
+import type { ListedCheckIn } from "./check-in-listing";
 
 type CheckInDecisionKind = "approve" | "cancel" | "decline" | "withdraw";
 
@@ -195,7 +195,7 @@ export function CheckInAnswers({
           successMessage: approvedMessage,
         }}
         decisions={decisions}
-        label={hasPendingNewTime(checkIn) ? "Accept" : "Approve"}
+        label={checkIn.newTimeWaits ? "Accept" : "Approve"}
         size={size}
       />
     </>

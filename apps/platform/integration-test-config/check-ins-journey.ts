@@ -1,5 +1,7 @@
+import type { CheckInNotification } from "@eli-coach-platform/domain/check-in";
 import { z } from "zod";
 
+import type { SentEmail } from "./api-integration-test-suite";
 import {
   COACH_SESSION,
   type AccountSession,
@@ -22,7 +24,12 @@ export type CheckInSchedule = {
   note?: string | null;
 };
 
-export type CheckInAnswer = { timeZone?: string };
+export type CheckInActingZone = { timeZone?: string };
+
+export type CheckInEmailKey = {
+  moves: number;
+  notification: CheckInNotification;
+};
 
 export type CheckInNewTime = {
   startsAt: string;
@@ -148,25 +155,25 @@ export class CheckInsJourney {
   withdraw(
     requester: Requester,
     checkInId: string,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/withdrawal`, answer);
+    return this.decide(requester, `${checkInId}/withdrawal`, zone);
   }
 
   approve(
     checkInId: string,
     requester: Requester = COACH_SESSION,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/approval`, answer);
+    return this.decide(requester, `${checkInId}/approval`, zone);
   }
 
   decline(
     checkInId: string,
     requester: Requester = COACH_SESSION,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/decline`, answer);
+    return this.decide(requester, `${checkInId}/decline`, zone);
   }
 
   proposeNewTime(
@@ -198,9 +205,9 @@ export class CheckInsJourney {
   cancel(
     requester: Requester,
     checkInId: string,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/cancellation`, answer);
+    return this.decide(requester, `${checkInId}/cancellation`, zone);
   }
 
   async approved(checkInId: string): Promise<void> {
@@ -258,6 +265,23 @@ export class CheckInsJourney {
     return row;
   }
 
+  async sentEmailsFor(
+    checkInId: string,
+    key?: CheckInEmailKey,
+  ): Promise<SentEmail[]> {
+    const emails = await this.rig.suite.sentEmails();
+    const keyPrefix = `check-in:${checkInId}:`;
+    const isWanted = key
+      ? (idempotencyKey: string) =>
+          idempotencyKey === `${keyPrefix}${key.moves}:${key.notification}`
+      : (idempotencyKey: string) => idempotencyKey.startsWith(keyPrefix);
+
+    return emails.filter(
+      ({ idempotencyKey }) =>
+        idempotencyKey !== null && isWanted(idempotencyKey),
+    );
+  }
+
   heldCheckInHours(): Promise<HeldCheckInHour[]> {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
       sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
@@ -273,14 +297,14 @@ export class CheckInsJourney {
     return openTimesSchema.parse(await response.json()).times;
   }
 
-  private answer(
+  private decide(
     requester: Requester,
     target: string,
-    answer: CheckInAnswer | undefined,
+    zone: CheckInActingZone | undefined,
   ): Promise<Response> {
     return this.send(requester, `${CHECK_INS_API}/${target}`, {
-      ...(answer && {
-        body: JSON.stringify(answer),
+      ...(zone && {
+        body: JSON.stringify(zone),
         headers: { "Content-Type": "application/json" },
       }),
       method: "POST",

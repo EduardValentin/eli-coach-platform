@@ -242,6 +242,11 @@ describe("SharedCheckInsController proposeNewTime", () => {
       error: "moves_exhausted",
     },
     { result: { status: "not_pending" }, status: 409, error: "not_pending" },
+    {
+      result: { status: "changed_meanwhile" },
+      status: 409,
+      error: "not_pending",
+    },
     { result: { status: "expired" }, status: 409, error: "not_pending" },
     {
       result: { status: "not_your_turn" },
@@ -364,7 +369,11 @@ describe("SharedCheckInsController cancel", () => {
     { result: { status: "not_approved" }, status: 409, error: "not_pending" },
     { result: { status: "expired" }, status: 409, error: "not_pending" },
     { result: { status: "not_allowed" }, status: 409, error: "not_pending" },
-    { result: { status: "not_pending" }, status: 409, error: "not_pending" },
+    {
+      result: { status: "changed_meanwhile" },
+      status: 409,
+      error: "not_pending",
+    },
     { result: { status: "ended" }, status: 409, error: "ended" },
   ])(
     "answers $status $error when the cancellation is refused as $result.status",
@@ -454,6 +463,11 @@ describe("SharedCheckInsController approve", () => {
 
   it.each<{ result: ApproveCheckInResult; status: number; error: string }>([
     { result: { status: "not_pending" }, status: 409, error: "not_pending" },
+    {
+      result: { status: "changed_meanwhile" },
+      status: 409,
+      error: "not_pending",
+    },
     { result: { status: "expired" }, status: 409, error: "not_pending" },
     { result: { status: "not_your_turn" }, status: 409, error: "not_pending" },
     { result: { status: "ended" }, status: 409, error: "ended" },

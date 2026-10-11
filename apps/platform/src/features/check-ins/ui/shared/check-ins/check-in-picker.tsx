@@ -56,7 +56,7 @@ export type OpenTimesQuery = {
 
 type CheckInPickerProps = {
   onOpenChange: (open: boolean) => void;
-  onRefused?: () => void;
+  onRefusal?: () => void;
   onSubmitted: (startsAt: string) => void;
   open: boolean;
   openTimesQuery?: OpenTimesQuery;
@@ -82,7 +82,7 @@ const NO_TIMES: readonly string[] = [];
 
 export function CheckInPicker({
   onOpenChange,
-  onRefused,
+  onRefusal,
   onSubmitted,
   open,
   openTimesQuery,
@@ -105,7 +105,7 @@ export function CheckInPicker({
         setSelectedSlot(null);
         openTimes.load();
       }
-      onRefused?.();
+      onRefusal?.();
     },
     submission,
   });

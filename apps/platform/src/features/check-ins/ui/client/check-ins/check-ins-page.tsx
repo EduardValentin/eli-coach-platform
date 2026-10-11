@@ -38,12 +38,11 @@ import {
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
-import { useCheckInMenu } from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
 import {
-  CancelCheckInDialog,
-  dayAndTimeOf,
-} from "~/features/check-ins/ui/shared/check-ins/cancel-check-in-dialog";
-import { ProposeCheckInTimeDialog } from "~/features/check-ins/ui/shared/check-ins/propose-check-in-time-dialog";
+  CheckInMenuDialogs,
+  useCheckInMenu,
+  type CheckInMenuWording,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
 
 import { CheckInRequestDialog } from "./check-in-request-dialog";
 
@@ -158,33 +157,12 @@ export default function ClientCheckInsRoute() {
         timeZone={timeZone}
       />
 
-      {menu.proposal && (
-        <ProposeCheckInTimeDialog
-          checkIn={menu.proposal.checkIn}
-          key={menu.proposal.opening}
-          onOpenChange={menu.onDialogOpenChange}
-          open={menu.proposal.open}
-          proposer={{
-            clientTimeZone: timeZone,
-            noteLabel: "Add a note for your coach (optional)",
-          }}
-          timeZone={timeZone}
-        />
-      )}
-
-      {menu.cancellation && (
-        <CancelCheckInDialog
-          cancellation={{
-            checkInId: menu.cancellation.checkIn.id,
-            description: `${dayAndTimeOf(menu.cancellation.checkIn, timeZone)}.`,
-            successMessage: "Check-in cancelled",
-          }}
-          decisions={decisions}
-          key={menu.cancellation.opening}
-          onOpenChange={menu.onDialogOpenChange}
-          open={menu.cancellation.open}
-        />
-      )}
+      <CheckInMenuDialogs
+        decisions={decisions}
+        menu={menu}
+        timeZone={timeZone}
+        wording={menuWordingIn(timeZone)}
+      />
 
       <CheckInDecisionOutcomes decisions={decisions} />
 
@@ -193,6 +171,19 @@ export default function ClientCheckInsRoute() {
       )}
     </div>
   );
+}
+
+function menuWordingIn(timeZone: string): CheckInMenuWording<ListedCheckIn> {
+  return {
+    cancellationOf: (_checkIn, dayAndTime) => ({
+      description: `${dayAndTime}.`,
+      successMessage: "Check-in cancelled",
+    }),
+    proposerOf: () => ({
+      clientTimeZone: timeZone,
+      noteLabel: "Add a note for your coach (optional)",
+    }),
+  };
 }
 
 function clientActionsFor(

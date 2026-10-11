@@ -10,12 +10,7 @@ import {
 import type { ReactNode } from "react";
 
 import {
-  formatClockTime,
-  formatShortDay,
-} from "~/features/assessment-calls/public/call-moment";
-
-import {
-  hasPendingNewTime,
+  checkInMomentOf,
   type CheckInParty,
   type ListedCheckIn,
 } from "./check-in-listing";
@@ -48,12 +43,12 @@ export function CheckInRow({
   timeZone,
   viewer,
 }: CheckInRowProps) {
-  const when = appointmentTimeOf(new Date(checkIn.startsAt), timeZone);
-  const newTimeWaits = hasPendingNewTime(checkIn);
+  const when = checkInMomentOf(checkIn.startsAt, timeZone);
+  const { newTimeWaits } = checkIn;
   const earlierWhen =
     checkIn.earlierStartsAt === null
       ? undefined
-      : appointmentTimeOf(new Date(checkIn.earlierStartsAt), timeZone);
+      : checkInMomentOf(checkIn.earlierStartsAt, timeZone);
   const isOver = checkIn.status === "passed" || checkIn.status === "cancelled";
   const shownNote = noteOf(checkIn);
   const hasActions = actions !== undefined || menu.length > 0;
@@ -96,15 +91,8 @@ export function CheckInRow({
   );
 }
 
-function appointmentTimeOf(instant: Date, timeZone: string) {
-  return {
-    date: formatShortDay(instant, timeZone),
-    time: formatClockTime(instant, timeZone),
-  };
-}
-
 function moveLabelOf(checkIn: ListedCheckIn, viewer: CheckInViewer): string {
-  return hasPendingNewTime(checkIn)
+  return checkIn.newTimeWaits
     ? `New time from ${nameFor(checkIn.proposedBy, viewer)}`
     : `Requested by ${nameFor(checkIn.initiatedBy, viewer)}`;
 }

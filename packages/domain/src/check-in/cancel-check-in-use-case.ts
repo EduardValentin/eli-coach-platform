@@ -13,7 +13,7 @@ export type CancelCheckInResult =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInCancellationRefusal | "not_pending" };
+  | { status: CheckInCancellationRefusal | "changed_meanwhile" };
 
 type CancelCheckInUseCaseOptions = {
   checkIns: CheckIns;
@@ -35,7 +35,7 @@ export class CancelCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.cancellationRefusalFor(turn),
       outcome: "cancelled",
-      from: "approved",
+      expectedStatus: "approved",
       notificationOf: () => "cancelled",
     });
 

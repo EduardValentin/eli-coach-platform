@@ -48,6 +48,7 @@ export {
 } from "./list-coach-check-ins-use-case";
 export {
   ListOpenCheckInTimesUseCase,
+  type ListOpenCheckInTimesCommand,
   type ListOpenCheckInTimesResult,
 } from "./list-open-check-in-times-use-case";
 export {

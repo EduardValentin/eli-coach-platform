@@ -60,7 +60,7 @@ function createPorts(options: {
     listAll: vi.fn().mockResolvedValue(options.checkIns),
     settle: vi.fn(),
     move: vi.fn(),
-    cancelFrom: vi.fn(),
+    cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
@@ -104,6 +104,7 @@ describe("ListClientCheckInsUseCase", () => {
           isWaitingRequest: false,
           viewerProposal: "none",
           viewerMayCancel: false,
+          newTimeWaits: false,
         },
         {
           ...approved.toSnapshot(),
@@ -113,6 +114,7 @@ describe("ListClientCheckInsUseCase", () => {
           isWaitingRequest: false,
           viewerProposal: "allowed",
           viewerMayCancel: true,
+          newTimeWaits: false,
         },
       ],
     });
@@ -191,6 +193,7 @@ describe("ListCoachCheckInsUseCase", () => {
         isWaitingRequest: false,
         viewerProposal: "none",
         viewerMayCancel: false,
+        newTimeWaits: false,
         client: { firstName: "Ana", lastName: "Popescu" },
       },
       {
@@ -201,6 +204,7 @@ describe("ListCoachCheckInsUseCase", () => {
         isWaitingRequest: false,
         viewerProposal: "none",
         viewerMayCancel: false,
+        newTimeWaits: false,
         client: { firstName: "Maria", lastName: "Ionescu" },
       },
     ]);

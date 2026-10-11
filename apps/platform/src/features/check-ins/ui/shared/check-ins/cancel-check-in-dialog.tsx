@@ -1,12 +1,6 @@
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 
-import {
-  formatClockTime,
-  formatShortDay,
-} from "~/features/assessment-calls/public/call-moment";
-
 import type { CheckInDecisions } from "./check-in-decisions";
-import type { ListedCheckIn } from "./check-in-listing";
 
 type CheckInCancellation = {
   checkInId: string;
@@ -42,10 +36,4 @@ export function CancelCheckInDialog({
       tone="destructive"
     />
   );
-}
-
-export function dayAndTimeOf(checkIn: ListedCheckIn, timeZone: string): string {
-  const startsAt = new Date(checkIn.startsAt);
-
-  return `${formatShortDay(startsAt, timeZone)} at ${formatClockTime(startsAt, timeZone)}`;
 }

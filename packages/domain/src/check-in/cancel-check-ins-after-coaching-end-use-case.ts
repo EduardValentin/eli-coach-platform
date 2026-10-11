@@ -5,7 +5,7 @@ import type { CheckIns } from "./check-ins";
 type CoachingEndCommand = { clientId: string; endsAt: Date };
 
 type CancelCheckInsAfterCoachingEndUseCaseOptions = {
-  checkIns: Pick<CheckIns, "cancelFrom">;
+  checkIns: Pick<CheckIns, "cancelStartingFrom">;
   clock: Clock;
 };
 
@@ -18,9 +18,9 @@ export class CancelCheckInsAfterCoachingEndUseCase {
     clientId,
     endsAt,
   }: CoachingEndCommand): Promise<{ cancelled: number }> {
-    const { cancelled } = await this.options.checkIns.cancelFrom({
+    const { cancelled } = await this.options.checkIns.cancelStartingFrom({
       clientId,
-      from: endsAt,
+      startsFrom: endsAt,
       at: this.options.clock.now(),
     });
 

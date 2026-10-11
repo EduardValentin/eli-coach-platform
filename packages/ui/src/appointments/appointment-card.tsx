@@ -76,9 +76,11 @@ function RescheduledMarker({ from }: { from: AppointmentTime }) {
 
   return (
     <IconHint
-      className="size-5 self-center rounded-control text-text-secondary hover:text-text-primary"
+      className="self-center"
       icon={<RefreshCw aria-hidden="true" size={RESCHEDULED_GLYPH_SIZE} />}
       label={label}
+      size="compact"
+      tone="muted"
     >
       {label}
     </IconHint>

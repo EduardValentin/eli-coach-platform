@@ -63,7 +63,7 @@ function createCheckIns(answer?: CheckInRequestResult) {
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue("settled"),
     move: vi.fn().mockResolvedValue("moved"),
-    cancelFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
+    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
 }
 

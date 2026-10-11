@@ -26,7 +26,7 @@ type Settlement = {
   id: string;
   outcome: CheckInOutcome;
   at: Date;
-  from: RecordedStatus;
+  expectedStatus: RecordedStatus;
   clientTimeZone?: string;
 };
 
@@ -36,7 +36,7 @@ type CheckInMoveCommand = {
   at: Date;
 };
 
-type ClientCancellation = { clientId: string; from: Date; at: Date };
+type ClientCancellation = { clientId: string; startsFrom: Date; at: Date };
 
 type CheckInAppointment = {
   appointmentKind: "check_in";
@@ -114,11 +114,11 @@ export class PostgresCheckIns implements CheckIns {
     );
   }
 
-  cancelFrom(
+  cancelStartingFrom(
     cancellation: ClientCancellation,
   ): Promise<{ cancelled: string[] }> {
     return this.options.database.transaction((transaction) =>
-      this.cancelUpcomingFrom(transaction, cancellation),
+      this.cancelUpcomingStartingFrom(transaction, cancellation),
     );
   }
 
@@ -161,7 +161,7 @@ export class PostgresCheckIns implements CheckIns {
 
   private async settleWhileExpected(
     transaction: DatabaseTransaction,
-    { id, outcome, at, from, clientTimeZone }: Settlement,
+    { id, outcome, at, expectedStatus, clientTimeZone }: Settlement,
   ): Promise<CheckInSettlement> {
     const settled = await transaction
       .update(checkInsTable)
@@ -169,14 +169,14 @@ export class PostgresCheckIns implements CheckIns {
       .where(
         and(
           eq(checkInsTable.id, id),
-          eq(checkInsTable.status, from),
+          eq(checkInsTable.status, expectedStatus),
           gt(checkInsTable.startsAt, at),
         ),
       )
       .returning({ id: checkInsTable.id });
 
     if (settled.length === 0) {
-      return "not_pending";
+      return "changed_meanwhile";
     }
 
     if (outcome === "cancelled") {
@@ -217,7 +217,7 @@ export class PostgresCheckIns implements CheckIns {
       .returning({ id: checkInsTable.id });
 
     if (moved.length === 0) {
-      return "not_pending";
+      return "changed_meanwhile";
     }
 
     await this.releaseHourOf(transaction, snapshot.id);
@@ -237,9 +237,9 @@ export class PostgresCheckIns implements CheckIns {
     return "moved";
   }
 
-  private async cancelUpcomingFrom(
+  private async cancelUpcomingStartingFrom(
     transaction: DatabaseTransaction,
-    { clientId, from, at }: ClientCancellation,
+    { clientId, startsFrom, at }: ClientCancellation,
   ): Promise<{ cancelled: string[] }> {
     const cancelled = await transaction
       .update(checkInsTable)
@@ -248,7 +248,7 @@ export class PostgresCheckIns implements CheckIns {
         and(
           eq(checkInsTable.clientId, clientId),
           inArray(checkInsTable.status, OPEN_STATUSES),
-          gte(checkInsTable.startsAt, from),
+          gte(checkInsTable.startsAt, startsFrom),
           gt(checkInsTable.startsAt, at),
         ),
       )

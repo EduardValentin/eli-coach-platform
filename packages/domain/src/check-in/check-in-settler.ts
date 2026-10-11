@@ -29,11 +29,11 @@ type CheckInSettlerOptions = {
 
 type CheckInTurn = { party: CheckInParty; at: Date };
 
-type CheckInAnswer<Refusal extends CheckInRefusal> = {
+type CheckInSettling<Refusal extends CheckInRefusal> = {
   command: CheckInActorCommand;
   refusalOf: (checkIn: CheckIn, turn: CheckInTurn) => Refusal | null;
   outcome: CheckInOutcome;
-  from: RecordedCheckInStatus;
+  expectedStatus: RecordedCheckInStatus;
   notificationOf: (checkIn: CheckIn) => CheckInNotification;
 };
 
@@ -42,7 +42,7 @@ export type SettledCheckIn<Refusal extends CheckInRefusal> =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: Refusal | "not_pending" };
+  | { status: Refusal | "changed_meanwhile" };
 
 export class CheckInSettler {
   private readonly announcer: CheckInAnnouncer;
@@ -54,9 +54,9 @@ export class CheckInSettler {
   }
 
   async settle<Refusal extends CheckInRefusal>(
-    answer: CheckInAnswer<Refusal>,
+    settling: CheckInSettling<Refusal>,
   ): Promise<SettledCheckIn<Refusal>> {
-    const { command, outcome, from } = answer;
+    const { command, outcome, expectedStatus } = settling;
     const zone = actingClientZoneOf(command);
 
     if (zone.status === "invalid") {
@@ -72,7 +72,7 @@ export class CheckInSettler {
     const { checkIn } = reached;
     const party = command.actor.party;
     const at = this.options.clock.now();
-    const refusal = answer.refusalOf(checkIn, { party, at });
+    const refusal = settling.refusalOf(checkIn, { party, at });
 
     if (refusal) {
       return { status: refusal };
@@ -82,12 +82,12 @@ export class CheckInSettler {
       id: checkIn.id,
       outcome,
       at,
-      from,
+      expectedStatus,
       ...(zone.timeZone && { clientTimeZone: zone.timeZone.name }),
     });
 
-    if (recorded === "not_pending") {
-      return { status: "not_pending" };
+    if (recorded === "changed_meanwhile") {
+      return { status: "changed_meanwhile" };
     }
 
     const settled = checkIn.settled({
@@ -97,7 +97,7 @@ export class CheckInSettler {
     });
 
     await this.announcer.announce(
-      answer.notificationOf(checkIn),
+      settling.notificationOf(checkIn),
       settled,
       party,
     );

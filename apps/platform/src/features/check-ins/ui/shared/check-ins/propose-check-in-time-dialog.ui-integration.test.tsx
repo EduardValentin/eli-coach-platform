@@ -63,6 +63,7 @@ const APPROVED: ListedCheckIn = {
   viewerMayWithdraw: false,
   viewerProposal: "allowed",
   viewerMayCancel: true,
+  newTimeWaits: false,
   isWaitingRequest: false,
   startsAt: "2026-10-14T07:00:00.000Z",
   endsAt: "2026-10-14T08:00:00.000Z",

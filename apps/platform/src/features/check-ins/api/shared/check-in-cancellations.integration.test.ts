@@ -112,7 +112,10 @@ describe.sequential("check-in cancellations integration", () => {
     await checkIns.cancel(ANA_SESSION, checkInId);
 
     // assert
-    const [sent, ...others] = await emailsFor(checkInId, "0:cancelled");
+    const [sent, ...others] = await checkIns.sentEmailsFor(checkInId, {
+      moves: 0,
+      notification: "cancelled",
+    });
     expect(others).toEqual([]);
     expect(sent?.to).toBe(COACH_EMAIL);
     expect(sent?.replyTo).toBe(ANA.email);
@@ -136,7 +139,10 @@ describe.sequential("check-in cancellations integration", () => {
     expect(response.status).toBe(200);
     expect((await checkIns.movedRowOf(checkInId)).status).toBe("cancelled");
     expect(await checkIns.heldCheckInHours()).toEqual([]);
-    const [sent, ...others] = await emailsFor(checkInId, "0:cancelled");
+    const [sent, ...others] = await checkIns.sentEmailsFor(checkInId, {
+      moves: 0,
+      notification: "cancelled",
+    });
     expect(others).toEqual([]);
     expect(sent?.to).toBe(ANA.email);
     expect(sent?.subject).toBe("Eli cancelled the check-in");
@@ -173,7 +179,12 @@ describe.sequential("check-in cancellations integration", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: "not_pending" });
     expect((await checkIns.movedRowOf(checkInId)).status).toBe("approved");
-    expect(await emailsFor(checkInId, "0:cancelled")).toEqual([]);
+    expect(
+      await checkIns.sentEmailsFor(checkInId, {
+        moves: 0,
+        notification: "cancelled",
+      }),
+    ).toEqual([]);
   });
 
   it("refuses a second cancellation of the same check-in and emails once", async () => {
@@ -188,7 +199,12 @@ describe.sequential("check-in cancellations integration", () => {
     // assert
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: "not_pending" });
-    expect(await emailsFor(checkInId, "0:cancelled")).toHaveLength(1);
+    expect(
+      await checkIns.sentEmailsFor(checkInId, {
+        moves: 0,
+        notification: "cancelled",
+      }),
+    ).toHaveLength(1);
   });
 
   it("keeps the cancellation when the provider refuses the email", async () => {
@@ -240,12 +256,4 @@ async function approvedThursdayCheckIn(): Promise<string> {
   await checkIns.approved(checkInId);
 
   return checkInId;
-}
-
-async function emailsFor(checkInId: string, event: string) {
-  const emails = await suite.sentEmails();
-
-  return emails.filter((email) =>
-    email.idempotencyKey?.includes(`check-in:${checkInId}:${event}`),
-  );
 }

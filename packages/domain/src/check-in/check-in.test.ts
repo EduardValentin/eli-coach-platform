@@ -621,6 +621,7 @@ describe("CheckIn#viewFor", () => {
       isWaitingRequest: false,
       viewerProposal: "none",
       viewerMayCancel: false,
+      newTimeWaits: false,
     });
   });
 
@@ -1013,6 +1014,47 @@ describe("CheckIn#hasPendingNewTime", () => {
 
       // assert
       expect(pending).toBe(expected);
+    },
+  );
+});
+
+describe("CheckIn#viewFor newTimeWaits", () => {
+  it.each([
+    {
+      situation: "a new time waiting for an answer",
+      subject: newTimeFromCoach(),
+      at: BEFORE_START,
+      expected: true,
+    },
+    {
+      situation: "a new time left unanswered past its start",
+      subject: newTimeFromCoach(),
+      at: NEW_START,
+      expected: false,
+    },
+    {
+      situation: "a brand-new request",
+      subject: checkIn(),
+      at: BEFORE_START,
+      expected: false,
+    },
+    {
+      situation: "a check-in whose new time was accepted",
+      subject: newTimeFromCoach({ recordedStatus: "approved" }),
+      at: BEFORE_START,
+      expected: false,
+    },
+  ])(
+    "shows $situation with a new time waiting: $expected",
+    ({ subject, at, expected }) => {
+      // arrange
+      const viewer = { party: "client" as const, at };
+
+      // act
+      const view = subject.viewFor(viewer);
+
+      // assert
+      expect(view.newTimeWaits).toBe(expected);
     },
   );
 });

@@ -53,6 +53,7 @@ export type CheckInView = CheckInSnapshot & {
   isWaitingRequest: boolean;
   viewerProposal: CheckInViewerProposal;
   viewerMayCancel: boolean;
+  newTimeWaits: boolean;
 };
 
 export type CheckInNewTime = {
@@ -312,6 +313,7 @@ export class CheckIn {
       isWaitingRequest: this.isWaitingRequestAt(viewer.at),
       viewerProposal: this.proposalOpenTo(viewer),
       viewerMayCancel: this.cancellationRefusalFor(viewer) === null,
+      newTimeWaits: this.statusAt(viewer.at) === "pending" && this.wasMoved(),
     };
   }
 

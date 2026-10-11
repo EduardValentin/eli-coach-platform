@@ -103,7 +103,7 @@ function createProposeCheckInTime(options?: {
     listAll: vi.fn(),
     settle: vi.fn(),
     move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
-    cancelFrom: vi.fn(),
+    cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
@@ -305,7 +305,7 @@ describe("ProposeCheckInTimeUseCase", () => {
 
   it.each([
     ["the new hour was taken meanwhile", "time_taken"],
-    ["the check-in changed meanwhile", "not_pending"],
+    ["the check-in changed meanwhile", "changed_meanwhile"],
   ] as const)(
     "refuses when %s and emails nobody",
     async (_situation, moved) => {

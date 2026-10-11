@@ -84,7 +84,7 @@ function createPorts(options?: {
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue(options?.settlement ?? "settled"),
     move: vi.fn().mockResolvedValue("moved"),
-    cancelFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
+    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
@@ -161,7 +161,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
-        from: "pending",
+        expectedStatus: "pending",
       });
     });
 
@@ -199,7 +199,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
-        from: "pending",
+        expectedStatus: "pending",
       });
     });
 
@@ -255,13 +255,13 @@ describe.each(ANSWERS)(
 
     it("refuses when another answer settled the request first", async () => {
       // arrange
-      const ports = createPorts({ settlement: "not_pending" });
+      const ports = createPorts({ settlement: "changed_meanwhile" });
 
       // act
       const result = await create(ports).execute(command);
 
       // assert
-      expect(result).toEqual({ status: "not_pending" });
+      expect(result).toEqual({ status: "changed_meanwhile" });
       expect(ports.notifications[notification]).not.toHaveBeenCalled();
     });
 
@@ -375,7 +375,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
-        from: "pending",
+        expectedStatus: "pending",
         clientTimeZone: "Asia/Tokyo",
       });
     });
@@ -410,7 +410,7 @@ describe.each(ANSWERS)(
         id: "check-in-1",
         outcome,
         at: NOW,
-        from: "pending",
+        expectedStatus: "pending",
       });
     });
 
@@ -496,7 +496,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
       id: "check-in-1",
       outcome: "cancelled",
       at: NOW,
-      from: "pending",
+      expectedStatus: "pending",
     });
     expect(ports.notifications.withdrawn).toHaveBeenCalledWith({
       checkIn: expect.objectContaining({ id: "check-in-1" }),
@@ -636,7 +636,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
 
   it("refuses when the coach answered first", async () => {
     // arrange
-    const ports = createPorts({ settlement: "not_pending" });
+    const ports = createPorts({ settlement: "changed_meanwhile" });
 
     // act
     const result = await new WithdrawCheckInRequestUseCase(ports).execute(
@@ -644,7 +644,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
     );
 
     // assert
-    expect(result).toEqual({ status: "not_pending" });
+    expect(result).toEqual({ status: "changed_meanwhile" });
     expect(ports.notifications.withdrawn).not.toHaveBeenCalled();
   });
 
@@ -714,7 +714,7 @@ describe("CancelCheckInUseCase", () => {
         id: "check-in-1",
         outcome: "cancelled",
         at: NOW,
-        from: "approved",
+        expectedStatus: "approved",
       });
       expect(ports.notifications.cancelled).toHaveBeenCalledWith({
         checkIn: expect.objectContaining({ id: "check-in-1" }),
@@ -761,7 +761,7 @@ describe("CancelCheckInUseCase", () => {
     // arrange
     const ports = createPorts({
       found: approvedCheckIn(),
-      settlement: "not_pending",
+      settlement: "changed_meanwhile",
     });
 
     // act
@@ -771,7 +771,7 @@ describe("CancelCheckInUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "not_pending" });
+    expect(result).toEqual({ status: "changed_meanwhile" });
     expect(ports.notifications.cancelled).not.toHaveBeenCalled();
   });
 

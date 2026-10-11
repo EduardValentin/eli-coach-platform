@@ -7,6 +7,7 @@ import type {
   CheckInActorCommand,
   DeclineCheckInResult,
   DeclineCheckInUseCase,
+  ListOpenCheckInTimesCommand,
   ListOpenCheckInTimesResult,
   ListOpenCheckInTimesUseCase,
   ProposeCheckInTimeResult,
@@ -64,19 +65,16 @@ export class SharedCheckInsController {
   constructor(private readonly options: SharedCheckInsControllerOptions) {}
 
   async listOpenTimes(args: LoaderFunctionArgs): Promise<Response> {
-    const actor = this.requireCheckInActor(args);
-    const query = openCheckInTimesQuerySchema.safeParse(
-      Object.fromEntries(new URL(args.request.url).searchParams),
+    const command = this.openTimesCommandOf(
+      this.requireCheckInActor(args),
+      args.request,
     );
 
-    if (actor.party === "coach" && !query.success) {
+    if (!command) {
       return unknownClient();
     }
 
-    const result = await this.options.listOpenCheckInTimes.execute({
-      actor,
-      ...(actor.party === "coach" && { clientId: query.data?.clientId }),
-    });
+    const result = await this.options.listOpenCheckInTimes.execute(command);
 
     return this.respondToOpenTimes(result);
   }
@@ -184,6 +182,21 @@ export class SharedCheckInsController {
     return this.respondToDecision(result);
   }
 
+  private openTimesCommandOf(
+    actor: CheckInActor,
+    request: Request,
+  ): ListOpenCheckInTimesCommand | null {
+    if (actor.party !== "coach") {
+      return { actor };
+    }
+
+    const query = openCheckInTimesQuerySchema.safeParse(
+      Object.fromEntries(new URL(request.url).searchParams),
+    );
+
+    return query.success ? { actor, clientId: query.data.clientId } : null;
+  }
+
   private respondToOpenTimes(result: ListOpenCheckInTimesResult): Response {
     switch (result.status) {
       case "listed":
@@ -218,6 +231,7 @@ export class SharedCheckInsController {
       case "time_taken":
       case "moves_exhausted":
         return refusedCheckIn(result.status);
+      case "changed_meanwhile":
       case "not_pending":
       case "expired":
       case "not_your_turn":
@@ -241,6 +255,7 @@ export class SharedCheckInsController {
         return refusedCheckIn("ended");
       case "invalid_time_zone":
         return refusedCheckIn("invalid_time_zone", { status: UNPROCESSABLE });
+      case "changed_meanwhile":
       case "not_pending":
       case "not_approved":
       case "not_allowed":

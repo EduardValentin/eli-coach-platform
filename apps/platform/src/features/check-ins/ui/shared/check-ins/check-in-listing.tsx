@@ -10,6 +10,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import {
+  formatClockTime,
+  formatShortDay,
+} from "~/features/assessment-calls/public/call-moment";
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 
 export type ListedCheckIn = ClientCheckIns["checkIns"][number];
@@ -17,6 +21,11 @@ export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 export type CheckInParty = ListedCheckIn["initiatedBy"];
 
 export type CheckInTab = "upcoming" | "requests" | "past";
+
+export type CheckInMoment = {
+  date: string;
+  time: string;
+};
 
 export type CheckInEmptyCopy = {
   description: string;
@@ -31,8 +40,16 @@ type CheckInListingProps<CheckIn extends ListedCheckIn> = {
   renderCheckIn: (checkIn: CheckIn, tab: CheckInTab) => ReactNode;
 };
 
-export function hasPendingNewTime(checkIn: ListedCheckIn): boolean {
-  return checkIn.status === "pending" && checkIn.earlierStartsAt !== null;
+export function checkInMomentOf(
+  startsAt: string,
+  timeZone: string,
+): CheckInMoment {
+  const instant = new Date(startsAt);
+
+  return {
+    date: formatShortDay(instant, timeZone),
+    time: formatClockTime(instant, timeZone),
+  };
 }
 
 const CHECK_IN_TABS: readonly CheckInTab[] = ["upcoming", "requests", "past"];

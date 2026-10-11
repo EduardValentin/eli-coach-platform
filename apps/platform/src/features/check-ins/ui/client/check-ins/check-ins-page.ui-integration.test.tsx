@@ -66,6 +66,7 @@ const APPROVED_SOON: ClientCheckIn = {
   viewerMayWithdraw: false,
   viewerProposal: "allowed",
   viewerMayCancel: true,
+  newTimeWaits: false,
   isWaitingRequest: false,
   startsAt: "2026-10-14T07:00:00.000Z",
   endsAt: "2026-10-14T08:00:00.000Z",
@@ -145,6 +146,7 @@ const COACH_NEW_TIME: ClientCheckIn = {
   proposedBy: "coach",
   awaitsViewer: true,
   viewerMayCancel: false,
+  newTimeWaits: true,
   startsAt: "2026-10-15T11:00:00.000Z",
   endsAt: "2026-10-15T12:00:00.000Z",
   joinEmphasisFrom: "2026-10-15T10:50:00.000Z",
@@ -160,6 +162,7 @@ const COACH_NEW_TIME_ACCEPTED: ClientCheckIn = {
   status: "approved",
   awaitsViewer: false,
   viewerMayCancel: true,
+  newTimeWaits: false,
 };
 
 const OWN_NEW_TIME: ClientCheckIn = {

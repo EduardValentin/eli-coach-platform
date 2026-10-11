@@ -13,7 +13,7 @@ export type WithdrawCheckInRequestResult =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInAnswerRefusal };
+  | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type WithdrawCheckInRequestUseCaseOptions = {
   checkIns: CheckIns;
@@ -37,7 +37,7 @@ export class WithdrawCheckInRequestUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.withdrawalRefusalFor(turn),
       outcome: "cancelled",
-      from: "pending",
+      expectedStatus: "pending",
       notificationOf: () => "withdrawn",
     });
 

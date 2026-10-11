@@ -34,6 +34,7 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
+  CoachingSubscription,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
@@ -365,7 +366,11 @@ export function composeCoachingSalesFeature(
           }),
         }),
         bookingTimeZone: call.visitorTimeZone,
-        coachingEndsAt: await coachingEndOf(entry.journey.clientId),
+        coachingEndsAt: entry.subscription
+          ? CoachingSubscription.reconstitute(
+              entry.subscription,
+            ).coachingEndsAt()
+          : null,
       };
     },
     identitiesOf: async (clientIds) =>

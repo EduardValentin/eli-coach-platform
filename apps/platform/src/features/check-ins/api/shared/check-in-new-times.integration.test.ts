@@ -162,7 +162,10 @@ describe.sequential("check-in new times integration", () => {
       });
 
       // assert
-      const [sent, ...others] = await emailsFor(checkInId, "1:newTimeProposed");
+      const [sent, ...others] = await checkIns.sentEmailsFor(checkInId, {
+        moves: 1,
+        notification: "newTimeProposed",
+      });
       expect(others).toEqual([]);
       expect(sent?.to).toBe(ANA.email);
       expect(sent?.subject).toBe("Eli proposed a new time for your check-in");
@@ -200,7 +203,10 @@ describe.sequential("check-in new times integration", () => {
         clientTimeZone: HER_ZONE_NOW,
         newTimeNote: CLIENT_NOTE,
       });
-      const [sent, ...others] = await emailsFor(checkInId, "1:newTimeProposed");
+      const [sent, ...others] = await checkIns.sentEmailsFor(checkInId, {
+        moves: 1,
+        notification: "newTimeProposed",
+      });
       expect(others).toEqual([]);
       expect(sent?.to).toBe(COACH_EMAIL);
       expect(sent?.replyTo).toBe(ANA.email);
@@ -261,7 +267,7 @@ describe.sequential("check-in new times integration", () => {
 
       // assert
       expect(
-        (await emailsFor(checkInId))
+        (await checkIns.sentEmailsFor(checkInId))
           .map(({ idempotencyKey }) =>
             idempotencyKey?.slice(idempotencyKey.indexOf("check-in:")),
           )
@@ -387,7 +393,12 @@ describe.sequential("check-in new times integration", () => {
       expect(
         (await checkIns.heldCheckInHours()).map(({ startsAt }) => startsAt),
       ).toEqual([new Date(THURSDAY_FIRST_HOUR)]);
-      expect(await emailsFor(checkInId, "newTimeProposed")).toEqual([]);
+      expect(
+        await checkIns.sentEmailsFor(checkInId, {
+          moves: 1,
+          notification: "newTimeProposed",
+        }),
+      ).toEqual([]);
     });
 
     it("refuses an hour at or after the client's coaching end", async () => {
@@ -565,12 +576,17 @@ describe.sequential("check-in new times integration", () => {
         moves: 1,
         answeredAt: PROPOSED_AT,
       });
-      const [accepted, ...others] = await emailsFor(
-        checkInId,
-        "1:newTimeAccepted",
-      );
+      const [accepted, ...others] = await checkIns.sentEmailsFor(checkInId, {
+        moves: 1,
+        notification: "newTimeAccepted",
+      });
       expect(others).toEqual([]);
-      expect(await emailsFor(checkInId, "1:approved")).toEqual([]);
+      expect(
+        await checkIns.sentEmailsFor(checkInId, {
+          moves: 1,
+          notification: "approved",
+        }),
+      ).toEqual([]);
       expect(accepted?.to).toBe(COACH_EMAIL);
       expect(accepted?.replyTo).toBe(ANA.email);
       expect(accepted?.subject).toBe("Ana Popescu accepted the new time");
@@ -598,10 +614,10 @@ describe.sequential("check-in new times integration", () => {
 
       // assert
       expect(response.status).toBe(200);
-      const [accepted, ...others] = await emailsFor(
-        checkInId,
-        "1:newTimeAccepted",
-      );
+      const [accepted, ...others] = await checkIns.sentEmailsFor(checkInId, {
+        moves: 1,
+        notification: "newTimeAccepted",
+      });
       expect(others).toEqual([]);
       expect(accepted?.to).toBe(ANA.email);
       expect(accepted?.subject).toBe("Eli accepted the new time");
@@ -636,10 +652,10 @@ describe.sequential("check-in new times integration", () => {
       expect(await checkIns.openTimesOf(ANA_SESSION)).toEqual(
         expect.arrayContaining([THURSDAY_FIRST_HOUR, FRIDAY_FIRST_HOUR]),
       );
-      const [declined, ...others] = await emailsFor(
-        checkInId,
-        "1:newTimeDeclined",
-      );
+      const [declined, ...others] = await checkIns.sentEmailsFor(checkInId, {
+        moves: 1,
+        notification: "newTimeDeclined",
+      });
       expect(others).toEqual([]);
       expect(declined?.to).toBe(COACH_EMAIL);
       expect(declined?.subject).toBe("Ana Popescu declined the new time");
@@ -663,7 +679,12 @@ describe.sequential("check-in new times integration", () => {
       expect(response.status).toBe(409);
       expect(await response.json()).toEqual({ error: "not_pending" });
       expect((await checkIns.movedRowOf(checkInId)).status).toBe("pending");
-      expect(await emailsFor(checkInId, "1:newTimeAccepted")).toEqual([]);
+      expect(
+        await checkIns.sentEmailsFor(checkInId, {
+          moves: 1,
+          notification: "newTimeAccepted",
+        }),
+      ).toEqual([]);
     });
   });
 });
@@ -710,12 +731,4 @@ async function scheduleAnasEnd(endsAt: Date): Promise<void> {
   if (delivered.status !== 200) {
     throw new Error(`Scheduling her end answered ${delivered.status}.`);
   }
-}
-
-async function emailsFor(checkInId: string, event = "") {
-  const emails = await suite.sentEmails();
-
-  return emails.filter((email) =>
-    email.idempotencyKey?.includes(`check-in:${checkInId}:${event}`),
-  );
 }

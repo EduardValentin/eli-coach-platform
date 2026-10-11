@@ -78,6 +78,7 @@ describe("ClientCheckInsController loadCheckIns", () => {
           viewerMayWithdraw: true,
           viewerProposal: "none",
           viewerMayCancel: false,
+          newTimeWaits: false,
           isWaitingRequest: true,
           startsAt: "2026-10-22T14:00:00.000Z",
           endsAt: "2026-10-22T15:00:00.000Z",

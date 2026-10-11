@@ -8,8 +8,8 @@ const COACHING_ENDS_AT = new Date("2026-07-01T10:00:00.000Z");
 
 function createCancelAfterEnd(cancelled: string[]) {
   const checkIns = {
-    cancelFrom: vi.fn().mockResolvedValue({ cancelled }),
-  } satisfies Pick<CheckIns, "cancelFrom">;
+    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled }),
+  } satisfies Pick<CheckIns, "cancelStartingFrom">;
 
   return {
     checkIns,
@@ -36,9 +36,9 @@ describe("CancelCheckInsAfterCoachingEndUseCase", () => {
 
     // assert
     expect(result).toEqual({ cancelled: 2 });
-    expect(checkIns.cancelFrom).toHaveBeenCalledWith({
+    expect(checkIns.cancelStartingFrom).toHaveBeenCalledWith({
       clientId: "client-1",
-      from: COACHING_ENDS_AT,
+      startsFrom: COACHING_ENDS_AT,
       at: NOW,
     });
   });

@@ -13,7 +13,7 @@ export type ApproveCheckInResult =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInAnswerRefusal };
+  | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type ApproveCheckInUseCaseOptions = {
   checkIns: CheckIns;
@@ -35,7 +35,7 @@ export class ApproveCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "approved",
-      from: "pending",
+      expectedStatus: "pending",
       notificationOf: (checkIn) =>
         checkIn.hasPendingNewTime() ? "newTimeAccepted" : "approved",
     });

@@ -1,14 +1,10 @@
 import { toast } from "@eli-coach-platform/ui/toast";
 import { generatePath, useRevalidator } from "react-router";
 
-import {
-  formatClockTime,
-  formatShortDay,
-} from "~/features/assessment-calls/public/call-moment";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
 import { NO_LONGER_WAITING } from "./check-in-decisions";
-import type { ListedCheckIn } from "./check-in-listing";
+import { checkInMomentOf, type ListedCheckIn } from "./check-in-listing";
 import {
   CheckInPicker,
   type CheckInPickerWording,
@@ -43,12 +39,12 @@ export function ProposeCheckInTimeDialog({
   timeZone,
 }: ProposeCheckInTimeDialogProps) {
   const { revalidate } = useRevalidator();
-  const startsAt = new Date(checkIn.startsAt);
+  const current = checkInMomentOf(checkIn.startsAt, timeZone);
 
   return (
     <CheckInPicker
       onOpenChange={onOpenChange}
-      onRefused={() => void revalidate()}
+      onRefusal={() => void revalidate()}
       onSubmitted={() => toast.success("New time proposed")}
       open={open}
       openTimesQuery={openTimesQuery}
@@ -65,7 +61,7 @@ export function ProposeCheckInTimeDialog({
       timeZone={timeZone}
       wording={{
         busyLabel: "Proposing…",
-        description: `Currently set for ${formatShortDay(startsAt, timeZone)} · ${formatClockTime(startsAt, timeZone)}`,
+        description: `Currently set for ${current.date} · ${current.time}`,
         noteLabel,
         problemCopy: PROBLEM_COPY,
         stepVerb: "Propose",
