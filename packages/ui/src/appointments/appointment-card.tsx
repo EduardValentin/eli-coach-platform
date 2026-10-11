@@ -115,6 +115,7 @@ type AppointmentCardProps = {
   attendee: AppointmentAttendee;
   badges?: ReactNode;
   details?: ReadonlyArray<AppointmentDetail>;
+  parity?: string;
   parityRoot?: string;
   quote?: string;
   quoteAuthor?: string;
@@ -130,6 +131,7 @@ export function AppointmentCard({
   attendee,
   badges,
   details = [],
+  parity,
   parityRoot,
   quote,
   quoteAuthor,
@@ -145,6 +147,7 @@ export function AppointmentCard({
         "flex flex-col gap-4 rounded-card border border-border-subtle bg-surface-base p-5 md:flex-row md:items-start",
         CARD_TONE[status],
       )}
+      data-parity={parity}
       data-parity-root={parityRoot}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">

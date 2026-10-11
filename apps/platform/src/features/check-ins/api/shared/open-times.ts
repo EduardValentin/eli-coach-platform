@@ -21,7 +21,7 @@ export async function action(_args: ActionFunctionArgs) {
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(checkInsContext).clientCheckIns.listOpenTimes(args),
+    args.context.get(checkInsContext).sharedCheckIns.listOpenTimes(args),
   );
 }
 

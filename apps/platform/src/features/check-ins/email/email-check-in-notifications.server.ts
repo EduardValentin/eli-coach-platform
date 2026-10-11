@@ -25,13 +25,24 @@ import {
   CLIENT_CHECK_INS_PATH,
   clientCheckInJoinPath,
   COACH_CHECK_INS_PATH,
+  coachCheckInJoinPath,
 } from "~/features/check-ins/public/paths";
 
+import {
+  CheckInApprovedByClientEmail,
+  checkInApprovedByClientSubject,
+  checkInApprovedByClientText,
+} from "./check-in-approved-by-client-email.server";
 import {
   CheckInApprovedEmail,
   checkInApprovedSubject,
   checkInApprovedText,
 } from "./check-in-approved-email.server";
+import {
+  CheckInDeclinedByClientEmail,
+  checkInDeclinedByClientSubject,
+  checkInDeclinedByClientText,
+} from "./check-in-declined-by-client-email.server";
 import {
   CheckInDeclinedEmail,
   checkInDeclinedSubject,
@@ -42,6 +53,16 @@ import {
   checkInRequestedSubject,
   checkInRequestedText,
 } from "./check-in-requested-email.server";
+import {
+  CheckInScheduleCancelledEmail,
+  checkInScheduleCancelledSubject,
+  checkInScheduleCancelledText,
+} from "./check-in-schedule-cancelled-email.server";
+import {
+  CheckInScheduledEmail,
+  checkInScheduledSubject,
+  checkInScheduledText,
+} from "./check-in-scheduled-email.server";
 import {
   CheckInWithdrawnEmail,
   checkInWithdrawnSubject,
@@ -67,7 +88,6 @@ type CheckInEmail = {
   body: ReactElement;
 };
 
-const CALENDAR_TITLE = `Check-in with ${COACH_DISPLAY_NAME}`;
 const INVITE_PRODUCT_NAME = "Check-in";
 const NAME_UNSAFE_RUNS = /[\p{Cc}\s]+/gu;
 
@@ -78,13 +98,36 @@ export class EmailCheckInNotifications implements CheckInNotifications {
   ) {}
 
   requested(notice: CheckInNotice): Promise<CheckInDelivery> {
+    return notice.recipient === "coach"
+      ? this.sendClientRequestToCoach(notice)
+      : this.sendCoachRequestToClient(notice);
+  }
+
+  withdrawn(notice: CheckInNotice): Promise<CheckInDelivery> {
+    return notice.recipient === "coach"
+      ? this.sendClientWithdrawalToCoach(notice)
+      : this.sendCoachCancellationToClient(notice);
+  }
+
+  approved(notice: CheckInNotice): Promise<CheckInDelivery> {
+    return notice.recipient === "client"
+      ? this.sendCoachApprovalToClient(notice)
+      : this.sendClientApprovalToCoach(notice);
+  }
+
+  declined(notice: CheckInNotice): Promise<CheckInDelivery> {
+    return notice.recipient === "client"
+      ? this.sendCoachDeclineToClient(notice)
+      : this.sendClientDeclineToCoach(notice);
+  }
+
+  private sendClientRequestToCoach(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
     const props = {
       clientName: this.fullNameOf(notice.client),
       note: notice.checkIn.note,
-      when: formatCallMoment(
-        notice.checkIn.startsAt,
-        notice.checkIn.coachTimeZone,
-      ),
+      when: this.coachMomentOf(notice),
       reviewUrl: this.publicUrlOf(COACH_CHECK_INS_PATH),
       currentYear: this.currentYear(),
     };
@@ -100,13 +143,32 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     });
   }
 
-  withdrawn(notice: CheckInNotice): Promise<CheckInDelivery> {
+  private sendCoachRequestToClient(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
+    const props = {
+      note: notice.checkIn.note,
+      when: this.clientMomentOf(notice),
+      checkInsUrl: this.publicUrlOf(CLIENT_CHECK_INS_PATH),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkInId: notice.checkIn.id,
+      notification: "requested",
+      to: notice.client.email,
+      subject: checkInScheduledSubject(),
+      text: checkInScheduledText(props),
+      body: createElement(CheckInScheduledEmail, props),
+    });
+  }
+
+  private sendClientWithdrawalToCoach(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
     const props = {
       clientName: this.fullNameOf(notice.client),
-      when: formatCallMoment(
-        notice.checkIn.startsAt,
-        notice.checkIn.coachTimeZone,
-      ),
+      when: this.coachMomentOf(notice),
       currentYear: this.currentYear(),
     };
 
@@ -121,14 +183,35 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     });
   }
 
-  approved(notice: CheckInNotice): Promise<CheckInDelivery> {
-    const joinUrl = this.publicUrlOf(clientCheckInJoinPath(notice.checkIn.id));
-    const event = this.toCalendarEvent(notice.checkIn, joinUrl);
+  private sendCoachCancellationToClient(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
     const props = {
-      when: formatCallMoment(
-        notice.checkIn.startsAt,
-        notice.checkIn.clientTimeZone,
-      ),
+      when: this.clientMomentOf(notice),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkInId: notice.checkIn.id,
+      notification: "withdrawn",
+      to: notice.client.email,
+      subject: checkInScheduleCancelledSubject(),
+      text: checkInScheduleCancelledText(props),
+      body: createElement(CheckInScheduleCancelledEmail, props),
+    });
+  }
+
+  private sendCoachApprovalToClient(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
+    const joinUrl = this.publicUrlOf(clientCheckInJoinPath(notice.checkIn.id));
+    const event = this.toCalendarEvent({
+      checkIn: notice.checkIn,
+      joinUrl,
+      withWhom: COACH_DISPLAY_NAME,
+    });
+    const props = {
+      when: this.clientMomentOf(notice),
       joinUrl,
       googleCalendarUrl: buildGoogleCalendarUrl(
         event,
@@ -148,12 +231,44 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     });
   }
 
-  declined(notice: CheckInNotice): Promise<CheckInDelivery> {
+  private sendClientApprovalToCoach(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
+    const clientName = this.fullNameOf(notice.client);
+    const joinUrl = this.publicUrlOf(coachCheckInJoinPath(notice.checkIn.id));
+    const event = this.toCalendarEvent({
+      checkIn: notice.checkIn,
+      joinUrl,
+      withWhom: clientName,
+    });
     const props = {
-      when: formatCallMoment(
-        notice.checkIn.startsAt,
-        notice.checkIn.clientTimeZone,
+      clientName,
+      when: this.coachMomentOf(notice),
+      joinUrl,
+      googleCalendarUrl: buildGoogleCalendarUrl(
+        event,
+        notice.checkIn.coachTimeZone,
       ),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkInId: notice.checkIn.id,
+      notification: "approved",
+      to: this.options.coachEmail,
+      replyTo: notice.client.email,
+      attachments: [this.inviteFor(event)],
+      subject: checkInApprovedByClientSubject(props),
+      text: checkInApprovedByClientText(props),
+      body: createElement(CheckInApprovedByClientEmail, props),
+    });
+  }
+
+  private sendCoachDeclineToClient(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
+    const props = {
+      when: this.clientMomentOf(notice),
       checkInsUrl: this.publicUrlOf(CLIENT_CHECK_INS_PATH),
       currentYear: this.currentYear(),
     };
@@ -165,6 +280,26 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       subject: checkInDeclinedSubject(),
       text: checkInDeclinedText(props),
       body: createElement(CheckInDeclinedEmail, props),
+    });
+  }
+
+  private sendClientDeclineToCoach(
+    notice: CheckInNotice,
+  ): Promise<CheckInDelivery> {
+    const props = {
+      clientName: this.fullNameOf(notice.client),
+      when: this.coachMomentOf(notice),
+      currentYear: this.currentYear(),
+    };
+
+    return this.send({
+      checkInId: notice.checkIn.id,
+      notification: "declined",
+      to: this.options.coachEmail,
+      replyTo: notice.client.email,
+      subject: checkInDeclinedByClientSubject(props),
+      text: checkInDeclinedByClientText(props),
+      body: createElement(CheckInDeclinedByClientEmail, props),
     });
   }
 
@@ -202,20 +337,39 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     return this.options.clock.now().getUTCFullYear();
   }
 
-  private toCalendarEvent(
-    checkIn: CheckInNotice["checkIn"],
-    joinUrl: string,
-  ): CalendarEvent {
+  private coachMomentOf(notice: CheckInNotice): string {
+    return formatCallMoment(
+      notice.checkIn.startsAt,
+      notice.checkIn.coachTimeZone,
+    );
+  }
+
+  private clientMomentOf(notice: CheckInNotice): string {
+    return formatCallMoment(
+      notice.checkIn.startsAt,
+      notice.checkIn.clientTimeZone,
+    );
+  }
+
+  private toCalendarEvent({
+    checkIn,
+    joinUrl,
+    withWhom,
+  }: {
+    checkIn: CheckInNotice["checkIn"];
+    joinUrl: string;
+    withWhom: string;
+  }): CalendarEvent {
     return {
       description: [
-        `A ${CHECK_IN_RULES.durationMinutes}-minute check-in with ${COACH_DISPLAY_NAME}.`,
+        `A ${CHECK_IN_RULES.durationMinutes}-minute check-in with ${withWhom}.`,
         `Join the check-in: ${joinUrl}`,
       ].join("\n"),
       endsAt: checkIn.endsAt,
       id: checkIn.id,
       joinUrl,
       startsAt: checkIn.startsAt,
-      title: CALENDAR_TITLE,
+      title: `Check-in with ${withWhom}`,
     };
   }
 

@@ -1,7 +1,7 @@
 import type { Clock } from "../shared";
 
 import type { CheckInView } from "./check-in";
-import { CheckInClientReach } from "./check-in-client-reach";
+import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
@@ -10,15 +10,15 @@ export type ListClientCheckInsResult =
 
 type ListClientCheckInsUseCaseOptions = {
   checkIns: CheckIns;
-  clients: CheckInClients;
+  clients: Pick<CheckInClients, "findByAuthSubjectId">;
   clock: Clock;
 };
 
 export class ListClientCheckInsUseCase {
-  private readonly reach: CheckInClientReach;
+  private readonly reach: CheckInActorReach;
 
   constructor(private readonly options: ListClientCheckInsUseCaseOptions) {
-    this.reach = new CheckInClientReach(options);
+    this.reach = new CheckInActorReach(options);
   }
 
   async execute(authSubjectId: string): Promise<ListClientCheckInsResult> {

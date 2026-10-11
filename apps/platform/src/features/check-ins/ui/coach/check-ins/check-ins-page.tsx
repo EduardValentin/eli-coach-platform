@@ -22,8 +22,9 @@ import {
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
 import {
-  CheckInDecisionButton,
+  CheckInAnswers,
   CheckInDecisionOutcomes,
+  CheckInWithdrawal,
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
@@ -43,7 +44,8 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   requests: {
     icon: CalendarPlus,
     title: "No open requests",
-    description: "Requests from your clients show up here.",
+    description:
+      "Requests from your clients and the ones you send show up here.",
   },
   past: {
     icon: Clock,
@@ -103,44 +105,27 @@ function coachActionsFor(
   }
 
   if (checkIn.awaitsViewer) {
-    return <RequestAnswers checkIn={checkIn} decisions={decisions} />;
+    return (
+      <CheckInAnswers
+        approvedMessage={`Approved check-in with ${fullNameOf(checkIn)}`}
+        checkInId={checkIn.id}
+        decisions={decisions}
+        size="xs"
+      />
+    );
+  }
+
+  if (checkIn.viewerMayWithdraw) {
+    return (
+      <CheckInWithdrawal
+        checkInId={checkIn.id}
+        decisions={decisions}
+        size="xs"
+      />
+    );
   }
 
   return undefined;
-}
-
-function RequestAnswers({
-  checkIn,
-  decisions,
-}: {
-  checkIn: CoachCheckIn;
-  decisions: CheckInDecisions;
-}) {
-  return (
-    <>
-      <CheckInDecisionButton
-        decision={{
-          checkInId: checkIn.id,
-          kind: "decline",
-          successMessage: "Check-in declined",
-        }}
-        decisions={decisions}
-        label="Decline"
-        size="xs"
-        variant="ghost"
-      />
-      <CheckInDecisionButton
-        decision={{
-          checkInId: checkIn.id,
-          kind: "approve",
-          successMessage: `Approved check-in with ${fullNameOf(checkIn)}`,
-        }}
-        decisions={decisions}
-        label="Approve"
-        size="xs"
-      />
-    </>
-  );
 }
 
 function fullNameOf(checkIn: CoachCheckIn): string {

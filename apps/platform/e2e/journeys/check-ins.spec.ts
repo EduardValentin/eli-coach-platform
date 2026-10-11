@@ -9,9 +9,9 @@ import { COACH_TIME_ZONE } from "../support/coach-availability";
 import { E2E_APP_URL } from "../support/e2e-app";
 import {
   COACH_NOTIFICATION_EMAIL,
-  latestEmailTo,
+  emailTo,
+  latestSubjectTo,
   refuseEmailsTo,
-  type CapturedEmail,
 } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
 import { collectPageProblems } from "../support/page-problems";
@@ -68,23 +68,6 @@ const NO_OTHER_MEASUREMENTS = {
 } as const;
 
 test.use({ timezoneId: CLIENT_TIME_ZONE });
-
-async function latestSubjectTo(address: string): Promise<string | null> {
-  try {
-    return (await latestEmailTo(address)).subject;
-  } catch {
-    return null;
-  }
-}
-
-async function emailTo(
-  address: string,
-  subject: string,
-): Promise<CapturedEmail> {
-  await expect.poll(() => latestSubjectTo(address)).toBe(subject);
-
-  return latestEmailTo(address);
-}
 
 function clientJoinLinkOf(checkInId: string): string {
   return `${E2E_APP_URL}/client/checkins/${checkInId}/join`;
@@ -143,8 +126,7 @@ test(
 
     // act
     await clientCheckIns.openRequestDialog();
-    const requested =
-      await checkInRequestDialog.requestSoonest(FORM_CHECK_NOTE);
+    const requested = await checkInRequestDialog.sendSoonest(FORM_CHECK_NOTE);
 
     // assert
     await expect(page.getByText(/^Check-in requested for /)).toBeVisible();
@@ -259,7 +241,7 @@ test(
 
     // act
     await clientCheckIns.openRequestDialog();
-    const withdrawn = await checkInRequestDialog.requestSoonest(WITHDRAWN_NOTE);
+    const withdrawn = await checkInRequestDialog.sendSoonest(WITHDRAWN_NOTE);
 
     // assert
     await clientCheckIns.expectRequestBlocked();
@@ -293,7 +275,7 @@ test(
     await checkInRequestDialog.closeWithEscape();
     await checkInRequestDialog.expectClosed();
     await clientCheckIns.openRequestDialog();
-    const declined = await checkInRequestDialog.requestSoonest(DECLINED_NOTE);
+    const declined = await checkInRequestDialog.sendSoonest(DECLINED_NOTE);
     await page.goto("/");
     await publicNav.signOut();
     await page.goto("/store");
@@ -372,7 +354,7 @@ test(
     await signIn();
     await clientCheckIns.open();
     await clientCheckIns.openRequestDialog();
-    const requested = await checkInRequestDialog.requestSoonest(PRIVATE_NOTE);
+    const requested = await checkInRequestDialog.sendSoonest(PRIVATE_NOTE);
     const checkInId = await checkInRecords.idOf(
       client.clientId,
       requested.startsAt,
@@ -614,7 +596,7 @@ test(
     await checkInRequestDialog.expectTimeTaken(TAKEN_NOTE);
 
     // act
-    const requested = await checkInRequestDialog.requestAnotherTime();
+    const requested = await checkInRequestDialog.sendAnotherTime();
 
     // assert
     expect(requested.startsAt).toEqual(next);
@@ -667,12 +649,12 @@ test(
     await signIn();
     await clientCheckIns.open();
     await clientCheckIns.openRequestDialog();
-    const first = await checkInRequestDialog.requestSoonest(FIRST_NOTE);
+    const first = await checkInRequestDialog.sendSoonest(FIRST_NOTE);
     const firstId = await checkInRecords.idOf(client.clientId, first.startsAt);
     await checkInRecords.markApproved(firstId);
     await clientCheckIns.open();
     await clientCheckIns.openRequestDialog();
-    const second = await checkInRequestDialog.requestSoonest(SECOND_NOTE);
+    const second = await checkInRequestDialog.sendSoonest(SECOND_NOTE);
     const secondId = await checkInRecords.idOf(
       client.clientId,
       second.startsAt,
@@ -680,8 +662,7 @@ test(
     await checkInRecords.markApproved(secondId);
     await clientCheckIns.open();
     await clientCheckIns.openRequestDialog();
-    const unanswered =
-      await checkInRequestDialog.requestSoonest(UNANSWERED_NOTE);
+    const unanswered = await checkInRequestDialog.sendSoonest(UNANSWERED_NOTE);
     const unansweredId = await checkInRecords.idOf(
       client.clientId,
       unanswered.startsAt,
@@ -730,7 +711,7 @@ test(
     await clientCheckIns.open();
     await clientCheckIns.openRequestDialog();
     const answeredTwice =
-      await checkInRequestDialog.requestSoonest(LATE_ANSWER_NOTE);
+      await checkInRequestDialog.sendSoonest(LATE_ANSWER_NOTE);
     const answeredTwiceId = await checkInRecords.idOf(
       client.clientId,
       answeredTwice.startsAt,
@@ -852,7 +833,7 @@ test(
     await clientCheckIns.openRequestDialogWithKeyboard();
 
     // act
-    await checkInRequestDialog.requestSoonestByKeyboard(KEYBOARD_NOTE);
+    await checkInRequestDialog.sendSoonestByKeyboard(KEYBOARD_NOTE);
 
     // assert
     await clientCheckIns.expectRequestBlocked();
@@ -893,7 +874,7 @@ test.describe("on a touch screen", () => {
       await clientCheckIns.open();
       await clientCheckIns.expectFloatingRequestButton();
       await clientCheckIns.openRequestDialog();
-      await checkInRequestDialog.requestSoonest(PHONE_NOTE);
+      await checkInRequestDialog.sendSoonest(PHONE_NOTE);
 
       // assert
       await clientCheckIns.expectRequestBlocked();

@@ -6,13 +6,14 @@ type OpenTimesBody = { times: string[] };
 
 const REQUESTS_PATH = "/api/check-ins";
 const OPEN_TIMES_PATH = `${REQUESTS_PATH}/open-times`;
+const SCHEDULE_PATH = `${REQUESTS_PATH}/schedule`;
 const OK = 200;
 
 export class CheckInRequests {
   constructor(private readonly page: Page) {}
 
-  private approvalPathOf(checkInId: string): string {
-    return `${REQUESTS_PATH}/${checkInId}/approval`;
+  private answerPathOf(checkInId: string, answer: string): string {
+    return `${REQUESTS_PATH}/${checkInId}/${answer}`;
   }
 
   private async answerOf(path: string, data: unknown): Promise<CheckInAnswer> {
@@ -36,7 +37,27 @@ export class CheckInRequests {
     });
   }
 
+  async schedule(
+    clientId: string,
+    startsAt: Date,
+    note: string,
+  ): Promise<CheckInAnswer> {
+    return this.answerOf(SCHEDULE_PATH, {
+      clientId,
+      startsAt: startsAt.toISOString(),
+      note,
+    });
+  }
+
   async approve(checkInId: string): Promise<CheckInAnswer> {
-    return this.answerOf(this.approvalPathOf(checkInId), {});
+    return this.answerOf(this.answerPathOf(checkInId, "approval"), {});
+  }
+
+  async decline(checkInId: string, body: object): Promise<CheckInAnswer> {
+    return this.answerOf(this.answerPathOf(checkInId, "decline"), body);
+  }
+
+  async withdraw(checkInId: string): Promise<CheckInAnswer> {
+    return this.answerOf(this.answerPathOf(checkInId, "withdrawal"), {});
   }
 }

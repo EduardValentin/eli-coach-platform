@@ -1,0 +1,4 @@
+[
+  {"waitFor": "[data-parity=\"client-header-actions\"]"},
+  {"wait": 600}
+]

@@ -63,7 +63,7 @@ function createClients(client: CheckInClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(client),
     identitiesOf: vi.fn().mockResolvedValue([ANA]),
-  } satisfies CheckInClients;
+  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
 }
 
 function createNotifications() {
@@ -139,6 +139,7 @@ describe("RequestCheckInUseCase", () => {
     expect(notifications.requested).toHaveBeenCalledWith({
       checkIn: expect.objectContaining({ id: "check-in-1" }),
       client: ANA,
+      recipient: "coach",
     });
   });
 
@@ -194,7 +195,11 @@ describe("RequestCheckInUseCase", () => {
   );
 
   it.each([
-    ["whose coaching ended", { clientId: "client-1", portal: "unreachable" }],
+    ["whose coaching ended", { clientId: "client-1", portal: "ended" }],
+    [
+      "who has not sent her onboarding",
+      { clientId: "client-1", portal: "awaiting_onboarding" },
+    ],
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
     // arrange

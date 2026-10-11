@@ -9,6 +9,7 @@ import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
+import { ScheduleCheckinAction } from './ScheduleCheckinAction';
 import { PortalBackLink } from '../PortalBackLink';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { needsRefund } from '../../domain/coachingSubscription';
@@ -47,7 +48,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
               {refundDue && <NeedsRefundBadge parity="needs-refund" />}
             </div>
-            <p className="text-text-secondary">{journey.identity.email}</p>
+            <p className="text-text-secondary" data-parity="client-email">{journey.identity.email}</p>
           </div>
         </div>
         <div
@@ -61,6 +62,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
             <FolderOpen aria-hidden="true" size={16} />
             Resources
           </Link>
+          <ScheduleCheckinAction journey={journey} />
         </div>
       </header>
 

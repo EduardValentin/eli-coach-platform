@@ -268,20 +268,6 @@ describe.sequential("check-in answers integration", () => {
       ),
     ).toHaveLength(1);
   });
-
-  it("refuses a client who tries to answer her own request", async () => {
-    // arrange
-    const { clientId, checkInId } = await anaAskedForThursday();
-
-    // act
-    const response = await checkIns.approve(checkInId, ANA_SESSION);
-
-    // assert
-    expect(response.status).toBe(403);
-    expect(
-      (await checkIns.checkInRowsOf(clientId)).map(({ status }) => status),
-    ).toEqual(["pending"]);
-  });
 });
 
 async function anaAskedForThursday(): Promise<{

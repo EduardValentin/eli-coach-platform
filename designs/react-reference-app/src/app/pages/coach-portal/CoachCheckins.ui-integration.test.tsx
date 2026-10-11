@@ -362,6 +362,59 @@ describe('the actions on the coach’s check-in rows', () => {
   });
 });
 
+const OWN_REQUEST_NOTE = /Quick look at your first two weeks/;
+
+describe('the coach’s own requests', () => {
+  it('lists them after the requests waiting for her answer, marked as hers', () => {
+    // arrange
+    // act
+    renderPage();
+
+    // assert
+    const rows = within(listedCheckins()).getAllByRole('listitem');
+    const awaitingHer = rows.filter((row) => within(row).queryByRole('button', { name: 'Approve' }));
+    const hers = rows.filter((row) => within(row).queryByText(/Requested by you$/));
+    expect(awaitingHer.length).toBeGreaterThan(0);
+    expect(hers.length).toBeGreaterThan(0);
+    expect(rows.indexOf(awaitingHer.at(-1)!)).toBeLessThan(rows.indexOf(hers[0]));
+    expect(within(rowWith(OWN_REQUEST_NOTE)).getByText(/Requested by you$/)).toBeInTheDocument();
+  });
+
+  it('cancels her waiting request and files it under past as cancelled', async () => {
+    // arrange
+    renderPage();
+    const row = rowWith(OWN_REQUEST_NOTE);
+
+    // act
+    await userEvent.click(within(row).getByRole('button', { name: 'Cancel request' }));
+
+    // assert
+    expect(within(row).getByRole('button', { name: 'Cancelling…' })).toBeDisabled();
+    expect(await screen.findByText('Request cancelled', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.queryByText(OWN_REQUEST_NOTE)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
+    // act
+    await showTab('Past');
+    // assert
+    expect(within(rowWith(OWN_REQUEST_NOTE)).getByText('Cancelled')).toBeInTheDocument();
+  });
+
+  it('keeps her request waiting when cancelling it fails', async () => {
+    // arrange
+    renderPage('&ckservice=fails');
+    const row = rowWith(OWN_REQUEST_NOTE);
+
+    // act
+    await userEvent.click(within(row).getByRole('button', { name: 'Cancel request' }));
+
+    // assert
+    expect(
+      await screen.findByText("Your request wasn't cancelled. Try again.", {}, SERVICE_TIMEOUT),
+    ).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Cancel request' })).toBeEnabled();
+  });
+});
+
 describe('the coach joining a check-in', () => {
   it('sends her to her meeting room for an approved check-in', async () => {
     // arrange

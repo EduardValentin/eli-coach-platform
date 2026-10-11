@@ -1,19 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
 import {
   useCheckins,
-  type CheckinRequester,
+  type CheckinClient,
   type CheckinRequestResult,
 } from '../context/CheckinContext';
 import type { CheckIn } from '../domain/checkins';
+import { useCheckinPicker, type CheckinChoice } from '../hooks/useCheckinPicker';
 import { browserTimeZone } from '../utils/dateFormatters';
-import { CheckinSchedulerSheet, type OpenTimesListing } from './CheckinSchedulerSheet';
+import {
+  CheckinSchedulerSheet,
+  TIME_TAKEN_COPY,
+  type CheckinPickerWording,
+} from './CheckinSchedulerSheet';
 
-type RequestProblem = Exclude<CheckinRequestResult['status'], 'requested'> | 'failed';
+type RequestRefusal = Exclude<CheckinRequestResult['status'], 'requested'>;
 
-const PROBLEM_COPY: Record<RequestProblem, string> = {
-  time_taken: 'That time is no longer free. Pick another one.',
+const PROBLEM_COPY: Record<RequestRefusal | 'failed', string> = {
+  time_taken: TIME_TAKEN_COPY,
   request_waiting: 'You already have a check-in request waiting. You can send another once it is answered.',
   failed: "Your request didn't go through. Try again.",
+};
+
+const WORDING: CheckinPickerWording = {
+  noteLabel: 'Add a note for your coach (optional)',
+  stepVerb: 'Request',
+  busyLabel: 'Requesting…',
 };
 
 export function CheckinRequestDialog({
@@ -24,108 +34,30 @@ export function CheckinRequestDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  client: CheckinRequester;
+  client: CheckinClient;
   onRequested: (checkin: CheckIn) => void;
 }) {
-  const { loadOpenTimes, requestCheckin } = useCheckins();
-  const [openTimes, setOpenTimes] = useState<OpenTimesListing>({ status: 'loading' });
-  const [loadCount, setLoadCount] = useState(0);
-  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
-  const [note, setNote] = useState('');
-  const [problem, setProblem] = useState<RequestProblem | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const loadTimes = useRef(loadOpenTimes);
-  loadTimes.current = loadOpenTimes;
+  const { requestCheckin } = useCheckins();
 
-  useEffect(() => {
-    if (!open) return;
+  const send = async ({ startsAt, note }: CheckinChoice): Promise<RequestRefusal | null> => {
+    const result = await requestCheckin({ client, startsAt, note });
+    if (result.status !== 'requested') return result.status;
 
-    let current = true;
-    setOpenTimes((previous) => (previous.status === 'ready' ? previous : { status: 'loading' }));
-    loadTimes
-      .current()
-      .then((times) => {
-        if (current) setOpenTimes({ status: 'ready', times });
-      })
-      .catch(() => {
-        if (current) setOpenTimes({ status: 'failed' });
-      });
-
-    return () => {
-      current = false;
-    };
-  }, [open, loadCount]);
-
-  const reloadTimes = () => setLoadCount((count) => count + 1);
-
-  const retry = () => {
-    setOpenTimes({ status: 'loading' });
-    reloadTimes();
+    onRequested(result.checkin);
+    return null;
   };
 
-  const forget = () => {
-    setOpenTimes({ status: 'loading' });
-    setSelectedSlot(null);
-    setNote('');
-    setProblem(null);
-  };
-
-  const close = (next: boolean) => {
-    if (!next) forget();
-    onOpenChange(next);
-  };
-
-  const chooseSlot = (slot: Date | null) => {
-    setSelectedSlot(slot);
-    if (slot) setProblem(null);
-  };
-
-  const refuse = (refusal: RequestProblem) => {
-    setProblem(refusal);
-    if (refusal !== 'time_taken') return;
-
-    setSelectedSlot(null);
-    reloadTimes();
-  };
-
-  const submit = async () => {
-    if (!selectedSlot) return;
-
-    setSubmitting(true);
-    setProblem(null);
-    try {
-      const result = await requestCheckin({ client, startsAt: selectedSlot, note });
-      if (result.status !== 'requested') {
-        refuse(result.status);
-        return;
-      }
-      forget();
-      onOpenChange(false);
-      onRequested(result.checkin);
-    } catch {
-      refuse('failed');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const { problem, sheet } = useCheckinPicker({ open, onOpenChange, send });
 
   return (
     <CheckinSchedulerSheet
-      open={open}
-      onOpenChange={close}
+      {...sheet}
       variant="request"
       title="Request a check-in"
       description="Pick a date and time that works for you. Your coach will confirm or suggest another time."
-      openTimes={openTimes}
-      onRetry={retry}
+      wording={WORDING}
       timeZone={browserTimeZone()}
-      selectedSlot={selectedSlot}
-      onSelectSlot={chooseSlot}
-      note={note}
-      onNoteChange={setNote}
       problem={problem ? PROBLEM_COPY[problem] : null}
-      submitting={submitting}
-      onSubmit={submit}
     />
   );
 }

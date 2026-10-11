@@ -9,6 +9,7 @@ export const CHECK_INS_ROUTE_SEGMENT = "checkins";
 
 export const CHECK_INS_API_PATHS = {
   requests: CHECK_INS_API,
+  schedule: `${CHECK_INS_API}/schedule`,
   openTimes: `${CHECK_INS_API}/open-times`,
   withdrawal: `${CHECK_INS_API}/:checkInId/withdrawal`,
   approval: `${CHECK_INS_API}/:checkInId/approval`,

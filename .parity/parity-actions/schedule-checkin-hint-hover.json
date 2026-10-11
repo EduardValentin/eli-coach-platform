@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity=\"client-header-actions\"]"},
+  {"wait": 600},
+  {"hover": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"},
+  {"waitFor": "[data-parity=\"disabled-action-hint\"]"},
+  {"wait": 400}
+]

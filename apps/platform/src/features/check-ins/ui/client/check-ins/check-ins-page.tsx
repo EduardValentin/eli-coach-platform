@@ -32,8 +32,9 @@ import {
 } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
 import {
-  CheckInDecisionButton,
+  CheckInAnswers,
   CheckInDecisionOutcomes,
+  CheckInWithdrawal,
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
@@ -59,7 +60,8 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   requests: {
     icon: CalendarPlus,
     title: "No open requests",
-    description: "Requests you send show up here.",
+    description:
+      "Requests you send and proposals from your coach show up here.",
   },
   past: {
     icon: Clock,
@@ -84,7 +86,7 @@ const COACH = {
 export default function ClientCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
-  const decisions = useCheckInDecisions();
+  const decisions = useCheckInDecisions({ timeZone });
   const [requesting, setRequesting] = useState(false);
   const [openings, setOpenings] = useState(0);
   const hasWaitingRequest = checkIns.some(
@@ -117,7 +119,7 @@ export default function ClientCheckInsRoute() {
     <div className="w-full" data-parity-root="ClientCheckins">
       <PortalPageHeader
         actions={renderRequestButton("hidden sm:inline-flex")}
-        subtitle="Request a check-in and look back at past sessions."
+        subtitle="Request a check-in, answer proposals, and look back at past sessions."
         title="Check-ins"
       />
 
@@ -168,18 +170,23 @@ function clientActionsFor(
     );
   }
 
+  if (checkIn.awaitsViewer) {
+    return (
+      <CheckInAnswers
+        approvedMessage="Check-in approved"
+        checkInId={checkIn.id}
+        decisions={decisions}
+        size="sm"
+      />
+    );
+  }
+
   if (checkIn.viewerMayWithdraw) {
     return (
-      <CheckInDecisionButton
-        decision={{
-          checkInId: checkIn.id,
-          kind: "withdraw",
-          successMessage: "Request cancelled",
-        }}
+      <CheckInWithdrawal
+        checkInId={checkIn.id}
         decisions={decisions}
-        label="Cancel request"
         size="sm"
-        variant="outline"
       />
     );
   }

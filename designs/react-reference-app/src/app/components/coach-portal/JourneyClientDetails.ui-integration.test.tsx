@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { Toaster } from 'sonner';
@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { CheckinProvider } from '../../context/CheckinContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   AWAITING_REVIEW_CALL_ID,
@@ -68,10 +69,12 @@ function renderDetails(
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
-              <UnitPreferencesProvider>
-                <DemoJourneyDetails callId={callId} />
-                <Toaster />
-              </UnitPreferencesProvider>
+              <CheckinProvider>
+                <UnitPreferencesProvider>
+                  <DemoJourneyDetails callId={callId} />
+                  <Toaster />
+                </UnitPreferencesProvider>
+              </CheckinProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
@@ -1335,5 +1338,146 @@ describe('the coach reading what cycle mode means', () => {
     expect(
       screen.queryByRole('button', { name: 'Re-send invitation' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+const SCHEDULE_DIALOG = 'Schedule a check-in with Jane';
+const AWAITING_ONBOARDING_REASON = 'She can answer a check-in once she has sent her onboarding.';
+const TIME_LABEL = /^\d{1,2}:\d{2}\s?[AP]M$/;
+
+function scheduleAction(): HTMLElement {
+  return within(pageHeader()).getByRole('button', { name: 'Schedule check-in' });
+}
+
+function openDays(dialog: HTMLElement): HTMLButtonElement[] {
+  return [...dialog.querySelectorAll<HTMLButtonElement>('td[data-day] button')].filter(
+    (day) => !day.disabled && day.getAttribute('aria-disabled') !== 'true',
+  );
+}
+
+describe('the coach scheduling a check-in from the client page', () => {
+  it('puts Schedule check-in after Resources in the header once she has sent her onboarding', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    const resources = within(pageHeader()).getByRole('link', { name: 'Resources' });
+    expect(
+      resources.compareDocumentPosition(scheduleAction()) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(scheduleAction()).toBeEnabled();
+    expect(scheduleAction()).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('still offers it while a cancelled coaching keeps her access', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jsub=cancelled';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(scheduleAction()).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('leaves it out once her coaching has ended', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jsub=ended';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(pageHeader()).queryByRole('button', { name: 'Schedule check-in' }),
+    ).not.toBeInTheDocument();
+    expect(within(pageHeader()).getByRole('link', { name: 'Resources' })).toBeInTheDocument();
+  });
+
+  it('holds it back before she sends her onboarding and explains why on hover', async () => {
+    // arrange
+    const user = renderDetails('?jstage=onboarding', { postMvp: false });
+
+    // act
+    await user.hover(scheduleAction());
+
+    // assert
+    expect(scheduleAction()).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByText(AWAITING_ONBOARDING_REASON)).toBeVisible();
+  });
+
+  it('explains why it is held back when the coach tabs to it', async () => {
+    // arrange
+    const user = renderDetails('?jstage=onboarding', { postMvp: false });
+
+    // act
+    while (document.activeElement !== scheduleAction()) await user.tab();
+
+    // assert
+    expect(await screen.findByText(AWAITING_ONBOARDING_REASON)).toBeVisible();
+    expect(scheduleAction()).toHaveAccessibleDescription(AWAITING_ONBOARDING_REASON);
+  });
+
+  it('does not open the dialog while it is held back', async () => {
+    // arrange
+    const user = renderDetails('?jstage=onboarding', { postMvp: false });
+
+    // act
+    await user.click(scheduleAction());
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: SCHEDULE_DIALOG })).not.toBeInTheDocument();
+  });
+
+  it('words the reason for a man before he sends his onboarding', async () => {
+    // arrange
+    const user = renderDetails('?jstage=onboarding&jgender=male', { postMvp: false });
+
+    // act
+    await user.hover(scheduleAction());
+
+    // assert
+    expect(
+      await screen.findByText('He can answer a check-in once he has sent his onboarding.'),
+    ).toBeVisible();
+  });
+
+  it('schedules a check-in from the dialog, says so and gives focus back to the action', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+    await user.click(scheduleAction());
+    const dialog = await screen.findByRole('dialog', { name: SCHEDULE_DIALOG });
+    await waitFor(() => expect(openDays(dialog).length).toBeGreaterThan(0), LATENCY_TIMEOUT);
+    await user.click(openDays(dialog)[0]);
+    const [time] = await within(dialog).findAllByRole('button', { name: TIME_LABEL });
+    await user.click(time);
+
+    // act
+    await user.click(within(dialog).getByRole('button', { name: `Schedule ${time.textContent}` }));
+
+    // assert
+    expect(
+      await screen.findByText(/^Check-in scheduled for \w{3}, \w{3} \d{1,2}$/, {}, LATENCY_TIMEOUT),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: SCHEDULE_DIALOG })).not.toBeInTheDocument();
+    await waitFor(() => expect(scheduleAction()).toHaveFocus());
+  });
+
+  it('gives focus back to the action when the coach closes the dialog with Escape', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+    scheduleAction().focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('dialog', { name: SCHEDULE_DIALOG });
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: SCHEDULE_DIALOG })).not.toBeInTheDocument();
+    await waitFor(() => expect(scheduleAction()).toHaveFocus());
   });
 });

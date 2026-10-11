@@ -5,6 +5,7 @@ import {
   listOpenCheckinTimes,
   openCheckinTimes,
   requestCheckinTime,
+  scheduleCheckinTime,
   withdrawCheckinRequest,
   type CheckinSchedule,
 } from './checkinService';
@@ -17,6 +18,7 @@ const BUCHAREST_EVENINGS = {
 };
 
 const MONDAY_MORNING = new Date('2026-10-12T07:00:00.000Z');
+const SCHEDULED_START = new Date('2026-10-13T14:00:00.000Z');
 
 const bucharestWeekday = new Intl.DateTimeFormat('en-GB', {
   timeZone: BUCHAREST_EVENINGS.timeZone,
@@ -307,5 +309,52 @@ describe('the check-in service', () => {
 
     // assert
     await expect(withdrawing).rejects.toThrow('The check-in service did not answer.');
+  });
+
+  it('schedules an open time the coach picked', async () => {
+    // arrange
+    const choice = { startsAt: SCHEDULED_START, schedule: scheduleAt(MONDAY_MORNING) };
+
+    // act
+    const decision = await settled(scheduleCheckinTime(choice, 'works'));
+
+    // assert
+    expect(decision).toBe('scheduled');
+  });
+
+  it('answers taken for a scheduled time that is no longer open', async () => {
+    // arrange
+    const choice = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING, { heldCheckinStarts: [SCHEDULED_START] }),
+    };
+
+    // act
+    const decision = await settled(scheduleCheckinTime(choice, 'works'));
+
+    // assert
+    expect(decision).toBe('time_taken');
+  });
+
+  it('refuses when the client cannot answer a check-in', async () => {
+    // arrange
+    const choice = { startsAt: SCHEDULED_START, schedule: scheduleAt(MONDAY_MORNING) };
+
+    // act
+    const decision = await settled(scheduleCheckinTime(choice, 'cannot-answer'));
+
+    // assert
+    expect(decision).toBe('client_cannot_answer');
+  });
+
+  it('fails scheduling when the service fails', async () => {
+    // arrange
+    const choice = { startsAt: SCHEDULED_START, schedule: scheduleAt(MONDAY_MORNING) };
+
+    // act
+    const scheduling = settled(scheduleCheckinTime(choice, 'fails'));
+
+    // assert
+    await expect(scheduling).rejects.toThrow('The check-in service did not answer.');
   });
 });
