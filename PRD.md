@@ -270,35 +270,34 @@ Per Business Rule 53.
 10. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
 11. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
 12. An upcoming check-in banner at the top of the chat shows the next approved check-in's date, time, and kind.
-13. The sidebar has a "Next Check-in" widget with date, time, a "Join Meet" button, and a link to the Check-ins page.
 
 ### Check-ins (`/client/checkins`)
 
-14. Reached from the portal navigation's "Check-ins" entry, whose badge counts the check-ins awaiting her answer, and opens on Requests when a check-in awaits her answer, otherwise on Upcoming. Organized into Upcoming (approved check-ins with Join Meet, the option to propose a new time, and cancellation where Business Rule 47 allows it), Requests (check-ins awaiting her answer first, which she can approve, reschedule, or decline; then those waiting for the coach: her own pending request, which she can withdraw, and new times she proposed), and Past (passed and cancelled). On both portals, a check-in shows its kind unless it is recurring, who requested an ad-hoc check-in or proposed a pending new time, and who wrote its note. Each tab can be narrowed by kind, and Requests also by whose answer is awaited, each option showing how many check-ins it matches; Requests lists the check-ins awaiting the viewer's answer first, and the client's Requests tab shows how many await her answer. Every tab sorts by check-in date with a direction toggle (Upcoming and Requests start soonest first, Past newest first), shows ten check-ins per page with page controls and a "Showing a–b of n" line, keeps its tab, filters, sort, and page across a reload, and offers to clear the filters when they hide every check-in.
-15. New ad-hoc requests can be made from this page: she picks an open time (Business Rule 45) and may add a note (Business Rule 43), under the one-pending limit (Business Rule 44). The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
+13. Reached from the portal navigation's "Check-ins" entry, whose badge counts the check-ins awaiting her answer, and opens on Requests when a check-in awaits her answer, otherwise on Upcoming. Organized into Upcoming (approved check-ins with Join Meet, the option to propose a new time, and cancellation where Business Rule 47 allows it), Requests (check-ins awaiting her answer first, which she can approve, reschedule, or decline; then those waiting for the coach: her own pending request, which she can withdraw, and new times she proposed), and Past (passed and cancelled). On both portals, a check-in shows its kind unless it is recurring, who requested an ad-hoc check-in or proposed a pending new time, and who wrote its note. Each tab can be narrowed by kind, and Requests also by whose answer is awaited, each option showing how many check-ins it matches; Requests lists the check-ins awaiting the viewer's answer first, and the client's Requests tab shows how many await her answer. Every tab sorts by check-in date with a direction toggle (Upcoming and Requests start soonest first, Past newest first), shows ten check-ins per page with page controls and a "Showing a–b of n" line, keeps its tab, filters, sort, and page across a reload, and offers to clear the filters when they hide every check-in. The portal sidebar, and the More menu on a phone, has a "Next Check-in" widget with the date and time of her next approved check-in that has not ended, a "Join Meet" button, and a link to the Check-ins page; it is absent while she has none.
+14. New ad-hoc requests can be made from this page: she picks an open time (Business Rule 45) and may add a note (Business Rule 43), under the one-pending limit (Business Rule 44). The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
 
 ### Menstrual cycle tracking (`/client/cycle`)
 
-16. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
-17. A cycle calendar shows logged period days and the current phase.
+15. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
+16. A cycle calendar shows logged period days and the current phase.
 
 ### Settings (`/client/settings`)
 
-18. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
-19. Her coaching subscription: her coaching bundle and what she pays, when it renews or, once cancelled, when it ends, the cancellation open to her with its terms (Business Rule 63), and her payment method, which she updates on the payment provider's hosted page (Business Rule 65). Cancelling asks her to confirm and lets her keep her coaching instead. A payment problem is shown here too.
+17. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
+18. Her coaching subscription: her coaching bundle and what she pays, when it renews or, once cancelled, when it ends, the cancellation open to her with its terms (Business Rule 63), and her payment method, which she updates on the payment provider's hosted page (Business Rule 65). Cancelling asks her to confirm and lets her keep her coaching instead. A payment problem is shown here too.
 
 ### Resources (`/client/resources`)
 
-20. Reached from portal navigation, which marks the entry while she has resources she has not opened. Her resources show newest first, each with its first page or a file cover, its file type, title, and tags, and a "New" marker until she opens it (Business Rule 61).
-21. She narrows them by tag and by a search on the title; the tags offered are those on her own resources. The page has its own empty states for no resources yet and for no matches.
-22. Opening a resource shows its pages when it can be read in the portal (Business Rule 58), with its description, tags, file type, size, and the date it was added, and a download action.
+19. Reached from portal navigation, which marks the entry while she has resources she has not opened. Her resources show newest first, each with its first page or a file cover, its file type, title, and tags, and a "New" marker until she opens it (Business Rule 61).
+20. She narrows them by tag and by a search on the title; the tags offered are those on her own resources. The page has its own empty states for no resources yet and for no matches.
+21. Opening a resource shows its pages when it can be read in the portal (Business Rule 58), with its description, tags, file type, size, and the date it was added, and a download action.
 
 ## 5. Coach Portal (`/coach`)
 
 ### Dashboard
 
-1. Opens to a greeting stating how many assessment calls the coach still has today (calls dated today that have not ended) and an "Upcoming calls" widget listing her next three calls that have not ended, soonest first, each with the visitor's name, the call's date and time, a Today badge when it is today, and its join link, plus a link to the full assessment calls list. With no upcoming call the widget says so and still links to the list.
-2. Managed clients, pending check-ins, and important client information. The "Pending Check-ins" card lists the check-ins awaiting the coach's answer, the subtitle states how many there are, and each "Review" action opens that check-in on the coach's Check-ins page.
+1. Opens to a greeting stating how many assessment calls the coach still has today (calls dated today that have not ended) and an "Upcoming assessment calls" widget listing her next three calls that have not ended, soonest first, each with the visitor's name, the call's date and time, a Today badge when it is today, and its join link, plus a link to the full assessment calls list. With no upcoming call the widget says so and still links to the list.
+2. Managed clients, pending check-ins, and important client information. The "Pending Check-ins" card lists up to three check-ins awaiting the coach's answer, soonest first, the subtitle states how many there are, and each "Review" action opens that check-in on the coach's Check-ins page.
 
 ### Assessment calls (`/coach/assessment-calls`)
 
