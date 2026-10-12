@@ -12,7 +12,7 @@ import {
   CALORIE_BAND_OPTIONS,
   type CalorieBand,
 } from '../../../utils/recipeListing';
-import { CountedMultiSelect } from '../../CountedMultiSelect';
+import { MultiSelect } from '../../MultiSelect';
 import { CountedSelect } from '../../CountedSelect';
 import {
   Dialog,
@@ -166,7 +166,7 @@ export function RecipePicker({
               const filter = familyFilter(family);
               return (
                 <div key={family} className="w-40">
-                  <CountedMultiSelect
+                  <MultiSelect
                     label={filter.label}
                     selected={filter.selected}
                     options={filter.options}

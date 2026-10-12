@@ -31,7 +31,7 @@ import {
 } from '../../../utils/libraryListing';
 import { pageOf } from '../../../utils/listPaging';
 import { Button } from '../../ui/button';
-import { CountedMultiSelect } from '../../CountedMultiSelect';
+import { MultiSelect } from '../../MultiSelect';
 import { EmptyState } from '../../EmptyState';
 import { FilterChip, FilterChipGroup } from '../../FilterChipGroup';
 import { ListingToolbar } from '../../ListingToolbar';
@@ -133,7 +133,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
         view={<>{tabs}{viewSwitch}</>}
         filters={
           <>
-            <CountedMultiSelect
+            <MultiSelect
               label="Category"
               selected={selection.categories}
               options={FOOD_CATEGORIES}

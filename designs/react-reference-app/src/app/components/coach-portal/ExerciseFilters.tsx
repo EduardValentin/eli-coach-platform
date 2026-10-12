@@ -12,7 +12,7 @@ import {
   type ExerciseSelection,
 } from '../../utils/exerciseFilters';
 import { toggled } from '../../utils/libraryListing';
-import { CountedMultiSelect } from '../CountedMultiSelect';
+import { MultiSelect } from '../MultiSelect';
 import { CountedSelect } from '../CountedSelect';
 
 export function ExerciseFilters({
@@ -34,7 +34,7 @@ export function ExerciseFilters({
         counts={countsByType(exercises, selection)}
         onChoose={(type) => onSelectionChange({ ...selection, type })}
       />
-      <CountedMultiSelect
+      <MultiSelect
         label="Tags"
         selected={selection.tags}
         options={EXERCISE_TAGS}

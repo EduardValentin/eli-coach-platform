@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { CountedMultiSelect } from "./CountedMultiSelect";
+import { MultiSelect } from "./MultiSelect";
 
 type Tag = "strength" | "recovery";
 
@@ -10,7 +10,7 @@ const LABELS: Record<Tag, string> = { strength: "Strength", recovery: "Recovery"
 function renderFilter(selected: Tag[]) {
   const onToggle = vi.fn();
   render(
-    <CountedMultiSelect<Tag>
+    <MultiSelect<Tag>
       label="Tags"
       selected={selected}
       options={["strength", "recovery"]}
@@ -22,7 +22,7 @@ function renderFilter(selected: Tag[]) {
   return { user: userEvent.setup(), onToggle };
 }
 
-describe("CountedMultiSelect", () => {
+describe("MultiSelect", () => {
   it("is named for the filter while nothing is chosen", () => {
     // arrange
     // act
@@ -67,5 +67,79 @@ describe("CountedMultiSelect", () => {
     // assert
     expect(onToggle).toHaveBeenCalledWith("strength");
     expect(screen.getByRole("list", { name: "Tags" })).toBeInTheDocument();
+  });
+});
+
+describe("a MultiSelect in a form", () => {
+  it("shows the chosen names in the trigger when summary is names", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect
+        label="Primary muscles"
+        selected={["Glutes", "Core"]}
+        options={["Glutes", "Core", "Lats"]}
+        labels={{ Glutes: "Glutes", Core: "Core", Lats: "Lats" }}
+        summary="names"
+        onToggle={() => {}}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Primary muscles, 2 selected" })).toHaveTextContent("Glutes, Core");
+  });
+
+  it("shows the label alone when nothing is chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect
+        label="Equipment"
+        selected={[]}
+        options={["Mat"]}
+        labels={{ Mat: "Mat" }}
+        summary="names"
+        onToggle={() => {}}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Equipment" })).toHaveTextContent("Equipment");
+  });
+
+  it("renders no count badge for an option when no counts are given", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <MultiSelect label="Equipment" selected={[]} options={["Mat"]} labels={{ Mat: "Mat" }} onToggle={() => {}} />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Equipment" }));
+
+    // assert
+    expect(screen.getByRole("checkbox", { name: "Mat" })).toBeInTheDocument();
+    expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
+  });
+
+  it("takes an id so a label can point at the trigger", () => {
+    // arrange
+    // act
+    render(
+      <>
+        <label htmlFor="muscles">Primary muscles</label>
+        <MultiSelect
+          id="muscles"
+          label="Primary muscles"
+          selected={[]}
+          options={["Lats"]}
+          labels={{ Lats: "Lats" }}
+          onToggle={() => {}}
+        />
+      </>,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Primary muscles" })).toHaveAttribute("id", "muscles");
   });
 });

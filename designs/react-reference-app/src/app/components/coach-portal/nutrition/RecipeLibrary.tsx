@@ -37,7 +37,7 @@ import {
   type RecipeTagFamily,
 } from '../../../utils/recipeListing';
 import { Button } from '../../ui/button';
-import { CountedMultiSelect } from '../../CountedMultiSelect';
+import { MultiSelect } from '../../MultiSelect';
 import { CountedSelect } from '../../CountedSelect';
 import { EmptyState } from '../../EmptyState';
 import { ListingToolbar } from '../../ListingToolbar';
@@ -144,7 +144,7 @@ export function RecipeLibrary({ tabs }: { tabs: ReactNode }) {
             {RECIPE_FILTER_FAMILIES.map((family) => {
               const options = familyTags(family);
               return (
-                <CountedMultiSelect
+                <MultiSelect
                   key={family}
                   label={TAG_FAMILY_LABELS[family]}
                   selected={selection.tags[family]}
