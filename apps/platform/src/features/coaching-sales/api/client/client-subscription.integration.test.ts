@@ -10,7 +10,10 @@ import {
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { CheckInsJourney } from "~integration-test-config/check-ins-journey";
-import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";
+import {
+  ClientOnboardingJourney,
+  regularSubmission,
+} from "~integration-test-config/client-onboarding-journey";
 import {
   ANA,
   CALL_ENDED_INSTANT,
@@ -398,26 +401,35 @@ describe.sequential("client subscription integration", () => {
 
   describe("writing once her coaching has ended", () => {
     it.each([
-      ["save her onboarding draft", "/api/client-onboarding/draft", jsonPut()],
+      [
+        "save her onboarding draft",
+        "/api/client-onboarding/draft",
+        jsonWrite("PUT", {
+          formId: "goal-availability",
+          answers: regularSubmission().answers,
+          currentFormIndex: 0,
+          consents: regularSubmission().consents,
+        }),
+      ],
       [
         "submit her onboarding",
         "/api/client-onboarding/submission",
-        formWrite(),
+        formWrite({ submission: JSON.stringify(regularSubmission()) }),
       ],
       [
         "answer her coach's questions",
         "/api/client-onboarding/detail-answers",
-        formWrite(),
+        jsonWrite("POST", { answers: { "goal-availability": { weight: 64 } } }),
       ],
       [
         "record her measurements and photos",
         "/api/client-profile/measurements",
-        formWrite(),
+        formWrite({ entry: JSON.stringify({ weightKg: 64.2, waistCm: 71.5 }) }),
       ],
       [
         "save her unit preference",
         "/api/client-profile/unit-preference",
-        jsonPut(),
+        jsonWrite("PUT", { weightUnit: "kg", heightUnit: "cm" }),
       ],
     ])("refuses to %s", async (_write, target, init) => {
       // arrange
@@ -870,16 +882,24 @@ function openPaymentMethod(session: AccountSession): Promise<Response> {
   });
 }
 
-function jsonPut(): () => RequestInit {
+function jsonWrite(method: "PUT" | "POST", body: unknown): () => RequestInit {
   return () => ({
-    method: "PUT",
+    method,
     headers: { "content-type": "application/json" },
-    body: "{}",
+    body: JSON.stringify(body),
   });
 }
 
-function formWrite(): () => RequestInit {
-  return () => ({ method: "POST", body: new FormData() });
+function formWrite(fields: Record<string, string>): () => RequestInit {
+  return () => {
+    const form = new FormData();
+
+    for (const [name, value] of Object.entries(fields)) {
+      form.set(name, value);
+    }
+
+    return { method: "POST", body: form };
+  };
 }
 
 async function refundDueEmails() {

@@ -24,6 +24,7 @@ type AnswerOnboardingDetailsCommand = {
 type AnswerOnboardingDetailsResult =
   | { status: "answered" }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "no-open-request" }
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
@@ -53,6 +54,10 @@ export class AnswerOnboardingDetailsUseCase {
 
     if (!client || !identity) {
       return { status: "not-on-journey" };
+    }
+
+    if (!client.standing.hasPortalAccessAt(this.options.clock.now())) {
+      return { status: "ended" };
     }
 
     const { clientId } = client;

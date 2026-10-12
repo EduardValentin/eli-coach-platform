@@ -21,6 +21,7 @@ type SaveOnboardingDraftCommand = {
 type SaveOnboardingDraftResult =
   | { status: "saved" }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "already-submitted" };
 
 type SaveOnboardingDraftUseCaseOptions = {
@@ -46,6 +47,10 @@ export class SaveOnboardingDraftUseCase {
 
     if (!client || !identity) {
       return { status: "not-on-journey" };
+    }
+
+    if (!client.standing.hasPortalAccessAt(this.options.clock.now())) {
+      return { status: "ended" };
     }
 
     const stored = await this.options.onboardings.findByClientId(

@@ -1,9 +1,9 @@
+import type { ClientIdentities, ClientReach } from "../client";
 import type { CoachAvailabilitySource } from "../coach-availability";
 import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
@@ -29,8 +29,9 @@ export type ScheduleCheckInResult =
 type ScheduleCheckInUseCaseOptions = {
   availability: CoachAvailabilitySource;
   checkIns: Pick<CheckIns, "request">;
-  clients: Pick<CheckInClients, "findById" | "identitiesOf">;
+  clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
@@ -62,7 +63,7 @@ export class ScheduleCheckInUseCase {
       return { status: "client_cannot_answer" };
     }
 
-    const zone = CheckInTimeZone.from(client.bookingTimeZone);
+    const zone = CheckInTimeZone.from(client.timeZone);
 
     if (zone.status === "invalid") {
       return { status: "invalid_time_zone" };

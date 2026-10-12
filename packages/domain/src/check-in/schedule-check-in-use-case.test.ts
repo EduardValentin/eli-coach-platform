@@ -1,15 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
 } from "../coach-availability";
 
 import { CheckIn } from "./check-in";
-import type {
-  CheckInClientReference,
-  CheckInClients,
-} from "./check-in-clients";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInRequestResult, CheckIns } from "./check-ins";
 import { ScheduleCheckInUseCase } from "./schedule-check-in-use-case";
@@ -25,11 +26,11 @@ const ANA = {
   email: "ana@example.com",
 };
 
-const ANA_REFERENCE: CheckInClientReference = {
+const ANA_REACH: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
-  bookingTimeZone: "America/New_York",
+  timeZone: "America/New_York",
 };
 
 const COMMAND = {
@@ -54,7 +55,7 @@ function workingDays(): CoachAvailabilitySource {
 }
 
 function createScheduleCheckIn(options?: {
-  client?: CheckInClientReference | null;
+  client?: ClientReachReading | null;
   answer?: CheckInRequestResult;
 }) {
   const checkIns = {
@@ -73,10 +74,12 @@ function createScheduleCheckIn(options?: {
     findById: vi
       .fn()
       .mockResolvedValue(
-        options?.client === undefined ? ANA_REFERENCE : options.client,
+        options?.client === undefined ? ANA_REACH : options.client,
       ),
-    identitiesOf: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<CheckInClients, "findById" | "identitiesOf">;
+  } satisfies Pick<ClientReach, "findById">;
+  const identities = {
+    findByClientIds: vi.fn().mockResolvedValue([ANA]),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -92,6 +95,7 @@ function createScheduleCheckIn(options?: {
     checkIns,
     clients,
     clock: { now: () => NOW },
+    identities,
     ids: { generate: () => "check-in-1" },
     incidents: {
       checkInNotificationFailed: vi.fn(),
@@ -180,7 +184,7 @@ describe("ScheduleCheckInUseCase", () => {
     async (portal) => {
       // arrange
       const { scheduleCheckIn, ports } = createScheduleCheckIn({
-        client: { ...ANA_REFERENCE, portal },
+        client: { ...ANA_REACH, portal },
       });
 
       // act
@@ -225,7 +229,7 @@ describe("ScheduleCheckInUseCase", () => {
   it("refuses a time at or after the client's coaching end without holding it", async () => {
     // arrange
     const { scheduleCheckIn, ports } = createScheduleCheckIn({
-      client: { ...ANA_REFERENCE, coachingEndsAt: OPEN_START },
+      client: { ...ANA_REACH, coachingEndsAt: OPEN_START },
     });
 
     // act
@@ -254,7 +258,7 @@ describe("ScheduleCheckInUseCase", () => {
   it("refuses a booking zone that names no place", async () => {
     // arrange
     const { scheduleCheckIn, ports } = createScheduleCheckIn({
-      client: { ...ANA_REFERENCE, bookingTimeZone: "Mars/Olympus_Mons" },
+      client: { ...ANA_REACH, timeZone: "Mars/Olympus_Mons" },
     });
 
     // act

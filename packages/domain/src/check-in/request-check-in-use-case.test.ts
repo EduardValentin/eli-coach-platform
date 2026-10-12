@@ -1,12 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
 } from "../coach-availability";
 
 import { CheckIn } from "./check-in";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInRequestResult, CheckIns } from "./check-ins";
@@ -24,10 +28,11 @@ const ANA = {
   email: "ana@example.com",
 };
 
-const REACHABLE_ANA: CheckInClient = {
+const REACHABLE_ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  timeZone: "Europe/London",
 };
 
 const COMMAND = {
@@ -67,11 +72,16 @@ function createCheckIns(answer?: CheckInRequestResult) {
   } satisfies CheckIns;
 }
 
-function createClients(client: CheckInClient | null) {
+function createClients(client: ClientReachReading | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(client),
-    identitiesOf: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+}
+
+function createIdentities() {
+  return {
+    findByClientIds: vi.fn().mockResolvedValue([ANA]),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
 }
 
 function createNotifications() {
@@ -89,7 +99,7 @@ function createNotifications() {
 
 function createRequestCheckIn(options?: {
   checkIns?: ReturnType<typeof createCheckIns>;
-  client?: CheckInClient | null;
+  client?: ClientReachReading | null;
   notifications?: ReturnType<typeof createNotifications>;
   incidents?: CheckInIncidents;
 }) {
@@ -100,6 +110,7 @@ function createRequestCheckIn(options?: {
       options?.client === undefined ? REACHABLE_ANA : options.client,
     ),
     clock: { now: () => NOW },
+    identities: createIdentities(),
     ids: { generate: () => "check-in-1" },
     incidents: options?.incidents ?? {
       checkInNotificationFailed: vi.fn(),

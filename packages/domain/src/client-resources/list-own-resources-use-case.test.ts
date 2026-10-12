@@ -4,7 +4,7 @@ import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { ListOwnResourcesUseCase } from "./list-own-resources-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach, ClientReachReading } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };
@@ -79,23 +79,36 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
+function reachReading(
+  clientId: string,
+  portal: ClientReachReading["portal"],
+): ClientReachReading {
+  return {
+    clientId,
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
 
-const CLIENT_BY_SUBJECT = new Map<string, ResourceClient>([
-  ["user_ana", { clientId: "client-ana", portal: "reachable" }],
-  ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
+const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
+  ["user_ana", reachReading("client-ana", "reachable")],
+  ["user_cleo", reachReading("client-cleo", "ended")],
+  ["user_dana", reachReading("client-dana", "awaiting_onboarding")],
 ]);
 
 function createUseCase(
   resources: ClientResources = new InMemoryClientResources(),
 ) {
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) =>
+      reachReading(clientId, "reachable"),
+    ),
     findByAuthSubjectId: vi.fn(
       async (authSubjectId: string) =>
         CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
     ),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -209,7 +222,8 @@ describe("ListOwnResourcesUseCase", () => {
   });
 
   it.each([
-    ["a client whose portal is unreachable", "user_cleo"],
+    ["a client whose coaching has ended", "user_cleo"],
+    ["a client still awaiting onboarding", "user_dana"],
     ["an account bound to no client", "user_nobody"],
   ])("finds nothing for %s", async (_case, authSubjectId) => {
     // arrange

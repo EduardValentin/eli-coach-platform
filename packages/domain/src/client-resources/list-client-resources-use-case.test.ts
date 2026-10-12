@@ -5,7 +5,7 @@ import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { ListClientResourcesUseCase } from "./list-client-resources-use-case";
 import type { ResourceBrowseSnapshot } from "./resource-browse";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const MEAL_PREP = { tag: "Meal Prep", folded: "meal prep" };
@@ -85,15 +85,27 @@ function createUseCase(
   resources: ClientResources = new InMemoryClientResources(),
 ) {
   const clients = {
-    exists: vi.fn(async (clientId: string) =>
-      ["client-ana", "client-bea"].includes(clientId),
+    findById: vi.fn(async (clientId: string) =>
+      ["client-ana", "client-bea"].includes(clientId)
+        ? {
+            clientId: clientId,
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            timeZone: "Europe/Bucharest",
+          }
+        : null,
     ),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
       authSubjectId === "user_ana"
-        ? { clientId: "client-ana", portal: "reachable" as const }
+        ? {
+            clientId: "client-ana",
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            timeZone: "Europe/Bucharest",
+          }
         : null,
     ),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

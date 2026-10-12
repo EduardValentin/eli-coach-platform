@@ -1,6 +1,7 @@
+import type { ClientIdentities } from "../client";
+
 import type { CheckIn } from "./check-in";
 import type { CheckInParty } from "./check-in-party";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type {
   CheckInDelivery,
@@ -9,7 +10,7 @@ import type {
 } from "./check-in-notifications";
 
 type CheckInAnnouncerOptions = {
-  clients: Pick<CheckInClients, "identitiesOf">;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };
@@ -38,7 +39,7 @@ export class CheckInAnnouncer {
     actedBy: CheckInParty,
   ): Promise<CheckInDelivery> {
     try {
-      const [client] = await this.options.clients.identitiesOf([
+      const [client] = await this.options.identities.findByClientIds([
         checkIn.clientId,
       ]);
 

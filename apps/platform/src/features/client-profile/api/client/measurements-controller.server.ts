@@ -39,7 +39,10 @@ type RecordMeasurementsResult = Awaited<
 
 const RECORD_MEASUREMENTS_MAX_BYTES = 32 * 1024 * 1024;
 
-const NOT_ON_JOURNEY_STATUS = 404;
+const REFUSAL_STATUS = {
+  "not-on-journey": 404,
+  ended: 409,
+} as const;
 
 export class ClientMeasurementsController {
   constructor(private readonly options: ClientMeasurementsControllerOptions) {}
@@ -116,10 +119,10 @@ function recordingResponse(result: RecordMeasurementsResult): Response {
     return createBadRequestResponse("The measurements are out of range.");
   }
 
-  if (result.status === "not-on-journey") {
+  if (result.status === "not-on-journey" || result.status === "ended") {
     return Response.json(
       measurementsRefusalSchema.parse({ error: result.status }),
-      { status: NOT_ON_JOURNEY_STATUS },
+      { status: REFUSAL_STATUS[result.status] },
     );
   }
 

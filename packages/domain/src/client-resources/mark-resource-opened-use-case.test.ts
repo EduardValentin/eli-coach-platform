@@ -4,7 +4,7 @@ import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { MarkResourceOpenedUseCase } from "./mark-resource-opened-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach, ClientReachReading } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
@@ -79,23 +79,35 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
+function reachReading(
+  clientId: string,
+  portal: ClientReachReading["portal"],
+): ClientReachReading {
+  return {
+    clientId,
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
 
-const CLIENT_BY_SUBJECT = new Map<string, ResourceClient>([
-  ["user_ana", { clientId: "client-ana", portal: "reachable" }],
-  ["user_bea", { clientId: "client-bea", portal: "reachable" }],
-  ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
+const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
+  ["user_ana", reachReading("client-ana", "reachable")],
+  ["user_bea", reachReading("client-bea", "reachable")],
+  ["user_cleo", reachReading("client-cleo", "ended")],
 ]);
 
 function createUseCase() {
   const resources = new InMemoryClientResources();
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) =>
+      reachReading(clientId, "reachable"),
+    ),
     findByAuthSubjectId: vi.fn(
       async (authSubjectId: string) =>
         CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
     ),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

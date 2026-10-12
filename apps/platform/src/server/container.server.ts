@@ -138,11 +138,6 @@ export function createPlatformContainer(options: {
     clock,
     database: database.client,
   });
-  const checkInsComposition = composeCheckInsFeature({
-    clock,
-    coachTime: coachSchedule.handles.coachTime,
-    database: database.client,
-  });
   const assessmentCalls = composeAssessmentCallsFeature({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallsConfig: environment,
@@ -176,6 +171,22 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const checkIns = composeCheckInsFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    availability: coachSchedule.handles.availability,
+    calendar: coachSchedule.handles.calendar,
+    clientIdentities: clients.handles.clientIdentities,
+    clientReach: clients.handles.clientReach,
+    clock,
+    coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
+    coachTime: coachSchedule.handles.coachTime,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    incidents,
+    meetingRoom: coachSchedule.handles.meetingRoom,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
   const coachingSales = composeCoachingSalesFeature({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
@@ -184,7 +195,7 @@ export function createPlatformContainer(options: {
     clientReach: clients.handles.clientReach,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    coachingEnds: [checkInsComposition.handles.coachingEndHandler],
+    coachingEnds: [checkIns.handles.coachingEndHandler],
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
@@ -202,13 +213,12 @@ export function createPlatformContainer(options: {
   });
   const clientProfile = composeClientProfileFeature({
     clientIdentities: clients.handles.clientIdentities,
+    clientReach: clients.handles.clientReach,
     clock,
     database: database.client,
     incidents,
-    measurementClients: clients.handles.measurementClients,
     progressPhotoRenditions: createProgressPhotoRenditions(),
     progressPhotoStore: createProgressPhotoStore(environment),
-    unitPreferenceClients: clients.handles.unitPreferenceClients,
   });
   const clientOnboarding = composeClientOnboardingFeature({
     appBasePath: environment.APP_BASE_PATH,
@@ -221,7 +231,7 @@ export function createPlatformContainer(options: {
     measurements: clientProfile.handles.measurements,
     onboardingClients: clients.handles.onboardingClients,
     onboardingReviewStamps: clients.handles.onboardingReviewStamps,
-    onboardingSubmissionStamps: clients.handles.onboardingSubmissionStamps,
+    onboardingSubmissionStamps: clients.handles.clientJourneys,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
     recordMeasurementEntry: clientProfile.handles.recordMeasurementEntry,
@@ -230,6 +240,7 @@ export function createPlatformContainer(options: {
     unitPreferences: clientProfile.handles.unitPreferences,
   });
   const clientResources = composeClientResourcesFeature({
+    clientReach: clients.handles.clientReach,
     clock,
     database: database.client,
     documentPages: createResourceDocumentPages({
@@ -239,20 +250,7 @@ export function createPlatformContainer(options: {
     fileFormats: createResourceFileFormatDetector(),
     imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
     incidents,
-    resourceClients: clients.handles.resourceClients,
     store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
-  });
-  const checkIns = checkInsComposition.complete({
-    appBasePath: environment.APP_BASE_PATH,
-    availability: coachSchedule.handles.availability,
-    calendar: coachSchedule.handles.calendar,
-    checkInClients: clients.handles.checkInClients,
-    coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
-    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
-    incidents,
-    meetingRoom: coachSchedule.handles.meetingRoom,
-    productEmail,
-    publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const platform = composePlatformFeature({
     app: environment,
@@ -283,7 +281,7 @@ export function createPlatformContainer(options: {
       },
     }),
     assessmentCalls,
-    checkIns,
+    checkIns: checkIns.feature,
     clientOnboarding,
     clientProfile,
     clientResources,

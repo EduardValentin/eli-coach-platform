@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import {
   ClientResourceAccess,
   type ResourceRequester,
@@ -9,7 +10,6 @@ import {
   type ResourceBrowseInput,
   type ResourceBrowseSnapshot,
 } from "./resource-browse";
-import type { ResourceClients } from "./resource-clients";
 
 type ListOwnResourcesCommand = {
   requester: ResourceRequester;
@@ -28,7 +28,7 @@ type ListOwnResourcesResult =
 
 type ListOwnResourcesUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   incidents: ClientResourceIncidents;
 };
 

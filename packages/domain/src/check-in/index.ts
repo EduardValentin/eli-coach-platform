@@ -17,10 +17,6 @@ export {
 export { CHECK_IN_KINDS } from "./check-in-kind";
 export { CHECK_IN_PARTIES } from "./check-in-party";
 export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
-export {
-  type CheckInClientIdentity,
-  type CheckInClients,
-} from "./check-in-clients";
 export { type CheckInIds } from "./check-in-ids";
 export { type CheckInIncidents } from "./check-in-incidents";
 export { MAX_CHECK_IN_NOTE_LENGTH } from "./check-in-note";

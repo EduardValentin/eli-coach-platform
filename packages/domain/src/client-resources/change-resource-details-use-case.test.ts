@@ -5,7 +5,7 @@ import { ClientResource } from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,
@@ -86,12 +86,19 @@ class InMemoryClientResources implements ClientResources {
 function createUseCase() {
   const resources = new InMemoryClientResources();
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
+    })),
     findByAuthSubjectId: vi.fn(async () => ({
       clientId: "client-ana",
       portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
     })),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

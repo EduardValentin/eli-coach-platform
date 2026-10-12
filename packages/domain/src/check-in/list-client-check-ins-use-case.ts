@@ -1,8 +1,8 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { CheckInView } from "./check-in";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
 export type ListClientCheckInsResult =
@@ -10,7 +10,7 @@ export type ListClientCheckInsResult =
 
 type ListClientCheckInsUseCaseOptions = {
   checkIns: CheckIns;
-  clients: Pick<CheckInClients, "findByAuthSubjectId">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
 };
 

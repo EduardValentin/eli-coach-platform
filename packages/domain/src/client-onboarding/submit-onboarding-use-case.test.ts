@@ -120,6 +120,21 @@ function answersWithWeight(weight: number): OnboardingAnswersByForm {
   return answers;
 }
 
+const ENDED_ACCESS_AT = new Date("2026-09-27T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-28T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
+
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
@@ -524,5 +539,48 @@ describe("SubmitOnboardingUseCase", () => {
     expect(changes.recordSubmission).not.toHaveBeenCalled();
     expect(stamps.recordOnboardingSubmitted).not.toHaveBeenCalled();
     expect(incidents.onboardingSubmissionRefused).not.toHaveBeenCalled();
+  });
+
+  it("submits nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const changes = createChanges();
+    const stamps = createStamps();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
+      changes,
+      stamps,
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: completeAnswers(),
+      consents: givenConsents(),
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(changes.recordSubmission).not.toHaveBeenCalled();
+    expect(stamps.recordOnboardingSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("submits the answers of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: completeAnswers(),
+      consents: givenConsents(),
+    });
+
+    // assert
+    expect(result).toMatchObject({ status: "submitted" });
+    expect(changes.recordSubmission).toHaveBeenCalled();
   });
 });

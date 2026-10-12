@@ -6,7 +6,7 @@ import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { RemoveClientResourceUseCase } from "./remove-client-resource-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -114,12 +114,19 @@ function createUseCase() {
   const resources = new InMemoryClientResources(removals);
   const store = new InMemoryResourceStore(removals);
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
+    })),
     findByAuthSubjectId: vi.fn(async () => ({
       clientId: "client-ana",
       portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
     })),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

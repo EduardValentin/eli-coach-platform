@@ -21,7 +21,6 @@ import { clientsContext } from "./clients-context.server";
 import {
   readClientPortalStanding,
   requireClientPortalStanding,
-  requireOpenClientPortal,
 } from "./require-client-portal-standing.server";
 
 const BASE_PATH = "/app";
@@ -427,67 +426,6 @@ describe("readClientPortalStanding", () => {
       expect(readJourneyOf(args)).not.toHaveBeenCalled();
     },
   );
-});
-
-describe("requireOpenClientPortal", () => {
-  it("refuses a write from a client whose coaching has ended", async () => {
-    // arrange
-    const args = journeyArgs({
-      portal: "ended",
-      journey: journeyOf(SUBMITTED),
-      pathname: "/app/api/client-profile/measurements",
-    });
-
-    // act
-    const thrown = await captureThrown(() => requireOpenClientPortal(args));
-
-    // assert
-    expect((thrown as Response).status).toBe(409);
-    expect(await (thrown as Response).json()).toEqual({ error: "ended" });
-  });
-
-  it("lets a write through from a client whose portal is open", async () => {
-    // arrange
-    const args = journeyArgs({
-      journey: journeyOf(SUBMITTED),
-      pathname: "/app/api/client-profile/measurements",
-    });
-
-    // act
-    const thrown = await captureThrown(() => requireOpenClientPortal(args));
-
-    // assert
-    expect(thrown).toBeUndefined();
-  });
-
-  it.each<[string, ResolvedSession]>([
-    ["an anonymous visitor", { kind: "anonymous" }],
-    [
-      "the coach",
-      {
-        account: {
-          authSubjectId: "user_coach",
-          id: "acct_coach",
-          role: "COACH",
-        },
-        kind: "authenticated",
-      },
-    ],
-  ])("leaves %s to the route's own account check", async (_label, session) => {
-    // arrange
-    const args = journeyArgs({
-      portal: "ended",
-      journey: journeyOf(SUBMITTED),
-      pathname: "/app/api/client-profile/measurements",
-      session,
-    });
-
-    // act
-    const thrown = await captureThrown(() => requireOpenClientPortal(args));
-
-    // assert
-    expect(thrown).toBeUndefined();
-  });
 });
 
 function journeyOf(

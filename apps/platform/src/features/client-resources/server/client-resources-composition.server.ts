@@ -11,11 +11,11 @@ import {
   RemoveClientResourceUseCase,
   type ClientResourceIncidents,
   type ClientResourceStore,
-  type ResourceClients,
   type ResourceDocumentPages,
   type ResourceFileFormatDetector,
   type ResourceImagePages,
 } from "@eli-coach-platform/domain/client-resources";
+import type { ClientReach } from "@eli-coach-platform/domain/client";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 
 import { OwnResourcesController } from "~/features/client-resources/api/client/own-resources-controller.server";
@@ -31,13 +31,13 @@ export type ClientResourcesFeature = {
 };
 
 type ClientResourcesFeatureHandles = {
+  clientReach: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
   database: DatabaseClient;
   documentPages: ResourceDocumentPages;
   fileFormats: ResourceFileFormatDetector;
   imagePages: ResourceImagePages;
   incidents: ClientResourceIncidents;
-  resourceClients: ResourceClients;
   store: ClientResourceStore;
 };
 
@@ -46,7 +46,7 @@ export function composeClientResourcesFeature(
 ): ClientResourcesFeature {
   const accessPorts = {
     resources: new PostgresClientResources(handles.database),
-    clients: handles.resourceClients,
+    clients: handles.clientReach,
     incidents: handles.incidents,
   };
   const servingPorts = { ...accessPorts, store: handles.store };

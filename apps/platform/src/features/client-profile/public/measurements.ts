@@ -75,7 +75,7 @@ export const recordMeasurementsResponseSchema = z.object({
 });
 
 export const measurementsRefusalSchema = z.object({
-  error: z.literal("not-on-journey"),
+  error: z.enum(["not-on-journey", "ended"]),
 });
 
 const PROGRESS_PHOTO_VIEW_LABELS = {

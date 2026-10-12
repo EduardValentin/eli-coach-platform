@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach, ClientReachReading } from "../client";
+
 import type { ClientUnitPreferences } from "./client-unit-preferences";
 import { SaveUnitPreferenceUseCase } from "./save-unit-preference-use-case";
-import type { UnitPreferenceClients } from "./unit-preference-clients";
 import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
 
 const NOW = new Date("2026-09-28T10:00:00.000Z");
@@ -11,10 +12,19 @@ const IMPERIAL: UnitPreferenceSnapshot = {
   heightUnit: "ft-in",
 };
 
-function createClients(found: { clientId: string } | null) {
+function reachOf(portal: ClientReachReading["portal"]): ClientReachReading {
+  return {
+    clientId: "client-1",
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
+
+function createClients(found: ClientReachReading | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
-  } satisfies UnitPreferenceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
 }
 
 function createPreferences() {
@@ -27,7 +37,7 @@ function createPreferences() {
 describe("SaveUnitPreferenceUseCase", () => {
   it("saves her units now", async () => {
     // arrange
-    const clients = createClients({ clientId: "client-1" });
+    const clients = createClients(reachOf("reachable"));
     const preferences = createPreferences();
     const useCase = new SaveUnitPreferenceUseCase({
       clients,
@@ -69,5 +79,44 @@ describe("SaveUnitPreferenceUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
     expect(preferences.save).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const preferences = createPreferences();
+    const useCase = new SaveUnitPreferenceUseCase({
+      clients: createClients(reachOf("ended")),
+      preferences,
+      clock: { now: () => NOW },
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      preference: IMPERIAL,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(preferences.save).not.toHaveBeenCalled();
+  });
+
+  it("saves the units of a client still awaiting her onboarding", async () => {
+    // arrange
+    const preferences = createPreferences();
+    const useCase = new SaveUnitPreferenceUseCase({
+      clients: createClients(reachOf("awaiting_onboarding")),
+      preferences,
+      clock: { now: () => NOW },
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      preference: IMPERIAL,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "saved" });
   });
 });

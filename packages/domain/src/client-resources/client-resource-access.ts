@@ -1,9 +1,9 @@
 import type { AccountRole } from "../account";
+import type { ClientReach } from "../client";
 
 import type { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 
 export type ResourceRequester = { role: AccountRole; authSubjectId: string };
 
@@ -22,7 +22,7 @@ function reachOf(requester: ResourceRequester): ResourceReach {
 
 type ClientResourceAccessOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   incidents: ClientResourceIncidents;
 };
 
@@ -105,7 +105,7 @@ export class ClientResourceAccess {
     clientId: string,
   ): Promise<boolean> {
     if (reachOf(requester) === "none") return false;
-    if (!(await this.options.clients.exists(clientId))) return false;
+    if ((await this.options.clients.findById(clientId)) === null) return false;
     if (await this.reaches(requester, (ownId) => ownId === clientId)) {
       return true;
     }

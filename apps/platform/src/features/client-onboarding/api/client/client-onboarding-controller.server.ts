@@ -60,7 +60,7 @@ type ClientOnboardingControllerOptions = {
 };
 
 type OnboardingRefusal =
-  "not-on-journey" | "already-submitted" | "no-open-request";
+  "not-on-journey" | "ended" | "already-submitted" | "no-open-request";
 
 type SubmittedOnboarding = Extract<
   Awaited<ReturnType<SubmitOnboardingUseCase["execute"]>>,
@@ -82,6 +82,7 @@ const SUBMISSION_REQUEST_MAX_BYTES = 32 * 1024 * 1024;
 
 const REFUSAL_STATUS = {
   "not-on-journey": 404,
+  ended: 409,
   "already-submitted": 409,
   "no-open-request": 409,
 } as const satisfies Record<OnboardingRefusal, number>;

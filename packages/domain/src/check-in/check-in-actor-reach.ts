@@ -1,6 +1,7 @@
+import type { ClientReach, ClientReachReading } from "../client";
+
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
 type ReachedCheckIn =
@@ -10,7 +11,7 @@ type ReachedCheckIn =
 
 type CheckInActorReachOptions = {
   checkIns: Pick<CheckIns, "find">;
-  clients: Pick<CheckInClients, "findByAuthSubjectId">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
 };
 
 export class CheckInActorReach {
@@ -18,7 +19,7 @@ export class CheckInActorReach {
 
   async reachableClientOf(
     authSubjectId: string,
-  ): Promise<CheckInClient | null> {
+  ): Promise<ClientReachReading | null> {
     const client =
       await this.options.clients.findByAuthSubjectId(authSubjectId);
 

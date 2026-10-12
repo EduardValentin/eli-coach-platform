@@ -11,5 +11,5 @@ export const unitPreferenceSchema = z.object({
 }) satisfies z.ZodType<UnitPreferenceSnapshot>;
 
 export const unitPreferenceRefusalSchema = z.object({
-  error: z.literal("not-on-journey"),
+  error: z.enum(["not-on-journey", "ended"]),
 });

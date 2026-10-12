@@ -1,18 +1,17 @@
-import type { CheckInClients, CheckInPortalReach } from "./check-in-clients";
+import type { ClientReach, PortalReach } from "../client";
 
 export type ClientCheckInScheduling =
   "allowed" | "awaiting_onboarding" | "ended" | "unknown";
 
 type ReadClientCheckInSchedulingUseCaseOptions = {
-  clients: Pick<CheckInClients, "findById">;
+  clients: Pick<ClientReach, "findById">;
 };
 
-const SCHEDULING_BY_REACH: Record<CheckInPortalReach, ClientCheckInScheduling> =
-  {
-    reachable: "allowed",
-    awaiting_onboarding: "awaiting_onboarding",
-    ended: "ended",
-  };
+const SCHEDULING_BY_REACH: Record<PortalReach, ClientCheckInScheduling> = {
+  reachable: "allowed",
+  awaiting_onboarding: "awaiting_onboarding",
+  ended: "ended",
+};
 
 export class ReadClientCheckInSchedulingUseCase {
   constructor(

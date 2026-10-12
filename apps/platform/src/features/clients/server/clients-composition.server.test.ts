@@ -67,27 +67,15 @@ describe("composeClientsFeature client handles", () => {
     await expect(reading).rejects.toThrow("database down");
   });
 
-  it("reads whether a client exists for her resources from the clients table", async () => {
-    // arrange
-    const { handles } = composeClientsFeature(createHandles());
-
-    // act
-    const reading = handles.resourceClients.exists(CLIENT_ID);
-
-    // assert
-    await expect(reading).rejects.toThrow("database down");
-  });
-
   it("stamps the submitted onboarding on the clients table", async () => {
     // arrange
     const { handles } = composeClientsFeature(createHandles());
 
     // act
-    const stamping =
-      handles.onboardingSubmissionStamps.recordOnboardingSubmitted({
-        clientId: CLIENT_ID,
-        at: new Date("2026-10-20T10:00:00.000Z"),
-      });
+    const stamping = handles.clientJourneys.recordOnboardingSubmitted({
+      clientId: CLIENT_ID,
+      at: new Date("2026-10-20T10:00:00.000Z"),
+    });
 
     // assert
     await expect(stamping).rejects.toThrow("database down");
@@ -132,83 +120,8 @@ describe("composeClientsFeature client handles", () => {
   });
 });
 
-describe("composeClientsFeature resource clients", () => {
-  it.each([
-    [
-      "reachable once she submitted onboarding and her coaching runs",
-      { onboardingSubmittedAt: SUBMITTED_AT, standing: NOT_STARTED },
-      "reachable",
-    ],
-    [
-      "unreachable once her coaching ended",
-      {
-        onboardingSubmittedAt: SUBMITTED_AT,
-        standing: {
-          ...NOT_STARTED,
-          status: "ended",
-          accessEndsAt: SUBMITTED_AT,
-        },
-      },
-      "unreachable",
-    ],
-    [
-      "unreachable before she submitted onboarding",
-      { onboardingSubmittedAt: null, standing: NOT_STARTED },
-      "unreachable",
-    ],
-  ] as const)("answers her portal %s", async (_label, row, portal) => {
-    // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([[clientRow(row)]]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({ clientId: CLIENT_ID, portal });
-  });
-
-  it("answers no client for a subject bound to none", async () => {
-    // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([[]]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_unknown");
-
-    // assert
-    expect(client).toBeNull();
-  });
-});
-
-describe("composeClientsFeature check-in clients", () => {
-  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
-    // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([
-        [clientRow({ onboardingSubmittedAt: SUBMITTED_AT })],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: CLIENT_ID,
-      portal: "reachable",
-      coachingEndsAt: null,
-    });
-  });
-
-  it("answers a signed-in client's coaching end once her coaching is cancelled", async () => {
+describe("composeClientsFeature client reach", () => {
+  it("answers a signed-in client's portal, coaching end and booking zone from the clients table", async () => {
     // arrange
     const endsAt = new Date("2027-01-21T08:00:00.000Z");
     const { handles } = composeClientsFeature({
@@ -222,62 +135,6 @@ describe("composeClientsFeature check-in clients", () => {
               status: "cancelled",
               accessEndsAt: endsAt,
             },
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client?.coachingEndsAt).toEqual(endsAt);
-  });
-
-  it("names each client and gives her email, and nothing else of her identity", async () => {
-    // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([
-        [
-          {
-            clientId: CLIENT_ID,
-            firstName: "Ana",
-            lastName: "Popescu",
-            email: "ana@example.com",
-            dateOfBirth: "1994-03-14",
-            gender: "female",
-            country: "RO",
-            phone: "+40712345678",
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const identities = await handles.checkInClients.identitiesOf([CLIENT_ID]);
-
-    // assert
-    expect(identities).toEqual([
-      {
-        clientId: CLIENT_ID,
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-      },
-    ]);
-  });
-});
-
-describe("composeClientsFeature check-in client references", () => {
-  it("answers her portal reach and the zone she booked her assessment call from", async () => {
-    // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([
-        [
-          clientRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
             timeZone: "America/New_York",
           }),
         ],
@@ -285,76 +142,31 @@ describe("composeClientsFeature check-in client references", () => {
     });
 
     // act
-    const client = await handles.checkInClients.findById(CLIENT_ID);
+    const reading = await handles.clientReach.findByAuthSubjectId("user_ana");
 
     // assert
-    expect(client).toEqual({
+    expect(reading).toEqual({
       clientId: CLIENT_ID,
       portal: "reachable",
-      bookingTimeZone: "America/New_York",
-      coachingEndsAt: null,
+      coachingEndsAt: endsAt,
+      timeZone: "America/New_York",
     });
   });
 
-  it.each([
-    [
-      "awaiting onboarding while her coaching runs and she has not sent it",
-      {
-        onboardingSubmittedAt: null,
-        standing: { ...NOT_STARTED, status: "active" },
-      },
-      "awaiting_onboarding",
-    ],
-    [
-      "ended once her coaching ended",
-      {
-        onboardingSubmittedAt: SUBMITTED_AT,
-        standing: {
-          ...NOT_STARTED,
-          status: "ended",
-          accessEndsAt: SUBMITTED_AT,
-        },
-      },
-      "ended",
-    ],
-  ] as const)("answers her portal %s", async (_label, row, portal) => {
+  it("answers a referenced client's portal by her id", async () => {
     // arrange
-    const { handles } = composeClientsFeature({
-      ...createHandles(),
-      database: createDatabaseAnswering([[clientRow(row)]]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(CLIENT_ID);
-
-    // assert
-    expect(client?.portal).toBe(portal);
-  });
-
-  it("answers a referenced client's coaching end once her coaching is cancelled", async () => {
-    // arrange
-    const endsAt = new Date("2027-01-21T08:00:00.000Z");
     const { handles } = composeClientsFeature({
       ...createHandles(),
       database: createDatabaseAnswering([
-        [
-          clientRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
-            standing: {
-              ...NOT_STARTED,
-              status: "cancelled",
-              accessEndsAt: endsAt,
-            },
-          }),
-        ],
+        [clientRow({ onboardingSubmittedAt: null })],
       ]),
     });
 
     // act
-    const client = await handles.checkInClients.findById(CLIENT_ID);
+    const reading = await handles.clientReach.findById(CLIENT_ID);
 
     // assert
-    expect(client?.coachingEndsAt).toEqual(endsAt);
+    expect(reading?.portal).toBe("awaiting_onboarding");
   });
 
   it("answers no client when none is recorded", async () => {
@@ -365,10 +177,10 @@ describe("composeClientsFeature check-in client references", () => {
     });
 
     // act
-    const client = await handles.checkInClients.findById(CLIENT_ID);
+    const reading = await handles.clientReach.findById(CLIENT_ID);
 
     // assert
-    expect(client).toBeNull();
+    expect(reading).toBeNull();
   });
 });
 

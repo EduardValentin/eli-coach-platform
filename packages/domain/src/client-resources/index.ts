@@ -48,7 +48,6 @@ export {
   type ResourceBrowseInput,
   type ResourceBrowseSnapshot,
 } from "./resource-browse";
-export { type ResourceClients } from "./resource-clients";
 export {
   MAX_RESOURCE_DESCRIPTION_LENGTH,
   MAX_RESOURCE_TITLE_LENGTH,

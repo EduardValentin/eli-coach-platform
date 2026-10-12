@@ -71,6 +71,21 @@ const SUBMISSION: OnboardingSubmission = {
   submittedAt: SUBMITTED_AT,
 };
 
+const ENDED_ACCESS_AT = new Date("2026-09-29T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-30T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
+
 function askedRequest(
   questionIds: readonly OnboardingQuestionId[] = [WEIGHT],
 ): DetailRequest {
@@ -312,5 +327,40 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
     expect(ports.reviews.findByClientId).not.toHaveBeenCalled();
+  });
+
+  it("answers nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const ports = answerPorts({
+      client: clientWithAccessEndingAt(ENDED_ACCESS_AT),
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 82 } },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(ports.reviews.recordAnswer).not.toHaveBeenCalled();
+  });
+
+  it("records the answers of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const ports = answerPorts({
+      client: clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT),
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 82 } },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "answered" });
   });
 });

@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,
@@ -6,7 +7,6 @@ import {
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 import { RESOURCE_RENDITION_MIME_TYPE } from "./resource-renditions";
 
 export type ResourcePreview =
@@ -28,7 +28,7 @@ export type OpenResourcePreviewResult =
 
 type OpenResourcePreviewUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   store: ClientResourceStore;
   incidents: ClientResourceIncidents;
 };

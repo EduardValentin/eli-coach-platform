@@ -1,17 +1,17 @@
+import type { ClientIdentities, ClientIdentity } from "../client";
 import type { Clock } from "../shared";
 
 import type { CheckIn, CheckInView } from "./check-in";
-import type { CheckInClientIdentity, CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
 export type CoachCheckInView = CheckInView & {
-  client: Pick<CheckInClientIdentity, "firstName" | "lastName">;
+  client: Pick<ClientIdentity, "firstName" | "lastName">;
 };
 
 type ListCoachCheckInsUseCaseOptions = {
   checkIns: CheckIns;
-  clients: Pick<CheckInClients, "identitiesOf">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
 };
 
 export class ListCoachCheckInsUseCase {
@@ -19,7 +19,7 @@ export class ListCoachCheckInsUseCase {
 
   async execute(): Promise<CoachCheckInView[]> {
     const checkIns = await this.options.checkIns.listAll();
-    const identities = await this.options.clients.identitiesOf(
+    const identities = await this.options.identities.findByClientIds(
       this.clientIdsOf(checkIns),
     );
     const identityByClientId = new Map(

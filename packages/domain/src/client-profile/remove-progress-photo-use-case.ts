@@ -1,6 +1,6 @@
 import type { AccountRole } from "../account";
+import type { ClientReach } from "../client";
 
-import type { MeasurementClients } from "./measurement-clients";
 import type { MeasurementIncidents } from "./measurement-incidents";
 import type { ProgressPhotoStore } from "./progress-photo-store";
 import type { ProgressPhotos } from "./progress-photos";
@@ -16,7 +16,7 @@ type RemoveProgressPhotoResult =
   { status: "removed" } | { status: "not-found" };
 
 type RemoveProgressPhotoUseCaseOptions = {
-  clients: MeasurementClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   photos: ProgressPhotos;
   store: ProgressPhotoStore;
   incidents: MeasurementIncidents;

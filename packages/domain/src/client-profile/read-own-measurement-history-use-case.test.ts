@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach } from "../client";
+
 import { UnitPreference } from "../unit-preference";
 import { ClientProfile } from "./client-profile";
 import type { ClientProfiles } from "./client-profiles";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
 import type { ClientUnitPreferencesSource } from "../unit-preference";
-import type { MeasurementClients } from "./measurement-clients";
 import {
   MeasurementHistory,
   type MeasurementRecord,
@@ -39,7 +40,7 @@ function createPorts(stored: {
     clock: { now: () => WEIGH_IN_DUE_AT },
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(stored.client),
-    } satisfies MeasurementClients,
+    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(
         ClientProfile.fromOnboarding({

@@ -1,7 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
-import type { CheckInClients } from "@eli-coach-platform/domain/check-in";
 import type {
   ClientIdentities,
   ClientReach,
@@ -26,10 +25,7 @@ import {
 import type {
   OnboardingClients,
   OnboardingReviewStamps,
-  OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
-import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import {
   ListClientsUseCase,
   ReadClientRecordUseCase,
@@ -37,7 +33,6 @@ import {
 } from "@eli-coach-platform/domain/client-roster";
 import type { PaidClientAdmission } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
@@ -68,19 +63,14 @@ export type ClientsFeature = {
 type ClientsComposition = {
   feature: ClientsFeature;
   handles: {
-    checkInClients: CheckInClients;
     clientIdentities: ClientIdentities;
     clientJourneys: ClientJourneys;
     clientReach: ClientReach;
     invitationAcceptance: InvitationAcceptance;
-    measurementClients: MeasurementClients;
     onboardingClients: OnboardingClients;
     onboardingReviewStamps: OnboardingReviewStamps;
-    onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paidClientAdmission: PaidClientAdmission;
-    resourceClients: ResourceClients;
     reviewStampWriter: typeof writeReviewStamps;
-    unitPreferenceClients: UnitPreferenceClients;
     writeClient: typeof writeClient;
     writeCoachingStanding: typeof writeCoachingStanding;
   };
@@ -145,56 +135,6 @@ export function composeClientsFeature(
     journeys,
   });
 
-  const checkInClients: CheckInClients = {
-    findByAuthSubjectId: async (authSubjectId) => {
-      const reading = await clientReach.findByAuthSubjectId(authSubjectId);
-
-      return reading
-        ? {
-            clientId: reading.clientId,
-            portal: reading.portal,
-            coachingEndsAt: reading.coachingEndsAt,
-          }
-        : null;
-    },
-    findById: async (clientId) => {
-      const reading = await clientReach.findById(clientId);
-
-      return reading
-        ? {
-            clientId: reading.clientId,
-            portal: reading.portal,
-            bookingTimeZone: reading.timeZone,
-            coachingEndsAt: reading.coachingEndsAt,
-          }
-        : null;
-    },
-    identitiesOf: async (clientIds) =>
-      (await clientIdentities.findByClientIds(clientIds)).map(
-        ({ clientId, firstName, lastName, email }) => ({
-          clientId,
-          firstName,
-          lastName,
-          email,
-        }),
-      ),
-  };
-
-  const resourceClients: ResourceClients = {
-    exists: (clientId) => onboardingClients.exists(clientId),
-    findByAuthSubjectId: async (authSubjectId) => {
-      const reading = await clientReach.findByAuthSubjectId(authSubjectId);
-
-      return reading
-        ? {
-            clientId: reading.clientId,
-            portal:
-              reading.portal === "reachable" ? "reachable" : "unreachable",
-          }
-        : null;
-    },
-  };
-
   return {
     feature: {
       clientJourney: new ClientJourneyController({
@@ -228,23 +168,18 @@ export function composeClientsFeature(
       readClientPortalStanding,
     },
     handles: {
-      checkInClients,
       clientIdentities,
       clientJourneys: journeys,
       clientReach,
       invitationAcceptance: {
         accept: (input) => acceptInvitation.execute(input),
       },
-      measurementClients: onboardingClients,
       onboardingClients,
       onboardingReviewStamps: journeys,
-      onboardingSubmissionStamps: journeys,
       paidClientAdmission: {
         admit: (input) => admitPaidClient.execute(input).then(() => undefined),
       },
-      resourceClients,
       reviewStampWriter: writeReviewStamps,
-      unitPreferenceClients: onboardingClients,
       writeClient,
       writeCoachingStanding,
     },

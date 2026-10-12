@@ -8,7 +8,7 @@ import type {
 } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { DownloadClientResourceUseCase } from "./download-client-resource-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ORIGINAL_BYTES = Uint8Array.of(0xd0, 0xcf, 0x11, 0xe0);
@@ -99,13 +99,23 @@ class InMemoryOriginals implements ClientResourceStore {
 function createUseCase() {
   const store = new InMemoryOriginals();
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
+    })),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
       authSubjectId === "user_ana"
-        ? { clientId: "client-ana", portal: "reachable" as const }
+        ? {
+            clientId: "client-ana",
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            timeZone: "Europe/Bucharest",
+          }
         : null,
     ),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

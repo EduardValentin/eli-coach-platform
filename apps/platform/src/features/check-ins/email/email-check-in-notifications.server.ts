@@ -2,12 +2,12 @@ import { joinBasePath } from "@eli-coach-platform/config";
 import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
 import {
   CHECK_IN_RULES,
-  type CheckInClientIdentity,
   type CheckInDelivery,
   type CheckInNotice,
   type CheckInNotification,
   type CheckInNotifications,
 } from "@eli-coach-platform/domain/check-in";
+import type { ClientIdentity } from "@eli-coach-platform/domain/client";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   buildCalendarInvite,
@@ -515,7 +515,9 @@ export class EmailCheckInNotifications implements CheckInNotifications {
     };
   }
 
-  private fullNameOf(client: CheckInClientIdentity): string {
+  private fullNameOf(
+    client: Pick<ClientIdentity, "firstName" | "lastName">,
+  ): string {
     return `${client.firstName} ${client.lastName}`
       .replace(NAME_UNSAFE_RUNS, " ")
       .trim();

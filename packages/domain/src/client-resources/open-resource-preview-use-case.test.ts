@@ -9,7 +9,7 @@ import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { OpenResourcePreviewUseCase } from "./open-resource-preview-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -104,13 +104,23 @@ class InMemoryResourceImages implements ClientResourceStore {
 function createUseCase() {
   const store = new InMemoryResourceImages();
   const clients = {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) => ({
+      clientId: clientId,
+      portal: "reachable" as const,
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
+    })),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
       authSubjectId === "user_ana"
-        ? { clientId: "client-ana", portal: "reachable" as const }
+        ? {
+            clientId: "client-ana",
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            timeZone: "Europe/Bucharest",
+          }
         : null,
     ),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
@@ -7,11 +12,6 @@ import {
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type {
-  CheckInClient,
-  CheckInClientReference,
-  CheckInClients,
-} from "./check-in-clients";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInMove, CheckIns } from "./check-ins";
 import { ProposeCheckInTimeUseCase } from "./propose-check-in-time-use-case";
@@ -31,15 +31,11 @@ const ANA = {
 const COACH: CheckInActor = { party: "coach" };
 const ANA_ACTOR: CheckInActor = { party: "client", authSubjectId: "user_ana" };
 
-const REACHABLE_ANA: CheckInClient = {
+const REACHABLE_ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
-};
-
-const ANA_REFERENCE: CheckInClientReference = {
-  ...REACHABLE_ANA,
-  bookingTimeZone: "Europe/London",
+  timeZone: "Europe/London",
 };
 
 const APPROVED = {
@@ -89,8 +85,8 @@ function workingDays(): CoachAvailabilitySource {
 function createProposeCheckInTime(options?: {
   found?: CheckIn | null;
   moved?: CheckInMove;
-  reference?: CheckInClientReference | null;
-  client?: CheckInClient | null;
+  reference?: ClientReachReading | null;
+  client?: ClientReachReading | null;
 }) {
   const checkIns = {
     request: vi.fn(),
@@ -114,13 +110,12 @@ function createProposeCheckInTime(options?: {
     findById: vi
       .fn()
       .mockResolvedValue(
-        options?.reference === undefined ? ANA_REFERENCE : options.reference,
+        options?.reference === undefined ? REACHABLE_ANA : options.reference,
       ),
-    identitiesOf: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<
-    CheckInClients,
-    "findByAuthSubjectId" | "findById" | "identitiesOf"
-  >;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
+  const identities = {
+    findByClientIds: vi.fn().mockResolvedValue([ANA]),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -136,6 +131,7 @@ function createProposeCheckInTime(options?: {
     checkIns,
     clients,
     clock: { now: () => NOW },
+    identities,
     incidents: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
@@ -294,7 +290,7 @@ describe("ProposeCheckInTimeUseCase", () => {
   it("refuses a new time at the client's coaching end without moving", async () => {
     // arrange
     const { proposeCheckInTime, ports } = createProposeCheckInTime({
-      reference: { ...ANA_REFERENCE, coachingEndsAt: NEW_START },
+      reference: { ...REACHABLE_ANA, coachingEndsAt: NEW_START },
     });
 
     // act

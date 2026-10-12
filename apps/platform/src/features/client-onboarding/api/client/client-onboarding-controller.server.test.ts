@@ -312,6 +312,7 @@ describe("ClientOnboardingController save draft", () => {
 
   it.each<[SaveDraftResult["status"], number, string]>([
     ["not-on-journey", 404, "not-on-journey"],
+    ["ended", 409, "ended"],
     ["already-submitted", 409, "already-submitted"],
   ])("answers %s with %i", async (status, expectedStatus, expectedError) => {
     // arrange
@@ -532,6 +533,7 @@ describe("ClientOnboardingController submit", () => {
 
   it.each<[SubmitResult["status"], number, string]>([
     ["not-on-journey", 404, "not-on-journey"],
+    ["ended", 409, "ended"],
     ["already-submitted", 409, "already-submitted"],
   ])("answers %s with %i", async (status, expectedStatus, expectedError) => {
     // arrange
@@ -561,6 +563,7 @@ describe("ClientOnboardingController submit", () => {
     ],
     ["missing a consent", { status: "consent-missing", consent: "disclaimer" }],
     ["off her journey", { status: "not-on-journey" }],
+    ["past her portal access", { status: "ended" }],
     ["already sent", { status: "already-submitted" }],
   ])(
     "attaches no photo to a submission refused as %s",
@@ -745,6 +748,7 @@ describe("ClientOnboardingController answer details", () => {
   it.each([
     ["no-open-request" as const, 409],
     ["not-on-journey" as const, 404],
+    ["ended" as const, 409],
   ])("refuses her answers when %s", async (status, httpStatus) => {
     // arrange
     const { controller } = createController({ answerResult: { status } });

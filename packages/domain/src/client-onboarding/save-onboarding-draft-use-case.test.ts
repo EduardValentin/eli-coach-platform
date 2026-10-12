@@ -48,6 +48,21 @@ const SUBMISSION: OnboardingSubmission = {
   submittedAt: new Date("2026-09-27T10:00:00.000Z"),
 };
 
+const ENDED_ACCESS_AT = new Date("2026-09-27T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-28T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
+
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
@@ -224,5 +239,37 @@ describe("SaveOnboardingDraftUseCase", () => {
       formId: "goal-availability",
     });
     expect(incidents.onboardingDraftSaved).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute(command());
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(changes.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it("saves the draft of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute(command());
+
+    // assert
+    expect(result).toEqual({ status: "saved" });
+    expect(changes.saveDraft).toHaveBeenCalled();
   });
 });

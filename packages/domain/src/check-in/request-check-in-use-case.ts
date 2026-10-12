@@ -1,10 +1,10 @@
+import type { ClientIdentities, ClientReach } from "../client";
 import type { CoachAvailabilitySource } from "../coach-availability";
 import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
@@ -31,8 +31,9 @@ export type RequestCheckInResult =
 type RequestCheckInUseCaseOptions = {
   availability: CoachAvailabilitySource;
   checkIns: CheckIns;
-  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;

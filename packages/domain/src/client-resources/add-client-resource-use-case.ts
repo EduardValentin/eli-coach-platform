@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import {
@@ -13,7 +14,6 @@ import type { ClientResourceIds } from "./client-resource-ids";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 import {
   ResourceDetails,
   type ResourceDetailsInput,
@@ -51,7 +51,7 @@ export type AddClientResourceResult =
 type AddClientResourceUseCaseOptions = {
   resources: ClientResources;
   resourceIds: ClientResourceIds;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   store: ClientResourceStore;
   documentPages: ResourceDocumentPages;
   imagePages: ResourceImagePages;
@@ -88,7 +88,7 @@ export class AddClientResourceUseCase {
       return { status: "not-found" };
     }
 
-    if (!(await this.options.clients.exists(command.clientId))) {
+    if ((await this.options.clients.findById(command.clientId)) === null) {
       return { status: "not-found" };
     }
 

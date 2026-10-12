@@ -1,10 +1,10 @@
+import type { ClientReach } from "../client";
 import type { CoachMeetingRoomSource } from "../coach-meeting-room";
 import type { Clock } from "../shared";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 
 export type ResolveCheckInJoinCommand = {
@@ -19,7 +19,7 @@ export type CheckInJoinResult =
 
 type ResolveCheckInJoinUseCaseOptions = {
   checkIns: CheckIns;
-  clients: Pick<CheckInClients, "findByAuthSubjectId">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   meetingRoom: CoachMeetingRoomSource;
 };

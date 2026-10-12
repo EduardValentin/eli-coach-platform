@@ -36,6 +36,7 @@ type SubmitOnboardingResult =
       entryId: string;
     }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "already-submitted" }
   | { status: "consent-missing"; consent: OnboardingConsent }
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
@@ -65,6 +66,10 @@ export class SubmitOnboardingUseCase {
 
     if (!client || !identity) {
       return { status: "not-on-journey" };
+    }
+
+    if (!client.standing.hasPortalAccessAt(this.options.clock.now())) {
+      return { status: "ended" };
     }
 
     const [stored, preference] = await Promise.all([

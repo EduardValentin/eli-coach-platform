@@ -6,7 +6,6 @@ export {
 } from "./client-profile";
 export { type ClientProfiles } from "./client-profiles";
 export { type ClientMeasurementRecords } from "./client-measurement-records";
-export { type MeasurementClients } from "./measurement-clients";
 export {
   MeasurementHistory,
   type MeasurementDueLine,

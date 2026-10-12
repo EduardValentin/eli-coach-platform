@@ -1,10 +1,11 @@
+import type { ClientIdentity } from "../client";
+
 import type { CheckInSnapshot } from "./check-in";
 import type { CheckInParty } from "./check-in-party";
-import type { CheckInClientIdentity } from "./check-in-clients";
 
 export type CheckInNotice = {
   checkIn: CheckInSnapshot;
-  client: CheckInClientIdentity;
+  client: Pick<ClientIdentity, "clientId" | "firstName" | "lastName" | "email">;
   recipient: CheckInParty;
 };
 

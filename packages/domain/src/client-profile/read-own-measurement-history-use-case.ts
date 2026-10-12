@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 import {
   UnitPreference,
@@ -5,7 +6,6 @@ import {
 } from "../unit-preference";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
 import type { ClientProfiles } from "./client-profiles";
-import type { MeasurementClients } from "./measurement-clients";
 import {
   MeasurementHistory,
   type MeasurementDueLine,
@@ -21,7 +21,7 @@ export type OwnMeasurementHistoryReading = {
 };
 
 type ReadOwnMeasurementHistoryUseCaseOptions = {
-  clients: MeasurementClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   profiles: ClientProfiles;
   records: ClientMeasurementRecords;

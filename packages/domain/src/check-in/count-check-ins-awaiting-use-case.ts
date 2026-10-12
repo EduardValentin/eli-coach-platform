@@ -1,15 +1,15 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckIns } from "./check-ins";
 
 type CountCheckInsAwaitingUseCaseOptions = {
   checkIns: Pick<CheckIns, "find" | "listAll" | "listForClient">;
-  clients: Pick<CheckInClients, "findByAuthSubjectId">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   incidents: CheckInIncidents;
 };

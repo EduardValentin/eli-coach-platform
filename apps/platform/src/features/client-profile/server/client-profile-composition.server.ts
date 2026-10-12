@@ -1,5 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { ClientIdentities } from "@eli-coach-platform/domain/client";
+import type {
+  ClientIdentities,
+  ClientReach,
+} from "@eli-coach-platform/domain/client";
 import {
   AttachProgressPhotosUseCase,
   OpenProgressPhotoUseCase,
@@ -8,7 +11,6 @@ import {
   ReadOwnMeasurementHistoryUseCase,
   RecordMeasurementsUseCase,
   RemoveProgressPhotoUseCase,
-  type MeasurementClients,
   type MeasurementIncidents,
   type ProgressPhotoRenditions,
   type ProgressPhotoStore,
@@ -18,7 +20,6 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   SaveUnitPreferenceUseCase,
   type ClientUnitPreferencesSource,
-  type UnitPreferenceClients,
 } from "@eli-coach-platform/domain/unit-preference";
 
 import { ClientMeasurementsController } from "~/features/client-profile/api/client/measurements-controller.server";
@@ -58,13 +59,12 @@ type ClientProfileComposition = {
 
 type ClientProfileFeatureHandles = {
   clientIdentities: ClientIdentities;
+  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   database: DatabaseClient;
   incidents: MeasurementIncidents;
-  measurementClients: MeasurementClients;
   progressPhotoRenditions: ProgressPhotoRenditions;
   progressPhotoStore: ProgressPhotoStore;
-  unitPreferenceClients: UnitPreferenceClients;
 };
 
 export function composeClientProfileFeature(
@@ -76,7 +76,7 @@ export function composeClientProfileFeature(
   const profiles = new PostgresClientProfiles(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
   const progressPhotoPorts = {
-    clients: handles.measurementClients,
+    clients: handles.clientReach,
     photos,
     store: handles.progressPhotoStore,
     incidents: handles.incidents,
@@ -92,7 +92,7 @@ export function composeClientProfileFeature(
     feature: {
       clientMeasurements: new ClientMeasurementsController({
         readOwnMeasurementHistory: new ReadOwnMeasurementHistoryUseCase({
-          clients: handles.measurementClients,
+          clients: handles.clientReach,
           clock: handles.clock,
           profiles,
           records,
@@ -120,7 +120,7 @@ export function composeClientProfileFeature(
       }),
       unitPreference: new UnitPreferenceController({
         saveUnitPreference: new SaveUnitPreferenceUseCase({
-          clients: handles.unitPreferenceClients,
+          clients: handles.clientReach,
           clock: handles.clock,
           preferences: unitPreferences,
         }),
