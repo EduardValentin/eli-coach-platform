@@ -1,0 +1,15 @@
+import type { PortalReach } from "./portal-reach";
+
+export type ClientReachReading = {
+  clientId: string;
+  portal: PortalReach;
+  coachingEndsAt: Date | null;
+  timeZone: string;
+};
+
+export interface ClientReach {
+  findByAuthSubjectId(
+    authSubjectId: string,
+  ): Promise<ClientReachReading | null>;
+  findById(clientId: string): Promise<ClientReachReading | null>;
+}

@@ -1,6 +1,7 @@
 import {
   EMAIL_FRAME_STYLES,
   EMAIL_PRIMARY_BUTTON_STYLE,
+  dividerStyle,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -11,16 +12,15 @@ import {
   EmailPreviewText,
   EmailSection,
   EmailText,
-} from "@eli-coach-platform/infrastructure/email/server";
-
-import {
-  buttonSectionStyle,
-  dividerStyle,
   heroAccentRuleStyle,
   heroEyebrowStyle,
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
+} from "@eli-coach-platform/infrastructure/email/server";
+
+import {
+  buttonSectionStyle,
   closingNoteSectionStyle,
   closingNoteTextStyle,
   detailsCardStyle,

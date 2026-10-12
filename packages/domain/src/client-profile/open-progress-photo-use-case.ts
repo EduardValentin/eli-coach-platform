@@ -1,6 +1,6 @@
 import type { AccountRole } from "../account";
+import type { ClientReach } from "../client";
 
-import type { MeasurementClients } from "./measurement-clients";
 import type { MeasurementIncidents } from "./measurement-incidents";
 import type { ProgressPhoto } from "./progress-photo";
 import type { ProgressPhotoStore } from "./progress-photo-store";
@@ -21,7 +21,7 @@ type OpenProgressPhotoResult =
   | { status: "not-found" };
 
 type OpenProgressPhotoUseCaseOptions = {
-  clients: MeasurementClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   photos: ProgressPhotos;
   store: ProgressPhotoStore;
   incidents: MeasurementIncidents;

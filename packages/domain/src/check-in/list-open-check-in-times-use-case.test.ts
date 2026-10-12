@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach, ClientReachReading } from "../client";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
@@ -8,10 +9,6 @@ import {
 } from "../coach-availability";
 
 import type { CheckInActor } from "./check-in-actor";
-import type {
-  CheckInClientReference,
-  CheckInClients,
-} from "./check-in-clients";
 import { ListOpenCheckInTimesUseCase } from "./list-open-check-in-times-use-case";
 
 const MONDAY_LATE_MORNING = new Date("2026-06-01T08:30:00.000Z");
@@ -38,16 +35,16 @@ function calendarBusyWith(busy: TimeInterval[]): CoachCalendar {
 const ANA_ACTOR: CheckInActor = { party: "client", authSubjectId: "user_ana" };
 const COACH: CheckInActor = { party: "coach" };
 
-const ANA: CheckInClientReference = {
+const ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
-  bookingTimeZone: "Europe/London",
+  timeZone: "Europe/London",
 };
 
 function createListOpenTimes(options?: {
   busy?: TimeInterval[];
-  client?: CheckInClientReference | null;
+  client?: ClientReachReading | null;
 }) {
   const client = options?.client === undefined ? ANA : options.client;
   const ports = {
@@ -56,7 +53,7 @@ function createListOpenTimes(options?: {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(client),
       findById: vi.fn().mockResolvedValue(client),
-    } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "findById">,
+    } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">,
     clock: { now: () => MONDAY_LATE_MORNING },
   };
 
@@ -65,7 +62,7 @@ function createListOpenTimes(options?: {
 
 async function openTimes(options?: {
   busy?: TimeInterval[];
-  client?: CheckInClientReference;
+  client?: ClientReachReading;
 }): Promise<string[]> {
   const { listOpenTimes } = createListOpenTimes(options);
 

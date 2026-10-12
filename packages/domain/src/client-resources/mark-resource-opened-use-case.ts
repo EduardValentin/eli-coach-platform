@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { ClientResource } from "./client-resource";
@@ -7,7 +8,6 @@ import {
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 
 type MarkResourceOpenedCommand = {
   requester: ResourceRequester;
@@ -19,7 +19,7 @@ type MarkResourceOpenedResult =
 
 type MarkResourceOpenedUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   incidents: ClientResourceIncidents;
   clock: Clock;
 };

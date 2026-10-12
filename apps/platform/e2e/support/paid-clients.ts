@@ -80,6 +80,13 @@ type InvitationTimes = {
 export const SEEDED_BUNDLE = getCoachingBundle("3-months");
 export const SEEDED_TIER: PriceTier = "regular";
 
+const SEEDED_STANDING = {
+  status: "not-started",
+  accessEndsAt: null,
+  refundDue: false,
+  bundleMonths: SEEDED_BUNDLE.months,
+} as const;
+
 const PRIMARY_GOAL = "build_strength";
 const COUNTRY = "RO";
 const TIME_ZONE = "Europe/Bucharest";
@@ -100,9 +107,11 @@ const INSERT_ENDED_CALL = `
 const INSERT_CLIENT = `
   insert into app.clients (
     assessment_call_id, first_name, last_name, email, date_of_birth, gender,
-    primary_goal, country, created_at, auth_subject_id
+    primary_goal, country, created_at, auth_subject_id, booking_time_zone,
+    coaching_status, coaching_access_ends_at, coaching_refund_due,
+    coaching_bundle_months
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
   returning id
 `;
 const INSERT_SUBSCRIPTION = `
@@ -110,9 +119,9 @@ const INSERT_SUBSCRIPTION = `
     client_id, assessment_call_id, bundle_id, months, tier, amount_cents,
     currency, stripe_customer_id, stripe_subscription_id,
     stripe_payment_intent_id, stripe_checkout_session_id, paid_at,
-    start_choice, created_at
+    start_choice, status, access_ends_at, created_at
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $12)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $12)
 `;
 const INSERT_INVITATION = `
   insert into app.client_invitations (
@@ -243,6 +252,11 @@ async function insertPaidClient(
     COUNTRY,
     paidAt,
     binding.authSubjectId,
+    TIME_ZONE,
+    SEEDED_STANDING.status,
+    SEEDED_STANDING.accessEndsAt,
+    SEEDED_STANDING.refundDue,
+    SEEDED_STANDING.bundleMonths,
   ]);
   await connection.query(INSERT_SUBSCRIPTION, [
     clientId,
@@ -258,6 +272,8 @@ async function insertPaidClient(
     references.checkoutSessionId,
     paidAt,
     payment.start,
+    SEEDED_STANDING.status,
+    SEEDED_STANDING.accessEndsAt,
   ]);
 
   return {

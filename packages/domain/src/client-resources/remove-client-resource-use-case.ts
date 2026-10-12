@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { ClientResourceOwner } from "./client-resource";
 import {
   ClientResourceAccess,
@@ -6,7 +7,6 @@ import {
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 
 type RemoveClientResourceCommand = {
   requester: ResourceRequester;
@@ -18,7 +18,7 @@ export type RemoveClientResourceResult =
 
 type RemoveClientResourceUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   store: ClientResourceStore;
   incidents: ClientResourceIncidents;
 };

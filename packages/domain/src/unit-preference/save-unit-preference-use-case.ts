@@ -1,8 +1,8 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { ClientUnitPreferences } from "./client-unit-preferences";
 import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
-import type { UnitPreferenceClients } from "./unit-preference-clients";
 
 type SaveUnitPreferenceCommand = {
   authSubjectId: string;
@@ -10,10 +10,10 @@ type SaveUnitPreferenceCommand = {
 };
 
 type SaveUnitPreferenceResult =
-  { status: "saved" } | { status: "not-on-journey" };
+  { status: "saved" } | { status: "not-on-journey" } | { status: "ended" };
 
 type SaveUnitPreferenceUseCaseOptions = {
-  clients: UnitPreferenceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   preferences: ClientUnitPreferences;
   clock: Clock;
 };
@@ -30,6 +30,10 @@ export class SaveUnitPreferenceUseCase {
 
     if (!client) {
       return { status: "not-on-journey" };
+    }
+
+    if (client.portal === "ended") {
+      return { status: "ended" };
     }
 
     await this.options.preferences.save({

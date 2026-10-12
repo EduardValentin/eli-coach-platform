@@ -1,12 +1,7 @@
 import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 import { describe, expect, it } from "vitest";
 
-import {
-  bundleLengthLabel,
-  formatEuros,
-  presentBundleCards,
-  renewalLabel,
-} from "./bundle-cards";
+import { formatEuros, presentBundleCards, renewalLabel } from "./bundle-cards";
 
 describe("presentBundleCards", () => {
   it("presents the regular prices with savings against the one-month bundle", () => {
@@ -108,23 +103,6 @@ describe("renewalLabel", () => {
 
     // act
     const label = renewalLabel(bundleMonths);
-
-    // assert
-    expect(label).toBe(expected);
-  });
-});
-
-describe("bundleLengthLabel", () => {
-  it.each([
-    [1, "1 month"],
-    [3, "3 months"],
-    [6, "6 months"],
-  ])("words a bundle of %i months as its length", (months, expected) => {
-    // arrange
-    const bundleMonths = months;
-
-    // act
-    const label = bundleLengthLabel(bundleMonths);
 
     // assert
     expect(label).toBe(expected);

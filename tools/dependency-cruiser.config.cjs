@@ -31,24 +31,81 @@ const FEATURE_ORDER = [
   "waitlist",
   "coach-schedule",
   "assessment-calls",
-  "coaching-sales",
+  "clients",
   "client-profile",
   "client-resources",
   "client-onboarding",
   "check-ins",
+  "coaching-sales",
 ];
 
-const unorderedFeatures = readdirSync(
-  path.join(__dirname, "../apps/platform/src/features"),
-  { withFileTypes: true },
-)
-  .filter((entry) => entry.isDirectory() && !FEATURE_ORDER.includes(entry.name))
-  .map((entry) => entry.name);
+const DOMAIN_SLICE_ORDER = [
+  "shared",
+  "email-address",
+  "feature-flag",
+  "product",
+  "cart",
+  "acquisition",
+  "download-grant",
+  "waitlist",
+  "account",
+  "coach-availability",
+  "coach-meeting-room",
+  "coach-schedule",
+  "assessment-call",
+  "client",
+  "unit-preference",
+  "measurement",
+  "client-invitation",
+  "client-profile",
+  "client-onboarding",
+  "client-journey",
+  "client-roster",
+  "client-resources",
+  "check-in",
+  "coaching-bundle",
+  "payment-link",
+  "coaching-subscription",
+];
 
-if (unorderedFeatures.length > 0) {
-  throw new Error(
-    `Place every feature in FEATURE_ORDER; missing: ${unorderedFeatures.join(", ")}.`,
-  );
+function requireEveryFolderOrdered({ directory, order, orderName }) {
+  const unordered = readdirSync(path.join(__dirname, "..", directory), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isDirectory() && !order.includes(entry.name))
+    .map((entry) => entry.name);
+
+  if (unordered.length > 0) {
+    throw new Error(
+      `Place every folder of ${directory} in ${orderName}; missing: ${unordered.join(", ")}.`,
+    );
+  }
+}
+
+requireEveryFolderOrdered({
+  directory: "apps/platform/src/features",
+  order: FEATURE_ORDER,
+  orderName: "FEATURE_ORDER",
+});
+requireEveryFolderOrdered({
+  directory: "packages/domain/src",
+  order: DOMAIN_SLICE_ORDER,
+  orderName: "DOMAIN_SLICE_ORDER",
+});
+
+function domainSliceOrderRule(slice, position) {
+  const earlierSlices = DOMAIN_SLICE_ORDER.slice(0, position);
+
+  return {
+    name: `domain-slice-order-${slice}`,
+    comment: `A domain slice imports only the slices before it in DOMAIN_SLICE_ORDER: ${slice} may import ${earlierSlices.join(", ") || "no other slice"}.`,
+    severity: "error",
+    from: { path: `^packages/domain/src/${slice}/` },
+    to: {
+      path: "^packages/domain/src/",
+      pathNot: `^packages/domain/src/(${[...earlierSlices, slice].join("|")})/`,
+    },
+  };
 }
 
 function featureOrderRule(feature, position) {
@@ -389,6 +446,7 @@ module.exports = {
         pathNot: "^packages/domain/src/[^/]+/index\\.ts$",
       },
     },
+    ...DOMAIN_SLICE_ORDER.map(domainSliceOrderRule),
     {
       name: "domain-no-externals",
       comment: "The domain package imports nothing outside itself.",

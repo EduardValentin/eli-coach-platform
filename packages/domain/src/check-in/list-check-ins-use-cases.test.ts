@@ -1,29 +1,39 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CheckIn, type CheckInProps } from "./check-in";
 import type {
-  CheckInClient,
-  CheckInClientIdentity,
-  CheckInClients,
-} from "./check-in-clients";
+  ClientIdentities,
+  ClientIdentity,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
+
+import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckIns } from "./check-ins";
 import { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
 import { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
 
 const NOW = new Date("2026-06-03T09:30:00.000Z");
 
-const ANA: CheckInClientIdentity = {
+const ANA: ClientIdentity = {
   clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   email: "ana@example.com",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  country: "RO",
+  phone: "+40712345678",
 };
 
-const MARIA: CheckInClientIdentity = {
+const MARIA: ClientIdentity = {
   clientId: "client-2",
   firstName: "Maria",
   lastName: "Ionescu",
   email: "maria@example.com",
+  dateOfBirth: "1991-07-02",
+  gender: "female",
+  country: "RO",
+  phone: null,
 };
 
 const REQUEST = {
@@ -50,8 +60,8 @@ function checkIn(props?: Partial<CheckInProps>): CheckIn {
 
 function createPorts(options: {
   checkIns: CheckIn[];
-  client?: CheckInClient | null;
-  identities?: CheckInClientIdentity[];
+  client?: ClientReachReading | null;
+  identities?: ClientIdentity[];
 }) {
   const checkIns = {
     request: vi.fn(),
@@ -63,17 +73,22 @@ function createPorts(options: {
     cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
-    findByAuthSubjectId: vi
-      .fn()
-      .mockResolvedValue(
-        options.client === undefined
-          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
-          : options.client,
-      ),
-    identitiesOf: vi.fn().mockResolvedValue(options.identities ?? []),
-  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+    findByAuthSubjectId: vi.fn().mockResolvedValue(
+      options.client === undefined
+        ? {
+            clientId: "client-1",
+            portal: "reachable",
+            coachingEndsAt: null,
+            timeZone: "Europe/London",
+          }
+        : options.client,
+    ),
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  const identities = {
+    findByClientIds: vi.fn().mockResolvedValue(options.identities ?? []),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
 
-  return { checkIns, clients, clock: { now: () => NOW } };
+  return { checkIns, clients, clock: { now: () => NOW }, identities };
 }
 
 describe("ListClientCheckInsUseCase", () => {
@@ -147,7 +162,12 @@ describe("ListClientCheckInsUseCase", () => {
   it.each([
     [
       "whose coaching ended",
-      { clientId: "client-1", portal: "ended", coachingEndsAt: null },
+      {
+        clientId: "client-1",
+        portal: "ended",
+        coachingEndsAt: null,
+        timeZone: "Europe/London",
+      },
     ],
     ["with no client record", null],
   ] as const)("refuses a requester %s", async (_situation, client) => {
@@ -244,8 +264,8 @@ describe("ListCoachCheckInsUseCase", () => {
     await new ListCoachCheckInsUseCase(ports).execute();
 
     // assert
-    expect(ports.clients.identitiesOf).toHaveBeenCalledTimes(1);
-    expect(ports.clients.identitiesOf).toHaveBeenCalledWith([
+    expect(ports.identities.findByClientIds).toHaveBeenCalledTimes(1);
+    expect(ports.identities.findByClientIds).toHaveBeenCalledWith([
       "client-1",
       "client-2",
     ]);

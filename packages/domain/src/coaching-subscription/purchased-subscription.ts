@@ -1,14 +1,11 @@
+import { CoachingStanding, type CoachingStatus } from "../client";
 import {
   getCoachingBundle,
   type CoachingBundleId,
   type PriceTier,
 } from "../coaching-bundle";
 
-import type {
-  CheckoutCompletion,
-  CoachingSubscriptionStatus,
-  StartChoice,
-} from "./coaching-subscription";
+import type { CheckoutCompletion, StartChoice } from "./coaching-subscription";
 
 export type PurchasedSubscriptionSnapshot = {
   bundleId: CoachingBundleId;
@@ -22,7 +19,7 @@ export type PurchasedSubscriptionSnapshot = {
   checkoutSessionId: string;
   paidAt: Date;
   startChoice: StartChoice;
-  status: CoachingSubscriptionStatus;
+  status: CoachingStatus;
 };
 
 export class PurchasedSubscription {
@@ -37,7 +34,7 @@ export class PurchasedSubscription {
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
   readonly startChoice: StartChoice;
-  readonly status: CoachingSubscriptionStatus;
+  readonly status: CoachingStatus;
 
   private constructor(snapshot: PurchasedSubscriptionSnapshot) {
     this.bundleId = snapshot.bundleId;
@@ -70,6 +67,15 @@ export class PurchasedSubscription {
       paidAt: completion.paidAt,
       startChoice: completion.startChoice,
       status: "not-started",
+    });
+  }
+
+  standing(): CoachingStanding {
+    return CoachingStanding.of({
+      status: this.status,
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: this.months,
     });
   }
 

@@ -2,7 +2,7 @@ import type { Clock } from "../shared";
 
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
-import type { OnboardingClients } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviews } from "./onboarding-reviews";
 
@@ -13,7 +13,7 @@ type ApproveOnboardingAnswersResult =
   | { status: "not-reviewable" };
 
 type ApproveOnboardingAnswersUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   clock: Clock;
@@ -26,13 +26,15 @@ export class ApproveOnboardingAnswersUseCase {
   ) {}
 
   async execute(clientId: string): Promise<ApproveOnboardingAnswersResult> {
-    const client = await this.options.clients.findByClientId(clientId);
+    const participant = await this.options.participants.byClientId(clientId);
 
-    if (!client) {
+    if (!participant) {
       return { status: "not-found" };
     }
 
-    if (client.subscriptionCancelledOrEnded) {
+    const { client, identity } = participant;
+
+    if (client.standing.isCancelledOrEnded()) {
       return { status: "subscription-cancelled-or-ended" };
     }
 
@@ -41,7 +43,7 @@ export class ApproveOnboardingAnswersUseCase {
       this.options.reviews.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });

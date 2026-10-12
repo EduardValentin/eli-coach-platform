@@ -46,12 +46,12 @@ describe("composeClientProfileFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(
-      handles.unitPreferenceClients.findByAuthSubjectId,
-    ).toHaveBeenCalledWith("user_uninvited");
+    expect(handles.clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_uninvited",
+    );
   });
 
-  it("names no due line for an account with no client record through the measurement clients it is handed", async () => {
+  it("names no due line for an account with no client record through the client reach it is handed", async () => {
     // arrange
     const handles = createHandles();
     const { feature } = composeClientProfileFeature(handles);
@@ -63,7 +63,7 @@ describe("composeClientProfileFeature", () => {
 
     // assert
     expect(nudge).toEqual({ dueLine: null });
-    expect(handles.measurementClients.findByAuthSubjectId).toHaveBeenCalledWith(
+    expect(handles.clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
       "user_uninvited",
     );
   });
@@ -124,6 +124,9 @@ function createHandles() {
       findByClientId: vi.fn().mockResolvedValue(null),
       findByClientIds: vi.fn().mockResolvedValue([]),
     },
+    clientReach: {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+    },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
     incidents: {
@@ -133,14 +136,8 @@ function createHandles() {
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
     },
-    measurementClients: {
-      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-    },
     progressPhotoRenditions: { render: vi.fn() },
     progressPhotoStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
-    unitPreferenceClients: {
-      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-    },
   };
 }
 

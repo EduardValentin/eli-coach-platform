@@ -2,7 +2,6 @@ import type {
   ClientJourneySnapshot,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
-  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import { describe, expect, it, vi } from "vitest";
 
@@ -10,10 +9,10 @@ import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-comp
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { clientJourneyContext } from "~/features/coaching-sales/server/guards/client-journey-context.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientJourneyContext } from "~/features/clients/server/guards/client-journey-context.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -33,6 +32,12 @@ const ANA: ClientJourneySnapshot = {
   detailsRequestedAt: null,
   detailsAnsweredAt: null,
   answersApprovedAt: null,
+  standing: {
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  },
 };
 
 describe("client shell loader", () => {
@@ -106,14 +111,13 @@ function shellArguments(
   const clientJourney = new ClientJourneyController({
     markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
     readClientJourney: {} as ReadClientJourneyUseCase,
-    readProgramStatus: {} as ReadProgramStatusUseCase,
   });
 
   return createRequestArgs({
     contexts: [
-      contextEntry(coachingSalesContext, {
+      contextEntry(clientsContext, {
         clientJourney,
-      } as unknown as CoachingSalesFeature),
+      } as unknown as ClientsFeature),
       contextEntry(clientResourcesContext, {
         ownResources: { countUnopened },
       } as unknown as ClientResourcesFeature),

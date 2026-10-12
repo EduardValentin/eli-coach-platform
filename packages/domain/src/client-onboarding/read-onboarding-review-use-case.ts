@@ -13,7 +13,8 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
 } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClient } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import {
   OnboardingReview,
   type OnboardingReviewStage,
@@ -61,7 +62,7 @@ type ReadOnboardingReviewResult =
   | { status: "not-found" };
 
 type ReadOnboardingReviewUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   measurements: ClientMeasurementsSource;
@@ -103,18 +104,20 @@ export class ReadOnboardingReviewUseCase {
   constructor(private readonly options: ReadOnboardingReviewUseCaseOptions) {}
 
   async execute(clientId: string): Promise<ReadOnboardingReviewResult> {
-    const client = await this.options.clients.findByClientId(clientId);
+    const participant = await this.options.participants.byClientId(clientId);
 
-    if (!client) {
+    if (!participant) {
       return { status: "not-found" };
     }
+
+    const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
       this.options.onboardings.findByClientId(clientId),
       this.options.reviews.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });
@@ -137,7 +140,7 @@ export class ReadOnboardingReviewUseCase {
       screening: {
         outcome: screeningOutcome({
           answers,
-          dateOfBirth: client.dateOfBirth,
+          dateOfBirth: identity.dateOfBirth,
           now: submission.submittedAt,
         }),
         yesCount: flaggedQuestions.filter(

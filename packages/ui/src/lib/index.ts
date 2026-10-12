@@ -6,8 +6,13 @@ export {
 export { cn } from "./cn";
 export { ABSENT_VALUE, MAIN_CONTENT_ID } from "./constants";
 export { describedByOf } from "./described-by";
+export {
+  useConfirmedFetcherDialog,
+  type DialogAfterAnswer,
+} from "./use-confirmed-fetcher-dialog";
 export { PhoneLink } from "./phone-link";
 export { PORTAL_PAGE_TITLE_CLASS, VALUE_CLASS } from "./typography";
 export { useDisplayTimeZone } from "./use-display-time-zone";
+export { useFragmentToken } from "./use-fragment-token";
 export { useSearchParamsWriter } from "./use-search-params-writer";
 export { useIsDesktopViewport, useIsMobileViewport } from "./viewport";

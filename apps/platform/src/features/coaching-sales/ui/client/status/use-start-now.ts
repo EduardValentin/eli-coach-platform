@@ -1,9 +1,9 @@
-import { programStartedSchema } from "~/features/coaching-sales/public/client-subscription";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 import {
   useConfirmedFetcherDialog,
   type DialogAfterAnswer,
-} from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
+} from "@eli-coach-platform/ui/lib";
+import { programStartedSchema } from "~/features/coaching-sales/public/client-subscription";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 import { START_NOW_PROBLEM } from "./program-status-copy";
 

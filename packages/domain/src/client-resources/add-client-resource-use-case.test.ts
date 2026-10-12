@@ -10,7 +10,7 @@ import type {
   ResourcePageImage,
 } from "./client-resource-store";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach } from "../client";
 import type {
   ResourceDocumentPages,
   ResourceDocumentReading,
@@ -196,9 +196,18 @@ function createUseCase(setup: Setup = {}) {
   const store = new InMemoryResourceStore();
   const documentPages = setup.documentPages ?? new FakeDocumentPages(3);
   const clients = {
-    exists: vi.fn(async () => setup.clientExists ?? true),
+    findById: vi.fn(async (clientId: string) =>
+      (setup.clientExists ?? true)
+        ? {
+            clientId: clientId,
+            portal: "reachable" as const,
+            coachingEndsAt: null,
+            timeZone: "Europe/Bucharest",
+          }
+        : null,
+    ),
     findByAuthSubjectId: vi.fn(async () => null),
-  } satisfies ResourceClients;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),

@@ -30,7 +30,7 @@ const UNKNOWN_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const RESOURCE_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 
 describe("composeClientResourcesFeature", () => {
-  it("answers not found for a client the resource clients it is handed do not know", async () => {
+  it("answers not found for a client the client reach it is handed does not know", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeClientResourcesFeature(handles);
@@ -42,7 +42,7 @@ describe("composeClientResourcesFeature", () => {
 
     // assert
     expect((thrown as Response).status).toBe(404);
-    expect(handles.resourceClients.exists).toHaveBeenCalledWith(
+    expect(handles.clientReach.findById).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
   });
@@ -107,9 +107,11 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("lists her own resources from the clients' resources table and reports a failed read", async () => {
     // arrange
     const handles = createHandles();
-    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
     });
     const feature = composeClientResourcesFeature(handles);
 
@@ -127,9 +129,11 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("counts her unopened resources in the clients' resources table and reports a failed count", async () => {
     // arrange
     const handles = createHandles();
-    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
     });
     const feature = composeClientResourcesFeature(handles);
 
@@ -147,9 +151,11 @@ describe("composeClientResourcesFeature, for the client herself", () => {
   it("looks the resource she opened up in the clients' resources table", async () => {
     // arrange
     const handles = createHandles();
-    handles.resourceClients.findByAuthSubjectId.mockResolvedValue({
+    handles.clientReach.findByAuthSubjectId.mockResolvedValue({
       clientId: CLIENT_ID,
       portal: "reachable",
+      coachingEndsAt: null,
+      timeZone: "Europe/Bucharest",
     });
     const feature = composeClientResourcesFeature(handles);
 
@@ -163,6 +169,10 @@ describe("composeClientResourcesFeature, for the client herself", () => {
 
 function createHandles() {
   return {
+    clientReach: {
+      findById: vi.fn().mockResolvedValue(null),
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+    },
     clock: { now: () => new Date("2026-10-05T09:30:00.000Z") },
     database: createUnreachableDatabase(),
     documentPages: { read: vi.fn() },
@@ -178,10 +188,6 @@ function createHandles() {
       resourceChangeFailed: vi.fn(),
       resourceFilesOrphaned: vi.fn(),
       unopenedCountFailed: vi.fn(),
-    },
-    resourceClients: {
-      exists: vi.fn().mockResolvedValue(false),
-      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
     },
     store: {
       storeOriginal: vi.fn(),

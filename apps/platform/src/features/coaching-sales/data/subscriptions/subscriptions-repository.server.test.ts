@@ -5,7 +5,7 @@ import {
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCoachingSubscriptions } from "./subscriptions-repository.server";
 
@@ -45,10 +45,7 @@ describe("PostgresCoachingSubscriptions#save", () => {
   it("writes only while the stored row still holds every value the change was decided on", async () => {
     // arrange
     const database = createDatabaseUpdating();
-    const subscriptions = new PostgresCoachingSubscriptions({
-      clock: { now: () => PROBLEM_AT },
-      database: database.client,
-    });
+    const { subscriptions } = createSubscriptions(database.client);
     const previous = subscriptionOf();
 
     // act
@@ -64,11 +61,185 @@ describe("PostgresCoachingSubscriptions#save", () => {
       `("app"."coaching_subscriptions"."id" = $1 and "app"."coaching_subscriptions"."status" = $2 and "app"."coaching_subscriptions"."start_choice" = $3 and "app"."coaching_subscriptions"."cancelled_at" = $4 and "app"."coaching_subscriptions"."access_ends_at" = $5 and "app"."coaching_subscriptions"."payment_problem_since" is null and "app"."coaching_subscriptions"."refunded_cents" is null)`,
     );
   });
+
+  it("copies the saved subscription's standing onto her client in the same transaction", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf({
+      status: "active",
+      cancelledAt: null,
+      accessEndsAt: null,
+    });
+    const cancelled = subscriptionOf();
+
+    // act
+    await subscriptions.save({ subscription: cancelled, previous });
+
+    // assert
+    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      standing: expect.anything(),
+    });
+    expect(
+      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+    ).toEqual(cancelled.standing().toSnapshot());
+  });
+
+  it("copies the standing again when the change leaves every column as it was", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const unchanged = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.save({
+      subscription: unchanged,
+      previous: unchanged,
+    });
+
+    // assert
+    expect(outcome).toBe("saved");
+    expect(database.conditions).toEqual([]);
+    expect(writeCoachingStanding).toHaveBeenCalledTimes(1);
+  });
+
+  it("copies no standing when the stored row no longer holds what the change was decided on", async () => {
+    // arrange
+    const database = createDatabaseUpdating({ written: [] });
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.save({
+      subscription: previous.flagPaymentProblem(PROBLEM_AT),
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("stale");
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+  });
 });
 
-function createDatabaseUpdating() {
+describe("PostgresCoachingSubscriptions#saveForEvent", () => {
+  it("copies the reconciled subscription's standing onto her client in the transaction that records the event", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf({
+      status: "active",
+      cancelledAt: null,
+      accessEndsAt: null,
+    });
+    const cancelled = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_1",
+      subscription: cancelled,
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("recorded");
+    expect(database.recordedEvents).toEqual(["evt_1"]);
+    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      standing: expect.anything(),
+    });
+    expect(
+      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+    ).toEqual(cancelled.standing().toSnapshot());
+  });
+
+  it("copies no standing for an event decided on a row that has changed since", async () => {
+    // arrange
+    const database = createDatabaseUpdating({ written: [] });
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_2",
+      subscription: previous.flagPaymentProblem(PROBLEM_AT),
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("stale");
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+  });
+
+  it("writes neither the subscription nor the standing for an event the ledger already holds", async () => {
+    // arrange
+    const database = createDatabaseUpdating({
+      written: [{ id: "written" }],
+      heldEvents: ["evt_3"],
+    });
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_3",
+      subscription: previous.flagPaymentProblem(PROBLEM_AT),
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("duplicate");
+    expect(database.conditions).toEqual([]);
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+  });
+});
+
+function createSubscriptions(database: DatabaseClient) {
+  const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
+  const subscriptions = new PostgresCoachingSubscriptions({
+    clock: { now: () => PROBLEM_AT },
+    database,
+    writeCoachingStanding,
+  });
+
+  return { subscriptions, writeCoachingStanding };
+}
+
+function createDatabaseUpdating(
+  options: { written: readonly unknown[]; heldEvents?: readonly string[] } = {
+    written: [{ id: "written" }],
+  },
+) {
   const conditions: unknown[] = [];
-  const client = {
+  const recordedEvents: string[] = [];
+  const transaction = {
+    insert: () => ({
+      values: (entry: { id: string }) => ({
+        onConflictDoNothing: () => ({
+          returning: () => {
+            if (options.heldEvents?.includes(entry.id)) {
+              return Promise.resolve([]);
+            }
+
+            recordedEvents.push(entry.id);
+
+            return Promise.resolve([{ id: entry.id }]);
+          },
+        }),
+      }),
+    }),
     update: () => {
       const statement = {
         set: () => statement,
@@ -77,12 +248,15 @@ function createDatabaseUpdating() {
 
           return statement;
         },
-        returning: () => Promise.resolve([{ id: "written" }]),
+        returning: () => Promise.resolve(options.written),
       };
 
       return statement;
     },
+  };
+  const client = {
+    transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
   } as unknown as DatabaseClient;
 
-  return { client, conditions };
+  return { client, conditions, recordedEvents, transaction };
 }

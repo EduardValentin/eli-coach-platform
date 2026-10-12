@@ -1,3 +1,4 @@
+import type { ClientIdentities, ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type {
@@ -10,7 +11,6 @@ import type {
 import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type {
   CheckInNotification,
@@ -21,8 +21,9 @@ import type { CheckIns } from "./check-ins";
 
 type CheckInSettlerOptions = {
   checkIns: Pick<CheckIns, "find" | "settle">;
-  clients: Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };

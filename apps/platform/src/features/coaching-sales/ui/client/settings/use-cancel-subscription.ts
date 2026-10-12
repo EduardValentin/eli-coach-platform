@@ -1,4 +1,8 @@
 import {
+  useConfirmedFetcherDialog,
+  type DialogAfterAnswer,
+} from "@eli-coach-platform/ui/lib";
+import {
   formatDayMonth,
   useCalendarDayTimeZone,
 } from "@eli-coach-platform/ui/lib";
@@ -10,10 +14,6 @@ import {
   subscriptionRefusalSchema,
 } from "~/features/coaching-sales/public/client-subscription";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
-import {
-  useConfirmedFetcherDialog,
-  type DialogAfterAnswer,
-} from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
 
 import {
   CANCEL_UNAVAILABLE_MESSAGE,

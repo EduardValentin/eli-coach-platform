@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
+
 import { ApproveOnboardingAnswersUseCase } from "./approve-onboarding-answers-use-case";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -7,6 +13,7 @@ import { DetailRequest } from "./detail-request";
 import { emptyAnswers } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
@@ -36,6 +43,28 @@ const NO_STAMPS: ReviewStamps = {
 
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
+  submittedAt: SUBMITTED_AT,
+  reviewStamps: NO_STAMPS,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+
+const CANCELLED_OR_ENDED_CLIENT: OnboardingClient = {
+  ...CLIENT,
+  standing: CoachingStanding.of({
+    status: "ended",
+    accessEndsAt: ASKED_AT,
+    refundDue: false,
+    bundleMonths: 3,
+  }),
+};
+
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   country: "RO",
@@ -43,14 +72,6 @@ const CLIENT: OnboardingClient = {
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
-  submittedAt: SUBMITTED_AT,
-  reviewStamps: NO_STAMPS,
-  subscriptionCancelledOrEnded: false,
-};
-
-const CANCELLED_OR_ENDED_CLIENT: OnboardingClient = {
-  ...CLIENT,
-  subscriptionCancelledOrEnded: true,
 };
 
 const SUBMISSION: OnboardingSubmission = {
@@ -83,6 +104,12 @@ function createClients(found: OnboardingClient | null = CLIENT) {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
+}
+
+function createIdentities(found: ClientIdentity | null = IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
 }
 
 function createOnboardings(
@@ -145,14 +172,23 @@ function createIncidents() {
 function reviewPorts(
   overrides: {
     client?: OnboardingClient | null;
+    identity?: ClientIdentity | null;
     submission?: OnboardingSubmission | null;
     stored?: Partial<StoredReview>;
   } = {},
 ) {
+  const clients = createClients(
+    overrides.client === undefined ? CLIENT : overrides.client,
+  );
+
   return {
-    clients: createClients(
-      overrides.client === undefined ? CLIENT : overrides.client,
-    ),
+    clients,
+    participants: new OnboardingParticipants({
+      clients,
+      identities: createIdentities(
+        overrides.identity === undefined ? IDENTITY : overrides.identity,
+      ),
+    }),
     onboardings: createOnboardings(
       overrides.submission === undefined ? SUBMISSION : overrides.submission,
     ),
@@ -229,6 +265,19 @@ describe("OpenOnboardingReviewUseCase", () => {
     expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingReviewOpened).not.toHaveBeenCalled();
   });
+
+  it("answers not-found for a client with no identity", async () => {
+    // arrange
+    const ports = reviewPorts({ identity: null });
+    const useCase = new OpenOnboardingReviewUseCase(ports);
+
+    // act
+    const result = await useCase.execute(CLIENT.clientId);
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+  });
 });
 
 describe("RequestOnboardingDetailsUseCase", () => {
@@ -275,8 +324,8 @@ describe("RequestOnboardingDetailsUseCase", () => {
     expect(notifications.sendDetailsRequest).toHaveBeenCalledWith({
       requestId: "request-1",
       clientId: CLIENT.clientId,
-      email: CLIENT.email,
-      firstName: CLIENT.firstName,
+      email: IDENTITY.email,
+      firstName: IDENTITY.firstName,
     });
     expect(
       ports.reviews.recordRequest.mock.invocationCallOrder[0],
@@ -410,6 +459,28 @@ describe("RequestOnboardingDetailsUseCase", () => {
     expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
+
+  it("answers not-found for a client with no identity, emailing nothing", async () => {
+    // arrange
+    const ports = reviewPorts({
+      identity: null,
+      stored: { openedAt: OPENED_AT },
+    });
+    const notifications = createNotifications();
+    const useCase = requestUseCase(ports, notifications);
+
+    // act
+    const result = await useCase.execute({
+      clientId: CLIENT.clientId,
+      questionIds: [WEIGHT],
+      note: NOTE,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe("ApproveOnboardingAnswersUseCase", () => {
@@ -499,6 +570,22 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingAnswersApproved).not.toHaveBeenCalled();
   });
+
+  it("answers not-found for a client with no identity", async () => {
+    // arrange
+    const ports = reviewPorts({
+      identity: null,
+      stored: { openedAt: OPENED_AT },
+    });
+    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+
+    // act
+    const result = await useCase.execute(CLIENT.clientId);
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
+  });
 });
 
 describe("ReadOpenDetailRequestUseCase", () => {
@@ -574,5 +661,18 @@ describe("ReadOpenDetailRequestUseCase", () => {
 
     // assert
     expect(result).toBeNull();
+  });
+
+  it("reads nothing for a client with no identity", async () => {
+    // arrange
+    const ports = readPorts({ identity: null });
+    const useCase = new ReadOpenDetailRequestUseCase(ports);
+
+    // act
+    const result = await useCase.execute("user_ana");
+
+    // assert
+    expect(result).toBeNull();
+    expect(ports.stamps.record).not.toHaveBeenCalled();
   });
 });

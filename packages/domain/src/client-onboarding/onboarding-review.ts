@@ -1,4 +1,5 @@
 import type { VisitorGender } from "../assessment-call";
+import type { ClientIdentity } from "../client";
 import type { MeasureUnits } from "../unit-preference";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
@@ -11,7 +12,6 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
 } from "./onboarding-answers";
-import type { OnboardingClient } from "./onboarding-clients";
 import type { ReviewStamps } from "./onboarding-review-stamps";
 import {
   formsForGender,
@@ -58,7 +58,7 @@ type AnswerDetailsOutcome =
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type OnboardingReviewProps = {
-  client: Pick<OnboardingClient, "clientId" | "gender" | "dateOfBirth">;
+  client: Pick<ClientIdentity, "clientId" | "gender" | "dateOfBirth">;
   submission: OnboardingSubmission | null;
   openedAt: Date | null;
   approvedAt: Date | null;

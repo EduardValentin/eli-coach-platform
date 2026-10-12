@@ -1,3 +1,4 @@
+import type { ClientReach, ClientReachReading } from "../client";
 import type {
   CoachAvailabilitySource,
   CoachCalendar,
@@ -6,7 +7,6 @@ import type { Clock } from "../shared";
 
 import { CheckIn } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import { CHECK_IN_RULES } from "./check-in-rules";
 
 export type ListOpenCheckInTimesCommand = {
@@ -21,13 +21,13 @@ export type ListOpenCheckInTimesResult =
   | { status: "ended" };
 
 type OpenTimesClient =
-  | { status: "found"; client: CheckInClient }
+  | { status: "found"; client: ClientReachReading }
   | Exclude<ListOpenCheckInTimesResult, { status: "listed" }>;
 
 type ListOpenCheckInTimesUseCaseOptions = {
   availability: CoachAvailabilitySource;
   calendar: CoachCalendar;
-  clients: Pick<CheckInClients, "findByAuthSubjectId" | "findById">;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
 };
 

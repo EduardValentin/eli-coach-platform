@@ -15,7 +15,7 @@ const DETAIL_REQUESTS_PATH = "/api/client-onboarding/detail-requests";
 const APPROVALS_PATH = "/api/client-onboarding/approvals";
 const DETAIL_ANSWERS_PATH = "/api/client-onboarding/detail-answers";
 const ONBOARDING_DRAFT_PATH = "/api/client-onboarding/draft";
-const INVITATION_RESENDS_PATH = "/api/coaching-sales/invitation-resends";
+const INVITATION_RESENDS_PATH = "/api/clients/invitation-resends";
 const SUBSCRIPTION_CANCELLATION_PATH =
   "/api/coaching-sales/subscription-cancellation";
 const PROGRAM_START_PATH = "/api/coaching-sales/program-start";

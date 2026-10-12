@@ -6,6 +6,7 @@ import { checkInsApiRoutes } from "./features/check-ins/routes";
 import { clientOnboardingApiRoutes } from "./features/client-onboarding/routes";
 import { clientProfileApiRoutes } from "./features/client-profile/routes";
 import { clientResourcesApiRoutes } from "./features/client-resources/routes";
+import { clientsApiRoutes } from "./features/clients/routes";
 import { coachScheduleApiRoutes } from "./features/coach-schedule/routes";
 import { coachingSalesApiRoutes } from "./features/coaching-sales/routes";
 import { storeApiRoutes } from "./features/store/routes";
@@ -21,6 +22,7 @@ export default [
   ...accountsApiRoutes,
   ...coachScheduleApiRoutes,
   ...assessmentCallsApiRoutes,
+  ...clientsApiRoutes,
   ...coachingSalesApiRoutes,
   ...clientOnboardingApiRoutes,
   ...clientProfileApiRoutes,

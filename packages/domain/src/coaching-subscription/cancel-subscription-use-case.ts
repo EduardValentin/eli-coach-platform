@@ -17,6 +17,7 @@ import type {
   RefundDueNotice,
   RefundNotifications,
 } from "./refund-notifications";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type CancelSubscriptionResult =
   | {
@@ -37,15 +38,16 @@ type RecordedCancellation = Extract<
 type CancelSubscriptionUseCaseOptions = {
   clients: ClientIdentities;
   clock: Clock;
-  coachingEnd: CoachingEndHandler;
+  coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
   notifications: RefundNotifications;
   paymentSubscriptions: PaymentSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
   subscriptions: CoachingSubscriptions;
 };
 
 type CancellationRecording = {
-  authSubjectId: string;
+  clientId: string;
   now: Date;
   previous: CoachingSubscription;
 };
@@ -59,7 +61,7 @@ export class CancelSubscriptionUseCase {
 
   async execute(authSubjectId: string): Promise<CancelSubscriptionResult> {
     const current =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.signedInSubscriptions.currentFor(authSubjectId);
 
     if (!current) {
       return { status: "not_found" };
@@ -85,7 +87,7 @@ export class CancelSubscriptionUseCase {
     }
 
     const recorded = await this.record(decision, {
-      authSubjectId,
+      clientId: current.clientId,
       now,
       previous: current,
     });
@@ -141,8 +143,8 @@ export class CancelSubscriptionUseCase {
       return decision;
     }
 
-    const fresh = await this.options.subscriptions.findCurrentForAuthSubject(
-      recording.authSubjectId,
+    const fresh = await this.options.subscriptions.findCurrentForClient(
+      recording.clientId,
     );
 
     if (!fresh) {

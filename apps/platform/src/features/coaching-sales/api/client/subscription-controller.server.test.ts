@@ -5,6 +5,7 @@ import {
   type CoachingSubscriptionSnapshot,
   type OpenPaymentMethodSessionUseCase,
   type ReadClientSubscriptionUseCase,
+  type ReadProgramStatusUseCase,
   type StartProgramNowUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
@@ -108,7 +109,7 @@ describe("SubscriptionController#loadSettings", () => {
       startNowUntil: "2026-10-16T10:00:00.000Z",
       card: null,
     });
-    expect(readClientSubscription).toHaveBeenCalledWith("user_ana");
+    expect(readClientSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it("reads the card on file by brand, last four digits and expiry, never its payment method", async () => {
@@ -243,6 +244,17 @@ describe("SubscriptionController#loadEnded", () => {
     // assert
     expect(ended).toEqual({ refundDue });
   });
+
+  it("tells the ended page that nothing is owed when no subscription is read", async () => {
+    // arrange
+    const { controller } = createController({ reading: null });
+
+    // act
+    const ended = await controller.loadEnded(clientArgs());
+
+    // assert
+    expect(ended).toEqual({ refundDue: false });
+  });
 });
 
 describe("SubscriptionController#cancel", () => {
@@ -278,7 +290,7 @@ describe("SubscriptionController#cancel", () => {
       accessEndsAt: "2026-10-15T10:00:00.000Z",
       refundDue: true,
     });
-    expect(cancelSubscription).toHaveBeenCalledWith("user_ana");
+    expect(cancelSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it.each([
@@ -350,7 +362,7 @@ describe("SubscriptionController#startNow", () => {
     // assert
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: "started" });
-    expect(startProgramNow).toHaveBeenCalledWith("user_ana");
+    expect(startProgramNow).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it.each([
@@ -391,7 +403,7 @@ describe("SubscriptionController#openPaymentMethod", () => {
       "https://billing.stripe.com/p/1",
     );
     expect(openPaymentMethodSession).toHaveBeenCalledWith({
-      authSubjectId: "user_ana",
+      authSubjectId: CLIENT.authSubjectId,
       returnUrl: "https://evoa.fit/app/client/settings",
     });
   });
@@ -450,12 +462,125 @@ describe("SubscriptionController#openPaymentMethod", () => {
   });
 });
 
+describe("SubscriptionController#loadProgramStatus", () => {
+  it.each([
+    [
+      "with the day the work starts",
+      new Date("2026-10-10T10:00:00.000Z"),
+      "2026-10-10T10:00:00.000Z",
+    ],
+    ["with no start day", null, null],
+  ])(
+    "answers her submitted onboarding %s",
+    async (_label, workStartsOn, expectedWorkStartsOn) => {
+      // arrange
+      const { controller, readProgramStatus } = createController({
+        programStatus: {
+          kind: "submitted",
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn,
+          startNowUntil: null,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind: "submitted",
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: expectedWorkStartsOn,
+        startNowUntil: null,
+      });
+      expect(readProgramStatus).toHaveBeenCalledWith("user_ana");
+    },
+  );
+
+  it("carries until when she can start now", async () => {
+    // arrange
+    const { controller } = createController({
+      programStatus: {
+        kind: "submitted",
+        submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+        startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
+      },
+    });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toMatchObject({
+      startNowUntil: "2026-10-10T10:00:00.000Z",
+    });
+  });
+
+  it.each(["in-review", "needs-details", "approved"] as const)(
+    "answers the %s step of her reviewed onboarding",
+    async (kind) => {
+      // arrange
+      const { controller } = createController({
+        programStatus: {
+          kind,
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn: null,
+          startNowUntil: null,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind,
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: null,
+        startNowUntil: null,
+      });
+    },
+  );
+
+  it("answers no status before she has sent her onboarding", async () => {
+    // arrange
+    const { controller } = createController({ programStatus: null });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toBeNull();
+  });
+
+  it("refuses the coach without reading any status", async () => {
+    // arrange
+    const { controller, readProgramStatus } = createController({
+      programStatus: null,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadProgramStatus(clientArgs({ account: COACH })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readProgramStatus).not.toHaveBeenCalled();
+  });
+});
+
 function createController(options: {
   reading?: Reading | null;
   cancelled?: Awaited<ReturnType<CancelSubscriptionUseCase["execute"]>>;
   started?: Awaited<ReturnType<StartProgramNowUseCase["execute"]>>;
   opened?: Awaited<ReturnType<OpenPaymentMethodSessionUseCase["execute"]>>;
+  programStatus?: Awaited<ReturnType<ReadProgramStatusUseCase["execute"]>>;
 }) {
+  const readProgramStatus = vi
+    .fn()
+    .mockResolvedValue(options.programStatus ?? null);
   const readClientSubscription = vi
     .fn()
     .mockResolvedValue(options.reading ?? null);
@@ -474,6 +599,9 @@ function createController(options: {
     readClientSubscription: {
       execute: readClientSubscription,
     } as unknown as ReadClientSubscriptionUseCase,
+    readProgramStatus: {
+      execute: readProgramStatus,
+    } as unknown as ReadProgramStatusUseCase,
     startProgramNow: {
       execute: startProgramNow,
     } as unknown as StartProgramNowUseCase,
@@ -484,6 +612,7 @@ function createController(options: {
     controller,
     openPaymentMethodSession,
     readClientSubscription,
+    readProgramStatus,
     startProgramNow,
   };
 }

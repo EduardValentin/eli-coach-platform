@@ -8,6 +8,7 @@ import {
 import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
 import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
+import { clientsClientRoutes } from "../../features/clients/routes";
 import {
   coachingSalesClientRoutes,
   coachingSalesClientShellRoutes,
@@ -25,6 +26,7 @@ export const clientPortalRoutes = [
         ...clientResourcesClientRoutes,
         ...coachingSalesClientShellRoutes,
       ]),
+      ...clientsClientRoutes,
       ...coachingSalesClientRoutes,
       ...clientOnboardingClientRoutes,
       ...checkInsClientJoinRoutes,

@@ -1,3 +1,4 @@
+import type { ClientIdentities, ClientReach } from "../client";
 import type { CoachAvailabilitySource } from "../coach-availability";
 import type { Clock } from "../shared";
 
@@ -9,7 +10,6 @@ import {
 import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import { CheckInAnnouncer } from "./check-in-announcer";
-import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
@@ -40,11 +40,9 @@ type OpenStartCheck = {
 type ProposeCheckInTimeUseCaseOptions = {
   availability: CoachAvailabilitySource;
   checkIns: Pick<CheckIns, "find" | "move">;
-  clients: Pick<
-    CheckInClients,
-    "findByAuthSubjectId" | "findById" | "identitiesOf"
-  >;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };

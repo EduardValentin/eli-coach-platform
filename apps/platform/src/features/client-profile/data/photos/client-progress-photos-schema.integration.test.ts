@@ -18,9 +18,9 @@ const insertCallSql = `
 
 const insertClientSql = `
   insert into app.clients
-    (id, assessment_call_id, first_name, last_name, email, date_of_birth, gender, primary_goal, country, phone, created_at)
+    (id, assessment_call_id, first_name, last_name, email, date_of_birth, gender, primary_goal, country, phone, created_at, booking_time_zone)
   values
-    ($1, $2, 'Ana', 'Regular', 'ana@example.com', '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T09:00:00Z')
+    ($1, $2, 'Ana', 'Regular', 'ana@example.com', '1994-03-14', 'female', 'build_strength', 'RO', null, '2026-09-01T09:00:00Z', 'Europe/Bucharest')
 `;
 
 const insertEntrySql = `

@@ -88,7 +88,6 @@ export const SECOND_PURCHASE: Purchase = {
 };
 
 const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle#([\w-]+)/;
-const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
 const VISITOR_TIME_ZONE = "Europe/London";
 
 const openSlotsSchema = z.object({ slots: z.array(z.string()).min(1) });
@@ -202,19 +201,6 @@ export class CoachingSalesJourney {
     return token;
   }
 
-  async latestInvitationToken(): Promise<string> {
-    const emails = await this.rig.suite.sentEmails();
-    const token = emails
-      .flatMap((email) => INVITATION_LINK.exec(email.text)?.[1] ?? [])
-      .at(-1);
-
-    if (!token) {
-      throw new Error("No invitation email has been sent.");
-    }
-
-    return token;
-  }
-
   async startCheckout(choice: CheckoutChoice): Promise<Response> {
     const form = new URLSearchParams({ token: choice.token });
 
@@ -316,19 +302,6 @@ export class CoachingSalesJourney {
     }
 
     return sentLink;
-  }
-
-  async clientIdPaidFor(callId: string): Promise<string> {
-    const [client] = await this.rig.suite.postgres.queryRows<{ id: string }>({
-      sql: "select id from app.clients where assessment_call_id = $1",
-      values: [callId],
-    });
-
-    if (!client) {
-      throw new Error("The payment for that call created no client.");
-    }
-
-    return client.id;
   }
 
   async openSlots(): Promise<string[]> {

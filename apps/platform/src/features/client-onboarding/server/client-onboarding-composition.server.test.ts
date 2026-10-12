@@ -171,6 +171,10 @@ function createHandles() {
     } as unknown as AttachProgressPhotosUseCase & {
       execute: ReturnType<typeof vi.fn>;
     },
+    clientIdentities: {
+      findByClientId: vi.fn().mockResolvedValue(null),
+      findByClientIds: vi.fn().mockResolvedValue([]),
+    },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),

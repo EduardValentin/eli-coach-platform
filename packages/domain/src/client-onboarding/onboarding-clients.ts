@@ -1,19 +1,12 @@
-import type { VisitorGender } from "../assessment-call";
+import type { CoachingStanding } from "../client";
 
 import type { ReviewStamps } from "./onboarding-review-stamps";
 
 export type OnboardingClient = {
   clientId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  gender: VisitorGender;
-  dateOfBirth: string;
-  country: string;
-  phone: string | null;
   submittedAt: Date | null;
   reviewStamps: ReviewStamps;
-  subscriptionCancelledOrEnded: boolean;
+  standing: CoachingStanding;
 };
 
 export interface OnboardingClients {

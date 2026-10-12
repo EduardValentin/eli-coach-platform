@@ -41,7 +41,7 @@ export class ResendInvitationUseCase {
       return { status: "not-found" };
     }
 
-    if (client.subscriptionCancelledOrEnded) {
+    if (client.coachingCancelledOrEnded) {
       return { status: "subscription-cancelled-or-ended" };
     }
 

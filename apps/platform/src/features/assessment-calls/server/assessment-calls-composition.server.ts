@@ -7,6 +7,7 @@ import {
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
   type AssessmentCallIncidents,
+  type AssessmentCallReader,
 } from "@eli-coach-platform/domain/assessment-call";
 import type {
   CoachAvailabilitySource,
@@ -15,7 +16,6 @@ import type {
 import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
 import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
-import type { AssessmentCallReader } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";

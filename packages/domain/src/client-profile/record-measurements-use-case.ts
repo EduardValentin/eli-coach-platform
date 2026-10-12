@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import {
   hasMeasurementProblem,
   measurementEntryOf,
@@ -7,7 +8,6 @@ import type { Clock } from "../shared";
 
 import type { ClientMeasurementRecords } from "./client-measurement-records";
 import type { ClientProfiles } from "./client-profiles";
-import type { MeasurementClients } from "./measurement-clients";
 import type { MeasurementIncidents } from "./measurement-incidents";
 import {
   ProgressPhotoIntake,
@@ -35,10 +35,11 @@ type RecordMeasurementsResult =
       photos: ProgressPhotoOutcomes;
     }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "invalid" };
 
 type RecordMeasurementsUseCaseOptions = {
-  clients: MeasurementClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId">;
   profiles: ClientProfiles;
   records: ClientMeasurementRecords;
   photos: ProgressPhotos;
@@ -65,6 +66,10 @@ export class RecordMeasurementsUseCase {
 
     if (!client) {
       return { status: "not-on-journey" };
+    }
+
+    if (client.portal === "ended") {
+      return { status: "ended" };
     }
 
     const now = this.options.clock.now();

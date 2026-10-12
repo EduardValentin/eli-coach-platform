@@ -13,8 +13,8 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 
 import { middleware } from "./access-layout.server";
 
@@ -99,6 +99,12 @@ describe("client portal access middleware", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+          bundleMonths: null,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -134,6 +140,12 @@ describe("client portal access middleware", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+          bundleMonths: null,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -176,15 +188,18 @@ function createMiddlewareArgs(options: {
 }): Parameters<typeof guardClientPortal>[0] {
   const coachingSales = {
     readClientPortalStanding: {
-      execute: vi
-        .fn()
-        .mockResolvedValue(
-          options.journey
-            ? { journey: options.journey, coaching: "active" }
-            : null,
-        ),
+      execute: vi.fn().mockResolvedValue(
+        options.journey
+          ? {
+              journey: options.journey,
+              portal: options.journey.onboardingSubmittedAt
+                ? "reachable"
+                : "awaiting_onboarding",
+            }
+          : null,
+      ),
     },
-  } as unknown as CoachingSalesFeature;
+  } as unknown as ClientsFeature;
 
   return createRequestArgs({
     contexts: [
@@ -195,7 +210,7 @@ function createMiddlewareArgs(options: {
           signInUrl: "https://accounts.evoa.fit/sign-in",
         },
       } as AccountsFeature),
-      contextEntry(coachingSalesContext, coachingSales),
+      contextEntry(clientsContext, coachingSales),
       contextEntry(sessionContext, options.session),
     ],
     request: new Request(options.url),

@@ -14,6 +14,7 @@ import {
   CoachingSalesJourney,
   type Visitor,
 } from "~integration-test-config/coaching-sales-journey";
+import { ClientsJourney } from "~integration-test-config/clients-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -26,6 +27,7 @@ import {
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 
 const PAST_CALLS = "/coach/assessment-calls/?when=past";
 const ALL_CALLS = "/coach/assessment-calls/";
@@ -111,7 +113,7 @@ describe.sequential("coach assessment calls page sales integration", () => {
   it("reads Paid once the payment has been recorded and offers her client page", async () => {
     // arrange
     const { callId } = await journey.payForCall();
-    const clientId = await journey.clientIdPaidFor(callId);
+    const clientId = await clients.clientIdPaidFor(callId);
 
     // act
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);

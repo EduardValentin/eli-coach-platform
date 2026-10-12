@@ -70,6 +70,22 @@ describe("UnitPreferenceController save", () => {
     expect(await response.json()).toEqual({ error: "not-on-journey" });
   });
 
+  it("answers conflict to a client whose portal access has ended", async () => {
+    // arrange
+    const { controller } = createController({ status: "ended" });
+
+    // act
+    const response = await controller.save(
+      clientArgs({
+        body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "ended" });
+  });
+
   it("refuses a unit the platform does not offer without saving anything", async () => {
     // arrange
     const { controller, saveUnitPreference } = createController({

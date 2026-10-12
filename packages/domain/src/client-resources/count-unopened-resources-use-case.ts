@@ -1,14 +1,14 @@
+import type { ClientReach } from "../client";
 import {
   ClientResourceAccess,
   type ResourceRequester,
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 
 type CountUnopenedResourcesUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   incidents: ClientResourceIncidents;
 };
 

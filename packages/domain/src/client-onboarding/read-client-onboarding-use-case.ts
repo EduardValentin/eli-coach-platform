@@ -5,7 +5,7 @@ import {
 
 import { ClientOnboarding } from "./client-onboarding";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
-import type { OnboardingClients } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 
 type ClientOnboardingReading = {
   onboarding: ClientOnboarding;
@@ -13,7 +13,7 @@ type ClientOnboardingReading = {
 };
 
 type ReadClientOnboardingUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   unitPreferences: ClientUnitPreferencesSource;
 };
@@ -24,12 +24,14 @@ export class ReadClientOnboardingUseCase {
   async execute(
     authSubjectId: string,
   ): Promise<ClientOnboardingReading | null> {
-    const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+    const participant =
+      await this.options.participants.byAuthSubjectId(authSubjectId);
 
-    if (!client) {
+    if (!participant) {
       return null;
     }
+
+    const { client, identity } = participant;
 
     const [stored, unitPreference] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),
@@ -37,7 +39,10 @@ export class ReadClientOnboardingUseCase {
     ]);
 
     return {
-      onboarding: ClientOnboarding.reconstitute({ client, ...stored }),
+      onboarding: ClientOnboarding.reconstitute({
+        client: identity,
+        ...stored,
+      }),
       unitPreference: unitPreference ?? UnitPreference.metric(),
     };
   }

@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { ClientResource } from "./client-resource";
 import {
   ClientResourceAccess,
@@ -5,7 +6,6 @@ import {
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 import {
   ResourceDetails,
   type ResourceDetailsInput,
@@ -26,7 +26,7 @@ export type ChangeResourceDetailsResult =
 
 type ChangeResourceDetailsUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   incidents: ClientResourceIncidents;
 };
 

@@ -68,3 +68,21 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
     },
   );
 });
+
+describe("PurchasedSubscription.standing", () => {
+  it("starts the client's standing as not started with the bought bundle's months", () => {
+    // arrange
+    const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
+
+    // act
+    const standing = purchased.standing();
+
+    // assert
+    expect(standing.toSnapshot()).toEqual({
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: 3,
+    });
+  });
+});

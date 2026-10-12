@@ -3,6 +3,7 @@ import type { Clock } from "../shared";
 import type { StartNowRefusal } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type StartProgramNowResult =
   | { status: "started" }
@@ -12,7 +13,8 @@ type StartProgramNowResult =
 type StartProgramNowUseCaseOptions = {
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
-  subscriptions: CoachingSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
+  subscriptions: Pick<CoachingSubscriptions, "save">;
 };
 
 export class StartProgramNowUseCase {
@@ -38,7 +40,7 @@ export class StartProgramNowUseCase {
     now: Date,
   ): Promise<StartProgramNowResult | "stale"> {
     const current =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.signedInSubscriptions.currentFor(authSubjectId);
 
     if (!current) {
       return { status: "not_found" };

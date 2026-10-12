@@ -150,5 +150,10 @@ export const submissionSentSchema = submissionAcceptedSchema.extend({
 });
 
 export const onboardingRefusalSchema = z.object({
-  error: z.enum(["not-on-journey", "already-submitted", "no-open-request"]),
+  error: z.enum([
+    "not-on-journey",
+    "ended",
+    "already-submitted",
+    "no-open-request",
+  ]),
 });

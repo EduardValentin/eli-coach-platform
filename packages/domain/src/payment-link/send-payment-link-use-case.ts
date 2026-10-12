@@ -1,12 +1,12 @@
 import {
   AssessmentCall,
+  type AssessmentCallReader,
   type AssessmentCallSnapshot,
 } from "../assessment-call";
 import type { PricingEligibility } from "../coaching-bundle";
 import { EmailAddress } from "../email-address";
 import type { Clock } from "../shared";
 
-import type { AssessmentCallReader } from "./assessment-call-reader";
 import type { CallSalesStates } from "./call-sales-states";
 import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
 import type {

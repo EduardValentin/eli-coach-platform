@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   HttpJsonError,
   handleHttpErrorResponse,
+  readJsonRequestBody,
   readTextRequestBody,
 } from "./http.server";
 
@@ -100,5 +101,38 @@ describe("readTextRequestBody", () => {
 
     // assert
     expect(body).toEqual({ status: "too_large" });
+  });
+});
+
+describe("readJsonRequestBody", () => {
+  it("parses a JSON body within the limit", async () => {
+    // arrange
+    const request = new Request("https://evoa.fit/api/clients/invitation", {
+      body: '{"token":"abc"}',
+      method: "POST",
+    });
+
+    // act
+    const body = await readJsonRequestBody(request, { maxBytes: 64 });
+
+    // assert
+    expect(body).toEqual({ token: "abc" });
+  });
+
+  it.each([
+    ["a body that is not JSON", "not json", 64],
+    ["a body over the limit", '{"token":"abc"}', 4],
+  ])("reads %s as no body", async (_label, payload, maxBytes) => {
+    // arrange
+    const request = new Request("https://evoa.fit/api/clients/invitation", {
+      body: payload,
+      method: "POST",
+    });
+
+    // act
+    const body = await readJsonRequestBody(request, { maxBytes });
+
+    // assert
+    expect(body).toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
 import { RowActionButton } from "@eli-coach-platform/ui/appointments";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
+import { useConfirmedJsonAction } from "@eli-coach-platform/ui/toast";
 import { Send } from "lucide-react";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
@@ -12,7 +13,6 @@ import {
   type CallSalesState,
 } from "~/features/coaching-sales/public/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
-import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
 
 type PaymentLinkCall = {
   fullName: string;

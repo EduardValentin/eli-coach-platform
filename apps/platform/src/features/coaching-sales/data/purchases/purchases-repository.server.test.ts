@@ -1,6 +1,4 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { AssessmentCall } from "@eli-coach-platform/domain/assessment-call";
-import { Client } from "@eli-coach-platform/domain/client";
 import {
   PurchasedSubscription,
   type CoachingPurchase,
@@ -16,31 +14,51 @@ const PAID_CALL_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
 describe("PostgresCoachingPurchases#recordCompletion", () => {
-  it("records the event in the ledger and then the purchase", async () => {
+  it("records the event in the ledger, admits the client and then records the purchase and her standing in the same transaction", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const purchases = createPurchases(database.client);
+    const { purchases, writeClient, writeCoachingStanding } = createPurchases(
+      database.client,
+    );
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
     expect(outcome).toEqual({ outcome: "recorded", clientId: "client-1" });
+    expect(writeClient).toHaveBeenCalledWith(database.transaction, {
+      intake: purchase().intake,
+      admittedAt: NOW,
+    });
     expect(database.insertedRows).toEqual([
       { id: "evt_1", receivedAt: NOW },
-      expect.objectContaining({ assessmentCallId: PAID_CALL_ID }),
       expect.objectContaining({
         clientId: "client-1",
+        assessmentCallId: PAID_CALL_ID,
         stripeCheckoutSessionId: "cs_1",
       }),
     ]);
+    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+      clientId: "client-1",
+      standing: expect.anything(),
+    });
+    expect(
+      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+    ).toEqual({
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: 3,
+    });
     expect(database.update).toHaveBeenCalledTimes(1);
   });
 
   it("answers a duplicate event with the client it recorded and writes nothing else when the ledger already holds the event", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([]);
-    const purchases = createPurchases(database.client);
+    const { purchases, writeClient, writeCoachingStanding } = createPurchases(
+      database.client,
+    );
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -51,6 +69,8 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       clientId: "client-recorded-earlier",
     });
     expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
+    expect(writeClient).not.toHaveBeenCalled();
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
     expect(database.update).not.toHaveBeenCalled();
   });
 
@@ -59,7 +79,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     const database = createDatabaseWithLedgerAnswering([], {
       recordedClients: [],
     });
-    const purchases = createPurchases(database.client);
+    const { purchases } = createPurchases(database.client);
 
     // act
     const recording = purchases.recordCompletion(purchase());
@@ -68,12 +88,12 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     await expect(recording).rejects.toThrow(PAID_CALL_ID);
   });
 
-  it("answers an already paid call when the call already has a client", async () => {
+  it("answers an already paid call and records nothing more when the call already has a client", async () => {
     // arrange
-    const purchases = createPurchases(
-      createDatabaseFailingTransactionWith(
-        uniqueViolation("clients_assessment_call_id_unique"),
-      ),
+    const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
+    const { purchases, writeCoachingStanding } = createPurchases(
+      database.client,
+      { admitted: "call_already_has_client" },
     );
 
     // act
@@ -81,31 +101,15 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
 
     // assert
     expect(outcome).toEqual({ outcome: "call_already_paid" });
+    expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+    expect(database.update).not.toHaveBeenCalled();
   });
 
-  it("rethrows any other unique violation", async () => {
+  it("rethrows a failure of the purchase transaction", async () => {
     // arrange
-    const failure = uniqueViolation(
-      "coaching_subscriptions_stripe_subscription_id_unique",
-    );
-    const purchases = createPurchases(
-      createDatabaseFailingTransactionWith(failure),
-    );
-
-    // act
-    const recording = purchases.recordCompletion(purchase());
-
-    // assert
-    await expect(recording).rejects.toBe(failure);
-  });
-
-  it("rethrows a failure that is not a unique violation", async () => {
-    // arrange
-    const failure = Object.assign(new Error("connection reset"), {
-      code: "08006",
-      constraint: "clients_assessment_call_id_unique",
-    });
-    const purchases = createPurchases(
+    const failure = new Error("connection reset");
+    const { purchases } = createPurchases(
       createDatabaseFailingTransactionWith(failure),
     );
 
@@ -120,7 +124,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
 describe("PostgresCoachingPurchases#forCalls", () => {
   it("answers a state for every requested call, held when nothing is recorded, and lets paid outrank a sent link", async () => {
     // arrange
-    const purchases = createPurchases(
+    const { purchases } = createPurchases(
       createDatabaseAnsweringSalesRows([
         {
           assessmentCallId: PAID_CALL_ID,
@@ -153,7 +157,7 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
   it("keeps the client a paid call created when a sent link is read after it", async () => {
     // arrange
-    const purchases = createPurchases(
+    const { purchases } = createPurchases(
       createDatabaseAnsweringSalesRows([
         { assessmentCallId: PAID_CALL_ID, state: "paid", clientId: CLIENT_ID },
         {
@@ -176,7 +180,7 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
   it("answers an empty map without querying when no call is asked for", async () => {
     // arrange
-    const purchases = createPurchases(createUnreachableDatabase());
+    const { purchases } = createPurchases(createUnreachableDatabase());
 
     // act
     const states = await purchases.forCalls([]);
@@ -186,34 +190,39 @@ describe("PostgresCoachingPurchases#forCalls", () => {
   });
 });
 
-function createPurchases(database: DatabaseClient): PostgresCoachingPurchases {
-  return new PostgresCoachingPurchases({
+function createPurchases(
+  database: DatabaseClient,
+  options: { admitted?: { clientId: string } | "call_already_has_client" } = {},
+) {
+  const writeClient = vi
+    .fn()
+    .mockResolvedValue(options.admitted ?? { clientId: "client-1" });
+  const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
+  const purchases = new PostgresCoachingPurchases({
     clock: { now: () => NOW },
     database,
+    writeClient,
+    writeCoachingStanding,
   });
+
+  return { purchases, writeClient, writeCoachingStanding };
 }
 
 function purchase(): CoachingPurchase {
-  const call = AssessmentCall.reconstitute({
-    id: PAID_CALL_ID,
-    firstName: "Ana",
-    lastName: "Popescu",
-    visitorEmail: "ana@example.com",
-    visitorNotes: null,
-    dateOfBirth: "1994-03-14",
-    gender: "female",
-    primaryGoal: "build_strength",
-    country: "RO",
-    phone: null,
-    startsAt: new Date("2026-10-19T14:00:00.000Z"),
-    visitorTimeZone: "Europe/Bucharest",
-    coachTimeZone: "Europe/Bucharest",
-    bookedAt: new Date("2026-10-18T09:30:00.000Z"),
-  }).toSnapshot();
-
   return {
     eventId: "evt_1",
-    client: Client.fromAssessmentCall(call, NOW),
+    intake: {
+      assessmentCallId: PAID_CALL_ID,
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: "ana@example.com",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: null,
+      bookingTimeZone: "Europe/Bucharest",
+    },
     subscription: PurchasedSubscription.fromCompletedCheckout({
       checkoutSessionId: "cs_1",
       paymentCustomerId: "cus_1",
@@ -231,16 +240,10 @@ function purchase(): CoachingPurchase {
   };
 }
 
-function uniqueViolation(constraint: string): Error {
-  return Object.assign(new Error("duplicate key value"), {
-    cause: { code: "23505", constraint },
-  });
-}
-
 function createDatabaseWithLedgerAnswering(
   ledgerRows: readonly unknown[],
   options: { recordedClients: readonly unknown[] } = {
-    recordedClients: [{ id: "client-recorded-earlier" }],
+    recordedClients: [{ clientId: "client-recorded-earlier" }],
   },
 ) {
   const insertedRows: unknown[] = [];
@@ -252,7 +255,6 @@ function createDatabaseWithLedgerAnswering(
 
         return Object.assign(Promise.resolve(), {
           onConflictDoNothing: () => ({ returning: async () => ledgerRows }),
-          returning: async () => [{ id: "client-1" }],
         });
       },
     }),
@@ -270,7 +272,7 @@ function createDatabaseWithLedgerAnswering(
     transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
   } as unknown as DatabaseClient;
 
-  return { client, insertedRows, update };
+  return { client, insertedRows, transaction, update };
 }
 
 function createDatabaseFailingTransactionWith(failure: Error): DatabaseClient {

@@ -1,14 +1,10 @@
 import type { VisitorGender } from "../assessment-call";
-import {
+import type { CoachingStanding, CoachingStatus } from "../client";
+import type {
   ClientJourney,
-  type ClientJourneySnapshot,
-  type ClientJourneyStep,
+  ClientJourneySnapshot,
+  ClientJourneyStep,
 } from "../client-journey";
-import {
-  CoachingSubscription,
-  type CoachingSubscriptionSnapshot,
-  type CoachingSubscriptionStatus,
-} from "../coaching-subscription";
 
 export const CLIENT_STATUSES = [
   "invited",
@@ -32,7 +28,7 @@ export type ClientRosterEntry = {
     gender: VisitorGender;
     assessmentCallId: string;
   };
-  subscription: CoachingSubscriptionSnapshot | null;
+  joinedAt: Date;
 };
 
 export interface ClientRoster {
@@ -49,8 +45,8 @@ const JOURNEY_STATUSES: Record<ClientJourneyStep, ClientStatus> = {
   approved: "approved",
 };
 
-const SUBSCRIPTION_STATUSES: Record<
-  CoachingSubscriptionStatus,
+const CLIENT_STATUS_BY_COACHING_STATUS: Record<
+  CoachingStatus,
   ClientStatus | null
 > = {
   "not-started": null,
@@ -62,45 +58,32 @@ const SUBSCRIPTION_STATUSES: Record<
 export function clientStatusOf(input: {
   accountBound: boolean;
   step: ClientJourneyStep;
-  subscription: Pick<
-    CoachingSubscriptionSnapshot,
-    "status" | "accessEndsAt"
-  > | null;
+  standing: CoachingStanding;
   now: Date;
 }): ClientStatus {
-  const subscriptionCancelledOrEnded = CoachingSubscription.isCancelledOrEnded(
-    input.subscription?.status ?? null,
-  );
-
-  if (!input.accountBound && !subscriptionCancelledOrEnded) {
+  if (!input.accountBound && !input.standing.isCancelledOrEnded()) {
     return "invited";
   }
 
-  const fromSubscription = input.subscription
-    ? SUBSCRIPTION_STATUSES[
-        CoachingSubscription.statusOf(input.subscription, input.now)
-      ]
-    : null;
-
-  return fromSubscription ?? JOURNEY_STATUSES[input.step];
+  return (
+    CLIENT_STATUS_BY_COACHING_STATUS[input.standing.at(input.now)] ??
+    JOURNEY_STATUSES[input.step]
+  );
 }
 
-export function rosterEntryStatus(
-  entry: ClientRosterEntry,
-  now: Date,
-): ClientStatus {
+export function rosterEntryStatus(input: {
+  accountBound: boolean;
+  journey: ClientJourney;
+  now: Date;
+}): ClientStatus {
   return clientStatusOf({
-    accountBound: entry.accountBound,
-    step: ClientJourney.from(entry.journey).step(),
-    subscription: entry.subscription,
-    now,
+    accountBound: input.accountBound,
+    step: input.journey.step(),
+    standing: input.journey.standing,
+    now: input.now,
   });
 }
 
 export function rosterEntryNeedsRefund(entry: ClientRosterEntry): boolean {
-  return entry.subscription
-    ? CoachingSubscription.reconstitute(
-        entry.subscription,
-      ).hasRefundOutstanding()
-    : false;
+  return entry.journey.standing.refundDue;
 }

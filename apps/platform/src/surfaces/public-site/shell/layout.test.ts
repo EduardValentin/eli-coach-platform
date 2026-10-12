@@ -7,8 +7,8 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
@@ -83,6 +83,12 @@ describe("public layout loader", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+          bundleMonths: null,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -211,15 +217,18 @@ function createLoaderArgs(options: {
 }): LoaderFunctionArgs {
   const coachingSales = {
     readClientPortalStanding: {
-      execute: vi
-        .fn()
-        .mockResolvedValue(
-          options.journey
-            ? { journey: options.journey, coaching: "active" }
-            : null,
-        ),
+      execute: vi.fn().mockResolvedValue(
+        options.journey
+          ? {
+              journey: options.journey,
+              portal: options.journey.onboardingSubmittedAt
+                ? "reachable"
+                : "awaiting_onboarding",
+            }
+          : null,
+      ),
     },
-  } as unknown as CoachingSalesFeature;
+  } as unknown as ClientsFeature;
 
   const waitlist = {
     waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
@@ -231,7 +240,7 @@ function createLoaderArgs(options: {
         appBasePath: options.appBasePath ?? "/",
         botDetection: botDetectionConfig,
       }),
-      contextEntry(coachingSalesContext, coachingSales),
+      contextEntry(clientsContext, coachingSales),
       contextEntry(sessionContext, options.session),
       contextEntry(waitlistContext, waitlist),
     ],

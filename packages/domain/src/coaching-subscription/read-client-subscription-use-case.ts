@@ -1,18 +1,18 @@
+import type { CoachingStatus } from "../client";
 import type { Clock } from "../shared";
 
 import {
   withdrawalDeadline,
   type CancellationRule,
   type CoachingSubscriptionSnapshot,
-  type CoachingSubscriptionStatus,
 } from "./coaching-subscription";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import type { PaymentCardSnapshot } from "./payment-card";
 import type { PaymentCards } from "./payment-cards";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type ClientSubscriptionReading = {
   subscription: CoachingSubscriptionSnapshot;
-  status: CoachingSubscriptionStatus;
+  status: CoachingStatus;
   cancellationRule: CancellationRule;
   withdrawalDeadline: Date;
   paidThrough: Date;
@@ -26,7 +26,7 @@ type ClientSubscriptionReading = {
 type ReadClientSubscriptionUseCaseOptions = {
   cards: PaymentCards;
   clock: Clock;
-  subscriptions: CoachingSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 
 export class ReadClientSubscriptionUseCase {
@@ -36,7 +36,7 @@ export class ReadClientSubscriptionUseCase {
     authSubjectId: string,
   ): Promise<ClientSubscriptionReading | null> {
     const subscription =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.signedInSubscriptions.currentFor(authSubjectId);
 
     if (!subscription) {
       return null;

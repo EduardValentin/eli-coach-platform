@@ -25,10 +25,10 @@ import {
   vi,
 } from "vitest";
 
+import { CLIENT_ENDED_PATH } from "~/features/clients/public/paths";
 import { clientAction as cancelSubscription } from "~/features/coaching-sales/api/client/subscription-cancellation";
 import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 import {
-  CLIENT_ENDED_PATH,
   CLIENT_SETTINGS_PATH,
   COACHING_SALES_API_PATHS,
 } from "~/features/coaching-sales/public/paths";

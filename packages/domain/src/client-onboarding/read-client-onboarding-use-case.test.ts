@@ -1,15 +1,38 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
+import {
   UnitPreference,
   type ClientUnitPreferencesSource,
 } from "../unit-preference";
+
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyDraft } from "./onboarding-draft";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { OnboardingParticipants } from "./onboarding-participants";
 import { ReadClientOnboardingUseCase } from "./read-client-onboarding-use-case";
 
 const CLIENT: OnboardingClient = {
+  clientId: "client-1",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+const IDENTITY: ClientIdentity = {
   clientId: "client-1",
   gender: "female",
   dateOfBirth: "1994-05-12",
@@ -18,14 +41,6 @@ const CLIENT: OnboardingClient = {
   country: "RO",
   phone: "+40712345678",
   email: "ana@example.com",
-  submittedAt: null,
-  reviewStamps: {
-    reviewOpenedAt: null,
-    detailsRequestedAt: null,
-    detailsAnsweredAt: null,
-    answersApprovedAt: null,
-  },
-  subscriptionCancelledOrEnded: false,
 };
 const DRAFT = emptyDraft(new Date("2026-09-28T10:00:00.000Z"));
 
@@ -34,6 +49,12 @@ function createClients(found: OnboardingClient | null) {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
+}
+
+function createIdentities(found: ClientIdentity | null = IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
 }
 
 function createOnboardings() {
@@ -60,7 +81,10 @@ describe("ReadClientOnboardingUseCase", () => {
       UnitPreference.of("imperial"),
     );
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(CLIENT),
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(),
+      }),
       onboardings,
       unitPreferences,
     });
@@ -87,7 +111,10 @@ describe("ReadClientOnboardingUseCase", () => {
   it("reads metric units while she has chosen none", async () => {
     // arrange
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(CLIENT),
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(),
+      }),
       onboardings: createOnboardings(),
       unitPreferences: createUnitPreferences(null),
     });
@@ -106,13 +133,36 @@ describe("ReadClientOnboardingUseCase", () => {
     // arrange
     const onboardings = createOnboardings();
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(null),
+      participants: new OnboardingParticipants({
+        clients: createClients(null),
+        identities: createIdentities(),
+      }),
       onboardings,
       unitPreferences: createUnitPreferences(null),
     });
 
     // act
     const result = await useCase.execute("user_stranger");
+
+    // assert
+    expect(result).toBeNull();
+    expect(onboardings.findByClientId).not.toHaveBeenCalled();
+  });
+
+  it("reads nothing for a client with no identity", async () => {
+    // arrange
+    const onboardings = createOnboardings();
+    const useCase = new ReadClientOnboardingUseCase({
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(null),
+      }),
+      onboardings,
+      unitPreferences: createUnitPreferences(null),
+    });
+
+    // act
+    const result = await useCase.execute("user_ana");
 
     // assert
     expect(result).toBeNull();

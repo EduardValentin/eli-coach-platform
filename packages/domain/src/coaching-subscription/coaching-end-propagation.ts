@@ -3,8 +3,14 @@ import type { CoachingSubscription } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 
 type CoachingEndPropagationOptions = {
-  coachingEnd: CoachingEndHandler;
+  coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
+};
+
+type CoachingEndNotice = {
+  subscriptionId: string;
+  clientId: string;
+  endsAt: Date;
 };
 
 export class CoachingEndPropagation {
@@ -17,17 +23,27 @@ export class CoachingEndPropagation {
       return;
     }
 
-    const { clientId } = subscription;
+    const notice = {
+      subscriptionId: subscription.id,
+      clientId: subscription.clientId,
+      endsAt,
+    };
+
+    for (const handler of this.options.coachingEnds) {
+      await this.tell(handler, notice);
+    }
+  }
+
+  private async tell(
+    handler: CoachingEndHandler,
+    notice: CoachingEndNotice,
+  ): Promise<void> {
+    const { clientId, endsAt } = notice;
 
     try {
-      await this.options.coachingEnd.coachingEnds({ clientId, endsAt });
+      await handler.coachingEnds({ clientId, endsAt });
     } catch (error) {
-      this.options.incidents.coachingEndNotPropagated({
-        subscriptionId: subscription.id,
-        clientId,
-        endsAt,
-        error,
-      });
+      this.options.incidents.coachingEndNotPropagated({ ...notice, error });
     }
   }
 }

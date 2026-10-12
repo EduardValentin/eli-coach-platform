@@ -7,7 +7,7 @@ import {
 } from "./client-resource-access";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach, ClientReachReading } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 function resourceOf(id: string, clientId: string): ClientResource {
@@ -66,25 +66,38 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
+const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
+  ["user_ana", reachReading("client-ana", "reachable")],
+  ["user_bea", reachReading("client-bea", "reachable")],
+  ["user_cleo", reachReading("client-cleo", "ended")],
+  ["user_dana", reachReading("client-dana", "awaiting_onboarding")],
+]);
 
-class InMemoryResourceClients implements ResourceClients {
-  private readonly clientBySubject = new Map<string, ResourceClient>([
-    ["user_ana", { clientId: "client-ana", portal: "reachable" }],
-    ["user_bea", { clientId: "client-bea", portal: "reachable" }],
-    ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
-  ]);
+function reachReading(
+  clientId: string,
+  portal: ClientReachReading["portal"],
+): ClientReachReading {
+  return {
+    clientId,
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
 
-  async exists(clientId: string): Promise<boolean> {
-    return [...this.clientBySubject.values()].some(
-      (client) => client.clientId === clientId,
-    );
-  }
-
+class InMemoryClientReach implements ClientReach {
   async findByAuthSubjectId(
     authSubjectId: string,
-  ): Promise<ResourceClient | null> {
-    return this.clientBySubject.get(authSubjectId) ?? null;
+  ): Promise<ClientReachReading | null> {
+    return CLIENT_BY_SUBJECT.get(authSubjectId) ?? null;
+  }
+
+  async findById(clientId: string): Promise<ClientReachReading | null> {
+    return (
+      [...CLIENT_BY_SUBJECT.values()].find(
+        (reading) => reading.clientId === clientId,
+      ) ?? null
+    );
   }
 }
 
@@ -93,7 +106,7 @@ function createAccess() {
     RESOURCE,
     UNREACHABLE_PORTAL_RESOURCE,
   ]);
-  const clients = new InMemoryResourceClients();
+  const clients = new InMemoryClientReach();
   const incidents = {
     resourceStored: vi.fn(),
     resourceRefused: vi.fn(),
@@ -120,6 +133,10 @@ const ACCOUNT_WITHOUT_RESOURCE_ROLE = {
 const CLEO_WITH_UNREACHABLE_PORTAL = {
   role: "CLIENT",
   authSubjectId: "user_cleo",
+} as const;
+const DANA_AWAITING_ONBOARDING = {
+  role: "CLIENT",
+  authSubjectId: "user_dana",
 } as const;
 const UNBOUND_CLIENT = {
   role: "CLIENT",
@@ -292,7 +309,8 @@ describe("ClientResourceAccess", () => {
     });
 
     it.each([
-      ["a client whose portal is unreachable", CLEO_WITH_UNREACHABLE_PORTAL],
+      ["a client whose coaching has ended", CLEO_WITH_UNREACHABLE_PORTAL],
+      ["a client still awaiting onboarding", DANA_AWAITING_ONBOARDING],
       ["an account bound to no client", UNBOUND_CLIENT],
     ])(
       "answers no client to %s, without reporting it",
@@ -462,7 +480,7 @@ describe("ClientResourceAccess", () => {
     it("is refused a client's resources before anything is looked up, even her own", async () => {
       // arrange
       const { access, clients } = createAccess();
-      const clientExists = vi.spyOn(clients, "exists");
+      const findClientById = vi.spyOn(clients, "findById");
       const findClient = vi.spyOn(clients, "findByAuthSubjectId");
 
       // act
@@ -473,7 +491,7 @@ describe("ClientResourceAccess", () => {
 
       // assert
       expect(reached).toBe(false);
-      expect(clientExists).not.toHaveBeenCalled();
+      expect(findClientById).not.toHaveBeenCalled();
       expect(findClient).not.toHaveBeenCalled();
     });
   });

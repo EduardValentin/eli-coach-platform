@@ -14,6 +14,7 @@ import {
   ANA,
   CoachingSalesJourney,
 } from "~integration-test-config/coaching-sales-journey";
+import { ClientsJourney } from "~integration-test-config/clients-journey";
 import {
   CLIENT_SESSION,
   COACH_SESSION,
@@ -33,6 +34,7 @@ import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/s
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const sales = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 
@@ -201,7 +203,7 @@ describe.sequential("coach clients pages integration", () => {
     it("reads an invited client's identity with an otherwise empty profile, the collapsed assessment call, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       const { callId } = await sales.payForCall();
-      const clientId = await sales.clientIdPaidFor(callId);
+      const clientId = await clients.clientIdPaidFor(callId);
 
       // act
       const response = await rig.requestAs(
@@ -350,7 +352,7 @@ describe.sequential("coach clients pages integration", () => {
     it("offers no invitation re-send for an invited client whose coaching has ended", async () => {
       // arrange
       const { callId } = await sales.payForCall();
-      const clientId = await sales.clientIdPaidFor(callId);
+      const clientId = await clients.clientIdPaidFor(callId);
       await lifecycle.deliverEvent({
         id: "evt_client_page_invited_deleted",
         type: "customer.subscription.deleted",
@@ -401,7 +403,7 @@ describe.sequential("coach clients pages integration", () => {
       // arrange
       await rig.provisionClient();
       const { callId } = await sales.payForCall();
-      const clientId = await sales.clientIdPaidFor(callId);
+      const clientId = await clients.clientIdPaidFor(callId);
 
       // act
       const response = await rig.requestAs(
@@ -416,7 +418,7 @@ describe.sequential("coach clients pages integration", () => {
     it("sends an anonymous visitor to sign in", async () => {
       // arrange
       const { callId } = await sales.payForCall();
-      const clientId = await sales.clientIdPaidFor(callId);
+      const clientId = await clients.clientIdPaidFor(callId);
 
       // act
       const response = await suite.request(

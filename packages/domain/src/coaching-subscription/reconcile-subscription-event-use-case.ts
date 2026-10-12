@@ -15,7 +15,7 @@ type ReconcileSubscriptionEventResult = {
 };
 
 type ReconcileSubscriptionEventUseCaseOptions = {
-  coachingEnd: CoachingEndHandler;
+  coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
   subscriptions: CoachingSubscriptions;
 };

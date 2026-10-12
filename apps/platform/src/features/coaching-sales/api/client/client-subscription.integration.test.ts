@@ -10,7 +10,14 @@ import {
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { CheckInsJourney } from "~integration-test-config/check-ins-journey";
-import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";
+import {
+  ClientsJourney,
+  type ClientStanding,
+} from "~integration-test-config/clients-journey";
+import {
+  ClientOnboardingJourney,
+  regularSubmission,
+} from "~integration-test-config/client-onboarding-journey";
 import {
   ANA,
   CALL_ENDED_INSTANT,
@@ -50,6 +57,7 @@ const suite = new ApiIntegrationTestSuite({
 const rig = new PlatformRig(suite);
 const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
+const clients = new ClientsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 const checkIns = new CheckInsJourney(rig);
 
@@ -92,6 +100,14 @@ const MARIA: Visitor = {
   firstName: "Maria",
   gender: "female",
   lastName: "Ionescu",
+};
+
+const PURCHASED_STANDING: ClientStanding = {
+  bookingTimeZone: "Europe/London",
+  coachingAccessEndsAt: null,
+  coachingBundleMonths: 3,
+  coachingRefundDue: false,
+  coachingStatus: "not-started",
 };
 
 const WAITING_PURCHASE: Purchase = {
@@ -150,6 +166,12 @@ describe.sequential("client subscription integration", () => {
         refundedCents: 0,
         refundedAt: null,
       });
+      expect(await clients.standingOf(ANA.email)).toEqual({
+        ...PURCHASED_STANDING,
+        coachingStatus: "ended",
+        coachingAccessEndsAt: DAY_13,
+        coachingRefundDue: true,
+      });
       const [refundDueEmail, ...otherRefundDueEmails] = await refundDueEmails();
       expect(otherRefundDueEmails).toEqual([]);
       expect(refundDueEmail?.subject).toBe(
@@ -191,6 +213,11 @@ describe.sequential("client subscription integration", () => {
         cancelledAt: DAY_13,
         accessEndsAt: PAID_THROUGH,
         refundReason: null,
+      });
+      expect(await clients.standingOf(ANA.email)).toEqual({
+        ...PURCHASED_STANDING,
+        coachingStatus: "cancelled",
+        coachingAccessEndsAt: PAID_THROUGH,
       });
       expect(await refundDueEmails()).toEqual([]);
       const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
@@ -264,6 +291,7 @@ describe.sequential("client subscription integration", () => {
         cancelledAt: null,
         refundReason: null,
       });
+      expect(await clients.standingOf(ANA.email)).toEqual(PURCHASED_STANDING);
       expect(await refundDueEmails()).toEqual([]);
     });
 
@@ -398,26 +426,35 @@ describe.sequential("client subscription integration", () => {
 
   describe("writing once her coaching has ended", () => {
     it.each([
-      ["save her onboarding draft", "/api/client-onboarding/draft", jsonPut()],
+      [
+        "save her onboarding draft",
+        "/api/client-onboarding/draft",
+        jsonWrite("PUT", {
+          formId: "goal-availability",
+          answers: regularSubmission().answers,
+          currentFormIndex: 0,
+          consents: regularSubmission().consents,
+        }),
+      ],
       [
         "submit her onboarding",
         "/api/client-onboarding/submission",
-        formWrite(),
+        formWrite({ submission: JSON.stringify(regularSubmission()) }),
       ],
       [
         "answer her coach's questions",
         "/api/client-onboarding/detail-answers",
-        formWrite(),
+        jsonWrite("POST", { answers: { "goal-availability": { weight: 64 } } }),
       ],
       [
         "record her measurements and photos",
         "/api/client-profile/measurements",
-        formWrite(),
+        formWrite({ entry: JSON.stringify({ weightKg: 64.2, waistCm: 71.5 }) }),
       ],
       [
         "save her unit preference",
         "/api/client-profile/unit-preference",
-        jsonPut(),
+        jsonWrite("PUT", { weightUnit: "kg", heightUnit: "cm" }),
       ],
     ])("refuses to %s", async (_write, target, init) => {
       // arrange
@@ -573,6 +610,7 @@ describe.sequential("client subscription integration", () => {
         previousAttributes: { cancel_at: null },
       });
       const echoed = await lifecycle.subscriptionRow();
+      const echoedStanding = await clients.standingOf(ANA.email);
       await rig.holdClock(PAID_THROUGH);
       await lifecycle.deliverEvent({
         id: "evt_subscription_deleted",
@@ -589,11 +627,21 @@ describe.sequential("client subscription integration", () => {
         cancelledAt: DAY_14,
         accessEndsAt: PAID_THROUGH,
       });
+      expect(echoedStanding).toEqual({
+        ...PURCHASED_STANDING,
+        coachingStatus: "cancelled",
+        coachingAccessEndsAt: PAID_THROUGH,
+      });
       expect(await lifecycle.subscriptionRow()).toMatchObject({
         status: "ended",
         cancelledAt: DAY_14,
         accessEndsAt: PAID_THROUGH,
         refundReason: null,
+      });
+      expect(await clients.standingOf(ANA.email)).toEqual({
+        ...PURCHASED_STANDING,
+        coachingStatus: "ended",
+        coachingAccessEndsAt: PAID_THROUGH,
       });
     });
 
@@ -631,6 +679,7 @@ describe.sequential("client subscription integration", () => {
         object: stripeRefundedChargeObject(10000),
       });
       const partRefunded = await lifecycle.subscriptionRow();
+      const partRefundedStanding = await clients.standingOf(ANA.email);
       await rig.holdClock(fullyRefundedAt);
       await lifecycle.deliverEvent({
         id: "evt_subscription_refunded",
@@ -644,10 +693,15 @@ describe.sequential("client subscription integration", () => {
         refundedCents: 10000,
         refundedAt: null,
       });
+      expect(partRefundedStanding).toMatchObject({ coachingRefundDue: true });
       expect(await lifecycle.subscriptionRow()).toMatchObject({
         refundDueCents: 44700,
         refundedCents: 44700,
         refundedAt: fullyRefundedAt,
+      });
+      expect(await clients.standingOf(ANA.email)).toMatchObject({
+        coachingStatus: "ended",
+        coachingRefundDue: false,
       });
     });
 
@@ -682,6 +736,12 @@ describe.sequential("client subscription integration", () => {
       expect(
         await lifecycle.subscriptionRow(SECOND_PURCHASE.subscriptionId),
       ).toMatchObject({ refundedCents: 0, refundedAt: null });
+      expect(await clients.standingOf(ANA.email)).toMatchObject({
+        coachingRefundDue: false,
+      });
+      expect(await clients.standingOf(MARIA.email)).toMatchObject({
+        coachingRefundDue: true,
+      });
     });
 
     it("acknowledges a refund of another payment of the same customer and leaves her subscription alone", async () => {
@@ -870,16 +930,24 @@ function openPaymentMethod(session: AccountSession): Promise<Response> {
   });
 }
 
-function jsonPut(): () => RequestInit {
+function jsonWrite(method: "PUT" | "POST", body: unknown): () => RequestInit {
   return () => ({
-    method: "PUT",
+    method,
     headers: { "content-type": "application/json" },
-    body: "{}",
+    body: JSON.stringify(body),
   });
 }
 
-function formWrite(): () => RequestInit {
-  return () => ({ method: "POST", body: new FormData() });
+function formWrite(fields: Record<string, string>): () => RequestInit {
+  return () => {
+    const form = new FormData();
+
+    for (const [name, value] of Object.entries(fields)) {
+      form.set(name, value);
+    }
+
+    return { method: "POST", body: form };
+  };
 }
 
 async function refundDueEmails() {

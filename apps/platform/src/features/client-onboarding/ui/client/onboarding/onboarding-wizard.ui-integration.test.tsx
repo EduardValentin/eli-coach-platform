@@ -30,7 +30,7 @@ import {
 import { configureAxe } from "vitest-axe";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
-import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/public/paths";
+import { clientAction } from "~/features/client-onboarding/api/client/submission";
 import type {
   OnboardingConsentInstants,
   OnboardingWizardPage,
@@ -39,7 +39,7 @@ import type {
 } from "~/features/client-onboarding/public/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
-import { clientAction } from "~/features/client-onboarding/api/client/submission";
+import { CLIENT_ONBOARDING_PATH } from "~/features/clients/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import OnboardingRoute from "./onboarding-page";

@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
+
 import { ApproveCheckInUseCase } from "./approve-check-in-use-case";
 import { CancelCheckInUseCase } from "./cancel-check-in-use-case";
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckIns, CheckInSettlement } from "./check-ins";
 import { DeclineCheckInUseCase } from "./decline-check-in-use-case";
@@ -70,7 +75,7 @@ function approvedCheckIn(props?: Partial<CheckInProps>): CheckIn {
 function createPorts(options?: {
   found?: CheckIn | null;
   settlement?: CheckInSettlement;
-  client?: CheckInClient | null;
+  client?: ClientReachReading | null;
   now?: Date;
 }) {
   const checkIns = {
@@ -87,15 +92,20 @@ function createPorts(options?: {
     cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
   } satisfies CheckIns;
   const clients = {
-    findByAuthSubjectId: vi
-      .fn()
-      .mockResolvedValue(
-        options?.client === undefined
-          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
-          : options.client,
-      ),
-    identitiesOf: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+    findByAuthSubjectId: vi.fn().mockResolvedValue(
+      options?.client === undefined
+        ? {
+            clientId: "client-1",
+            portal: "reachable",
+            coachingEndsAt: null,
+            timeZone: "Europe/London",
+          }
+        : options.client,
+    ),
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+  const identities = {
+    findByClientIds: vi.fn().mockResolvedValue([ANA]),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
   const notifications = {
     requested: vi.fn().mockResolvedValue("sent"),
     withdrawn: vi.fn().mockResolvedValue("sent"),
@@ -112,6 +122,7 @@ function createPorts(options?: {
     checkIns,
     clients,
     clock: { now: () => now },
+    identities,
     incidents: {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
@@ -449,7 +460,12 @@ describe.each(ANSWERS)(
         // arrange
         const ports = createPorts({
           found: coachRequest(),
-          client: { clientId: "client-1", portal, coachingEndsAt: null },
+          client: {
+            clientId: "client-1",
+            portal,
+            coachingEndsAt: null,
+            timeZone: "Europe/London",
+          },
         });
 
         // act
@@ -624,7 +640,12 @@ describe("WithdrawCheckInRequestUseCase", () => {
   it("refuses a client whose coaching ended", async () => {
     // arrange
     const ports = createPorts({
-      client: { clientId: "client-1", portal: "ended", coachingEndsAt: null },
+      client: {
+        clientId: "client-1",
+        portal: "ended",
+        coachingEndsAt: null,
+        timeZone: "Europe/London",
+      },
     });
 
     // act
@@ -672,7 +693,7 @@ describe("WithdrawCheckInRequestUseCase", () => {
   it("reports the email when her identity cannot be read", async () => {
     // arrange
     const ports = createPorts();
-    ports.clients.identitiesOf.mockResolvedValue([]);
+    ports.identities.findByClientIds.mockResolvedValue([]);
 
     // act
     const result = await new WithdrawCheckInRequestUseCase(ports).execute(

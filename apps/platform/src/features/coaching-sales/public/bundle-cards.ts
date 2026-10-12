@@ -35,10 +35,6 @@ export function presentBundleCards(
   return bundles.map((bundle) => toCard(bundle, { tier, baselinePerMonth }));
 }
 
-export function bundleLengthLabel(months: number): string {
-  return months === 1 ? "1 month" : `${months} months`;
-}
-
 export function renewalLabel(months: number): string {
   return months === 1 ? "Every month" : `Every ${months} months`;
 }

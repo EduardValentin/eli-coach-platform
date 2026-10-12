@@ -3,6 +3,7 @@ import type {
   CancelSubscriptionUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadClientSubscriptionUseCase,
+  ReadProgramStatusUseCase,
   StartProgramNowUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import {
@@ -13,6 +14,7 @@ import {
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
+import { CLIENT_ENDED_PATH } from "~/features/clients/public/paths";
 import {
   clientEndedSchema,
   clientSettingsSchema,
@@ -25,10 +27,11 @@ import {
   type ClientSettings,
   type SubscriptionRefusalAnswer,
 } from "~/features/coaching-sales/public/client-subscription";
+import { CLIENT_SETTINGS_PATH } from "~/features/coaching-sales/public/paths";
 import {
-  CLIENT_ENDED_PATH,
-  CLIENT_SETTINGS_PATH,
-} from "~/features/coaching-sales/public/paths";
+  programStatusSchema,
+  type ProgramStatus,
+} from "~/features/coaching-sales/public/program-status";
 
 type SubscriptionControllerOptions = {
   appBasePath: string;
@@ -36,6 +39,7 @@ type SubscriptionControllerOptions = {
   openPaymentMethodSession: OpenPaymentMethodSessionUseCase;
   publicAppUrl: string;
   readClientSubscription: ReadClientSubscriptionUseCase;
+  readProgramStatus: ReadProgramStatusUseCase;
   startProgramNow: StartProgramNowUseCase;
 };
 
@@ -70,9 +74,9 @@ export class SubscriptionController {
   constructor(private readonly options: SubscriptionControllerOptions) {}
 
   async loadSettings(args: LoaderFunctionArgs): Promise<ClientSettings> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const account = requirePortalAccess(args, { role: "CLIENT" });
     const reading = await this.options.readClientSubscription.execute(
-      client.authSubjectId,
+      account.authSubjectId,
     );
 
     if (!reading) {
@@ -83,9 +87,9 @@ export class SubscriptionController {
   }
 
   async loadEnded(args: LoaderFunctionArgs): Promise<ClientEnded> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const account = requirePortalAccess(args, { role: "CLIENT" });
     const reading = await this.options.readClientSubscription.execute(
-      client.authSubjectId,
+      account.authSubjectId,
     );
 
     return clientEndedSchema.parse({
@@ -93,10 +97,30 @@ export class SubscriptionController {
     });
   }
 
+  async loadProgramStatus(
+    args: LoaderFunctionArgs,
+  ): Promise<ProgramStatus | null> {
+    const account = requirePortalAccess(args, { role: "CLIENT" });
+    const status = await this.options.readProgramStatus.execute(
+      account.authSubjectId,
+    );
+
+    if (!status) {
+      return null;
+    }
+
+    return programStatusSchema.parse({
+      kind: status.kind,
+      submittedAt: status.submittedAt.toISOString(),
+      workStartsOn: status.workStartsOn?.toISOString() ?? null,
+      startNowUntil: status.startNowUntil?.toISOString() ?? null,
+    });
+  }
+
   async cancel(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const account = requireApiAccount(args, { role: "CLIENT" });
     const result = await this.options.cancelSubscription.execute(
-      client.authSubjectId,
+      account.authSubjectId,
     );
 
     if (result.status !== "cancelled") {
@@ -114,9 +138,9 @@ export class SubscriptionController {
   }
 
   async startNow(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const account = requireApiAccount(args, { role: "CLIENT" });
     const result = await this.options.startProgramNow.execute(
-      client.authSubjectId,
+      account.authSubjectId,
     );
 
     if (result.status === "started") {
@@ -134,9 +158,9 @@ export class SubscriptionController {
   }
 
   async openPaymentMethod(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
+    const account = requireApiAccount(args, { role: "CLIENT" });
     const result = await this.options.openPaymentMethodSession.execute({
-      authSubjectId: client.authSubjectId,
+      authSubjectId: account.authSubjectId,
       returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),
     });
 

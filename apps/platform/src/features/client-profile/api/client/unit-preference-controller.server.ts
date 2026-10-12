@@ -17,7 +17,10 @@ type UnitPreferenceControllerOptions = {
 
 const UNIT_PREFERENCE_REQUEST_MAX_BYTES = 1024;
 
-const NOT_ON_JOURNEY_STATUS = 404;
+const REFUSAL_STATUS = {
+  "not-on-journey": 404,
+  ended: 409,
+} as const;
 
 export class UnitPreferenceController {
   constructor(private readonly options: UnitPreferenceControllerOptions) {}
@@ -43,7 +46,7 @@ export class UnitPreferenceController {
 
     return Response.json(
       unitPreferenceRefusalSchema.parse({ error: result.status }),
-      { status: NOT_ON_JOURNEY_STATUS },
+      { status: REFUSAL_STATUS[result.status] },
     );
   }
 }

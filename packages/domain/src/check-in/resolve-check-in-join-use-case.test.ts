@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach, ClientReachReading } from "../client";
 import {
   CoachMeetingRoom,
   type CoachMeetingRoomSource,
@@ -7,7 +8,6 @@ import {
 
 import { CheckIn, type CheckInProps } from "./check-in";
 import type { CheckInActor } from "./check-in-actor";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckIns } from "./check-ins";
 import { ResolveCheckInJoinUseCase } from "./resolve-check-in-join-use-case";
 
@@ -52,7 +52,7 @@ function roomAt(url: string): CoachMeetingRoom {
 function createResolveJoin(options?: {
   found?: CheckIn | null;
   room?: CoachMeetingRoom | null;
-  client?: CheckInClient | null;
+  client?: ClientReachReading | null;
   now?: Date;
 }) {
   const checkIns = {
@@ -69,15 +69,17 @@ function createResolveJoin(options?: {
     cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
-    findByAuthSubjectId: vi
-      .fn()
-      .mockResolvedValue(
-        options?.client === undefined
-          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
-          : options.client,
-      ),
-    identitiesOf: vi.fn(),
-  } satisfies Pick<CheckInClients, "findByAuthSubjectId" | "identitiesOf">;
+    findByAuthSubjectId: vi.fn().mockResolvedValue(
+      options?.client === undefined
+        ? {
+            clientId: "client-1",
+            portal: "reachable",
+            coachingEndsAt: null,
+            timeZone: "Europe/London",
+          }
+        : options.client,
+    ),
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
   const meetingRoom: CoachMeetingRoomSource = {
     current: vi
       .fn()
@@ -165,6 +167,7 @@ describe("ResolveCheckInJoinUseCase", () => {
           clientId: "client-1",
           portal: "ended",
           coachingEndsAt: null,
+          timeZone: "Europe/London",
         } as const,
       },
     ],

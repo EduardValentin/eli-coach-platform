@@ -1,7 +1,8 @@
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClient } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -13,7 +14,7 @@ type OpenDetailRequestReading = {
 };
 
 type ReadOpenDetailRequestUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   stamps: OnboardingReviewStamps;
@@ -26,19 +27,21 @@ export class ReadOpenDetailRequestUseCase {
   async execute(
     authSubjectId: string,
   ): Promise<OpenDetailRequestReading | null> {
-    const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
+    const participant =
+      await this.options.participants.byAuthSubjectId(authSubjectId);
 
-    if (!client) {
+    if (!participant) {
       return null;
     }
+
+    const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),
       this.options.reviews.findByClientId(client.clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });

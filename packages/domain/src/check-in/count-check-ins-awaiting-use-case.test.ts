@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach, ClientReachReading } from "../client";
+
 import { CheckIn, type CheckInProps } from "./check-in";
-import type { CheckInClient, CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckIns } from "./check-ins";
 import { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
@@ -46,10 +47,11 @@ const LAPSED_REQUEST = {
   startsAt: new Date("2026-06-03T09:00:00.000Z"),
 } satisfies CheckInProps;
 
-const REACHABLE: CheckInClient = {
+const REACHABLE: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  timeZone: "Europe/London",
 };
 
 function checkInsOf(...props: CheckInProps[]): CheckIn[] {
@@ -58,7 +60,7 @@ function checkInsOf(...props: CheckInProps[]): CheckIn[] {
 
 function createUseCase(options: {
   checkIns: CheckIn[];
-  client?: CheckInClient | null;
+  client?: ClientReachReading | null;
   failure?: Error;
 }) {
   const listed = options.failure
@@ -75,7 +77,7 @@ function createUseCase(options: {
       .mockResolvedValue(
         options.client === undefined ? REACHABLE : options.client,
       ),
-  } satisfies Pick<CheckInClients, "findByAuthSubjectId">;
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),

@@ -4,7 +4,7 @@ import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { BrowsedResources, ClientResources } from "./client-resources";
 import { CountUnopenedResourcesUseCase } from "./count-unopened-resources-use-case";
-import type { ResourceClients } from "./resource-clients";
+import type { ClientReach, ClientReachReading } from "../client";
 import type { ResourceTagSnapshot } from "./resource-tags";
 
 const ADDED_AT = new Date("2026-10-05T09:00:00.000Z");
@@ -73,21 +73,34 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
-type ResourceClient = { clientId: string; portal: "reachable" | "unreachable" };
+function reachReading(
+  clientId: string,
+  portal: ClientReachReading["portal"],
+): ClientReachReading {
+  return {
+    clientId,
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
+  };
+}
 
-const CLIENT_BY_SUBJECT = new Map<string, ResourceClient>([
-  ["user_ana", { clientId: "client-ana", portal: "reachable" }],
-  ["user_cleo", { clientId: "client-cleo", portal: "unreachable" }],
+const CLIENT_BY_SUBJECT = new Map<string, ClientReachReading>([
+  ["user_ana", reachReading("client-ana", "reachable")],
+  ["user_cleo", reachReading("client-cleo", "ended")],
+  ["user_dana", reachReading("client-dana", "awaiting_onboarding")],
 ]);
 
 function createUseCase(
   options: {
     resources?: ClientResources;
-    clients?: ResourceClients;
+    clients?: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   } = {},
 ) {
   const clients = options.clients ?? {
-    exists: vi.fn(async () => true),
+    findById: vi.fn(async (clientId: string) =>
+      reachReading(clientId, "reachable"),
+    ),
     findByAuthSubjectId: vi.fn(
       async (authSubjectId: string) =>
         CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
@@ -131,8 +144,12 @@ describe("CountUnopenedResourcesUseCase", () => {
   it.each([
     ["the coach", { role: "COACH", authSubjectId: "user_eli" }],
     [
-      "a client whose portal is unreachable",
+      "a client whose coaching has ended",
       { role: "CLIENT", authSubjectId: "user_cleo" },
+    ],
+    [
+      "a client still awaiting onboarding",
+      { role: "CLIENT", authSubjectId: "user_dana" },
     ],
     [
       "an account bound to no client",
@@ -176,7 +193,9 @@ describe("CountUnopenedResourcesUseCase", () => {
     const failure = new Error("connection terminated");
     const { useCase, incidents } = createUseCase({
       clients: {
-        exists: vi.fn(async () => true),
+        findById: vi.fn(async (clientId: string) =>
+          reachReading(clientId, "reachable"),
+        ),
         findByAuthSubjectId: vi.fn().mockRejectedValue(failure),
       },
     });

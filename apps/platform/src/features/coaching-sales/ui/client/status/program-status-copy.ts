@@ -1,4 +1,4 @@
-import type { ProgramStatusKind } from "~/features/coaching-sales/public/client-journey";
+import type { ProgramStatusKind } from "~/features/coaching-sales/public/program-status";
 
 const ONBOARDING_EYEBROW = "Your onboarding";
 const PROGRAM_EYEBROW = "Your program";

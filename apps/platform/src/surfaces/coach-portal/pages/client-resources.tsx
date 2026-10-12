@@ -7,12 +7,12 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { CoachResourceLibrary } from "~/features/client-resources/ui/coach/resources/coach-resource-library";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
-import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { coachClientPath } from "~/features/coaching-sales/public/paths";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
+import { clientFullName } from "~/features/clients/public/clients";
+import { coachClientPath } from "~/features/clients/public/paths";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
@@ -29,9 +29,7 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const [client, listing] = await Promise.all([
-    args.context
-      .get(coachingSalesContext)
-      .coachClients.loadClient(args, clientId),
+    args.context.get(clientsContext).coachClients.loadClient(args, clientId),
     args.context
       .get(clientResourcesContext)
       .coachResources.load(args, clientId),

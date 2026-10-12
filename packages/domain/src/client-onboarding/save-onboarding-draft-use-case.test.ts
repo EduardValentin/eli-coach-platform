@@ -1,16 +1,39 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
+
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyAnswers } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import { noConsents } from "./onboarding-consents";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { SaveOnboardingDraftUseCase } from "./save-onboarding-draft-use-case";
 
 const NOW = new Date("2026-09-28T10:00:00.000Z");
-const MALE_CLIENT: OnboardingClient = {
+const CLIENT: OnboardingClient = {
+  clientId: "client-1",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+const MALE_IDENTITY: ClientIdentity = {
   clientId: "client-1",
   gender: "male",
   dateOfBirth: "1990-03-02",
@@ -19,14 +42,6 @@ const MALE_CLIENT: OnboardingClient = {
   country: "RO",
   phone: "+40712345678",
   email: "ana@example.com",
-  submittedAt: null,
-  reviewStamps: {
-    reviewOpenedAt: null,
-    detailsRequestedAt: null,
-    detailsAnsweredAt: null,
-    answersApprovedAt: null,
-  },
-  subscriptionCancelledOrEnded: false,
 };
 const SUBMISSION: OnboardingSubmission = {
   answers: emptyAnswers(),
@@ -34,11 +49,32 @@ const SUBMISSION: OnboardingSubmission = {
   submittedAt: new Date("2026-09-27T10:00:00.000Z"),
 };
 
+const ENDED_ACCESS_AT = new Date("2026-09-27T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-28T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
+
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
+}
+
+function createIdentities(found: ClientIdentity | null = MALE_IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
 }
 
 function createOnboardings(submission: OnboardingSubmission | null = null) {
@@ -77,13 +113,17 @@ function createIncidents() {
 function createUseCase(
   ports: {
     clients?: OnboardingClients;
+    identities?: Pick<ClientIdentities, "findByClientId">;
     onboardings?: ClientOnboardingSource;
     changes?: ClientOnboardingChanges;
     incidents?: ClientOnboardingIncidents;
   } = {},
 ) {
   return new SaveOnboardingDraftUseCase({
-    clients: ports.clients ?? createClients(MALE_CLIENT),
+    participants: new OnboardingParticipants({
+      clients: ports.clients ?? createClients(CLIENT),
+      identities: ports.identities ?? createIdentities(),
+    }),
     onboardings: ports.onboardings ?? createOnboardings(),
     changes: ports.changes ?? createChanges(),
     clock: { now: () => NOW },
@@ -202,5 +242,37 @@ describe("SaveOnboardingDraftUseCase", () => {
       formId: "goal-availability",
     });
     expect(incidents.onboardingDraftSaved).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute(command());
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(changes.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it("saves the draft of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute(command());
+
+    // assert
+    expect(result).toEqual({ status: "saved" });
+    expect(changes.saveDraft).toHaveBeenCalled();
   });
 });

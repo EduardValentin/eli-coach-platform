@@ -64,7 +64,6 @@ function createCustomerCards(card: PaymentCard | null) {
 function createSubscriptions(found: CoachingSubscription | null) {
   return {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
-    findCurrentForAuthSubject: vi.fn().mockResolvedValue(found),
     findByPaymentSubscriptionId: vi.fn().mockResolvedValue(found),
     findCurrentByPaymentCustomerId: vi.fn().mockResolvedValue(found),
     findByPaymentIntentId: vi.fn(),

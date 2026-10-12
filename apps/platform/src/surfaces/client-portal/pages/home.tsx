@@ -16,9 +16,7 @@ import { clientPortalPageMeta } from "~/surfaces/client-portal/shell/client-port
 
 export async function loader(args: LoaderFunctionArgs) {
   const [programStatus, detailsRequest, { dueLine }] = await Promise.all([
-    args.context
-      .get(coachingSalesContext)
-      .clientJourney.loadProgramStatus(args),
+    args.context.get(coachingSalesContext).subscription.loadProgramStatus(args),
     args.context.get(clientOnboardingContext).controller.loadOpenRequest(args),
     args.context.get(clientProfileContext).clientMeasurements.loadNudge(args),
   ]);

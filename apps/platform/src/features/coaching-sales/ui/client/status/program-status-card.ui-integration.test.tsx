@@ -28,13 +28,13 @@ import {
 } from "vitest";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
-import { clientAction as startProgram } from "~/features/coaching-sales/api/client/program-start";
-import type { ProgramStatus } from "~/features/coaching-sales/public/client-journey";
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
-  COACHING_SALES_API_PATHS,
-} from "~/features/coaching-sales/public/paths";
+} from "~/features/clients/public/paths";
+import { clientAction as startProgram } from "~/features/coaching-sales/api/client/program-start";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
+import type { ProgramStatus } from "~/features/coaching-sales/public/program-status";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { ProgramStatusCard } from "./program-status-card";

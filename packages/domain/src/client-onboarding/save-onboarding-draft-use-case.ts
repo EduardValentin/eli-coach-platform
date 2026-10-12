@@ -5,8 +5,8 @@ import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import type { OnboardingFormId } from "./onboarding-schema";
 
 type SaveOnboardingDraftCommand = {
@@ -20,10 +20,11 @@ type SaveOnboardingDraftCommand = {
 type SaveOnboardingDraftResult =
   | { status: "saved" }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "already-submitted" };
 
 type SaveOnboardingDraftUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   changes: ClientOnboardingChanges;
   clock: Clock;
@@ -36,18 +37,28 @@ export class SaveOnboardingDraftUseCase {
   async execute(
     command: SaveOnboardingDraftCommand,
   ): Promise<SaveOnboardingDraftResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const participant = await this.options.participants.byAuthSubjectId(
       command.authSubjectId,
     );
 
-    if (!client) {
+    if (!participant) {
       return { status: "not-on-journey" };
+    }
+
+    const { client, identity } = participant;
+    const now = this.options.clock.now();
+
+    if (!client.standing.hasPortalAccessAt(now)) {
+      return { status: "ended" };
     }
 
     const stored = await this.options.onboardings.findByClientId(
       client.clientId,
     );
-    const onboarding = ClientOnboarding.reconstitute({ client, ...stored });
+    const onboarding = ClientOnboarding.reconstitute({
+      client: identity,
+      ...stored,
+    });
 
     if (onboarding.isSubmitted()) {
       return { status: "already-submitted" };
@@ -58,7 +69,7 @@ export class SaveOnboardingDraftUseCase {
       answers: command.answers,
       currentFormIndex: command.currentFormIndex,
       consents: command.consents,
-      now: this.options.clock.now(),
+      now,
     });
 
     const saved = await this.options.changes

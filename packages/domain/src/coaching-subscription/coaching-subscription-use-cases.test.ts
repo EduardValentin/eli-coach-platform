@@ -2,15 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   AssessmentCall,
+  type AssessmentCallReader,
   type AssessmentCallSnapshot,
 } from "../assessment-call";
 import type { PriceTier, PricingEligibility } from "../coaching-bundle";
-import { Client } from "../client";
 import { EmailAddress } from "../email-address";
 import {
   CoachingSalesWindow,
   PaymentLink,
-  type AssessmentCallReader,
   type CallSalesStates,
   type CoachingSalesIncidents,
   type PaymentLinks,
@@ -179,8 +178,10 @@ function createCheckoutSessions(
 
 const PAID_CLIENT_ID = "client-1";
 
-function createPurchases(outcome: CoachingPurchaseOutcome): CoachingPurchases {
-  return { recordCompletion: vi.fn().mockResolvedValue(outcome) };
+function createPurchases(outcome: CoachingPurchaseOutcome) {
+  return {
+    recordCompletion: vi.fn().mockResolvedValue(outcome),
+  } satisfies CoachingPurchases;
 }
 
 function createAdmission() {
@@ -547,7 +548,6 @@ function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
   return {
     admission: createAdmission(),
     calls: createCalls(call),
-    clock,
     incidents: createSubscriptionIncidents(),
     paymentCheckout: createPaymentCheckout(completion),
     paymentSubscriptions: createPaymentSubscriptions(),
@@ -566,7 +566,7 @@ const DUPLICATE: CoachingPurchaseOutcome = {
 };
 
 describe("RecordCheckoutCompletedUseCase", () => {
-  it("records the client profile from the booking and the subscription the provider reports paid for the session, then admits the paid client, with no sales window consulted", async () => {
+  it("records the client's intake from the booking and the subscription the provider reports paid for the session, then admits the paid client, with no sales window consulted", async () => {
     // arrange
     const dependencies = recordCheckoutDependencies(RECORDED);
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
@@ -584,12 +584,28 @@ describe("RecordCheckoutCompletedUseCase", () => {
     ).toHaveBeenCalledWith("cs_2");
     expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
       eventId: "evt_1",
-      client: Client.fromAssessmentCall(call, NOW),
+      intake: {
+        assessmentCallId: "call-1",
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone: "+40712345678",
+        bookingTimeZone: "Europe/Bucharest",
+      },
       subscription: PurchasedSubscription.fromCompletedCheckout(completion),
     });
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
+    expect(
+      dependencies.purchases.recordCompletion.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      dependencies.admission.admit.mock.invocationCallOrder[0] ?? 0,
+    );
   });
 
   it.each([

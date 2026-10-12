@@ -1,10 +1,6 @@
-import type {
-  AssessmentCallSnapshot,
-  VisitorGender,
-  VisitorPrimaryGoal,
-} from "../assessment-call";
+import type { VisitorGender, VisitorPrimaryGoal } from "../assessment-call";
 
-export type ClientSnapshot = {
+export type ClientIntake = {
   assessmentCallId: string;
   firstName: string;
   lastName: string;
@@ -14,6 +10,10 @@ export type ClientSnapshot = {
   primaryGoal: VisitorPrimaryGoal;
   country: string;
   phone: string | null;
+  bookingTimeZone: string;
+};
+
+export type ClientSnapshot = ClientIntake & {
   createdAt: Date;
 };
 
@@ -27,6 +27,7 @@ export class Client {
   readonly primaryGoal: VisitorPrimaryGoal;
   readonly country: string;
   readonly phone: string | null;
+  readonly bookingTimeZone: string;
   readonly createdAt: Date;
 
   private constructor(props: ClientSnapshot) {
@@ -39,22 +40,12 @@ export class Client {
     this.primaryGoal = props.primaryGoal;
     this.country = props.country;
     this.phone = props.phone;
+    this.bookingTimeZone = props.bookingTimeZone;
     this.createdAt = props.createdAt;
   }
 
-  static fromAssessmentCall(call: AssessmentCallSnapshot, now: Date): Client {
-    return new Client({
-      assessmentCallId: call.id,
-      firstName: call.firstName,
-      lastName: call.lastName,
-      email: call.visitorEmail,
-      dateOfBirth: call.dateOfBirth,
-      gender: call.gender,
-      primaryGoal: call.primaryGoal,
-      country: call.country,
-      phone: call.phone,
-      createdAt: now,
-    });
+  static fromIntake(intake: ClientIntake, now: Date): Client {
+    return new Client({ ...intake, createdAt: now });
   }
 
   toSnapshot(): ClientSnapshot {
@@ -68,6 +59,7 @@ export class Client {
       primaryGoal: this.primaryGoal,
       country: this.country,
       phone: this.phone,
+      bookingTimeZone: this.bookingTimeZone,
       createdAt: this.createdAt,
     };
   }

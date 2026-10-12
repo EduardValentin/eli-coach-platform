@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MeasurementClients } from "./measurement-clients";
+import type { ClientReach } from "../client";
+
 import type { MeasurementIncidents } from "./measurement-incidents";
 import { ProgressPhoto } from "./progress-photo";
 import type { ProgressPhotoReference } from "./progress-photo-reference";
@@ -67,7 +68,7 @@ function createPorts(requesterClient: { clientId: string } | null) {
   return {
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(requesterClient),
-    } satisfies MeasurementClients,
+    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
     photos: new InMemoryProgressPhotos(),
     store: new InMemoryProgressPhotoStore(),
     incidents: {

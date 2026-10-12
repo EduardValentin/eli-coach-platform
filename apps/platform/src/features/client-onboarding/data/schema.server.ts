@@ -14,7 +14,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { clientsTable } from "~/features/coaching-sales/data/schema.server";
+import { clientsTable } from "~/features/clients/data/schema.server";
 
 export const clientOnboardingConstraints = {
   submissionPerClient: "client_onboarding_submissions_client_id_unique",

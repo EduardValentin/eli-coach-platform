@@ -10,7 +10,7 @@ import type { OnboardingSubmissionProblem } from "./client-onboarding";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { profileFactsOf } from "./onboarding-profile-facts";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -23,11 +23,12 @@ type AnswerOnboardingDetailsCommand = {
 type AnswerOnboardingDetailsResult =
   | { status: "answered" }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "no-open-request" }
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type AnswerOnboardingDetailsUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   unitPreferences: ClientUnitPreferencesSource;
@@ -43,12 +44,19 @@ export class AnswerOnboardingDetailsUseCase {
   async execute(
     command: AnswerOnboardingDetailsCommand,
   ): Promise<AnswerOnboardingDetailsResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const participant = await this.options.participants.byAuthSubjectId(
       command.authSubjectId,
     );
 
-    if (!client) {
+    if (!participant) {
       return { status: "not-on-journey" };
+    }
+
+    const { client, identity } = participant;
+    const now = this.options.clock.now();
+
+    if (!client.standing.hasPortalAccessAt(now)) {
+      return { status: "ended" };
     }
 
     const { clientId } = client;
@@ -58,11 +66,10 @@ export class AnswerOnboardingDetailsUseCase {
       this.options.unitPreferences.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });
-    const now = this.options.clock.now();
     const outcome = review.answer({
       answers: command.answers,
       units: measureUnitsOf(

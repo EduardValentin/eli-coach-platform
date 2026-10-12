@@ -16,6 +16,7 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
+  readJsonRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
 import {
   data,
@@ -24,7 +25,6 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { readJsonRequestBody } from "~/features/coaching-sales/api/read-json-request-body.server";
 import {
   coachingBundleIdSchema,
   presentBundleCards,

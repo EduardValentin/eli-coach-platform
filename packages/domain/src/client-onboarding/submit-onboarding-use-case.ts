@@ -15,8 +15,8 @@ import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { profileFactsOf } from "./onboarding-profile-facts";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import { screeningOutcome } from "./onboarding-submission";
@@ -35,12 +35,13 @@ type SubmitOnboardingResult =
       entryId: string;
     }
   | { status: "not-on-journey" }
+  | { status: "ended" }
   | { status: "already-submitted" }
   | { status: "consent-missing"; consent: OnboardingConsent }
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type SubmitOnboardingUseCaseOptions = {
-  clients: OnboardingClients;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   unitPreferences: ClientUnitPreferencesSource;
   changes: ClientOnboardingChanges;
@@ -55,21 +56,29 @@ export class SubmitOnboardingUseCase {
   async execute(
     command: SubmitOnboardingCommand,
   ): Promise<SubmitOnboardingResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const participant = await this.options.participants.byAuthSubjectId(
       command.authSubjectId,
     );
 
-    if (!client) {
+    if (!participant) {
       return { status: "not-on-journey" };
+    }
+
+    const { client, identity } = participant;
+    const now = this.options.clock.now();
+
+    if (!client.standing.hasPortalAccessAt(now)) {
+      return { status: "ended" };
     }
 
     const [stored, preference] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),
       this.options.unitPreferences.findByClientId(client.clientId),
     ]);
-    const onboarding = ClientOnboarding.reconstitute({ client, ...stored });
-    const now = this.options.clock.now();
-
+    const onboarding = ClientOnboarding.reconstitute({
+      client: identity,
+      ...stored,
+    });
     const outcome = onboarding.submit({
       answers: command.answers,
       consents: command.consents,

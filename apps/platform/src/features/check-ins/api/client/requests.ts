@@ -10,15 +10,12 @@ import {
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { requireOpenClientPortal } from "~/features/coaching-sales/server/guards/require-client-portal-standing.server";
 
 export async function action(args: ActionFunctionArgs) {
-  return handleHttpErrorResponse(async () => {
+  return handleHttpErrorResponse(() => {
     if (args.request.method !== "POST") {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
-
-    await requireOpenClientPortal(args);
 
     return args.context.get(checkInsContext).clientCheckIns.request(args);
   });

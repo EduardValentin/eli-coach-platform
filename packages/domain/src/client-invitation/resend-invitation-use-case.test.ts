@@ -27,7 +27,7 @@ const invitedClient: InvitedClient = {
   email: "ana@example.com",
   firstName: "Ana",
   authSubjectId: null,
-  subscriptionCancelledOrEnded: false,
+  coachingCancelledOrEnded: false,
 };
 
 function sentInvitation(
@@ -256,7 +256,7 @@ describe("ResendInvitationUseCase", () => {
   it("refuses a resend once her coaching is cancelled or ended, touching nothing", async () => {
     // arrange
     const dependencies = resendDependencies({
-      client: { ...invitedClient, subscriptionCancelledOrEnded: true },
+      client: { ...invitedClient, coachingCancelledOrEnded: true },
     });
     const useCase = new ResendInvitationUseCase(dependencies);
 

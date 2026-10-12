@@ -1,9 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
 import type {
   ClientMeasurementsSource,
   MeasurementEntry,
 } from "../measurement";
+
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { DetailRequest } from "./detail-request";
@@ -12,6 +18,7 @@ import {
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
@@ -34,6 +41,18 @@ const NO_STAMPS: ReviewStamps = {
 
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
+  submittedAt: SUBMITTED_AT,
+  reviewStamps: NO_STAMPS,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   country: "RO",
@@ -41,9 +60,6 @@ const CLIENT: OnboardingClient = {
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
-  submittedAt: SUBMITTED_AT,
-  reviewStamps: NO_STAMPS,
-  subscriptionCancelledOrEnded: false,
 };
 
 const SUBMITTED_MEASUREMENT: MeasurementEntry = {
@@ -119,19 +135,27 @@ function createIncidents() {
 function readPorts(
   overrides: {
     client?: OnboardingClient | null;
+    identity?: ClientIdentity;
     submission?: OnboardingSubmission | null;
     stored?: Partial<Awaited<ReturnType<OnboardingReviews["findByClientId"]>>>;
   } = {},
 ) {
   return {
-    clients: {
-      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-      findByClientId: vi
-        .fn()
-        .mockResolvedValue(
-          overrides.client === undefined ? CLIENT : overrides.client,
-        ),
-    } satisfies OnboardingClients,
+    participants: new OnboardingParticipants({
+      clients: {
+        findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+        findByClientId: vi
+          .fn()
+          .mockResolvedValue(
+            overrides.client === undefined ? CLIENT : overrides.client,
+          ),
+      } satisfies OnboardingClients,
+      identities: {
+        findByClientId: vi
+          .fn()
+          .mockResolvedValue(overrides.identity ?? IDENTITY),
+      } satisfies Pick<ClientIdentities, "findByClientId">,
+    }),
     onboardings: {
       findByClientId: vi.fn().mockResolvedValue({
         draft: null,
@@ -241,7 +265,7 @@ describe("ReadOnboardingReviewUseCase", () => {
 
   it("reads no cycle mode for a male client, whose review has no cycle form", async () => {
     // arrange
-    const ports = readPorts({ client: { ...CLIENT, gender: "male" } });
+    const ports = readPorts({ identity: { ...IDENTITY, gender: "male" } });
     const useCase = new ReadOnboardingReviewUseCase(ports);
 
     // act

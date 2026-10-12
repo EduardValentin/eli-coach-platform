@@ -2,7 +2,7 @@ import { CLIENT_PORTAL_PATH } from "../../accounts/public/paths";
 import {
   COACH_CLIENTS_ROUTE_SEGMENT,
   coachClientPath,
-} from "../../coaching-sales/public/paths";
+} from "../../clients/public/paths";
 
 const CLIENT_RESOURCES_API = "/api/client-resources";
 

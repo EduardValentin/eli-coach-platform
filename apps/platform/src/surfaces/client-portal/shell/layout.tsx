@@ -20,7 +20,7 @@ import {
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 
 import {
   presentClientIdentity,
@@ -44,7 +44,7 @@ type ClientShell = ClientNavigationCounts & {
 
 export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
   const presentation = presentClientIdentity(
-    args.context.get(coachingSalesContext).clientJourney.loadIdentity(args),
+    args.context.get(clientsContext).clientJourney.loadIdentity(args),
   );
 
   const [unopenedResources, checkInsAwaiting] = await Promise.all([

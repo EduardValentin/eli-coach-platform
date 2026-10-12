@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ClientReach, ClientReachReading } from "../client";
 import type { MeasurementEntry } from "../measurement";
 import { ClientProfile } from "./client-profile";
 import type { ClientProfiles } from "./client-profiles";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
-import type { MeasurementClients } from "./measurement-clients";
 import type { MeasurementIncidents } from "./measurement-incidents";
 import { ProgressPhoto, type ProgressPhotoView } from "./progress-photo";
 import type {
@@ -87,7 +87,7 @@ class InMemoryProgressPhotos implements ProgressPhotos {
 function createPorts(
   options: {
     consent?: ProfileConsent;
-    client?: { clientId: string } | null;
+    client?: ClientReachReading | null;
     rendition?: ProgressPhotoRendition;
   } = {},
 ) {
@@ -99,11 +99,9 @@ function createPorts(
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValue(
-          options.client === undefined
-            ? { clientId: "client-1" }
-            : options.client,
+          options.client === undefined ? reachOf("reachable") : options.client,
         ),
-    } satisfies MeasurementClients,
+    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
     profiles: {
       findByClientId: vi
         .fn()
@@ -141,6 +139,15 @@ function createPorts(
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
     } satisfies MeasurementIncidents,
+  };
+}
+
+function reachOf(portal: ClientReachReading["portal"]): ClientReachReading {
+  return {
+    clientId: "client-1",
+    portal,
+    coachingEndsAt: null,
+    timeZone: "Europe/Bucharest",
   };
 }
 
@@ -206,6 +213,46 @@ describe("RecordMeasurementsUseCase", () => {
     expect(result).toEqual({ status: "not-on-journey" });
     expect(ports.records.record).not.toHaveBeenCalled();
     expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client whose portal access has ended, before reading her entry", async () => {
+    // arrange
+    const ports = createPorts({ client: reachOf("ended") });
+    const useCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      values: { weightKg: 500 },
+      consentGiven: true,
+      photos: [receivedPhoto("front")],
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(ports.records.record).not.toHaveBeenCalled();
+    expect(ports.profiles.recordPhotoConsent).not.toHaveBeenCalled();
+  });
+
+  it("records the entry of a client still awaiting her onboarding", async () => {
+    // arrange
+    const ports = createPorts({ client: reachOf("awaiting_onboarding") });
+    const useCase = new RecordMeasurementsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      values: VALUES,
+      consentGiven: false,
+      photos: [],
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "recorded",
+      entryId: "entry-1",
+      photos: {},
+    });
   });
 
   it.each([

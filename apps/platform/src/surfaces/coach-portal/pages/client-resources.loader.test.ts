@@ -6,9 +6,9 @@ import type {
 } from "~/features/client-resources/public/client-resources";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
-import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import type { CoachClient } from "~/features/clients/public/coach-clients";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -25,7 +25,7 @@ const CLIENT: CoachClient = {
   invitation: null,
   lastName: "Popescu",
   needsRefund: false,
-  subscriptionCancelledOrEnded: false,
+  coachingCancelledOrEnded: false,
   assessmentCall: {
     startsAt: "2026-09-18T12:00:00.000Z",
     firstName: "Andreea",
@@ -40,7 +40,6 @@ const CLIENT: CoachClient = {
   },
   gender: "female",
   status: "awaiting-review",
-  subscription: null,
 };
 
 const RESOURCES: ClientResourceView[] = [
@@ -174,9 +173,9 @@ function routeArguments(
   const loadResources = vi.fn().mockResolvedValue(LISTING);
   const args = createRequestArgs({
     contexts: [
-      contextEntry(coachingSalesContext, {
+      contextEntry(clientsContext, {
         coachClients: { loadClient },
-      } as unknown as CoachingSalesFeature),
+      } as unknown as ClientsFeature),
       contextEntry(clientResourcesContext, {
         coachResources: { load: loadResources },
       } as unknown as ClientResourcesFeature),

@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "../client";
+import type {
+  ClientIdentities,
+  ClientIdentity,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
 import type { CoachingEndHandler } from "./coaching-end-handler";
@@ -18,9 +23,11 @@ import { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-ca
 import { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
 import { RefundDue } from "./refund-due";
 import type { RefundNotifications } from "./refund-notifications";
+import { SignedInSubscriptions } from "./signed-in-subscriptions";
 import { StartProgramNowUseCase } from "./start-program-now-use-case";
 import type { SubscriptionEvent } from "./subscription-event";
 
+const CLIENT_ID = "client-1";
 const AUTH_SUBJECT_ID = "user_ana";
 const PAID_AT = new Date("2026-10-02T10:00:00.000Z");
 const DAY_13 = new Date("2026-10-15T10:00:00.000Z");
@@ -67,7 +74,6 @@ function clockAt(now: Date) {
 function createSubscriptions(found: CoachingSubscription | null) {
   return {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
-    findCurrentForAuthSubject: vi.fn().mockResolvedValue(found),
     findByPaymentSubscriptionId: vi.fn().mockResolvedValue(found),
     findCurrentByPaymentCustomerId: vi.fn().mockResolvedValue(found),
     findByPaymentIntentId: vi.fn().mockResolvedValue(found),
@@ -137,6 +143,26 @@ function createClients(found: ClientIdentity | null = ana) {
   } satisfies ClientIdentities;
 }
 
+const anaReach: ClientReachReading = {
+  clientId: CLIENT_ID,
+  portal: "reachable",
+  coachingEndsAt: null,
+  timeZone: "Europe/Bucharest",
+};
+
+function createClientReach(found: ClientReachReading | null = anaReach) {
+  return {
+    findByAuthSubjectId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+}
+
+function signedInOf(
+  subscriptions: ReturnType<typeof createSubscriptions>,
+  clientReach = createClientReach(),
+) {
+  return new SignedInSubscriptions({ clientReach, subscriptions });
+}
+
 function createCoachingEnd() {
   return {
     coachingEnds: vi.fn().mockResolvedValue(undefined),
@@ -151,15 +177,20 @@ function cancelUseCase(options: {
   incidents?: ReturnType<typeof createIncidents>;
   notifications?: ReturnType<typeof createNotifications>;
   clients?: ReturnType<typeof createClients>;
+  clientReach?: ReturnType<typeof createClientReach>;
 }) {
   return new CancelSubscriptionUseCase({
     clients: options.clients ?? createClients(),
     clock: clockAt(options.now),
-    coachingEnd: options.coachingEnd ?? createCoachingEnd(),
+    coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
     incidents: options.incidents ?? createIncidents(),
     notifications: options.notifications ?? createNotifications(),
     paymentSubscriptions:
       options.paymentSubscriptions ?? createPaymentSubscriptions(),
+    signedInSubscriptions: signedInOf(
+      options.subscriptions,
+      options.clientReach,
+    ),
     subscriptions: options.subscriptions,
   });
 }
@@ -200,9 +231,7 @@ describe("CancelSubscriptionUseCase", () => {
       subscription: cancelled,
       refundDue: true,
     });
-    expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
-      AUTH_SUBJECT_ID,
-    );
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith(CLIENT_ID);
     expect(paymentSubscriptions.endNow).toHaveBeenCalledWith("sub_1");
     expect(subscriptions.save).toHaveBeenCalledWith({
       subscription: CoachingSubscription.reconstitute(cancelled),
@@ -377,7 +406,7 @@ describe("CancelSubscriptionUseCase", () => {
     // arrange
     const flagged = subscriptionOf({ paymentProblemSince: DAY_13 });
     const subscriptions = createSubscriptions(subscriptionOf());
-    subscriptions.findCurrentForAuthSubject
+    subscriptions.findCurrentForClient
       .mockResolvedValueOnce(subscriptionOf())
       .mockResolvedValueOnce(flagged);
     subscriptions.save
@@ -418,7 +447,7 @@ describe("CancelSubscriptionUseCase", () => {
     const providerEndedAt = new Date(DAY_13.getTime() + 1000);
     const providerEnded = current.end(providerEndedAt);
     const subscriptions = createSubscriptions(current);
-    subscriptions.findCurrentForAuthSubject
+    subscriptions.findCurrentForClient
       .mockResolvedValueOnce(current)
       .mockResolvedValueOnce(providerEnded);
     subscriptions.save
@@ -505,7 +534,7 @@ describe("CancelSubscriptionUseCase", () => {
     const alreadyRecorded =
       decided.outcome === "cancelled" ? decided.subscription : current;
     const subscriptions = createSubscriptions(current);
-    subscriptions.findCurrentForAuthSubject
+    subscriptions.findCurrentForClient
       .mockResolvedValueOnce(current)
       .mockResolvedValueOnce(alreadyRecorded);
     subscriptions.save.mockResolvedValueOnce("stale");
@@ -605,6 +634,43 @@ describe("CancelSubscriptionUseCase", () => {
     },
   );
 
+  it("tells every coaching-end handler, reporting the one that fails without skipping the next", async () => {
+    // arrange
+    const failure = new Error("first handler down");
+    const failing = createCoachingEnd();
+    failing.coachingEnds.mockRejectedValue(failure);
+    const listening = createCoachingEnd();
+    const incidents = createIncidents();
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = new CancelSubscriptionUseCase({
+      clients: createClients(),
+      clock: clockAt(DAY_14),
+      coachingEnds: [failing, listening],
+      incidents,
+      notifications: createNotifications(),
+      paymentSubscriptions: createPaymentSubscriptions(),
+      signedInSubscriptions: signedInOf(subscriptions),
+      subscriptions,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
+    expect(listening.coachingEnds).toHaveBeenCalledWith({
+      clientId: "client-1",
+      endsAt: ACCESS_END,
+    });
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledTimes(1);
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: "client-1",
+      endsAt: ACCESS_END,
+      error: failure,
+    });
+  });
+
   it("keeps the cancellation and reports it when the coaching end cannot be propagated", async () => {
     // arrange
     const failure = new Error("check-ins down");
@@ -690,6 +756,26 @@ describe("CancelSubscriptionUseCase", () => {
       subscriptionId: "subscription-1",
     });
   });
+
+  it("finds nothing to cancel for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      paymentSubscriptions,
+      clientReach: createClientReach(null),
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
+    expect(paymentSubscriptions.endNow).not.toHaveBeenCalled();
+  });
 });
 
 describe("StartProgramNowUseCase", () => {
@@ -697,10 +783,15 @@ describe("StartProgramNowUseCase", () => {
     now: Date;
     subscriptions: ReturnType<typeof createSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
+    clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new StartProgramNowUseCase({
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
+      signedInSubscriptions: signedInOf(
+        options.subscriptions,
+        options.clientReach,
+      ),
       subscriptions: options.subscriptions,
     });
   }
@@ -717,9 +808,7 @@ describe("StartProgramNowUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "started" });
-    expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
-      AUTH_SUBJECT_ID,
-    );
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith(CLIENT_ID);
     expect(subscriptions.save).toHaveBeenCalledWith({
       subscription: subscriptionOf({ startChoice: "immediate" }),
       previous: current,
@@ -764,6 +853,27 @@ describe("StartProgramNowUseCase", () => {
     expect(result).toEqual({ status: "not_found" });
   });
 
+  it("finds nothing to start for a subject bound to no client", async () => {
+    // arrange
+    const clientReach = createClientReach(null);
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions,
+      clientReach,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
+      AUTH_SUBJECT_ID,
+    );
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
+  });
+
   it("re-reads once when the subscription changed meanwhile, then fails on a second change", async () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
@@ -775,7 +885,7 @@ describe("StartProgramNowUseCase", () => {
 
     // assert
     await expect(starting).rejects.toThrow();
-    expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledTimes(2);
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -785,13 +895,17 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     subscriptions: ReturnType<typeof createSubscriptions>;
     paymentSubscriptions?: ReturnType<typeof createPaymentSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
+    clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new OpenPaymentMethodSessionUseCase({
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
       paymentSubscriptions:
         options.paymentSubscriptions ?? createPaymentSubscriptions(),
-      subscriptions: options.subscriptions,
+      signedInSubscriptions: signedInOf(
+        options.subscriptions,
+        options.clientReach,
+      ),
     });
   }
 
@@ -867,6 +981,26 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     expect(result).toEqual({ status: "not_found" });
   });
 
+  it("finds no session for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = openUseCase({
+      now: DAY_13,
+      subscriptions,
+      clientReach: createClientReach(null),
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: AUTH_SUBJECT_ID,
+      returnUrl: RETURN_URL,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
+  });
+
   it("answers provider_unavailable when the provider fails", async () => {
     // arrange
     const paymentSubscriptions = createPaymentSubscriptions();
@@ -897,7 +1031,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions,
+      signedInSubscriptions: signedInOf(subscriptions),
     });
 
     // act
@@ -916,9 +1050,7 @@ describe("ReadClientSubscriptionUseCase", () => {
       refundDue: false,
       card: null,
     });
-    expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
-      AUTH_SUBJECT_ID,
-    );
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith(CLIENT_ID);
   });
 
   it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
@@ -926,8 +1058,8 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ startChoice: "immediate" }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(subscriptionOf({ startChoice: "immediate" })),
       ),
     });
 
@@ -947,7 +1079,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_14),
-      subscriptions: createSubscriptions(subscriptionOf()),
+      signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
@@ -966,13 +1098,15 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_14),
-      subscriptions: createSubscriptions(
-        subscriptionOf({
-          status: "ended",
-          cancelledAt: DAY_13,
-          accessEndsAt: DAY_13,
-          refund: refund.toSnapshot(),
-        }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(
+          subscriptionOf({
+            status: "ended",
+            cancelledAt: DAY_13,
+            accessEndsAt: DAY_13,
+            refund: refund.toSnapshot(),
+          }),
+        ),
       ),
     });
 
@@ -993,8 +1127,8 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ paymentProblemSince: DAY_13 }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(subscriptionOf({ paymentProblemSince: DAY_13 })),
       ),
     });
 
@@ -1018,7 +1152,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards,
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(subscriptionOf()),
+      signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
@@ -1034,7 +1168,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     const useCase = new ReadClientSubscriptionUseCase({
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(null),
+      signedInSubscriptions: signedInOf(createSubscriptions(null)),
     });
 
     // act
@@ -1042,6 +1176,23 @@ describe("ReadClientSubscriptionUseCase", () => {
 
     // assert
     expect(reading).toBeNull();
+  });
+
+  it("reads nothing for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
+      clock: clockAt(DAY_13),
+      signedInSubscriptions: signedInOf(subscriptions, createClientReach(null)),
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toBeNull();
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 });
 
@@ -1054,7 +1205,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     coachingEnd?: ReturnType<typeof createCoachingEnd>;
   }) {
     return new ReconcileSubscriptionEventUseCase({
-      coachingEnd: options.coachingEnd ?? createCoachingEnd(),
+      coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
       incidents: options.incidents ?? createIncidents(),
       subscriptions: options.subscriptions,
     });
@@ -1503,6 +1654,72 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       error: failure,
     });
   });
+
+  it.each<[string, SubscriptionEvent[]]>([
+    [
+      "a scheduled end arriving after the end",
+      [
+        {
+          kind: "ended",
+          paymentSubscriptionId: "sub_1",
+          endedAt: OCCURRED_AT,
+        },
+        {
+          kind: "end-scheduled",
+          paymentSubscriptionId: "sub_1",
+          endsAt: ACCESS_END,
+          occurredAt: DAY_14,
+        },
+      ],
+    ],
+    [
+      "a recovered payment arriving after the end",
+      [
+        {
+          kind: "ended",
+          paymentSubscriptionId: "sub_1",
+          endedAt: OCCURRED_AT,
+        },
+        {
+          kind: "payment-recovered",
+          paymentSubscriptionId: "sub_1",
+          occurredAt: DAY_14,
+        },
+      ],
+    ],
+  ])(
+    "leaves the standing equal to the saved subscription's after %s",
+    async (_label, events) => {
+      // arrange
+      const subscriptions = createSubscriptions(subscriptionOf());
+      let saved = subscriptionOf();
+      subscriptions.findByPaymentSubscriptionId.mockImplementation(() =>
+        Promise.resolve(saved),
+      );
+      subscriptions.saveForEvent.mockImplementation((change) => {
+        saved = change.subscription;
+        return Promise.resolve("recorded");
+      });
+      const useCase = reconcileUseCase({ subscriptions });
+
+      // act
+      for (const [index, event] of events.entries()) {
+        await useCase.execute({ eventId: `evt_${index}`, event });
+      }
+
+      // assert
+      const lastSaved = subscriptions.saveForEvent.mock.lastCall?.[0];
+      expect(lastSaved?.subscription.standing().toSnapshot()).toEqual(
+        saved.standing().toSnapshot(),
+      );
+      expect(saved.standing().toSnapshot()).toEqual({
+        status: "ended",
+        accessEndsAt: OCCURRED_AT,
+        refundDue: false,
+        bundleMonths: 3,
+      });
+    },
+  );
 
   it("fails the delivery so the provider redelivers when the subscription keeps changing", async () => {
     // arrange

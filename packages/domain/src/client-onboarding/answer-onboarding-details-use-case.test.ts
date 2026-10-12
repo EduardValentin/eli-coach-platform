@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
 import { ClientProfile } from "../client-profile";
 import type { ClientUnitPreferencesSource } from "../unit-preference";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
@@ -8,6 +13,7 @@ import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { DetailRequest } from "./detail-request";
 import { emptyAnswers, type OnboardingQuestionId } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
@@ -32,6 +38,18 @@ const REQUESTED_STAMPS: ReviewStamps = {
 
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
+  submittedAt: SUBMITTED_AT,
+  reviewStamps: REQUESTED_STAMPS,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   country: "RO",
@@ -39,9 +57,6 @@ const CLIENT: OnboardingClient = {
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
-  submittedAt: SUBMITTED_AT,
-  reviewStamps: REQUESTED_STAMPS,
-  subscriptionCancelledOrEnded: false,
 };
 
 const SUBMISSION: OnboardingSubmission = {
@@ -56,6 +71,21 @@ const SUBMISSION: OnboardingSubmission = {
   },
   submittedAt: SUBMITTED_AT,
 };
+
+const ENDED_ACCESS_AT = new Date("2026-09-29T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-30T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
 
 function askedRequest(
   questionIds: readonly OnboardingQuestionId[] = [WEIGHT],
@@ -104,14 +134,19 @@ function answerPorts(
   } = {},
 ) {
   return {
-    clients: {
-      findByAuthSubjectId: vi
-        .fn()
-        .mockResolvedValue(
-          overrides.client === undefined ? CLIENT : overrides.client,
-        ),
-      findByClientId: vi.fn().mockResolvedValue(null),
-    } satisfies OnboardingClients,
+    participants: new OnboardingParticipants({
+      clients: {
+        findByAuthSubjectId: vi
+          .fn()
+          .mockResolvedValue(
+            overrides.client === undefined ? CLIENT : overrides.client,
+          ),
+        findByClientId: vi.fn().mockResolvedValue(null),
+      } satisfies OnboardingClients,
+      identities: {
+        findByClientId: vi.fn().mockResolvedValue(IDENTITY),
+      } satisfies Pick<ClientIdentities, "findByClientId">,
+    }),
     onboardings: {
       findByClientId: vi
         .fn()
@@ -295,5 +330,40 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-on-journey" });
     expect(ports.reviews.findByClientId).not.toHaveBeenCalled();
+  });
+
+  it("answers nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const ports = answerPorts({
+      client: clientWithAccessEndingAt(ENDED_ACCESS_AT),
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 82 } },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(ports.reviews.recordAnswer).not.toHaveBeenCalled();
+  });
+
+  it("records the answers of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const ports = answerPorts({
+      client: clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT),
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 82 } },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "answered" });
   });
 });

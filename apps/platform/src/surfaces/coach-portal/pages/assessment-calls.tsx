@@ -15,6 +15,7 @@ import {
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
+import { ViewClientLink } from "~/features/clients/ui/coach/clients/view-client-link";
 import type { CallSalesState } from "~/features/coaching-sales/public/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
@@ -29,7 +30,6 @@ import {
   SALES_STATUS_PARAM,
   useSalesFilterParam,
 } from "~/features/coaching-sales/ui/coach/call-sales/sales-status-filter";
-import { ViewClientLink } from "~/features/coaching-sales/ui/coach/clients/view-client-link";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
 

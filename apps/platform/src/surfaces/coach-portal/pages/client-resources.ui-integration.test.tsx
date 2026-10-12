@@ -49,8 +49,8 @@ import {
   COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
   coachClientResourcesPath,
 } from "~/features/client-resources/public/paths";
-import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
-import { coachClientPath } from "~/features/coaching-sales/public/paths";
+import type { CoachClient } from "~/features/clients/public/coach-clients";
+import { coachClientPath } from "~/features/clients/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import CoachClientResourcesRoute, { ErrorBoundary } from "./client-resources";
@@ -71,7 +71,7 @@ const CLIENT: CoachClient = {
   invitation: null,
   lastName: "Popescu",
   needsRefund: false,
-  subscriptionCancelledOrEnded: false,
+  coachingCancelledOrEnded: false,
   assessmentCall: {
     startsAt: "2026-09-18T12:00:00.000Z",
     firstName: "Andreea",
@@ -86,7 +86,6 @@ const CLIENT: CoachClient = {
   },
   gender: "female",
   status: "awaiting-review",
-  subscription: null,
 };
 
 const PLATE_GUIDE: ClientResourceView = {

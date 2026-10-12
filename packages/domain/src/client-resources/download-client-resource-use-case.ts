@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import {
   ClientResourceAccess,
   type ResourceRequester,
@@ -5,7 +6,6 @@ import {
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
-import type { ResourceClients } from "./resource-clients";
 import type { ResourceFileKind } from "./resource-file-kind";
 
 type DownloadClientResourceCommand = {
@@ -26,7 +26,7 @@ export type DownloadClientResourceResult =
 
 type DownloadClientResourceUseCaseOptions = {
   resources: ClientResources;
-  clients: ResourceClients;
+  clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   store: ClientResourceStore;
   incidents: ClientResourceIncidents;
 };

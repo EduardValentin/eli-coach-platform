@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
 import { ClientProfile } from "../client-profile";
 import {
   UnitPreference,
   type ClientUnitPreferencesSource,
 } from "../unit-preference";
+
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -14,6 +20,7 @@ import {
 } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { SubmitOnboardingUseCase } from "./submit-onboarding-use-case";
@@ -23,13 +30,6 @@ const EARLIER_SUBMITTED_AT = new Date("2026-09-27T10:00:00.000Z");
 const CONSENTED_AT = new Date("2026-09-28T09:30:00.000Z");
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
-  gender: "male",
-  dateOfBirth: "1990-03-02",
-  firstName: "Ana",
-  lastName: "Popescu",
-  country: "RO",
-  phone: "+40712345678",
-  email: "ana@example.com",
   submittedAt: null,
   reviewStamps: {
     reviewOpenedAt: null,
@@ -37,7 +37,22 @@ const CLIENT: OnboardingClient = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
-  subscriptionCancelledOrEnded: false,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+    bundleMonths: null,
+  }),
+};
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
+  gender: "male",
+  dateOfBirth: "1990-03-02",
+  firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
+  email: "ana@example.com",
 };
 const IMPERIAL = UnitPreference.of("imperial");
 
@@ -106,11 +121,32 @@ function answersWithWeight(weight: number): OnboardingAnswersByForm {
   return answers;
 }
 
+const ENDED_ACCESS_AT = new Date("2026-09-27T10:00:00.000Z");
+const RUNNING_ACCESS_ENDS_AT = new Date("2026-10-28T10:00:00.000Z");
+
+function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
+  return {
+    ...CLIENT,
+    standing: CoachingStanding.of({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+      bundleMonths: 3,
+    }),
+  };
+}
+
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
+}
+
+function createIdentities(found: ClientIdentity | null = IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
 }
 
 function createOnboardings(submission: OnboardingSubmission | null = null) {
@@ -162,6 +198,7 @@ function createIncidents() {
 function createUseCase(
   ports: {
     clients?: OnboardingClients;
+    identities?: Pick<ClientIdentities, "findByClientId">;
     onboardings?: ClientOnboardingSource;
     unitPreferences?: ClientUnitPreferencesSource;
     changes?: ClientOnboardingChanges;
@@ -170,7 +207,10 @@ function createUseCase(
   } = {},
 ) {
   return new SubmitOnboardingUseCase({
-    clients: ports.clients ?? createClients(CLIENT),
+    participants: new OnboardingParticipants({
+      clients: ports.clients ?? createClients(CLIENT),
+      identities: ports.identities ?? createIdentities(),
+    }),
     onboardings: ports.onboardings ?? createOnboardings(),
     unitPreferences: ports.unitPreferences ?? createUnitPreferences(),
     changes: ports.changes ?? createChanges(),
@@ -283,7 +323,7 @@ describe("SubmitOnboardingUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const useCase = createUseCase({
-      clients: createClients({ ...CLIENT, dateOfBirth: "2012-01-01" }),
+      identities: createIdentities({ ...IDENTITY, dateOfBirth: "2012-01-01" }),
       incidents,
     });
 
@@ -502,5 +542,48 @@ describe("SubmitOnboardingUseCase", () => {
     expect(changes.recordSubmission).not.toHaveBeenCalled();
     expect(stamps.recordOnboardingSubmitted).not.toHaveBeenCalled();
     expect(incidents.onboardingSubmissionRefused).not.toHaveBeenCalled();
+  });
+
+  it("submits nothing for a client whose portal access has ended", async () => {
+    // arrange
+    const changes = createChanges();
+    const stamps = createStamps();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(ENDED_ACCESS_AT)),
+      changes,
+      stamps,
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: completeAnswers(),
+      consents: givenConsents(),
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ended" });
+    expect(changes.recordSubmission).not.toHaveBeenCalled();
+    expect(stamps.recordOnboardingSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("submits the answers of a client who cancelled while her access runs on", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({
+      clients: createClients(clientWithAccessEndingAt(RUNNING_ACCESS_ENDS_AT)),
+      changes,
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: completeAnswers(),
+      consents: givenConsents(),
+    });
+
+    // assert
+    expect(result).toMatchObject({ status: "submitted" });
+    expect(changes.recordSubmission).toHaveBeenCalled();
   });
 });

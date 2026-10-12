@@ -1,8 +1,8 @@
 import type { Clock } from "../shared";
 
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
-import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type OpenPaymentMethodSessionCommand = {
   authSubjectId: string;
@@ -19,7 +19,7 @@ type OpenPaymentMethodSessionUseCaseOptions = {
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   paymentSubscriptions: PaymentSubscriptions;
-  subscriptions: CoachingSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
 };
 
 export class OpenPaymentMethodSessionUseCase {
@@ -30,10 +30,9 @@ export class OpenPaymentMethodSessionUseCase {
   async execute(
     command: OpenPaymentMethodSessionCommand,
   ): Promise<OpenPaymentMethodSessionResult> {
-    const subscription =
-      await this.options.subscriptions.findCurrentForAuthSubject(
-        command.authSubjectId,
-      );
+    const subscription = await this.options.signedInSubscriptions.currentFor(
+      command.authSubjectId,
+    );
 
     if (!subscription) {
       return { status: "not_found" };

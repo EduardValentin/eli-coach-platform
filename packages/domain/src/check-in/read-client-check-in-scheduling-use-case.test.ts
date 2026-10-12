@@ -1,15 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  CheckInClientReference,
-  CheckInClients,
-} from "./check-in-clients";
+import type { ClientReach, ClientReachReading } from "../client";
+
 import { ReadClientCheckInSchedulingUseCase } from "./read-client-check-in-scheduling-use-case";
 
-function createReadScheduling(client: CheckInClientReference | null) {
+function createReadScheduling(client: ClientReachReading | null) {
   const clients = {
     findById: vi.fn().mockResolvedValue(client),
-  } satisfies Pick<CheckInClients, "findById">;
+  } satisfies Pick<ClientReach, "findById">;
 
   return {
     clients,
@@ -30,7 +28,7 @@ describe("ReadClientCheckInSchedulingUseCase", () => {
         clientId: "client-1",
         portal,
         coachingEndsAt: null,
-        bookingTimeZone: "Europe/London",
+        timeZone: "Europe/London",
       });
 
       // act

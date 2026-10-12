@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MeasurementClients } from "./measurement-clients";
+import type { ClientReach } from "../client";
+
 import type { MeasurementIncidents } from "./measurement-incidents";
 import { ProgressPhoto } from "./progress-photo";
 import type { ProgressPhotoStore } from "./progress-photo-store";
@@ -36,7 +37,7 @@ function createPorts(
             ? { clientId: "client-1" }
             : stored.requesterClient,
         ),
-    } satisfies MeasurementClients,
+    } satisfies Pick<ClientReach, "findByAuthSubjectId">,
     photos: {
       add: vi.fn(),
       findById: vi

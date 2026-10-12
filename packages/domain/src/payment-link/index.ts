@@ -1,4 +1,3 @@
-export { type AssessmentCallReader } from "./assessment-call-reader";
 export {
   type CallSale,
   type CallSalesState,

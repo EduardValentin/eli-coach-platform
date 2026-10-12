@@ -1,7 +1,9 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AnswerOnboardingDetailsUseCase,
   ApproveOnboardingAnswersUseCase,
+  OnboardingParticipants,
   OpenOnboardingReviewUseCase,
   ReadClientOnboardingUseCase,
   ReadOnboardingReviewUseCase,
@@ -42,6 +44,7 @@ export type ClientOnboardingFeature = {
 type ClientOnboardingFeatureHandles = {
   appBasePath: string;
   attachProgressPhotos: AttachProgressPhotosUseCase;
+  clientIdentities: ClientIdentities;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -61,12 +64,11 @@ type ClientOnboardingFeatureHandles = {
 export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
 ): ClientOnboardingFeature {
-  const {
-    clock,
-    incidents,
-    onboardingClients: clients,
-    unitPreferences,
-  } = handles;
+  const { clock, incidents, unitPreferences } = handles;
+  const participants = new OnboardingParticipants({
+    clients: handles.onboardingClients,
+    identities: handles.clientIdentities,
+  });
   const onboardings = new PostgresClientOnboardings({
     database: handles.database,
     clientProfileWriter: handles.saveClientProfile,
@@ -77,7 +79,7 @@ export function composeClientOnboardingFeature(
     reviewStampWriter: handles.reviewStampWriter,
     clientProfileWriter: handles.saveClientProfile,
   });
-  const reviewPorts = { clients, onboardings, reviews, incidents };
+  const reviewPorts = { participants, onboardings, reviews, incidents };
   const reviewReadPorts = {
     ...reviewPorts,
     stamps: handles.onboardingReviewStamps,
@@ -93,24 +95,24 @@ export function composeClientOnboardingFeature(
       attachProgressPhotos: handles.attachProgressPhotos,
       clock,
       readClientOnboarding: new ReadClientOnboardingUseCase({
-        clients,
+        participants,
         onboardings,
         unitPreferences,
       }),
       readOpenDetailRequest: new ReadOpenDetailRequestUseCase(reviewReadPorts),
       saveOnboardingDraft: new SaveOnboardingDraftUseCase({
         changes: onboardings,
-        clients,
         clock,
         incidents,
         onboardings,
+        participants,
       }),
       submitOnboarding: new SubmitOnboardingUseCase({
         changes: onboardings,
-        clients,
         clock,
         incidents,
         onboardings,
+        participants,
         stamps: handles.onboardingSubmissionStamps,
         unitPreferences,
       }),
