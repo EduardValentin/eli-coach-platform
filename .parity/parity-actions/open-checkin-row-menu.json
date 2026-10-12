@@ -1,7 +1,0 @@
-[
-  {"waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"},
-  {"wait": 600},
-  {"click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"},
-  {"waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"},
-  {"wait": 400}
-]

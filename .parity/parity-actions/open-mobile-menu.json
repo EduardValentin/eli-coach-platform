@@ -1,5 +1,0 @@
-[
-  { "click": "[aria-label=\"Open menu\"]" },
-  { "waitFor": "nav[aria-label=\"Public site menu\"] [data-parity=\"portal-link\"]" },
-  { "wait": 1500 }
-]
