@@ -14,6 +14,10 @@ import {
   CoachingSalesJourney,
 } from "~integration-test-config/coaching-sales-journey";
 import {
+  ClientsJourney,
+  INVITATION_API,
+} from "~integration-test-config/clients-journey";
+import {
   COACH_SESSION,
   PlatformRig,
   type AccountSession,
@@ -27,9 +31,9 @@ import {
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 
 const INVITATION_PAGE = "/invitation";
-const INVITATION_API = "/api/clients/invitation";
 const CHECKING_INVITATION = "Checking your invitation…";
 const SIGNED_IN_HEADING = "You&#x27;re already signed in";
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
@@ -66,7 +70,7 @@ describe.sequential("invitation landing integration", () => {
   it("answers the emailed invitation with the hosted sign-up link only, uncached", async () => {
     // arrange
     await journey.payForCall();
-    const token = await journey.latestInvitationToken();
+    const token = await clients.latestInvitationToken();
 
     // act
     const response = await resolveInvitation({ token });
@@ -83,7 +87,7 @@ describe.sequential("invitation landing integration", () => {
   it("still answers the invitation while the site is in waiting-list mode", async () => {
     // arrange
     await journey.payForCall();
-    const token = await journey.latestInvitationToken();
+    const token = await clients.latestInvitationToken();
     await rig.switchWaitlistModeOn();
 
     // act
@@ -96,7 +100,7 @@ describe.sequential("invitation landing integration", () => {
   it("answers an invitation she has already accepted as unavailable", async () => {
     // arrange
     await journey.payForCall();
-    const token = await journey.latestInvitationToken();
+    const token = await clients.latestInvitationToken();
     await acceptInvitationAs(INVITED_CLIENT);
 
     // act
@@ -110,7 +114,7 @@ describe.sequential("invitation landing integration", () => {
   it("answers an invitation older than 30 days as unavailable", async () => {
     // arrange
     await journey.payForCall();
-    const token = await journey.latestInvitationToken();
+    const token = await clients.latestInvitationToken();
     await rig.holdClock(THIRTY_ONE_DAYS_AFTER_THE_SEND);
 
     // act

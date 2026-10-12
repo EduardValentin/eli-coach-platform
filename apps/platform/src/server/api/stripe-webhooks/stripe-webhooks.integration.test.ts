@@ -17,6 +17,10 @@ import {
   SECOND_CHECKOUT_REQUEST,
 } from "~integration-test-config/coaching-sales-journey";
 import {
+  ClientsJourney,
+  type ClientStanding,
+} from "~integration-test-config/clients-journey";
+import {
   COACH_SESSION,
   PlatformRig,
 } from "~integration-test-config/platform-rig";
@@ -51,6 +55,7 @@ import {
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const SCHEDULED_END = new Date("2027-01-21T08:00:00.000Z");
@@ -65,6 +70,14 @@ const NOT_STARTED_ROW = {
   refundDueBy: null,
   refundedCents: null,
   refundedAt: null,
+};
+
+const PURCHASED_STANDING: ClientStanding = {
+  bookingTimeZone: "Europe/London",
+  coachingAccessEndsAt: null,
+  coachingBundleMonths: 3,
+  coachingRefundDue: false,
+  coachingStatus: "not-started",
 };
 
 const COMPLETED_EVENT_ID = "evt_integration_completed";
@@ -178,6 +191,7 @@ describe.sequential("stripe webhooks integration", () => {
         primaryGoal: "build_strength",
       },
     ]);
+    expect(await clients.standingOf(ANA.email)).toEqual(PURCHASED_STANDING);
     expect(await readSubscriptions()).toEqual([
       {
         amountCents: 44700,
@@ -720,6 +734,11 @@ describe.sequential("stripe webhooks integration", () => {
       cancelledAt: rig.now(),
       accessEndsAt: SCHEDULED_END,
     });
+    expect(await clients.standingOf(ANA.email)).toEqual({
+      ...PURCHASED_STANDING,
+      coachingStatus: "cancelled",
+      coachingAccessEndsAt: SCHEDULED_END,
+    });
   });
 
   it("puts a cancellation lifted in Stripe back to not started", async () => {
@@ -745,6 +764,7 @@ describe.sequential("stripe webhooks integration", () => {
     // assert
     expect(response.status).toBe(200);
     expect(await lifecycle.subscriptionRow()).toEqual(NOT_STARTED_ROW);
+    expect(await clients.standingOf(ANA.email)).toEqual(PURCHASED_STANDING);
   });
 
   it("ends the subscription Stripe deleted at its end instant without a refund due", async () => {
@@ -768,6 +788,11 @@ describe.sequential("stripe webhooks integration", () => {
       status: "ended",
       cancelledAt: rig.now(),
       accessEndsAt: rig.now(),
+    });
+    expect(await clients.standingOf(ANA.email)).toEqual({
+      ...PURCHASED_STANDING,
+      coachingStatus: "ended",
+      coachingAccessEndsAt: rig.now(),
     });
   });
 
@@ -813,6 +838,7 @@ describe.sequential("stripe webhooks integration", () => {
       refundedCents: 20000,
       refundedAt: rig.now(),
     });
+    expect(await clients.standingOf(ANA.email)).toEqual(PURCHASED_STANDING);
   });
 
   it("changes nothing when a subscription event is delivered again", async () => {

@@ -20,6 +20,11 @@ import {
   CoachingSalesJourney,
 } from "~integration-test-config/coaching-sales-journey";
 import {
+  ClientsJourney,
+  INVITATION_API,
+  INVITATION_LINK,
+} from "~integration-test-config/clients-journey";
+import {
   CLIENT_SESSION,
   COACH_SESSION,
   PlatformRig,
@@ -42,12 +47,11 @@ import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/s
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const INVITATION_RESENDS_API = "/api/clients/invitation-resends";
-const INVITATION_API = "/api/clients/invitation";
 const INVITATION_SUBJECT = "Your place is booked — create your account.";
-const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
 const EARLIER_PROVIDER_ID = "inv_integration";
 const FRESH_PROVIDER_ID = "inv_integration_fresh";
 const UNKNOWN_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
@@ -99,7 +103,7 @@ describe.sequential("coach clients integration", () => {
     it("reissues her invitation, revokes the earlier Clerk invitation before creating a fresh one and emails her the fresh link once", async () => {
       // arrange
       const earlier = await payAndReadInvitation();
-      const earlierToken = await journey.latestInvitationToken();
+      const earlierToken = await clients.latestInvitationToken();
       await suite.wireMock.stub(clerkCreatesInvitation(FRESH_PROVIDER_ID));
       await rig.holdClock(RESEND_INSTANT);
 

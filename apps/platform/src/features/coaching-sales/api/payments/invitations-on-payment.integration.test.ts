@@ -21,6 +21,10 @@ import {
   FIRST_CHECKOUT_REQUEST,
 } from "~integration-test-config/coaching-sales-journey";
 import {
+  ClientsJourney,
+  INVITATION_LINK,
+} from "~integration-test-config/clients-journey";
+import {
   COACH_SESSION,
   PlatformRig,
 } from "~integration-test-config/platform-rig";
@@ -38,10 +42,10 @@ import {
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const clients = new ClientsJourney(rig);
 
 const PAID_EVENT_ID = "evt_integration_invited";
 const INVITATION_SUBJECT = "Your place is booked — create your account.";
-const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
 const HOSTED_SIGN_UP_URL = "https://evoa.fit/sign-up";
 const CLIENT_PORTAL_URL = "https://localhost:3000/eli-coach-platform/client";
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -104,7 +108,7 @@ describe.sequential("invitations on payment integration", () => {
     expect(response.status).toBe(200);
     expect(otherInvitations).toEqual([]);
     expect(invitation).toMatchObject({
-      clientId: await clientIdForCall(callId),
+      clientId: await clients.clientIdPaidFor(callId),
       emailDeliveryFailedAt: null,
       emailSentAt: CALL_ENDED_INSTANT,
       providerInvitationId: "inv_integration",
@@ -281,15 +285,6 @@ async function readInvitations(): Promise<InvitationRow[]> {
     `,
     values: [],
   });
-}
-
-async function clientIdForCall(callId: string): Promise<string | undefined> {
-  const [client] = await suite.postgres.queryRows<{ id: string }>({
-    sql: "select id from app.clients where assessment_call_id = $1",
-    values: [callId],
-  });
-
-  return client?.id;
 }
 
 async function readClerkInvitationRequests(): Promise<
