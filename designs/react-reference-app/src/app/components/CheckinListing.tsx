@@ -122,12 +122,7 @@ export function CheckinListing({
       openingTab(awaitingViewer),
   );
 
-  useEffect(() => {
-    if (!focusedCheckinId) return;
-    const anchor = document.getElementById(checkinAnchorId(focusedCheckinId));
-    anchor?.scrollIntoView({ block: "center" });
-    anchor?.focus({ preventScroll: true });
-  }, [focusedCheckinId]);
+  useBringCheckinIntoFocus(focusedCheckinId);
 
   const tab = parseTab(searchParams.get(TAB_PARAM), defaultTab);
   const selection: CheckinSelection = {
@@ -348,4 +343,13 @@ export function CheckinListing({
       </TabsContent>
     </Tabs>
   );
+}
+
+function useBringCheckinIntoFocus(focusedCheckinId: string | null) {
+  useEffect(() => {
+    if (!focusedCheckinId) return;
+    const anchor = document.getElementById(checkinAnchorId(focusedCheckinId));
+    anchor?.scrollIntoView({ block: "center" });
+    anchor?.focus({ preventScroll: true });
+  }, [focusedCheckinId]);
 }

@@ -514,7 +514,7 @@ export function PortalSidebar({
   const { appState } = useAppState();
   const { getUpcomingCheckins } = useCheckins();
   const nextCheckin = getUpcomingCheckins(DEMO_CLIENT.id).at(0);
-  const widget = nextCheckin && <NextCheckinCard checkin={nextCheckin} />;
+  const nextCheckinWidget = nextCheckin && <NextCheckinCard checkin={nextCheckin} />;
   const moreOpen = moreSheet === 'open';
   const includeLink = (link: ClientPortalLink) =>
     !link.postMvp || appState.prototypeMode === 'post-mvp';
@@ -541,7 +541,7 @@ export function PortalSidebar({
 
   return (
     <>
-      <DesktopSidebar links={links} attention={attention} widget={widget} />
+      <DesktopSidebar links={links} attention={attention} widget={nextCheckinWidget} />
       <MobileTopBar />
       <MobileTabBar
         links={barLinks}
@@ -562,7 +562,7 @@ export function PortalSidebar({
         <MoreSheetBody
           links={moreLinks}
           attention={attention}
-          widget={widget}
+          widget={nextCheckinWidget}
           onClose={() => setMoreSheet('closed')}
         />
       </BottomSheet>

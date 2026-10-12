@@ -81,7 +81,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
     () => tabHolding(focusedId, checkIns) ?? openingTabOf(checkIns),
   );
   const { chooseTab, tab } = useCheckInTabParam(defaultTab);
-  useFocusedCheckIn(focusedId);
+  useBringCheckInIntoFocus(focusedId);
   const shown = ordered(
     checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
     tab,
@@ -171,7 +171,7 @@ function useCheckInTabParam(defaultTab: CheckInTab) {
   return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
 }
 
-function useFocusedCheckIn(focusedId: string | null) {
+function useBringCheckInIntoFocus(focusedId: string | null) {
   useEffect(() => {
     if (focusedId === null) {
       return;

@@ -85,7 +85,7 @@ export default function ClientLayoutRoute() {
   const { displayName } = presentation;
   const navigation = clientNavigationOf(counts);
   const timeZone = useCalendarDayTimeZone();
-  const widget = nextCheckIn && (
+  const nextCheckInWidget = nextCheckIn && (
     <NextCheckInWidget checkIn={nextCheckIn} timeZone={timeZone} />
   );
 
@@ -120,13 +120,13 @@ export default function ClientLayoutRoute() {
             ),
             navigationLabel: "Client portal more",
             title: "More",
-            widget,
+            widget: nextCheckInWidget,
           },
           tabs: navigation.tabs,
           tabsLabel: "Client portal tabs",
         }}
         navigationLabel="Client portal navigation"
-        sidebarWidget={widget}
+        sidebarWidget={nextCheckInWidget}
         topBarBrand={<ClientNameBlock displayName={displayName} size="sm" />}
         topBarLabel="Client portal top bar"
       >
