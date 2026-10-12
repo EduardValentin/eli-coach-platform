@@ -1,4 +1,0 @@
-[
-  { "waitFor": "[data-parity-root=\"AssessmentCallsUnavailable\"]" },
-  { "wait": 400 }
-]

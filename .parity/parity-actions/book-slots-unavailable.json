@@ -1,4 +1,0 @@
-[
-  {"waitFor": "[role=\"alert\"] >> role=button[name=\"Try again\" s]"},
-  {"wait": 600}
-]

@@ -1,9 +1,0 @@
-[
-  {"waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"},
-  {"wait": 600},
-  {"click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"},
-  {"wait": 600},
-  {"waitFor": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"]"},
-  {"hover": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"] >> nth=0"},
-  {"wait": 600}
-]
