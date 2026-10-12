@@ -40,6 +40,7 @@ export function MultiSelect<Value extends string>({
   onToggle,
   counts,
   summary = "count",
+  size = "sm",
   id,
 }: {
   label: string;
@@ -49,6 +50,7 @@ export function MultiSelect<Value extends string>({
   onToggle: (value: Value) => void;
   counts?: Record<Value, number>;
   summary?: Summary;
+  size?: "sm" | "md";
   id?: string;
 }) {
   return (
@@ -58,7 +60,7 @@ export function MultiSelect<Value extends string>({
           type="button"
           id={id}
           data-slot="select-trigger"
-          data-size="sm"
+          data-size={size}
           aria-label={triggerName(label, selected.length)}
           className={selectTriggerClasses("w-full")}
         >

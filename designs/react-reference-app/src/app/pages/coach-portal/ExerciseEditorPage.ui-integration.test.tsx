@@ -1,0 +1,367 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
+import { Toaster } from 'sonner';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExerciseEditorPage } from './ExerciseEditorPage';
+import { MP4_ACCEPT } from '../../utils/exerciseVideo';
+import { AppProvider } from '../../context/AppContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { TrainingProvider, useTraining } from '../../context/TrainingContext';
+
+const SQUAT_ID = 'e1';
+const SPLIT_SQUAT_ID = 'e3';
+
+function SavedExerciseProbe({ name }: { name: string }) {
+  const { exercises } = useTraining();
+  const saved = exercises.find((exercise) => exercise.name === name);
+  return (
+    <p data-testid="saved">
+      {saved
+        ? [saved.type, saved.measuredIn, saved.perSide ? 'per-side' : 'both-sides', saved.primaryMuscles.join('+'), saved.secondaryMuscles.join('+'), saved.equipment.join('+'), saved.tags.join('+'), saved.videoUrl ?? 'no-video'].join('|')
+        : 'none'}
+    </p>
+  );
+}
+
+function renderEditor(path: string, probeName = 'Back squat') {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <AppProvider>
+        <ClientProfileProvider>
+          <TrainingProvider>
+            <SavedExerciseProbe name={probeName} />
+            <Routes>
+              <Route path="/coach/training" element={<p>Exercise library</p>} />
+              <Route path="/coach/training/exercises/new" element={<ExerciseEditorPage />} />
+              <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorPage />} />
+            </Routes>
+            <Toaster />
+          </TrainingProvider>
+        </ClientProfileProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+  return userEvent.setup();
+}
+
+const NEW = '/coach/training/exercises/new';
+const edit = (id: string) => `/coach/training/exercises/${id}`;
+const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
+const field = (name: string | RegExp) => screen.getByRole('combobox', { name });
+const multi = (name: string | RegExp) => screen.getByRole('button', { name });
+const primary = () => screen.getByRole('button', { name: /^(Create exercise|Save changes)$/ });
+const dropzone = () => screen.getByText('Drag and drop video').closest('div') as HTMLElement;
+const drop = (file: File) => fireEvent.drop(dropzone(), { dataTransfer: { files: [file] } });
+
+async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLElement, option: string) {
+  await user.click(combobox);
+  await user.click(screen.getByRole('option', { name: option }));
+}
+
+async function tick(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement, option: string) {
+  await user.click(trigger);
+  await user.click(screen.getByRole('checkbox', { name: option }));
+  await user.keyboard('{Escape}');
+}
+
+beforeAll(() => {
+  URL.createObjectURL = vi.fn(() => 'blob:preview');
+  URL.revokeObjectURL = vi.fn();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('a new exercise', () => {
+  it('is a page titled New exercise with a way back, Resistance measured in reps and a disabled Create', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(screen.getByRole('heading', { level: 1, name: 'New exercise' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to exercises' })).toHaveAttribute('href', '/coach/training');
+    expect(field('Type')).toHaveTextContent('Resistance');
+    expect(field('Measured in')).toHaveTextContent('Reps');
+    expect(screen.getByRole('checkbox', { name: 'Performed one side at a time' })).not.toBeChecked();
+    expect(primary()).toHaveTextContent('Create exercise');
+    expect(primary()).toBeDisabled();
+  });
+
+  it('lays the fields out in the agreed order', () => {
+    // arrange & act
+    renderEditor(NEW);
+    const titles = screen.getAllByText(/^(Name|Type|Measured in|Primary muscles|Secondary muscles|Equipment|Difficulty|Tags|Form cues|Demo video)$/, { selector: 'label, p' });
+
+    // assert
+    expect(titles.map((title) => title.textContent)).toEqual([
+      'Name', 'Type', 'Measured in', 'Primary muscles', 'Secondary muscles', 'Equipment', 'Difficulty', 'Tags', 'Form cues', 'Demo video',
+    ]);
+  });
+
+  it('switches the unit to time when the type becomes cardio', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await choose(user, field('Type'), 'Cardio');
+
+    // assert
+    expect(field('Measured in')).toHaveTextContent('Time');
+  });
+
+  it('keeps a unit the coach chose by hand when the type changes afterwards', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await choose(user, field('Measured in'), 'Distance');
+    await choose(user, field('Type'), 'Cardio');
+
+    // assert
+    expect(field('Measured in')).toHaveTextContent('Distance');
+  });
+
+  it('saves a cardio exercise without muscles and returns to the library', async () => {
+    // arrange
+    const user = renderEditor(NEW, 'Rowing intervals');
+
+    // act
+    await user.type(screen.getByLabelText('Name'), 'Rowing intervals');
+    await choose(user, field('Type'), 'Cardio');
+    await tick(user, multi('Equipment'), 'Rower');
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('cardio|time|both-sides|||Rower||no-video');
+    expect(screen.getByText('Exercise library')).toBeInTheDocument();
+  });
+
+  it('will not create a resistance exercise without a primary muscle, and says so', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+
+    // assert
+    expect(primary()).toBeDisabled();
+    expect(screen.getByText('Pick at least one primary muscle')).toBeInTheDocument();
+  });
+
+  it('refuses a name an archived exercise already uses', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await user.type(screen.getByLabelText('Name'), 'smith machine squat');
+
+    // assert
+    expect(screen.getByText('An exercise with this name already exists')).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(primary()).toBeDisabled();
+  });
+
+  it('moves a muscle out of secondary when it becomes primary', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await tick(user, multi('Secondary muscles'), 'Core');
+    await tick(user, multi('Primary muscles'), 'Core');
+
+    // assert
+    expect(multi(/^Secondary muscles$/)).toBeInTheDocument();
+    expect(multi(/^Primary muscles, 1 selected$/)).toHaveTextContent('Core');
+  });
+
+  it('creates a per-side resistance exercise with the chosen muscles, equipment and tags', async () => {
+    // arrange
+    const user = renderEditor(NEW, 'Cossack squat');
+
+    // act
+    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.click(screen.getByRole('checkbox', { name: 'Performed one side at a time' }));
+    await tick(user, multi('Primary muscles'), 'Adductors');
+    await tick(user, multi(/^Primary muscles/), 'Glutes');
+    await tick(user, multi('Secondary muscles'), 'Core');
+    await tick(user, multi('Equipment'), 'Kettlebell');
+    await user.click(screen.getByRole('button', { name: 'Hypertrophy' }));
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('resistance|reps|per-side|Adductors+Glutes|Core|Kettlebell|Hypertrophy|no-video');
+  });
+});
+
+describe('editing an exercise', () => {
+  it('opens titled Edit exercise with every stored value shown', () => {
+    // arrange & act
+    renderEditor(edit(SPLIT_SQUAT_ID));
+
+    // assert
+    expect(screen.getByRole('heading', { level: 1, name: 'Edit exercise' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveValue('Bulgarian Split Squat');
+    expect(screen.getByRole('checkbox', { name: 'Performed one side at a time' })).toBeChecked();
+    expect(multi(/^Primary muscles, 2 selected$/)).toHaveTextContent('Quadriceps, Glutes');
+    expect(multi(/^Equipment, 2 selected$/)).toHaveTextContent('Dumbbells, Bench');
+    expect(screen.getByRole('button', { name: 'Hypertrophy' })).toHaveAttribute('aria-pressed', 'true');
+    expect(primary()).toHaveTextContent('Save changes');
+    expect(primary()).toBeEnabled();
+  });
+
+  it('lets an exercise keep its own name', () => {
+    // arrange & act
+    renderEditor(edit(SQUAT_ID));
+
+    // assert
+    expect(screen.queryByText('An exercise with this name already exists')).not.toBeInTheDocument();
+  });
+
+  it('persists a changed difficulty and a removed tag', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+
+    // act
+    await choose(user, field('Difficulty'), 'Advanced');
+    await user.click(screen.getByRole('button', { name: 'Hypertrophy' }));
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('resistance|reps|both-sides|Quadriceps+Glutes|Core+Hamstrings|Barbell+Squat rack|Strength|demo-video-1.mp4');
+  });
+
+  it('sends an unknown id back to the library', () => {
+    // arrange & act
+    renderEditor(edit('nope'));
+
+    // assert
+    expect(screen.getByText('Exercise library')).toBeInTheDocument();
+  });
+});
+
+describe('the demo video', () => {
+  it('offers .mp4 to the file picker and says what to upload', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(document.querySelector('input[type="file"]')).toHaveAttribute('accept', MP4_ACCEPT);
+    expect(screen.getByText('MP4 up to 50 MB, in a format that plays well on a phone.')).toBeInTheDocument();
+  });
+
+  it('rejects a dropped .mov with a visible error tied to the control', () => {
+    // arrange
+    renderEditor(NEW);
+
+    // act
+    drop(fileNamed('clip.mov', 'video/quicktime'));
+
+    // assert
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('clip.mov is not an .mp4');
+    expect(screen.getByRole('button', { name: 'Browse files' })).toHaveAttribute('aria-describedby', alert.id);
+  });
+
+  it('attaches an .mp4 chosen through the picker on save', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    // act
+    await user.upload(input, fileNamed('squat.mp4', 'video/mp4'));
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('squat.mp4');
+  });
+
+  it('names each rejected file, so a second rejection is announced too', () => {
+    // arrange
+    renderEditor(NEW);
+    drop(fileNamed('squat-demo.mov', 'video/quicktime'));
+    const first = screen.getByRole('alert').textContent;
+
+    // act
+    drop(fileNamed('deadlift-demo.mov', 'video/quicktime'));
+
+    // assert
+    expect(screen.getByRole('alert').textContent).not.toBe(first);
+    expect(screen.getByRole('alert')).toHaveTextContent('deadlift-demo.mov');
+  });
+
+  it('clears the error once a valid .mp4 is dropped', () => {
+    // arrange
+    renderEditor(NEW);
+    drop(fileNamed('squat-demo.mov', 'video/quicktime'));
+
+    // act
+    drop(fileNamed('squat-demo.mp4', 'video/mp4'));
+
+    // assert
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement();
+    expect(screen.queryByText('Drag and drop video')).not.toBeInTheDocument();
+  });
+});
+
+const THUMBED_ID = 'thumbed';
+
+function ThumbnailedExerciseSeeder() {
+  const navigate = useNavigate();
+  const { exercises, addExercise } = useTraining();
+  const thumbed = exercises.find((exercise) => exercise.id === THUMBED_ID);
+  const seed = () => {
+    addExercise({
+      id: THUMBED_ID,
+      name: 'Thumbed exercise',
+      description: '',
+      type: 'cardio',
+      measuredIn: 'time',
+      perSide: false,
+      equipment: [],
+      difficulty: 'Beginner',
+      primaryMuscles: [],
+      secondaryMuscles: [],
+      tags: ['Recovery'],
+      thumbnailUrl: 'thumb.png',
+    });
+    navigate(edit(THUMBED_ID));
+  };
+  return (
+    <>
+      <p data-testid="thumbnail">{thumbed?.thumbnailUrl ?? 'none'}</p>
+      <button type="button" onClick={seed}>Seed a thumbnailed exercise</button>
+    </>
+  );
+}
+
+describe('saving an exercise the editor only partly covers', () => {
+  it('keeps a thumbnail the editor does not edit', async () => {
+    // arrange
+    render(
+      <MemoryRouter initialEntries={['/coach/training']}>
+        <AppProvider>
+          <ClientProfileProvider>
+            <TrainingProvider>
+              <ThumbnailedExerciseSeeder />
+              <Routes>
+                <Route path="/coach/training" element={<p>Exercise library</p>} />
+                <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorPage />} />
+              </Routes>
+            </TrainingProvider>
+          </ClientProfileProvider>
+        </AppProvider>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Seed a thumbnailed exercise' }));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByText('Exercise library')).toBeInTheDocument();
+    expect(screen.getByTestId('thumbnail')).toHaveTextContent('thumb.png');
+  });
+});

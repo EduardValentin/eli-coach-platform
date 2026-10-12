@@ -33,7 +33,6 @@ import {
   AlertDialogCancel,
 } from '../../components/ui/alert-dialog';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
 import { ExerciseLibrary } from '../../components/coach-portal/ExerciseLibrary';
 import { DeleteConfirmDialog } from '../../components/coach-portal/DeleteConfirmDialog';
 import { SearchField } from '../../components/SearchField';
@@ -347,11 +346,6 @@ export function TrainingHub() {
     'all' | 'active' | 'completed'
   >('all');
 
-  const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
-  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
-    null,
-  );
-
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -419,18 +413,13 @@ export function TrainingHub() {
     return true;
   });
 
-  const openExercise = (exerciseId: string | null) => {
-    setEditingExerciseId(exerciseId);
-    setIsExerciseModalOpen(true);
-  };
-
   const filteredClients = MOCK_CLIENTS.filter((c) =>
     c.name.toLowerCase().includes(clientSearch.toLowerCase()),
   );
 
   const handleCreate = () => {
     if (activeTab === 'exercises') {
-      openExercise(null);
+      navigate('/coach/training/exercises/new');
     } else if (activeTab === 'templates') {
       navigate('/coach/training/template-builder');
     }
@@ -462,7 +451,7 @@ export function TrainingHub() {
           ) : (
             <Button type="button" onClick={handleCreate} variant="primary" size="md">
               <Plus aria-hidden="true" />
-              {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
+              {activeTab === 'exercises' ? 'New exercise' : 'New Template'}
             </Button>
           )
         }
@@ -576,14 +565,10 @@ export function TrainingHub() {
           </div>
         )}
 
-        {activeTab === 'exercises' && <ExerciseLibrary onEdit={openExercise} />}
+        {activeTab === 'exercises' && (
+          <ExerciseLibrary onEdit={(exerciseId) => navigate(`/coach/training/exercises/${exerciseId}`)} />
+        )}
       </Tabs>
-
-      <ExerciseModal
-        isOpen={isExerciseModalOpen}
-        onClose={() => setIsExerciseModalOpen(false)}
-        exerciseId={editingExerciseId}
-      />
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog

@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
@@ -20,7 +20,10 @@ function renderHub(path = '/coach/training') {
       <AppProvider>
         <ClientProfileProvider>
           <TrainingProvider>
-            <TrainingHub />
+            <Routes>
+              <Route path="/coach/training" element={<TrainingHub />} />
+              <Route path="/coach/training/exercises/*" element={<p>Exercise editor</p>} />
+            </Routes>
             <Toaster />
           </TrainingProvider>
         </ClientProfileProvider>
@@ -202,20 +205,15 @@ describe('the exercise library filters', () => {
     expect(within(exerciseRow('Bike Intervals')).getByText('Recovery')).toBeInTheDocument();
   });
 
-  it('shows a tag added through the modal on the exercise row', async () => {
+  it("opens the exercise editor from a row's Edit action", async () => {
     // arrange
     const user = renderLibrary();
-    expect(within(exerciseRow('Bike Intervals')).queryByText('Strength')).not.toBeInTheDocument();
 
     // act
     await chooseAction(user, 'Bike Intervals', 'Edit');
-    await user.click(
-      within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name: 'Strength' }),
-    );
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     // assert
-    expect(within(exerciseRow('Bike Intervals')).getByText('Strength')).toBeInTheDocument();
+    expect(screen.getByText('Exercise editor')).toBeInTheDocument();
   });
 
   it('narrows to one type from the Type filter', async () => {
@@ -250,7 +248,18 @@ describe('the Training page in MVP mode', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Exercises' })).toBeInTheDocument();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New Exercise' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New exercise' })).toBeInTheDocument();
+  });
+
+  it('opens the exercise editor from New exercise', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'New exercise' }));
+
+    // assert
+    expect(screen.getByText('Exercise editor')).toBeInTheDocument();
   });
 
   it('keeps the plan tabs in Post-MVP mode', () => {
