@@ -26,6 +26,14 @@ type ConsoleLogger = AcquisitionIncidents &
 
 export function createConsoleLogger(): ConsoleLogger {
   return {
+    awaitingCheckInsCountFailed: ({ error, party }) => {
+      console.error("Check-ins awaiting an answer could not be counted.", {
+        errorCategory: "check_in_awaiting_count_failure",
+        errorClass: errorClassOf(error),
+        party,
+        ...errorCodeOf(error),
+      });
+    },
     bookingModeReadFailed: () => {
       console.error("Assessment call booking mode read failed.", {
         errorCategory: "assessment_call_booking_mode_read_failure",

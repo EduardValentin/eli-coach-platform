@@ -434,6 +434,53 @@ describe("the client's check-ins page", () => {
   });
 });
 
+describe("where the client's check-ins page opens", () => {
+  it("opens on Requests while a check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, COACH_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("list", { name: "Requests check-ins" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens on Upcoming when no check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, WAITING_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("opens on the tab the address names even while a check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, COACH_REQUEST] };
+
+    // act
+    await renderCheckInsPageWithView(`${CLIENT_CHECK_INS_PATH}?view=upcoming`);
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+});
+
 describe("the client's check-ins tab in the address", () => {
   it("opens on Past when the address names it", async () => {
     // arrange, act

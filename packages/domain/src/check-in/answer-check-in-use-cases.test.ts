@@ -112,7 +112,10 @@ function createPorts(options?: {
     checkIns,
     clients,
     clock: { now: () => now },
-    incidents: { checkInNotificationFailed: vi.fn() },
+    incidents: {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    },
     notifications,
   };
 }

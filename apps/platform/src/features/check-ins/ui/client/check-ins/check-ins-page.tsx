@@ -131,7 +131,6 @@ export default function ClientCheckInsRoute() {
 
       <CheckInListing
         checkIns={checkIns}
-        defaultTab="upcoming"
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow

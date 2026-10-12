@@ -169,6 +169,30 @@ describe("createConsoleLogger", () => {
     });
   });
 
+  it("logs check-ins awaiting an answer that could not be counted by party and the class of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.awaitingCheckInsCountFailed({
+      error: new TypeError("secret row contents"),
+      party: "client",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Check-ins awaiting an answer could not be counted.",
+      {
+        errorCategory: "check_in_awaiting_count_failure",
+        errorClass: "TypeError",
+        party: "client",
+      },
+    );
+  });
+
   it("logs a coaching end that did not reach the check-ins by subscription, client, end and error class only", () => {
     // arrange
     const consoleError = vi

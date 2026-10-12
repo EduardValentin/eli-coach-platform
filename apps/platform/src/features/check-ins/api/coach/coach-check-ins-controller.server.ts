@@ -1,5 +1,6 @@
 import type {
   CoachCheckInView,
+  CountCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
   ReadClientCheckInSchedulingUseCase,
   ScheduleCheckInResult,
@@ -25,6 +26,7 @@ import {
 } from "~/features/check-ins/public/check-ins";
 
 type CoachCheckInsControllerOptions = {
+  countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
   listCoachCheckIns: ListCoachCheckInsUseCase;
   readClientCheckInScheduling: ReadClientCheckInSchedulingUseCase;
   scheduleCheckIn: ScheduleCheckInUseCase;
@@ -46,6 +48,12 @@ export class CoachCheckInsController {
     return coachCheckInsSchema.parse({
       checkIns: checkIns.map((view) => this.present(view)),
     });
+  }
+
+  async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
+    requirePortalAccess(args, { role: "COACH" });
+
+    return this.options.countCheckInsAwaiting.execute({ party: "coach" });
   }
 
   async loadClientScheduling(

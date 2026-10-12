@@ -37,6 +37,7 @@ export {
   type CheckIns,
   type CheckInSettlement,
 } from "./check-ins";
+export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
 export {
   DeclineCheckInUseCase,
   type DeclineCheckInResult,

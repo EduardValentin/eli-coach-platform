@@ -528,7 +528,7 @@ test(
     await coachCheckIns.openFromNavigation();
 
     // assert
-    await coachCheckIns.expectTabShown("Requests");
+    await coachCheckIns.expectTabShown("Upcoming");
 
     // act
     await coachSettings.open();

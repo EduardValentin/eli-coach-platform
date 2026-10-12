@@ -1,18 +1,37 @@
 import { PortalShell } from "@eli-coach-platform/ui/layout";
 import { Dumbbell } from "lucide-react";
-import { Outlet, type MetaFunction } from "react-router";
+import {
+  Outlet,
+  useLoaderData,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
 
 import {
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
 } from "~/features/accounts/public/paths";
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 
-import { coachSurfaceLinks } from "./navigation-links";
+import {
+  coachSurfaceLinksOf,
+  type CoachNavigationCounts,
+} from "./navigation-links";
 
 const COACH_PORTAL_TITLE = "Coach Portal | Evoa";
 const COACH_PORTAL_DESCRIPTION =
   "Coach-facing workspace for client management, planning, scheduling, and communication.";
 const COACH_PORTAL_THEME_COLOR = "#17212f";
+
+export async function loader(
+  args: LoaderFunctionArgs,
+): Promise<CoachNavigationCounts> {
+  return {
+    checkInsAwaiting: await args.context
+      .get(checkInsContext)
+      .coachCheckIns.loadAwaitingCount(args),
+  };
+}
 
 export const handle = {
   portal: COACH_PORTAL_ROUTE_SEGMENT,
@@ -70,11 +89,13 @@ function CoachTopBarBrand() {
 }
 
 export default function CoachLayoutRoute() {
+  const counts = useLoaderData<typeof loader>();
+
   return (
     <PortalShell
       asideLabel="Coach portal sidebar"
       brand={<CoachBrand />}
-      links={coachSurfaceLinks}
+      links={coachSurfaceLinksOf(counts)}
       mobileNavigation={{
         kind: "drawer",
         label: "Coach portal mobile navigation",

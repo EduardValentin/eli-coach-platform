@@ -85,7 +85,6 @@ export default function CoachCheckInsRoute() {
 
       <CheckInListing
         checkIns={checkIns}
-        defaultTab="requests"
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow

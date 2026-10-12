@@ -18,6 +18,7 @@ import {
   type PortalRouteHandle,
 } from "~/features/accounts/public/paths";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
@@ -27,16 +28,18 @@ import {
 } from "./client-identity-presentation";
 import { ClientNameBlock } from "./client-name-block";
 import { clientPortalPageMeta } from "./client-portal-meta";
-import { clientSurfaceLinks, clientTabLinks } from "./navigation-links";
+import {
+  clientNavigationOf,
+  type ClientNavigationCounts,
+} from "./navigation-links";
 
 const pwaRegistration = createPwaRegistration({
   assetBasePath: import.meta.env.BASE_URL,
   surface: "client",
 });
 
-type ClientShell = {
+type ClientShell = ClientNavigationCounts & {
   presentation: ClientShellPresentation;
-  unopenedResources: number;
 };
 
 export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
@@ -44,12 +47,12 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
     args.context.get(coachingSalesContext).clientJourney.loadIdentity(args),
   );
 
-  return {
-    presentation,
-    unopenedResources: await args.context
-      .get(clientResourcesContext)
-      .ownResources.countUnopened(args),
-  };
+  const [unopenedResources, checkInsAwaiting] = await Promise.all([
+    args.context.get(clientResourcesContext).ownResources.countUnopened(args),
+    args.context.get(checkInsContext).clientCheckIns.loadAwaitingCount(args),
+  ]);
+
+  return { presentation, unopenedResources, checkInsAwaiting };
 }
 
 export const handle = {
@@ -64,15 +67,16 @@ export const links: LinksFunction = () => [
 ];
 
 export default function ClientLayoutRoute() {
-  const { presentation, unopenedResources } = useLoaderData<typeof loader>();
+  const { presentation, ...counts } = useLoaderData<typeof loader>();
   const { displayName } = presentation;
+  const navigation = clientNavigationOf(counts);
 
   return (
     <>
       <PortalShell
         asideLabel="Client portal sidebar"
         brand={<ClientNameBlock displayName={displayName} size="md" />}
-        links={clientSurfaceLinks(unopenedResources)}
+        links={navigation.links}
         mobileNavigation={{
           kind: "tabs",
           sheet: {
@@ -99,7 +103,7 @@ export default function ClientLayoutRoute() {
             navigationLabel: "Client portal more",
             title: "More",
           },
-          tabs: clientTabLinks,
+          tabs: navigation.tabs,
           tabsLabel: "Client portal tabs",
         }}
         navigationLabel="Client portal navigation"

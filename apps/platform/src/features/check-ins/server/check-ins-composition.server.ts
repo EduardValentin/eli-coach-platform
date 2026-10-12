@@ -3,6 +3,7 @@ import {
   ApproveCheckInUseCase,
   CancelCheckInsAfterCoachingEndUseCase,
   CancelCheckInUseCase,
+  CountCheckInsAwaitingUseCase,
   DeclineCheckInUseCase,
   ListClientCheckInsUseCase,
   ListCoachCheckInsUseCase,
@@ -100,6 +101,10 @@ export function composeCheckInsFeature(
           publicAppUrl: handles.publicAppUrl,
         }),
       };
+      const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase({
+        ...readPorts,
+        incidents: handles.incidents,
+      });
       const requestPorts = {
         ...answerPorts,
         availability,
@@ -114,10 +119,12 @@ export function composeCheckInsFeature(
           }),
         }),
         clientCheckIns: new ClientCheckInsController({
+          countCheckInsAwaiting,
           listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
           requestCheckIn: new RequestCheckInUseCase(requestPorts),
         }),
         coachCheckIns: new CoachCheckInsController({
+          countCheckInsAwaiting,
           listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
           readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
             readPorts,

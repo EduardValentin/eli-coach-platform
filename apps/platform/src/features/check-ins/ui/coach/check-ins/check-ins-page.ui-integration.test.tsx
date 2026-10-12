@@ -523,7 +523,9 @@ describe("the coach's check-ins page", () => {
         });
       }),
     );
-    const user = await renderCheckInsPage();
+    const { user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=requests`,
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Cancel request" }));
@@ -546,7 +548,9 @@ describe("the coach's check-ins page", () => {
         HttpResponse.json({ error: "not_pending" }, { status: 409 }),
       ),
     );
-    const user = await renderCheckInsPage();
+    const { user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=requests`,
+    );
     const readsBefore = listingReads;
 
     // act
@@ -569,6 +573,33 @@ describe("the coach's check-ins page", () => {
 
     // assert
     expect((await axe(baseElement)).violations).toEqual([]);
+  });
+});
+
+describe("where the coach's check-ins page opens", () => {
+  it("opens on Requests while a check-in waits for her answer", async () => {
+    // arrange, act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("opens on Upcoming when no check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [IOANA_OWN_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 });
 

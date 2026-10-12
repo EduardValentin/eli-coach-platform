@@ -101,7 +101,10 @@ function createRequestCheckIn(options?: {
     ),
     clock: { now: () => NOW },
     ids: { generate: () => "check-in-1" },
-    incidents: options?.incidents ?? { checkInNotificationFailed: vi.fn() },
+    incidents: options?.incidents ?? {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    },
     notifications: options?.notifications ?? createNotifications(),
   };
 
@@ -296,7 +299,10 @@ describe("RequestCheckInUseCase", () => {
     // arrange
     const notifications = createNotifications();
     notifications.requested.mockResolvedValue("failed");
-    const incidents = { checkInNotificationFailed: vi.fn() };
+    const incidents = {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,
       incidents,
@@ -317,7 +323,10 @@ describe("RequestCheckInUseCase", () => {
     // arrange
     const notifications = createNotifications();
     notifications.requested.mockRejectedValue(new Error("provider down"));
-    const incidents = { checkInNotificationFailed: vi.fn() };
+    const incidents = {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,
       incidents,

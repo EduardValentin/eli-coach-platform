@@ -1,5 +1,6 @@
 import {
   CheckIn,
+  type CountCheckInsAwaitingUseCase,
   type ListClientCheckInsUseCase,
   type RequestCheckInResult,
   type RequestCheckInUseCase,
@@ -117,6 +118,39 @@ describe("ClientCheckInsController loadCheckIns", () => {
     // assert
     expect((thrown as Response).status).toBe(403);
     expect(listClientCheckIns).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClientCheckInsController loadAwaitingCount", () => {
+  it("counts the check-ins waiting for the client's answer", async () => {
+    // arrange
+    const { controller, countCheckInsAwaiting } = createController({
+      awaiting: 2,
+    });
+
+    // act
+    const count = await controller.loadAwaitingCount(clientArgs());
+
+    // assert
+    expect(count).toBe(2);
+    expect(countCheckInsAwaiting).toHaveBeenCalledWith({
+      party: "client",
+      authSubjectId: "user_ana",
+    });
+  });
+
+  it("refuses the coach without counting", async () => {
+    // arrange
+    const { controller, countCheckInsAwaiting } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadAwaitingCount(clientArgs({ session: COACH_SESSION })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(countCheckInsAwaiting).not.toHaveBeenCalled();
   });
 });
 
@@ -252,10 +286,14 @@ describe("ClientCheckInsController request", () => {
 
 function createController(
   answers: {
+    awaiting?: number;
     listed?: Awaited<ReturnType<ListClientCheckInsUseCase["execute"]>>;
     requested?: RequestCheckInResult;
   } = {},
 ) {
+  const countCheckInsAwaiting = vi
+    .fn()
+    .mockResolvedValue(answers.awaiting ?? 0);
   const listClientCheckIns = vi
     .fn()
     .mockResolvedValue(answers.listed ?? { status: "listed", checkIns: [] });
@@ -266,6 +304,9 @@ function createController(
     },
   );
   const controller = new ClientCheckInsController({
+    countCheckInsAwaiting: {
+      execute: countCheckInsAwaiting,
+    } as unknown as CountCheckInsAwaitingUseCase,
     listClientCheckIns: {
       execute: listClientCheckIns,
     } as unknown as ListClientCheckInsUseCase,
@@ -276,6 +317,7 @@ function createController(
 
   return {
     controller,
+    countCheckInsAwaiting,
     listClientCheckIns,
     requestCheckIn,
   };

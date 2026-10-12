@@ -894,3 +894,125 @@ describe("PortalShell tab navigation accessibility", () => {
     expect(results.violations).toEqual([]);
   });
 });
+
+const countedCheckInsLinks: readonly PortalNavigationLink[] = clientLinks.map(
+  (link) => (link.label === "Check-ins" ? { ...link, count: 2 } : link),
+);
+
+const countedCycleLinks: readonly PortalNavigationLink[] = clientLinks.map(
+  (link) => (link.label === "Cycle" ? { ...link, count: 1 } : link),
+);
+
+function countedName(label: string, count: number) {
+  return new RegExp(`^${label} ?\\(${count} waiting on you\\)$`);
+}
+
+function queryNavigationCount(container: ParentNode) {
+  return container.querySelector<HTMLElement>(
+    '[data-parity="navigation-count"]',
+  );
+}
+
+describe("PortalShell counted navigation link", () => {
+  it("names a counted sidebar link with its count and draws the count badge after the label", () => {
+    // arrange, act
+    renderClientShell({ links: countedCheckInsLinks });
+
+    // assert
+    const link = getSidebarLink(countedName("Check-ins", 2));
+    const badge = queryNavigationCount(link);
+
+    expect(badge).toHaveTextContent("2");
+    expect(badge).toHaveAttribute("aria-hidden", "true");
+    expect(badge).toHaveClass(
+      "ml-auto",
+      "size-5",
+      "rounded-full",
+      "bg-status-pending",
+      "text-micro",
+      "font-bold",
+      "text-text-inverted",
+    );
+    expect(link.lastElementChild).toBe(badge);
+  });
+
+  it("names a counted link in the coach's drawer with its count and draws the badge", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({
+      links: [portalLinks[0], { ...portalLinks[1], count: 3 }],
+    });
+
+    // act
+    const menu = await openMobileMenu(user);
+
+    // assert
+    const link = within(menu).getByRole("link", {
+      name: countedName("Clients", 3),
+    });
+
+    expect(queryNavigationCount(link)).toHaveTextContent("3");
+    expect(
+      queryNavigationCount(
+        within(menu).getByRole("link", { name: "Dashboard" }),
+      ),
+    ).toBeNull();
+  });
+
+  it("draws a counted tab's badge on the corner of its icon and leaves More unmarked", () => {
+    // arrange, act
+    renderClientShell({
+      links: countedCheckInsLinks,
+      tabs: countedCheckInsLinks.slice(0, 5),
+    });
+
+    // assert
+    const tabBar = screen.getByRole("navigation", {
+      name: "Client portal tabs",
+    });
+    const tab = within(tabBar).getByRole("link", {
+      name: countedName("Check-ins", 2),
+    });
+    const badge = queryNavigationCount(tab);
+
+    expect(badge).toHaveTextContent("2");
+    expect(badge).toHaveClass("absolute", "ring-2", "ring-surface-base");
+    expect(badge?.parentElement).toBe(tab.querySelector("svg")?.parentElement);
+    expect(queryAttentionDot(tab)).toBeNull();
+    expect(queryAttentionDot(getMoreButton())).toBeNull();
+  });
+
+  it("marks More when a counted link sits in the sheet and counts it there before the chevron", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell({ links: countedCycleLinks });
+
+    // act
+    const sheet = await openMoreSheet(user, markedName("More"));
+
+    // assert
+    const link = within(sheet).getByRole("link", {
+      name: countedName("Cycle", 1),
+    });
+    const badge = queryNavigationCount(link);
+
+    expect(badge).toHaveTextContent("1");
+    expect(badge?.nextElementSibling).toBe(link.lastElementChild);
+    expect(link.lastElementChild?.tagName.toLowerCase()).toBe("svg");
+  });
+
+  it("draws no badge and keeps the name plain when the count is zero", () => {
+    // arrange, act
+    renderClientShell({
+      links: clientLinks.map((link) =>
+        link.label === "Check-ins" ? { ...link, count: 0 } : link,
+      ),
+    });
+
+    // assert
+    const link = getSidebarLink(/^Check-ins$/);
+
+    expect(queryNavigationCount(document.body)).toBeNull();
+    expect(link).toHaveTextContent(/^Check-ins$/);
+  });
+});

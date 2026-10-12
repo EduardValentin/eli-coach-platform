@@ -136,7 +136,10 @@ function createProposeCheckInTime(options?: {
     checkIns,
     clients,
     clock: { now: () => NOW },
-    incidents: { checkInNotificationFailed: vi.fn() },
+    incidents: {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    },
     notifications,
   };
 

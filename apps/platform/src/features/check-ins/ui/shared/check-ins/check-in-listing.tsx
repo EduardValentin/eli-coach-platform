@@ -8,7 +8,7 @@ import {
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   formatClockTime,
@@ -35,7 +35,6 @@ export type CheckInEmptyCopy = {
 
 type CheckInListingProps<CheckIn extends ListedCheckIn> = {
   checkIns: readonly CheckIn[];
-  defaultTab: CheckInTab;
   emptyCopy: Record<CheckInTab, CheckInEmptyCopy>;
   renderCheckIn: (checkIn: CheckIn, tab: CheckInTab) => ReactNode;
 };
@@ -71,10 +70,10 @@ const TAB_OF_STATUS: Record<ListedCheckIn["status"], CheckInTab> = {
 
 export function CheckInListing<CheckIn extends ListedCheckIn>({
   checkIns,
-  defaultTab,
   emptyCopy,
   renderCheckIn,
 }: CheckInListingProps<CheckIn>) {
+  const [defaultTab] = useState(() => openingTabOf(checkIns));
   const { chooseTab, tab } = useCheckInTabParam(defaultTab);
   const shown = ordered(
     checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
@@ -157,6 +156,12 @@ function useCheckInTabParam(defaultTab: CheckInTab) {
   };
 
   return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
+}
+
+function openingTabOf(checkIns: readonly ListedCheckIn[]): CheckInTab {
+  return checkIns.some((checkIn) => checkIn.awaitsViewer)
+    ? "requests"
+    : "upcoming";
 }
 
 function tabNamed(name: string | null, fallback: CheckInTab): CheckInTab {

@@ -93,7 +93,10 @@ function createScheduleCheckIn(options?: {
     clients,
     clock: { now: () => NOW },
     ids: { generate: () => "check-in-1" },
-    incidents: { checkInNotificationFailed: vi.fn() },
+    incidents: {
+      checkInNotificationFailed: vi.fn(),
+      awaitingCheckInsCountFailed: vi.fn(),
+    },
     notifications,
   };
 
