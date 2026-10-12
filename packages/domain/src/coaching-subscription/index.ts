@@ -59,6 +59,7 @@ export {
   type RefundDueNotice,
   type RefundNotifications,
 } from "./refund-notifications";
+export { SignedInSubscriptions } from "./signed-in-subscriptions";
 export { StartCheckoutUseCase } from "./start-checkout-use-case";
 export { StartProgramNowUseCase } from "./start-program-now-use-case";
 export { type SubscriptionEvent } from "./subscription-event";

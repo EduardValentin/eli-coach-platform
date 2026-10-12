@@ -1,3 +1,4 @@
+import { ClientJourney } from "../client-journey";
 import type { Clock } from "../shared";
 
 import {
@@ -35,7 +36,11 @@ export class ListClientsUseCase {
         status: "listed",
         clients: entries.map((entry) => ({
           ...entry,
-          status: rosterEntryStatus(entry, now),
+          status: rosterEntryStatus({
+            accountBound: entry.accountBound,
+            journey: ClientJourney.from(entry.journey),
+            now,
+          }),
           needsRefund: rosterEntryNeedsRefund(entry),
         })),
       };

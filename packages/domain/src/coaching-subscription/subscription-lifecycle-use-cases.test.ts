@@ -23,6 +23,7 @@ import { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-ca
 import { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
 import { RefundDue } from "./refund-due";
 import type { RefundNotifications } from "./refund-notifications";
+import { SignedInSubscriptions } from "./signed-in-subscriptions";
 import { StartProgramNowUseCase } from "./start-program-now-use-case";
 import type { SubscriptionEvent } from "./subscription-event";
 
@@ -155,6 +156,13 @@ function createClientReach(found: ClientReachReading | null = anaReach) {
   } satisfies Pick<ClientReach, "findByAuthSubjectId">;
 }
 
+function signedInOf(
+  subscriptions: ReturnType<typeof createSubscriptions>,
+  clientReach = createClientReach(),
+) {
+  return new SignedInSubscriptions({ clientReach, subscriptions });
+}
+
 function createCoachingEnd() {
   return {
     coachingEnds: vi.fn().mockResolvedValue(undefined),
@@ -172,7 +180,6 @@ function cancelUseCase(options: {
   clientReach?: ReturnType<typeof createClientReach>;
 }) {
   return new CancelSubscriptionUseCase({
-    clientReach: options.clientReach ?? createClientReach(),
     clients: options.clients ?? createClients(),
     clock: clockAt(options.now),
     coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
@@ -180,6 +187,10 @@ function cancelUseCase(options: {
     notifications: options.notifications ?? createNotifications(),
     paymentSubscriptions:
       options.paymentSubscriptions ?? createPaymentSubscriptions(),
+    signedInSubscriptions: signedInOf(
+      options.subscriptions,
+      options.clientReach,
+    ),
     subscriptions: options.subscriptions,
   });
 }
@@ -630,15 +641,16 @@ describe("CancelSubscriptionUseCase", () => {
     failing.coachingEnds.mockRejectedValue(failure);
     const listening = createCoachingEnd();
     const incidents = createIncidents();
+    const subscriptions = createSubscriptions(subscriptionOf());
     const useCase = new CancelSubscriptionUseCase({
-      clientReach: createClientReach(),
       clients: createClients(),
       clock: clockAt(DAY_14),
       coachingEnds: [failing, listening],
       incidents,
       notifications: createNotifications(),
       paymentSubscriptions: createPaymentSubscriptions(),
-      subscriptions: createSubscriptions(subscriptionOf()),
+      signedInSubscriptions: signedInOf(subscriptions),
+      subscriptions,
     });
 
     // act
@@ -774,9 +786,12 @@ describe("StartProgramNowUseCase", () => {
     clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new StartProgramNowUseCase({
-      clientReach: options.clientReach ?? createClientReach(),
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
+      signedInSubscriptions: signedInOf(
+        options.subscriptions,
+        options.clientReach,
+      ),
       subscriptions: options.subscriptions,
     });
   }
@@ -883,12 +898,14 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new OpenPaymentMethodSessionUseCase({
-      clientReach: options.clientReach ?? createClientReach(),
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
       paymentSubscriptions:
         options.paymentSubscriptions ?? createPaymentSubscriptions(),
-      subscriptions: options.subscriptions,
+      signedInSubscriptions: signedInOf(
+        options.subscriptions,
+        options.clientReach,
+      ),
     });
   }
 
@@ -1012,10 +1029,9 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions,
+      signedInSubscriptions: signedInOf(subscriptions),
     });
 
     // act
@@ -1040,11 +1056,10 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ startChoice: "immediate" }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(subscriptionOf({ startChoice: "immediate" })),
       ),
     });
 
@@ -1062,10 +1077,9 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the waiting path at its withdrawal deadline with no start now", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_14),
-      subscriptions: createSubscriptions(subscriptionOf()),
+      signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
@@ -1082,16 +1096,17 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_14),
-      subscriptions: createSubscriptions(
-        subscriptionOf({
-          status: "ended",
-          cancelledAt: DAY_13,
-          accessEndsAt: DAY_13,
-          refund: refund.toSnapshot(),
-        }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(
+          subscriptionOf({
+            status: "ended",
+            cancelledAt: DAY_13,
+            accessEndsAt: DAY_13,
+            refund: refund.toSnapshot(),
+          }),
+        ),
       ),
     });
 
@@ -1110,11 +1125,10 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads a payment problem the provider flagged", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ paymentProblemSince: DAY_13 }),
+      signedInSubscriptions: signedInOf(
+        createSubscriptions(subscriptionOf({ paymentProblemSince: DAY_13 })),
       ),
     });
 
@@ -1136,10 +1150,9 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
     const cards = createCards(card);
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards,
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(subscriptionOf()),
+      signedInSubscriptions: signedInOf(createSubscriptions(subscriptionOf())),
     });
 
     // act
@@ -1153,10 +1166,9 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads nothing for a subject with no subscription", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions: createSubscriptions(null),
+      signedInSubscriptions: signedInOf(createSubscriptions(null)),
     });
 
     // act
@@ -1170,10 +1182,9 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     const useCase = new ReadClientSubscriptionUseCase({
-      clientReach: createClientReach(null),
       cards: createCards(null),
       clock: clockAt(DAY_13),
-      subscriptions,
+      signedInSubscriptions: signedInOf(subscriptions, createClientReach(null)),
     });
 
     // act

@@ -1,4 +1,4 @@
-import type { ClientIdentities, ClientReach } from "../client";
+import type { ClientIdentities } from "../client";
 import type { Clock } from "../shared";
 
 import type { CoachingEndHandler } from "./coaching-end-handler";
@@ -17,6 +17,7 @@ import type {
   RefundDueNotice,
   RefundNotifications,
 } from "./refund-notifications";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type CancelSubscriptionResult =
   | {
@@ -35,13 +36,13 @@ type RecordedCancellation = Extract<
 >;
 
 type CancelSubscriptionUseCaseOptions = {
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clients: ClientIdentities;
   clock: Clock;
   coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
   notifications: RefundNotifications;
   paymentSubscriptions: PaymentSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
   subscriptions: CoachingSubscriptions;
 };
 
@@ -59,11 +60,8 @@ export class CancelSubscriptionUseCase {
   }
 
   async execute(authSubjectId: string): Promise<CancelSubscriptionResult> {
-    const client =
-      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
     const current =
-      client &&
-      (await this.options.subscriptions.findCurrentForClient(client.clientId));
+      await this.options.signedInSubscriptions.currentFor(authSubjectId);
 
     if (!current) {
       return { status: "not_found" };

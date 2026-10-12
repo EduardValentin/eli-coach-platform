@@ -7,8 +7,8 @@ import { ClientJourney } from "../client-journey";
 import type { Clock } from "../shared";
 
 import {
-  clientStatusOf,
   rosterEntryNeedsRefund,
+  rosterEntryStatus,
   type ClientRoster,
   type ClientRosterEntry,
   type ClientStatus,
@@ -60,10 +60,9 @@ export class ReadClientRecordUseCase {
 
     return {
       ...entry,
-      status: clientStatusOf({
+      status: rosterEntryStatus({
         accountBound: entry.accountBound,
-        step: journey.step(),
-        standing: journey.standing,
+        journey,
         now: this.options.clock.now(),
       }),
       needsRefund: rosterEntryNeedsRefund(entry),

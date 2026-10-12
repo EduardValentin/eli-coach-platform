@@ -1,9 +1,9 @@
-import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { StartNowRefusal } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type StartProgramNowResult =
   | { status: "started" }
@@ -11,28 +11,20 @@ type StartProgramNowResult =
   | { status: "not_found" };
 
 type StartProgramNowUseCaseOptions = {
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
-  subscriptions: CoachingSubscriptions;
+  signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
+  subscriptions: Pick<CoachingSubscriptions, "save">;
 };
 
 export class StartProgramNowUseCase {
   constructor(private readonly options: StartProgramNowUseCaseOptions) {}
 
   async execute(authSubjectId: string): Promise<StartProgramNowResult> {
-    const client =
-      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
-
-    if (!client) {
-      return { status: "not_found" };
-    }
-
-    const { clientId } = client;
     const now = this.options.clock.now();
-    const first = await this.attempt(clientId, now);
+    const first = await this.attempt(authSubjectId, now);
     const result =
-      first === "stale" ? await this.attempt(clientId, now) : first;
+      first === "stale" ? await this.attempt(authSubjectId, now) : first;
 
     if (result === "stale") {
       throw new Error(
@@ -44,11 +36,11 @@ export class StartProgramNowUseCase {
   }
 
   private async attempt(
-    clientId: string,
+    authSubjectId: string,
     now: Date,
   ): Promise<StartProgramNowResult | "stale"> {
     const current =
-      await this.options.subscriptions.findCurrentForClient(clientId);
+      await this.options.signedInSubscriptions.currentFor(authSubjectId);
 
     if (!current) {
       return { status: "not_found" };

@@ -1,9 +1,9 @@
 import type { VisitorGender } from "../assessment-call";
 import type { CoachingStanding, CoachingStatus } from "../client";
-import {
+import type {
   ClientJourney,
-  type ClientJourneySnapshot,
-  type ClientJourneyStep,
+  ClientJourneySnapshot,
+  ClientJourneyStep,
 } from "../client-journey";
 
 export const CLIENT_STATUSES = [
@@ -71,17 +71,16 @@ export function clientStatusOf(input: {
   );
 }
 
-export function rosterEntryStatus(
-  entry: ClientRosterEntry,
-  now: Date,
-): ClientStatus {
-  const journey = ClientJourney.from(entry.journey);
-
+export function rosterEntryStatus(input: {
+  accountBound: boolean;
+  journey: ClientJourney;
+  now: Date;
+}): ClientStatus {
   return clientStatusOf({
-    accountBound: entry.accountBound,
-    step: journey.step(),
-    standing: journey.standing,
-    now,
+    accountBound: input.accountBound,
+    step: input.journey.step(),
+    standing: input.journey.standing,
+    now: input.now,
   });
 }
 

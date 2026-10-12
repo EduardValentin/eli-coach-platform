@@ -20,6 +20,7 @@ import {
   ReconcileSubscriptionEventUseCase,
   RecordCheckoutCompletedUseCase,
   RefreshPaymentCardUseCase,
+  SignedInSubscriptions,
   StartCheckoutUseCase,
   StartProgramNowUseCase,
   type CoachingEndHandler,
@@ -145,6 +146,10 @@ export function composeCoachingSalesFeature(
     salesWindow,
   };
 
+  const signedInSubscriptions = new SignedInSubscriptions({
+    clientReach: handles.clientReach,
+    subscriptions,
+  });
   const subscriptionPorts = {
     clock,
     coachingEnds: handles.coachingEnds,
@@ -155,7 +160,6 @@ export function composeCoachingSalesFeature(
   const subscriptionUseCases = {
     cancelSubscription: new CancelSubscriptionUseCase({
       ...subscriptionPorts,
-      clientReach: handles.clientReach,
       clients: handles.clientIdentities,
       notifications: createRefundNotifications(handles.productEmail, {
         appBasePath: handles.appBasePath,
@@ -163,10 +167,11 @@ export function composeCoachingSalesFeature(
         coachEmail: handles.coachEmail,
         publicAppUrl: handles.publicAppUrl,
       }),
+      signedInSubscriptions,
     }),
     openPaymentMethodSession: new OpenPaymentMethodSessionUseCase({
       ...subscriptionPorts,
-      clientReach: handles.clientReach,
+      signedInSubscriptions,
     }),
     mirrorPaymentCard: new MirrorPaymentCardUseCase({
       cards: paymentCards,
@@ -175,9 +180,8 @@ export function composeCoachingSalesFeature(
     }),
     readClientSubscription: new ReadClientSubscriptionUseCase({
       cards: paymentCards,
-      clientReach: handles.clientReach,
       clock,
-      subscriptions,
+      signedInSubscriptions,
     }),
     readProgramStatus: new ReadProgramStatusUseCase({
       clock,
@@ -193,9 +197,9 @@ export function composeCoachingSalesFeature(
       incidents: handles.incidents,
     }),
     startProgramNow: new StartProgramNowUseCase({
-      clientReach: handles.clientReach,
       clock,
       incidents: handles.incidents,
+      signedInSubscriptions,
       subscriptions,
     }),
   };
