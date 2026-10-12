@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AnswerOnboardingDetailsUseCase,
   ApproveOnboardingAnswersUseCase,
@@ -42,6 +43,7 @@ export type ClientOnboardingFeature = {
 type ClientOnboardingFeatureHandles = {
   appBasePath: string;
   attachProgressPhotos: AttachProgressPhotosUseCase;
+  clientIdentities: ClientIdentities;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -62,6 +64,7 @@ export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
 ): ClientOnboardingFeature {
   const {
+    clientIdentities: identities,
     clock,
     incidents,
     onboardingClients: clients,
@@ -77,7 +80,7 @@ export function composeClientOnboardingFeature(
     reviewStampWriter: handles.reviewStampWriter,
     clientProfileWriter: handles.saveClientProfile,
   });
-  const reviewPorts = { clients, onboardings, reviews, incidents };
+  const reviewPorts = { clients, identities, onboardings, reviews, incidents };
   const reviewReadPorts = {
     ...reviewPorts,
     stamps: handles.onboardingReviewStamps,
@@ -94,6 +97,7 @@ export function composeClientOnboardingFeature(
       clock,
       readClientOnboarding: new ReadClientOnboardingUseCase({
         clients,
+        identities,
         onboardings,
         unitPreferences,
       }),
@@ -102,6 +106,7 @@ export function composeClientOnboardingFeature(
         changes: onboardings,
         clients,
         clock,
+        identities,
         incidents,
         onboardings,
       }),
@@ -109,6 +114,7 @@ export function composeClientOnboardingFeature(
         changes: onboardings,
         clients,
         clock,
+        identities,
         incidents,
         onboardings,
         stamps: handles.onboardingSubmissionStamps,

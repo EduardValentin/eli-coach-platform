@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
 import { ClientProfile } from "../client-profile";
 import {
   UnitPreference,
   type ClientUnitPreferencesSource,
 } from "../unit-preference";
+
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -23,13 +29,6 @@ const EARLIER_SUBMITTED_AT = new Date("2026-09-27T10:00:00.000Z");
 const CONSENTED_AT = new Date("2026-09-28T09:30:00.000Z");
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
-  gender: "male",
-  dateOfBirth: "1990-03-02",
-  firstName: "Ana",
-  lastName: "Popescu",
-  country: "RO",
-  phone: "+40712345678",
-  email: "ana@example.com",
   submittedAt: null,
   reviewStamps: {
     reviewOpenedAt: null,
@@ -37,7 +36,21 @@ const CLIENT: OnboardingClient = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
-  subscriptionCancelledOrEnded: false,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+  }),
+};
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
+  gender: "male",
+  dateOfBirth: "1990-03-02",
+  firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
+  email: "ana@example.com",
 };
 const IMPERIAL = UnitPreference.of("imperial");
 
@@ -113,6 +126,12 @@ function createClients(found: OnboardingClient | null) {
   } satisfies OnboardingClients;
 }
 
+function createIdentities(found: ClientIdentity | null = IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
+}
+
 function createOnboardings(submission: OnboardingSubmission | null = null) {
   return {
     findByClientId: vi.fn().mockResolvedValue({ draft: null, submission }),
@@ -162,6 +181,7 @@ function createIncidents() {
 function createUseCase(
   ports: {
     clients?: OnboardingClients;
+    identities?: Pick<ClientIdentities, "findByClientId">;
     onboardings?: ClientOnboardingSource;
     unitPreferences?: ClientUnitPreferencesSource;
     changes?: ClientOnboardingChanges;
@@ -171,6 +191,7 @@ function createUseCase(
 ) {
   return new SubmitOnboardingUseCase({
     clients: ports.clients ?? createClients(CLIENT),
+    identities: ports.identities ?? createIdentities(),
     onboardings: ports.onboardings ?? createOnboardings(),
     unitPreferences: ports.unitPreferences ?? createUnitPreferences(),
     changes: ports.changes ?? createChanges(),
@@ -283,7 +304,7 @@ describe("SubmitOnboardingUseCase", () => {
     // arrange
     const incidents = createIncidents();
     const useCase = createUseCase({
-      clients: createClients({ ...CLIENT, dateOfBirth: "2012-01-01" }),
+      identities: createIdentities({ ...IDENTITY, dateOfBirth: "2012-01-01" }),
       incidents,
     });
 

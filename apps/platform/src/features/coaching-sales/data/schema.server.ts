@@ -3,13 +3,13 @@ import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
 } from "@eli-coach-platform/domain/assessment-call";
+import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
 import {
   COACHING_BUNDLE_IDS,
   COACHING_BUNDLE_MONTHS,
   PRICE_TIERS,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
-  COACHING_SUBSCRIPTION_STATUSES,
   REFUND_REASONS,
   START_CHOICES,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -240,7 +240,7 @@ export const coachingSubscriptionsTable = appSchema.table(
       length: 16,
     }).notNull(),
     status: varchar("status", {
-      enum: COACHING_SUBSCRIPTION_STATUSES,
+      enum: COACHING_STATUSES,
       length: 16,
     })
       .notNull()
@@ -286,7 +286,7 @@ export const coachingSubscriptionsTable = appSchema.table(
     ),
     check(
       "coaching_subscriptions_status_check",
-      sql`${table.status} in (${quotedList(COACHING_SUBSCRIPTION_STATUSES)})`,
+      sql`${table.status} in (${quotedList(COACHING_STATUSES)})`,
     ),
     check(
       "coaching_subscriptions_refund_reason_check",

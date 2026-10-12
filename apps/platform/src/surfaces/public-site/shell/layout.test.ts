@@ -83,6 +83,11 @@ describe("public layout loader", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -211,13 +216,16 @@ function createLoaderArgs(options: {
 }): LoaderFunctionArgs {
   const coachingSales = {
     readClientPortalStanding: {
-      execute: vi
-        .fn()
-        .mockResolvedValue(
-          options.journey
-            ? { journey: options.journey, coaching: "active" }
-            : null,
-        ),
+      execute: vi.fn().mockResolvedValue(
+        options.journey
+          ? {
+              journey: options.journey,
+              portal: options.journey.onboardingSubmittedAt
+                ? "reachable"
+                : "awaiting_onboarding",
+            }
+          : null,
+      ),
     },
   } as unknown as CoachingSalesFeature;
 

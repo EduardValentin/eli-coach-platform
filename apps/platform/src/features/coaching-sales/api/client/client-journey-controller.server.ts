@@ -1,8 +1,8 @@
 import type {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
-  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
+import type { ReadProgramStatusUseCase } from "@eli-coach-platform/domain/coaching-subscription";
 import {
   redirect,
   type ActionFunctionArgs,

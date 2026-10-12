@@ -1,3 +1,7 @@
+import {
+  ClientJourney,
+  type ClientJourneyStep,
+} from "@eli-coach-platform/domain/client-journey";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,7 +10,17 @@ import {
   clientJourneyRedirect,
   programStatusSchema,
   welcomePageSchema,
+  type ClientPortalStanding,
 } from "./client-journey";
+
+function openStanding(step: ClientJourneyStep): ClientPortalStanding {
+  return {
+    step,
+    portal: ClientJourney.isAfterSubmission(step)
+      ? "reachable"
+      : "awaiting_onboarding",
+  };
+}
 
 describe("clientJourneyRedirect", () => {
   it.each([
@@ -30,7 +44,7 @@ describe("clientJourneyRedirect", () => {
 
     // act
     const redirectTo = clientJourneyRedirect(
-      { step: journeyStep, coaching: "active" },
+      openStanding(journeyStep),
       requestedPath,
     );
 
@@ -70,7 +84,7 @@ describe("clientJourneyRedirect", () => {
 
       // act
       const redirectTo = clientJourneyRedirect(
-        { step: journeyStep, coaching: "active" },
+        openStanding(journeyStep),
         requestedPath,
       );
 
@@ -87,10 +101,7 @@ describe("clientJourneyRedirect over a path written differently", () => {
     ["needs-details", "/Client/Onboarding"],
   ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
     // act
-    const redirectTo = clientJourneyRedirect(
-      { step, coaching: "active" },
-      requestedPath,
-    );
+    const redirectTo = clientJourneyRedirect(openStanding(step), requestedPath);
 
     // assert
     expect(redirectTo).toBeNull();
@@ -101,7 +112,7 @@ describe("clientJourneyRedirect over a path written differently", () => {
     (requestedPath) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step: "approved", coaching: "ended" },
+        { step: "approved", portal: "ended" },
         requestedPath,
       );
 
@@ -117,7 +128,7 @@ describe("clientJourneyRedirect once her coaching has ended", () => {
     (step) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step, coaching: "ended" },
+        { step, portal: "ended" },
         "/client/ended",
       );
 
@@ -138,7 +149,7 @@ describe("clientJourneyRedirect once her coaching has ended", () => {
     (step, requestedPath) => {
       // act
       const redirectTo = clientJourneyRedirect(
-        { step, coaching: "ended" },
+        { step, portal: "ended" },
         requestedPath,
       );
 
@@ -159,10 +170,7 @@ describe("clientJourneyPortalLink", () => {
       const journeyStep = step;
 
       // act
-      const link = clientJourneyPortalLink({
-        step: journeyStep,
-        coaching: "active",
-      });
+      const link = clientJourneyPortalLink(openStanding(journeyStep));
 
       // assert
       expect(link).toEqual({
@@ -176,7 +184,7 @@ describe("clientJourneyPortalLink", () => {
     "offers no onboarding link at the %s step once her coaching has ended",
     (step) => {
       // act
-      const link = clientJourneyPortalLink({ step, coaching: "ended" });
+      const link = clientJourneyPortalLink({ step, portal: "ended" });
 
       // assert
       expect(link).toBeNull();
@@ -190,10 +198,7 @@ describe("clientJourneyPortalLink", () => {
       const journeyStep = step;
 
       // act
-      const link = clientJourneyPortalLink({
-        step: journeyStep,
-        coaching: "active",
-      });
+      const link = clientJourneyPortalLink(openStanding(journeyStep));
 
       // assert
       expect(link).toBeNull();

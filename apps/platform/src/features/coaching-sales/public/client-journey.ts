@@ -1,8 +1,8 @@
+import type { PortalReach } from "@eli-coach-platform/domain/client";
 import {
   ClientJourney,
   STEPS_AFTER_SUBMISSION,
   type ClientJourneyStep,
-  type CoachingStanding,
 } from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
@@ -30,7 +30,7 @@ type ClientJourneyGate = {
 
 export type ClientPortalStanding = {
   step: ClientJourneyStep;
-  coaching: CoachingStanding;
+  portal: PortalReach;
 };
 
 const ENDED_GATE: ClientJourneyGate = {
@@ -91,7 +91,7 @@ export function clientJourneyPortalLink(
   standing: ClientPortalStanding,
 ): { href: string; label: string } | null {
   if (
-    standing.coaching === "ended" ||
+    standing.portal === "ended" ||
     ClientJourney.isAfterSubmission(standing.step)
   ) {
     return null;
@@ -104,7 +104,7 @@ export function clientJourneyPortalLink(
 }
 
 function gateOf(standing: ClientPortalStanding): ClientJourneyGate {
-  if (standing.coaching === "ended") {
+  if (standing.portal === "ended") {
     return ENDED_GATE;
   }
 

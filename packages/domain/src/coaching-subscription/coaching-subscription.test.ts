@@ -238,20 +238,6 @@ describe("CoachingSubscription.statusAt", () => {
     expect(result).toBe(status);
   });
 
-  it("derives the same status from a snapshot", () => {
-    // arrange
-    const snapshot = snapshotOf({
-      status: "cancelled",
-      accessEndsAt: ACCESS_END,
-    });
-
-    // act
-    const status = CoachingSubscription.statusOf(snapshot, ACCESS_END);
-
-    // assert
-    expect(status).toBe("ended");
-  });
-
   it.each([
     [{ status: "cancelled", accessEndsAt: ACCESS_END }, DAY_14, true],
     [{ status: "cancelled", accessEndsAt: ACCESS_END }, ACCESS_END, false],
@@ -269,18 +255,69 @@ describe("CoachingSubscription.statusAt", () => {
   );
 });
 
-describe("CoachingSubscription.isCancelledOrEnded", () => {
+describe("CoachingSubscription.standing", () => {
   it.each([
-    [null, false],
-    ["not-started", false],
-    ["active", false],
-    ["cancelled", true],
-    ["ended", true],
+    [{}, { status: "not-started", accessEndsAt: null, refundDue: false }],
+    [
+      { status: "active" },
+      { status: "active", accessEndsAt: null, refundDue: false },
+    ],
+    [
+      { status: "cancelled", cancelledAt: DAY_14, accessEndsAt: ACCESS_END },
+      { status: "cancelled", accessEndsAt: ACCESS_END, refundDue: false },
+    ],
+    [
+      {
+        status: "ended",
+        cancelledAt: DAY_13,
+        accessEndsAt: DAY_13,
+        refund: RefundDue.full({
+          amountCents: 44700,
+          cancelledAt: DAY_13,
+        }).toSnapshot(),
+      },
+      { status: "ended", accessEndsAt: DAY_13, refundDue: true },
+    ],
+    [
+      {
+        status: "ended",
+        cancelledAt: DAY_13,
+        accessEndsAt: DAY_13,
+        refund: {
+          ...RefundDue.full({
+            amountCents: 44700,
+            cancelledAt: DAY_13,
+          }).toSnapshot(),
+          refundedCents: 44700,
+          refundedAt: DAY_14,
+        },
+      },
+      { status: "ended", accessEndsAt: DAY_13, refundDue: false },
+    ],
+  ] as const)("records the standing of %o as %o", (overrides, expected) => {
+    // arrange
+    const subscription = subscriptionOf(overrides);
+
+    // act
+    const standing = subscription.standing();
+
+    // assert
+    expect(standing.toSnapshot()).toEqual(expected);
+  });
+
+  it.each([
+    [{}, false],
+    [{ status: "active" }, false],
+    [{ status: "cancelled", accessEndsAt: ACCESS_END }, true],
+    [{ status: "ended", accessEndsAt: DAY_13 }, true],
   ] as const)(
-    "reads a %s subscription as cancelled or ended: %s",
-    (status, expected) => {
+    "reads %o as cancelled or ended from its recorded status: %s",
+    (overrides, expected) => {
+      // arrange
+      const subscription = subscriptionOf(overrides);
+
       // act
-      const cancelledOrEnded = CoachingSubscription.isCancelledOrEnded(status);
+      const cancelledOrEnded = subscription.standing().isCancelledOrEnded();
 
       // assert
       expect(cancelledOrEnded).toBe(expected);

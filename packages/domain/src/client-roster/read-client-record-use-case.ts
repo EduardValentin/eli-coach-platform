@@ -1,9 +1,9 @@
-import type { VisitorGender, VisitorPrimaryGoal } from "../assessment-call";
-import {
-  CoachingSubscription,
-  type CoachingSubscriptionStatus,
-} from "../coaching-subscription";
-import type { AssessmentCallReader } from "../payment-link";
+import type {
+  AssessmentCallReader,
+  VisitorGender,
+  VisitorPrimaryGoal,
+} from "../assessment-call";
+import { CoachingStanding } from "../client";
 import type { Clock } from "../shared";
 
 import {
@@ -17,10 +17,7 @@ import {
 type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
   needsRefund: boolean;
-  subscriptionStatus: CoachingSubscriptionStatus | null;
   subscriptionCancelledOrEnded: boolean;
-  refundOutstandingCents: number | null;
-  workStartsOn: Date | null;
   assessmentCall: {
     startsAt: Date;
     firstName: string;
@@ -60,20 +57,14 @@ export class ReadClientRecordUseCase {
     }
 
     const now = this.options.clock.now();
-    const subscription = entry.subscription
-      ? CoachingSubscription.reconstitute(entry.subscription)
-      : null;
 
     return {
       ...entry,
       status: rosterEntryStatus(entry, now),
       needsRefund: rosterEntryNeedsRefund(entry),
-      subscriptionStatus: subscription?.statusAt(now) ?? null,
-      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
-        subscription?.status ?? null,
-      ),
-      refundOutstandingCents: subscription?.refund?.outstandingCents() ?? null,
-      workStartsOn: subscription?.programWorkStart() ?? null,
+      subscriptionCancelledOrEnded: CoachingStanding.of(
+        entry.journey.standing,
+      ).isCancelledOrEnded(),
       assessmentCall: {
         startsAt: call.startsAt,
         firstName: call.firstName,

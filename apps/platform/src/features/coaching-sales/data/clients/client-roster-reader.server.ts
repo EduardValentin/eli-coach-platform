@@ -9,11 +9,11 @@ import {
   clientsTable,
   coachingSubscriptionsTable,
 } from "~/features/coaching-sales/data/schema.server";
-import { currentSubscriptionIdOfClient } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 import {
-  subscriptionColumns,
-  toSubscriptionSnapshot,
-} from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
+  coachingStandingOf,
+  isCurrentSubscriptionOfClient,
+} from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import { subscriptionColumns } from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
 
 export class PostgresClientRoster implements ClientRoster {
   constructor(private readonly database: DatabaseClient) {}
@@ -52,13 +52,11 @@ function selectRoster(database: DatabaseClient) {
       authSubjectId: clientsTable.authSubjectId,
       email: clientsTable.email,
       assessmentCallId: clientsTable.assessmentCallId,
+      createdAt: clientsTable.createdAt,
       subscription: subscriptionColumns,
     })
     .from(clientsTable)
-    .leftJoin(
-      coachingSubscriptionsTable,
-      eq(coachingSubscriptionsTable.id, currentSubscriptionIdOfClient),
-    );
+    .leftJoin(coachingSubscriptionsTable, isCurrentSubscriptionOfClient);
 }
 
 type RosterRow = Awaited<ReturnType<typeof selectRoster>>[number];
@@ -76,6 +74,7 @@ function toRosterEntry(row: RosterRow): ClientRosterEntry {
       detailsRequestedAt: row.detailsRequestedAt,
       detailsAnsweredAt: row.detailsAnsweredAt,
       answersApprovedAt: row.answersApprovedAt,
+      standing: coachingStandingOf(row.subscription).toSnapshot(),
     },
     accountBound: row.authSubjectId !== null,
     booking: {
@@ -83,8 +82,6 @@ function toRosterEntry(row: RosterRow): ClientRosterEntry {
       gender: row.gender,
       assessmentCallId: row.assessmentCallId,
     },
-    subscription: row.subscription
-      ? toSubscriptionSnapshot(row.subscription)
-      : null,
+    joinedAt: row.createdAt,
   };
 }

@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   AssessmentCall,
+  type AssessmentCallReader,
   type AssessmentCallSnapshot,
 } from "../assessment-call";
 import type { PricingEligibility } from "../coaching-bundle";
 import { EmailAddress } from "../email-address";
 import type { FeatureFlagReader } from "../feature-flag";
 
-import type { AssessmentCallReader } from "./assessment-call-reader";
 import type { CallSalesState, CallSalesStates } from "./call-sales-states";
 import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
 import type { CoachingSalesNotifications } from "./coaching-sales-notifications";

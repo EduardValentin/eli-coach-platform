@@ -99,6 +99,11 @@ describe("client portal access middleware", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -134,6 +139,11 @@ describe("client portal access middleware", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+        },
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -176,13 +186,16 @@ function createMiddlewareArgs(options: {
 }): Parameters<typeof guardClientPortal>[0] {
   const coachingSales = {
     readClientPortalStanding: {
-      execute: vi
-        .fn()
-        .mockResolvedValue(
-          options.journey
-            ? { journey: options.journey, coaching: "active" }
-            : null,
-        ),
+      execute: vi.fn().mockResolvedValue(
+        options.journey
+          ? {
+              journey: options.journey,
+              portal: options.journey.onboardingSubmittedAt
+                ? "reachable"
+                : "awaiting_onboarding",
+            }
+          : null,
+      ),
     },
   } as unknown as CoachingSalesFeature;
 

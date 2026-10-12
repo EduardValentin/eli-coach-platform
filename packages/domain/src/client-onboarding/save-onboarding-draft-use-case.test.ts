@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
+
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -10,7 +16,22 @@ import type { OnboardingSubmission } from "./onboarding-submission";
 import { SaveOnboardingDraftUseCase } from "./save-onboarding-draft-use-case";
 
 const NOW = new Date("2026-09-28T10:00:00.000Z");
-const MALE_CLIENT: OnboardingClient = {
+const CLIENT: OnboardingClient = {
+  clientId: "client-1",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+  }),
+};
+const MALE_IDENTITY: ClientIdentity = {
   clientId: "client-1",
   gender: "male",
   dateOfBirth: "1990-03-02",
@@ -19,14 +40,6 @@ const MALE_CLIENT: OnboardingClient = {
   country: "RO",
   phone: "+40712345678",
   email: "ana@example.com",
-  submittedAt: null,
-  reviewStamps: {
-    reviewOpenedAt: null,
-    detailsRequestedAt: null,
-    detailsAnsweredAt: null,
-    answersApprovedAt: null,
-  },
-  subscriptionCancelledOrEnded: false,
 };
 const SUBMISSION: OnboardingSubmission = {
   answers: emptyAnswers(),
@@ -39,6 +52,12 @@ function createClients(found: OnboardingClient | null) {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
     findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
+}
+
+function createIdentities(found: ClientIdentity | null = MALE_IDENTITY) {
+  return {
+    findByClientId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientIdentities, "findByClientId">;
 }
 
 function createOnboardings(submission: OnboardingSubmission | null = null) {
@@ -77,13 +96,15 @@ function createIncidents() {
 function createUseCase(
   ports: {
     clients?: OnboardingClients;
+    identities?: Pick<ClientIdentities, "findByClientId">;
     onboardings?: ClientOnboardingSource;
     changes?: ClientOnboardingChanges;
     incidents?: ClientOnboardingIncidents;
   } = {},
 ) {
   return new SaveOnboardingDraftUseCase({
-    clients: ports.clients ?? createClients(MALE_CLIENT),
+    clients: ports.clients ?? createClients(CLIENT),
+    identities: ports.identities ?? createIdentities(),
     onboardings: ports.onboardings ?? createOnboardings(),
     changes: ports.changes ?? createChanges(),
     clock: { now: () => NOW },

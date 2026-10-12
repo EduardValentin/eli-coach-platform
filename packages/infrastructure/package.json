@@ -24,6 +24,7 @@
     "./http/server": "./src/http/index.server.ts",
     "./identity/server": "./src/identity/index.server.ts",
     "./images/server": "./src/images/index.server.ts",
+    "./link-tokens/server": "./src/link-tokens/index.server.ts",
     "./payments/server": "./src/payments/index.server.ts"
   },
   "peerDependencies": {

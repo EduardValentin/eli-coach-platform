@@ -1,6 +1,4 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { AssessmentCall } from "@eli-coach-platform/domain/assessment-call";
-import { Client } from "@eli-coach-platform/domain/client";
 import {
   PurchasedSubscription,
   type CoachingPurchase,
@@ -28,7 +26,18 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     expect(outcome).toEqual({ outcome: "recorded", clientId: "client-1" });
     expect(database.insertedRows).toEqual([
       { id: "evt_1", receivedAt: NOW },
-      expect.objectContaining({ assessmentCallId: PAID_CALL_ID }),
+      {
+        assessmentCallId: PAID_CALL_ID,
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone: null,
+        createdAt: NOW,
+      },
       expect.objectContaining({
         clientId: "client-1",
         stripeCheckoutSessionId: "cs_1",
@@ -194,26 +203,20 @@ function createPurchases(database: DatabaseClient): PostgresCoachingPurchases {
 }
 
 function purchase(): CoachingPurchase {
-  const call = AssessmentCall.reconstitute({
-    id: PAID_CALL_ID,
-    firstName: "Ana",
-    lastName: "Popescu",
-    visitorEmail: "ana@example.com",
-    visitorNotes: null,
-    dateOfBirth: "1994-03-14",
-    gender: "female",
-    primaryGoal: "build_strength",
-    country: "RO",
-    phone: null,
-    startsAt: new Date("2026-10-19T14:00:00.000Z"),
-    visitorTimeZone: "Europe/Bucharest",
-    coachTimeZone: "Europe/Bucharest",
-    bookedAt: new Date("2026-10-18T09:30:00.000Z"),
-  }).toSnapshot();
-
   return {
     eventId: "evt_1",
-    client: Client.fromAssessmentCall(call, NOW),
+    intake: {
+      assessmentCallId: PAID_CALL_ID,
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: "ana@example.com",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: null,
+      bookingTimeZone: "Europe/Bucharest",
+    },
     subscription: PurchasedSubscription.fromCompletedCheckout({
       checkoutSessionId: "cs_1",
       paymentCustomerId: "cus_1",

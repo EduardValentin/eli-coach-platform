@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import { CoachingStanding } from "@eli-coach-platform/domain/client";
 import { describe, expect, it } from "vitest";
 
 import { PostgresOnboardingClients } from "./onboarding-clients-reader.server";
@@ -7,32 +8,44 @@ const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const SUBMITTED_AT = new Date("2026-10-23T09:00:00.000Z");
 const REVIEW_OPENED_AT = new Date("2026-10-24T09:00:00.000Z");
 
+function currentSubscription(status: string) {
+  return {
+    id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+    clientId: CLIENT_ID,
+    bundleId: "3-months",
+    months: 3,
+    tier: "regular",
+    amountCents: 44700,
+    currency: "eur",
+    paymentCustomerId: "cus_1",
+    paymentSubscriptionId: "sub_1",
+    checkoutSessionId: "cs_1",
+    paidAt: new Date("2026-09-26T10:00:00.000Z"),
+    startChoice: "immediate",
+    status,
+    cancelledAt: null,
+    accessEndsAt: null,
+    paymentProblemSince: null,
+    refundReason: null,
+    refundDueCents: null,
+    refundDueBy: null,
+    refundedCents: null,
+    refundedAt: null,
+  };
+}
+
 const CLIENT_ROW = {
   clientId: CLIENT_ID,
-  firstName: "Ana",
-  lastName: "Popescu",
-  email: "ana@example.com",
-  gender: "female",
-  dateOfBirth: "1994-03-14",
-  country: "RO",
-  phone: "+40712345678",
   submittedAt: SUBMITTED_AT,
   reviewOpenedAt: REVIEW_OPENED_AT,
   detailsRequestedAt: null,
   detailsAnsweredAt: null,
   answersApprovedAt: null,
-  currentSubscriptionStatus: "not-started",
+  subscription: currentSubscription("not-started"),
 };
 
 const ONBOARDING_CLIENT = {
   clientId: CLIENT_ID,
-  firstName: "Ana",
-  lastName: "Popescu",
-  email: "ana@example.com",
-  gender: "female",
-  dateOfBirth: "1994-03-14",
-  country: "RO",
-  phone: "+40712345678",
   submittedAt: SUBMITTED_AT,
   reviewStamps: {
     reviewOpenedAt: REVIEW_OPENED_AT,
@@ -40,11 +53,15 @@ const ONBOARDING_CLIENT = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
-  subscriptionCancelledOrEnded: false,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+  }),
 };
 
 describe("PostgresOnboardingClients#findByAuthSubjectId", () => {
-  it("reads the client bound to the subject with her identity, submission and review stamps", async () => {
+  it("reads the client bound to the subject with her submission, review stamps and coaching standing", async () => {
     // arrange
     const clients = new PostgresOnboardingClients(
       createDatabaseAnswering([CLIENT_ROW]),
@@ -106,17 +123,22 @@ describe("PostgresOnboardingClients#findByClientId", () => {
     [null, false],
   ] as const)(
     "reads her coaching as closed for a current %s subscription: %s",
-    async (currentSubscriptionStatus, expected) => {
+    async (status, expected) => {
       // arrange
       const clients = new PostgresOnboardingClients(
-        createDatabaseAnswering([{ ...CLIENT_ROW, currentSubscriptionStatus }]),
+        createDatabaseAnswering([
+          {
+            ...CLIENT_ROW,
+            subscription: status ? currentSubscription(status) : null,
+          },
+        ]),
       );
 
       // act
       const client = await clients.findByClientId(CLIENT_ID);
 
       // assert
-      expect(client?.subscriptionCancelledOrEnded).toBe(expected);
+      expect(client?.standing.isCancelledOrEnded()).toBe(expected);
     },
   );
 
@@ -165,6 +187,7 @@ function createDatabaseAnswering(
     select: (columns: Record<string, unknown>) => {
       const selection = {
         from: () => selection,
+        leftJoin: () => selection,
         where: () => selection,
         limit: () =>
           Promise.resolve(

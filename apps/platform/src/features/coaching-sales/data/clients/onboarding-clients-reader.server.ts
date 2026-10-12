@@ -5,11 +5,17 @@ import type {
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
-import { CoachingSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import { eq, type SQL } from "drizzle-orm";
 
-import { clientsTable } from "~/features/coaching-sales/data/schema.server";
-import { currentSubscriptionStatus } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import {
+  clientsTable,
+  coachingSubscriptionsTable,
+} from "~/features/coaching-sales/data/schema.server";
+import {
+  coachingStandingOf,
+  isCurrentSubscriptionOfClient,
+} from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import { subscriptionColumns } from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
 
 export class PostgresOnboardingClients
   implements OnboardingClients, UnitPreferenceClients, MeasurementClients
@@ -38,21 +44,15 @@ export class PostgresOnboardingClients
     const [row] = await this.database
       .select({
         clientId: clientsTable.id,
-        firstName: clientsTable.firstName,
-        lastName: clientsTable.lastName,
-        email: clientsTable.email,
-        gender: clientsTable.gender,
-        dateOfBirth: clientsTable.dateOfBirth,
-        country: clientsTable.country,
-        phone: clientsTable.phone,
         submittedAt: clientsTable.onboardingSubmittedAt,
         reviewOpenedAt: clientsTable.reviewOpenedAt,
         detailsRequestedAt: clientsTable.detailsRequestedAt,
         detailsAnsweredAt: clientsTable.detailsAnsweredAt,
         answersApprovedAt: clientsTable.answersApprovedAt,
-        currentSubscriptionStatus,
+        subscription: subscriptionColumns,
       })
       .from(clientsTable)
+      .leftJoin(coachingSubscriptionsTable, isCurrentSubscriptionOfClient)
       .where(filter)
       .limit(1);
 
@@ -62,13 +62,6 @@ export class PostgresOnboardingClients
 
     return {
       clientId: row.clientId,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      email: row.email,
-      gender: row.gender,
-      dateOfBirth: row.dateOfBirth,
-      country: row.country,
-      phone: row.phone,
       submittedAt: row.submittedAt,
       reviewStamps: {
         reviewOpenedAt: row.reviewOpenedAt,
@@ -76,9 +69,7 @@ export class PostgresOnboardingClients
         detailsAnsweredAt: row.detailsAnsweredAt,
         answersApprovedAt: row.answersApprovedAt,
       },
-      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
-        row.currentSubscriptionStatus,
-      ),
+      standing: coachingStandingOf(row.subscription),
     };
   }
 }

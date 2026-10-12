@@ -51,11 +51,25 @@ const COACH: AccountSnapshot = {
 const RECORD_READINGS = {
   status: "invited",
   needsRefund: false,
-  subscriptionStatus: "not-started",
   subscriptionCancelledOrEnded: false,
-  refundOutstandingCents: null,
-  workStartsOn: null,
 } as const;
+
+function summaryOf(
+  subscription: Partial<CoachingSubscriptionSnapshot> = {},
+  readings: {
+    status?: CoachingSubscriptionSnapshot["status"];
+    workStartsOn?: Date | null;
+    refundOutstandingCents?: number | null;
+  } = {},
+) {
+  return {
+    subscription: { ...SUBSCRIPTION, ...subscription },
+    status: "not-started",
+    workStartsOn: null,
+    refundOutstandingCents: null,
+    ...readings,
+  };
+}
 
 const BOOKED_CALL = {
   startsAt: new Date("2026-09-24T15:00:00.000Z"),
@@ -85,6 +99,7 @@ function rosterEntry(
       detailsRequestedAt: null,
       detailsAnsweredAt: null,
       answersApprovedAt: null,
+      standing: { status: "not-started", accessEndsAt: null, refundDue: false },
     },
     accountBound: overrides.accountBound ?? false,
     booking: {
@@ -92,10 +107,7 @@ function rosterEntry(
       gender: "female",
       assessmentCallId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
     },
-    subscription:
-      overrides.subscription === undefined
-        ? SUBSCRIPTION
-        : overrides.subscription,
+    joinedAt: PAID_AT,
   };
 }
 
@@ -108,12 +120,13 @@ describe("CoachClientsController#loadRoster", () => {
         clients: [
           { ...rosterEntry(), status: "invited", needsRefund: true },
           {
-            ...rosterEntry({ clientId: OTHER_CLIENT_ID, subscription: null }),
+            ...rosterEntry({ clientId: OTHER_CLIENT_ID }),
             status: "onboarding",
             needsRefund: false,
           },
         ],
       },
+      summaries: { [CLIENT_ID]: summaryOf() },
     });
 
     // act
@@ -194,19 +207,24 @@ describe("CoachClientsController#loadRoster", () => {
 describe("CoachClientsController#loadClient", () => {
   it("reads her record with her gender, the call as she booked it, subscription and pending invitation", async () => {
     // arrange
-    const { controller, readClientInvitation, readClientRecord } =
-      createController({
-        record: {
-          ...rosterEntry(),
-          ...RECORD_READINGS,
-          assessmentCall: { ...BOOKED_CALL, notes: "I train at home." },
-        },
-        invitation: {
-          state: "pending",
-          sentAt: SENT_AT,
-          expiresAt: EXPIRES_AT,
-        },
-      });
+    const {
+      controller,
+      readClientInvitation,
+      readClientRecord,
+      readSubscriptionSummary,
+    } = createController({
+      record: {
+        ...rosterEntry(),
+        ...RECORD_READINGS,
+        assessmentCall: { ...BOOKED_CALL, notes: "I train at home." },
+      },
+      invitation: {
+        state: "pending",
+        sentAt: SENT_AT,
+        expiresAt: EXPIRES_AT,
+      },
+      summaries: { [CLIENT_ID]: summaryOf() },
+    });
 
     // act
     const client = await controller.loadClient(coachArgs(), CLIENT_ID);
@@ -252,25 +270,28 @@ describe("CoachClientsController#loadClient", () => {
     });
     expect(readClientRecord).toHaveBeenCalledWith(CLIENT_ID);
     expect(readClientInvitation).toHaveBeenCalledWith(CLIENT_ID);
+    expect(readSubscriptionSummary).toHaveBeenCalledWith(CLIENT_ID);
   });
 
   it("reads when a cancelled subscription ends", async () => {
     // arrange
     const { controller } = createController({
       record: {
-        ...rosterEntry({
-          subscription: {
-            ...SUBSCRIPTION,
+        ...rosterEntry(),
+        ...RECORD_READINGS,
+        status: "cancelled",
+        subscriptionCancelledOrEnded: true,
+        assessmentCall: BOOKED_CALL,
+      },
+      summaries: {
+        [CLIENT_ID]: summaryOf(
+          {
             status: "cancelled",
             cancelledAt: new Date("2026-10-15T10:00:00.000Z"),
             accessEndsAt: new Date("2026-12-26T10:00:00.000Z"),
           },
-        }),
-        ...RECORD_READINGS,
-        status: "cancelled",
-        subscriptionStatus: "cancelled",
-        subscriptionCancelledOrEnded: true,
-        assessmentCall: BOOKED_CALL,
+          { status: "cancelled" },
+        ),
       },
     });
 
@@ -291,9 +312,16 @@ describe("CoachClientsController#loadClient", () => {
     const endedAt = new Date("2026-10-15T10:00:00.000Z");
     const { controller } = createController({
       record: {
-        ...rosterEntry({
-          subscription: {
-            ...SUBSCRIPTION,
+        ...rosterEntry(),
+        ...RECORD_READINGS,
+        status: "inactive",
+        needsRefund: true,
+        subscriptionCancelledOrEnded: true,
+        assessmentCall: BOOKED_CALL,
+      },
+      summaries: {
+        [CLIENT_ID]: summaryOf(
+          {
             status: "ended",
             cancelledAt: endedAt,
             accessEndsAt: endedAt,
@@ -305,14 +333,8 @@ describe("CoachClientsController#loadClient", () => {
               refundedAt: null,
             },
           },
-        }),
-        ...RECORD_READINGS,
-        status: "inactive",
-        needsRefund: true,
-        subscriptionStatus: "ended",
-        subscriptionCancelledOrEnded: true,
-        refundOutstandingCents: 34700,
-        assessmentCall: BOOKED_CALL,
+          { status: "ended", refundOutstandingCents: 34700 },
+        ),
       },
     });
 
@@ -343,9 +365,15 @@ describe("CoachClientsController#loadClient", () => {
     const endedAt = new Date("2026-10-15T10:00:00.000Z");
     const { controller } = createController({
       record: {
-        ...rosterEntry({
-          subscription: {
-            ...SUBSCRIPTION,
+        ...rosterEntry(),
+        ...RECORD_READINGS,
+        status: "inactive",
+        subscriptionCancelledOrEnded: true,
+        assessmentCall: BOOKED_CALL,
+      },
+      summaries: {
+        [CLIENT_ID]: summaryOf(
+          {
             status: "ended",
             cancelledAt: endedAt,
             accessEndsAt: endedAt,
@@ -357,13 +385,8 @@ describe("CoachClientsController#loadClient", () => {
               refundedAt: new Date("2026-10-20T10:00:00.000Z"),
             },
           },
-        }),
-        ...RECORD_READINGS,
-        status: "inactive",
-        subscriptionStatus: "ended",
-        subscriptionCancelledOrEnded: true,
-        refundOutstandingCents: 0,
-        assessmentCall: BOOKED_CALL,
+          { status: "ended", refundOutstandingCents: 0 },
+        ),
       },
     });
 
@@ -379,17 +402,13 @@ describe("CoachClientsController#loadClient", () => {
 
   it("reads a reduced price for a subscription bought at the reduced tier", async () => {
     // arrange
-    const entry = rosterEntry();
     const { controller } = createController({
       record: {
-        ...entry,
-        subscription: entry.subscription && {
-          ...entry.subscription,
-          tier: "reduced",
-        },
+        ...rosterEntry(),
         ...RECORD_READINGS,
         assessmentCall: BOOKED_CALL,
       },
+      summaries: { [CLIENT_ID]: summaryOf({ tier: "reduced" }) },
     });
 
     // act
@@ -405,8 +424,13 @@ describe("CoachClientsController#loadClient", () => {
       record: {
         ...rosterEntry(),
         ...RECORD_READINGS,
-        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
         assessmentCall: BOOKED_CALL,
+      },
+      summaries: {
+        [CLIENT_ID]: summaryOf(
+          { startChoice: "waiting" },
+          { workStartsOn: new Date("2026-10-10T10:00:00.000Z") },
+        ),
       },
     });
 
@@ -421,10 +445,9 @@ describe("CoachClientsController#loadClient", () => {
     // arrange
     const { controller } = createController({
       record: {
-        ...rosterEntry({ subscription: null }),
+        ...rosterEntry(),
         ...RECORD_READINGS,
         status: "onboarding",
-        subscriptionStatus: null,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -621,6 +644,7 @@ function createController(outcomes: {
   record?: unknown;
   invitation?: unknown;
   resent?: unknown;
+  summaries?: Record<string, unknown>;
 }) {
   const listClients = vi.fn().mockResolvedValue(outcomes.listed);
   const readClientRecord = vi.fn().mockResolvedValue(outcomes.record ?? null);
@@ -628,10 +652,14 @@ function createController(outcomes: {
     .fn()
     .mockResolvedValue(outcomes.invitation ?? null);
   const resendInvitation = vi.fn().mockResolvedValue(outcomes.resent);
+  const readSubscriptionSummary = vi.fn((clientId: string) =>
+    Promise.resolve(outcomes.summaries?.[clientId] ?? null),
+  );
   const controller = new CoachClientsController({
     listClients: { execute: listClients } as never,
     readClientRecord: { execute: readClientRecord } as never,
     readClientInvitation: { execute: readClientInvitation } as never,
+    readSubscriptionSummary: { execute: readSubscriptionSummary } as never,
     resendInvitation: { execute: resendInvitation } as never,
   });
 
@@ -640,6 +668,7 @@ function createController(outcomes: {
     listClients,
     readClientInvitation,
     readClientRecord,
+    readSubscriptionSummary,
     resendInvitation,
   };
 }

@@ -1,52 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { AssessmentCall } from "../assessment-call";
-import {
-  RefundDue,
-  type CoachingSubscriptionSnapshot,
-} from "../coaching-subscription";
-import type { AssessmentCallReader } from "../payment-link";
+import { AssessmentCall, type AssessmentCallReader } from "../assessment-call";
+import type { CoachingStandingSnapshot } from "../client";
+
 import type { ClientRoster, ClientRosterEntry } from "./client-roster";
 import type { ClientRosterIncidents } from "./client-roster-incidents";
 import { ListClientsUseCase } from "./list-clients-use-case";
 import { ReadClientRecordUseCase } from "./read-client-record-use-case";
 
-const PAID_AT = new Date("2026-09-26T10:00:00.000Z");
+const JOINED_AT = new Date("2026-09-26T10:00:00.000Z");
 const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
 const NOW = new Date("2026-10-20T10:00:00.000Z");
 const clock = { now: () => NOW };
 
-function subscriptionSnapshot(
-  overrides: Partial<CoachingSubscriptionSnapshot> = {},
-): CoachingSubscriptionSnapshot {
-  return {
-    id: "subscription-1",
-    clientId: "client-1",
-    bundleId: "3-months",
-    months: 3,
-    tier: "regular",
-    amountCents: 44700,
-    currency: "eur",
-    paymentCustomerId: "cus_1",
-    paymentSubscriptionId: "sub_1",
-    checkoutSessionId: "cs_1",
-    paidAt: PAID_AT,
-    startChoice: "immediate",
-    status: "not-started",
-    cancelledAt: null,
-    accessEndsAt: null,
-    paymentProblemSince: null,
-    refund: null,
-    ...overrides,
-  };
-}
+const NOT_STARTED: CoachingStandingSnapshot = {
+  status: "not-started",
+  accessEndsAt: null,
+  refundDue: false,
+};
 
 function entry(
   overrides: {
     clientId?: string;
     accountBound?: boolean;
     onboardingSubmittedAt?: Date | null;
-    subscription?: CoachingSubscriptionSnapshot;
+    standing?: CoachingStandingSnapshot;
   } = {},
 ): ClientRosterEntry {
   return {
@@ -61,6 +39,7 @@ function entry(
       detailsRequestedAt: null,
       detailsAnsweredAt: null,
       answersApprovedAt: null,
+      standing: overrides.standing ?? NOT_STARTED,
     },
     accountBound: overrides.accountBound ?? true,
     booking: {
@@ -68,7 +47,7 @@ function entry(
       gender: "female",
       assessmentCallId: "call-1",
     },
-    subscription: overrides.subscription ?? subscriptionSnapshot(),
+    joinedAt: JOINED_AT,
   };
 }
 
@@ -118,15 +97,7 @@ describe("ListClientsUseCase", () => {
     const cancelledAt = new Date("2026-10-05T10:00:00.000Z");
     const ended = entry({
       onboardingSubmittedAt: SUBMITTED_AT,
-      subscription: subscriptionSnapshot({
-        status: "ended",
-        cancelledAt,
-        accessEndsAt: cancelledAt,
-        refund: RefundDue.full({
-          amountCents: 44700,
-          cancelledAt,
-        }).toSnapshot(),
-      }),
+      standing: { status: "ended", accessEndsAt: cancelledAt, refundDue: true },
     });
     const useCase = new ListClientsUseCase({
       roster: createRoster({ list: vi.fn().mockResolvedValue([ended]) }),
@@ -202,10 +173,7 @@ describe("ReadClientRecordUseCase", () => {
       ...found,
       status: "awaiting-review",
       needsRefund: false,
-      subscriptionStatus: "not-started",
       subscriptionCancelledOrEnded: false,
-      refundOutstandingCents: null,
-      workStartsOn: null,
       assessmentCall: {
         startsAt: new Date("2026-09-25T15:00:00.000Z"),
         firstName: "Ana-Maria",
@@ -223,84 +191,41 @@ describe("ReadClientRecordUseCase", () => {
     expect(calls.findById).toHaveBeenCalledWith("call-1");
   });
 
-  it("reads when the work starts for a client waiting out her withdrawal window", async () => {
-    // arrange
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({
-        findById: vi.fn().mockResolvedValue(
-          entry({
-            subscription: subscriptionSnapshot({ startChoice: "waiting" }),
-          }),
-        ),
-      }),
-      calls: callReader(null),
-      clock,
-    });
+  it.each([
+    [
+      "cancelled with access left",
+      { status: "cancelled", accessEndsAt: NOW, refundDue: false },
+      { subscriptionCancelledOrEnded: true, needsRefund: false },
+    ],
+    [
+      "ended with a refund still owed",
+      { status: "ended", accessEndsAt: NOW, refundDue: true },
+      { subscriptionCancelledOrEnded: true, needsRefund: true },
+    ],
+    [
+      "active",
+      { status: "active", accessEndsAt: null, refundDue: false },
+      { subscriptionCancelledOrEnded: false, needsRefund: false },
+    ],
+  ] as const)(
+    "reads a client whose coaching is %s from her standing",
+    async (_label, standing, expected) => {
+      // arrange
+      const useCase = new ReadClientRecordUseCase({
+        roster: createRoster({
+          findById: vi.fn().mockResolvedValue(entry({ standing })),
+        }),
+        calls: callReader(null),
+        clock,
+      });
 
-    // act
-    const result = await useCase.execute("client-1");
+      // act
+      const result = await useCase.execute("client-1");
 
-    // assert
-    expect(result?.workStartsOn).toEqual(new Date("2026-10-10T10:00:00.000Z"));
-  });
-
-  it("reads her subscription as ended once her cancelled access has run out", async () => {
-    // arrange
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({
-        findById: vi.fn().mockResolvedValue(
-          entry({
-            subscription: subscriptionSnapshot({
-              status: "cancelled",
-              cancelledAt: PAID_AT,
-              accessEndsAt: NOW,
-            }),
-          }),
-        ),
-      }),
-      calls: callReader(null),
-      clock,
-    });
-
-    // act
-    const result = await useCase.execute("client-1");
-
-    // assert
-    expect(result?.subscriptionStatus).toBe("ended");
-  });
-
-  it("reads a cancelled subscription whose refund is part settled as cancelled or ended with what is still owed", async () => {
-    // arrange
-    const cancelledAt = new Date("2026-10-05T10:00:00.000Z");
-    const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({
-        findById: vi.fn().mockResolvedValue(
-          entry({
-            subscription: subscriptionSnapshot({
-              status: "ended",
-              cancelledAt,
-              accessEndsAt: cancelledAt,
-              refund: RefundDue.full({ amountCents: 44700, cancelledAt })
-                .settle({ refundedCents: 10000, at: NOW })
-                .toSnapshot(),
-            }),
-          }),
-        ),
-      }),
-      calls: callReader(null),
-      clock,
-    });
-
-    // act
-    const result = await useCase.execute("client-1");
-
-    // assert
-    expect(result).toMatchObject({
-      subscriptionCancelledOrEnded: true,
-      refundOutstandingCents: 34700,
-      needsRefund: true,
-    });
-  });
+      // assert
+      expect(result).toMatchObject(expected);
+    },
+  );
 
   it("reads no notes when she left none when booking", async () => {
     // arrange

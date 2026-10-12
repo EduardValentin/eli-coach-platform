@@ -1,13 +1,10 @@
 import type { VisitorGender } from "../assessment-call";
+import { CoachingStanding, type CoachingStandingSnapshot } from "../client";
 import {
   formsForGender,
   reviewStageOf,
   type ReviewStamps,
 } from "../client-onboarding";
-import {
-  CoachingSubscription,
-  type CoachingSubscriptionSnapshot,
-} from "../coaching-subscription";
 
 export type ClientJourneyStep =
   | "welcome"
@@ -28,10 +25,6 @@ export type StepAfterSubmission = (typeof STEPS_AFTER_SUBMISSION)[number];
 
 export type WelcomeWording = "five-part" | "four-part";
 
-export type CoachingStanding = "active" | "ended";
-
-export type PortalReach = "reachable" | "awaiting_onboarding" | "ended";
-
 export type ClientJourneySnapshot = ReviewStamps & {
   clientId: string;
   firstName: string;
@@ -39,6 +32,7 @@ export type ClientJourneySnapshot = ReviewStamps & {
   gender: VisitorGender;
   welcomeSeenAt: Date | null;
   onboardingSubmittedAt: Date | null;
+  standing: CoachingStandingSnapshot;
 };
 
 export class ClientJourney {
@@ -52,6 +46,7 @@ export class ClientJourney {
   readonly detailsRequestedAt: Date | null;
   readonly detailsAnsweredAt: Date | null;
   readonly answersApprovedAt: Date | null;
+  readonly standing: CoachingStanding;
 
   private constructor(snapshot: ClientJourneySnapshot) {
     this.clientId = snapshot.clientId;
@@ -64,6 +59,7 @@ export class ClientJourney {
     this.detailsRequestedAt = snapshot.detailsRequestedAt;
     this.detailsAnsweredAt = snapshot.detailsAnsweredAt;
     this.answersApprovedAt = snapshot.answersApprovedAt;
+    this.standing = CoachingStanding.of(snapshot.standing);
   }
 
   static from(snapshot: ClientJourneySnapshot): ClientJourney {
@@ -74,36 +70,6 @@ export class ClientJourney {
     step: ClientJourneyStep,
   ): step is StepAfterSubmission {
     return STEPS_AFTER_SUBMISSION.some((submitted) => submitted === step);
-  }
-
-  static coachingStandingOf(reading: {
-    subscription: Pick<
-      CoachingSubscriptionSnapshot,
-      "status" | "accessEndsAt"
-    > | null;
-    at: Date;
-  }): CoachingStanding {
-    if (!reading.subscription) {
-      return "active";
-    }
-
-    return CoachingSubscription.statusOf(reading.subscription, reading.at) ===
-      "ended"
-      ? "ended"
-      : "active";
-  }
-
-  static portalReachOf(standing: {
-    step: ClientJourneyStep;
-    coaching: CoachingStanding;
-  }): PortalReach {
-    if (standing.coaching === "ended") {
-      return "ended";
-    }
-
-    return ClientJourney.isAfterSubmission(standing.step)
-      ? "reachable"
-      : "awaiting_onboarding";
   }
 
   step(): ClientJourneyStep {
@@ -142,6 +108,7 @@ export class ClientJourney {
       detailsRequestedAt: this.detailsRequestedAt,
       detailsAnsweredAt: this.detailsAnsweredAt,
       answersApprovedAt: this.answersApprovedAt,
+      standing: this.standing.toSnapshot(),
     };
   }
 }

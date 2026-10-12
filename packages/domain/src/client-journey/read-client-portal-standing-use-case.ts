@@ -1,23 +1,17 @@
-import type { CoachingSubscriptions } from "../coaching-subscription";
+import { portalReachOf, type PortalReach } from "../client";
 import type { Clock } from "../shared";
 
-import {
-  ClientJourney,
-  type CoachingStanding,
-  type PortalReach,
-} from "./client-journey";
+import type { ClientJourney } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 
 type ClientPortalStandingReading = {
   journey: ClientJourney;
-  coaching: CoachingStanding;
   portal: PortalReach;
 };
 
 type ReadClientPortalStandingUseCaseOptions = {
   clock: Clock;
   journeys: ClientJourneys;
-  subscriptions: CoachingSubscriptions;
 };
 
 export class ReadClientPortalStandingUseCase {
@@ -35,18 +29,13 @@ export class ReadClientPortalStandingUseCase {
       return null;
     }
 
-    const subscription = await this.options.subscriptions.findCurrentForClient(
-      journey.clientId,
-    );
-    const coaching = ClientJourney.coachingStandingOf({
-      subscription,
-      at: this.options.clock.now(),
-    });
-
     return {
       journey,
-      coaching,
-      portal: ClientJourney.portalReachOf({ step: journey.step(), coaching }),
+      portal: portalReachOf({
+        standing: journey.standing,
+        onboardingSubmittedAt: journey.onboardingSubmittedAt,
+        now: this.options.clock.now(),
+      }),
     };
   }
 }

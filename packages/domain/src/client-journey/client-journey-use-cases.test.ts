@@ -1,23 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  CoachingSubscription,
-  type CoachingSubscriptions,
-  type CoachingSubscriptionSnapshot,
-  type StartChoice,
-} from "../coaching-subscription";
+import type { CoachingStandingSnapshot } from "../client";
 
 import { ClientJourney, type ClientJourneySnapshot } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 import { MarkWelcomeSeenUseCase } from "./mark-welcome-seen-use-case";
 import { ReadClientJourneyUseCase } from "./read-client-journey-use-case";
 import { ReadClientPortalStandingUseCase } from "./read-client-portal-standing-use-case";
-import { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 
 const NOW = new Date("2026-09-27T10:00:00.000Z");
 const WELCOME_SEEN_AT = new Date("2026-09-27T09:00:00.000Z");
 const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
-const PURCHASED_AT = new Date("2026-09-26T10:00:00.000Z");
 
 const OPENED_AT = new Date("2026-09-28T11:00:00.000Z");
 const ASKED_AT = new Date("2026-09-28T12:00:00.000Z");
@@ -29,10 +22,16 @@ const NO_REVIEW_STAMPS = {
   answersApprovedAt: null,
 };
 
+const NOT_STARTED: CoachingStandingSnapshot = {
+  status: "not-started",
+  accessEndsAt: null,
+  refundDue: false,
+};
+
 function journey(
   welcomeSeenAt: Date | null,
   onboardingSubmittedAt: Date | null = null,
-  reviewStamps: Partial<ClientJourneySnapshot> = {},
+  overrides: Partial<ClientJourneySnapshot> = {},
 ): ClientJourney {
   return ClientJourney.from({
     clientId: "client-1",
@@ -42,7 +41,8 @@ function journey(
     welcomeSeenAt,
     onboardingSubmittedAt,
     ...NO_REVIEW_STAMPS,
-    ...reviewStamps,
+    standing: NOT_STARTED,
+    ...overrides,
   });
 }
 
@@ -52,44 +52,6 @@ function createJourneys(found: ClientJourney | null) {
     recordWelcomeSeen: vi.fn().mockResolvedValue(undefined),
     recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
   } satisfies ClientJourneys;
-}
-
-function subscriptionOf(
-  overrides: Partial<CoachingSubscriptionSnapshot> & {
-    startChoice: StartChoice;
-  },
-): CoachingSubscription {
-  return CoachingSubscription.reconstitute({
-    id: "subscription-1",
-    clientId: "client-1",
-    bundleId: "3-months",
-    months: 3,
-    tier: "regular",
-    amountCents: 44700,
-    currency: "eur",
-    paymentCustomerId: "cus_1",
-    paymentSubscriptionId: "sub_1",
-    checkoutSessionId: "cs_1",
-    paidAt: PURCHASED_AT,
-    status: "not-started",
-    cancelledAt: null,
-    accessEndsAt: null,
-    paymentProblemSince: null,
-    refund: null,
-    ...overrides,
-  });
-}
-
-function createSubscriptions(found: CoachingSubscription | null) {
-  return {
-    findCurrentForClient: vi.fn().mockResolvedValue(found),
-    findCurrentForAuthSubject: vi.fn(),
-    findByPaymentSubscriptionId: vi.fn(),
-    findCurrentByPaymentCustomerId: vi.fn(),
-    findByPaymentIntentId: vi.fn(),
-    save: vi.fn(),
-    saveForEvent: vi.fn(),
-  } satisfies CoachingSubscriptions;
 }
 
 describe("ReadClientJourneyUseCase", () => {
@@ -165,191 +127,42 @@ describe("MarkWelcomeSeenUseCase", () => {
   });
 });
 
-describe("ReadProgramStatusUseCase", () => {
-  it("answers her submission with no later start when she started immediately", async () => {
-    // arrange
-    const subscriptions = createSubscriptions(
-      subscriptionOf({ startChoice: "immediate" }),
-    );
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions,
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status).toEqual({
-      kind: "submitted",
-      submittedAt: SUBMITTED_AT,
-      workStartsOn: null,
-      startNowUntil: null,
-    });
-    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
-  });
-
-  it("answers her submission with the day the work starts and until when she can start now when she waits out the withdrawal window", async () => {
-    // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ startChoice: "waiting" }),
-      ),
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status).toEqual({
-      kind: "submitted",
-      submittedAt: SUBMITTED_AT,
-      workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
-      startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
-    });
-  });
-
-  it("answers neither a coming work start nor start now once her withdrawal deadline has passed on the waiting path", async () => {
-    // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => new Date("2026-10-10T10:00:00.000Z") },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ startChoice: "waiting" }),
-      ),
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status).toMatchObject({
-      workStartsOn: null,
-      startNowUntil: null,
-    });
-  });
-
-  it("answers her submission with no start day when she holds no subscription", async () => {
-    // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(null),
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status).toEqual({
-      kind: "submitted",
-      submittedAt: SUBMITTED_AT,
-      workStartsOn: null,
-      startNowUntil: null,
-    });
-  });
-
-  it.each([
-    ["in-review", { reviewOpenedAt: OPENED_AT }],
-    [
-      "needs-details",
-      { reviewOpenedAt: OPENED_AT, detailsRequestedAt: ASKED_AT },
-    ],
-    ["approved", { reviewOpenedAt: OPENED_AT, answersApprovedAt: NOW }],
-  ] as const)(
-    "answers %s once the coach's review reaches it",
-    async (expected, reviewStamps) => {
-      // arrange
-      const useCase = new ReadProgramStatusUseCase({
-        clock: { now: () => NOW },
-        journeys: createJourneys(
-          journey(WELCOME_SEEN_AT, SUBMITTED_AT, reviewStamps),
-        ),
-        subscriptions: createSubscriptions(null),
-      });
-
-      // act
-      const status = await useCase.execute("user_ana");
-
-      // assert
-      expect(status).toMatchObject({
-        kind: expected,
-        submittedAt: SUBMITTED_AT,
-      });
-    },
-  );
-
-  it.each([
-    ["a client who has not sent her onboarding", journey(WELCOME_SEEN_AT)],
-    ["a subject bound to no client", null],
-  ])("answers no status for %s", async (_label, found) => {
-    // arrange
-    const subscriptions = createSubscriptions(
-      subscriptionOf({ startChoice: "waiting" }),
-    );
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(found),
-      subscriptions,
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status).toBeNull();
-    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
-  });
-});
-
 describe("ReadClientPortalStandingUseCase", () => {
   const ACCESS_END = new Date("2026-12-26T10:00:00.000Z");
-  const ENDED_SUBSCRIPTION = subscriptionOf({
-    startChoice: "waiting",
+  const ENDED: CoachingStandingSnapshot = {
     status: "ended",
-    cancelledAt: NOW,
     accessEndsAt: NOW,
-  });
+    refundDue: false,
+  };
 
   function standingUseCase(options: {
     found: ClientJourney | null;
-    subscription: CoachingSubscription | null;
     now: Date;
   }) {
-    const subscriptions = createSubscriptions(options.subscription);
+    const journeys = createJourneys(options.found);
 
     return {
-      subscriptions,
+      journeys,
       useCase: new ReadClientPortalStandingUseCase({
         clock: { now: () => options.now },
-        journeys: createJourneys(options.found),
-        subscriptions,
+        journeys,
       }),
     };
   }
 
   it("answers her portal reachable to a client who submitted onboarding and whose coaching is active", async () => {
     // arrange
-    const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
-    const { useCase, subscriptions } = standingUseCase({
-      found,
-      subscription: subscriptionOf({ startChoice: "waiting" }),
-      now: NOW,
+    const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
+      standing: { status: "active", accessEndsAt: null, refundDue: false },
     });
+    const { useCase, journeys } = standingUseCase({ found, now: NOW });
 
     // act
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({
-      journey: found,
-      coaching: "active",
-      portal: "reachable",
-    });
-    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
+    expect(standing).toEqual({ journey: found, portal: "reachable" });
+    expect(journeys.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
   });
 
   it("keeps the portal reachable to a client the coach sent back for details", async () => {
@@ -358,21 +171,13 @@ describe("ReadClientPortalStandingUseCase", () => {
       reviewOpenedAt: OPENED_AT,
       detailsRequestedAt: ASKED_AT,
     });
-    const { useCase } = standingUseCase({
-      found,
-      subscription: subscriptionOf({ startChoice: "waiting" }),
-      now: NOW,
-    });
+    const { useCase } = standingUseCase({ found, now: NOW });
 
     // act
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({
-      journey: found,
-      coaching: "active",
-      portal: "reachable",
-    });
+    expect(standing).toEqual({ journey: found, portal: "reachable" });
   });
 
   it.each([
@@ -382,11 +187,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     "answers her portal awaiting onboarding to a client who %s, though her coaching is active",
     async (_label, found) => {
       // arrange
-      const { useCase } = standingUseCase({
-        found,
-        subscription: subscriptionOf({ startChoice: "waiting" }),
-        now: NOW,
-      });
+      const { useCase } = standingUseCase({ found, now: NOW });
 
       // act
       const standing = await useCase.execute("user_ana");
@@ -394,96 +195,71 @@ describe("ReadClientPortalStandingUseCase", () => {
       // assert
       expect(standing).toEqual({
         journey: found,
-        coaching: "active",
         portal: "awaiting_onboarding",
       });
     },
   );
 
   it.each([
-    ["ended", ENDED_SUBSCRIPTION, NOW],
+    ["ended", ENDED, NOW],
     [
       "cancelled and past her access end",
-      subscriptionOf({
-        startChoice: "waiting",
+      {
         status: "cancelled",
-        cancelledAt: NOW,
         accessEndsAt: ACCESS_END,
-      }),
+        refundDue: false,
+      } satisfies CoachingStandingSnapshot,
       ACCESS_END,
     ],
   ])(
-    "answers her coaching and her portal ended to a submitted client whose subscription is %s",
-    async (_label, subscription, now) => {
+    "answers her portal ended to a submitted client whose coaching is %s",
+    async (_label, standingSnapshot, now) => {
       // arrange
-      const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
-      const { useCase } = standingUseCase({ found, subscription, now });
+      const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
+        standing: standingSnapshot,
+      });
+      const { useCase } = standingUseCase({ found, now });
 
       // act
       const standing = await useCase.execute("user_ana");
 
       // assert
-      expect(standing).toEqual({
-        journey: found,
-        coaching: "ended",
-        portal: "ended",
-      });
+      expect(standing).toEqual({ journey: found, portal: "ended" });
     },
   );
 
-  it("answers her coaching ended to a client who never submitted onboarding", async () => {
+  it("answers her portal ended to a client who never submitted onboarding", async () => {
     // arrange
-    const found = journey(WELCOME_SEEN_AT);
-    const { useCase } = standingUseCase({
-      found,
-      subscription: ENDED_SUBSCRIPTION,
-      now: NOW,
-    });
+    const found = journey(WELCOME_SEEN_AT, null, { standing: ENDED });
+    const { useCase } = standingUseCase({ found, now: NOW });
 
     // act
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({
-      journey: found,
-      coaching: "ended",
-      portal: "ended",
-    });
+    expect(standing).toEqual({ journey: found, portal: "ended" });
   });
 
-  it("answers her portal reachable to a submitted client with no subscription", async () => {
+  it("answers her portal reachable to a submitted client whose coaching has not started", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT);
-    const { useCase } = standingUseCase({
-      found,
-      subscription: null,
-      now: NOW,
-    });
+    const { useCase } = standingUseCase({ found, now: NOW });
 
     // act
     const standing = await useCase.execute("user_ana");
 
     // assert
-    expect(standing).toEqual({
-      journey: found,
-      coaching: "active",
-      portal: "reachable",
-    });
+    expect(standing).toEqual({ journey: found, portal: "reachable" });
   });
 
   it("answers no standing for a subject bound to no client", async () => {
     // arrange
-    const { useCase, subscriptions } = standingUseCase({
-      found: null,
-      subscription: null,
-      now: NOW,
-    });
+    const { useCase } = standingUseCase({ found: null, now: NOW });
 
     // act
     const standing = await useCase.execute("user_ana");
 
     // assert
     expect(standing).toBeNull();
-    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingStanding,
+  type ClientIdentities,
+  type ClientIdentity,
+} from "../client";
 import { ClientProfile } from "../client-profile";
 import type { ClientUnitPreferencesSource } from "../unit-preference";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
@@ -32,6 +37,17 @@ const REQUESTED_STAMPS: ReviewStamps = {
 
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
+  submittedAt: SUBMITTED_AT,
+  reviewStamps: REQUESTED_STAMPS,
+  standing: CoachingStanding.of({
+    status: "not-started",
+    accessEndsAt: null,
+    refundDue: false,
+  }),
+};
+
+const IDENTITY: ClientIdentity = {
+  clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
   country: "RO",
@@ -39,9 +55,6 @@ const CLIENT: OnboardingClient = {
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
-  submittedAt: SUBMITTED_AT,
-  reviewStamps: REQUESTED_STAMPS,
-  subscriptionCancelledOrEnded: false,
 };
 
 const SUBMISSION: OnboardingSubmission = {
@@ -112,6 +125,9 @@ function answerPorts(
         ),
       findByClientId: vi.fn().mockResolvedValue(null),
     } satisfies OnboardingClients,
+    identities: {
+      findByClientId: vi.fn().mockResolvedValue(IDENTITY),
+    } satisfies Pick<ClientIdentities, "findByClientId">,
     onboardings: {
       findByClientId: vi
         .fn()

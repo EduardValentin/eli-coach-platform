@@ -1,3 +1,4 @@
+import type { ClientIdentities } from "../client";
 import {
   UnitPreference,
   type ClientUnitPreferencesSource,
@@ -14,6 +15,7 @@ type ClientOnboardingReading = {
 
 type ReadClientOnboardingUseCaseOptions = {
   clients: OnboardingClients;
+  identities: Pick<ClientIdentities, "findByClientId">;
   onboardings: ClientOnboardingSource;
   unitPreferences: ClientUnitPreferencesSource;
 };
@@ -26,8 +28,10 @@ export class ReadClientOnboardingUseCase {
   ): Promise<ClientOnboardingReading | null> {
     const client =
       await this.options.clients.findByAuthSubjectId(authSubjectId);
+    const identity =
+      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client) {
+    if (!client || !identity) {
       return null;
     }
 
@@ -37,7 +41,10 @@ export class ReadClientOnboardingUseCase {
     ]);
 
     return {
-      onboarding: ClientOnboarding.reconstitute({ client, ...stored }),
+      onboarding: ClientOnboarding.reconstitute({
+        client: identity,
+        ...stored,
+      }),
       unitPreference: unitPreference ?? UnitPreference.metric(),
     };
   }

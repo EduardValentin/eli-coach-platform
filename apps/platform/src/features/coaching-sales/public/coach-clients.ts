@@ -2,11 +2,9 @@ import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
 } from "@eli-coach-platform/domain/assessment-call";
+import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
 import { CLIENT_STATUSES } from "@eli-coach-platform/domain/client-roster";
-import {
-  COACHING_SUBSCRIPTION_STATUSES,
-  REFUND_REASONS,
-} from "@eli-coach-platform/domain/coaching-subscription";
+import { REFUND_REASONS } from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
 import { coachingBundleIdSchema } from "./bundle-cards";
@@ -75,7 +73,7 @@ const clientSubscriptionSchema = z.object({
   reducedPrice: z.boolean(),
   paidAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
-  status: z.enum(COACHING_SUBSCRIPTION_STATUSES),
+  status: z.enum(COACHING_STATUSES),
   endsOn: z.iso.datetime().nullable(),
   endedOn: z.iso.datetime().nullable(),
   refund: subscriptionRefundSchema.nullable(),

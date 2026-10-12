@@ -2,6 +2,7 @@ import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
+import { Client } from "@eli-coach-platform/domain/client";
 import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
@@ -101,7 +102,7 @@ async function recordPurchase(
   transaction: DatabaseTransaction,
   recording: { purchase: CoachingPurchase; receivedAt: Date },
 ): Promise<CoachingPurchaseOutcome> {
-  const { client, eventId, subscription } = recording.purchase;
+  const { intake, eventId, subscription } = recording.purchase;
   const ledgerOutcome = await recordPaymentEvent(transaction, {
     eventId,
     receivedAt: recording.receivedAt,
@@ -110,13 +111,25 @@ async function recordPurchase(
   if (ledgerOutcome === "duplicate") {
     return {
       outcome: "duplicate_event",
-      clientId: await findClientIdForCall(transaction, client.assessmentCallId),
+      clientId: await findClientIdForCall(transaction, intake.assessmentCallId),
     };
   }
 
+  const client = Client.fromIntake(intake, recording.receivedAt).toSnapshot();
   const [clientRow] = await transaction
     .insert(clientsTable)
-    .values(client.toSnapshot())
+    .values({
+      assessmentCallId: client.assessmentCallId,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      dateOfBirth: client.dateOfBirth,
+      gender: client.gender,
+      primaryGoal: client.primaryGoal,
+      country: client.country,
+      phone: client.phone,
+      createdAt: client.createdAt,
+    })
     .returning({ id: clientsTable.id });
 
   if (!clientRow) {

@@ -1,4 +1,5 @@
 import type { VisitorGender } from "../assessment-call";
+import type { ClientIdentity } from "../client";
 import type { MeasurementEntry } from "../measurement";
 import type { MeasureUnits } from "../unit-preference";
 
@@ -7,7 +8,6 @@ import {
   withoutUnreachable,
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
-import type { OnboardingClient } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
 import type { OnboardingDraft } from "./onboarding-draft";
 import {
@@ -48,7 +48,7 @@ type OnboardingSubmitOutcome =
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type ClientOnboardingProps = {
-  client: Pick<OnboardingClient, "clientId" | "gender" | "dateOfBirth">;
+  client: Pick<ClientIdentity, "clientId" | "gender" | "dateOfBirth">;
   draft: OnboardingDraft | null;
   submission: OnboardingSubmission | null;
 };

@@ -1,4 +1,7 @@
-import type { AssessmentCallSnapshot } from "../assessment-call";
+import type {
+  AssessmentCallReader,
+  AssessmentCallSnapshot,
+} from "../assessment-call";
 import {
   findCoachingBundle,
   type PricingEligibility,
@@ -6,7 +9,6 @@ import {
 import { EmailAddress } from "../email-address";
 import {
   PaymentLink,
-  type AssessmentCallReader,
   type CallSalesStates,
   type CoachingSalesWindow,
   type PaymentLinks,

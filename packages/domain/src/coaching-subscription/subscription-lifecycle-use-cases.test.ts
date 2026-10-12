@@ -155,7 +155,7 @@ function cancelUseCase(options: {
   return new CancelSubscriptionUseCase({
     clients: options.clients ?? createClients(),
     clock: clockAt(options.now),
-    coachingEnd: options.coachingEnd ?? createCoachingEnd(),
+    coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
     incidents: options.incidents ?? createIncidents(),
     notifications: options.notifications ?? createNotifications(),
     paymentSubscriptions:
@@ -604,6 +604,41 @@ describe("CancelSubscriptionUseCase", () => {
       });
     },
   );
+
+  it("tells every coaching-end handler, reporting the one that fails without skipping the next", async () => {
+    // arrange
+    const failure = new Error("first handler down");
+    const failing = createCoachingEnd();
+    failing.coachingEnds.mockRejectedValue(failure);
+    const listening = createCoachingEnd();
+    const incidents = createIncidents();
+    const useCase = new CancelSubscriptionUseCase({
+      clients: createClients(),
+      clock: clockAt(DAY_14),
+      coachingEnds: [failing, listening],
+      incidents,
+      notifications: createNotifications(),
+      paymentSubscriptions: createPaymentSubscriptions(),
+      subscriptions: createSubscriptions(subscriptionOf()),
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
+    expect(listening.coachingEnds).toHaveBeenCalledWith({
+      clientId: "client-1",
+      endsAt: ACCESS_END,
+    });
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledTimes(1);
+    expect(incidents.coachingEndNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: "client-1",
+      endsAt: ACCESS_END,
+      error: failure,
+    });
+  });
 
   it("keeps the cancellation and reports it when the coaching end cannot be propagated", async () => {
     // arrange
@@ -1054,7 +1089,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     coachingEnd?: ReturnType<typeof createCoachingEnd>;
   }) {
     return new ReconcileSubscriptionEventUseCase({
-      coachingEnd: options.coachingEnd ?? createCoachingEnd(),
+      coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
       incidents: options.incidents ?? createIncidents(),
       subscriptions: options.subscriptions,
     });
@@ -1503,6 +1538,71 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       error: failure,
     });
   });
+
+  it.each<[string, SubscriptionEvent[]]>([
+    [
+      "a scheduled end arriving after the end",
+      [
+        {
+          kind: "ended",
+          paymentSubscriptionId: "sub_1",
+          endedAt: OCCURRED_AT,
+        },
+        {
+          kind: "end-scheduled",
+          paymentSubscriptionId: "sub_1",
+          endsAt: ACCESS_END,
+          occurredAt: DAY_14,
+        },
+      ],
+    ],
+    [
+      "a recovered payment arriving after the end",
+      [
+        {
+          kind: "ended",
+          paymentSubscriptionId: "sub_1",
+          endedAt: OCCURRED_AT,
+        },
+        {
+          kind: "payment-recovered",
+          paymentSubscriptionId: "sub_1",
+          occurredAt: DAY_14,
+        },
+      ],
+    ],
+  ])(
+    "leaves the standing equal to the saved subscription's after %s",
+    async (_label, events) => {
+      // arrange
+      const subscriptions = createSubscriptions(subscriptionOf());
+      let saved = subscriptionOf();
+      subscriptions.findByPaymentSubscriptionId.mockImplementation(() =>
+        Promise.resolve(saved),
+      );
+      subscriptions.saveForEvent.mockImplementation((change) => {
+        saved = change.subscription;
+        return Promise.resolve("recorded");
+      });
+      const useCase = reconcileUseCase({ subscriptions });
+
+      // act
+      for (const [index, event] of events.entries()) {
+        await useCase.execute({ eventId: `evt_${index}`, event });
+      }
+
+      // assert
+      const lastSaved = subscriptions.saveForEvent.mock.lastCall?.[0];
+      expect(lastSaved?.subscription.standing().toSnapshot()).toEqual(
+        saved.standing().toSnapshot(),
+      );
+      expect(saved.standing().toSnapshot()).toEqual({
+        status: "ended",
+        accessEndsAt: OCCURRED_AT,
+        refundDue: false,
+      });
+    },
+  );
 
   it("fails the delivery so the provider redelivers when the subscription keeps changing", async () => {
     // arrange

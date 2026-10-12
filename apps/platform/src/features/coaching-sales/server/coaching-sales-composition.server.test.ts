@@ -1,8 +1,10 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
+import type {
+  AssessmentCallReader,
+  AssessmentCallSnapshot,
+} from "@eli-coach-platform/domain/assessment-call";
 import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
-import type { AssessmentCallReader } from "@eli-coach-platform/domain/payment-link";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
@@ -220,8 +222,15 @@ describe("composeCoachingSalesFeature resource clients", () => {
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
       database: createDatabaseAnswering([
-        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
-        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+        [
+          {
+            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
+            subscription: subscriptionRow({
+              status: "not-started",
+              accessEndsAt: null,
+            }),
+          },
+        ],
       ]),
     });
 
@@ -241,13 +250,15 @@ describe("composeCoachingSalesFeature resource clients", () => {
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
       database: createDatabaseAnswering([
-        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
         [
-          subscriptionRow({
-            status: "ended",
-            cancelledAt: SUBMITTED_AT,
-            accessEndsAt: SUBMITTED_AT,
-          }),
+          {
+            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
+            subscription: subscriptionRow({
+              status: "ended",
+              cancelledAt: SUBMITTED_AT,
+              accessEndsAt: SUBMITTED_AT,
+            }),
+          },
         ],
       ]),
     });
@@ -268,8 +279,15 @@ describe("composeCoachingSalesFeature resource clients", () => {
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
       database: createDatabaseAnswering([
-        [journeyRow({ onboardingSubmittedAt: null })],
-        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+        [
+          {
+            ...journeyRow({ onboardingSubmittedAt: null }),
+            subscription: subscriptionRow({
+              status: "not-started",
+              accessEndsAt: null,
+            }),
+          },
+        ],
       ]),
     });
 
@@ -307,11 +325,16 @@ describe("composeCoachingSalesFeature check-in clients", () => {
       ...createHandles({}),
       database: createDatabaseAnswering([
         [
-          journeyRow({
-            onboardingSubmittedAt: new Date("2026-10-15T10:00:00.000Z"),
-          }),
+          {
+            ...journeyRow({
+              onboardingSubmittedAt: new Date("2026-10-15T10:00:00.000Z"),
+            }),
+            subscription: subscriptionRow({
+              status: "not-started",
+              accessEndsAt: null,
+            }),
+          },
         ],
-        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
       ]),
     });
 
@@ -488,8 +511,15 @@ describe("composeCoachingSalesFeature check-in client references", () => {
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
       database: createDatabaseAnswering([
-        [journeyRow({ onboardingSubmittedAt: null })],
-        [subscriptionRow({ status: "not-started", accessEndsAt: null })],
+        [
+          {
+            ...journeyRow({ onboardingSubmittedAt: null }),
+            subscription: subscriptionRow({
+              status: "not-started",
+              accessEndsAt: null,
+            }),
+          },
+        ],
       ]),
     });
 
@@ -515,8 +545,12 @@ describe("composeCoachingSalesFeature check-in client references", () => {
     const { handles } = composeCoachingSalesFeature({
       ...createHandles({}),
       database: createDatabaseAnswering([
-        [journeyRow({ onboardingSubmittedAt: SUBMITTED_AT })],
-        [cancelled],
+        [
+          {
+            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
+            subscription: cancelled,
+          },
+        ],
         [cancelled],
       ]),
     });
@@ -546,7 +580,6 @@ describe("composeCoachingSalesFeature check-in client references", () => {
             subscription: cancelled,
           }),
         ],
-        [cancelled],
       ]),
     });
 

@@ -3,11 +3,17 @@ import type {
   InvitedClient,
   InvitedClients,
 } from "@eli-coach-platform/domain/client-invitation";
-import { CoachingSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import { eq } from "drizzle-orm";
 
-import { clientsTable } from "~/features/coaching-sales/data/schema.server";
-import { currentSubscriptionStatus } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import {
+  clientsTable,
+  coachingSubscriptionsTable,
+} from "~/features/coaching-sales/data/schema.server";
+import {
+  coachingStandingOf,
+  isCurrentSubscriptionOfClient,
+} from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import { subscriptionColumns } from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
 
 export class PostgresInvitedClients implements InvitedClients {
   constructor(private readonly database: DatabaseClient) {}
@@ -19,9 +25,10 @@ export class PostgresInvitedClients implements InvitedClients {
         email: clientsTable.email,
         firstName: clientsTable.firstName,
         authSubjectId: clientsTable.authSubjectId,
-        currentSubscriptionStatus,
+        subscription: subscriptionColumns,
       })
       .from(clientsTable)
+      .leftJoin(coachingSubscriptionsTable, isCurrentSubscriptionOfClient)
       .where(eq(clientsTable.id, clientId))
       .limit(1);
 
@@ -34,9 +41,9 @@ export class PostgresInvitedClients implements InvitedClients {
       email: row.email,
       firstName: row.firstName,
       authSubjectId: row.authSubjectId,
-      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
-        row.currentSubscriptionStatus,
-      ),
+      subscriptionCancelledOrEnded: coachingStandingOf(
+        row.subscription,
+      ).isCancelledOrEnded(),
     };
   }
 }

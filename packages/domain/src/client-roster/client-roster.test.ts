@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 
+import { CoachingStanding, type CoachingStandingSnapshot } from "../client";
+
 import { CLIENT_STATUSES, clientStatusOf } from "./client-roster";
 
 const NOW = new Date("2026-10-20T10:00:00.000Z");
 const LATER = new Date("2027-01-02T10:00:00.000Z");
+
+function standingOf(
+  recorded: Pick<CoachingStandingSnapshot, "status" | "accessEndsAt">,
+): CoachingStanding {
+  return CoachingStanding.of({ ...recorded, refundDue: false });
+}
 
 describe("clientStatusOf", () => {
   it.each([
@@ -19,7 +27,7 @@ describe("clientStatusOf", () => {
     const input = {
       accountBound,
       step,
-      subscription: { status: "not-started" as const, accessEndsAt: null },
+      standing: standingOf({ status: "not-started", accessEndsAt: null }),
       now: NOW,
     };
 
@@ -28,22 +36,6 @@ describe("clientStatusOf", () => {
 
     // assert
     expect(status).toBe(expected);
-  });
-
-  it("derives her status from the journey when she holds no subscription", () => {
-    // arrange
-    const input = {
-      accountBound: true,
-      step: "submitted" as const,
-      subscription: null,
-      now: NOW,
-    };
-
-    // act
-    const status = clientStatusOf(input);
-
-    // assert
-    expect(status).toBe("awaiting-review");
   });
 
   it.each([
@@ -56,13 +48,13 @@ describe("clientStatusOf", () => {
     ],
     ["inactive once ended", { status: "ended", accessEndsAt: NOW }, "inactive"],
   ] as const)(
-    "reads her subscription as %s over her journey",
-    (_label, subscription, expected) => {
+    "reads her coaching as %s over her journey",
+    (_label, recorded, expected) => {
       // arrange
       const input = {
         accountBound: true,
         step: "approved" as const,
-        subscription,
+        standing: standingOf(recorded),
         now: NOW,
       };
 
@@ -78,13 +70,13 @@ describe("clientStatusOf", () => {
     ["cancelled", { status: "cancelled", accessEndsAt: LATER }, "cancelled"],
     ["inactive", { status: "ended", accessEndsAt: NOW }, "inactive"],
   ] as const)(
-    "reads her cancelled or ended subscription as %s before her account is bound",
-    (_label, subscription, expected) => {
+    "reads her cancelled or ended coaching as %s before her account is bound",
+    (_label, recorded, expected) => {
       // arrange
       const input = {
         accountBound: false,
         step: "welcome" as const,
-        subscription,
+        standing: standingOf(recorded),
         now: NOW,
       };
 
@@ -101,7 +93,7 @@ describe("clientStatusOf", () => {
     const input = {
       accountBound: false,
       step: "welcome" as const,
-      subscription: { status: "active" as const, accessEndsAt: null },
+      standing: standingOf({ status: "active", accessEndsAt: null }),
       now: NOW,
     };
 

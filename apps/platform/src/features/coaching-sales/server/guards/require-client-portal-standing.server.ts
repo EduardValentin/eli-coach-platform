@@ -96,7 +96,7 @@ async function readSignedInClientStanding(
 
   return {
     journey: standing.journey,
-    standing: { step: standing.journey.step(), coaching: standing.coaching },
+    standing: { step: standing.journey.step(), portal: standing.portal },
   };
 }
 
@@ -105,7 +105,7 @@ export async function requireOpenClientPortal(
 ): Promise<void> {
   const standing = await readClientPortalStanding(args);
 
-  if (standing?.coaching === "ended") {
+  if (standing?.portal === "ended") {
     throw Response.json(ENDED_REFUSAL, { status: CONFLICT });
   }
 }

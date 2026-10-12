@@ -10,7 +10,15 @@ import type {
 import { and, eq, isNull } from "drizzle-orm";
 
 import { writeReviewStamps } from "~/features/coaching-sales/data/client-journeys/review-stamps.server";
-import { clientsTable } from "~/features/coaching-sales/data/schema.server";
+import {
+  clientsTable,
+  coachingSubscriptionsTable,
+} from "~/features/coaching-sales/data/schema.server";
+import {
+  coachingStandingOf,
+  isCurrentSubscriptionOfClient,
+} from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import { subscriptionColumns } from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
 
 export class PostgresClientJourneys
   implements ClientJourneys, OnboardingReviewStamps
@@ -32,12 +40,23 @@ export class PostgresClientJourneys
         detailsRequestedAt: clientsTable.detailsRequestedAt,
         detailsAnsweredAt: clientsTable.detailsAnsweredAt,
         answersApprovedAt: clientsTable.answersApprovedAt,
+        subscription: subscriptionColumns,
       })
       .from(clientsTable)
+      .leftJoin(coachingSubscriptionsTable, isCurrentSubscriptionOfClient)
       .where(eq(clientsTable.authSubjectId, authSubjectId))
       .limit(1);
 
-    return row ? ClientJourney.from(row) : null;
+    if (!row) {
+      return null;
+    }
+
+    const { subscription, ...journey } = row;
+
+    return ClientJourney.from({
+      ...journey,
+      standing: coachingStandingOf(subscription).toSnapshot(),
+    });
   }
 
   async recordWelcomeSeen(input: {

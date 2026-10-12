@@ -1,5 +1,5 @@
+import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
 import {
-  COACHING_SUBSCRIPTION_STATUSES,
   OFFERED_CANCELLATION_RULES,
   START_NOW_REFUSALS,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -36,7 +36,7 @@ export const clientSettingsSchema = z.object({
     amountCents: z.number().int().positive(),
     currency: z.string().length(3),
     paidAt: z.iso.datetime(),
-    status: z.enum(COACHING_SUBSCRIPTION_STATUSES),
+    status: z.enum(COACHING_STATUSES),
     cancelledAt: z.iso.datetime().nullable(),
     accessEndsAt: z.iso.datetime().nullable(),
     paymentProblem: z.boolean(),

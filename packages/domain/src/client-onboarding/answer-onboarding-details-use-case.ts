@@ -1,3 +1,4 @@
+import type { ClientIdentities } from "../client";
 import { ClientProfile } from "../client-profile";
 import type { Clock } from "../shared";
 import {
@@ -28,6 +29,7 @@ type AnswerOnboardingDetailsResult =
 
 type AnswerOnboardingDetailsUseCaseOptions = {
   clients: OnboardingClients;
+  identities: Pick<ClientIdentities, "findByClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   unitPreferences: ClientUnitPreferencesSource;
@@ -46,8 +48,10 @@ export class AnswerOnboardingDetailsUseCase {
     const client = await this.options.clients.findByAuthSubjectId(
       command.authSubjectId,
     );
+    const identity =
+      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client) {
+    if (!client || !identity) {
       return { status: "not-on-journey" };
     }
 
@@ -58,7 +62,7 @@ export class AnswerOnboardingDetailsUseCase {
       this.options.unitPreferences.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });

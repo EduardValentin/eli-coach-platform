@@ -37,7 +37,7 @@ type RecordedCancellation = Extract<
 type CancelSubscriptionUseCaseOptions = {
   clients: ClientIdentities;
   clock: Clock;
-  coachingEnd: CoachingEndHandler;
+  coachingEnds: readonly CoachingEndHandler[];
   incidents: CoachingSubscriptionIncidents;
   notifications: RefundNotifications;
   paymentSubscriptions: PaymentSubscriptions;

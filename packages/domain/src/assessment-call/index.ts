@@ -1,4 +1,5 @@
 export { AssessmentCall, type AssessmentCallSnapshot } from "./assessment-call";
+export { type AssessmentCallReader } from "./assessment-call-reader";
 export { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 export { type AssessmentCallIncidents } from "./assessment-call-incidents";
 export {

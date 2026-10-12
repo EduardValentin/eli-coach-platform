@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import type { ClientIdentity } from "../client";
 import type { MeasureUnits } from "../unit-preference";
+
 import { DetailRequest } from "./detail-request";
 import {
   emptyAnswers,
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
-import type { OnboardingClient } from "./onboarding-clients";
 import { OnboardingReview, reviewStageOf } from "./onboarding-review";
 import type { ReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingSubmission } from "./onboarding-submission";
@@ -30,7 +31,7 @@ const NO_STAMPS: ReviewStamps = {
   answersApprovedAt: null,
 };
 
-const CLIENT: OnboardingClient = {
+const IDENTITY: ClientIdentity = {
   clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
@@ -39,9 +40,6 @@ const CLIENT: OnboardingClient = {
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
-  submittedAt: SUBMITTED_AT,
-  reviewStamps: NO_STAMPS,
-  subscriptionCancelledOrEnded: false,
 };
 
 function submittedAnswers(): OnboardingAnswersByForm {
@@ -69,7 +67,7 @@ function request(
 ): DetailRequest {
   return DetailRequest.reconstitute({
     id: "request-1",
-    clientId: CLIENT.clientId,
+    clientId: IDENTITY.clientId,
     questionIds: [WEIGHT],
     note: "Please weigh yourself in the morning.",
     askedAt: ASKED_AT,
@@ -82,7 +80,7 @@ function review(
   overrides: Partial<Parameters<typeof OnboardingReview.reconstitute>[0]> = {},
 ): OnboardingReview {
   return OnboardingReview.reconstitute({
-    client: CLIENT,
+    client: IDENTITY,
     submission: submission(),
     openedAt: null,
     approvedAt: null,
@@ -246,7 +244,7 @@ describe("OnboardingReview#requestDetails", () => {
     if (outcome.status !== "requested") return;
     expect(outcome.request.toSnapshot()).toEqual({
       id: "request-1",
-      clientId: CLIENT.clientId,
+      clientId: IDENTITY.clientId,
       questionIds: [WEIGHT, GOAL_WEIGHT],
       note: "Please weigh yourself in the morning.",
       askedAt: ASKED_AT,
@@ -325,7 +323,7 @@ describe("OnboardingReview#requestDetails", () => {
   it("refuses a safety question she was never shown because she screens manually", () => {
     // arrange
     const onboardingReview = review({
-      client: { ...CLIENT, dateOfBirth: "2015-01-01" },
+      client: { ...IDENTITY, dateOfBirth: "2015-01-01" },
       openedAt: OPENED_AT,
     });
 
@@ -624,7 +622,7 @@ describe("OnboardingReview#reviewableForms", () => {
   it("leaves out the safety form for a client who screens manually and the cycle form for a male client", () => {
     // arrange
     const onboardingReview = review({
-      client: { ...CLIENT, gender: "male", dateOfBirth: "1950-01-01" },
+      client: { ...IDENTITY, gender: "male", dateOfBirth: "1950-01-01" },
     });
 
     // act

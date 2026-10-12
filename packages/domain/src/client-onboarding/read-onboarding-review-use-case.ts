@@ -1,3 +1,4 @@
+import type { ClientIdentities } from "../client";
 import {
   earliestMeasurementOf,
   type ClientMeasurementsSource,
@@ -62,6 +63,7 @@ type ReadOnboardingReviewResult =
 
 type ReadOnboardingReviewUseCaseOptions = {
   clients: OnboardingClients;
+  identities: Pick<ClientIdentities, "findByClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   measurements: ClientMeasurementsSource;
@@ -104,8 +106,10 @@ export class ReadOnboardingReviewUseCase {
 
   async execute(clientId: string): Promise<ReadOnboardingReviewResult> {
     const client = await this.options.clients.findByClientId(clientId);
+    const identity =
+      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client) {
+    if (!client || !identity) {
       return { status: "not-found" };
     }
 
@@ -114,7 +118,7 @@ export class ReadOnboardingReviewUseCase {
       this.options.reviews.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });
@@ -137,7 +141,7 @@ export class ReadOnboardingReviewUseCase {
       screening: {
         outcome: screeningOutcome({
           answers,
-          dateOfBirth: client.dateOfBirth,
+          dateOfBirth: identity.dateOfBirth,
           now: submission.submittedAt,
         }),
         yesCount: flaggedQuestions.filter(

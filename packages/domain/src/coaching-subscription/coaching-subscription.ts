@@ -1,3 +1,4 @@
+import { CoachingStanding, type CoachingStatus } from "../client";
 import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
 
 import { RefundDue, type RefundDueSnapshot } from "./refund-due";
@@ -7,16 +8,6 @@ export const COACHING_SUBSCRIPTION_PURPOSE = "coaching-subscription";
 export const START_CHOICES = ["immediate", "waiting"] as const;
 
 export type StartChoice = (typeof START_CHOICES)[number];
-
-export const COACHING_SUBSCRIPTION_STATUSES = [
-  "not-started",
-  "active",
-  "cancelled",
-  "ended",
-] as const;
-
-export type CoachingSubscriptionStatus =
-  (typeof COACHING_SUBSCRIPTION_STATUSES)[number];
 
 export type CheckoutCompletion = {
   checkoutSessionId: string;
@@ -76,7 +67,7 @@ export type CoachingSubscriptionSnapshot = {
   checkoutSessionId: string;
   paidAt: Date;
   startChoice: StartChoice;
-  status: CoachingSubscriptionStatus;
+  status: CoachingStatus;
   cancelledAt: Date | null;
   accessEndsAt: Date | null;
   paymentProblemSince: Date | null;
@@ -89,11 +80,6 @@ type CoachingSubscriptionProps = Omit<
 > & {
   refund: RefundDue | null;
 };
-
-type SubscriptionStanding = Pick<
-  CoachingSubscriptionSnapshot,
-  "status" | "accessEndsAt"
->;
 
 export const WITHDRAWAL_WINDOW_DAYS = 14;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -117,7 +103,7 @@ export class CoachingSubscription {
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
   readonly startChoice: StartChoice;
-  readonly status: CoachingSubscriptionStatus;
+  readonly status: CoachingStatus;
   readonly cancelledAt: Date | null;
   readonly accessEndsAt: Date | null;
   readonly paymentProblemSince: Date | null;
@@ -152,29 +138,16 @@ export class CoachingSubscription {
     });
   }
 
-  static statusOf(
-    standing: SubscriptionStanding,
-    now: Date,
-  ): CoachingSubscriptionStatus {
-    const accessHasEnded =
-      standing.accessEndsAt !== null &&
-      now.getTime() >= standing.accessEndsAt.getTime();
-
-    if (standing.status === "cancelled" && accessHasEnded) {
-      return "ended";
-    }
-
-    return standing.status;
+  standing(): CoachingStanding {
+    return CoachingStanding.of({
+      status: this.status,
+      accessEndsAt: this.accessEndsAt,
+      refundDue: this.hasRefundOutstanding(),
+    });
   }
 
-  static isCancelledOrEnded(
-    status: CoachingSubscriptionStatus | null,
-  ): boolean {
-    return status === "cancelled" || status === "ended";
-  }
-
-  statusAt(now: Date): CoachingSubscriptionStatus {
-    return CoachingSubscription.statusOf(this, now);
+  statusAt(now: Date): CoachingStatus {
+    return this.standing().at(now);
   }
 
   hasRefundOutstanding(): boolean {
@@ -186,13 +159,11 @@ export class CoachingSubscription {
   }
 
   coachingEndsAt(): Date | null {
-    return CoachingSubscription.isCancelledOrEnded(this.status)
-      ? this.accessEndsAt
-      : null;
+    return this.standing().coachingEndsAt();
   }
 
   hasPortalAccessAt(now: Date): boolean {
-    return this.statusAt(now) !== "ended";
+    return this.standing().hasPortalAccessAt(now);
   }
 
   cancellationRule(now: Date): CancellationRule {

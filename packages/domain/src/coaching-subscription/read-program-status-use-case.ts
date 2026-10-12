@@ -1,8 +1,11 @@
-import type { CoachingSubscriptions } from "../coaching-subscription";
+import {
+  ClientJourney,
+  type ClientJourneys,
+  type StepAfterSubmission,
+} from "../client-journey";
 import type { Clock } from "../shared";
 
-import { ClientJourney, type StepAfterSubmission } from "./client-journey";
-import type { ClientJourneys } from "./client-journeys";
+import type { CoachingSubscriptions } from "./coaching-subscriptions";
 
 type ProgramStatus = {
   kind: StepAfterSubmission;
@@ -13,8 +16,8 @@ type ProgramStatus = {
 
 type ReadProgramStatusUseCaseOptions = {
   clock: Clock;
-  journeys: ClientJourneys;
-  subscriptions: CoachingSubscriptions;
+  journeys: Pick<ClientJourneys, "findByAuthSubjectId">;
+  subscriptions: Pick<CoachingSubscriptions, "findCurrentForClient">;
 };
 
 export class ReadProgramStatusUseCase {

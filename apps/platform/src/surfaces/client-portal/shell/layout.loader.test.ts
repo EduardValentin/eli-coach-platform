@@ -2,8 +2,8 @@ import type {
   ClientJourneySnapshot,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
-  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
+import type { ReadProgramStatusUseCase } from "@eli-coach-platform/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
@@ -33,6 +33,7 @@ const ANA: ClientJourneySnapshot = {
   detailsRequestedAt: null,
   detailsAnsweredAt: null,
   answersApprovedAt: null,
+  standing: { status: "not-started", accessEndsAt: null, refundDue: false },
 };
 
 describe("client shell loader", () => {

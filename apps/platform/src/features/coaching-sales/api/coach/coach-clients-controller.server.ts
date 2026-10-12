@@ -8,7 +8,10 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
-import type { RefundDueSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
+import type {
+  ReadSubscriptionSummaryUseCase,
+  RefundDueSnapshot,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -28,6 +31,7 @@ type CoachClientsControllerOptions = {
   listClients: ListClientsUseCase;
   readClientRecord: ReadClientRecordUseCase;
   readClientInvitation: ReadClientInvitationUseCase;
+  readSubscriptionSummary: ReadSubscriptionSummaryUseCase;
   resendInvitation: ResendInvitationUseCase;
 };
 
@@ -57,6 +61,10 @@ type ClientRecord = NonNullable<
   Awaited<ReturnType<ReadClientRecordUseCase["execute"]>>
 >;
 
+type SubscriptionSummary = NonNullable<
+  Awaited<ReturnType<ReadSubscriptionSummaryUseCase["execute"]>>
+>;
+
 type InvitationRecord = NonNullable<
   Awaited<ReturnType<ReadClientInvitationUseCase["execute"]>>
 >;
@@ -73,8 +81,16 @@ export class CoachClientsController {
       return clientRosterSchema.parse({ clients: null });
     }
 
+    const summaries = await Promise.all(
+      listing.clients.map((client) =>
+        this.options.readSubscriptionSummary.execute(client.journey.clientId),
+      ),
+    );
+
     return clientRosterSchema.parse({
-      clients: listing.clients.map(toRosterClient),
+      clients: listing.clients.map((client, index) =>
+        toRosterClient(client, summaries[index] ?? null),
+      ),
     });
   }
 
@@ -90,9 +106,10 @@ export class CoachClientsController {
       throw createNotFoundResponse();
     }
 
-    const [record, invitation] = await Promise.all([
+    const [record, invitation, summary] = await Promise.all([
       this.options.readClientRecord.execute(id.data),
       this.options.readClientInvitation.execute(id.data),
+      this.options.readSubscriptionSummary.execute(id.data),
     ]);
 
     if (!record) {
@@ -104,7 +121,7 @@ export class CoachClientsController {
       subscriptionCancelledOrEnded: record.subscriptionCancelledOrEnded,
       gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
-      subscription: subscriptionOf(record),
+      subscription: summary ? subscriptionOf(summary) : null,
       invitation: invitationOf(record, invitation),
     });
   }
@@ -165,20 +182,19 @@ function invitationOf(
   };
 }
 
-function toRosterClient(client: ListedClient) {
+function toRosterClient(
+  client: ListedClient,
+  summary: SubscriptionSummary | null,
+) {
   return {
     ...identityOf(client),
-    bundleMonths: client.subscription?.months ?? null,
-    paidAt: client.subscription?.paidAt.toISOString() ?? null,
+    bundleMonths: summary?.subscription.months ?? null,
+    paidAt: summary?.subscription.paidAt.toISOString() ?? null,
   };
 }
 
-function subscriptionOf(record: ClientRecord) {
-  if (!record.subscription) {
-    return null;
-  }
-
-  const { subscription, subscriptionStatus } = record;
+function subscriptionOf(summary: SubscriptionSummary) {
+  const { subscription, status: subscriptionStatus } = summary;
   const accessEndsOn = subscription.accessEndsAt?.toISOString() ?? null;
 
   return {
@@ -186,14 +202,14 @@ function subscriptionOf(record: ClientRecord) {
     months: subscription.months,
     reducedPrice: subscription.tier === "reduced",
     paidAt: subscription.paidAt.toISOString(),
-    workStartsOn: record.workStartsOn?.toISOString() ?? null,
+    workStartsOn: summary.workStartsOn?.toISOString() ?? null,
     status: subscriptionStatus,
     endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
     endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
     refund: subscription.refund
       ? refundOf(subscription.refund, {
           currency: subscription.currency,
-          outstandingCents: record.refundOutstandingCents ?? 0,
+          outstandingCents: summary.refundOutstandingCents ?? 0,
         })
       : null,
   };

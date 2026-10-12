@@ -1,3 +1,5 @@
+import type { ClientIdentities } from "../client";
+
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingQuestionId } from "./onboarding-answers";
@@ -14,6 +16,7 @@ type OpenDetailRequestReading = {
 
 type ReadOpenDetailRequestUseCaseOptions = {
   clients: OnboardingClients;
+  identities: Pick<ClientIdentities, "findByClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   stamps: OnboardingReviewStamps;
@@ -28,8 +31,10 @@ export class ReadOpenDetailRequestUseCase {
   ): Promise<OpenDetailRequestReading | null> {
     const client =
       await this.options.clients.findByAuthSubjectId(authSubjectId);
+    const identity =
+      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client) {
+    if (!client || !identity) {
       return null;
     }
 
@@ -38,7 +43,7 @@ export class ReadOpenDetailRequestUseCase {
       this.options.reviews.findByClientId(client.clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });

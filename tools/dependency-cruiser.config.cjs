@@ -31,6 +31,7 @@ const FEATURE_ORDER = [
   "waitlist",
   "coach-schedule",
   "assessment-calls",
+  "clients",
   "coaching-sales",
   "client-profile",
   "client-resources",
@@ -49,6 +50,65 @@ if (unorderedFeatures.length > 0) {
   throw new Error(
     `Place every feature in FEATURE_ORDER; missing: ${unorderedFeatures.join(", ")}.`,
   );
+}
+
+const DOMAIN_SLICE_ORDER = [
+  "shared",
+  "email-address",
+  "feature-flag",
+  "product",
+  "cart",
+  "acquisition",
+  "download-grant",
+  "waitlist",
+  "account",
+  "coach-availability",
+  "coach-meeting-room",
+  "coach-schedule",
+  "assessment-call",
+  "unit-preference",
+  "measurement",
+  "client",
+  "client-invitation",
+  "client-profile",
+  "client-onboarding",
+  "client-journey",
+  "client-roster",
+  "client-resources",
+  "check-in",
+  "coaching-bundle",
+  "payment-link",
+  "coaching-subscription",
+];
+
+const unorderedDomainSlices = readdirSync(
+  path.join(__dirname, "../packages/domain/src"),
+  { withFileTypes: true },
+)
+  .filter(
+    (entry) => entry.isDirectory() && !DOMAIN_SLICE_ORDER.includes(entry.name),
+  )
+  .map((entry) => entry.name);
+
+if (unorderedDomainSlices.length > 0) {
+  throw new Error(
+    `Place every domain slice in DOMAIN_SLICE_ORDER; missing: ${unorderedDomainSlices.join(", ")}.`,
+  );
+}
+
+function domainSliceOrderRule(slice, position) {
+  const earlierSlices = DOMAIN_SLICE_ORDER.slice(0, position);
+
+  return {
+    name: `domain-slice-order-${slice}`,
+    comment: `A domain slice imports only the slices before it in DOMAIN_SLICE_ORDER: ${slice} may import ${earlierSlices.join(", ") || "no other slice"}.`,
+    severity: "error",
+    from: { path: `^packages/domain/src/${slice}/` },
+    to: {
+      path: "^packages/domain/src/",
+      pathNot: `^packages/domain/src/(${[...earlierSlices, slice].join("|")})/`,
+    },
+  };
 }
 
 function featureOrderRule(feature, position) {
@@ -389,6 +449,7 @@ module.exports = {
         pathNot: "^packages/domain/src/[^/]+/index\\.ts$",
       },
     },
+    ...DOMAIN_SLICE_ORDER.map(domainSliceOrderRule),
     {
       name: "domain-no-externals",
       comment: "The domain package imports nothing outside itself.",

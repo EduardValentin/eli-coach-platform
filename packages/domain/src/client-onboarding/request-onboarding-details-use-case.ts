@@ -1,10 +1,11 @@
+import type { ClientIdentities, ClientIdentity } from "../client";
 import type { Clock } from "../shared";
 
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { DetailRequest } from "./detail-request";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
 import {
   OnboardingReview,
@@ -30,6 +31,7 @@ type RequestOnboardingDetailsResult =
 
 type RequestOnboardingDetailsUseCaseOptions = {
   clients: OnboardingClients;
+  identities: Pick<ClientIdentities, "findByClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   requestIds: DetailRequestIdGenerator;
@@ -48,12 +50,14 @@ export class RequestOnboardingDetailsUseCase {
   ): Promise<RequestOnboardingDetailsResult> {
     const { clientId } = command;
     const client = await this.options.clients.findByClientId(clientId);
+    const identity =
+      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client) {
+    if (!client || !identity) {
       return { status: "not-found" };
     }
 
-    if (client.subscriptionCancelledOrEnded) {
+    if (client.standing.isCancelledOrEnded()) {
       return { status: "subscription-cancelled-or-ended" };
     }
 
@@ -62,7 +66,7 @@ export class RequestOnboardingDetailsUseCase {
       this.options.reviews.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
-      client,
+      client: identity,
       submission: stored.submission,
       ...reviewed,
     });
@@ -90,13 +94,13 @@ export class RequestOnboardingDetailsUseCase {
       clientId,
       questionCount: outcome.request.questionIds.length,
     });
-    await this.emailDetailsRequest(client, outcome.request);
+    await this.emailDetailsRequest(identity, outcome.request);
 
     return { status: "requested" };
   }
 
   private async emailDetailsRequest(
-    client: OnboardingClient,
+    client: ClientIdentity,
     request: DetailRequest,
   ): Promise<void> {
     const delivery = await this.options.notifications

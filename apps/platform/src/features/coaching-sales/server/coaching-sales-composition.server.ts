@@ -1,7 +1,11 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
+import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
 import type { CheckInClients } from "@eli-coach-platform/domain/check-in";
-import type { ClientIdentities } from "@eli-coach-platform/domain/client";
+import {
+  portalReachOf,
+  type ClientIdentities,
+} from "@eli-coach-platform/domain/client";
 import {
   AcceptInvitationUseCase,
   AdmitPaidClientUseCase,
@@ -16,7 +20,6 @@ import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
   ReadClientPortalStandingUseCase,
-  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import type {
   OnboardingClients,
@@ -34,11 +37,12 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
-  CoachingSubscription,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
   ReadClientSubscriptionUseCase,
+  ReadProgramStatusUseCase,
+  ReadSubscriptionSummaryUseCase,
   ReconcileSubscriptionEventUseCase,
   RecordCheckoutCompletedUseCase,
   RefreshPaymentCardUseCase,
@@ -58,7 +62,6 @@ import {
   ReadCallSalesStatesUseCase,
   ResolvePaymentLinkUseCase,
   SendPaymentLinkUseCase,
-  type AssessmentCallReader,
   type CoachingSalesIncidents,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -66,6 +69,7 @@ import type { MeasurementClients } from "@eli-coach-platform/domain/client-profi
 import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
 import type {
   PaymentCardHandler,
   PaymentCompletionHandler,
@@ -94,10 +98,6 @@ import { PostgresOnboardingClients } from "~/features/coaching-sales/data/client
 import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
 import { PostgresInvitedClients } from "~/features/coaching-sales/data/invitations/invited-clients-repository.server";
 import { PostgresClientInvitations } from "~/features/coaching-sales/data/invitations/invitations-repository.server";
-import {
-  LinkTokenSha256,
-  RandomLinkTokenGenerator,
-} from "~/features/coaching-sales/data/link-tokens/link-token.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
 import { PostgresPaymentCards } from "~/features/coaching-sales/data/payment-cards/payment-cards-repository.server";
@@ -173,8 +173,7 @@ export function composeCoachingSalesFeature(
   const invitations = new PostgresClientInvitations(database);
   const journeys = new PostgresClientJourneys(database);
   const onboardingClients = new PostgresOnboardingClients(database);
-  const tokenGenerator = new RandomLinkTokenGenerator();
-  const tokenHasher = new LinkTokenSha256();
+  const { generator: tokenGenerator, hasher: tokenHasher } = createLinkTokens();
   const emailOptions = {
     appBasePath: handles.appBasePath,
     clock,
@@ -235,7 +234,6 @@ export function composeCoachingSalesFeature(
     readClientPortalStanding: new ReadClientPortalStandingUseCase({
       clock,
       journeys,
-      subscriptions,
     }),
     readProgramStatus: new ReadProgramStatusUseCase({
       clock,
@@ -246,7 +244,7 @@ export function composeCoachingSalesFeature(
 
   const subscriptionPorts = {
     clock,
-    coachingEnd: handles.coachingEndHandler,
+    coachingEnds: [handles.coachingEndHandler],
     incidents: handles.incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
@@ -302,6 +300,10 @@ export function composeCoachingSalesFeature(
       clock,
       roster,
     }),
+    readSubscriptionSummary: new ReadSubscriptionSummaryUseCase({
+      clock,
+      subscriptions,
+    }),
   };
 
   const portalClientOf = async (authSubjectId: string) => {
@@ -311,7 +313,11 @@ export function composeCoachingSalesFeature(
       );
 
     return standing
-      ? { clientId: standing.journey.clientId, portal: standing.portal }
+      ? {
+          clientId: standing.journey.clientId,
+          portal: standing.portal,
+          coachingEndsAt: standing.journey.standing.coachingEndsAt(),
+        }
       : null;
   };
 
@@ -329,18 +335,8 @@ export function composeCoachingSalesFeature(
     },
   };
 
-  const coachingEndOf = async (clientId: string) =>
-    (await subscriptions.findCurrentForClient(clientId))?.coachingEndsAt() ??
-    null;
-
   const checkInClients: CheckInClients = {
-    findByAuthSubjectId: async (authSubjectId) => {
-      const client = await portalClientOf(authSubjectId);
-
-      return client
-        ? { ...client, coachingEndsAt: await coachingEndOf(client.clientId) }
-        : null;
-    },
+    findByAuthSubjectId: portalClientOf,
     findById: async (clientId) => {
       const entry = await roster.findById(clientId);
 
@@ -356,21 +352,17 @@ export function composeCoachingSalesFeature(
         return null;
       }
 
+      const journey = ClientJourney.from(entry.journey);
+
       return {
-        clientId: entry.journey.clientId,
-        portal: ClientJourney.portalReachOf({
-          step: ClientJourney.from(entry.journey).step(),
-          coaching: ClientJourney.coachingStandingOf({
-            subscription: entry.subscription,
-            at: clock.now(),
-          }),
+        clientId: journey.clientId,
+        portal: portalReachOf({
+          standing: journey.standing,
+          onboardingSubmittedAt: journey.onboardingSubmittedAt,
+          now: clock.now(),
         }),
         bookingTimeZone: call.visitorTimeZone,
-        coachingEndsAt: entry.subscription
-          ? CoachingSubscription.reconstitute(
-              entry.subscription,
-            ).coachingEndsAt()
-          : null,
+        coachingEndsAt: journey.standing.coachingEndsAt(),
       };
     },
     identitiesOf: async (clientIds) =>
@@ -404,7 +396,6 @@ export function composeCoachingSalesFeature(
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
       admission: paidClientAdmission,
       calls: handles.assessmentCallReader,
-      clock,
       incidents: handles.incidents,
       paymentCheckout: handles.paymentCheckout,
       paymentSubscriptions: handles.paymentSubscriptions,

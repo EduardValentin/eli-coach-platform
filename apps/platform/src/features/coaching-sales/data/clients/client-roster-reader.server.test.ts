@@ -12,6 +12,7 @@ const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
 const CANCELLED_AT = new Date("2026-10-01T10:00:00.000Z");
 const REFUND_DUE_BY = new Date("2026-10-15T10:00:00.000Z");
 const SUBSCRIPTION_ID = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+const JOINED_AT = new Date("2026-09-26T10:01:00.000Z");
 
 const CLIENT_ROW = {
   clientId: CLIENT_ID,
@@ -27,6 +28,7 @@ const CLIENT_ROW = {
   authSubjectId: "user_ana",
   email: "ana@example.com",
   assessmentCallId: CALL_ID,
+  createdAt: JOINED_AT,
   subscription: {
     id: SUBSCRIPTION_ID,
     clientId: CLIENT_ID,
@@ -64,6 +66,11 @@ const ROSTER_ENTRY = {
     detailsRequestedAt: null,
     detailsAnsweredAt: null,
     answersApprovedAt: null,
+    standing: {
+      status: "ended",
+      accessEndsAt: CANCELLED_AT,
+      refundDue: true,
+    },
   },
   accountBound: true,
   booking: {
@@ -71,37 +78,13 @@ const ROSTER_ENTRY = {
     gender: "female",
     assessmentCallId: CALL_ID,
   },
-  subscription: {
-    id: SUBSCRIPTION_ID,
-    clientId: CLIENT_ID,
-    bundleId: "3-months",
-    months: 3,
-    tier: "regular",
-    amountCents: 44700,
-    currency: "eur",
-    paymentCustomerId: "cus_1",
-    paymentSubscriptionId: "sub_1",
-    checkoutSessionId: "cs_1",
-    paidAt: PAID_AT,
-    startChoice: "immediate",
-    status: "ended",
-    cancelledAt: CANCELLED_AT,
-    accessEndsAt: CANCELLED_AT,
-    paymentProblemSince: null,
-    refund: {
-      reason: "full-refund",
-      amountCents: 44700,
-      dueBy: REFUND_DUE_BY,
-      refundedCents: 0,
-      refundedAt: null,
-    },
-  },
+  joinedAt: JOINED_AT,
 };
 
 const dialect = new PgDialect();
 
 describe("PostgresClientRoster#list", () => {
-  it("reads every client with her journey, booking and latest subscription, ended ones included", async () => {
+  it("reads every client with her journey, the standing of her latest subscription, her booking and when she joined, ended ones included", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
     const roster = new PostgresClientRoster(database.client);
@@ -158,7 +141,7 @@ describe("PostgresClientRoster#list", () => {
     expect(entry?.accountBound).toBe(false);
   });
 
-  it("reads no subscription for a client who holds none", async () => {
+  it("reads the coaching of a client who holds no subscription as not started", async () => {
     // arrange
     const roster = new PostgresClientRoster(
       createDatabaseAnswering([{ ...CLIENT_ROW, subscription: null }]).client,
@@ -168,7 +151,11 @@ describe("PostgresClientRoster#list", () => {
     const [entry] = await roster.list();
 
     // assert
-    expect(entry?.subscription).toBeNull();
+    expect(entry?.journey.standing).toEqual({
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+    });
   });
 });
 

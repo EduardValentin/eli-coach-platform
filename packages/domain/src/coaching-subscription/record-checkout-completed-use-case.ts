@@ -1,6 +1,8 @@
-import { Client } from "../client";
-import type { AssessmentCallReader } from "../payment-link";
-import type { Clock } from "../shared";
+import type {
+  AssessmentCallReader,
+  AssessmentCallSnapshot,
+} from "../assessment-call";
+import type { ClientIntake } from "../client";
 
 import type { CoachingPurchases } from "./coaching-purchases";
 import type { CheckoutCompletion } from "./coaching-subscription";
@@ -25,7 +27,6 @@ type RecordCheckoutCompletedResult =
 type RecordCheckoutCompletedUseCaseOptions = {
   admission: PaidClientAdmission;
   calls: AssessmentCallReader;
-  clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   paymentCheckout: PaymentCheckout;
   paymentSubscriptions: PaymentSubscriptions;
@@ -81,7 +82,7 @@ export class RecordCheckoutCompletedUseCase {
 
     const purchase = await this.options.purchases.recordCompletion({
       eventId,
-      client: Client.fromAssessmentCall(call, this.options.clock.now()),
+      intake: this.intakeOf(call),
       subscription: PurchasedSubscription.fromCompletedCheckout(completion),
     });
 
@@ -100,6 +101,21 @@ export class RecordCheckoutCompletedUseCase {
     return {
       status: STATUS_BY_PURCHASE_OUTCOME[purchase.outcome],
       paymentCustomerId: completion.paymentCustomerId,
+    };
+  }
+
+  private intakeOf(call: AssessmentCallSnapshot): ClientIntake {
+    return {
+      assessmentCallId: call.id,
+      firstName: call.firstName,
+      lastName: call.lastName,
+      email: call.visitorEmail,
+      dateOfBirth: call.dateOfBirth,
+      gender: call.gender,
+      primaryGoal: call.primaryGoal,
+      country: call.country,
+      phone: call.phone,
+      bookingTimeZone: call.visitorTimeZone,
     };
   }
 

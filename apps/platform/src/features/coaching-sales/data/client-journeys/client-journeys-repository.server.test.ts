@@ -95,6 +95,85 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
     expect(journey?.step()).toBe("needs-details");
   });
 
+  it("reads her coaching standing from her current subscription", async () => {
+    // arrange
+    const accessEndsAt = new Date("2026-12-26T10:00:00.000Z");
+    const journeys = new PostgresClientJourneys(
+      createDatabaseAnswering([
+        {
+          clientId: CLIENT_ID,
+          firstName: "Ana",
+          gender: "female",
+          lastName: "Popescu",
+          welcomeSeenAt: WELCOME_SEEN_AT,
+          onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+          ...NO_REVIEW_STAMPS,
+          subscription: {
+            id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+            clientId: CLIENT_ID,
+            bundleId: "3-months",
+            months: 3,
+            tier: "regular",
+            amountCents: 44700,
+            currency: "eur",
+            paymentCustomerId: "cus_1",
+            paymentSubscriptionId: "sub_1",
+            checkoutSessionId: "cs_1",
+            paidAt: new Date("2026-09-26T10:00:00.000Z"),
+            startChoice: "immediate",
+            status: "cancelled",
+            cancelledAt: WELCOME_SEEN_AT,
+            accessEndsAt,
+            paymentProblemSince: null,
+            refundReason: null,
+            refundDueCents: null,
+            refundDueBy: null,
+            refundedCents: null,
+            refundedAt: null,
+          },
+        },
+      ]),
+    );
+
+    // act
+    const journey = await journeys.findByAuthSubjectId("user_invited");
+
+    // assert
+    expect(journey?.standing.toSnapshot()).toEqual({
+      status: "cancelled",
+      accessEndsAt,
+      refundDue: false,
+    });
+  });
+
+  it("reads her coaching as not started while she holds no subscription", async () => {
+    // arrange
+    const journeys = new PostgresClientJourneys(
+      createDatabaseAnswering([
+        {
+          clientId: CLIENT_ID,
+          firstName: "Ana",
+          gender: "female",
+          lastName: "Popescu",
+          welcomeSeenAt: null,
+          onboardingSubmittedAt: null,
+          ...NO_REVIEW_STAMPS,
+          subscription: null,
+        },
+      ]),
+    );
+
+    // act
+    const journey = await journeys.findByAuthSubjectId("user_invited");
+
+    // assert
+    expect(journey?.standing.toSnapshot()).toEqual({
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+    });
+  });
+
   it("answers null for a subject no client is bound to", async () => {
     // arrange
     const journeys = new PostgresClientJourneys(createDatabaseAnswering([]));
@@ -166,6 +245,7 @@ function createDatabaseAnswering(
     select: (columns: Record<string, unknown>) => {
       const selection = {
         from: () => selection,
+        leftJoin: () => selection,
         where: () => selection,
         limit: () =>
           Promise.resolve(

@@ -1,4 +1,5 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { PortalReach } from "@eli-coach-platform/domain/client";
 import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
 import type { ReviewStamps } from "@eli-coach-platform/domain/client-onboarding";
 import { describe, expect, it, vi } from "vitest";
@@ -238,7 +239,7 @@ describe("requireClientPortalStanding", () => {
       // arrange
       const args = journeyArgs({
         journey: journeyOf(REVIEW_JOURNEYS.approved),
-        coaching: "ended",
+        portal: "ended",
         pathname,
       });
 
@@ -259,7 +260,7 @@ describe("requireClientPortalStanding", () => {
     // arrange
     const args = journeyArgs({
       journey: journeyOf(REVIEW_JOURNEYS.approved),
-      coaching: "ended",
+      portal: "ended",
       pathname: "/app/client/ended",
     });
 
@@ -319,6 +320,11 @@ describe("requireClientPortalStanding", () => {
         detailsRequestedAt: null,
         detailsAnsweredAt: null,
         answersApprovedAt: null,
+        standing: {
+          status: "not-started",
+          accessEndsAt: null,
+          refundDue: false,
+        },
       });
     },
   );
@@ -347,7 +353,7 @@ describe("requireClientPortalStanding", () => {
 });
 
 describe("readClientPortalStanding", () => {
-  it("names the step a signed-in client is at and whether her coaching is active", async () => {
+  it("names the step a signed-in client is at and how far her portal reaches", async () => {
     // arrange
     const args = journeyArgs({
       journey: journeyOf({ welcomeSeenAt: null }),
@@ -358,7 +364,10 @@ describe("readClientPortalStanding", () => {
     const standing = await readClientPortalStanding(args);
 
     // assert
-    expect(standing).toEqual({ step: "welcome", coaching: "active" });
+    expect(standing).toEqual({
+      step: "welcome",
+      portal: "awaiting_onboarding",
+    });
   });
 
   it("hands over no journey snapshot, which only the gate does", async () => {
@@ -423,7 +432,7 @@ describe("requireOpenClientPortal", () => {
   it("refuses a write from a client whose coaching has ended", async () => {
     // arrange
     const args = journeyArgs({
-      coaching: "ended",
+      portal: "ended",
       journey: journeyOf(SUBMITTED),
       pathname: "/app/api/client-profile/measurements",
     });
@@ -466,7 +475,7 @@ describe("requireOpenClientPortal", () => {
   ])("leaves %s to the route's own account check", async (_label, session) => {
     // arrange
     const args = journeyArgs({
-      coaching: "ended",
+      portal: "ended",
       journey: journeyOf(SUBMITTED),
       pathname: "/app/api/client-profile/measurements",
       session,
@@ -497,6 +506,7 @@ function journeyOf(
     detailsRequestedAt: options.detailsRequestedAt ?? null,
     detailsAnsweredAt: options.detailsAnsweredAt ?? null,
     answersApprovedAt: options.answersApprovedAt ?? null,
+    standing: { status: "not-started", accessEndsAt: null, refundDue: false },
   });
 }
 
@@ -522,7 +532,7 @@ const REVIEW_JOURNEYS = {
 type ReviewJourney = keyof typeof REVIEW_JOURNEYS;
 
 function journeyArgs(options: {
-  coaching?: "active" | "ended";
+  portal?: PortalReach;
   appBasePath?: string;
   journey: ClientJourney | null;
   pathname: string;
@@ -534,7 +544,11 @@ function journeyArgs(options: {
         options.journey
           ? {
               journey: options.journey,
-              coaching: options.coaching ?? "active",
+              portal:
+                options.portal ??
+                (options.journey.onboardingSubmittedAt
+                  ? "reachable"
+                  : "awaiting_onboarding"),
             }
           : null,
       ),

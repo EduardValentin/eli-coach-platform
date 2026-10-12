@@ -34,7 +34,9 @@ export function selectSubscriptions(database: DatabaseClient) {
   return database.select(subscriptionColumns).from(coachingSubscriptionsTable);
 }
 
-type SubscriptionRow = Awaited<ReturnType<typeof selectSubscriptions>>[number];
+export type SubscriptionRow = Awaited<
+  ReturnType<typeof selectSubscriptions>
+>[number];
 
 type SubscriptionWrite = Partial<
   Pick<

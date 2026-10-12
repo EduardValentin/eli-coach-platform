@@ -3,8 +3,8 @@ import {
   ClientJourney,
   type MarkWelcomeSeenUseCase,
   type ReadClientJourneyUseCase,
-  type ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
+import type { ReadProgramStatusUseCase } from "@eli-coach-platform/domain/coaching-subscription";
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
@@ -319,6 +319,7 @@ function journeyOf(options: { gender: VisitorGender }): ClientJourney {
     detailsRequestedAt: null,
     detailsAnsweredAt: null,
     answersApprovedAt: null,
+    standing: { status: "not-started", accessEndsAt: null, refundDue: false },
   });
 }
 

@@ -11,7 +11,12 @@ import type {
 
 const TOKEN_BYTES = 32;
 
-export class RandomLinkTokenGenerator
+type LinkTokens = {
+  generator: PaymentLinkTokenGenerator & InvitationTokenGenerator;
+  hasher: PaymentLinkTokenHasher & InvitationTokenHasher;
+};
+
+class RandomLinkTokenGenerator
   implements PaymentLinkTokenGenerator, InvitationTokenGenerator
 {
   create(): { rawToken: string; sha256: string } {
@@ -21,9 +26,7 @@ export class RandomLinkTokenGenerator
   }
 }
 
-export class LinkTokenSha256
-  implements PaymentLinkTokenHasher, InvitationTokenHasher
-{
+class LinkTokenSha256 implements PaymentLinkTokenHasher, InvitationTokenHasher {
   sha256(rawToken: string): string {
     return hashSha256(rawToken);
   }
@@ -31,4 +34,11 @@ export class LinkTokenSha256
 
 function hashSha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function createLinkTokens(): LinkTokens {
+  return {
+    generator: new RandomLinkTokenGenerator(),
+    hasher: new LinkTokenSha256(),
+  };
 }
