@@ -34,6 +34,10 @@ export function parseTab(raw: string | null, fallback: CheckinTab): CheckinTab {
   return CHECKIN_TABS.find((tab) => tab === raw) ?? fallback;
 }
 
+export function openingTab(awaitingViewer: number): CheckinTab {
+  return awaitingViewer > 0 ? 'requests' : 'upcoming';
+}
+
 export function parseKindFilter(raw: string | null): KindFilter {
   return KIND_FILTERS.find((kind) => kind === raw) ?? 'any';
 }

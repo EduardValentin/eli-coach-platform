@@ -5,6 +5,7 @@ import {
   countsByWaiting,
   filterCheckins,
   hasActiveFilters,
+  openingTab,
   orderCheckins,
   parseDirection,
   parseKindFilter,
@@ -154,6 +155,30 @@ describe('ordering check-ins', () => {
 
     // assert
     expect(ordered.map((c) => c.id)).toEqual(['from-jane', 'recurring', 'from-coach']);
+  });
+});
+
+describe('choosing the tab the listing opens on', () => {
+  it('opens on Requests while a check-in waits for the viewer', () => {
+    // arrange
+    const awaitingViewer = 1;
+
+    // act
+    const tab = openingTab(awaitingViewer);
+
+    // assert
+    expect(tab).toBe('requests');
+  });
+
+  it('opens on Upcoming while nothing waits for the viewer', () => {
+    // arrange
+    const awaitingViewer = 0;
+
+    // act
+    const tab = openingTab(awaitingViewer);
+
+    // assert
+    expect(tab).toBe('upcoming');
   });
 });
 

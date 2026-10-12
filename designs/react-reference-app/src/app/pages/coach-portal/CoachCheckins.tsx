@@ -24,7 +24,7 @@ import {
   CheckinListing,
   type CheckinEmptyCopy,
 } from "../../components/CheckinListing";
-import type { CheckinTab } from "../../utils/checkinListing";
+import { openingTab, type CheckinTab } from "../../utils/checkinListing";
 import { CheckinProposeTimeDialog } from "../../components/CheckinProposeTimeDialog";
 import { JoinMeetLink } from "../../components/JoinMeetLink";
 import {
@@ -73,12 +73,13 @@ const BUSY_LABEL: Record<CheckinAnswer, string> = {
 function tabHoldingCheckin(
   checkinId: string | null,
   groups: Record<CheckinTab, CheckIn[]>,
+  fallback: CheckinTab,
 ): CheckinTab {
-  if (!checkinId) return "requests";
+  if (!checkinId) return fallback;
   const tabs = Object.keys(groups) as CheckinTab[];
   return (
     tabs.find((tab) => groups[tab].some((c) => c.id === checkinId)) ??
-    "requests"
+    fallback
   );
 }
 
@@ -107,6 +108,7 @@ export function CoachCheckins() {
     getPendingCheckins,
     getUpcomingCheckins,
     getPastCheckins,
+    getCheckinsAwaiting,
     cancelCheckin,
   } = useCheckins();
   const { addNotification } = useNotifications();
@@ -120,7 +122,11 @@ export function CoachCheckins() {
   const [searchParams] = useSearchParams();
   const focusedCheckinId = checkinIdFromSearch(searchParams);
   const [focusedTab] = useState<CheckinTab>(() =>
-    tabHoldingCheckin(focusedCheckinId, { upcoming, requests: pending, past }),
+    tabHoldingCheckin(
+      focusedCheckinId,
+      { upcoming, requests: pending, past },
+      openingTab(getCheckinsAwaiting("coach").length),
+    ),
   );
 
   useEffect(() => {

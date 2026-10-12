@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevToggle } from '../../components/DevToggle';
@@ -55,6 +55,10 @@ function renderAt(path: string) {
                   <MessagingProvider>
                     <NotificationProvider>
                       <Routes>
+                        <Route
+                          path="/coach"
+                          element={<Link to="/coach/checkins">Check-ins</Link>}
+                        />
                         <Route path="/coach/checkins" element={<CoachCheckins />} />
                         <Route
                           path="/coach/checkins/:checkinId/join"
@@ -99,6 +103,33 @@ function hasRowFor(clientName: string): boolean {
 async function showTab(name: string) {
   await userEvent.click(screen.getByRole('tab', { name: new RegExp(`^${name}`) }));
 }
+
+describe('where the coach check-ins page opens', () => {
+  it('opens on Upcoming once no check-in waits for her answer', async () => {
+    // arrange
+    renderAt('/coach?session=coach');
+    await userEvent.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Check-ins' }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Pending check-ins' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'None pending' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Check-ins' }));
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens on the tab the address names even while requests wait for her', () => {
+    // arrange
+    // act
+    renderPage('&view=past');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
 
 describe('the coach check-ins page', () => {
   it('opens on the requests and counts the ones waiting for her answer', () => {

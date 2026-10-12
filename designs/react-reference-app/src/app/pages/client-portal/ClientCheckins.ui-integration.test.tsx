@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevToggle } from '../../components/DevToggle';
@@ -58,6 +58,10 @@ function renderAt(path: string) {
                   <MessagingProvider>
                     <NotificationProvider>
                       <Routes>
+                        <Route
+                          path="/portal"
+                          element={<Link to="/portal/checkins">Check-ins</Link>}
+                        />
                         <Route path="/portal/checkins" element={<ClientCheckins />} />
                         <Route
                           path="/portal/checkins/:checkinId/join"
@@ -135,6 +139,44 @@ function rowWith(text: string | RegExp): HTMLElement {
 
   return row;
 }
+
+describe('where her check-ins open', () => {
+  it('opens on Requests while a check-in waits for her answer', () => {
+    // arrange
+    // act
+    renderPage();
+
+    // assert
+    const requestsTab = screen.getByRole('tab', { name: /^Requests/ });
+
+    expect(requestsTab).toHaveAttribute('aria-selected', 'true');
+    expect(requestsTab).toHaveAccessibleName(/^Requests \d+ waiting on you$/);
+  });
+
+  it('opens on Upcoming once no check-in waits for her answer', async () => {
+    // arrange
+    renderAt('/portal?session=client');
+    await openCheckinDevSettings();
+    await userEvent.click(screen.getByRole('combobox', { name: 'Pending check-ins' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'None pending' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Check-ins' }));
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens on the tab the address names even while a check-in waits for her', () => {
+    // arrange
+    // act
+    renderPage('&view=past');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
 
 describe('requesting a check-in', () => {
   it('sends the picked time with her note and shows it waiting for her coach', async () => {
@@ -486,7 +528,7 @@ describe('a check-in her coach scheduled', () => {
 describe('the actions on her check-in rows', () => {
   it('keeps Join Meet on an upcoming check-in and puts Reschedule then Cancel in its menu', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     const row = rowWith(FOOD_LOG_NOTE);
 
     // act
@@ -569,7 +611,7 @@ describe('the actions on her check-in rows', () => {
 
   it('leaves the menu out once a check-in has nothing left to put in it', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     await proposeNewTimeFor(FOOD_LOG_NOTE, 'Friday works better');
 
     // act
@@ -600,7 +642,7 @@ describe('the actions on her check-in rows', () => {
 describe('a check-in moved twice', () => {
   it('keeps Reschedule in its menu, marked disabled', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
 
     // act
@@ -613,7 +655,7 @@ describe('a check-in moved twice', () => {
 
   it('says why when she hovers Reschedule', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
 
     // act
@@ -625,7 +667,7 @@ describe('a check-in moved twice', () => {
 
   it('says why when she reaches Reschedule from the keyboard', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     act(() => moreActionsIn(rowWith(MOVED_TWICE_NOTE)).focus());
     await userEvent.keyboard('{Enter}');
     await screen.findByRole('menu');
@@ -641,7 +683,7 @@ describe('a check-in moved twice', () => {
 
   it('says why on a tap and opens no dialog', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
     const reschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
 
@@ -656,7 +698,7 @@ describe('a check-in moved twice', () => {
   it('shows the time it was moved from', () => {
     // arrange
     // act
-    renderPage();
+    renderPage('&view=upcoming');
 
     // assert
     expect(
@@ -668,7 +710,7 @@ describe('a check-in moved twice', () => {
 describe('proposing a new time', () => {
   it('says when the check-in is set for now and asks for a note for her coach', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     await userEvent.click(moreActionsIn(rowWith(FOOD_LOG_NOTE)));
 
     // act
@@ -682,7 +724,7 @@ describe('proposing a new time', () => {
 
   it('moves the check-in under Requests with the earlier time struck through and her note', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
 
     // act
     await proposeNewTimeFor(FOOD_LOG_NOTE, 'Friday works better');
@@ -713,7 +755,7 @@ describe('proposing a new time', () => {
 
   it('gives focus back to the row menu button when she closes the dialog', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
     await userEvent.click(trigger);
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
@@ -745,7 +787,7 @@ describe('proposing a new time', () => {
 describe('the row menu from the keyboard', () => {
   it('opens on Enter, moves with the arrow keys and gives focus back to its button on Escape', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
     act(() => trigger.focus());
 
@@ -765,7 +807,7 @@ describe('the row menu from the keyboard', () => {
 
   it('asks before cancelling from the menu and gives focus back to its button when she keeps the check-in', async () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
     const trigger = moreActionsIn(rowWith(FOOD_LOG_NOTE));
     act(() => trigger.focus());
     await userEvent.keyboard(' ');
@@ -807,7 +849,7 @@ describe('her check-ins when there is nothing to show', () => {
 describe('joining her check-in', () => {
   it('links each upcoming check-in to its own join page', () => {
     // arrange
-    renderPage();
+    renderPage('&view=upcoming');
 
     // act
     const links = screen.getAllByRole('link', { name: 'Join Meet' });
