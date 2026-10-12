@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { bundleLengthLabel } from '../domain/bundles';
+import type {
+  Difficulty,
+  Equipment,
+  ExerciseTag,
+  ExerciseType,
+  Measure,
+  Muscle,
+} from '../domain/exercises';
+import { SAMPLE_EXERCISES } from '../services/exerciseSamples';
 import {
   archivedItem,
   exerciseUsage,
@@ -30,11 +39,14 @@ export interface Exercise {
   id: string;
   name: string;
   description: string;
-  equipment: string[];
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
-  tags?: string[];
+  type: ExerciseType;
+  measuredIn: Measure;
+  perSide: boolean;
+  equipment: Equipment[];
+  difficulty: Difficulty;
+  primaryMuscles: Muscle[];
+  secondaryMuscles: Muscle[];
+  tags: ExerciseTag[];
   videoUrl?: string;
   thumbnailUrl?: string;
   archivedAt?: string;
@@ -217,146 +229,6 @@ interface TrainingState {
   // Mocked client shortcut (for portal views)
   clientActivePlan: PlanInstance | null;
 }
-
-// ── Mock exercises ──────────────────────────────────────────────
-
-const mockExercises: Exercise[] = [
-  {
-    id: 'e1',
-    name: 'Barbell Back Squat',
-    description: 'A compound lower body exercise that targets the quads, glutes, and core.',
-    equipment: ['Barbell', 'Squat Rack'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Quadriceps', 'Glutes'],
-    secondaryMuscles: ['Core', 'Hamstrings'],
-    tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-1.mp4'
-  },
-  {
-    id: 'e2',
-    name: 'Romanian Deadlift',
-    description: 'Hip-hinge movement focusing on the posterior chain.',
-    equipment: ['Barbell'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Hamstrings', 'Glutes'],
-    secondaryMuscles: ['Lower Back'],
-    tags: ['Strength', 'Recovery'],
-    videoUrl: 'demo-video-2.mp4'
-  },
-  {
-    id: 'e3',
-    name: 'Bulgarian Split Squat',
-    description: 'Unilateral leg exercise for developing balance and leg strength.',
-    equipment: ['Dumbbells', 'Bench'],
-    difficulty: 'Advanced',
-    primaryMuscles: ['Quadriceps', 'Glutes'],
-    secondaryMuscles: ['Core', 'Calves'],
-    tags: ['Hypertrophy']
-  },
-  {
-    id: 'e4',
-    name: 'Barbell Bench Press',
-    description: 'Upper body pushing compound for chest, shoulders, and triceps.',
-    equipment: ['Barbell', 'Bench'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Chest', 'Triceps'],
-    secondaryMuscles: ['Shoulders'],
-    tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-4.mp4'
-  },
-  {
-    id: 'e5',
-    name: 'Overhead Press',
-    description: 'Standing barbell press for shoulder strength and stability.',
-    equipment: ['Barbell'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Shoulders', 'Triceps'],
-    secondaryMuscles: ['Core'],
-    tags: ['Strength']
-  },
-  {
-    id: 'e6',
-    name: 'Pull-Ups',
-    description: 'Bodyweight vertical pull for back width and arm strength.',
-    equipment: ['Pull-Up Bar'],
-    difficulty: 'Advanced',
-    primaryMuscles: ['Lats', 'Biceps'],
-    secondaryMuscles: ['Rhomboids', 'Core'],
-    tags: ['Strength']
-  },
-  {
-    id: 'e7',
-    name: 'Dumbbell Rows',
-    description: 'Single-arm rowing movement for upper back thickness.',
-    equipment: ['Dumbbells', 'Bench'],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Lats', 'Rhomboids'],
-    secondaryMuscles: ['Biceps', 'Core'],
-    tags: ['Hypertrophy']
-  },
-  {
-    id: 'e8',
-    name: 'Lateral Raises',
-    description: 'Isolation movement for the lateral deltoids.',
-    equipment: ['Dumbbells'],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Shoulders'],
-    secondaryMuscles: [],
-    tags: ['Hypertrophy']
-  },
-  {
-    id: 'e9',
-    name: 'Hip Thrust',
-    description: 'Glute-focused hip extension movement with barbell loading.',
-    equipment: ['Barbell', 'Bench'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Glutes', 'Hamstrings'],
-    secondaryMuscles: ['Core'],
-    tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-9.mp4'
-  },
-  {
-    id: 'e10',
-    name: 'Leg Press',
-    description: 'Machine-based lower body compound for quads and glutes.',
-    equipment: ['Machine'],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Quadriceps', 'Glutes'],
-    secondaryMuscles: ['Hamstrings'],
-    tags: ['Hypertrophy']
-  },
-  {
-    id: 'e11',
-    name: 'Walking Lunges',
-    description: 'Dynamic unilateral lower body exercise for strength and balance.',
-    equipment: ['Dumbbells'],
-    difficulty: 'Intermediate',
-    primaryMuscles: ['Quadriceps', 'Glutes'],
-    secondaryMuscles: ['Core', 'Calves'],
-    tags: ['Hypertrophy']
-  },
-  {
-    id: 'e12',
-    name: 'Plank',
-    description: 'Isometric core hold for deep stabilizer activation.',
-    equipment: [],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Core'],
-    secondaryMuscles: ['Shoulders'],
-    tags: ['Recovery']
-  },
-  {
-    id: 'e13',
-    name: 'Smith Machine Squat',
-    description: 'Guided squat on a fixed bar path for quad-focused volume.',
-    equipment: ['Smith Machine'],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Quadriceps', 'Glutes'],
-    secondaryMuscles: ['Hamstrings'],
-    tags: ['Hypertrophy'],
-    archivedAt: '2026-09-28T10:00:00.000Z'
-  }
-];
 
 // ── Mock templates ──────────────────────────────────────────────
 
@@ -911,7 +783,7 @@ const mockWorkoutLogs: WorkoutLog[] = [
 const TrainingContext = createContext<TrainingState | undefined>(undefined);
 
 export function TrainingProvider({ children }: { children: ReactNode }) {
-  const [exercises, setExercises] = useState<Exercise[]>(mockExercises);
+  const [exercises, setExercises] = useState<Exercise[]>([...SAMPLE_EXERCISES]);
   const [planTemplates, setPlanTemplates] = useState<PlanTemplate[]>(mockTemplates);
   const [planInstances, setPlanInstances] = useState<PlanInstance[]>(mockPlanInstances);
   const [goals, setGoals] = useState<Goal[]>(mockGoals);

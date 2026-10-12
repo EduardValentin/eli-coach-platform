@@ -2,6 +2,7 @@ import { useId, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
+import type { Equipment, ExerciseTag, Muscle } from '../../domain/exercises';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -158,11 +159,14 @@ export function ExerciseModal({
       thumbnailUrl: edited?.thumbnailUrl,
       name,
       description,
+      type: 'resistance',
+      measuredIn: 'reps',
+      perSide: false,
       difficulty,
-      equipment,
-      primaryMuscles,
-      secondaryMuscles,
-      tags,
+      equipment: equipment as Equipment[],
+      primaryMuscles: primaryMuscles as Muscle[],
+      secondaryMuscles: secondaryMuscles as Muscle[],
+      tags: tags as ExerciseTag[],
       videoUrl: videoFile
         ? videoFile.name
         : videoPreview

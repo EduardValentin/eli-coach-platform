@@ -62,9 +62,10 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.getByText('Overhead Press')).toBeInTheDocument();
+    expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 12')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 14')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -101,7 +102,7 @@ describe('the exercise library filters', () => {
     await user.click(screen.getByRole('button', { name: 'Tags' }));
 
     // assert
-    expect(screen.getByRole('checkbox', { name: 'Recovery 2' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Recovery 4' })).toBeInTheDocument();
   });
 
   it('narrows to equipment-free exercises', async () => {
@@ -189,7 +190,7 @@ describe('the exercise library filters', () => {
       .getAllByRole('row')
       .slice(1)
       .map((row) => within(row).getAllByRole('cell')[0].textContent);
-    expect(names[0]).toMatch(/^Dumbbell Rows/);
+    expect(names[0]).toMatch(/^Couch Stretch/);
   });
 
   it('shows each exercise its tags so the coach can see why a row matched', () => {
@@ -198,23 +199,23 @@ describe('the exercise library filters', () => {
     renderLibrary();
 
     // assert
-    expect(within(exerciseRow('Plank')).getByText('Recovery')).toBeInTheDocument();
+    expect(within(exerciseRow('Bike Intervals')).getByText('Recovery')).toBeInTheDocument();
   });
 
   it('shows a tag added through the modal on the exercise row', async () => {
     // arrange
     const user = renderLibrary();
-    expect(within(exerciseRow('Plank')).queryByText('Strength')).not.toBeInTheDocument();
+    expect(within(exerciseRow('Bike Intervals')).queryByText('Strength')).not.toBeInTheDocument();
 
     // act
-    await chooseAction(user, 'Plank', 'Edit');
+    await chooseAction(user, 'Bike Intervals', 'Edit');
     await user.click(
       within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name: 'Strength' }),
     );
     await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     // assert
-    expect(within(exerciseRow('Plank')).getByText('Strength')).toBeInTheDocument();
+    expect(within(exerciseRow('Bike Intervals')).getByText('Strength')).toBeInTheDocument();
   });
 
   it('finds an exercise a coach marked Bodyweight under the no-equipment filter', async () => {
@@ -267,26 +268,26 @@ describe('archiving an exercise', () => {
     const user = renderLibrary();
 
     // act
-    await chooseAction(user, 'Plank', 'Archive');
+    await chooseAction(user, 'Barbell Back Squat', 'Archive');
 
     // assert
-    expect(screen.queryByText('Plank')).not.toBeInTheDocument();
-    expect(await screen.findByText('"Plank" archived')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    expect(await screen.findByText('"Barbell Back Squat" archived')).toBeInTheDocument();
   });
 
   it('shows it under Archived, where Restore brings it back', async () => {
     // arrange
     const user = renderLibrary();
-    await chooseAction(user, 'Plank', 'Archive');
+    await chooseAction(user, 'Barbell Back Squat', 'Archive');
     await chooseOption(user, 'Status', 'Archived');
 
     // act
-    await chooseAction(user, 'Plank', 'Restore');
+    await chooseAction(user, 'Barbell Back Squat', 'Restore');
     await chooseOption(user, 'Status', 'Active');
 
     // assert
-    expect(exerciseRow('Plank')).toBeInTheDocument();
-    expect(await screen.findByText('"Plank" restored')).toBeInTheDocument();
+    expect(exerciseRow('Barbell Back Squat')).toBeInTheDocument();
+    expect(await screen.findByText('"Barbell Back Squat" restored')).toBeInTheDocument();
   });
 
   it('counts the exercises in each status', async () => {
@@ -297,7 +298,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 12' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 14' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 
@@ -319,14 +320,14 @@ describe('deleting an exercise', () => {
     // arrange
     const user = renderLibrary();
     await user.click(
-      within(exerciseRow('Plank')).getByRole('button', { name: 'Actions for Plank' }),
+      within(exerciseRow('Barbell Back Squat')).getByRole('button', { name: 'Actions for Barbell Back Squat' }),
     );
 
     // act
     await user.hover(screen.getByRole('menuitem', { name: 'Delete' }));
 
     // assert
-    expect(await screen.findByText(/^Used in 1 template and \d+ plans?$/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Used in 2 templates and \d+ plans?$/)).toBeInTheDocument();
   });
 
   it('is unavailable while a plan uses it', async () => {
@@ -334,7 +335,7 @@ describe('deleting an exercise', () => {
     const user = renderLibrary();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+    await user.click(screen.getByRole('button', { name: 'Actions for Barbell Back Squat' }));
 
     // assert
     expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
