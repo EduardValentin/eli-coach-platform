@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
@@ -5,7 +6,7 @@ import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
 
 type OpenPaymentMethodSessionCommand = {
-  clientId: string;
+  authSubjectId: string;
   returnUrl: string;
 };
 
@@ -16,6 +17,7 @@ type OpenPaymentMethodSessionResult =
   | { status: "provider_unavailable" };
 
 type OpenPaymentMethodSessionUseCaseOptions = {
+  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   paymentSubscriptions: PaymentSubscriptions;
@@ -30,9 +32,12 @@ export class OpenPaymentMethodSessionUseCase {
   async execute(
     command: OpenPaymentMethodSessionCommand,
   ): Promise<OpenPaymentMethodSessionResult> {
-    const subscription = await this.options.subscriptions.findCurrentForClient(
-      command.clientId,
+    const client = await this.options.clientReach.findByAuthSubjectId(
+      command.authSubjectId,
     );
+    const subscription =
+      client &&
+      (await this.options.subscriptions.findCurrentForClient(client.clientId));
 
     if (!subscription) {
       return { status: "not_found" };

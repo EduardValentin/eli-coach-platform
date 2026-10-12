@@ -1,4 +1,3 @@
-import type { ClientIdentities } from "../client";
 import type { Clock } from "../shared";
 
 import { ClientOnboarding } from "./client-onboarding";
@@ -6,8 +5,8 @@ import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import type { OnboardingFormId } from "./onboarding-schema";
 
 type SaveOnboardingDraftCommand = {
@@ -25,8 +24,7 @@ type SaveOnboardingDraftResult =
   | { status: "already-submitted" };
 
 type SaveOnboardingDraftUseCaseOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   changes: ClientOnboardingChanges;
   clock: Clock;
@@ -39,17 +37,18 @@ export class SaveOnboardingDraftUseCase {
   async execute(
     command: SaveOnboardingDraftCommand,
   ): Promise<SaveOnboardingDraftResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const participant = await this.options.participants.byAuthSubjectId(
       command.authSubjectId,
     );
-    const identity =
-      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client || !identity) {
+    if (!participant) {
       return { status: "not-on-journey" };
     }
 
-    if (!client.standing.hasPortalAccessAt(this.options.clock.now())) {
+    const { client, identity } = participant;
+    const now = this.options.clock.now();
+
+    if (!client.standing.hasPortalAccessAt(now)) {
       return { status: "ended" };
     }
 
@@ -70,7 +69,7 @@ export class SaveOnboardingDraftUseCase {
       answers: command.answers,
       currentFormIndex: command.currentFormIndex,
       consents: command.consents,
-      now: this.options.clock.now(),
+      now,
     });
 
     const saved = await this.options.changes

@@ -109,7 +109,7 @@ describe("the invitation block", () => {
     // arrange, act
     await renderBlock({
       invitation: PENDING,
-      subscriptionCancelledOrEnded: true,
+      coachingCancelledOrEnded: true,
     });
 
     // assert
@@ -365,7 +365,7 @@ function recordResendRequests(response: Response): unknown[] {
 
 async function renderBlock(loaded: {
   gender?: VisitorGender;
-  subscriptionCancelledOrEnded?: boolean;
+  coachingCancelledOrEnded?: boolean;
   invitation: ClientInvitationReading;
 }) {
   const user = userEvent.setup();
@@ -379,8 +379,7 @@ async function renderBlock(loaded: {
         <InvitationBlock
           client={{
             clientId: CLIENT_ID,
-            subscriptionCancelledOrEnded:
-              loaded.subscriptionCancelledOrEnded ?? false,
+            coachingCancelledOrEnded: loaded.coachingCancelledOrEnded ?? false,
             email: EMAIL,
             gender: loaded.gender ?? "female",
           }}

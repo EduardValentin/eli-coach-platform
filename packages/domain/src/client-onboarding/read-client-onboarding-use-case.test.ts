@@ -13,6 +13,7 @@ import {
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyDraft } from "./onboarding-draft";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { OnboardingParticipants } from "./onboarding-participants";
 import { ReadClientOnboardingUseCase } from "./read-client-onboarding-use-case";
 
 const CLIENT: OnboardingClient = {
@@ -80,8 +81,10 @@ describe("ReadClientOnboardingUseCase", () => {
       UnitPreference.of("imperial"),
     );
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(CLIENT),
-      identities: createIdentities(),
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(),
+      }),
       onboardings,
       unitPreferences,
     });
@@ -108,8 +111,10 @@ describe("ReadClientOnboardingUseCase", () => {
   it("reads metric units while she has chosen none", async () => {
     // arrange
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(CLIENT),
-      identities: createIdentities(),
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(),
+      }),
       onboardings: createOnboardings(),
       unitPreferences: createUnitPreferences(null),
     });
@@ -128,8 +133,10 @@ describe("ReadClientOnboardingUseCase", () => {
     // arrange
     const onboardings = createOnboardings();
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(null),
-      identities: createIdentities(),
+      participants: new OnboardingParticipants({
+        clients: createClients(null),
+        identities: createIdentities(),
+      }),
       onboardings,
       unitPreferences: createUnitPreferences(null),
     });
@@ -146,8 +153,10 @@ describe("ReadClientOnboardingUseCase", () => {
     // arrange
     const onboardings = createOnboardings();
     const useCase = new ReadClientOnboardingUseCase({
-      clients: createClients(CLIENT),
-      identities: createIdentities(null),
+      participants: new OnboardingParticipants({
+        clients: createClients(CLIENT),
+        identities: createIdentities(null),
+      }),
       onboardings,
       unitPreferences: createUnitPreferences(null),
     });

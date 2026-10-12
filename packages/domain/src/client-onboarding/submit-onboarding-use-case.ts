@@ -1,4 +1,3 @@
-import type { ClientIdentities } from "../client";
 import { ClientProfile } from "../client-profile";
 import type { Clock } from "../shared";
 import {
@@ -16,8 +15,8 @@ import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { profileFactsOf } from "./onboarding-profile-facts";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import { screeningOutcome } from "./onboarding-submission";
@@ -42,8 +41,7 @@ type SubmitOnboardingResult =
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type SubmitOnboardingUseCaseOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   unitPreferences: ClientUnitPreferencesSource;
   changes: ClientOnboardingChanges;
@@ -58,17 +56,18 @@ export class SubmitOnboardingUseCase {
   async execute(
     command: SubmitOnboardingCommand,
   ): Promise<SubmitOnboardingResult> {
-    const client = await this.options.clients.findByAuthSubjectId(
+    const participant = await this.options.participants.byAuthSubjectId(
       command.authSubjectId,
     );
-    const identity =
-      client && (await this.options.identities.findByClientId(client.clientId));
 
-    if (!client || !identity) {
+    if (!participant) {
       return { status: "not-on-journey" };
     }
 
-    if (!client.standing.hasPortalAccessAt(this.options.clock.now())) {
+    const { client, identity } = participant;
+    const now = this.options.clock.now();
+
+    if (!client.standing.hasPortalAccessAt(now)) {
       return { status: "ended" };
     }
 
@@ -80,8 +79,6 @@ export class SubmitOnboardingUseCase {
       client: identity,
       ...stored,
     });
-    const now = this.options.clock.now();
-
     const outcome = onboarding.submit({
       answers: command.answers,
       consents: command.consents,

@@ -1,7 +1,7 @@
 import {
   EMAIL_COLORS,
   EMAIL_FONTS,
-  invitationReassuranceSectionStyle,
+  closingReassuranceSectionStyle,
   nextStepsCardStyle,
   nextStepsEyebrowStyle,
   nextStepsOuterStyle,
@@ -87,7 +87,7 @@ export const detailsLabelStyle: CSSProperties = { ...nextStepsEyebrowStyle };
 export const detailsValueStyle: CSSProperties = { ...nextStepTextStyle };
 
 export const closingNoteSectionStyle: CSSProperties = {
-  ...invitationReassuranceSectionStyle,
+  ...closingReassuranceSectionStyle,
 };
 
 export const closingNoteTextStyle: CSSProperties = { ...reassuranceTextStyle };

@@ -179,7 +179,7 @@ describe("ReadClientRecordUseCase", () => {
       ...found,
       status: "awaiting-review",
       needsRefund: false,
-      subscriptionCancelledOrEnded: false,
+      coachingCancelledOrEnded: false,
       assessmentCall: {
         startsAt: new Date("2026-09-25T15:00:00.000Z"),
         firstName: "Ana-Maria",
@@ -206,12 +206,12 @@ describe("ReadClientRecordUseCase", () => {
         refundDue: false,
         bundleMonths: 3,
       },
-      { subscriptionCancelledOrEnded: true, needsRefund: false },
+      { coachingCancelledOrEnded: true, needsRefund: false },
     ],
     [
       "ended with a refund still owed",
       { status: "ended", accessEndsAt: NOW, refundDue: true, bundleMonths: 3 },
-      { subscriptionCancelledOrEnded: true, needsRefund: true },
+      { coachingCancelledOrEnded: true, needsRefund: true },
     ],
     [
       "active",
@@ -221,7 +221,7 @@ describe("ReadClientRecordUseCase", () => {
         refundDue: false,
         bundleMonths: 3,
       },
-      { subscriptionCancelledOrEnded: false, needsRefund: false },
+      { coachingCancelledOrEnded: false, needsRefund: false },
     ],
   ] as const)(
     "reads a client whose coaching is %s from her standing",

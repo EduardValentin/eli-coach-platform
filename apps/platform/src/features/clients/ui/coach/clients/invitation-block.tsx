@@ -21,7 +21,7 @@ const RESEND_FAILURE_MESSAGE =
 
 type InvitedClient = Pick<
   CoachClient,
-  "clientId" | "email" | "gender" | "subscriptionCancelledOrEnded"
+  "clientId" | "email" | "gender" | "coachingCancelledOrEnded"
 >;
 
 type InvitationBlockProps = {
@@ -46,7 +46,7 @@ export function InvitationBlock({ client, invitation }: InvitationBlockProps) {
     <PortalWidget
       data-parity-root="InvitationBlock"
       action={
-        client.subscriptionCancelledOrEnded ? null : (
+        client.coachingCancelledOrEnded ? null : (
           <Button
             aria-busy={isSending || undefined}
             data-parity="resend-invitation"

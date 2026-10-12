@@ -1,4 +1,4 @@
-import type { ClientIdentities } from "../client";
+import type { ClientIdentities, ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { CoachingEndHandler } from "./coaching-end-handler";
@@ -35,6 +35,7 @@ type RecordedCancellation = Extract<
 >;
 
 type CancelSubscriptionUseCaseOptions = {
+  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clients: ClientIdentities;
   clock: Clock;
   coachingEnds: readonly CoachingEndHandler[];
@@ -57,9 +58,12 @@ export class CancelSubscriptionUseCase {
     this.coachingEnd = new CoachingEndPropagation(options);
   }
 
-  async execute(clientId: string): Promise<CancelSubscriptionResult> {
+  async execute(authSubjectId: string): Promise<CancelSubscriptionResult> {
+    const client =
+      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
     const current =
-      await this.options.subscriptions.findCurrentForClient(clientId);
+      client &&
+      (await this.options.subscriptions.findCurrentForClient(client.clientId));
 
     if (!current) {
       return { status: "not_found" };
@@ -85,7 +89,7 @@ export class CancelSubscriptionUseCase {
     }
 
     const recorded = await this.record(decision, {
-      clientId,
+      clientId: current.clientId,
       now,
       previous: current,
     });

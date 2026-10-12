@@ -20,6 +20,7 @@ import {
 } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { SubmitOnboardingUseCase } from "./submit-onboarding-use-case";
@@ -206,8 +207,10 @@ function createUseCase(
   } = {},
 ) {
   return new SubmitOnboardingUseCase({
-    clients: ports.clients ?? createClients(CLIENT),
-    identities: ports.identities ?? createIdentities(),
+    participants: new OnboardingParticipants({
+      clients: ports.clients ?? createClients(CLIENT),
+      identities: ports.identities ?? createIdentities(),
+    }),
     onboardings: ports.onboardings ?? createOnboardings(),
     unitPreferences: ports.unitPreferences ?? createUnitPreferences(),
     changes: ports.changes ?? createChanges(),

@@ -44,7 +44,7 @@ type ReviewedClient = {
   email: string;
   firstName: string;
   gender: VisitorGender;
-  subscriptionCancelledOrEnded: boolean;
+  coachingCancelledOrEnded: boolean;
 };
 
 type OnboardingPanelProps = {
@@ -247,7 +247,7 @@ function SubmittedOnboarding({
         />
       </div>
 
-      {client.subscriptionCancelledOrEnded ? null : (
+      {client.coachingCancelledOrEnded ? null : (
         <StageActions
           onApprove={() => setConfirmingApproval(true)}
           onReview={enterReview}

@@ -100,7 +100,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
-      subscriptionCancelledOrEnded: record.subscriptionCancelledOrEnded,
+      coachingCancelledOrEnded: record.coachingCancelledOrEnded,
       gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
       invitation: invitationOf(record, invitation),

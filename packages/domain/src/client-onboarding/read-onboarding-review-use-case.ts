@@ -1,4 +1,3 @@
-import type { ClientIdentities } from "../client";
 import {
   earliestMeasurementOf,
   type ClientMeasurementsSource,
@@ -14,7 +13,8 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
 } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClient } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import {
   OnboardingReview,
   type OnboardingReviewStage,
@@ -62,8 +62,7 @@ type ReadOnboardingReviewResult =
   | { status: "not-found" };
 
 type ReadOnboardingReviewUseCaseOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   measurements: ClientMeasurementsSource;
@@ -105,13 +104,13 @@ export class ReadOnboardingReviewUseCase {
   constructor(private readonly options: ReadOnboardingReviewUseCaseOptions) {}
 
   async execute(clientId: string): Promise<ReadOnboardingReviewResult> {
-    const client = await this.options.clients.findByClientId(clientId);
-    const identity =
-      client && (await this.options.identities.findByClientId(client.clientId));
+    const participant = await this.options.participants.byClientId(clientId);
 
-    if (!client || !identity) {
+    if (!participant) {
       return { status: "not-found" };
     }
+
+    const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
       this.options.onboardings.findByClientId(clientId),

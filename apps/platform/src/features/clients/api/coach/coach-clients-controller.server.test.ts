@@ -30,7 +30,7 @@ const COACH: AccountSnapshot = {
 const RECORD_READINGS = {
   status: "invited",
   needsRefund: false,
-  subscriptionCancelledOrEnded: false,
+  coachingCancelledOrEnded: false,
 } as const;
 
 const BOOKED_CALL = {
@@ -205,7 +205,7 @@ describe("CoachClientsController#loadClient", () => {
       email: "ana@example.com",
       status: "invited",
       needsRefund: false,
-      subscriptionCancelledOrEnded: false,
+      coachingCancelledOrEnded: false,
       gender: "female",
       assessmentCall: {
         startsAt: "2026-09-24T15:00:00.000Z",
@@ -237,7 +237,7 @@ describe("CoachClientsController#loadClient", () => {
         ...RECORD_READINGS,
         status: "inactive",
         needsRefund: true,
-        subscriptionCancelledOrEnded: true,
+        coachingCancelledOrEnded: true,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -247,7 +247,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.needsRefund).toBe(true);
-    expect(client.subscriptionCancelledOrEnded).toBe(true);
+    expect(client.coachingCancelledOrEnded).toBe(true);
   });
 
   it("reads no invitation once her account is bound", async () => {

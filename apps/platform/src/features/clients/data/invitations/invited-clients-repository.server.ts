@@ -34,7 +34,7 @@ export class PostgresInvitedClients implements InvitedClients {
       email: row.email,
       firstName: row.firstName,
       authSubjectId: row.authSubjectId,
-      subscriptionCancelledOrEnded: CoachingStanding.of(
+      coachingCancelledOrEnded: CoachingStanding.of(
         row.standing,
       ).isCancelledOrEnded(),
     };

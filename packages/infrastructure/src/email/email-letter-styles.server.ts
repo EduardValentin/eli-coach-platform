@@ -108,7 +108,7 @@ export const dividerStyle: CSSProperties = {
   width: "auto",
 };
 
-export const invitationReassuranceSectionStyle: CSSProperties = {
+export const closingReassuranceSectionStyle: CSSProperties = {
   padding: "28px 36px 36px",
   textAlign: "center",
 };

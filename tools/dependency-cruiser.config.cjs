@@ -39,19 +39,6 @@ const FEATURE_ORDER = [
   "coaching-sales",
 ];
 
-const unorderedFeatures = readdirSync(
-  path.join(__dirname, "../apps/platform/src/features"),
-  { withFileTypes: true },
-)
-  .filter((entry) => entry.isDirectory() && !FEATURE_ORDER.includes(entry.name))
-  .map((entry) => entry.name);
-
-if (unorderedFeatures.length > 0) {
-  throw new Error(
-    `Place every feature in FEATURE_ORDER; missing: ${unorderedFeatures.join(", ")}.`,
-  );
-}
-
 const DOMAIN_SLICE_ORDER = [
   "shared",
   "email-address",
@@ -81,20 +68,30 @@ const DOMAIN_SLICE_ORDER = [
   "coaching-subscription",
 ];
 
-const unorderedDomainSlices = readdirSync(
-  path.join(__dirname, "../packages/domain/src"),
-  { withFileTypes: true },
-)
-  .filter(
-    (entry) => entry.isDirectory() && !DOMAIN_SLICE_ORDER.includes(entry.name),
-  )
-  .map((entry) => entry.name);
+function requireEveryFolderOrdered({ directory, order, orderName }) {
+  const unordered = readdirSync(path.join(__dirname, "..", directory), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isDirectory() && !order.includes(entry.name))
+    .map((entry) => entry.name);
 
-if (unorderedDomainSlices.length > 0) {
-  throw new Error(
-    `Place every domain slice in DOMAIN_SLICE_ORDER; missing: ${unorderedDomainSlices.join(", ")}.`,
-  );
+  if (unordered.length > 0) {
+    throw new Error(
+      `Place every folder of ${directory} in ${orderName}; missing: ${unordered.join(", ")}.`,
+    );
+  }
 }
+
+requireEveryFolderOrdered({
+  directory: "apps/platform/src/features",
+  order: FEATURE_ORDER,
+  orderName: "FEATURE_ORDER",
+});
+requireEveryFolderOrdered({
+  directory: "packages/domain/src",
+  order: DOMAIN_SLICE_ORDER,
+  orderName: "DOMAIN_SLICE_ORDER",
+});
 
 function domainSliceOrderRule(slice, position) {
   const earlierSlices = DOMAIN_SLICE_ORDER.slice(0, position);

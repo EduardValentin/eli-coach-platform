@@ -155,6 +155,7 @@ export function composeCoachingSalesFeature(
   const subscriptionUseCases = {
     cancelSubscription: new CancelSubscriptionUseCase({
       ...subscriptionPorts,
+      clientReach: handles.clientReach,
       clients: handles.clientIdentities,
       notifications: createRefundNotifications(handles.productEmail, {
         appBasePath: handles.appBasePath,
@@ -163,9 +164,10 @@ export function composeCoachingSalesFeature(
         publicAppUrl: handles.publicAppUrl,
       }),
     }),
-    openPaymentMethodSession: new OpenPaymentMethodSessionUseCase(
-      subscriptionPorts,
-    ),
+    openPaymentMethodSession: new OpenPaymentMethodSessionUseCase({
+      ...subscriptionPorts,
+      clientReach: handles.clientReach,
+    }),
     mirrorPaymentCard: new MirrorPaymentCardUseCase({
       cards: paymentCards,
       incidents: handles.incidents,
@@ -173,6 +175,7 @@ export function composeCoachingSalesFeature(
     }),
     readClientSubscription: new ReadClientSubscriptionUseCase({
       cards: paymentCards,
+      clientReach: handles.clientReach,
       clock,
       subscriptions,
     }),
@@ -190,6 +193,7 @@ export function composeCoachingSalesFeature(
       incidents: handles.incidents,
     }),
     startProgramNow: new StartProgramNowUseCase({
+      clientReach: handles.clientReach,
       clock,
       incidents: handles.incidents,
       subscriptions,
@@ -269,7 +273,6 @@ export function composeCoachingSalesFeature(
       subscription: new SubscriptionController({
         appBasePath: handles.appBasePath,
         cancelSubscription: subscriptionUseCases.cancelSubscription,
-        clientReach: handles.clientReach,
         openPaymentMethodSession: subscriptionUseCases.openPaymentMethodSession,
         publicAppUrl: handles.publicAppUrl,
         readClientSubscription: subscriptionUseCases.readClientSubscription,

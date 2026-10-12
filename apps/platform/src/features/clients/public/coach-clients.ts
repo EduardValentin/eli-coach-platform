@@ -60,7 +60,7 @@ export const coachClientSchema = z.object({
   email: z.string().min(1),
   status: clientStatusSchema,
   needsRefund: z.boolean(),
-  subscriptionCancelledOrEnded: z.boolean(),
+  coachingCancelledOrEnded: z.boolean(),
   gender: visitorGenderSchema,
   assessmentCall: bookedAssessmentCallSchema,
   invitation: clientInvitationSchema.nullable(),

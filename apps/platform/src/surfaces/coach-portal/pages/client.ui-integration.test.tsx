@@ -65,7 +65,7 @@ const INVITED: CoachClient = {
   gender: "female",
   status: "invited",
   needsRefund: false,
-  subscriptionCancelledOrEnded: false,
+  coachingCancelledOrEnded: false,
 };
 
 const SUBSCRIPTION: ClientSubscription = {
@@ -115,7 +115,7 @@ const ENDED_WITH_REFUND_DUE: CoachClient = {
   ...AWAITING_REVIEW,
   status: "inactive",
   needsRefund: true,
-  subscriptionCancelledOrEnded: true,
+  coachingCancelledOrEnded: true,
 };
 
 const ENDED_SUBSCRIPTION: ClientSubscription = {
@@ -620,7 +620,7 @@ describe("the coach's client page", () => {
         client: {
           ...AWAITING_REVIEW,
           status: "cancelled",
-          subscriptionCancelledOrEnded: true,
+          coachingCancelledOrEnded: true,
         },
         review: {
           ...SUBMITTED_REVIEW,
@@ -655,7 +655,7 @@ describe("the coach's client page", () => {
       client: {
         ...INVITED,
         status: "inactive",
-        subscriptionCancelledOrEnded: true,
+        coachingCancelledOrEnded: true,
       },
     });
 

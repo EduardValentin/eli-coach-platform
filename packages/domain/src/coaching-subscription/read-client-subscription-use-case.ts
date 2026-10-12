@@ -1,4 +1,4 @@
-import type { CoachingStatus } from "../client";
+import type { ClientReach, CoachingStatus } from "../client";
 import type { Clock } from "../shared";
 
 import {
@@ -24,6 +24,7 @@ type ClientSubscriptionReading = {
 };
 
 type ReadClientSubscriptionUseCaseOptions = {
+  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   cards: PaymentCards;
   clock: Clock;
   subscriptions: CoachingSubscriptions;
@@ -32,9 +33,14 @@ type ReadClientSubscriptionUseCaseOptions = {
 export class ReadClientSubscriptionUseCase {
   constructor(private readonly options: ReadClientSubscriptionUseCaseOptions) {}
 
-  async execute(clientId: string): Promise<ClientSubscriptionReading | null> {
+  async execute(
+    authSubjectId: string,
+  ): Promise<ClientSubscriptionReading | null> {
+    const client =
+      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
     const subscription =
-      await this.options.subscriptions.findCurrentForClient(clientId);
+      client &&
+      (await this.options.subscriptions.findCurrentForClient(client.clientId));
 
     if (!subscription) {
       return null;

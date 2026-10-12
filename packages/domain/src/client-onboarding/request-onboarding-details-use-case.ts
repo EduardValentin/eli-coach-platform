@@ -1,12 +1,12 @@
-import type { ClientIdentities, ClientIdentity } from "../client";
+import type { ClientIdentity } from "../client";
 import type { Clock } from "../shared";
 
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { DetailRequest } from "./detail-request";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import {
   OnboardingReview,
   type DetailRequestRefusal,
@@ -30,8 +30,7 @@ type RequestOnboardingDetailsResult =
   | { status: "invalid"; reason: DetailRequestRefusal };
 
 type RequestOnboardingDetailsUseCaseOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   requestIds: DetailRequestIdGenerator;
@@ -49,13 +48,13 @@ export class RequestOnboardingDetailsUseCase {
     command: RequestOnboardingDetailsCommand,
   ): Promise<RequestOnboardingDetailsResult> {
     const { clientId } = command;
-    const client = await this.options.clients.findByClientId(clientId);
-    const identity =
-      client && (await this.options.identities.findByClientId(client.clientId));
+    const participant = await this.options.participants.byClientId(clientId);
 
-    if (!client || !identity) {
+    if (!participant) {
       return { status: "not-found" };
     }
+
+    const { client, identity } = participant;
 
     if (client.standing.isCancelledOrEnded()) {
       return { status: "subscription-cancelled-or-ended" };

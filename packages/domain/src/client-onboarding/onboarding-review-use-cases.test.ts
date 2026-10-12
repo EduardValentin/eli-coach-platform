@@ -13,6 +13,7 @@ import { DetailRequest } from "./detail-request";
 import { emptyAnswers } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
@@ -176,13 +177,18 @@ function reviewPorts(
     stored?: Partial<StoredReview>;
   } = {},
 ) {
+  const clients = createClients(
+    overrides.client === undefined ? CLIENT : overrides.client,
+  );
+
   return {
-    clients: createClients(
-      overrides.client === undefined ? CLIENT : overrides.client,
-    ),
-    identities: createIdentities(
-      overrides.identity === undefined ? IDENTITY : overrides.identity,
-    ),
+    clients,
+    participants: new OnboardingParticipants({
+      clients,
+      identities: createIdentities(
+        overrides.identity === undefined ? IDENTITY : overrides.identity,
+      ),
+    }),
     onboardings: createOnboardings(
       overrides.submission === undefined ? SUBMISSION : overrides.submission,
     ),

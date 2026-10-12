@@ -151,13 +151,19 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
           eq(coachingSubscriptionsTable.id, previous.id),
           eq(coachingSubscriptionsTable.status, previous.status),
           eq(coachingSubscriptionsTable.startChoice, previous.startChoice),
-          holds(coachingSubscriptionsTable.cancelledAt, previous.cancelledAt),
-          holds(coachingSubscriptionsTable.accessEndsAt, previous.accessEndsAt),
-          holds(
+          this.holds(
+            coachingSubscriptionsTable.cancelledAt,
+            previous.cancelledAt,
+          ),
+          this.holds(
+            coachingSubscriptionsTable.accessEndsAt,
+            previous.accessEndsAt,
+          ),
+          this.holds(
             coachingSubscriptionsTable.paymentProblemSince,
             previous.paymentProblemSince,
           ),
-          holds(
+          this.holds(
             coachingSubscriptionsTable.refundedCents,
             previous.refund?.refundedCents ?? null,
           ),
@@ -257,8 +263,8 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
 
     return left === right;
   }
-}
 
-function holds<Value>(column: Column, value: Value | null): SQL {
-  return value === null ? isNull(column) : eq(column, value);
+  private holds<Value>(column: Column, value: Value | null): SQL {
+    return value === null ? isNull(column) : eq(column, value);
+  }
 }

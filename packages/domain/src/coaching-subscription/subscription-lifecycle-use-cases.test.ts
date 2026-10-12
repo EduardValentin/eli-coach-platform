@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities, ClientIdentity } from "../client";
+import type {
+  ClientIdentities,
+  ClientIdentity,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
 import type { CoachingEndHandler } from "./coaching-end-handler";
@@ -22,6 +27,7 @@ import { StartProgramNowUseCase } from "./start-program-now-use-case";
 import type { SubscriptionEvent } from "./subscription-event";
 
 const CLIENT_ID = "client-1";
+const AUTH_SUBJECT_ID = "user_ana";
 const PAID_AT = new Date("2026-10-02T10:00:00.000Z");
 const DAY_13 = new Date("2026-10-15T10:00:00.000Z");
 const DAY_14 = new Date("2026-10-16T10:00:00.000Z");
@@ -136,6 +142,19 @@ function createClients(found: ClientIdentity | null = ana) {
   } satisfies ClientIdentities;
 }
 
+const anaReach: ClientReachReading = {
+  clientId: CLIENT_ID,
+  portal: "reachable",
+  coachingEndsAt: null,
+  timeZone: "Europe/Bucharest",
+};
+
+function createClientReach(found: ClientReachReading | null = anaReach) {
+  return {
+    findByAuthSubjectId: vi.fn().mockResolvedValue(found),
+  } satisfies Pick<ClientReach, "findByAuthSubjectId">;
+}
+
 function createCoachingEnd() {
   return {
     coachingEnds: vi.fn().mockResolvedValue(undefined),
@@ -150,8 +169,10 @@ function cancelUseCase(options: {
   incidents?: ReturnType<typeof createIncidents>;
   notifications?: ReturnType<typeof createNotifications>;
   clients?: ReturnType<typeof createClients>;
+  clientReach?: ReturnType<typeof createClientReach>;
 }) {
   return new CancelSubscriptionUseCase({
+    clientReach: options.clientReach ?? createClientReach(),
     clients: options.clients ?? createClients(),
     clock: clockAt(options.now),
     coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
@@ -190,7 +211,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -240,7 +261,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -282,7 +303,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -319,7 +340,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "provider_unavailable" });
@@ -348,7 +369,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -364,7 +385,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
@@ -388,7 +409,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({
@@ -443,7 +464,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({
@@ -485,7 +506,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -516,7 +537,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "nothing_to_cancel" });
@@ -532,7 +553,7 @@ describe("CancelSubscriptionUseCase", () => {
     const useCase = cancelUseCase({ now: DAY_14, subscriptions });
 
     // act
-    const cancelling = useCase.execute(CLIENT_ID);
+    const cancelling = useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     await expect(cancelling).rejects.toThrow();
@@ -567,7 +588,7 @@ describe("CancelSubscriptionUseCase", () => {
       });
 
       // act
-      const result = await useCase.execute(CLIENT_ID);
+      const result = await useCase.execute(AUTH_SUBJECT_ID);
 
       // assert
       expect(result).toMatchObject({ status: "cancelled" });
@@ -592,7 +613,7 @@ describe("CancelSubscriptionUseCase", () => {
       });
 
       // act
-      await useCase.execute(CLIENT_ID);
+      await useCase.execute(AUTH_SUBJECT_ID);
 
       // assert
       expect(coachingEnd.coachingEnds).toHaveBeenCalledWith({
@@ -610,6 +631,7 @@ describe("CancelSubscriptionUseCase", () => {
     const listening = createCoachingEnd();
     const incidents = createIncidents();
     const useCase = new CancelSubscriptionUseCase({
+      clientReach: createClientReach(),
       clients: createClients(),
       clock: clockAt(DAY_14),
       coachingEnds: [failing, listening],
@@ -620,7 +642,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
@@ -651,7 +673,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toMatchObject({ status: "cancelled", rule: "no-refund" });
@@ -695,7 +717,7 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    await useCase.execute(CLIENT_ID);
+    await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(coachingEnd.coachingEnds).not.toHaveBeenCalled();
@@ -714,13 +736,33 @@ describe("CancelSubscriptionUseCase", () => {
     });
 
     // act
-    await useCase.execute(CLIENT_ID);
+    await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(notifications.notifyRefundDue).not.toHaveBeenCalled();
     expect(incidents.refundNotificationFailed).toHaveBeenCalledWith({
       subscriptionId: "subscription-1",
     });
+  });
+
+  it("finds nothing to cancel for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      paymentSubscriptions,
+      clientReach: createClientReach(null),
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
+    expect(paymentSubscriptions.endNow).not.toHaveBeenCalled();
   });
 });
 
@@ -729,8 +771,10 @@ describe("StartProgramNowUseCase", () => {
     now: Date;
     subscriptions: ReturnType<typeof createSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
+    clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new StartProgramNowUseCase({
+      clientReach: options.clientReach ?? createClientReach(),
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
       subscriptions: options.subscriptions,
@@ -745,7 +789,7 @@ describe("StartProgramNowUseCase", () => {
     const useCase = startNowUseCase({ now: DAY_13, subscriptions, incidents });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "started" });
@@ -773,7 +817,7 @@ describe("StartProgramNowUseCase", () => {
     const useCase = startNowUseCase({ now, subscriptions });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "refused", reason });
@@ -788,10 +832,31 @@ describe("StartProgramNowUseCase", () => {
     });
 
     // act
-    const result = await useCase.execute(CLIENT_ID);
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(result).toEqual({ status: "not_found" });
+  });
+
+  it("finds nothing to start for a subject bound to no client", async () => {
+    // arrange
+    const clientReach = createClientReach(null);
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions,
+      clientReach,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(clientReach.findByAuthSubjectId).toHaveBeenCalledWith(
+      AUTH_SUBJECT_ID,
+    );
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 
   it("re-reads once when the subscription changed meanwhile, then fails on a second change", async () => {
@@ -801,7 +866,7 @@ describe("StartProgramNowUseCase", () => {
     const useCase = startNowUseCase({ now: DAY_13, subscriptions });
 
     // act
-    const starting = useCase.execute(CLIENT_ID);
+    const starting = useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     await expect(starting).rejects.toThrow();
@@ -815,8 +880,10 @@ describe("OpenPaymentMethodSessionUseCase", () => {
     subscriptions: ReturnType<typeof createSubscriptions>;
     paymentSubscriptions?: ReturnType<typeof createPaymentSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
+    clientReach?: ReturnType<typeof createClientReach>;
   }) {
     return new OpenPaymentMethodSessionUseCase({
+      clientReach: options.clientReach ?? createClientReach(),
       clock: clockAt(options.now),
       incidents: options.incidents ?? createIncidents(),
       paymentSubscriptions:
@@ -838,7 +905,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      clientId: CLIENT_ID,
+      authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
 
@@ -869,7 +936,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      clientId: CLIENT_ID,
+      authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
 
@@ -889,12 +956,32 @@ describe("OpenPaymentMethodSessionUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      clientId: CLIENT_ID,
+      authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
 
     // assert
     expect(result).toEqual({ status: "not_found" });
+  });
+
+  it("finds no session for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = openUseCase({
+      now: DAY_13,
+      subscriptions,
+      clientReach: createClientReach(null),
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: AUTH_SUBJECT_ID,
+      returnUrl: RETURN_URL,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_found" });
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 
   it("answers provider_unavailable when the provider fails", async () => {
@@ -911,7 +998,7 @@ describe("OpenPaymentMethodSessionUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      clientId: CLIENT_ID,
+      authSubjectId: AUTH_SUBJECT_ID,
       returnUrl: RETURN_URL,
     });
 
@@ -925,13 +1012,14 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions,
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toEqual({
@@ -952,6 +1040,7 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(
@@ -960,7 +1049,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -973,13 +1062,14 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the waiting path at its withdrawal deadline with no start now", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_14),
       subscriptions: createSubscriptions(subscriptionOf()),
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -992,6 +1082,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_14),
       subscriptions: createSubscriptions(
@@ -1005,7 +1096,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({
@@ -1019,6 +1110,7 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads a payment problem the provider flagged", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(
@@ -1027,7 +1119,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({ paymentProblem: true });
@@ -1044,13 +1136,14 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
     const cards = createCards(card);
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards,
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(subscriptionOf()),
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toMatchObject({ card: card.toSnapshot() });
@@ -1060,16 +1153,35 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads nothing for a subject with no subscription", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(),
       cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(null),
     });
 
     // act
-    const reading = await useCase.execute(CLIENT_ID);
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
 
     // assert
     expect(reading).toBeNull();
+  });
+
+  it("reads nothing for a subject bound to no client", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = new ReadClientSubscriptionUseCase({
+      clientReach: createClientReach(null),
+      cards: createCards(null),
+      clock: clockAt(DAY_13),
+      subscriptions,
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toBeNull();
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 });
 

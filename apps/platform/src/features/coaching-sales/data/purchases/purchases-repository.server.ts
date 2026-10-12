@@ -101,7 +101,7 @@ export class PostgresCoachingPurchases
           ),
       );
 
-    return callSalesOf(callIds, advancedSales);
+    return this.callSalesOf(callIds, advancedSales);
   }
 
   private async recordPurchase(
@@ -117,7 +117,7 @@ export class PostgresCoachingPurchases
     if (ledgerOutcome === "duplicate") {
       return {
         outcome: "duplicate_event",
-        clientId: await findClientIdForCall(
+        clientId: await this.findClientIdForCall(
           transaction,
           intake.assessmentCallId,
         ),
@@ -174,49 +174,52 @@ export class PostgresCoachingPurchases
 
     return { outcome: "recorded", clientId: admitted.clientId };
   }
-}
 
-async function findClientIdForCall(
-  transaction: DatabaseTransaction,
-  assessmentCallId: string,
-): Promise<string> {
-  const [subscriptionRow] = await transaction
-    .select({ clientId: coachingSubscriptionsTable.clientId })
-    .from(coachingSubscriptionsTable)
-    .where(eq(coachingSubscriptionsTable.assessmentCallId, assessmentCallId))
-    .limit(1);
+  private async findClientIdForCall(
+    transaction: DatabaseTransaction,
+    assessmentCallId: string,
+  ): Promise<string> {
+    const [subscriptionRow] = await transaction
+      .select({ clientId: coachingSubscriptionsTable.clientId })
+      .from(coachingSubscriptionsTable)
+      .where(eq(coachingSubscriptionsTable.assessmentCallId, assessmentCallId))
+      .limit(1);
 
-  if (!subscriptionRow) {
-    throw new Error(
-      `No client was recorded for assessment call ${assessmentCallId}.`,
+    if (!subscriptionRow) {
+      throw new Error(
+        `No client was recorded for assessment call ${assessmentCallId}.`,
+      );
+    }
+
+    return subscriptionRow.clientId;
+  }
+
+  private callSalesOf(
+    callIds: readonly string[],
+    advancedSales: readonly ({ assessmentCallId: string } & CallSale)[],
+  ): ReadonlyMap<string, CallSale> {
+    const sales = new Map<string, CallSale>(
+      callIds.map((callId) => [callId, { state: "held", clientId: null }]),
+    );
+
+    for (const { assessmentCallId, state, clientId } of advancedSales) {
+      const current = sales.get(assessmentCallId)?.state ?? "held";
+
+      if (this.outranks(state, current)) {
+        sales.set(assessmentCallId, { state, clientId });
+      }
+    }
+
+    return sales;
+  }
+
+  private outranks(
+    candidate: CallSalesState,
+    current: CallSalesState,
+  ): boolean {
+    return (
+      SALES_STATE_PRECEDENCE.indexOf(candidate) >
+      SALES_STATE_PRECEDENCE.indexOf(current)
     );
   }
-
-  return subscriptionRow.clientId;
-}
-
-function callSalesOf(
-  callIds: readonly string[],
-  advancedSales: readonly ({ assessmentCallId: string } & CallSale)[],
-): ReadonlyMap<string, CallSale> {
-  const sales = new Map<string, CallSale>(
-    callIds.map((callId) => [callId, { state: "held", clientId: null }]),
-  );
-
-  for (const { assessmentCallId, state, clientId } of advancedSales) {
-    const current = sales.get(assessmentCallId)?.state ?? "held";
-
-    if (outranks(state, current)) {
-      sales.set(assessmentCallId, { state, clientId });
-    }
-  }
-
-  return sales;
-}
-
-function outranks(candidate: CallSalesState, current: CallSalesState): boolean {
-  return (
-    SALES_STATE_PRECEDENCE.indexOf(candidate) >
-    SALES_STATE_PRECEDENCE.indexOf(current)
-  );
 }

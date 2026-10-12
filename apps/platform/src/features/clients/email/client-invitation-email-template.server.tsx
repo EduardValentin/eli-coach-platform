@@ -21,7 +21,7 @@ import {
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
-  invitationReassuranceSectionStyle,
+  closingReassuranceSectionStyle,
   letterParagraphStyle,
   letterSectionStyle,
   nextStepsCardStyle,
@@ -154,7 +154,7 @@ export function ClientInvitationEmailTemplate({
 
             <EmailDivider style={dividerStyle} />
 
-            <EmailSection style={invitationReassuranceSectionStyle}>
+            <EmailSection style={closingReassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 {copy.reassurance}
               </EmailText>

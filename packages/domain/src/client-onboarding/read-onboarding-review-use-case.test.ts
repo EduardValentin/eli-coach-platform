@@ -18,6 +18,7 @@ import {
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { OnboardingParticipants } from "./onboarding-participants";
 import type {
   OnboardingReviewStamps,
   ReviewStamps,
@@ -140,17 +141,21 @@ function readPorts(
   } = {},
 ) {
   return {
-    clients: {
-      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-      findByClientId: vi
-        .fn()
-        .mockResolvedValue(
-          overrides.client === undefined ? CLIENT : overrides.client,
-        ),
-    } satisfies OnboardingClients,
-    identities: {
-      findByClientId: vi.fn().mockResolvedValue(overrides.identity ?? IDENTITY),
-    } satisfies Pick<ClientIdentities, "findByClientId">,
+    participants: new OnboardingParticipants({
+      clients: {
+        findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+        findByClientId: vi
+          .fn()
+          .mockResolvedValue(
+            overrides.client === undefined ? CLIENT : overrides.client,
+          ),
+      } satisfies OnboardingClients,
+      identities: {
+        findByClientId: vi
+          .fn()
+          .mockResolvedValue(overrides.identity ?? IDENTITY),
+      } satisfies Pick<ClientIdentities, "findByClientId">,
+    }),
     onboardings: {
       findByClientId: vi.fn().mockResolvedValue({
         draft: null,

@@ -35,13 +35,6 @@ const COACH: AccountSnapshot = {
   role: "COACH",
 };
 
-const CLIENT_ID = "client-ana";
-const CLIENT_REACH = {
-  clientId: CLIENT_ID,
-  portal: "reachable",
-  coachingEndsAt: null,
-  timeZone: "Europe/Bucharest",
-} as const;
 const PAID_AT = new Date("2026-10-02T10:00:00.000Z");
 const DAY_13 = new Date("2026-10-15T10:00:00.000Z");
 const DEADLINE = new Date("2026-10-16T10:00:00.000Z");
@@ -116,7 +109,7 @@ describe("SubscriptionController#loadSettings", () => {
       startNowUntil: "2026-10-16T10:00:00.000Z",
       card: null,
     });
-    expect(readClientSubscription).toHaveBeenCalledWith(CLIENT_ID);
+    expect(readClientSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it("reads the card on file by brand, last four digits and expiry, never its payment method", async () => {
@@ -251,6 +244,17 @@ describe("SubscriptionController#loadEnded", () => {
     // assert
     expect(ended).toEqual({ refundDue });
   });
+
+  it("tells the ended page that nothing is owed when no subscription is read", async () => {
+    // arrange
+    const { controller } = createController({ reading: null });
+
+    // act
+    const ended = await controller.loadEnded(clientArgs());
+
+    // assert
+    expect(ended).toEqual({ refundDue: false });
+  });
 });
 
 describe("SubscriptionController#cancel", () => {
@@ -286,7 +290,7 @@ describe("SubscriptionController#cancel", () => {
       accessEndsAt: "2026-10-15T10:00:00.000Z",
       refundDue: true,
     });
-    expect(cancelSubscription).toHaveBeenCalledWith(CLIENT_ID);
+    expect(cancelSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it.each([
@@ -358,7 +362,7 @@ describe("SubscriptionController#startNow", () => {
     // assert
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: "started" });
-    expect(startProgramNow).toHaveBeenCalledWith(CLIENT_ID);
+    expect(startProgramNow).toHaveBeenCalledWith(CLIENT.authSubjectId);
   });
 
   it.each([
@@ -399,7 +403,7 @@ describe("SubscriptionController#openPaymentMethod", () => {
       "https://billing.stripe.com/p/1",
     );
     expect(openPaymentMethodSession).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
+      authSubjectId: CLIENT.authSubjectId,
       returnUrl: "https://evoa.fit/app/client/settings",
     });
   });
@@ -567,85 +571,13 @@ describe("SubscriptionController#loadProgramStatus", () => {
   });
 });
 
-describe("SubscriptionController for a signed-in client with no client record", () => {
-  it("answers 404 to her settings without reading a subscription", async () => {
-    // arrange
-    const { controller, readClientSubscription } = createController({
-      client: null,
-    });
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.loadSettings(clientArgs()),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(404);
-    expect(readClientSubscription).not.toHaveBeenCalled();
-  });
-
-  it("tells the ended page that nothing is owed", async () => {
-    // arrange
-    const { controller } = createController({ client: null });
-
-    // act
-    const ended = await controller.loadEnded(clientArgs());
-
-    // assert
-    expect(ended).toEqual({ refundDue: false });
-  });
-
-  it.each([
-    ["cancelling", "cancel"],
-    ["starting now", "startNow"],
-  ] as const)(
-    "answers 404 to %s without touching a subscription",
-    async (_label, action) => {
-      // arrange
-      const { controller, cancelSubscription, startProgramNow } =
-        createController({ client: null });
-
-      // act
-      const response = await controller[action](apiArgs());
-
-      // assert
-      expect(response.status).toBe(404);
-      expect(await response.json()).toEqual({ error: "not-found" });
-      expect(cancelSubscription).not.toHaveBeenCalled();
-      expect(startProgramNow).not.toHaveBeenCalled();
-    },
-  );
-
-  it("answers 404 to opening the payment method", async () => {
-    // arrange
-    const { controller, openPaymentMethodSession } = createController({
-      client: null,
-    });
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.openPaymentMethod(apiArgs()),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(404);
-    expect(openPaymentMethodSession).not.toHaveBeenCalled();
-  });
-});
-
 function createController(options: {
-  client?: typeof CLIENT_REACH | null;
   reading?: Reading | null;
   cancelled?: Awaited<ReturnType<CancelSubscriptionUseCase["execute"]>>;
   started?: Awaited<ReturnType<StartProgramNowUseCase["execute"]>>;
   opened?: Awaited<ReturnType<OpenPaymentMethodSessionUseCase["execute"]>>;
   programStatus?: Awaited<ReturnType<ReadProgramStatusUseCase["execute"]>>;
 }) {
-  const findByAuthSubjectId = vi
-    .fn()
-    .mockResolvedValue(
-      options.client === undefined ? CLIENT_REACH : options.client,
-    );
   const readProgramStatus = vi
     .fn()
     .mockResolvedValue(options.programStatus ?? null);
@@ -660,7 +592,6 @@ function createController(options: {
     cancelSubscription: {
       execute: cancelSubscription,
     } as unknown as CancelSubscriptionUseCase,
-    clientReach: { findByAuthSubjectId },
     openPaymentMethodSession: {
       execute: openPaymentMethodSession,
     } as unknown as OpenPaymentMethodSessionUseCase,
@@ -679,7 +610,6 @@ function createController(options: {
   return {
     cancelSubscription,
     controller,
-    findByAuthSubjectId,
     openPaymentMethodSession,
     readClientSubscription,
     readProgramStatus,

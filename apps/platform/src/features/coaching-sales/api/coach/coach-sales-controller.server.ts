@@ -30,7 +30,7 @@ type SubscriptionSummary = NonNullable<
   Awaited<ReturnType<ReadSubscriptionSummaryUseCase["execute"]>>
 >;
 
-const CLIENT_ID_SCHEMA = z.uuid();
+const clientIdSchema = z.uuid();
 
 type CallVisitorEmail = { email: string; id: string };
 
@@ -49,7 +49,7 @@ export class CoachSalesController {
   ): Promise<ClientSubscription | null> {
     requirePortalAccess(args, { role: "COACH" });
 
-    const id = CLIENT_ID_SCHEMA.safeParse(clientId);
+    const id = clientIdSchema.safeParse(clientId);
 
     if (!id.success) {
       return null;
@@ -58,7 +58,7 @@ export class CoachSalesController {
     const summary = await this.options.readSubscriptionSummary.execute(id.data);
 
     return summary
-      ? clientSubscriptionSchema.parse(subscriptionOf(summary))
+      ? clientSubscriptionSchema.parse(this.subscriptionOf(summary))
       : null;
   }
 
@@ -79,41 +79,41 @@ export class CoachSalesController {
       ),
     );
   }
-}
 
-function subscriptionOf(summary: SubscriptionSummary) {
-  const { subscription, status: subscriptionStatus } = summary;
-  const accessEndsOn = subscription.accessEndsAt?.toISOString() ?? null;
+  private subscriptionOf(summary: SubscriptionSummary) {
+    const { subscription, status: subscriptionStatus } = summary;
+    const accessEndsOn = subscription.accessEndsAt?.toISOString() ?? null;
 
-  return {
-    bundleId: subscription.bundleId,
-    months: subscription.months,
-    reducedPrice: subscription.tier === "reduced",
-    paidAt: subscription.paidAt.toISOString(),
-    workStartsOn: summary.workStartsOn?.toISOString() ?? null,
-    status: subscriptionStatus,
-    endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
-    endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
-    refund: subscription.refund
-      ? refundOf(subscription.refund, {
-          currency: subscription.currency,
-          outstandingCents: summary.refundOutstandingCents ?? 0,
-        })
-      : null,
-  };
-}
+    return {
+      bundleId: subscription.bundleId,
+      months: subscription.months,
+      reducedPrice: subscription.tier === "reduced",
+      paidAt: subscription.paidAt.toISOString(),
+      workStartsOn: summary.workStartsOn?.toISOString() ?? null,
+      status: subscriptionStatus,
+      endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
+      endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
+      refund: subscription.refund
+        ? this.refundOf(subscription.refund, {
+            currency: subscription.currency,
+            outstandingCents: summary.refundOutstandingCents ?? 0,
+          })
+        : null,
+    };
+  }
 
-function refundOf(
-  refund: RefundDueSnapshot,
-  reading: { currency: string; outstandingCents: number },
-) {
-  return {
-    reason: refund.reason,
-    amountCents: refund.amountCents,
-    outstandingCents: reading.outstandingCents,
-    refundedCents: refund.refundedCents,
-    currency: reading.currency,
-    dueBy: refund.dueBy?.toISOString() ?? null,
-    refundedOn: refund.refundedAt?.toISOString() ?? null,
-  };
+  private refundOf(
+    refund: RefundDueSnapshot,
+    reading: { currency: string; outstandingCents: number },
+  ) {
+    return {
+      reason: refund.reason,
+      amountCents: refund.amountCents,
+      outstandingCents: reading.outstandingCents,
+      refundedCents: refund.refundedCents,
+      currency: reading.currency,
+      dueBy: refund.dueBy?.toISOString() ?? null,
+      refundedOn: refund.refundedAt?.toISOString() ?? null,
+    };
+  }
 }

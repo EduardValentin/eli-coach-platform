@@ -1,3 +1,4 @@
+import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { StartNowRefusal } from "./coaching-subscription";
@@ -10,6 +11,7 @@ type StartProgramNowResult =
   | { status: "not_found" };
 
 type StartProgramNowUseCaseOptions = {
+  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   subscriptions: CoachingSubscriptions;
@@ -18,7 +20,15 @@ type StartProgramNowUseCaseOptions = {
 export class StartProgramNowUseCase {
   constructor(private readonly options: StartProgramNowUseCaseOptions) {}
 
-  async execute(clientId: string): Promise<StartProgramNowResult> {
+  async execute(authSubjectId: string): Promise<StartProgramNowResult> {
+    const client =
+      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
+
+    if (!client) {
+      return { status: "not_found" };
+    }
+
+    const { clientId } = client;
     const now = this.options.clock.now();
     const first = await this.attempt(clientId, now);
     const result =

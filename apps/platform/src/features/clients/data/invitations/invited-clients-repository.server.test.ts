@@ -41,7 +41,7 @@ describe("PostgresInvitedClients#findById", () => {
       email: "ana@example.com",
       firstName: "Ana",
       authSubjectId: null,
-      subscriptionCancelledOrEnded: false,
+      coachingCancelledOrEnded: false,
     });
   });
 
@@ -70,7 +70,7 @@ describe("PostgresInvitedClients#findById", () => {
       const client = await invitedClients.findById(CLIENT_ID);
 
       // assert
-      expect(client?.subscriptionCancelledOrEnded).toBe(expected);
+      expect(client?.coachingCancelledOrEnded).toBe(expected);
     },
   );
 

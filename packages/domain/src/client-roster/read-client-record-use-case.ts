@@ -3,12 +3,12 @@ import type {
   VisitorGender,
   VisitorPrimaryGoal,
 } from "../assessment-call";
-import { CoachingStanding } from "../client";
+import { ClientJourney } from "../client-journey";
 import type { Clock } from "../shared";
 
 import {
+  clientStatusOf,
   rosterEntryNeedsRefund,
-  rosterEntryStatus,
   type ClientRoster,
   type ClientRosterEntry,
   type ClientStatus,
@@ -17,7 +17,7 @@ import {
 type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
   needsRefund: boolean;
-  subscriptionCancelledOrEnded: boolean;
+  coachingCancelledOrEnded: boolean;
   assessmentCall: {
     startsAt: Date;
     firstName: string;
@@ -56,15 +56,18 @@ export class ReadClientRecordUseCase {
       return null;
     }
 
-    const now = this.options.clock.now();
+    const journey = ClientJourney.from(entry.journey);
 
     return {
       ...entry,
-      status: rosterEntryStatus(entry, now),
+      status: clientStatusOf({
+        accountBound: entry.accountBound,
+        step: journey.step(),
+        standing: journey.standing,
+        now: this.options.clock.now(),
+      }),
       needsRefund: rosterEntryNeedsRefund(entry),
-      subscriptionCancelledOrEnded: CoachingStanding.of(
-        entry.journey.standing,
-      ).isCancelledOrEnded(),
+      coachingCancelledOrEnded: journey.standing.isCancelledOrEnded(),
       assessmentCall: {
         startsAt: call.startsAt,
         firstName: call.firstName,

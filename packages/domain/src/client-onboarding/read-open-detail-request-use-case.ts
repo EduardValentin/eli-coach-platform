@@ -1,9 +1,8 @@
-import type { ClientIdentities } from "../client";
-
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClient } from "./onboarding-clients";
+import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -15,8 +14,7 @@ type OpenDetailRequestReading = {
 };
 
 type ReadOpenDetailRequestUseCaseOptions = {
-  clients: OnboardingClients;
-  identities: Pick<ClientIdentities, "findByClientId">;
+  participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   stamps: OnboardingReviewStamps;
@@ -29,14 +27,14 @@ export class ReadOpenDetailRequestUseCase {
   async execute(
     authSubjectId: string,
   ): Promise<OpenDetailRequestReading | null> {
-    const client =
-      await this.options.clients.findByAuthSubjectId(authSubjectId);
-    const identity =
-      client && (await this.options.identities.findByClientId(client.clientId));
+    const participant =
+      await this.options.participants.byAuthSubjectId(authSubjectId);
 
-    if (!client || !identity) {
+    if (!participant) {
       return null;
     }
+
+    const { client, identity } = participant;
 
     const [stored, reviewed] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),

@@ -36,7 +36,7 @@ export {
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
-  invitationReassuranceSectionStyle,
+  closingReassuranceSectionStyle,
   letterParagraphStyle,
   letterSectionStyle,
   nextStepsCardStyle,

@@ -1,5 +1,4 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { ClientReach } from "@eli-coach-platform/domain/client";
 import type {
   CancelSubscriptionUseCase,
   OpenPaymentMethodSessionUseCase,
@@ -37,7 +36,6 @@ import {
 type SubscriptionControllerOptions = {
   appBasePath: string;
   cancelSubscription: CancelSubscriptionUseCase;
-  clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   openPaymentMethodSession: OpenPaymentMethodSessionUseCase;
   publicAppUrl: string;
   readClientSubscription: ReadClientSubscriptionUseCase;
@@ -77,7 +75,9 @@ export class SubscriptionController {
 
   async loadSettings(args: LoaderFunctionArgs): Promise<ClientSettings> {
     const account = requirePortalAccess(args, { role: "CLIENT" });
-    const reading = await this.readClientSubscription(account.authSubjectId);
+    const reading = await this.options.readClientSubscription.execute(
+      account.authSubjectId,
+    );
 
     if (!reading) {
       throw createNotFoundResponse();
@@ -88,7 +88,9 @@ export class SubscriptionController {
 
   async loadEnded(args: LoaderFunctionArgs): Promise<ClientEnded> {
     const account = requirePortalAccess(args, { role: "CLIENT" });
-    const reading = await this.readClientSubscription(account.authSubjectId);
+    const reading = await this.options.readClientSubscription.execute(
+      account.authSubjectId,
+    );
 
     return clientEndedSchema.parse({
       refundDue: reading?.refundDue ?? false,
@@ -117,13 +119,9 @@ export class SubscriptionController {
 
   async cancel(args: ActionFunctionArgs): Promise<Response> {
     const account = requireApiAccount(args, { role: "CLIENT" });
-    const clientId = await this.clientIdOf(account.authSubjectId);
-
-    if (!clientId) {
-      return refusalResponse(NOT_FOUND);
-    }
-
-    const result = await this.options.cancelSubscription.execute(clientId);
+    const result = await this.options.cancelSubscription.execute(
+      account.authSubjectId,
+    );
 
     if (result.status !== "cancelled") {
       return refusalResponse(CANCEL_REFUSALS[result.status]);
@@ -141,13 +139,9 @@ export class SubscriptionController {
 
   async startNow(args: ActionFunctionArgs): Promise<Response> {
     const account = requireApiAccount(args, { role: "CLIENT" });
-    const clientId = await this.clientIdOf(account.authSubjectId);
-
-    if (!clientId) {
-      return refusalResponse(NOT_FOUND);
-    }
-
-    const result = await this.options.startProgramNow.execute(clientId);
+    const result = await this.options.startProgramNow.execute(
+      account.authSubjectId,
+    );
 
     if (result.status === "started") {
       return Response.json(programStartedSchema.parse(result));
@@ -165,14 +159,8 @@ export class SubscriptionController {
 
   async openPaymentMethod(args: ActionFunctionArgs): Promise<Response> {
     const account = requireApiAccount(args, { role: "CLIENT" });
-    const clientId = await this.clientIdOf(account.authSubjectId);
-
-    if (!clientId) {
-      throw createNotFoundResponse();
-    }
-
     const result = await this.options.openPaymentMethodSession.execute({
-      clientId,
+      authSubjectId: account.authSubjectId,
       returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),
     });
 
@@ -186,23 +174,6 @@ export class SubscriptionController {
       case "not_found":
         throw createNotFoundResponse();
     }
-  }
-
-  private async clientIdOf(authSubjectId: string): Promise<string | null> {
-    const client =
-      await this.options.clientReach.findByAuthSubjectId(authSubjectId);
-
-    return client?.clientId ?? null;
-  }
-
-  private async readClientSubscription(
-    authSubjectId: string,
-  ): Promise<SubscriptionReading | null> {
-    const clientId = await this.clientIdOf(authSubjectId);
-
-    return clientId
-      ? this.options.readClientSubscription.execute(clientId)
-      : null;
   }
 
   private publicUrl(path: string): string {
