@@ -200,7 +200,9 @@ export function AppointmentCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Title className="text-sm font-medium">{attendee.name}</Title>
+            <Title className="text-sm font-medium" data-parity="attendee-name">
+              {attendee.name}
+            </Title>
             {badges}
           </div>
 

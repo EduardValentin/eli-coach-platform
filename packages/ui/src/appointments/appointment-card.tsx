@@ -19,7 +19,7 @@ const CONTACT_GLYPH_SIZE = 13;
 const RESCHEDULED_GLYPH_SIZE = 12;
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
-  past: "text-text-muted",
+  past: "shadow-none text-text-muted",
   scheduled: "shadow-soft text-text-primary",
 };
 
@@ -193,7 +193,9 @@ export function AppointmentCard({
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <Title className="text-sm font-medium">{attendee.name}</Title>
+            <Title className="text-sm font-medium" data-parity="attendee-name">
+              {attendee.name}
+            </Title>
             {badges}
           </div>
 

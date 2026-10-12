@@ -204,6 +204,16 @@ describe("appointment card", () => {
     expect(container.firstElementChild).toHaveClass("text-text-muted");
   });
 
+  it("lays a card whose appointment has already happened flat", () => {
+    // arrange, act
+    const { container } = render(
+      <AppointmentCard attendee={ATTENDEE} status="past" when={WHEN} />,
+    );
+
+    // assert
+    expect(container.firstElementChild).toHaveClass("shadow-none");
+  });
+
   it("carries the badges and the actions the caller hands it", () => {
     // arrange, act
     render(
