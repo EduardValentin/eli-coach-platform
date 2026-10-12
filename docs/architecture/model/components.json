@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "tooling": { "language": "typescript", "dependencyCruiserConfig": "tools/dependency-cruiser.config.cjs", "roots": [ "apps/platform/src", "packages/config/src", "packages/content/src", "packages/db/src", "packages/domain/src", "packages/infrastructure/src", "packages/test-support/src", "packages/ui/src" ] },
+  "components": [
+    { "id": "C1", "name": "packages/domain", "paths": [ "packages/domain/src/**" ], "enforcement": "export map (twenty-six subpaths, no .)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C2", "name": "packages/db", "paths": [ "packages/db/src/**" ], "enforcement": "exports (.)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C3", "name": "packages/config", "paths": [ "packages/config/src/**" ], "enforcement": "exports (., ./runtime)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C4", "name": "packages/content", "paths": [ "packages/content/src/**" ], "enforcement": "exports (.)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C5", "name": "packages/ui", "paths": [ "packages/ui/src/**" ], "enforcement": "exports (twelve entries)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C6", "name": "packages/infrastructure", "paths": [ "packages/infrastructure/src/**" ], "enforcement": "exports (fourteen entries)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C7", "name": "apps/platform/src/features/store", "paths": [ "apps/platform/src/features/store/**" ], "enforcement": "feature-internals", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C8", "name": "apps/platform/src/features/waitlist", "paths": [ "apps/platform/src/features/waitlist/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C9", "name": "apps/platform/src/features/accounts", "paths": [ "apps/platform/src/features/accounts/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C11", "name": "apps/platform/src/surfaces/public-site", "paths": [ "apps/platform/src/surfaces/public-site/**" ], "enforcement": "surface-to-surface", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C12", "name": "apps/platform/src/surfaces/client-portal", "paths": [ "apps/platform/src/surfaces/client-portal/**" ], "enforcement": "surface-to-surface", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C13", "name": "apps/platform/src/surfaces/coach-portal", "paths": [ "apps/platform/src/surfaces/coach-portal/**" ], "enforcement": "surface-to-surface", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C14", "name": "apps/platform/src/server", "paths": [ "apps/platform/src/server/**" ], "enforcement": "composition-root", "releaseUnit": "no", "entryPoints": [ "apps/platform/src/server/container.server.ts" ] },
+    { "id": "C15", "name": "apps/platform", "paths": [ "apps/platform/src/root.tsx", "apps/platform/src/root.server.ts", "apps/platform/src/root-error-page.tsx", "apps/platform/src/routes.ts", "apps/platform/src/app.css", "apps/platform/src/types/**", "apps/platform/db/drizzle.config.ts", "apps/platform/db/seeds/**", "apps/platform/db/apply-seeds.ts", "apps/platform/vite.config.ts", "apps/platform/react-router.config.ts", "apps/platform/package.json" ], "enforcement": "root-registry", "releaseUnit": "no", "entryPoints": [ "apps/platform/src/root.tsx", "apps/platform/src/root.server.ts", "apps/platform/src/routes.ts" ] },
+    { "id": "C16", "name": "packages/test-support", "paths": [ "packages/test-support/src/**" ], "enforcement": "export map", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C17", "name": "apps/platform/src/features/assessment-calls", "paths": [ "apps/platform/src/features/assessment-calls/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C18", "name": "apps/platform/src/features/coaching-sales", "paths": [ "apps/platform/src/features/coaching-sales/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C19", "name": "apps/platform/src/features/client-onboarding", "paths": [ "apps/platform/src/features/client-onboarding/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C20", "name": "apps/platform/src/features/client-profile", "paths": [ "apps/platform/src/features/client-profile/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C21", "name": "apps/platform/src/features/client-resources", "paths": [ "apps/platform/src/features/client-resources/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C22", "name": "apps/platform/src/features/check-ins", "paths": [ "apps/platform/src/features/check-ins/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C23", "name": "apps/platform/src/features/coach-schedule", "paths": [ "apps/platform/src/features/coach-schedule/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C24", "name": "apps/platform/src/features/clients", "paths": [ "apps/platform/src/features/clients/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] }
+  ]
+}
