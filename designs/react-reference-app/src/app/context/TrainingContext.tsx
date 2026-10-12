@@ -33,12 +33,10 @@ function readPersistedActiveWorkout(): WorkoutLog | null {
   }
 }
 
-// ── Exercise types (unchanged) ──────────────────────────────────
-
 export interface Exercise {
   id: string;
   name: string;
-  description: string;
+  cues: string;
   type: ExerciseType;
   measuredIn: Measure;
   perSide: boolean;

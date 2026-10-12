@@ -4,7 +4,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e1',
     name: 'Barbell Back Squat',
-    description: 'A compound lower body exercise that targets the quads, glutes, and core.',
+    cues: 'A compound lower body exercise that targets the quads, glutes, and core.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -18,7 +18,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e2',
     name: 'Romanian Deadlift',
-    description: 'Hip-hinge movement focusing on the posterior chain.',
+    cues: 'Hip-hinge movement focusing on the posterior chain.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -32,7 +32,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e3',
     name: 'Bulgarian Split Squat',
-    description: 'Unilateral leg exercise for developing balance and leg strength.',
+    cues: 'Unilateral leg exercise for developing balance and leg strength.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: true,
@@ -45,7 +45,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e4',
     name: 'Barbell Bench Press',
-    description: 'Upper body pushing compound for chest, shoulders, and triceps.',
+    cues: 'Upper body pushing compound for chest, shoulders, and triceps.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -59,7 +59,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e5',
     name: 'Overhead Press',
-    description: 'Standing barbell press for shoulder strength and stability.',
+    cues: 'Standing barbell press for shoulder strength and stability.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -72,7 +72,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e6',
     name: 'Pull-Ups',
-    description: 'Bodyweight vertical pull for back width and arm strength.',
+    cues: 'Bodyweight vertical pull for back width and arm strength.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -85,7 +85,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e7',
     name: 'Dumbbell Rows',
-    description: 'Single-arm rowing movement for upper back thickness.',
+    cues: 'Single-arm rowing movement for upper back thickness.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: true,
@@ -98,7 +98,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e8',
     name: 'Lateral Raises',
-    description: 'Isolation movement for the lateral deltoids.',
+    cues: 'Isolation movement for the lateral deltoids.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -111,7 +111,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e9',
     name: 'Hip Thrust',
-    description: 'Glute-focused hip extension movement with barbell loading.',
+    cues: 'Glute-focused hip extension movement with barbell loading.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -125,7 +125,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e10',
     name: 'Leg Press',
-    description: 'Machine-based lower body compound for quads and glutes.',
+    cues: 'Machine-based lower body compound for quads and glutes.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -138,7 +138,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e11',
     name: 'Walking Lunges',
-    description: 'Dynamic unilateral lower body exercise for strength and balance.',
+    cues: 'Dynamic unilateral lower body exercise for strength and balance.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: true,
@@ -151,7 +151,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e12',
     name: 'Plank',
-    description: 'Isometric core hold for deep stabilizer activation.',
+    cues: 'Isometric core hold for deep stabilizer activation.',
     type: 'resistance',
     measuredIn: 'time',
     perSide: false,
@@ -164,7 +164,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e13',
     name: 'Smith Machine Squat',
-    description: 'Guided squat on a fixed bar path for quad-focused volume.',
+    cues: 'Guided squat on a fixed bar path for quad-focused volume.',
     type: 'resistance',
     measuredIn: 'reps',
     perSide: false,
@@ -178,7 +178,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e14',
     name: 'Bike Intervals',
-    description: 'Alternate hard and easy efforts; keep the cadence up on the hard ones.',
+    cues: 'Alternate hard and easy efforts; keep the cadence up on the hard ones.',
     type: 'cardio',
     measuredIn: 'time',
     perSide: false,
@@ -191,7 +191,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e15',
     name: 'Couch Stretch',
-    description: 'Rear knee against the wall, squeeze the glute, keep the ribs down.',
+    cues: 'Rear knee against the wall, squeeze the glute, keep the ribs down.',
     type: 'mobility',
     measuredIn: 'time',
     perSide: true,

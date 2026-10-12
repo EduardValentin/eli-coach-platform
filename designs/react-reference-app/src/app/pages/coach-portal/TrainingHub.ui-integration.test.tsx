@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useParams } from 'react-router';
 import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
@@ -16,7 +16,13 @@ afterEach(() => {
 
 function ExerciseEditorStandIn() {
   const { exerciseId } = useParams();
-  return <p>Exercise editor {exerciseId ?? 'new'}</p>;
+  const { state } = useLocation();
+  return (
+    <>
+      <p>Exercise editor {exerciseId ?? 'new'}</p>
+      <p data-testid="library-search">{state?.library}</p>
+    </>
+  );
 }
 
 function renderHub(path = '/coach/training') {
@@ -222,6 +228,17 @@ describe('the exercise library filters', () => {
     expect(screen.getByText('Exercise editor e14')).toBeInTheDocument();
   });
 
+  it('hands the editor the filters it was opened from, so it can return to them', async () => {
+    // arrange
+    const user = renderLibrary('/coach/training?type=cardio');
+
+    // act
+    await chooseAction(user, 'Bike Intervals', 'Edit');
+
+    // assert
+    expect(screen.getByTestId('library-search')).toHaveTextContent('?type=cardio');
+  });
+
   it('narrows to one type from the Type filter', async () => {
     // arrange
     const user = renderLibrary();
@@ -281,6 +298,30 @@ describe('the Training page in MVP mode', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Client Plans' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Exercise Library' })).toBeInTheDocument();
+  });
+
+  it('opens the tab the link names in Post-MVP mode', () => {
+    // arrange
+    window.history.replaceState(null, '', '/?scope=post-mvp');
+
+    // act
+    renderHub('/coach/training?tab=exercises&type=cardio');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
+  it('falls back to Client Plans for a tab it does not know', () => {
+    // arrange
+    window.history.replaceState(null, '', '/?scope=post-mvp');
+
+    // act
+    renderHub('/coach/training?tab=nope');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Client Plans' })).toHaveAttribute('aria-selected', 'true');
   });
 });
 

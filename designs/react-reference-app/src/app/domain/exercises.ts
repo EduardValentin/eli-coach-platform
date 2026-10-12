@@ -68,10 +68,21 @@ export type ExerciseDraft = {
   equipment: readonly Equipment[];
   difficulty: Difficulty;
   tags: readonly ExerciseTag[];
-  description: string;
+  cues: string;
 };
 
-export type ExerciseDraftProblems = { name?: string; primaryMuscles?: string };
+export function withPrimaryMuscleToggled(draft: ExerciseDraft, muscle: Muscle): ExerciseDraft {
+  const primaryMuscles = draft.primaryMuscles.includes(muscle)
+    ? draft.primaryMuscles.filter((other) => other !== muscle)
+    : [...draft.primaryMuscles, muscle];
+  return {
+    ...draft,
+    primaryMuscles,
+    secondaryMuscles: draft.secondaryMuscles.filter((other) => other !== muscle),
+  };
+}
+
+export type ExerciseDraftProblems ={ name?: string; primaryMuscles?: string };
 
 const normalisedName = (name: string) => name.trim().toLowerCase();
 

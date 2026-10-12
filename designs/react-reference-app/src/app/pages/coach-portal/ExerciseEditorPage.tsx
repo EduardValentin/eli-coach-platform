@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { Check, Dumbbell, Film, PlayCircle, Target, UploadCloud } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
+import { Check, Dumbbell, Film, Target, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
@@ -17,6 +17,7 @@ import {
   draftProblems,
   isValidDraft,
   labelsOf,
+  withPrimaryMuscleToggled,
   type Difficulty,
   type Equipment,
   type ExerciseDraft,
@@ -24,7 +25,13 @@ import {
   type Measure,
   type Muscle,
 } from '../../domain/exercises';
-import { MP4_ACCEPT, isMp4File, mp4RejectionMessage } from '../../utils/exerciseVideo';
+import {
+  MP4_ACCEPT,
+  isMp4File,
+  isWithinMp4Limit,
+  mp4RejectionMessage,
+  mp4TooLargeMessage,
+} from '../../utils/exerciseVideo';
 import { toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
@@ -41,6 +48,13 @@ import { Textarea } from '../../components/ui/textarea';
 import { cn } from '../../components/ui/utils';
 
 const LIBRARY = '/coach/training';
+type LibraryReturn = { library?: unknown } | null;
+
+function libraryPath(state: LibraryReturn): string {
+  const search = state?.library;
+  return typeof search === 'string' ? `${LIBRARY}${search}` : LIBRARY;
+}
+
 const MUSCLE_LABELS = labelsOf(MUSCLES);
 const EQUIPMENT_LABELS = labelsOf(EQUIPMENT);
 const DIFFICULTY_LABELS = labelsOf(DIFFICULTIES);
@@ -59,7 +73,7 @@ const EMPTY: Draft = {
   equipment: [],
   difficulty: 'Beginner',
   tags: [],
-  description: '',
+  cues: '',
 };
 
 function draftFrom(exercise: Exercise): Draft {
@@ -74,7 +88,7 @@ function draftFrom(exercise: Exercise): Draft {
     equipment: exercise.equipment,
     difficulty: exercise.difficulty,
     tags: exercise.tags,
-    description: exercise.description,
+    cues: exercise.cues,
   };
 }
 
@@ -101,6 +115,10 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
       onChange({ ...video, error: mp4RejectionMessage(file) });
       return;
     }
+    if (!isWithinMp4Limit(file)) {
+      onChange({ ...video, error: mp4TooLargeMessage(file) });
+      return;
+    }
     onChange({ file, preview: URL.createObjectURL(file), error: null });
   };
 
@@ -119,7 +137,6 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
       {video.preview ? (
         <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted">
           <video src={video.preview} className="h-full w-full object-cover opacity-80" />
-          <PlayCircle size={48} className="absolute text-surface-inverted-foreground" aria-hidden="true" />
           <MediaOverlayActions
             subject="video"
             onReplace={browse}
@@ -159,7 +176,7 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
   );
 }
 
-function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
+function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; library: string }) {
   const navigate = useNavigate();
   const { exercises, addExercise, updateExercise } = useTraining();
   const [draft, setDraft] = useState<Draft>(editing ? draftFrom(editing) : EMPTY);
@@ -194,17 +211,13 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
   const chooseMeasure = (measuredIn: Measure) =>
     change((previous) => ({ ...previous, measuredIn, measureTouched: true }));
   const togglePrimary = (muscle: Muscle) =>
-    change((previous) => ({
-      ...previous,
-      primaryMuscles: toggled(previous.primaryMuscles, muscle),
-      secondaryMuscles: previous.secondaryMuscles.filter((other) => other !== muscle),
-    }));
+    change((previous) => ({ ...previous, ...withPrimaryMuscleToggled(previous, muscle) }));
 
   const save = () => {
     const record: Exercise = {
       id: editing?.id ?? `e-${Date.now()}`,
       name: draft.name.trim(),
-      description: draft.description.trim(),
+      cues: draft.cues.trim(),
       type: draft.type,
       measuredIn: draft.measuredIn,
       perSide: draft.perSide,
@@ -224,12 +237,12 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
       addExercise(record);
       toast.success('Exercise created');
     }
-    navigate(LIBRARY);
+    navigate(library);
   };
 
   return (
     <div className="w-full max-w-3xl">
-      <PortalBackLink to={LIBRARY}>Back to exercises</PortalBackLink>
+      <PortalBackLink to={library}>Back to exercises</PortalBackLink>
       <PortalPageHeader
         title={editing ? 'Edit exercise' : 'New exercise'}
         subtitle="Say what it is, what it works and how it is measured, so plans can prescribe it."
@@ -382,7 +395,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
         >
           <SettingsRows>
             <SettingsRow htmlFor={ids.cues} title="Form cues" layout="stacked">
-              <Textarea id={ids.cues} rows={3} value={draft.description} onChange={(event) => set('description', event.target.value)} placeholder="Keep the chest up, drive through the heels…" />
+              <Textarea id={ids.cues} rows={3} value={draft.cues} onChange={(event) => set('cues', event.target.value)} placeholder="Keep the chest up, drive through the heels…" />
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked">
               <VideoField video={video} onChange={changeVideo} />
@@ -392,7 +405,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
       </div>
 
       <div className="mt-8 flex items-center justify-end gap-3">
-        <Link to={LIBRARY} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
+        <Link to={library} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
           Cancel
         </Link>
         <Button onClick={save} variant="primary" size="md" disabled={!isValidDraft(problems)}>
@@ -407,7 +420,8 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
 export function ExerciseEditorPage() {
   const { exerciseId } = useParams<{ exerciseId?: string }>();
   const { exercises } = useTraining();
+  const library = libraryPath(useLocation().state as LibraryReturn);
   const editing = exerciseId ? exercises.find((exercise) => exercise.id === exerciseId) : undefined;
-  if (exerciseId && !editing) return <Navigate to={LIBRARY} replace />;
-  return <ExerciseEditor key={editing?.id ?? 'new'} editing={editing} />;
+  if (exerciseId && !editing) return <Navigate to={library} replace />;
+  return <ExerciseEditor key={editing?.id ?? 'new'} editing={editing} library={library} />;
 }

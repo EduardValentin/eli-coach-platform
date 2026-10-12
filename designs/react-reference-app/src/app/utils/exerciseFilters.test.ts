@@ -14,7 +14,7 @@ function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
   return {
     id: 'e-test',
     name: 'Barbell Back Squat',
-    description: '',
+    cues: '',
     equipment: ['Barbell'],
     difficulty: 'Intermediate',
     primaryMuscles: ['Quadriceps'],

@@ -3,7 +3,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { SelectTrigger, selectTriggerClasses } from "./ui/select";
+import { FIELD_TAB_INDEX, SelectTrigger, selectTriggerClasses } from "./ui/select";
 
 type Summary = "count" | "names";
 type TriggerSize = ComponentProps<typeof SelectTrigger>["size"];
@@ -74,6 +74,7 @@ export function MultiSelect<Value extends string>({
           id={id}
           data-slot="select-trigger"
           data-size={size}
+          tabIndex={FIELD_TAB_INDEX}
           aria-label={triggerName(label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}

@@ -16,7 +16,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
       open={open}
       onOpenChange={onOpenChange}
       title={exercise.name}
-      description={exercise.description}
+      description={exercise.cues}
     >
       <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8">
         <h3 className="text-lg md:text-xl font-semibold text-text-primary pr-10">
@@ -48,7 +48,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
         <div>
           <h4 className={`${LABEL_CLASS} mb-2`}>How to perform</h4>
           <p className="text-sm text-text-secondary leading-relaxed">
-            {exercise.description}
+            {exercise.cues}
           </p>
         </div>
 

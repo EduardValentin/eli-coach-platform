@@ -38,7 +38,7 @@ import { DeleteConfirmDialog } from '../../components/coach-portal/DeleteConfirm
 import { SearchField } from '../../components/SearchField';
 import { useAppState } from '../../context/AppContext';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
   Popover,
   PopoverTrigger,
@@ -55,6 +55,13 @@ import {
   WIDGET_TITLE_CLASS,
   LABEL_CLASS,
 } from '../../components/typography';
+
+const HUB_TABS = ['instances', 'templates', 'exercises'] as const;
+type HubTab = (typeof HUB_TABS)[number];
+
+function hubTabFrom(value: string | null): HubTab {
+  return HUB_TABS.find((tab) => tab === value) ?? 'instances';
+}
 
 const MOCK_CLIENTS = [
   { id: 'client-1', name: 'Jane Doe', avatar: 'JD' },
@@ -338,10 +345,11 @@ export function TrainingHub() {
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState<
-    'instances' | 'templates' | 'exercises'
-  >('instances');
-  const activeTab = isPostMvp ? selectedTab : 'exercises';
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: HubTab = isPostMvp ? hubTabFrom(searchParams.get('tab')) : 'exercises';
+  const openExerciseEditor = (path: string) =>
+    navigate(path, { state: { library: location.search } });
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'active' | 'completed'
   >('all');
@@ -419,7 +427,7 @@ export function TrainingHub() {
 
   const handleCreate = () => {
     if (activeTab === 'exercises') {
-      navigate('/coach/training/exercises/new');
+      openExerciseEditor('/coach/training/exercises/new');
     } else if (activeTab === 'templates') {
       navigate('/coach/training/template-builder');
     }
@@ -460,7 +468,7 @@ export function TrainingHub() {
       <Tabs
         variant="segmented"
         value={activeTab}
-        onValueChange={(value) => setSelectedTab(value as typeof selectedTab)}
+        onValueChange={(value) => setSearchParams({ tab: value }, { replace: true })}
         className="w-full"
       >
         {isPostMvp && (
@@ -566,7 +574,7 @@ export function TrainingHub() {
         )}
 
         {activeTab === 'exercises' && (
-          <ExerciseLibrary onEdit={(exerciseId) => navigate(`/coach/training/exercises/${exerciseId}`)} />
+          <ExerciseLibrary onEdit={(exerciseId) => openExerciseEditor(`/coach/training/exercises/${exerciseId}`)} />
         )}
       </Tabs>
 

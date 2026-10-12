@@ -33,7 +33,7 @@ type SelectTriggerProps = React.ComponentProps<
 // Safari's default Tab order visits text fields only and skips buttons unless
 // they carry an explicit tabindex; a control that stands in for a form field
 // must stay reachable like the native field it replaces.
-const FIELD_TAB_INDEX = 0;
+export const FIELD_TAB_INDEX = 0;
 
 function selectTriggerClasses(className?: string): string {
   return cn(

@@ -10,6 +10,7 @@ import {
   draftProblems,
   isValidDraft,
   needsEquipment,
+  withPrimaryMuscleToggled,
   type ExerciseDraft,
 } from './exercises';
 
@@ -23,7 +24,7 @@ const squat: ExerciseDraft = {
   equipment: ['Barbell', 'Squat rack'],
   difficulty: 'Intermediate',
   tags: ['Strength'],
-  description: '',
+  cues: '',
 };
 
 describe('the exercise vocabularies', () => {
@@ -123,5 +124,25 @@ describe('draftProblems', () => {
     expect(resistance.primaryMuscles).toBe('Pick at least one primary muscle');
     expect(mobility.primaryMuscles).toBe('Pick at least one primary muscle');
     expect(cardio.primaryMuscles).toBeUndefined();
+  });
+});
+
+describe('withPrimaryMuscleToggled', () => {
+  it('takes a muscle out of secondary when it becomes primary', () => {
+    // act
+    const draft = withPrimaryMuscleToggled(squat, 'Core');
+
+    // assert
+    expect(draft.primaryMuscles).toEqual(['Quadriceps', 'Glutes', 'Core']);
+    expect(draft.secondaryMuscles).toEqual([]);
+  });
+
+  it('leaves secondary untouched when a primary muscle is toggled off', () => {
+    // act
+    const draft = withPrimaryMuscleToggled(squat, 'Glutes');
+
+    // assert
+    expect(draft.primaryMuscles).toEqual(['Quadriceps']);
+    expect(draft.secondaryMuscles).toEqual(['Core']);
   });
 });

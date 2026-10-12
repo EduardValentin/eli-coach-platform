@@ -339,7 +339,7 @@ Per Business Rule 53.
 
 ### Data model
 
-**Exercise**: name, description, type (Resistance, Cardio, or Mobility), the unit it is measured in (reps, time, or distance, defaulting from the type and adjustable per exercise), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
+**Exercise**: name, form cues, type (Resistance, Cardio, or Mobility), the unit it is measured in (reps, time, or distance, defaulting from the type and adjustable per exercise), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
 
 **Goal**: client, name (e.g. "Strength & Recomp Block"), type (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, Custom), start date, status (active or completed).
 
