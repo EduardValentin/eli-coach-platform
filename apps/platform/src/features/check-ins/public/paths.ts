@@ -24,8 +24,14 @@ export const CLIENT_CHECK_INS_PATH = `${CLIENT_PORTAL_PATH}/${CHECK_INS_ROUTE_SE
 
 export const COACH_CHECK_INS_PATH = `${COACH_PORTAL_PATH}/${CHECK_INS_ROUTE_SEGMENT}`;
 
+export const CHECK_IN_FOCUS_PARAM = "checkin";
+
 export function clientCheckInJoinPath(checkInId: string): string {
   return `${CLIENT_CHECK_INS_PATH}/${encodeURIComponent(checkInId)}/join`;
+}
+
+export function coachCheckInPath(checkInId: string): string {
+  return `${COACH_CHECK_INS_PATH}?${CHECK_IN_FOCUS_PARAM}=${encodeURIComponent(checkInId)}`;
 }
 
 export function coachCheckInJoinPath(checkInId: string): string {

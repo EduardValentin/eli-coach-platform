@@ -5,7 +5,9 @@ import {
   CancelCheckInUseCase,
   CountCheckInsAwaitingUseCase,
   DeclineCheckInUseCase,
+  FindNextClientCheckInUseCase,
   ListClientCheckInsUseCase,
+  ListCoachCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
   ListOpenCheckInTimesUseCase,
   ProposeCheckInTimeUseCase,
@@ -96,10 +98,10 @@ export function composeCheckInsFeature(
       publicAppUrl: handles.publicAppUrl,
     }),
   };
-  const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase({
-    ...readPorts,
-    incidents: handles.incidents,
-  });
+  const observedReadPorts = { ...readPorts, incidents: handles.incidents };
+  const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase(
+    observedReadPorts,
+  );
   const requestPorts = {
     ...answerPorts,
     availability,
@@ -116,12 +118,18 @@ export function composeCheckInsFeature(
       }),
       clientCheckIns: new ClientCheckInsController({
         countCheckInsAwaiting,
+        findNextClientCheckIn: new FindNextClientCheckInUseCase(
+          observedReadPorts,
+        ),
         listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
         requestCheckIn: new RequestCheckInUseCase(requestPorts),
       }),
       coachCheckIns: new CoachCheckInsController({
         countCheckInsAwaiting,
         listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
+        listCoachCheckInsAwaiting: new ListCoachCheckInsAwaitingUseCase(
+          observedReadPorts,
+        ),
         readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
           readPorts,
         ),

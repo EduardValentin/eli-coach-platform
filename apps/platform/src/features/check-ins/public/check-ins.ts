@@ -59,6 +59,10 @@ const coachCheckInSchema = checkInSchema.extend({
   client: z.object({ firstName: z.string(), lastName: z.string() }),
 });
 
+export const clientCheckInSchema = checkInSchema;
+
+export type ClientCheckIn = z.infer<typeof clientCheckInSchema>;
+
 export const clientCheckInsSchema = z.object({
   checkIns: z.array(checkInSchema),
 });
@@ -118,9 +122,7 @@ export const checkInRefusalSchema = z.object({
 
 export type CheckInRefusalReply = z.infer<typeof checkInRefusalSchema>;
 
-export function presentCheckIn(
-  view: CheckInView,
-): ClientCheckIns["checkIns"][number] {
+export function presentCheckIn(view: CheckInView): ClientCheckIn {
   return {
     id: view.id,
     kind: view.kind,

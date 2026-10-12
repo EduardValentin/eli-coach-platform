@@ -1,5 +1,6 @@
 import type {
   CountCheckInsAwaitingUseCase,
+  FindNextClientCheckInUseCase,
   ListClientCheckInsUseCase,
   RequestCheckInResult,
   RequestCheckInUseCase,
@@ -15,13 +16,16 @@ import {
 } from "~/features/check-ins/api/check-in-transport.server";
 import {
   checkInRequestSchema,
+  clientCheckInSchema,
   clientCheckInsSchema,
   presentCheckIn,
+  type ClientCheckIn,
   type ClientCheckIns,
 } from "~/features/check-ins/public/check-ins";
 
 type ClientCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
+  findNextClientCheckIn: FindNextClientCheckInUseCase;
   listClientCheckIns: ListClientCheckInsUseCase;
   requestCheckIn: RequestCheckInUseCase;
 };
@@ -45,6 +49,21 @@ export class ClientCheckInsController {
     return clientCheckInsSchema.parse({
       checkIns: listing.checkIns.map(presentCheckIn),
     });
+  }
+
+  async loadNextCheckIn(
+    args: LoaderFunctionArgs,
+  ): Promise<ClientCheckIn | null> {
+    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const next = await this.options.findNextClientCheckIn.execute(
+      client.authSubjectId,
+    );
+
+    if (next === null) {
+      return null;
+    }
+
+    return clientCheckInSchema.parse(presentCheckIn(next));
   }
 
   async loadAwaitingCount(args: LoaderFunctionArgs): Promise<number> {
