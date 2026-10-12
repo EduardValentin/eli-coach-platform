@@ -219,7 +219,7 @@ function createHandles(
     clientReach: { findByAuthSubjectId: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
-    coachingEndHandler: { coachingEnds: async () => undefined },
+    coachingEnds: [{ coachingEnds: async () => undefined }],
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },

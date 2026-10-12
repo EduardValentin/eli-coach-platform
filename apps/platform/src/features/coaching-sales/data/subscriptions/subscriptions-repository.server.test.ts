@@ -128,6 +128,84 @@ describe("PostgresCoachingSubscriptions#save", () => {
   });
 });
 
+describe("PostgresCoachingSubscriptions#saveForEvent", () => {
+  it("copies the reconciled subscription's standing onto her client in the transaction that records the event", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf({
+      status: "active",
+      cancelledAt: null,
+      accessEndsAt: null,
+    });
+    const cancelled = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_1",
+      subscription: cancelled,
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("recorded");
+    expect(database.recordedEvents).toEqual(["evt_1"]);
+    expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      standing: expect.anything(),
+    });
+    expect(
+      writeCoachingStanding.mock.calls[0]?.[1].standing.toSnapshot(),
+    ).toEqual(cancelled.standing().toSnapshot());
+  });
+
+  it("copies no standing for an event decided on a row that has changed since", async () => {
+    // arrange
+    const database = createDatabaseUpdating({ written: [] });
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_2",
+      subscription: previous.flagPaymentProblem(PROBLEM_AT),
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("stale");
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+  });
+
+  it("writes neither the subscription nor the standing for an event the ledger already holds", async () => {
+    // arrange
+    const database = createDatabaseUpdating({
+      written: [{ id: "written" }],
+      heldEvents: ["evt_3"],
+    });
+    const { subscriptions, writeCoachingStanding } = createSubscriptions(
+      database.client,
+    );
+    const previous = subscriptionOf();
+
+    // act
+    const outcome = await subscriptions.saveForEvent({
+      eventId: "evt_3",
+      subscription: previous.flagPaymentProblem(PROBLEM_AT),
+      previous,
+    });
+
+    // assert
+    expect(outcome).toBe("duplicate");
+    expect(database.conditions).toEqual([]);
+    expect(writeCoachingStanding).not.toHaveBeenCalled();
+  });
+});
+
 function createSubscriptions(database: DatabaseClient) {
   const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
   const subscriptions = new PostgresCoachingSubscriptions({
@@ -140,10 +218,28 @@ function createSubscriptions(database: DatabaseClient) {
 }
 
 function createDatabaseUpdating(
-  options: { written: readonly unknown[] } = { written: [{ id: "written" }] },
+  options: { written: readonly unknown[]; heldEvents?: readonly string[] } = {
+    written: [{ id: "written" }],
+  },
 ) {
   const conditions: unknown[] = [];
+  const recordedEvents: string[] = [];
   const transaction = {
+    insert: () => ({
+      values: (entry: { id: string }) => ({
+        onConflictDoNothing: () => ({
+          returning: () => {
+            if (options.heldEvents?.includes(entry.id)) {
+              return Promise.resolve([]);
+            }
+
+            recordedEvents.push(entry.id);
+
+            return Promise.resolve([{ id: entry.id }]);
+          },
+        }),
+      }),
+    }),
     update: () => {
       const statement = {
         set: () => statement,
@@ -162,5 +258,5 @@ function createDatabaseUpdating(
     transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
   } as unknown as DatabaseClient;
 
-  return { client, conditions, transaction };
+  return { client, conditions, recordedEvents, transaction };
 }

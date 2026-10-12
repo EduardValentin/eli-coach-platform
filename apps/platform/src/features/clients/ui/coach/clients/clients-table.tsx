@@ -17,7 +17,10 @@ import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 
-import { clientFullName } from "~/features/clients/public/clients";
+import {
+  bundleLengthLabel,
+  clientFullName,
+} from "~/features/clients/public/clients";
 import type { RosterClient } from "~/features/clients/public/coach-clients";
 import { coachClientPath } from "~/features/clients/public/paths";
 import { NeedsRefundBadge } from "~/features/clients/ui/shared/needs-refund-badge";
@@ -182,8 +185,4 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
       </TableCell>
     </TableRow>
   );
-}
-
-function bundleLengthLabel(months: number): string {
-  return months === 1 ? "1 month" : `${months} months`;
 }

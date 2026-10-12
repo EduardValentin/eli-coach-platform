@@ -6,6 +6,7 @@ import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
   type CoachingSubscriptions,
+  type RefundDueSnapshot,
   type SubscriptionChange,
   type SubscriptionEventChange,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -15,17 +16,30 @@ import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 
 import type { CoachingStandingWriter } from "~/features/coaching-sales/data/client-writers.server";
 import { coachingSubscriptionsTable } from "~/features/coaching-sales/data/schema.server";
-import {
-  changedColumns,
-  selectSubscriptions,
-  toSubscriptionSnapshot,
-} from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
 
 type PostgresCoachingSubscriptionsOptions = {
   clock: Clock;
   database: DatabaseClient;
   writeCoachingStanding: CoachingStandingWriter;
 };
+
+type CoachingSubscriptionRow = typeof coachingSubscriptionsTable.$inferSelect;
+
+type SubscriptionWrite = Partial<
+  Pick<
+    typeof coachingSubscriptionsTable.$inferInsert,
+    | "status"
+    | "startChoice"
+    | "cancelledAt"
+    | "accessEndsAt"
+    | "paymentProblemSince"
+    | "refundReason"
+    | "refundDueCents"
+    | "refundDueBy"
+    | "refundedCents"
+    | "refundedAt"
+  >
+>;
 
 export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   constructor(private readonly options: PostgresCoachingSubscriptionsOptions) {}
@@ -82,7 +96,9 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   private async findCurrent(
     condition: SQL,
   ): Promise<CoachingSubscription | null> {
-    const [row] = await selectSubscriptions(this.options.database)
+    const [row] = await this.options.database
+      .select()
+      .from(coachingSubscriptionsTable)
       .where(condition)
       .orderBy(
         desc(coachingSubscriptionsTable.paidAt),
@@ -91,7 +107,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
       .limit(1);
 
     return row
-      ? CoachingSubscription.reconstitute(toSubscriptionSnapshot(row))
+      ? CoachingSubscription.reconstitute(this.toSubscriptionSnapshot(row))
       : null;
   }
 
@@ -100,7 +116,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     change: SubscriptionChange,
   ): Promise<boolean> {
     const previous = change.previous.toSnapshot();
-    const columns = changedColumns({
+    const columns = this.changedColumns({
       subscription: change.subscription.toSnapshot(),
       previous,
     });
@@ -122,7 +138,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   private async updateHeld(
     transaction: DatabaseTransaction,
     update: {
-      columns: ReturnType<typeof changedColumns>;
+      columns: SubscriptionWrite;
       previous: CoachingSubscriptionSnapshot;
     },
   ): Promise<boolean> {
@@ -150,6 +166,96 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
       .returning({ id: coachingSubscriptionsTable.id });
 
     return written.length > 0;
+  }
+
+  private toSubscriptionSnapshot(
+    row: CoachingSubscriptionRow,
+  ): CoachingSubscriptionSnapshot {
+    return {
+      id: row.id,
+      clientId: row.clientId,
+      bundleId: row.bundleId,
+      months: row.months,
+      tier: row.tier,
+      amountCents: row.amountCents,
+      currency: row.currency,
+      paymentCustomerId: row.stripeCustomerId,
+      paymentSubscriptionId: row.stripeSubscriptionId,
+      checkoutSessionId: row.stripeCheckoutSessionId,
+      paidAt: row.paidAt,
+      startChoice: row.startChoice,
+      status: row.status,
+      cancelledAt: row.cancelledAt,
+      accessEndsAt: row.accessEndsAt,
+      paymentProblemSince: row.paymentProblemSince,
+      refund: this.refundOf(row),
+    };
+  }
+
+  private refundOf(row: CoachingSubscriptionRow): RefundDueSnapshot | null {
+    const { refundReason, refundDueCents, refundedCents } = row;
+
+    if (
+      refundReason === null ||
+      refundDueCents === null ||
+      refundedCents === null
+    ) {
+      return null;
+    }
+
+    return {
+      reason: refundReason,
+      amountCents: refundDueCents,
+      dueBy: row.refundDueBy,
+      refundedCents,
+      refundedAt: row.refundedAt,
+    };
+  }
+
+  private changedColumns(change: {
+    subscription: CoachingSubscriptionSnapshot;
+    previous: CoachingSubscriptionSnapshot;
+  }): SubscriptionWrite {
+    const next = this.writableColumnsOf(change.subscription);
+    const previous = this.writableColumnsOf(change.previous);
+
+    return Object.fromEntries(
+      Object.entries(next).filter(
+        ([column, value]) =>
+          !this.sameValue(value, previous[column as keyof SubscriptionWrite]),
+      ),
+    );
+  }
+
+  private writableColumnsOf(
+    snapshot: CoachingSubscriptionSnapshot,
+  ): Required<SubscriptionWrite> {
+    return {
+      status: snapshot.status,
+      startChoice: snapshot.startChoice,
+      cancelledAt: snapshot.cancelledAt,
+      accessEndsAt: snapshot.accessEndsAt,
+      paymentProblemSince: snapshot.paymentProblemSince,
+      ...this.refundColumnsOf(snapshot.refund),
+    };
+  }
+
+  private refundColumnsOf(refund: RefundDueSnapshot | null) {
+    return {
+      refundReason: refund?.reason ?? null,
+      refundDueCents: refund?.amountCents ?? null,
+      refundDueBy: refund?.dueBy ?? null,
+      refundedCents: refund?.refundedCents ?? null,
+      refundedAt: refund?.refundedAt ?? null,
+    };
+  }
+
+  private sameValue(left: unknown, right: unknown): boolean {
+    if (left instanceof Date && right instanceof Date) {
+      return left.getTime() === right.getTime();
+    }
+
+    return left === right;
   }
 }
 

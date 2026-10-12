@@ -178,8 +178,10 @@ function createCheckoutSessions(
 
 const PAID_CLIENT_ID = "client-1";
 
-function createPurchases(outcome: CoachingPurchaseOutcome): CoachingPurchases {
-  return { recordCompletion: vi.fn().mockResolvedValue(outcome) };
+function createPurchases(outcome: CoachingPurchaseOutcome) {
+  return {
+    recordCompletion: vi.fn().mockResolvedValue(outcome),
+  } satisfies CoachingPurchases;
 }
 
 function createAdmission() {
@@ -599,6 +601,11 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
     });
+    expect(
+      dependencies.purchases.recordCompletion.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      dependencies.admission.admit.mock.invocationCallOrder[0] ?? 0,
+    );
   });
 
   it.each([

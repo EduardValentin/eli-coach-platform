@@ -6,10 +6,8 @@ import {
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import {
-  bundleLengthLabel,
-  formatEuros,
-} from "~/features/coaching-sales/public/bundle-cards";
+import { bundleLengthLabel } from "~/features/clients/public/clients";
+import { formatEuros } from "~/features/coaching-sales/public/bundle-cards";
 import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/public/coaching-sales";
 
 import {

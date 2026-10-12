@@ -94,7 +94,7 @@ export type CoachingSalesFeatureHandles = {
   clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   coachEmail: string;
-  coachingEndHandler: CoachingEndHandler;
+  coachingEnds: readonly CoachingEndHandler[];
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
@@ -147,7 +147,7 @@ export function composeCoachingSalesFeature(
 
   const subscriptionPorts = {
     clock,
-    coachingEnds: [handles.coachingEndHandler],
+    coachingEnds: handles.coachingEnds,
     incidents: handles.incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
