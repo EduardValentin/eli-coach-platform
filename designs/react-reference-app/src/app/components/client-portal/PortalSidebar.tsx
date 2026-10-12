@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from 'react';
 import { useAppState } from '../../context/AppContext';
+import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { AttentionDot } from '../AttentionDot';
 import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
@@ -156,9 +157,11 @@ function ClientNameBlock({
 function DesktopSidebar({
   links,
   attention,
+  widget,
 }: {
   links: ClientPortalLink[];
   attention: LinkAttention;
+  widget: ReactNode;
 }) {
   const location = useLocation();
 
@@ -216,9 +219,11 @@ function DesktopSidebar({
           })}
         </nav>
 
-        <div className="mx-4 mb-6" data-parity="next-checkin">
-          <NextCheckinCard />
-        </div>
+        {widget && (
+          <div className="mx-4 mb-6" data-parity="sidebar-widget">
+            {widget}
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -431,10 +436,6 @@ function MoreSheetNavigation({
           </Link>
         );
       })}
-
-      <div className="pt-4" data-parity="next-checkin">
-        <NextCheckinCard />
-      </div>
     </nav>
   );
 }
@@ -442,10 +443,12 @@ function MoreSheetNavigation({
 function MoreSheetBody({
   links,
   attention,
+  widget,
   onClose,
 }: {
   links: ClientPortalLink[];
   attention: LinkAttention;
+  widget: ReactNode;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -472,6 +475,12 @@ function MoreSheetBody({
           attention={attention}
           onClose={onClose}
         />
+      )}
+
+      {widget && (
+        <div className="px-3 pb-4" data-parity="sheet-widget">
+          {widget}
+        </div>
       )}
 
       <div className="mt-auto border-t border-border-subtle px-4 py-3">
@@ -503,6 +512,9 @@ export function PortalSidebar({
   const [moreSheet, setMoreSheet] = useState<MoreSheetState>('closed');
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const { appState } = useAppState();
+  const { getUpcomingCheckins } = useCheckins();
+  const nextCheckin = getUpcomingCheckins(DEMO_CLIENT.id).at(0);
+  const widget = nextCheckin && <NextCheckinCard checkin={nextCheckin} />;
   const moreOpen = moreSheet === 'open';
   const includeLink = (link: ClientPortalLink) =>
     !link.postMvp || appState.prototypeMode === 'post-mvp';
@@ -529,7 +541,7 @@ export function PortalSidebar({
 
   return (
     <>
-      <DesktopSidebar links={links} attention={attention} />
+      <DesktopSidebar links={links} attention={attention} widget={widget} />
       <MobileTopBar />
       <MobileTabBar
         links={barLinks}
@@ -550,6 +562,7 @@ export function PortalSidebar({
         <MoreSheetBody
           links={moreLinks}
           attention={attention}
+          widget={widget}
           onClose={() => setMoreSheet('closed')}
         />
       </BottomSheet>

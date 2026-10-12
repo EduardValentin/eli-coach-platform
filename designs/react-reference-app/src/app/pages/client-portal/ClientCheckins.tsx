@@ -30,7 +30,7 @@ import {
 import { CheckinProposeTimeDialog } from '../../components/CheckinProposeTimeDialog';
 import { CheckinRequestDialog } from '../../components/CheckinRequestDialog';
 import { useCheckinAnswers, type CheckinAnswer } from '../../hooks/useCheckinAnswers';
-import { openingTab, type CheckinTab } from '../../utils/checkinListing';
+import type { CheckinTab } from '../../utils/checkinListing';
 import { Button } from '../../components/ui/button';
 import { DisabledActionHint } from '../../components/DisabledActionHint';
 import { toast } from 'sonner';
@@ -70,7 +70,6 @@ export function ClientCheckins() {
     findCheckin,
     cancelCheckin,
     hasOpenClientRequest,
-    getCheckinsAwaiting,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { answer, answerInFlight } = useCheckinAnswers();
@@ -84,9 +83,6 @@ export function ClientCheckins() {
 
   const openRequest = hasOpenClientRequest(CLIENT_ID);
 
-  const [defaultTab] = useState<CheckinTab>(() =>
-    openingTab(getCheckinsAwaiting('client', CLIENT_ID).length),
-  );
   const [showRequest, setShowRequest] = useState(false);
   const [proposingFor, setProposingFor] = useState<string | null>(null);
   const [movingReview, setMovingReview] = useState(false);
@@ -256,7 +252,6 @@ export function ClientCheckins() {
       <CheckinListing
         party="client"
         clientId={CLIENT_ID}
-        defaultTab={defaultTab}
         waitingForLabel="Waiting for your coach"
         emptyCopy={EMPTY_COPY}
         renderCheckin={(c, tab) => (

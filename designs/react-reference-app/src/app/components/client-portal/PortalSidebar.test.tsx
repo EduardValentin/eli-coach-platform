@@ -6,12 +6,13 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
-import { CheckinProvider } from '../../context/CheckinContext';
+import { CheckinProvider, useCheckins } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { NotificationProvider } from '../../context/NotificationContext';
@@ -43,7 +44,18 @@ type RenderSidebarOptions = {
   search?: string;
   markedHrefs?: readonly string[];
   countByHref?: Readonly<Record<string, number>>;
+  checkins?: 'seeded' | 'none';
 };
+
+function ClearCheckins() {
+  const { clearAllCheckins } = useCheckins();
+
+  useEffect(() => {
+    clearAllCheckins();
+  }, [clearAllCheckins]);
+
+  return null;
+}
 
 function renderSidebar(options: RenderSidebarOptions = {}) {
   const {
@@ -51,6 +63,7 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
     search = '',
     markedHrefs = [],
     countByHref = {},
+    checkins = 'seeded',
   } = options;
   window.history.replaceState(null, '', `/${search}`);
 
@@ -61,6 +74,7 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <CheckinProvider>
+                {checkins === 'none' && <ClearCheckins />}
                 <NotificationProvider>
                   <PortalSidebar
                     links={links}
@@ -338,5 +352,50 @@ describe('PortalSidebar More sheet', () => {
     await waitFor(() =>
       expect(document.getElementById(PORTAL_MAIN_ID)).toHaveFocus(),
     );
+  });
+});
+
+describe('PortalSidebar next check-in', () => {
+  it('shows her next check-in in the sidebar and in the More sheet under their own headings', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSidebar();
+    const sidebarHeading = within(
+      screen.getByRole('complementary', { name: 'Client portal sidebar' }),
+    ).getByRole('heading', { name: 'Next check-in' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'More' }));
+
+    // assert
+    const sheetHeading = within(
+      screen.getByRole('dialog', { name: 'More' }),
+    ).getByRole('heading', { name: 'Next check-in' });
+    expect(sheetHeading.id).not.toBe(sidebarHeading.id);
+  });
+
+  it('shows no next check-in in the sidebar or the More sheet while she has none', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSidebar({ checkins: 'none' });
+    const sidebar = screen.getByRole('complementary', {
+      name: 'Client portal sidebar',
+    });
+    expect(
+      within(sidebar).queryByRole('heading', { name: 'Next check-in' }),
+    ).toBeNull();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'More' }));
+
+    // assert
+    expect(
+      within(screen.getByRole('dialog', { name: 'More' })).queryByRole(
+        'heading',
+        { name: 'Next check-in' },
+      ),
+    ).toBeNull();
+    expect(document.querySelector('[data-parity="sidebar-widget"]')).toBeNull();
+    expect(document.querySelector('[data-parity="sheet-widget"]')).toBeNull();
   });
 });

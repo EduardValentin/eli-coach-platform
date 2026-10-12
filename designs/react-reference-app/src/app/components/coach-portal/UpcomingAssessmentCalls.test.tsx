@@ -64,7 +64,7 @@ describe('the upcoming calls widget', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Upcoming calls' }),
+      screen.getByRole('heading', { level: 2, name: 'Upcoming assessment calls' }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Times in/)).toBeNull();
   });

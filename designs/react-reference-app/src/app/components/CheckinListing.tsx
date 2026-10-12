@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { CalendarSearch, type LucideIcon } from "lucide-react";
 import { useAppState } from "../context/AppContext";
@@ -10,6 +10,7 @@ import {
   defaultDirectionFor,
   filterCheckins,
   hasActiveFilters,
+  openingTab,
   orderCheckins,
   parseDirection,
   parseKindFilter,
@@ -20,6 +21,7 @@ import {
   type KindFilter,
   type WaitingFilter,
 } from "../utils/checkinListing";
+import { checkinAnchorId, checkinIdFromSearch } from "../utils/checkinLinks";
 import { pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
 import { ListPager } from "./ListPager";
@@ -61,6 +63,15 @@ export type CheckinEmptyCopy = {
   description: string;
 };
 
+function tabHoldingCheckin(
+  checkinId: string | null,
+  groups: Record<CheckinTab, CheckIn[]>,
+): CheckinTab | undefined {
+  if (!checkinId) return undefined;
+  const tabs = Object.keys(groups) as CheckinTab[];
+  return tabs.find((tab) => groups[tab].some((c) => c.id === checkinId));
+}
+
 function dateSortOptions(tab: CheckinTab): readonly SortOption<"date">[] {
   return [
     {
@@ -76,7 +87,6 @@ function dateSortOptions(tab: CheckinTab): readonly SortOption<"date">[] {
 export function CheckinListing({
   party,
   clientId,
-  defaultTab,
   waitingForLabel,
   search,
   emptyCopy,
@@ -84,7 +94,6 @@ export function CheckinListing({
 }: {
   party: CheckinParty;
   clientId?: string;
-  defaultTab: CheckinTab;
   waitingForLabel: string;
   search?: { placeholder: string };
   emptyCopy: Record<CheckinTab, CheckinEmptyCopy>;
@@ -100,6 +109,26 @@ export function CheckinListing({
     getCheckinsAwaiting,
   } = useCheckins();
 
+  const focusedCheckinId = checkinIdFromSearch(searchParams);
+  const tabCheckins: Record<CheckinTab, CheckIn[]> = {
+    upcoming: getUpcomingCheckins(clientId),
+    requests: getPendingCheckins(clientId),
+    past: getPastCheckins(clientId),
+  };
+  const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
+  const [defaultTab] = useState<CheckinTab>(
+    () =>
+      tabHoldingCheckin(focusedCheckinId, tabCheckins) ??
+      openingTab(awaitingViewer),
+  );
+
+  useEffect(() => {
+    if (!focusedCheckinId) return;
+    const anchor = document.getElementById(checkinAnchorId(focusedCheckinId));
+    anchor?.scrollIntoView({ block: "center" });
+    anchor?.focus({ preventScroll: true });
+  }, [focusedCheckinId]);
+
   const tab = parseTab(searchParams.get(TAB_PARAM), defaultTab);
   const selection: CheckinSelection = {
     kind: parseKindFilter(searchParams.get(KIND_PARAM)),
@@ -112,11 +141,6 @@ export function CheckinListing({
   const direction = parseDirection(searchParams.get(DIRECTION_PARAM), tab);
   const page = parsePage(searchParams.get(PAGE_PARAM));
 
-  const tabCheckins: Record<CheckinTab, CheckIn[]> = {
-    upcoming: getUpcomingCheckins(clientId),
-    requests: getPendingCheckins(clientId),
-    past: getPastCheckins(clientId),
-  };
   const inTab = tabCheckins[tab];
   const shown = orderCheckins(filterCheckins(inTab, selection, party), {
     tab,
@@ -124,7 +148,6 @@ export function CheckinListing({
     party,
   });
   const view = pageOf(shown, { page, perPage: CHECKINS_PER_PAGE });
-  const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
   const kinds =
     appState.prototypeMode === "post-mvp" ? POST_MVP_KINDS : MVP_KINDS;
   const waitingLabels: Record<WaitingFilter, string> = {
@@ -307,7 +330,13 @@ export function CheckinListing({
             >
               {view.items.map((checkin) => (
                 <li key={checkin.id} data-parity="checkin-row">
-                  {renderCheckin(checkin, tab)}
+                  <div
+                    id={checkinAnchorId(checkin.id)}
+                    tabIndex={-1}
+                    className="rounded-card"
+                  >
+                    {renderCheckin(checkin, tab)}
+                  </div>
                 </li>
               ))}
             </ul>

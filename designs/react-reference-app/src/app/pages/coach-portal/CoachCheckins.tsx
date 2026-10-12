@@ -1,5 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router";
+import { useState } from "react";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
 import { useCheckins } from "../../context/CheckinContext";
 import {
@@ -24,7 +23,7 @@ import {
   CheckinListing,
   type CheckinEmptyCopy,
 } from "../../components/CheckinListing";
-import { openingTab, type CheckinTab } from "../../utils/checkinListing";
+import type { CheckinTab } from "../../utils/checkinListing";
 import { CheckinProposeTimeDialog } from "../../components/CheckinProposeTimeDialog";
 import { JoinMeetLink } from "../../components/JoinMeetLink";
 import {
@@ -32,7 +31,6 @@ import {
   type CheckinAnswer,
 } from "../../hooks/useCheckinAnswers";
 import { PortalPageHeader } from "../../components/PortalPageHeader";
-import { checkinAnchorId, checkinIdFromSearch } from "../../utils/checkinLinks";
 import { Button } from "../../components/ui/button";
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
 import { toast } from "sonner";
@@ -70,33 +68,6 @@ const BUSY_LABEL: Record<CheckinAnswer, string> = {
   withdraw: "Cancelling…",
 };
 
-function tabHoldingCheckin(
-  checkinId: string | null,
-  groups: Record<CheckinTab, CheckIn[]>,
-  fallback: CheckinTab,
-): CheckinTab {
-  if (!checkinId) return fallback;
-  const tabs = Object.keys(groups) as CheckinTab[];
-  return (
-    tabs.find((tab) => groups[tab].some((c) => c.id === checkinId)) ??
-    fallback
-  );
-}
-
-function CheckinAnchor({
-  checkinId,
-  children,
-}: {
-  checkinId: string;
-  children: ReactNode;
-}) {
-  return (
-    <div id={checkinAnchorId(checkinId)} tabIndex={-1} className="rounded-card">
-      {children}
-    </div>
-  );
-}
-
 function firstName(fullName: string): string {
   return fullName.split(" ")[0];
 }
@@ -105,36 +76,11 @@ export function CoachCheckins() {
   const {
     statusOf,
     findCheckin,
-    getPendingCheckins,
-    getUpcomingCheckins,
-    getPastCheckins,
-    getCheckinsAwaiting,
     cancelCheckin,
   } = useCheckins();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { answer, answerInFlight } = useCheckinAnswers();
-
-  const pending = getPendingCheckins();
-  const upcoming = getUpcomingCheckins();
-  const past = getPastCheckins();
-
-  const [searchParams] = useSearchParams();
-  const focusedCheckinId = checkinIdFromSearch(searchParams);
-  const [focusedTab] = useState<CheckinTab>(() =>
-    tabHoldingCheckin(
-      focusedCheckinId,
-      { upcoming, requests: pending, past },
-      openingTab(getCheckinsAwaiting("coach").length),
-    ),
-  );
-
-  useEffect(() => {
-    if (!focusedCheckinId) return;
-    const card = document.getElementById(checkinAnchorId(focusedCheckinId));
-    card?.scrollIntoView({ block: "center" });
-    card?.focus({ preventScroll: true });
-  }, [focusedCheckinId]);
 
   const [proposingFor, setProposingFor] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
@@ -256,20 +202,18 @@ export function CoachCheckins() {
   });
 
   const card = (c: CheckIn, actions: CheckinRowActions) => (
-    <CheckinAnchor key={c.id} checkinId={c.id}>
-      <CheckinCard
-        checkin={c}
-        status={statusOf(c)}
-        viewer={{ party: "coach", counterpartName: firstName(c.clientName) }}
-        attendee={{
-          name: c.clientName,
-          imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-        }}
-        footnote={c.planId ? "Linked to training plan" : undefined}
-        actions={actions}
-        actionSize="xs"
-      />
-    </CheckinAnchor>
+    <CheckinCard
+      checkin={c}
+      status={statusOf(c)}
+      viewer={{ party: "coach", counterpartName: firstName(c.clientName) }}
+      attendee={{
+        name: c.clientName,
+        imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+      }}
+      footnote={c.planId ? "Linked to training plan" : undefined}
+      actions={actions}
+      actionSize="xs"
+    />
   );
 
   const actionsFor = (c: CheckIn, tab: CheckinTab): CheckinRowActions => {
@@ -287,7 +231,6 @@ export function CoachCheckins() {
 
       <CheckinListing
         party="coach"
-        defaultTab={focusedTab}
         waitingForLabel="Waiting for clients"
         search={{ placeholder: "Search by client name" }}
         emptyCopy={EMPTY_COPY}

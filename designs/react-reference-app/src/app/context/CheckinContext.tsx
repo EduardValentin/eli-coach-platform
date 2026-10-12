@@ -511,7 +511,7 @@ function manyCheckinsSample(): CheckIn[] {
   return sample;
 }
 
-function byStartAscending(a: CheckIn, b: CheckIn): number {
+export function byStartAscending(a: CheckIn, b: CheckIn): number {
   return checkinStartsAt(a).getTime() - checkinStartsAt(b).getTime();
 }
 
