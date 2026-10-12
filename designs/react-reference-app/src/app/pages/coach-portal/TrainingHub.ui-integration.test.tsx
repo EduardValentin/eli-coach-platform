@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
@@ -14,6 +14,11 @@ afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
 
+function ExerciseEditorStandIn() {
+  const { exerciseId } = useParams();
+  return <p>Exercise editor {exerciseId ?? 'new'}</p>;
+}
+
 function renderHub(path = '/coach/training') {
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -22,7 +27,8 @@ function renderHub(path = '/coach/training') {
           <TrainingProvider>
             <Routes>
               <Route path="/coach/training" element={<TrainingHub />} />
-              <Route path="/coach/training/exercises/*" element={<p>Exercise editor</p>} />
+              <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
+              <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
             </Routes>
             <Toaster />
           </TrainingProvider>
@@ -213,7 +219,7 @@ describe('the exercise library filters', () => {
     await chooseAction(user, 'Bike Intervals', 'Edit');
 
     // assert
-    expect(screen.getByText('Exercise editor')).toBeInTheDocument();
+    expect(screen.getByText('Exercise editor e14')).toBeInTheDocument();
   });
 
   it('narrows to one type from the Type filter', async () => {
@@ -259,7 +265,7 @@ describe('the Training page in MVP mode', () => {
     await user.click(screen.getByRole('button', { name: 'New exercise' }));
 
     // assert
-    expect(screen.getByText('Exercise editor')).toBeInTheDocument();
+    expect(screen.getByText('Exercise editor new')).toBeInTheDocument();
   });
 
   it('keeps the plan tabs in Post-MVP mode', () => {

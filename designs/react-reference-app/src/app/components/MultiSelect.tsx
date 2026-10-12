@@ -1,10 +1,12 @@
+import type { ComponentProps } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { selectTriggerClasses } from "./ui/select";
+import { SelectTrigger, selectTriggerClasses } from "./ui/select";
 
 type Summary = "count" | "names";
+type TriggerSize = ComponentProps<typeof SelectTrigger>["size"];
 
 function triggerName(label: string, chosen: number): string {
   return chosen === 0 ? label : `${label}, ${chosen} selected`;
@@ -15,14 +17,19 @@ function TriggerSummary<Value extends string>({
   selected,
   labels,
   summary,
+  placeholder,
 }: {
   label: string;
   selected: readonly Value[];
   labels: Record<Value, string>;
   summary: Summary;
+  placeholder?: string;
 }) {
   if (summary === "names" && selected.length > 0) {
     return <span className="truncate">{selected.map((value) => labels[value]).join(", ")}</span>;
+  }
+  if (summary === "names" && placeholder) {
+    return <span className="truncate text-text-secondary">{placeholder}</span>;
   }
   return (
     <>
@@ -41,7 +48,10 @@ export function MultiSelect<Value extends string>({
   counts,
   summary = "count",
   size = "sm",
+  placeholder,
   id,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: {
   label: string;
   selected: readonly Value[];
@@ -50,8 +60,11 @@ export function MultiSelect<Value extends string>({
   onToggle: (value: Value) => void;
   counts?: Record<Value, number>;
   summary?: Summary;
-  size?: "sm" | "md";
+  size?: TriggerSize;
+  placeholder?: string;
   id?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
 }) {
   return (
     <Popover>
@@ -62,10 +75,12 @@ export function MultiSelect<Value extends string>({
           data-slot="select-trigger"
           data-size={size}
           aria-label={triggerName(label, selected.length)}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           className={selectTriggerClasses("w-full")}
         >
           <span data-slot="select-value" className="flex min-w-0 items-center gap-2">
-            <TriggerSummary label={label} selected={selected} labels={labels} summary={summary} />
+            <TriggerSummary label={label} selected={selected} labels={labels} summary={summary} placeholder={placeholder} />
           </span>
           <ChevronDownIcon className="size-4 opacity-50" aria-hidden="true" />
         </button>

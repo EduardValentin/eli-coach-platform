@@ -10,7 +10,6 @@ import {
   Trash2,
   X,
   ImagePlus,
-  RefreshCw,
   Save,
   Smile,
 } from 'lucide-react';
@@ -61,7 +60,7 @@ import { TAG_FAMILY_ICON } from '../../components/coach-portal/nutrition/food-ic
 import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-icons';
 import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
-import { Button as ThemeButton } from '../../components/ThemeButton';
+import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem {
@@ -444,29 +443,11 @@ function RecipeBuilderInner() {
                 iconSize={48}
               />
               {imageUrl && (
-                <div
-                  className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-surface-inverted/80 via-surface-inverted/40 to-transparent px-2 pt-12 pb-2"
-                  data-surface="inverted"
-                >
-                  <ThemeButton
-                    aria-label="Replace recipe photo"
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="glass"
-                    size="xs"
-                  >
-                    <RefreshCw size={12} aria-hidden="true" />
-                    Replace
-                  </ThemeButton>
-                  <ThemeButton
-                    aria-label="Remove recipe photo"
-                    onClick={() => setImageUrl(undefined)}
-                    variant="glass"
-                    size="xs"
-                  >
-                    <X size={12} aria-hidden="true" />
-                    Remove
-                  </ThemeButton>
-                </div>
+                <MediaOverlayActions
+                  subject="recipe photo"
+                  onReplace={() => fileInputRef.current?.click()}
+                  onRemove={() => setImageUrl(undefined)}
+                />
               )}
             </div>
 

@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { Check, Dumbbell, Film, PlayCircle, RefreshCw, Target, Trash2, UploadCloud } from 'lucide-react';
+import { Check, Dumbbell, Film, PlayCircle, Target, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
@@ -27,11 +27,11 @@ import {
 import { MP4_ACCEPT, isMp4File, mp4RejectionMessage } from '../../utils/exerciseVideo';
 import { toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
+import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
-import { Button as ThemeButton } from '../../components/ThemeButton';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -89,25 +89,23 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
   const errorId = useId();
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const browse = () => input.current?.click();
   const pickerTrigger = {
     'aria-invalid': video.error ? true : undefined,
     'aria-describedby': errorId,
-    onClick: () => input.current?.click(),
   };
 
   const take = (file: File | undefined) => {
     if (!file) return;
     if (!isMp4File(file)) {
-      const message = mp4RejectionMessage(file);
-      onChange({ ...video, error: message });
-      toast.error(message);
+      onChange({ ...video, error: mp4RejectionMessage(file) });
       return;
     }
     onChange({ file, preview: URL.createObjectURL(file), error: null });
   };
 
   return (
-    <div className="grid gap-2">
+    <div className="grid max-w-md gap-2">
       <input
         ref={input}
         type="file"
@@ -122,19 +120,12 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
         <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted">
           <video src={video.preview} className="h-full w-full object-cover opacity-80" />
           <PlayCircle size={48} className="absolute text-surface-inverted-foreground" aria-hidden="true" />
-          <div
-            data-surface="inverted"
-            className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-surface-inverted/80 via-surface-inverted/40 to-transparent px-2 pt-12 pb-2"
-          >
-            <ThemeButton type="button" variant="glass" size="xs" aria-label="Replace video" {...pickerTrigger}>
-              <RefreshCw size={12} aria-hidden="true" />
-              Replace
-            </ThemeButton>
-            <ThemeButton type="button" variant="glass" size="xs" aria-label="Remove video" onClick={() => onChange(NO_VIDEO)}>
-              <Trash2 size={12} aria-hidden="true" />
-              Remove
-            </ThemeButton>
-          </div>
+          <MediaOverlayActions
+            subject="video"
+            onReplace={browse}
+            onRemove={() => onChange(NO_VIDEO)}
+            replaceProps={pickerTrigger}
+          />
         </div>
       ) : (
         <div
@@ -156,7 +147,7 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
           <UploadCloud className="mx-auto mb-3 text-primary" size={24} aria-hidden="true" />
           <p className="text-sm font-medium text-text-primary">Drag and drop video</p>
           <p className="mb-4 mt-1 text-xs text-text-secondary">{VIDEO_GUIDANCE}</p>
-          <Button type="button" variant="outline" {...pickerTrigger}>
+          <Button type="button" variant="outline" onClick={browse} {...pickerTrigger}>
             Browse files
           </Button>
         </div>
@@ -173,27 +164,37 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
   const { exercises, addExercise, updateExercise } = useTraining();
   const [draft, setDraft] = useState<Draft>(editing ? draftFrom(editing) : EMPTY);
   const [video, setVideo] = useState<VideoState>(videoFrom(editing));
+  const [touched, setTouched] = useState(false);
   const ids = {
     name: useId(), nameProblem: useId(), type: useId(), measure: useId(), measureHint: useId(), perSide: useId(),
-    primary: useId(), secondary: useId(), equipment: useId(), difficulty: useId(), cues: useId(),
+    sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
+    difficulty: useId(), tagsLabel: useId(), cues: useId(), videoLabel: useId(),
   };
 
   const others = exercises.filter((exercise) => exercise.id !== editing?.id);
   const problems = draftProblems(draft, others);
-  const nameProblem = draft.name.trim() === '' ? undefined : problems.name;
+  const shownProblems: typeof problems = touched ? problems : {};
+  const change = (update: (previous: Draft) => Draft) => {
+    setTouched(true);
+    setDraft(update);
+  };
+  const changeVideo = (next: VideoState) => {
+    setTouched(true);
+    setVideo(next);
+  };
   const set = <Key extends keyof Draft>(key: Key, value: Draft[Key]) =>
-    setDraft((previous) => ({ ...previous, [key]: value }));
+    change((previous) => ({ ...previous, [key]: value }));
 
   const chooseType = (type: ExerciseType) =>
-    setDraft((previous) => ({
+    change((previous) => ({
       ...previous,
       type,
       measuredIn: previous.measureTouched ? previous.measuredIn : defaultMeasureFor(type),
     }));
   const chooseMeasure = (measuredIn: Measure) =>
-    setDraft((previous) => ({ ...previous, measuredIn, measureTouched: true }));
+    change((previous) => ({ ...previous, measuredIn, measureTouched: true }));
   const togglePrimary = (muscle: Muscle) =>
-    setDraft((previous) => ({
+    change((previous) => ({
       ...previous,
       primaryMuscles: toggled(previous.primaryMuscles, muscle),
       secondaryMuscles: previous.secondaryMuscles.filter((other) => other !== muscle),
@@ -246,15 +247,15 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
               htmlFor={ids.name}
               title="Name"
               layout="stacked"
-              problem={nameProblem && <InlineProblem id={ids.nameProblem}>{nameProblem}</InlineProblem>}
+              problem={shownProblems.name && <InlineProblem id={ids.nameProblem}>{shownProblems.name}</InlineProblem>}
             >
               <Input
                 id={ids.name}
                 value={draft.name}
                 onChange={(event) => set('name', event.target.value)}
                 placeholder="e.g. Barbell back squat"
-                aria-invalid={nameProblem ? true : undefined}
-                aria-describedby={nameProblem ? ids.nameProblem : undefined}
+                aria-invalid={shownProblems.name ? true : undefined}
+                aria-describedby={shownProblems.name ? ids.nameProblem : undefined}
               />
             </SettingsRow>
             <SettingsRow htmlFor={ids.type} title="Type" layout="stacked">
@@ -283,7 +284,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
                 </SelectContent>
               </Select>
             </SettingsRow>
-            <SettingsRow title="Sides" layout="stacked">
+            <SettingsRow as="fieldset" labelId={ids.sidesLabel} title="Sides" layout="stacked">
               <label htmlFor={ids.perSide} className="flex items-center gap-2 text-sm text-text-primary">
                 <Checkbox id={ids.perSide} checked={draft.perSide} onCheckedChange={(checked) => set('perSide', checked === true)} />
                 Performed one side at a time
@@ -303,13 +304,20 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
               htmlFor={ids.primary}
               title="Primary muscles"
               layout="stacked"
-              problem={problems.primaryMuscles && <InlineProblem>{problems.primaryMuscles}</InlineProblem>}
+              problem={
+                shownProblems.primaryMuscles && (
+                  <InlineProblem id={ids.primaryProblem}>{shownProblems.primaryMuscles}</InlineProblem>
+                )
+              }
             >
               <MultiSelect
                 id={ids.primary}
                 label="Primary muscles"
                 summary="names"
                 size="md"
+                placeholder="Pick muscles"
+                aria-invalid={shownProblems.primaryMuscles ? true : undefined}
+                aria-describedby={shownProblems.primaryMuscles ? ids.primaryProblem : undefined}
                 selected={draft.primaryMuscles}
                 options={MUSCLES}
                 labels={MUSCLE_LABELS}
@@ -322,6 +330,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
                 label="Secondary muscles"
                 summary="names"
                 size="md"
+                placeholder="Pick muscles"
                 selected={draft.secondaryMuscles}
                 options={MUSCLES.filter((muscle) => !draft.primaryMuscles.includes(muscle))}
                 labels={MUSCLE_LABELS}
@@ -334,6 +343,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
                 label="Equipment"
                 summary="names"
                 size="md"
+                placeholder="Pick equipment"
                 selected={draft.equipment}
                 options={EQUIPMENT}
                 labels={EQUIPMENT_LABELS}
@@ -350,7 +360,7 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
                 </SelectContent>
               </Select>
             </SettingsRow>
-            <SettingsRow title="Tags" layout="stacked">
+            <SettingsRow as="fieldset" labelId={ids.tagsLabel} title="Tags" layout="stacked">
               <ul className="flex flex-wrap gap-2">
                 {EXERCISE_TAGS.map((tag) => (
                   <li key={tag}>
@@ -374,8 +384,8 @@ function ExerciseEditor({ editing }: { editing: Exercise | undefined }) {
             <SettingsRow htmlFor={ids.cues} title="Form cues" layout="stacked">
               <Textarea id={ids.cues} rows={3} value={draft.description} onChange={(event) => set('description', event.target.value)} placeholder="Keep the chest up, drive through the heels…" />
             </SettingsRow>
-            <SettingsRow title="Demo video" layout="stacked">
-              <VideoField video={video} onChange={setVideo} />
+            <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked">
+              <VideoField video={video} onChange={changeVideo} />
             </SettingsRow>
           </SettingsRows>
         </SettingsSection>

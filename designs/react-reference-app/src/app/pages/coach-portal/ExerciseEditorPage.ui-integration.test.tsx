@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { Toaster } from 'sonner';
@@ -100,6 +100,48 @@ describe('a new exercise', () => {
     ]);
   });
 
+  it('names the Sides, Tags and Demo video groups', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(screen.getByRole('group', { name: 'Sides' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Tags' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Demo video' })).toBeInTheDocument();
+  });
+
+  it('shows no problem before the coach changes anything', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(screen.queryByText('Give the exercise a name')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pick at least one primary muscle')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('says why Create is disabled once a typed name is cleared', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+
+    // act
+    await user.clear(screen.getByLabelText('Name'));
+
+    // assert
+    expect(screen.getByText('Give the exercise a name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(primary()).toBeDisabled();
+  });
+
+  it('offers Cancel as a way back to the library', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/coach/training');
+  });
+
   it('switches the unit to time when the type becomes cardio', async () => {
     // arrange
     const user = renderEditor(NEW);
@@ -148,6 +190,7 @@ describe('a new exercise', () => {
     // assert
     expect(primary()).toBeDisabled();
     expect(screen.getByText('Pick at least one primary muscle')).toBeInTheDocument();
+    expect(multi('Primary muscles')).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('refuses a name an archived exercise already uses', async () => {
@@ -264,6 +307,18 @@ describe('the demo video', () => {
     expect(screen.getByRole('button', { name: 'Browse files' })).toHaveAttribute('aria-describedby', alert.id);
   });
 
+  it('announces a rejected file once, through the alert and not a toast as well', async () => {
+    // arrange
+    renderEditor(NEW);
+
+    // act
+    drop(fileNamed('clip.mov', 'video/quicktime'));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+    // assert
+    expect(screen.getAllByText(/clip\.mov is not an \.mp4/)).toHaveLength(1);
+  });
+
   it('attaches an .mp4 chosen through the picker on save', async () => {
     // arrange
     const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
@@ -275,6 +330,18 @@ describe('the demo video', () => {
 
     // assert
     expect(screen.getByTestId('saved')).toHaveTextContent('squat.mp4');
+  });
+
+  it('clears the stored video when the coach removes it and saves', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Remove video' }));
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('no-video');
   });
 
   it('names each rejected file, so a second rejection is announced too', () => {

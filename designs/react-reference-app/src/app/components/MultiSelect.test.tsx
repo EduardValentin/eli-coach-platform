@@ -107,6 +107,25 @@ describe("a MultiSelect in a form", () => {
     expect(screen.getByRole("button", { name: "Equipment" })).toHaveTextContent("Equipment");
   });
 
+  it("shows a placeholder instead of the label when one is given and nothing is chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect
+        label="Equipment"
+        selected={[]}
+        options={["Mat"]}
+        labels={{ Mat: "Mat" }}
+        summary="names"
+        placeholder="Pick equipment"
+        onToggle={() => {}}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Equipment" })).toHaveTextContent(/^Pick equipment$/);
+  });
+
   it("renders no count badge for an option when no counts are given", async () => {
     // arrange
     const user = userEvent.setup();
