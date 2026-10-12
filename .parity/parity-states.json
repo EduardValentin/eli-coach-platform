@@ -1913,13 +1913,12 @@
         "waitFor": "text=15 to 69"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "onboarding-complete-form1"
+      }
+    ]
   },
-  "onboarding-to-form2": [
-    {
-      "use": "onboarding-complete-form1"
-    }
-  ],
   "onboarding-unsaved": {
     "prototype": [
       {
@@ -2935,7 +2934,6 @@
   ],
   "wait-banner": [],
   "wait-bundle": [],
-  "wait-error": [],
   "wait-resumed": [
     {
       "waitFor": "[data-parity=\"resume-note\"]"
