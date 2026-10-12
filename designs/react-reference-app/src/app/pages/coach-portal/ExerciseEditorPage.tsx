@@ -11,6 +11,7 @@ import {
   EXERCISE_TYPES,
   EXERCISE_TYPE_LABELS,
   MEASURES,
+  MEASURE_EXAMPLES,
   MEASURE_LABELS,
   MUSCLES,
   defaultMeasureFor,
@@ -34,6 +35,7 @@ import {
 } from '../../utils/exerciseVideo';
 import { toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
+import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
@@ -41,7 +43,6 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button, buttonVariants } from '../../components/ui/button';
-import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
@@ -58,6 +59,8 @@ function libraryPath(state: LibraryReturn): string {
 const MUSCLE_LABELS = labelsOf(MUSCLES);
 const EQUIPMENT_LABELS = labelsOf(EQUIPMENT);
 const DIFFICULTY_LABELS = labelsOf(DIFFICULTIES);
+const BOTH_SIDES = 'both';
+const ONE_SIDE = 'one';
 const VIDEO_GUIDANCE = 'MP4 up to 50 MB, in a format that plays well on a phone.';
 
 type Draft = ExerciseDraft & { measureTouched: boolean };
@@ -183,7 +186,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const [video, setVideo] = useState<VideoState>(videoFrom(editing));
   const [touched, setTouched] = useState(false);
   const ids = {
-    name: useId(), nameProblem: useId(), type: useId(), measure: useId(), measureHint: useId(), perSide: useId(),
+    name: useId(), nameProblem: useId(), type: useId(), measure: useId(),
     sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
     difficulty: useId(), tagsLabel: useId(), cues: useId(), videoLabel: useId(),
   };
@@ -243,17 +246,13 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   return (
     <div className="w-full max-w-3xl">
       <PortalBackLink to={library}>Back to exercises</PortalBackLink>
-      <PortalPageHeader
-        title={editing ? 'Edit exercise' : 'New exercise'}
-        subtitle="Say what it is, what it works and how it is measured, so plans can prescribe it."
-      />
+      <PortalPageHeader title={editing ? 'Edit exercise' : 'New exercise'} />
 
       <div className="space-y-6 sm:space-y-8">
         <SettingsSection
           headingId="exercise-about-heading"
           title="About the exercise"
           icon={<Dumbbell aria-hidden="true" className="text-brand-secondary" size={18} />}
-          description="Its name, what kind of work it is and how a plan prescribes it."
         >
           <SettingsRows>
             <SettingsRow
@@ -281,27 +280,33 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 </SelectContent>
               </Select>
             </SettingsRow>
-            <SettingsRow
-              htmlFor={ids.measure}
-              title="Measured in"
-              layout="stacked"
-              description="Pre-filled from the type; change it for a timed hold or a carry."
-              descriptionId={ids.measureHint}
-            >
+            <SettingsRow htmlFor={ids.measure} title="Measured in" layout="stacked">
               <Select value={draft.measuredIn} onValueChange={(value) => chooseMeasure(value as Measure)}>
-                <SelectTrigger id={ids.measure} aria-describedby={ids.measureHint}><SelectValue /></SelectTrigger>
+                <SelectTrigger id={ids.measure}>
+                  <SelectValue>{MEASURE_LABELS[draft.measuredIn]}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {MEASURES.map((measure) => (
-                    <SelectItem key={measure} value={measure}>{MEASURE_LABELS[measure]}</SelectItem>
+                    <SelectItem key={measure} value={measure}>
+                      {MEASURE_LABELS[measure]}{' '}
+                      <span className="text-xs text-text-secondary in-data-[state=checked]:text-current">
+                        {MEASURE_EXAMPLES[measure]}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </SettingsRow>
-            <SettingsRow as="fieldset" labelId={ids.sidesLabel} title="Sides" layout="stacked">
-              <label htmlFor={ids.perSide} className="flex items-center gap-2 text-sm text-text-primary">
-                <Checkbox id={ids.perSide} checked={draft.perSide} onCheckedChange={(checked) => set('perSide', checked === true)} />
-                Performed one side at a time
-              </label>
+            <SettingsRow labelId={ids.sidesLabel} title="Sides" layout="stacked">
+              <ChoiceGroup
+                size="md"
+                aria-labelledby={ids.sidesLabel}
+                value={draft.perSide ? ONE_SIDE : BOTH_SIDES}
+                onValueChange={(value) => set('perSide', value === ONE_SIDE)}
+              >
+                <ChoiceOption value={BOTH_SIDES}>Both sides together</ChoiceOption>
+                <ChoiceOption value={ONE_SIDE}>One side at a time</ChoiceOption>
+              </ChoiceGroup>
             </SettingsRow>
           </SettingsRows>
         </SettingsSection>
@@ -310,7 +315,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
           headingId="exercise-work-heading"
           title="What it works"
           icon={<Target aria-hidden="true" className="text-brand-secondary" size={18} />}
-          description="Muscles, equipment and how the library files it."
         >
           <SettingsRows>
             <SettingsRow
@@ -391,7 +395,6 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
           headingId="exercise-coaching-heading"
           title="Coaching"
           icon={<Film aria-hidden="true" className="text-brand-secondary" size={18} />}
-          description="What the client reads and watches before she does it."
         >
           <SettingsRows>
             <SettingsRow htmlFor={ids.cues} title="Form cues" layout="stacked">

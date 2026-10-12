@@ -81,7 +81,7 @@ describe("MultiSelect", () => {
 });
 
 describe("a MultiSelect in a form", () => {
-  it("shows the chosen names in the trigger when summary is names", () => {
+  it("shows each chosen name as a pill in the trigger when summary is names", () => {
     // arrange
     // act
     render(
@@ -96,7 +96,28 @@ describe("a MultiSelect in a form", () => {
     );
 
     // assert
-    expect(screen.getByRole("button", { name: "Primary muscles, 2 selected" })).toHaveTextContent("Glutes, Core");
+    const trigger = screen.getByRole("button", { name: "Primary muscles, 2 selected" });
+    expect(within(trigger).getByText("Glutes")).toHaveAttribute("data-slot", "badge");
+    expect(within(trigger).getByText("Core")).toHaveAttribute("data-slot", "badge");
+  });
+
+  it("shows no name pills when summary is count", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect
+        label="Primary muscles"
+        selected={["Glutes", "Core"]}
+        options={["Glutes", "Core", "Lats"]}
+        labels={{ Glutes: "Glutes", Core: "Core", Lats: "Lats" }}
+        onToggle={() => {}}
+      />,
+    );
+
+    // assert
+    const trigger = screen.getByRole("button", { name: "Primary muscles, 2 selected" });
+    expect(within(trigger).queryByText("Glutes")).not.toBeInTheDocument();
+    expect(trigger).toHaveTextContent(/^Primary muscles2$/);
   });
 
   it("shows the label alone when nothing is chosen", () => {
@@ -170,5 +191,89 @@ describe("a MultiSelect in a form", () => {
 
     // assert
     expect(screen.getByRole("button", { name: "Primary muscles" })).toHaveAttribute("id", "muscles");
+  });
+});
+
+const MUSCLES = ["Chest", "Lats", "Traps", "Shoulders", "Biceps", "Triceps", "Core", "Glutes", "Calves"] as const;
+type Muscle = (typeof MUSCLES)[number];
+const MUSCLE_LABELS = Object.fromEntries(MUSCLES.map((muscle) => [muscle, muscle])) as Record<Muscle, string>;
+
+function renderMuscles(options: readonly Muscle[]) {
+  render(
+    <MultiSelect<Muscle>
+      label="Primary muscles"
+      selected={[]}
+      options={options}
+      labels={MUSCLE_LABELS}
+      summary="names"
+      onToggle={() => {}}
+    />,
+  );
+  return userEvent.setup();
+}
+
+describe("searching a long MultiSelect", () => {
+  it("offers no search for eight options or fewer", async () => {
+    // arrange
+    const user = renderMuscles(MUSCLES.slice(0, 8));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Primary muscles" }));
+
+    // assert
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "Primary muscles" })).getAllByRole("checkbox")).toHaveLength(8);
+  });
+
+  it("opens with focus in the search once there are more than eight options", async () => {
+    // arrange
+    const user = renderMuscles(MUSCLES);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Primary muscles" }));
+
+    // assert
+    expect(screen.getByRole("searchbox", { name: "Search primary muscles" })).toHaveFocus();
+  });
+
+  it("narrows the list to the labels holding the typed text, whatever its case", async () => {
+    // arrange
+    const user = renderMuscles(MUSCLES);
+    await user.click(screen.getByRole("button", { name: "Primary muscles" }));
+
+    // act
+    await user.keyboard("CE");
+
+    // assert
+    const list = screen.getByRole("list", { name: "Primary muscles" });
+    expect(within(list).getAllByRole("checkbox").map((option) => option.closest("label")?.textContent)).toEqual([
+      "Biceps",
+      "Triceps",
+    ]);
+  });
+
+  it("says No matches when nothing holds the typed text", async () => {
+    // arrange
+    const user = renderMuscles(MUSCLES);
+    await user.click(screen.getByRole("button", { name: "Primary muscles" }));
+
+    // act
+    await user.keyboard("hamstrings");
+
+    // assert
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("closes on Escape from the search", async () => {
+    // arrange
+    const user = renderMuscles(MUSCLES);
+    await user.click(screen.getByRole("button", { name: "Primary muscles" }));
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
   });
 });

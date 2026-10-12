@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate, type InitialEntry } from 'react-router';
 import { Toaster } from 'sonner';
@@ -65,7 +65,7 @@ const primary = () => screen.getByRole('button', { name: /^(Create exercise|Save
 const dropzone = () => screen.getByText('Drag and drop video').closest('div') as HTMLElement;
 const drop = (file: File) => fireEvent.drop(dropzone(), { dataTransfer: { files: [file] } });
 
-async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLElement, option: string) {
+async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLElement, option: string | RegExp) {
   await user.click(combobox);
   await user.click(screen.getByRole('option', { name: option }));
 }
@@ -95,7 +95,8 @@ describe('a new exercise', () => {
     expect(screen.getByRole('link', { name: 'Back to exercises' })).toHaveAttribute('href', '/coach/training');
     expect(field('Type')).toHaveTextContent('Resistance');
     expect(field('Measured in')).toHaveTextContent('Reps');
-    expect(screen.getByRole('checkbox', { name: 'Performed one side at a time' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Both sides together' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'One side at a time' })).not.toBeChecked();
     expect(primary()).toHaveTextContent('Create exercise');
     expect(primary()).toBeDisabled();
   });
@@ -116,7 +117,7 @@ describe('a new exercise', () => {
     renderEditor(NEW);
 
     // assert
-    expect(screen.getByRole('group', { name: 'Sides' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Sides' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Tags' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Demo video' })).toBeInTheDocument();
   });
@@ -185,11 +186,35 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW);
 
     // act
-    await choose(user, field('Measured in'), 'Distance');
+    await choose(user, field('Measured in'), /^Distance/);
     await choose(user, field('Type'), 'Cardio');
 
     // assert
     expect(field('Measured in')).toHaveTextContent('Distance');
+  });
+
+  it('gives each unit an example', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await user.click(field('Measured in'));
+
+    // assert
+    expect(screen.getByRole('option', { name: 'Reps e.g. 3 × 10' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Time e.g. 45 s hold' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Distance e.g. 400 m' })).toBeInTheDocument();
+  });
+
+  it('shows only the chosen unit, without its example', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await choose(user, field('Measured in'), /^Time/);
+
+    // assert
+    expect(field('Measured in')).toHaveTextContent(/^Time$/);
   });
 
   it('saves a cardio exercise without muscles and returns to the library', async () => {
@@ -252,7 +277,7 @@ describe('a new exercise', () => {
 
     // act
     await user.type(screen.getByLabelText('Name'), 'Cossack squat');
-    await user.click(screen.getByRole('checkbox', { name: 'Performed one side at a time' }));
+    await user.click(screen.getByRole('radio', { name: 'One side at a time' }));
     await tick(user, multi('Primary muscles'), 'Adductors');
     await tick(user, multi(/^Primary muscles/), 'Glutes');
     await tick(user, multi('Secondary muscles'), 'Core');
@@ -273,9 +298,9 @@ describe('editing an exercise', () => {
     // assert
     expect(screen.getByRole('heading', { level: 1, name: 'Edit exercise' })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveValue('Bulgarian Split Squat');
-    expect(screen.getByRole('checkbox', { name: 'Performed one side at a time' })).toBeChecked();
-    expect(multi(/^Primary muscles, 2 selected$/)).toHaveTextContent('Quadriceps, Glutes');
-    expect(multi(/^Equipment, 2 selected$/)).toHaveTextContent('Dumbbells, Bench');
+    expect(screen.getByRole('radio', { name: 'One side at a time' })).toBeChecked();
+    expect(within(multi(/^Primary muscles, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Quadriceps', 'Glutes']);
+    expect(within(multi(/^Equipment, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Dumbbells', 'Bench']);
     expect(screen.getByRole('button', { name: 'Hypertrophy' })).toHaveAttribute('aria-pressed', 'true');
     expect(primary()).toHaveTextContent('Save changes');
     expect(primary()).toBeEnabled();

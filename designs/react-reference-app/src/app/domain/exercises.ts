@@ -13,6 +13,11 @@ export const MEASURE_LABELS: Record<Measure, string> = {
   time: 'Time',
   distance: 'Distance',
 };
+export const MEASURE_EXAMPLES: Record<Measure, string> = {
+  reps: 'e.g. 3 × 10',
+  time: 'e.g. 45 s hold',
+  distance: 'e.g. 400 m',
+};
 
 const DEFAULT_MEASURE: Record<ExerciseType, Measure> = {
   resistance: 'reps',
