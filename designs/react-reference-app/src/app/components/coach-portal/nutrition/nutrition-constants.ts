@@ -23,16 +23,6 @@ export const CATEGORY_SWATCH: Record<FoodCategory, string> = {
   seasoning: 'bg-nutrition-seasoning',
 };
 
-// Soft-tint surfaces (labels on top stay text-foreground for AAA contrast).
-export const CATEGORY_SOFT: Record<FoodCategory, string> = {
-  protein: 'bg-nutrition-protein-soft',
-  carb: 'bg-nutrition-carb-soft',
-  fat: 'bg-nutrition-fat-soft',
-  legume: 'bg-nutrition-legume-soft',
-  extra: 'bg-nutrition-extra-soft',
-  seasoning: 'bg-nutrition-seasoning-soft',
-};
-
 export const CATEGORY_BORDER: Record<FoodCategory, string> = {
   protein: 'border-nutrition-protein',
   carb: 'border-nutrition-carb',
@@ -63,14 +53,6 @@ export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
   'cycle-phase': 'bg-tag-cycle',
   nutrient: 'bg-tag-nutrient',
   dietary: 'bg-tag-dietary',
-};
-
-// Family-colored left edge for the tag-group cards in the food dialog.
-export const TAG_FAMILY_BORDER: Record<TagFamily, string> = {
-  'meal-time': 'border-l-tag-mealtime',
-  'cycle-phase': 'border-l-tag-cycle',
-  nutrient: 'border-l-tag-nutrient',
-  dietary: 'border-l-tag-dietary',
 };
 
 export const CATEGORY_ICON_COLOR: Record<FoodCategory, string> = {

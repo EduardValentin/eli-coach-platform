@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useNutrition } from '../../../context/NutritionContext';
+import { pickableItems } from '../../../domain/libraryLifecycle';
 import { Card, CardContent } from '../../ui/card';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
@@ -101,7 +102,9 @@ export function EquivalenceGroups() {
 
 function AddToGroup({ groupId }: { groupId: string }) {
   const { foods, assignFoodToGroup } = useNutrition();
-  const available = foods.filter((f) => f.equivalenceGroupId == null);
+  const available = pickableItems(foods).filter(
+    (f) => f.equivalenceGroupId == null,
+  );
   return (
     <Select
       value=""

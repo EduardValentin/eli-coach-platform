@@ -24,13 +24,8 @@ import { useAppState } from '../../context/AppContext';
 
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
-  { name: 'Training', href: '/coach/training', icon: Activity, postMvp: true },
-  {
-    name: 'Nutrition',
-    href: '/coach/nutrition',
-    icon: Utensils,
-    postMvp: true,
-  },
+  { name: 'Training', href: '/coach/training', icon: Activity },
+  { name: 'Nutrition', href: '/coach/nutrition', icon: Utensils },
   {
     name: 'Messages',
     href: '/coach/messages',

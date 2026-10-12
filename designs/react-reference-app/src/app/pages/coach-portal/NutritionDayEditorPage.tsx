@@ -30,6 +30,7 @@ import type {
 } from '../../context/NutritionContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
+import { pickableItems } from '../../domain/libraryLifecycle';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import {
@@ -1118,7 +1119,10 @@ function IngredientSwaps({
     .map((ing) => {
       const originalFood = foods.find((f) => f.id === ing.foodId);
       if (!originalFood) return null;
-      const siblings = groupSiblings(originalFood, foods);
+      const siblings = groupSiblings(
+        originalFood,
+        pickableItems(foods, [slot.ingredientSwaps?.[ing.foodId]]),
+      );
       if (siblings.length === 0) return null;
       return { ing, originalFood, siblings };
     })

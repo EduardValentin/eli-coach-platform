@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { bundleLengthLabel } from '../domain/bundles';
+import {
+  archivedItem,
+  exerciseUsage,
+  isDeletable,
+  restoredItem,
+  type LibraryDeletion,
+  type LibraryUsage,
+} from '../domain/libraryLifecycle';
 
 const ACTIVE_WORKOUT_STORAGE_KEY = 'eli:active-workout';
 
@@ -29,6 +37,7 @@ export interface Exercise {
   tags?: string[];
   videoUrl?: string;
   thumbnailUrl?: string;
+  archivedAt?: string;
 }
 
 // ── Plan building-block types (unchanged) ───────────────────────
@@ -159,7 +168,10 @@ interface TrainingState {
   exercises: Exercise[];
   addExercise: (exercise: Exercise) => void;
   updateExercise: (exercise: Exercise) => void;
-  deleteExercise: (id: string) => void;
+  archiveExercise: (id: string) => void;
+  restoreExercise: (id: string) => void;
+  deleteExercise: (id: string) => LibraryDeletion;
+  getExerciseUsage: (id: string) => LibraryUsage;
 
   // Plan templates
   planTemplates: PlanTemplate[];
@@ -332,6 +344,17 @@ const mockExercises: Exercise[] = [
     primaryMuscles: ['Core'],
     secondaryMuscles: ['Shoulders'],
     tags: ['Recovery']
+  },
+  {
+    id: 'e13',
+    name: 'Smith Machine Squat',
+    description: 'Guided squat on a fixed bar path for quad-focused volume.',
+    equipment: ['Smith Machine'],
+    difficulty: 'Beginner',
+    primaryMuscles: ['Quadriceps', 'Glutes'],
+    secondaryMuscles: ['Hamstrings'],
+    tags: ['Hypertrophy'],
+    archivedAt: '2026-09-28T10:00:00.000Z'
   }
 ];
 
@@ -899,8 +922,18 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     setExercises(prev => [...prev, exercise]), []);
   const updateExercise = useCallback((exercise: Exercise) =>
     setExercises(prev => prev.map(e => e.id === exercise.id ? exercise : e)), []);
-  const deleteExercise = useCallback((id: string) =>
-    setExercises(prev => prev.filter(e => e.id !== id)), []);
+  const archiveExercise = useCallback((id: string) =>
+    setExercises(prev => prev.map(e => e.id === id ? archivedItem(e, new Date()) : e)), []);
+  const restoreExercise = useCallback((id: string) =>
+    setExercises(prev => prev.map(e => e.id === id ? restoredItem(e) : e)), []);
+  const getExerciseUsage = useCallback((id: string): LibraryUsage =>
+    exerciseUsage(id, { templates: planTemplates, plans: planInstances }),
+    [planTemplates, planInstances]);
+  const deleteExercise = useCallback((id: string): LibraryDeletion => {
+    if (!isDeletable(getExerciseUsage(id))) return 'in-use';
+    setExercises(prev => prev.filter(e => e.id !== id));
+    return 'deleted';
+  }, [getExerciseUsage]);
 
   // ── Template CRUD ───────────────────────────────────────────
   const addTemplate = useCallback((template: PlanTemplate) =>
@@ -1155,7 +1188,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   return (
     <TrainingContext.Provider value={{
       exercises,
-      addExercise, updateExercise, deleteExercise,
+      addExercise, updateExercise, archiveExercise, restoreExercise, deleteExercise, getExerciseUsage,
       planTemplates,
       addTemplate, updateTemplate, deleteTemplate,
       planInstances,

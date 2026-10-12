@@ -3,6 +3,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { GripVertical, X } from 'lucide-react';
 import { useNutrition, TAG_FAMILIES } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
+import { itemsWithStatus } from '../../../domain/libraryLifecycle';
 import { LABEL_CLASS } from '../../typography';
 import { CATEGORY_SWATCH, TAG_FAMILY_LABELS } from './nutrition-constants';
 
@@ -48,7 +49,9 @@ function FoodChip({ food }: { food: Food }) {
 
 function TagBucket({ tag }: { tag: Tag }) {
   const { foods, addFoodTag, removeFoodTag } = useNutrition();
-  const tagged = foods.filter((f) => f.tagIds.includes(tag.id));
+  const tagged = itemsWithStatus(foods, 'active').filter((f) =>
+    f.tagIds.includes(tag.id),
+  );
 
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
@@ -127,7 +130,7 @@ export function FoodTagBoard() {
         <section aria-label="Foods" className="flex flex-col gap-2">
           <h2 className={LABEL_CLASS}>Foods</h2>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-start">
-            {foods.map((f) => (
+            {itemsWithStatus(foods, 'active').map((f) => (
               <FoodChip key={f.id} food={f} />
             ))}
           </div>

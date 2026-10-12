@@ -1,192 +1,115 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { ChevronUp, ChevronDown, Pencil } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useNutrition } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
-import { Button } from '../../ui/button';
+import type { SortChoice } from '../../SortControl';
+import { SortableTableHead } from '../../SortableTableHead';
 import {
-  CATEGORY_LABELS,
-  CATEGORY_ICON_COLOR,
-  MACRO_DOT,
-} from './nutrition-constants';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../ui/table';
+import { FOOD_SORT, type FoodSortKey } from '../../../utils/foodListing';
+import { CATEGORY_LABELS, CATEGORY_ICON_COLOR } from './nutrition-constants';
 import { foodIcon } from './food-icons';
 import { TagPill } from './TagPill';
 
-type SortKey = 'name' | 'kcal' | 'protein' | 'carb' | 'fat';
+const SORTED_COLUMNS: readonly { key: FoodSortKey; label: string }[] = [
+  { key: 'name', label: 'Food' },
+  { key: 'kcal', label: 'kcal' },
+  { key: 'protein', label: 'Protein' },
+  { key: 'carb', label: 'Carbs' },
+  { key: 'fat', label: 'Fat' },
+];
+
+const VALUE_CELL = 'text-sm text-text-secondary tabular-nums';
+
+const COLUMN_COUNT = SORTED_COLUMNS.length + 2;
 
 interface FoodTableProps {
-  foods: Food[];
-  onEdit: (food: Food) => void;
+  foods: readonly Food[];
+  sort: SortChoice<FoodSortKey>;
+  onSort: (key: FoodSortKey) => void;
+  actionsFor: (food: Food) => ReactNode;
+  empty: ReactNode;
 }
 
-export function FoodTable({ foods, onEdit }: FoodTableProps) {
-  const { tags } = useNutrition();
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [dir, setDir] = useState<'asc' | 'desc'>('asc');
-
-  const toggleSort = (k: SortKey) => {
-    if (k === sortKey) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortKey(k);
-      setDir('asc');
-    }
-  };
-
-  const sorted = useMemo(() => {
-    const factor = dir === 'asc' ? 1 : -1;
-    return [...foods].sort((a, b) =>
-      sortKey === 'name'
-        ? a.name.localeCompare(b.name) * factor
-        : (a[sortKey] - b[sortKey]) * factor,
-    );
-  }, [foods, sortKey, dir]);
-
-  const ariaSort = (k: SortKey): 'ascending' | 'descending' | 'none' =>
-    sortKey === k ? (dir === 'asc' ? 'ascending' : 'descending') : 'none';
-
-  const headerBtn = (k: SortKey, label: ReactNode) => (
-    <button
-      type="button"
-      onClick={() => toggleSort(k)}
-      className="inline-flex items-center gap-1 font-medium hover:text-text-primary"
-    >
-      {label}
-      {sortKey === k &&
-        (dir === 'asc' ? (
-          <ChevronUp size={14} aria-hidden="true" />
-        ) : (
-          <ChevronDown size={14} aria-hidden="true" />
-        ))}
-    </button>
-  );
-
-  const macroHead = (k: 'protein' | 'carb' | 'fat', letter: string) => (
-    <span className="inline-flex items-center gap-1">
-      <span
-        className={`size-1.5 rounded-full ${MACRO_DOT[k]}`}
+function FoodName({ food }: { food: Food }) {
+  const Icon = foodIcon(food.icon);
+  return (
+    <div className="flex items-center gap-3">
+      <div
         aria-hidden="true"
-      />
-      {letter}
-    </span>
+        className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center shrink-0"
+      >
+        <Icon size={18} className={CATEGORY_ICON_COLOR[food.category]} />
+      </div>
+      <div>
+        <p className="font-semibold text-sm text-text-primary">{food.name}</p>
+        <p className="text-xs text-text-secondary mt-0.5">{CATEGORY_LABELS[food.category]}</p>
+      </div>
+    </div>
   );
+}
+
+export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableProps) {
+  const { tags } = useNutrition();
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="text-left text-text-secondary">
-          <th
-            scope="col"
-            aria-sort={ariaSort('name')}
-            className="border-b border-border rounded-field py-2 pr-3"
-          >
-            {headerBtn('name', 'Food')}
-          </th>
-          <th
-            scope="col"
-            aria-sort={ariaSort('kcal')}
-            className="border-b border-border rounded-field py-2 px-3 text-right"
-          >
-            {headerBtn('kcal', 'kcal')}
-          </th>
-          <th
-            scope="col"
-            aria-sort={ariaSort('protein')}
-            className="border-b border-border rounded-field py-2 px-3 text-right"
-          >
-            {headerBtn('protein', macroHead('protein', 'P'))}
-          </th>
-          <th
-            scope="col"
-            aria-sort={ariaSort('carb')}
-            className="border-b border-border rounded-field py-2 px-3 text-right"
-          >
-            {headerBtn('carb', macroHead('carb', 'C'))}
-          </th>
-          <th
-            scope="col"
-            aria-sort={ariaSort('fat')}
-            className="border-b border-border rounded-field py-2 px-3 text-right"
-          >
-            {headerBtn('fat', macroHead('fat', 'F'))}
-          </th>
-          <th
-            scope="col"
-            className="border-b border-border rounded-field py-2 px-3 font-medium"
-          >
-            Tags
-          </th>
-          <th
-            scope="col"
-            className="border-b border-border rounded-field py-2 pl-3"
-          >
-            <span className="sr-only">Actions</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {sorted.map((food) => {
-          const foodTags = food.tagIds
-            .map((id) => tags.find((t) => t.id === id))
-            .filter((t): t is Tag => Boolean(t));
-          return (
-            <tr key={food.id} className="hover:bg-surface-muted">
-              <td className="border-b border-border/60 rounded-field py-2 pr-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  {(() => {
-                    const Icon = foodIcon(food.icon);
-                    return (
-                      <Icon
-                        size={18}
-                        className={`shrink-0 ${CATEGORY_ICON_COLOR[food.category]}`}
-                        aria-hidden="true"
-                      />
-                    );
-                  })()}
-                  <span className="font-medium text-text-primary truncate">
-                    {food.name}
-                  </span>
-                  <span className="hidden lg:inline text-xs text-text-secondary shrink-0">
-                    {CATEGORY_LABELS[food.category]}
-                  </span>
-                  <span className="sr-only lg:hidden">
-                    {CATEGORY_LABELS[food.category]}
-                  </span>
-                </div>
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 px-3 text-right tabular-nums text-text-primary">
-                {food.kcal}
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 px-3 text-right tabular-nums text-text-primary">
-                {food.protein}g
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 px-3 text-right tabular-nums text-text-primary">
-                {food.carb}g
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 px-3 text-right tabular-nums text-text-primary">
-                {food.fat}g
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 px-3">
-                <ul className="flex flex-wrap gap-1">
-                  {foodTags.map((t) => (
-                    <li key={t.id}>
-                      <TagPill tag={t} />
-                    </li>
-                  ))}
-                </ul>
-              </td>
-              <td className="border-b border-border/60 rounded-field py-2 pl-3 text-right">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Edit ${food.name}`}
-                  onClick={() => onEdit(food)}
-                >
-                  <Pencil size={16} aria-hidden="true" />
-                </Button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {SORTED_COLUMNS.map(({ key, label }) => (
+            <SortableTableHead
+              key={key}
+              label={label}
+              active={sort.key === key}
+              direction={sort.key === key ? sort.direction : FOOD_SORT.defaultDirection[key]}
+              onSort={() => onSort(key)}
+            />
+          ))}
+          <TableHead>Tags</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {foods.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={COLUMN_COUNT} className="p-0">
+              {empty}
+            </TableCell>
+          </TableRow>
+        ) : (
+          foods.map((food) => {
+              const foodTags = food.tagIds
+                .map((id) => tags.find((t) => t.id === id))
+                .filter((t): t is Tag => Boolean(t));
+              return (
+                <TableRow key={food.id}>
+                  <TableCell>
+                    <FoodName food={food} />
+                  </TableCell>
+                  <TableCell className={VALUE_CELL}>{food.kcal}</TableCell>
+                  <TableCell className={VALUE_CELL}>{food.protein}g</TableCell>
+                  <TableCell className={VALUE_CELL}>{food.carb}g</TableCell>
+                  <TableCell className={VALUE_CELL}>{food.fat}g</TableCell>
+                  <TableCell>
+                    <ul className="flex flex-wrap gap-1">
+                      {foodTags.map((t) => (
+                        <li key={t.id}>
+                          <TagPill tag={t} />
+                        </li>
+                      ))}
+                    </ul>
+                  </TableCell>
+                  <TableCell>{actionsFor(food)}</TableCell>
+                </TableRow>
+              );
+            })
+        )}
+      </TableBody>
+    </Table>
   );
 }

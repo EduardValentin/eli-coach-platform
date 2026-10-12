@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { matchesExerciseFilters } from './exerciseFilters';
+import {
+  EXERCISE_TAGS,
+  matchesExerciseFilters,
+  type ExerciseSelection,
+  type ExerciseTag,
+} from './exerciseFilters';
 import type { Exercise } from '../context/TrainingContext';
 
 function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
@@ -16,13 +21,23 @@ function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
   };
 }
 
+function selection(query: string, filters: string[] = []): ExerciseSelection {
+  return {
+    query,
+    tags: filters.filter((filter): filter is ExerciseTag =>
+      (EXERCISE_TAGS as readonly string[]).includes(filter),
+    ),
+    equipment: filters.includes('No equipment') ? 'none' : 'any',
+  };
+}
+
 describe('matchesExerciseFilters', () => {
   it('keeps every exercise when nothing is searched or filtered', () => {
     // arrange
     const exercise = makeExercise();
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection(''));
 
     // assert
     expect(result).toBe(true);
@@ -33,7 +48,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Barbell Back Squat' });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '  BACK sq ', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('  BACK sq '));
 
     // assert
     expect(result).toBe(true);
@@ -44,7 +59,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Leg Press', primaryMuscles: ['Quadriceps', 'Glutes'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'glute', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('glute'));
 
     // assert
     expect(result).toBe(true);
@@ -59,7 +74,7 @@ describe('matchesExerciseFilters', () => {
     });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'core', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('core'));
 
     // assert
     expect(result).toBe(false);
@@ -70,7 +85,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Leg Press', primaryMuscles: ['Quadriceps'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'bench', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('bench'));
 
     // assert
     expect(result).toBe(false);
@@ -81,7 +96,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ tags: ['Strength'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(true);
@@ -92,7 +107,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ tags: ['Recovery'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(false);
@@ -103,7 +118,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ tags: undefined });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(false);
@@ -114,11 +129,7 @@ describe('matchesExerciseFilters', () => {
     const strengthOnly = makeExercise({ tags: ['Strength'] });
 
     // act
-    const result = matchesExerciseFilters({
-      exercise: strengthOnly,
-      searchQuery: '',
-      activeFilters: ['Strength', 'Hypertrophy'],
-    });
+    const result = matchesExerciseFilters(strengthOnly, selection('', ['Strength', 'Hypertrophy']));
 
     // assert
     expect(result).toBe(true);
@@ -129,7 +140,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ equipment: ['Bodyweight'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No equipment'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['No equipment']));
 
     // assert
     expect(result).toBe(true);
@@ -140,7 +151,7 @@ describe('matchesExerciseFilters', () => {
     const pullUp = makeExercise({ equipment: ['Bodyweight', 'Pull-Up Bar'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise: pullUp, searchQuery: '', activeFilters: ['No equipment'] });
+    const result = matchesExerciseFilters(pullUp, selection('', ['No equipment']));
 
     // assert
     expect(result).toBe(false);
@@ -152,8 +163,8 @@ describe('matchesExerciseFilters', () => {
     const barbell = makeExercise({ equipment: ['Barbell'] });
 
     // act
-    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: ['No equipment'] });
-    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: ['No equipment'] });
+    const plankResult = matchesExerciseFilters(plank, selection('', ['No equipment']));
+    const barbellResult = matchesExerciseFilters(barbell, selection('', ['No equipment']));
 
     // assert
     expect(plankResult).toBe(true);
@@ -166,8 +177,8 @@ describe('matchesExerciseFilters', () => {
     const barbell = makeExercise({ equipment: ['Barbell'] });
 
     // act
-    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: [] });
-    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: [] });
+    const plankResult = matchesExerciseFilters(plank, selection(''));
+    const barbellResult = matchesExerciseFilters(barbell, selection(''));
 
     // assert
     expect(plankResult).toBe(true);
@@ -179,11 +190,7 @@ describe('matchesExerciseFilters', () => {
     const strengthWithBarbell = makeExercise({ tags: ['Strength'], equipment: ['Barbell'] });
 
     // act
-    const result = matchesExerciseFilters({
-      exercise: strengthWithBarbell,
-      searchQuery: '',
-      activeFilters: ['Strength', 'No equipment'],
-    });
+    const result = matchesExerciseFilters(strengthWithBarbell, selection('', ['Strength', 'No equipment']));
 
     // assert
     expect(result).toBe(false);
@@ -194,16 +201,8 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Plank', tags: ['Recovery'], equipment: [] });
 
     // act
-    const agreeing = matchesExerciseFilters({
-      exercise,
-      searchQuery: 'plank',
-      activeFilters: ['Recovery', 'No equipment'],
-    });
-    const disagreeing = matchesExerciseFilters({
-      exercise,
-      searchQuery: 'squat',
-      activeFilters: ['Recovery', 'No equipment'],
-    });
+    const agreeing = matchesExerciseFilters(exercise, selection('plank', ['Recovery', 'No equipment']));
+    const disagreeing = matchesExerciseFilters(exercise, selection('squat', ['Recovery', 'No equipment']));
 
     // assert
     expect(agreeing).toBe(true);

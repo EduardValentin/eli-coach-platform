@@ -2,6 +2,7 @@ import { Mail, Phone, RefreshCw } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { cardVariants } from '../ui/card';
 import { DateTimeLabel } from '../DateTimeLabel';
 import { LABEL_CLASS } from '../typography';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
@@ -16,12 +17,11 @@ import type {
   AppointmentTitleElement,
 } from './appointment';
 
-const CARD_CLASS =
-  'flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-border-subtle bg-card';
+const CARD_LAYOUT = 'flex flex-col md:flex-row md:items-start gap-4 p-5';
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
-  scheduled: 'shadow-soft text-text-primary',
-  past: 'text-muted-foreground',
+  scheduled: 'text-text-primary',
+  past: 'shadow-none text-muted-foreground',
 };
 
 function AttendeeAvatar({
@@ -189,7 +189,7 @@ export function AppointmentCard({
       initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
-      className={cn(CARD_CLASS, CARD_TONE[status])}
+      className={cn(cardVariants({ variant: 'item' }), CARD_LAYOUT, CARD_TONE[status])}
       data-parity={parity}
       data-parity-root={parityRoot}
     >

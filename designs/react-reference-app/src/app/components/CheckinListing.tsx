@@ -23,17 +23,12 @@ import {
 import { pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
 import { ListPager } from "./ListPager";
+import { ListingToolbar } from "./ListingToolbar";
 import { SearchField } from "./SearchField";
 import { SortControl, type SortChoice, type SortOption } from "./SortControl";
+import { CountedSelect } from "./CountedSelect";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 const TAB_PARAM = "view";
@@ -76,39 +71,6 @@ function dateSortOptions(tab: CheckinTab): readonly SortOption<"date">[] {
       directionLabels: { asc: "Soonest first", desc: "Latest first" },
     },
   ];
-}
-
-function CountedSelect<Value extends string>({
-  label,
-  value,
-  options,
-  labels,
-  counts,
-  onChoose,
-}: {
-  label: string;
-  value: Value;
-  options: readonly Value[];
-  labels: Record<Value, string>;
-  counts: Record<Value, number>;
-  onChoose: (value: Value) => void;
-}) {
-  return (
-    <Select value={value} onValueChange={(chosen) => onChoose(chosen as Value)}>
-      <SelectTrigger aria-label={label} size="sm" className="w-full">
-        <SelectValue>{labels[value]}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            <span className="flex items-center gap-2">
-              {labels[option]} <Badge tone="count">{counts[option]}</Badge>
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 export function CheckinListing({
@@ -252,8 +214,8 @@ export function CheckinListing({
       onValueChange={chooseTab}
       className="w-full"
     >
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+      <ListingToolbar
+        view={
           <TabsList>
             {(["upcoming", "requests", "past"] as const).map((value) => (
               <TabsTrigger key={value} value={value} className="px-4 sm:px-5">
@@ -275,10 +237,9 @@ export function CheckinListing({
               </TabsTrigger>
             ))}
           </TabsList>
-          <div
-            className="grid gap-3 sm:grid-flow-col sm:auto-cols-fr"
-            data-parity="checkin-filters"
-          >
+        }
+        filters={
+          <>
             <CountedSelect
               label="Kind"
               value={selection.kind}
@@ -297,31 +258,31 @@ export function CheckinListing({
                 onChoose={chooseWaiting}
               />
             )}
-          </div>
-        </div>
-
-        <div
-          className="grid w-full gap-3 sm:w-fit sm:max-w-full"
-          data-parity="checkin-search-sort"
-        >
-          {search && (
-            <SearchField
-              aria-label="Search check-ins"
-              placeholder={search.placeholder}
-              size="sm"
-              className="w-full sm:w-72"
-              value={selection.query}
-              onChange={(event) => changeQuery(event.target.value)}
+          </>
+        }
+        filtersParity="checkin-filters"
+        search={
+          <>
+            {search && (
+              <SearchField
+                aria-label="Search check-ins"
+                placeholder={search.placeholder}
+                size="sm"
+                className="w-full sm:w-72"
+                value={selection.query}
+                onChange={(event) => changeQuery(event.target.value)}
+              />
+            )}
+            <SortControl
+              options={dateSortOptions(tab)}
+              sort={{ key: "date", direction }}
+              onChange={chooseSort}
+              className="sm:w-72"
             />
-          )}
-          <SortControl
-            options={dateSortOptions(tab)}
-            sort={{ key: "date", direction }}
-            onChange={chooseSort}
-            className="sm:w-72"
-          />
-        </div>
-      </div>
+          </>
+        }
+        searchParity="checkin-search-sort"
+      />
 
       <TabsContent value={tab} data-parity="checkins-tab-panel">
         {view.items.length === 0 ? (

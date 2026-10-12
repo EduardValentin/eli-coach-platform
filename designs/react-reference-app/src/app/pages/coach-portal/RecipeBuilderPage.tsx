@@ -4,12 +4,14 @@ import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import {
   ArrowLeft,
+  Library,
   GripVertical,
   Plus,
   Trash2,
   X,
   ImagePlus,
   RefreshCw,
+  Save,
   Smile,
 } from 'lucide-react';
 import {
@@ -26,6 +28,8 @@ import type {
   Tag,
   TagFamily,
 } from '../../context/NutritionContext';
+import { useAppState } from '../../context/AppContext';
+import { pickableItems } from '../../domain/libraryLifecycle';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -51,13 +55,13 @@ import {
   CATEGORY_SWATCH,
   MACRO_TILE,
   TAG_FAMILY_LABELS,
-  TAG_FAMILY_BORDER,
   COOKING_METHOD_LABELS,
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { TAG_FAMILY_ICON } from '../../components/coach-portal/nutrition/food-icons';
 import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-icons';
 import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
+import { Button as ThemeButton } from '../../components/ThemeButton';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem {
@@ -84,7 +88,10 @@ function DraggableFood({
   return (
     <div
       ref={drag}
-      className={`flex cursor-grab select-none items-center gap-2 rounded-control border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
+      className={cn(
+        'group flex cursor-grab select-none items-center gap-2 rounded-control border bg-card p-3 transition-all hover:shadow-card active:cursor-grabbing',
+        { 'opacity-50 ring-2 ring-primary': isDragging },
+      )}
     >
       <GripVertical
         size={14}
@@ -182,6 +189,7 @@ function RecipeBuilderInner() {
   );
   const [icon, setIcon] = useState<RecipeIcon | undefined>(existing?.icon);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
     existing?.ingredients ?? [],
@@ -200,6 +208,8 @@ function RecipeBuilderInner() {
     existing?.instructions ?? '',
   );
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -222,8 +232,9 @@ function RecipeBuilderInner() {
       ...prev,
       { foodId, grams: food.defaultPortionGrams, method: 'raw' },
     ]);
-
-    // Auto-derive tags from the added food (coach can still adjust)
+    if (isPostMvp) suggestTagsFrom(food);
+  };
+  const suggestTagsFrom = (food: Food) => {
     const foodTags = food.tagIds
       .map((id) => tags.find((t) => t.id === id))
       .filter((t): t is Tag => Boolean(t));
@@ -302,7 +313,7 @@ function RecipeBuilderInner() {
     navigate('/coach/nutrition?tab=recipes');
   };
 
-  const filteredFoods = foods.filter(
+  const filteredFoods = pickableItems(foods).filter(
     (f) =>
       !query.trim() ||
       f.name.toLowerCase().includes(query.trim().toLowerCase()),
@@ -326,7 +337,6 @@ function RecipeBuilderInner() {
     <div
       className={`fixed inset-0 z-50 flex flex-col bg-surface-subtle ${isDragging ? 'select-none' : ''}`}
     >
-      {/* Header */}
       <div className="h-14 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Button
@@ -337,6 +347,15 @@ function RecipeBuilderInner() {
             className="shrink-0"
           >
             <ArrowLeft size={20} />
+          </Button>
+          <Button
+            onClick={() => setLibraryOpen(true)}
+            variant="ghost"
+            size="icon-sm"
+            className="lg:hidden shrink-0"
+            aria-label="Open food library"
+          >
+            <Library size={20} />
           </Button>
           <Input
             value={name}
@@ -349,12 +368,19 @@ function RecipeBuilderInner() {
         <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
+            aria-label="Cancel"
             onClick={() => navigate('/coach/nutrition?tab=recipes')}
           >
-            Cancel
+            <X aria-hidden="true" />
+            <span className="hidden lg:inline">Cancel</span>
           </Button>
-          <Button onClick={save} disabled={name.trim() === ''}>
-            Save recipe
+          <Button
+            aria-label="Save recipe"
+            onClick={save}
+            disabled={name.trim() === ''}
+          >
+            <Save aria-hidden="true" />
+            <span className="hidden sm:inline">Save recipe</span>
           </Button>
         </div>
       </div>
@@ -362,19 +388,42 @@ function RecipeBuilderInner() {
       {/* Body */}
       <div className="flex-1 flex min-h-0">
         {/* Library sidebar */}
+        {libraryOpen && (
+          <div
+            aria-hidden="true"
+            className="lg:hidden fixed inset-0 bg-black/30 z-40"
+            onClick={() => setLibraryOpen(false)}
+          />
+        )}
         <aside
           aria-label="Food library"
-          className="w-72 shrink-0 border-r border-border bg-card flex flex-col"
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
+            { 'translate-x-0 shadow-2xl': libraryOpen, '-translate-x-full': !libraryOpen },
+          )}
         >
-          <div className="p-3 px-3 border-b border-border rounded-field">
+          <div className="p-4 px-3 border-b border-border rounded-field bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <p className={LABEL_CLASS}>Food library</p>
+              <Button
+                onClick={() => setLibraryOpen(false)}
+                variant="ghost"
+                size="icon-sm"
+                className="lg:hidden"
+                aria-label="Close food library"
+              >
+                <X size={18} />
+              </Button>
+            </div>
             <SearchField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search foods…"
+              placeholder="Search by name"
               aria-label="Search foods"
+              size="sm"
             />
           </div>
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
             {filteredFoods.map((f) => (
               <DraggableFood key={f.id} food={f} onAdd={addIngredient} />
             ))}
@@ -382,7 +431,7 @@ function RecipeBuilderInner() {
         </aside>
 
         {/* Recipe canvas */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6">
           <h1 className="sr-only">Recipe builder</h1>
 
           {/* Recipe visual: photo → icon → default */}
@@ -394,31 +443,29 @@ function RecipeBuilderInner() {
                 className="h-40 w-full rounded-card"
                 iconSize={48}
               />
-              {/* Photo overlay controls (shown only when photo is set) */}
               {imageUrl && (
-                <div className="absolute bottom-2 right-2 flex gap-2">
-                  <Button
-                    type="button"
+                <div
+                  className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-surface-inverted/80 via-surface-inverted/40 to-transparent px-2 pt-12 pb-2"
+                  data-surface="inverted"
+                >
+                  <ThemeButton
                     aria-label="Replace recipe photo"
                     onClick={() => fileInputRef.current?.click()}
-                    variant="ghost"
+                    variant="glass"
                     size="xs"
-                    className="bg-surface-inverted/60 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted/75 focus-visible:ring-surface-inverted-foreground"
                   >
                     <RefreshCw size={12} aria-hidden="true" />
                     Replace
-                  </Button>
-                  <Button
-                    type="button"
+                  </ThemeButton>
+                  <ThemeButton
                     aria-label="Remove recipe photo"
                     onClick={() => setImageUrl(undefined)}
-                    variant="ghost"
+                    variant="glass"
                     size="xs"
-                    className="bg-surface-inverted/60 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted/75 focus-visible:ring-surface-inverted-foreground"
                   >
                     <X size={12} aria-hidden="true" />
                     Remove
-                  </Button>
+                  </ThemeButton>
                 </div>
               )}
             </div>
@@ -432,7 +479,6 @@ function RecipeBuilderInner() {
                   aria-label="Upload recipe photo"
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="border-dashed hover:border-primary"
                 >
                   <ImagePlus size={16} aria-hidden="true" />
                   Upload photo
@@ -450,7 +496,6 @@ function RecipeBuilderInner() {
                         : 'Choose meal icon'
                     }
                     variant="outline"
-                    className="border-dashed hover:border-primary"
                   >
                     <Smile size={16} aria-hidden="true" />
                     {icon
@@ -477,7 +522,7 @@ function RecipeBuilderInner() {
                       }}
                       className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                         icon === undefined
-                          ? 'bg-primary-soft text-primary ring-1 ring-primary/30'
+                          ? 'bg-primary-soft text-primary'
                           : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
                       }`}
                     >
@@ -498,7 +543,7 @@ function RecipeBuilderInner() {
                         }}
                         className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                           icon === key
-                            ? 'bg-primary-soft text-primary ring-1 ring-primary/30'
+                            ? 'bg-primary-soft text-primary'
                             : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
                         }`}
                       >
@@ -524,11 +569,14 @@ function RecipeBuilderInner() {
 
           <div
             ref={drop}
-            className={`rounded-card border-2 border-dashed p-4 min-h-40 transition-colors ${
-              isOver && canDrop
-                ? 'border-primary bg-primary-soft'
-                : 'border-border'
-            }`}
+            className={cn(
+              'rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200',
+              {
+                'border-primary bg-primary-soft': isOver && canDrop,
+                'border-primary/30 bg-primary-soft': canDrop && !isOver,
+                'border-border bg-surface-quiet': !canDrop,
+              },
+            )}
           >
             {ingredients.length === 0 ? (
               <p className="text-sm text-text-secondary">
@@ -603,23 +651,28 @@ function RecipeBuilderInner() {
               <p className="text-sm font-medium text-text-primary">
                 Macros (whole recipe)
               </p>
-              <label className="flex items-center gap-2 text-xs text-text-secondary">
-                <Checkbox
-                  checked={override !== null}
-                  onCheckedChange={(checked) =>
-                    setOverride(checked ? { ...macros } : null)
-                  }
-                />
-                Override manually
-              </label>
+              {isPostMvp && (
+                <label className="flex items-center gap-2 text-xs text-text-secondary">
+                  <Checkbox
+                    checked={override !== null}
+                    onCheckedChange={(checked) =>
+                      setOverride(checked ? { ...macros } : null)
+                    }
+                  />
+                  Override manually
+                </label>
+              )}
             </div>
             <dl className="grid grid-cols-4 gap-2">
               {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
                 <div
                   key={key}
-                  className={`rounded-compact py-2 text-center ${key === 'kcal' ? 'bg-surface-quiet' : MACRO_TILE[key]}`}
+                  className={cn(
+                    'rounded-compact py-2 text-center',
+                    key === 'kcal' ? 'bg-card' : MACRO_TILE[key],
+                  )}
                 >
-                  <dt className={LABEL_CLASS}>
+                  <dt className="text-label uppercase text-text-primary">
                     {key === 'kcal'
                       ? 'kcal'
                       : key === 'protein'
@@ -629,7 +682,7 @@ function RecipeBuilderInner() {
                           : 'F'}
                   </dt>
                   <dd className={`${VALUE_CLASS} tabular-nums`}>
-                    {override ? (
+                    {isPostMvp && override ? (
                       <Input
                         type="number"
                         min="0"
@@ -711,7 +764,7 @@ function RecipeBuilderInner() {
                       key={family}
                       role="group"
                       aria-label={TAG_FAMILY_LABELS[family]}
-                      className={`rounded-control border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                      className="rounded-control border border-border bg-card p-3"
                     >
                       <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                         {(() => {

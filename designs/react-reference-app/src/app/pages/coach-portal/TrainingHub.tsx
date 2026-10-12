@@ -8,15 +8,12 @@ import {
   Plus,
   Search,
   CalendarDays,
-  Activity,
-  PlayCircle,
   Users,
   Pencil,
   UserPlus,
   Check,
   FileText,
   Trash2,
-  AlertTriangle,
   Target,
   ChevronDown,
   Copy,
@@ -34,17 +31,13 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
-  AlertDialogAction,
 } from '../../components/ui/alert-dialog';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
-import { ExerciseFilters } from '../../components/coach-portal/ExerciseFilters';
-import { RowActionButton } from '../../components/RowActionButton';
+import { ExerciseLibrary } from '../../components/coach-portal/ExerciseLibrary';
+import { DeleteConfirmDialog } from '../../components/coach-portal/DeleteConfirmDialog';
 import { SearchField } from '../../components/SearchField';
-import {
-  matchesExerciseFilters,
-  type ExerciseFilter,
-} from '../../utils/exerciseFilters';
+import { useAppState } from '../../context/AppContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import {
@@ -62,7 +55,6 @@ import { cn } from '../../components/ui/utils';
 import {
   WIDGET_TITLE_CLASS,
   LABEL_CLASS,
-  VALUE_CLASS,
 } from '../../components/typography';
 
 const MOCK_CLIENTS = [
@@ -338,22 +330,22 @@ function TemplateCard({
 
 export function TrainingHub() {
   const {
-    exercises,
     planTemplates,
     planInstances,
     deleteTemplate,
     createPlanInstance,
     goals,
   } = useTraining();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<
+  const [selectedTab, setSelectedTab] = useState<
     'instances' | 'templates' | 'exercises'
   >('instances');
-  const [searchQuery, setSearchQuery] = useState('');
+  const activeTab = isPostMvp ? selectedTab : 'exercises';
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'active' | 'completed'
   >('all');
-  const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
@@ -427,21 +419,10 @@ export function TrainingHub() {
     return true;
   });
 
-  const toggleFilter = (filter: ExerciseFilter) =>
-    setActiveFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((active) => active !== filter)
-        : [...prev, filter],
-    );
-
-  const clearFilters = () => {
-    setActiveFilters([]);
-    setSearchQuery('');
+  const openExercise = (exerciseId: string | null) => {
+    setEditingExerciseId(exerciseId);
+    setIsExerciseModalOpen(true);
   };
-
-  const filteredExercises = exercises.filter((exercise) =>
-    matchesExerciseFilters({ exercise, searchQuery, activeFilters }),
-  );
 
   const filteredClients = MOCK_CLIENTS.filter((c) =>
     c.name.toLowerCase().includes(clientSearch.toLowerCase()),
@@ -449,8 +430,7 @@ export function TrainingHub() {
 
   const handleCreate = () => {
     if (activeTab === 'exercises') {
-      setEditingExerciseId(null);
-      setIsExerciseModalOpen(true);
+      openExercise(null);
     } else if (activeTab === 'templates') {
       navigate('/coach/training/template-builder');
     }
@@ -459,30 +439,29 @@ export function TrainingHub() {
   return (
     <div className="w-full">
       <PortalPageHeader
-        title="Training & Programs"
-        subtitle="Manage client plans, templates, and exercises."
+        title={isPostMvp ? 'Training & Programs' : 'Exercises'}
+        subtitle={
+          isPostMvp
+            ? 'Manage client plans, templates, and exercises.'
+            : 'Build the exercise library your plans draw from.'
+        }
         actions={
           activeTab === 'instances' ? (
             <Button
+              type="button"
               onClick={() => {
                 setNewPlanClientSearch('');
                 setShowNewPlanClientPicker(true);
               }}
               variant="primary"
               size="md"
-              className="shadow-card"
             >
-              <Plus size={20} />
+              <Plus aria-hidden="true" />
               New Client Plan
             </Button>
           ) : (
-            <Button
-              onClick={handleCreate}
-              variant="primary"
-              size="md"
-              className="shadow-card"
-            >
-              <Plus size={20} />
+            <Button type="button" onClick={handleCreate} variant="primary" size="md">
+              <Plus aria-hidden="true" />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
             </Button>
           )
@@ -492,34 +471,36 @@ export function TrainingHub() {
       <Tabs
         variant="segmented"
         value={activeTab}
-        onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+        onValueChange={(value) => setSelectedTab(value as typeof selectedTab)}
         className="w-full"
       >
-        <div className="mb-6 flex flex-col gap-2">
-          <TabsList>
-            <TabsTrigger value="instances">
-              Client Plans
-            </TabsTrigger>
-            <TabsTrigger value="templates">
-              Templates
-            </TabsTrigger>
-            <TabsTrigger value="exercises">
-              Exercise Library
-            </TabsTrigger>
-          </TabsList>
-          {activeTab === 'instances' && (
-            <p className="text-sm text-text-secondary">
-              {planInstances.filter((p) => p.status === 'active').length} active
-              plans
-            </p>
-          )}
-          {activeTab === 'templates' && (
-            <p className="text-sm text-text-secondary">
-              {planTemplates.length}{' '}
-              {planTemplates.length === 1 ? 'template' : 'templates'}
-            </p>
-          )}
-        </div>
+        {isPostMvp && (
+          <div className="mb-6 flex flex-col gap-2">
+            <TabsList>
+              <TabsTrigger value="instances">
+                Client Plans
+              </TabsTrigger>
+              <TabsTrigger value="templates">
+                Templates
+              </TabsTrigger>
+              <TabsTrigger value="exercises">
+                Exercise Library
+              </TabsTrigger>
+            </TabsList>
+            {activeTab === 'instances' && (
+              <p className="text-sm text-text-secondary">
+                {planInstances.filter((p) => p.status === 'active').length} active
+                plans
+              </p>
+            )}
+            {activeTab === 'templates' && (
+              <p className="text-sm text-text-secondary">
+                {planTemplates.length}{' '}
+                {planTemplates.length === 1 ? 'template' : 'templates'}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── Client Plans tab ─── */}
         {activeTab === 'instances' && (
@@ -595,139 +576,7 @@ export function TrainingHub() {
           </div>
         )}
 
-        {/* ── Exercise Library tab ─── */}
-        {activeTab === 'exercises' && (
-          <div>
-            <SearchField
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search exercises by name or muscle..."
-              className="mb-4 max-w-md"
-            />
-
-            <div className="mb-6">
-              <ExerciseFilters
-                activeFilters={activeFilters}
-                onToggleFilter={toggleFilter}
-                onClearFilters={clearFilters}
-              />
-            </div>
-
-            <div className="bg-card rounded-card border border-border overflow-x-auto shadow-card">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-quiet px-3 border-b border-border rounded-field">
-                    <th className={cn('p-4', LABEL_CLASS)}>Exercise</th>
-                    <th className={cn('p-4', LABEL_CLASS)}>Target Muscles</th>
-                    <th className={cn('p-4', LABEL_CLASS)}>Difficulty</th>
-                    <th className={cn('p-4', LABEL_CLASS)}>Video</th>
-                    <th className={cn('p-4 text-right', LABEL_CLASS)}>
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredExercises.map((exercise) => (
-                    <tr
-                      key={exercise.id}
-                      className="px-3 border-b border-border-subtle rounded-field hover:bg-surface-muted transition-colors"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-surface-quiet rounded-compact flex items-center justify-center text-text-secondary shrink-0">
-                            <Activity size={20} />
-                          </div>
-                          <div>
-                            <p className={VALUE_CLASS}>{exercise.name}</p>
-                            <p className="text-xs text-text-secondary truncate max-w-[200px]">
-                              {exercise.equipment.join(', ')}
-                            </p>
-                            {exercise.tags && exercise.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {exercise.tags.map((tag) => (
-                                  <Badge key={tag} tone="brand-secondary">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-wrap gap-1">
-                          {exercise.primaryMuscles.map((m) => (
-                            <Badge key={m} tone="brand-secondary">
-                              {m}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <Badge
-                          tone={
-                            exercise.difficulty === 'Beginner'
-                              ? 'success'
-                              : exercise.difficulty === 'Intermediate'
-                                ? 'pending'
-                                : 'outline'
-                          }
-                          className={
-                            exercise.difficulty === 'Advanced'
-                              ? 'border-destructive/20 bg-destructive/10 text-destructive'
-                              : undefined
-                          }
-                        >
-                          {exercise.difficulty}
-                        </Badge>
-                      </td>
-                      <td className="p-4">
-                        {exercise.videoUrl ? (
-                          <div className="text-primary flex items-center gap-1 text-xs font-medium">
-                            <PlayCircle size={16} /> Attached
-                          </div>
-                        ) : (
-                          <span className="text-xs text-text-secondary">
-                            None
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-right">
-                        <RowActionButton
-                          onClick={() => {
-                            setEditingExerciseId(exercise.id);
-                            setIsExerciseModalOpen(true);
-                          }}
-                        >
-                          Edit
-                        </RowActionButton>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredExercises.length === 0 && (
-                <EmptyState
-                  icon={Search}
-                  title="No exercises match your search and filters."
-                  description="Try a different search term or clear your filters."
-                  action={
-                    (activeFilters.length > 0 || Boolean(searchQuery)) && (
-                      <Button
-                        type="button"
-                        variant="link"
-                        size="xs"
-                        onClick={clearFilters}
-                      >
-                        Clear search and filters
-                      </Button>
-                    )
-                  }
-                />
-              )}
-            </div>
-          </div>
-        )}
+        {activeTab === 'exercises' && <ExerciseLibrary onEdit={openExercise} />}
       </Tabs>
 
       <ExerciseModal
@@ -737,37 +586,13 @@ export function TrainingHub() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent className="sm:max-w-md rounded-card">
-          <AlertDialogHeader>
-            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle size={24} className="text-destructive" />
-            </div>
-            <AlertDialogTitle className="text-center text-text-primary">
-              Delete this {deleteTarget?.type === 'plan' ? 'plan' : 'template'}?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
-              <span className="font-medium text-text-primary">
-                "{deleteTarget?.name}"
-              </span>{' '}
-              will be permanently removed. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              variant="destructive"
-              className="flex-1"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        subject={
+          deleteTarget && { noun: deleteTarget.type, name: deleteTarget.name }
+        }
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
       {/* Start Plan from Template - Client Selection */}
       <AlertDialog

@@ -61,12 +61,24 @@ describe('CoachSidebar navigation links', () => {
     renderSidebar();
 
     // act
-    const postMvpLinks = ['Training', 'Nutrition', 'Messages'].flatMap((name) =>
-      screen.queryAllByRole('link', { name }),
-    );
+    const messagesLinks = screen.queryAllByRole('link', { name: 'Messages' });
 
     // assert
-    expect(postMvpLinks).toHaveLength(0);
+    expect(messagesLinks).toHaveLength(0);
+  });
+
+  it.each([
+    ['Training', '/coach/training'],
+    ['Nutrition', '/coach/nutrition'],
+  ])('leads to the %s libraries in MVP mode', (name, href) => {
+    // arrange
+    renderSidebar();
+
+    // act
+    const [link] = screen.getAllByRole('link', { name });
+
+    // assert
+    expect(link).toHaveAttribute('href', href);
   });
 
   it('shows Post-MVP features in Post-MVP mode', () => {

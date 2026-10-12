@@ -1,136 +1,213 @@
-import { useMemo, useState } from 'react';
-import { LayoutGrid, Plus, Shuffle, Tags } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { Archive, LayoutGrid, SearchX, Shuffle, Tags, Utensils } from 'lucide-react';
+import { useNutrition, FOOD_CATEGORIES } from '../../../context/NutritionContext';
+import type { Food } from '../../../context/NutritionContext';
+import { useAppState } from '../../../context/AppContext';
 import {
-  useNutrition,
-  FOOD_CATEGORIES,
-} from '../../../context/NutritionContext';
-import type { Food, FoodCategory } from '../../../context/NutritionContext';
+  countsByStatus,
+  itemsWithStatus,
+  parseStatus,
+  usageHint,
+  type LibraryItemStatus,
+} from '../../../domain/libraryLifecycle';
+import { useLibraryLifecycle } from '../../../hooks/useLibraryLifecycle';
+import { useListingSearchParams } from '../../../hooks/useListingSearchParams';
+import {
+  FOOD_SORT,
+  countsByCategory,
+  hasActiveFoodFilters,
+  matchesFoodFilters,
+  sortFoods,
+  type FoodSelection,
+  type FoodSortKey,
+} from '../../../utils/foodListing';
+import {
+  LIBRARY_ITEMS_PER_PAGE,
+  headerSort,
+  knownValues,
+  parseSort,
+  sortParams,
+  toggled,
+} from '../../../utils/libraryListing';
+import { pageOf } from '../../../utils/listPaging';
 import { Button } from '../../ui/button';
+import { CountedMultiSelect } from '../../CountedMultiSelect';
+import { EmptyState } from '../../EmptyState';
 import { FilterChip, FilterChipGroup } from '../../FilterChipGroup';
+import { ListingToolbar } from '../../ListingToolbar';
+import { ListPager } from '../../ListPager';
 import { SearchField } from '../../SearchField';
-import { ToggleChip } from '../../ToggleChip';
-import { FoodCard } from './FoodCard';
+import { TablePanel } from '../../TablePanel';
+import { DeleteConfirmDialog } from '../DeleteConfirmDialog';
+import { LibraryItemActions, LibraryStatusFilter } from '../LibraryLifecycleControls';
 import { FoodTable } from './FoodTable';
 import { CATEGORY_LABELS } from './nutrition-constants';
 import { FoodFormDialog } from './FoodFormDialog';
 import { FoodTagBoard } from './FoodTagBoard';
 import { EquivalenceGroups } from './EquivalenceGroups';
 
-export function FoodLibrary() {
-  const { foods } = useNutrition();
-  const [query, setQuery] = useState('');
-  const [activeCategories, setActiveCategories] = useState<FoodCategory[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
+type FoodView = 'catalog' | 'board' | 'groups';
+
+function emptyCopy(status: LibraryItemStatus, libraryIsEmpty: boolean) {
+  if (!libraryIsEmpty) {
+    return { icon: SearchX, title: 'No foods match', description: 'Try another filter or search.' };
+  }
+  if (status === 'archived') {
+    return {
+      icon: Archive,
+      title: 'No archived foods',
+      description: 'Foods you archive appear here, ready to restore.',
+    };
+  }
+  return { icon: Utensils, title: 'No foods yet', description: 'Foods you add appear here.' };
+}
+
+export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
+  const { foods, archiveFood, restoreFood, deleteFood, getFoodUsage } = useNutrition();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const listing = useListingSearchParams();
+  const lifecycle = useLibraryLifecycle({
+    noun: 'food',
+    archive: archiveFood,
+    restore: restoreFood,
+    remove: deleteFood,
+  });
   const [editing, setEditing] = useState<Food | undefined>(undefined);
-  const [view, setView] = useState<'catalog' | 'board' | 'groups'>('catalog');
+  const [selectedView, setSelectedView] = useState<FoodView>('catalog');
+  const view = isPostMvp ? selectedView : 'catalog';
 
-  const openCreate = () => {
-    setEditing(undefined);
-    setDialogOpen(true);
+  const selection: FoodSelection = {
+    categories: knownValues(listing.readList('category'), FOOD_CATEGORIES),
+    query: listing.read('q') ?? '',
   };
-  const openEdit = (food: Food) => {
-    setEditing(food);
-    setDialogOpen(true);
-  };
+  const status = parseStatus(listing.read('status'));
+  const sort = parseSort(FOOD_SORT, listing.read('sort'), listing.read('dir'));
 
-  const toggleCategory = (c: FoodCategory) =>
-    setActiveCategories((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+  const inStatus = itemsWithStatus(foods, status);
+  const matching = sortFoods(
+    inStatus.filter((food) => matchesFoodFilters(food, selection)),
+    sort,
+  );
+  const page = pageOf(matching, { page: listing.page, perPage: LIBRARY_ITEMS_PER_PAGE });
+  const statusCounts = countsByStatus(foods.filter((food) => matchesFoodFilters(food, selection)));
+  const empty = emptyCopy(status, inStatus.length === 0);
+
+  const chooseSort = (key: FoodSortKey) =>
+    listing.write(sortParams(FOOD_SORT, headerSort(FOOD_SORT, sort, key)));
+
+  const clearFilters = () => listing.write({ category: null, q: null });
+
+  const viewSwitch = isPostMvp && (
+    <FilterChipGroup
+      aria-label="Food library view"
+      value={view}
+      onValueChange={(value) => {
+        if (value) setSelectedView(value as FoodView);
+      }}
+    >
+      <FilterChip value="catalog">
+        <LayoutGrid size={16} /> Catalog
+      </FilterChip>
+      <FilterChip value="board">
+        <Tags size={16} /> Tag board
+      </FilterChip>
+      <FilterChip value="groups">
+        <Shuffle size={16} /> Swap groups
+      </FilterChip>
+    </FilterChipGroup>
+  );
+
+  if (view !== 'catalog') {
+    return (
+      <>
+        <ListingToolbar view={<>{tabs}{viewSwitch}</>} />
+        {view === 'board' ? <FoodTagBoard /> : <EquivalenceGroups />}
+      </>
     );
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return foods.filter((f) => {
-      const matchesQuery = !q || f.name.toLowerCase().includes(q);
-      const matchesCategory =
-        activeCategories.length === 0 || activeCategories.includes(f.category);
-      return matchesQuery && matchesCategory;
-    });
-  }, [foods, query, activeCategories]);
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <FilterChipGroup
-          aria-label="Food library view"
-          value={view}
-          onValueChange={(value) => {
-            if (value) setView(value as typeof view);
-          }}
-        >
-          <FilterChip value="catalog">
-            <LayoutGrid size={16} /> Catalog
-          </FilterChip>
-          <FilterChip value="board">
-            <Tags size={16} /> Tag board
-          </FilterChip>
-          <FilterChip value="groups">
-            <Shuffle size={16} /> Swap groups
-          </FilterChip>
-        </FilterChipGroup>
-        <Button size="xs" onClick={openCreate}>
-          <Plus size={16} /> Add food
-        </Button>
-      </div>
-
-      {view === 'catalog' && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3">
-            <SearchField
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search foods…"
-              aria-label="Search foods"
-              className="w-full max-w-md"
+    <>
+      <ListingToolbar
+        view={<>{tabs}{viewSwitch}</>}
+        filters={
+          <>
+            <CountedMultiSelect
+              label="Category"
+              selected={selection.categories}
+              options={FOOD_CATEGORIES}
+              labels={CATEGORY_LABELS}
+              counts={countsByCategory(inStatus, selection)}
+              onToggle={(category) =>
+                listing.write({ category: toggled(selection.categories, category) })
+              }
             />
-            <ul
-              className="flex flex-wrap gap-2"
-              aria-label="Filter by category"
-            >
-              {FOOD_CATEGORIES.map((c) => (
-                <li key={c}>
-                  <ToggleChip
-                    pressed={activeCategories.includes(c)}
-                    onPressedChange={() => toggleCategory(c)}
-                  >
-                    {CATEGORY_LABELS[c]}
-                  </ToggleChip>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {filtered.length === 0 ? (
-            <p className="text-text-secondary">No foods match your filters.</p>
-          ) : (
-            <>
-              <div className="hidden md:block overflow-x-auto">
-                <FoodTable foods={filtered} onEdit={openEdit} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
-                {filtered.map((food) => (
-                  <FoodCard key={food.id} food={food} onEdit={openEdit} />
-                ))}
-              </div>
-            </>
+            <LibraryStatusFilter
+              status={status}
+              counts={statusCounts}
+              onChoose={(chosen) => listing.write({ status: chosen === 'active' ? null : chosen })}
+            />
+          </>
+        }
+        search={
+          <SearchField
+            aria-label="Search foods"
+            placeholder="Search by name"
+            size="sm"
+            className="w-full sm:w-72"
+            value={selection.query}
+            onChange={(event) => listing.write({ q: event.target.value })}
+          />
+        }
+      />
+
+      <TablePanel>
+        <FoodTable
+          foods={page.items}
+          sort={sort}
+          onSort={chooseSort}
+          empty={
+            <EmptyState
+              icon={empty.icon}
+              title={empty.title}
+              description={empty.description}
+              action={
+                inStatus.length > 0 && hasActiveFoodFilters(selection) ? (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+          actionsFor={(food) => (
+            <LibraryItemActions
+              itemName={food.name}
+              status={status}
+              usage={usageHint(getFoodUsage(food.id))}
+              onEdit={() => setEditing(food)}
+              onArchive={() => lifecycle.archive(food)}
+              onRestore={() => lifecycle.restore(food)}
+              onDelete={() => lifecycle.requestDeletion(food)}
+            />
           )}
-        </div>
-      )}
-      {view === 'board' && (
-        <div>
-          <FoodTagBoard />
-        </div>
-      )}
-      {view === 'groups' && (
-        <div>
-          <EquivalenceGroups />
-        </div>
-      )}
+        />
+      </TablePanel>
+      {page.pageCount > 1 && <ListPager view={page} pathForPage={listing.pathForPage} />}
 
       <FoodFormDialog
-        open={dialogOpen}
+        open={editing !== undefined}
         food={editing}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditing(undefined);
+        }}
       />
-    </div>
+      <DeleteConfirmDialog
+        subject={lifecycle.deletionSubject}
+        onConfirm={lifecycle.confirmDeletion}
+        onCancel={lifecycle.cancelDeletion}
+      />
+    </>
   );
 }

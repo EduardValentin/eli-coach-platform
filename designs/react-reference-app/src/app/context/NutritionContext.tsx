@@ -2,6 +2,15 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 import type { CyclePhase } from './CycleContext';
 import { phaseForDate } from './CycleContext';
 import type { RecipeIcon } from '../components/coach-portal/nutrition/recipe-icons';
+import {
+  archivedItem,
+  foodUsage,
+  isDeletable,
+  recipeUsage,
+  restoredItem,
+  type LibraryDeletion,
+  type LibraryUsage,
+} from '../domain/libraryLifecycle';
 
 export type FoodCategory = 'protein' | 'carb' | 'fat' | 'legume' | 'extra' | 'seasoning';
 
@@ -31,6 +40,7 @@ export interface Food {
   tagIds: string[];
   defaultPortionGrams: number;
   equivalenceGroupId?: string;
+  archivedAt?: string;
 }
 
 export interface EquivalenceGroup {
@@ -65,6 +75,7 @@ export interface Recipe {
   macroOverride?: RecipeMacros;
   imageUrl?: string;     // data-URL from client-side FileReader (mocked, no backend)
   icon?: RecipeIcon;     // meal-type icon shown when no imageUrl is set
+  archivedAt?: string;
 }
 
 export interface DailyTarget { kcal: number; protein: number; carb: number; fat: number }
@@ -117,9 +128,6 @@ export interface ClientFoodPreferences {                      // replaces free-t
 export const COOKING_METHODS: CookingMethod[] = [
   'raw', 'boiled', 'grilled', 'baked', 'pan-fried', 'steamed',
 ];
-
-// Recipe-Library calorie-band filters: a recipe matches a band when its total kcal <= band.
-export const CALORIE_BANDS = [200, 500, 600] as const;
 
 // Default per-day meal slots and their soft kcal budget split (sums to 1.0).
 export const DEFAULT_MEAL_ROLES: string[] = ['mt-breakfast', 'mt-lunch', 'mt-dinner', 'mt-snack'];
@@ -337,6 +345,7 @@ const MOCK_FOODS: Food[] = [
   { id: 'food-lentils', name: 'Lentils', category: 'legume', icon: 'legume', kcal: 116, protein: 9, carb: 20, fat: 0.4, defaultPortionGrams: 150, tagIds: ['nu-iron', 'di-vegetarian', 'di-lactose-free'] },
   { id: 'food-dark-chocolate', name: 'Dark chocolate', category: 'extra', icon: 'chocolate', kcal: 546, protein: 5, carb: 61, fat: 31, defaultPortionGrams: 20, tagIds: ['mt-snack', 'nu-magnesium'] },
   { id: 'food-turmeric', name: 'Turmeric', category: 'seasoning', icon: 'herb', kcal: 0, protein: 0, carb: 0, fat: 0, defaultPortionGrams: 2, tagIds: ['nu-anti-inflammatory'] },
+  { id: 'food-rice-cakes', name: 'Rice cakes', category: 'carb', icon: 'grain', kcal: 387, protein: 8, carb: 81, fat: 2.8, defaultPortionGrams: 20, tagIds: ['mt-snack'], archivedAt: '2026-09-28T10:00:00.000Z' },
 ];
 
 const MOCK_RECIPES: Recipe[] = [
@@ -385,6 +394,21 @@ const MOCK_RECIPES: Recipe[] = [
     instructions: 'Preheat the oven to 200°C. Brush the salmon and sweet potato with olive oil and season to taste. Bake the sweet potato for 25 minutes and the salmon for the final 15 minutes until flaky and tender.',
     mealRoleIds: ['mt-dinner'],
     tagIds: ['nu-omega3', 'nu-anti-inflammatory', 'cp-luteal'],
+  },
+  {
+    id: 'recipe-rice-cake-stack',
+    name: 'Rice cake & yogurt stack',
+    icon: 'pastry',
+    ingredients: [
+      { foodId: 'food-rice-cakes', grams: 20, method: 'raw' },
+      { foodId: 'food-greek-yogurt', grams: 100, method: 'raw' },
+    ],
+    prepMinutes: 5,
+    cookMinutes: 0,
+    instructions: 'Spread the Greek yogurt over the rice cakes and top with fruit.',
+    mealRoleIds: ['mt-snack'],
+    tagIds: [],
+    archivedAt: '2026-09-28T10:00:00.000Z',
   },
 ];
 
@@ -496,7 +520,10 @@ interface NutritionContextType {
   getFood(id: string): Food | undefined;
   addFood(input: Omit<Food, 'id'>): Food;
   updateFood(id: string, patch: Partial<Omit<Food, 'id'>>): void;
-  deleteFood(id: string): void;
+  archiveFood(id: string): void;
+  restoreFood(id: string): void;
+  deleteFood(id: string): LibraryDeletion;
+  getFoodUsage(id: string): LibraryUsage;
   addFoodTag(foodId: string, tagId: string): void;
   removeFoodTag(foodId: string, tagId: string): void;
   addEquivalenceGroup(name: string): EquivalenceGroup;
@@ -505,7 +532,10 @@ interface NutritionContextType {
   getRecipe(id: string): Recipe | undefined;
   addRecipe(input: Omit<Recipe, 'id'>): Recipe;
   updateRecipe(id: string, patch: Partial<Omit<Recipe, 'id'>>): void;
-  deleteRecipe(id: string): void;
+  archiveRecipe(id: string): void;
+  restoreRecipe(id: string): void;
+  deleteRecipe(id: string): LibraryDeletion;
+  getRecipeUsage(id: string): LibraryUsage;
   getPlan(clientId: string): ClientNutritionPlan | undefined;
   getPreferences(clientId: string): ClientFoodPreferences | undefined;
   createBlock(clientId: string, target: DailyTarget, dayPhases: (CyclePhase | undefined)[]): void;
@@ -694,8 +724,20 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch, id } : r)));
   };
 
-  const deleteRecipe = (id: string) => {
+  const archiveRecipe = (id: string) => {
+    setRecipes((prev) => prev.map((r) => (r.id === id ? archivedItem(r, new Date()) : r)));
+  };
+
+  const restoreRecipe = (id: string) => {
+    setRecipes((prev) => prev.map((r) => (r.id === id ? restoredItem(r) : r)));
+  };
+
+  const getRecipeUsage = (id: string): LibraryUsage => recipeUsage(id, plans);
+
+  const deleteRecipe = (id: string): LibraryDeletion => {
+    if (!isDeletable(getRecipeUsage(id))) return 'in-use';
     setRecipes((prev) => prev.filter((r) => r.id !== id));
+    return 'deleted';
   };
 
   const getFood = (id: string) => foods.find((f) => f.id === id);
@@ -710,8 +752,20 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setFoods((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch, id } : f)));
   };
 
-  const deleteFood = (id: string) => {
+  const archiveFood = (id: string) => {
+    setFoods((prev) => prev.map((f) => (f.id === id ? archivedItem(f, new Date()) : f)));
+  };
+
+  const restoreFood = (id: string) => {
+    setFoods((prev) => prev.map((f) => (f.id === id ? restoredItem(f) : f)));
+  };
+
+  const getFoodUsage = (id: string): LibraryUsage => foodUsage(id, recipes);
+
+  const deleteFood = (id: string): LibraryDeletion => {
+    if (!isDeletable(getFoodUsage(id))) return 'in-use';
     setFoods((prev) => prev.filter((f) => f.id !== id));
+    return 'deleted';
   };
 
   const addFoodTag = (foodId: string, tagId: string) => {
@@ -744,10 +798,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     <NutritionContext.Provider
       value={{
         foods, tags, equivalenceGroups,
-        getFood, addFood, updateFood, deleteFood,
+        getFood, addFood, updateFood, archiveFood, restoreFood, deleteFood, getFoodUsage,
         addFoodTag, removeFoodTag,
         addEquivalenceGroup, assignFoodToGroup,
-        recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
+        recipes, getRecipe, addRecipe, updateRecipe, archiveRecipe, restoreRecipe, deleteRecipe, getRecipeUsage,
         getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, saveDay, copyDayToPhase, setPhaseTargetOverride,
         setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative, setSlotSelection,
         setPreferences, markBlockComplete, carryOverBlock,
