@@ -1,38 +1,45 @@
 import type { Exercise } from '../context/TrainingContext';
 import {
-  countsFor,
-  matchesQuery,
-  orderBy,
-  type SortRule,
-} from './libraryListing';
+  EXERCISE_TAGS,
+  EXERCISE_TAG_LABELS,
+  EXERCISE_TYPES,
+  EXERCISE_TYPE_LABELS,
+  needsEquipment,
+  type ExerciseTag,
+  type ExerciseType,
+} from '../domain/exercises';
+import { countsFor, matchesQuery, orderBy, type SortRule } from './libraryListing';
 import type { SortChoice } from '../components/SortControl';
 
-export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
+export { EXERCISE_TAGS, EXERCISE_TAG_LABELS, type ExerciseTag };
 
-export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
-
-export const EXERCISE_TAG_LABELS: Record<ExerciseTag, string> = {
-  Strength: 'Strength',
-  Hypertrophy: 'Hypertrophy',
-  Recovery: 'Recovery',
+export type TypeFilter = 'any' | ExerciseType;
+export const TYPE_FILTERS: readonly TypeFilter[] = ['any', ...EXERCISE_TYPES];
+export const TYPE_FILTER_LABELS: Record<TypeFilter, string> = {
+  any: 'Any type',
+  ...EXERCISE_TYPE_LABELS,
 };
 
 export type EquipmentFilter = 'any' | 'none';
-
 export const EQUIPMENT_FILTERS: readonly EquipmentFilter[] = ['any', 'none'];
-
 export const EQUIPMENT_LABELS: Record<EquipmentFilter, string> = {
   any: 'Any equipment',
   none: 'No equipment',
 };
 
 export type ExerciseSelection = {
+  type: TypeFilter;
   tags: readonly ExerciseTag[];
   equipment: EquipmentFilter;
   query: string;
 };
 
-export const NO_EXERCISE_FILTERS: ExerciseSelection = { tags: [], equipment: 'any', query: '' };
+export const NO_EXERCISE_FILTERS: ExerciseSelection = {
+  type: 'any',
+  tags: [],
+  equipment: 'any',
+  query: '',
+};
 
 export type ExerciseSortKey = 'name' | 'difficulty';
 
@@ -47,19 +54,17 @@ const DIFFICULTY_ORDER: Record<Exercise['difficulty'], number> = {
   Advanced: 2,
 };
 
-const BODYWEIGHT = 'Bodyweight';
-
-function requiresEquipment(exercise: Exercise): boolean {
-  return exercise.equipment.some((item) => item !== BODYWEIGHT);
+function matchesType(exercise: Exercise, type: TypeFilter): boolean {
+  return type === 'any' || exercise.type === type;
 }
 
 function matchesTags(exercise: Exercise, tags: readonly ExerciseTag[]): boolean {
   if (tags.length === 0) return true;
-  return tags.some((tag) => exercise.tags?.includes(tag));
+  return tags.some((tag) => exercise.tags.includes(tag));
 }
 
 function matchesEquipment(exercise: Exercise, equipment: EquipmentFilter): boolean {
-  return equipment === 'any' || !requiresEquipment(exercise);
+  return equipment === 'any' || !needsEquipment(exercise.equipment);
 }
 
 function matchesSearch(exercise: Exercise, query: string): boolean {
@@ -69,6 +74,7 @@ function matchesSearch(exercise: Exercise, query: string): boolean {
 export function matchesExerciseFilters(exercise: Exercise, selection: ExerciseSelection): boolean {
   return (
     matchesSearch(exercise, selection.query) &&
+    matchesType(exercise, selection.type) &&
     matchesTags(exercise, selection.tags) &&
     matchesEquipment(exercise, selection.equipment)
   );
@@ -76,8 +82,25 @@ export function matchesExerciseFilters(exercise: Exercise, selection: ExerciseSe
 
 export function hasActiveExerciseFilters(selection: ExerciseSelection): boolean {
   return (
-    selection.tags.length > 0 || selection.equipment !== 'any' || selection.query.trim().length > 0
+    selection.type !== 'any' ||
+    selection.tags.length > 0 ||
+    selection.equipment !== 'any' ||
+    selection.query.trim().length > 0
   );
+}
+
+export function countsByType(
+  exercises: readonly Exercise[],
+  selection: ExerciseSelection,
+): Record<TypeFilter, number> {
+  const others = exercises.filter((exercise) =>
+    matchesExerciseFilters(exercise, { ...selection, type: 'any' }),
+  );
+  return countsFor(TYPE_FILTERS, others, matchesType);
+}
+
+export function parseType(raw: string | null): TypeFilter {
+  return (EXERCISE_TYPES as readonly string[]).includes(raw ?? '') ? (raw as ExerciseType) : 'any';
 }
 
 export function countsByTag(

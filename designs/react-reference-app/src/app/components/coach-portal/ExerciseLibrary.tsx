@@ -8,6 +8,7 @@ import {
   usageHint,
   type LibraryItemStatus,
 } from '../../domain/libraryLifecycle';
+import { EXERCISE_TYPE_LABELS } from '../../domain/exercises';
 import { useLibraryLifecycle } from '../../hooks/useLibraryLifecycle';
 import { useListingSearchParams } from '../../hooks/useListingSearchParams';
 import {
@@ -16,6 +17,7 @@ import {
   hasActiveExerciseFilters,
   matchesExerciseFilters,
   parseEquipment,
+  parseType,
   sortExercises,
   type ExerciseSelection,
   type ExerciseSortKey,
@@ -84,7 +86,10 @@ function ExerciseRow({
           <div>
             <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
             <p className="text-xs text-text-secondary mt-0.5">
-              {exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment'}
+              {[
+                EXERCISE_TYPE_LABELS[exercise.type],
+                exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
+              ].join(' · ')}
             </p>
           </div>
         </div>
@@ -130,6 +135,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
   });
 
   const selection: ExerciseSelection = {
+    type: parseType(listing.read('type')),
     tags: knownValues(listing.readList('tags'), EXERCISE_TAGS),
     equipment: parseEquipment(listing.read('equipment')),
     query: listing.read('q') ?? '',
@@ -150,6 +156,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
 
   const chooseSelection = (next: ExerciseSelection) =>
     listing.write({
+      type: next.type === 'any' ? null : next.type,
       tags: next.tags,
       equipment: next.equipment === 'any' ? null : next.equipment,
     });
@@ -157,7 +164,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
   const chooseSort = (key: ExerciseSortKey) =>
     listing.write(sortParams(EXERCISE_SORT, headerSort(EXERCISE_SORT, sort, key)));
 
-  const clearFilters = () => listing.write({ tags: null, equipment: null, q: null });
+  const clearFilters = () => listing.write({ type: null, tags: null, equipment: null, q: null });
 
   return (
     <>

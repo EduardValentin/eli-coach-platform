@@ -218,18 +218,25 @@ describe('the exercise library filters', () => {
     expect(within(exerciseRow('Bike Intervals')).getByText('Strength')).toBeInTheDocument();
   });
 
-  it('finds an exercise a coach marked Bodyweight under the no-equipment filter', async () => {
+  it('narrows to one type from the Type filter', async () => {
     // arrange
     const user = renderLibrary();
-    await chooseAction(user, 'Plank', 'Edit');
-    await user.click(screen.getByRole('button', { name: 'Bodyweight' }));
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     // act
-    await chooseOption(user, 'Equipment', 'No equipment');
+    await chooseOption(user, 'Type', 'Cardio');
+
+    // assert
+    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
+  it('keeps the tag and equipment filters from an old link that names no type', () => {
+    // arrange & act
+    renderHub('/coach/training?session=coach&tags=Recovery&equipment=none');
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 });
 

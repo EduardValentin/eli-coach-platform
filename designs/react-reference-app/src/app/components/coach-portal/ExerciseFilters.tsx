@@ -4,8 +4,11 @@ import {
   EQUIPMENT_LABELS,
   EXERCISE_TAGS,
   EXERCISE_TAG_LABELS,
+  TYPE_FILTERS,
+  TYPE_FILTER_LABELS,
   countsByEquipment,
   countsByTag,
+  countsByType,
   type ExerciseSelection,
 } from '../../utils/exerciseFilters';
 import { toggled } from '../../utils/libraryListing';
@@ -23,6 +26,14 @@ export function ExerciseFilters({
 }) {
   return (
     <>
+      <CountedSelect
+        label="Type"
+        value={selection.type}
+        options={TYPE_FILTERS}
+        labels={TYPE_FILTER_LABELS}
+        counts={countsByType(exercises, selection)}
+        onChoose={(type) => onSelectionChange({ ...selection, type })}
+      />
       <CountedMultiSelect
         label="Tags"
         selected={selection.tags}
