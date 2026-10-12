@@ -8,13 +8,15 @@ import {
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
 import type { LucideIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 
 import {
   formatClockTime,
   formatShortDay,
 } from "~/features/assessment-calls/public/call-moment";
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
+import { CHECK_IN_FOCUS_PARAM } from "~/features/check-ins/public/paths";
 
 export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 
@@ -73,8 +75,13 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   emptyCopy,
   renderCheckIn,
 }: CheckInListingProps<CheckIn>) {
-  const [defaultTab] = useState(() => openingTabOf(checkIns));
+  const [searchParams] = useSearchParams();
+  const focusedId = searchParams.get(CHECK_IN_FOCUS_PARAM);
+  const [defaultTab] = useState(
+    () => tabHolding(focusedId, checkIns) ?? openingTabOf(checkIns),
+  );
   const { chooseTab, tab } = useCheckInTabParam(defaultTab);
+  useFocusedCheckIn(focusedId);
   const shown = ordered(
     checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
     tab,
@@ -129,7 +136,13 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
           <ul aria-label={`${TAB_LABELS[tab]} check-ins`} className="space-y-3">
             {shown.map((checkIn) => (
               <li data-parity="checkin-row" key={checkIn.id}>
-                {renderCheckIn(checkIn, tab)}
+                <div
+                  className="rounded-card"
+                  id={anchorIdOf(checkIn.id)}
+                  tabIndex={-1}
+                >
+                  {renderCheckIn(checkIn, tab)}
+                </div>
               </li>
             ))}
           </ul>
@@ -156,6 +169,31 @@ function useCheckInTabParam(defaultTab: CheckInTab) {
   };
 
   return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
+}
+
+function useFocusedCheckIn(focusedId: string | null) {
+  useEffect(() => {
+    if (focusedId === null) {
+      return;
+    }
+
+    const anchor = document.getElementById(anchorIdOf(focusedId));
+    anchor?.scrollIntoView({ block: "center" });
+    anchor?.focus({ preventScroll: true });
+  }, [focusedId]);
+}
+
+function anchorIdOf(checkInId: string): string {
+  return `checkin-${checkInId}`;
+}
+
+function tabHolding(
+  checkInId: string | null,
+  checkIns: readonly ListedCheckIn[],
+): CheckInTab | undefined {
+  const held = checkIns.find((checkIn) => checkIn.id === checkInId);
+
+  return held && TAB_OF_STATUS[held.status];
 }
 
 function openingTabOf(checkIns: readonly ListedCheckIn[]): CheckInTab {

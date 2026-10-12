@@ -5,6 +5,7 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunction,
 } from "react-router";
 
 import {
@@ -32,6 +33,12 @@ export async function loader(
       .coachCheckIns.loadAwaitingCount(args),
   };
 }
+
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}) => defaultShouldRevalidate || currentUrl.pathname !== nextUrl.pathname;
 
 export const handle = {
   portal: COACH_PORTAL_ROUTE_SEGMENT,

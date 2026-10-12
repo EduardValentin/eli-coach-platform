@@ -44,6 +44,7 @@ import type {
 import {
   CHECK_INS_API_PATHS,
   COACH_CHECK_INS_PATH,
+  coachCheckInPath,
 } from "~/features/check-ins/public/paths";
 import {
   frameworkModeAction,
@@ -140,6 +141,16 @@ const ANDREEA_NEW_TIME: CoachCheckIn = {
   newTimeNote:
     "I have a work call that morning. Could we meet on Friday afternoon?",
 };
+
+const MARIA_CANCELLED: CoachCheckIn = {
+  ...MARIA_REQUEST,
+  id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
+  status: "cancelled",
+  awaitsViewer: false,
+  isWaitingRequest: false,
+};
+
+const UNKNOWN_CHECK_IN_ID = "6a7b8c9d-0e1f-4a2b-9c3d-5e6f7a8b9c0d";
 
 const ELENA_ID = "7b8c9d0e-1f2a-4b3c-9d4e-6f7a8b9c0d1e";
 
@@ -650,6 +661,77 @@ describe("the coach's check-ins tab in the address", () => {
     expect(
       screen.getByRole("list", { name: "Requests check-ins" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("the coach's check-in named in the address", () => {
+  it("opens on the tab holding a check-in she was sent to review, scrolled to the centre and focused", async () => {
+    // arrange
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+
+    // act
+    await renderCheckInsPageWithView(coachCheckInPath(ANDREEA_REQUEST.id));
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    const row = rowNaming("Andreea Ionescu");
+    await waitFor(() => {
+      expect(row).toContainElement(document.activeElement as HTMLElement);
+    });
+    expect(document.activeElement).toHaveTextContent("Andreea Ionescu");
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+    expect(scrollIntoView.mock.contexts).toContain(document.activeElement);
+    scrollIntoView.mockRestore();
+  });
+
+  it("opens on Past for a cancelled check-in", async () => {
+    // arrange
+    listing = { checkIns: [ANDREEA_REQUEST, MARIA_CANCELLED] };
+
+    // act
+    await renderCheckInsPageWithView(coachCheckInPath(MARIA_CANCELLED.id));
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Past" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toHaveTextContent("Maria Popescu");
+    });
+  });
+
+  it("opens as usual, without a word, for a check-in it does not know", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(coachCheckInPath(UNKNOWN_CHECK_IN_ID));
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(document.activeElement).toBe(document.body);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the tab the address names over the tab holding the check-in", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(
+      `${coachCheckInPath(ANDREEA_REQUEST.id)}&view=upcoming`,
+    );
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).toHaveTextContent("Elena Dumitru");
   });
 });
 

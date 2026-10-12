@@ -32,6 +32,7 @@ type PortalMoreSheetContent = {
   navigationLabel: string;
   renderHeader: (closeSheet: () => void) => ReactNode;
   title: string;
+  widget?: ReactNode;
 };
 
 type PortalMobileNavigation =
@@ -51,6 +52,7 @@ type PortalShellProps = PropsWithChildren<{
   navigationLabel: string;
   /** Slot beside the sidebar brand for the notification bell story. */
   sidebarActions?: ReactNode;
+  sidebarWidget?: ReactNode;
   topBarBrand: ReactNode;
   /** Top bar slot for the notification bell story. */
   topBarActions?: ReactNode;
@@ -113,6 +115,7 @@ export function PortalShell(props: PortalShellProps) {
     mobileNavigation,
     navigationLabel,
     sidebarActions,
+    sidebarWidget,
     topBarActions,
     topBarBrand,
     topBarLabel,
@@ -158,6 +161,11 @@ export function PortalShell(props: PortalShellProps) {
             links={links}
             navigationLabel={navigationLabel}
           />
+          {sidebarWidget && (
+            <div className="mx-4 mb-6" data-parity="sidebar-widget">
+              {sidebarWidget}
+            </div>
+          )}
         </PortalSidebarSurface>
       </aside>
       <main
@@ -418,6 +426,11 @@ function PortalMoreSheet(props: PortalMoreSheetProps) {
             navigationLabel={content.navigationLabel}
             onNavigate={closeSheet}
           />
+        )}
+        {content.widget && (
+          <div className="px-3 pb-4" data-parity="sheet-widget">
+            {content.widget}
+          </div>
         )}
         <div className="mt-auto border-t border-border-subtle px-4 py-3">
           {content.footer}
