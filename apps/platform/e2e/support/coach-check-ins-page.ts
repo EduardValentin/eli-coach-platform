@@ -12,10 +12,13 @@ import {
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
 import { tabTo } from "./keyboard";
+import { countedNavigationName } from "./navigation-counts";
 
 const CHECK_INS_PATH = "/coach/checkins";
 const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
 const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
+const REVIEW_URL = /[?&]checkin=/;
+const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
@@ -43,16 +46,46 @@ export class CoachCheckInsPage {
     });
   }
 
+  private get heading() {
+    return this.page.getByRole("heading", { level: 1, name: "Check-ins" });
+  }
+
   async open(): Promise<void> {
     await this.page.goto(CHECK_INS_PATH);
     await this.expectOpen();
   }
 
+  async visitReview(checkInId: string): Promise<void> {
+    await this.page.goto(
+      `${CHECK_INS_PATH}?${new URLSearchParams({ checkin: checkInId })}`,
+    );
+  }
+
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(CHECK_INS_PATH);
+    await expect(this.heading).toBeVisible();
+  }
+
+  async expectReviewLanded(showing: string): Promise<void> {
+    await expect(this.page).toHaveURL(REVIEW_URL);
+    await expect(this.heading).toBeVisible();
+    await this.expectTabShown("Requests");
     await expect(
-      this.page.getByRole("heading", { level: 1, name: "Check-ins" }),
-    ).toBeVisible();
+      this.checkIn("Requests", showing).locator(CHECK_IN_ANCHOR),
+    ).toBeFocused();
+  }
+
+  async expectReviewOpenedAsUsual(tab: CheckInTab): Promise<void> {
+    await expect(this.page).toHaveURL(REVIEW_URL);
+    await expect(this.heading).toBeVisible();
+    await this.expectTabShown(tab);
+    await expect(this.page.locator(`${CHECK_IN_ANCHOR}:focus`)).toHaveCount(0);
+  }
+
+  async expectNavigationCount(count: number): Promise<void> {
+    await expect(
+      this.navigation.getByRole("link", { name: /^Check-ins/ }),
+    ).toHaveAccessibleName(countedNavigationName("Check-ins", count));
   }
 
   async expectNavigationLinks(names: readonly string[]): Promise<void> {
