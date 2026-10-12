@@ -272,6 +272,12 @@ export class ClientPortalShell {
       .click();
   }
 
+  async expectCheckInsCountInSidebar(count: number): Promise<void> {
+    await expect(
+      this.sidebarNavigation.getByRole("link", { name: /^Check-ins/ }),
+    ).toHaveAccessibleName(countedNavigationName("Check-ins", count));
+  }
+
   async expectCheckInsCountInTabs(count: number): Promise<void> {
     await expect(
       this.tabBar.getByRole("link", { name: /^Check-ins/ }),

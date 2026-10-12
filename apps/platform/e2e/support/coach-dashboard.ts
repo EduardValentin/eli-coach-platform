@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { tabTo } from "./keyboard";
+
 export type DashboardGreeting = { calls: number; checkIns: number };
 
 const DASHBOARD_PATH = "/coach";
@@ -70,6 +72,21 @@ export class CoachDashboardPage {
       this.pendingCheckIns.getByText("No pending check-ins.", { exact: true }),
     ).toBeVisible();
     await expect(this.pendingRows).toHaveCount(0);
+  }
+
+  async expectPendingCheckInsAt(shownTimes: readonly RegExp[]): Promise<void> {
+    await expect(this.pendingRows).toHaveCount(shownTimes.length);
+    for (const [position, shownTime] of shownTimes.entries()) {
+      await expect(this.pendingRows.nth(position)).toContainText(shownTime);
+    }
+  }
+
+  async reviewByKeyboard(clientName: string): Promise<void> {
+    await tabTo(
+      this.page,
+      this.pendingRowOf(clientName).getByRole("link", { name: "Review" }),
+    );
+    await this.page.keyboard.press("Enter");
   }
 
   async review(clientName: string): Promise<void> {
