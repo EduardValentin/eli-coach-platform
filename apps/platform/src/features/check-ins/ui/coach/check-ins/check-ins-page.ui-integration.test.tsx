@@ -29,7 +29,13 @@ import {
 import { configureAxe } from "vitest-axe";
 
 import { clientAction as approveCheckIn } from "~/features/check-ins/api/shared/approval";
+import { clientAction as cancelCheckIn } from "~/features/check-ins/api/shared/cancellation";
 import { clientAction as declineCheckIn } from "~/features/check-ins/api/shared/decline";
+import { clientAction as proposeNewTime } from "~/features/check-ins/api/shared/new-time";
+import {
+  clientLoader as openTimesLoader,
+  shouldRevalidate as shouldRevalidateOpenTimes,
+} from "~/features/check-ins/api/shared/open-times";
 import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/shared/withdrawal";
 import type {
   CoachCheckIn,
@@ -39,7 +45,10 @@ import {
   CHECK_INS_API_PATHS,
   COACH_CHECK_INS_PATH,
 } from "~/features/check-ins/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import {
+  frameworkModeAction,
+  frameworkModeLoader,
+} from "~/server/test-support/framework-mode-action";
 
 import CoachCheckInsRoute from "./check-ins-page";
 
@@ -51,13 +60,21 @@ const ANDREEA_REQUEST: CoachCheckIn = {
   kind: "ad_hoc",
   status: "pending",
   initiatedBy: "client",
+  proposedBy: "client",
   awaitsViewer: true,
   viewerMayWithdraw: false,
+  viewerProposal: "allowed",
+  viewerMayCancel: false,
+  newTimeWaits: false,
   isWaitingRequest: true,
   startsAt: "2026-10-16T09:00:00.000Z",
   endsAt: "2026-10-16T10:00:00.000Z",
   joinEmphasisFrom: "2026-10-16T08:50:00.000Z",
+  earlierStartsAt: null,
+  moves: 0,
   note: "I have some questions about my macros",
+  newTimeNote: null,
+  clientId: "6a7b8c9d-0e1f-4a2b-8c3d-5e6f7a8b9c0d",
   client: { firstName: "Andreea", lastName: "Ionescu" },
 };
 
@@ -95,8 +112,10 @@ const IOANA_OWN_REQUEST: CoachCheckIn = {
   ...ANDREEA_REQUEST,
   id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
   initiatedBy: "coach",
+  proposedBy: "coach",
   awaitsViewer: false,
   viewerMayWithdraw: true,
+  viewerProposal: "none",
   isWaitingRequest: false,
   startsAt: "2026-10-13T12:00:00.000Z",
   endsAt: "2026-10-13T13:00:00.000Z",
@@ -105,18 +124,71 @@ const IOANA_OWN_REQUEST: CoachCheckIn = {
   client: { firstName: "Ioana", lastName: "Stan" },
 };
 
+const ANDREEA_NEW_TIME: CoachCheckIn = {
+  ...ANDREEA_REQUEST,
+  id: "4e5f6a7b-8c9d-4e0f-9a1b-3c4d5e6f7a8b",
+  initiatedBy: "coach",
+  proposedBy: "client",
+  isWaitingRequest: false,
+  newTimeWaits: true,
+  startsAt: "2026-10-16T13:00:00.000Z",
+  endsAt: "2026-10-16T14:00:00.000Z",
+  joinEmphasisFrom: "2026-10-16T12:50:00.000Z",
+  earlierStartsAt: "2026-10-16T07:00:00.000Z",
+  moves: 1,
+  note: "Time to look back at your first month",
+  newTimeNote:
+    "I have a work call that morning. Could we meet on Friday afternoon?",
+};
+
+const ELENA_ID = "7b8c9d0e-1f2a-4b3c-9d4e-6f7a8b9c0d1e";
+
+const ELENA_CANCELLABLE: CoachCheckIn = {
+  ...ELENA_UPCOMING,
+  viewerMayCancel: true,
+  clientId: ELENA_ID,
+};
+
+const ELENA_MOVED_TWICE: CoachCheckIn = {
+  ...ELENA_CANCELLABLE,
+  viewerProposal: "exhausted",
+  earlierStartsAt: "2026-10-12T12:00:00.000Z",
+  moves: 2,
+};
+
+const ELENA_MENU = "More actions for the check-in on Tue, Oct 13 at 10:00 AM";
+const MOVED_TWICE_REASON = "This check-in has already been moved twice.";
+
+const THURSDAY_AFTERNOON = "2026-10-15T14:00:00.000Z";
+const THURSDAY_EVENING = "2026-10-15T15:00:00.000Z";
+
 const APPROVAL_URL = `*${CHECK_INS_API_PATHS.approval}`;
+const OPEN_TIMES_URL = `*${CHECK_INS_API_PATHS.openTimes}`;
+const NEW_TIME_URL = `*${CHECK_INS_API_PATHS.newTime}`;
+const CANCELLATION_URL = `*${CHECK_INS_API_PATHS.cancellation}`;
 const WITHDRAWAL_URL = `*${CHECK_INS_API_PATHS.withdrawal}`;
 const DECLINE_URL = `*${CHECK_INS_API_PATHS.decline}`;
 
 const server = setupServer();
 const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
+const axeWithMenuOpen = configureAxe({
+  rules: { "color-contrast": { enabled: false }, region: { enabled: false } },
+});
 
 let listing: CoachCheckIns;
 let listingReads = 0;
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
+  Element.prototype.scrollIntoView = () => {};
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      disconnect() {}
+      observe() {}
+      unobserve() {}
+    },
+  );
   vi.stubGlobal(
     "matchMedia",
     vi.fn((query: string) => ({
@@ -187,7 +259,7 @@ describe("the coach's check-ins page", () => {
     ).toBeEnabled();
   });
 
-  it("offers Join Meet on her upcoming check-ins", async () => {
+  it("offers Join Meet on her upcoming check-ins, with more actions beside it", async () => {
     // arrange
     const user = await renderCheckInsPage();
 
@@ -202,7 +274,11 @@ describe("the coach's check-ins page", () => {
     expect(
       within(row).getByRole("link", { name: "Join Meet" }),
     ).toHaveAttribute("href", `/coach/checkins/${ELENA_UPCOMING.id}/join`);
-    expect(within(row).queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual([ELENA_MENU]);
   });
 
   it.each([
@@ -447,7 +523,9 @@ describe("the coach's check-ins page", () => {
         });
       }),
     );
-    const user = await renderCheckInsPage();
+    const { user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=requests`,
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Cancel request" }));
@@ -470,7 +548,9 @@ describe("the coach's check-ins page", () => {
         HttpResponse.json({ error: "not_pending" }, { status: 409 }),
       ),
     );
-    const user = await renderCheckInsPage();
+    const { user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=requests`,
+    );
     const readsBefore = listingReads;
 
     // act
@@ -493,6 +573,33 @@ describe("the coach's check-ins page", () => {
 
     // assert
     expect((await axe(baseElement)).violations).toEqual([]);
+  });
+});
+
+describe("where the coach's check-ins page opens", () => {
+  it("opens on Requests while a check-in waits for her answer", async () => {
+    // arrange, act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("opens on Upcoming when no check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [IOANA_OWN_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 });
 
@@ -546,6 +653,232 @@ describe("the coach's check-ins tab in the address", () => {
   });
 });
 
+describe("the coach's moved check-ins", () => {
+  it("shows a client's new time with the earlier time struck through and her note, to accept, decline or answer with another", async () => {
+    // arrange
+    listing = { checkIns: [ANDREEA_NEW_TIME] };
+    const user = await renderCheckInsPage();
+    const row = rowNaming("Andreea Ionescu");
+    const menu = "More actions for the check-in on Fri, Oct 16 at 4:00 PM";
+
+    // act
+    await user.click(within(row).getByRole("button", { name: menu }));
+
+    // assert
+    expect(row).toHaveTextContent("Ad-hoc · New time from Andreea");
+    expect(row.querySelector("s")).toHaveTextContent("Fri, Oct 16 · 10:00 AM");
+    expect(row).toHaveTextContent(
+      'Andreea: "I have a work call that morning. Could we meet on Friday afternoon?"',
+    );
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map(
+          (button) => button.getAttribute("aria-label") ?? button.textContent,
+        ),
+    ).toEqual(["Decline", "Accept", menu]);
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Reschedule"]);
+  });
+
+  it("holds back Reschedule on a check-in moved twice, explaining why on hover", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_MOVED_TWICE] };
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+    const reschedule = within(await screen.findByRole("menu")).getByRole(
+      "menuitem",
+      { name: "Reschedule" },
+    );
+
+    // act
+    await user.hover(reschedule);
+
+    // assert
+    expect(reschedule).toHaveAttribute("aria-disabled", "true");
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+  });
+});
+
+describe("the coach's upcoming check-in menu", () => {
+  it("proposes a new time from the open times of that client, with a note named for her", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    const asked: (string | null)[] = [];
+    const proposals: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.get(OPEN_TIMES_URL, ({ request }) => {
+        asked.push(new URL(request.url).searchParams.get("clientId"));
+        return HttpResponse.json({
+          times: [THURSDAY_AFTERNOON, THURSDAY_EVENING],
+        });
+      }),
+      http.post(NEW_TIME_URL, async ({ params, request }) => {
+        proposals.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        return HttpResponse.json({
+          status: "proposed",
+          checkInId: ELENA_CANCELLABLE.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Propose a new time",
+    });
+    await user.click(
+      await within(dialog).findByRole("button", {
+        name: /Thursday,? 15 October 2026/,
+      }),
+    );
+    await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
+    await user.type(
+      within(dialog).getByRole("textbox", {
+        name: "Add a note for Elena (optional)",
+      }),
+      "I'm travelling that morning",
+    );
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Propose 6:00 PM" }),
+    );
+
+    // assert
+    expect(await screen.findByText("New time proposed")).toBeInTheDocument();
+    expect(asked).toEqual([ELENA_ID]);
+    expect(proposals).toEqual([
+      {
+        checkInId: ELENA_CANCELLABLE.id,
+        body: {
+          note: "I'm travelling that morning",
+          startsAt: THURSDAY_EVENING,
+        },
+      },
+    ]);
+  });
+
+  it("cancels an upcoming check-in once she confirms, naming the client", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    const cancellations: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(CANCELLATION_URL, async ({ params, request }) => {
+        cancellations.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        listing = {
+          checkIns: [
+            {
+              ...ELENA_CANCELLABLE,
+              status: "cancelled",
+              viewerProposal: "none",
+              viewerMayCancel: false,
+            },
+          ],
+        };
+        return HttpResponse.json({
+          status: "cancelled",
+          checkInId: ELENA_CANCELLABLE.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Cancel",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Cancel this check-in?",
+    });
+    const question = dialog.textContent;
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cancel check-in" }),
+    );
+
+    // assert
+    expect(question).toContain("Tue, Oct 13 at 10:00 AM with Elena Dumitru.");
+    expect(
+      await screen.findByText("Cancelled check-in with Elena Dumitru"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("No upcoming check-ins"),
+    ).toBeInTheDocument();
+    expect(cancellations).toEqual([
+      { checkInId: ELENA_CANCELLABLE.id, body: {} },
+    ]);
+  });
+
+  it("says the check-in is no longer upcoming when the client cancelled it first, and reads the check-ins again", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    server.use(
+      http.post(CANCELLATION_URL, () =>
+        HttpResponse.json({ error: "not_pending" }, { status: 409 }),
+      ),
+    );
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Cancel",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Cancel this check-in?",
+    });
+    const readsBefore = listingReads;
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cancel check-in" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("This check-in is no longer upcoming."),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listingReads).toBeGreaterThan(readsBefore);
+    });
+  });
+
+  it("passes the axe checks with the menu open", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+    await showTab(user, "Upcoming");
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+    await screen.findByRole("menu");
+
+    // act
+    const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
 function rowNaming(name: string): HTMLElement {
   const row = screen.getByText(name).closest("li");
 
@@ -592,6 +925,19 @@ async function renderCheckInsPageWithView(entry = COACH_CHECK_INS_PATH) {
       {
         action: frameworkModeAction(withdrawCheckIn),
         path: CHECK_INS_API_PATHS.withdrawal,
+      },
+      {
+        loader: frameworkModeLoader(openTimesLoader),
+        path: CHECK_INS_API_PATHS.openTimes,
+        shouldRevalidate: shouldRevalidateOpenTimes,
+      },
+      {
+        action: frameworkModeAction(proposeNewTime),
+        path: CHECK_INS_API_PATHS.newTime,
+      },
+      {
+        action: frameworkModeAction(cancelCheckIn),
+        path: CHECK_INS_API_PATHS.cancellation,
       },
     ],
     { initialEntries: [entry] },

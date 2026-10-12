@@ -3,10 +3,18 @@ import type { ReactNode } from "react";
 import { cn } from "../lib/cn";
 import { HintPopover } from "./hint-popover";
 
-type IconHintTone = "neutral" | "danger";
+type IconHintSize = "default" | "compact";
+
+type IconHintTone = "neutral" | "muted" | "danger";
+
+const SIZE_CLASS: Record<IconHintSize, string> = {
+  default: "size-6 rounded-full",
+  compact: "size-5 rounded-control",
+};
 
 const TONE_CLASS: Record<IconHintTone, string> = {
   neutral: "",
+  muted: "text-text-secondary hover:text-text-primary",
   danger: "text-feedback-danger",
 };
 
@@ -17,6 +25,7 @@ type IconHintProps = {
   icon: ReactNode;
   label: string;
   parity?: string;
+  size?: IconHintSize;
   tone?: IconHintTone;
 };
 
@@ -27,6 +36,7 @@ export function IconHint({
   icon,
   label,
   parity,
+  size = "default",
   tone = "neutral",
 }: IconHintProps) {
   return (
@@ -34,7 +44,8 @@ export function IconHint({
       <button
         aria-label={label}
         className={cn(
-          "inline-flex size-6 items-center justify-center rounded-full",
+          "inline-flex items-center justify-center",
+          SIZE_CLASS[size],
           TONE_CLASS[tone],
           className,
         )}

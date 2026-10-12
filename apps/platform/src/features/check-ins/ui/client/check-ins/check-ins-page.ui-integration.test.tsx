@@ -35,7 +35,9 @@ import {
 } from "~/features/check-ins/api/shared/open-times";
 import { clientAction as requestCheckIn } from "~/features/check-ins/api/client/requests";
 import { clientAction as approveCheckIn } from "~/features/check-ins/api/shared/approval";
+import { clientAction as cancelCheckIn } from "~/features/check-ins/api/shared/cancellation";
 import { clientAction as declineCheckIn } from "~/features/check-ins/api/shared/decline";
+import { clientAction as proposeNewTime } from "~/features/check-ins/api/shared/new-time";
 import { clientAction as withdrawCheckIn } from "~/features/check-ins/api/shared/withdrawal";
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 import {
@@ -59,13 +61,20 @@ const APPROVED_SOON: ClientCheckIn = {
   kind: "ad_hoc",
   status: "approved",
   initiatedBy: "client",
+  proposedBy: "client",
   awaitsViewer: false,
   viewerMayWithdraw: false,
+  viewerProposal: "allowed",
+  viewerMayCancel: true,
+  newTimeWaits: false,
   isWaitingRequest: false,
   startsAt: "2026-10-14T07:00:00.000Z",
   endsAt: "2026-10-14T08:00:00.000Z",
   joinEmphasisFrom: "2026-10-14T06:50:00.000Z",
+  earlierStartsAt: null,
+  moves: 0,
   note: null,
+  newTimeNote: null,
 };
 
 const APPROVED_LATER: ClientCheckIn = {
@@ -93,6 +102,7 @@ const COACH_REQUEST: ClientCheckIn = {
   id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
   status: "pending",
   initiatedBy: "coach",
+  proposedBy: "coach",
   awaitsViewer: true,
   startsAt: "2026-10-19T09:00:00.000Z",
   endsAt: "2026-10-19T10:00:00.000Z",
@@ -110,6 +120,8 @@ const PASSED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
   status: "passed",
+  viewerProposal: "none",
+  viewerMayCancel: false,
   startsAt: "2026-10-05T07:00:00.000Z",
   endsAt: "2026-10-05T08:00:00.000Z",
   joinEmphasisFrom: "2026-10-05T06:50:00.000Z",
@@ -119,10 +131,80 @@ const CANCELLED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "4e5f6a7b-8c9d-4e0f-9a1b-3c4d5e6f7a8b",
   status: "cancelled",
+  viewerProposal: "none",
+  viewerMayCancel: false,
   startsAt: "2026-10-08T13:00:00.000Z",
   endsAt: "2026-10-08T14:00:00.000Z",
   joinEmphasisFrom: "2026-10-08T12:50:00.000Z",
   note: "Wanted to talk through travel week",
+};
+
+const COACH_NEW_TIME: ClientCheckIn = {
+  ...APPROVED_SOON,
+  id: "6a7b8c9d-0e1f-4a2b-9c3d-5e6f7a8b9c0d",
+  status: "pending",
+  proposedBy: "coach",
+  awaitsViewer: true,
+  viewerMayCancel: false,
+  newTimeWaits: true,
+  startsAt: "2026-10-15T11:00:00.000Z",
+  endsAt: "2026-10-15T12:00:00.000Z",
+  joinEmphasisFrom: "2026-10-15T10:50:00.000Z",
+  earlierStartsAt: "2026-10-14T07:00:00.000Z",
+  moves: 1,
+  note: "Want to go over my food log",
+  newTimeNote:
+    "I am travelling that Wednesday. Could we do Thursday at 2 PM instead?",
+};
+
+const COACH_NEW_TIME_ACCEPTED: ClientCheckIn = {
+  ...COACH_NEW_TIME,
+  status: "approved",
+  awaitsViewer: false,
+  viewerMayCancel: true,
+  newTimeWaits: false,
+};
+
+const OWN_NEW_TIME: ClientCheckIn = {
+  ...COACH_NEW_TIME,
+  id: "7b8c9d0e-1f2a-4b3c-8d4e-6f7a8b9c0d1e",
+  initiatedBy: "coach",
+  proposedBy: "client",
+  awaitsViewer: false,
+  viewerProposal: "none",
+  startsAt: "2026-10-16T13:00:00.000Z",
+  endsAt: "2026-10-16T14:00:00.000Z",
+  joinEmphasisFrom: "2026-10-16T12:50:00.000Z",
+  earlierStartsAt: "2026-10-16T07:00:00.000Z",
+  note: "Time to look back at your first month",
+  newTimeNote:
+    "I have a work call that morning. Could we meet on Friday afternoon?",
+};
+
+const RESCHEDULED: ClientCheckIn = {
+  ...APPROVED_SOON,
+  id: "8c9d0e1f-2a3b-4c4d-9e5f-7a8b9c0d1e2f",
+  proposedBy: "coach",
+  startsAt: "2026-10-16T09:00:00.000Z",
+  endsAt: "2026-10-16T10:00:00.000Z",
+  joinEmphasisFrom: "2026-10-16T08:50:00.000Z",
+  earlierStartsAt: "2026-10-15T08:00:00.000Z",
+  moves: 1,
+  note: "Want to go over my food log",
+};
+
+const MOVED_TWICE: ClientCheckIn = {
+  ...RESCHEDULED,
+  id: "9d0e1f2a-3b4c-4d5e-8f6a-8b9c0d1e2f3a",
+  proposedBy: "client",
+  viewerProposal: "exhausted",
+  startsAt: "2026-10-22T13:00:00.000Z",
+  endsAt: "2026-10-22T14:00:00.000Z",
+  joinEmphasisFrom: "2026-10-22T12:50:00.000Z",
+  earlierStartsAt: "2026-10-20T12:00:00.000Z",
+  moves: 2,
+  note: "Can we plan my holiday training?",
+  newTimeNote: "Thursday afternoon suits me better.",
 };
 
 const THURSDAY_AFTERNOON = "2026-10-15T14:00:00.000Z";
@@ -133,14 +215,26 @@ const OPEN_TIMES = [THURSDAY_AFTERNOON, THURSDAY_EVENING, FRIDAY_AFTERNOON];
 const WAITING_REASON =
   "You can send another request once this one is answered.";
 
+const MOVED_TWICE_REASON = "This check-in has already been moved twice.";
+
+const SOON_MENU = "More actions for the check-in on Wed, Oct 14 at 10:00 AM";
+const COACH_NEW_TIME_MENU =
+  "More actions for the check-in on Thu, Oct 15 at 2:00 PM";
+const MOVED_TWICE_MENU =
+  "More actions for the check-in on Thu, Oct 22 at 4:00 PM";
+
 const OPEN_TIMES_URL = `*${CHECK_INS_API_PATHS.openTimes}`;
 const REQUESTS_URL = `*${CHECK_INS_API_PATHS.requests}`;
 const WITHDRAWAL_URL = `*${CHECK_INS_API_PATHS.withdrawal}`;
 const APPROVAL_URL = `*${CHECK_INS_API_PATHS.approval}`;
 const DECLINE_URL = `*${CHECK_INS_API_PATHS.decline}`;
+const CANCELLATION_URL = `*${CHECK_INS_API_PATHS.cancellation}`;
 
 const server = setupServer();
 const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
+const axeWithMenuOpen = configureAxe({
+  rules: { "color-contrast": { enabled: false }, region: { enabled: false } },
+});
 
 let listing: ClientCheckIns;
 let listingReads = 0;
@@ -340,6 +434,53 @@ describe("the client's check-ins page", () => {
   });
 });
 
+describe("where the client's check-ins page opens", () => {
+  it("opens on Requests while a check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, COACH_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: /^Requests/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("list", { name: "Requests check-ins" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens on Upcoming when no check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, WAITING_REQUEST] };
+
+    // act
+    await renderCheckInsPage();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("opens on the tab the address names even while a check-in waits for her answer", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, COACH_REQUEST] };
+
+    // act
+    await renderCheckInsPageWithView(`${CLIENT_CHECK_INS_PATH}?view=upcoming`);
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+});
+
 describe("the client's check-ins tab in the address", () => {
   it("opens on Past when the address names it", async () => {
     // arrange, act
@@ -410,11 +551,11 @@ describe("the client answering her coach's request", () => {
     expect(rows[0]).toHaveTextContent(
       'Your coach: "Let\'s look at your first two weeks"',
     );
-    expect(
-      within(rows[0])
-        .getAllByRole("button")
-        .map(({ textContent }) => textContent),
-    ).toEqual(["Decline", "Approve"]);
+    expect(buttonNamesIn(rows[0])).toEqual([
+      "Decline",
+      "Approve",
+      "More actions for the check-in on Mon, Oct 19 at 12:00 PM",
+    ]);
     expect(rows[1]).toHaveTextContent("Ad-hoc · Requested by you");
     expect(
       within(rows[1]).getByRole("button", { name: "Cancel request" }),
@@ -1025,6 +1166,461 @@ describe("the client cancelling her waiting request", () => {
   });
 });
 
+describe("the client's moved check-ins", () => {
+  it("shows her coach's new time with the earlier time struck through and her coach's note, to accept, decline or answer with another", async () => {
+    // arrange
+    listing = { checkIns: [COACH_NEW_TIME] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await showTab(user, /^Requests/);
+    const row = within(
+      await screen.findByRole("list", { name: "Requests check-ins" }),
+    ).getByRole("listitem");
+    await user.click(
+      within(row).getByRole("button", { name: COACH_NEW_TIME_MENU }),
+    );
+
+    // assert
+    expect(row).toHaveTextContent("Ad-hoc · New time from your coach");
+    expect(struckThroughTimeIn(row)).toBe("Wed, Oct 14 · 10:00 AM");
+    expect(row).toHaveTextContent("Thu, Oct 15");
+    expect(row).toHaveTextContent(
+      'Your coach: "I am travelling that Wednesday. Could we do Thursday at 2 PM instead?"',
+    );
+    expect(buttonNamesIn(row)).toEqual([
+      "Decline",
+      "Accept",
+      COACH_NEW_TIME_MENU,
+    ]);
+    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+      "Reschedule",
+    ]);
+  });
+
+  it("shows her own new time waiting for her coach, with nothing to take it back", async () => {
+    // arrange
+    listing = { checkIns: [OWN_NEW_TIME] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await showTab(user, /^Requests/);
+
+    // assert
+    const row = within(
+      await screen.findByRole("list", { name: "Requests check-ins" }),
+    ).getByRole("listitem");
+    expect(row).toHaveTextContent("Ad-hoc · New time from you");
+    expect(struckThroughTimeIn(row)).toBe("Fri, Oct 16 · 10:00 AM");
+    expect(row).toHaveTextContent(
+      'You: "I have a work call that morning. Could we meet on Friday afternoon?"',
+    );
+    expect(within(row).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("accepts her coach's new time from her time zone and moves it to Upcoming, marked as rescheduled", async () => {
+    // arrange
+    listing = { checkIns: [COACH_NEW_TIME] };
+    const approvals: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(APPROVAL_URL, async ({ params, request }) => {
+        approvals.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        listing = { checkIns: [COACH_NEW_TIME_ACCEPTED] };
+        return HttpResponse.json({
+          status: "approved",
+          checkInId: COACH_NEW_TIME.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await showTab(user, /^Requests/);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    // assert
+    expect(await screen.findByText("Check-in approved")).toBeInTheDocument();
+    expect(await screen.findByText("No open requests")).toBeInTheDocument();
+    await showTab(user, "Upcoming");
+    const row = within(
+      await screen.findByRole("list", { name: "Upcoming check-ins" }),
+    ).getByRole("listitem");
+    expect(
+      within(row).getByRole("button", {
+        name: "Rescheduled from Wed, Oct 14 · 10:00 AM",
+      }),
+    ).toBeInTheDocument();
+    expect(struckThroughTimeIn(row)).toBeUndefined();
+    expect(approvals).toEqual([
+      { checkInId: COACH_NEW_TIME.id, body: { timeZone: TIME_ZONE } },
+    ]);
+  });
+
+  it("marks a rescheduled check-in with the time it moved from, explained on hover", async () => {
+    // arrange
+    listing = { checkIns: [RESCHEDULED] };
+    const user = await renderCheckInsPage();
+    const row = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getByRole("listitem");
+
+    // act
+    await user.hover(
+      within(row).getByRole("button", {
+        name: "Rescheduled from Thu, Oct 15 · 11:00 AM",
+      }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("Rescheduled from Thu, Oct 15 · 11:00 AM"),
+    ).toBeInTheDocument();
+    expect(row).toHaveTextContent("Ad-hoc · Requested by you");
+    expect(row).toHaveTextContent('You: "Want to go over my food log"');
+  });
+
+  it("passes the axe checks with moved check-ins listed", async () => {
+    // arrange
+    listing = { checkIns: [COACH_NEW_TIME, OWN_NEW_TIME, RESCHEDULED] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+
+    // act
+    await showTab(user, /^Requests/);
+
+    // assert
+    expect((await axe(baseElement)).violations).toEqual([]);
+  });
+});
+
+describe("the client's upcoming check-in menu", () => {
+  it("offers to reschedule or cancel an upcoming check-in", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+
+    // assert
+    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+      "Reschedule",
+      "Cancel",
+    ]);
+  });
+
+  it("leaves the menu out of her past and cancelled check-ins", async () => {
+    // arrange
+    listing = { checkIns: [PASSED, CANCELLED] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await showTab(user, "Past");
+
+    // assert
+    const list = await screen.findByRole("list", { name: "Past check-ins" });
+    expect(within(list).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("proposes another time from the menu and hands focus back to the menu when she closes it", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    answerOpenTimes();
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+
+    // act
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Propose a new time",
+    });
+    await within(dialog).findByRole("button", {
+      name: /Thursday,? 15 October 2026/,
+    });
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(dialog).toHaveTextContent(
+      "Currently set for Wed, Oct 14 · 10:00 AM",
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: SOON_MENU })).toHaveFocus();
+  });
+
+  it("proposes a new time with her note and says so", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    answerOpenTimes();
+    const proposals: unknown[] = [];
+    server.use(
+      http.post(`*${CHECK_INS_API_PATHS.newTime}`, async ({ request }) => {
+        proposals.push(await request.json());
+        return HttpResponse.json({
+          status: "proposed",
+          checkInId: APPROVED_SOON.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Propose a new time",
+    });
+    await user.click(
+      await within(dialog).findByRole("button", {
+        name: /Thursday,? 15 October 2026/,
+      }),
+    );
+    await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
+    await user.type(
+      within(dialog).getByRole("textbox", {
+        name: "Add a note for your coach (optional)",
+      }),
+      "Evenings work better",
+    );
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Propose 6:00 PM" }),
+    );
+
+    // assert
+    expect(await screen.findByText("New time proposed")).toBeInTheDocument();
+    expect(proposals).toEqual([
+      {
+        note: "Evenings work better",
+        startsAt: THURSDAY_EVENING,
+        timeZone: TIME_ZONE,
+      },
+    ]);
+  });
+
+  it("cancels an upcoming check-in once she confirms, and lists it under Past as cancelled", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    const cancellations: { checkInId: string; body: unknown }[] = [];
+    server.use(
+      http.post(CANCELLATION_URL, async ({ params, request }) => {
+        cancellations.push({
+          checkInId: String(params.checkInId),
+          body: await request.json(),
+        });
+        listing = {
+          checkIns: [
+            {
+              ...APPROVED_SOON,
+              status: "cancelled",
+              viewerProposal: "none",
+              viewerMayCancel: false,
+            },
+          ],
+        };
+        return HttpResponse.json({
+          status: "cancelled",
+          checkInId: APPROVED_SOON.id,
+        });
+      }),
+    );
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Cancel",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Cancel this check-in?",
+    });
+    const description = dialog.textContent;
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cancel check-in" }),
+    );
+
+    // assert
+    expect(description).toContain("Wed, Oct 14 at 10:00 AM.");
+    expect(await screen.findByText("Check-in cancelled")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No upcoming check-ins"),
+    ).toBeInTheDocument();
+    await showTab(user, "Past");
+    expect(
+      within(
+        await screen.findByRole("list", { name: "Past check-ins" }),
+      ).getByText("Cancelled"),
+    ).toBeInTheDocument();
+    expect(cancellations).toEqual([
+      { checkInId: APPROVED_SOON.id, body: { timeZone: TIME_ZONE } },
+    ]);
+  });
+
+  it("keeps the check-in when she changes her mind, handing focus back to the menu", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Cancel",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Cancel this check-in?",
+    });
+
+    // act
+    await user.click(within(dialog).getByRole("button", { name: "Keep" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: SOON_MENU })).toHaveFocus();
+  });
+
+  it("works the menu by keyboard, from the trigger to the cancel question and back", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    const user = await renderCheckInsPage();
+    screen.getByRole("button", { name: SOON_MENU }).focus();
+
+    // act
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+    await user.keyboard("{ArrowDown}{ArrowDown}{Enter}");
+    await screen.findByRole("dialog", { name: "Cancel this check-in?" });
+    await user.keyboard("{Escape}");
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: SOON_MENU })).toHaveFocus();
+  });
+
+  it("passes the axe checks with the menu open", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+    await user.click(screen.getByRole("button", { name: SOON_MENU }));
+    await screen.findByRole("menu");
+
+    // act
+    const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
+describe("Reschedule on a check-in moved twice", () => {
+  it("stays in the menu, held back", async () => {
+    // arrange
+    listing = { checkIns: [MOVED_TWICE] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(screen.getByRole("button", { name: MOVED_TWICE_MENU }));
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("explains itself on hover", async () => {
+    // arrange
+    listing = { checkIns: [MOVED_TWICE] };
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: MOVED_TWICE_MENU }));
+
+    // act
+    await user.hover(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+
+    // assert
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+  });
+
+  it("is reached from the keyboard and does nothing on Enter", async () => {
+    // arrange
+    listing = { checkIns: [MOVED_TWICE] };
+    const user = await renderCheckInsPage();
+    screen.getByRole("button", { name: MOVED_TWICE_MENU }).focus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("menu");
+    await user.keyboard("{ArrowDown}{ArrowUp}");
+
+    // act
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(screen.getByRole("menuitem", { name: "Reschedule" })).toHaveFocus();
+    expect(
+      screen.queryByRole("dialog", { name: "Propose a new time" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("explains itself on a tap without opening the new time", async () => {
+    // arrange
+    listing = { checkIns: [MOVED_TWICE] };
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: MOVED_TWICE_MENU }));
+
+    // act
+    await user.pointer({
+      keys: "[TouchA]",
+      target: within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    });
+
+    // assert
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Propose a new time" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes the axe checks with the reason open", async () => {
+    // arrange
+    listing = { checkIns: [MOVED_TWICE] };
+    const { baseElement, user } = await renderCheckInsPageWithView();
+    await user.click(screen.getByRole("button", { name: MOVED_TWICE_MENU }));
+    await user.hover(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+    await screen.findByText(MOVED_TWICE_REASON);
+
+    // act
+    const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
 function answerOpenTimes(times: readonly string[] = OPEN_TIMES) {
   server.use(http.get(OPEN_TIMES_URL, () => HttpResponse.json({ times })));
 }
@@ -1039,6 +1635,22 @@ function answerRequests(answer: () => Response): unknown[] {
   );
 
   return received;
+}
+
+function buttonNamesIn(element: HTMLElement): (string | null)[] {
+  return within(element)
+    .getAllByRole("button")
+    .map((button) => button.getAttribute("aria-label") ?? button.textContent);
+}
+
+function struckThroughTimeIn(row: HTMLElement): string | undefined {
+  return row.querySelector("s")?.textContent ?? undefined;
+}
+
+function menuItemNames(menu: HTMLElement): (string | null)[] {
+  return within(menu)
+    .getAllByRole("menuitem")
+    .map(({ textContent }) => textContent);
 }
 
 function requestButtons(): HTMLElement[] {
@@ -1104,6 +1716,14 @@ async function renderCheckInsPageWithView(entry = CLIENT_CHECK_INS_PATH) {
       {
         action: frameworkModeAction(declineCheckIn),
         path: CHECK_INS_API_PATHS.decline,
+      },
+      {
+        action: frameworkModeAction(proposeNewTime),
+        path: CHECK_INS_API_PATHS.newTime,
+      },
+      {
+        action: frameworkModeAction(cancelCheckIn),
+        path: CHECK_INS_API_PATHS.cancellation,
       },
     ],
     { initialEntries: [entry] },

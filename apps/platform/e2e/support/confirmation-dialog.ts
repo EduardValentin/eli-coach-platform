@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { isFocused } from "./keyboard";
+import { isFocused, tabTo } from "./keyboard";
 
 const TRAP_PROBE_KEYS = [
   "Tab",
@@ -50,6 +50,17 @@ export class ConfirmationDialog {
       .click();
   }
 
+  async confirmByKeyboard(): Promise<void> {
+    await tabTo(
+      this.page,
+      this.dialog.getByRole("button", {
+        name: this.labels.confirm,
+        exact: true,
+      }),
+    );
+    await this.page.keyboard.press("Enter");
+  }
+
   async dismiss(): Promise<void> {
     await this.dialog
       .getByRole("button", { name: this.labels.dismiss, exact: true })
@@ -85,6 +96,25 @@ export class ConfirmationDialog {
   async expectNoProblem(): Promise<void> {
     await expect(this.dialog).toBeVisible();
     await expect(this.dialog.getByRole("alert")).toHaveCount(0);
+  }
+
+  async expectWithinViewport(): Promise<void> {
+    await expect(this.dialog).toBeVisible();
+    await expect
+      .poll(async () => {
+        const box = await this.dialog.boundingBox();
+        const viewport = this.page.viewportSize();
+
+        return (
+          box !== null &&
+          viewport !== null &&
+          box.x >= 0 &&
+          box.y >= 0 &&
+          box.x + box.width <= viewport.width &&
+          box.y + box.height <= viewport.height
+        );
+      })
+      .toBe(true);
   }
 
   async expectClosed(): Promise<void> {

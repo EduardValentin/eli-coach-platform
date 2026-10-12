@@ -6,12 +6,14 @@ import { RowActionsMenu, type RowMenuAction } from './RowActionsMenu';
 import { Badge } from './ui/badge';
 import {
   CHECKIN_KIND_LABEL,
+  MOVES_EXHAUSTED_REASON,
   checkinNote,
   checkinStartsAt,
   latestMove,
   previousSlot,
   type CheckIn,
   type CheckinParty,
+  type CheckinProposal,
   type CheckinStatus,
 } from '../domain/checkins';
 import {
@@ -20,11 +22,26 @@ import {
   formatSlotTime,
 } from '../utils/dateFormatters';
 
+export type CheckinMenuAction = {
+  onSelect: () => void;
+  disabledReason?: string;
+};
+
 export type CheckinMenu = {
-  reschedule?: () => void;
-  cancel?: () => void;
+  reschedule?: CheckinMenuAction;
+  cancel?: CheckinMenuAction;
   disabled?: boolean;
 };
+
+export function rescheduleAction(
+  proposal: CheckinProposal,
+  onSelect: () => void,
+): CheckinMenuAction | undefined {
+  if (proposal === 'none') return undefined;
+  if (proposal === 'exhausted') return { onSelect, disabledReason: MOVES_EXHAUSTED_REASON };
+
+  return { onSelect };
+}
 
 export type CheckinRowActions = {
   shown?: ReactNode;
@@ -64,7 +81,7 @@ function menuActions(menu: CheckinMenu): RowMenuAction[] {
       label: 'Reschedule',
       icon: CalendarClock,
       disabled: menu.disabled,
-      onSelect: menu.reschedule,
+      ...menu.reschedule,
     });
   }
   if (menu.cancel) {
@@ -74,7 +91,7 @@ function menuActions(menu: CheckinMenu): RowMenuAction[] {
       icon: CalendarX,
       tone: 'destructive',
       disabled: menu.disabled,
-      onSelect: menu.cancel,
+      ...menu.cancel,
     });
   }
 

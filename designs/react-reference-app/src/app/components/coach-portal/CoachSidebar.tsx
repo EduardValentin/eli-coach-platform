@@ -15,6 +15,7 @@ import {
 import { useState, type ReactNode, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
+import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
 import { navigationLinkSlug } from '../navigation-link-slug';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
@@ -118,12 +119,10 @@ const SidebarNavigation = ({
           <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
           <span className="text-sm font-medium">{link.name}</span>
           {link.name === 'Check-ins' && pendingCheckins > 0 && (
-            <span
-              className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-micro font-bold flex items-center justify-center"
-              data-parity="checkins-count"
-            >
-              {pendingCheckins}
-            </span>
+            <>
+              <NavigationCountLabel count={pendingCheckins} />
+              <NavigationCount className="ml-auto" count={pendingCheckins} />
+            </>
           )}
         </Link>
       );

@@ -22,11 +22,14 @@ vi.mock("@clerk/react-router", () => ({
 
 import type { ClientShellPresentation } from "./client-identity-presentation";
 import ClientLayoutRoute, { meta } from "./layout";
+import type { ClientNavigationCounts } from "./navigation-links";
 
 const ANA: ClientShellPresentation = {
   displayName: "Ana Popescu",
   greeting: "Welcome back, Ana.",
 };
+
+const WAITING_CHECK_INS = /^Check-ins ?\(2 waiting on you\)$/;
 
 function ProfilePage() {
   return <h1>Her profile</h1>;
@@ -40,7 +43,7 @@ afterEach(() => {
 function renderClientLayout(
   presentation: ClientShellPresentation = ANA,
   entry = "/client",
-  unopenedResources = 0,
+  counts: Partial<ClientNavigationCounts> = {},
 ) {
   const RoutesStub = createRoutesStub([
     {
@@ -52,7 +55,12 @@ function renderClientLayout(
         { Component: () => <h1>Her settings</h1>, path: "settings" },
       ],
       Component: ClientLayoutRoute,
-      loader: () => ({ presentation, unopenedResources }),
+      loader: () => ({
+        presentation,
+        unopenedResources: 0,
+        checkInsAwaiting: 0,
+        ...counts,
+      }),
       path: "/client",
     },
   ]);
@@ -151,7 +159,7 @@ describe("ClientLayoutRoute", () => {
   it("marks her resources and the More tab as holding something new while she has an unopened resource", async () => {
     // arrange
     const user = userEvent.setup();
-    renderClientLayout(ANA, "/client", 2);
+    renderClientLayout(ANA, "/client", { unopenedResources: 2 });
     const navigation = await screen.findByRole("navigation", {
       name: "Client portal navigation",
     });
@@ -180,7 +188,7 @@ describe("ClientLayoutRoute", () => {
   it("leaves her resources and the More tab unmarked once she has opened everything", async () => {
     // arrange
     const user = userEvent.setup();
-    renderClientLayout(ANA, "/client", 0);
+    renderClientLayout(ANA, "/client", { unopenedResources: 0 });
     const navigation = await screen.findByRole("navigation", {
       name: "Client portal navigation",
     });
@@ -202,6 +210,40 @@ describe("ClientLayoutRoute", () => {
       ).getByRole("link", { name: "Resources" }),
     ).toHaveTextContent(/^Resources$/);
     expect(screen.queryByText(/\(new\)/)).not.toBeInTheDocument();
+  });
+
+  it("counts the check-ins waiting for her answer on the Check-ins entry and tab, leaving More unmarked", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client", { checkInsAwaiting: 2 });
+
+    // assert
+    const navigation = await screen.findByRole("navigation", {
+      name: "Client portal navigation",
+    });
+    const tabs = screen.getByRole("navigation", { name: "Client portal tabs" });
+
+    expect(
+      within(navigation).getByRole("link", { name: WAITING_CHECK_INS }),
+    ).toHaveAttribute("href", "/client/checkins");
+    expect(
+      within(tabs).getByRole("link", { name: WAITING_CHECK_INS }),
+    ).toHaveAttribute("href", "/client/checkins");
+    expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
+  });
+
+  it("shows no count on her check-ins while nothing waits for her answer", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client", { checkInsAwaiting: 0 });
+
+    // assert
+    const navigation = await screen.findByRole("navigation", {
+      name: "Client portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Check-ins" }),
+    ).toHaveTextContent(/^Check-ins$/);
+    expect(screen.queryByText(/waiting on you/)).not.toBeInTheDocument();
   });
 
   it("marks her check-ins as the page being read on the check-ins page", async () => {

@@ -146,6 +146,21 @@ describe('CoachSidebar navigation links', () => {
   });
 });
 
+describe('CoachSidebar waiting count', () => {
+  it('counts the check-ins waiting for her answer on the Check-ins link', () => {
+    // arrange
+    // act
+    renderSidebar();
+
+    // assert
+    const sidebar = screen.getByRole('complementary', { name: 'Coach portal sidebar' });
+
+    expect(
+      within(sidebar).getByRole('link', { name: 'Check-ins (3 waiting on you)' }),
+    ).toHaveTextContent('3');
+  });
+});
+
 describe('CoachSidebar mobile navigation', () => {
   it('opens as a named modal dialog with the top-bar actions inside', async () => {
     // arrange

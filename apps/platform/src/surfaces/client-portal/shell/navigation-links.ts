@@ -37,25 +37,34 @@ const SETTINGS_LINK: PortalNavigationLink = {
   icon: Settings,
 };
 
-export function clientSurfaceLinks(
-  unopenedResources: number,
-): readonly PortalNavigationLink[] {
-  return [
-    DASHBOARD_LINK,
-    CHECK_INS_LINK,
-    PROFILE_LINK,
-    {
-      href: CLIENT_RESOURCES_PATH,
-      label: "Resources",
-      icon: FolderOpen,
-      marked: unopenedResources > 0,
-    },
-    SETTINGS_LINK,
-  ];
-}
+export type ClientNavigationCounts = {
+  checkInsAwaiting: number;
+  unopenedResources: number;
+};
 
-export const clientTabLinks: readonly PortalNavigationLink[] = [
-  DASHBOARD_LINK,
-  CHECK_INS_LINK,
-  PROFILE_LINK,
-];
+type ClientNavigation = {
+  links: readonly PortalNavigationLink[];
+  tabs: readonly PortalNavigationLink[];
+};
+
+export function clientNavigationOf(
+  counts: ClientNavigationCounts,
+): ClientNavigation {
+  const checkIns = { ...CHECK_INS_LINK, count: counts.checkInsAwaiting };
+
+  return {
+    links: [
+      DASHBOARD_LINK,
+      checkIns,
+      PROFILE_LINK,
+      {
+        href: CLIENT_RESOURCES_PATH,
+        label: "Resources",
+        icon: FolderOpen,
+        marked: counts.unopenedResources > 0,
+      },
+      SETTINGS_LINK,
+    ],
+    tabs: [DASHBOARD_LINK, checkIns, PROFILE_LINK],
+  };
+}

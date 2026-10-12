@@ -41,7 +41,7 @@ export function CheckinScheduleDialog({
     return null;
   };
 
-  const { problem, sheet } = useCheckinPicker({ open, onOpenChange, send });
+  const { problem, sheet } = useCheckinPicker({ open, onOpenChange, clientId: client.id, send });
 
   return (
     <CheckinSchedulerSheet

@@ -11,6 +11,7 @@ import {
 import { useAppState } from '../../context/AppContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { AttentionDot } from '../AttentionDot';
+import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
 import { NotificationBell } from '../NotificationBell';
 import { navigationLinkSlug } from '../navigation-link-slug';
 import { LABEL_CLASS } from '../typography';
@@ -27,6 +28,63 @@ const MAX_BAR_TABS = 4;
 
 function NewLinkLabel() {
   return <span className="sr-only"> (new)</span>;
+}
+
+type LinkAttention = {
+  countByHref: Readonly<Record<string, number>>;
+  markedHrefs: readonly string[];
+};
+
+function countOf(attention: LinkAttention, href: string): number {
+  return attention.countByHref[href] ?? 0;
+}
+
+function needsAttention(attention: LinkAttention, href: string): boolean {
+  return countOf(attention, href) > 0 || attention.markedHrefs.includes(href);
+}
+
+function LinkAttentionMark({
+  attention,
+  href,
+  className,
+}: {
+  attention: LinkAttention;
+  href: string;
+  className?: string;
+}) {
+  const count = countOf(attention, href);
+
+  if (count > 0) {
+    return (
+      <>
+        <NavigationCountLabel count={count} />
+        <NavigationCount className={className} count={count} />
+      </>
+    );
+  }
+
+  if (!attention.markedHrefs.includes(href)) return null;
+
+  return (
+    <>
+      <NewLinkLabel />
+      <AttentionDot className={className} />
+    </>
+  );
+}
+
+function LinkAttentionLabel({
+  attention,
+  href,
+}: {
+  attention: LinkAttention;
+  href: string;
+}) {
+  const count = countOf(attention, href);
+
+  if (count > 0) return <NavigationCountLabel count={count} />;
+  if (attention.markedHrefs.includes(href)) return <NewLinkLabel />;
+  return null;
 }
 
 type MoreSheetState = 'open' | 'closed' | 'closed-for-desktop';
@@ -97,10 +155,10 @@ function ClientNameBlock({
 
 function DesktopSidebar({
   links,
-  markedHrefs,
+  attention,
 }: {
   links: ClientPortalLink[];
-  markedHrefs: readonly string[];
+  attention: LinkAttention;
 }) {
   const location = useLocation();
 
@@ -148,12 +206,11 @@ function DesktopSidebar({
                   aria-hidden="true"
                 />
                 <span className="text-sm font-medium">{link.name}</span>
-                {markedHrefs.includes(link.href) && (
-                  <>
-                    <NewLinkLabel />
-                    <AttentionDot className="ml-auto" />
-                  </>
-                )}
+                <LinkAttentionMark
+                  attention={attention}
+                  href={link.href}
+                  className="ml-auto"
+                />
               </Link>
             );
           })}
@@ -183,16 +240,25 @@ function MobileTopBar() {
 
 function IconWithMarker({
   marked,
+  count = 0,
   children,
 }: {
   marked: boolean;
+  count?: number;
   children: ReactNode;
 }) {
   return (
     <span className="relative inline-flex">
       {children}
-      {marked && (
-        <AttentionDot className="absolute -top-0.5 -right-0.5 ring-2 ring-surface-base" />
+      {count > 0 ? (
+        <NavigationCount
+          className="absolute -top-2 -right-2.5 ring-2 ring-surface-base"
+          count={count}
+        />
+      ) : (
+        marked && (
+          <AttentionDot className="absolute -top-0.5 -right-0.5 ring-2 ring-surface-base" />
+        )
       )}
     </span>
   );
@@ -201,20 +267,22 @@ function IconWithMarker({
 function MobileTabBar({
   links,
   moreLinks,
-  markedHrefs,
+  attention,
   moreOpen,
   moreButtonRef,
   onOpenMore,
 }: {
   links: ClientPortalLink[];
   moreLinks: ClientPortalLink[];
-  markedHrefs: readonly string[];
+  attention: LinkAttention;
   moreOpen: boolean;
   moreButtonRef: RefObject<HTMLButtonElement>;
   onOpenMore: () => void;
 }) {
   const location = useLocation();
-  const moreMarked = moreLinks.some((link) => markedHrefs.includes(link.href));
+  const moreMarked = moreLinks.some((link) =>
+    needsAttention(attention, link.href),
+  );
   const moreActive =
     moreOpen ||
     moreLinks.some((link) => isRouteActive(location.pathname, link.href));
@@ -243,7 +311,10 @@ function MobileTabBar({
                   },
                 )}
               >
-                <IconWithMarker marked={markedHrefs.includes(link.href)}>
+                <IconWithMarker
+                  marked={attention.markedHrefs.includes(link.href)}
+                  count={countOf(attention, link.href)}
+                >
                   <Icon
                     size={22}
                     strokeWidth={isActive ? 2.4 : 2}
@@ -251,7 +322,7 @@ function MobileTabBar({
                   />
                 </IconWithMarker>
                 <span className="text-caption font-semibold">{link.name}</span>
-                {markedHrefs.includes(link.href) && <NewLinkLabel />}
+                <LinkAttentionLabel attention={attention} href={link.href} />
               </Link>
             </li>
           );
@@ -291,11 +362,11 @@ function MobileTabBar({
 
 function MoreSheetNavigation({
   links,
-  markedHrefs,
+  attention,
   onClose,
 }: {
   links: ClientPortalLink[];
-  markedHrefs: readonly string[];
+  attention: LinkAttention;
   onClose: () => void;
 }) {
   const location = useLocation();
@@ -351,12 +422,7 @@ function MoreSheetNavigation({
               aria-hidden="true"
             />
             <span className="text-base font-medium flex-1">{link.name}</span>
-            {markedHrefs.includes(link.href) && (
-              <>
-                <NewLinkLabel />
-                <AttentionDot />
-              </>
-            )}
+            <LinkAttentionMark attention={attention} href={link.href} />
             <ChevronRight
               size={18}
               className="text-text-secondary"
@@ -375,11 +441,11 @@ function MoreSheetNavigation({
 
 function MoreSheetBody({
   links,
-  markedHrefs,
+  attention,
   onClose,
 }: {
   links: ClientPortalLink[];
-  markedHrefs: readonly string[];
+  attention: LinkAttention;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -403,7 +469,7 @@ function MoreSheetBody({
       {links.length > 0 && (
         <MoreSheetNavigation
           links={links}
-          markedHrefs={markedHrefs}
+          attention={attention}
           onClose={onClose}
         />
       )}
@@ -427,10 +493,13 @@ function MoreSheetBody({
 export function PortalSidebar({
   links: portalLinks,
   markedHrefs = [],
+  countByHref = {},
 }: {
   links: readonly ClientPortalLink[];
   markedHrefs?: readonly string[];
+  countByHref?: Readonly<Record<string, number>>;
 }) {
+  const attention: LinkAttention = { countByHref, markedHrefs };
   const [moreSheet, setMoreSheet] = useState<MoreSheetState>('closed');
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const { appState } = useAppState();
@@ -460,12 +529,12 @@ export function PortalSidebar({
 
   return (
     <>
-      <DesktopSidebar links={links} markedHrefs={markedHrefs} />
+      <DesktopSidebar links={links} attention={attention} />
       <MobileTopBar />
       <MobileTabBar
         links={barLinks}
         moreLinks={moreLinks}
-        markedHrefs={markedHrefs}
+        attention={attention}
         moreOpen={moreOpen}
         moreButtonRef={moreButtonRef}
         onOpenMore={() => setMoreSheet('open')}
@@ -480,7 +549,7 @@ export function PortalSidebar({
       >
         <MoreSheetBody
           links={moreLinks}
-          markedHrefs={markedHrefs}
+          attention={attention}
           onClose={() => setMoreSheet('closed')}
         />
       </BottomSheet>

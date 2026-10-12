@@ -13,6 +13,8 @@ export type CheckinStatus = RecordedCheckinStatus | 'passed';
 
 export const MAX_RESCHEDULES = 2;
 
+export const MOVES_EXHAUSTED_REASON = 'This check-in has already been moved twice.';
+
 export const CHECKIN_DURATION_MINUTES = 60;
 
 export const JOIN_OPENS_MINUTES_BEFORE = 10;
@@ -40,7 +42,7 @@ export interface CheckIn {
   note?: string;
   previousDate?: string;
   previousTime?: string;
-  rescheduleMessage?: string;
+  newTimeNote?: string;
 }
 
 export type TimeSpan = { start: number; end: number };
@@ -142,8 +144,8 @@ export function latestMove(checkin: CheckIn): CheckinMove | null {
 export type CheckinNote = { text: string; by: CheckinParty };
 
 export function checkinNote(checkin: CheckIn): CheckinNote | null {
-  if (checkin.rescheduleMessage) {
-    return { text: checkin.rescheduleMessage, by: checkin.proposedBy };
+  if (checkin.newTimeNote) {
+    return { text: checkin.newTimeNote, by: checkin.proposedBy };
   }
   if (checkin.note) return { text: checkin.note, by: checkin.initiatedBy };
 
@@ -154,8 +156,22 @@ export function awaitsResponseFrom(checkin: CheckIn): CheckinParty {
   return checkin.proposedBy === 'coach' ? 'client' : 'coach';
 }
 
-export function canPropose(checkin: CheckIn): boolean {
-  return checkin.rescheduleCount < MAX_RESCHEDULES;
+export type CheckinProposal = 'allowed' | 'exhausted' | 'none';
+
+function mayAnswerWithNewTime(checkin: CheckIn, party: CheckinParty): boolean {
+  if (checkin.status === 'approved') return true;
+
+  return checkin.status === 'pending' && awaitsResponseFrom(checkin) === party;
+}
+
+export function proposalFor(checkin: CheckIn, party: CheckinParty): CheckinProposal {
+  if (!mayAnswerWithNewTime(checkin, party)) return 'none';
+
+  return checkin.rescheduleCount < MAX_RESCHEDULES ? 'allowed' : 'exhausted';
+}
+
+export function canProposeFor(checkin: CheckIn, party: CheckinParty): boolean {
+  return proposalFor(checkin, party) === 'allowed';
 }
 
 export function canWithdrawRequest(
@@ -186,6 +202,7 @@ export function isOpenClientRequest(
   return (
     checkin.kind === 'ad-hoc' &&
     checkin.initiatedBy === 'client' &&
+    previousSlot(checkin) === undefined &&
     checkinStatus(checkin, clock) === 'pending'
   );
 }

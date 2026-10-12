@@ -38,6 +38,11 @@ import {
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
+import {
+  CheckInMenuDialogs,
+  useCheckInMenu,
+  type CheckInMenuWording,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
 
 import { CheckInRequestDialog } from "./check-in-request-dialog";
 
@@ -87,6 +92,7 @@ export default function ClientCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
   const decisions = useCheckInDecisions({ timeZone });
+  const menu = useCheckInMenu<ListedCheckIn>(decisions);
   const [requesting, setRequesting] = useState(false);
   const [openings, setOpenings] = useState(0);
   const hasWaitingRequest = checkIns.some(
@@ -125,13 +131,13 @@ export default function ClientCheckInsRoute() {
 
       <CheckInListing
         checkIns={checkIns}
-        defaultTab="upcoming"
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
             actions={clientActionsFor(checkIn, tab, decisions)}
             attendee={COACH}
             checkIn={checkIn}
+            menu={menu.menuOf(checkIn)}
             timeZone={timeZone}
             viewer={VIEWER}
           />
@@ -150,6 +156,13 @@ export default function ClientCheckInsRoute() {
         timeZone={timeZone}
       />
 
+      <CheckInMenuDialogs
+        decisions={decisions}
+        menu={menu}
+        timeZone={timeZone}
+        wording={menuWordingIn(timeZone)}
+      />
+
       <CheckInDecisionOutcomes decisions={decisions} />
 
       {renderRequestButton(
@@ -157,6 +170,19 @@ export default function ClientCheckInsRoute() {
       )}
     </div>
   );
+}
+
+function menuWordingIn(timeZone: string): CheckInMenuWording<ListedCheckIn> {
+  return {
+    cancellationOf: (_checkIn, dayAndTime) => ({
+      description: `${dayAndTime}.`,
+      successMessage: "Check-in cancelled",
+    }),
+    proposerOf: () => ({
+      clientTimeZone: timeZone,
+      noteLabel: "Add a note for your coach (optional)",
+    }),
+  };
 }
 
 function clientActionsFor(
@@ -174,7 +200,7 @@ function clientActionsFor(
     return (
       <CheckInAnswers
         approvedMessage="Check-in approved"
-        checkInId={checkIn.id}
+        checkIn={checkIn}
         decisions={decisions}
         size="sm"
       />

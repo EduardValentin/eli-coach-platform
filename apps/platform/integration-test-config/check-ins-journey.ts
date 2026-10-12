@@ -1,5 +1,7 @@
+import type { CheckInNotification } from "@eli-coach-platform/domain/check-in";
 import { z } from "zod";
 
+import type { SentEmail } from "./api-integration-test-suite";
 import {
   COACH_SESSION,
   type AccountSession,
@@ -22,7 +24,18 @@ export type CheckInSchedule = {
   note?: string | null;
 };
 
-export type CheckInAnswer = { timeZone?: string };
+export type CheckInActingZone = { timeZone?: string };
+
+export type CheckInEmailKey = {
+  moves: number;
+  notification: CheckInNotification;
+};
+
+export type CheckInNewTime = {
+  startsAt: string;
+  note?: string | null;
+  timeZone?: string;
+};
 
 export type CheckInRow = {
   id: string;
@@ -36,6 +49,17 @@ export type CheckInRow = {
   proposedBy: string;
   note: string | null;
   requestedAt: Date;
+  answeredAt: Date | null;
+};
+
+export type MovedCheckInRow = {
+  status: string;
+  startsAt: Date;
+  earlierStartsAt: Date | null;
+  moves: number;
+  newTimeNote: string | null;
+  proposedBy: string;
+  clientTimeZone: string;
   answeredAt: Date | null;
 };
 
@@ -73,14 +97,19 @@ export class CheckInsJourney {
     return this.send(requester, `${CHECK_INS_API}/open-times`);
   }
 
+  openTimesFor(requester: Requester, clientId: string): Promise<Response> {
+    return this.send(
+      requester,
+      `${CHECK_INS_API}/open-times?${new URLSearchParams({ clientId })}`,
+    );
+  }
+
   async openTimesOf(session: AccountSession): Promise<string[]> {
-    const response = await this.openTimes(session);
+    return this.timesOf(await this.openTimes(session));
+  }
 
-    if (response.status !== 200) {
-      throw new Error(`Reading the open times answered ${response.status}.`);
-    }
-
-    return openTimesSchema.parse(await response.json()).times;
+  async openTimesOfClient(clientId: string): Promise<string[]> {
+    return this.timesOf(await this.openTimesFor(COACH_SESSION, clientId));
   }
 
   request(requester: Requester, ask: CheckInAsk): Promise<Response> {
@@ -126,25 +155,59 @@ export class CheckInsJourney {
   withdraw(
     requester: Requester,
     checkInId: string,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/withdrawal`, answer);
+    return this.decide(requester, `${checkInId}/withdrawal`, zone);
   }
 
   approve(
     checkInId: string,
     requester: Requester = COACH_SESSION,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/approval`, answer);
+    return this.decide(requester, `${checkInId}/approval`, zone);
   }
 
   decline(
     checkInId: string,
     requester: Requester = COACH_SESSION,
-    answer?: CheckInAnswer,
+    zone?: CheckInActingZone,
   ): Promise<Response> {
-    return this.answer(requester, `${checkInId}/decline`, answer);
+    return this.decide(requester, `${checkInId}/decline`, zone);
+  }
+
+  proposeNewTime(
+    requester: Requester,
+    checkInId: string,
+    newTime: CheckInNewTime,
+  ): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/${checkInId}/new-time`, {
+      body: JSON.stringify(newTime),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  async proposedNewTime(
+    requester: AccountSession,
+    checkInId: string,
+    newTime: CheckInNewTime,
+  ): Promise<void> {
+    const response = await this.proposeNewTime(requester, checkInId, newTime);
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Proposing a new time answered ${response.status}: ${await response.text()}`,
+      );
+    }
+  }
+
+  cancel(
+    requester: Requester,
+    checkInId: string,
+    zone?: CheckInActingZone,
+  ): Promise<Response> {
+    return this.decide(requester, `${checkInId}/cancellation`, zone);
   }
 
   async approved(checkInId: string): Promise<void> {
@@ -189,6 +252,36 @@ export class CheckInsJourney {
     });
   }
 
+  async movedRowOf(checkInId: string): Promise<MovedCheckInRow> {
+    const [row] = await this.rig.suite.postgres.queryRows<MovedCheckInRow>({
+      sql: 'select status, starts_at as "startsAt", earlier_starts_at as "earlierStartsAt", moves, new_time_note as "newTimeNote", proposed_by as "proposedBy", client_time_zone as "clientTimeZone", answered_at as "answeredAt" from app.check_ins where id = $1',
+      values: [checkInId],
+    });
+
+    if (!row) {
+      throw new Error(`No check-in ${checkInId} is stored.`);
+    }
+
+    return row;
+  }
+
+  async sentEmailsFor(
+    checkInId: string,
+    key?: CheckInEmailKey,
+  ): Promise<SentEmail[]> {
+    const emails = await this.rig.suite.sentEmails();
+    const keyPrefix = `check-in:${checkInId}:`;
+    const isWanted = key
+      ? (idempotencyKey: string) =>
+          idempotencyKey === `${keyPrefix}${key.moves}:${key.notification}`
+      : (idempotencyKey: string) => idempotencyKey.startsWith(keyPrefix);
+
+    return emails.filter(
+      ({ idempotencyKey }) =>
+        idempotencyKey !== null && isWanted(idempotencyKey),
+    );
+  }
+
   heldCheckInHours(): Promise<HeldCheckInHour[]> {
     return this.rig.suite.postgres.queryRows<HeldCheckInHour>({
       sql: 'select check_in_id as "checkInId", starts_at as "startsAt", ends_at as "endsAt" from app.coach_time_reservations where check_in_id is not null order by starts_at',
@@ -196,14 +289,22 @@ export class CheckInsJourney {
     });
   }
 
-  private answer(
+  private async timesOf(response: Response): Promise<string[]> {
+    if (response.status !== 200) {
+      throw new Error(`Reading the open times answered ${response.status}.`);
+    }
+
+    return openTimesSchema.parse(await response.json()).times;
+  }
+
+  private decide(
     requester: Requester,
     target: string,
-    answer: CheckInAnswer | undefined,
+    zone: CheckInActingZone | undefined,
   ): Promise<Response> {
     return this.send(requester, `${CHECK_INS_API}/${target}`, {
-      ...(answer && {
-        body: JSON.stringify(answer),
+      ...(zone && {
+        body: JSON.stringify(zone),
         headers: { "Content-Type": "application/json" },
       }),
       method: "POST",

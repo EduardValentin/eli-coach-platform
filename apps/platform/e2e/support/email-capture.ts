@@ -95,6 +95,14 @@ export async function latestSubjectTo(address: string): Promise<string | null> {
   }
 }
 
+export async function subjectsTo(address: string): Promise<string[]> {
+  const response = await fetch(
+    `${EMAIL_CAPTURE_URL}${EMAILS_PATH}?${new URLSearchParams({ to: address })}`,
+  );
+
+  return ((await response.json()) as SentEmail[]).map(({ subject }) => subject);
+}
+
 export async function emailTo(
   address: string,
   subject: string,

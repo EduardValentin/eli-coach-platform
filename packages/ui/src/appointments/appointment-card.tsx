@@ -1,10 +1,11 @@
-import { Mail, Phone } from "lucide-react";
+import { Mail, Phone, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
 import { LABEL_CLASS } from "../lib/typography";
 import { Avatar } from "../primitives/avatar";
 import { DateTimeLabel } from "../primitives/date-time-label";
+import { IconHint } from "../primitives/icon-hint";
 import type {
   AppointmentAttendee,
   AppointmentDetail,
@@ -14,6 +15,8 @@ import type {
 } from "./appointment";
 
 const CONTACT_GLYPH_SIZE = 13;
+
+const RESCHEDULED_GLYPH_SIZE = 12;
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
   past: "text-text-muted",
@@ -64,18 +67,44 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
   );
 }
 
+function formatAppointmentTime({ date, time }: AppointmentTime) {
+  return `${date} · ${time}`;
+}
+
+function RescheduledMarker({ from }: { from: AppointmentTime }) {
+  const label = `Rescheduled from ${formatAppointmentTime(from)}`;
+
+  return (
+    <IconHint
+      className="self-center"
+      icon={<RefreshCw aria-hidden="true" size={RESCHEDULED_GLYPH_SIZE} />}
+      label={label}
+      size="compact"
+      tone="muted"
+    >
+      {label}
+    </IconHint>
+  );
+}
+
 function AppointmentTimeRow({
   label,
+  rescheduledFrom,
   when,
 }: {
   label?: string;
+  rescheduledFrom?: AppointmentTime;
   when: AppointmentTime;
 }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-1.5">
       <DateTimeLabel size="sm" when={when} />
+      {rescheduledFrom && <RescheduledMarker from={rescheduledFrom} />}
       {label && (
-        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+        <span
+          data-parity="appointment-when-label"
+          className="basis-full text-sm text-text-secondary sm:basis-auto"
+        >
           <span className="hidden sm:inline">· </span>
           {label}
         </span>
@@ -120,7 +149,9 @@ type AppointmentCardProps = {
   quote?: string;
   quoteAuthor?: string;
   quoteParity?: string;
+  rescheduledFrom?: AppointmentTime;
   status?: AppointmentStatus;
+  supersededWhen?: AppointmentTime;
   titleElement?: AppointmentTitleElement;
   when: AppointmentTime;
   whenLabel?: string;
@@ -136,7 +167,9 @@ export function AppointmentCard({
   quote,
   quoteAuthor,
   quoteParity,
+  rescheduledFrom,
   status = "scheduled",
+  supersededWhen,
   titleElement: Title = "p",
   when,
   whenLabel,
@@ -164,7 +197,17 @@ export function AppointmentCard({
             {badges}
           </div>
 
-          <AppointmentTimeRow label={whenLabel} when={when} />
+          {supersededWhen && (
+            <s className="mb-0.5 block text-xs text-text-secondary">
+              {formatAppointmentTime(supersededWhen)}
+            </s>
+          )}
+
+          <AppointmentTimeRow
+            label={whenLabel}
+            rescheduledFrom={rescheduledFrom}
+            when={when}
+          />
 
           <AttendeeContactRow attendee={attendee} />
 

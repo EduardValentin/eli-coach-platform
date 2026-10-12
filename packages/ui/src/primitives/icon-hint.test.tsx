@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Info } from "lucide-react";
+import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { IconHint } from "./icon-hint";
@@ -138,5 +139,54 @@ describe("IconHint", () => {
     expect(
       (await screen.findByText(HINT)).closest('[data-parity-root="RatioHint"]'),
     ).not.toBeNull();
+  });
+});
+
+describe("IconHint presentation", () => {
+  function renderPresented(
+    presentation: Pick<ComponentProps<typeof IconHint>, "size" | "tone">,
+  ) {
+    render(
+      <IconHint
+        icon={<Info aria-hidden="true" size={12} />}
+        label="Rescheduled"
+        {...presentation}
+      >
+        Rescheduled
+      </IconHint>,
+    );
+
+    return screen.getByRole("button", { name: "Rescheduled" });
+  }
+
+  it("is a 24px round button by default", () => {
+    // arrange
+    // act
+    const trigger = renderPresented({});
+
+    // assert
+    expect(trigger).toHaveClass("size-6", "rounded-full");
+  });
+
+  it("is a 20px button with the control corner when compact", () => {
+    // arrange
+    // act
+    const trigger = renderPresented({ size: "compact" });
+
+    // assert
+    expect(trigger).toHaveClass("size-5", "rounded-control");
+    expect(trigger).not.toHaveClass("size-6", "rounded-full");
+  });
+
+  it("uses secondary ink that turns primary on hover when muted", () => {
+    // arrange
+    // act
+    const trigger = renderPresented({ tone: "muted" });
+
+    // assert
+    expect(trigger).toHaveClass(
+      "text-text-secondary",
+      "hover:text-text-primary",
+    );
   });
 });

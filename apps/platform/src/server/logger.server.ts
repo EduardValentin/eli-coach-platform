@@ -26,6 +26,14 @@ type ConsoleLogger = AcquisitionIncidents &
 
 export function createConsoleLogger(): ConsoleLogger {
   return {
+    awaitingCheckInsCountFailed: ({ error, party }) => {
+      console.error("Check-ins awaiting an answer could not be counted.", {
+        errorCategory: "check_in_awaiting_count_failure",
+        errorClass: errorClassOf(error),
+        party,
+        ...errorCodeOf(error),
+      });
+    },
     bookingModeReadFailed: () => {
       console.error("Assessment call booking mode read failed.", {
         errorCategory: "assessment_call_booking_mode_read_failure",
@@ -42,6 +50,18 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "check_in_notification_failure",
         notification,
       });
+    },
+    coachingEndNotPropagated: ({ clientId, endsAt, error, subscriptionId }) => {
+      console.error(
+        "Coaching end did not reach the client's check-ins; their later check-ins stay booked.",
+        {
+          clientId,
+          endsAt: endsAt.toISOString(),
+          errorCategory: "coaching_end_propagation_failure",
+          errorClass: errorClassOf(error),
+          subscriptionId,
+        },
+      );
     },
     paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {
       console.error(

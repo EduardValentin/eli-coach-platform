@@ -244,4 +244,150 @@ describe('EmailPreview', () => {
     expect(markup).toContain('That hour is free again.');
     expect(markup).toContain('Europe/Bucharest');
   });
+
+  it('previews the new time to the client with the coach note', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in new time' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time — to-client',
+      'Eli proposed a new time for your check-in',
+    );
+    expect(markup).toContain('>EARLIER<');
+    expect(markup).toContain('>NEW TIME<');
+    expect(markup).toContain('>NOTE<');
+    expect(markup).toContain('Answer the proposal');
+    expect(markup).toContain('/portal/checkins');
+    expect(markup).toContain('Europe/London');
+  });
+
+  it('previews the new time to the coach without a note', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+    await user.click(screen.getByRole('button', { name: 'Check-in new time' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'To the coach, without a note' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time — to-coach',
+      'Jane Doe proposed a new time for your check-in',
+    );
+    expect(markup).not.toContain('>NOTE<');
+    expect(markup).toContain('/coach/checkins');
+    expect(markup).toContain('Europe/Bucharest');
+  });
+
+  it('previews the accepted new time with the join link and the calendar offer', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in new time accepted' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time accepted — to-client',
+      'Eli accepted the new time',
+    );
+    expect(markup).toContain('Join the check-in');
+    expect(markup).toContain('/portal/checkins/ci-demo/join');
+    expect(markup).toContain('Add to Google Calendar');
+    expect(markup).toContain('text=Check-in+with+Eli');
+  });
+
+  it('previews the accepted new time to the coach', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+    await user.click(screen.getByRole('button', { name: 'Check-in new time accepted' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'To the coach' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time accepted — to-coach',
+      'Jane Doe accepted the new time',
+    );
+    expect(markup).toContain('/coach/checkins/ci-demo/join');
+    expect(markup).toContain('text=Check-in+with+Jane+Doe');
+    expect(markup).toContain('Europe/Bucharest');
+  });
+
+  it('previews the declined new time', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in new time declined' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time declined — to-client',
+      'Eli declined the new time',
+    );
+    expect(markup).toContain('That hour is free again.');
+    expect(markup).toContain('Europe/London');
+  });
+
+  it('previews the declined new time to the coach', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+    await user.click(screen.getByRole('button', { name: 'Check-in new time declined' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'To the coach' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in new time declined — to-coach',
+      'Jane Doe declined the new time',
+    );
+    expect(markup).toContain('Europe/Bucharest');
+  });
+
+  it('previews the cancelled check-in', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Check-in cancelled' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in cancelled — to-client',
+      'Eli cancelled the check-in',
+    );
+    expect(markup).toContain('That hour is free again.');
+    expect(markup).toContain('Europe/London');
+  });
+
+  it('previews the cancelled check-in to the coach', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+    await user.click(screen.getByRole('button', { name: 'Check-in cancelled' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'To the coach' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Check-in cancelled — to-coach',
+      'Jane Doe cancelled the check-in',
+    );
+    expect(markup).toContain('Europe/Bucharest');
+  });
 });

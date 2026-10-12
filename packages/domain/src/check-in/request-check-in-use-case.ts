@@ -60,12 +60,19 @@ export class RequestCheckInUseCase {
       return { status: "invalid_time_zone" };
     }
 
-    const clientId = await this.reach.reachableClientIdOf(
-      command.authSubjectId,
-    );
+    const client = await this.reach.reachableClientOf(command.authSubjectId);
 
-    if (!clientId) {
+    if (!client) {
       return { status: "ended" };
+    }
+
+    if (
+      !CheckIn.startsBeforeCoachingEnd({
+        startsAt: command.startsAt,
+        coachingEndsAt: client.coachingEndsAt,
+      })
+    ) {
+      return { status: "time_taken" };
     }
 
     const now = this.options.clock.now();
@@ -84,7 +91,7 @@ export class RequestCheckInUseCase {
     const requested = await this.options.checkIns.request({
       checkIn: CheckIn.requestedByClient({
         id: this.options.ids.generate(),
-        clientId,
+        clientId: client.clientId,
         startsAt: command.startsAt,
         clientTimeZone: zone.timeZone,
         coachTimeZone: availability.timeZone,

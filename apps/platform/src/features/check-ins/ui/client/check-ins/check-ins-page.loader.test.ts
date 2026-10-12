@@ -17,19 +17,46 @@ const LISTING: ClientCheckIns = {
       kind: "ad_hoc",
       status: "pending",
       initiatedBy: "client",
+      proposedBy: "client",
       awaitsViewer: false,
       viewerMayWithdraw: true,
+      viewerProposal: "none",
+      viewerMayCancel: false,
+      newTimeWaits: false,
       isWaitingRequest: true,
       startsAt: "2026-10-15T09:00:00.000Z",
       endsAt: "2026-10-15T10:00:00.000Z",
       joinEmphasisFrom: "2026-10-15T08:50:00.000Z",
+      earlierStartsAt: null,
+      moves: 0,
       note: "Can we look at my squat form?",
+      newTimeNote: null,
+    },
+    {
+      id: "7a3c0d2f-5e4b-4f9c-8b8d-2e3f4a5b6c7d",
+      kind: "ad_hoc",
+      status: "approved",
+      initiatedBy: "client",
+      proposedBy: "coach",
+      awaitsViewer: false,
+      viewerMayWithdraw: false,
+      viewerProposal: "exhausted",
+      viewerMayCancel: true,
+      newTimeWaits: false,
+      isWaitingRequest: false,
+      startsAt: "2026-10-22T13:00:00.000Z",
+      endsAt: "2026-10-22T14:00:00.000Z",
+      joinEmphasisFrom: "2026-10-22T12:50:00.000Z",
+      earlierStartsAt: "2026-10-20T12:00:00.000Z",
+      moves: 2,
+      note: "Can we plan my holiday training?",
+      newTimeNote: "Thursday afternoon suits me better.",
     },
   ],
 };
 
 describe("the client's check-ins loader", () => {
-  it("loads her own check-ins", async () => {
+  it("loads her own check-ins, a moved one with its earlier time, moves and new-time note", async () => {
     // arrange
     const loadCheckIns = vi.fn().mockResolvedValue(LISTING);
     const args = createRequestArgs({

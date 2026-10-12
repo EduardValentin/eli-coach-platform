@@ -124,7 +124,10 @@ describe.sequential("client check-in answers integration", () => {
     expect(
       (await checkIns.heldCheckInHours()).map((hour) => hour.checkInId),
     ).toEqual([checkInId]);
-    const [approved, ...others] = await emailsFor(checkInId, "approved");
+    const [approved, ...others] = await checkIns.sentEmailsFor(checkInId, {
+      moves: 0,
+      notification: "approved",
+    });
     expect(others).toEqual([]);
     expect(approved?.to).toBe(COACH_EMAIL);
     expect(approved?.replyTo).toBe(ANA.email);
@@ -167,7 +170,10 @@ describe.sequential("client check-in answers integration", () => {
     expect(await checkIns.openTimesOf(ANA_SESSION)).toContain(
       THURSDAY_FIRST_HOUR,
     );
-    const [declined, ...others] = await emailsFor(checkInId, "declined");
+    const [declined, ...others] = await checkIns.sentEmailsFor(checkInId, {
+      moves: 0,
+      notification: "declined",
+    });
     expect(others).toEqual([]);
     expect(declined?.to).toBe(COACH_EMAIL);
     expect(declined?.subject).toBe("Ana Popescu declined the check-in");
@@ -195,7 +201,10 @@ describe.sequential("client check-in answers integration", () => {
       }),
     ]);
     expect(await checkIns.heldCheckInHours()).toEqual([]);
-    const [cancelled, ...others] = await emailsFor(checkInId, "withdrawn");
+    const [cancelled, ...others] = await checkIns.sentEmailsFor(checkInId, {
+      moves: 0,
+      notification: "withdrawn",
+    });
     expect(others).toEqual([]);
     expect(cancelled?.to).toBe(ANA.email);
     expect(cancelled?.subject).toBe("Eli cancelled the check-in request");
@@ -319,8 +328,8 @@ describe.sequential("client check-in answers integration", () => {
         }),
       ]);
       expect(
-        (await emailsFor(checkInId)).map(({ idempotencyKey }) =>
-          idempotencyKey?.includes(`check-in:${checkInId}:requested`),
+        (await checkIns.sentEmailsFor(checkInId)).map(({ idempotencyKey }) =>
+          idempotencyKey?.includes(`check-in:${checkInId}:0:requested`),
         ),
       ).toEqual([true]);
     },
@@ -341,7 +350,7 @@ describe.sequential("client check-in answers integration", () => {
       expect(await response.json()).toEqual({ error: "ended" });
       expect(
         (await checkIns.checkInRowsOf(clientId)).map(({ status }) => status),
-      ).toEqual(["pending"]);
+      ).toEqual(["cancelled"]);
     },
   );
 
@@ -363,7 +372,7 @@ describe.sequential("client check-in answers integration", () => {
       row?.status === "approved" ? 1 : 0,
     );
     expect(
-      (await emailsFor(checkInId)).filter(
+      (await checkIns.sentEmailsFor(checkInId)).filter(
         ({ idempotencyKey }) => !idempotencyKey?.includes(":requested"),
       ),
     ).toHaveLength(1);
@@ -404,12 +413,4 @@ async function endAnasCoaching(): Promise<void> {
   if (delivered.status !== 200) {
     throw new Error(`Ending her coaching answered ${delivered.status}.`);
   }
-}
-
-async function emailsFor(checkInId: string, event = "") {
-  const emails = await suite.sentEmails();
-
-  return emails.filter((email) =>
-    email.idempotencyKey?.includes(`check-in:${checkInId}:${event}`),
-  );
 }

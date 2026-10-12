@@ -1,11 +1,17 @@
 import type {
   ApproveCheckInResult,
   ApproveCheckInUseCase,
+  CancelCheckInResult,
+  CancelCheckInUseCase,
   CheckInActor,
   CheckInActorCommand,
   DeclineCheckInResult,
   DeclineCheckInUseCase,
+  ListOpenCheckInTimesCommand,
+  ListOpenCheckInTimesResult,
   ListOpenCheckInTimesUseCase,
+  ProposeCheckInTimeResult,
+  ProposeCheckInTimeUseCase,
   WithdrawCheckInRequestResult,
   WithdrawCheckInRequestUseCase,
 } from "@eli-coach-platform/domain/check-in";
@@ -19,21 +25,29 @@ import {
   readCheckInBody,
   refusedCheckIn,
   unknownCheckIn,
+  unknownClient,
 } from "~/features/check-ins/api/check-in-transport.server";
 import {
   checkInAnswerSchema,
+  checkInNewTimeSchema,
+  openCheckInTimesQuerySchema,
   openCheckInTimesSchema,
 } from "~/features/check-ins/public/check-ins";
 
 type SharedCheckInsControllerOptions = {
   approveCheckIn: ApproveCheckInUseCase;
+  cancelCheckIn: CancelCheckInUseCase;
   declineCheckIn: DeclineCheckInUseCase;
   listOpenCheckInTimes: ListOpenCheckInTimesUseCase;
+  proposeCheckInTime: ProposeCheckInTimeUseCase;
   withdrawCheckInRequest: WithdrawCheckInRequestUseCase;
 };
 
 type CheckInDecisionResult =
-  ApproveCheckInResult | DeclineCheckInResult | WithdrawCheckInRequestResult;
+  | ApproveCheckInResult
+  | CancelCheckInResult
+  | DeclineCheckInResult
+  | WithdrawCheckInRequestResult;
 
 type CheckInDecision = {
   execute(command: CheckInActorCommand): Promise<CheckInDecisionResult>;
@@ -51,16 +65,59 @@ export class SharedCheckInsController {
   constructor(private readonly options: SharedCheckInsControllerOptions) {}
 
   async listOpenTimes(args: LoaderFunctionArgs): Promise<Response> {
-    this.requireCheckInActor(args);
-
-    const times = await this.options.listOpenCheckInTimes.execute();
-
-    return Response.json(
-      openCheckInTimesSchema.parse({
-        times: times.map((time) => time.toISOString()),
-      }),
-      { headers: { "Cache-Control": "no-store" } },
+    const command = this.openTimesCommandOf(
+      this.requireCheckInActor(args),
+      args.request,
     );
+
+    if (!command) {
+      return unknownClient();
+    }
+
+    const result = await this.options.listOpenCheckInTimes.execute(command);
+
+    return this.respondToOpenTimes(result);
+  }
+
+  async proposeNewTime(
+    args: ActionFunctionArgs,
+    checkInId: string | undefined,
+  ): Promise<Response> {
+    const actor = this.requireCheckInActor(args);
+    const id = checkInIdSchema.safeParse(checkInId);
+
+    if (!id.success) {
+      return unknownCheckIn();
+    }
+
+    const newTime = checkInNewTimeSchema.safeParse(
+      await readCheckInBody(args.request),
+    );
+
+    if (!newTime.success) {
+      return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
+    }
+
+    const result = await this.options.proposeCheckInTime.execute({
+      checkInId: id.data,
+      actor,
+      startsAt: new Date(newTime.data.startsAt),
+      note: newTime.data.note ?? null,
+      ...(newTime.data.timeZone && { clientTimeZone: newTime.data.timeZone }),
+    });
+
+    return this.respondToProposal(result);
+  }
+
+  cancel(
+    args: ActionFunctionArgs,
+    checkInId: string | undefined,
+  ): Promise<Response> {
+    return this.decide({
+      args,
+      checkInId,
+      decision: this.options.cancelCheckIn,
+    });
   }
 
   approve(
@@ -125,9 +182,67 @@ export class SharedCheckInsController {
     return this.respondToDecision(result);
   }
 
+  private openTimesCommandOf(
+    actor: CheckInActor,
+    request: Request,
+  ): ListOpenCheckInTimesCommand | null {
+    if (actor.party !== "coach") {
+      return { actor };
+    }
+
+    const query = openCheckInTimesQuerySchema.safeParse(
+      Object.fromEntries(new URL(request.url).searchParams),
+    );
+
+    return query.success ? { actor, clientId: query.data.clientId } : null;
+  }
+
+  private respondToOpenTimes(result: ListOpenCheckInTimesResult): Response {
+    switch (result.status) {
+      case "listed":
+        return Response.json(
+          openCheckInTimesSchema.parse({
+            times: result.times.map((time) => time.toISOString()),
+          }),
+          { headers: { "Cache-Control": "no-store" } },
+        );
+      case "client_required":
+        return refusedCheckIn("invalid_request", { status: UNPROCESSABLE });
+      case "unknown_client":
+        return unknownClient();
+      case "ended":
+        return refusedCheckIn("ended");
+    }
+  }
+
+  private respondToProposal(result: ProposeCheckInTimeResult): Response {
+    switch (result.status) {
+      case "proposed":
+        return checkInOutcomeResponse(
+          { status: "proposed", checkInId: result.checkIn.id },
+          { status: 200 },
+        );
+      case "unknown":
+        return unknownCheckIn();
+      case "invalid_time_zone":
+      case "note_too_long":
+        return refusedCheckIn(result.status, { status: UNPROCESSABLE });
+      case "ended":
+      case "time_taken":
+      case "moves_exhausted":
+        return refusedCheckIn(result.status);
+      case "changed_meanwhile":
+      case "not_pending":
+      case "expired":
+      case "not_your_turn":
+        return refusedCheckIn("not_pending");
+    }
+  }
+
   private respondToDecision(result: CheckInDecisionResult): Response {
     switch (result.status) {
       case "approved":
+      case "cancelled":
       case "declined":
       case "withdrawn":
         return checkInOutcomeResponse(
@@ -140,7 +255,10 @@ export class SharedCheckInsController {
         return refusedCheckIn("ended");
       case "invalid_time_zone":
         return refusedCheckIn("invalid_time_zone", { status: UNPROCESSABLE });
+      case "changed_meanwhile":
       case "not_pending":
+      case "not_approved":
+      case "not_allowed":
       case "expired":
       case "not_your_turn":
         return refusedCheckIn("not_pending");

@@ -34,6 +34,7 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
+  CoachingSubscription,
   MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
@@ -43,6 +44,7 @@ import {
   RefreshPaymentCardUseCase,
   StartCheckoutUseCase,
   StartProgramNowUseCase,
+  type CoachingEndHandler,
   type CoachingSubscriptionIncidents,
   type PaidClientAdmission,
   type PaymentCheckout,
@@ -142,6 +144,7 @@ export type CoachingSalesFeatureHandles = {
   assessmentCallReader: AssessmentCallReader;
   clock: Clock;
   coachEmail: string;
+  coachingEndHandler: CoachingEndHandler;
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
@@ -243,6 +246,7 @@ export function composeCoachingSalesFeature(
 
   const subscriptionPorts = {
     clock,
+    coachingEnd: handles.coachingEndHandler,
     incidents: handles.incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
@@ -271,10 +275,9 @@ export function composeCoachingSalesFeature(
       clock,
       subscriptions,
     }),
-    reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase({
-      incidents: handles.incidents,
-      subscriptions,
-    }),
+    reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase(
+      subscriptionPorts,
+    ),
     refreshPaymentCard: new RefreshPaymentCardUseCase({
       cards: paymentCards,
       customerCards: handles.paymentCustomerCards,
@@ -326,8 +329,18 @@ export function composeCoachingSalesFeature(
     },
   };
 
+  const coachingEndOf = async (clientId: string) =>
+    (await subscriptions.findCurrentForClient(clientId))?.coachingEndsAt() ??
+    null;
+
   const checkInClients: CheckInClients = {
-    findByAuthSubjectId: portalClientOf,
+    findByAuthSubjectId: async (authSubjectId) => {
+      const client = await portalClientOf(authSubjectId);
+
+      return client
+        ? { ...client, coachingEndsAt: await coachingEndOf(client.clientId) }
+        : null;
+    },
     findById: async (clientId) => {
       const entry = await roster.findById(clientId);
 
@@ -353,6 +366,11 @@ export function composeCoachingSalesFeature(
           }),
         }),
         bookingTimeZone: call.visitorTimeZone,
+        coachingEndsAt: entry.subscription
+          ? CoachingSubscription.reconstitute(
+              entry.subscription,
+            ).coachingEndsAt()
+          : null,
       };
     },
     identitiesOf: async (clientIds) =>

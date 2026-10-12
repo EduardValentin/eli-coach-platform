@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { MoreHorizontal, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { DisabledActionHint } from './DisabledActionHint';
 import { HintPopover } from './HintPopover';
 import { Button } from './ui/button';
 import {
@@ -17,6 +18,7 @@ export type RowMenuAction = {
   tone?: 'default' | 'destructive';
   disabled?: boolean;
   disabledHint?: string;
+  disabledReason?: string;
   onSelect: () => void;
 };
 
@@ -34,14 +36,16 @@ function RowMenuItem({
   action: RowMenuAction;
   onChoose: (run: () => void) => void;
 }) {
-  const { name, label, icon: Icon, tone, disabled, disabledHint, onSelect } = action;
-  const blocked = disabledHint !== undefined;
+  const { name, label, icon: Icon, tone, disabled, disabledHint, disabledReason, onSelect } = action;
+  const flagged = disabledHint !== undefined;
+  const blocked = flagged || Boolean(disabledReason);
 
   const item = (
     <DropdownMenuItem
       data-parity={`row-action-${name}`}
       disabled={disabled}
-      aria-disabled={blocked ? true : undefined}
+      aria-disabled={flagged ? true : undefined}
+      className={cn({ 'aria-disabled:opacity-100': flagged })}
       onSelect={(event) => {
         if (blocked) {
           event.preventDefault();
@@ -51,9 +55,9 @@ function RowMenuItem({
       }}
       variant={tone}
     >
-      <Icon aria-hidden="true" className={cn({ 'opacity-50': blocked })} />
-      <span className={cn({ 'opacity-50': blocked })}>{label}</span>
-      {blocked && (
+      <Icon aria-hidden="true" className={cn({ 'opacity-50': flagged })} />
+      <span className={cn({ 'opacity-50': flagged })}>{label}</span>
+      {flagged && (
         <span className="ml-auto flex pl-2">
           <TriangleAlert aria-hidden="true" className="text-warning" />
         </span>
@@ -61,7 +65,11 @@ function RowMenuItem({
     </DropdownMenuItem>
   );
 
-  if (!blocked) return item;
+  if (disabledReason) {
+    return <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>;
+  }
+
+  if (!flagged) return item;
 
   return (
     <HintPopover hint={disabledHint} align="end" contentParity={`row-action-${name}-hint`}>

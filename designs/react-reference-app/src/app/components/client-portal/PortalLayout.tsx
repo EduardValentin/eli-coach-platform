@@ -4,14 +4,18 @@ import { PORTAL_MAIN_ID, PortalSidebar } from './PortalSidebar';
 import { CLIENT_PORTAL_LINKS } from './navigation-links';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
 import { useAppState } from '../../context/AppContext';
+import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
 import { SIGNED_IN_CLIENT_ID } from '../../context/ClientProfileContext';
 import { useUnopenedResources } from '../../hooks/useClientResources';
 
 const RESOURCES_HREF = '/portal/resources';
+const CHECKINS_HREF = '/portal/checkins';
 
 export function PortalLayout() {
   const { appState } = useAppState();
   const hasUnopenedResources = useUnopenedResources(SIGNED_IN_CLIENT_ID);
+  const { getCheckinsAwaiting } = useCheckins();
+  const checkinsAwaiting = getCheckinsAwaiting('client', DEMO_CLIENT.id).length;
 
   useEffect(() => {
     document.documentElement.dataset.portal = 'client';
@@ -29,6 +33,7 @@ export function PortalLayout() {
       <PortalSidebar
         links={CLIENT_PORTAL_LINKS}
         markedHrefs={hasUnopenedResources ? [RESOURCES_HREF] : []}
+        countByHref={{ [CHECKINS_HREF]: checkinsAwaiting }}
       />
 
       <main

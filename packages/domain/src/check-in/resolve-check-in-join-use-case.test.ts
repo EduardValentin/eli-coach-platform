@@ -27,6 +27,9 @@ const APPROVED = {
   note: null,
   requestedAt: new Date("2026-06-01T08:30:00.000Z"),
   answeredAt: new Date("2026-06-01T12:00:00.000Z"),
+  earlierStartsAt: null,
+  moves: 0,
+  newTimeNote: null,
 } satisfies CheckInProps;
 
 const ANA: CheckInActor = { party: "client", authSubjectId: "user_ana" };
@@ -62,13 +65,15 @@ function createResolveJoin(options?: {
     listForClient: vi.fn(),
     listAll: vi.fn(),
     settle: vi.fn(),
+    move: vi.fn(),
+    cancelStartingFrom: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
       .fn()
       .mockResolvedValue(
         options?.client === undefined
-          ? { clientId: "client-1", portal: "reachable" }
+          ? { clientId: "client-1", portal: "reachable", coachingEndsAt: null }
           : options.client,
       ),
     identitiesOf: vi.fn(),
@@ -155,7 +160,13 @@ describe("ResolveCheckInJoinUseCase", () => {
     ["a check-in that does not exist", { found: null }],
     [
       "a client whose coaching ended",
-      { client: { clientId: "client-1", portal: "ended" } as const },
+      {
+        client: {
+          clientId: "client-1",
+          portal: "ended",
+          coachingEndsAt: null,
+        } as const,
+      },
     ],
   ])("answers unknown to the client for %s", async (_situation, options) => {
     // arrange

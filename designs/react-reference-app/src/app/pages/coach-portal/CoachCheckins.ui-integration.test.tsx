@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevToggle } from '../../components/DevToggle';
@@ -55,6 +55,10 @@ function renderAt(path: string) {
                   <MessagingProvider>
                     <NotificationProvider>
                       <Routes>
+                        <Route
+                          path="/coach"
+                          element={<Link to="/coach/checkins">Check-ins</Link>}
+                        />
                         <Route path="/coach/checkins" element={<CoachCheckins />} />
                         <Route
                           path="/coach/checkins/:checkinId/join"
@@ -100,6 +104,33 @@ async function showTab(name: string) {
   await userEvent.click(screen.getByRole('tab', { name: new RegExp(`^${name}`) }));
 }
 
+describe('where the coach check-ins page opens', () => {
+  it('opens on Upcoming once no check-in waits for her answer', async () => {
+    // arrange
+    renderAt('/coach?session=coach');
+    await userEvent.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Check-ins' }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Pending check-ins' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'None pending' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Check-ins' }));
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens on the tab the address names even while requests wait for her', () => {
+    // arrange
+    // act
+    renderPage('&view=past');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 describe('the coach check-ins page', () => {
   it('opens on the requests and counts the ones waiting for her answer', () => {
     // arrange
@@ -110,7 +141,7 @@ describe('the coach check-ins page', () => {
     const requestsTab = screen.getByRole('tab', { name: /^Requests/ });
 
     expect(requestsTab).toHaveAttribute('aria-selected', 'true');
-    expect(requestsTab).toHaveAccessibleName('Requests 2 waiting on you');
+    expect(requestsTab).toHaveAccessibleName('Requests 3 waiting on you');
     expect(within(rowFor('Jessica Alba')).getByText(/I have some questions about my macros/)).toBeInTheDocument();
   });
 
@@ -128,7 +159,7 @@ describe('the coach check-ins page', () => {
     expect(
       await screen.findByText('Approved check-in with Jessica Alba', {}, SERVICE_TIMEOUT),
     ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 1 waiting on you');
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
     // act
     await showTab('Upcoming');
     // assert
@@ -165,7 +196,7 @@ describe('the coach check-ins page', () => {
       await screen.findByText("The check-in wasn't approved. Try again.", {}, SERVICE_TIMEOUT),
     ).toBeInTheDocument();
     expect(within(row).getByRole('button', { name: 'Approve' })).toBeEnabled();
-    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 3 waiting on you');
   });
 
   it('explains the empty requests tab', async () => {
@@ -363,6 +394,147 @@ describe('the actions on the coach’s check-in rows', () => {
 });
 
 const OWN_REQUEST_NOTE = /Quick look at your first two weeks/;
+const CLIENT_NEW_TIME_NOTE = /I have a work call that morning/;
+const OWN_NEW_TIME_NOTE = /I am travelling that Wednesday/;
+const MOVED_TWICE_NOTE = /Thursday afternoon suits me better/;
+const MOVED_TWICE_REASON = 'This check-in has already been moved twice.';
+const TIME_LABEL = /^\d{1,2}:\d{2}\s?[AP]M$/;
+
+function openDays(dialog: HTMLElement): HTMLButtonElement[] {
+  return [...dialog.querySelectorAll<HTMLButtonElement>('td[data-day] button')].filter(
+    (day) => !day.disabled && day.getAttribute('aria-disabled') !== 'true',
+  );
+}
+
+async function proposeNewTimeFor(row: HTMLElement, { noteLabel, note }: { noteLabel: string; note: string }) {
+  await userEvent.click(moreActionsIn(row));
+  await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+  const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
+  await waitFor(() => expect(openDays(sheet).length).toBeGreaterThan(0), SERVICE_TIMEOUT);
+  await userEvent.click(openDays(sheet)[0]);
+  const [time] = await within(sheet).findAllByRole('button', { name: TIME_LABEL });
+  await userEvent.click(time);
+  await userEvent.type(within(sheet).getByLabelText(noteLabel), note);
+  await userEvent.click(within(sheet).getByRole('button', { name: `Propose ${time.textContent}` }));
+  await waitFor(
+    () => expect(screen.queryByRole('dialog', { name: 'Propose a new time' })).not.toBeInTheDocument(),
+    SERVICE_TIMEOUT,
+  );
+}
+
+describe('new times on the coach’s check-ins', () => {
+  it('shows Decline and Accept on a client’s new time with Reschedule in the menu', async () => {
+    // arrange
+    renderPage();
+    const row = rowWith(CLIENT_NEW_TIME_NOTE);
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(within(row).getByText(/New time from Jane$/)).toBeInTheDocument();
+    expect(row.querySelector('s')).not.toBeNull();
+    expect(shownRowActions(row)).toEqual(['Decline', 'Accept']);
+    expect(items).toEqual(['Reschedule']);
+  });
+
+  it('shows nothing to do on her own new time', () => {
+    // arrange
+    // act
+    renderPage();
+
+    // assert
+    const row = rowWith(OWN_NEW_TIME_NOTE);
+    expect(within(row).getByText(/New time from you$/)).toBeInTheDocument();
+    expect(shownRowActions(row)).toEqual([]);
+    expect(within(row).queryByRole('button', { name: MORE_ACTIONS })).not.toBeInTheDocument();
+  });
+
+  it('accepts a client’s new time and moves it to upcoming, marked as rescheduled', async () => {
+    // arrange
+    renderPage();
+
+    // act
+    await userEvent.click(within(rowWith(CLIENT_NEW_TIME_NOTE)).getByRole('button', { name: 'Accept' }));
+
+    // assert
+    expect(await screen.findByText('Approved check-in with Jane Doe', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    // act
+    await showTab('Upcoming');
+    // assert
+    expect(
+      within(rowWith(CLIENT_NEW_TIME_NOTE)).getByRole('button', { name: /^Rescheduled from / }),
+    ).toBeInTheDocument();
+  });
+
+  it('asks for a note for the client by first name when she proposes a new time', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    await userEvent.click(moreActionsIn(rowFor('Jessica Alba')));
+
+    // act
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+
+    // assert
+    const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
+    expect(sheet).toHaveAccessibleDescription(/^Currently set for \w{3}, \w{3} \d{1,2} · \d{1,2}:\d{2} [AP]M$/);
+    expect(within(sheet).getByLabelText('Add a note for Jessica (optional)')).toBeInTheDocument();
+  });
+
+  it('moves an upcoming check-in under Requests once she proposes a new time', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+
+    // act
+    await proposeNewTimeFor(rowFor('Jessica Alba'), {
+      noteLabel: 'Add a note for Jessica (optional)',
+      note: 'Could we move to the evening?',
+    });
+
+    // assert
+    expect(screen.getByText('New time proposed')).toBeInTheDocument();
+    // act
+    await showTab('Requests');
+    // assert
+    const row = rowWith(/Could we move to the evening\?/);
+    expect(within(row).getByText(/New time from you$/)).toBeInTheDocument();
+    expect(shownRowActions(row)).toEqual([]);
+  });
+
+  it('gives focus back to the row menu button when she closes the dialog', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    const trigger = moreActionsIn(rowFor('Jessica Alba'));
+    await userEvent.click(trigger);
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+    await screen.findByRole('dialog', { name: 'Propose a new time' });
+
+    // act
+    await userEvent.keyboard('{Escape}');
+
+    // assert
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('keeps Reschedule disabled with the reason on a check-in moved twice', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    await userEvent.click(moreActionsIn(rowWith(MOVED_TWICE_NOTE)));
+    const reschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
+
+    // act
+    await userEvent.hover(reschedule);
+
+    // assert
+    expect(reschedule).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByText(MOVED_TWICE_REASON)).toBeInTheDocument();
+  });
+});
 
 describe('the coach’s own requests', () => {
   it('lists them after the requests waiting for her answer, marked as hers', () => {
@@ -392,7 +564,7 @@ describe('the coach’s own requests', () => {
     expect(within(row).getByRole('button', { name: 'Cancelling…' })).toBeDisabled();
     expect(await screen.findByText('Request cancelled', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByText(OWN_REQUEST_NOTE)).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 2 waiting on you');
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAccessibleName('Requests 3 waiting on you');
     // act
     await showTab('Past');
     // assert

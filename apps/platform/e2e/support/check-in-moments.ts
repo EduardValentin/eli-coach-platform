@@ -25,6 +25,19 @@ export function clockTimeOf(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
+export function shortDayOf(instant: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone,
+    weekday: "short",
+  }).format(instant);
+}
+
+export function shortMomentOf(instant: Date, timeZone: string): string {
+  return `${shortDayOf(instant, timeZone)} · ${clockTimeOf(instant, timeZone)}`;
+}
+
 export function emailMomentOf(instant: Date, timeZone: string): string {
   return `${dayNameOf(instant, timeZone)} at ${clockTimeOf(instant, timeZone)}`;
 }

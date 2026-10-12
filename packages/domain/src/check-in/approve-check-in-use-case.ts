@@ -1,6 +1,6 @@
 import type { Clock } from "../shared";
 
-import type { CheckInRefusal, CheckInSnapshot } from "./check-in";
+import type { CheckInAnswerRefusal, CheckInSnapshot } from "./check-in";
 import type { CheckInActorCommand } from "./check-in-actor";
 import type { CheckInClients } from "./check-in-clients";
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -13,7 +13,7 @@ export type ApproveCheckInResult =
   | { status: "unknown" }
   | { status: "ended" }
   | { status: "invalid_time_zone" }
-  | { status: CheckInRefusal };
+  | { status: CheckInAnswerRefusal | "changed_meanwhile" };
 
 type ApproveCheckInUseCaseOptions = {
   checkIns: CheckIns;
@@ -35,7 +35,9 @@ export class ApproveCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "approved",
-      notification: "approved",
+      expectedStatus: "pending",
+      notificationOf: (checkIn) =>
+        checkIn.hasPendingNewTime() ? "newTimeAccepted" : "approved",
     });
 
     return settled.status === "settled"

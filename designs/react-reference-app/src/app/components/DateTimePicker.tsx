@@ -96,7 +96,10 @@ export function SlotPickerFrame({
             </button>
           </div>
 
-          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
+          <div
+            className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1"
+            data-parity="slot-picker-times"
+          >
             {children}
           </div>
 

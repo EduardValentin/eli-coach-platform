@@ -5,29 +5,50 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
-import { MemoryRouter } from "react-router";
+import { createRoutesStub } from "react-router";
 
 import CoachLayoutRoute, { meta } from "./layout";
+import type { CoachNavigationCounts } from "./navigation-links";
 
 afterEach(() => {
   cleanup();
 });
 
-function renderCoachLayout() {
-  return render(
-    <MemoryRouter initialEntries={["/coach"]}>
-      <CoachLayoutRoute />
-    </MemoryRouter>,
-  );
+function renderCoachLayout(
+  entry = "/coach",
+  counts: CoachNavigationCounts = { checkInsAwaiting: 0 },
+) {
+  const RoutesStub = createRoutesStub([
+    {
+      children: [
+        { Component: () => <p>Dashboard page</p>, index: true },
+        { Component: () => <h1>Clients</h1>, path: "clients/*" },
+        { Component: () => <h1>Check-ins</h1>, path: "checkins" },
+        {
+          Component: () => <h1>Assessment calls</h1>,
+          path: "assessment-calls",
+        },
+      ],
+      Component: CoachLayoutRoute,
+      loader: () => counts,
+      path: "/coach",
+    },
+  ]);
+
+  return render(<RoutesStub initialEntries={[entry]} />);
+}
+
+async function findNavigation() {
+  return screen.findByRole("navigation", { name: "Coach portal navigation" });
 }
 
 describe("CoachLayoutRoute", () => {
-  it("renders the Evoa coach shell with labeled navigation landmarks", () => {
+  it("renders the Evoa coach shell with labeled navigation landmarks", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
-    const sidebar = screen.getByRole("complementary", {
+    const sidebar = await screen.findByRole("complementary", {
       name: "Coach portal sidebar",
     });
 
@@ -38,13 +59,13 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("names the mobile top bar for the coach portal", () => {
+  it("names the mobile top bar for the coach portal", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
     expect(
-      screen.getByRole("banner", { name: "Coach portal top bar" }),
+      await screen.findByRole("banner", { name: "Coach portal top bar" }),
     ).toBeInTheDocument();
   });
 
@@ -54,7 +75,7 @@ describe("CoachLayoutRoute", () => {
     renderCoachLayout();
 
     // act
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    await user.click(await screen.findByRole("button", { name: "Open menu" }));
 
     // assert
     expect(
@@ -64,14 +85,12 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the coach pages that exist, Dashboard first", () => {
+  it("shows the coach pages that exist, Dashboard first", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
-    const navigation = screen.getByRole("navigation", {
-      name: "Coach portal navigation",
-    });
+    const navigation = await findNavigation();
     const links = within(navigation).getAllByRole("link");
 
     expect(links).toHaveLength(5);
@@ -87,56 +106,81 @@ describe("CoachLayoutRoute", () => {
     expect(links[4]).toHaveAttribute("href", "/coach/settings");
   });
 
-  it("marks the clients entry as the page being read on a client's page", () => {
+  it("counts the check-ins waiting for her answer on the Check-ins entry", async () => {
     // arrange, act
-    render(
-      <MemoryRouter
-        initialEntries={["/coach/clients/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11"]}
-      >
-        <CoachLayoutRoute />
-      </MemoryRouter>,
-    );
+    renderCoachLayout("/coach", { checkInsAwaiting: 3 });
 
     // assert
-    const navigation = screen.getByRole("navigation", {
-      name: "Coach portal navigation",
+    const navigation = await findNavigation();
+
+    expect(
+      within(navigation).getByRole("link", {
+        name: "Check-ins (3 waiting on you)",
+      }),
+    ).toHaveAttribute("href", "/coach/checkins");
+  });
+
+  it("shows no count on the Check-ins entry while nothing waits for her answer", async () => {
+    // arrange, act
+    renderCoachLayout("/coach", { checkInsAwaiting: 0 });
+
+    // assert
+    const navigation = await findNavigation();
+
+    expect(
+      within(navigation).getByRole("link", { name: "Check-ins" }),
+    ).toHaveTextContent(/^Check-ins$/);
+    expect(screen.queryByText(/waiting on you/)).not.toBeInTheDocument();
+  });
+
+  it("counts the check-ins waiting for her answer in the mobile navigation", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCoachLayout("/coach", { checkInsAwaiting: 1 });
+
+    // act
+    await user.click(await screen.findByRole("button", { name: "Open menu" }));
+
+    // assert
+    const menu = await screen.findByRole("dialog", {
+      name: "Coach portal mobile navigation",
     });
+
+    expect(
+      within(menu).getByRole("link", { name: "Check-ins (1 waiting on you)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("marks the clients entry as the page being read on a client's page", async () => {
+    // arrange, act
+    renderCoachLayout("/coach/clients/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11");
+
+    // assert
+    const navigation = await findNavigation();
 
     expect(
       within(navigation).getByRole("link", { name: "Clients" }),
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("marks the check-ins entry as the page being read", () => {
+  it("marks the check-ins entry as the page being read", async () => {
     // arrange, act
-    render(
-      <MemoryRouter initialEntries={["/coach/checkins"]}>
-        <CoachLayoutRoute />
-      </MemoryRouter>,
-    );
+    renderCoachLayout("/coach/checkins");
 
     // assert
-    const navigation = screen.getByRole("navigation", {
-      name: "Coach portal navigation",
-    });
+    const navigation = await findNavigation();
 
     expect(
       within(navigation).getByRole("link", { name: "Check-ins" }),
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("marks the assessment calls entry as the page being read", () => {
+  it("marks the assessment calls entry as the page being read", async () => {
     // arrange, act
-    render(
-      <MemoryRouter initialEntries={["/coach/assessment-calls"]}>
-        <CoachLayoutRoute />
-      </MemoryRouter>,
-    );
+    renderCoachLayout("/coach/assessment-calls");
 
     // assert
-    const navigation = screen.getByRole("navigation", {
-      name: "Coach portal navigation",
-    });
+    const navigation = await findNavigation();
 
     expect(
       within(navigation).getByRole("link", { name: "Assessment calls" }),
@@ -146,23 +190,24 @@ describe("CoachLayoutRoute", () => {
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("keeps the brand block non-navigating until a coach profile page exists", () => {
+  it("keeps the brand block non-navigating until a coach profile page exists", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
-    const sidebar = screen.getByRole("complementary", {
+    const sidebar = await screen.findByRole("complementary", {
       name: "Coach portal sidebar",
     });
 
     expect(within(sidebar).getByText("Evoa").closest("a")).toBeNull();
   });
 
-  it("contains no notification bell until the coach notifications story", () => {
+  it("contains no notification bell until the coach notifications story", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
+    await findNavigation();
     expect(
       screen.queryByRole("button", { name: /notification/i }),
     ).not.toBeInTheDocument();

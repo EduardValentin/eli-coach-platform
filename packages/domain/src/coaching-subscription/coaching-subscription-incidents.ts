@@ -54,4 +54,10 @@ export interface CoachingSubscriptionIncidents {
     paymentCustomerId: string;
     error: unknown;
   }): void;
+  coachingEndNotPropagated(incident: {
+    subscriptionId: string;
+    clientId: string;
+    endsAt: Date;
+    error: unknown;
+  }): void;
 }

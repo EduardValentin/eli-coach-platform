@@ -24,6 +24,7 @@ export type PortalNavigationLink = {
   label: string;
   icon: LucideIcon;
   marked?: boolean;
+  count?: number;
 };
 
 type PortalMoreSheetContent = {
@@ -69,6 +70,8 @@ type NavigationItemState = "current" | "idle";
 const MAX_BAR_TABS = 4;
 const TAB_ATTENTION_DOT_CLASS_NAME =
   "absolute -top-0.5 -right-0.5 ring-2 ring-surface-base";
+const TAB_NAVIGATION_COUNT_CLASS_NAME =
+  "absolute -top-2 -right-2.5 ring-2 ring-surface-base";
 const MORE_SHEET_ID = "portal-more-sheet";
 const TAB_CLASS_NAME =
   "flex h-full w-full flex-col items-center justify-center gap-1 transition-colors";
@@ -261,7 +264,9 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
     isMoreOpen || sheetLinks.some((link) => link.href === activeHref)
       ? "current"
       : "idle";
-  const isMoreMarked = sheetLinks.some((link) => link.marked);
+  const isMoreMarked = sheetLinks.some(
+    (link) => link.marked || waitingCountOf(link) > 0,
+  );
 
   const closeMoreForDesktop = useCallback(() => {
     setMoreSheet("closed-for-desktop");
@@ -346,9 +351,9 @@ function PortalTabBar(props: PortalTabBarProps) {
                 data-parity={`tab-${parityHookSlug(tab.label)}`}
                 to={tab.href}
               >
-                <TabGlyph icon={tab.icon} marked={tab.marked} state={state} />
+                <TabGlyph link={tab} state={state} />
                 <span className="text-caption font-semibold">{tab.label}</span>
-                {tab.marked && <NewMarkLabel />}
+                <LinkAttentionLabel link={tab} />
               </RouterLink>
             </li>
           );
@@ -366,7 +371,10 @@ function PortalTabBar(props: PortalTabBarProps) {
             ref={more.buttonRef}
             type="button"
           >
-            <TabGlyph icon={Ellipsis} marked={more.marked} state={more.state} />
+            <TabGlyph
+              link={{ icon: Ellipsis, marked: more.marked }}
+              state={more.state}
+            />
             <span className="text-caption font-semibold">More</span>
             {more.marked && <NewMarkLabel />}
           </button>
@@ -458,12 +466,7 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
               strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
             />
             <span className="flex-1 text-base font-medium">{link.label}</span>
-            {link.marked && (
-              <>
-                <NewMarkLabel />
-                <AttentionDot />
-              </>
-            )}
+            <LinkAttentionMark link={link} />
             <ChevronRight
               aria-hidden="true"
               className="text-text-secondary"
@@ -476,14 +479,17 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
   );
 }
 
+type LinkAttention = Pick<PortalNavigationLink, "count" | "marked">;
+
 type TabGlyphProps = {
-  icon: LucideIcon;
-  marked?: boolean;
+  link: LinkAttention & Pick<PortalNavigationLink, "icon">;
   state: NavigationItemState;
 };
 
 function TabGlyph(props: TabGlyphProps) {
-  const { icon: Icon, marked, state } = props;
+  const { link, state } = props;
+  const Icon = link.icon;
+  const count = waitingCountOf(link);
 
   return (
     <span className="relative inline-flex">
@@ -492,9 +498,93 @@ function TabGlyph(props: TabGlyphProps) {
         size={22}
         strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
       />
-      {marked && <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />}
+      {count > 0 ? (
+        <NavigationCount
+          className={TAB_NAVIGATION_COUNT_CLASS_NAME}
+          count={count}
+        />
+      ) : (
+        link.marked && <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />
+      )}
     </span>
   );
+}
+
+type LinkAttentionProps = {
+  className?: string;
+  link: LinkAttention;
+};
+
+function LinkAttentionMark(props: LinkAttentionProps) {
+  const { className, link } = props;
+  const count = waitingCountOf(link);
+
+  if (count > 0) {
+    return (
+      <>
+        <WaitingCountLabel count={count} />
+        <NavigationCount className={className} count={count} />
+      </>
+    );
+  }
+
+  if (!link.marked) {
+    return null;
+  }
+
+  return (
+    <>
+      <NewMarkLabel />
+      <AttentionDot className={className} />
+    </>
+  );
+}
+
+function LinkAttentionLabel(props: LinkAttentionProps) {
+  const { link } = props;
+  const count = waitingCountOf(link);
+
+  if (count > 0) {
+    return <WaitingCountLabel count={count} />;
+  }
+
+  return link.marked ? <NewMarkLabel /> : null;
+}
+
+function waitingCountOf(link: LinkAttention) {
+  return link.count ?? 0;
+}
+
+type NavigationCountProps = {
+  className?: string;
+  count: number;
+};
+
+function NavigationCount(props: NavigationCountProps) {
+  const { className, count } = props;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex size-5 items-center justify-center rounded-full bg-status-pending text-micro font-bold text-text-inverted",
+        className,
+      )}
+      data-parity="navigation-count"
+    >
+      {count}
+    </span>
+  );
+}
+
+type WaitingCountLabelProps = {
+  count: number;
+};
+
+function WaitingCountLabel(props: WaitingCountLabelProps) {
+  const { count } = props;
+
+  return <span className="sr-only"> ({count} waiting on you)</span>;
 }
 
 type AttentionDotProps = {
@@ -616,12 +706,7 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
               strokeWidth={SIDEBAR_ICON_STROKE_WIDTHS[state]}
             />
             <span className="text-sm font-medium">{link.label}</span>
-            {link.marked && (
-              <>
-                <NewMarkLabel />
-                <AttentionDot className="ml-auto" />
-              </>
-            )}
+            <LinkAttentionMark className="ml-auto" link={link} />
           </RouterLink>
         );
       })}
