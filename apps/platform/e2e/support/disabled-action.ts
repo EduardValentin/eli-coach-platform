@@ -7,6 +7,7 @@ export type DisabledActionParts = {
   button: Locator;
   opens: Locator;
   reason: string;
+  focusByKeyboard?: () => Promise<void>;
 };
 
 export class DisabledAction {
@@ -50,11 +51,15 @@ export class DisabledAction {
     await expect(this.shownReason).toBeHidden();
   }
 
-  async expectReasonOnFocus(): Promise<void> {
+  private async focusByTab(): Promise<void> {
     if (await isFocused(this.parts.button)) {
       await this.page.keyboard.press("Shift+Tab");
     }
     await tabTo(this.page, this.parts.button);
+  }
+
+  async expectReasonOnFocus(): Promise<void> {
+    await (this.parts.focusByKeyboard ?? (() => this.focusByTab()))();
     await expect(this.shownReason).toBeVisible();
     await this.expectReasonDescribesButton();
     await this.page.keyboard.press("Enter");

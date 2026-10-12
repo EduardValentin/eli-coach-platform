@@ -1,3 +1,5 @@
+import type { CoachingEndHandler } from "./coaching-end-handler";
+import { CoachingEndPropagation } from "./coaching-end-propagation";
 import type { CoachingSubscription } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
@@ -13,14 +15,19 @@ type ReconcileSubscriptionEventResult = {
 };
 
 type ReconcileSubscriptionEventUseCaseOptions = {
+  coachingEnd: CoachingEndHandler;
   incidents: CoachingSubscriptionIncidents;
   subscriptions: CoachingSubscriptions;
 };
 
 export class ReconcileSubscriptionEventUseCase {
+  private readonly coachingEnd: CoachingEndPropagation;
+
   constructor(
     private readonly options: ReconcileSubscriptionEventUseCaseOptions,
-  ) {}
+  ) {
+    this.coachingEnd = new CoachingEndPropagation(options);
+  }
 
   async execute(
     command: ReconcileSubscriptionEventCommand,
@@ -75,6 +82,7 @@ export class ReconcileSubscriptionEventUseCase {
 
     if (saved === "recorded") {
       this.reportSettledRefund(current, mirrored);
+      await this.coachingEnd.propagate(mirrored);
     }
 
     return { status: saved };

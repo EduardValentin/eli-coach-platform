@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MOVES_EXHAUSTED_REASON,
   canCancelApproved,
-  canPropose,
+  canProposeFor,
   canWithdrawRequest,
   checkinNote,
   checkinSchedulingFor,
@@ -17,6 +18,7 @@ import {
   isOpenClientRequest,
   latestMove,
   programReviewCheckin,
+  proposalFor,
   proposesNewTime,
   type CheckIn,
 } from './checkins';
@@ -268,17 +270,6 @@ describe('proposing and withdrawing', () => {
     expect(proposal).toBe(true);
   });
 
-  it('stops new proposals after two reschedule rounds', () => {
-    // arrange
-    const exhausted = checkin({ rescheduleCount: 2 });
-
-    // act
-    const allowed = canPropose(exhausted);
-
-    // assert
-    expect(allowed).toBe(false);
-  });
-
   it('lets the proposer withdraw a new request', () => {
     // arrange
     const request = checkin({
@@ -306,6 +297,132 @@ describe('proposing and withdrawing', () => {
 
     // act
     const allowed = canWithdrawRequest(request, 'coach');
+
+    // assert
+    expect(allowed).toBe(false);
+  });
+});
+
+describe('proposing a new time', () => {
+  it.each(['coach', 'client'] as const)('lets the %s propose one for an approved check-in', (party) => {
+    // arrange
+    const approved = checkin({ status: 'approved' });
+
+    // act
+    const allowed = canProposeFor(approved, party);
+
+    // assert
+    expect(allowed).toBe(true);
+  });
+
+  it('lets the party a request waits for answer it with a new time', () => {
+    // arrange
+    const request = checkin({ kind: 'ad-hoc', status: 'pending', initiatedBy: 'client', proposedBy: 'client' });
+
+    // act
+    const allowed = canProposeFor(request, 'coach');
+
+    // assert
+    expect(allowed).toBe(true);
+  });
+
+  it('never lets the proposer move her own waiting request', () => {
+    // arrange
+    const request = checkin({ kind: 'ad-hoc', status: 'pending', initiatedBy: 'client', proposedBy: 'client' });
+
+    // act
+    const allowed = canProposeFor(request, 'client');
+
+    // assert
+    expect(allowed).toBe(false);
+  });
+
+  it('never lets the proposer move her own waiting new time', () => {
+    // arrange
+    const moved = checkin({
+      status: 'pending',
+      proposedBy: 'coach',
+      rescheduleCount: 1,
+      previousDate: '2026-10-15',
+      previousTime: '10:00',
+    });
+
+    // act
+    const allowed = canProposeFor(moved, 'coach');
+
+    // assert
+    expect(allowed).toBe(false);
+  });
+
+  it('does not offer a new time for a cancelled check-in', () => {
+    // arrange
+    const cancelled = checkin({ status: 'cancelled' });
+
+    // act
+    const proposal = proposalFor(cancelled, 'coach');
+
+    // assert
+    expect(proposal).toBe('none');
+  });
+
+  it('stops new times once a check-in has been moved twice', () => {
+    // arrange
+    const exhausted = checkin({ rescheduleCount: 2 });
+
+    // act
+    const allowed = canProposeFor(exhausted, 'client');
+
+    // assert
+    expect(allowed).toBe(false);
+  });
+
+  it('marks a check-in moved twice as exhausted for a party who could otherwise propose', () => {
+    // arrange
+    const exhausted = checkin({ rescheduleCount: 2 });
+
+    // act
+    const proposal = proposalFor(exhausted, 'coach');
+
+    // assert
+    expect(proposal).toBe('exhausted');
+  });
+
+  it('still allows a second new time after the first', () => {
+    // arrange
+    const movedOnce = checkin({ rescheduleCount: 1 });
+
+    // act
+    const proposal = proposalFor(movedOnce, 'client');
+
+    // assert
+    expect(proposal).toBe('allowed');
+  });
+
+  it('explains why a third new time is not offered', () => {
+    // arrange
+    // act
+    const reason = MOVES_EXHAUSTED_REASON;
+
+    // assert
+    expect(reason).toBe('This check-in has already been moved twice.');
+  });
+});
+
+describe('withdrawing a moved check-in', () => {
+  it('does not let the proposer take back a new time', () => {
+    // arrange
+    const moved = checkin({
+      kind: 'ad-hoc',
+      status: 'pending',
+      initiatedBy: 'client',
+      proposedBy: 'client',
+      rescheduleCount: 1,
+      previousDate: '2026-10-15',
+      previousTime: '10:00',
+    });
+
+    // act
+    const allowed = canWithdrawRequest(moved, 'client');
 
     // assert
     expect(allowed).toBe(false);
@@ -385,6 +502,25 @@ describe('the client request limit', () => {
       status: 'pending',
       initiatedBy: 'coach',
       proposedBy: 'coach',
+      previousDate: '2026-10-15',
+      previousTime: '10:00',
+    });
+
+    // act
+    const open = isOpenClientRequest(moved, { now: NOW });
+
+    // assert
+    expect(open).toBe(false);
+  });
+
+  it('ignores her own request once it has been moved', () => {
+    // arrange
+    const moved = checkin({
+      kind: 'ad-hoc',
+      status: 'pending',
+      initiatedBy: 'client',
+      proposedBy: 'client',
+      rescheduleCount: 1,
       previousDate: '2026-10-15',
       previousTime: '10:00',
     });
@@ -528,7 +664,7 @@ describe('the note on a check-in', () => {
       initiatedBy: 'client',
       proposedBy: 'coach',
       note: 'Questions about macros',
-      rescheduleMessage: 'Thursday suits me better',
+      newTimeNote: 'Thursday suits me better',
     });
 
     // act

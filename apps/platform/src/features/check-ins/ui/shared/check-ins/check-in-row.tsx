@@ -2,15 +2,18 @@ import {
   AppointmentCard,
   type AppointmentAttendee,
 } from "@eli-coach-platform/ui/appointments";
-import { Badge } from "@eli-coach-platform/ui/primitives";
+import {
+  Badge,
+  RowActionsMenu,
+  type RowMenuAction,
+} from "@eli-coach-platform/ui/primitives";
 import type { ReactNode } from "react";
 
 import {
-  formatClockTime,
-  formatShortDay,
-} from "~/features/assessment-calls/public/call-moment";
-
-import type { CheckInParty, ListedCheckIn } from "./check-in-listing";
+  checkInMomentOf,
+  type CheckInParty,
+  type ListedCheckIn,
+} from "./check-in-listing";
 
 export type CheckInViewer = {
   counterpartName: string;
@@ -21,6 +24,8 @@ type CheckInRowProps = {
   actions?: ReactNode;
   attendee: AppointmentAttendee;
   checkIn: ListedCheckIn;
+  menu: readonly RowMenuAction[];
+  menuSize?: "xs" | "sm";
   timeZone: string;
   viewer: CheckInViewer;
 };
@@ -33,23 +38,38 @@ export function CheckInRow({
   actions,
   attendee,
   checkIn,
+  menu,
+  menuSize,
   timeZone,
   viewer,
 }: CheckInRowProps) {
-  const startsAt = new Date(checkIn.startsAt);
-  const requester = nameFor(checkIn.initiatedBy, viewer);
+  const when = checkInMomentOf(checkIn.startsAt, timeZone);
+  const { newTimeWaits } = checkIn;
+  const earlierWhen =
+    checkIn.earlierStartsAt === null
+      ? undefined
+      : checkInMomentOf(checkIn.earlierStartsAt, timeZone);
   const isOver = checkIn.status === "passed" || checkIn.status === "cancelled";
+  const shownNote = noteOf(checkIn);
+  const hasActions = actions !== undefined || menu.length > 0;
 
   return (
     <AppointmentCard
       actions={
-        actions && (
+        hasActions ? (
           <div className="flex w-full items-center gap-2 md:w-auto">
-            <div className="flex flex-1 gap-2 *:flex-1 md:flex-none md:*:flex-none">
-              {actions}
-            </div>
+            {actions && (
+              <div className="flex flex-1 gap-2 *:flex-1 md:flex-none md:*:flex-none">
+                {actions}
+              </div>
+            )}
+            <RowActionsMenu
+              actions={menu}
+              label={`More actions for the check-in on ${when.date} at ${when.time}`}
+              size={menuSize}
+            />
           </div>
-        )
+        ) : undefined
       }
       attendee={attendee}
       badges={
@@ -59,17 +79,34 @@ export function CheckInRow({
       }
       parity="checkin-card-body"
       parityRoot="CheckinCard"
-      quote={checkIn.note ?? undefined}
-      quoteAuthor={checkIn.note ? capitalized(requester) : undefined}
+      quote={shownNote?.text}
+      quoteAuthor={shownNote && capitalized(nameFor(shownNote.by, viewer))}
       quoteParity="checkin-note"
+      rescheduledFrom={newTimeWaits ? undefined : earlierWhen}
       status={isOver ? "past" : "scheduled"}
-      when={{
-        date: formatShortDay(startsAt, timeZone),
-        time: formatClockTime(startsAt, timeZone),
-      }}
-      whenLabel={`${KIND_LABELS[checkIn.kind]} · Requested by ${requester}`}
+      supersededWhen={newTimeWaits ? earlierWhen : undefined}
+      when={when}
+      whenLabel={`${KIND_LABELS[checkIn.kind]} · ${moveLabelOf(checkIn, viewer)}`}
     />
   );
+}
+
+function moveLabelOf(checkIn: ListedCheckIn, viewer: CheckInViewer): string {
+  return checkIn.newTimeWaits
+    ? `New time from ${nameFor(checkIn.proposedBy, viewer)}`
+    : `Requested by ${nameFor(checkIn.initiatedBy, viewer)}`;
+}
+
+function noteOf(
+  checkIn: ListedCheckIn,
+): { by: CheckInParty; text: string } | undefined {
+  if (checkIn.newTimeNote) {
+    return { by: checkIn.proposedBy, text: checkIn.newTimeNote };
+  }
+
+  return checkIn.note
+    ? { by: checkIn.initiatedBy, text: checkIn.note }
+    : undefined;
 }
 
 function nameFor(party: CheckInParty, viewer: CheckInViewer): string {

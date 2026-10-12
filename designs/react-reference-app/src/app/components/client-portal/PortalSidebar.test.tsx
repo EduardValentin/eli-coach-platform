@@ -42,10 +42,16 @@ type RenderSidebarOptions = {
   links?: readonly ClientPortalLink[];
   search?: string;
   markedHrefs?: readonly string[];
+  countByHref?: Readonly<Record<string, number>>;
 };
 
 function renderSidebar(options: RenderSidebarOptions = {}) {
-  const { links = CLIENT_PORTAL_LINKS, search = '', markedHrefs = [] } = options;
+  const {
+    links = CLIENT_PORTAL_LINKS,
+    search = '',
+    markedHrefs = [],
+    countByHref = {},
+  } = options;
   window.history.replaceState(null, '', `/${search}`);
 
   render(
@@ -56,7 +62,11 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
             <ClientJourneyProvider>
               <CheckinProvider>
                 <NotificationProvider>
-                  <PortalSidebar links={links} markedHrefs={markedHrefs} />
+                  <PortalSidebar
+                    links={links}
+                    markedHrefs={markedHrefs}
+                    countByHref={countByHref}
+                  />
                   <main id={PORTAL_MAIN_ID} tabIndex={-1}>
                     Dashboard content
                   </main>
@@ -130,6 +140,50 @@ describe('PortalSidebar attention marker', () => {
 
     // assert
     expect(within(sidebar).getByRole('link', { name: 'Resources' })).toBeInTheDocument();
+  });
+});
+
+describe('PortalSidebar waiting count', () => {
+  it('counts the check-ins waiting for her on the sidebar link and the tab', () => {
+    // arrange
+    renderSidebar({ countByHref: { '/portal/checkins': 2 } });
+
+    // act
+    const sidebar = screen.getByRole('navigation', { name: 'Client portal navigation' });
+    const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
+
+    // assert
+    expect(
+      within(sidebar).getByRole('link', { name: 'Check-ins (2 waiting on you)' }),
+    ).toHaveTextContent('2');
+    expect(
+      within(bar).getByRole('link', { name: 'Check-ins (2 waiting on you)' }),
+    ).toHaveTextContent('2');
+    expect(within(bar).getByRole('button', { name: 'More' })).toBeInTheDocument();
+  });
+
+  it('marks More when a counted link sits in the sheet', () => {
+    // arrange
+    renderSidebar({ countByHref: { '/portal/cycle': 1 } });
+
+    // act
+    const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
+
+    // assert
+    expect(within(bar).getByRole('button', { name: 'More (new)' })).toBeInTheDocument();
+  });
+
+  it('shows no count while nothing waits for her', () => {
+    // arrange
+    renderSidebar({ countByHref: { '/portal/checkins': 0 } });
+
+    // act
+    const sidebar = screen.getByRole('navigation', { name: 'Client portal navigation' });
+
+    // assert
+    expect(within(sidebar).getByRole('link', { name: 'Check-ins' })).toHaveTextContent(
+      /^Check-ins$/,
+    );
   });
 });
 

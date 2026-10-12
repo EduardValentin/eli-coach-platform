@@ -68,6 +68,15 @@ export class ScheduleCheckInUseCase {
       return { status: "invalid_time_zone" };
     }
 
+    if (
+      !CheckIn.startsBeforeCoachingEnd({
+        startsAt: command.startsAt,
+        coachingEndsAt: client.coachingEndsAt,
+      })
+    ) {
+      return { status: "time_taken" };
+    }
+
     const now = this.options.clock.now();
     const availability = await this.options.availability.current();
 

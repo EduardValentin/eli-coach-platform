@@ -185,6 +185,12 @@ export class CoachingSubscription {
     return this.paymentProblemSince !== null;
   }
 
+  coachingEndsAt(): Date | null {
+    return CoachingSubscription.isCancelledOrEnded(this.status)
+      ? this.accessEndsAt
+      : null;
+  }
+
   hasPortalAccessAt(now: Date): boolean {
     return this.statusAt(now) !== "ended";
   }

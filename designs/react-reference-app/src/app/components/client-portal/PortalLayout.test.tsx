@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -91,5 +91,20 @@ describe('PortalLayout skip link', () => {
       'href',
       `#${screen.getByRole('main').id}`,
     );
+  });
+});
+
+describe('PortalLayout check-ins count', () => {
+  it('counts the check-ins waiting for her answer on the Check-ins link', () => {
+    // arrange
+    // act
+    renderLayout();
+
+    // assert
+    const sidebar = screen.getByRole('navigation', { name: 'Client portal navigation' });
+
+    expect(
+      within(sidebar).getByRole('link', { name: /^Check-ins \(\d+ waiting on you\)$/ }),
+    ).toHaveAttribute('href', '/portal/checkins');
   });
 });

@@ -4,6 +4,7 @@ import {
   answerCheckinRequest,
   listOpenCheckinTimes,
   openCheckinTimes,
+  proposeCheckinTime,
   requestCheckinTime,
   scheduleCheckinTime,
   withdrawCheckinRequest,
@@ -144,6 +145,23 @@ describe('openCheckinTimes', () => {
 
     // assert
     expect(times.at(-1)?.toISOString()).toBe('2026-11-10T17:00:00.000Z');
+  });
+
+  it('offers no start at or after the client coaching end', () => {
+    // arrange
+    const schedule = scheduleAt(MONDAY_MORNING, {
+      coachingEndsAt: new Date('2026-10-14T14:00:00.000Z'),
+    });
+
+    // act
+    const times = openCheckinTimes(schedule);
+
+    // assert
+    expect(isoStarts(times)).toEqual([
+      '2026-10-13T14:00:00.000Z',
+      '2026-10-13T15:00:00.000Z',
+      '2026-10-13T16:00:00.000Z',
+    ]);
   });
 });
 
@@ -356,5 +374,110 @@ describe('the check-in service', () => {
 
     // assert
     await expect(scheduling).rejects.toThrow('The check-in service did not answer.');
+  });
+
+  it('proposes an open time as the new time', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING),
+      proposal: 'allowed' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'works'));
+
+    // assert
+    expect(decision).toBe('proposed');
+  });
+
+  it('refuses a third new time', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING),
+      proposal: 'exhausted' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'time-taken'));
+
+    // assert
+    expect(decision).toBe('moves_exhausted');
+  });
+
+  it('refuses a new time for a check-in that no longer waits for that party', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING),
+      proposal: 'none' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'works'));
+
+    // assert
+    expect(decision).toBe('not_pending');
+  });
+
+  it('answers taken whenever the service is told the new time was taken', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING),
+      proposal: 'allowed' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'time-taken'));
+
+    // assert
+    expect(decision).toBe('time_taken');
+  });
+
+  it('answers taken for a new time that is no longer open', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING, { heldCheckinStarts: [SCHEDULED_START] }),
+      proposal: 'allowed' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'works'));
+
+    // assert
+    expect(decision).toBe('time_taken');
+  });
+
+  it('answers taken for a new time at the client coaching end', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING, { coachingEndsAt: SCHEDULED_START }),
+      proposal: 'allowed' as const,
+    };
+
+    // act
+    const decision = await settled(proposeCheckinTime(proposal, 'works'));
+
+    // assert
+    expect(decision).toBe('time_taken');
+  });
+
+  it('fails a new time when the service fails', async () => {
+    // arrange
+    const proposal = {
+      startsAt: SCHEDULED_START,
+      schedule: scheduleAt(MONDAY_MORNING),
+      proposal: 'allowed' as const,
+    };
+
+    // act
+    const proposing = settled(proposeCheckinTime(proposal, 'fails'));
+
+    // assert
+    await expect(proposing).rejects.toThrow('The check-in service did not answer.');
   });
 });

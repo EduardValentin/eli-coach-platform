@@ -16,6 +16,9 @@ const PENDING_ROW = {
   note: "Can we talk about my knees?",
   requestedAt: new Date("2026-10-19T08:00:00.000Z"),
   answeredAt: null,
+  earlierStartsAt: null,
+  moves: 0,
+  newTimeNote: null,
 };
 
 const APPROVED_ROW = {
@@ -53,6 +56,34 @@ describe("PostgresCheckIns#find", () => {
       note: "Can we talk about my knees?",
       requestedAt: new Date("2026-10-19T08:00:00.000Z"),
       answeredAt: null,
+      earlierStartsAt: null,
+      moves: 0,
+      newTimeNote: null,
+    });
+  });
+
+  it("maps a moved row's earlier time, move count and new-time note", async () => {
+    // arrange
+    const movedRow = {
+      ...PENDING_ROW,
+      proposedBy: "coach",
+      earlierStartsAt: new Date("2026-10-21T14:00:00.000Z"),
+      moves: 1,
+      newTimeNote: "Does Thursday work instead?",
+    };
+    const checkIns = new PostgresCheckIns(
+      repositoryOptions(createDatabaseReturning([movedRow])),
+    );
+
+    // act
+    const checkIn = await checkIns.find(PENDING_ROW.id);
+
+    // assert
+    expect(checkIn?.toSnapshot()).toMatchObject({
+      proposedBy: "coach",
+      earlierStartsAt: new Date("2026-10-21T14:00:00.000Z"),
+      moves: 1,
+      newTimeNote: "Does Thursday work instead?",
     });
   });
 

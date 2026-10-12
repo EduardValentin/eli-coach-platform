@@ -17,20 +17,50 @@ const LISTING: CoachCheckIns = {
       kind: "ad_hoc",
       status: "pending",
       initiatedBy: "client",
+      proposedBy: "client",
       awaitsViewer: true,
       viewerMayWithdraw: false,
+      viewerProposal: "allowed",
+      viewerMayCancel: false,
+      newTimeWaits: false,
       isWaitingRequest: true,
       startsAt: "2026-10-15T09:00:00.000Z",
       endsAt: "2026-10-15T10:00:00.000Z",
       joinEmphasisFrom: "2026-10-15T08:50:00.000Z",
+      earlierStartsAt: null,
+      moves: 0,
       note: null,
+      newTimeNote: null,
+      clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
+      client: { firstName: "Andreea", lastName: "Ionescu" },
+    },
+    {
+      id: "7a3c0d2f-5e4b-4f9c-8b8d-2e3f4a5b6c7d",
+      kind: "ad_hoc",
+      status: "approved",
+      initiatedBy: "client",
+      proposedBy: "coach",
+      awaitsViewer: false,
+      viewerMayWithdraw: false,
+      viewerProposal: "exhausted",
+      viewerMayCancel: true,
+      newTimeWaits: false,
+      isWaitingRequest: false,
+      startsAt: "2026-10-22T13:00:00.000Z",
+      endsAt: "2026-10-22T14:00:00.000Z",
+      joinEmphasisFrom: "2026-10-22T12:50:00.000Z",
+      earlierStartsAt: "2026-10-20T12:00:00.000Z",
+      moves: 2,
+      note: "Can we plan my holiday training?",
+      newTimeNote: "Thursday afternoon suits me better.",
+      clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
       client: { firstName: "Andreea", lastName: "Ionescu" },
     },
   ],
 };
 
 describe("the coach's check-ins loader", () => {
-  it("loads every client's check-ins", async () => {
+  it("loads every client's check-ins, a moved one with its earlier time, moves and new-time note", async () => {
     // arrange
     const loadCheckIns = vi.fn().mockResolvedValue(LISTING);
     const args = createRequestArgs({

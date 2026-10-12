@@ -34,6 +34,7 @@ import { resendRejects } from "~integration-test-config/wire-mock/expectations/r
 import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/stripe-api";
 
 const COACH_EMAIL = "eli@evoa.fit";
+const UNKNOWN_CLIENT_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const PUBLIC_ORIGIN = "https://localhost:3000";
 
 const suite = new ApiIntegrationTestSuite({
@@ -180,15 +181,58 @@ describe.sequential("check-in requests integration", () => {
       expect(response.status).toBe(401);
     });
 
-    it("offers the coach the same open times", async () => {
+    it("offers the coach the same open times for the client she names", async () => {
+      // arrange
+      const clientId = await submittedAna();
+
+      // act
+      const times = await checkIns.openTimesOfClient(clientId);
+
+      // assert
+      expect(times).toEqual(await checkIns.openTimesOf(ANA_SESSION));
+    });
+
+    it("refuses the coach open times without a client", async () => {
       // arrange
       await submittedAna();
 
       // act
-      const times = await checkIns.openTimesOf(COACH_SESSION);
+      const response = await checkIns.openTimes(COACH_SESSION);
 
       // assert
-      expect(times).toEqual(await checkIns.openTimesOf(ANA_SESSION));
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({ error: "invalid_request" });
+    });
+
+    it("answers not found when the coach names a client she does not have", async () => {
+      // arrange
+      await submittedAna();
+
+      // act
+      const response = await checkIns.openTimesFor(
+        COACH_SESSION,
+        UNKNOWN_CLIENT_ID,
+      );
+
+      // assert
+      expect(response.status).toBe(404);
+    });
+
+    it("offers the client her own open times whichever client she names", async () => {
+      // arrange
+      await submittedAna();
+
+      // act
+      const response = await checkIns.openTimesFor(
+        ANA_SESSION,
+        UNKNOWN_CLIENT_ID,
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        times: await checkIns.openTimesOf(ANA_SESSION),
+      });
     });
   });
 
@@ -264,7 +308,7 @@ describe.sequential("check-in requests integration", () => {
       expect(sent[0]?.to).toBe(COACH_EMAIL);
       expect(sent[0]?.replyTo).toBe(ANA.email);
       expect(sent[0]?.idempotencyKey).toContain(
-        `check-in:${checkInId}:requested`,
+        `check-in:${checkInId}:0:requested`,
       );
       expect(sent[0]?.html).toContain(
         `href="${PUBLIC_ORIGIN}${suite.path("/coach/checkins")}"`,
@@ -506,7 +550,7 @@ describe.sequential("check-in requests integration", () => {
         THURSDAY_FIRST_HOUR,
       );
       const withdrawn = (await checkInEmailsOf(checkInId)).filter((email) =>
-        email.idempotencyKey?.includes(`check-in:${checkInId}:withdrawn`),
+        email.idempotencyKey?.includes(`check-in:${checkInId}:0:withdrawn`),
       );
       expect(withdrawn.map(({ to }) => to)).toEqual([COACH_EMAIL]);
     });

@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AppointmentCard } from "./appointment-card";
@@ -13,6 +14,7 @@ afterEach(() => {
 
 const ATTENDEE = { email: "ana@example.com", name: "Ana Popescu" };
 const WHEN = { date: "Sun, Sep 20", time: "12:36 AM" };
+const EARLIER = { date: "Fri, Sep 18", time: "9:00 AM" };
 
 describe("appointment card", () => {
   it("names the attendee and when the appointment falls", () => {
@@ -234,5 +236,75 @@ describe("appointment card", () => {
       "src",
       "/media/eli/eli-portrait-192.webp",
     );
+  });
+
+  it("strikes the earlier time through above the time row while a new time waits", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        supersededWhen={EARLIER}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    const earlier = screen.getByText("Fri, Sep 18 · 9:00 AM");
+
+    expect(earlier.tagName).toBe("S");
+    expect(
+      earlier.compareDocumentPosition(screen.getByText("Sun, Sep 20")),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("names the time a rescheduled appointment moved from", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        rescheduledFrom={EARLIER}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("button", {
+        name: "Rescheduled from Fri, Sep 18 · 9:00 AM",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows where a rescheduled appointment moved from on hover", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        rescheduledFrom={EARLIER}
+        when={WHEN}
+      />,
+    );
+
+    // act
+    await user.hover(
+      screen.getByRole("button", {
+        name: "Rescheduled from Fri, Sep 18 · 9:00 AM",
+      }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("Rescheduled from Fri, Sep 18 · 9:00 AM"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows neither marker for an appointment that never moved", () => {
+    // arrange, act
+    render(<AppointmentCard attendee={ATTENDEE} when={WHEN} />);
+
+    // assert
+    expect(screen.queryByText(/Rescheduled from/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("deletion")).not.toBeInTheDocument();
   });
 });

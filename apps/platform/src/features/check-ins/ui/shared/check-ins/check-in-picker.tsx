@@ -50,10 +50,16 @@ type CheckInPickerSubmission = {
   bodyOf: (choice: CheckInChoice) => Record<string, string>;
 };
 
+export type OpenTimesQuery = {
+  clientId: string;
+};
+
 type CheckInPickerProps = {
   onOpenChange: (open: boolean) => void;
+  onRefusal?: () => void;
   onSubmitted: (startsAt: string) => void;
   open: boolean;
+  openTimesQuery?: OpenTimesQuery;
   submission: CheckInPickerSubmission;
   timeZone: string;
   wording: CheckInPickerWording;
@@ -65,8 +71,8 @@ type OpenTimes =
   | { status: "ready"; times: readonly string[] };
 
 type ChoiceSubmissionOptions = {
+  onRefused: (refusal: CheckInRefusal) => void;
   onSubmitted: (startsAt: string) => void;
-  onTimeTaken: () => void;
   submission: CheckInPickerSubmission;
 };
 
@@ -76,14 +82,16 @@ const NO_TIMES: readonly string[] = [];
 
 export function CheckInPicker({
   onOpenChange,
+  onRefusal,
   onSubmitted,
   open,
+  openTimesQuery,
   submission,
   timeZone,
   wording,
 }: CheckInPickerProps) {
   const title = useRef<HTMLHeadingElement>(null);
-  const openTimes = useOpenTimes();
+  const openTimes = useOpenTimes(openTimesQuery);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -92,9 +100,12 @@ export function CheckInPicker({
       onOpenChange(false);
       onSubmitted(startsAt);
     },
-    onTimeTaken: () => {
-      setSelectedSlot(null);
-      openTimes.load();
+    onRefused: (refusal) => {
+      if (refusal === "time_taken") {
+        setSelectedSlot(null);
+        openTimes.load();
+      }
+      onRefusal?.();
     },
     submission,
   });
@@ -151,7 +162,7 @@ export function CheckInPicker({
         />
         <SheetDialogBody>
           {sending.problem && (
-            <Alert className="mb-6">
+            <Alert className="mb-6" data-parity="checkin-picker-problem">
               <p>{problemCopyOf(sending.problem, wording)}</p>
             </Alert>
           )}
@@ -174,6 +185,7 @@ export function CheckInPicker({
           <Button
             aria-busy={sending.submitting || undefined}
             corner="control"
+            data-parity="checkin-picker-step"
             disabled={
               openTimes.listing.status !== "ready" ||
               !selectedSlot ||
@@ -203,32 +215,28 @@ export function CheckInPicker({
   );
 }
 
-function useOpenTimes() {
+function useOpenTimes(query?: OpenTimesQuery) {
   const { data, load, state } = useFetcher<unknown>();
+  const path = query
+    ? `${CHECK_INS_API_PATHS.openTimes}?${new URLSearchParams(query)}`
+    : CHECK_INS_API_PATHS.openTimes;
 
   return {
     listing: openTimesOf(data, state),
     load: () => {
-      void load(CHECK_INS_API_PATHS.openTimes);
+      void load(path);
     },
   };
 }
 
 function useChoiceSubmission({
+  onRefused,
   onSubmitted,
-  onTimeTaken,
   submission,
 }: ChoiceSubmissionOptions) {
   const fetcher = useFetcher<unknown>();
   const [submittedSlot, setSubmittedSlot] = useState<string | null>(null);
   const [problem, setProblem] = useState<CheckInPickerProblem | null>(null);
-
-  const showProblem = (shown: CheckInPickerProblem) => {
-    setProblem(shown);
-    if (shown === "time_taken") {
-      onTimeTaken();
-    }
-  };
 
   const applyReply = useEffectEvent((reply: unknown) => {
     if (!submittedSlot) return;
@@ -239,7 +247,13 @@ function useChoiceSubmission({
     }
 
     const refusal = checkInRefusalSchema.safeParse(reply);
-    showProblem(refusal.success ? refusal.data.error : "failed");
+    if (!refusal.success) {
+      setProblem("failed");
+      return;
+    }
+
+    setProblem(refusal.data.error);
+    onRefused(refusal.data.error);
   });
 
   useEffect(() => {

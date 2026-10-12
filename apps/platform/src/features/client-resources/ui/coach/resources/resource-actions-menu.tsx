@@ -1,12 +1,5 @@
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@eli-coach-platform/ui/primitives";
-import { Ellipsis, Pencil, Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { Button, RowActionsMenu } from "@eli-coach-platform/ui/primitives";
+import { Pencil, Trash2 } from "lucide-react";
 
 export type ResourceManagement = {
   onEdit: () => void;
@@ -27,51 +20,25 @@ export function ResourceActionsMenu({
   title,
   management,
 }: ResourceActionsMenuProps) {
-  const chosenAction = useRef<(() => void) | null>(null);
-
-  const runOnceFocusIsBackOnTheTrigger = () => {
-    const action = chosenAction.current;
-    chosenAction.current = null;
-    action?.();
-  };
-
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={`Actions for ${title}`}
-          data-parity="row-actions-trigger"
-          size="icon-sm"
-          variant="ghost"
-        >
-          <Ellipsis aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="min-w-40"
-        data-parity-root="ResourceActionsMenu"
-        onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
-      >
-        <DropdownMenuItem
-          onSelect={() => {
-            chosenAction.current = management.onEdit;
-          }}
-        >
-          <Pencil aria-hidden="true" />
-          {COPY.edit}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => {
-            chosenAction.current = management.onDelete;
-          }}
-          variant="destructive"
-        >
-          <Trash2 aria-hidden="true" />
-          {COPY.delete}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowActionsMenu
+      actions={[
+        {
+          icon: Pencil,
+          label: COPY.edit,
+          name: "edit",
+          onSelect: management.onEdit,
+        },
+        {
+          icon: Trash2,
+          label: COPY.delete,
+          name: "delete",
+          onSelect: management.onDelete,
+          tone: "destructive",
+        },
+      ]}
+      label={`Actions for ${title}`}
+    />
   );
 }
 

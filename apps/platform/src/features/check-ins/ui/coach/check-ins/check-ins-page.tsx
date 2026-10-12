@@ -28,6 +28,11 @@ import {
   useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
+import {
+  CheckInMenuDialogs,
+  useCheckInMenu,
+  type CheckInMenuWording,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -54,10 +59,22 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   },
 };
 
+const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
+  cancellationOf: (checkIn, dayAndTime) => ({
+    description: `${dayAndTime} with ${fullNameOf(checkIn)}.`,
+    successMessage: `Cancelled check-in with ${fullNameOf(checkIn)}`,
+  }),
+  proposerOf: (checkIn) => ({
+    noteLabel: `Add a note for ${checkIn.client.firstName} (optional)`,
+    openTimesQuery: { clientId: checkIn.clientId },
+  }),
+};
+
 export default function CoachCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
   const decisions = useCheckInDecisions();
+  const menu = useCheckInMenu<CoachCheckIn>(decisions);
 
   return (
     <div className="w-full" data-parity-root="CoachCheckins">
@@ -68,13 +85,14 @@ export default function CoachCheckInsRoute() {
 
       <CheckInListing
         checkIns={checkIns}
-        defaultTab="requests"
         emptyCopy={EMPTY_COPY}
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
             actions={coachActionsFor(checkIn, tab, decisions)}
             attendee={{ name: fullNameOf(checkIn) }}
             checkIn={checkIn}
+            menu={menu.menuOf(checkIn)}
+            menuSize="xs"
             timeZone={timeZone}
             viewer={{
               counterpartName: checkIn.client.firstName,
@@ -82,6 +100,13 @@ export default function CoachCheckInsRoute() {
             }}
           />
         )}
+      />
+
+      <CheckInMenuDialogs
+        decisions={decisions}
+        menu={menu}
+        timeZone={timeZone}
+        wording={MENU_WORDING}
       />
 
       <CheckInDecisionOutcomes decisions={decisions} />
@@ -108,7 +133,7 @@ function coachActionsFor(
     return (
       <CheckInAnswers
         approvedMessage={`Approved check-in with ${fullNameOf(checkIn)}`}
-        checkInId={checkIn.id}
+        checkIn={checkIn}
         decisions={decisions}
         size="xs"
       />

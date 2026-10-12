@@ -9,6 +9,8 @@ import {
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
+import type { PickedCheckIn } from "./check-in-picker-dialog";
+import { CheckInRows } from "./check-in-rows";
 import { tabTo } from "./keyboard";
 
 const CHECK_INS_PATH = "/coach/checkins";
@@ -18,7 +20,11 @@ const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 
 export class CoachCheckInsPage {
-  constructor(private readonly page: Page) {}
+  private readonly rows: CheckInRows;
+
+  constructor(private readonly page: Page) {
+    this.rows = new CheckInRows(page);
+  }
 
   private joinPathOf(checkInId: string): string {
     return `${CHECK_INS_PATH}/${checkInId}/join`;
@@ -157,6 +163,151 @@ export class CoachCheckInsPage {
       false,
     );
     expect(isOwn.lastIndexOf(false)).toBeLessThan(isOwn.indexOf(true));
+  }
+
+  private async shownRow(tab: CheckInTab, showing: string): Promise<Locator> {
+    await this.showTab(tab);
+
+    return this.checkIn(tab, showing);
+  }
+
+  async reschedule(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.choose(await this.shownRow(tab, showing), "Reschedule");
+  }
+
+  async rescheduleByKeyboard(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.chooseByKeyboard(
+      await this.shownRow(tab, showing),
+      "Reschedule",
+    );
+  }
+
+  async cancelByKeyboard(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.chooseByKeyboard(
+      await this.shownRow(tab, showing),
+      "Cancel",
+    );
+  }
+
+  async expectNoRowMenu(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.expectNoMenu(await this.shownRow(tab, showing));
+  }
+
+  async cancel(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.choose(await this.shownRow(tab, showing), "Cancel");
+  }
+
+  async expectCancelledToast(clientName: string): Promise<void> {
+    await expect(
+      this.page.getByText(`Cancelled check-in with ${clientName}`),
+    ).toBeVisible();
+  }
+
+  async expectRowMenuFocused(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.expectMenuFocused(this.checkIn(tab, showing));
+  }
+
+  async expectRescheduleBlocked(
+    tab: CheckInTab,
+    showing: string,
+  ): Promise<void> {
+    await this.rows.expectRescheduleBlocked(await this.shownRow(tab, showing));
+  }
+
+  async expectRescheduleReasonOnHover(
+    tab: CheckInTab,
+    showing: string,
+  ): Promise<void> {
+    await this.rows.expectRescheduleReasonOnHover(
+      await this.shownRow(tab, showing),
+    );
+  }
+
+  async expectRescheduleReasonOnFocus(
+    tab: CheckInTab,
+    showing: string,
+  ): Promise<void> {
+    await this.rows.expectRescheduleReasonOnFocus(
+      await this.shownRow(tab, showing),
+    );
+  }
+
+  async expectRescheduleReasonOnTap(
+    tab: CheckInTab,
+    showing: string,
+  ): Promise<void> {
+    await this.rows.expectRescheduleReasonOnTap(
+      await this.shownRow(tab, showing),
+    );
+  }
+
+  async expectNoActions(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.expectNoActions(await this.shownRow(tab, showing));
+  }
+
+  async expectNewTimeFromClient(
+    note: string,
+    clientFirstName: string,
+  ): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+
+    await expect(row).toContainText(
+      `Ad-hoc · New time from ${clientFirstName}`,
+    );
+    await expect(row).toContainText(`${clientFirstName}: "${note}"`);
+    await expect(row.getByRole("button", { name: "Accept" })).toBeVisible();
+    await expect(row.getByRole("button", { name: "Decline" })).toBeVisible();
+  }
+
+  async expectOwnNewTime(note: string): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+
+    await expect(row).toContainText("Ad-hoc · New time from you");
+    await expect(row).toContainText(`You: "${note}"`);
+    await this.rows.expectNoActions(row);
+  }
+
+  async expectEarlierTimeStruck(
+    note: string,
+    earlier: PickedCheckIn,
+  ): Promise<void> {
+    await this.rows.expectEarlierTimeStruck(
+      await this.shownRow("Requests", note),
+      earlier,
+    );
+  }
+
+  async expectUpcomingAt(note: string, shown: PickedCheckIn): Promise<void> {
+    await this.rows.expectShownAt(await this.shownRow("Upcoming", note), shown);
+  }
+
+  async expectRescheduledFrom(
+    note: string,
+    earlier: PickedCheckIn,
+  ): Promise<void> {
+    await this.rows.expectRescheduledFrom(
+      await this.shownRow("Upcoming", note),
+      earlier,
+    );
+  }
+
+  async accept(clientName: string): Promise<void> {
+    const row = await this.shownRow("Requests", clientName);
+    const approvalSettled = this.responseFinished(APPROVAL_DATA_PATH);
+    const revalidationSettled = this.responseFinished(CHECK_INS_DATA_PATH);
+
+    await row.getByRole("button", { name: "Accept" }).click();
+    await expect(
+      this.page.getByText(`Approved check-in with ${clientName}`),
+    ).toBeVisible();
+    await Promise.all([approvalSettled, revalidationSettled]);
+  }
+
+  async acceptNoLongerWaiting(showing: string): Promise<void> {
+    const row = await this.shownRow("Requests", showing);
+
+    await row.getByRole("button", { name: "Accept" }).click();
+    await expect(this.page.getByText(NO_LONGER_WAITING)).toBeVisible();
   }
 
   async joinFromRow(clientName: string): Promise<void> {

@@ -93,7 +93,7 @@ describe.sequential("check-in answers integration", () => {
     expect(
       (await checkIns.heldCheckInHours()).map((hour) => hour.checkInId),
     ).toEqual([checkInId]);
-    const [approved, ...others] = await emailsFor(checkInId, "approved");
+    const [approved, ...others] = await emailsFor(checkInId, "0:approved");
     expect(others).toEqual([]);
     expect(approved?.to).toBe(ANA.email);
     expect(approved?.html).toContain(
@@ -133,7 +133,7 @@ describe.sequential("check-in answers integration", () => {
     expect(await checkIns.openTimesOf(ANA_SESSION)).toContain(
       THURSDAY_FIRST_HOUR,
     );
-    const [declined, ...others] = await emailsFor(checkInId, "declined");
+    const [declined, ...others] = await emailsFor(checkInId, "0:declined");
     expect(others).toEqual([]);
     expect(declined?.to).toBe(ANA.email);
     expect(declined?.html).toContain(
@@ -183,10 +183,10 @@ describe.sequential("check-in answers integration", () => {
       expect(response.status).toBe(409);
       expect(await response.json()).toEqual({ error: "not_pending" });
       expect(await checkIns.heldCheckInHours()).toEqual(heldBefore);
-      expect(await emailsFor(checkInId, "approved")).toHaveLength(
+      expect(await emailsFor(checkInId, "0:approved")).toHaveLength(
         first === "approve" ? 1 : 0,
       );
-      expect(await emailsFor(checkInId, "declined")).toHaveLength(
+      expect(await emailsFor(checkInId, "0:declined")).toHaveLength(
         first === "decline" ? 1 : 0,
       );
     },
@@ -226,7 +226,7 @@ describe.sequential("check-in answers integration", () => {
       ).toEqual(["pending"]);
       expect(
         (await emailsFor(checkInId)).map(({ idempotencyKey }) =>
-          idempotencyKey?.includes(`check-in:${checkInId}:requested`),
+          idempotencyKey?.includes(`check-in:${checkInId}:0:requested`),
         ),
       ).toEqual([true]);
     },

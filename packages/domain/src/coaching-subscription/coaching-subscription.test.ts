@@ -288,6 +288,43 @@ describe("CoachingSubscription.isCancelledOrEnded", () => {
   );
 });
 
+describe("CoachingSubscription.coachingEndsAt", () => {
+  it.each([
+    { situation: "a subscription not started", overrides: {}, expected: null },
+    {
+      situation: "an active subscription",
+      overrides: { status: "active" },
+      expected: null,
+    },
+    {
+      situation: "a cancelled subscription",
+      overrides: {
+        status: "cancelled",
+        cancelledAt: DAY_14,
+        accessEndsAt: ACCESS_END,
+      },
+      expected: ACCESS_END,
+    },
+    {
+      situation: "an ended subscription",
+      overrides: { status: "ended", cancelledAt: DAY_13, accessEndsAt: DAY_13 },
+      expected: DAY_13,
+    },
+  ] as const)(
+    "ends the coaching of $situation at $expected",
+    ({ overrides, expected }) => {
+      // arrange
+      const subscription = subscriptionOf(overrides);
+
+      // act
+      const endsAt = subscription.coachingEndsAt();
+
+      // assert
+      expect(endsAt).toEqual(expected);
+    },
+  );
+});
+
 describe("CoachingSubscription.hasRefundOutstanding", () => {
   it.each([
     ["no refund", null, false],

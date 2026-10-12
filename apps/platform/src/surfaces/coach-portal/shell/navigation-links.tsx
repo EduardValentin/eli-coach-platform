@@ -13,10 +13,27 @@ import { COACH_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
 import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
 
-export const coachSurfaceLinks: readonly PortalNavigationLink[] = [
-  { href: COACH_PORTAL_PATH, label: "Dashboard", icon: LayoutDashboard },
-  { href: COACH_CLIENTS_PATH, label: "Clients", icon: Users },
-  { href: COACH_CHECK_INS_PATH, label: "Check-ins", icon: CalendarDays },
-  { href: COACH_ASSESSMENT_CALLS_PATH, label: "Assessment calls", icon: Video },
-  { href: COACH_SETTINGS_PATH, label: "Settings", icon: Settings },
-];
+export type CoachNavigationCounts = {
+  checkInsAwaiting: number;
+};
+
+export function coachSurfaceLinksOf(
+  counts: CoachNavigationCounts,
+): readonly PortalNavigationLink[] {
+  return [
+    { href: COACH_PORTAL_PATH, label: "Dashboard", icon: LayoutDashboard },
+    { href: COACH_CLIENTS_PATH, label: "Clients", icon: Users },
+    {
+      href: COACH_CHECK_INS_PATH,
+      label: "Check-ins",
+      icon: CalendarDays,
+      count: counts.checkInsAwaiting,
+    },
+    {
+      href: COACH_ASSESSMENT_CALLS_PATH,
+      label: "Assessment calls",
+      icon: Video,
+    },
+    { href: COACH_SETTINGS_PATH, label: "Settings", icon: Settings },
+  ];
+}

@@ -17,6 +17,20 @@ const MARK_APPROVED = `
   update app.check_ins set status = 'approved', answered_at = now()
   where id = $1
 `;
+const MARK_MOVED = `
+  update app.check_ins
+  set moves = $2, earlier_starts_at = starts_at - interval '1 day'
+  where id = $1
+`;
+const MARK_CANCELLED = `
+  update app.check_ins set status = 'cancelled' where id = $1
+`;
+const FREE_HOUR = `
+  delete from app.coach_time_reservations where check_in_id = $1
+`;
+const FIND_MOVES = `
+  select moves, earlier_starts_at from app.check_ins where id = $1
+`;
 const MOVE_CHECK_IN = `
   update app.check_ins set starts_at = now() + make_interval(mins => $2)
   where id = $1
@@ -47,6 +61,8 @@ const HOLD_HOUR = `
   select starts_at, starts_at + interval '1 hour', id from held
 `;
 
+type MovesRow = { moves: number; earlier_starts_at: Date | null };
+
 export class CheckInRecords {
   constructor(private readonly pool: pg.Pool) {}
 
@@ -75,6 +91,34 @@ export class CheckInRecords {
 
   async markApproved(checkInId: string): Promise<void> {
     await this.pool.query(MARK_APPROVED, [checkInId]);
+  }
+
+  async markCancelled(checkInId: string): Promise<void> {
+    await this.pool.query(MARK_CANCELLED, [checkInId]);
+    await this.pool.query(FREE_HOUR, [checkInId]);
+  }
+
+  async markMoved(checkInId: string, times: number): Promise<void> {
+    await this.pool.query(MARK_MOVED, [checkInId, times]);
+  }
+
+  async movesOf(checkInId: string): Promise<number> {
+    return (await this.movesRowOf(checkInId)).moves;
+  }
+
+  async earlierStartOf(checkInId: string): Promise<Date | null> {
+    return (await this.movesRowOf(checkInId)).earlier_starts_at;
+  }
+
+  private async movesRowOf(checkInId: string): Promise<MovesRow> {
+    const { rows } = await this.pool.query<MovesRow>(FIND_MOVES, [checkInId]);
+    const [row] = rows;
+
+    if (!row) {
+      throw new Error(`No check-in ${checkInId}.`);
+    }
+
+    return row;
   }
 
   async moveStart(checkInId: string, minutesFromNow: number): Promise<void> {

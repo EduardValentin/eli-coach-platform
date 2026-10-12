@@ -15,12 +15,6 @@ export { CheckboxChip } from "./checkbox-chip";
 export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
 export { DisabledActionHint } from "./disabled-action-hint";
-export {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./dropdown-menu";
 export { FieldError } from "./field-error";
 export { FileDropzone, FilePickerButton } from "./file-dropzone";
 export { FieldHint } from "./field-hint";
@@ -43,6 +37,7 @@ export {
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Progress } from "./progress";
 export { RadioGroup, RadioGroupItem } from "./radio-group";
+export { RowActionsMenu, type RowMenuAction } from "./row-actions-menu";
 export { SearchField } from "./search-field";
 export { SectionEyebrow } from "./section-eyebrow";
 export {

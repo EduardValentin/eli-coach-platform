@@ -6,6 +6,8 @@ import type {
 } from "@eli-coach-platform/domain/client-journey";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
+import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
@@ -34,13 +36,14 @@ const ANA: ClientJourneySnapshot = {
 };
 
 describe("client shell loader", () => {
-  it("names the client the gate handed over and counts the resources she has not opened", async () => {
+  it("names the client the gate handed over and counts the resources she has not opened and the check-ins waiting for her", async () => {
     // arrange
     const countUnopened = vi.fn().mockResolvedValue(2);
-    const args = shellArguments(
-      [contextEntry(clientJourneyContext, ANA)],
+    const loadAwaitingCount = vi.fn().mockResolvedValue(3);
+    const args = shellArguments([contextEntry(clientJourneyContext, ANA)], {
       countUnopened,
-    );
+      loadAwaitingCount,
+    });
 
     // act
     const shell = await loader(args);
@@ -52,8 +55,10 @@ describe("client shell loader", () => {
         greeting: "Welcome back, Ana.",
       },
       unopenedResources: 2,
+      checkInsAwaiting: 3,
     });
     expect(countUnopened).toHaveBeenCalledWith(args);
+    expect(loadAwaitingCount).toHaveBeenCalledWith(args);
   });
 
   it("falls back to the quiet greeting for an account with no client record", async () => {
@@ -67,13 +72,15 @@ describe("client shell loader", () => {
     expect(shell).toEqual({
       presentation: { displayName: "Client", greeting: "Welcome back." },
       unopenedResources: 0,
+      checkInsAwaiting: 0,
     });
   });
 
   it("refuses to render, without counting anything, when the access layout's gate never ran", async () => {
     // arrange
     const countUnopened = vi.fn().mockResolvedValue(0);
-    const args = shellArguments([], countUnopened);
+    const loadAwaitingCount = vi.fn().mockResolvedValue(0);
+    const args = shellArguments([], { countUnopened, loadAwaitingCount });
 
     // act
     const loading = loader(args);
@@ -81,13 +88,21 @@ describe("client shell loader", () => {
     // assert
     await expect(loading).rejects.toThrow();
     expect(countUnopened).not.toHaveBeenCalled();
+    expect(loadAwaitingCount).not.toHaveBeenCalled();
   });
 });
 
 function shellArguments(
   journeyEntries: readonly ContextEntry[],
-  countUnopened = vi.fn().mockResolvedValue(0),
+  counts: {
+    countUnopened?: ReturnType<typeof vi.fn>;
+    loadAwaitingCount?: ReturnType<typeof vi.fn>;
+  } = {},
 ) {
+  const {
+    countUnopened = vi.fn().mockResolvedValue(0),
+    loadAwaitingCount = vi.fn().mockResolvedValue(0),
+  } = counts;
   const clientJourney = new ClientJourneyController({
     markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
     readClientJourney: {} as ReadClientJourneyUseCase,
@@ -102,6 +117,9 @@ function shellArguments(
       contextEntry(clientResourcesContext, {
         ownResources: { countUnopened },
       } as unknown as ClientResourcesFeature),
+      contextEntry(checkInsContext, {
+        clientCheckIns: { loadAwaitingCount },
+      } as unknown as CheckInsFeature),
       ...journeyEntries,
     ],
     request: new Request("https://evoa.fit/client"),

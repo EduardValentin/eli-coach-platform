@@ -28,7 +28,7 @@ type SheetBase = {
 };
 
 type PickerSheetProps = SheetBase & {
-  variant: 'reschedule' | 'schedule';
+  variant: 'schedule';
   selectedDate: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   selectedTime: string | null;
@@ -84,6 +84,7 @@ function StepButton({
 }) {
   return (
     <Button
+      data-parity="checkin-picker-step"
       onClick={onSubmit}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
@@ -191,7 +192,7 @@ function RequestSheetContent({
       />
       <SheetDialogBody>
         {problem && (
-          <Alert className="mb-6">
+          <Alert data-parity="checkin-picker-problem" className="mb-6">
             <p>{problem}</p>
           </Alert>
         )}

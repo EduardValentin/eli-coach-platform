@@ -4,6 +4,7 @@ import {
   heldCheckinSpan,
   spansOverlap,
   timeSpanFrom,
+  type CheckinProposal,
   type CheckinStatus,
   type TimeSpan,
 } from '../domain/checkins';
@@ -28,6 +29,7 @@ export type CheckinSchedule = {
   availability: CoachAvailability;
   callStarts: readonly Date[];
   heldCheckinStarts: readonly Date[];
+  coachingEndsAt?: Date;
 };
 
 export type CheckinRequestDecision = 'requested' | 'request_waiting' | 'time_taken';
@@ -35,6 +37,8 @@ export type CheckinRequestDecision = 'requested' | 'request_waiting' | 'time_tak
 export type CheckinScheduleDecision = 'scheduled' | 'client_cannot_answer' | 'time_taken';
 
 export type CheckinSettlement = 'settled' | 'not_pending';
+
+export type CheckinProposalDecision = 'proposed' | 'moves_exhausted' | 'not_pending' | 'time_taken';
 
 export type CheckinTimeRequest = {
   startsAt: Date;
@@ -45,6 +49,12 @@ export type CheckinTimeRequest = {
 export type CheckinTimeSchedule = {
   startsAt: Date;
   schedule: CheckinSchedule;
+};
+
+export type CheckinTimeProposal = {
+  startsAt: Date;
+  schedule: CheckinSchedule;
+  proposal: CheckinProposal;
 };
 
 export type PendingRequestAnswer = { status: CheckinStatus };
@@ -68,10 +78,17 @@ function windowStartHours({ startHour, endHour }: CoachAvailability): number[] {
   return hours;
 }
 
+function latestStart({ now, coachingEndsAt }: CheckinSchedule): number {
+  const horizon = now.getTime() + CHECKIN_HORIZON_DAYS * DAY_MS;
+  if (!coachingEndsAt) return horizon;
+
+  return Math.min(horizon, coachingEndsAt.getTime() - 1);
+}
+
 export function openCheckinTimes(schedule: CheckinSchedule): Date[] {
   const { now, availability } = schedule;
   const earliest = now.getTime() + CHECKIN_NOTICE_MINUTES * MINUTE_MS;
-  const latest = now.getTime() + CHECKIN_HORIZON_DAYS * DAY_MS;
+  const latest = latestStart(schedule);
   const busy = busySpans(schedule);
   const hours = windowStartHours(availability);
   const today = new TZDate(now, availability.timeZone);
@@ -145,6 +162,19 @@ export async function scheduleCheckinTime(
   if (outcome === 'time-taken' || !isOpenTime(startsAt, schedule)) return 'time_taken';
 
   return 'scheduled';
+}
+
+export async function proposeCheckinTime(
+  { startsAt, schedule, proposal }: CheckinTimeProposal,
+  outcome: CheckinServiceOutcome,
+): Promise<CheckinProposalDecision> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+  if (proposal === 'none') return 'not_pending';
+  if (proposal === 'exhausted') return 'moves_exhausted';
+  if (outcome === 'time-taken' || !isOpenTime(startsAt, schedule)) return 'time_taken';
+
+  return 'proposed';
 }
 
 async function settlePendingRequest(

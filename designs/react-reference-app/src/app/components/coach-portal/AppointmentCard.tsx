@@ -1,27 +1,27 @@
-import { Mail, Phone, RefreshCw } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
-import type { ReactNode } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { DateTimeLabel } from '../DateTimeLabel';
-import { LABEL_CLASS } from '../typography';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { cn } from '../ui/utils';
-import { getInitials } from '../../utils/clientHelpers';
-import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
+import { Mail, Phone, RefreshCw } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import type { ReactNode } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DateTimeLabel } from "../DateTimeLabel";
+import { IconHint } from "../IconHint";
+import { LABEL_CLASS } from "../typography";
+import { cn } from "../ui/utils";
+import { getInitials } from "../../utils/clientHelpers";
+import { formatShortDay, formatSlotTime } from "../../utils/dateFormatters";
 import type {
   AppointmentAttendee,
   AppointmentDetail,
   AppointmentStatus,
   AppointmentTime,
   AppointmentTitleElement,
-} from './appointment';
+} from "./appointment";
 
 const CARD_CLASS =
-  'flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-border-subtle bg-card';
+  "flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-border-subtle bg-card";
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
-  scheduled: 'shadow-soft text-text-primary',
-  past: 'text-muted-foreground',
+  scheduled: "shadow-soft text-text-primary",
+  past: "text-muted-foreground",
 };
 
 function AttendeeAvatar({
@@ -32,7 +32,7 @@ function AttendeeAvatar({
   status: AppointmentStatus;
 }) {
   return (
-    <Avatar size="md" className={cn(status === 'past' && 'opacity-70')}>
+    <Avatar size="md" className={cn(status === "past" && "opacity-70")}>
       {attendee.imageUrl && <AvatarImage src={attendee.imageUrl} alt="" />}
       <AvatarFallback aria-hidden="true">
         {getInitials(attendee.name)}
@@ -49,16 +49,15 @@ function RescheduledMarker({ from }: { from: AppointmentTime }) {
   const label = `Rescheduled from ${formatAppointmentTime(from)}`;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        type="button"
-        className="inline-flex size-5 items-center justify-center self-center rounded-control text-text-secondary hover:text-text-primary"
-      >
-        <RefreshCw aria-hidden="true" size={12} />
-        <span className="sr-only">{label}</span>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <IconHint
+      label={label}
+      icon={<RefreshCw aria-hidden="true" size={12} />}
+      size="compact"
+      tone="muted"
+      className="self-center"
+    >
+      {label}
+    </IconHint>
   );
 }
 
@@ -80,7 +79,10 @@ function AppointmentTimeRow({
       />
       {rescheduledFrom && <RescheduledMarker from={rescheduledFrom} />}
       {label && (
-        <span className="basis-full text-sm text-text-secondary sm:basis-auto">
+        <span
+          data-parity="appointment-when-label"
+          className="basis-full text-sm text-text-secondary sm:basis-auto"
+        >
           <span className="hidden sm:inline">· </span>
           {label}
         </span>
@@ -90,7 +92,7 @@ function AppointmentTimeRow({
 }
 
 const CONTACT_LINK_CLASS =
-  'inline-flex max-w-full items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline';
+  "inline-flex max-w-full items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline";
 
 function AttendeeEmailLink({ email }: { email: string }) {
   return (
@@ -150,8 +152,8 @@ function AppointmentDetails({
 export function AppointmentCard({
   attendee,
   when,
-  status = 'scheduled',
-  titleElement: Title = 'p',
+  status = "scheduled",
+  titleElement: Title = "p",
   badges,
   whenLabel,
   supersededWhen,

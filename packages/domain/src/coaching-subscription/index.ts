@@ -22,6 +22,7 @@ export {
   type CoachingSubscriptionStatus,
   type StartChoice,
 } from "./coaching-subscription";
+export { type CoachingEndHandler } from "./coaching-end-handler";
 export { type CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 export {
   type CoachingSubscriptions,

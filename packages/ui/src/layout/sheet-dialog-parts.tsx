@@ -75,6 +75,7 @@ export function SheetDialogFooter({
         "shrink-0 border-t bg-surface-base px-5 py-3 md:px-8 md:py-4",
         RULE_COLOR_CLASS[rule],
       )}
+      data-parity="sheet-footer"
     >
       {children}
     </div>

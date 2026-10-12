@@ -1,6 +1,7 @@
 import {
   CHECK_IN_RULES,
   CheckIn,
+  type CheckInMove,
   type CheckInOutcome,
   type CheckInRequestResult,
   type CheckIns,
@@ -11,7 +12,7 @@ import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { and, asc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, sql } from "drizzle-orm";
 
 import { checkInsTable } from "~/features/check-ins/data/schema.server";
 
@@ -19,12 +20,23 @@ type CheckInRow = typeof checkInsTable.$inferSelect;
 
 type CheckInRequest = { checkIn: CheckIn; at: Date };
 
+type RecordedStatus = CheckInRow["status"];
+
 type Settlement = {
   id: string;
   outcome: CheckInOutcome;
   at: Date;
+  expectedStatus: RecordedStatus;
   clientTimeZone?: string;
 };
+
+type CheckInMoveCommand = {
+  checkIn: CheckIn;
+  expected: { recordedStatus: RecordedStatus; startsAt: Date };
+  at: Date;
+};
+
+type ClientCancellation = { clientId: string; startsFrom: Date; at: Date };
 
 type CheckInAppointment = {
   appointmentKind: "check_in";
@@ -49,6 +61,8 @@ type PostgresCheckInsOptions = {
 
 const CLIENT_REQUEST_LOCK_PREFIX = "check-in-request:";
 const REQUEST_SAVEPOINT = sql.identifier("check_in_request");
+const MOVE_SAVEPOINT = sql.identifier("check_in_move");
+const OPEN_STATUSES: RecordedStatus[] = ["pending", "approved"];
 
 export class PostgresCheckIns implements CheckIns {
   constructor(private readonly options: PostgresCheckInsOptions) {}
@@ -90,7 +104,21 @@ export class PostgresCheckIns implements CheckIns {
 
   settle(settlement: Settlement): Promise<CheckInSettlement> {
     return this.options.database.transaction((transaction) =>
-      this.settleWhilePending(transaction, settlement),
+      this.settleWhileExpected(transaction, settlement),
+    );
+  }
+
+  move(command: CheckInMoveCommand): Promise<CheckInMove> {
+    return this.options.database.transaction((transaction) =>
+      this.moveWhileExpected(transaction, command),
+    );
+  }
+
+  cancelStartingFrom(
+    cancellation: ClientCancellation,
+  ): Promise<{ cancelled: string[] }> {
+    return this.options.database.transaction((transaction) =>
+      this.cancelUpcomingStartingFrom(transaction, cancellation),
     );
   }
 
@@ -131,9 +159,9 @@ export class PostgresCheckIns implements CheckIns {
     return { status: decision };
   }
 
-  private async settleWhilePending(
+  private async settleWhileExpected(
     transaction: DatabaseTransaction,
-    { id, outcome, at, clientTimeZone }: Settlement,
+    { id, outcome, at, expectedStatus, clientTimeZone }: Settlement,
   ): Promise<CheckInSettlement> {
     const settled = await transaction
       .update(checkInsTable)
@@ -141,24 +169,106 @@ export class PostgresCheckIns implements CheckIns {
       .where(
         and(
           eq(checkInsTable.id, id),
-          eq(checkInsTable.status, "pending"),
+          eq(checkInsTable.status, expectedStatus),
           gt(checkInsTable.startsAt, at),
         ),
       )
       .returning({ id: checkInsTable.id });
 
     if (settled.length === 0) {
-      return "not_pending";
+      return "changed_meanwhile";
     }
 
     if (outcome === "cancelled") {
-      await this.options.coachTime.release(transaction, {
-        appointmentKind: "check_in",
-        appointmentId: id,
-      });
+      await this.releaseHourOf(transaction, id);
     }
 
     return "settled";
+  }
+
+  private async moveWhileExpected(
+    transaction: DatabaseTransaction,
+    { checkIn, expected, at }: CheckInMoveCommand,
+  ): Promise<CheckInMove> {
+    const snapshot = checkIn.toSnapshot();
+
+    await transaction.execute(sql`savepoint ${MOVE_SAVEPOINT}`);
+
+    const moved = await transaction
+      .update(checkInsTable)
+      .set({
+        startsAt: snapshot.startsAt,
+        earlierStartsAt: snapshot.earlierStartsAt,
+        moves: snapshot.moves,
+        newTimeNote: snapshot.newTimeNote,
+        status: snapshot.recordedStatus,
+        proposedBy: snapshot.proposedBy,
+        answeredAt: snapshot.answeredAt,
+        clientTimeZone: snapshot.clientTimeZone,
+      })
+      .where(
+        and(
+          eq(checkInsTable.id, snapshot.id),
+          eq(checkInsTable.status, expected.recordedStatus),
+          eq(checkInsTable.startsAt, expected.startsAt),
+          gt(checkInsTable.startsAt, at),
+        ),
+      )
+      .returning({ id: checkInsTable.id });
+
+    if (moved.length === 0) {
+      return "changed_meanwhile";
+    }
+
+    await this.releaseHourOf(transaction, snapshot.id);
+
+    const coachTime = await this.options.coachTime.reserve(transaction, {
+      ...CHECK_IN_RULES.coachTimeFrom(snapshot.startsAt),
+      appointmentKind: "check_in",
+      appointmentId: snapshot.id,
+    });
+
+    if (coachTime.status === "taken") {
+      await transaction.execute(sql`rollback to savepoint ${MOVE_SAVEPOINT}`);
+
+      return "time_taken";
+    }
+
+    return "moved";
+  }
+
+  private async cancelUpcomingStartingFrom(
+    transaction: DatabaseTransaction,
+    { clientId, startsFrom, at }: ClientCancellation,
+  ): Promise<{ cancelled: string[] }> {
+    const cancelled = await transaction
+      .update(checkInsTable)
+      .set({ status: "cancelled", answeredAt: at })
+      .where(
+        and(
+          eq(checkInsTable.clientId, clientId),
+          inArray(checkInsTable.status, OPEN_STATUSES),
+          gte(checkInsTable.startsAt, startsFrom),
+          gt(checkInsTable.startsAt, at),
+        ),
+      )
+      .returning({ id: checkInsTable.id });
+
+    for (const { id } of cancelled) {
+      await this.releaseHourOf(transaction, id);
+    }
+
+    return { cancelled: cancelled.map(({ id }) => id) };
+  }
+
+  private releaseHourOf(
+    transaction: DatabaseTransaction,
+    checkInId: string,
+  ): Promise<void> {
+    return this.options.coachTime.release(transaction, {
+      appointmentKind: "check_in",
+      appointmentId: checkInId,
+    });
   }
 
   private toRow(checkIn: CheckIn): typeof checkInsTable.$inferInsert {
@@ -177,6 +287,9 @@ export class PostgresCheckIns implements CheckIns {
       note: snapshot.note,
       requestedAt: snapshot.requestedAt,
       answeredAt: snapshot.answeredAt,
+      earlierStartsAt: snapshot.earlierStartsAt,
+      moves: snapshot.moves,
+      newTimeNote: snapshot.newTimeNote,
     };
   }
 
@@ -194,6 +307,9 @@ export class PostgresCheckIns implements CheckIns {
       note: row.note,
       requestedAt: row.requestedAt,
       answeredAt: row.answeredAt,
+      earlierStartsAt: row.earlierStartsAt,
+      moves: row.moves,
+      newTimeNote: row.newTimeNote,
     });
   }
 }

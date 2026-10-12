@@ -74,7 +74,7 @@ export function HintPopover({
         onCloseAutoFocus={(event) => event.preventDefault()}
         data-parity={contentParity}
         data-parity-root={contentParityRoot}
-        className="w-fit max-w-sm rounded-field border-0 bg-primary px-3 py-1.5 text-xs text-pretty text-primary-foreground shadow-none"
+        className="w-fit max-w-sm rounded-field border-0 bg-surface-inverted px-3 py-1.5 text-xs text-pretty text-surface-inverted-foreground shadow-none"
       >
         <div id={hintId} className="space-y-1">
           {hint}

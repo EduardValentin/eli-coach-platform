@@ -1,0 +1,18 @@
+[
+  {"waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"},
+  {"waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"},
+  {"wait": 400},
+  {"click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"},
+  {"fill": ["[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=/^Add a note for /]", "Thursday evening suits me better"]},
+  {"click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Propose /]"},
+  {"waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"},
+  {"wait": 600}
+]

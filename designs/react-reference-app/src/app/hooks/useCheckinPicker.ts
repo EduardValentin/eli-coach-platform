@@ -9,10 +9,12 @@ const TIME_TAKEN = 'time_taken';
 export function useCheckinPicker<Refusal extends string>({
   open,
   onOpenChange,
+  clientId,
   send,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  clientId: string;
   send: (choice: CheckinChoice) => Promise<Refusal | null>;
 }) {
   const { loadOpenTimes } = useCheckins();
@@ -31,7 +33,7 @@ export function useCheckinPicker<Refusal extends string>({
     let current = true;
     setOpenTimes((previous) => (previous.status === 'ready' ? previous : { status: 'loading' }));
     loadTimes
-      .current()
+      .current(clientId)
       .then((times) => {
         if (current) setOpenTimes({ status: 'ready', times });
       })
@@ -42,7 +44,7 @@ export function useCheckinPicker<Refusal extends string>({
     return () => {
       current = false;
     };
-  }, [open, loadCount]);
+  }, [open, loadCount, clientId]);
 
   const reloadTimes = () => setLoadCount((count) => count + 1);
 

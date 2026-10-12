@@ -1,10 +1,14 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   ApproveCheckInUseCase,
+  CancelCheckInsAfterCoachingEndUseCase,
+  CancelCheckInUseCase,
+  CountCheckInsAwaitingUseCase,
   DeclineCheckInUseCase,
   ListClientCheckInsUseCase,
   ListCoachCheckInsUseCase,
   ListOpenCheckInTimesUseCase,
+  ProposeCheckInTimeUseCase,
   ReadClientCheckInSchedulingUseCase,
   RequestCheckInUseCase,
   ResolveCheckInJoinUseCase,
@@ -18,6 +22,7 @@ import type {
   CoachCalendar,
 } from "@eli-coach-platform/domain/coach-availability";
 import type { CoachMeetingRoomSource } from "@eli-coach-platform/domain/coach-meeting-room";
+import type { CoachingEndHandler } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
@@ -39,79 +44,112 @@ export type CheckInsFeature = {
   sharedCheckIns: SharedCheckInsController;
 };
 
+type CheckInsFoundationHandles = {
+  clock: Clock;
+  coachTime: CheckInCoachTime;
+  database: DatabaseClient;
+};
+
 type CheckInsFeatureHandles = {
   appBasePath: string;
   availability: CoachAvailabilitySource;
   calendar: CoachCalendar;
   checkInClients: CheckInClients;
-  clock: Clock;
   coachEmail: string;
-  coachTime: CheckInCoachTime;
   contactEmail: string;
-  database: DatabaseClient;
   incidents: CheckInIncidents;
   meetingRoom: CoachMeetingRoomSource;
   productEmail: ProductEmail;
   publicAppUrl: string;
 };
 
-export function composeCheckInsFeature(
-  handles: CheckInsFeatureHandles,
-): CheckInsFeature {
-  const { availability, clock } = handles;
-  const readPorts = {
-    checkIns: new PostgresCheckIns({
-      coachTime: handles.coachTime,
-      database: handles.database,
-    }),
-    clients: handles.checkInClients,
-    clock,
-  };
-  const answerPorts = {
-    ...readPorts,
-    incidents: handles.incidents,
-    notifications: new EmailCheckInNotifications(handles.productEmail, {
-      appBasePath: handles.appBasePath,
-      clock,
-      coachEmail: handles.coachEmail,
-      contactEmail: handles.contactEmail,
-      publicAppUrl: handles.publicAppUrl,
-    }),
-  };
+type CheckInsComposition = {
+  handles: { coachingEndHandler: CoachingEndHandler };
+  complete: (handles: CheckInsFeatureHandles) => CheckInsFeature;
+};
 
-  const requestPorts = {
-    ...answerPorts,
-    availability,
-    ids: new RandomCheckInIds(),
-  };
+export function composeCheckInsFeature(
+  foundation: CheckInsFoundationHandles,
+): CheckInsComposition {
+  const { clock } = foundation;
+  const checkIns = new PostgresCheckIns({
+    coachTime: foundation.coachTime,
+    database: foundation.database,
+  });
+  const cancelCheckInsAfterCoachingEnd =
+    new CancelCheckInsAfterCoachingEndUseCase({ checkIns, clock });
 
   return {
-    checkInJoin: new CheckInJoinController({
-      resolveCheckInJoin: new ResolveCheckInJoinUseCase({
+    handles: {
+      coachingEndHandler: {
+        coachingEnds: async (notice) => {
+          await cancelCheckInsAfterCoachingEnd.execute(notice);
+        },
+      },
+    },
+    complete: (handles) => {
+      const { availability } = handles;
+      const readPorts = { checkIns, clients: handles.checkInClients, clock };
+      const answerPorts = {
         ...readPorts,
-        meetingRoom: handles.meetingRoom,
-      }),
-    }),
-    clientCheckIns: new ClientCheckInsController({
-      listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
-      requestCheckIn: new RequestCheckInUseCase(requestPorts),
-    }),
-    coachCheckIns: new CoachCheckInsController({
-      listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
-      readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
-        readPorts,
-      ),
-      scheduleCheckIn: new ScheduleCheckInUseCase(requestPorts),
-    }),
-    sharedCheckIns: new SharedCheckInsController({
-      approveCheckIn: new ApproveCheckInUseCase(answerPorts),
-      declineCheckIn: new DeclineCheckInUseCase(answerPorts),
-      listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
+        incidents: handles.incidents,
+        notifications: new EmailCheckInNotifications(handles.productEmail, {
+          appBasePath: handles.appBasePath,
+          clock,
+          coachEmail: handles.coachEmail,
+          contactEmail: handles.contactEmail,
+          publicAppUrl: handles.publicAppUrl,
+        }),
+      };
+      const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase({
+        ...readPorts,
+        incidents: handles.incidents,
+      });
+      const requestPorts = {
+        ...answerPorts,
         availability,
-        calendar: handles.calendar,
-        clock,
-      }),
-      withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(answerPorts),
-    }),
+        ids: new RandomCheckInIds(),
+      };
+
+      return {
+        checkInJoin: new CheckInJoinController({
+          resolveCheckInJoin: new ResolveCheckInJoinUseCase({
+            ...readPorts,
+            meetingRoom: handles.meetingRoom,
+          }),
+        }),
+        clientCheckIns: new ClientCheckInsController({
+          countCheckInsAwaiting,
+          listClientCheckIns: new ListClientCheckInsUseCase(readPorts),
+          requestCheckIn: new RequestCheckInUseCase(requestPorts),
+        }),
+        coachCheckIns: new CoachCheckInsController({
+          countCheckInsAwaiting,
+          listCoachCheckIns: new ListCoachCheckInsUseCase(readPorts),
+          readClientCheckInScheduling: new ReadClientCheckInSchedulingUseCase(
+            readPorts,
+          ),
+          scheduleCheckIn: new ScheduleCheckInUseCase(requestPorts),
+        }),
+        sharedCheckIns: new SharedCheckInsController({
+          approveCheckIn: new ApproveCheckInUseCase(answerPorts),
+          cancelCheckIn: new CancelCheckInUseCase(answerPorts),
+          declineCheckIn: new DeclineCheckInUseCase(answerPorts),
+          listOpenCheckInTimes: new ListOpenCheckInTimesUseCase({
+            availability,
+            calendar: handles.calendar,
+            clients: handles.checkInClients,
+            clock,
+          }),
+          proposeCheckInTime: new ProposeCheckInTimeUseCase({
+            ...answerPorts,
+            availability,
+          }),
+          withdrawCheckInRequest: new WithdrawCheckInRequestUseCase(
+            answerPorts,
+          ),
+        }),
+      };
+    },
   };
 }

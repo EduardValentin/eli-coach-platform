@@ -299,6 +299,28 @@ describe("the coach scheduling a check-in", () => {
     ]);
   });
 
+  it("asks for the open times of the client she is scheduling", async () => {
+    // arrange
+    const asked: (string | null)[] = [];
+    server.use(
+      http.get(OPEN_TIMES_URL, ({ request }) => {
+        asked.push(new URL(request.url).searchParams.get("clientId"));
+        return HttpResponse.json({ times: OPEN_TIMES });
+      }),
+    );
+    const user = await renderAction({ scheduling: "allowed" });
+
+    // act
+    await user.click(scheduleButton());
+    const dialog = await screen.findByRole("dialog", { name: TITLE });
+    await within(dialog).findByRole("button", {
+      name: /Thursday,? 15 October 2026/,
+    });
+
+    // assert
+    expect(asked).toEqual([CLIENT_ID]);
+  });
+
   it("shows the scheduling under way and holds the step until the server answers", async () => {
     // arrange
     let release: () => void = () => {};
