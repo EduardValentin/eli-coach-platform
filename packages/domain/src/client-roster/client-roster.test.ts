@@ -10,7 +10,11 @@ const LATER = new Date("2027-01-02T10:00:00.000Z");
 function standingOf(
   recorded: Pick<CoachingStandingSnapshot, "status" | "accessEndsAt">,
 ): CoachingStanding {
-  return CoachingStanding.of({ ...recorded, refundDue: false });
+  return CoachingStanding.of({
+    ...recorded,
+    refundDue: false,
+    bundleMonths: 3,
+  });
 }
 
 describe("clientStatusOf", () => {

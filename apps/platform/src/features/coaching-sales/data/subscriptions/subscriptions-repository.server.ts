@@ -4,19 +4,17 @@ import type {
 } from "@eli-coach-platform/db";
 import {
   CoachingSubscription,
+  type CoachingSubscriptionSnapshot,
   type CoachingSubscriptions,
   type SubscriptionChange,
   type SubscriptionEventChange,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { recordEventOnce } from "@eli-coach-platform/infrastructure/payments/server";
-import { and, eq, inArray, isNull, type Column, type SQL } from "drizzle-orm";
+import { and, desc, eq, isNull, type Column, type SQL } from "drizzle-orm";
 
-import {
-  clientsTable,
-  coachingSubscriptionsTable,
-} from "~/features/coaching-sales/data/schema.server";
-import { mostRecentlyPaidFirst } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
+import type { CoachingStandingWriter } from "~/features/coaching-sales/data/client-writers.server";
+import { coachingSubscriptionsTable } from "~/features/coaching-sales/data/schema.server";
 import {
   changedColumns,
   selectSubscriptions,
@@ -26,6 +24,7 @@ import {
 type PostgresCoachingSubscriptionsOptions = {
   clock: Clock;
   database: DatabaseClient;
+  writeCoachingStanding: CoachingStandingWriter;
 };
 
 export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
@@ -33,20 +32,6 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
 
   findCurrentForClient(clientId: string): Promise<CoachingSubscription | null> {
     return this.findCurrent(eq(coachingSubscriptionsTable.clientId, clientId));
-  }
-
-  findCurrentForAuthSubject(
-    authSubjectId: string,
-  ): Promise<CoachingSubscription | null> {
-    return this.findCurrent(
-      inArray(
-        coachingSubscriptionsTable.clientId,
-        this.options.database
-          .select({ id: clientsTable.id })
-          .from(clientsTable)
-          .where(eq(clientsTable.authSubjectId, authSubjectId)),
-      ),
-    );
   }
 
   findByPaymentSubscriptionId(
@@ -77,7 +62,9 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   }
 
   async save(change: SubscriptionChange): Promise<"saved" | "stale"> {
-    const written = await writeChange(this.options.database, change);
+    const written = await this.options.database.transaction((transaction) =>
+      this.writeChange(transaction, change),
+    );
 
     return written ? "saved" : "stale";
   }
@@ -88,7 +75,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     return recordEventOnce(this.options.database, {
       eventId: change.eventId,
       receivedAt: this.options.clock.now(),
-      write: (transaction) => writeChange(transaction, change),
+      write: (transaction) => this.writeChange(transaction, change),
     });
   }
 
@@ -97,52 +84,73 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   ): Promise<CoachingSubscription | null> {
     const [row] = await selectSubscriptions(this.options.database)
       .where(condition)
-      .orderBy(...mostRecentlyPaidFirst(coachingSubscriptionsTable))
+      .orderBy(
+        desc(coachingSubscriptionsTable.paidAt),
+        desc(coachingSubscriptionsTable.id),
+      )
       .limit(1);
 
     return row
       ? CoachingSubscription.reconstitute(toSubscriptionSnapshot(row))
       : null;
   }
-}
 
-async function writeChange(
-  database: DatabaseClient | DatabaseTransaction,
-  change: SubscriptionChange,
-): Promise<boolean> {
-  const previous = change.previous.toSnapshot();
-  const columns = changedColumns({
-    subscription: change.subscription.toSnapshot(),
-    previous,
-  });
+  private async writeChange(
+    transaction: DatabaseTransaction,
+    change: SubscriptionChange,
+  ): Promise<boolean> {
+    const previous = change.previous.toSnapshot();
+    const columns = changedColumns({
+      subscription: change.subscription.toSnapshot(),
+      previous,
+    });
 
-  if (Object.keys(columns).length === 0) {
-    return true;
+    const written =
+      Object.keys(columns).length === 0 ||
+      (await this.updateHeld(transaction, { columns, previous }));
+
+    if (written) {
+      await this.options.writeCoachingStanding(transaction, {
+        clientId: previous.clientId,
+        standing: change.subscription.standing(),
+      });
+    }
+
+    return written;
   }
 
-  const written = await database
-    .update(coachingSubscriptionsTable)
-    .set(columns)
-    .where(
-      and(
-        eq(coachingSubscriptionsTable.id, previous.id),
-        eq(coachingSubscriptionsTable.status, previous.status),
-        eq(coachingSubscriptionsTable.startChoice, previous.startChoice),
-        holds(coachingSubscriptionsTable.cancelledAt, previous.cancelledAt),
-        holds(coachingSubscriptionsTable.accessEndsAt, previous.accessEndsAt),
-        holds(
-          coachingSubscriptionsTable.paymentProblemSince,
-          previous.paymentProblemSince,
+  private async updateHeld(
+    transaction: DatabaseTransaction,
+    update: {
+      columns: ReturnType<typeof changedColumns>;
+      previous: CoachingSubscriptionSnapshot;
+    },
+  ): Promise<boolean> {
+    const { columns, previous } = update;
+    const written = await transaction
+      .update(coachingSubscriptionsTable)
+      .set(columns)
+      .where(
+        and(
+          eq(coachingSubscriptionsTable.id, previous.id),
+          eq(coachingSubscriptionsTable.status, previous.status),
+          eq(coachingSubscriptionsTable.startChoice, previous.startChoice),
+          holds(coachingSubscriptionsTable.cancelledAt, previous.cancelledAt),
+          holds(coachingSubscriptionsTable.accessEndsAt, previous.accessEndsAt),
+          holds(
+            coachingSubscriptionsTable.paymentProblemSince,
+            previous.paymentProblemSince,
+          ),
+          holds(
+            coachingSubscriptionsTable.refundedCents,
+            previous.refund?.refundedCents ?? null,
+          ),
         ),
-        holds(
-          coachingSubscriptionsTable.refundedCents,
-          previous.refund?.refundedCents ?? null,
-        ),
-      ),
-    )
-    .returning({ id: coachingSubscriptionsTable.id });
+      )
+      .returning({ id: coachingSubscriptionsTable.id });
 
-  return written.length > 0;
+    return written.length > 0;
+  }
 }
 
 function holds<Value>(column: Column, value: Value | null): SQL {

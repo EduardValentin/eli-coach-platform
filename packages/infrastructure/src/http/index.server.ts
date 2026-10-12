@@ -3,6 +3,7 @@ export {
   handleHttpErrorResponse,
   HttpJsonError,
   readFormDataRequestBody,
+  readJsonRequestBody,
   readTextRequestBody,
   throwMethodNotAllowedResponse,
 } from "./http.server";

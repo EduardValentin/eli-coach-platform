@@ -43,6 +43,7 @@ const CLIENT: OnboardingClient = {
     status: "not-started",
     accessEndsAt: null,
     refundDue: false,
+    bundleMonths: null,
   }),
 };
 

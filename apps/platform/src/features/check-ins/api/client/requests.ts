@@ -10,7 +10,7 @@ import {
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import { requireOpenClientPortal } from "~/features/coaching-sales/server/guards/require-client-portal-standing.server";
+import { requireOpenClientPortal } from "~/features/clients/server/guards/require-client-portal-standing.server";
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(async () => {

@@ -18,11 +18,11 @@ type StartProgramNowUseCaseOptions = {
 export class StartProgramNowUseCase {
   constructor(private readonly options: StartProgramNowUseCaseOptions) {}
 
-  async execute(authSubjectId: string): Promise<StartProgramNowResult> {
+  async execute(clientId: string): Promise<StartProgramNowResult> {
     const now = this.options.clock.now();
-    const first = await this.attempt(authSubjectId, now);
+    const first = await this.attempt(clientId, now);
     const result =
-      first === "stale" ? await this.attempt(authSubjectId, now) : first;
+      first === "stale" ? await this.attempt(clientId, now) : first;
 
     if (result === "stale") {
       throw new Error(
@@ -34,11 +34,11 @@ export class StartProgramNowUseCase {
   }
 
   private async attempt(
-    authSubjectId: string,
+    clientId: string,
     now: Date,
   ): Promise<StartProgramNowResult | "stale"> {
     const current =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.subscriptions.findCurrentForClient(clientId);
 
     if (!current) {
       return { status: "not_found" };

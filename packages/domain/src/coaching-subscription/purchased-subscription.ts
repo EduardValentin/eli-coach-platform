@@ -1,4 +1,4 @@
-import type { CoachingStatus } from "../client";
+import { CoachingStanding, type CoachingStatus } from "../client";
 import {
   getCoachingBundle,
   type CoachingBundleId,
@@ -67,6 +67,15 @@ export class PurchasedSubscription {
       paidAt: completion.paidAt,
       startChoice: completion.startChoice,
       status: "not-started",
+    });
+  }
+
+  standing(): CoachingStanding {
+    return CoachingStanding.of({
+      status: this.status,
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: this.months,
     });
   }
 

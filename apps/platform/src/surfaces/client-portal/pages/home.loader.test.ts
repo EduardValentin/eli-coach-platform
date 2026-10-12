@@ -14,11 +14,11 @@ import {
 import { loader } from "./home";
 
 describe("client dashboard loader", () => {
-  it("loads her program status from the client journey, her open details request from her onboarding and what measurements are due from her profile", async () => {
+  it("loads her program status from her subscription, her open details request from her onboarding and what measurements are due from her profile", async () => {
     // arrange
     const {
       args,
-      clientJourney,
+      subscription,
       clientMeasurements,
       controller,
       programStatus,
@@ -37,15 +37,15 @@ describe("client dashboard loader", () => {
       dueLine: "weigh-in",
       programStatus,
     });
-    expect(clientJourney.loadProgramStatus).toHaveBeenCalledWith(args);
+    expect(subscription.loadProgramStatus).toHaveBeenCalledWith(args);
     expect(controller.loadOpenRequest).toHaveBeenCalledWith(args);
     expect(clientMeasurements.loadNudge).toHaveBeenCalledWith(args);
   });
 
   it("hands her no card when she has no program status yet", async () => {
     // arrange
-    const { args, clientJourney } = routeArguments();
-    clientJourney.loadProgramStatus.mockResolvedValue(null);
+    const { args, subscription } = routeArguments();
+    subscription.loadProgramStatus.mockResolvedValue(null);
 
     // act
     const loaded = await loader(args);
@@ -65,7 +65,7 @@ function routeArguments() {
     submittedAt: "2026-10-01T09:00:00.000Z",
     workStartsOn: null,
   };
-  const clientJourney = {
+  const subscription = {
     loadProgramStatus: vi.fn().mockResolvedValue(programStatus),
   };
   const controller = {
@@ -77,7 +77,7 @@ function routeArguments() {
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {
-        clientJourney,
+        subscription,
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
         controller,
@@ -89,5 +89,5 @@ function routeArguments() {
     request: new Request("https://evoa.fit/client"),
   });
 
-  return { args, clientJourney, clientMeasurements, controller, programStatus };
+  return { args, subscription, clientMeasurements, controller, programStatus };
 }

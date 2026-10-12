@@ -9,9 +9,6 @@ export type SubscriptionEventChange = SubscriptionChange & { eventId: string };
 
 export interface CoachingSubscriptions {
   findCurrentForClient(clientId: string): Promise<CoachingSubscription | null>;
-  findCurrentForAuthSubject(
-    authSubjectId: string,
-  ): Promise<CoachingSubscription | null>;
   findByPaymentSubscriptionId(
     paymentSubscriptionId: string,
   ): Promise<CoachingSubscription | null>;

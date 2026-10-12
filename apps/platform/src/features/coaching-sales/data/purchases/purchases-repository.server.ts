@@ -2,7 +2,6 @@ import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { Client } from "@eli-coach-platform/domain/client";
 import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
@@ -17,19 +16,29 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
+import type {
+  ClientWriter,
+  CoachingStandingWriter,
+} from "~/features/coaching-sales/data/client-writers.server";
 import {
   checkoutSessionsTable,
-  clientsTable,
-  coachingSalesConstraints,
   coachingSubscriptionsTable,
   paymentLinksTable,
 } from "~/features/coaching-sales/data/schema.server";
-import { violatesUniqueConstraint } from "~/features/coaching-sales/data/unique-violation.server";
 
 type PostgresCoachingPurchasesOptions = {
   clock: Clock;
   database: DatabaseClient;
+  writeClient: ClientWriter;
+  writeCoachingStanding: CoachingStandingWriter;
 };
+
+type PurchaseRecording = {
+  purchase: CoachingPurchase;
+  receivedAt: Date;
+};
+
+class CallAlreadyPaid extends Error {}
 
 const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
   "held",
@@ -49,12 +58,10 @@ export class PostgresCoachingPurchases
 
     try {
       return await this.options.database.transaction((transaction) =>
-        recordPurchase(transaction, { purchase, receivedAt }),
+        this.recordPurchase(transaction, { purchase, receivedAt }),
       );
     } catch (error) {
-      if (
-        violatesUniqueConstraint(error, coachingSalesConstraints.clientPerCall)
-      ) {
+      if (error instanceof CallAlreadyPaid) {
         return { outcome: "call_already_paid" };
       }
 
@@ -71,12 +78,12 @@ export class PostgresCoachingPurchases
 
     const advancedSales = await this.options.database
       .select({
-        assessmentCallId: clientsTable.assessmentCallId,
+        assessmentCallId: coachingSubscriptionsTable.assessmentCallId,
         state: sql<CallSalesState>`'paid'`,
-        clientId: sql<string | null>`${clientsTable.id}`,
+        clientId: sql<string | null>`${coachingSubscriptionsTable.clientId}`,
       })
-      .from(clientsTable)
-      .where(inArray(clientsTable.assessmentCallId, [...callIds]))
+      .from(coachingSubscriptionsTable)
+      .where(inArray(coachingSubscriptionsTable.assessmentCallId, [...callIds]))
       .union(
         this.options.database
           .select({
@@ -96,99 +103,96 @@ export class PostgresCoachingPurchases
 
     return callSalesOf(callIds, advancedSales);
   }
-}
 
-async function recordPurchase(
-  transaction: DatabaseTransaction,
-  recording: { purchase: CoachingPurchase; receivedAt: Date },
-): Promise<CoachingPurchaseOutcome> {
-  const { intake, eventId, subscription } = recording.purchase;
-  const ledgerOutcome = await recordPaymentEvent(transaction, {
-    eventId,
-    receivedAt: recording.receivedAt,
-  });
+  private async recordPurchase(
+    transaction: DatabaseTransaction,
+    recording: PurchaseRecording,
+  ): Promise<CoachingPurchaseOutcome> {
+    const { intake, eventId, subscription } = recording.purchase;
+    const ledgerOutcome = await recordPaymentEvent(transaction, {
+      eventId,
+      receivedAt: recording.receivedAt,
+    });
 
-  if (ledgerOutcome === "duplicate") {
-    return {
-      outcome: "duplicate_event",
-      clientId: await findClientIdForCall(transaction, intake.assessmentCallId),
-    };
+    if (ledgerOutcome === "duplicate") {
+      return {
+        outcome: "duplicate_event",
+        clientId: await findClientIdForCall(
+          transaction,
+          intake.assessmentCallId,
+        ),
+      };
+    }
+
+    const admitted = await this.options.writeClient(transaction, {
+      intake,
+      admittedAt: recording.receivedAt,
+    });
+
+    if (admitted === "call_already_has_client") {
+      throw new CallAlreadyPaid();
+    }
+
+    const purchased = subscription.toSnapshot();
+
+    await transaction.insert(coachingSubscriptionsTable).values({
+      clientId: admitted.clientId,
+      assessmentCallId: intake.assessmentCallId,
+      bundleId: purchased.bundleId,
+      months: purchased.months,
+      tier: purchased.tier,
+      amountCents: purchased.amountCents,
+      currency: purchased.currency,
+      stripeCustomerId: purchased.paymentCustomerId,
+      stripeSubscriptionId: purchased.paymentSubscriptionId,
+      stripePaymentIntentId: purchased.paymentIntentId,
+      stripeCheckoutSessionId: purchased.checkoutSessionId,
+      paidAt: purchased.paidAt,
+      startChoice: purchased.startChoice,
+      status: purchased.status,
+      createdAt: recording.receivedAt,
+    });
+    await this.options.writeCoachingStanding(transaction, {
+      clientId: admitted.clientId,
+      standing: subscription.standing(),
+    });
+
+    await transaction
+      .update(paymentLinksTable)
+      .set({ state: "spent" })
+      .where(
+        inArray(
+          paymentLinksTable.id,
+          transaction
+            .select({ id: checkoutSessionsTable.paymentLinkId })
+            .from(checkoutSessionsTable)
+            .where(
+              eq(checkoutSessionsTable.id, subscription.checkoutSessionId),
+            ),
+        ),
+      );
+
+    return { outcome: "recorded", clientId: admitted.clientId };
   }
-
-  const client = Client.fromIntake(intake, recording.receivedAt).toSnapshot();
-  const [clientRow] = await transaction
-    .insert(clientsTable)
-    .values({
-      assessmentCallId: client.assessmentCallId,
-      firstName: client.firstName,
-      lastName: client.lastName,
-      email: client.email,
-      dateOfBirth: client.dateOfBirth,
-      gender: client.gender,
-      primaryGoal: client.primaryGoal,
-      country: client.country,
-      phone: client.phone,
-      createdAt: client.createdAt,
-    })
-    .returning({ id: clientsTable.id });
-
-  if (!clientRow) {
-    throw new Error("Client insert returned no row.");
-  }
-
-  const purchased = subscription.toSnapshot();
-
-  await transaction.insert(coachingSubscriptionsTable).values({
-    clientId: clientRow.id,
-    assessmentCallId: client.assessmentCallId,
-    bundleId: purchased.bundleId,
-    months: purchased.months,
-    tier: purchased.tier,
-    amountCents: purchased.amountCents,
-    currency: purchased.currency,
-    stripeCustomerId: purchased.paymentCustomerId,
-    stripeSubscriptionId: purchased.paymentSubscriptionId,
-    stripePaymentIntentId: purchased.paymentIntentId,
-    stripeCheckoutSessionId: purchased.checkoutSessionId,
-    paidAt: purchased.paidAt,
-    startChoice: purchased.startChoice,
-    status: purchased.status,
-    createdAt: recording.receivedAt,
-  });
-
-  await transaction
-    .update(paymentLinksTable)
-    .set({ state: "spent" })
-    .where(
-      inArray(
-        paymentLinksTable.id,
-        transaction
-          .select({ id: checkoutSessionsTable.paymentLinkId })
-          .from(checkoutSessionsTable)
-          .where(eq(checkoutSessionsTable.id, subscription.checkoutSessionId)),
-      ),
-    );
-
-  return { outcome: "recorded", clientId: clientRow.id };
 }
 
 async function findClientIdForCall(
   transaction: DatabaseTransaction,
   assessmentCallId: string,
 ): Promise<string> {
-  const [clientRow] = await transaction
-    .select({ id: clientsTable.id })
-    .from(clientsTable)
-    .where(eq(clientsTable.assessmentCallId, assessmentCallId))
+  const [subscriptionRow] = await transaction
+    .select({ clientId: coachingSubscriptionsTable.clientId })
+    .from(coachingSubscriptionsTable)
+    .where(eq(coachingSubscriptionsTable.assessmentCallId, assessmentCallId))
     .limit(1);
 
-  if (!clientRow) {
+  if (!subscriptionRow) {
     throw new Error(
       `No client was recorded for assessment call ${assessmentCallId}.`,
     );
   }
 
-  return clientRow.id;
+  return subscriptionRow.clientId;
 }
 
 function callSalesOf(

@@ -15,7 +15,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { clientsTable } from "~/features/coaching-sales/data/schema.server";
+import { clientsTable } from "~/features/clients/data/schema.server";
 
 export const clientResourcesTable = appSchema.table(
   "client_resources",

@@ -137,6 +137,23 @@ export async function readTextRequestBody(
   return { status: "valid", text: new TextDecoder().decode(body.bytes) };
 }
 
+export async function readJsonRequestBody(
+  request: Request,
+  options: ReadRequestBodyOptions,
+): Promise<unknown> {
+  const body = await readTextRequestBody(request, options);
+
+  if (body.status !== "valid") {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(body.text);
+  } catch {
+    return undefined;
+  }
+}
+
 function declaresLengthOver(request: Request, maxBytes: number): boolean {
   const declaredLength = request.headers.get("Content-Length");
 

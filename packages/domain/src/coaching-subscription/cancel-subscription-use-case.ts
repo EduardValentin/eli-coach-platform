@@ -45,7 +45,7 @@ type CancelSubscriptionUseCaseOptions = {
 };
 
 type CancellationRecording = {
-  authSubjectId: string;
+  clientId: string;
   now: Date;
   previous: CoachingSubscription;
 };
@@ -57,9 +57,9 @@ export class CancelSubscriptionUseCase {
     this.coachingEnd = new CoachingEndPropagation(options);
   }
 
-  async execute(authSubjectId: string): Promise<CancelSubscriptionResult> {
+  async execute(clientId: string): Promise<CancelSubscriptionResult> {
     const current =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.subscriptions.findCurrentForClient(clientId);
 
     if (!current) {
       return { status: "not_found" };
@@ -85,7 +85,7 @@ export class CancelSubscriptionUseCase {
     }
 
     const recorded = await this.record(decision, {
-      authSubjectId,
+      clientId,
       now,
       previous: current,
     });
@@ -141,8 +141,8 @@ export class CancelSubscriptionUseCase {
       return decision;
     }
 
-    const fresh = await this.options.subscriptions.findCurrentForAuthSubject(
-      recording.authSubjectId,
+    const fresh = await this.options.subscriptions.findCurrentForClient(
+      recording.clientId,
     );
 
     if (!fresh) {

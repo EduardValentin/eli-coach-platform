@@ -42,7 +42,12 @@ function journey(
     welcomeSeenAt,
     onboardingSubmittedAt,
     ...NO_REVIEW_STAMPS,
-    standing: { status: "not-started", accessEndsAt: null, refundDue: false },
+    standing: {
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: null,
+    },
     ...reviewStamps,
   });
 }

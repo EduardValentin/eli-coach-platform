@@ -100,9 +100,10 @@ const INSERT_ENDED_CALL = `
 const INSERT_CLIENT = `
   insert into app.clients (
     assessment_call_id, first_name, last_name, email, date_of_birth, gender,
-    primary_goal, country, created_at, auth_subject_id
+    primary_goal, country, created_at, auth_subject_id, booking_time_zone,
+    coaching_bundle_months
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
   returning id
 `;
 const INSERT_SUBSCRIPTION = `
@@ -243,6 +244,8 @@ async function insertPaidClient(
     COUNTRY,
     paidAt,
     binding.authSubjectId,
+    TIME_ZONE,
+    SEEDED_BUNDLE.months,
   ]);
   await connection.query(INSERT_SUBSCRIPTION, [
     clientId,

@@ -1,11 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type {
-  AssessmentCallReader,
-  AssessmentCallSnapshot,
-} from "@eli-coach-platform/domain/assessment-call";
 import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
 import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -15,15 +12,12 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import { writeReviewStamps } from "~/features/coaching-sales/data/client-journeys/review-stamps.server";
-
 import {
   composeCoachingSalesFeature,
   type CoachingSalesFeatureHandles,
 } from "./coaching-sales-composition.server";
 
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
-const RESOURCE_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
 describe("composeCoachingSalesFeature", () => {
   it("refuses to send a payment link while the site is in waitlist mode", async () => {
@@ -112,525 +106,6 @@ describe("composeCoachingSalesFeature", () => {
       eventId: "evt_1",
       reason: "call_not_found",
     });
-  });
-});
-
-describe("composeCoachingSalesFeature invitation acceptance", () => {
-  it("refuses a subject whose identity carries no invitation without reading any invitation", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const outcome = await handles.invitationAcceptance.accept({
-      authSubjectId: "user_uninvited",
-    });
-
-    // assert
-    expect(outcome).toBe("refused");
-  });
-});
-
-describe("composeCoachingSalesFeature client onboarding handles", () => {
-  it("reads the onboarding client from the clients table", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const reading = handles.onboardingClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    await expect(reading).rejects.toThrow("database down");
-  });
-
-  it("reads the client's identity from the clients table", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const reading = handles.clientIdentities.findByClientId(
-      "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
-    );
-
-    // assert
-    await expect(reading).rejects.toThrow("database down");
-  });
-
-  it("reads whether a client exists for her resources from the clients table", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const reading = handles.resourceClients.exists(
-      "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
-    );
-
-    // assert
-    await expect(reading).rejects.toThrow("database down");
-  });
-
-  it("stamps the submitted onboarding on the clients table", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const stamping =
-      handles.onboardingSubmissionStamps.recordOnboardingSubmitted({
-        clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
-        at: new Date("2026-10-20T10:00:00.000Z"),
-      });
-
-    // assert
-    await expect(stamping).rejects.toThrow("database down");
-  });
-
-  it("projects the review stamps on the clients table", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const stamping = handles.onboardingReviewStamps.record({
-      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
-      stamps: {
-        reviewOpenedAt: new Date("2026-10-20T10:00:00.000Z"),
-        detailsRequestedAt: null,
-        detailsAnsweredAt: null,
-        answersApprovedAt: null,
-      },
-    });
-
-    // assert
-    await expect(stamping).rejects.toThrow("database down");
-  });
-
-  it("hands out the review stamp writer other features call inside their own transaction", () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const writer = handles.reviewStampWriter;
-
-    // assert
-    expect(writer).toBe(writeReviewStamps);
-  });
-});
-
-describe("composeCoachingSalesFeature resource clients", () => {
-  const SUBMITTED_AT = new Date("2026-10-15T10:00:00.000Z");
-
-  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
-            subscription: subscriptionRow({
-              status: "not-started",
-              accessEndsAt: null,
-            }),
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "reachable",
-    });
-  });
-
-  it("answers her portal unreachable once her coaching ended", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
-            subscription: subscriptionRow({
-              status: "ended",
-              cancelledAt: SUBMITTED_AT,
-              accessEndsAt: SUBMITTED_AT,
-            }),
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "unreachable",
-    });
-  });
-
-  it("answers her portal unreachable before she submitted onboarding", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({ onboardingSubmittedAt: null }),
-            subscription: subscriptionRow({
-              status: "not-started",
-              accessEndsAt: null,
-            }),
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "unreachable",
-    });
-  });
-
-  it("answers no client for a subject bound to none", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([[]]),
-    });
-
-    // act
-    const client =
-      await handles.resourceClients.findByAuthSubjectId("user_nobody");
-
-    // assert
-    expect(client).toBeNull();
-  });
-});
-
-describe("composeCoachingSalesFeature check-in clients", () => {
-  it("answers her client with her portal reachable once she submitted onboarding and her coaching runs", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({
-              onboardingSubmittedAt: new Date("2026-10-15T10:00:00.000Z"),
-            }),
-            subscription: subscriptionRow({
-              status: "not-started",
-              accessEndsAt: null,
-            }),
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "reachable",
-      coachingEndsAt: null,
-    });
-  });
-
-  it("names each client and gives her email, and nothing else of her identity", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            clientId: RESOURCE_CLIENT_ID,
-            firstName: "Ana",
-            lastName: "Popescu",
-            email: "ana@example.com",
-            dateOfBirth: "1994-03-14",
-            gender: "female",
-            country: "RO",
-            phone: "+40712345678",
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const identities = await handles.checkInClients.identitiesOf([
-      RESOURCE_CLIENT_ID,
-    ]);
-
-    // assert
-    expect(identities).toEqual([
-      {
-        clientId: RESOURCE_CLIENT_ID,
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-      },
-    ]);
-  });
-});
-
-describe("composeCoachingSalesFeature check-in client references", () => {
-  const SUBMITTED_AT = new Date("2026-10-15T10:00:00.000Z");
-
-  it("answers her portal reach and the zone she booked her assessment call from", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      assessmentCallReader: callIn("America/New_York"),
-      database: createDatabaseAnswering([
-        [
-          rosterRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
-            subscription: subscriptionRow({
-              status: "not-started",
-              accessEndsAt: null,
-            }),
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "reachable",
-      bookingTimeZone: "America/New_York",
-      coachingEndsAt: null,
-    });
-  });
-
-  it("answers her portal awaiting onboarding while her coaching runs and she has not sent it", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      assessmentCallReader: callIn("Europe/London"),
-      database: createDatabaseAnswering([
-        [
-          rosterRow({
-            onboardingSubmittedAt: null,
-            subscription: subscriptionRow({
-              status: "active",
-              accessEndsAt: null,
-            }),
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client?.portal).toBe("awaiting_onboarding");
-  });
-
-  it("answers her portal ended once her coaching ended", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      assessmentCallReader: callIn("Europe/London"),
-      database: createDatabaseAnswering([
-        [
-          rosterRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
-            subscription: subscriptionRow({
-              status: "ended",
-              cancelledAt: SUBMITTED_AT,
-              accessEndsAt: SUBMITTED_AT,
-            }),
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client?.portal).toBe("ended");
-  });
-
-  it("answers no client when the roster holds none", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      assessmentCallReader: callIn("Europe/London"),
-      database: createDatabaseAnswering([[]]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client).toBeNull();
-  });
-
-  it("answers no client when her assessment call cannot be found", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          rosterRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
-            subscription: null,
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client).toBeNull();
-  });
-
-  it("answers a signed-in client's portal awaiting onboarding as it is", async () => {
-    // arrange
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({ onboardingSubmittedAt: null }),
-            subscription: subscriptionRow({
-              status: "not-started",
-              accessEndsAt: null,
-            }),
-          },
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client).toEqual({
-      clientId: RESOURCE_CLIENT_ID,
-      portal: "awaiting_onboarding",
-      coachingEndsAt: null,
-    });
-  });
-
-  it("answers a signed-in client's coaching end once her current subscription is cancelled", async () => {
-    // arrange
-    const endsAt = new Date("2027-01-21T08:00:00.000Z");
-    const cancelled = subscriptionRow({
-      status: "cancelled",
-      cancelledAt: SUBMITTED_AT,
-      accessEndsAt: endsAt,
-    });
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      database: createDatabaseAnswering([
-        [
-          {
-            ...journeyRow({ onboardingSubmittedAt: SUBMITTED_AT }),
-            subscription: cancelled,
-          },
-        ],
-        [cancelled],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findByAuthSubjectId("user_ana");
-
-    // assert
-    expect(client?.coachingEndsAt).toEqual(endsAt);
-  });
-
-  it("answers a referenced client's coaching end once her current subscription is cancelled", async () => {
-    // arrange
-    const endsAt = new Date("2027-01-21T08:00:00.000Z");
-    const cancelled = subscriptionRow({
-      status: "cancelled",
-      cancelledAt: SUBMITTED_AT,
-      accessEndsAt: endsAt,
-    });
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      assessmentCallReader: callIn("Europe/London"),
-      database: createDatabaseAnswering([
-        [
-          rosterRow({
-            onboardingSubmittedAt: SUBMITTED_AT,
-            subscription: cancelled,
-          }),
-        ],
-      ]),
-    });
-
-    // act
-    const client = await handles.checkInClients.findById(RESOURCE_CLIENT_ID);
-
-    // assert
-    expect(client?.coachingEndsAt).toEqual(endsAt);
-  });
-});
-
-describe("composeCoachingSalesFeature coach clients", () => {
-  it("answers no clients and reports the failure when the roster cannot be read", async () => {
-    // arrange
-    const incidents = createIncidents();
-    const { feature } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      incidents,
-    });
-
-    // act
-    const roster = await feature.coachClients.loadRoster(
-      coachArgs(new Request("https://evoa.fit/coach/clients")),
-    );
-
-    // assert
-    expect(roster).toEqual({ clients: null });
-    expect(incidents.rosterReadFailed).toHaveBeenCalledWith(
-      new Error("database down"),
-    );
-  });
-
-  it("re-sends an invitation through the clients table", async () => {
-    // arrange
-    const { feature } = composeCoachingSalesFeature(createHandles({}));
-
-    // act
-    const resending = feature.coachClients.resendInvitation(
-      coachArgs(
-        new Request("https://evoa.fit/api/coaching-sales/invitation-resends", {
-          body: JSON.stringify({
-            clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
-          }),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }),
-      ),
-    );
-
-    // assert
-    await expect(resending).rejects.toThrow("database down");
   });
 });
 
@@ -736,22 +211,21 @@ function createHandles(
   return {
     appBasePath: "/eli-coach-platform",
     assessmentCallReader: { findById: async () => null },
+    clientIdentities: {
+      findByClientId: async () => null,
+      findByClientIds: async () => [],
+    },
+    clientJourneys: { findByAuthSubjectId: async () => null },
+    clientReach: { findByAuthSubjectId: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
     coachingEndHandler: { coachingEnds: async () => undefined },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
-    identityInvitations: {
-      create: async () => {
-        throw new Error("no identity invitation expected");
-      },
-      findInvitationIdForSubject: async () => null,
-      replace: async () => {
-        throw new Error("no identity invitation expected");
-      },
-    },
     incidents: createIncidents(),
+    linkTokens: createLinkTokens(),
+    paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
     paymentSubscriptions: payments.subscriptions,
@@ -761,6 +235,10 @@ function createHandles(
     },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
+    writeClient: async () => {
+      throw new Error("no client expected");
+    },
+    writeCoachingStanding: async () => undefined,
   };
 }
 
@@ -768,9 +246,6 @@ function createIncidents() {
   return {
     paymentCardRefreshFailed: vi.fn(),
     coachingEndNotPropagated: vi.fn(),
-    invitationEmailFailed: vi.fn(),
-    invitationResendFailed: vi.fn(),
-    invitationResent: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),
@@ -783,99 +258,8 @@ function createIncidents() {
     subscriptionCancelled: vi.fn(),
     subscriptionEventReconciled: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
-    rosterReadFailed: vi.fn(),
     salesModeReadFailed: vi.fn(),
   };
-}
-
-function journeyRow(stamps: { onboardingSubmittedAt: Date | null }) {
-  return {
-    clientId: RESOURCE_CLIENT_ID,
-    firstName: "Ana",
-    lastName: "Popescu",
-    gender: "female",
-    welcomeSeenAt: new Date("2026-10-14T10:00:00.000Z"),
-    onboardingSubmittedAt: stamps.onboardingSubmittedAt,
-    reviewOpenedAt: null,
-    detailsRequestedAt: null,
-    detailsAnsweredAt: null,
-    answersApprovedAt: null,
-  };
-}
-
-function subscriptionRow(lifecycle: {
-  status: string;
-  cancelledAt?: Date;
-  accessEndsAt: Date | null;
-}) {
-  return {
-    id: "subscription-1",
-    clientId: RESOURCE_CLIENT_ID,
-    bundleId: "3-months",
-    months: 3,
-    tier: "regular",
-    amountCents: 44700,
-    currency: "eur",
-    paymentCustomerId: "cus_1",
-    paymentSubscriptionId: "sub_1",
-    checkoutSessionId: "cs_1",
-    paidAt: new Date("2026-10-10T10:00:00.000Z"),
-    startChoice: "waiting",
-    status: lifecycle.status,
-    cancelledAt: lifecycle.cancelledAt ?? null,
-    accessEndsAt: lifecycle.accessEndsAt,
-    paymentProblemSince: null,
-    refundReason: null,
-    refundDueCents: null,
-    refundDueBy: null,
-    refundedCents: null,
-    refundedAt: null,
-  };
-}
-
-function rosterRow(options: {
-  onboardingSubmittedAt: Date | null;
-  subscription: ReturnType<typeof subscriptionRow> | null;
-}) {
-  return {
-    ...journeyRow({ onboardingSubmittedAt: options.onboardingSubmittedAt }),
-    authSubjectId: "user_ana",
-    email: "ana@example.com",
-    assessmentCallId: CALL_ID,
-    subscription: options.subscription,
-  };
-}
-
-function callIn(visitorTimeZone: string): AssessmentCallReader {
-  return {
-    findById: async (id) =>
-      id === CALL_ID
-        ? ({ id: CALL_ID, visitorTimeZone } as AssessmentCallSnapshot)
-        : null,
-  };
-}
-
-function createDatabaseAnswering(
-  answers: readonly (readonly Record<string, unknown>[])[],
-): DatabaseClient {
-  const pending = [...answers];
-
-  return {
-    select: () => {
-      const rows = pending.shift() ?? [];
-      const selection = {
-        from: () => selection,
-        leftJoin: () => selection,
-        where: () => selection,
-        orderBy: () => selection,
-        limit: () => Promise.resolve(rows),
-        then: (onFulfilled: (value: typeof rows) => unknown) =>
-          Promise.resolve(rows).then(onFulfilled),
-      };
-
-      return selection;
-    },
-  } as unknown as DatabaseClient;
 }
 
 function createUnreachableDatabase(): DatabaseClient {

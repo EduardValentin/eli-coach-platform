@@ -143,6 +143,7 @@ export class CoachingSubscription {
       status: this.status,
       accessEndsAt: this.accessEndsAt,
       refundDue: this.hasRefundOutstanding(),
+      bundleMonths: this.months,
     });
   }
 

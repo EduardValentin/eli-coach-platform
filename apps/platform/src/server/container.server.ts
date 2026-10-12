@@ -22,6 +22,7 @@ import {
 } from "@eli-coach-platform/infrastructure/documents/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
+import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
 import {
   createProgressPhotoRenditions,
   createResourceImagePages,
@@ -51,6 +52,7 @@ import {
   composeClientResourcesFeature,
   type ClientResourcesFeature,
 } from "~/features/client-resources/server/client-resources-composition.server";
+import { composeClientsFeature } from "~/features/clients/server/clients-composition.server";
 import { composeCoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
@@ -79,6 +81,7 @@ export type PlatformContainer = {
   clientOnboarding: ClientOnboardingFeature;
   clientProfile: ReturnType<typeof composeClientProfileFeature>;
   clientResources: ClientResourcesFeature;
+  clients: ReturnType<typeof composeClientsFeature>;
   closeDatabase: () => Promise<void>;
   coachSchedule: ReturnType<typeof composeCoachScheduleFeature>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
@@ -118,6 +121,7 @@ export function createPlatformContainer(options: {
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
   const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
+  const linkTokens = createLinkTokens();
   const waitlist = composeWaitlistFeature({
     botVerifier,
     clock,
@@ -157,54 +161,71 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const clients = composeClientsFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    identityInvitations: createIdentityInvitations(environment, {
+      signUpUrl: environment.CLERK_SIGN_UP_URL,
+      returnUrl: clientPortalUrl(environment),
+    }),
+    incidents,
+    linkTokens,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
   const coachingSales = composeCoachingSalesFeature({
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
+    clientIdentities: clients.handles.clientIdentities,
+    clientJourneys: clients.handles.clientJourneys,
+    clientReach: clients.handles.clientReach,
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     coachingEndHandler: checkInsComposition.handles.coachingEndHandler,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
-    identityInvitations: createIdentityInvitations(environment, {
-      signUpUrl: environment.CLERK_SIGN_UP_URL,
-      returnUrl: clientPortalUrl(environment),
-    }),
     incidents,
+    linkTokens,
+    paidClientAdmission: clients.handles.paidClientAdmission,
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,
     paymentSubscriptions: payments.subscriptions,
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
+    writeClient: clients.handles.writeClient,
+    writeCoachingStanding: clients.handles.writeCoachingStanding,
   });
   const clientProfile = composeClientProfileFeature({
-    clientIdentities: coachingSales.handles.clientIdentities,
+    clientIdentities: clients.handles.clientIdentities,
     clock,
     database: database.client,
     incidents,
-    measurementClients: coachingSales.handles.measurementClients,
+    measurementClients: clients.handles.measurementClients,
     progressPhotoRenditions: createProgressPhotoRenditions(),
     progressPhotoStore: createProgressPhotoStore(environment),
-    unitPreferenceClients: coachingSales.handles.unitPreferenceClients,
+    unitPreferenceClients: clients.handles.unitPreferenceClients,
   });
   const clientOnboarding = composeClientOnboardingFeature({
     appBasePath: environment.APP_BASE_PATH,
     attachProgressPhotos: clientProfile.handles.attachProgressPhotos,
-    clientIdentities: coachingSales.handles.clientIdentities,
+    clientIdentities: clients.handles.clientIdentities,
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     incidents,
     measurements: clientProfile.handles.measurements,
-    onboardingClients: coachingSales.handles.onboardingClients,
-    onboardingReviewStamps: coachingSales.handles.onboardingReviewStamps,
-    onboardingSubmissionStamps:
-      coachingSales.handles.onboardingSubmissionStamps,
+    onboardingClients: clients.handles.onboardingClients,
+    onboardingReviewStamps: clients.handles.onboardingReviewStamps,
+    onboardingSubmissionStamps: clients.handles.onboardingSubmissionStamps,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
     recordMeasurementEntry: clientProfile.handles.recordMeasurementEntry,
-    reviewStampWriter: coachingSales.handles.reviewStampWriter,
+    reviewStampWriter: clients.handles.reviewStampWriter,
     saveClientProfile: clientProfile.handles.saveClientProfile,
     unitPreferences: clientProfile.handles.unitPreferences,
   });
@@ -218,14 +239,14 @@ export function createPlatformContainer(options: {
     fileFormats: createResourceFileFormatDetector(),
     imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
     incidents,
-    resourceClients: coachingSales.handles.resourceClients,
+    resourceClients: clients.handles.resourceClients,
     store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
   });
   const checkIns = checkInsComposition.complete({
     appBasePath: environment.APP_BASE_PATH,
     availability: coachSchedule.handles.availability,
     calendar: coachSchedule.handles.calendar,
-    checkInClients: coachingSales.handles.checkInClients,
+    checkInClients: clients.handles.checkInClients,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     incidents,
@@ -254,7 +275,7 @@ export function createPlatformContainer(options: {
       bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
       clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
       database: database.client,
-      invitationAcceptance: coachingSales.handles.invitationAcceptance,
+      invitationAcceptance: clients.handles.invitationAcceptance,
       portal: {
         appBasePath: environment.APP_BASE_PATH,
         publicAppUrl: environment.PUBLIC_APP_URL,
@@ -266,6 +287,7 @@ export function createPlatformContainer(options: {
     clientOnboarding,
     clientProfile,
     clientResources,
+    clients,
     closeDatabase: () => database.close(),
     coachSchedule,
     coachingSales,

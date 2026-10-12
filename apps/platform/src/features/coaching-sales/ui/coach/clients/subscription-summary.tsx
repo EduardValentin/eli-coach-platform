@@ -9,7 +9,7 @@ import { CreditCard } from "lucide-react";
 
 import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import { bundleLengthLabel } from "~/features/coaching-sales/public/bundle-cards";
-import type { ClientSubscription } from "~/features/coaching-sales/public/coach-clients";
+import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
 import { formatMoney } from "~/features/coaching-sales/public/money";
 import { REFUND_REASON_LABELS } from "~/features/coaching-sales/public/subscription-refunds";
 

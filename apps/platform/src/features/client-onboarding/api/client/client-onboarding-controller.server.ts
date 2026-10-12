@@ -18,13 +18,13 @@ import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference"
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
+  readJsonRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
-import { readJsonRequestBody } from "~/features/client-onboarding/api/read-json-request-body.server";
 import {
   answerDetailsRequestSchema,
   missingConsentSchema,
@@ -121,7 +121,9 @@ export class ClientOnboardingController {
   async saveDraft(args: ActionFunctionArgs): Promise<Response> {
     const client = requireApiAccount(args, { role: "CLIENT" });
     const request = saveDraftRequestSchema.safeParse(
-      await readJsonRequestBody(args.request, ONBOARDING_REQUEST_MAX_BYTES),
+      await readJsonRequestBody(args.request, {
+        maxBytes: ONBOARDING_REQUEST_MAX_BYTES,
+      }),
     );
 
     if (!request.success) {
@@ -197,7 +199,9 @@ export class ClientOnboardingController {
   async answerDetails(args: ActionFunctionArgs): Promise<Response> {
     const client = requireApiAccount(args, { role: "CLIENT" });
     const request = answerDetailsRequestSchema.safeParse(
-      await readJsonRequestBody(args.request, ONBOARDING_REQUEST_MAX_BYTES),
+      await readJsonRequestBody(args.request, {
+        maxBytes: ONBOARDING_REQUEST_MAX_BYTES,
+      }),
     );
 
     if (!request.success) {

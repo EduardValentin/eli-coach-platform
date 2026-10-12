@@ -17,6 +17,7 @@ function standingOf(
     status: "not-started",
     accessEndsAt: null,
     refundDue: false,
+    bundleMonths: null,
     ...overrides,
   });
 }
@@ -166,12 +167,13 @@ describe("CoachingStanding.refundDue", () => {
 });
 
 describe("CoachingStanding.toSnapshot", () => {
-  it("returns the recorded status, access end and refund due", () => {
+  it("returns the recorded status, access end, refund due and bundle months", () => {
     // arrange
     const snapshot: CoachingStandingSnapshot = {
       status: "cancelled",
       accessEndsAt: ACCESS_END,
       refundDue: true,
+      bundleMonths: 6,
     };
 
     // act

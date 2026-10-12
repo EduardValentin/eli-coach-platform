@@ -1,4 +1,5 @@
 export { Client, type ClientIntake } from "./client";
+export { type ClientReach, type ClientReachReading } from "./client-reach";
 export {
   type ClientIdentities,
   type ClientIdentity,

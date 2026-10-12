@@ -5,7 +5,7 @@ import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
 
 type OpenPaymentMethodSessionCommand = {
-  authSubjectId: string;
+  clientId: string;
   returnUrl: string;
 };
 
@@ -30,10 +30,9 @@ export class OpenPaymentMethodSessionUseCase {
   async execute(
     command: OpenPaymentMethodSessionCommand,
   ): Promise<OpenPaymentMethodSessionResult> {
-    const subscription =
-      await this.options.subscriptions.findCurrentForAuthSubject(
-        command.authSubjectId,
-      );
+    const subscription = await this.options.subscriptions.findCurrentForClient(
+      command.clientId,
+    );
 
     if (!subscription) {
       return { status: "not_found" };

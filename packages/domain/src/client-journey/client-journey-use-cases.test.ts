@@ -26,6 +26,7 @@ const NOT_STARTED: CoachingStandingSnapshot = {
   status: "not-started",
   accessEndsAt: null,
   refundDue: false,
+  bundleMonths: null,
 };
 
 function journey(
@@ -133,6 +134,7 @@ describe("ReadClientPortalStandingUseCase", () => {
     status: "ended",
     accessEndsAt: NOW,
     refundDue: false,
+    bundleMonths: 3,
   };
 
   function standingUseCase(options: {
@@ -153,7 +155,12 @@ describe("ReadClientPortalStandingUseCase", () => {
   it("answers her portal reachable to a client who submitted onboarding and whose coaching is active", async () => {
     // arrange
     const found = journey(WELCOME_SEEN_AT, SUBMITTED_AT, {
-      standing: { status: "active", accessEndsAt: null, refundDue: false },
+      standing: {
+        status: "active",
+        accessEndsAt: null,
+        refundDue: false,
+        bundleMonths: 3,
+      },
     });
     const { useCase, journeys } = standingUseCase({ found, now: NOW });
 
@@ -208,6 +215,7 @@ describe("ReadClientPortalStandingUseCase", () => {
         status: "cancelled",
         accessEndsAt: ACCESS_END,
         refundDue: false,
+        bundleMonths: 3,
       } satisfies CoachingStandingSnapshot,
       ACCESS_END,
     ],

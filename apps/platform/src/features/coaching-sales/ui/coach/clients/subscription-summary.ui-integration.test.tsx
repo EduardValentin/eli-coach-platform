@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ClientSubscription } from "~/features/coaching-sales/public/coach-clients";
+import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
 
 import { SubscriptionSummary } from "./subscription-summary";
 

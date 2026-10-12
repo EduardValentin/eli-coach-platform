@@ -5,7 +5,7 @@ import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/public/paths";
 import {
   clientJourneyPortalLink,
   type ClientPortalStanding,
-} from "~/features/coaching-sales/public/client-journey";
+} from "~/features/clients/public/client-journey";
 
 const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
   CLIENT: { href: PORTAL_PATH_BY_ROLE.CLIENT, label: "Client Portal" },

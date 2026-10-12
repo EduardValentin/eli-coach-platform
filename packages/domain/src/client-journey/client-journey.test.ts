@@ -16,7 +16,12 @@ function journey(
     detailsRequestedAt: null,
     detailsAnsweredAt: null,
     answersApprovedAt: null,
-    standing: { status: "not-started", accessEndsAt: null, refundDue: false },
+    standing: {
+      status: "not-started",
+      accessEndsAt: null,
+      refundDue: false,
+      bundleMonths: null,
+    },
     ...overrides,
   });
 }
@@ -160,6 +165,7 @@ describe("ClientJourney#toSnapshot", () => {
       status: "cancelled",
       accessEndsAt: new Date("2026-12-26T10:00:00.000Z"),
       refundDue: true,
+      bundleMonths: 3,
     } as const;
     const clientJourney = journey({
       welcomeSeenAt,

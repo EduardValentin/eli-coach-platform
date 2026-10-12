@@ -27,12 +27,13 @@ import type {
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
 import type { MeasurementRow } from "~/features/client-profile/public/measurements";
 import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
-import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
+import type { CoachClient } from "~/features/clients/public/coach-clients";
 import {
+  CLIENTS_API_PATHS,
   COACH_CLIENTS_PATH,
-  COACHING_SALES_API_PATHS,
   coachClientPath,
-} from "~/features/coaching-sales/public/paths";
+} from "~/features/clients/public/paths";
+import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
 
 import CoachClientRoute, { ErrorBoundary } from "./client";
 
@@ -65,17 +66,18 @@ const INVITED: CoachClient = {
   status: "invited",
   needsRefund: false,
   subscriptionCancelledOrEnded: false,
-  subscription: {
-    bundleId: "3-months",
-    months: 3,
-    paidAt: "2026-09-20T09:00:00.000Z",
-    reducedPrice: false,
-    workStartsOn: null,
-    status: "not-started",
-    endsOn: null,
-    endedOn: null,
-    refund: null,
-  },
+};
+
+const SUBSCRIPTION: ClientSubscription = {
+  bundleId: "3-months",
+  months: 3,
+  paidAt: "2026-09-20T09:00:00.000Z",
+  reducedPrice: false,
+  workStartsOn: null,
+  status: "not-started",
+  endsOn: null,
+  endedOn: null,
+  refund: null,
 };
 
 const AWAITING_ONBOARDING_PROFILE: ClientProfileView = {
@@ -114,25 +116,26 @@ const ENDED_WITH_REFUND_DUE: CoachClient = {
   status: "inactive",
   needsRefund: true,
   subscriptionCancelledOrEnded: true,
-  subscription: {
-    ...AWAITING_REVIEW.subscription,
-    bundleId: "3-months",
-    months: 3,
-    paidAt: "2026-09-20T09:00:00.000Z",
-    reducedPrice: false,
-    workStartsOn: "2026-10-04T09:00:00.000Z",
-    status: "ended",
-    endsOn: null,
-    endedOn: "2026-09-25T09:00:00.000Z",
-    refund: {
-      reason: "full-refund",
-      amountCents: 44700,
-      outstandingCents: 44700,
-      refundedCents: 0,
-      currency: "eur",
-      dueBy: "2026-10-09T09:00:00.000Z",
-      refundedOn: null,
-    },
+};
+
+const ENDED_SUBSCRIPTION: ClientSubscription = {
+  ...SUBSCRIPTION,
+  bundleId: "3-months",
+  months: 3,
+  paidAt: "2026-09-20T09:00:00.000Z",
+  reducedPrice: false,
+  workStartsOn: "2026-10-04T09:00:00.000Z",
+  status: "ended",
+  endsOn: null,
+  endedOn: "2026-09-25T09:00:00.000Z",
+  refund: {
+    reason: "full-refund",
+    amountCents: 44700,
+    outstandingCents: 44700,
+    refundedCents: 0,
+    currency: "eur",
+    dueBy: "2026-10-09T09:00:00.000Z",
+    refundedOn: null,
   },
 };
 
@@ -513,7 +516,8 @@ describe("the coach's client page", () => {
   it("drops the invitation once her account exists and the subscription when there is none", async () => {
     // arrange, act
     await renderClientPage({
-      client: { ...AWAITING_REVIEW, subscription: null },
+      client: AWAITING_REVIEW,
+      subscription: null,
     });
 
     // assert
@@ -545,7 +549,7 @@ describe("the coach's client page", () => {
   it("re-sends her invitation from the page and says where it went", async () => {
     // arrange
     server.use(
-      http.post(COACHING_SALES_API_PATHS.invitationResends, () =>
+      http.post(CLIENTS_API_PATHS.invitationResends, () =>
         HttpResponse.json({ email: INVITED.email, status: "sent" }),
       ),
     );
@@ -571,6 +575,7 @@ describe("the coach's client page", () => {
     // arrange, act
     await renderClientPage({
       client: ENDED_WITH_REFUND_DUE,
+      subscription: ENDED_SUBSCRIPTION,
       review: SUBMITTED_REVIEW,
     });
 
@@ -694,6 +699,7 @@ function coachIsIn(timeZone: string) {
 
 type ClientPageData = {
   client: CoachClient;
+  subscription: ClientSubscription | null;
   review: OnboardingReviewView;
   profile: ClientProfileView;
   measurements: MeasurementRow[];
@@ -707,6 +713,7 @@ function clientNotFound(): never {
 async function renderClientRouter(
   load: () => ClientPageData = () => ({
     client: INVITED,
+    subscription: SUBSCRIPTION,
     review: NOT_SUBMITTED,
     profile: AWAITING_ONBOARDING_PROFILE,
     measurements: [],
@@ -739,7 +746,7 @@ async function renderClientRouter(
       },
       {
         action: forwardToServer,
-        path: COACHING_SALES_API_PATHS.invitationResends,
+        path: CLIENTS_API_PATHS.invitationResends,
       },
     ],
     { initialEntries: [coachClientPath(CLIENT_ID)] },
@@ -754,6 +761,8 @@ async function renderClientRouter(
 async function renderClientPage(options: Partial<ClientPageData> = {}) {
   const { user } = await renderClientRouter(() => ({
     client: options.client ?? INVITED,
+    subscription:
+      options.subscription === undefined ? SUBSCRIPTION : options.subscription,
     review: options.review ?? NOT_SUBMITTED,
     profile: options.profile ?? AWAITING_ONBOARDING_PROFILE,
     measurements: options.measurements ?? [],

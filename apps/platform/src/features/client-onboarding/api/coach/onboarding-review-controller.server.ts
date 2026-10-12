@@ -4,7 +4,10 @@ import type {
   ReadOnboardingReviewUseCase,
   RequestOnboardingDetailsUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
+import {
+  createBadRequestResponse,
+  readJsonRequestBody,
+} from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -20,7 +23,6 @@ import {
   type ReviewActionRefusal,
 } from "~/features/client-onboarding/public/onboarding-review";
 
-import { readJsonRequestBody } from "~/features/client-onboarding/api/read-json-request-body.server";
 import { presentSubmittedReview } from "./onboarding-review-presenter.server";
 
 type OnboardingReviewControllerOptions = {
@@ -88,7 +90,9 @@ export class OnboardingReviewController {
   async openReview(args: ActionFunctionArgs): Promise<Response> {
     requireApiAccount(args, { role: "COACH" });
     const request = reviewTargetSchema.safeParse(
-      await readJsonRequestBody(args.request, REVIEW_ACTION_MAX_BYTES),
+      await readJsonRequestBody(args.request, {
+        maxBytes: REVIEW_ACTION_MAX_BYTES,
+      }),
     );
 
     if (!request.success) {
@@ -107,7 +111,9 @@ export class OnboardingReviewController {
   async requestDetails(args: ActionFunctionArgs): Promise<Response> {
     requireApiAccount(args, { role: "COACH" });
     const request = detailRequestSchema.safeParse(
-      await readJsonRequestBody(args.request, REVIEW_ACTION_MAX_BYTES),
+      await readJsonRequestBody(args.request, {
+        maxBytes: REVIEW_ACTION_MAX_BYTES,
+      }),
     );
 
     if (!request.success) {
@@ -128,7 +134,9 @@ export class OnboardingReviewController {
   async approveAnswers(args: ActionFunctionArgs): Promise<Response> {
     requireApiAccount(args, { role: "COACH" });
     const request = reviewTargetSchema.safeParse(
-      await readJsonRequestBody(args.request, REVIEW_ACTION_MAX_BYTES),
+      await readJsonRequestBody(args.request, {
+        maxBytes: REVIEW_ACTION_MAX_BYTES,
+      }),
     );
 
     if (!request.success) {

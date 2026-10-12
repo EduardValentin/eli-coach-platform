@@ -6,7 +6,7 @@ import type {
 
 import { coachingSubscriptionsTable } from "~/features/coaching-sales/data/schema.server";
 
-export const subscriptionColumns = {
+const subscriptionColumns = {
   id: coachingSubscriptionsTable.id,
   clientId: coachingSubscriptionsTable.clientId,
   bundleId: coachingSubscriptionsTable.bundleId,
@@ -34,9 +34,7 @@ export function selectSubscriptions(database: DatabaseClient) {
   return database.select(subscriptionColumns).from(coachingSubscriptionsTable);
 }
 
-export type SubscriptionRow = Awaited<
-  ReturnType<typeof selectSubscriptions>
->[number];
+type SubscriptionRow = Awaited<ReturnType<typeof selectSubscriptions>>[number];
 
 type SubscriptionWrite = Partial<
   Pick<

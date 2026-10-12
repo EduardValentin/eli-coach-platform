@@ -32,11 +32,11 @@ const FEATURE_ORDER = [
   "coach-schedule",
   "assessment-calls",
   "clients",
-  "coaching-sales",
   "client-profile",
   "client-resources",
   "client-onboarding",
   "check-ins",
+  "coaching-sales",
 ];
 
 const unorderedFeatures = readdirSync(

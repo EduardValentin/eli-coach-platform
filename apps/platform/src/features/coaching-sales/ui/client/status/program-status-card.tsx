@@ -7,11 +7,11 @@ import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ClipboardList } from "lucide-react";
 import { Link } from "react-router";
 
-import type { ProgramStatus } from "~/features/coaching-sales/public/client-journey";
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
-} from "~/features/coaching-sales/public/paths";
+} from "~/features/clients/public/paths";
+import type { ProgramStatus } from "~/features/coaching-sales/public/program-status";
 
 import {
   ANSWER_NOW_LABEL,

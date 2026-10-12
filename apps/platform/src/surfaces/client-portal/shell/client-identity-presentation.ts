@@ -1,4 +1,4 @@
-import type { ClientIdentity } from "~/features/coaching-sales/public/client-journey";
+import type { ClientIdentity } from "~/features/clients/public/client-journey";
 
 export type ClientShellPresentation = {
   displayName: string;

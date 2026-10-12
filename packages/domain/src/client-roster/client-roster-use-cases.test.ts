@@ -17,6 +17,7 @@ const NOT_STARTED: CoachingStandingSnapshot = {
   status: "not-started",
   accessEndsAt: null,
   refundDue: false,
+  bundleMonths: null,
 };
 
 function entry(
@@ -97,7 +98,12 @@ describe("ListClientsUseCase", () => {
     const cancelledAt = new Date("2026-10-05T10:00:00.000Z");
     const ended = entry({
       onboardingSubmittedAt: SUBMITTED_AT,
-      standing: { status: "ended", accessEndsAt: cancelledAt, refundDue: true },
+      standing: {
+        status: "ended",
+        accessEndsAt: cancelledAt,
+        refundDue: true,
+        bundleMonths: 3,
+      },
     });
     const useCase = new ListClientsUseCase({
       roster: createRoster({ list: vi.fn().mockResolvedValue([ended]) }),
@@ -194,17 +200,27 @@ describe("ReadClientRecordUseCase", () => {
   it.each([
     [
       "cancelled with access left",
-      { status: "cancelled", accessEndsAt: NOW, refundDue: false },
+      {
+        status: "cancelled",
+        accessEndsAt: NOW,
+        refundDue: false,
+        bundleMonths: 3,
+      },
       { subscriptionCancelledOrEnded: true, needsRefund: false },
     ],
     [
       "ended with a refund still owed",
-      { status: "ended", accessEndsAt: NOW, refundDue: true },
+      { status: "ended", accessEndsAt: NOW, refundDue: true, bundleMonths: 3 },
       { subscriptionCancelledOrEnded: true, needsRefund: true },
     ],
     [
       "active",
-      { status: "active", accessEndsAt: null, refundDue: false },
+      {
+        status: "active",
+        accessEndsAt: null,
+        refundDue: false,
+        bundleMonths: 3,
+      },
       { subscriptionCancelledOrEnded: false, needsRefund: false },
     ],
   ] as const)(

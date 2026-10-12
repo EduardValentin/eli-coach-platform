@@ -33,15 +33,15 @@ import {
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
+import {
+  COACH_CLIENTS_PATH,
+  coachClientPath,
+} from "~/features/clients/public/paths";
 import type {
   PricingTiers,
   CallSales,
 } from "~/features/coaching-sales/public/coaching-sales";
-import {
-  COACH_CLIENTS_PATH,
-  COACHING_SALES_API_PATHS,
-  coachClientPath,
-} from "~/features/coaching-sales/public/paths";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,

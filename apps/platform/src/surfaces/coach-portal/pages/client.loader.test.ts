@@ -9,7 +9,10 @@ import type { ClientProfileView } from "~/features/client-profile/public/client-
 import type { MeasurementRow } from "~/features/client-profile/public/measurements";
 import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import type { CoachClient } from "~/features/coaching-sales/public/coach-clients";
+import type { CoachClient } from "~/features/clients/public/coach-clients";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import {
@@ -43,7 +46,18 @@ const CLIENT: CoachClient = {
   },
   gender: "female",
   status: "onboarding",
-  subscription: null,
+};
+
+const SUBSCRIPTION: ClientSubscription = {
+  bundleId: "3-months",
+  months: 3,
+  reducedPrice: false,
+  paidAt: "2026-09-18T13:00:00.000Z",
+  workStartsOn: null,
+  status: "not-started",
+  endsOn: null,
+  endedOn: null,
+  refund: null,
 };
 
 const REVIEW: OnboardingReviewView = {
@@ -85,12 +99,13 @@ const PROFILE: ClientProfileView = {
 };
 
 describe("coach client page loader", () => {
-  it("reads her record, her onboarding review, her profile, her measurements and whether a check-in can be scheduled for this request, side by side", async () => {
+  it("reads her record, her subscription, her onboarding review, her profile, her measurements and whether a check-in can be scheduled for this request, side by side", async () => {
     // arrange
     const {
       args,
       loadClient,
       loadClientScheduling,
+      loadClientSubscription,
       loadMeasurements,
       loadProfile,
       loadReview,
@@ -102,12 +117,14 @@ describe("coach client page loader", () => {
     // assert
     expect(loaded).toEqual({
       client: CLIENT,
+      subscription: SUBSCRIPTION,
       review: REVIEW,
       profile: PROFILE,
       measurements: MEASUREMENTS,
       scheduling: "awaiting_onboarding",
     });
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
+    expect(loadClientSubscription).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClientScheduling).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadReview).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadProfile).toHaveBeenCalledWith(args, CLIENT_ID);
@@ -162,6 +179,7 @@ describe("coach client page meta", () => {
     // arrange
     const data = {
       client: CLIENT,
+      subscription: SUBSCRIPTION,
       review: REVIEW,
       profile: PROFILE,
       measurements: MEASUREMENTS,
@@ -178,14 +196,18 @@ describe("coach client page meta", () => {
 
 function routeArguments() {
   const loadClient = vi.fn().mockResolvedValue(CLIENT);
+  const loadClientSubscription = vi.fn().mockResolvedValue(SUBSCRIPTION);
   const loadReview = vi.fn().mockResolvedValue(REVIEW);
   const loadProfile = vi.fn().mockResolvedValue(PROFILE);
   const loadMeasurements = vi.fn().mockResolvedValue(MEASUREMENTS);
   const loadClientScheduling = vi.fn().mockResolvedValue("awaiting_onboarding");
   const args = createRequestArgs({
     contexts: [
-      contextEntry(coachingSalesContext, {
+      contextEntry(clientsContext, {
         coachClients: { loadClient },
+      } as unknown as ClientsFeature),
+      contextEntry(coachingSalesContext, {
+        coachSales: { loadClientSubscription },
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
         coachReview: { loadReview },
@@ -205,6 +227,7 @@ function routeArguments() {
     args,
     loadClient,
     loadClientScheduling,
+    loadClientSubscription,
     loadMeasurements,
     loadProfile,
     loadReview,

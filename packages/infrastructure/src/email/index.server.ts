@@ -27,3 +27,22 @@ export {
   EMAIL_PRIMARY_BUTTON_STYLE,
 } from "./email-frame-styles.server";
 export { EMAIL_COLORS, EMAIL_FONTS } from "./email-theme.server";
+export {
+  contactLineStyle,
+  contactLinkStyle,
+  dividerStyle,
+  heroAccentRuleStyle,
+  heroEyebrowStyle,
+  heroHeadingStyle,
+  heroSectionStyle,
+  heroSubheadStyle,
+  invitationReassuranceSectionStyle,
+  letterParagraphStyle,
+  letterSectionStyle,
+  nextStepsCardStyle,
+  nextStepsEyebrowStyle,
+  nextStepsOuterStyle,
+  nextStepTextStyle,
+  reassuranceTextStyle,
+  signoffStyle,
+} from "./email-letter-styles.server";

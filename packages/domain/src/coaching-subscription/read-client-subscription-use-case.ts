@@ -32,11 +32,9 @@ type ReadClientSubscriptionUseCaseOptions = {
 export class ReadClientSubscriptionUseCase {
   constructor(private readonly options: ReadClientSubscriptionUseCaseOptions) {}
 
-  async execute(
-    authSubjectId: string,
-  ): Promise<ClientSubscriptionReading | null> {
+  async execute(clientId: string): Promise<ClientSubscriptionReading | null> {
     const subscription =
-      await this.options.subscriptions.findCurrentForAuthSubject(authSubjectId);
+      await this.options.subscriptions.findCurrentForClient(clientId);
 
     if (!subscription) {
       return null;

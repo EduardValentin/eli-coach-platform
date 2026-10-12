@@ -10,8 +10,8 @@ import {
 import { COACH_PORTAL_PATH } from "~/features/accounts/public/paths";
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/public/paths";
 import { COACH_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
+import { COACH_CLIENTS_PATH } from "~/features/clients/public/paths";
 import { COACH_SETTINGS_PATH } from "~/features/coach-schedule/public/paths";
-import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
 
 export type CoachNavigationCounts = {
   checkInsAwaiting: number;

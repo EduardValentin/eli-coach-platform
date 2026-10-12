@@ -1,8 +1,4 @@
 import { appSchema } from "@eli-coach-platform/db";
-import {
-  VISITOR_GENDERS,
-  VISITOR_PRIMARY_GOALS,
-} from "@eli-coach-platform/domain/assessment-call";
 import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
 import {
   COACHING_BUNDLE_IDS,
@@ -18,10 +14,8 @@ import { sql, type SQL } from "drizzle-orm";
 import {
   char,
   check,
-  date,
   index,
   integer,
-  text,
   timestamp,
   uniqueIndex,
   uuid,
@@ -30,18 +24,13 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
+import { clientsTable } from "~/features/clients/data/schema.server";
 
 const PAYMENT_LINK_STATES = [
   "valid",
   "voided",
   "spent",
 ] as const satisfies readonly PaymentLinkState[];
-
-export const coachingSalesConstraints = {
-  clientPerCall: "clients_assessment_call_id_unique",
-  clientPerAuthSubject: "clients_auth_subject_id_unique",
-  invitationPerClient: "client_invitations_client_id_unique",
-} as const;
 
 export const paymentLinksTable = appSchema.table(
   "payment_links",
@@ -103,106 +92,6 @@ export const checkoutSessionsTable = appSchema.table(
     tierCheck("checkout_sessions", table.tier),
     startChoiceCheck("checkout_sessions", table.startChoice),
     positiveAmountCheck("checkout_sessions", table.amountCents),
-  ],
-);
-
-export const clientsTable = appSchema.table(
-  "clients",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    assessmentCallId: uuid("assessment_call_id")
-      .notNull()
-      .references(() => assessmentCallsTable.id),
-    firstName: varchar("first_name", { length: 60 }).notNull(),
-    lastName: varchar("last_name", { length: 60 }).notNull(),
-    email: varchar("email", { length: 320 }).notNull(),
-    dateOfBirth: date("date_of_birth", { mode: "string" }).notNull(),
-    gender: varchar("gender", { enum: VISITOR_GENDERS, length: 32 }).notNull(),
-    primaryGoal: varchar("primary_goal", {
-      enum: VISITOR_PRIMARY_GOALS,
-      length: 32,
-    }).notNull(),
-    country: char("country", { length: 2 }).notNull(),
-    phone: varchar("phone", { length: 16 }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-    authSubjectId: varchar("auth_subject_id", { length: 255 }),
-    welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
-    onboardingSubmittedAt: timestamp("onboarding_submitted_at", {
-      withTimezone: true,
-    }),
-    reviewOpenedAt: timestamp("review_opened_at", { withTimezone: true }),
-    detailsRequestedAt: timestamp("details_requested_at", {
-      withTimezone: true,
-    }),
-    detailsAnsweredAt: timestamp("details_answered_at", {
-      withTimezone: true,
-    }),
-    answersApprovedAt: timestamp("answers_approved_at", {
-      withTimezone: true,
-    }),
-  },
-  (table) => [
-    uniqueIndex(coachingSalesConstraints.clientPerCall).on(
-      table.assessmentCallId,
-    ),
-    uniqueIndex(coachingSalesConstraints.clientPerAuthSubject).on(
-      table.authSubjectId,
-    ),
-    check(
-      "clients_gender_check",
-      sql`${table.gender} in (${quotedList(VISITOR_GENDERS)})`,
-    ),
-    check(
-      "clients_primary_goal_check",
-      sql`${table.primaryGoal} in (${quotedList(VISITOR_PRIMARY_GOALS)})`,
-    ),
-  ],
-);
-
-export const clientInvitationsTable = appSchema.table(
-  "client_invitations",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id")
-      .notNull()
-      .references(() => clientsTable.id),
-    email: varchar("email", { length: 320 }).notNull(),
-    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
-    sentAt: timestamp("sent_at", { withTimezone: true }).notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    usedAt: timestamp("used_at", { withTimezone: true }),
-    acceptedByAuthSubjectId: varchar("accepted_by_auth_subject_id", {
-      length: 255,
-    }),
-    providerInvitationId: varchar("provider_invitation_id", { length: 255 }),
-    providerInvitationUrl: text("provider_invitation_url"),
-    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
-    emailDeliveryFailedAt: timestamp("email_delivery_failed_at", {
-      withTimezone: true,
-    }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  },
-  (table) => [
-    uniqueIndex(coachingSalesConstraints.invitationPerClient).on(
-      table.clientId,
-    ),
-    uniqueIndex("client_invitations_token_hash_unique").on(table.tokenHash),
-    check(
-      "client_invitations_token_hash_hex",
-      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`,
-    ),
-    check(
-      "client_invitations_expires_after_sending",
-      sql`${table.expiresAt} > ${table.sentAt}`,
-    ),
-    check(
-      "client_invitations_used_by_a_subject",
-      sql`(${table.usedAt} is null) = (${table.acceptedByAuthSubjectId} is null)`,
-    ),
-    check(
-      "client_invitations_provider_complete",
-      sql`(${table.providerInvitationId} is null) = (${table.providerInvitationUrl} is null)`,
-    ),
   ],
 );
 

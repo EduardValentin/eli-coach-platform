@@ -257,14 +257,32 @@ describe("CoachingSubscription.statusAt", () => {
 
 describe("CoachingSubscription.standing", () => {
   it.each([
-    [{}, { status: "not-started", accessEndsAt: null, refundDue: false }],
+    [
+      {},
+      {
+        status: "not-started",
+        accessEndsAt: null,
+        refundDue: false,
+        bundleMonths: 3,
+      },
+    ],
     [
       { status: "active" },
-      { status: "active", accessEndsAt: null, refundDue: false },
+      {
+        status: "active",
+        accessEndsAt: null,
+        refundDue: false,
+        bundleMonths: 3,
+      },
     ],
     [
       { status: "cancelled", cancelledAt: DAY_14, accessEndsAt: ACCESS_END },
-      { status: "cancelled", accessEndsAt: ACCESS_END, refundDue: false },
+      {
+        status: "cancelled",
+        accessEndsAt: ACCESS_END,
+        refundDue: false,
+        bundleMonths: 3,
+      },
     ],
     [
       {
@@ -276,7 +294,12 @@ describe("CoachingSubscription.standing", () => {
           cancelledAt: DAY_13,
         }).toSnapshot(),
       },
-      { status: "ended", accessEndsAt: DAY_13, refundDue: true },
+      {
+        status: "ended",
+        accessEndsAt: DAY_13,
+        refundDue: true,
+        bundleMonths: 3,
+      },
     ],
     [
       {
@@ -292,7 +315,12 @@ describe("CoachingSubscription.standing", () => {
           refundedAt: DAY_14,
         },
       },
-      { status: "ended", accessEndsAt: DAY_13, refundDue: false },
+      {
+        status: "ended",
+        accessEndsAt: DAY_13,
+        refundDue: false,
+        bundleMonths: 3,
+      },
     ],
   ] as const)("records the standing of %o as %o", (overrides, expected) => {
     // arrange

@@ -21,15 +21,16 @@ import { clientProfileContext } from "~/features/client-profile/server/guards/cl
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
 import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
-import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/public/paths";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
-import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
-import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
-import { NeedsRefundBadge } from "~/features/coaching-sales/ui/coach/clients/needs-refund-badge";
-import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
-import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
 import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
+import { clientFullName } from "~/features/clients/public/clients";
+import { COACH_CLIENTS_PATH } from "~/features/clients/public/paths";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import { AssessmentCallBlock } from "~/features/clients/ui/coach/clients/assessment-call-block";
+import { ClientStatusBadge } from "~/features/clients/ui/coach/clients/client-status-badge";
+import { InvitationBlock } from "~/features/clients/ui/coach/clients/invitation-block";
+import { NeedsRefundBadge } from "~/features/clients/ui/shared/needs-refund-badge";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
@@ -42,11 +43,12 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const { coachProfile } = args.context.get(clientProfileContext);
-  const [client, review, profile, measurements, scheduling] = await Promise.all(
-    [
+  const [client, subscription, review, profile, measurements, scheduling] =
+    await Promise.all([
+      args.context.get(clientsContext).coachClients.loadClient(args, clientId),
       args.context
         .get(coachingSalesContext)
-        .coachClients.loadClient(args, clientId),
+        .coachSales.loadClientSubscription(args, clientId),
       args.context
         .get(clientOnboardingContext)
         .coachReview.loadReview(args, clientId),
@@ -55,10 +57,9 @@ export async function loader(args: LoaderFunctionArgs) {
       args.context
         .get(checkInsContext)
         .coachCheckIns.loadClientScheduling(args, clientId),
-    ],
-  );
+    ]);
 
-  return { client, review, profile, measurements, scheduling };
+  return { client, subscription, review, profile, measurements, scheduling };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -76,7 +77,7 @@ export function ErrorBoundary() {
 }
 
 export default function CoachClientRoute() {
-  const { client, review, profile, measurements, scheduling } =
+  const { client, subscription, review, profile, measurements, scheduling } =
     useLoaderData<typeof loader>();
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
@@ -123,11 +124,11 @@ export default function CoachClientRoute() {
         review={review}
         statusBadge={<ClientStatusBadge status={client.status} />}
       />
-      {client.subscription && (
+      {subscription && (
         <SubscriptionSummary
           className="mb-8"
           gender={client.gender}
-          subscription={client.subscription}
+          subscription={subscription}
         />
       )}
       <MeasurementsTable

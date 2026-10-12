@@ -13,8 +13,8 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
-import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
+import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 
 import { middleware } from "./access-layout.server";
 
@@ -103,6 +103,7 @@ describe("client portal access middleware", () => {
           status: "not-started",
           accessEndsAt: null,
           refundDue: false,
+          bundleMonths: null,
         },
       }),
       session: {
@@ -143,6 +144,7 @@ describe("client portal access middleware", () => {
           status: "not-started",
           accessEndsAt: null,
           refundDue: false,
+          bundleMonths: null,
         },
       }),
       session: {
@@ -197,7 +199,7 @@ function createMiddlewareArgs(options: {
           : null,
       ),
     },
-  } as unknown as CoachingSalesFeature;
+  } as unknown as ClientsFeature;
 
   return createRequestArgs({
     contexts: [
@@ -208,7 +210,7 @@ function createMiddlewareArgs(options: {
           signInUrl: "https://accounts.evoa.fit/sign-in",
         },
       } as AccountsFeature),
-      contextEntry(coachingSalesContext, coachingSales),
+      contextEntry(clientsContext, coachingSales),
       contextEntry(sessionContext, options.session),
     ],
     request: new Request(options.url),

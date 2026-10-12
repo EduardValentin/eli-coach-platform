@@ -48,6 +48,7 @@ const CLIENT: OnboardingClient = {
     status: "not-started",
     accessEndsAt: null,
     refundDue: false,
+    bundleMonths: null,
   }),
 };
 
@@ -57,6 +58,7 @@ const CANCELLED_OR_ENDED_CLIENT: OnboardingClient = {
     status: "ended",
     accessEndsAt: ASKED_AT,
     refundDue: false,
+    bundleMonths: 3,
   }),
 };
 

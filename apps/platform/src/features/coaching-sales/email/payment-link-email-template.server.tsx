@@ -1,6 +1,9 @@
 import {
   EMAIL_FRAME_STYLES,
   EMAIL_PRIMARY_BUTTON_STYLE,
+  contactLineStyle,
+  contactLinkStyle,
+  dividerStyle,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -11,6 +14,14 @@ import {
   EmailPreviewText,
   EmailSection,
   EmailText,
+  heroAccentRuleStyle,
+  heroEyebrowStyle,
+  heroHeadingStyle,
+  heroSectionStyle,
+  heroSubheadStyle,
+  letterParagraphStyle,
+  letterSectionStyle,
+  signoffStyle,
 } from "@eli-coach-platform/infrastructure/email/server";
 
 import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/public/coaching-sales";
@@ -22,21 +33,10 @@ import {
   bundleTitleStyle,
   bundleTotalStyle,
   buttonSectionStyle,
-  contactLineStyle,
-  contactLinkStyle,
-  dividerStyle,
-  heroAccentRuleStyle,
-  heroEyebrowStyle,
-  heroHeadingStyle,
-  heroSectionStyle,
-  heroSubheadStyle,
-  letterParagraphStyle,
-  letterSectionStyle,
   noteLinkStyle,
   noteSectionStyle,
   noteTextStyle,
   reassuranceSectionStyle,
-  signoffStyle,
 } from "./coaching-sales-email-styles.server";
 
 export type PaymentLinkEmailBundleViewModel = {

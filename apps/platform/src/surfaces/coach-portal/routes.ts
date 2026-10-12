@@ -7,9 +7,9 @@ import {
   checkInsCoachRoutes,
 } from "../../features/check-ins/routes";
 import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/public/paths";
+import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/clients/public/paths";
+import { clientsCoachRoutes } from "../../features/clients/routes";
 import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
-import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
-import { coachingSalesCoachRoutes } from "../../features/coaching-sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
@@ -22,7 +22,7 @@ export const coachPortalRoutes = [
         "./pages/assessment-calls.tsx",
       ),
       ...coachScheduleCoachRoutes,
-      ...coachingSalesCoachRoutes,
+      ...clientsCoachRoutes,
       ...checkInsCoachRoutes,
       route(`${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`, "./pages/client.tsx"),
       route(
