@@ -339,7 +339,7 @@ Per Business Rule 53.
 
 ### Data model
 
-**Exercise**: name, description, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. An exercise needs no equipment when it lists nothing or only Bodyweight.
+**Exercise**: name, description, type (Resistance, Cardio, or Mobility), the unit it is measured in (reps, time, or distance, defaulting from the type and adjustable per exercise), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
 
 **Goal**: client, name (e.g. "Strength & Recomp Block"), type (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, Custom), start date, status (active or completed).
 
@@ -354,7 +354,7 @@ Per Business Rule 53.
 ### Exercise Library
 
 1. The coach creates exercises with `.mp4` upload by drag-and-drop or button, and reuses them across plans.
-2. The library supports search and filters for Strength, Hypertrophy, and Recovery tags and for no-equipment exercises. Tag filters combine as "any of"; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
+2. The library supports search and filters for type, for Strength, Hypertrophy, and Recovery tags, and for no-equipment exercises. Tag filters combine as "any of"; the type filter narrows to one type; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
 
 ### Plan Builder
 
