@@ -1,4 +1,0 @@
-[
-  {"waitFor": "[data-parity-root=\"CoachResourceLibrary\"] >> text=No resources yet"},
-  {"wait": 400}
-]

@@ -1,0 +1,3625 @@
+{
+  "add-resource-tag-suggestions": [
+    {
+      "use": "add-resource-tag-query"
+    },
+    {
+      "waitFor": "role=listbox[name=\"Tag suggestions\"]"
+    }
+  ],
+  "add-resource-tags-chosen": [
+    {
+      "use": "add-resource-tag-query"
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
+        "Week one"
+      ]
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] >> role=button[name=\"Remove Week one\"]"
+    },
+    {
+      "click": "[role=\"dialog\"] h3"
+    }
+  ],
+  "ask-details-toast": [
+    {
+      "use": "review-dialog-flag-and-note"
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"ask-details\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "book-date-picked": [
+    {
+      "click": "td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "button[aria-pressed]"
+    }
+  ],
+  "book-slots-unavailable": [],
+  "book-time-picked": [
+    {
+      "click": "td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "button[aria-pressed]"
+    }
+  ],
+  "calls-unavailable": [],
+  "cancel-fails": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-cancel-outcome"
+      },
+      {
+        "click": "role=option[name=\"Fails\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "click": "[data-parity=\"cancel-action\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"cancel-problem\"]"
+      }
+    ],
+    "real": []
+  },
+  "cancel-no-refund-toast": [
+    {
+      "click": "[data-parity=\"cancel-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "card-mastercard": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-card-on-file"
+      },
+      {
+        "click": "role=option[name=\"Mastercard •••• 4444, 03/31\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"payment-card-brand\"] >> text=Mastercard"
+      }
+    ],
+    "real": []
+  },
+  "checkin-approve-toast": [
+    {
+      "click": "[data-parity-root=\"CoachCheckins\"] >> role=button[name=\"Approve\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-cancel-request-toast": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Cancel request\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-cancel-toast": [
+    {
+      "use": "trigger-checkin-cancel-confirm"
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-decline-toast": [
+    {
+      "click": "[data-parity-root=\"CoachCheckins\"] >> role=button[name=\"Decline\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-live": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-live-checkin"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "checkin-propose-refused": [
+    {
+      "use": "reschedule-checkin-pick-time"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=/^Add a note for /]",
+        "Thursday evening suits me better"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Propose /]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"
+    }
+  ],
+  "checkin-propose-time-picked": [
+    {
+      "use": "reschedule-checkin-pick-time"
+    }
+  ],
+  "checkin-propose-toast": [
+    {
+      "use": "reschedule-checkin-pick-time"
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Propose /]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-request-date-picked": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "checkin-request-failed": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"
+    }
+  ],
+  "checkin-request-hint-hover": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-open-client-request"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "hover": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Request check-in\"] >> nth=0"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "hover": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Request check-in\"] >> nth=0"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  },
+  "checkin-request-loading": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"status\"]"
+    }
+  ],
+  "checkin-request-taken": [
+    {
+      "use": "request-checkin-pick-time"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=\"Add a note for your coach (optional)\"]",
+        "Can we look at my squat form?"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Request /]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"
+    }
+  ],
+  "checkin-request-time-picked": [
+    {
+      "use": "request-checkin-pick-time"
+    }
+  ],
+  "checkin-requested-toast": [
+    {
+      "use": "request-checkin-pick-time"
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Request /]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkin-schedule-cannot-answer": [
+    {
+      "use": "schedule-checkin-pick-time"
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Schedule /]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"
+    }
+  ],
+  "checkin-schedule-date-picked": [
+    {
+      "click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "checkin-schedule-taken": [
+    {
+      "use": "schedule-checkin-pick-time"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=/^Add a note for /]",
+        "Let's look at your first two weeks"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Schedule /]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] [role=\"alert\"]"
+    }
+  ],
+  "checkin-schedule-time-picked": [
+    {
+      "use": "schedule-checkin-pick-time"
+    }
+  ],
+  "checkin-scheduled-toast": [
+    {
+      "use": "schedule-checkin-pick-time"
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Schedule /]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "checkins-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"No check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-empty-past": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"No check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-empty-requests": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"No check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-empty-upcoming": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"No check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-open-request": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-open-client-request"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-own-request": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"None pending\" s]"
+      },
+      {
+        "click": "#dev-open-client-request"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
+      }
+    ],
+    "real": []
+  },
+  "checkins-tab-past": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+    }
+  ],
+  "checkins-tab-requests": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    }
+  ],
+  "checkins-tab-upcoming": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    }
+  ],
+  "checkout-immediate": {
+    "prototype": [],
+    "real": [
+      {
+        "click": "[data-parity=\"option-immediate\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CheckoutComplete\"]"
+      }
+    ]
+  },
+  "checkout-waiting": {
+    "prototype": [],
+    "real": [
+      {
+        "click": "[data-parity=\"option-waiting\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"CheckoutComplete\"]"
+      }
+    ]
+  },
+  "client-approved": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"approved\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"form-goal-availability\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-cancelled": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-subscription"
+      },
+      {
+        "click": "role=option[name=\"Cancelled\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"SubscriptionSummary\"] >> text=Ends on"
+      }
+    ],
+    "real": []
+  },
+  "client-checkin-accept-toast": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "waitFor": "[data-parity-root$=\"Checkins\"] >> role=button[name=\"Accept\" s]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=button[name=\"Accept\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "client-checkin-approve-toast": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Approve\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "client-checkin-decline-toast": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=\"Decline\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "client-checkins-ready": [],
+  "client-ended": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-subscription"
+      },
+      {
+        "click": "role=option[name=\"Ended\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"SubscriptionSummary\"] >> text=Ended on"
+      }
+    ],
+    "real": []
+  },
+  "client-header-ready": [],
+  "client-in-review": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"reviewing\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"review-action\"] >> text=Continue review"
+      }
+    ],
+    "real": []
+  },
+  "client-invitation-email-failed": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"invited\"]"
+      },
+      {
+        "click": "#dev-coach-invitation"
+      },
+      {
+        "click": "role=option[name=\"Email failed\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"InvitationBlock\"] [data-parity=\"invitation-state\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-invitation-expired": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"invited\"]"
+      },
+      {
+        "click": "#dev-coach-invitation"
+      },
+      {
+        "click": "role=option[name=\"Expired\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"InvitationBlock\"] [data-parity=\"invitation-state\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-invited": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"invited\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"InvitationBlock\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-needs-details": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"needs-details\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"request-status\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-needs-details-expanded": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"needs-details\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"request-status\"]"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "click": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"form-safety-screening\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "hover": "[data-parity-root=\"OnboardingPanel\"] h2"
+      }
+    ],
+    "real": []
+  },
+  "client-not-found": [],
+  "client-onboarding": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"onboarding\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"OnboardingPanel\"] >> text=Her answers are not in yet"
+      }
+    ],
+    "real": []
+  },
+  "client-open-resource-viewer-pdf": [
+    {
+      "click": "[data-parity-root=\"ClientResources\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    }
+  ],
+  "client-open-resource-viewer-word": [
+    {
+      "click": "[data-parity-root=\"ClientResources\"] [data-parity=\"resource-card\"] >> role=button[name=\"Luteal phase meal ideas\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"resource-cover\"]"
+    }
+  ],
+  "client-part-refunded": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-refund"
+      },
+      {
+        "click": "role=option[name=\"Part refunded\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-refund-due\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-refund-due": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-refund"
+      },
+      {
+        "click": "role=option[name=\"Due\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-refund-due\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-refunded": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-refund"
+      },
+      {
+        "click": "role=option[name=\"Refunded\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-refunded\"]"
+      }
+    ],
+    "real": []
+  },
+  "client-resources-empty": [],
+  "client-resources-populated": [],
+  "client-resources-search-no-matches": [
+    {
+      "fill": [
+        "[data-parity-root=\"ClientResources\"] >> role=searchbox[name=\"Search resources\"]",
+        "zzz"
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ClientResources\"] >> text=No matches"
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "hover": "[data-parity-root=\"ClientResources\"] h1"
+    }
+  ],
+  "client-resources-tag-filter-active": [
+    {
+      "click": "[data-parity-root=\"ClientResources\"] >> role=combobox[name=\"Tag\"]"
+    },
+    {
+      "waitFor": "role=option[name=/^All tags/]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=option[name=/^Nutrition/]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ClientResources\"] >> role=combobox[name=\"Tag\"] >> text=Nutrition"
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "hover": "[data-parity-root=\"ClientResources\"] h1"
+    }
+  ],
+  "client-resources-tag-filter-open": [
+    {
+      "click": "[data-parity-root=\"ClientResources\"] >> role=combobox[name=\"Tag\"]"
+    },
+    {
+      "waitFor": "role=option[name=/^All tags/]"
+    }
+  ],
+  "client-resources-unavailable": [],
+  "client-waiting-start": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-start-path"
+      },
+      {
+        "click": "role=option[name=\"Waiting out the 14 days\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-start\"] >> text=After the 14 days"
+      }
+    ],
+    "real": []
+  },
+  "clients-cancelled": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-subscription"
+      },
+      {
+        "click": "role=option[name=\"Cancelled\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "role=cell >> text=Cancelled"
+      }
+    ],
+    "real": []
+  },
+  "clients-empty": {
+    "prototype": [],
+    "real": []
+  },
+  "clients-inactive": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-subscription"
+      },
+      {
+        "click": "role=option[name=\"Ended\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "role=cell >> text=Inactive"
+      }
+    ],
+    "real": []
+  },
+  "clients-needs-refund": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-refund"
+      },
+      {
+        "click": "role=option[name=\"Due\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity$=\"-needs-refund\"]"
+      }
+    ],
+    "real": []
+  },
+  "clients-unavailable": {
+    "prototype": [],
+    "real": []
+  },
+  "coach-checkin-cancel-request-toast": [
+    {
+      "click": "[data-parity-root=\"CoachCheckins\"] >> role=button[name=\"Cancel request\" s] >> nth=0"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "coach-checkin-cancel-toast": [
+    {
+      "use": "open-rescheduled-checkin-menu"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "coach-checkin-propose-toast": [
+    {
+      "use": "open-rescheduled-checkin-menu"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=button[name=/^Propose /]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "coach-checkins-ready": [],
+  "coach-hover-checkin-reschedule-moved-twice": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "coach-hover-checkin-rescheduled-marker": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "waitFor": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"]"
+    },
+    {
+      "hover": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"] >> nth=0"
+    }
+  ],
+  "coach-open-checkin-cancel-confirm": [
+    {
+      "use": "open-rescheduled-checkin-menu"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
+  "coach-open-checkin-propose": [
+    {
+      "use": "open-rescheduled-checkin-menu"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    }
+  ],
+  "coach-open-checkin-row-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    }
+  ],
+  "coach-resources-search-no-matches": [
+    {
+      "fill": [
+        "[data-parity-root=\"CoachResourceLibrary\"] >> role=searchbox[name=\"Search resources\"]",
+        "zzz"
+      ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"CoachResourceLibrary\"] >> text=No matches"
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "hover": "[data-parity-root=\"CoachResourceLibrary\"] h1"
+    }
+  ],
+  "coach-resources-sort-open": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=combobox[name=\"Sort by\"]"
+    },
+    {
+      "waitFor": "role=option[name=\"Title\"]"
+    }
+  ],
+  "coach-resources-tag-filter-active": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=combobox[name=\"Tag\"]"
+    },
+    {
+      "waitFor": "role=option[name=/^All tags/]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=option[name=/^Nutrition/]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CoachResourceLibrary\"] >> role=combobox[name=\"Tag\"] >> text=Nutrition"
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "hover": "[data-parity-root=\"CoachResourceLibrary\"] h1"
+    }
+  ],
+  "coach-resources-tag-filter-open": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=combobox[name=\"Tag\"]"
+    },
+    {
+      "waitFor": "role=option[name=/^All tags/]"
+    }
+  ],
+  "delete-resource-toast": [
+    {
+      "use": "trigger-resource-delete-confirm"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "edit-resource-changed": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Title\"]",
+        "Glute warm-up for lower-body days"
+      ]
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "Ten minutes before every lower-body session."
+      ]
+    },
+    {
+      "hover": "[role=\"dialog\"] h3"
+    }
+  ],
+  "edit-resource-save-failed": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Title\"]",
+        "Glute warm-up for lower-body days"
+      ]
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "Ten minutes before every lower-body session."
+      ]
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=button[name=\"Save\" s]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [role=\"alert\"]"
+    }
+  ],
+  "edit-resource-saved-toast": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Title\"]",
+        "Glute warm-up for lower-body days"
+      ]
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "Ten minutes before every lower-body session."
+      ]
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=button[name=\"Save\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "edit-resource-tag-suggestions": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
+        "Nu"
+      ]
+    },
+    {
+      "waitFor": "role=listbox[name=\"Tag suggestions\"] >> role=option[name=\"Nutrition\"]"
+    }
+  ],
+  "edit-resource-tags-chosen": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
+        "Nutrition"
+      ]
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] >> role=button[name=\"Remove Nutrition\"]"
+    },
+    {
+      "click": "[role=\"dialog\"] h3"
+    }
+  ],
+  "empty-calls": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Booking\"]"
+      },
+      {
+        "click": "#dev-dashboard-calls"
+      },
+      {
+        "click": "role=option[name=\"None\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "ended-refund-due": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-refund"
+      },
+      {
+        "click": "role=option[name=\"Due\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"dead-end-detail\"]"
+      }
+    ],
+    "real": []
+  },
+  "expand-assessment-call": [
+    {
+      "click": "[data-parity-root=\"AssessmentCallBlock\"] [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "hover": "[data-parity-root=\"ClientProfileBlock\"] h2"
+    }
+  ],
+  "expand-onboarding-form": [
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"form-safety-screening\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "hover": "[data-parity-root=\"OnboardingPanel\"] h2"
+    }
+  ],
+  "filter-clients-awaiting-review": [
+    {
+      "click": "[data-parity=\"status-filter\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"status-count-all\"]"
+    },
+    {
+      "click": "role=option[name=/^Awaiting review/]"
+    },
+    {
+      "waitFor": "[data-parity=\"row-1-name\"]"
+    },
+    {
+      "hover": "h1"
+    }
+  ],
+  "focus-resource-actions-trigger": [
+    {
+      "use": "open-resource-actions-then-close"
+    }
+  ],
+  "hover-checkin-reschedule-moved-twice": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "hover-checkin-rescheduled-marker": [
+    {
+      "waitFor": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"]"
+    },
+    {
+      "hover": "[data-parity-root$=\"Checkins\"] [aria-label^=\"Rescheduled from\"] >> nth=0"
+    }
+  ],
+  "hover-payment-link-action": [
+    {
+      "hover": "[data-parity=\"payment-link-action\"]"
+    }
+  ],
+  "hover-profile-link": [
+    {
+      "hover": "[data-parity=\"link-profile\"]"
+    }
+  ],
+  "hover-resource-actions-delete": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "hover": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    }
+  ],
+  "hover-resource-actions-trigger": [
+    {
+      "hover": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    }
+  ],
+  "hover-resource-viewer-coach-delete": [
+    {
+      "use": "open-resource-viewer-with-management"
+    },
+    {
+      "hover": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"] >> role=button[name=\"Delete\" s]"
+    }
+  ],
+  "invitation-signed-in": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Session\"]"
+      },
+      {
+        "click": "#dev-session"
+      },
+      {
+        "click": "role=option[name=\"Coach\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "main[aria-label=\"Error\"]"
+      }
+    ],
+    "real": []
+  },
+  "invitation-unavailable": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-invitation-state"
+      },
+      {
+        "click": "role=option[name=\"Expired\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "main[aria-label=\"Error\"]"
+      }
+    ],
+    "real": []
+  },
+  "keyboard-open-resource-actions": [
+    {
+      "use": "open-resource-actions-then-close"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    }
+  ],
+  "lightbox-next": [
+    {
+      "use": "open-front-photo-lightbox"
+    },
+    {
+      "click": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-next\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-counter\"] >> text=2 of 3"
+    }
+  ],
+  "lightbox-zoom": [
+    {
+      "use": "open-front-photo-lightbox"
+    },
+    {
+      "click": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    },
+    {
+      "click": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"][style*=\"scale(2)\"]"
+    }
+  ],
+  "no-card": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-card-on-file"
+      },
+      {
+        "click": "role=option[name=\"No card\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"payment-card\"] >> text=No payment method configured"
+      }
+    ],
+    "real": []
+  },
+  "nudge-measurements": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-measurements-due"
+      },
+      {
+        "click": "role=option[name=\"Measurements and photos\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"MeasurementsNudge\"] >> text=Time for your measurements and photos"
+      }
+    ],
+    "real": []
+  },
+  "onboarding-form2-consent-missing": [
+    {
+      "use": "onboarding-complete-form1"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
+  "onboarding-form3-regular-cycle": [
+    {
+      "use": "onboarding-complete-through-form2"
+    },
+    {
+      "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"Yes, and it's regular\"]"
+    },
+    {
+      "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+    },
+    {
+      "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No\"]"
+    }
+  ],
+  "onboarding-form4-default": [
+    {
+      "use": "onboarding-complete-through-form2"
+    },
+    {
+      "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
+    },
+    {
+      "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+    },
+    {
+      "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
+  "onboarding-form5-default": [
+    {
+      "use": "onboarding-complete-through-form4"
+    }
+  ],
+  "onboarding-form5-photo-consent": [
+    {
+      "use": "onboarding-complete-through-form4"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "wait": 300
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingWizard\"] [data-parity=\"progress-photos-checkbox\"]"
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingWizard\"] [data-parity=\"progress-photos-checkbox\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingWizard\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"
+    }
+  ],
+  "onboarding-imperial": [
+    {
+      "click": "[data-parity=\"units-choice\"] >> text=lb · in"
+    }
+  ],
+  "onboarding-manual-screening": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-age-band"
+      },
+      {
+        "click": "role=option[name=\"Under 15\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 300
+      },
+      {
+        "fill": [
+          "[data-parity=\"field-weight\"] input",
+          "70"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"field-height\"] input",
+          "165"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"field-goalWeight\"] input",
+          "65"
+        ]
+      },
+      {
+        "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+      },
+      {
+        "click": "role=option[name=\"Lose fat\"]"
+      },
+      {
+        "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+      },
+      {
+        "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+      },
+      {
+        "click": "role=option[name=\"New to training\"]"
+      },
+      {
+        "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+      },
+      {
+        "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+      },
+      {
+        "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"field-coachExpectations\"] input",
+          "Keep me accountable."
+        ]
+      },
+      {
+        "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+      },
+      {
+        "click": "role=option[name=\"Lightly active\"]"
+      },
+      {
+        "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+      },
+      {
+        "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+      },
+      {
+        "click": "role=option[name=\"Home\"]"
+      },
+      {
+        "click": "[data-parity=\"continue\"]"
+      },
+      {
+        "wait": 500
+      },
+      {
+        "waitFor": "text=15 to 69"
+      }
+    ],
+    "real": []
+  },
+  "onboarding-to-form2": [
+    {
+      "use": "onboarding-complete-form1"
+    }
+  ],
+  "onboarding-unsaved": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-onboarding-connection"
+      },
+      {
+        "click": "role=option[name=\"Lost\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"field-weight\"] input",
+          "72"
+        ]
+      },
+      {
+        "waitFor": "[data-parity=\"save-status\"] >> text=Not saved yet"
+      }
+    ],
+    "real": [
+      {
+        "fill": [
+          "[data-parity=\"field-weight\"] input",
+          "72"
+        ]
+      },
+      {
+        "waitFor": "[data-parity=\"save-status\"] >> text=Not saved yet"
+      }
+    ]
+  },
+  "open-add-measurements-sheet": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"
+    }
+  ],
+  "open-add-resource-dialog": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] >> text=Drop a file here or choose one"
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "hover": "[role=\"dialog\"] h3"
+    }
+  ],
+  "open-approve-confirm": [
+    {
+      "click": "[data-parity=\"review-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "open-cancel-dialog": [
+    {
+      "click": "[data-parity=\"cancel-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
+  "open-checkin-cancel-confirm": [
+    {
+      "use": "trigger-checkin-cancel-confirm"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
+  "open-checkin-propose": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    }
+  ],
+  "open-checkin-request": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    }
+  ],
+  "open-checkin-row-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    }
+  ],
+  "open-checkin-schedule": [
+    {
+      "click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    }
+  ],
+  "open-clients-status-filter": [
+    {
+      "click": "[data-parity=\"status-filter\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"status-count-all\"]"
+    }
+  ],
+  "open-coach-drawer": [
+    {
+      "click": "[aria-label=\"Open menu\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]"
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "hover": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]"
+    }
+  ],
+  "open-cycle-mode-tooltip": [
+    {
+      "hover": "[data-parity=\"fact-cycle-mode-info\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CycleModeTooltip\"]"
+    }
+  ],
+  "open-delete-resource-confirm": [
+    {
+      "use": "trigger-resource-delete-confirm"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
+  "open-edit-resource-dialog": [
+    {
+      "use": "open-resource-edit-details-dialog"
+    },
+    {
+      "hover": "[role=\"dialog\"] h3"
+    }
+  ],
+  "open-lightbox-front": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    }
+  ],
+  "open-mobile-menu": [
+    {
+      "click": "[aria-label=\"Open menu\"]"
+    },
+    {
+      "waitFor": "nav[aria-label=\"Public site menu\"] [data-parity=\"portal-link\"]"
+    }
+  ],
+  "open-more-sheet": [
+    {
+      "click": "[data-parity=\"tab-more\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"sheet-handle\"]"
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "hover": "[role=\"dialog\"] [data-parity=\"sheet-handle\"]"
+    }
+  ],
+  "open-panel-approve-confirm": [
+    {
+      "click": "[data-parity=\"approve-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "open-photo-view": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
+    }
+  ],
+  "open-remove-photo-confirm": [
+    {
+      "use": "open-remove-front-photo-confirm"
+    }
+  ],
+  "open-resend-dialog": [
+    {
+      "click": "[data-parity=\"resend-invitation\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "open-resource-actions": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    }
+  ],
+  "open-resource-viewer-coach-actions": [
+    {
+      "use": "open-resource-viewer-with-management"
+    },
+    {
+      "hover": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"] >> role=button[name=\"Edit details\" s]"
+    }
+  ],
+  "open-resource-viewer-image": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Plate portions guide\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    }
+  ],
+  "open-resource-viewer-pdf": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    }
+  ],
+  "open-resource-viewer-word": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Food diary template\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"resource-cover\"]"
+    }
+  ],
+  "open-review-dialog": [
+    {
+      "click": "[data-parity=\"review-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
+    }
+  ],
+  "open-start-now-dialog": [
+    {
+      "click": "[data-parity=\"start-now\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
+  ],
+  "open-status-filter": [
+    {
+      "click": "[data-parity=\"status-filter\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"status-count-any\"]"
+    }
+  ],
+  "payment-method-fails": {
+    "prototype": [
+      {
+        "click": "[data-parity=\"manage-payment-method\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"payment-method-problem\"]"
+      }
+    ],
+    "real": []
+  },
+  "ratio-hidden": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-life-stage"
+      },
+      {
+        "click": "role=option[name=\"Pregnant\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"MeasurementsTable\"] tbody td:nth-of-type(7):has-text(\"—\")"
+      }
+    ],
+    "real": []
+  },
+  "record-consent-reopen-sheet": [
+    {
+      "use": "open-measurements-photo-sheet"
+    },
+    {
+      "click": "[role=\"dialog\"] [data-parity=\"progress-photos-checkbox\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=button[name=\"Save measurements\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"
+    }
+  ],
+  "remove-failed": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-photo-removal"
+      },
+      {
+        "click": "role=option[name=\"Fails\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+      },
+      {
+        "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"remove-front\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-sonner-toast]"
+      }
+    ],
+    "real": []
+  },
+  "remove-front-photo": [
+    {
+      "use": "open-remove-front-photo-confirm"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"] >> text=No front photo"
+    }
+  ],
+  "resend-invitation-failed-toast": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-invitation-resend"
+      },
+      {
+        "click": "role=option[name=\"Fails\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "click": "[data-parity=\"resend-invitation\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-sonner-toast]"
+      }
+    ],
+    "real": []
+  },
+  "resend-invitation-toast": [
+    {
+      "click": "[data-parity=\"resend-invitation\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "resource-viewer-next": [
+    {
+      "use": "open-resource-viewer"
+    },
+    {
+      "click": "[data-parity-root=\"ResourceViewer\"] >> role=button[name=\"Next page\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-counter\"] >> text=2 / 6"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "hover": "[data-parity-root=\"ResourceViewer\"] h2"
+    }
+  ],
+  "resource-viewer-zoom": [
+    {
+      "use": "open-resource-viewer"
+    },
+    {
+      "click": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    },
+    {
+      "click": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"][style*=\"scale(2)\"]"
+    }
+  ],
+  "resources-empty": [],
+  "resources-populated": [],
+  "resources-unavailable": [],
+  "review-dialog-flagged": [
+    {
+      "use": "review-dialog-flag-and-note"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"ask-details\"]:not([disabled])"
+    }
+  ],
+  "save-failed": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-measurement-save"
+      },
+      {
+        "click": "role=option[name=\"Fails\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
+      },
+      {
+        "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"
+      },
+      {
+        "wait": 1200
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=button[name=\"Save measurements\"]"
+      },
+      {
+        "waitFor": "[data-sonner-toast]"
+      }
+    ],
+    "real": []
+  },
+  "save-measurements-toast": [
+    {
+      "use": "open-measurements-photo-sheet"
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=button[name=\"Save measurements\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "schedule-checkin-hint-hover": [
+    {
+      "hover": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "search-calls-paid-client": [
+    {
+      "fill": [
+        "[aria-label=\"Search calls\"]",
+        "jane"
+      ]
+    },
+    {
+      "waitFor": "role=link[name=/View client/]"
+    }
+  ],
+  "search-calls-resend-dialog": [
+    {
+      "fill": [
+        "[aria-label=\"Search calls\"]",
+        "dumitru"
+      ]
+    },
+    {
+      "waitFor": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "click": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"payment-link-action\"] >> text=Re-send"
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "click": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "search-calls-send-dialog": [
+    {
+      "fill": [
+        "[aria-label=\"Search calls\"]",
+        "cristina"
+      ]
+    },
+    {
+      "waitFor": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"]"
+    }
+  ],
+  "search-clients": [
+    {
+      "fill": [
+        "[data-parity=\"clients-search\"]",
+        "andreea"
+      ]
+    },
+    {
+      "waitFor": "[data-parity=\"row-1-name\"]"
+    }
+  ],
+  "search-clients-no-match": [
+    {
+      "fill": [
+        "[data-parity=\"clients-search\"]",
+        "no such client"
+      ]
+    },
+    {
+      "waitFor": "role=button[name=\"Clear filters\"]"
+    }
+  ],
+  "seeded-photos": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-seeded-photos"
+      },
+      {
+        "click": "role=option[name=\"On the latest entry\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+      }
+    ],
+    "real": []
+  },
+  "select-6-months": [
+    {
+      "click": "[data-parity=\"bundle-6-months\"]"
+    }
+  ],
+  "send-link-toast": [
+    {
+      "click": "[data-parity=\"payment-link-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "skip-focus": {
+    "prototype": [
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Tab"
+      }
+    ],
+    "real": [
+      {
+        "press": "Tab"
+      }
+    ]
+  },
+  "sort-clients-bundle": [
+    {
+      "click": "[data-parity=\"sort-bundle\"] button"
+    },
+    {
+      "waitFor": "[data-parity=\"sort-bundle\"][aria-sort=\"ascending\"]"
+    }
+  ],
+  "start-checked": [
+    {
+      "click": "[data-parity=\"option-immediate\"]"
+    }
+  ],
+  "start-error": [
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"StartChoice\"] [data-parity=\"error\"]"
+    }
+  ],
+  "start-focus": [
+    {
+      "click": "[data-parity=\"bundle-3-months\"]"
+    },
+    {
+      "wait": 700
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "start-now-fails": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-start-now-outcome"
+      },
+      {
+        "click": "role=option[name=\"Fails\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "click": "[data-parity=\"start-now\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"start-now-problem\"]"
+      }
+    ],
+    "real": []
+  },
+  "status-approved": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"approved\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"status-eyebrow\"] >> text=Your program"
+      }
+    ],
+    "real": []
+  },
+  "status-in-review": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"reviewing\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"status-label\"] >> text=reviewing your answers"
+      }
+    ],
+    "real": []
+  },
+  "status-needs-details": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-stage"
+      },
+      {
+        "click": "role=option[name=\"needs-details\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"answer-now\"]"
+      }
+    ],
+    "real": []
+  },
+  "status-waiting": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-start-path"
+      },
+      {
+        "click": "role=option[name=\"Waiting out the 14 days\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"start-sooner-note\"]"
+      }
+    ],
+    "real": []
+  },
+  "status-waiting-deadline-passed": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-start-path"
+      },
+      {
+        "click": "role=option[name=\"Waiting out the 14 days\"]"
+      },
+      {
+        "click": "#dev-journey-days-since-payment"
+      },
+      {
+        "click": "role=option[name=\"14 days (withdrawal right gone)\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"ProgramStatusCard\"] [data-parity=\"status-line\"]"
+      }
+    ],
+    "real": []
+  },
+  "subscription-cancelled": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-subscription"
+      },
+      {
+        "click": "role=option[name=\"Cancelled\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-plan\"] >> text=/access until/"
+      }
+    ],
+    "real": []
+  },
+  "subscription-no-refund": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-days-since-payment"
+      },
+      {
+        "click": "role=option[name=\"14 days (withdrawal right gone)\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"subscription-cancellation\"] >> text=/no refund/"
+      }
+    ],
+    "real": []
+  },
+  "subscription-payment-problem": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-payment-problem"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "[data-parity=\"payment-problem\"]"
+      }
+    ],
+    "real": []
+  },
+  "tick-photo-consent": [
+    {
+      "use": "open-measurements-photo-sheet"
+    },
+    {
+      "click": "[role=\"dialog\"] [data-parity=\"progress-photos-checkbox\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"
+    }
+  ],
+  "wait-banner": [],
+  "wait-bundle": [],
+  "wait-error": [],
+  "wait-resumed": [
+    {
+      "waitFor": "[data-parity=\"resume-note\"]"
+    }
+  ],
+  "wait-welcome": [],
+  "welcome-four-part": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-journey-gender"
+      },
+      {
+        "click": "role=option[name=\"Prefer not to say\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "text=short form in four parts"
+      }
+    ],
+    "real": []
+  },
+  "onboarding-complete-through-form4": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
+    },
+    {
+      "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+    },
+    {
+      "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-eatingStyle\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"No restrictions\"]"
+    },
+    {
+      "click": "[data-parity=\"field-allergiesOrIntolerances\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-mealsPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Three\"]"
+    },
+    {
+      "click": "[data-parity=\"field-snacksPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"One\"]"
+    },
+    {
+      "click": "[data-parity=\"field-firstMeal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"7–9am\"]"
+    },
+    {
+      "click": "[data-parity=\"field-lastMeal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"6–8pm\"]"
+    },
+    {
+      "click": "[data-parity=\"field-energyDips\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-jobType\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Mostly sitting\"]"
+    },
+    {
+      "click": "[data-parity=\"field-sleepHours\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"7–8 hours\"]"
+    },
+    {
+      "click": "[data-parity=\"field-eatingOutFrequency\"] >> role=radio[name=\"Bring food from home\"]"
+    },
+    {
+      "click": "[data-parity=\"field-cookingSetup\"] >> role=radio[name=\"I do\"]"
+    },
+    {
+      "click": "[data-parity=\"field-cookingTime\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"15–30 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-waterPerDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"2–5 glasses\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-nutritionGoal\"] input",
+        "Eat more consistently."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-checkInDay\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Monday\"]"
+    },
+    {
+      "click": "[data-parity=\"field-checkInChannel\"] >> role=radio[name=\"Email\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
+  "onboarding-complete-through-form2": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    },
+    {
+      "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "wait": 500
+    }
+  ],
+  "onboarding-complete-form1": [
+    {
+      "fill": [
+        "[data-parity=\"field-weight\"] input",
+        "70"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-height\"] input",
+        "165"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-goalWeight\"] input",
+        "65"
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lose fat\"]"
+    },
+    {
+      "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+    },
+    {
+      "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"New to training\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+    },
+    {
+      "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    },
+    {
+      "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"field-coachExpectations\"] input",
+        "Keep me accountable."
+      ]
+    },
+    {
+      "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Lightly active\"]"
+    },
+    {
+      "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+    },
+    {
+      "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+    },
+    {
+      "click": "role=option[name=\"Home\"]"
+    },
+    {
+      "click": "[data-parity=\"continue\"]"
+    }
+  ],
+  "open-rescheduled-checkin-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "reschedule-checkin-pick-time": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "open-measurements-photo-sheet": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"
+    },
+    {
+      "wait": 1200
+    }
+  ],
+  "add-resource-tag-query": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Add resource\"]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] >> text=Drop a file here or choose one"
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=combobox[name=/^Tags/]"
+    },
+    {
+      "fill": [
+        "[role=\"dialog\"] >> role=combobox[name=/^Tags/]",
+        "Meal prep"
+      ]
+    }
+  ],
+  "request-checkin-pick-time": [
+    {
+      "click": "[data-parity-root=\"ClientCheckins\"] >> role=button[name=/^Request (a )?check-in$/] >> visible=true"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "schedule-checkin-pick-time": [
+    {
+      "click": "[data-parity=\"client-header-actions\"] >> role=button[name=\"Schedule check-in\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"CheckinSchedulerSheet\"] button[aria-pressed]"
+    }
+  ],
+  "open-resource-edit-details-dialog": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Edit details\" s]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"] [data-parity=\"resource-file-row\"]"
+    },
+    {
+      "wait": 1200
+    }
+  ],
+  "open-front-photo-lightbox": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-remove-front-photo-confirm": [
+    {
+      "click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"
+    },
+    {
+      "waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"remove-front\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "review-dialog-flag-and-note": [
+    {
+      "click": "[data-parity=\"review-action\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"flag-sleepHours\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"review-note\"]",
+        "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder."
+      ]
+    }
+  ],
+  "trigger-checkin-cancel-confirm": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "trigger-resource-delete-confirm": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    }
+  ],
+  "open-resource-actions-then-close": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] >> role=button[name=\"Actions for Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Escape"
+    }
+  ],
+  "open-resource-viewer": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-page\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-resource-viewer-with-management": [
+    {
+      "click": "[data-parity-root=\"CoachResourceLibrary\"] [data-parity=\"resource-card\"] >> role=button[name=\"Glute activation warm-up\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ResourceViewer\"] [data-parity=\"viewer-management\"]"
+    },
+    {
+      "wait": 600
+    }
+  ]
+}

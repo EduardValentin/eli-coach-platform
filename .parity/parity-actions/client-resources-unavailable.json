@@ -1,4 +1,0 @@
-[
-  {"waitFor": "[data-parity-root=\"ClientResources\"] [data-parity-root=\"ResourcesUnavailable\"]"},
-  {"wait": 400}
-]

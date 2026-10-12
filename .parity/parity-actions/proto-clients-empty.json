@@ -1,4 +1,0 @@
-[
-  { "waitFor": "text=No clients yet" },
-  { "wait": 1000 }
-]
