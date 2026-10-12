@@ -1,18 +1,40 @@
 import { describe, it, expect } from 'vitest';
-import { matchesExerciseFilters } from './exerciseFilters';
+import {
+  EXERCISE_TAGS,
+  NO_EXERCISE_FILTERS,
+  countsByType,
+  matchesExerciseFilters,
+  parseType,
+  type ExerciseSelection,
+  type ExerciseTag,
+} from './exerciseFilters';
 import type { Exercise } from '../context/TrainingContext';
 
 function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
   return {
     id: 'e-test',
     name: 'Barbell Back Squat',
-    description: '',
+    cues: '',
     equipment: ['Barbell'],
     difficulty: 'Intermediate',
     primaryMuscles: ['Quadriceps'],
     secondaryMuscles: [],
     tags: ['Strength'],
+    type: 'resistance',
+    measuredIn: 'reps',
+    perSide: false,
     ...overrides,
+  };
+}
+
+function selection(query: string, filters: string[] = []): ExerciseSelection {
+  return {
+    query,
+    type: 'any',
+    tags: filters.filter((filter): filter is ExerciseTag =>
+      (EXERCISE_TAGS as readonly string[]).includes(filter),
+    ),
+    equipment: filters.includes('No equipment') ? 'none' : 'any',
   };
 }
 
@@ -22,7 +44,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise();
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection(''));
 
     // assert
     expect(result).toBe(true);
@@ -33,7 +55,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Barbell Back Squat' });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '  BACK sq ', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('  BACK sq '));
 
     // assert
     expect(result).toBe(true);
@@ -44,7 +66,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Leg Press', primaryMuscles: ['Quadriceps', 'Glutes'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'glute', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('glute'));
 
     // assert
     expect(result).toBe(true);
@@ -59,7 +81,7 @@ describe('matchesExerciseFilters', () => {
     });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'core', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('core'));
 
     // assert
     expect(result).toBe(false);
@@ -70,7 +92,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Leg Press', primaryMuscles: ['Quadriceps'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: 'bench', activeFilters: [] });
+    const result = matchesExerciseFilters(exercise, selection('bench'));
 
     // assert
     expect(result).toBe(false);
@@ -81,7 +103,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ tags: ['Strength'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(true);
@@ -92,7 +114,7 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ tags: ['Recovery'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(false);
@@ -100,10 +122,10 @@ describe('matchesExerciseFilters', () => {
 
   it('drops an untagged exercise once any tag is selected', () => {
     // arrange
-    const exercise = makeExercise({ tags: undefined });
+    const exercise = makeExercise({ tags: [] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Strength'] });
+    const result = matchesExerciseFilters(exercise, selection('', ['Strength']));
 
     // assert
     expect(result).toBe(false);
@@ -114,36 +136,10 @@ describe('matchesExerciseFilters', () => {
     const strengthOnly = makeExercise({ tags: ['Strength'] });
 
     // act
-    const result = matchesExerciseFilters({
-      exercise: strengthOnly,
-      searchQuery: '',
-      activeFilters: ['Strength', 'Hypertrophy'],
-    });
+    const result = matchesExerciseFilters(strengthOnly, selection('', ['Strength', 'Hypertrophy']));
 
     // assert
     expect(result).toBe(true);
-  });
-
-  it('reads a bodyweight exercise as equipment-free', () => {
-    // arrange
-    const exercise = makeExercise({ equipment: ['Bodyweight'] });
-
-    // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No equipment'] });
-
-    // assert
-    expect(result).toBe(true);
-  });
-
-  it('still excludes a bodyweight exercise that also needs a real item', () => {
-    // arrange — a pull-up is bodyweight-loaded but needs a bar
-    const pullUp = makeExercise({ equipment: ['Bodyweight', 'Pull-Up Bar'] });
-
-    // act
-    const result = matchesExerciseFilters({ exercise: pullUp, searchQuery: '', activeFilters: ['No equipment'] });
-
-    // assert
-    expect(result).toBe(false);
   });
 
   it('keeps a no-equipment exercise when the filter is applied and drops an equipment one', () => {
@@ -152,8 +148,8 @@ describe('matchesExerciseFilters', () => {
     const barbell = makeExercise({ equipment: ['Barbell'] });
 
     // act
-    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: ['No equipment'] });
-    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: ['No equipment'] });
+    const plankResult = matchesExerciseFilters(plank, selection('', ['No equipment']));
+    const barbellResult = matchesExerciseFilters(barbell, selection('', ['No equipment']));
 
     // assert
     expect(plankResult).toBe(true);
@@ -166,8 +162,8 @@ describe('matchesExerciseFilters', () => {
     const barbell = makeExercise({ equipment: ['Barbell'] });
 
     // act
-    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: [] });
-    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: [] });
+    const plankResult = matchesExerciseFilters(plank, selection(''));
+    const barbellResult = matchesExerciseFilters(barbell, selection(''));
 
     // assert
     expect(plankResult).toBe(true);
@@ -179,11 +175,7 @@ describe('matchesExerciseFilters', () => {
     const strengthWithBarbell = makeExercise({ tags: ['Strength'], equipment: ['Barbell'] });
 
     // act
-    const result = matchesExerciseFilters({
-      exercise: strengthWithBarbell,
-      searchQuery: '',
-      activeFilters: ['Strength', 'No equipment'],
-    });
+    const result = matchesExerciseFilters(strengthWithBarbell, selection('', ['Strength', 'No equipment']));
 
     // assert
     expect(result).toBe(false);
@@ -194,19 +186,81 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ name: 'Plank', tags: ['Recovery'], equipment: [] });
 
     // act
-    const agreeing = matchesExerciseFilters({
-      exercise,
-      searchQuery: 'plank',
-      activeFilters: ['Recovery', 'No equipment'],
-    });
-    const disagreeing = matchesExerciseFilters({
-      exercise,
-      searchQuery: 'squat',
-      activeFilters: ['Recovery', 'No equipment'],
-    });
+    const agreeing = matchesExerciseFilters(exercise, selection('plank', ['Recovery', 'No equipment']));
+    const disagreeing = matchesExerciseFilters(exercise, selection('squat', ['Recovery', 'No equipment']));
 
     // assert
     expect(agreeing).toBe(true);
     expect(disagreeing).toBe(false);
+  });
+});
+
+describe('the type filter', () => {
+  it('keeps every exercise while the type is any', () => {
+    // arrange
+    const bike = makeExercise({ name: 'Bike', type: 'cardio' });
+    const squat = makeExercise({ name: 'Squat' });
+
+    // assert
+    expect(matchesExerciseFilters(bike, { ...NO_EXERCISE_FILTERS, type: 'any' })).toBe(true);
+    expect(matchesExerciseFilters(squat, { ...NO_EXERCISE_FILTERS, type: 'any' })).toBe(true);
+  });
+
+  it('narrows to the chosen type', () => {
+    // arrange
+    const bike = makeExercise({ name: 'Bike', type: 'cardio' });
+    const squat = makeExercise({ name: 'Squat' });
+
+    // assert
+    expect(matchesExerciseFilters(bike, { ...NO_EXERCISE_FILTERS, type: 'cardio' })).toBe(true);
+    expect(matchesExerciseFilters(squat, { ...NO_EXERCISE_FILTERS, type: 'cardio' })).toBe(false);
+  });
+
+  it('counts the exercises behind each type under the other filters', () => {
+    // arrange
+    const exercises = [
+      makeExercise({ name: 'Bike', type: 'cardio', tags: ['Recovery'] }),
+      makeExercise({ name: 'Squat', tags: ['Strength'] }),
+      makeExercise({ name: 'Stretch', type: 'mobility', tags: ['Strength'] }),
+    ];
+
+    // act
+    const counts = countsByType(exercises, { ...NO_EXERCISE_FILTERS, tags: ['Strength'] });
+
+    // assert
+    expect(counts).toEqual({ any: 2, resistance: 1, cardio: 0, mobility: 1 });
+  });
+
+  it('reads an unknown type from the link as any', () => {
+    // assert
+    expect(parseType('cardio')).toBe('cardio');
+    expect(parseType('yoga')).toBe('any');
+    expect(parseType(null)).toBe('any');
+  });
+});
+
+describe('the equipment rule', () => {
+  it('treats an empty equipment list as no equipment', () => {
+    // arrange
+    const plank = makeExercise({ name: 'Plank', equipment: [] });
+
+    // assert
+    expect(matchesExerciseFilters(plank, { ...NO_EXERCISE_FILTERS, equipment: 'none' })).toBe(true);
+  });
+
+  it('treats any listed item as equipment', () => {
+    // arrange
+    const stretch = makeExercise({ name: 'Stretch', equipment: ['Mat'] });
+
+    // assert
+    expect(matchesExerciseFilters(stretch, { ...NO_EXERCISE_FILTERS, equipment: 'none' })).toBe(false);
+  });
+
+  it('searches an exercise with no primary muscles by name alone', () => {
+    // arrange
+    const bike = makeExercise({ name: 'Bike', type: 'cardio', primaryMuscles: [] });
+
+    // assert
+    expect(matchesExerciseFilters(bike, { ...NO_EXERCISE_FILTERS, query: 'bike' })).toBe(true);
   });
 });

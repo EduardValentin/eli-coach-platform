@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Plus,
   Trash2,
   GripVertical,
-  Search,
+  SearchX,
   Activity,
   Info,
   ArrowLeft,
-  Filter,
   MoreVertical,
   Copy,
   ArrowLeftRight,
@@ -32,9 +31,12 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { ExerciseFilters } from './ExerciseFilters';
 import {
+  NO_EXERCISE_FILTERS,
+  hasActiveExerciseFilters,
   matchesExerciseFilters,
-  type ExerciseFilter,
+  type ExerciseSelection,
 } from '../../utils/exerciseFilters';
+import { pickableItems } from '../../domain/libraryLifecycle';
 import { Checkbox } from '../ui/checkbox';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -605,7 +607,7 @@ function SwapVariantsPicker({
   const currentVariants = planExercise.swapVariants || [];
   const hasVariants = currentVariants.length > 0;
 
-  const filteredExercises = exercises.filter(
+  const filteredExercises = pickableItems(exercises, currentVariants).filter(
     (ex) =>
       ex.id !== planExercise.exerciseId &&
       (ex.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -732,46 +734,7 @@ export function PlanBuilder({
   const [selectedForSuperset, setSelectedForSuperset] = useState<string[]>([]);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
-  // Search & filter
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterPopoverRef = useRef<HTMLDivElement>(null);
-  const filterTriggerRef = useRef<HTMLButtonElement>(null);
-  const pendingClickSwallowRef = useRef<((click: MouseEvent) => void) | null>(
-    null,
-  );
-
-  const stopSwallowingClicks = () => {
-    const handler = pendingClickSwallowRef.current;
-    if (!handler) return;
-    document.removeEventListener('click', handler, { capture: true });
-    pendingClickSwallowRef.current = null;
-  };
-
-  /**
-   * Closing the popover on pointerdown is not enough on its own: the click that
-   * follows still reaches whatever the popover was covering, and a library
-   * card's quick-add sits right there — so dismissing the popover would add an
-   * exercise the coach never asked for. This lives outside the open/close effect
-   * because closing re-runs that effect's cleanup, which would unregister the
-   * handler before the click ever arrived.
-   */
-  const swallowNextOutsideClick = () => {
-    stopSwallowingClicks();
-    const handler = (click: MouseEvent) => {
-      click.preventDefault();
-      click.stopPropagation();
-      stopSwallowingClicks();
-    };
-    pendingClickSwallowRef.current = handler;
-    document.addEventListener('click', handler, { capture: true });
-    // A press that never becomes a click (a drag, a scroll) must not leave this
-    // armed to eat an unrelated click later.
-    window.setTimeout(stopSwallowingClicks, 300);
-  };
-
-  useEffect(() => stopSwallowingClicks, []);
+  const [selection, setSelection] = useState<ExerciseSelection>(NO_EXERCISE_FILTERS);
 
   // Week action dropdown
   const [openWeekAction, setOpenWeekAction] = useState<number | null>(null);
@@ -832,56 +795,16 @@ export function PlanBuilder({
     return groups;
   }, [activeDay]);
 
+  const pickableExercises = useMemo(() => pickableItems(exercises), [exercises]);
   const filteredLibrary = useMemo(
     () =>
-      exercises.filter((exercise) =>
-        matchesExerciseFilters({ exercise, searchQuery, activeFilters }),
+      pickableExercises.filter((exercise) =>
+        matchesExerciseFilters(exercise, selection),
       ),
-    [exercises, searchQuery, activeFilters],
+    [pickableExercises, selection],
   );
 
-  // The popover overlays the results it filters, so a coach who has finished with
-  // it needs the two ways out they will reach for first.
-  useEffect(() => {
-    if (!isFilterOpen) return;
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (filterPopoverRef.current?.contains(target)) return;
-      if (filterTriggerRef.current?.contains(target)) return;
-      swallowNextOutsideClick();
-      setIsFilterOpen(false);
-    };
-
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      const focusWasInside = filterPopoverRef.current?.contains(
-        document.activeElement,
-      );
-      setIsFilterOpen(false);
-      if (focusWasInside) filterTriggerRef.current?.focus();
-    };
-
-    document.addEventListener('pointerdown', closeOnOutsidePointer);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutsidePointer);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [isFilterOpen]);
-
-  const toggleFilter = (filter: ExerciseFilter) => {
-    setActiveFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
-        : [...prev, filter],
-    );
-  };
-
-  const clearFilters = () => {
-    setActiveFilters([]);
-    setSearchQuery('');
-  };
+  const clearFilters = () => setSelection(NO_EXERCISE_FILTERS);
 
   // ── Week / Day manipulation ────────────────────────────────────────
 
@@ -1863,47 +1786,19 @@ export function PlanBuilder({
                 </Button>
               </div>
               <SearchField
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search exercises..."
+                aria-label="Search exercises"
+                value={selection.query}
+                onChange={(e) => setSelection({ ...selection, query: e.target.value })}
+                placeholder="Search by name or muscle"
                 size="sm"
                 className="mb-3"
               />
-
-              <div className="relative">
-                <Button
-                  ref={filterTriggerRef}
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  aria-expanded={isFilterOpen}
-                  variant="outline"
-                  className="w-full justify-between bg-muted font-medium text-text-secondary"
-                >
-                  <div className="flex items-center gap-2">
-                    <Filter size={16} />
-                    <span>
-                      Filters{' '}
-                      {activeFilters.length > 0 && `(${activeFilters.length})`}
-                    </span>
-                  </div>
-                </Button>
-
-                <AnimatePresence>
-                  {isFilterOpen && (
-                    <motion.div
-                      ref={filterPopoverRef}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-control p-3 z-50"
-                    >
-                      <ExerciseFilters
-                        activeFilters={activeFilters}
-                        onToggleFilter={toggleFilter}
-                        onClearFilters={clearFilters}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div className="grid gap-3">
+                <ExerciseFilters
+                  exercises={pickableExercises}
+                  selection={selection}
+                  onSelectionChange={setSelection}
+                />
               </div>
             </div>
 
@@ -1917,20 +1812,15 @@ export function PlanBuilder({
               ))}
               {filteredLibrary.length === 0 && (
                 <EmptyState
-                  icon={Search}
-                  title="No exercises match your search and filters."
-                  description="Try a different search term or clear your filters."
+                  icon={SearchX}
+                  title="No exercises match"
+                  description="Try another filter or search."
                   action={
-                    (activeFilters.length > 0 || Boolean(searchQuery)) && (
-                      <Button
-                        type="button"
-                        variant="link"
-                        size="xs"
-                        onClick={clearFilters}
-                      >
-                        Clear search and filters
+                    hasActiveExerciseFilters(selection) ? (
+                      <Button variant="outline" onClick={clearFilters}>
+                        Clear filters
                       </Button>
-                    )
+                    ) : undefined
                   }
                 />
               )}

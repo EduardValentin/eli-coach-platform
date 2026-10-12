@@ -19,3 +19,11 @@ export const mp4RejectionMessage = (file: File): string =>
 export function isMp4File(file: File): boolean {
   return file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
 }
+
+export const MP4_MAX_BYTES = 50 * 1024 * 1024;
+
+export function isWithinMp4Limit(file: File): boolean {
+  return file.size <= MP4_MAX_BYTES;
+}
+
+export const mp4TooLargeMessage = (file: File): string => `${file.name} is larger than 50 MB`;

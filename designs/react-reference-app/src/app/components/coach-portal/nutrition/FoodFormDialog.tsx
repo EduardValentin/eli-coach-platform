@@ -9,6 +9,7 @@ import type {
   FoodCategory,
   FoodIcon,
 } from '../../../context/NutritionContext';
+import { useAppState } from '../../../context/AppContext';
 import { FOOD_ICONS, TAG_FAMILY_ICON } from './food-icons';
 import {
   Dialog,
@@ -29,9 +30,9 @@ import {
   SelectItem,
 } from '../../ui/select';
 import { ToggleChip } from '../../ToggleChip';
+import { cn } from '../../ui/utils';
 import {
   CATEGORY_LABELS,
-  TAG_FAMILY_BORDER,
   TAG_FAMILY_LABELS,
 } from './nutrition-constants';
 
@@ -73,6 +74,8 @@ export function FoodFormDialog({
   onOpenChange,
 }: FoodFormDialogProps) {
   const { tags, equivalenceGroups, addFood, updateFood } = useNutrition();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const [draft, setDraft] = useState<DraftState>(EMPTY);
 
   useEffect(() => {
@@ -132,8 +135,9 @@ export function FoodFormDialog({
         <DialogHeader>
           <DialogTitle>{food ? 'Edit food' : 'Add food'}</DialogTitle>
           <DialogDescription>
-            Set the category, reference macros per 100 g, swap group, and tags
-            for this food.
+            {isPostMvp
+              ? 'Set the category, reference macros per 100 g, swap group, and tags for this food.'
+              : 'Set the category, reference macros per 100 g, and tags for this food.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -177,7 +181,10 @@ export function FoodFormDialog({
                     aria-label={label}
                     aria-pressed={draft.icon === key}
                     onClick={() => set('icon', key)}
-                    className={`flex size-9 items-center justify-center rounded-compact border transition-colors ${draft.icon === key ? 'border-primary bg-primary-soft text-primary' : 'border-border text-text-secondary hover:bg-surface-muted'}`}
+                    className={cn('flex size-9 items-center justify-center rounded-compact border transition-colors', {
+                      'border-primary bg-primary-soft text-primary': draft.icon === key,
+                      'border-border text-text-secondary hover:bg-surface-muted': draft.icon !== key,
+                    })}
                   >
                     <Icon size={18} aria-hidden="true" />
                   </button>
@@ -224,27 +231,29 @@ export function FoodFormDialog({
             />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="food-group">Swap group</Label>
-            <Select
-              value={draft.equivalenceGroupId || 'none'}
-              onValueChange={(v) =>
-                set('equivalenceGroupId', v === 'none' ? '' : v)
-              }
-            >
-              <SelectTrigger id="food-group">
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {equivalenceGroups.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isPostMvp && (
+            <div className="grid gap-2">
+              <Label htmlFor="food-group">Swap group</Label>
+              <Select
+                value={draft.equivalenceGroupId || 'none'}
+                onValueChange={(v) =>
+                  set('equivalenceGroupId', v === 'none' ? '' : v)
+                }
+              >
+                <SelectTrigger id="food-group">
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {equivalenceGroups.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <fieldset className="grid gap-3">
             <legend className="mb-1 text-sm font-medium">Tags</legend>
@@ -254,7 +263,7 @@ export function FoodFormDialog({
                   key={family}
                   role="group"
                   aria-label={TAG_FAMILY_LABELS[family]}
-                  className={`rounded-control border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                  className="rounded-control border border-border bg-card p-3"
                 >
                   <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                     {(() => {

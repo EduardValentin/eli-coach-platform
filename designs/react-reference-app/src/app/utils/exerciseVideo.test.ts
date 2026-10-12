@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { isMp4File, mp4RejectionMessage } from './exerciseVideo';
+import { MP4_MAX_BYTES, isMp4File, isWithinMp4Limit, mp4RejectionMessage, mp4TooLargeMessage } from './exerciseVideo';
 
 const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
+
+function videoOfSize(name: string, size: number): File {
+  const file = fileNamed(name, 'video/mp4');
+  Object.defineProperty(file, 'size', { value: size });
+  return file;
+}
 
 describe('isMp4File', () => {
   it('accepts a file the browser reports as video/mp4', () => {
@@ -82,5 +88,40 @@ describe('isMp4File', () => {
     // assert
     expect(firstMessage).toContain('squat-demo.mov');
     expect(firstMessage).not.toBe(secondMessage);
+  });
+});
+
+describe('isWithinMp4Limit', () => {
+  it('accepts a video of exactly 50 MB', () => {
+    // arrange
+    const file = videoOfSize('squat-demo.mp4', MP4_MAX_BYTES);
+
+    // act
+    const result = isWithinMp4Limit(file);
+
+    // assert
+    expect(result).toBe(true);
+  });
+
+  it('refuses a video one byte over 50 MB', () => {
+    // arrange
+    const file = videoOfSize('squat-demo.mp4', MP4_MAX_BYTES + 1);
+
+    // act
+    const result = isWithinMp4Limit(file);
+
+    // assert
+    expect(result).toBe(false);
+  });
+
+  it('names the oversize file', () => {
+    // arrange
+    const file = videoOfSize('clip.mp4', MP4_MAX_BYTES + 1);
+
+    // act
+    const message = mp4TooLargeMessage(file);
+
+    // assert
+    expect(message).toBe('clip.mp4 is larger than 50 MB');
   });
 });

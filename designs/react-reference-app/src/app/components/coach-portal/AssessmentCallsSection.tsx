@@ -52,6 +52,7 @@ import { AppointmentCard } from './AppointmentCard';
 import { CallJourneyActions } from './CallJourneyActions';
 import { CallStageBadge } from './CallStageBadge';
 import { ListPager } from '../ListPager';
+import { ListingToolbar } from '../ListingToolbar';
 import { pageOf, parsePage } from '../../utils/listPaging';
 import { JoinCallLink } from './JoinCallLink';
 import { SortControl, type SortOption } from '../SortControl';
@@ -387,8 +388,8 @@ export function AssessmentCallsSection({
         onValueChange={chooseStatus}
         className="w-full"
       >
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+        <ListingToolbar
+          view={
             <TabsList aria-label="When">
               {WHEN_TABS.map((tab) => (
                 <TabsTrigger key={tab.status} value={tab.status}>
@@ -396,30 +397,33 @@ export function AssessmentCallsSection({
                 </TabsTrigger>
               ))}
             </TabsList>
+          }
+          filters={
             <StatusFilter
               counts={counts}
               journey={journey}
               onChoose={chooseJourney}
             />
-          </div>
-
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <SearchField
-              id={SEARCH_FIELD_ID}
-              aria-label="Search calls"
-              placeholder="Search by name or email"
-              size="sm"
-              className="w-full sm:w-72"
-              value={query}
-              onChange={(event) => changeQuery(event.target.value)}
-            />
-            <SortControl
-              options={CALL_SORT_OPTIONS}
-              sort={sort}
-              onChange={chooseSort}
-            />
-          </div>
-        </div>
+          }
+          search={
+            <>
+              <SearchField
+                id={SEARCH_FIELD_ID}
+                aria-label="Search calls"
+                placeholder="Search by name or email"
+                size="sm"
+                className="w-full sm:w-72"
+                value={query}
+                onChange={(event) => changeQuery(event.target.value)}
+              />
+              <SortControl
+                options={CALL_SORT_OPTIONS}
+                sort={sort}
+                onChange={chooseSort}
+              />
+            </>
+          }
+        />
 
         <TabsContent value={status}>
           {view.items.length === 0 ? (

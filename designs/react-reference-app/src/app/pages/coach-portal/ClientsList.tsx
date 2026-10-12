@@ -1,5 +1,4 @@
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { motion } from 'motion/react';
 import { ArrowRight, Users } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Button, buttonVariants } from '../../components/ui/button';
@@ -24,6 +23,8 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { SearchField } from '../../components/SearchField';
+import { ListingToolbar } from '../../components/ListingToolbar';
+import { TablePanel } from '../../components/TablePanel';
 import { EmptyState } from '../../components/EmptyState';
 import { SortableTableHead } from '../../components/SortableTableHead';
 import { useClientProfile } from '../../context/ClientProfileContext';
@@ -472,16 +473,15 @@ export function ClientsList() {
         subtitle="Manage your active roster and past client records."
       />
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+      <ListingToolbar
+        filters={
           <StatusFilter
             counts={counts}
             status={status}
             onChoose={chooseStatus}
           />
-        </div>
-
-        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+        }
+        search={
           <SearchField
             id={SEARCH_FIELD_ID}
             aria-label="Search clients"
@@ -492,15 +492,10 @@ export function ClientsList() {
             value={query}
             onChange={(event) => changeQuery(event.target.value)}
           />
-        </div>
-      </div>
+        }
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden"
-        data-parity="roster-table"
-      >
+      <TablePanel parity="roster-table">
         <Table>
           <TableHeader>
             <TableRow>
@@ -564,7 +559,7 @@ export function ClientsList() {
             )}
           </TableBody>
         </Table>
-      </motion.div>
+      </TablePanel>
 
     </div>
   );

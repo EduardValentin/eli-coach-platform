@@ -33,25 +33,43 @@ async function renderBuilderLibrary(dayZeroType: 'Rest' | 'Strength' = 'Rest') {
       />
     </TrainingProvider>
   );
-  await user.click(screen.getByRole('button', { name: /^Filters/ }));
   return user;
 }
 
-// Day-type buttons share names with the goal chips, so every chip lookup is
-// scoped to its labelled group.
-const tagChip = (name: string) =>
-  within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name });
+type User = ReturnType<typeof userEvent.setup>;
 
-const noEquipmentChip = () =>
-  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name: 'No equipment' });
+async function chooseTags(user: User, tags: string[]) {
+  await user.click(screen.getByRole('button', { name: /^Tags/ }));
+  for (const tag of tags) {
+    await user.click(screen.getByRole('checkbox', { name: new RegExp(tag) }));
+  }
+  await user.keyboard('{Escape}');
+}
+
+async function chooseNoEquipment(user: User) {
+  await user.click(screen.getByRole('combobox', { name: 'Equipment' }));
+  await user.click(screen.getByRole('option', { name: /No equipment/ }));
+}
 
 describe("the plan builder's exercise library panel", () => {
-  it('filters by tag through the same vocabulary as the library tab', async () => {
+  it('leaves archived exercises out', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(tagChip('Recovery'));
+    await chooseTags(user, ['Hypertrophy']);
+
+    // assert
+    expect(screen.getByText('Bulgarian Split Squat')).toBeInTheDocument();
+    expect(screen.queryByText('Smith Machine Squat')).not.toBeInTheDocument();
+  });
+
+  it('filters by tag through the same vocabulary as the exercise library', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+
+    // act
+    await chooseTags(user, ['Recovery']);
 
     // assert
     expect(screen.getByText('Romanian Deadlift')).toBeInTheDocument();
@@ -62,113 +80,62 @@ describe("the plan builder's exercise library panel", () => {
   it('widens rather than intersects when a second tag is picked', async () => {
     // arrange
     const user = await renderBuilderLibrary();
-    await user.click(tagChip('Recovery'));
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    await chooseTags(user, ['Recovery']);
 
     // act
-    await user.click(tagChip('Strength'));
+    await chooseTags(user, ['Strength']);
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 
-  it('narrows to equipment-free exercises when the chip is pressed', async () => {
+  it('says how many tags are chosen on the tag filter', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(noEquipmentChip());
+    await chooseTags(user, ['Recovery']);
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Tags, 1 selected' })).toBeInTheDocument();
+  });
+
+  it('narrows to equipment-free exercises', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+
+    // act
+    await chooseNoEquipment(user);
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
-  it('shows its empty state when the tags and the equipment filter cannot both be met', async () => {
+  it('offers to clear the filters when nothing matches', async () => {
     // arrange
     const user = await renderBuilderLibrary();
-
-    // act — no Strength-tagged exercise is equipment-free
-    await user.click(tagChip('Strength'));
-    await user.click(noEquipmentChip());
-
-    // assert
-    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
-  });
-
-  it('counts the active filters on the popover trigger', async () => {
-    // arrange
-    const user = await renderBuilderLibrary();
+    await chooseTags(user, ['Strength']);
+    await chooseNoEquipment(user);
+    expect(screen.getByText('No exercises match')).toBeInTheDocument();
 
     // act
-    await user.click(tagChip('Recovery'));
-
-    // assert
-    expect(screen.getByRole('button', { name: /Filters \(1\)/ })).toBeInTheDocument();
-  });
-
-  it('offers a way out of the empty state', async () => {
-    // arrange
-    const user = await renderBuilderLibrary();
-    await user.click(tagChip('Strength'));
-    await user.click(noEquipmentChip());
-    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
-    // dismiss the popover first: while it is open the next outside click is
-    // swallowed by design, so it would not reach the empty state's action
-    await user.keyboard('{Escape}');
-
-    // act — the empty state's own clear action, not the popover's
-    const emptyState = screen.getByText('No exercises match your search and filters.').closest('div') as HTMLElement;
-    await user.click(within(emptyState).getByRole('button', { name: /^Clear/ }));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-  });
-
-  it('closes the filters popover on Escape and returns focus to the trigger', async () => {
-    // arrange
-    const user = await renderBuilderLibrary();
-    const trigger = screen.getByRole('button', { name: /^Filters/ });
-    expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    // move focus off the trigger and into the popover, or the assertion below
-    // passes on focus that never left
-    await user.tab();
-    expect(trigger).not.toHaveFocus();
-
-    // act
-    await user.keyboard('{Escape}');
-
-    // assert
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(document.activeElement).toBe(trigger);
-  });
-
-  it('dismisses on an outside click without letting that click reach what it covered', async () => {
-    // arrange — the popover overlays the library, whose cards carry a quick-add
-    const user = await renderBuilderLibrary('Strength');
-    const trigger = screen.getByRole('button', { name: /^Filters/ });
-    const quickAdd = screen.getAllByRole('button', { name: 'Add to current day' })[0];
-    // the name appears once in the library; adding it to the day makes it two
-    expect(screen.queryAllByText('Barbell Back Squat')).toHaveLength(1);
-
-    // act
-    await user.click(quickAdd);
-
-    // assert — the popover closes, and the plan is untouched
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryAllByText('Barbell Back Squat')).toHaveLength(1);
   });
 
   it('clears the panel search alongside the filters', async () => {
     // arrange
     const user = await renderBuilderLibrary();
-    await user.click(tagChip('Recovery'));
-    const search = screen.getByPlaceholderText('Search exercises...');
+    await chooseTags(user, ['Strength']);
+    const search = screen.getByRole('searchbox', { name: 'Search exercises' });
     await user.type(search, 'plank');
 
     // act
-    await user.click(screen.getByRole('button', { name: /^Clear/ }));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     // assert
     expect(search).toHaveValue('');

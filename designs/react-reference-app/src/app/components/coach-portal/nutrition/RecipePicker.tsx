@@ -3,9 +3,17 @@ import { Check, Clock, Plus, X } from 'lucide-react';
 import {
   useNutrition,
   recipeMacros,
-  CALORIE_BANDS,
 } from '../../../context/NutritionContext';
-import type { Tag } from '../../../context/NutritionContext';
+import type { Tag, TagFamily } from '../../../context/NutritionContext';
+import { pickableItems } from '../../../domain/libraryLifecycle';
+import { toggled } from '../../../utils/libraryListing';
+import {
+  CALORIE_BAND_LABELS,
+  CALORIE_BAND_OPTIONS,
+  type CalorieBand,
+} from '../../../utils/recipeListing';
+import { MultiSelect } from '../../MultiSelect';
+import { CountedSelect } from '../../CountedSelect';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +27,6 @@ import { cn } from '../../ui/utils';
 import { ScrollArea } from '../../ui/scroll-area';
 import { SearchField } from '../../SearchField';
 import { LABEL_CLASS } from '../../typography';
-import { FilterDropdown } from './FilterDropdown';
 import { RecipeVisual } from './RecipeVisual';
 import { TagPill } from './TagPill';
 import { TAG_FAMILY_LABELS, MACRO_DOT } from './nutrition-constants';
@@ -59,54 +66,65 @@ export function RecipePicker({
 }: RecipePickerProps) {
   const { recipes, foods, tags } = useNutrition();
 
-  // ----- Filter state -------------------------------------------------------
   const [query, setQuery] = useState('');
-  // Combined multi-select tag ids: meal-time + cycle-phase + dietary + nutrient
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
-  // Single-select calorie band (kcal ceiling)
-  const [activeBand, setActiveBand] = useState<number | null>(null);
+  const [band, setBand] = useState<CalorieBand>('any');
 
-  const toggleTag = (id: string) =>
-    setActiveTagIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+  const toggleTag = (id: string) => setActiveTagIds((prev) => toggled(prev, id));
 
-  const hasActiveFilters =
-    activeTagIds.length > 0 || activeBand !== null || query.trim() !== '';
+  const hasActiveFilters = activeTagIds.length > 0 || band !== 'any' || query.trim() !== '';
 
   const clearFilters = () => {
     setQuery('');
     setActiveTagIds([]);
-    setActiveBand(null);
+    setBand('any');
   };
 
-  // ----- Tag family slices for FilterDropdown -------------------------------
-  const mealTimeTags = tags.filter((t: Tag) => t.family === 'meal-time');
-  const cyclePhaseTags = tags.filter((t: Tag) => t.family === 'cycle-phase');
-  const dietaryTags = tags.filter((t: Tag) => t.family === 'dietary');
-  const nutrientTags = tags.filter((t: Tag) => t.family === 'nutrient');
+  const pickable = useMemo(
+    () => pickableItems(recipes, [currentRecipeId, ...alternativeRecipeIds]),
+    [recipes, currentRecipeId, alternativeRecipeIds],
+  );
 
-  // ----- Filtered + sorted recipe list -------------------------------------
-  const { suggested, others } = useMemo(() => {
-    const q = query.trim().toLowerCase();
-
-    const filtered = recipes.filter((r) => {
-      const matchesQuery = !q || r.name.toLowerCase().includes(q);
-      // AND across every active tag id: recipe must have it in mealRoleIds OR tagIds
+  const matching = (filters: { tagIds: readonly string[]; band: CalorieBand }) =>
+    pickable.filter((r) => {
+      const matchesQuery = !query.trim() || r.name.toLowerCase().includes(query.trim().toLowerCase());
       const recipeTagIds = [...r.mealRoleIds, ...r.tagIds];
-      const matchesTags = activeTagIds.every((id) => recipeTagIds.includes(id));
-      const matchesBand =
-        activeBand === null || recipeMacros(r, foods).kcal <= activeBand;
+      const matchesTags = filters.tagIds.every((id) => recipeTagIds.includes(id));
+      const matchesBand = filters.band === 'any' || recipeMacros(r, foods).kcal <= Number(filters.band);
       return matchesQuery && matchesTags && matchesBand;
     });
 
-    const suggested = filtered.filter((r) =>
-      r.mealRoleIds.includes(mealRoleId),
-    );
-    const others = filtered.filter((r) => !r.mealRoleIds.includes(mealRoleId));
+  const familyFilter = (family: TagFamily) => {
+    const familyTags = tags.filter((t: Tag) => t.family === family);
+    const familyIds = familyTags.map((t) => t.id);
+    const others = matching({
+      tagIds: activeTagIds.filter((id) => !familyIds.includes(id)),
+      band,
+    });
+    return {
+      label: TAG_FAMILY_LABELS[family],
+      options: familyIds,
+      labels: Object.fromEntries(familyTags.map((t) => [t.id, t.label])),
+      selected: activeTagIds.filter((id) => familyIds.includes(id)),
+      counts: Object.fromEntries(
+        familyIds.map((id) => [
+          id,
+          others.filter((r) => [...r.mealRoleIds, ...r.tagIds].includes(id)).length,
+        ]),
+      ),
+    };
+  };
 
-    return { suggested, others };
-  }, [recipes, foods, query, activeTagIds, activeBand, mealRoleId]);
+  const bandCounts = Object.fromEntries(
+    CALORIE_BAND_OPTIONS.map((option) => [
+      option,
+      matching({ tagIds: activeTagIds, band: option }).length,
+    ]),
+  ) as Record<CalorieBand, number>;
+
+  const filtered = matching({ tagIds: activeTagIds, band });
+  const suggested = filtered.filter((r) => r.mealRoleIds.includes(mealRoleId));
+  const others = filtered.filter((r) => !r.mealRoleIds.includes(mealRoleId));
 
   const total = suggested.length + others.length;
   const roleLabel = MEAL_ROLE_LABEL[mealRoleId] ?? mealRoleId;
@@ -144,61 +162,31 @@ export function RecipePicker({
 
           {/* Dropdown filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <FilterDropdown
-              label="Meal-time"
-              options={mealTimeTags.map((t: Tag) => ({
-                value: t.id,
-                label: t.label,
-              }))}
-              selected={activeTagIds.filter((id) =>
-                mealTimeTags.some((t: Tag) => t.id === id),
-              )}
-              onToggle={toggleTag}
-            />
-            <FilterDropdown
-              label={TAG_FAMILY_LABELS['cycle-phase']}
-              options={cyclePhaseTags.map((t: Tag) => ({
-                value: t.id,
-                label: t.label,
-              }))}
-              selected={activeTagIds.filter((id) =>
-                cyclePhaseTags.some((t: Tag) => t.id === id),
-              )}
-              onToggle={toggleTag}
-            />
-            <FilterDropdown
-              label={TAG_FAMILY_LABELS['dietary']}
-              options={dietaryTags.map((t: Tag) => ({
-                value: t.id,
-                label: t.label,
-              }))}
-              selected={activeTagIds.filter((id) =>
-                dietaryTags.some((t: Tag) => t.id === id),
-              )}
-              onToggle={toggleTag}
-            />
-            <FilterDropdown
-              label={TAG_FAMILY_LABELS['nutrient']}
-              options={nutrientTags.map((t: Tag) => ({
-                value: t.id,
-                label: t.label,
-              }))}
-              selected={activeTagIds.filter((id) =>
-                nutrientTags.some((t: Tag) => t.id === id),
-              )}
-              onToggle={toggleTag}
-            />
-            <FilterDropdown
-              label="Calories"
-              options={CALORIE_BANDS.map((b) => ({
-                value: String(b),
-                label: `Under ${b} kcal`,
-              }))}
-              selected={activeBand !== null ? [String(activeBand)] : []}
-              onToggle={(v) =>
-                setActiveBand((prev) => (prev === Number(v) ? null : Number(v)))
-              }
-            />
+            {(['meal-time', 'cycle-phase', 'dietary', 'nutrient'] as const).map((family) => {
+              const filter = familyFilter(family);
+              return (
+                <div key={family} className="w-40">
+                  <MultiSelect
+                    label={filter.label}
+                    selected={filter.selected}
+                    options={filter.options}
+                    labels={filter.labels}
+                    counts={filter.counts}
+                    onToggle={toggleTag}
+                  />
+                </div>
+              );
+            })}
+            <div className="w-40">
+              <CountedSelect
+                label="Calories"
+                value={band}
+                options={CALORIE_BAND_OPTIONS}
+                labels={CALORIE_BAND_LABELS}
+                counts={bandCounts}
+                onChoose={setBand}
+              />
+            </div>
             {hasActiveFilters && (
               <Button
                 variant="ghost-muted"

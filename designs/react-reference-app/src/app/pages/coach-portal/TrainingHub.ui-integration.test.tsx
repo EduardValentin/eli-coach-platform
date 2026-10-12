@@ -1,52 +1,96 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { MemoryRouter, Route, Routes, useLocation, useParams } from 'react-router';
+import { Toaster } from 'sonner';
+import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
+import { AppProvider } from '../../context/AppContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
-/** Opens the Exercise Library tab, where the filters live. */
-async function renderLibrary() {
-  const user = userEvent.setup();
-  render(
-    <MemoryRouter>
-      <TrainingProvider>
-        <TrainingHub />
-      </TrainingProvider>
-    </MemoryRouter>,
+type User = ReturnType<typeof userEvent.setup>;
+
+afterEach(() => {
+  window.history.replaceState(null, '', '/');
+});
+
+function ExerciseEditorStandIn() {
+  const { exerciseId } = useParams();
+  const { state } = useLocation();
+  return (
+    <>
+      <p>Exercise editor {exerciseId ?? 'new'}</p>
+      <p data-testid="library-search">{state?.library}</p>
+    </>
   );
-  await user.click(screen.getByRole('tab', { name: 'Exercise Library' }));
-  return user;
 }
 
-const tagChip = (name: string) =>
-  within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', {
-    name,
-  });
+function renderHub(path = '/coach/training') {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <AppProvider>
+        <ClientProfileProvider>
+          <TrainingProvider>
+            <Routes>
+              <Route path="/coach/training" element={<TrainingHub />} />
+              <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
+              <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
+            </Routes>
+            <Toaster />
+          </TrainingProvider>
+        </ClientProfileProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
 
-const noEquipmentChip = () =>
-  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', {
-    name: 'No equipment',
-  });
+function renderLibrary(path?: string): User {
+  renderHub(path);
+  return userEvent.setup();
+}
 
-describe('the Exercise Library filters', () => {
-  it('lists the whole library before anything is filtered', async () => {
-    // arrange & act
-    await renderLibrary();
+const exerciseRow = (name: string) => screen.getByText(name).closest('tr') as HTMLElement;
+
+async function chooseTags(user: User, tags: string[]) {
+  await user.click(screen.getByRole('button', { name: /^Tags/ }));
+  for (const tag of tags) {
+    await user.click(screen.getByRole('checkbox', { name: new RegExp(tag) }));
+  }
+  await user.keyboard('{Escape}');
+}
+
+async function chooseOption(user: User, filter: string, option: string) {
+  await user.click(screen.getByRole('combobox', { name: filter }));
+  await user.click(screen.getByRole('option', { name: new RegExp(option) }));
+}
+
+async function chooseAction(user: User, exerciseName: string, action: string) {
+  await user.click(screen.getByRole('button', { name: `Actions for ${exerciseName}` }));
+  await user.click(screen.getByRole('menuitem', { name: action }));
+}
+
+describe('the exercise library filters', () => {
+  it('lists the library a page at a time, alphabetically', () => {
+    // arrange
+    // act
+    renderLibrary();
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.getByText('Overhead Press')).toBeInTheDocument();
+    expect(screen.queryByText('Plank')).not.toBeInTheDocument();
+    expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 14')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
     // arrange
-    const user = await renderLibrary();
+    const user = renderLibrary();
 
     // act
-    await user.click(tagChip('Recovery'));
+    await chooseTags(user, ['Recovery']);
 
-    // assert — only the two Recovery-tagged exercises survive
+    // assert
     expect(screen.getByText('Romanian Deadlift')).toBeInTheDocument();
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
@@ -54,24 +98,34 @@ describe('the Exercise Library filters', () => {
 
   it('widens the table when a second tag is selected, rather than intersecting', async () => {
     // arrange
-    const user = await renderLibrary();
-    await user.click(tagChip('Recovery'));
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    const user = renderLibrary();
+    await chooseTags(user, ['Recovery']);
 
     // act
-    await user.click(tagChip('Strength'));
+    await chooseTags(user, ['Strength']);
 
-    // assert — Strength-only exercises join the Recovery-tagged ones
+    // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 
-  it('narrows to equipment-free exercises when the chip is pressed', async () => {
+  it('counts the exercises behind each tag', async () => {
     // arrange
-    const user = await renderLibrary();
+    const user = renderLibrary();
 
     // act
-    await user.click(noEquipmentChip());
+    await user.click(screen.getByRole('button', { name: 'Tags' }));
+
+    // assert
+    expect(screen.getByRole('checkbox', { name: 'Recovery 4' })).toBeInTheDocument();
+  });
+
+  it('narrows to equipment-free exercises', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await chooseOption(user, 'Equipment', 'No equipment');
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
@@ -80,176 +134,308 @@ describe('the Exercise Library filters', () => {
 
   it('intersects the tags with the equipment filter', async () => {
     // arrange
-    const user = await renderLibrary();
+    const user = renderLibrary();
 
     // act
-    await user.click(tagChip('Recovery'));
-    await user.click(noEquipmentChip());
+    await chooseTags(user, ['Recovery']);
+    await chooseOption(user, 'Equipment', 'No equipment');
 
-    // assert — both are Recovery-tagged, but Romanian Deadlift needs a barbell
+    // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Romanian Deadlift')).not.toBeInTheDocument();
   });
 
-  it('lifts the equipment constraint again when the chip is unpressed', async () => {
+  it('combines the filters with the search', async () => {
     // arrange
-    const user = await renderLibrary();
-    await user.click(noEquipmentChip());
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    const user = renderLibrary();
+    await chooseTags(user, ['Recovery']);
 
     // act
-    await user.click(noEquipmentChip());
+    await user.type(screen.getByRole('searchbox', { name: 'Search exercises' }), 'squat');
 
     // assert
-    expect(noEquipmentChip()).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    expect(screen.getByText('No exercises match')).toBeInTheDocument();
+  });
+
+  it('offers to clear the filters when nothing matches', async () => {
+    // arrange
+    const user = renderLibrary();
+    await chooseTags(user, ['Strength']);
+    await chooseOption(user, 'Equipment', 'No equipment');
+    expect(screen.getByText('Try another filter or search.')).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Equipment' })).toHaveTextContent('Any equipment');
+  });
+
+  it('shows no clear action while no filter is set', () => {
+    // arrange
+    // act
+    renderLibrary();
+
+    // assert
+    expect(screen.queryByRole('button', { name: /Clear/ })).not.toBeInTheDocument();
+  });
+
+  it('reads its filters back from the link', () => {
+    // arrange
+    // act
+    renderLibrary('/coach/training?tags=Recovery&equipment=none&q=pla');
+
+    // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.queryByText('Romanian Deadlift')).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search exercises' })).toHaveValue('pla');
   });
 
-  it('combines the filters with the existing search', async () => {
+  it('sorts by difficulty from the column header', async () => {
     // arrange
-    const user = await renderLibrary();
-
-    // act — every match for "squat" is Strength- or Hypertrophy-tagged, so the
-    // tag group is the only thing that can exclude one
-    await user.click(tagChip('Recovery'));
-    await user.type(screen.getByPlaceholderText(/Search exercises/), 'squat');
-
-    // assert
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
-    expect(screen.queryByText('Bulgarian Split Squat')).not.toBeInTheDocument();
-    expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
-  });
-
-  it('shows the empty state when no exercise matches', async () => {
-    // arrange
-    const user = await renderLibrary();
-
-    // act — nothing is both Strength-tagged and equipment-free
-    await user.click(tagChip('Strength'));
-    await user.click(noEquipmentChip());
-
-    // assert
-    expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
-    expect(screen.queryByText('Plank')).not.toBeInTheDocument();
-  });
-
-  it('restores the full library through the clear action', async () => {
-    // arrange
-    const user = await renderLibrary();
-    await user.click(tagChip('Recovery'));
-    await user.click(noEquipmentChip());
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    const user = renderLibrary();
 
     // act
-    await user.click(
-      screen.getByRole('button', { name: 'Clear search and filters' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Difficulty' }));
 
     // assert
-    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    // the switch is a controlled input: clearing must visibly reset it too
-    expect(noEquipmentChip()).toHaveAttribute('aria-pressed', 'false');
+    const names = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[0].textContent);
+    expect(names[0]).toMatch(/^Couch Stretch/);
   });
 
-  it('keeps the clear action focusable while it works, rather than unmounting it', async () => {
+  it('shows each exercise its tags so the coach can see why a row matched', () => {
     // arrange
-    const user = await renderLibrary();
-    await user.click(tagChip('Recovery'));
-    const clear = screen.getByRole('button', {
-      name: 'Clear search and filters',
-    });
-    clear.focus();
+    // act
+    renderLibrary();
+
+    // assert
+    expect(within(exerciseRow('Bike Intervals')).getByText('Recovery')).toBeInTheDocument();
+  });
+
+  it("opens the exercise editor from a row's Edit action", async () => {
+    // arrange
+    const user = renderLibrary();
 
     // act
-    await user.keyboard('{Enter}');
+    await chooseAction(user, 'Bike Intervals', 'Edit');
 
-    // assert — the control stays mounted, focusable and in the tab order, so a
-    // keyboard user is never left with focus on the document body.
-    expect(document.activeElement).toBe(clear);
+    // assert
+    expect(screen.getByText('Exercise editor e14')).toBeInTheDocument();
+  });
+
+  it('hands the editor the filters it was opened from, so it can return to them', async () => {
+    // arrange
+    const user = renderLibrary('/coach/training?type=cardio');
+
+    // act
+    await chooseAction(user, 'Bike Intervals', 'Edit');
+
+    // assert
+    expect(screen.getByTestId('library-search')).toHaveTextContent('?type=cardio');
+  });
+
+  it('narrows to one type from the Type filter', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await chooseOption(user, 'Type', 'Cardio');
+
+    // assert
+    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
+  it('keeps the tag and equipment filters from an old link that names no type', () => {
+    // arrange & act
+    renderHub('/coach/training?session=coach&tags=Recovery&equipment=none');
+
+    // assert
+    expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+});
+
+describe('the Training page in MVP mode', () => {
+  it('is the exercise library, without the plan tabs', () => {
+    // arrange
+    // act
+    renderHub();
+
+    // assert
+    expect(screen.getByRole('heading', { level: 1, name: 'Exercises' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New exercise' })).toBeInTheDocument();
   });
 
-  it('shows each exercise its tags so the coach can see why a row matched', async () => {
+  it('opens the exercise editor from New exercise', async () => {
     // arrange
-    await renderLibrary();
-    const plankRow = screen.getByText('Plank').closest('tr') as HTMLElement;
+    const user = renderLibrary();
 
-    // act & assert
-    expect(within(plankRow).getByText('Recovery')).toBeInTheDocument();
+    // act
+    await user.click(screen.getByRole('button', { name: 'New exercise' }));
+
+    // assert
+    expect(screen.getByText('Exercise editor new')).toBeInTheDocument();
   });
 
-  it('shows a tag added through the modal on the exercise row', async () => {
+  it('keeps the plan tabs in Post-MVP mode', () => {
     // arrange
-    const user = await renderLibrary();
-    const plankRow = () =>
-      screen.getByText('Plank').closest('tr') as HTMLElement;
-    expect(within(plankRow()).queryByText('Strength')).not.toBeInTheDocument();
+    window.history.replaceState(null, '', '/?scope=post-mvp');
 
-    // act — edit Plank through the real modal and add a tag
-    await user.click(within(plankRow()).getByRole('button', { name: 'Edit' }));
-    // The filter block and the modal now both say "Tags" — that shared wording is
-    // the point; the modal's group is the later of the two in the DOM.
-    const tagGroups = screen.getAllByRole('group', { name: 'Tags' });
-    const modalTags = tagGroups[tagGroups.length - 1];
-    await user.click(
-      within(modalTags).getByRole('button', { name: 'Strength' }),
-    );
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+    // act
+    renderHub();
 
-    // assert — the visible row, not provider state
-    expect(within(plankRow()).getByText('Strength')).toBeInTheDocument();
-  });
-
-  it('offers a way out of the empty state', async () => {
-    // arrange
-    const user = await renderLibrary();
-    await user.click(tagChip('Strength'));
-    await user.click(noEquipmentChip());
+    // assert
     expect(
-      screen.getByText('No exercises match your search and filters.'),
+      screen.getByRole('heading', { level: 1, name: 'Training & Programs' }),
     ).toBeInTheDocument();
-
-    // act
-    await user.click(
-      screen
-        .getAllByRole('button', { name: 'Clear search and filters' })
-        .at(-1)!,
-    );
-
-    // assert
-    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Client Plans' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toBeInTheDocument();
   });
 
-  it('clears the search alongside the filters', async () => {
+  it('opens the tab the link names in Post-MVP mode', () => {
     // arrange
-    const user = await renderLibrary();
-    const search = screen.getByPlaceholderText(/Search exercises/);
-    await user.type(search, 'plank');
-    await user.click(tagChip('Recovery'));
+    window.history.replaceState(null, '', '/?scope=post-mvp');
+
+    // act
+    renderHub('/coach/training?tab=exercises&type=cardio');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
+  it('falls back to Client Plans for a tab it does not know', () => {
+    // arrange
+    window.history.replaceState(null, '', '/?scope=post-mvp');
+
+    // act
+    renderHub('/coach/training?tab=nope');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Client Plans' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
+describe('archiving an exercise', () => {
+  it('takes it out of the library list', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await chooseAction(user, 'Barbell Back Squat', 'Archive');
+
+    // assert
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    expect(await screen.findByText('"Barbell Back Squat" archived')).toBeInTheDocument();
+  });
+
+  it('shows it under Archived, where Restore brings it back', async () => {
+    // arrange
+    const user = renderLibrary();
+    await chooseAction(user, 'Barbell Back Squat', 'Archive');
+    await chooseOption(user, 'Status', 'Archived');
+
+    // act
+    await chooseAction(user, 'Barbell Back Squat', 'Restore');
+    await chooseOption(user, 'Status', 'Active');
+
+    // assert
+    expect(exerciseRow('Barbell Back Squat')).toBeInTheDocument();
+    expect(await screen.findByText('"Barbell Back Squat" restored')).toBeInTheDocument();
+  });
+
+  it('counts the exercises in each status', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+
+    // assert
+    expect(screen.getByRole('option', { name: 'Active 14' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
+  });
+
+  it('lists only archived exercises under Archived', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await chooseOption(user, 'Status', 'Archived');
+
+    // assert
+    expect(screen.getByText('Smith Machine Squat')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+});
+
+describe('deleting an exercise', () => {
+  it('marks an exercise in use and says how often it is used', async () => {
+    // arrange
+    const user = renderLibrary();
+    await user.click(
+      within(exerciseRow('Barbell Back Squat')).getByRole('button', { name: 'Actions for Barbell Back Squat' }),
+    );
+
+    // act
+    await user.hover(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    // assert
+    expect(await screen.findByText(/^Used in 2 templates and \d+ plans?$/)).toBeInTheDocument();
+  });
+
+  it('is unavailable while a plan uses it', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Barbell Back Squat' }));
+
+    // assert
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+  });
+
+  it('removes an unused exercise once confirmed', async () => {
+    // arrange
+    const user = renderLibrary();
+    await chooseOption(user, 'Status', 'Archived');
+    await chooseAction(user, 'Smith Machine Squat', 'Delete');
 
     // act
     await user.click(
-      screen.getByRole('button', { name: 'Clear search and filters' }),
+      within(screen.getByRole('alertdialog', { name: 'Delete this exercise?' })).getByRole(
+        'button',
+        { name: 'Delete' },
+      ),
     );
 
     // assert
-    expect(search).toHaveValue('');
-    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+    expect(screen.queryByText('Smith Machine Squat')).not.toBeInTheDocument();
+    expect(await screen.findByText('"Smith Machine Squat" deleted')).toBeInTheDocument();
   });
 
-  it('finds an exercise a coach marked Bodyweight under the no-equipment filter', async () => {
-    // arrange — no seeded exercise is bodyweight, so author one the way a coach would
-    const user = await renderLibrary();
-    const plankRow = screen.getByText('Plank').closest('tr') as HTMLElement;
-    await user.click(within(plankRow).getByRole('button', { name: 'Edit' }));
-    await user.click(screen.getByRole('button', { name: 'Bodyweight' }));
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+  it('keeps the exercise when the coach cancels', async () => {
+    // arrange
+    const user = renderLibrary();
+    await chooseOption(user, 'Status', 'Archived');
+    await chooseAction(user, 'Smith Machine Squat', 'Delete');
 
     // act
-    await user.click(noEquipmentChip());
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    // assert — Bodyweight does not make it require equipment
-    expect(screen.getByText('Plank')).toBeInTheDocument();
+    // assert
+    expect(screen.getByText('Smith Machine Squat')).toBeInTheDocument();
   });
 });
