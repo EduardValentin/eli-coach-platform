@@ -81,6 +81,8 @@ function createUseCase(options: {
   const incidents = {
     checkInNotificationFailed: vi.fn(),
     awaitingCheckInsCountFailed: vi.fn(),
+    awaitingCheckInsListFailed: vi.fn(),
+    nextCheckInLookupFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new CountCheckInsAwaitingUseCase({
     checkIns,

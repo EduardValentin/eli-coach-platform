@@ -33,16 +33,16 @@ export {
   type CheckIns,
   type CheckInSettlement,
 } from "./check-ins";
+export { type CoachCheckInView } from "./coach-check-in-views";
 export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
 export {
   DeclineCheckInUseCase,
   type DeclineCheckInResult,
 } from "./decline-check-in-use-case";
+export { FindNextClientCheckInUseCase } from "./find-next-client-check-in-use-case";
 export { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
-export {
-  ListCoachCheckInsUseCase,
-  type CoachCheckInView,
-} from "./list-coach-check-ins-use-case";
+export { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
+export { ListCoachCheckInsAwaitingUseCase } from "./list-coach-check-ins-awaiting-use-case";
 export {
   ListOpenCheckInTimesUseCase,
   type ListOpenCheckInTimesCommand,

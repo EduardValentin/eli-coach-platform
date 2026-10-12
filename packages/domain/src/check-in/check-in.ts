@@ -161,6 +161,10 @@ export class CheckIn {
     return "requested";
   }
 
+  static byStart(a: CheckIn, b: CheckIn): number {
+    return a.startsAt.getTime() - b.startsAt.getTime();
+  }
+
   static startsBeforeCoachingEnd({
     startsAt,
     coachingEndsAt,

@@ -34,6 +34,13 @@ export function createConsoleLogger(): ConsoleLogger {
         ...errorCodeOf(error),
       });
     },
+    awaitingCheckInsListFailed: ({ error }) => {
+      console.error("Check-ins awaiting an answer could not be listed.", {
+        errorCategory: "check_in_awaiting_list_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
     bookingModeReadFailed: () => {
       console.error("Assessment call booking mode read failed.", {
         errorCategory: "assessment_call_booking_mode_read_failure",
@@ -118,6 +125,13 @@ export function createConsoleLogger(): ConsoleLogger {
         clientId,
         entryId,
         eventCategory: "measurement_entry_saved",
+      });
+    },
+    nextCheckInLookupFailed: ({ error }) => {
+      console.error("The client's next check-in could not be found.", {
+        errorCategory: "check_in_next_lookup_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
       });
     },
     notificationFailed: ({ recipient }) => {
