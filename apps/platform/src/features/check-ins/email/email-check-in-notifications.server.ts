@@ -23,9 +23,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import {
+  describeTimeZone,
   formatCallMoment,
   formatCallSchedule,
-  formatWeeklyMoment,
+  formatClockTime,
+  formatWeekday,
 } from "~/features/assessment-calls/public/call-moment";
 import {
   CLIENT_CHECK_INS_PATH,
@@ -553,10 +555,17 @@ export class EmailCheckInNotifications implements CheckInNotifications {
   private seriesPropsOf(notice: CheckInSeriesNotice) {
     return {
       coachName: COACH_DISPLAY_NAME,
-      when: formatWeeklyMoment(notice.weekStartsAt, notice.clientTimeZone),
+      when: this.weeklyMomentOf(notice),
       checkInsUrl: this.publicUrlOf(CLIENT_CHECK_INS_PATH),
       currentYear: this.currentYear(),
     };
+  }
+
+  private weeklyMomentOf({
+    weekStartsAt,
+    clientTimeZone,
+  }: CheckInSeriesNotice): string {
+    return `Every ${formatWeekday(weekStartsAt, clientTimeZone)} at ${formatClockTime(weekStartsAt, clientTimeZone)} — ${describeTimeZone(weekStartsAt, clientTimeZone)}`;
   }
 
   private async deliver(email: OutgoingEmail): Promise<CheckInDelivery> {

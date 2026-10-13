@@ -18,7 +18,7 @@ const CHECK_IN_TABS = [
   "past",
 ] as const satisfies readonly CheckInTab[];
 
-const LAST_HOUR_OF_DAY = 23;
+export const LAST_HOUR_OF_DAY = 23;
 
 const CHECK_IN_OUTCOMES = [
   "requested",

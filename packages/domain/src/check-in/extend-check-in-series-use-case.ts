@@ -2,15 +2,11 @@ import type { ClientReach } from "../client";
 import type { CoachAvailabilitySource } from "../coach-availability";
 import type { Clock } from "../shared";
 
-import { CheckIn } from "./check-in";
 import type { CheckInIds } from "./check-in-ids";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import { CheckInSeries } from "./check-in-series";
-import type {
-  CheckInSeriesOccurrence,
-  CheckInSeriesRecords,
-} from "./check-in-series-records";
+import { CheckInSeriesBounds } from "./check-in-series-bounds";
+import type { CheckInSeriesRecords } from "./check-in-series-records";
 
 export type ExtendCheckInSeriesResult =
   | { status: "extended"; created: number }
@@ -30,13 +26,7 @@ type ExtensionAttempt =
   | Exclude<ExtendCheckInSeriesResult, { status: "failed" }>
   | { status: "changed_meanwhile" };
 
-type MissingWeeks = {
-  series: CheckInSeries;
-  starts: readonly Date[];
-  clientTimeZone: string;
-  availability: CheckInSeriesOccurrence["availability"];
-  at: Date;
-};
+type ExtensionFailure = { clientId: string; error: unknown };
 
 export class ExtendCheckInSeriesUseCase {
   constructor(private readonly options: ExtendCheckInSeriesUseCaseOptions) {}
@@ -47,12 +37,7 @@ export class ExtendCheckInSeriesUseCase {
     try {
       return await this.extendWithOneRetry(command.clientId);
     } catch (error) {
-      this.options.incidents.checkInSeriesExtensionFailed({
-        clientId: command.clientId,
-        error,
-      });
-
-      return { status: "failed" };
+      return this.failed({ clientId: command.clientId, error });
     }
   }
 
@@ -65,13 +50,16 @@ export class ExtendCheckInSeriesUseCase {
         ? await this.attempt(clientId)
         : first;
 
-    if (result.status === "changed_meanwhile") {
-      throw new Error(
-        `The weekly check-in series of client ${clientId} kept changing while it was extended.`,
-      );
+    if (result.status !== "changed_meanwhile") {
+      return result;
     }
 
-    return result;
+    return this.failed({
+      clientId,
+      error: new Error(
+        `The weekly check-in series of client ${clientId} kept changing while it was extended.`,
+      ),
+    });
   }
 
   private async attempt(clientId: string): Promise<ExtensionAttempt> {
@@ -83,24 +71,18 @@ export class ExtendCheckInSeriesUseCase {
 
     const client = await this.options.clients.findById(clientId);
 
-    if (
-      client?.portal !== "reachable" ||
-      client.programStartsAt === null ||
-      client.paidThrough === null
-    ) {
+    if (!client) {
       return { status: "nothing_to_add" };
     }
 
     const now = this.options.clock.now();
-    const bounds = CheckInSeries.boundsFor({
+    const bounds = CheckInSeriesBounds.ofCoaching({
+      client,
       now,
       lead: CHECK_IN_RULES,
-      programStartsAt: client.programStartsAt,
-      paidThrough: client.paidThrough,
-      coachingEndsAt: client.coachingEndsAt,
     });
 
-    if (bounds === "nothing_to_create") {
+    if (bounds === "client_cannot_answer" || bounds === "nothing_to_create") {
       return { status: "nothing_to_add" };
     }
 
@@ -117,12 +99,12 @@ export class ExtendCheckInSeriesUseCase {
         coversFrom: current.coversFrom,
         coversUntil: current.coversUntil,
       },
-      occurrences: this.weeksOf({
-        series,
+      occurrences: series.occurrencesAt({
         starts,
         clientTimeZone: client.timeZone,
         availability: availability.holdsWeeklyHour(series) ? "open" : "closed",
         at: now,
+        newId: () => this.options.ids.generate(),
       }),
       at: now,
     });
@@ -132,20 +114,9 @@ export class ExtendCheckInSeriesUseCase {
       : extended;
   }
 
-  private weeksOf(missing: MissingWeeks): CheckInSeriesOccurrence[] {
-    const { series, availability } = missing;
+  private failed(failure: ExtensionFailure): { status: "failed" } {
+    this.options.incidents.checkInSeriesExtensionFailed(failure);
 
-    return missing.starts.map((startsAt) => ({
-      checkIn: CheckIn.seriesOccurrence({
-        id: this.options.ids.generate(),
-        seriesId: series.id,
-        clientId: series.clientId,
-        startsAt,
-        clientTimeZone: missing.clientTimeZone,
-        coachTimeZone: series.timeZone,
-        at: missing.at,
-      }),
-      availability,
-    }));
+    return { status: "failed" };
   }
 }

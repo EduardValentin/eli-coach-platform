@@ -1,23 +1,40 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  describeTimeZone,
   formatCallMoment,
   formatCallSchedule,
   formatDayFirstDate,
   formatShortDay,
-  formatWeeklyMoment,
+  formatWeekday,
 } from "./call-moment";
 
-describe("formatWeeklyMoment", () => {
-  it("names the weekday, the time and the zone the reader reads every week in", () => {
+describe("formatWeekday", () => {
+  it("names the weekday the reader lives the instant on", () => {
+    // arrange
+    const lateWednesdayInLondon = new Date("2026-10-14T22:30:00.000Z");
+
+    // act
+    const weekdays = [
+      formatWeekday(lateWednesdayInLondon, "Europe/London"),
+      formatWeekday(lateWednesdayInLondon, "Europe/Bucharest"),
+    ];
+
+    // assert
+    expect(weekdays).toEqual(["Wednesday", "Thursday"]);
+  });
+});
+
+describe("describeTimeZone", () => {
+  it("names the zone with the offset it keeps at that instant", () => {
     // arrange
     const startsAt = new Date("2026-10-14T15:00:00.000Z");
 
     // act
-    const moment = formatWeeklyMoment(startsAt, "Europe/London");
+    const zone = describeTimeZone(startsAt, "Europe/London");
 
     // assert
-    expect(moment).toBe("Every Wednesday at 4:00 PM — Europe/London (GMT+1)");
+    expect(zone).toBe("Europe/London (GMT+1)");
   });
 });
 

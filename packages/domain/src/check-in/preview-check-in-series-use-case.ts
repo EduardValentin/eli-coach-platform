@@ -7,9 +7,8 @@ import type {
 } from "../coach-availability";
 import type { Clock } from "../shared";
 
-import type { CheckIn } from "./check-in";
 import { CHECK_IN_RULES } from "./check-in-rules";
-import { CheckInSeries } from "./check-in-series";
+import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import {
   CheckInSeriesRule,
@@ -37,12 +36,7 @@ type PreviewCheckInSeriesUseCaseOptions = {
   series: Pick<CheckInSeriesRecords, "findActiveForClient" | "listOccurrences">;
 };
 
-type OwnWeeksAt = { clientId: string; now: Date };
-
-const HOUR_HOLDING_STATUSES: ReadonlySet<string> = new Set([
-  "pending",
-  "approved",
-]);
+type BusyOfClient = { clientId: string; now: Date };
 
 export class PreviewCheckInSeriesUseCase {
   constructor(private readonly options: PreviewCheckInSeriesUseCaseOptions) {}
@@ -56,75 +50,61 @@ export class PreviewCheckInSeriesUseCase {
       return { status: "unknown_client" };
     }
 
-    const { programStartsAt, paidThrough } = client;
-
-    if (
-      client.portal !== "reachable" ||
-      programStartsAt === null ||
-      paidThrough === null
-    ) {
-      return { status: "client_cannot_answer" };
-    }
-
     const now = this.options.clock.now();
-    const [availability, busy, ownWeeks] = await Promise.all([
-      this.options.availability.current(),
-      this.options.calendar.busyFrom(now),
-      this.ownWeeksOf({ clientId: client.clientId, now }),
-    ]);
-    const busyElsewhere = busy.filter(
-      (interval) => !this.isHeldByAny(interval, ownWeeks),
-    );
-    const bounds = CheckInSeries.boundsFor({
+    const bounds = CheckInSeriesBounds.ofCoaching({
+      client,
       now,
       lead: CHECK_IN_RULES,
-      programStartsAt,
-      paidThrough,
-      coachingEndsAt: client.coachingEndsAt,
     });
+
+    if (bounds === "client_cannot_answer") {
+      return { status: bounds };
+    }
+
+    if (bounds === "nothing_to_create") {
+      const availability = await this.options.availability.current();
+
+      return {
+        status: "previewed",
+        weekdays: [...availability.weekdays],
+        hours: availability
+          .weeklyHours()
+          .map((hour) => ({ hour, occurrences: 0, clashes: 0 })),
+      };
+    }
+
+    const [availability, busy] = await Promise.all([
+      this.options.availability.current(),
+      this.busyBesideOwnWeeksOf({ clientId: client.clientId, now }),
+    ]);
 
     return {
       status: "previewed",
       weekdays: [...availability.weekdays],
-      hours: availability.weeklyHours().map((hour) => {
-        if (bounds === "nothing_to_create") {
-          return { hour, occurrences: 0, clashes: 0 };
-        }
-
-        return CheckInSeriesRule.of({
-          weekday: command.weekday,
-          hour,
-          timeZone: availability.timeZone,
-        }).previewBetween({ bounds, busy: busyElsewhere });
+      hours: CheckInSeriesRule.previewHoursOn({
+        weekday: command.weekday,
+        availability,
+        bounds,
+        busy,
       }),
     };
   }
 
-  private async ownWeeksOf({ clientId, now }: OwnWeeksAt): Promise<CheckIn[]> {
-    const series = await this.options.series.findActiveForClient(clientId);
+  private async busyBesideOwnWeeksOf({
+    clientId,
+    now,
+  }: BusyOfClient): Promise<TimeInterval[]> {
+    const [busy, series] = await Promise.all([
+      this.options.calendar.busyFrom(now),
+      this.options.series.findActiveForClient(clientId),
+    ]);
 
     if (!series) {
-      return [];
+      return busy;
     }
 
     const weeks = await this.options.series.listOccurrences(series.id);
 
-    return weeks.filter((week) =>
-      HOUR_HOLDING_STATUSES.has(week.statusAt(now)),
-    );
-  }
-
-  private isHeldByAny(
-    interval: TimeInterval,
-    weeks: readonly CheckIn[],
-  ): boolean {
-    return weeks.some((week) => {
-      const held = CHECK_IN_RULES.coachTimeFrom(week.startsAt);
-
-      return (
-        held.start.getTime() === interval.start.getTime() &&
-        held.end.getTime() === interval.end.getTime()
-      );
-    });
+    return series.busyBesideOwnWeeks({ busy, weeks, at: now });
   }
 }

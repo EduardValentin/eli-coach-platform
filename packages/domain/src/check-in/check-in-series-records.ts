@@ -1,10 +1,9 @@
 import type { CheckIn } from "./check-in";
-import type { CheckInSeries, CheckInSeriesSnapshot } from "./check-in-series";
-
-export type CheckInSeriesOccurrence = {
-  checkIn: CheckIn;
-  availability: "open" | "closed";
-};
+import type {
+  CheckInSeries,
+  CheckInSeriesOccurrence,
+  CheckInSeriesSnapshot,
+} from "./check-in-series";
 
 export type CheckInSeriesSetUpResult =
   { status: "set_up"; occurrences: CheckIn[] } | { status: "series_exists" };

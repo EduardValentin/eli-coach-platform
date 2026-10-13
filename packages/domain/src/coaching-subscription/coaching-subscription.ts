@@ -104,7 +104,7 @@ export class CoachingSubscription {
   readonly paymentSubscriptionId: string;
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
-  private readonly paidThroughAt: Date;
+  readonly paidThrough: Date;
   readonly startChoice: StartChoice;
   readonly programStartsAt: Date;
   readonly status: CoachingStatus;
@@ -125,7 +125,7 @@ export class CoachingSubscription {
     this.paymentSubscriptionId = props.paymentSubscriptionId;
     this.checkoutSessionId = props.checkoutSessionId;
     this.paidAt = props.paidAt;
-    this.paidThroughAt = props.paidThrough;
+    this.paidThrough = props.paidThrough;
     this.startChoice = props.startChoice;
     this.programStartsAt = props.programStartsAt;
     this.status = props.status;
@@ -151,7 +151,7 @@ export class CoachingSubscription {
       refundDue: this.hasRefundOutstanding(),
       bundleMonths: this.months,
       programStartsAt: this.programStartsAt,
-      paidThrough: this.paidThroughAt,
+      paidThrough: this.paidThrough,
     });
   }
 
@@ -198,7 +198,7 @@ export class CoachingSubscription {
     }
 
     if (rule === "no-refund") {
-      const accessEndsAt = this.paidThrough();
+      const accessEndsAt = this.paidThrough;
 
       return {
         outcome: "cancelled",
@@ -227,10 +227,6 @@ export class CoachingSubscription {
 
   refundOnCancellationAt(now: Date): number {
     return this.cancellationRule(now) === "full-refund" ? this.amountCents : 0;
-  }
-
-  paidThrough(): Date {
-    return this.paidThroughAt;
   }
 
   programWorkStart(): Date | null {
@@ -372,7 +368,7 @@ export class CoachingSubscription {
       paymentSubscriptionId: this.paymentSubscriptionId,
       checkoutSessionId: this.checkoutSessionId,
       paidAt: this.paidAt,
-      paidThrough: this.paidThroughAt,
+      paidThrough: this.paidThrough,
       startChoice: this.startChoice,
       programStartsAt: this.programStartsAt,
       status: this.status,

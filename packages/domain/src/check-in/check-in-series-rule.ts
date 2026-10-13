@@ -5,13 +5,13 @@ import {
   weekdayIndexOf,
   WEEKDAYS,
   type CalendarDate,
+  type CoachAvailability,
   type TimeInterval,
   type Weekday,
 } from "../coach-availability";
 
 import { CHECK_IN_RULES } from "./check-in-rules";
-
-export type CheckInSeriesBounds = { from: Date; until: Date };
+import type { CheckInSeriesBounds } from "./check-in-series-bounds";
 
 export type CheckInSeriesRuleSnapshot = {
   weekday: Weekday;
@@ -23,6 +23,18 @@ export type CheckInSeriesPreviewHour = {
   hour: number;
   occurrences: number;
   clashes: number;
+};
+
+type CheckInSeriesWeekdayPreview = {
+  weekday: Weekday;
+  availability: CoachAvailability;
+  bounds: CheckInSeriesBounds;
+  busy: readonly TimeInterval[];
+};
+
+type CheckInSeriesHourPreview = {
+  bounds: CheckInSeriesBounds;
+  busy: readonly TimeInterval[];
 };
 
 const DAYS_PER_WEEK = 7;
@@ -40,6 +52,21 @@ export class CheckInSeriesRule {
 
   static of(snapshot: CheckInSeriesRuleSnapshot): CheckInSeriesRule {
     return new CheckInSeriesRule(snapshot);
+  }
+
+  static previewHoursOn({
+    weekday,
+    availability,
+    bounds,
+    busy,
+  }: CheckInSeriesWeekdayPreview): CheckInSeriesPreviewHour[] {
+    return availability.weeklyHours().map((hour) =>
+      new CheckInSeriesRule({
+        weekday,
+        hour,
+        timeZone: availability.timeZone,
+      }).previewBetween({ bounds, busy }),
+    );
   }
 
   startsBetween({ from, until }: CheckInSeriesBounds): Date[] {
@@ -67,10 +94,13 @@ export class CheckInSeriesRule {
     return start >= from ? start : this.startOn(addDays(date, DAYS_PER_WEEK));
   }
 
-  previewBetween(preview: {
-    bounds: CheckInSeriesBounds;
-    busy: readonly TimeInterval[];
-  }): CheckInSeriesPreviewHour {
+  toSnapshot(): CheckInSeriesRuleSnapshot {
+    return { weekday: this.weekday, hour: this.hour, timeZone: this.timeZone };
+  }
+
+  private previewBetween(
+    preview: CheckInSeriesHourPreview,
+  ): CheckInSeriesPreviewHour {
     const starts = this.startsBetween(preview.bounds);
 
     return {
@@ -79,10 +109,6 @@ export class CheckInSeriesRule {
       clashes: starts.filter((start) => this.isTaken(start, preview.busy))
         .length,
     };
-  }
-
-  toSnapshot(): CheckInSeriesRuleSnapshot {
-    return { weekday: this.weekday, hour: this.hour, timeZone: this.timeZone };
   }
 
   private firstMatchingDateFrom(from: Date): CalendarDate {

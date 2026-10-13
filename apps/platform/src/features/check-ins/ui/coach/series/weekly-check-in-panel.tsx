@@ -4,7 +4,7 @@ import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { Button, DisabledActionHint } from "@eli-coach-platform/ui/primitives";
 import { CalendarRange } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 
 import type {
   CheckInScheduling,
@@ -13,6 +13,7 @@ import type {
 import { awaitingOnboardingReason } from "~/features/check-ins/ui/coach/shared/awaiting-onboarding-reason";
 import { useCoachCheckInMenu } from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
+import { clientFullName } from "~/features/clients/public/clients";
 import {
   hourLabel,
   WEEKDAY_LABELS,
@@ -43,6 +44,23 @@ type Opening<Subject> = {
   subject: Subject;
 };
 
+type SeriesActionsProps = {
+  gender: VisitorGender;
+  onChange: (target: WeeklyCheckInTarget) => void;
+  onStop: (seriesId: string) => void;
+  primaryActionRef: RefObject<HTMLButtonElement | null>;
+  scheduling: CheckInScheduling;
+  series: WeeklyCheckInSeries | null;
+  stopRef: RefObject<HTMLButtonElement | null>;
+};
+
+type SeriesWeeksProps = {
+  client: WeeklyCheckInPanelProps["client"];
+  menuOf: ReturnType<typeof useCoachCheckInMenu>["menuOf"];
+  timeZone: string;
+  weeks: CoachClientSeriesPanel["weeks"];
+};
+
 export function WeeklyCheckInPanel({
   client,
   scheduling,
@@ -53,41 +71,11 @@ export function WeeklyCheckInPanel({
   const { dialogs, menuOf } = useCoachCheckInMenu();
   const primaryActionRef = useRef<HTMLButtonElement>(null);
   const stopRef = useRef<HTMLButtonElement>(null);
-  const [editing, setEditing] = useState<Opening<WeeklyCheckInTarget> | null>(
-    null,
-  );
-  const [stopping, setStopping] = useState<Opening<string> | null>(null);
+  const [seriesDialog, setSeriesDialog] =
+    useState<Opening<WeeklyCheckInTarget> | null>(null);
+  const [stopConfirmation, setStopConfirmation] =
+    useState<Opening<string> | null>(null);
   const series = scheduling === "ended" ? null : weekly.series;
-  const weeks = series ? weekly.weeks : [];
-  const fullName = `${client.firstName} ${client.lastName}`.trim();
-
-  const openEditing = (target: WeeklyCheckInTarget) =>
-    setEditing((current) => ({
-      open: true,
-      openings: (current?.openings ?? 0) + 1,
-      subject: target,
-    }));
-
-  const openStopping = (seriesId: string) =>
-    setStopping((current) => ({
-      open: true,
-      openings: (current?.openings ?? 0) + 1,
-      subject: seriesId,
-    }));
-
-  const primaryAction = (
-    <Button
-      data-parity={series ? "series-change" : "series-set-up"}
-      onClick={() =>
-        openEditing(series ? { mode: "change", series } : { mode: "set-up" })
-      }
-      ref={primaryActionRef}
-      size="sm"
-      variant="outline"
-    >
-      {series ? "Change" : "Set up"}
-    </Button>
-  );
 
   return (
     <PortalWidget
@@ -119,90 +107,164 @@ export function WeeklyCheckInPanel({
             No weekly check-in yet.
           </p>
         )}
-        {scheduling !== "ended" && (
-          <div className="flex flex-wrap gap-2" data-parity="series-actions">
-            {!series && scheduling === "awaiting_onboarding" ? (
-              <DisabledActionHint
-                reason={awaitingOnboardingReason(client.gender)}
-              >
-                {primaryAction}
-              </DisabledActionHint>
-            ) : (
-              primaryAction
-            )}
-            {series && (
-              <Button
-                data-parity="series-stop"
-                onClick={() => openStopping(series.id)}
-                ref={stopRef}
-                size="sm"
-                variant="destructive-outline"
-              >
-                Stop
-              </Button>
-            )}
-          </div>
-        )}
+        <SeriesActions
+          gender={client.gender}
+          onChange={(target) => setSeriesDialog(openingOf(target))}
+          onStop={(seriesId) => setStopConfirmation(openingOf(seriesId))}
+          primaryActionRef={primaryActionRef}
+          scheduling={scheduling}
+          series={series}
+          stopRef={stopRef}
+        />
       </div>
 
-      {series &&
-        (weeks.length > 0 ? (
-          <ul
-            aria-label="Weeks to come"
-            className="mt-5 space-y-3"
-            data-parity="series-weeks"
-          >
-            {weeks.map((week) => (
-              <li key={week.id}>
-                <CheckInRow
-                  attendee={{ name: fullName }}
-                  checkIn={week}
-                  menu={menuOf(week)}
-                  menuSize="xs"
-                  timeZone={timeZone}
-                  viewer={{ counterpartName: client.firstName, party: "coach" }}
-                />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p
-            className="mt-5 text-sm text-text-secondary"
-            data-parity="series-weeks-empty"
-          >
-            No weeks to come.
-          </p>
-        ))}
-
-      {editing && (
-        <WeeklyCheckInDialog
+      {series && (
+        <SeriesWeeks
           client={client}
-          key={editing.openings}
-          onOpenChange={(open) =>
-            setEditing((current) => current && { ...current, open })
-          }
-          open={editing.open}
-          suggestedWeekday={suggestedWeekday}
-          target={editing.subject}
+          menuOf={menuOf}
+          timeZone={timeZone}
+          weeks={weekly.weeks}
         />
       )}
 
-      {stopping && (
+      {seriesDialog && (
+        <WeeklyCheckInDialog
+          client={client}
+          key={seriesDialog.openings}
+          onOpenChange={(open) =>
+            setSeriesDialog((current) => current && { ...current, open })
+          }
+          open={seriesDialog.open}
+          suggestedWeekday={suggestedWeekday}
+          target={seriesDialog.subject}
+        />
+      )}
+
+      {stopConfirmation && (
         <StopWeeklyCheckInDialog
           clientFirstName={client.firstName}
-          key={stopping.openings}
+          key={stopConfirmation.openings}
           onOpenChange={(open) =>
-            setStopping((current) => current && { ...current, open })
+            setStopConfirmation((current) => current && { ...current, open })
           }
-          open={stopping.open}
+          open={stopConfirmation.open}
           returnFocusTo={series ? stopRef : primaryActionRef}
-          seriesId={stopping.subject}
+          seriesId={stopConfirmation.subject}
         />
       )}
 
       {dialogs}
     </PortalWidget>
   );
+}
+
+function SeriesActions({
+  gender,
+  onChange,
+  onStop,
+  primaryActionRef,
+  scheduling,
+  series,
+  stopRef,
+}: SeriesActionsProps) {
+  if (scheduling === "ended") {
+    return null;
+  }
+
+  if (series) {
+    return (
+      <div className="flex flex-wrap gap-2" data-parity="series-actions">
+        <Button
+          data-parity="series-change"
+          onClick={() => onChange({ mode: "change", series })}
+          ref={primaryActionRef}
+          size="sm"
+          variant="outline"
+        >
+          Change
+        </Button>
+        <Button
+          data-parity="series-stop"
+          onClick={() => onStop(series.id)}
+          ref={stopRef}
+          size="sm"
+          variant="destructive-outline"
+        >
+          Stop
+        </Button>
+      </div>
+    );
+  }
+
+  const setUp = (
+    <Button
+      data-parity="series-set-up"
+      onClick={() => onChange({ mode: "set-up" })}
+      ref={primaryActionRef}
+      size="sm"
+      variant="outline"
+    >
+      Set up
+    </Button>
+  );
+
+  if (scheduling === "awaiting_onboarding") {
+    return (
+      <div className="flex flex-wrap gap-2" data-parity="series-actions">
+        <DisabledActionHint reason={awaitingOnboardingReason(gender)}>
+          {setUp}
+        </DisabledActionHint>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2" data-parity="series-actions">
+      {setUp}
+    </div>
+  );
+}
+
+function SeriesWeeks({ client, menuOf, timeZone, weeks }: SeriesWeeksProps) {
+  if (weeks.length === 0) {
+    return (
+      <p
+        className="mt-5 text-sm text-text-secondary"
+        data-parity="series-weeks-empty"
+      >
+        No weeks to come.
+      </p>
+    );
+  }
+
+  return (
+    <ul
+      aria-label="Weeks to come"
+      className="mt-5 space-y-3"
+      data-parity="series-weeks"
+    >
+      {weeks.map((week) => (
+        <li key={week.id}>
+          <CheckInRow
+            attendee={{ name: clientFullName(client) }}
+            checkIn={week}
+            menu={menuOf(week)}
+            menuSize="xs"
+            timeZone={timeZone}
+            viewer={{ counterpartName: client.firstName, party: "coach" }}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function openingOf<Subject>(subject: Subject) {
+  return (current: Opening<Subject> | null): Opening<Subject> => ({
+    open: true,
+    openings: (current?.openings ?? 0) + 1,
+    subject,
+  });
 }
 
 function ruleLineOf({ hour, weekday }: WeeklyCheckInSeries): string {

@@ -1,8 +1,10 @@
-import type { SlotPolicy, Weekday } from "../coach-availability";
+import type { SlotPolicy, TimeInterval, Weekday } from "../coach-availability";
 
+import { CheckIn } from "./check-in";
+import { CHECK_IN_RULES } from "./check-in-rules";
+import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import {
   CheckInSeriesRule,
-  type CheckInSeriesBounds,
   type CheckInSeriesRuleSnapshot,
 } from "./check-in-series-rule";
 
@@ -18,12 +20,9 @@ export type CheckInSeriesSnapshot = CheckInSeriesRuleSnapshot & {
 
 export type CheckInSeriesStarts = { series: CheckInSeries; starts: Date[] };
 
-type CheckInSeriesReading = {
-  now: Date;
-  lead: SlotPolicy;
-  programStartsAt: Date;
-  paidThrough: Date;
-  coachingEndsAt: Date | null;
+export type CheckInSeriesOccurrence = {
+  checkIn: CheckIn;
+  availability: "open" | "closed";
 };
 
 type CheckInSeriesSetUp = {
@@ -38,6 +37,20 @@ type CheckInSeriesChange = {
   rule: CheckInSeriesRule;
   now: Date;
   lead: SlotPolicy;
+};
+
+type CheckInSeriesWeeks = {
+  starts: readonly Date[];
+  clientTimeZone: string;
+  availability: CheckInSeriesOccurrence["availability"];
+  at: Date;
+  newId: () => string;
+};
+
+type BusyBesideOwnWeeks = {
+  busy: readonly TimeInterval[];
+  weeks: readonly CheckIn[];
+  at: Date;
 };
 
 export class CheckInSeries {
@@ -69,22 +82,6 @@ export class CheckInSeries {
     return new CheckInSeries(snapshot);
   }
 
-  static boundsFor(
-    reading: CheckInSeriesReading,
-  ): CheckInSeriesBounds | "nothing_to_create" {
-    const { now, lead, programStartsAt, paidThrough, coachingEndsAt } = reading;
-    const from = latestOf(
-      new Date(now.getTime() + lead.leadMilliseconds()),
-      programStartsAt,
-    );
-    const until =
-      coachingEndsAt === null
-        ? paidThrough
-        : earliestOf(paidThrough, coachingEndsAt);
-
-    return from < until ? { from, until } : "nothing_to_create";
-  }
-
   static setUp({
     id,
     clientId,
@@ -107,42 +104,70 @@ export class CheckInSeries {
     };
   }
 
-  occurrenceStartsBetween(bounds: CheckInSeriesBounds): Date[] {
-    return this.rule().startsBetween(bounds);
-  }
-
   nextWeekStartFrom(at: Date): Date {
     return this.rule().nextStartFrom(at);
   }
 
   missingOccurrencesFor(bounds: CheckInSeriesBounds): CheckInSeriesStarts {
-    const starts = this.occurrenceStartsBetween(bounds).filter(
-      (start) => start < this.coversFrom || start >= this.coversUntil,
-    );
+    const cover = this.cover();
+    const starts = this.rule()
+      .startsBetween(bounds)
+      .filter((start) => !cover.holds(start));
 
     if (starts.length === 0) {
       return { series: this, starts };
     }
 
+    const widened = cover.spanning(bounds);
+
     return {
       series: this.with({
-        coversFrom: earliestOf(this.coversFrom, bounds.from),
-        coversUntil: latestOf(this.coversUntil, bounds.until),
+        coversFrom: widened.from,
+        coversUntil: widened.until,
       }),
       starts,
     };
   }
 
   changedTo({ rule, now, lead }: CheckInSeriesChange): CheckInSeriesStarts {
-    const from = latestOf(
-      new Date(now.getTime() + lead.leadMilliseconds()),
-      this.coversFrom,
-    );
-
     return {
       series: this.with({ ...rule.toSnapshot(), changedAt: now }),
-      starts: rule.startsBetween({ from, until: this.coversUntil }),
+      starts: rule.startsBetween(
+        this.cover().notBefore(
+          new Date(now.getTime() + lead.leadMilliseconds()),
+        ),
+      ),
     };
+  }
+
+  occurrencesAt(weeks: CheckInSeriesWeeks): CheckInSeriesOccurrence[] {
+    return weeks.starts.map((startsAt) => ({
+      checkIn: CheckIn.seriesOccurrence({
+        id: weeks.newId(),
+        seriesId: this.id,
+        clientId: this.clientId,
+        startsAt,
+        clientTimeZone: weeks.clientTimeZone,
+        coachTimeZone: this.timeZone,
+        at: weeks.at,
+      }),
+      availability: weeks.availability,
+    }));
+  }
+
+  busyBesideOwnWeeks({ busy, weeks, at }: BusyBesideOwnWeeks): TimeInterval[] {
+    const held = weeks
+      .filter((week) => week.seriesId === this.id && week.holdsCoachTimeAt(at))
+      .map((week) => CHECK_IN_RULES.coachTimeFrom(week.startsAt));
+
+    return busy.filter(
+      (interval) =>
+        !held.some(
+          (own) =>
+            own.start.getTime() === interval.start.getTime() &&
+            own.end.getTime() === interval.end.getTime(),
+        ),
+    );
   }
 
   stop(at: Date): CheckInSeries {
@@ -176,15 +201,14 @@ export class CheckInSeries {
     });
   }
 
+  private cover(): CheckInSeriesBounds {
+    return CheckInSeriesBounds.of({
+      from: this.coversFrom,
+      until: this.coversUntil,
+    });
+  }
+
   private with(changes: Partial<CheckInSeriesSnapshot>): CheckInSeries {
     return new CheckInSeries({ ...this.toSnapshot(), ...changes });
   }
-}
-
-function latestOf(left: Date, right: Date): Date {
-  return left > right ? left : right;
-}
-
-function earliestOf(left: Date, right: Date): Date {
-  return left < right ? left : right;
 }

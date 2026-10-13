@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { CheckIn } from "./check-in";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
+import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import { CheckInSeriesRule } from "./check-in-series-rule";
 
 const MONDAY_MORNING = new Date("2026-10-05T09:00:00.000Z");
 const A_DAY_LATER = new Date("2026-10-06T09:00:00.000Z");
 const DAY_15 = new Date("2026-10-19T09:00:00.000Z");
-const PAID_THROUGH = new Date("2027-01-05T09:00:00.000Z");
 
 const WEDNESDAY_EVENINGS = CheckInSeriesRule.of({
   weekday: "wednesday",
@@ -36,68 +37,13 @@ function isoOf(starts: readonly Date[]): string[] {
   return starts.map((start) => start.toISOString());
 }
 
-describe("CheckInSeries.boundsFor", () => {
-  it.each([
-    {
-      situation:
-        "an immediate start, from the first day at least 24 hours away",
-      programStartsAt: MONDAY_MORNING,
-      coachingEndsAt: null,
-      expected: { from: A_DAY_LATER, until: PAID_THROUGH },
-    },
-    {
-      situation: "a waiting start, from her program start on day 15",
-      programStartsAt: DAY_15,
-      coachingEndsAt: null,
-      expected: { from: DAY_15, until: PAID_THROUGH },
-    },
-    {
-      situation: "a coaching end before her paid-through date, until the end",
-      programStartsAt: MONDAY_MORNING,
-      coachingEndsAt: new Date("2026-12-01T10:00:00.000Z"),
-      expected: {
-        from: A_DAY_LATER,
-        until: new Date("2026-12-01T10:00:00.000Z"),
-      },
-    },
-    {
-      situation:
-        "a coaching end after her paid-through date, until paid through",
-      programStartsAt: MONDAY_MORNING,
-      coachingEndsAt: new Date("2027-02-01T10:00:00.000Z"),
-      expected: { from: A_DAY_LATER, until: PAID_THROUGH },
-    },
-    {
-      situation: "a coaching end within the next 24 hours, as nothing",
-      programStartsAt: MONDAY_MORNING,
-      coachingEndsAt: A_DAY_LATER,
-      expected: "nothing_to_create",
-    },
-  ])("bounds $situation", ({ programStartsAt, coachingEndsAt, expected }) => {
-    // arrange
-    const reading = {
-      now: MONDAY_MORNING,
-      lead: CHECK_IN_RULES,
-      programStartsAt,
-      paidThrough: PAID_THROUGH,
-      coachingEndsAt,
-    };
-
-    // act
-    const bounds = CheckInSeries.boundsFor(reading);
-
-    // assert
-    expect(bounds).toEqual(expected);
-  });
-});
-
 describe("CheckInSeries.setUp", () => {
   it("covers the bounds and starts every week at the coach's hour, keeping it across the change of clocks", () => {
     // arrange
-    const bounds = {
+    const bounds = CheckInSeriesBounds.of({
       from: A_DAY_LATER,
       until: new Date("2026-11-05T09:00:00.000Z"),
-    };
+    });
 
     // act
     const { series: setUp, starts } = CheckInSeries.setUp({
@@ -120,54 +66,15 @@ describe("CheckInSeries.setUp", () => {
   });
 });
 
-describe("CheckInSeries#occurrenceStartsBetween", () => {
-  it.each([
-    {
-      situation: "a first start on the lower bound",
-      from: "2026-10-07T15:00:00.000Z",
-      until: "2026-10-15T00:00:00.000Z",
-      expected: ["2026-10-07T15:00:00.000Z", "2026-10-14T15:00:00.000Z"],
-    },
-    {
-      situation: "a first start just before the lower bound",
-      from: "2026-10-07T15:00:00.001Z",
-      until: "2026-10-15T00:00:00.000Z",
-      expected: ["2026-10-14T15:00:00.000Z"],
-    },
-    {
-      situation: "a start on the upper bound",
-      from: "2026-10-07T00:00:00.000Z",
-      until: "2026-10-14T15:00:00.000Z",
-      expected: ["2026-10-07T15:00:00.000Z"],
-    },
-    {
-      situation: "no matching weekday",
-      from: "2026-10-08T00:00:00.000Z",
-      until: "2026-10-14T00:00:00.000Z",
-      expected: [],
-    },
-  ])("starts the weeks with $situation", ({ from, until, expected }) => {
-    // arrange
-    const bounds = { from: new Date(from), until: new Date(until) };
-
-    // act
-    const starts = series().occurrenceStartsBetween(bounds);
-
-    // assert
-    expect(isoOf(starts)).toEqual(expected);
-  });
-});
-
 describe("CheckInSeries#missingOccurrencesFor", () => {
   it("adds the weeks between an earlier program start and the first week, widening the cover", () => {
     // arrange
     const waiting = series({ coversFrom: DAY_15 });
 
     // act
-    const { series: widened, starts } = waiting.missingOccurrencesFor({
-      from: A_DAY_LATER,
-      until: SERIES.coversUntil,
-    });
+    const { series: widened, starts } = waiting.missingOccurrencesFor(
+      CheckInSeriesBounds.of({ from: A_DAY_LATER, until: SERIES.coversUntil }),
+    );
 
     // assert
     expect(isoOf(starts)).toEqual([
@@ -185,10 +92,12 @@ describe("CheckInSeries#missingOccurrencesFor", () => {
     const renewedUntil = new Date("2026-12-05T09:00:00.000Z");
 
     // act
-    const { series: widened, starts } = series().missingOccurrencesFor({
-      from: new Date("2026-11-03T09:00:00.000Z"),
-      until: renewedUntil,
-    });
+    const { series: widened, starts } = series().missingOccurrencesFor(
+      CheckInSeriesBounds.of({
+        from: new Date("2026-11-03T09:00:00.000Z"),
+        until: renewedUntil,
+      }),
+    );
 
     // assert
     expect(isoOf(starts)).toEqual([
@@ -205,10 +114,10 @@ describe("CheckInSeries#missingOccurrencesFor", () => {
 
   it("adds no week before the bounds when a renewal arrives after the cover ended", () => {
     // arrange
-    const late = {
+    const late = CheckInSeriesBounds.of({
       from: new Date("2026-11-20T09:00:00.000Z"),
       until: new Date("2026-12-05T09:00:00.000Z"),
-    };
+    });
 
     // act
     const { starts } = series().missingOccurrencesFor(late);
@@ -222,10 +131,10 @@ describe("CheckInSeries#missingOccurrencesFor", () => {
 
   it("adds nothing when the cover already holds the bounds", () => {
     // arrange
-    const within = {
+    const within = CheckInSeriesBounds.of({
       from: new Date("2026-10-10T09:00:00.000Z"),
       until: new Date("2026-11-01T09:00:00.000Z"),
-    };
+    });
 
     // act
     const { series: kept, starts } = series().missingOccurrencesFor(within);
@@ -351,28 +260,114 @@ describe("CheckInSeries#stop", () => {
   });
 });
 
-describe("CheckInSeriesRule#previewBetween", () => {
-  it("counts the weeks in the bounds and the ones whose hour is already taken", () => {
+describe("CheckInSeries#occurrencesAt", () => {
+  it("makes one weekly check-in of the series per start, each with a new id", () => {
     // arrange
-    const bounds = {
-      from: A_DAY_LATER,
-      until: new Date("2026-11-05T09:00:00.000Z"),
-    };
-    const busy = [
-      {
-        start: new Date("2026-10-14T15:30:00.000Z"),
-        end: new Date("2026-10-14T16:30:00.000Z"),
-      },
-      {
-        start: new Date("2026-10-28T15:00:00.000Z"),
-        end: new Date("2026-10-28T16:00:00.000Z"),
-      },
+    let generated = 0;
+    const starts = [
+      new Date("2026-10-07T15:00:00.000Z"),
+      new Date("2026-10-14T15:00:00.000Z"),
     ];
 
     // act
-    const preview = WEDNESDAY_EVENINGS.previewBetween({ bounds, busy });
+    const occurrences = series().occurrencesAt({
+      starts,
+      clientTimeZone: "Europe/London",
+      availability: "closed",
+      at: MONDAY_MORNING,
+      newId: () => `week-${(generated += 1)}`,
+    });
 
     // assert
-    expect(preview).toEqual({ hour: 18, occurrences: 5, clashes: 1 });
+    expect(
+      occurrences.map(({ checkIn, availability }) => ({
+        id: checkIn.id,
+        seriesId: checkIn.seriesId,
+        clientId: checkIn.clientId,
+        kind: checkIn.kind,
+        startsAt: checkIn.startsAt.toISOString(),
+        clientTimeZone: checkIn.clientTimeZone,
+        coachTimeZone: checkIn.coachTimeZone,
+        requestedAt: checkIn.requestedAt,
+        availability,
+      })),
+    ).toEqual([
+      {
+        id: "week-1",
+        seriesId: "series-1",
+        clientId: "client-1",
+        kind: "recurring",
+        startsAt: "2026-10-07T15:00:00.000Z",
+        clientTimeZone: "Europe/London",
+        coachTimeZone: "Europe/Bucharest",
+        requestedAt: MONDAY_MORNING,
+        availability: "closed",
+      },
+      {
+        id: "week-2",
+        seriesId: "series-1",
+        clientId: "client-1",
+        kind: "recurring",
+        startsAt: "2026-10-14T15:00:00.000Z",
+        clientTimeZone: "Europe/London",
+        coachTimeZone: "Europe/Bucharest",
+        requestedAt: MONDAY_MORNING,
+        availability: "closed",
+      },
+    ]);
+  });
+});
+
+describe("CheckInSeries#busyBesideOwnWeeks", () => {
+  const WEDNESDAY_SIX_PM = {
+    start: new Date("2026-10-14T15:00:00.000Z"),
+    end: new Date("2026-10-14T16:00:00.000Z"),
+  };
+  const WEDNESDAY_HALF_PAST_SIX_PM = {
+    start: new Date("2026-10-14T15:30:00.000Z"),
+    end: new Date("2026-10-14T16:30:00.000Z"),
+  };
+
+  function weekAt(startsAt: Date, seriesId = "series-1"): CheckIn {
+    return CheckIn.seriesOccurrence({
+      id: `week-${startsAt.toISOString()}`,
+      seriesId,
+      clientId: "client-1",
+      startsAt,
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      at: MONDAY_MORNING,
+    });
+  }
+
+  it.each([
+    {
+      situation: "the hour one of its weeks holds",
+      weeks: [weekAt(WEDNESDAY_SIX_PM.start)],
+      expected: [WEDNESDAY_HALF_PAST_SIX_PM],
+    },
+    {
+      situation: "a clash week, which holds no hour",
+      weeks: [weekAt(WEDNESDAY_SIX_PM.start).asClash()],
+      expected: [WEDNESDAY_SIX_PM, WEDNESDAY_HALF_PAST_SIX_PM],
+    },
+    {
+      situation: "a week of another series",
+      weeks: [weekAt(WEDNESDAY_SIX_PM.start, "series-2")],
+      expected: [WEDNESDAY_SIX_PM, WEDNESDAY_HALF_PAST_SIX_PM],
+    },
+  ])("leaves out $situation", ({ weeks, expected }) => {
+    // arrange
+    const busy = [WEDNESDAY_SIX_PM, WEDNESDAY_HALF_PAST_SIX_PM];
+
+    // act
+    const elsewhere = series().busyBesideOwnWeeks({
+      busy,
+      weeks,
+      at: MONDAY_MORNING,
+    });
+
+    // assert
+    expect(elsewhere).toEqual(expected);
   });
 });

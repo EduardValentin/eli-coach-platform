@@ -53,13 +53,8 @@ export function formatCallSchedule(instant: Date, timeZone: string): string {
   return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)}`;
 }
 
-export function formatWeeklyMoment(instant: Date, timeZone: string): string {
-  const weekday = partReader(
-    formatterFor("dayFirstDate", timeZone),
-    instant,
-  )("weekday");
-
-  return `Every ${weekday} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+export function formatWeekday(instant: Date, timeZone: string): string {
+  return partReader(formatterFor("dayFirstDate", timeZone), instant)("weekday");
 }
 
 // Joined from parts because Node and Chromium disagree on the comma after the
@@ -93,7 +88,7 @@ export function formatClockTime(instant: Date, timeZone: string): string {
   return formatterFor("clockTime", timeZone).format(instant);
 }
 
-function describeTimeZone(instant: Date, timeZone: string): string {
+export function describeTimeZone(instant: Date, timeZone: string): string {
   const offset = zoneOffset(instant, timeZone);
 
   return offset ? `${timeZone} (${offset})` : timeZone;

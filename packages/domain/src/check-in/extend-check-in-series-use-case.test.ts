@@ -246,6 +246,7 @@ describe("ExtendCheckInSeriesUseCase", () => {
     // assert
     expect(result).toEqual({ status: "failed" });
     expect(ports.series.extend).toHaveBeenCalledTimes(2);
+    expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledOnce();
     expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledWith({
       clientId: "client-1",
       error: expect.any(Error),

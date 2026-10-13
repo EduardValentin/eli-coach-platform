@@ -19,9 +19,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { LAST_HOUR_OF_DAY } from "~/features/check-ins/public/check-ins";
 import { clientsTable } from "~/features/clients/data/schema.server";
-
-const LAST_HOUR_OF_DAY = 23;
 
 export const checkInConstraints = {
   activeSeriesPerClient: "check_in_series_active_per_client_unique",

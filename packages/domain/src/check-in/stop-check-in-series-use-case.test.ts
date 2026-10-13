@@ -153,6 +153,20 @@ describe("StopCheckInSeriesUseCase", () => {
     expect(ports.series.stop).not.toHaveBeenCalled();
   });
 
+  it("reads her zone before it stops, so a failed read changes nothing", async () => {
+    // arrange
+    const failure = new Error("connection refused");
+    const { ports, stop } = createStop();
+    ports.clients.findById.mockRejectedValue(failure);
+
+    // act
+    const stopping = stop.execute({ seriesId: "series-1" });
+
+    // assert
+    await expect(stopping).rejects.toBe(failure);
+    expect(ports.series.stop).not.toHaveBeenCalled();
+  });
+
   it("keeps the stop and reports the email that failed", async () => {
     // arrange
     const { ports, stop } = createStop();

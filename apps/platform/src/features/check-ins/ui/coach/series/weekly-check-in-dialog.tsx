@@ -77,6 +77,12 @@ type SeriesChoice = {
   weekday: Weekday;
 };
 
+type SeriesRequest = {
+  action: string;
+  body: SeriesChoice & { clientId?: string };
+  method: "post" | "put";
+};
+
 const FIELD_LABEL_CLASS = "mb-2 block text-sm font-medium text-text-primary";
 
 const MODE_WORDING: Record<
@@ -305,21 +311,40 @@ function useSeriesSaving({ onRefused, onSaved }: SeriesSavingOptions) {
       choice: SeriesChoice,
     ) => {
       setProblem(null);
-      void fetcher.submit(
-        target.mode === "set-up" ? { clientId, ...choice } : choice,
-        {
-          action:
-            target.mode === "set-up"
-              ? CHECK_INS_API_PATHS.series
-              : generatePath(CHECK_INS_API_PATHS.seriesChange, {
-                  seriesId: target.series.id,
-                }),
-          encType: "application/json",
-          method: target.mode === "set-up" ? "post" : "put",
-        },
+      const { action, body, method } = seriesRequestOf(
+        target,
+        clientId,
+        choice,
       );
+      void fetcher.submit(body, {
+        action,
+        encType: "application/json",
+        method,
+      });
     },
     submitting: fetcher.state !== "idle",
+  };
+}
+
+function seriesRequestOf(
+  target: WeeklyCheckInTarget,
+  clientId: string,
+  choice: SeriesChoice,
+): SeriesRequest {
+  if (target.mode === "set-up") {
+    return {
+      action: CHECK_INS_API_PATHS.series,
+      body: { clientId, ...choice },
+      method: "post",
+    };
+  }
+
+  return {
+    action: generatePath(CHECK_INS_API_PATHS.seriesChange, {
+      seriesId: target.series.id,
+    }),
+    body: choice,
+    method: "put",
   };
 }
 

@@ -36,6 +36,7 @@ export class StopCheckInSeriesUseCase {
       return { status: "unknown_series" };
     }
 
+    const client = await this.options.clients.findById(current.clientId);
     const now = this.options.clock.now();
     const recorded = await this.options.series.stop({
       seriesId: current.id,
@@ -48,7 +49,6 @@ export class StopCheckInSeriesUseCase {
     }
 
     const stopped = current.stop(now);
-    const client = await this.options.clients.findById(current.clientId);
 
     await this.announcer.announceSeries("seriesStopped", {
       series: stopped,

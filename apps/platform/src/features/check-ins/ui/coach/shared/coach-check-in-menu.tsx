@@ -10,11 +10,12 @@ import {
   useCheckInMenu,
   type CheckInMenuWording,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
+import { clientFullName } from "~/features/clients/public/clients";
 
 const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
   cancellationOf: (checkIn, dayAndTime) => ({
-    description: `${dayAndTime} with ${fullNameOf(checkIn)}.`,
-    successMessage: `Cancelled check-in with ${fullNameOf(checkIn)}`,
+    description: `${dayAndTime} with ${clientFullName(checkIn.client)}.`,
+    successMessage: `Cancelled check-in with ${clientFullName(checkIn.client)}`,
   }),
   proposerOf: (checkIn) => ({
     noteLabel: `Add a note for ${checkIn.client.firstName} (optional)`,
@@ -42,8 +43,4 @@ export function useCoachCheckInMenu() {
     ),
     menuOf: menu.menuOf,
   };
-}
-
-export function fullNameOf(checkIn: CoachCheckIn): string {
-  return `${checkIn.client.firstName} ${checkIn.client.lastName}`.trim();
 }

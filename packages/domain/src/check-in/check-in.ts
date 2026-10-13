@@ -12,6 +12,16 @@ export const RECORDED_CHECK_IN_STATUSES = [
 ] as const;
 
 export type RecordedCheckInStatus = (typeof RECORDED_CHECK_IN_STATUSES)[number];
+
+const COACH_TIME_HOLDING_STATUSES: readonly RecordedCheckInStatus[] = [
+  "pending",
+  "approved",
+];
+
+export const OPEN_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
+  ...COACH_TIME_HOLDING_STATUSES,
+  "clash",
+];
 export type CheckInStatus = RecordedCheckInStatus | "passed";
 export type CheckInOutcome = Exclude<
   RecordedCheckInStatus,
@@ -304,6 +314,12 @@ export class CheckIn {
     }
 
     return this.recordedStatus;
+  }
+
+  holdsCoachTimeAt(at: Date): boolean {
+    const status = this.statusAt(at);
+
+    return COACH_TIME_HOLDING_STATUSES.some((holding) => holding === status);
   }
 
   isFor(clientId: string): boolean {

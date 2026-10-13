@@ -423,6 +423,59 @@ describe("CheckIn#isJoinableAt", () => {
   });
 });
 
+describe("CheckIn#holdsCoachTimeAt", () => {
+  it.each([
+    [
+      "a pending request before its start",
+      checkIn(),
+      "2026-06-03T08:59:59.999Z",
+      true,
+    ],
+    [
+      "a pending request at its start",
+      checkIn(),
+      "2026-06-03T09:00:00.000Z",
+      false,
+    ],
+    [
+      "an approved check-in before its end",
+      approvedCheckIn(),
+      "2026-06-03T09:59:59.999Z",
+      true,
+    ],
+    [
+      "an approved check-in at its end",
+      approvedCheckIn(),
+      "2026-06-03T10:00:00.000Z",
+      false,
+    ],
+    [
+      "a clash before its start",
+      checkIn({ recordedStatus: "clash" }),
+      "2026-06-03T08:59:59.999Z",
+      false,
+    ],
+    [
+      "a cancelled check-in before its start",
+      checkIn({ recordedStatus: "cancelled" }),
+      "2026-06-02T09:00:00.000Z",
+      false,
+    ],
+  ])(
+    "judges whether %s holds the coach's time: %s",
+    (_situation, subject, instant, expected) => {
+      // arrange
+      const now = new Date(instant);
+
+      // act
+      const holds = subject.holdsCoachTimeAt(now);
+
+      // assert
+      expect(holds).toBe(expected);
+    },
+  );
+});
+
 describe("CheckIn#answerRefusalFor", () => {
   it("lets the coach answer a request awaiting her before its start", () => {
     // arrange

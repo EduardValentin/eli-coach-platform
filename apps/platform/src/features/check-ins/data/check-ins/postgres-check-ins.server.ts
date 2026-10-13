@@ -7,6 +7,7 @@ import {
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
+  OPEN_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
 import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
 import type {
@@ -69,7 +70,6 @@ type PostgresCheckInsOptions = {
 
 const REQUEST_SAVEPOINT = sql.identifier("check_in_request");
 const MOVE_SAVEPOINT = sql.identifier("check_in_move");
-const OPEN_STATUSES: RecordedStatus[] = ["pending", "approved", "clash"];
 
 export class PostgresCheckIns implements CheckIns {
   constructor(private readonly options: PostgresCheckInsOptions) {}
@@ -252,7 +252,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(
         and(
           eq(checkInsTable.clientId, clientId),
-          inArray(checkInsTable.status, OPEN_STATUSES),
+          inArray(checkInsTable.status, [...OPEN_CHECK_IN_STATUSES]),
           gte(checkInsTable.startsAt, endsAt),
           gt(checkInsTable.startsAt, at),
         ),

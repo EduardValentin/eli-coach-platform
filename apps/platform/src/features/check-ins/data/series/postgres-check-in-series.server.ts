@@ -13,6 +13,7 @@ import {
   type CheckInSeriesRecords,
   type CheckInSeriesSetUpResult,
   type CheckInSeriesSnapshot,
+  OPEN_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
 import {
   and,
@@ -44,8 +45,6 @@ type PostgresCheckInSeriesOptions = {
 
 type CheckInSeriesRow = typeof checkInSeriesTable.$inferSelect;
 
-type CheckInRowStatus = (typeof checkInsTable.$inferSelect)["status"];
-
 type SeriesSetUp = Parameters<CheckInSeriesRecords["setUp"]>[0];
 type SeriesExtension = Parameters<CheckInSeriesRecords["extend"]>[0];
 type SeriesChange = Parameters<CheckInSeriesRecords["change"]>[0];
@@ -54,11 +53,6 @@ type SeriesStop = Parameters<CheckInSeriesRecords["stop"]>[0];
 type FutureWeeks = { seriesId: string; startsFrom: Date; at: Date };
 
 const UNIQUE_VIOLATION_CODE = "23505";
-const WEEK_STATUSES_TO_REPLACE: CheckInRowStatus[] = [
-  "pending",
-  "approved",
-  "clash",
-];
 
 export class PostgresCheckInSeries implements CheckInSeriesRecords {
   constructor(private readonly options: PostgresCheckInSeriesOptions) {}
@@ -249,20 +243,10 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
   ): Promise<CheckIn> {
     await transaction.insert(checkInsTable).values(checkInRowOf(checkIn));
 
-    const coachTime =
-      availability === "closed"
-        ? "not_attempted"
-        : (
-            await this.options.coachTime.reserve(transaction, {
-              ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
-              appointmentKind: "check_in",
-              appointmentId: checkIn.id,
-            })
-          ).status;
     const decided = CheckIn.decideOccurrence({
       occurrence: checkIn,
       availability,
-      coachTime,
+      coachTime: await this.coachTimeOf(transaction, { checkIn, availability }),
     });
 
     if (decided.recordedStatus !== checkIn.recordedStatus) {
@@ -275,6 +259,23 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
     return decided;
   }
 
+  private async coachTimeOf(
+    transaction: DatabaseTransaction,
+    { checkIn, availability }: CheckInSeriesOccurrence,
+  ): Promise<"reserved" | "taken" | "not_attempted"> {
+    if (availability === "closed") {
+      return "not_attempted";
+    }
+
+    const reserved = await this.options.coachTime.reserve(transaction, {
+      ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
+      appointmentKind: "check_in",
+      appointmentId: checkIn.id,
+    });
+
+    return reserved.status;
+  }
+
   private async cancelFutureWeeks(
     transaction: DatabaseTransaction,
     { seriesId, startsFrom, at }: FutureWeeks,
@@ -285,7 +286,7 @@ export class PostgresCheckInSeries implements CheckInSeriesRecords {
       .where(
         and(
           eq(checkInsTable.seriesId, seriesId),
-          inArray(checkInsTable.status, WEEK_STATUSES_TO_REPLACE),
+          inArray(checkInsTable.status, [...OPEN_CHECK_IN_STATUSES]),
           gte(checkInsTable.startsAt, startsFrom),
         ),
       )

@@ -14,10 +14,7 @@ import type {
 } from "~/features/check-ins/public/check-ins";
 import { coachCheckInJoinPath } from "~/features/check-ins/public/paths";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
-import {
-  fullNameOf,
-  useCoachCheckInMenu,
-} from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
+import { useCoachCheckInMenu } from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
 import {
   CheckInListing,
   type CheckInEmptyCopy,
@@ -30,6 +27,7 @@ import {
   CheckInWithdrawal,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
+import { clientFullName } from "~/features/clients/public/clients";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -74,7 +72,7 @@ export default function CoachCheckInsRoute() {
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
             actions={coachActionsFor(checkIn, tab, decisions)}
-            attendee={{ name: fullNameOf(checkIn) }}
+            attendee={{ name: clientFullName(checkIn.client) }}
             checkIn={checkIn}
             menu={menuOf(checkIn)}
             menuSize="xs"
@@ -114,7 +112,7 @@ function coachActionsFor(
   if (checkIn.awaitsViewer) {
     return (
       <CheckInAnswers
-        approvedMessage={`Approved check-in with ${fullNameOf(checkIn)}`}
+        approvedMessage={`Approved check-in with ${clientFullName(checkIn.client)}`}
         checkIn={checkIn}
         decisions={decisions}
         size="xs"

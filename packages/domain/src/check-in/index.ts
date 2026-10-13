@@ -14,6 +14,7 @@ export {
 export {
   CheckIn,
   MAX_CHECK_IN_MOVES,
+  OPEN_CHECK_IN_STATUSES,
   RECORDED_CHECK_IN_STATUSES,
   type CheckInOutcome,
   type CheckInTab,
@@ -34,11 +35,14 @@ export {
   type CheckInSeriesNotification,
 } from "./check-in-notifications";
 export { CHECK_IN_RULES } from "./check-in-rules";
-export { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
+export {
+  CheckInSeries,
+  type CheckInSeriesOccurrence,
+  type CheckInSeriesSnapshot,
+} from "./check-in-series";
 export {
   type CheckInSeriesChangeResult,
   type CheckInSeriesExtension,
-  type CheckInSeriesOccurrence,
   type CheckInSeriesRecords,
   type CheckInSeriesSetUpResult,
 } from "./check-in-series-records";

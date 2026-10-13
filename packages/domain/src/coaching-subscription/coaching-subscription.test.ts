@@ -782,7 +782,7 @@ describe("CoachingSubscription mirror rules", () => {
       ...onPath("waiting").toSnapshot(),
       paidThrough: renewedThrough,
     });
-    expect(renewed.paidThrough()).toEqual(renewedThrough);
+    expect(renewed.paidThrough).toEqual(renewedThrough);
   });
 
   it("settles the refund it owes", () => {

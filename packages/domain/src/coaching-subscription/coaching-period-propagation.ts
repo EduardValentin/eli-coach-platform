@@ -17,7 +17,7 @@ export class CoachingPeriodPropagation {
   ): Promise<void> {
     const notice = {
       clientId: subscription.clientId,
-      paidThrough: subscription.paidThrough(),
+      paidThrough: subscription.paidThrough,
     };
 
     await this.tellEach(subscription, (handler) =>
