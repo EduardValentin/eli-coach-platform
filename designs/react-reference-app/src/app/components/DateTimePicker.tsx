@@ -139,12 +139,15 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, detail, on
       <span className={isBooked ? 'line-through' : ''}>{label}</span>
       {isBooked && <span className="ml-1 text-xs uppercase tracking-label">Booked</span>}
       {detail && (
-        <span
-          data-parity={detail.parity}
-          className={cn('ml-2 text-xs', { 'text-status-pending': !isSelected })}
-        >
-          {detail.text}
-        </span>
+        <>
+          <span className="sr-only"> </span>
+          <span
+            data-parity={detail.parity}
+            className={cn('ml-2 text-xs', { 'text-status-pending': !isSelected })}
+          >
+            {detail.text}
+          </span>
+        </>
       )}
     </button>
   );

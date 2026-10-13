@@ -257,7 +257,7 @@ describe('setting up a weekly check-in', () => {
 
     // assert
     const dialog = await openedDialog(SET_UP_DIALOG);
-    expect(hourButton(dialog, '18:00')).toHaveTextContent('18:001 clash');
+    expect(hourButton(dialog, '18:00')).toHaveTextContent(/^18:00 1 clash$/);
     expect(hourButton(dialog, '17:00')).toHaveTextContent(/^17:00$/);
   });
 
