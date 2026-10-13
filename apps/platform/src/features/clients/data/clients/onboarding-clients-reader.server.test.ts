@@ -20,6 +20,8 @@ function standingOf(status: CoachingStatus) {
         : new Date("2026-12-26T10:00:00.000Z"),
     refundDue: false,
     bundleMonths: 3,
+    programStartsAt: null,
+    paidThrough: null,
   };
 }
 

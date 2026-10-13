@@ -72,6 +72,12 @@ export const clientsTable = appSchema.table(
     }),
     coachingRefundDue: boolean("coaching_refund_due").notNull().default(false),
     coachingBundleMonths: smallint("coaching_bundle_months"),
+    coachingProgramStartsAt: timestamp("coaching_program_starts_at", {
+      withTimezone: true,
+    }),
+    coachingPaidThrough: timestamp("coaching_paid_through", {
+      withTimezone: true,
+    }),
   },
   (table) => [
     uniqueIndex(clientsConstraints.clientPerCall).on(table.assessmentCallId),

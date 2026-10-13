@@ -5,6 +5,7 @@ import {
   getCoachingBundle,
   type PriceTier,
 } from "@eli-coach-platform/domain/coaching-bundle";
+import { PurchasedSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import type pg from "pg";
 
 export type ClientIdentity = {
@@ -109,9 +110,11 @@ const INSERT_CLIENT = `
     assessment_call_id, first_name, last_name, email, date_of_birth, gender,
     primary_goal, country, created_at, auth_subject_id, booking_time_zone,
     coaching_status, coaching_access_ends_at, coaching_refund_due,
-    coaching_bundle_months
+    coaching_bundle_months, coaching_program_starts_at, coaching_paid_through
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  values (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+  )
   returning id
 `;
 const INSERT_SUBSCRIPTION = `
@@ -119,9 +122,13 @@ const INSERT_SUBSCRIPTION = `
     client_id, assessment_call_id, bundle_id, months, tier, amount_cents,
     currency, stripe_customer_id, stripe_subscription_id,
     stripe_payment_intent_id, stripe_checkout_session_id, paid_at,
-    start_choice, status, access_ends_at, created_at
+    start_choice, status, access_ends_at, paid_through, program_starts_at,
+    created_at
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $12)
+  values (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+    $17, $12
+  )
 `;
 const INSERT_INVITATION = `
   insert into app.client_invitations (
@@ -229,6 +236,7 @@ async function insertPaidClient(
   const { identity, payment } = binding;
   const { paidAt, references } = payment;
   const callStartsAt = daysBefore(paidAt, CALL_ENDED_DAYS_AGO);
+  const period = paidPeriodOf(identity, payment);
   await connection.query(INSERT_ENDED_CALL, [
     payment.assessmentCallId,
     identity.firstName,
@@ -257,6 +265,8 @@ async function insertPaidClient(
     SEEDED_STANDING.accessEndsAt,
     SEEDED_STANDING.refundDue,
     SEEDED_STANDING.bundleMonths,
+    period.programStartsAt,
+    period.paidThrough,
   ]);
   await connection.query(INSERT_SUBSCRIPTION, [
     clientId,
@@ -274,6 +284,8 @@ async function insertPaidClient(
     payment.start,
     SEEDED_STANDING.status,
     SEEDED_STANDING.accessEndsAt,
+    period.paidThrough,
+    period.programStartsAt,
   ]);
 
   return {
@@ -285,6 +297,25 @@ async function insertPaidClient(
     paidAt,
     callStartsAt,
   };
+}
+
+function paidPeriodOf(identity: ClientIdentity, payment: PaymentSeed) {
+  const { references } = payment;
+
+  return PurchasedSubscription.fromCompletedCheckout({
+    checkoutSessionId: references.checkoutSessionId,
+    paymentCustomerId: references.customerId,
+    paymentSubscriptionId: references.subscriptionId,
+    paymentIntentId: references.paymentIntentId,
+    amountCents: SEEDED_BUNDLE.totalCents(SEEDED_TIER),
+    currency: SEEDED_BUNDLE.currency,
+    customerEmail: identity.email,
+    paidAt: payment.paidAt,
+    assessmentCallId: payment.assessmentCallId,
+    bundleId: SEEDED_BUNDLE.id,
+    tier: SEEDED_TIER,
+    startChoice: payment.start,
+  }).toSnapshot();
 }
 
 function seededPayment(start: StartChoice): PaymentSeed {

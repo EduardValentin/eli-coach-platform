@@ -8,6 +8,7 @@ import type {
 
 const OCCURRED_AT = new Date("2026-10-20T10:00:00.000Z");
 const SCHEDULED_END = new Date("2027-01-02T10:00:00.000Z");
+const PERIOD_END = new Date("2027-01-20T10:00:00.000Z");
 
 function state(
   overrides: Partial<PaymentSubscriptionState> = {},
@@ -35,6 +36,7 @@ function invoice(
     customerId: "cus_1",
     outcome: "paid",
     invoiceReason: "renewal",
+    periodEndsAt: PERIOD_END,
     occurredAt: OCCURRED_AT,
     ...overrides,
   };
@@ -133,7 +135,7 @@ describe("toSubscriptionEvent", () => {
     });
   });
 
-  it("reads a paid renewal", () => {
+  it("reads a paid renewal as paid through the end of the period it pays for", () => {
     // act
     const event = toSubscriptionEvent(invoice());
 
@@ -141,6 +143,7 @@ describe("toSubscriptionEvent", () => {
     expect(event).toEqual({
       kind: "renewal-paid",
       paymentSubscriptionId: "sub_1",
+      paidThrough: PERIOD_END,
       occurredAt: OCCURRED_AT,
     });
   });

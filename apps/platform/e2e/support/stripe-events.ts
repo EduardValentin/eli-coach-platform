@@ -42,15 +42,24 @@ type CheckoutCompletedDelivery = { baseURL: string; sessionId: string };
 
 type RenewalFailureDelivery = { baseURL: string; subscriptionId: string };
 
-type FailingSubscription = Pick<
+type RenewalPaidDelivery = RenewalFailureDelivery & { periodEnd: Date };
+
+type RenewedSubscription = Pick<
   Stripe.Subscription,
   "id" | "customer" | "currency" | "metadata"
 >;
+
+type SimulatedRenewal = {
+  subscription: RenewedSubscription;
+  reference: string;
+  periodEnd: Date;
+};
 
 const STRIPE_WEBHOOKS_PATH = "/api/stripe/webhooks";
 const RECORDED_EVENTS_PAGE = 100;
 const EVENT_LOOKUP_ATTEMPTS = 30;
 const EVENT_LOOKUP_INTERVAL_MS = 1_000;
+const MILLISECONDS_PER_SECOND = 1_000;
 
 export async function deliverStripeEvent(
   delivery: StripeEventDelivery,
@@ -85,40 +94,64 @@ export async function deliverSimulatedRenewalFailure(
   );
   const responses: Response[] = [];
 
-  for (const event of simulatedRenewalFailureEvents(
+  for (const event of simulatedRenewalFailureEvents({
     subscription,
-    randomUUID(),
-  )) {
+    reference: randomUUID(),
+    periodEnd: new Date(),
+  })) {
     responses.push(await postSignedEvent(delivery.baseURL, event));
   }
 
   return responses;
 }
 
+export async function deliverSimulatedRenewalPaid(
+  delivery: RenewalPaidDelivery,
+): Promise<Response> {
+  const subscription = await createStripeTestClient().subscriptions.retrieve(
+    delivery.subscriptionId,
+  );
+
+  return postSignedEvent(
+    delivery.baseURL,
+    simulatedRenewalPaidEvent({
+      subscription,
+      reference: randomUUID(),
+      periodEnd: delivery.periodEnd,
+    }),
+  );
+}
+
+export function simulatedRenewalPaidEvent(
+  renewal: SimulatedRenewal,
+): StripeWebhookEvent {
+  return {
+    id: `evt_e2e_${renewal.reference}_paid`,
+    type: "invoice.paid",
+    data: {
+      object: {
+        ...renewalInvoiceOf(renewal),
+        status: "paid",
+        attempt_count: 1,
+      },
+    },
+  };
+}
+
 export function simulatedRenewalFailureEvents(
-  subscription: FailingSubscription,
-  reference: string,
+  renewal: SimulatedRenewal,
 ): StripeWebhookEvent[] {
+  const { subscription, reference } = renewal;
+
   return [
     {
       id: `evt_e2e_${reference}_payment_failed`,
       type: "invoice.payment_failed",
       data: {
         object: {
-          id: `in_e2e_${reference}`,
-          object: "invoice",
-          customer: referencedId(subscription.customer),
-          currency: subscription.currency,
-          billing_reason: "subscription_cycle",
+          ...renewalInvoiceOf(renewal),
           status: "open",
           attempt_count: 1,
-          parent: {
-            type: "subscription_details",
-            subscription_details: {
-              subscription: subscription.id,
-              metadata: subscription.metadata,
-            },
-          },
         },
       },
     },
@@ -197,6 +230,36 @@ async function postSignedEvent(
     },
     method: "POST",
   });
+}
+
+function renewalInvoiceOf(renewal: SimulatedRenewal): Record<string, unknown> {
+  const { subscription, reference } = renewal;
+
+  return {
+    id: `in_e2e_${reference}`,
+    object: "invoice",
+    customer: referencedId(subscription.customer),
+    currency: subscription.currency,
+    billing_reason: "subscription_cycle",
+    lines: {
+      data: [
+        {
+          period: {
+            end: Math.floor(
+              renewal.periodEnd.getTime() / MILLISECONDS_PER_SECOND,
+            ),
+          },
+        },
+      ],
+    },
+    parent: {
+      type: "subscription_details",
+      subscription_details: {
+        subscription: subscription.id,
+        metadata: subscription.metadata,
+      },
+    },
+  };
 }
 
 function objectIdOf(object: unknown): string | null {

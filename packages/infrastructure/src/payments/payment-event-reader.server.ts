@@ -92,6 +92,11 @@ const subscriptionSchema = z.object({
 const invoiceSchema = z.object({
   customer: referencedIdSchema,
   billing_reason: z.string().nullish(),
+  lines: z.object({
+    data: z
+      .array(z.object({ period: z.object({ end: unixSecondsSchema }) }))
+      .min(1),
+  }),
   parent: z.object({
     subscription_details: z.object({
       subscription: referencedIdSchema,
@@ -258,6 +263,9 @@ export class PaymentEventReader {
         outcome,
         invoiceReason: this.vocabulary.invoiceReasonOf(
           invoice.billing_reason ?? null,
+        ),
+        periodEndsAt: fromUnixSeconds(
+          Math.max(...invoice.lines.data.map((line) => line.period.end)),
         ),
         occurredAt: fromUnixSeconds(event.created),
       },

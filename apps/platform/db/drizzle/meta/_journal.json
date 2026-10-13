@@ -295,6 +295,13 @@
       "when": 1791803280124,
       "tag": "0045_clients_standing",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791918125182,
+      "tag": "0046_subscription_periods",
+      "breakpoints": true
     }
   ]
 }

@@ -23,9 +23,9 @@ const insertClientSql = `
 
 const insertSubscriptionSql = `
   insert into app.coaching_subscriptions
-    (client_id, assessment_call_id, bundle_id, months, tier, amount_cents, currency, stripe_customer_id, stripe_subscription_id, stripe_checkout_session_id, paid_at, start_choice, status, created_at)
+    (client_id, assessment_call_id, bundle_id, months, tier, amount_cents, currency, stripe_customer_id, stripe_subscription_id, stripe_checkout_session_id, paid_at, paid_through, program_starts_at, start_choice, status, created_at)
   values
-    ($1, $2, '3-months', 3, 'regular', 44700, 'eur', 'cus_schema', $3, $4, '2026-09-01T09:00:00Z', 'immediate', 'not-started', '2026-09-01T09:00:00Z')
+    ($1, $2, '3-months', 3, 'regular', 44700, 'eur', 'cus_schema', $3, $4, '2026-09-01T09:00:00Z', '2026-12-01T09:00:00Z', '2026-09-01T09:00:00Z', 'immediate', 'not-started', '2026-09-01T09:00:00Z')
 `;
 
 describe.sequential("coaching subscriptions schema", () => {

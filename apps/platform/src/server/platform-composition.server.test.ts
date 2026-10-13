@@ -137,6 +137,7 @@ describe("composePlatformFeature", () => {
       customerId: "cus_1",
       outcome: "failed" as const,
       invoiceReason: "renewal" as const,
+      periodEndsAt: new Date("2027-01-20T10:00:00.000Z"),
       occurredAt: new Date("2026-10-20T10:00:00.000Z"),
     };
     const feature = composeWith({

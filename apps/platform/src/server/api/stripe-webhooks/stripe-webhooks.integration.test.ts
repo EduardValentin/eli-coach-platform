@@ -59,6 +59,9 @@ const clients = new ClientsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const SCHEDULED_END = new Date("2027-01-21T08:00:00.000Z");
+const PAID_THROUGH = new Date("2027-01-21T08:00:00.000Z");
+const WITHDRAWAL_PERIOD_END = new Date("2026-11-04T08:00:00.000Z");
+const RENEWED_THROUGH = new Date("2027-04-21T08:00:00.000Z");
 const NOT_STARTED_ROW = {
   status: "not-started",
   startChoice: "immediate",
@@ -208,6 +211,9 @@ describe.sequential("stripe webhooks integration", () => {
         stripeSubscriptionId: STRIPE_SUBSCRIPTION_ID,
         tier: "regular",
       },
+    ]);
+    expect(await lifecycle.subscriptionPeriod()).toEqual([
+      { paidThrough: PAID_THROUGH, programStartsAt: rig.now() },
     ]);
     expect(await readPaymentLinkStates(callId)).toEqual(["spent"]);
     expect(await readPaymentEventIds()).toEqual([COMPLETED_EVENT_ID]);
@@ -406,9 +412,9 @@ describe.sequential("stripe webhooks integration", () => {
     });
   });
 
-  it("holds the renewal of the paid subscription by pausing its collection", async () => {
+  it("holds the renewal of a purchase that waits out her withdrawal period until her program starts", async () => {
     // arrange
-    await openCheckout();
+    await openCheckout("waiting");
     const session = await journey.completionOfCheckoutRequest({
       requestIndex: FIRST_CHECKOUT_REQUEST,
       sessionId: STRIPE_CHECKOUT_SESSION_ID,
@@ -426,11 +432,36 @@ describe.sequential("stripe webhooks integration", () => {
     expect(response.status).toBe(200);
     expect(updates).toHaveLength(1);
     expect(updates[0]?.get("pause_collection[behavior]")).toBe("void");
+    expect(updates[0]?.get("pause_collection[resumes_at]")).toBe(
+      String(toUnixSeconds(WITHDRAWAL_PERIOD_END)),
+    );
+    expect(await lifecycle.subscriptionPeriod()).toEqual([
+      { paidThrough: PAID_THROUGH, programStartsAt: WITHDRAWAL_PERIOD_END },
+    ]);
+  });
+
+  it("holds no renewal of a purchase whose program starts at once", async () => {
+    // arrange
+    await openCheckout();
+    const session = await journey.completionOfCheckoutRequest({
+      requestIndex: FIRST_CHECKOUT_REQUEST,
+      sessionId: STRIPE_CHECKOUT_SESSION_ID,
+    });
+
+    // act
+    const response = await journey.deliverCheckoutCompleted(
+      session,
+      COMPLETED_EVENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.providerSubscriptionRequests("POST")).toEqual([]);
   });
 
   it("answers 500 when the hold fails, with the client already created and invited, then holds it on redelivery", async () => {
     // arrange
-    await openCheckout();
+    await openCheckout("waiting");
     const session = await journey.completionOfCheckoutRequest({
       requestIndex: FIRST_CHECKOUT_REQUEST,
       sessionId: STRIPE_CHECKOUT_SESSION_ID,
@@ -818,6 +849,25 @@ describe.sequential("stripe webhooks integration", () => {
     expect(await lifecycle.subscriptionRow()).toEqual(NOT_STARTED_ROW);
   });
 
+  it("records a paid renewal as paid through the end of the period its invoice pays for", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_renewed",
+      type: "invoice.paid",
+      object: stripeInvoiceObject("subscription_cycle", RENEWED_THROUGH),
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.subscriptionPeriod()).toEqual([
+      { paidThrough: RENEWED_THROUGH, programStartsAt: rig.now() },
+    ]);
+    expect(await clients.standingOf(ANA.email)).toEqual(PURCHASED_STANDING);
+  });
+
   it("records a refund the coach issued in Stripe as refunded with nothing owed", async () => {
     // arrange
     await journey.payForCall();
@@ -908,11 +958,11 @@ describe.sequential("stripe webhooks integration", () => {
   });
 });
 
-async function openCheckout() {
+async function openCheckout(startChoice = "immediate") {
   const sentLink = await journey.sendPaymentLinkAfterEndedCall();
   const response = await journey.startCheckout({
     bundleId: "3-months",
-    startChoice: "immediate",
+    startChoice,
     token: sentLink.token,
   });
 
