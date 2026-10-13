@@ -31,7 +31,18 @@ export const WEEKDAY_DISPLAY_ORDER = [
   "sunday",
 ] as const satisfies readonly Weekday[];
 
-function hourLabel(hour: number): string {
+export const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> =
+  {
+    monday: { full: "Monday", short: "Mon" },
+    tuesday: { full: "Tuesday", short: "Tue" },
+    wednesday: { full: "Wednesday", short: "Wed" },
+    thursday: { full: "Thursday", short: "Thu" },
+    friday: { full: "Friday", short: "Fri" },
+    saturday: { full: "Saturday", short: "Sat" },
+    sunday: { full: "Sunday", short: "Sun" },
+  };
+
+export function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
 }
 

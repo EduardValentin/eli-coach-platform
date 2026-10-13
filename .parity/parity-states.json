@@ -2082,6 +2082,17 @@
       "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
     }
   ],
+  "open-clash-row-menu": [
+    {
+      "use": "weekly-series-clashes"
+    },
+    {
+      "click": "li:has([data-parity=\"clash-badge\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    }
+  ],
   "open-clients-status-filter": [
     {
       "click": "[data-parity=\"status-filter\"]"
@@ -2264,6 +2275,45 @@
     },
     {
       "waitFor": "[data-parity=\"status-count-any\"]"
+    }
+  ],
+  "open-weekly-change": [
+    {
+      "use": "weekly-series-active"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-change\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-weekly-dialog": [
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-set-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-weekly-stop": [
+    {
+      "use": "weekly-series-active"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-stop\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
     }
   ],
   "payment-method-fails": {
@@ -2968,6 +3018,138 @@
     }
   ],
   "wait-welcome": [],
+  "weekly-changed-toast": [
+    {
+      "use": "open-weekly-change"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^19:00/]"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"checkin-picker-step\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "weekly-pick-hour": [
+    {
+      "use": "weekly-pick-weekday"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^18:00/]"
+    },
+    {
+      "hover": "[data-parity-root=\"WeeklyCheckinDialog\"] h3"
+    }
+  ],
+  "weekly-pick-weekday": [
+    {
+      "use": "open-weekly-dialog"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-weekday\"] >> role=radio[name=\"Wednesday\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "weekly-series-active": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"Active\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-series-clashes": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-series-stopped": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"Stopped\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-set-up-toast": [
+    {
+      "use": "weekly-pick-hour"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"checkin-picker-step\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "weekly-setup-hint-hover": [
+    {
+      "use": "client-onboarding"
+    },
+    {
+      "hover": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-set-up\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "weekly-stopped-toast": [
+    {
+      "use": "open-weekly-stop"
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
   "welcome-four-part": {
     "prototype": [
       {

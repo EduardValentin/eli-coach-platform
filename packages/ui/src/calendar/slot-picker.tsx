@@ -1,13 +1,13 @@
 import { motion } from "motion/react";
 import { useEffect, useRef, type RefObject } from "react";
 
-import { cn } from "../lib/cn";
 import { SlotCalendar } from "./slot-calendar";
 import type {
   CalendarDayReader,
   SlotPickerDays,
   SlotPickerWording,
 } from "./slot-picker-model";
+import { TimeSlotButton } from "./time-slot-button";
 
 type SlotPickerProps = {
   dayKeyOf: CalendarDayReader;
@@ -107,33 +107,6 @@ export function SlotPicker(props: SlotPickerProps) {
         </motion.div>
       ) : null}
     </div>
-  );
-}
-
-function TimeSlotButton(props: {
-  isSelected: boolean;
-  label: string;
-  onSelect: () => void;
-}) {
-  const { isSelected, label, onSelect } = props;
-
-  return (
-    <button
-      aria-pressed={isSelected}
-      className={cn(
-        "w-full rounded-control border px-4 py-3 text-sm font-medium transition-all duration-200",
-        {
-          "border-primary/30 bg-surface-base text-primary hover:border-primary hover:bg-primary/5":
-            !isSelected,
-          "border-primary bg-primary text-primary-foreground shadow-card":
-            isSelected,
-        },
-      )}
-      onClick={onSelect}
-      type="button"
-    >
-      <span>{label}</span>
-    </button>
   );
 }
 

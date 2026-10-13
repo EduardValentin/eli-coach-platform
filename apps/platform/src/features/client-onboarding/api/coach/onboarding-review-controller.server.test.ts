@@ -158,6 +158,7 @@ describe("OnboardingReviewController loadReview", () => {
         pregnancyContext: false,
         cycleMode: "phase-based",
         checkInDay: "Friday",
+        checkInWeekday: "friday",
         checkInChannel: "WhatsApp",
         forms: [
           {
@@ -242,6 +243,7 @@ describe("OnboardingReviewController loadReview", () => {
     expect(review.submitted).toMatchObject({
       cycleMode: null,
       checkInDay: null,
+      checkInWeekday: null,
       checkInChannel: null,
       forms: [],
       openRequest: null,

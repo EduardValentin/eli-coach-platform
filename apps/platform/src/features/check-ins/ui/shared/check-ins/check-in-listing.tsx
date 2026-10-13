@@ -22,7 +22,7 @@ export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 
 export type CheckInParty = ListedCheckIn["initiatedBy"];
 
-export type CheckInTab = "upcoming" | "requests" | "past";
+export type CheckInTab = ListedCheckIn["tab"];
 
 export type CheckInMoment = {
   date: string;
@@ -63,14 +63,6 @@ const TAB_LABELS: Record<CheckInTab, string> = {
   past: "Past",
 };
 
-const TAB_OF_STATUS: Record<ListedCheckIn["status"], CheckInTab> = {
-  approved: "upcoming",
-  pending: "requests",
-  passed: "past",
-  cancelled: "past",
-  clash: "requests",
-};
-
 export function CheckInListing<CheckIn extends ListedCheckIn>({
   checkIns,
   emptyCopy,
@@ -84,7 +76,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   const { chooseTab, tab } = useCheckInTabParam(defaultTab);
   useBringCheckInIntoFocus(focusedId);
   const shown = ordered(
-    checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
+    checkIns.filter((checkIn) => checkIn.tab === tab),
     tab,
   );
   const awaitingViewerCount = checkIns.filter(
@@ -194,7 +186,7 @@ function tabHolding(
 ): CheckInTab | undefined {
   const held = checkIns.find((checkIn) => checkIn.id === checkInId);
 
-  return held && TAB_OF_STATUS[held.status];
+  return held?.tab;
 }
 
 function openingTabOf(checkIns: readonly ListedCheckIn[]): CheckInTab {

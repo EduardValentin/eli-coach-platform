@@ -91,6 +91,7 @@ const WAITING_REQUEST: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "2c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f",
   status: "pending",
+  tab: "requests",
   viewerMayWithdraw: true,
   isWaitingRequest: true,
   startsAt: "2026-10-16T09:00:00.000Z",
@@ -103,6 +104,7 @@ const COACH_REQUEST: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
   status: "pending",
+  tab: "requests",
   initiatedBy: "coach",
   proposedBy: "coach",
   awaitsViewer: true,
@@ -115,6 +117,7 @@ const COACH_REQUEST: ClientCheckIn = {
 const COACH_REQUEST_APPROVED: ClientCheckIn = {
   ...COACH_REQUEST,
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
 };
 
@@ -122,6 +125,7 @@ const PASSED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
   status: "passed",
+  tab: "past",
   viewerProposal: "none",
   viewerMayCancel: false,
   startsAt: "2026-10-05T07:00:00.000Z",
@@ -133,6 +137,7 @@ const CANCELLED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "4e5f6a7b-8c9d-4e0f-9a1b-3c4d5e6f7a8b",
   status: "cancelled",
+  tab: "past",
   viewerProposal: "none",
   viewerMayCancel: false,
   startsAt: "2026-10-08T13:00:00.000Z",
@@ -145,6 +150,7 @@ const COACH_NEW_TIME: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "6a7b8c9d-0e1f-4a2b-9c3d-5e6f7a8b9c0d",
   status: "pending",
+  tab: "requests",
   proposedBy: "coach",
   awaitsViewer: true,
   viewerMayCancel: false,
@@ -162,6 +168,7 @@ const COACH_NEW_TIME: ClientCheckIn = {
 const COACH_NEW_TIME_ACCEPTED: ClientCheckIn = {
   ...COACH_NEW_TIME,
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
   viewerMayCancel: true,
   newTimeWaits: false,
@@ -208,6 +215,30 @@ const MOVED_TWICE: ClientCheckIn = {
   note: "Can we plan my holiday training?",
   newTimeNote: "Thursday afternoon suits me better.",
 };
+
+const WEEKLY_SERIES_ID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+
+const NEXT_WEEKLY: ClientCheckIn = {
+  ...APPROVED_SOON,
+  id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+  seriesId: WEEKLY_SERIES_ID,
+  kind: "recurring",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+  viewerMayCancel: false,
+  startsAt: "2026-10-21T15:00:00.000Z",
+  endsAt: "2026-10-21T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-21T14:50:00.000Z",
+};
+
+const NEXT_WEEKLY_CLASH: ClientCheckIn = {
+  ...NEXT_WEEKLY,
+  status: "clash",
+  viewerProposal: "none",
+};
+
+const NEXT_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 
 const THURSDAY_AFTERNOON = "2026-10-15T14:00:00.000Z";
 const THURSDAY_EVENING = "2026-10-15T15:00:00.000Z";
@@ -1425,6 +1456,7 @@ describe("the client's upcoming check-in menu", () => {
             {
               ...APPROVED_SOON,
               status: "cancelled",
+              tab: "past",
               viewerProposal: "none",
               viewerMayCancel: false,
             },
@@ -1617,6 +1649,57 @@ describe("Reschedule on a check-in moved twice", () => {
 
     // act
     const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
+describe("a weekly check-in on the client's check-ins page", () => {
+  it("shows a clashing next week under Upcoming as her coach finding a new time, with nothing to act on", async () => {
+    // arrange, act
+    listing = { checkIns: [NEXT_WEEKLY_CLASH] };
+    await renderCheckInsPage();
+
+    // assert
+    const row = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getByRole("listitem");
+    expect(row).toHaveTextContent("Wed, Oct 21");
+    expect(within(row).getByText("Clash")).toBeInTheDocument();
+    expect(row).toHaveTextContent("Your coach is finding a new time");
+    expect(
+      within(row).queryByRole("link", { name: "Join Meet" }),
+    ).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("lets her move her next weekly check-in but never cancel it", async () => {
+    // arrange
+    listing = { checkIns: [NEXT_WEEKLY] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(screen.getByRole("button", { name: NEXT_WEEKLY_MENU }));
+
+    // assert
+    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+      "Reschedule",
+    ]);
+    const row = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getByRole("listitem");
+    expect(within(row).getByRole("link", { name: "Join Meet" })).toBeVisible();
+    expect(row).not.toHaveTextContent("Requested by");
+  });
+
+  it("passes the axe checks with a clashing next week", async () => {
+    // arrange
+    listing = { checkIns: [NEXT_WEEKLY_CLASH] };
+    const { baseElement } = await renderCheckInsPageWithView();
+
+    // act
+    const results = await axe(baseElement);
 
     // assert
     expect(results.violations).toEqual([]);

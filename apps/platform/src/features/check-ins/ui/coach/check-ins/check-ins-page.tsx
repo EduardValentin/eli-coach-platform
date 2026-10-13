@@ -15,6 +15,10 @@ import type {
 import { coachCheckInJoinPath } from "~/features/check-ins/public/paths";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import {
+  fullNameOf,
+  useCoachCheckInMenu,
+} from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
+import {
   CheckInListing,
   type CheckInEmptyCopy,
   type CheckInTab,
@@ -23,16 +27,9 @@ import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-ro
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
 import {
   CheckInAnswers,
-  CheckInDecisionOutcomes,
   CheckInWithdrawal,
-  useCheckInDecisions,
   type CheckInDecisions,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-decisions";
-import {
-  CheckInMenuDialogs,
-  useCheckInMenu,
-  type CheckInMenuWording,
-} from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -59,22 +56,10 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   },
 };
 
-const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
-  cancellationOf: (checkIn, dayAndTime) => ({
-    description: `${dayAndTime} with ${fullNameOf(checkIn)}.`,
-    successMessage: `Cancelled check-in with ${fullNameOf(checkIn)}`,
-  }),
-  proposerOf: (checkIn) => ({
-    noteLabel: `Add a note for ${checkIn.client.firstName} (optional)`,
-    openTimesQuery: { clientId: checkIn.clientId },
-  }),
-};
-
 export default function CoachCheckInsRoute() {
   const { checkIns } = useLoaderData<typeof loader>();
   const timeZone = useCalendarDayTimeZone();
-  const decisions = useCheckInDecisions();
-  const menu = useCheckInMenu<CoachCheckIn>(decisions);
+  const { decisions, dialogs, menuOf } = useCoachCheckInMenu();
 
   return (
     <div className="w-full" data-parity-root="CoachCheckins">
@@ -91,7 +76,7 @@ export default function CoachCheckInsRoute() {
             actions={coachActionsFor(checkIn, tab, decisions)}
             attendee={{ name: fullNameOf(checkIn) }}
             checkIn={checkIn}
-            menu={menu.menuOf(checkIn)}
+            menu={menuOf(checkIn)}
             menuSize="xs"
             timeZone={timeZone}
             viewer={{
@@ -102,14 +87,7 @@ export default function CoachCheckInsRoute() {
         )}
       />
 
-      <CheckInMenuDialogs
-        decisions={decisions}
-        menu={menu}
-        timeZone={timeZone}
-        wording={MENU_WORDING}
-      />
-
-      <CheckInDecisionOutcomes decisions={decisions} />
+      {dialogs}
     </div>
   );
 }
@@ -127,6 +105,10 @@ function coachActionsFor(
         to={coachCheckInJoinPath(checkIn.id)}
       />
     );
+  }
+
+  if (checkIn.status === "clash") {
+    return undefined;
   }
 
   if (checkIn.awaitsViewer) {
@@ -151,8 +133,4 @@ function coachActionsFor(
   }
 
   return undefined;
-}
-
-function fullNameOf(checkIn: CoachCheckIn): string {
-  return `${checkIn.client.firstName} ${checkIn.client.lastName}`.trim();
 }
