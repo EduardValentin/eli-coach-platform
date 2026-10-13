@@ -102,18 +102,13 @@ export function CheckinListing({
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { appState } = useAppState();
-  const {
-    getUpcomingCheckins,
-    getPendingCheckins,
-    getPastCheckins,
-    getCheckinsAwaiting,
-  } = useCheckins();
+  const { getCheckinsInTab, getCheckinsAwaiting } = useCheckins();
 
   const focusedCheckinId = checkinIdFromSearch(searchParams);
   const tabCheckins: Record<CheckinTab, CheckIn[]> = {
-    upcoming: getUpcomingCheckins(clientId),
-    requests: getPendingCheckins(clientId),
-    past: getPastCheckins(clientId),
+    upcoming: getCheckinsInTab("upcoming", party, clientId),
+    requests: getCheckinsInTab("requests", party, clientId),
+    past: getCheckinsInTab("past", party, clientId),
   };
   const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
   const [defaultTab] = useState<CheckinTab>(

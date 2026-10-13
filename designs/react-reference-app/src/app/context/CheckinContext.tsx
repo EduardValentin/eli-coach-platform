@@ -4,23 +4,51 @@ import {
   checkinSlotAt,
   checkinStartsAt,
   checkinStatus,
+  checkinTabFor,
   coachingEndsAt,
   holdsCoachTime,
+  isComingUp,
   isOpenClientRequest,
+  nextUpcomingOfEachSeries,
   programReviewCheckin,
   proposalFor,
+  withProposedTime,
   type CheckIn,
   type CheckinClock,
   type CheckinParty,
   type CheckinStatus,
+  type CheckinTab,
 } from '../domain/checkins';
 import {
+  remainingCover,
+  seriesBounds,
+  seriesChangedTo,
+  seriesSetUp,
+  seriesStoppedAt,
+  type CheckinSeries,
+  type SeriesBounds,
+  type WeeklyRule,
+} from '../domain/checkinSeries';
+import { accessEndWithoutRefund, workStartDate } from '../domain/coachingSubscription';
+import {
   answerCheckinRequest,
+  changeCheckinSeries,
+  CHECKIN_NOTICE_MINUTES,
+  plannedSeriesWeeks,
+  previewCheckinSeries,
   proposeCheckinTime,
   requestCheckinTime,
   scheduleCheckinTime,
   listOpenCheckinTimes,
+  setUpCheckinSeries,
+  stopCheckinSeries,
   withdrawCheckinRequest,
+  type CheckinSeriesChangeDecision,
+  type CheckinSeriesSetUpDecision,
+  type CheckinSeriesStopDecision,
+  type SeriesBoundsAnswer,
+  type SeriesPreview,
+  type SeriesWeek,
   type CheckinProposalDecision,
   type CheckinRequestDecision,
   type CheckinSchedule,
@@ -35,6 +63,8 @@ import { useClientJourneys } from './ClientJourneyContext';
 import { toISODate } from '../utils/dateFormatters';
 
 export type { CheckIn } from '../domain/checkins';
+export type { CheckinSeries } from '../domain/checkinSeries';
+export type { SeriesPreview } from '../services/checkinService';
 
 export const DEMO_CLIENT = { id: 'c1', name: 'Jane Doe' } as const;
 
@@ -76,6 +106,21 @@ export type CheckinProposalResult =
   | { status: 'proposed'; checkin: CheckIn }
   | { status: Exclude<CheckinProposalDecision, 'proposed'> };
 
+export const WEEKLY_SERIES_SEEDS = ['none', 'active', 'clashes', 'stopped'] as const;
+export type WeeklySeriesSeed = (typeof WEEKLY_SERIES_SEEDS)[number];
+
+export type SeriesChoice = { weekday: number; hour: number };
+
+export type SeriesSetUpResult =
+  | { status: 'set_up'; series: CheckinSeries }
+  | { status: Exclude<CheckinSeriesSetUpDecision, 'set_up'> };
+
+export type SeriesChangeResult =
+  | { status: 'changed'; series: CheckinSeries }
+  | { status: Exclude<CheckinSeriesChangeDecision, 'changed'> };
+
+export type SeriesStopResult = { status: CheckinSeriesStopDecision };
+
 type RequestSettler = (
   answer: PendingRequestAnswer,
   outcome: CheckinServiceOutcome,
@@ -96,8 +141,7 @@ interface CheckinContextType {
   cancelCheckin: (checkinId: string) => void;
   proposeNewTime: (proposal: NewTimeProposal) => Promise<CheckinProposalResult>;
   getUpcomingCheckins: (clientId?: string) => CheckIn[];
-  getPendingCheckins: (clientId?: string) => CheckIn[];
-  getPastCheckins: (clientId?: string) => CheckIn[];
+  getCheckinsInTab: (tab: CheckinTab, party: CheckinParty, clientId?: string) => CheckIn[];
   getCheckinsAwaiting: (party: CheckinParty, clientId?: string) => CheckIn[];
   hasOpenClientRequest: (clientId: string) => boolean;
   getBookedSlots: (date: string) => string[];
@@ -108,6 +152,14 @@ interface CheckinContextType {
   setOpenClientRequest: (open: boolean) => void;
   hasLiveCheckin: boolean;
   setLiveCheckin: (live: boolean) => void;
+  seriesFor: (clientId: string) => CheckinSeries | null;
+  seriesWeeks: (clientId: string) => CheckIn[];
+  previewSeries: (clientId: string, weekday: number | null) => Promise<SeriesPreview>;
+  setUpSeries: (client: CheckinClient, choice: SeriesChoice) => Promise<SeriesSetUpResult>;
+  changeSeries: (client: CheckinClient, choice: SeriesChoice) => Promise<SeriesChangeResult>;
+  stopSeries: (clientId: string) => Promise<SeriesStopResult>;
+  weeklySeries: WeeklySeriesSeed;
+  setWeeklySeries: (seed: WeeklySeriesSeed) => void;
 }
 
 const CheckinContext = createContext<CheckinContextType | undefined>(undefined);
@@ -129,6 +181,38 @@ function createdDaysAgo(days: number): string {
 
 function newCheckinId(): string {
   return 'ck-' + Math.random().toString(36).substring(2, 8);
+}
+
+function newSeriesId(): string {
+  return 'series-' + Math.random().toString(36).substring(2, 8);
+}
+
+const SEEDED_SERIES_CHOICE: SeriesChoice = { weekday: 3, hour: 18 };
+const SEEDED_SERIES_WEEKS = 12;
+const SEEDED_CLASH_WEEKS = [0, 2];
+const WEEK_MS = 7 * 86400000;
+
+type SeriesWeekCheckin = {
+  series: CheckinSeries;
+  client: CheckinClient;
+  week: SeriesWeek;
+};
+
+function seriesWeekCheckin({ series, client, week }: SeriesWeekCheckin): CheckIn {
+  return {
+    ...checkinSlotAt(week.startsAt),
+    id: newCheckinId(),
+    clientId: client.id,
+    clientName: client.name,
+    coachId: 'coach-1',
+    kind: 'recurring',
+    status: week.clash ? 'clash' : 'approved',
+    initiatedBy: 'coach',
+    proposedBy: 'coach',
+    createdAt: (series.changedAt ?? series.setUpAt).toISOString(),
+    rescheduleCount: 0,
+    seriesId: series.id,
+  };
 }
 
 const MOCK_CHECKINS: CheckIn[] = [
@@ -515,6 +599,10 @@ export function byStartAscending(a: CheckIn, b: CheckIn): number {
   return checkinStartsAt(a).getTime() - checkinStartsAt(b).getTime();
 }
 
+function byNewestFirst(a: CheckIn, b: CheckIn): number {
+  return b.createdAt.localeCompare(a.createdAt);
+}
+
 function forClient(clientId?: string) {
   return (checkin: CheckIn) => !clientId || checkin.clientId === clientId;
 }
@@ -527,6 +615,7 @@ function noteOrNothing(note: string): string | undefined {
 export function CheckinProvider({ children }: { children: ReactNode }) {
   const [stored, setStored] = useState<CheckIn[]>(MOCK_CHECKINS);
   const [takenElsewhere, setTakenElsewhere] = useState<Date[]>([]);
+  const [seriesList, setSeriesList] = useState<CheckinSeries[]>([]);
   const { demoJourney, journeys } = useClientJourneys();
   const { settings, bookedStarts } = useAssessmentCalls();
   const { appState } = useAppState();
@@ -536,14 +625,16 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     () => programReviewCheckin(demoJourney, DEMO_CLIENT),
     [demoJourney],
   );
-  const coachingEndFor = useCallback(
+  const subscriptionFor = useCallback(
     (clientId: string) =>
-      coachingEndsAt(
-        clientId === DEMO_CLIENT.id
-          ? demoJourney.subscription
-          : journeys[clientId]?.subscription,
-      ),
+      clientId === DEMO_CLIENT.id
+        ? demoJourney.subscription
+        : journeys[clientId]?.subscription,
     [demoJourney, journeys],
+  );
+  const coachingEndFor = useCallback(
+    (clientId: string) => coachingEndsAt(subscriptionFor(clientId)),
+    [subscriptionFor],
   );
 
   const checkins = useMemo(
@@ -745,7 +836,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       const checkin = checkins.find((c) => c.id === checkinId);
       if (!checkin) return { status: 'not_pending' };
 
-      const proposal = holdsCoachTime(statusOf(checkin)) ? proposalFor(checkin, party) : 'none';
+      const proposal = isComingUp(statusOf(checkin)) ? proposalFor(checkin, party) : 'none';
       const decision = await proposeCheckinTime(
         { startsAt, schedule: scheduleFor(checkin.clientId), proposal },
         serviceOutcome,
@@ -755,16 +846,11 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       }
       if (decision !== 'proposed') return { status: decision };
 
-      const moved: CheckIn = {
-        ...checkin,
-        ...checkinSlotAt(startsAt),
-        status: 'pending',
-        proposedBy: party,
-        previousDate: checkin.date,
-        previousTime: checkin.time,
-        rescheduleCount: checkin.rescheduleCount + 1,
-        newTimeNote: noteOrNothing(note),
-      };
+      const moved = withProposedTime(checkin, {
+        slot: checkinSlotAt(startsAt),
+        party,
+        note: noteOrNothing(note),
+      });
       updateCheckin(checkinId, () => moved);
       return { status: 'proposed', checkin: moved };
     },
@@ -785,28 +871,25 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     [withStatus],
   );
 
-  const getPendingCheckins = useCallback(
-    (clientId?: string) =>
-      withStatus(['pending'], clientId).sort((a, b) =>
-        b.createdAt.localeCompare(a.createdAt),
-      ),
-    [withStatus],
-  );
+  const getCheckinsInTab = useCallback(
+    (tab: CheckinTab, party: CheckinParty, clientId?: string) => {
+      const inTab = checkins.filter(
+        (c) => forClient(clientId)(c) && checkinTabFor(statusOf(c), party) === tab,
+      );
+      if (tab === 'upcoming') return nextUpcomingOfEachSeries(inTab).sort(byStartAscending);
+      if (tab === 'requests') return inTab.sort(byNewestFirst);
 
-  const getPastCheckins = useCallback(
-    (clientId?: string) =>
-      withStatus(['passed', 'cancelled'], clientId).sort(
-        (a, b) => byStartAscending(b, a),
-      ),
-    [withStatus],
+      return inTab.sort((a, b) => byStartAscending(b, a));
+    },
+    [checkins, statusOf],
   );
 
   const getCheckinsAwaiting = useCallback(
     (party: CheckinParty, clientId?: string) =>
-      getPendingCheckins(clientId).filter(
-        (c) => awaitsResponseFrom(c) === party,
-      ),
-    [getPendingCheckins],
+      withStatus(['pending', 'clash'], clientId)
+        .filter((c) => awaitsResponseFrom(c) === party)
+        .sort(byNewestFirst),
+    [withStatus],
   );
 
   const getBookedSlots = useCallback(
@@ -823,14 +906,17 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
   const clearAllCheckins = useCallback(() => {
     setStored([]);
+    setSeriesList([]);
   }, []);
 
   const restoreSeededCheckins = useCallback(() => {
     setStored(MOCK_CHECKINS);
+    setSeriesList([]);
   }, []);
 
   const seedManyCheckins = useCallback(() => {
     setStored(manyCheckinsSample());
+    setSeriesList([]);
   }, []);
 
   const setOpenClientRequest = useCallback((open: boolean) => {
@@ -847,6 +933,224 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       return open ? [openRequestSample(), ...withoutRequests] : withoutRequests;
     });
   }, []);
+
+  const seriesFor = useCallback(
+    (clientId: string) =>
+      seriesList.find((series) => series.clientId === clientId && !series.stoppedAt) ?? null,
+    [seriesList],
+  );
+
+  const comingUpWeeksOf = useCallback(
+    (series: CheckinSeries | null) =>
+      series
+        ? checkins.filter((c) => c.seriesId === series.id && isComingUp(statusOf(c)))
+        : [],
+    [checkins, statusOf],
+  );
+
+  const seriesWeeks = useCallback(
+    (clientId: string) => comingUpWeeksOf(seriesFor(clientId)).sort(byStartAscending),
+    [comingUpWeeksOf, seriesFor],
+  );
+
+  const setUpBoundsFor = useCallback(
+    (clientId: string, now: Date): SeriesBoundsAnswer => {
+      const subscription = subscriptionFor(clientId);
+      if (!subscription) return 'nothing_to_create';
+
+      return seriesBounds({
+        now,
+        noticeMinutes: CHECKIN_NOTICE_MINUTES,
+        programStartsAt: workStartDate(subscription) ?? subscription.purchasedAt,
+        paidThrough: accessEndWithoutRefund(subscription, now),
+        coachingEndsAt: coachingEndsAt(subscription),
+      });
+    },
+    [subscriptionFor],
+  );
+
+  const ruleOf = useCallback(
+    (choice: SeriesChoice): WeeklyRule => ({ ...choice, timeZone: settings.timeZone }),
+    [settings.timeZone],
+  );
+
+  const scheduleBeside = useCallback(
+    (clientId: string, series: CheckinSeries | null): CheckinSchedule => {
+      const ownWeeks = new Set(comingUpWeeksOf(series).map((c) => c.id));
+      const heldElsewhere = checkins.filter(
+        (c) => !ownWeeks.has(c.id) && holdsCoachTime(statusOf(c)),
+      );
+
+      return {
+        ...scheduleFor(clientId),
+        heldCheckinStarts: [...heldElsewhere.map(checkinStartsAt), ...takenElsewhere],
+      };
+    },
+    [comingUpWeeksOf, checkins, statusOf, scheduleFor, takenElsewhere],
+  );
+
+  const previewSeries = useCallback(
+    (clientId: string, weekday: number | null) => {
+      const now = new Date();
+      const series = seriesFor(clientId);
+      const bounds = series
+        ? remainingCover(series, { now, noticeMinutes: CHECKIN_NOTICE_MINUTES })
+        : setUpBoundsFor(clientId, now);
+
+      return previewCheckinSeries(
+        { weekday, schedule: scheduleBeside(clientId, series), bounds },
+        serviceOutcome,
+      );
+    },
+    [seriesFor, setUpBoundsFor, scheduleBeside, serviceOutcome],
+  );
+
+  const setUpSeries = useCallback(
+    async (client: CheckinClient, choice: SeriesChoice): Promise<SeriesSetUpResult> => {
+      const now = new Date();
+      const rule = ruleOf(choice);
+      const bounds = setUpBoundsFor(client.id, now);
+      const schedule = scheduleBeside(client.id, null);
+      const planned =
+        bounds === 'nothing_to_create'
+          ? null
+          : seriesSetUp({ id: newSeriesId(), clientId: client.id, rule, bounds, at: now });
+      const weeks = planned ? plannedSeriesWeeks(rule, { schedule, starts: planned.starts }) : [];
+      const decision = await setUpCheckinSeries(
+        { rule, schedule, weeks, seriesExists: seriesFor(client.id) !== null },
+        serviceOutcome,
+      );
+      if (decision !== 'set_up') return { status: decision };
+      if (!planned) return { status: 'nothing_to_create' };
+
+      const { series } = planned;
+      setSeriesList((prev) => [...prev, series]);
+      setStored((prev) => [
+        ...weeks.map((week) => seriesWeekCheckin({ series, client, week })),
+        ...prev,
+      ]);
+      return { status: 'set_up', series };
+    },
+    [ruleOf, setUpBoundsFor, scheduleBeside, seriesFor, serviceOutcome],
+  );
+
+  const cancelWeeksOf = useCallback(
+    (series: CheckinSeries) => {
+      const cancelled = new Set(comingUpWeeksOf(series).map((c) => c.id));
+      return (prev: CheckIn[]) =>
+        prev.map((c): CheckIn => (cancelled.has(c.id) ? { ...c, status: 'cancelled' } : c));
+    },
+    [comingUpWeeksOf],
+  );
+
+  const changeSeries = useCallback(
+    async (client: CheckinClient, choice: SeriesChoice): Promise<SeriesChangeResult> => {
+      const current = seriesFor(client.id);
+      if (!current) return { status: 'changed_meanwhile' };
+
+      const rule = ruleOf(choice);
+      const schedule = scheduleBeside(client.id, current);
+      const changed = seriesChangedTo(current, {
+        rule,
+        now: new Date(),
+        noticeMinutes: CHECKIN_NOTICE_MINUTES,
+      });
+      const decision = await changeCheckinSeries({ rule, schedule }, serviceOutcome);
+      if (decision !== 'changed') return { status: decision };
+
+      const { series } = changed;
+      const weeks = plannedSeriesWeeks(rule, { schedule, starts: changed.starts });
+      const replaced = cancelWeeksOf(current);
+      setSeriesList((prev) => prev.map((s) => (s.id === series.id ? series : s)));
+      setStored((prev) => [
+        ...weeks.map((week) => seriesWeekCheckin({ series, client, week })),
+        ...replaced(prev),
+      ]);
+      return { status: 'changed', series };
+    },
+    [seriesFor, ruleOf, scheduleBeside, serviceOutcome, cancelWeeksOf],
+  );
+
+  const stopSeries = useCallback(
+    async (clientId: string): Promise<SeriesStopResult> => {
+      const current = seriesFor(clientId);
+      if (!current) return { status: 'changed_meanwhile' };
+
+      const decision = await stopCheckinSeries(serviceOutcome);
+      if (decision !== 'stopped') return { status: decision };
+
+      const stopped = seriesStoppedAt(current, new Date());
+      setSeriesList((prev) => prev.map((s) => (s.id === stopped.id ? stopped : s)));
+      setStored(cancelWeeksOf(current));
+      return { status: 'stopped' };
+    },
+    [seriesFor, serviceOutcome, cancelWeeksOf],
+  );
+
+  const weeklySeries = useMemo((): WeeklySeriesSeed => {
+    const demoSeries = seriesList.filter((series) => series.clientId === DEMO_CLIENT.id);
+    const active = demoSeries.find((series) => !series.stoppedAt);
+    if (active) {
+      const clashes = checkins.some((c) => c.seriesId === active.id && statusOf(c) === 'clash');
+      return clashes ? 'clashes' : 'active';
+    }
+
+    return demoSeries.length > 0 ? 'stopped' : 'none';
+  }, [seriesList, checkins, statusOf]);
+
+  const seededBoundsFor = useCallback(
+    (now: Date): SeriesBounds => {
+      const bounds = setUpBoundsFor(DEMO_CLIENT.id, now);
+      if (bounds !== 'nothing_to_create') return bounds;
+
+      const from = new Date(now.getTime() + CHECKIN_NOTICE_MINUTES * 60000);
+      return { from, until: new Date(from.getTime() + SEEDED_SERIES_WEEKS * WEEK_MS) };
+    },
+    [setUpBoundsFor],
+  );
+
+  const setWeeklySeries = useCallback(
+    (seed: WeeklySeriesSeed) => {
+      const now = new Date();
+      const demoSeriesIds = new Set(
+        seriesList.filter((series) => series.clientId === DEMO_CLIENT.id).map((series) => series.id),
+      );
+      const ofDemoSeries = (c: CheckIn) => c.seriesId !== undefined && demoSeriesIds.has(c.seriesId);
+      const releasedClashes = new Set(
+        stored.filter((c) => ofDemoSeries(c) && c.status === 'clash').map((c) => checkinStartsAt(c).getTime()),
+      );
+      const otherSeries = seriesList.filter((series) => !demoSeriesIds.has(series.id));
+      const otherCheckins = stored.filter((c) => !ofDemoSeries(c));
+      const otherTaken = takenElsewhere.filter((start) => !releasedClashes.has(start.getTime()));
+
+      if (seed === 'none') {
+        setSeriesList(otherSeries);
+        setStored(otherCheckins);
+        setTakenElsewhere(otherTaken);
+        return;
+      }
+
+      const { series, starts } = seriesSetUp({
+        id: newSeriesId(),
+        clientId: DEMO_CLIENT.id,
+        rule: ruleOf(SEEDED_SERIES_CHOICE),
+        bounds: seededBoundsFor(now),
+        at: now,
+      });
+      const clashStarts = seed === 'clashes' ? SEEDED_CLASH_WEEKS.map((week) => starts[week]) : [];
+      const weeks = starts.map((startsAt) => ({ startsAt, clash: clashStarts.includes(startsAt) }));
+      const seeded = weeks.map((week) => seriesWeekCheckin({ series, client: DEMO_CLIENT, week }));
+      const stopped = seed === 'stopped';
+
+      setSeriesList([...otherSeries, stopped ? seriesStoppedAt(series, now) : series]);
+      setStored([
+        ...seeded.map((c): CheckIn => (stopped ? { ...c, status: 'cancelled' } : c)),
+        ...otherCheckins,
+      ]);
+      setTakenElsewhere([...otherTaken, ...clashStarts]);
+    },
+    [seriesList, stored, takenElsewhere, ruleOf, seededBoundsFor],
+  );
 
   const hasLiveCheckin = stored.some((c) => c.id === LIVE_CHECKIN_ID);
 
@@ -874,8 +1178,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         cancelCheckin,
         proposeNewTime,
         getUpcomingCheckins,
-        getPendingCheckins,
-        getPastCheckins,
+        getCheckinsInTab,
         getCheckinsAwaiting,
         hasOpenClientRequest,
         getBookedSlots,
@@ -886,6 +1189,14 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         setOpenClientRequest,
         hasLiveCheckin,
         setLiveCheckin,
+        seriesFor,
+        seriesWeeks,
+        previewSeries,
+        setUpSeries,
+        changeSeries,
+        stopSeries,
+        weeklySeries,
+        setWeeklySeries,
       }}
     >
       {children}

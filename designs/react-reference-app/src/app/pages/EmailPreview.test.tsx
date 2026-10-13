@@ -390,4 +390,22 @@ describe('EmailPreview', () => {
     );
     expect(markup).toContain('Europe/Bucharest');
   });
+
+  it.each([
+    ['Weekly check-in set up', 'A weekly check-in with Eli.'],
+    ['Weekly check-in changed', 'Your weekly check-in moved.'],
+    ['Weekly check-in stopped', 'Your weekly check-in has stopped.'],
+  ])('previews the %s email to the client on a Wednesday', async (label, heading) => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: label }));
+
+    // assert
+    const markup = await previewedEmail(`${label} — to-client`, heading);
+    expect(markup).toMatch(/Every Wednesday at 4:00\s?PM/);
+    expect(markup).toContain('See your check-ins');
+  });
 });

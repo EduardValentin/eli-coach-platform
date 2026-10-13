@@ -913,3 +913,52 @@ describe('joining her check-in', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
   });
 });
+
+async function seedOnlyWeeklySeries(state: string) {
+  await userEvent.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+  await userEvent.click(screen.getByRole('tab', { name: 'Check-ins' }));
+  await userEvent.click(screen.getByRole('combobox', { name: 'Pending check-ins' }));
+  await userEvent.click(await screen.findByRole('option', { name: 'No check-ins' }));
+  await userEvent.click(screen.getByRole('combobox', { name: 'Weekly series' }));
+  await userEvent.click(await screen.findByRole('option', { name: state }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+}
+
+function listedRows(): HTMLElement[] {
+  return within(screen.getByRole('list', { name: /check-ins$/ })).getAllByRole('listitem');
+}
+
+describe('a weekly check-in on the client check-ins page', () => {
+  it('shows a clashing next week as her coach finding a new time, with nothing to act on', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('With clashes');
+
+    // act
+    await userEvent.click(screen.getByRole('tab', { name: /^Upcoming/ }));
+
+    // assert
+    const [row, ...others] = listedRows();
+    expect(others).toHaveLength(0);
+    expect(within(row).getByText('Clash')).toBeInTheDocument();
+    expect(within(row).getByText('Your coach is finding a new time')).toBeInTheDocument();
+    expect(within(row).queryByRole('link', { name: /Join/ })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('lets her move her next weekly check-in but never cancel it', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('Active');
+    await userEvent.click(screen.getByRole('tab', { name: /^Upcoming/ }));
+    const [row, ...others] = listedRows();
+
+    // act
+    await userEvent.click(within(row).getByRole('button', { name: /^More actions/ }));
+
+    // assert
+    expect(others).toHaveLength(0);
+    expect(await screen.findByRole('menuitem', { name: 'Reschedule' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Cancel' })).not.toBeInTheDocument();
+  });
+});

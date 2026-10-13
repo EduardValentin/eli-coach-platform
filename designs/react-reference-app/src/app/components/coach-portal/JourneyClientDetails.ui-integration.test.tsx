@@ -7,6 +7,7 @@ import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { MessagingProvider } from '../../context/MessagingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   AWAITING_REVIEW_CALL_ID,
@@ -70,10 +71,12 @@ function renderDetails(
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <CheckinProvider>
-                <UnitPreferencesProvider>
-                  <DemoJourneyDetails callId={callId} />
-                  <Toaster />
-                </UnitPreferencesProvider>
+                <MessagingProvider>
+                  <UnitPreferencesProvider>
+                    <DemoJourneyDetails callId={callId} />
+                    <Toaster />
+                  </UnitPreferencesProvider>
+                </MessagingProvider>
               </CheckinProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
@@ -603,7 +606,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, invitation, onboarding, subscription, measurements and the assessment call last', () => {
+  it('lays the page out as profile, invitation, onboarding, subscription, weekly check-in, measurements and the assessment call last', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -620,6 +623,7 @@ describe('the coach reading who a client is', () => {
       'Invitation',
       'Onboarding',
       'Subscription',
+      'Weekly check-in',
       'Measurements',
       'Assessment call',
     ]);

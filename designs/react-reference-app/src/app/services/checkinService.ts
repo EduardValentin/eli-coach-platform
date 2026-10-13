@@ -9,6 +9,11 @@ import {
   type TimeSpan,
 } from '../domain/checkins';
 import {
+  weekStartsBetween,
+  type SeriesBounds,
+  type WeeklyRule,
+} from '../domain/checkinSeries';
+import {
   ASSESSMENT_CALL_BUFFER_MINUTES,
   ASSESSMENT_CALL_DURATION_MINUTES,
   type CoachAvailability,
@@ -199,4 +204,133 @@ export function withdrawCheckinRequest(
   outcome: CheckinServiceOutcome,
 ): Promise<CheckinSettlement> {
   return settlePendingRequest(withdrawal, outcome);
+}
+
+export type SeriesBoundsAnswer = SeriesBounds | 'nothing_to_create';
+
+export type SeriesWeek = { startsAt: Date; clash: boolean };
+
+export type SeriesHourPreview = { hour: number; weeks: number; clashes: number };
+
+export type SeriesPreview = { weekdays: number[]; hours: SeriesHourPreview[] };
+
+export type SeriesPreviewRequest = {
+  weekday: number | null;
+  schedule: CheckinSchedule;
+  bounds: SeriesBoundsAnswer;
+};
+
+export type CheckinSeriesSetUpDecision =
+  | 'set_up'
+  | 'client_cannot_answer'
+  | 'series_exists'
+  | 'outside_availability'
+  | 'nothing_to_create';
+
+export type CheckinSeriesChangeDecision =
+  | 'changed'
+  | 'client_cannot_answer'
+  | 'outside_availability'
+  | 'changed_meanwhile';
+
+export type CheckinSeriesStopDecision = 'stopped' | 'changed_meanwhile';
+
+export type CheckinSeriesSetUp = {
+  rule: WeeklyRule;
+  schedule: CheckinSchedule;
+  weeks: readonly SeriesWeek[];
+  seriesExists: boolean;
+};
+
+export type CheckinSeriesChange = { rule: WeeklyRule; schedule: CheckinSchedule };
+
+const MONDAY_FIRST_WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];
+
+function holdsWeeklyHour(availability: CoachAvailability, { weekday, hour }: WeeklyRule): boolean {
+  return availability.weekdays.includes(weekday) && windowStartHours(availability).includes(hour);
+}
+
+function isBusyAt(startsAt: Date, schedule: CheckinSchedule): boolean {
+  const week = heldCheckinSpan(startsAt);
+
+  return busySpans(schedule).some((span) => spansOverlap(span, week));
+}
+
+function weekStartsOf(rule: WeeklyRule, bounds: SeriesBoundsAnswer): Date[] {
+  return bounds === 'nothing_to_create' ? [] : weekStartsBetween(rule, bounds);
+}
+
+export type SeriesWeekPlan = { schedule: CheckinSchedule; starts: readonly Date[] };
+
+export function plannedSeriesWeeks(
+  rule: WeeklyRule,
+  { schedule, starts }: SeriesWeekPlan,
+): SeriesWeek[] {
+  const insideAvailability = holdsWeeklyHour(schedule.availability, rule);
+
+  return starts.map((startsAt) => ({
+    startsAt,
+    clash: !insideAvailability || isBusyAt(startsAt, schedule),
+  }));
+}
+
+export function seriesPreview({ weekday, schedule, bounds }: SeriesPreviewRequest): SeriesPreview {
+  const { availability } = schedule;
+  const weekdays = MONDAY_FIRST_WEEKDAYS.filter((day) => availability.weekdays.includes(day));
+  if (weekday === null || !weekdays.includes(weekday)) return { weekdays, hours: [] };
+
+  const hours = windowStartHours(availability).map((hour) => {
+    const rule = { weekday, hour, timeZone: availability.timeZone };
+    const weeks = plannedSeriesWeeks(rule, { schedule, starts: weekStartsOf(rule, bounds) });
+    return { hour, weeks: weeks.length, clashes: weeks.filter((week) => week.clash).length };
+  });
+
+  return { weekdays, hours };
+}
+
+export async function previewCheckinSeries(
+  request: SeriesPreviewRequest,
+  outcome: CheckinServiceOutcome,
+): Promise<SeriesPreview> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+
+  return seriesPreview(request);
+}
+
+export async function setUpCheckinSeries(
+  { rule, schedule, weeks, seriesExists }: CheckinSeriesSetUp,
+  outcome: CheckinServiceOutcome,
+): Promise<CheckinSeriesSetUpDecision> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+  if (outcome === 'cannot-answer') return 'client_cannot_answer';
+  if (seriesExists) return 'series_exists';
+  if (!holdsWeeklyHour(schedule.availability, rule)) return 'outside_availability';
+  if (weeks.length === 0) return 'nothing_to_create';
+
+  return 'set_up';
+}
+
+export async function changeCheckinSeries(
+  { rule, schedule }: CheckinSeriesChange,
+  outcome: CheckinServiceOutcome,
+): Promise<CheckinSeriesChangeDecision> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+  if (outcome === 'cannot-answer') return 'client_cannot_answer';
+  if (outcome === 'time-taken') return 'changed_meanwhile';
+  if (!holdsWeeklyHour(schedule.availability, rule)) return 'outside_availability';
+
+  return 'changed';
+}
+
+export async function stopCheckinSeries(
+  outcome: CheckinServiceOutcome,
+): Promise<CheckinSeriesStopDecision> {
+  await answerAfterLatency();
+  if (outcome === 'fails') throw new Error(CHECKIN_SERVICE_FAILED);
+  if (outcome === 'time-taken') return 'changed_meanwhile';
+
+  return 'stopped';
 }

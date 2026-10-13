@@ -659,3 +659,86 @@ describe('the coach joining a check-in', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
   });
 });
+
+async function seedOnlyWeeklySeries(state: string) {
+  await userEvent.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+  await userEvent.click(screen.getByRole('tab', { name: 'Check-ins' }));
+  await userEvent.click(screen.getByRole('combobox', { name: 'Pending check-ins' }));
+  await userEvent.click(await screen.findByRole('option', { name: 'No check-ins' }));
+  await userEvent.click(screen.getByRole('combobox', { name: 'Weekly series' }));
+  await userEvent.click(await screen.findByRole('option', { name: state }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+}
+
+function listedRows(): HTMLElement[] {
+  return within(screen.getByRole('list', { name: /check-ins$/ })).getAllByRole('listitem');
+}
+
+describe('a weekly check-in on the coach check-ins page', () => {
+  it('puts the weeks whose hour is taken in Requests as clashes she reschedules or cancels', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('With clashes');
+
+    // act
+    await showTab('Requests');
+
+    // assert
+    const rows = listedRows();
+    expect(rows).toHaveLength(2);
+    rows.forEach((row) => {
+      expect(within(row).getByText('Clash')).toBeInTheDocument();
+      expect(within(row).getByText('Finding a new time')).toBeInTheDocument();
+      expect(within(row).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('2 waiting on you')).toBeInTheDocument();
+    await userEvent.click(within(rows[0]).getByRole('button', { name: /^More actions/ }));
+    expect(await screen.findByRole('menuitem', { name: 'Reschedule' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Cancel' })).toBeInTheDocument();
+  });
+
+  it('lists only the next week of the series under Upcoming', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('With clashes');
+
+    // act
+    await showTab('Upcoming');
+
+    // assert
+    const [row, ...others] = listedRows();
+    expect(others).toHaveLength(0);
+    expect(within(row).queryByText('Clash')).not.toBeInTheDocument();
+  });
+
+  it('waits for the client once the coach gives a clash a new time', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('With clashes');
+    await showTab('Requests');
+    await userEvent.click(within(listedRows()[0]).getByRole('button', { name: /^More actions/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(
+      () => expect(dialog.querySelectorAll('td[data-day] button:not([disabled])').length).toBeGreaterThan(0),
+      SERVICE_TIMEOUT,
+    );
+    const openDay = [...dialog.querySelectorAll<HTMLButtonElement>('td[data-day] button')].find(
+      (day) => !day.disabled && day.getAttribute('aria-disabled') !== 'true',
+    );
+    if (!openDay) throw new Error('No open day');
+    await userEvent.click(openDay);
+    const [time] = await within(dialog).findAllByRole('button', { name: /^\d{1,2}:\d{2}\s?[AP]M$/ });
+    await userEvent.click(time);
+
+    // act
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: new RegExp(`^\\w+ ${time.textContent}$`) }),
+    );
+
+    // assert
+    expect(await screen.findByText('New time proposed', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByText('1 waiting on you')).toBeInTheDocument();
+    expect(screen.getByText('New time from you')).toBeInTheDocument();
+  });
+});

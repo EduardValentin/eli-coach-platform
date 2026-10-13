@@ -182,7 +182,7 @@ export function ClientCheckins() {
   };
 
   const upcomingActions = (c: CheckIn): CheckinRowActions => ({
-    shown: <JoinMeetLink checkin={c} party="client" />,
+    shown: statusOf(c) === 'clash' ? undefined : <JoinMeetLink checkin={c} party="client" />,
     menu: {
       reschedule: rescheduleAction(proposalFor(c, 'client'), () => openReschedule(c)),
       cancel: canCancelApproved(c, 'client') ? { onSelect: () => setCancelTarget(c) } : undefined,

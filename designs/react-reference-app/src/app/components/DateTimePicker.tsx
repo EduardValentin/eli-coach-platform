@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { BrandCalendar } from './BrandCalendar';
 import { to24h } from '../utils/dateFormatters';
+import { cn } from './ui/utils';
 
 const DEFAULT_TIME_SLOTS = [
   '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -110,14 +111,17 @@ export function SlotPickerFrame({
   );
 }
 
+type TimeSlotDetail = { text: string; parity: string };
+
 type TimeSlotButtonProps = {
   label: string;
   isSelected: boolean;
   isBooked?: boolean;
+  detail?: TimeSlotDetail;
   onSelect: () => void;
 };
 
-export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }: TimeSlotButtonProps) {
+export function TimeSlotButton({ label, isSelected, isBooked = false, detail, onSelect }: TimeSlotButtonProps) {
   return (
     <button
       type="button"
@@ -134,6 +138,14 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }
     >
       <span className={isBooked ? 'line-through' : ''}>{label}</span>
       {isBooked && <span className="ml-1 text-xs uppercase tracking-label">Booked</span>}
+      {detail && (
+        <span
+          data-parity={detail.parity}
+          className={cn('ml-2 text-xs', { 'text-status-pending': !isSelected })}
+        >
+          {detail.text}
+        </span>
+      )}
     </button>
   );
 }

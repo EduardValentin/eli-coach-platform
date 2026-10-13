@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
 import { useCheckins } from "../../context/CheckinContext";
 import {
-  canCancelApproved,
   canWithdrawRequest,
-  proposalFor,
   proposesNewTime,
   type CheckIn,
 } from "../../domain/checkins";
@@ -16,7 +13,6 @@ import {
 } from "../../utils/dateFormatters";
 import {
   CheckinCard,
-  rescheduleAction,
   type CheckinRowActions,
 } from "../../components/CheckinCard";
 import {
@@ -24,15 +20,15 @@ import {
   type CheckinEmptyCopy,
 } from "../../components/CheckinListing";
 import type { CheckinTab } from "../../utils/checkinListing";
-import { CheckinProposeTimeDialog } from "../../components/CheckinProposeTimeDialog";
 import { JoinMeetLink } from "../../components/JoinMeetLink";
 import {
   useCheckinAnswers,
   type CheckinAnswer,
 } from "../../hooks/useCheckinAnswers";
+import { useCoachCheckinMenu } from "../../hooks/useCoachCheckinMenu";
 import { PortalPageHeader } from "../../components/PortalPageHeader";
 import { Button } from "../../components/ui/button";
-import { ConfirmDialog } from "../../components/ui/confirm-dialog";
+import { firstNameOf } from "../../utils/clientHelpers";
 import { toast } from "sonner";
 
 const CLIENT_AVATARS: Record<string, string | null> = {
@@ -68,24 +64,12 @@ const BUSY_LABEL: Record<CheckinAnswer, string> = {
   withdraw: "Cancelling…",
 };
 
-function firstName(fullName: string): string {
-  return fullName.split(" ")[0];
-}
-
 export function CoachCheckins() {
-  const {
-    statusOf,
-    findCheckin,
-    cancelCheckin,
-  } = useCheckins();
+  const { statusOf } = useCheckins();
   const { addNotification } = useNotifications();
-  const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { addSystemMessage } = useMessaging();
   const { answer, answerInFlight } = useCheckinAnswers();
-
-  const [proposingFor, setProposingFor] = useState<string | null>(null);
-  const [cancelTarget, setCancelTarget] = useState<CheckIn | null>(null);
-
-  const proposingCheckin = proposingFor ? findCheckin(proposingFor) ?? null : null;
+  const { rescheduleOf, cancelOf, dialogs } = useCoachCheckinMenu();
 
   const handleApprove = (c: CheckIn) =>
     answer(c, "approve", () => {
@@ -122,28 +106,6 @@ export function CoachCheckins() {
 
   const busyLabel = (c: CheckIn, action: CheckinAnswer, label: string) =>
     answerInFlight(c) === action ? BUSY_LABEL[action] : label;
-
-  const confirmCancel = () => {
-    if (!cancelTarget) return;
-    cancelCheckin(cancelTarget.id);
-    addSystemMessage(
-      cancelTarget.clientId,
-      "Check-in cancelled",
-      "checkin-cancelled",
-    );
-    toast.success(`Cancelled check-in with ${cancelTarget.clientName}`);
-    setCancelTarget(null);
-  };
-
-  const handleProposed = (c: CheckIn) => {
-    addSystemMessage(
-      c.clientId,
-      `Coach proposed rescheduling to ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
-      "checkin-rescheduled",
-    );
-    if (c.newTimeNote) ctxSendMessage(c.clientId, c.newTimeNote, "coach");
-    toast.success("New time proposed");
-  };
 
   const waitingActions = (c: CheckIn): CheckinRowActions => ({
     shown: canWithdrawRequest(c, "coach") ? (
@@ -183,21 +145,20 @@ export function CoachCheckins() {
       </>
     ),
     menu: {
-      reschedule: rescheduleAction(proposalFor(c, "coach"), () => setProposingFor(c.id)),
+      reschedule: rescheduleOf(c),
       disabled: answering(c),
     },
+  });
+
+  const clashActions = (c: CheckIn): CheckinRowActions => ({
+    menu: { reschedule: rescheduleOf(c), cancel: cancelOf(c) },
   });
 
   const upcomingActions = (c: CheckIn): CheckinRowActions => ({
     shown: <JoinMeetLink checkin={c} party="coach" size="xs" />,
     menu: {
-      reschedule:
-        c.kind === "program-review"
-          ? undefined
-          : rescheduleAction(proposalFor(c, "coach"), () => setProposingFor(c.id)),
-      cancel: canCancelApproved(c, "coach")
-        ? { onSelect: () => setCancelTarget(c) }
-        : undefined,
+      reschedule: c.kind === "program-review" ? undefined : rescheduleOf(c),
+      cancel: cancelOf(c),
     },
   });
 
@@ -205,7 +166,7 @@ export function CoachCheckins() {
     <CheckinCard
       checkin={c}
       status={statusOf(c)}
-      viewer={{ party: "coach", counterpartName: firstName(c.clientName) }}
+      viewer={{ party: "coach", counterpartName: firstNameOf(c.clientName) }}
       attendee={{
         name: c.clientName,
         imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
@@ -219,6 +180,7 @@ export function CoachCheckins() {
   const actionsFor = (c: CheckIn, tab: CheckinTab): CheckinRowActions => {
     if (tab === "upcoming") return upcomingActions(c);
     if (tab === "past") return {};
+    if (statusOf(c) === "clash") return clashActions(c);
     return c.proposedBy === "coach" ? waitingActions(c) : answerActions(c);
   };
 
@@ -237,36 +199,7 @@ export function CoachCheckins() {
         renderCheckin={(c, tab) => card(c, actionsFor(c, tab))}
       />
 
-      <CheckinProposeTimeDialog
-        checkin={proposingCheckin}
-        party="coach"
-        noteLabel={
-          proposingCheckin
-            ? `Add a note for ${firstName(proposingCheckin.clientName)} (optional)`
-            : ""
-        }
-        onOpenChange={(open) => {
-          if (!open) setProposingFor(null);
-        }}
-        onProposed={handleProposed}
-      />
-
-      <ConfirmDialog
-        open={cancelTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setCancelTarget(null);
-        }}
-        title="Cancel this check-in?"
-        description={
-          cancelTarget
-            ? `${formatCheckinDate(cancelTarget.date)} at ${formatCheckinTime(cancelTarget.time)} with ${cancelTarget.clientName}.`
-            : undefined
-        }
-        cancelLabel="Keep"
-        confirmLabel="Cancel check-in"
-        onConfirm={confirmCancel}
-        tone="destructive"
-      />
+      {dialogs}
     </div>
   );
 }

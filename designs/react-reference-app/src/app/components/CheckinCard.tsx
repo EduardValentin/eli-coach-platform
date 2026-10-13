@@ -65,6 +65,32 @@ function moveLabel(checkin: CheckIn, viewer: CheckinViewer): string | null {
   return move.move === 'new-time' ? `New time from ${who}` : `Requested by ${who}`;
 }
 
+const CLASH_LABEL: Record<CheckinParty, string> = {
+  coach: 'Finding a new time',
+  client: 'Your coach is finding a new time',
+};
+
+function whenLabelOf(checkin: CheckIn, status: CheckinStatus, viewer: CheckinViewer): string {
+  if (status === 'clash') return CLASH_LABEL[viewer.party];
+
+  return [CHECKIN_KIND_LABEL[checkin.kind], moveLabel(checkin, viewer)]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+function statusBadge(status: CheckinStatus): ReactNode {
+  if (status === 'cancelled') return <Badge tone="muted">Cancelled</Badge>;
+  if (status === 'clash') {
+    return (
+      <Badge tone="pending" data-parity="clash-badge">
+        Clash
+      </Badge>
+    );
+  }
+
+  return undefined;
+}
+
 function capitalized(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -144,9 +170,7 @@ export function CheckinCard({
   const previousWhen = previous ? { startsAt: previous, timeZone } : undefined;
   const awaitingNewTime = status === 'pending' && previousWhen;
   const isOver = status === 'passed' || status === 'cancelled';
-  const whenLabel = [CHECKIN_KIND_LABEL[checkin.kind], moveLabel(checkin, viewer)]
-    .filter(Boolean)
-    .join(' · ');
+  const whenLabel = whenLabelOf(checkin, status, viewer);
   const note = checkinNote(checkin);
   const more = menuActions(actions.menu ?? {});
   const hasActions = Boolean(actions.shown) || more.length > 0;
@@ -159,9 +183,7 @@ export function CheckinCard({
       supersededWhen={awaitingNewTime ? previousWhen : undefined}
       rescheduledFrom={awaitingNewTime ? undefined : previousWhen}
       status={isOver ? 'past' : 'scheduled'}
-      badges={
-        status === 'cancelled' ? <Badge tone="muted">Cancelled</Badge> : undefined
-      }
+      badges={statusBadge(status)}
       quote={note?.text}
       quoteAuthor={note ? capitalized(nameFor(note.by, viewer)) : undefined}
       quoteParity="checkin-note"

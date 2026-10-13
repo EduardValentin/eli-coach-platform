@@ -10,6 +10,7 @@ import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
 import { ScheduleCheckinAction } from './ScheduleCheckinAction';
+import { WeeklyCheckinPanel } from './WeeklyCheckinPanel';
 import { PortalBackLink } from '../PortalBackLink';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { needsRefund } from '../../domain/coachingSubscription';
@@ -76,14 +77,17 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         heightCm={statedHeightCm(journey.onboarding.answers)}
       />
       {journey.subscription && (
-        <SubscriptionSummary
-          subscription={journey.subscription}
-          perspective="coach"
-          clientGender={journey.identity.gender}
-          pricing={journey.pricing}
-          headingId="subscription-panel-heading"
-          className="mb-8"
-        />
+        <>
+          <SubscriptionSummary
+            subscription={journey.subscription}
+            perspective="coach"
+            clientGender={journey.identity.gender}
+            pricing={journey.pricing}
+            headingId="subscription-panel-heading"
+            className="mb-8"
+          />
+          <WeeklyCheckinPanel journey={journey} />
+        </>
       )}
       <JourneyMeasurements
         journey={journey}

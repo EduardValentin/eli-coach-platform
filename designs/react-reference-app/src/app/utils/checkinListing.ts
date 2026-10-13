@@ -4,10 +4,11 @@ import {
   type CheckIn,
   type CheckinKind,
   type CheckinParty,
+  type CheckinTab,
 } from '../domain/checkins';
 import type { SortDirection } from '../components/SortControl';
 
-export type CheckinTab = 'upcoming' | 'requests' | 'past';
+export type { CheckinTab } from '../domain/checkins';
 
 export type KindFilter = 'any' | CheckinKind;
 
