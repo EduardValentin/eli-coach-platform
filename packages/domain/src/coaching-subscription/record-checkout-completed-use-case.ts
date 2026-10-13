@@ -80,10 +80,12 @@ export class RecordCheckoutCompletedUseCase {
       return { status: "call_not_found" };
     }
 
+    const subscription =
+      PurchasedSubscription.fromCompletedCheckout(completion);
     const purchase = await this.options.purchases.recordCompletion({
       eventId,
       intake: this.intakeOf(call),
-      subscription: PurchasedSubscription.fromCompletedCheckout(completion),
+      subscription,
     });
 
     if (purchase.outcome === "call_already_paid") {
@@ -96,7 +98,7 @@ export class RecordCheckoutCompletedUseCase {
     }
 
     await this.options.admission.admit({ clientId: purchase.clientId });
-    await this.holdRenewal(completion.paymentSubscriptionId);
+    await this.holdRenewal(subscription);
 
     return {
       status: STATUS_BY_PURCHASE_OUTCOME[purchase.outcome],
@@ -119,11 +121,21 @@ export class RecordCheckoutCompletedUseCase {
     };
   }
 
-  private async holdRenewal(paymentSubscriptionId: string): Promise<void> {
+  private async holdRenewal(
+    subscription: PurchasedSubscription,
+  ): Promise<void> {
+    const { paymentSubscriptionId } = subscription;
+    const until = subscription.renewalHoldUntil();
+
+    if (until === null) {
+      return;
+    }
+
     try {
-      await this.options.paymentSubscriptions.holdRenewal(
+      await this.options.paymentSubscriptions.holdRenewal({
         paymentSubscriptionId,
-      );
+        until,
+      });
     } catch (error) {
       this.options.incidents.renewalHoldFailed({
         paymentSubscriptionId,

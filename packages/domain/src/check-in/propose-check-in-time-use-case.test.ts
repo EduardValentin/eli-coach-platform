@@ -35,11 +35,14 @@ const REACHABLE_ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/London",
 };
 
 const APPROVED = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: STARTS_AT,
   clientTimeZone: "Europe/London",
@@ -99,7 +102,7 @@ function createProposeCheckInTime(options?: {
     listAll: vi.fn(),
     settle: vi.fn(),
     move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
-    cancelStartingFrom: vi.fn(),
+    endCoaching: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi
@@ -125,6 +128,9 @@ function createProposeCheckInTime(options?: {
     newTimeAccepted: vi.fn().mockResolvedValue("sent"),
     newTimeDeclined: vi.fn().mockResolvedValue("sent"),
     cancelled: vi.fn().mockResolvedValue("sent"),
+    seriesSetUp: vi.fn().mockResolvedValue("sent"),
+    seriesChanged: vi.fn().mockResolvedValue("sent"),
+    seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const ports = {
     availability: workingDays(),
@@ -137,6 +143,8 @@ function createProposeCheckInTime(options?: {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
     },
     notifications,
   };
@@ -170,6 +178,57 @@ describe("ProposeCheckInTimeUseCase", () => {
       expected: { recordedStatus: "approved", startsAt: STARTS_AT },
       at: NOW,
     });
+  });
+
+  it("moves a clash to the coach's new time from the clash she read, waiting for the client without spending a move", async () => {
+    // arrange
+    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      found: checkIn({
+        seriesId: "series-1",
+        kind: "recurring",
+        recordedStatus: "clash",
+        initiatedBy: "coach",
+        proposedBy: "coach",
+        note: null,
+      }),
+    });
+
+    // act
+    const result = await proposeCheckInTime.execute(COACH_PROPOSAL);
+
+    // assert
+    expect(result).toEqual({
+      status: "proposed",
+      checkIn: expect.objectContaining({
+        startsAt: NEW_START,
+        recordedStatus: "pending",
+        proposedBy: "coach",
+        earlierStartsAt: STARTS_AT,
+        moves: 0,
+      }),
+    });
+    expect(ports.checkIns.move).toHaveBeenCalledWith({
+      checkIn: expect.any(CheckIn),
+      expected: { recordedStatus: "clash", startsAt: STARTS_AT },
+      at: NOW,
+    });
+  });
+
+  it("refuses the client moving a clash her coach is rescheduling", async () => {
+    // arrange
+    const { proposeCheckInTime, ports } = createProposeCheckInTime({
+      found: checkIn({ seriesId: "series-1", recordedStatus: "clash" }),
+    });
+
+    // act
+    const result = await proposeCheckInTime.execute({
+      ...COACH_PROPOSAL,
+      actor: ANA_ACTOR,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_your_turn" });
+    expect(ports.checkIns.move).not.toHaveBeenCalled();
   });
 
   it("emails the client the coach's new time", async () => {

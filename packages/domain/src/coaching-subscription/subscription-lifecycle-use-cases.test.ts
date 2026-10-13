@@ -9,6 +9,7 @@ import type {
 
 import { CancelSubscriptionUseCase } from "./cancel-subscription-use-case";
 import type { CoachingEndHandler } from "./coaching-end-handler";
+import type { CoachingPeriodHandler } from "./coaching-period-handler";
 import {
   CoachingSubscription,
   type CoachingSubscriptionSnapshot,
@@ -34,6 +35,7 @@ const DAY_13 = new Date("2026-10-15T10:00:00.000Z");
 const DAY_14 = new Date("2026-10-16T10:00:00.000Z");
 const WITHDRAWAL_DEADLINE = new Date("2026-10-16T10:00:00.000Z");
 const ACCESS_END = new Date("2027-01-02T10:00:00.000Z");
+const RENEWED_THROUGH = new Date("2027-04-02T10:00:00.000Z");
 const RETURN_URL = "https://evoa.example/client/settings";
 
 function snapshotOf(
@@ -51,7 +53,9 @@ function snapshotOf(
     paymentSubscriptionId: "sub_1",
     checkoutSessionId: "cs_1",
     paidAt: PAID_AT,
+    paidThrough: ACCESS_END,
     startChoice: "waiting",
+    programStartsAt: WITHDRAWAL_DEADLINE,
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,
@@ -93,6 +97,7 @@ function createCards(stored: PaymentCard | null) {
 function createPaymentSubscriptions() {
   return {
     holdRenewal: vi.fn().mockResolvedValue(undefined),
+    liftRenewalHold: vi.fn().mockResolvedValue(undefined),
     endNow: vi.fn().mockResolvedValue(undefined),
     endAt: vi.fn().mockResolvedValue(undefined),
     openPaymentMethodSession: vi
@@ -116,6 +121,8 @@ function createIncidents() {
     paymentCardEventMirrored: vi.fn(),
     paymentCardRefreshFailed: vi.fn(),
     coachingEndNotPropagated: vi.fn(),
+    coachingPeriodNotPropagated: vi.fn(),
+    renewalHoldLiftFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 
@@ -147,6 +154,8 @@ const anaReach: ClientReachReading = {
   clientId: CLIENT_ID,
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/Bucharest",
 };
 
@@ -167,6 +176,13 @@ function createCoachingEnd() {
   return {
     coachingEnds: vi.fn().mockResolvedValue(undefined),
   } satisfies CoachingEndHandler;
+}
+
+function createCoachingPeriod() {
+  return {
+    paidThroughExtended: vi.fn().mockResolvedValue(undefined),
+    programStarted: vi.fn().mockResolvedValue(undefined),
+  } satisfies CoachingPeriodHandler;
 }
 
 function cancelUseCase(options: {
@@ -784,10 +800,15 @@ describe("StartProgramNowUseCase", () => {
     subscriptions: ReturnType<typeof createSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
     clientReach?: ReturnType<typeof createClientReach>;
+    coachingPeriod?: ReturnType<typeof createCoachingPeriod>;
+    paymentSubscriptions?: ReturnType<typeof createPaymentSubscriptions>;
   }) {
     return new StartProgramNowUseCase({
       clock: clockAt(options.now),
+      coachingPeriods: [options.coachingPeriod ?? createCoachingPeriod()],
       incidents: options.incidents ?? createIncidents(),
+      paymentSubscriptions:
+        options.paymentSubscriptions ?? createPaymentSubscriptions(),
       signedInSubscriptions: signedInOf(
         options.subscriptions,
         options.clientReach,
@@ -810,7 +831,10 @@ describe("StartProgramNowUseCase", () => {
     expect(result).toEqual({ status: "started" });
     expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith(CLIENT_ID);
     expect(subscriptions.save).toHaveBeenCalledWith({
-      subscription: subscriptionOf({ startChoice: "immediate" }),
+      subscription: subscriptionOf({
+        startChoice: "immediate",
+        programStartsAt: DAY_13,
+      }),
       previous: current,
     });
     expect(incidents.programStartedNow).toHaveBeenCalledWith({
@@ -837,6 +861,108 @@ describe("StartProgramNowUseCase", () => {
     // assert
     expect(result).toEqual({ status: "refused", reason });
     expect(subscriptions.save).not.toHaveBeenCalled();
+  });
+
+  it("tells check-ins her program started now, then lifts the renewal hold", async () => {
+    // arrange
+    const coachingPeriod = createCoachingPeriod();
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const subscriptions = createSubscriptions(subscriptionOf());
+    const useCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions,
+      coachingPeriod,
+      paymentSubscriptions,
+    });
+
+    // act
+    await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(coachingPeriod.programStarted).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      startsAt: DAY_13,
+    });
+    expect(paymentSubscriptions.liftRenewalHold).toHaveBeenCalledWith("sub_1");
+    expect(subscriptions.save.mock.invocationCallOrder[0]).toBeLessThan(
+      coachingPeriod.programStarted.mock.invocationCallOrder[0] ?? 0,
+    );
+    expect(
+      coachingPeriod.programStarted.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      paymentSubscriptions.liftRenewalHold.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it("keeps the start and reports it when check-ins cannot be told", async () => {
+    // arrange
+    const failure = new Error("check-ins down");
+    const coachingPeriod = createCoachingPeriod();
+    coachingPeriod.programStarted.mockRejectedValue(failure);
+    const incidents = createIncidents();
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const useCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingPeriod,
+      incidents,
+      paymentSubscriptions,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "started" });
+    expect(incidents.coachingPeriodNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: CLIENT_ID,
+      error: failure,
+    });
+    expect(paymentSubscriptions.liftRenewalHold).toHaveBeenCalledWith("sub_1");
+  });
+
+  it("keeps the start and reports it when the renewal hold cannot be lifted", async () => {
+    // arrange
+    const failure = new Error("provider unavailable");
+    const paymentSubscriptions = createPaymentSubscriptions();
+    paymentSubscriptions.liftRenewalHold.mockRejectedValue(failure);
+    const incidents = createIncidents();
+    const useCase = startNowUseCase({
+      now: DAY_13,
+      subscriptions: createSubscriptions(subscriptionOf()),
+      incidents,
+      paymentSubscriptions,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "started" });
+    expect(incidents.renewalHoldLiftFailed).toHaveBeenCalledWith({
+      paymentSubscriptionId: "sub_1",
+      error: failure,
+    });
+  });
+
+  it("tells nobody and lifts nothing when the start is refused", async () => {
+    // arrange
+    const coachingPeriod = createCoachingPeriod();
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const useCase = startNowUseCase({
+      now: DAY_14,
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingPeriod,
+      paymentSubscriptions,
+    });
+
+    // act
+    await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(coachingPeriod.programStarted).not.toHaveBeenCalled();
+    expect(paymentSubscriptions.liftRenewalHold).not.toHaveBeenCalled();
   });
 
   it("finds nothing to start for a subject with no subscription", async () => {
@@ -1203,9 +1329,11 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     subscriptions: ReturnType<typeof createSubscriptions>;
     incidents?: ReturnType<typeof createIncidents>;
     coachingEnd?: ReturnType<typeof createCoachingEnd>;
+    coachingPeriod?: ReturnType<typeof createCoachingPeriod>;
   }) {
     return new ReconcileSubscriptionEventUseCase({
       coachingEnds: [options.coachingEnd ?? createCoachingEnd()],
+      coachingPeriods: [options.coachingPeriod ?? createCoachingPeriod()],
       incidents: options.incidents ?? createIncidents(),
       subscriptions: options.subscriptions,
     });
@@ -1279,9 +1407,10 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       {
         kind: "renewal-paid",
         paymentSubscriptionId: "sub_1",
+        paidThrough: RENEWED_THROUGH,
         occurredAt: OCCURRED_AT,
       },
-      subscriptionOf(),
+      subscriptionOf({ paidThrough: RENEWED_THROUGH }),
     ],
   ])(
     "mirrors %s and records the event once with the change",
@@ -1552,6 +1681,110 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     },
   );
 
+  it("tells check-ins her paid-through date once a paid renewal is recorded", async () => {
+    // arrange
+    const coachingPeriod = createCoachingPeriod();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingPeriod,
+    });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "renewal-paid",
+        paymentSubscriptionId: "sub_1",
+        paidThrough: RENEWED_THROUGH,
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingPeriod.paidThroughExtended).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      paidThrough: RENEWED_THROUGH,
+    });
+  });
+
+  it("tells check-ins nothing for a redelivered renewal", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf());
+    subscriptions.saveForEvent.mockResolvedValue("duplicate");
+    const coachingPeriod = createCoachingPeriod();
+    const useCase = reconcileUseCase({ subscriptions, coachingPeriod });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "renewal-paid",
+        paymentSubscriptionId: "sub_1",
+        paidThrough: RENEWED_THROUGH,
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingPeriod.paidThroughExtended).not.toHaveBeenCalled();
+  });
+
+  it("tells check-ins no paid-through date for an event that is not a renewal", async () => {
+    // arrange
+    const coachingPeriod = createCoachingPeriod();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(
+        subscriptionOf({ paymentProblemSince: DAY_13 }),
+      ),
+      coachingPeriod,
+    });
+
+    // act
+    await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "payment-recovered",
+        paymentSubscriptionId: "sub_1",
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(coachingPeriod.paidThroughExtended).not.toHaveBeenCalled();
+  });
+
+  it("keeps the recorded renewal and reports it when check-ins cannot be told", async () => {
+    // arrange
+    const failure = new Error("check-ins down");
+    const coachingPeriod = createCoachingPeriod();
+    coachingPeriod.paidThroughExtended.mockRejectedValue(failure);
+    const incidents = createIncidents();
+    const useCase = reconcileUseCase({
+      subscriptions: createSubscriptions(subscriptionOf()),
+      coachingPeriod,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      event: {
+        kind: "renewal-paid",
+        paymentSubscriptionId: "sub_1",
+        paidThrough: RENEWED_THROUGH,
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "recorded" });
+    expect(incidents.coachingPeriodNotPropagated).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      clientId: CLIENT_ID,
+      error: failure,
+    });
+  });
+
   it("tells check-ins nothing when a scheduled end is lifted", async () => {
     // arrange
     const coachingEnd = createCoachingEnd();
@@ -1717,6 +1950,8 @@ describe("ReconcileSubscriptionEventUseCase", () => {
         accessEndsAt: OCCURRED_AT,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       });
     },
   );

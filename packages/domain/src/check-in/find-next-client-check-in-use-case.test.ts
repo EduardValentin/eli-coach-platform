@@ -11,6 +11,7 @@ const NOW = new Date("2026-06-03T09:30:00.000Z");
 
 const APPROVED = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-05T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -64,6 +65,8 @@ const REACHABLE: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/London",
 };
 
@@ -94,6 +97,8 @@ function createUseCase(options: {
     awaitingCheckInsCountFailed: vi.fn(),
     awaitingCheckInsListFailed: vi.fn(),
     nextCheckInLookupFailed: vi.fn(),
+    checkInSeriesNotificationFailed: vi.fn(),
+    checkInSeriesExtensionFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new FindNextClientCheckInUseCase({
     checkIns,

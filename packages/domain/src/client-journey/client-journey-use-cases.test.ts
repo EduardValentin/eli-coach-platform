@@ -27,6 +27,8 @@ const NOT_STARTED: CoachingStandingSnapshot = {
   accessEndsAt: null,
   refundDue: false,
   bundleMonths: null,
+  programStartsAt: null,
+  paidThrough: null,
 };
 
 function journey(
@@ -135,6 +137,8 @@ describe("ReadClientPortalStandingUseCase", () => {
     accessEndsAt: NOW,
     refundDue: false,
     bundleMonths: 3,
+    programStartsAt: null,
+    paidThrough: null,
   };
 
   function standingUseCase(options: {
@@ -160,6 +164,8 @@ describe("ReadClientPortalStandingUseCase", () => {
         accessEndsAt: null,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
       },
     });
     const { useCase, journeys } = standingUseCase({ found, now: NOW });
@@ -216,6 +222,8 @@ describe("ReadClientPortalStandingUseCase", () => {
         accessEndsAt: ACCESS_END,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
       } satisfies CoachingStandingSnapshot,
       ACCESS_END,
     ],

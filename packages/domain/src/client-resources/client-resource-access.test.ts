@@ -81,6 +81,8 @@ function reachReading(
     clientId,
     portal,
     coachingEndsAt: null,
+    programStartsAt: null,
+    paidThrough: null,
     timeZone: "Europe/Bucharest",
   };
 }

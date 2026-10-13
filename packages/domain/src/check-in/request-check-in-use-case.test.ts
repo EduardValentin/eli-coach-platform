@@ -32,6 +32,8 @@ const REACHABLE_ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/London",
 };
 
@@ -68,7 +70,9 @@ function createCheckIns(answer?: CheckInRequestResult) {
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue("settled"),
     move: vi.fn().mockResolvedValue("moved"),
-    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
+    endCoaching: vi
+      .fn()
+      .mockResolvedValue({ cancelled: [], seriesStopped: false }),
   } satisfies CheckIns;
 }
 
@@ -94,6 +98,9 @@ function createNotifications() {
     newTimeAccepted: vi.fn().mockResolvedValue("sent"),
     newTimeDeclined: vi.fn().mockResolvedValue("sent"),
     cancelled: vi.fn().mockResolvedValue("sent"),
+    seriesSetUp: vi.fn().mockResolvedValue("sent"),
+    seriesChanged: vi.fn().mockResolvedValue("sent"),
+    seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
 }
 
@@ -117,6 +124,8 @@ function createRequestCheckIn(options?: {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
     },
     notifications: options?.notifications ?? createNotifications(),
   };
@@ -317,6 +326,8 @@ describe("RequestCheckInUseCase", () => {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
     };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,
@@ -343,6 +354,8 @@ describe("RequestCheckInUseCase", () => {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
     };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,

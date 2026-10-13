@@ -1,6 +1,7 @@
 import type { ClientIdentities } from "../client";
 import type { Clock } from "../shared";
 
+import { CheckIn } from "./check-in";
 import type { CheckIns } from "./check-ins";
 import {
   CoachCheckInViews,
@@ -16,11 +17,13 @@ type ListCoachCheckInsUseCaseOptions = {
 export class ListCoachCheckInsUseCase {
   private readonly views: CoachCheckInViews;
 
-  constructor(options: ListCoachCheckInsUseCaseOptions) {
+  constructor(private readonly options: ListCoachCheckInsUseCaseOptions) {
     this.views = new CoachCheckInViews(options);
   }
 
   async execute(): Promise<CoachCheckInView[]> {
-    return this.views.list();
+    const checkIns = await this.options.checkIns.listAll();
+
+    return CheckIn.nextUpcomingOfEachSeries(await this.views.viewsOf(checkIns));
   }
 }

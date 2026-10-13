@@ -38,6 +38,7 @@ const MARIA: ClientIdentity = {
 
 const REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-03T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -58,6 +59,19 @@ function checkIn(props?: Partial<CheckInProps>): CheckIn {
   return CheckIn.reconstitute({ ...REQUEST, ...props });
 }
 
+function weekOf(week: number, props?: Partial<CheckInProps>): CheckIn {
+  return checkIn({
+    id: `week-${week}`,
+    seriesId: "series-1",
+    kind: "recurring",
+    recordedStatus: "approved",
+    initiatedBy: "coach",
+    proposedBy: "coach",
+    startsAt: new Date(Date.UTC(2026, 5, 4 + 7 * week, 15)),
+    ...props,
+  });
+}
+
 function createPorts(options: {
   checkIns: CheckIn[];
   client?: ClientReachReading | null;
@@ -70,7 +84,7 @@ function createPorts(options: {
     listAll: vi.fn().mockResolvedValue(options.checkIns),
     settle: vi.fn(),
     move: vi.fn(),
-    cancelStartingFrom: vi.fn(),
+    endCoaching: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
@@ -79,6 +93,8 @@ function createPorts(options: {
             clientId: "client-1",
             portal: "reachable",
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/London",
           }
         : options.client,
@@ -114,6 +130,7 @@ describe("ListClientCheckInsUseCase", () => {
         {
           ...unanswered.toSnapshot(),
           status: "cancelled",
+          tab: "past",
           awaitsViewer: false,
           viewerMayWithdraw: false,
           isWaitingRequest: false,
@@ -124,6 +141,7 @@ describe("ListClientCheckInsUseCase", () => {
         {
           ...approved.toSnapshot(),
           status: "approved",
+          tab: "upcoming",
           awaitsViewer: false,
           viewerMayWithdraw: false,
           isWaitingRequest: false,
@@ -166,6 +184,8 @@ describe("ListClientCheckInsUseCase", () => {
         clientId: "client-1",
         portal: "ended",
         coachingEndsAt: null,
+        programStartsAt: null,
+        paidThrough: null,
         timeZone: "Europe/London",
       },
     ],
@@ -182,6 +202,30 @@ describe("ListClientCheckInsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "ended" });
     expect(ports.checkIns.listForClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("ListClientCheckInsUseCase weekly check-ins", () => {
+  it("lists only the next weekly check-in under Upcoming, the clash she waits on included", async () => {
+    // arrange
+    const ports = createPorts({
+      checkIns: [
+        weekOf(2),
+        weekOf(0, { recordedStatus: "clash" }),
+        weekOf(1),
+        weekOf(-1, { recordedStatus: "cancelled" }),
+      ],
+    });
+
+    // act
+    const result = await new ListClientCheckInsUseCase(ports).execute(
+      "user_ana",
+    );
+
+    // assert
+    expect(
+      result.status === "listed" && result.checkIns.map((view) => view.id),
+    ).toEqual(["week-0", "week--1"]);
   });
 });
 
@@ -208,6 +252,7 @@ describe("ListCoachCheckInsUseCase", () => {
       {
         ...anas.toSnapshot(),
         status: "cancelled",
+        tab: "past",
         awaitsViewer: false,
         viewerMayWithdraw: false,
         isWaitingRequest: false,
@@ -219,6 +264,7 @@ describe("ListCoachCheckInsUseCase", () => {
       {
         ...marias.toSnapshot(),
         status: "approved",
+        tab: "upcoming",
         awaitsViewer: false,
         viewerMayWithdraw: false,
         isWaitingRequest: false,
@@ -283,5 +329,30 @@ describe("ListCoachCheckInsUseCase", () => {
 
     // assert
     expect(listed.map((listing) => listing.id)).toEqual(["check-in-1"]);
+  });
+});
+
+describe("ListCoachCheckInsUseCase weekly check-ins", () => {
+  it("lists a clash under Requests and only the next approved week of the series under Upcoming", async () => {
+    // arrange
+    const ports = createPorts({
+      checkIns: [
+        weekOf(0, { recordedStatus: "clash" }),
+        weekOf(1),
+        weekOf(2),
+        weekOf(3, { recordedStatus: "pending", proposedBy: "client" }),
+      ],
+      identities: [ANA],
+    });
+
+    // act
+    const listed = await new ListCoachCheckInsUseCase(ports).execute();
+
+    // assert
+    expect(listed.map((view) => [view.id, view.tab])).toEqual([
+      ["week-0", "requests"],
+      ["week-1", "upcoming"],
+      ["week-3", "requests"],
+    ]);
   });
 });

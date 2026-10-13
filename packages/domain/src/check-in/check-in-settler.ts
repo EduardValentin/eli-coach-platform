@@ -6,7 +6,6 @@ import type {
   CheckInOutcome,
   CheckInRefusal,
   CheckInSnapshot,
-  RecordedCheckInStatus,
 } from "./check-in";
 import { actingClientZoneOf, type CheckInActorCommand } from "./check-in-actor";
 import { CheckInActorReach } from "./check-in-actor-reach";
@@ -34,7 +33,6 @@ type CheckInSettling<Refusal extends CheckInRefusal> = {
   command: CheckInActorCommand;
   refusalOf: (checkIn: CheckIn, turn: CheckInTurn) => Refusal | null;
   outcome: CheckInOutcome;
-  expectedStatus: RecordedCheckInStatus;
   notificationOf: (checkIn: CheckIn) => CheckInNotification;
 };
 
@@ -57,7 +55,7 @@ export class CheckInSettler {
   async settle<Refusal extends CheckInRefusal>(
     settling: CheckInSettling<Refusal>,
   ): Promise<SettledCheckIn<Refusal>> {
-    const { command, outcome, expectedStatus } = settling;
+    const { command, outcome } = settling;
     const zone = actingClientZoneOf(command);
 
     if (zone.status === "invalid") {
@@ -83,7 +81,7 @@ export class CheckInSettler {
       id: checkIn.id,
       outcome,
       at,
-      expectedStatus,
+      expectedStatus: checkIn.recordedStatus,
       ...(zone.timeZone && { clientTimeZone: zone.timeZone.name }),
     });
 

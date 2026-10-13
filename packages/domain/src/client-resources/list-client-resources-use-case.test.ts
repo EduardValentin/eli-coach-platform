@@ -91,6 +91,8 @@ function createUseCase(
             clientId: clientId,
             portal: "reachable" as const,
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/Bucharest",
           }
         : null,
@@ -101,6 +103,8 @@ function createUseCase(
             clientId: "client-ana",
             portal: "reachable" as const,
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/Bucharest",
           }
         : null,

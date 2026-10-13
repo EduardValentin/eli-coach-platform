@@ -30,6 +30,7 @@ const ANA_ACTOR: CheckInActor = { party: "client", authSubjectId: "user_ana" };
 
 const ANAS_REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: STARTS_AT,
   clientTimeZone: "Europe/London",
@@ -89,7 +90,9 @@ function createPorts(options?: {
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue(options?.settlement ?? "settled"),
     move: vi.fn().mockResolvedValue("moved"),
-    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
+    endCoaching: vi
+      .fn()
+      .mockResolvedValue({ cancelled: [], seriesStopped: false }),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
@@ -98,6 +101,8 @@ function createPorts(options?: {
             clientId: "client-1",
             portal: "reachable",
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/London",
           }
         : options.client,
@@ -115,6 +120,9 @@ function createPorts(options?: {
     newTimeAccepted: vi.fn().mockResolvedValue("sent"),
     newTimeDeclined: vi.fn().mockResolvedValue("sent"),
     cancelled: vi.fn().mockResolvedValue("sent"),
+    seriesSetUp: vi.fn().mockResolvedValue("sent"),
+    seriesChanged: vi.fn().mockResolvedValue("sent"),
+    seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const now = options?.now ?? NOW;
 
@@ -128,6 +136,8 @@ function createPorts(options?: {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
     },
     notifications,
   };
@@ -466,6 +476,8 @@ describe.each(ANSWERS)(
             clientId: "client-1",
             portal,
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/London",
           },
         });
@@ -646,6 +658,8 @@ describe("WithdrawCheckInRequestUseCase", () => {
         clientId: "client-1",
         portal: "ended",
         coachingEndsAt: null,
+        programStartsAt: null,
+        paidThrough: null,
         timeZone: "Europe/London",
       },
     });
@@ -782,6 +796,49 @@ describe("CancelCheckInUseCase", () => {
       expect(ports.notifications.cancelled).not.toHaveBeenCalled();
     },
   );
+
+  it("lets the coach cancel a clash, settling it from the clash she read", async () => {
+    // arrange
+    const ports = createPorts({
+      found: approvedCheckIn({
+        seriesId: "series-1",
+        kind: "recurring",
+        recordedStatus: "clash",
+      }),
+    });
+
+    // act
+    const result = await new CancelCheckInUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: COACH,
+    });
+
+    // assert
+    expect(result).toMatchObject({ status: "cancelled" });
+    expect(ports.checkIns.settle).toHaveBeenCalledWith({
+      id: "check-in-1",
+      outcome: "cancelled",
+      at: NOW,
+      expectedStatus: "clash",
+    });
+  });
+
+  it("refuses the client cancelling her approved weekly check-in", async () => {
+    // arrange
+    const ports = createPorts({
+      found: approvedCheckIn({ seriesId: "series-1", kind: "recurring" }),
+    });
+
+    // act
+    const result = await new CancelCheckInUseCase(ports).execute({
+      checkInId: "check-in-1",
+      actor: ANA_ACTOR,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not_allowed" });
+    expect(ports.checkIns.settle).not.toHaveBeenCalled();
+  });
 
   it("refuses when the check-in stopped being approved meanwhile", async () => {
     // arrange

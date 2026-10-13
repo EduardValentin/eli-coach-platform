@@ -1,0 +1,146 @@
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
+import type { CoachAvailabilitySource, Weekday } from "../coach-availability";
+import type { Clock } from "../shared";
+
+import { CheckIn, type CheckInSnapshot } from "./check-in";
+import { CheckInAnnouncer } from "./check-in-announcer";
+import type { CheckInIds } from "./check-in-ids";
+import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInNotifications } from "./check-in-notifications";
+import { CHECK_IN_RULES } from "./check-in-rules";
+import type { CheckInSeries, CheckInSeriesSnapshot } from "./check-in-series";
+import type {
+  CheckInSeriesOccurrence,
+  CheckInSeriesRecords,
+} from "./check-in-series-records";
+import { CheckInSeriesRule } from "./check-in-series-rule";
+
+export type ChangeCheckInSeriesCommand = {
+  seriesId: string;
+  weekday: Weekday;
+  hour: number;
+};
+
+export type ChangeCheckInSeriesResult =
+  | {
+      status: "changed";
+      series: CheckInSeriesSnapshot;
+      occurrences: CheckInSnapshot[];
+    }
+  | {
+      status:
+        | "unknown_series"
+        | "outside_availability"
+        | "client_cannot_answer"
+        | "changed_meanwhile";
+    };
+
+type ChangeCheckInSeriesUseCaseOptions = {
+  availability: CoachAvailabilitySource;
+  clients: Pick<ClientReach, "findById">;
+  clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
+  ids: CheckInIds;
+  incidents: CheckInIncidents;
+  notifications: CheckInNotifications;
+  series: Pick<CheckInSeriesRecords, "find" | "change">;
+};
+
+type WeeksOfSeries = {
+  series: CheckInSeries;
+  starts: readonly Date[];
+  client: ClientReachReading;
+  at: Date;
+};
+
+export class ChangeCheckInSeriesUseCase {
+  private readonly announcer: CheckInAnnouncer;
+
+  constructor(private readonly options: ChangeCheckInSeriesUseCaseOptions) {
+    this.announcer = new CheckInAnnouncer(options);
+  }
+
+  async execute(
+    command: ChangeCheckInSeriesCommand,
+  ): Promise<ChangeCheckInSeriesResult> {
+    const current = await this.options.series.find(command.seriesId);
+
+    if (!current || current.isStopped()) {
+      return { status: "unknown_series" };
+    }
+
+    const client = await this.options.clients.findById(current.clientId);
+
+    if (client?.portal !== "reachable") {
+      return { status: "client_cannot_answer" };
+    }
+
+    const availability = await this.options.availability.current();
+
+    if (!availability.holdsWeeklyHour(command)) {
+      return { status: "outside_availability" };
+    }
+
+    const now = this.options.clock.now();
+    const { series, starts } = current.changedTo({
+      rule: CheckInSeriesRule.of({
+        weekday: command.weekday,
+        hour: command.hour,
+        timeZone: availability.timeZone,
+      }),
+      now,
+      lead: CHECK_IN_RULES,
+    });
+    const recorded = await this.options.series.change({
+      series,
+      expected: {
+        changedAt: current.changedAt,
+        weekday: current.weekday,
+        hour: current.hour,
+      },
+      startsFrom: now,
+      occurrences: this.weeksOf({ series, starts, client, at: now }),
+      at: now,
+    });
+
+    if (recorded.status !== "changed") {
+      return recorded;
+    }
+
+    await this.announcer.announceSeries(
+      "seriesChanged",
+      series,
+      starts[0] ?? null,
+    );
+
+    return {
+      status: "changed",
+      series: series.toSnapshot(),
+      occurrences: recorded.occurrences.map((checkIn) => checkIn.toSnapshot()),
+    };
+  }
+
+  private weeksOf({
+    series,
+    starts,
+    client,
+    at,
+  }: WeeksOfSeries): CheckInSeriesOccurrence[] {
+    return starts.map((startsAt) => ({
+      checkIn: CheckIn.seriesOccurrence({
+        id: this.options.ids.generate(),
+        seriesId: series.id,
+        clientId: series.clientId,
+        startsAt,
+        clientTimeZone: client.timeZone,
+        coachTimeZone: series.timeZone,
+        at,
+      }),
+      availability: "open",
+    }));
+  }
+}

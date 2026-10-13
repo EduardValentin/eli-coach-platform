@@ -5,9 +5,17 @@ export {
   type CoachAvailabilityProps,
   type CoachAvailabilityResult,
   type Weekday,
+  weekdayNamed,
 } from "./coach-availability";
 export { type CoachAvailabilityChanges } from "./coach-availability-changes";
 export { type CoachAvailabilitySource } from "./coach-availability-source";
 export { type CoachCalendar } from "./coach-calendar";
 export { SlotPolicy } from "./slot-policy";
 export { type TimeInterval } from "./time-interval";
+export {
+  addDays,
+  instantToWallClock,
+  wallClockToInstant,
+  weekdayIndexOf,
+  type CalendarDate,
+} from "./zoned-time";

@@ -36,7 +36,6 @@ export class ApproveCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "approved",
-      expectedStatus: "pending",
       notificationOf: (checkIn) =>
         checkIn.hasPendingNewTime() ? "newTimeAccepted" : "approved",
     });

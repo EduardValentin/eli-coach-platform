@@ -5,7 +5,12 @@ import {
   type PriceTier,
 } from "../coaching-bundle";
 
-import type { CheckoutCompletion, StartChoice } from "./coaching-subscription";
+import {
+  addCalendarMonths,
+  withdrawalDeadline,
+  type CheckoutCompletion,
+  type StartChoice,
+} from "./coaching-subscription";
 
 export type PurchasedSubscriptionSnapshot = {
   bundleId: CoachingBundleId;
@@ -18,7 +23,9 @@ export type PurchasedSubscriptionSnapshot = {
   paymentIntentId: string | null;
   checkoutSessionId: string;
   paidAt: Date;
+  paidThrough: Date;
   startChoice: StartChoice;
+  programStartsAt: Date;
   status: CoachingStatus;
 };
 
@@ -33,7 +40,9 @@ export class PurchasedSubscription {
   readonly paymentIntentId: string | null;
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
+  readonly paidThrough: Date;
   readonly startChoice: StartChoice;
+  readonly programStartsAt: Date;
   readonly status: CoachingStatus;
 
   private constructor(snapshot: PurchasedSubscriptionSnapshot) {
@@ -47,16 +56,20 @@ export class PurchasedSubscription {
     this.paymentIntentId = snapshot.paymentIntentId;
     this.checkoutSessionId = snapshot.checkoutSessionId;
     this.paidAt = snapshot.paidAt;
+    this.paidThrough = snapshot.paidThrough;
     this.startChoice = snapshot.startChoice;
+    this.programStartsAt = snapshot.programStartsAt;
     this.status = snapshot.status;
   }
 
   static fromCompletedCheckout(
     completion: CheckoutCompletion,
   ): PurchasedSubscription {
+    const months = getCoachingBundle(completion.bundleId).months;
+
     return new PurchasedSubscription({
       bundleId: completion.bundleId,
-      months: getCoachingBundle(completion.bundleId).months,
+      months,
       tier: completion.tier,
       amountCents: completion.amountCents,
       currency: completion.currency,
@@ -65,7 +78,12 @@ export class PurchasedSubscription {
       paymentIntentId: completion.paymentIntentId,
       checkoutSessionId: completion.checkoutSessionId,
       paidAt: completion.paidAt,
+      paidThrough: addCalendarMonths(completion.paidAt, months),
       startChoice: completion.startChoice,
+      programStartsAt:
+        completion.startChoice === "waiting"
+          ? withdrawalDeadline(completion.paidAt)
+          : completion.paidAt,
       status: "not-started",
     });
   }
@@ -76,7 +94,13 @@ export class PurchasedSubscription {
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: this.months,
+      programStartsAt: this.programStartsAt,
+      paidThrough: this.paidThrough,
     });
+  }
+
+  renewalHoldUntil(): Date | null {
+    return this.startChoice === "waiting" ? this.programStartsAt : null;
   }
 
   toSnapshot(): PurchasedSubscriptionSnapshot {
@@ -91,7 +115,9 @@ export class PurchasedSubscription {
       paymentIntentId: this.paymentIntentId,
       checkoutSessionId: this.checkoutSessionId,
       paidAt: this.paidAt,
+      paidThrough: this.paidThrough,
       startChoice: this.startChoice,
+      programStartsAt: this.programStartsAt,
       status: this.status,
     };
   }

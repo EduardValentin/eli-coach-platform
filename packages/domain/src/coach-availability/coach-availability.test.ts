@@ -7,6 +7,7 @@ import {
   type CoachAvailabilityResult,
   type TimeInterval,
   type Weekday,
+  weekdayNamed,
 } from "./index";
 
 const WORKING_WEEK = [
@@ -691,4 +692,58 @@ describe("CoachAvailability steps in minutes of the day", () => {
       expect(open).toBe(expected);
     },
   );
+});
+
+describe("CoachAvailability.holdsWeeklyHour", () => {
+  it.each([
+    { weekday: "monday", hour: 17, expected: true },
+    { weekday: "friday", hour: 19, expected: true },
+    { weekday: "monday", hour: 16, expected: false },
+    { weekday: "monday", hour: 20, expected: false },
+    { weekday: "saturday", hour: 18, expected: false },
+  ] as const)(
+    "holds $weekday at $hour:00 inside the weekly window: $expected",
+    ({ weekday, hour, expected }) => {
+      // arrange
+      const availability = bucharestEvenings();
+
+      // act
+      const holds = availability.holdsWeeklyHour({ weekday, hour });
+
+      // assert
+      expect(holds).toBe(expected);
+    },
+  );
+});
+
+describe("CoachAvailability.weeklyHours", () => {
+  it("lists every hour a weekly check-in can start in the window", () => {
+    // arrange
+    const availability = bucharestEvenings();
+
+    // act
+    const hours = availability.weeklyHours();
+
+    // assert
+    expect(hours).toEqual([17, 18, 19]);
+  });
+});
+
+describe("weekdayNamed", () => {
+  it.each([
+    { name: "Wednesday", expected: "wednesday" },
+    { name: "SUNDAY", expected: "sunday" },
+    { name: " friday ", expected: "friday" },
+    { name: "Wed", expected: null },
+    { name: "", expected: null },
+  ] as const)("reads $name as $expected", ({ name, expected }) => {
+    // arrange
+    const answer = name;
+
+    // act
+    const weekday = weekdayNamed(answer);
+
+    // assert
+    expect(weekday).toBe(expected);
+  });
 });

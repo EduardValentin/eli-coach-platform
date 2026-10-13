@@ -1,8 +1,14 @@
 import type { Clock } from "../shared";
 
-import type { StartNowRefusal } from "./coaching-subscription";
+import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import { CoachingPeriodPropagation } from "./coaching-period-propagation";
+import type {
+  CoachingSubscription,
+  StartNowRefusal,
+} from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { PaymentSubscriptions } from "./payment-subscriptions";
 import type { SignedInSubscriptions } from "./signed-in-subscriptions";
 
 type StartProgramNowResult =
@@ -12,13 +18,19 @@ type StartProgramNowResult =
 
 type StartProgramNowUseCaseOptions = {
   clock: Clock;
+  coachingPeriods: readonly CoachingPeriodHandler[];
   incidents: CoachingSubscriptionIncidents;
+  paymentSubscriptions: Pick<PaymentSubscriptions, "liftRenewalHold">;
   signedInSubscriptions: Pick<SignedInSubscriptions, "currentFor">;
   subscriptions: Pick<CoachingSubscriptions, "save">;
 };
 
 export class StartProgramNowUseCase {
-  constructor(private readonly options: StartProgramNowUseCaseOptions) {}
+  private readonly coachingPeriod: CoachingPeriodPropagation;
+
+  constructor(private readonly options: StartProgramNowUseCaseOptions) {
+    this.coachingPeriod = new CoachingPeriodPropagation(options);
+  }
 
   async execute(authSubjectId: string): Promise<StartProgramNowResult> {
     const now = this.options.clock.now();
@@ -62,7 +74,26 @@ export class StartProgramNowUseCase {
     }
 
     this.options.incidents.programStartedNow({ subscriptionId: current.id });
+    await this.coachingPeriod.propagateProgramStart(decision.subscription);
+    await this.liftRenewalHold(decision.subscription);
 
     return { status: "started" };
+  }
+
+  private async liftRenewalHold(
+    subscription: CoachingSubscription,
+  ): Promise<void> {
+    const { paymentSubscriptionId } = subscription;
+
+    try {
+      await this.options.paymentSubscriptions.liftRenewalHold(
+        paymentSubscriptionId,
+      );
+    } catch (error) {
+      this.options.incidents.renewalHoldLiftFailed({
+        paymentSubscriptionId,
+        error,
+      });
+    }
   }
 }

@@ -36,7 +36,6 @@ export class DeclineCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.answerRefusalFor(turn),
       outcome: "cancelled",
-      expectedStatus: "pending",
       notificationOf: (checkIn) =>
         checkIn.hasPendingNewTime() ? "newTimeDeclined" : "declined",
     });

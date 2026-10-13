@@ -12,6 +12,8 @@ export type CoachingStandingSnapshot = {
   accessEndsAt: Date | null;
   refundDue: boolean;
   bundleMonths: number | null;
+  programStartsAt: Date | null;
+  paidThrough: Date | null;
 };
 
 export class CoachingStanding {
@@ -19,12 +21,16 @@ export class CoachingStanding {
   readonly accessEndsAt: Date | null;
   readonly refundDue: boolean;
   readonly bundleMonths: number | null;
+  readonly programStartsAt: Date | null;
+  readonly paidThrough: Date | null;
 
   private constructor(snapshot: CoachingStandingSnapshot) {
     this.status = snapshot.status;
     this.accessEndsAt = snapshot.accessEndsAt;
     this.refundDue = snapshot.refundDue;
     this.bundleMonths = snapshot.bundleMonths;
+    this.programStartsAt = snapshot.programStartsAt;
+    this.paidThrough = snapshot.paidThrough;
   }
 
   static of(snapshot: CoachingStandingSnapshot): CoachingStanding {
@@ -61,6 +67,8 @@ export class CoachingStanding {
       accessEndsAt: this.accessEndsAt,
       refundDue: this.refundDue,
       bundleMonths: this.bundleMonths,
+      programStartsAt: this.programStartsAt,
+      paidThrough: this.paidThrough,
     };
   }
 }

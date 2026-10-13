@@ -18,6 +18,8 @@ const NOT_STARTED: CoachingStandingSnapshot = {
   accessEndsAt: null,
   refundDue: false,
   bundleMonths: null,
+  programStartsAt: null,
+  paidThrough: null,
 };
 
 function entry(
@@ -103,6 +105,8 @@ describe("ListClientsUseCase", () => {
         accessEndsAt: cancelledAt,
         refundDue: true,
         bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
       },
     });
     const useCase = new ListClientsUseCase({
@@ -205,12 +209,21 @@ describe("ReadClientRecordUseCase", () => {
         accessEndsAt: NOW,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
       },
       { coachingCancelledOrEnded: true, needsRefund: false },
     ],
     [
       "ended with a refund still owed",
-      { status: "ended", accessEndsAt: NOW, refundDue: true, bundleMonths: 3 },
+      {
+        status: "ended",
+        accessEndsAt: NOW,
+        refundDue: true,
+        bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
+      },
       { coachingCancelledOrEnded: true, needsRefund: true },
     ],
     [
@@ -220,6 +233,8 @@ describe("ReadClientRecordUseCase", () => {
         accessEndsAt: null,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: null,
+        paidThrough: null,
       },
       { coachingCancelledOrEnded: false, needsRefund: false },
     ],

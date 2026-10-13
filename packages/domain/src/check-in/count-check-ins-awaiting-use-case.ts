@@ -26,9 +26,8 @@ export class CountCheckInsAwaitingUseCase {
       const checkIns = await this.checkInsSeenBy(actor);
       const at = this.options.clock.now();
 
-      return checkIns.filter(
-        (checkIn) =>
-          checkIn.answerRefusalFor({ party: actor.party, at }) === null,
+      return checkIns.filter((checkIn) =>
+        checkIn.awaitsAnswerOf({ party: actor.party, at }),
       ).length;
     } catch (error) {
       this.options.incidents.awaitingCheckInsCountFailed({

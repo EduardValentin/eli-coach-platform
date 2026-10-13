@@ -19,6 +19,8 @@ function standingOf(
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
     ...overrides,
   });
 }
