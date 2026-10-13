@@ -142,6 +142,29 @@ describe('ordering check-ins', () => {
     expect(ordered.map((c) => c.id)).toEqual(['from-jane', 'from-coach', 'recurring']);
   });
 
+  it('lists clashes before every other request, then by date', () => {
+    // arrange
+    const clash = checkin({
+      id: 'clash',
+      kind: 'recurring',
+      status: 'clash',
+      date: '2026-10-27',
+      initiatedBy: 'coach',
+      proposedBy: 'coach',
+    });
+    const checkins = [recurring, fromJane, fromCoach, clash];
+
+    // act
+    const ordered = orderCheckins(checkins, {
+      tab: 'requests',
+      direction: 'asc',
+      party: 'coach',
+    });
+
+    // assert
+    expect(ordered.map((c) => c.id)).toEqual(['clash', 'from-jane', 'from-coach', 'recurring']);
+  });
+
   it('orders other tabs by date alone', () => {
     // arrange
     const checkins = [fromJane, recurring, fromCoach];

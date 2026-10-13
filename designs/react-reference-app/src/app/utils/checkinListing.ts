@@ -139,10 +139,13 @@ export function orderCheckins(
   const sign = order.direction === 'asc' ? 1 : -1;
   const byDate = (a: CheckIn, b: CheckIn) =>
     sign * (checkinStartsAt(a).getTime() - checkinStartsAt(b).getTime());
-  const answerRank = (checkin: CheckIn) =>
-    order.tab === 'requests' && awaitsViewer(checkin, order.party) ? 0 : 1;
+  const requestRank = (checkin: CheckIn) => {
+    if (order.tab !== 'requests') return 0;
+    if (checkin.status === 'clash') return 0;
+    return awaitsViewer(checkin, order.party) ? 1 : 2;
+  };
 
   return [...checkins].sort(
-    (a, b) => answerRank(a) - answerRank(b) || byDate(a, b),
+    (a, b) => requestRank(a) - requestRank(b) || byDate(a, b),
   );
 }
