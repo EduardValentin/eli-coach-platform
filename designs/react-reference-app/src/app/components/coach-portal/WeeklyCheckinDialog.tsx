@@ -6,7 +6,7 @@ import {
   type SeriesChangeResult,
   type SeriesSetUpResult,
 } from '../../context/CheckinContext';
-import { WEEKDAY_NAMES } from '../../domain/checkinSeries';
+import { hourLabel, WEEKDAY_NAMES } from '../../domain/checkinSeries';
 import type { JourneyGender } from '../../domain/journey';
 import type { SeriesHourPreview } from '../../services/checkinService';
 import { clientPronouns } from '../../utils/journeyLabels';
@@ -45,10 +45,6 @@ const MODE_WORDING: Record<WeeklyCheckinMode, { action: string; busy: string; sa
   'set-up': { action: 'Set up', busy: 'Setting up…', saved: 'Weekly check-in set up' },
   change: { action: 'Change', busy: 'Changing…', saved: 'Weekly check-in changed' },
 };
-
-function hourLabel(hour: number): string {
-  return `${String(hour).padStart(2, '0')}:00`;
-}
 
 function clashesLabel(clashes: number): string | null {
   if (clashes === 0) return null;

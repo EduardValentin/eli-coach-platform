@@ -3,7 +3,7 @@ import { CalendarRange } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckins, type CheckinSeries } from '../../context/CheckinContext';
 import { checkinSchedulingFor, type CheckIn } from '../../domain/checkins';
-import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
+import { hourLabel, WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
 import type { ClientJourney } from '../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../domain/onboardingAnswers';
 import { useCoachCheckinMenu } from '../../hooks/useCoachCheckinMenu';
@@ -24,7 +24,7 @@ type DialogState = { mode: WeeklyCheckinMode; open: boolean; openings: number };
 type StopState = 'closed' | 'confirming' | 'stopping';
 
 function ruleLine({ weekday, hour }: CheckinSeries): string {
-  return `Every ${WEEKDAY_NAMES[weekday]} at ${String(hour).padStart(2, '0')}:00`;
+  return `Every ${WEEKDAY_NAMES[weekday]} at ${hourLabel(hour)}`;
 }
 
 function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {

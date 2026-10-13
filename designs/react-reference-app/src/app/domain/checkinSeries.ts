@@ -19,6 +19,10 @@ export function weekdayNamed(name: string | null): number | null {
   return index === -1 ? null : index;
 }
 
+export function hourLabel(hour: number): string {
+  return `${String(hour).padStart(2, '0')}:00`;
+}
+
 export type WeeklyRule = { weekday: number; hour: number; timeZone: string };
 
 export type SeriesBounds = { from: Date; until: Date };
