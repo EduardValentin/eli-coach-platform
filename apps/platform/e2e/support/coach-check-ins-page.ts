@@ -21,6 +21,8 @@ const REVIEW_URL = /[?&]checkin=/;
 const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
+const FINDING_A_NEW_TIME = "Finding a new time";
+const AD_HOC = "Ad-hoc";
 
 export class CoachCheckInsPage {
   private readonly rows: CheckInRows;
@@ -364,5 +366,21 @@ export class CoachCheckInsPage {
     await expect(
       this.page.getByRole("link", { name: "Go to Settings" }),
     ).toBeVisible();
+  }
+
+  async expectClashFirst(showing: string): Promise<void> {
+    const first = checkInsListed(this.page, "Requests").first();
+
+    await this.showTab("Requests");
+    await expect(first).toContainText(showing);
+    await expect(first).toContainText(FINDING_A_NEW_TIME);
+    await this.rows.expectClash(first);
+  }
+
+  async expectOneWeeklyUpcoming(showing: string): Promise<void> {
+    const listed = await this.shownRow("Upcoming", showing);
+
+    await expect(listed).toHaveCount(1);
+    await expect(listed).not.toContainText(AD_HOC);
   }
 }

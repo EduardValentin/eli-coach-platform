@@ -28,6 +28,8 @@ const WAITING_REASON =
   "You can send another request once this one is answered.";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 const COACH = "your coach";
+const COACH_FINDING_A_NEW_TIME = "Your coach is finding a new time";
+const AD_HOC = "Ad-hoc";
 
 export class ClientCheckInsPage {
   private readonly requestAction: DisabledAction;
@@ -410,5 +412,25 @@ export class ClientCheckInsPage {
   async returnFromNotReadyJoin(): Promise<void> {
     await this.page.getByRole("link", { name: "Back to check-ins" }).click();
     await this.expectOpen();
+  }
+
+  async expectCoachFindingTime(): Promise<void> {
+    const listed = checkInsListed(this.page, "Upcoming");
+
+    await this.showTab("Upcoming");
+    await expect(listed).toHaveCount(1);
+    await expect(listed).toContainText(COACH_FINDING_A_NEW_TIME);
+    await this.rows.expectClash(listed);
+  }
+
+  async expectOneWeeklyUpcoming(note: string): Promise<void> {
+    const listed = checkInsListed(this.page, "Upcoming");
+
+    await this.expectInOrder("Upcoming", [note]);
+    await expect(listed).not.toContainText(AD_HOC);
+  }
+
+  async expectNoCancel(tab: CheckInTab, note: string): Promise<void> {
+    await this.rows.expectNoCancel(await this.shownRow(tab, note));
   }
 }

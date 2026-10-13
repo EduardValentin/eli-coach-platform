@@ -21,6 +21,7 @@ export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
 };
 
 const MENU_TRIGGER = /^More actions for the check-in on /;
+const CLASH_BADGE = "Clash";
 const MOVES_EXHAUSTED_REASON = "This check-in has already been moved twice.";
 const PROPOSE_DIALOG_TITLE = "Propose a new time";
 const ARROW_SETTLE_MS = 250;
@@ -179,5 +180,17 @@ export class CheckInRows {
       }),
     ).toBeVisible();
     await expect(row.locator("s")).toHaveCount(0);
+  }
+
+  async expectClash(row: Locator): Promise<void> {
+    await expect(row.getByText(CLASH_BADGE, { exact: true })).toBeVisible();
+    await expect(row.getByRole("link", { name: "Join Meet" })).toHaveCount(0);
+  }
+
+  async expectNoCancel(row: Locator): Promise<void> {
+    await this.openMenu(row);
+    await expect(this.itemNamed("Reschedule")).toBeVisible();
+    await expect(this.itemNamed("Cancel")).toHaveCount(0);
+    await this.closeMenu(row);
   }
 }

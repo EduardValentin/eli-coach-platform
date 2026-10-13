@@ -42,8 +42,12 @@ const MOVE_CHECK_IN_RESERVATION = `
   where check_in_id = $1
 `;
 const MOVE_BOOKING_ZONE = `
+  with client as (
+    update app.clients set booking_time_zone = $2 where id = $1
+    returning assessment_call_id
+  )
   update app.assessment_calls set visitor_time_zone = $2
-  where id = (select assessment_call_id from app.clients where id = $1)
+  where id = (select assessment_call_id from client)
 `;
 const HOLD_HOUR = `
   with held as (
