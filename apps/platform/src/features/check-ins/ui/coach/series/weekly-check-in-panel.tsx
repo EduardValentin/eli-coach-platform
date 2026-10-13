@@ -158,7 +158,19 @@ export function WeeklyCheckInPanel({
   );
 }
 
-function SeriesActions({
+function SeriesActions(props: SeriesActionsProps) {
+  if (props.scheduling === "ended") {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2" data-parity="series-actions">
+      <SeriesActionButtons {...props} />
+    </div>
+  );
+}
+
+function SeriesActionButtons({
   gender,
   onChange,
   onStop,
@@ -167,13 +179,9 @@ function SeriesActions({
   series,
   stopRef,
 }: SeriesActionsProps) {
-  if (scheduling === "ended") {
-    return null;
-  }
-
   if (series) {
     return (
-      <div className="flex flex-wrap gap-2" data-parity="series-actions">
+      <>
         <Button
           data-parity="series-change"
           onClick={() => onChange({ mode: "change", series })}
@@ -192,7 +200,7 @@ function SeriesActions({
         >
           Stop
         </Button>
-      </div>
+      </>
     );
   }
 
@@ -210,19 +218,13 @@ function SeriesActions({
 
   if (scheduling === "awaiting_onboarding") {
     return (
-      <div className="flex flex-wrap gap-2" data-parity="series-actions">
-        <DisabledActionHint reason={awaitingOnboardingReason(gender)}>
-          {setUp}
-        </DisabledActionHint>
-      </div>
+      <DisabledActionHint reason={awaitingOnboardingReason(gender)}>
+        {setUp}
+      </DisabledActionHint>
     );
   }
 
-  return (
-    <div className="flex flex-wrap gap-2" data-parity="series-actions">
-      {setUp}
-    </div>
-  );
+  return setUp;
 }
 
 function SeriesWeeks({ client, menuOf, timeZone, weeks }: SeriesWeeksProps) {
