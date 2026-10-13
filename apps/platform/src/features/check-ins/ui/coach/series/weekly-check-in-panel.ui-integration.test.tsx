@@ -436,7 +436,7 @@ describe("setting up a weekly check-in", () => {
       within(hours)
         .getAllByRole("button")
         .map((hour) => hour.textContent),
-    ).toEqual(["17:00", "18:002 clashes", "19:001 clash"]);
+    ).toEqual(["17:00", "18:00 2 clashes", "19:00 1 clash"]);
     expect(asked).toEqual([{ clientId: CLIENT_ID, weekday: "wednesday" }]);
     expect(stepButton(dialog)).toBeDisabled();
   });

@@ -35,14 +35,17 @@ export function TimeSlotButton({
     >
       <span>{label}</span>
       {detail && (
-        <span
-          className={cn("ml-2 text-xs", {
-            "text-status-pending": !isSelected,
-          })}
-          data-parity={detail.parity}
-        >
-          {detail.text}
-        </span>
+        <>
+          <span className="sr-only"> </span>
+          <span
+            className={cn("ml-2 text-xs", {
+              "text-status-pending": !isSelected,
+            })}
+            data-parity={detail.parity}
+          >
+            {detail.text}
+          </span>
+        </>
       )}
     </button>
   );

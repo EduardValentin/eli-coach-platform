@@ -1002,7 +1002,7 @@ describe("the coach's upcoming check-in menu", () => {
 });
 
 describe("a weekly check-in on the coach's check-ins page", () => {
-  it("lists a week whose hour is taken first under Requests, counted, marked Clash and found a new time from its menu", async () => {
+  it("lists a week whose hour is taken first under Requests, before an earlier request waiting for her, counted, marked Clash and found a new time from its menu", async () => {
     // arrange
     listing = { checkIns: [ANDREEA_REQUEST, ELENA_CLASH, ELENA_NEXT_WEEKLY] };
     const user = await renderCheckInsPage();
@@ -1012,7 +1012,7 @@ describe("a weekly check-in on the coach's check-ins page", () => {
 
     // act
     await user.click(
-      within(rows[1]).getByRole("button", { name: ELENA_CLASH_MENU }),
+      within(rows[0]).getByRole("button", { name: ELENA_CLASH_MENU }),
     );
 
     // assert
@@ -1020,14 +1020,15 @@ describe("a weekly check-in on the coach's check-ins page", () => {
       screen.getByRole("tab", { name: /^Requests\s*2 waiting on you$/ }),
     ).toHaveAttribute("aria-selected", "true");
     expect(rows).toHaveLength(2);
-    expect(within(rows[1]).getByText("Elena Dumitru")).toBeInTheDocument();
-    expect(within(rows[1]).getByText("Clash")).toBeInTheDocument();
-    expect(rows[1]).toHaveTextContent("Finding a new time");
+    expect(within(rows[0]).getByText("Elena Dumitru")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("Clash")).toBeInTheDocument();
+    expect(rows[0]).toHaveTextContent("Finding a new time");
+    expect(rows[1]).toHaveTextContent("Andreea");
     expect(
-      within(rows[1]).queryByRole("button", { name: "Approve" }),
+      within(rows[0]).queryByRole("button", { name: "Approve" }),
     ).not.toBeInTheDocument();
     expect(
-      within(rows[1]).queryByRole("button", { name: "Decline" }),
+      within(rows[0]).queryByRole("button", { name: "Decline" }),
     ).not.toBeInTheDocument();
     expect(
       within(await screen.findByRole("menu"))

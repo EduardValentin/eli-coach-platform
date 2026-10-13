@@ -32,7 +32,7 @@ describe("a time slot button", () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
-  it("reads a detail after its time in the pending tone while not chosen", () => {
+  it("reads a detail after its time, apart from it, in the pending tone while not chosen", () => {
     // arrange, act
     render(
       <TimeSlotButton
@@ -46,7 +46,7 @@ describe("a time slot button", () => {
     // assert
     expect(
       screen.getByRole("button", { name: "18:00 2 clashes" }),
-    ).toBeInTheDocument();
+    ).toHaveTextContent(/^18:00 2 clashes$/);
     expect(screen.getByText("2 clashes")).toHaveClass("text-status-pending");
     expect(screen.getByText("2 clashes")).toHaveAttribute(
       "data-parity",

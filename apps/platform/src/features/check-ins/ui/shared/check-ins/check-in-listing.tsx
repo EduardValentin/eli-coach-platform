@@ -204,13 +204,16 @@ function ordered<CheckIn extends ListedCheckIn>(
   tab: CheckInTab,
 ): CheckIn[] {
   const direction = tab === "past" ? -1 : 1;
-  const answerRank = (checkIn: CheckIn) =>
-    tab === "requests" && checkIn.awaitsViewer ? 0 : 1;
+  const requestRank = (checkIn: CheckIn) => {
+    if (tab !== "requests") return 0;
+    if (checkIn.status === "clash") return 0;
+    return checkIn.awaitsViewer ? 1 : 2;
+  };
   const byStart = (first: CheckIn, second: CheckIn) =>
     direction * (Date.parse(first.startsAt) - Date.parse(second.startsAt));
 
   return [...checkIns].sort(
     (first, second) =>
-      answerRank(first) - answerRank(second) || byStart(first, second),
+      requestRank(first) - requestRank(second) || byStart(first, second),
   );
 }
