@@ -1,13 +1,15 @@
-import type { ClientReachReading } from "../client";
+import type { PortalReach } from "../client";
 import type { SlotPolicy } from "../coach-availability";
 
 export type CheckInSeriesBoundsSnapshot = { from: Date; until: Date };
 
 type CoachingReading = {
-  client: Pick<
-    ClientReachReading,
-    "portal" | "programStartsAt" | "paidThrough" | "coachingEndsAt"
-  >;
+  client: {
+    portal: PortalReach;
+    programStartsAt: Date | null;
+    paidThrough: Date | null;
+    coachingEndsAt: Date | null;
+  };
   now: Date;
   lead: SlotPolicy;
 };
