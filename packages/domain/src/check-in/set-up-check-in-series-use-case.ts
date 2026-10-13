@@ -129,7 +129,11 @@ export class SetUpCheckInSeriesUseCase {
       return recorded;
     }
 
-    await this.announcer.announceSeries("seriesSetUp", series, starts[0]);
+    await this.announcer.announceSeries("seriesSetUp", {
+      series,
+      weekStartsAt: starts[0],
+      clientTimeZone: client.timeZone,
+    });
 
     return {
       status: "set_up",

@@ -111,6 +111,7 @@ function createSetUp(options?: {
     nextCheckInLookupFailed: vi.fn(),
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
+    checkInSeriesReadFailed: vi.fn(),
   };
   const ports = {
     availability: availabilityOf(),
@@ -213,7 +214,8 @@ describe("SetUpCheckInSeriesUseCase", () => {
     // assert
     expect(ports.notifications.seriesSetUp).toHaveBeenCalledWith({
       series: expect.objectContaining({ id: "id-1", weekday: "wednesday" }),
-      firstOccurrenceAt: new Date(WEEK_STARTS[0]),
+      weekStartsAt: new Date(WEEK_STARTS[0]),
+      clientTimeZone: "Europe/London",
       client: ANA,
       recipient: "client",
     });

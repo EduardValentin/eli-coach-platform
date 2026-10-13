@@ -23,4 +23,5 @@ export interface CheckInIncidents {
     clientId: string;
     error: unknown;
   }): void;
+  checkInSeriesReadFailed(incident: { clientId: string; error: unknown }): void;
 }

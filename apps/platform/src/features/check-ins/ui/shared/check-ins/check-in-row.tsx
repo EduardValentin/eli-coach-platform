@@ -30,8 +30,9 @@ type CheckInRowProps = {
   viewer: CheckInViewer;
 };
 
-const KIND_LABELS: Record<ListedCheckIn["kind"], string> = {
+const KIND_LABELS: Record<ListedCheckIn["kind"], string | null> = {
   ad_hoc: "Ad-hoc",
+  recurring: null,
 };
 
 export function CheckInRow({
@@ -86,7 +87,9 @@ export function CheckInRow({
       status={isOver ? "past" : "scheduled"}
       supersededWhen={newTimeWaits ? earlierWhen : undefined}
       when={when}
-      whenLabel={`${KIND_LABELS[checkIn.kind]} · ${moveLabelOf(checkIn, viewer)}`}
+      whenLabel={[KIND_LABELS[checkIn.kind], moveLabelOf(checkIn, viewer)]
+        .filter(Boolean)
+        .join(" · ")}
     />
   );
 }

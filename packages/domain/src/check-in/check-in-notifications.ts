@@ -12,7 +12,8 @@ export type CheckInNotice = {
 
 export type CheckInSeriesNotice = {
   series: CheckInSeriesSnapshot;
-  firstOccurrenceAt: Date | null;
+  weekStartsAt: Date;
+  clientTimeZone: string;
   client: CheckInNotice["client"];
   recipient: "client";
 };

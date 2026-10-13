@@ -1,6 +1,7 @@
 import {
   CheckIn,
   type CheckInNotice,
+  type CheckInSeriesNotice,
 } from "@eli-coach-platform/domain/check-in";
 import {
   InMemoryProductEmail,
@@ -19,6 +20,7 @@ const COACH_JOIN_URL = `https://evoa.fit/eli-coach-platform/coach/checkins/${CHE
 const NOTICE: CheckInNotice = {
   checkIn: CheckIn.reconstitute({
     id: CHECK_IN_ID,
+    seriesId: null,
     clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
     startsAt: new Date("2026-10-22T14:00:00.000Z"),
     clientTimeZone: "Europe/London",
@@ -124,6 +126,30 @@ const NEW_TIME_NOTICES = [
 const COACH_REQUEST_NOTICE: CheckInNotice = {
   ...NOTICE,
   checkIn: { ...NOTICE.checkIn, initiatedBy: "coach", proposedBy: "coach" },
+};
+
+const SERIES_ID = "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a";
+const SET_UP_AT = new Date("2026-10-13T08:00:00.000Z");
+const CHANGED_AT = new Date("2026-10-15T08:00:00.000Z");
+const STOPPED_AT = new Date("2026-10-16T08:00:00.000Z");
+
+const SERIES_NOTICE: CheckInSeriesNotice = {
+  series: {
+    id: SERIES_ID,
+    clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
+    weekday: "wednesday",
+    hour: 18,
+    timeZone: "Europe/Bucharest",
+    coversFrom: new Date("2026-10-14T08:00:00.000Z"),
+    coversUntil: new Date("2027-01-13T08:00:00.000Z"),
+    setUpAt: SET_UP_AT,
+    changedAt: null,
+    stoppedAt: null,
+  },
+  weekStartsAt: new Date("2026-10-14T15:00:00.000Z"),
+  clientTimeZone: "Europe/London",
+  client: NOTICE.client,
+  recipient: "client",
 };
 
 function createNotifications(productEmail: ProductEmail) {
@@ -576,6 +602,63 @@ describe("EmailCheckInNotifications", () => {
     expect(calendarUrl.searchParams.get("ctz")).toBe("Europe/Bucharest");
     expect(calendarUrl.searchParams.get("location")).toBe(COACH_JOIN_URL);
   });
+
+  it.each([
+    {
+      notification: "seriesSetUp",
+      series: SERIES_NOTICE.series,
+      subject: "Eli set up a weekly check-in with you",
+      idempotencyKey: `check-in-series:${SERIES_ID}:${SET_UP_AT.toISOString()}:seriesSetUp`,
+      firstWeek: true,
+    },
+    {
+      notification: "seriesChanged",
+      series: { ...SERIES_NOTICE.series, changedAt: CHANGED_AT },
+      subject: "Eli changed your weekly check-in",
+      idempotencyKey: `check-in-series:${SERIES_ID}:${CHANGED_AT.toISOString()}:seriesChanged`,
+      firstWeek: true,
+    },
+    {
+      notification: "seriesStopped",
+      series: { ...SERIES_NOTICE.series, stoppedAt: STOPPED_AT },
+      subject: "Eli stopped your weekly check-in",
+      idempotencyKey: `check-in-series:${SERIES_ID}:${STOPPED_AT.toISOString()}:seriesStopped`,
+      firstWeek: false,
+    },
+  ] as const)(
+    "emails the client once per $notification with the weekly moment in her zone",
+    async ({ notification, series, subject, idempotencyKey, firstWeek }) => {
+      // arrange
+      const productEmail = new InMemoryProductEmail();
+      const notifications = createNotifications(productEmail);
+
+      // act
+      const delivery = await notifications[notification]({
+        ...SERIES_NOTICE,
+        series,
+      });
+
+      // assert
+      const sent = productEmail.sent[0];
+      expect(delivery).toBe("sent");
+      expect(sent?.to).toBe("ana@example.com");
+      expect(sent?.replyTo).toBeUndefined();
+      expect(sent?.subject).toBe(subject);
+      expect(sent?.idempotencyKey).toBe(idempotencyKey);
+      expect(sent?.attachments).toBeUndefined();
+      expect(sent?.text).toContain(
+        "WHEN: Every Wednesday at 4:00 PM — Europe/London (GMT+1)",
+      );
+      expect(
+        sent?.text.includes(
+          "FIRST WEEK: Wednesday, 14 October 2026 at 4:00 PM",
+        ),
+      ).toBe(firstWeek);
+      expect(sent?.html).toContain(
+        'href="https://evoa.fit/eli-coach-platform/client/checkins"',
+      );
+    },
+  );
 
   it("reports a send the provider refused as failed", async () => {
     // arrange

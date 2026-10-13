@@ -9,7 +9,6 @@ export {
 export { CancelCheckInsAfterCoachingEndUseCase } from "./cancel-check-ins-after-coaching-end-use-case";
 export {
   ChangeCheckInSeriesUseCase,
-  type ChangeCheckInSeriesCommand,
   type ChangeCheckInSeriesResult,
 } from "./change-check-in-series-use-case";
 export {
@@ -20,7 +19,7 @@ export {
   type CheckInTab,
   type CheckInView,
 } from "./check-in";
-export { CHECK_IN_KINDS, type CheckInKind } from "./check-in-kind";
+export { CHECK_IN_KINDS } from "./check-in-kind";
 export { CHECK_IN_PARTIES } from "./check-in-party";
 export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export { type CheckInIds } from "./check-in-ids";
@@ -43,7 +42,6 @@ export {
   type CheckInSeriesRecords,
   type CheckInSeriesSetUpResult,
 } from "./check-in-series-records";
-export { type CheckInSeriesPreviewHour } from "./check-in-series-rule";
 export {
   type CheckInMove,
   type CheckInRequestResult,
@@ -57,10 +55,7 @@ export {
   DeclineCheckInUseCase,
   type DeclineCheckInResult,
 } from "./decline-check-in-use-case";
-export {
-  ExtendCheckInSeriesUseCase,
-  type ExtendCheckInSeriesResult,
-} from "./extend-check-in-series-use-case";
+export { ExtendCheckInSeriesUseCase } from "./extend-check-in-series-use-case";
 export { FindNextClientCheckInUseCase } from "./find-next-client-check-in-use-case";
 export { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
 export { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
@@ -72,7 +67,6 @@ export {
 } from "./list-open-check-in-times-use-case";
 export {
   PreviewCheckInSeriesUseCase,
-  type PreviewCheckInSeriesCommand,
   type PreviewCheckInSeriesResult,
 } from "./preview-check-in-series-use-case";
 export {
@@ -101,7 +95,6 @@ export {
 } from "./schedule-check-in-use-case";
 export {
   SetUpCheckInSeriesUseCase,
-  type SetUpCheckInSeriesCommand,
   type SetUpCheckInSeriesResult,
 } from "./set-up-check-in-series-use-case";
 export {

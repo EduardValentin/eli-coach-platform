@@ -1,4 +1,4 @@
-import type { ClientIdentities } from "../client";
+import type { ClientIdentities, ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import { CheckInAnnouncer } from "./check-in-announcer";
@@ -12,6 +12,7 @@ export type StopCheckInSeriesResult =
   | { status: "unknown_series" | "changed_meanwhile" };
 
 type StopCheckInSeriesUseCaseOptions = {
+  clients: Pick<ClientReach, "findById">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: CheckInIncidents;
@@ -47,8 +48,13 @@ export class StopCheckInSeriesUseCase {
     }
 
     const stopped = current.stop(now);
+    const client = await this.options.clients.findById(current.clientId);
 
-    await this.announcer.announceSeries("seriesStopped", stopped, null);
+    await this.announcer.announceSeries("seriesStopped", {
+      series: stopped,
+      weekStartsAt: stopped.nextWeekStartFrom(now),
+      clientTimeZone: client?.timeZone ?? stopped.timeZone,
+    });
 
     return { status: "stopped", series: stopped.toSnapshot() };
   }

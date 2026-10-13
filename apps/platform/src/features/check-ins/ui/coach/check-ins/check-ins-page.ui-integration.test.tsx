@@ -58,8 +58,10 @@ const TIME_ZONE = "Europe/Bucharest";
 
 const ANDREEA_REQUEST: CoachCheckIn = {
   id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+  seriesId: null,
   kind: "ad_hoc",
   status: "pending",
+  tab: "requests",
   initiatedBy: "client",
   proposedBy: "client",
   awaitsViewer: true,

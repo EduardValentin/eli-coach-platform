@@ -46,7 +46,20 @@ const WORDINGS: Record<
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 export function formatCallMoment(instant: Date, timeZone: string): string {
-  return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+  return `${formatCallSchedule(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+}
+
+export function formatCallSchedule(instant: Date, timeZone: string): string {
+  return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)}`;
+}
+
+export function formatWeeklyMoment(instant: Date, timeZone: string): string {
+  const weekday = partReader(
+    formatterFor("dayFirstDate", timeZone),
+    instant,
+  )("weekday");
+
+  return `Every ${weekday} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
 }
 
 // Joined from parts because Node and Chromium disagree on the comma after the

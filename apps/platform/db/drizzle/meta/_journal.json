@@ -302,6 +302,13 @@
       "when": 1791918125182,
       "tag": "0046_subscription_periods",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1791918410915,
+      "tag": "0047_check_in_series",
+      "breakpoints": true
     }
   ]
 }

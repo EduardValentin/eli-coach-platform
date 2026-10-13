@@ -75,12 +75,34 @@ function createRead(options: {
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA]),
   } satisfies Pick<ClientIdentities, "findByClientIds">;
-  const ports = { clock: { now: () => NOW }, identities, series };
+  const ports = {
+    clock: { now: () => NOW },
+    identities,
+    incidents: { checkInSeriesReadFailed: vi.fn() },
+    series,
+  };
 
   return { ports, read: new ReadCoachClientSeriesUseCase(ports) };
 }
 
 describe("ReadCoachClientSeriesUseCase", () => {
+  it("reads no series and reports the failure when her series cannot be read", async () => {
+    // arrange
+    const failure = new Error("database down");
+    const { ports, read } = createRead({ active: null });
+    ports.series.findActiveForClient.mockRejectedValue(failure);
+
+    // act
+    const result = await read.execute("client-1");
+
+    // assert
+    expect(result).toEqual({ series: null, occurrences: [] });
+    expect(ports.incidents.checkInSeriesReadFailed).toHaveBeenCalledWith({
+      clientId: "client-1",
+      error: failure,
+    });
+  });
+
   it("reads her active series with every week still to come for the coach, soonest first, untrimmed", async () => {
     // arrange
     const { ports, read } = createRead({

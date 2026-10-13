@@ -145,6 +145,7 @@ function createProposeCheckInTime(options?: {
       nextCheckInLookupFailed: vi.fn(),
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
+      checkInSeriesReadFailed: vi.fn(),
     },
     notifications,
   };

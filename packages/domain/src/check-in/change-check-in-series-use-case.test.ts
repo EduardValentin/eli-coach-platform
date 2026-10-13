@@ -133,6 +133,7 @@ function createChange(options?: {
       nextCheckInLookupFailed: vi.fn(),
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
+      checkInSeriesReadFailed: vi.fn(),
     },
     notifications,
     series,
@@ -193,7 +194,8 @@ describe("ChangeCheckInSeriesUseCase", () => {
     // assert
     expect(ports.notifications.seriesChanged).toHaveBeenCalledWith({
       series: expect.objectContaining({ weekday: "friday", hour: 10 }),
-      firstOccurrenceAt: new Date(FRIDAY_STARTS[0]),
+      weekStartsAt: new Date(FRIDAY_STARTS[0]),
+      clientTimeZone: "Europe/London",
       client: ANA,
       recipient: "client",
     });

@@ -60,6 +60,13 @@ export class CheckInSeriesRule {
     return starts;
   }
 
+  nextStartFrom(from: Date): Date {
+    const date = this.firstMatchingDateFrom(from);
+    const start = this.startOn(date);
+
+    return start >= from ? start : this.startOn(addDays(date, DAYS_PER_WEEK));
+  }
+
   previewBetween(preview: {
     bounds: CheckInSeriesBounds;
     busy: readonly TimeInterval[];

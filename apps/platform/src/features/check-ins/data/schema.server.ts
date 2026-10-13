@@ -6,6 +6,7 @@ import {
   MAX_CHECK_IN_NOTE_LENGTH,
   RECORDED_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
+import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,
@@ -13,16 +14,57 @@ import {
   smallint,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
 import { clientsTable } from "~/features/clients/data/schema.server";
 
+const LAST_HOUR_OF_DAY = 23;
+
+export const checkInConstraints = {
+  activeSeriesPerClient: "check_in_series_active_per_client_unique",
+} as const;
+
+export const checkInSeriesTable = appSchema.table(
+  "check_in_series",
+  {
+    id: uuid("id").primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientsTable.id),
+    weekday: varchar("weekday", { enum: WEEKDAYS, length: 9 }).notNull(),
+    hour: smallint("hour").notNull(),
+    timeZone: varchar("time_zone", { length: 64 }).notNull(),
+    coversFrom: timestamp("covers_from", { withTimezone: true }).notNull(),
+    coversUntil: timestamp("covers_until", { withTimezone: true }).notNull(),
+    setUpAt: timestamp("set_up_at", { withTimezone: true }).notNull(),
+    changedAt: timestamp("changed_at", { withTimezone: true }),
+    stoppedAt: timestamp("stopped_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex(checkInConstraints.activeSeriesPerClient)
+      .on(table.clientId)
+      .where(sql`${table.stoppedAt} is null`),
+    check(
+      "check_in_series_weekday_check",
+      sql`${table.weekday} in (${quotedList(WEEKDAYS)})`,
+    ),
+    check(
+      "check_in_series_hour_check",
+      sql`${table.hour} between 0 and ${sql.raw(String(LAST_HOUR_OF_DAY))}`,
+    ),
+  ],
+);
+
 export const checkInsTable = appSchema.table(
   "check_ins",
   {
     id: uuid("id").primaryKey(),
+    seriesId: uuid("series_id").references(() => checkInSeriesTable.id, {
+      onDelete: "restrict",
+    }),
     clientId: uuid("client_id")
       .notNull()
       .references(() => clientsTable.id),
@@ -52,6 +94,10 @@ export const checkInsTable = appSchema.table(
   (table) => [
     index("check_ins_client_id_starts_at_idx").on(
       table.clientId,
+      table.startsAt,
+    ),
+    index("check_ins_series_id_starts_at_idx").on(
+      table.seriesId,
       table.startsAt,
     ),
     check(

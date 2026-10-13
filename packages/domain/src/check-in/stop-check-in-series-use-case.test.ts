@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientIdentities } from "../client";
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
@@ -29,6 +33,17 @@ const SERIES = {
   changedAt: CHANGED_AT,
   stoppedAt: null,
 } satisfies CheckInSeriesSnapshot;
+
+const ANA_REACH: ClientReachReading = {
+  clientId: "client-1",
+  portal: "reachable",
+  coachingEndsAt: null,
+  programStartsAt: new Date("2026-10-06T09:00:00.000Z"),
+  paidThrough: new Date("2026-11-05T09:00:00.000Z"),
+  timeZone: "Europe/London",
+};
+
+const NEXT_WEDNESDAY_SIX_PM = new Date("2026-10-14T15:00:00.000Z");
 
 function createStop(options?: {
   found?: CheckInSeries | null;
@@ -60,7 +75,11 @@ function createStop(options?: {
     seriesChanged: vi.fn(),
     seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
+  const clients = {
+    findById: vi.fn().mockResolvedValue(ANA_REACH),
+  } satisfies Pick<ClientReach, "findById">;
   const ports = {
+    clients,
     clock: { now: () => NOW },
     identities,
     incidents: {
@@ -70,6 +89,7 @@ function createStop(options?: {
       nextCheckInLookupFailed: vi.fn(),
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
+      checkInSeriesReadFailed: vi.fn(),
     },
     notifications,
     series,
@@ -96,7 +116,8 @@ describe("StopCheckInSeriesUseCase", () => {
     });
     expect(ports.notifications.seriesStopped).toHaveBeenCalledWith({
       series: stopped,
-      firstOccurrenceAt: null,
+      weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
+      clientTimeZone: "Europe/London",
       client: ANA,
       recipient: "client",
     });

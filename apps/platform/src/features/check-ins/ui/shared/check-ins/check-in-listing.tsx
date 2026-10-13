@@ -68,6 +68,7 @@ const TAB_OF_STATUS: Record<ListedCheckIn["status"], CheckInTab> = {
   pending: "requests",
   passed: "past",
   cancelled: "past",
+  clash: "requests",
 };
 
 export function CheckInListing<CheckIn extends ListedCheckIn>({

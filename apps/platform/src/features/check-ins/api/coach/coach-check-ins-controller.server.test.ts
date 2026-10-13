@@ -39,6 +39,7 @@ const CLIENT_SESSION: ResolvedSession = {
 
 const PENDING = CheckIn.reconstitute({
   id: CHECK_IN_ID,
+  seriesId: null,
   clientId: CLIENT_ID,
   startsAt: new Date("2026-10-22T14:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -75,8 +76,10 @@ describe("CoachCheckInsController loadCheckIns", () => {
       checkIns: [
         {
           id: CHECK_IN_ID,
+          seriesId: null,
           kind: "ad_hoc",
           status: "pending",
+          tab: "requests",
           initiatedBy: "client",
           proposedBy: "client",
           awaitsViewer: true,

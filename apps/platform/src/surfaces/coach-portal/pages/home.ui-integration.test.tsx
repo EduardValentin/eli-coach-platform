@@ -103,8 +103,10 @@ function pendingCheckIn(
 
   return {
     id,
+    seriesId: null,
     kind: "ad_hoc",
     status: "pending",
+    tab: "requests",
     initiatedBy: "client",
     proposedBy: "client",
     awaitsViewer: true,

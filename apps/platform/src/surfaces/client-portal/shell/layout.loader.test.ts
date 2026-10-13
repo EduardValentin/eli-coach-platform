@@ -39,13 +39,17 @@ const ANA: ClientJourneySnapshot = {
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
   },
 };
 
 const NEXT_CHECK_IN: ClientCheckIn = {
   id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+  seriesId: null,
   kind: "ad_hoc",
   status: "approved",
+  tab: "upcoming",
   initiatedBy: "client",
   proposedBy: "client",
   awaitsViewer: false,

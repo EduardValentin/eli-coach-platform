@@ -111,6 +111,10 @@ export class CheckInSeries {
     return this.rule().startsBetween(bounds);
   }
 
+  nextWeekStartFrom(at: Date): Date {
+    return this.rule().nextStartFrom(at);
+  }
+
   missingOccurrencesFor(bounds: CheckInSeriesBounds): CheckInSeriesStarts {
     const starts = this.occurrenceStartsBetween(bounds).filter(
       (start) => start < this.coversFrom || start >= this.coversUntil,

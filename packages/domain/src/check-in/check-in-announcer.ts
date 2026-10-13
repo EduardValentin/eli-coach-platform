@@ -20,6 +20,12 @@ type CheckInAnnouncerOptions = {
 
 type AnnouncedClient = CheckInNotice["client"];
 
+type AnnouncedSeries = {
+  series: CheckInSeries;
+  weekStartsAt: Date;
+  clientTimeZone: string;
+};
+
 export class CheckInAnnouncer {
   constructor(private readonly options: CheckInAnnouncerOptions) {}
 
@@ -46,13 +52,14 @@ export class CheckInAnnouncer {
 
   async announceSeries(
     notification: CheckInSeriesNotification,
-    series: CheckInSeries,
-    firstOccurrenceAt: Date | null,
+    announced: AnnouncedSeries,
   ): Promise<void> {
+    const { series } = announced;
     const delivery = await this.deliverTo(series.clientId, (client) =>
       this.options.notifications[notification]({
         series: series.toSnapshot(),
-        firstOccurrenceAt,
+        weekStartsAt: announced.weekStartsAt,
+        clientTimeZone: announced.clientTimeZone,
         client,
         recipient: "client",
       }),

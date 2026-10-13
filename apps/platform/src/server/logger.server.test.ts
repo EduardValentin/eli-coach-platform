@@ -315,6 +315,80 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a failed weekly check-in notification with the series and the event, without the recipient", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesNotificationFailed({
+      seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      notification: "seriesSetUp",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in notification failed.",
+      {
+        errorCategory: "check_in_series_notification_failure",
+        notification: "seriesSetUp",
+        seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      },
+    );
+  });
+
+  it("logs a weekly check-in that could not be extended by client and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesExtensionFailed({
+      clientId: "client-1",
+      error: Object.assign(new Error("deadlock detected"), { code: "40P01" }),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in could not be extended; its new weeks are missing.",
+      {
+        clientId: "client-1",
+        errorCategory: "check_in_series_extension_failure",
+        errorClass: "Error",
+        errorCode: "40P01",
+      },
+    );
+  });
+
+  it("logs a weekly check-in that could not be read by client and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesReadFailed({
+      clientId: "client-1",
+      error: Object.assign(new Error("connection reset"), { code: "08006" }),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in could not be read; the client record shows none.",
+      {
+        clientId: "client-1",
+        errorCategory: "check_in_series_read_failure",
+        errorClass: "Error",
+        errorCode: "08006",
+      },
+    );
+  });
+
   it("logs unreadable assessment call slots", () => {
     // arrange
     const consoleError = vi

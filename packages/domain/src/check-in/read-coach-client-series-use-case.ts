@@ -1,6 +1,7 @@
 import type { ClientIdentities } from "../client";
 import type { Clock } from "../shared";
 
+import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import {
@@ -16,6 +17,7 @@ export type CoachClientSeries = {
 type ReadCoachClientSeriesUseCaseOptions = {
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
+  incidents: Pick<CheckInIncidents, "checkInSeriesReadFailed">;
   series: Pick<CheckInSeriesRecords, "findActiveForClient" | "listOccurrences">;
 };
 
@@ -27,6 +29,16 @@ export class ReadCoachClientSeriesUseCase {
   }
 
   async execute(clientId: string): Promise<CoachClientSeries> {
+    try {
+      return await this.seriesOf(clientId);
+    } catch (error) {
+      this.options.incidents.checkInSeriesReadFailed({ clientId, error });
+
+      return { series: null, occurrences: [] };
+    }
+  }
+
+  private async seriesOf(clientId: string): Promise<CoachClientSeries> {
     const series = await this.options.series.findActiveForClient(clientId);
 
     if (!series) {

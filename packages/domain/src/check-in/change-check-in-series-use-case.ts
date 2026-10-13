@@ -111,11 +111,11 @@ export class ChangeCheckInSeriesUseCase {
       return recorded;
     }
 
-    await this.announcer.announceSeries(
-      "seriesChanged",
+    await this.announcer.announceSeries("seriesChanged", {
       series,
-      starts[0] ?? null,
-    );
+      weekStartsAt: starts[0] ?? series.nextWeekStartFrom(now),
+      clientTimeZone: client.timeZone,
+    });
 
     return {
       status: "changed",

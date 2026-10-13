@@ -298,6 +298,38 @@ describe("CheckInSeries#changedTo", () => {
   });
 });
 
+describe("CheckInSeries#nextWeekStartFrom", () => {
+  it("names the week of the series that starts next, at the coach's hour", () => {
+    // act
+    const next = series().nextWeekStartFrom(
+      new Date("2026-10-13T12:00:00.000Z"),
+    );
+
+    // assert
+    expect(next).toEqual(new Date("2026-10-14T15:00:00.000Z"));
+  });
+
+  it("names the following week once that day's hour has passed", () => {
+    // act
+    const next = series().nextWeekStartFrom(
+      new Date("2026-10-14T16:00:00.000Z"),
+    );
+
+    // assert
+    expect(next).toEqual(new Date("2026-10-21T15:00:00.000Z"));
+  });
+
+  it("names the week starting at the very instant asked", () => {
+    // act
+    const next = series().nextWeekStartFrom(
+      new Date("2026-10-14T15:00:00.000Z"),
+    );
+
+    // assert
+    expect(next).toEqual(new Date("2026-10-14T15:00:00.000Z"));
+  });
+});
+
 describe("CheckInSeries#stop", () => {
   it("records when the series stopped", () => {
     // arrange

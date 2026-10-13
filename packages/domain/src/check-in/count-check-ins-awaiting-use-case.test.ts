@@ -104,6 +104,7 @@ function createUseCase(options: {
     nextCheckInLookupFailed: vi.fn(),
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
+    checkInSeriesReadFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new CountCheckInsAwaitingUseCase({
     checkIns,

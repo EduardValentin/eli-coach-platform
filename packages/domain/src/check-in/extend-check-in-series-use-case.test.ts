@@ -98,6 +98,7 @@ function createExtend(options?: {
     nextCheckInLookupFailed: vi.fn(),
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
+    checkInSeriesReadFailed: vi.fn(),
   };
   const now = options?.now ?? RENEWAL_DAY;
   const ports = {
