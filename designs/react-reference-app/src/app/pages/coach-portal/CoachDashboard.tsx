@@ -1,9 +1,7 @@
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { ArrowRight, ClipboardCheck, Users } from 'lucide-react';
+import { ArrowRight, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { PortalWidget } from '../../components/PortalWidget';
-import { RowActionLink } from '../../components/RowActionButton';
-import { coachCheckinPath, coachCheckinsPath } from '../../utils/checkinLinks';
 import { WidgetLink } from '../../components/WidgetLink';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -18,8 +16,8 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { getInitials } from '../../utils/clientHelpers';
-import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
 import { AssessmentCallsUnavailable } from '../../components/coach-portal/AssessmentCallsUnavailable';
+import { PendingCheckins } from '../../components/coach-portal/PendingCheckins';
 import { UpcomingAssessmentCalls } from '../../components/coach-portal/UpcomingAssessmentCalls';
 import { useAppState } from '../../context/AppContext';
 import { useAssessmentCalls } from '../../context/AssessmentCallContext';
@@ -29,7 +27,7 @@ import {
   classifyCalls,
   countCallsLeftToday,
 } from '../../utils/assessmentCallListing';
-import { browserTimeZone, checkinInstant } from '../../utils/dateFormatters';
+import { browserTimeZone } from '../../utils/dateFormatters';
 
 const MOCK_CLIENTS = [
   {
@@ -112,8 +110,6 @@ function ActiveClientRow({
   );
 }
 
-const DASHBOARD_CHECKIN_LIMIT = 3;
-
 export function CoachDashboard() {
   const { getCheckinsAwaiting } = useCheckins();
   const { bookings } = useAssessmentCalls();
@@ -142,7 +138,7 @@ export function CoachDashboard() {
               You have {callsLeftToday} assessment call
               {callsLeftToday !== 1 ? 's' : ''} today.
             </span>
-            <span>
+            <span data-parity="review-count">
               {' '}
               {pendingCheckins.length} check-in
               {pendingCheckins.length !== 1 ? 's' : ''} to review.
@@ -158,52 +154,7 @@ export function CoachDashboard() {
           timeZone={timeZone}
         />
 
-        <PortalWidget
-          presentation="coach"
-          title="Pending Check-ins"
-          icon={
-            <ClipboardCheck
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
-          headingId="pending-checkins-heading"
-          footer={
-            <WidgetLink trailing="arrow" to={coachCheckinsPath()}>
-              View all check-ins
-            </WidgetLink>
-          }
-        >
-          <div className="space-y-4">
-            {pendingCheckins.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No pending check-ins
-              </p>
-            ) : (
-              pendingCheckins
-                .slice(0, DASHBOARD_CHECKIN_LIMIT)
-                .map((checkin) => (
-                  <DashboardAppointmentRow
-                    key={checkin.id}
-                    attendeeName={checkin.clientName}
-                    when={{
-                      startsAt: checkinInstant(checkin.date, checkin.time),
-                      timeZone,
-                    }}
-                    action={
-                      <RowActionLink
-                        to={coachCheckinPath(checkin.id)}
-                        icon={ClipboardCheck}
-                      >
-                        Review
-                      </RowActionLink>
-                    }
-                  />
-                ))
-            )}
-          </div>
-        </PortalWidget>
+        <PendingCheckins checkins={pendingCheckins} timeZone={timeZone} />
       </div>
 
       <PortalWidget

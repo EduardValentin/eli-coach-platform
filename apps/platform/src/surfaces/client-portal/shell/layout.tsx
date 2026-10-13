@@ -3,6 +3,7 @@ import {
   pwaSurfaceDefinitions,
 } from "@eli-coach-platform/infrastructure/pwa";
 import { PortalShell } from "@eli-coach-platform/ui/layout";
+import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { LogOut } from "lucide-react";
 import {
@@ -11,6 +12,7 @@ import {
   type LinksFunction,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunction,
 } from "react-router";
 
 import {
@@ -18,7 +20,9 @@ import {
   type PortalRouteHandle,
 } from "~/features/accounts/public/paths";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
+import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import { NextCheckInWidget } from "~/features/check-ins/ui/client/shell/next-check-in-widget";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 
@@ -39,6 +43,7 @@ const pwaRegistration = createPwaRegistration({
 });
 
 type ClientShell = ClientNavigationCounts & {
+  nextCheckIn: ClientCheckIn | null;
   presentation: ClientShellPresentation;
 };
 
@@ -47,13 +52,21 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
     args.context.get(clientsContext).clientJourney.loadIdentity(args),
   );
 
-  const [unopenedResources, checkInsAwaiting] = await Promise.all([
+  const { clientCheckIns } = args.context.get(checkInsContext);
+  const [nextCheckIn, unopenedResources, checkInsAwaiting] = await Promise.all([
+    clientCheckIns.loadNextCheckIn(args),
     args.context.get(clientResourcesContext).ownResources.countUnopened(args),
-    args.context.get(checkInsContext).clientCheckIns.loadAwaitingCount(args),
+    clientCheckIns.loadAwaitingCount(args),
   ]);
 
-  return { presentation, unopenedResources, checkInsAwaiting };
+  return { presentation, nextCheckIn, unopenedResources, checkInsAwaiting };
 }
+
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}) => defaultShouldRevalidate || currentUrl.pathname !== nextUrl.pathname;
 
 export const handle = {
   portal: CLIENT_PORTAL_ROUTE_SEGMENT,
@@ -67,9 +80,14 @@ export const links: LinksFunction = () => [
 ];
 
 export default function ClientLayoutRoute() {
-  const { presentation, ...counts } = useLoaderData<typeof loader>();
+  const { presentation, nextCheckIn, ...counts } =
+    useLoaderData<typeof loader>();
   const { displayName } = presentation;
   const navigation = clientNavigationOf(counts);
+  const timeZone = useCalendarDayTimeZone();
+  const nextCheckInWidget = nextCheckIn && (
+    <NextCheckInWidget checkIn={nextCheckIn} timeZone={timeZone} />
+  );
 
   return (
     <>
@@ -102,11 +120,13 @@ export default function ClientLayoutRoute() {
             ),
             navigationLabel: "Client portal more",
             title: "More",
+            widget: nextCheckInWidget,
           },
           tabs: navigation.tabs,
           tabsLabel: "Client portal tabs",
         }}
         navigationLabel="Client portal navigation"
+        sidebarWidget={nextCheckInWidget}
         topBarBrand={<ClientNameBlock displayName={displayName} size="sm" />}
         topBarLabel="Client portal top bar"
       >

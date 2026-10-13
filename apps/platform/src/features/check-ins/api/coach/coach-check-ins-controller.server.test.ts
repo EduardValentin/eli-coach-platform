@@ -2,6 +2,7 @@ import {
   CheckIn,
   type ClientCheckInScheduling,
   type CountCheckInsAwaitingUseCase,
+  type ListCoachCheckInsAwaitingUseCase,
   type ListCoachCheckInsUseCase,
   type ReadClientCheckInSchedulingUseCase,
   type ScheduleCheckInResult,
@@ -110,6 +111,60 @@ describe("CoachCheckInsController loadCheckIns", () => {
     // assert
     expect((thrown as Response).status).toBe(403);
     expect(listCoachCheckIns).not.toHaveBeenCalled();
+  });
+});
+
+describe("CoachCheckInsController loadAwaiting", () => {
+  it("hands the coach the check-ins waiting for her answer with each client's name", async () => {
+    // arrange
+    const { controller } = createController({
+      awaitingCheckIns: [
+        {
+          ...PENDING.viewFor({ party: "coach", at: NOW }),
+          client: { firstName: "Ana", lastName: "Popescu" },
+        },
+      ],
+    });
+
+    // act
+    const pending = await controller.loadAwaiting(coachArgs());
+
+    // assert
+    expect(pending.checkIns).toEqual([
+      expect.objectContaining({
+        id: CHECK_IN_ID,
+        status: "pending",
+        awaitsViewer: true,
+        startsAt: "2026-10-22T14:00:00.000Z",
+        clientId: CLIENT_ID,
+        client: { firstName: "Ana", lastName: "Popescu" },
+      }),
+    ]);
+  });
+
+  it("hands the coach no check-ins when none waits for her answer", async () => {
+    // arrange
+    const { controller } = createController({ awaitingCheckIns: [] });
+
+    // act
+    const pending = await controller.loadAwaiting(coachArgs());
+
+    // assert
+    expect(pending).toEqual({ checkIns: [] });
+  });
+
+  it("refuses a client without listing anything", async () => {
+    // arrange
+    const { controller, listCoachCheckInsAwaiting } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadAwaiting(coachArgs({ session: CLIENT_SESSION })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(listCoachCheckInsAwaiting).not.toHaveBeenCalled();
   });
 });
 
@@ -357,6 +412,9 @@ describe("CoachCheckInsController loadClientScheduling", () => {
 function createController(
   answers: {
     awaiting?: number;
+    awaitingCheckIns?: Awaited<
+      ReturnType<ListCoachCheckInsAwaitingUseCase["execute"]>
+    >;
     listed?: Awaited<ReturnType<ListCoachCheckInsUseCase["execute"]>>;
     scheduled?: ScheduleCheckInResult;
     scheduling?: ClientCheckInScheduling;
@@ -366,6 +424,9 @@ function createController(
     .fn()
     .mockResolvedValue(answers.awaiting ?? 0);
   const listCoachCheckIns = vi.fn().mockResolvedValue(answers.listed ?? []);
+  const listCoachCheckInsAwaiting = vi
+    .fn()
+    .mockResolvedValue(answers.awaitingCheckIns ?? []);
   const scheduleCheckIn = vi
     .fn()
     .mockResolvedValue(answers.scheduled ?? { status: "unknown_client" });
@@ -379,6 +440,9 @@ function createController(
     listCoachCheckIns: {
       execute: listCoachCheckIns,
     } as unknown as ListCoachCheckInsUseCase,
+    listCoachCheckInsAwaiting: {
+      execute: listCoachCheckInsAwaiting,
+    } as unknown as ListCoachCheckInsAwaitingUseCase,
     readClientCheckInScheduling: {
       execute: readClientCheckInScheduling,
     } as unknown as ReadClientCheckInSchedulingUseCase,
@@ -391,6 +455,7 @@ function createController(
     controller,
     countCheckInsAwaiting,
     listCoachCheckIns,
+    listCoachCheckInsAwaiting,
     readClientCheckInScheduling,
     scheduleCheckIn,
   };

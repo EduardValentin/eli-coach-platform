@@ -5,13 +5,21 @@ import type { ListedCheckIn } from "./check-in-listing";
 
 type JoinMeetLinkProps = {
   checkIn: Pick<ListedCheckIn, "endsAt" | "joinEmphasisFrom">;
+  className?: string;
   size?: "sm" | "xs";
   to: string;
+  width?: "content" | "full";
 };
 
 const MINUTE_MS = 60 * 1000;
 
-export function JoinMeetLink({ checkIn, size, to }: JoinMeetLinkProps) {
+export function JoinMeetLink({
+  checkIn,
+  className,
+  size,
+  to,
+  width,
+}: JoinMeetLinkProps) {
   const now = useMinuteTick();
   const isJoinNear =
     now >= Date.parse(checkIn.joinEmphasisFrom) &&
@@ -19,11 +27,13 @@ export function JoinMeetLink({ checkIn, size, to }: JoinMeetLinkProps) {
 
   return (
     <JoinLink
+      className={className}
       data-parity="join-meet"
       label="Join Meet"
       size={size}
       to={to}
       tone={isJoinNear ? "primary" : "quiet"}
+      width={width}
     />
   );
 }

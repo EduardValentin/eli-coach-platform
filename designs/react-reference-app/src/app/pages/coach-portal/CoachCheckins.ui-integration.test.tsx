@@ -129,6 +129,36 @@ describe('where the coach check-ins page opens', () => {
     // assert
     expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
   });
+
+  it('opens on the tab holding the check-in the address names and focuses its row', () => {
+    // arrange
+    // act
+    renderPage('&checkin=ck-7');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+    expect(document.getElementById('checkin-ck-7')).toHaveFocus();
+    expect(within(document.getElementById('checkin-ck-7')!).getByText('Jessica Alba')).toBeInTheDocument();
+  });
+
+  it('keeps the tab the address names over the check-in it names', () => {
+    // arrange
+    // act
+    renderPage('&view=upcoming&checkin=ck-7');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens as usual when the address names a check-in she cannot see', () => {
+    // arrange
+    // act
+    renderPage('&checkin=ck-missing');
+
+    // assert
+    expect(screen.getByRole('tab', { name: /^Requests/ })).toHaveAttribute('aria-selected', 'true');
+    expect(document.body).toHaveFocus();
+  });
 });
 
 describe('the coach check-ins page', () => {

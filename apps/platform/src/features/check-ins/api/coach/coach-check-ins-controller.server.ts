@@ -1,6 +1,7 @@
 import type {
   CoachCheckInView,
   CountCheckInsAwaitingUseCase,
+  ListCoachCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
   ReadClientCheckInSchedulingUseCase,
   ScheduleCheckInResult,
@@ -28,6 +29,7 @@ import {
 type CoachCheckInsControllerOptions = {
   countCheckInsAwaiting: CountCheckInsAwaitingUseCase;
   listCoachCheckIns: ListCoachCheckInsUseCase;
+  listCoachCheckInsAwaiting: ListCoachCheckInsAwaitingUseCase;
   readClientCheckInScheduling: ReadClientCheckInSchedulingUseCase;
   scheduleCheckIn: ScheduleCheckInUseCase;
 };
@@ -44,6 +46,16 @@ export class CoachCheckInsController {
     requirePortalAccess(args, { role: "COACH" });
 
     const checkIns = await this.options.listCoachCheckIns.execute();
+
+    return coachCheckInsSchema.parse({
+      checkIns: checkIns.map((view) => this.present(view)),
+    });
+  }
+
+  async loadAwaiting(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
+    requirePortalAccess(args, { role: "COACH" });
+
+    const checkIns = await this.options.listCoachCheckInsAwaiting.execute();
 
     return coachCheckInsSchema.parse({
       checkIns: checkIns.map((view) => this.present(view)),

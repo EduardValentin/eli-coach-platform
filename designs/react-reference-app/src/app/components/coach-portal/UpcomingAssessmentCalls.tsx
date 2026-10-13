@@ -36,7 +36,7 @@ export function UpcomingAssessmentCalls({
   return (
     <PortalWidget
       presentation="coach"
-      title="Upcoming calls"
+      title="Upcoming assessment calls"
       icon={
         <Video aria-hidden="true" className="text-brand-secondary" size={18} />
       }

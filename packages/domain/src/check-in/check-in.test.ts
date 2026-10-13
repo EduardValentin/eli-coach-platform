@@ -1111,6 +1111,37 @@ describe("CheckIn#cancellationRefusalFor", () => {
   );
 });
 
+describe("CheckIn.byStart", () => {
+  it("orders check-ins soonest start first", () => {
+    // arrange
+    const latest = checkIn({ id: "check-in-3", startsAt: NEW_START });
+    const soonest = checkIn({ id: "check-in-1", startsAt: BEFORE_START });
+    const between = checkIn({ id: "check-in-2", startsAt: STARTS_AT });
+
+    // act
+    const ordered = [latest, between, soonest].sort(CheckIn.byStart);
+
+    // assert
+    expect(ordered.map((entry) => entry.id)).toEqual([
+      "check-in-1",
+      "check-in-2",
+      "check-in-3",
+    ]);
+  });
+
+  it("holds two check-ins starting together as equal", () => {
+    // arrange
+    const first = checkIn({ id: "check-in-1" });
+    const second = checkIn({ id: "check-in-2" });
+
+    // act
+    const order = CheckIn.byStart(first, second);
+
+    // assert
+    expect(order).toBe(0);
+  });
+});
+
 describe("CheckIn.startsBeforeCoachingEnd", () => {
   it.each([
     { situation: "no coaching end", coachingEndsAt: null, expected: true },

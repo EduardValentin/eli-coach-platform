@@ -12,6 +12,7 @@ interface ClientWidgetProps {
   className?: string;
   action?: ReactNode;
   footer?: ReactNode;
+  parityRoot?: string;
 }
 
 export function ClientWidget({
@@ -25,6 +26,7 @@ export function ClientWidget({
   className,
   action,
   footer,
+  parityRoot,
 }: ClientWidgetProps) {
   return (
     <PortalWidget
@@ -38,6 +40,7 @@ export function ClientWidget({
       action={action}
       footer={footer}
       className={className}
+      parityRoot={parityRoot}
     >
       {children}
     </PortalWidget>

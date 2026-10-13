@@ -193,6 +193,50 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs check-ins awaiting an answer that could not be listed by the class of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.awaitingCheckInsListFailed({
+      error: new TypeError("secret row contents"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Check-ins awaiting an answer could not be listed.",
+      {
+        errorCategory: "check_in_awaiting_list_failure",
+        errorClass: "TypeError",
+      },
+    );
+  });
+
+  it("logs a client's next check-in that could not be found by the class of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.nextCheckInLookupFailed({
+      error: new TypeError("secret row contents"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "The client's next check-in could not be found.",
+      {
+        errorCategory: "check_in_next_lookup_failure",
+        errorClass: "TypeError",
+      },
+    );
+  });
+
   it("logs a coaching end that did not reach the check-ins by subscription, client, end and error class only", () => {
     // arrange
     const consoleError = vi

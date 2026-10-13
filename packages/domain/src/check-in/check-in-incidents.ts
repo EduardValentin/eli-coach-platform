@@ -10,4 +10,6 @@ export interface CheckInIncidents {
     party: CheckInParty;
     error: unknown;
   }): void;
+  awaitingCheckInsListFailed(incident: { error: unknown }): void;
+  nextCheckInLookupFailed(incident: { error: unknown }): void;
 }

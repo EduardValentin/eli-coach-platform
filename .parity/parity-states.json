@@ -191,9 +191,16 @@
       },
       {
         "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 1200
       }
     ],
-    "real": []
+    "real": [
+      {
+        "wait": 1200
+      }
+    ]
   },
   "checkin-propose-refused": [
     {
@@ -556,16 +563,34 @@
   "checkins-tab-past": [
     {
       "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
     }
   ],
   "checkins-tab-requests": [
     {
       "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
     }
   ],
   "checkins-tab-upcoming": [
     {
       "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
     }
   ],
   "checkout-immediate": {
@@ -2140,6 +2165,9 @@
     },
     {
       "hover": "[role=\"dialog\"] [data-parity=\"sheet-handle\"]"
+    },
+    {
+      "wait": 1500
     }
   ],
   "open-panel-approve-confirm": [
@@ -3618,6 +3646,45 @@
     },
     {
       "wait": 600
+    }
+  ],
+  "pending-checkins-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"None pending\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "review-first-pending": [
+    {
+      "click": "[data-parity-root=\"PendingCheckins\" i] >> role=link[name=/Review/] >> nth=0"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "dashboard-empty": [
+    {
+      "use": "empty-calls"
+    },
+    {
+      "use": "pending-checkins-empty"
     }
   ]
 }

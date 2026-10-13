@@ -1,16 +1,13 @@
+import { useId } from 'react';
 import { CalendarCheck } from 'lucide-react';
-import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
-import { checkinStartsAt } from '../../domain/checkins';
+import { checkinStartsAt, type CheckIn } from '../../domain/checkins';
 import { JoinMeetLink } from '../JoinMeetLink';
 import { DateTimeLabel } from '../DateTimeLabel';
 import { WidgetLink } from '../WidgetLink';
 import { ClientWidget } from './ClientWidget';
 
-export function NextCheckinCard() {
-  const { getUpcomingCheckins } = useCheckins();
-  const nextCheckin = getUpcomingCheckins(DEMO_CLIENT.id)[0];
-
-  if (!nextCheckin) return null;
+export function NextCheckinCard({ checkin }: { checkin: CheckIn }) {
+  const headingId = useId();
 
   return (
     <ClientWidget
@@ -22,12 +19,13 @@ export function NextCheckinCard() {
           size={16}
         />
       }
-      headingId="next-checkin-heading"
+      headingId={headingId}
       density="compact"
+      parityRoot="NextCheckinCard"
       hero={
         <DateTimeLabel
           size="sm"
-          startsAt={checkinStartsAt(nextCheckin)}
+          startsAt={checkinStartsAt(checkin)}
         />
       }
       footer={
@@ -36,7 +34,7 @@ export function NextCheckinCard() {
         </WidgetLink>
       }
     >
-      <JoinMeetLink checkin={nextCheckin} party="client" className="mt-3 w-full" />
+      <JoinMeetLink checkin={checkin} party="client" className="mt-3 w-full" />
     </ClientWidget>
   );
 }

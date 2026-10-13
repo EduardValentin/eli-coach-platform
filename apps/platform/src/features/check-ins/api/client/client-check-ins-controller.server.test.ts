@@ -1,6 +1,7 @@
 import {
   CheckIn,
   type CountCheckInsAwaitingUseCase,
+  type FindNextClientCheckInUseCase,
   type ListClientCheckInsUseCase,
   type RequestCheckInResult,
   type RequestCheckInUseCase,
@@ -50,6 +51,61 @@ const PENDING = CheckIn.reconstitute({
   earlierStartsAt: null,
   moves: 0,
   newTimeNote: null,
+});
+
+const APPROVED = CheckIn.reconstitute({
+  ...PENDING.toSnapshot(),
+  recordedStatus: "approved",
+  answeredAt: NOW,
+});
+
+describe("ClientCheckInsController loadNextCheckIn", () => {
+  it("hands the client her next approved check-in as instants", async () => {
+    // arrange
+    const { controller, findNextClientCheckIn } = createController({
+      next: APPROVED.viewFor({ party: "client", at: NOW }),
+    });
+
+    // act
+    const next = await controller.loadNextCheckIn(clientArgs());
+
+    // assert
+    expect(findNextClientCheckIn).toHaveBeenCalledWith("user_ana");
+    expect(next).toEqual(
+      expect.objectContaining({
+        id: CHECK_IN_ID,
+        status: "approved",
+        startsAt: "2026-10-22T14:00:00.000Z",
+        endsAt: "2026-10-22T15:00:00.000Z",
+        joinEmphasisFrom: "2026-10-22T13:50:00.000Z",
+      }),
+    );
+  });
+
+  it("hands the client nothing when no approved check-in lies ahead", async () => {
+    // arrange
+    const { controller } = createController({ next: null });
+
+    // act
+    const next = await controller.loadNextCheckIn(clientArgs());
+
+    // assert
+    expect(next).toBeNull();
+  });
+
+  it("refuses the coach without looking anything up", async () => {
+    // arrange
+    const { controller, findNextClientCheckIn } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadNextCheckIn(clientArgs({ session: COACH_SESSION })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(findNextClientCheckIn).not.toHaveBeenCalled();
+  });
 });
 
 describe("ClientCheckInsController loadCheckIns", () => {
@@ -288,6 +344,7 @@ function createController(
   answers: {
     awaiting?: number;
     listed?: Awaited<ReturnType<ListClientCheckInsUseCase["execute"]>>;
+    next?: Awaited<ReturnType<FindNextClientCheckInUseCase["execute"]>>;
     requested?: RequestCheckInResult;
   } = {},
 ) {
@@ -297,6 +354,7 @@ function createController(
   const listClientCheckIns = vi
     .fn()
     .mockResolvedValue(answers.listed ?? { status: "listed", checkIns: [] });
+  const findNextClientCheckIn = vi.fn().mockResolvedValue(answers.next ?? null);
   const requestCheckIn = vi.fn().mockResolvedValue(
     answers.requested ?? {
       status: "requested",
@@ -307,6 +365,9 @@ function createController(
     countCheckInsAwaiting: {
       execute: countCheckInsAwaiting,
     } as unknown as CountCheckInsAwaitingUseCase,
+    findNextClientCheckIn: {
+      execute: findNextClientCheckIn,
+    } as unknown as FindNextClientCheckInUseCase,
     listClientCheckIns: {
       execute: listClientCheckIns,
     } as unknown as ListClientCheckInsUseCase,
@@ -318,6 +379,7 @@ function createController(
   return {
     controller,
     countCheckInsAwaiting,
+    findNextClientCheckIn,
     listClientCheckIns,
     requestCheckIn,
   };

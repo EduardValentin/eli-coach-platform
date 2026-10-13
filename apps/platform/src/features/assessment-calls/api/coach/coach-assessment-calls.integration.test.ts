@@ -74,7 +74,7 @@ describe.sequential("coach assessment calls integration", () => {
     const page = await visibleDocument(response);
 
     expect(response.status).toBe(200);
-    expect(page).toContain("Upcoming calls");
+    expect(page).toContain("Upcoming assessment calls");
     expect(page).toContain("No upcoming calls.");
     expect(page).toContain("View all calls");
     expect(page).toContain(`href="${suite.path("/coach/assessment-calls")}"`);

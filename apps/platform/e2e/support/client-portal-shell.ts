@@ -1,10 +1,14 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { expectJoinEmphasis, type JoinEmphasis } from "./check-in-tabs";
+import { countedNavigationName } from "./navigation-counts";
+
 export type NavigationMark = "marked" | "unmarked";
 
 const RESOURCES = "Resources";
 const MORE = "More";
 const ANY_RESOURCES_LINK = /^Resources( \(new\))?$/;
+const NEXT_CHECK_IN = "Next check-in";
 
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
@@ -55,6 +59,10 @@ export class ClientPortalShell {
 
   private nameLinkIn(scope: Locator, displayName: string): Locator {
     return scope.getByRole("link", { name: displayName, exact: true });
+  }
+
+  private nextCheckInIn(scope: Locator): Locator {
+    return scope.getByRole("region", { name: NEXT_CHECK_IN });
   }
 
   private get skipLink() {
@@ -239,5 +247,40 @@ export class ClientPortalShell {
 
   async signOutFromSheet(): Promise<void> {
     await this.moreSheet.getByRole("button", { name: "Sign out" }).click();
+  }
+
+  nextCheckIn(): Locator {
+    return this.nextCheckInIn(this.sidebar);
+  }
+
+  nextCheckInInSheet(): Locator {
+    return this.nextCheckInIn(this.moreSheet);
+  }
+
+  async expectNoNextCheckIn(): Promise<void> {
+    await expect(this.sidebarNavigation).toBeVisible();
+    await expect(this.nextCheckIn()).toHaveCount(0);
+  }
+
+  async expectNextCheckInJoin(emphasis: JoinEmphasis): Promise<void> {
+    await expectJoinEmphasis(this.nextCheckIn(), emphasis);
+  }
+
+  async manageCheckInsFromWidget(): Promise<void> {
+    await this.nextCheckIn()
+      .getByRole("link", { name: "Manage check-ins" })
+      .click();
+  }
+
+  async expectCheckInsCountInSidebar(count: number): Promise<void> {
+    await expect(
+      this.sidebarNavigation.getByRole("link", { name: /^Check-ins/ }),
+    ).toHaveAccessibleName(countedNavigationName("Check-ins", count));
+  }
+
+  async expectCheckInsCountInTabs(count: number): Promise<void> {
+    await expect(
+      this.tabBar.getByRole("link", { name: /^Check-ins/ }),
+    ).toHaveAccessibleName(countedNavigationName("Check-ins", count));
   }
 }

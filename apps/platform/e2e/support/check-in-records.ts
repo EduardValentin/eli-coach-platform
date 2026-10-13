@@ -61,6 +61,31 @@ const HOLD_HOUR = `
   select starts_at, starts_at + interval '1 hour', id from held
 `;
 
+const PROPOSE_HOUR = `
+  with proposed as (
+    insert into app.check_ins (
+      id, client_id, starts_at, client_time_zone, coach_time_zone,
+      kind, status, initiated_by, proposed_by, requested_at
+    )
+    values (
+      gen_random_uuid(), $1, $2, $3, $3,
+      'ad_hoc', 'pending', 'coach', 'coach', now()
+    )
+    returning id, starts_at
+  )
+  insert into app.coach_time_reservations (starts_at, ends_at, check_in_id)
+  select starts_at, starts_at + interval '1 hour', id from proposed
+`;
+const CANCEL_WAITING_REQUESTS = `
+  with cancelled as (
+    update app.check_ins set status = 'cancelled'
+    where status = 'pending' and proposed_by = 'client' and starts_at > now()
+    returning id
+  )
+  delete from app.coach_time_reservations
+  where check_in_id in (select id from cancelled)
+`;
+
 type MovesRow = { moves: number; earlier_starts_at: Date | null };
 
 export class CheckInRecords {
@@ -95,6 +120,10 @@ export class CheckInRecords {
 
   async markCancelled(checkInId: string): Promise<void> {
     await this.pool.query(MARK_CANCELLED, [checkInId]);
+    await this.freeHourOf(checkInId);
+  }
+
+  async freeHourOf(checkInId: string): Promise<void> {
     await this.pool.query(FREE_HOUR, [checkInId]);
   }
 
@@ -135,6 +164,18 @@ export class CheckInRecords {
     timeZone: string,
   ): Promise<void> {
     await this.pool.query(HOLD_HOUR, [clientId, startsAt, timeZone]);
+  }
+
+  async proposeHourFor(
+    clientId: string,
+    startsAt: Date,
+    timeZone: string,
+  ): Promise<void> {
+    await this.pool.query(PROPOSE_HOUR, [clientId, startsAt, timeZone]);
+  }
+
+  async cancelWaitingRequests(): Promise<void> {
+    await this.pool.query(CANCEL_WAITING_REQUESTS);
   }
 
   async moveBookingZone(clientId: string, timeZone: string): Promise<void> {

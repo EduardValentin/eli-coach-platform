@@ -115,6 +115,8 @@ function createRequestCheckIn(options?: {
     incidents: options?.incidents ?? {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
+      awaitingCheckInsListFailed: vi.fn(),
+      nextCheckInLookupFailed: vi.fn(),
     },
     notifications: options?.notifications ?? createNotifications(),
   };
@@ -313,6 +315,8 @@ describe("RequestCheckInUseCase", () => {
     const incidents = {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
+      awaitingCheckInsListFailed: vi.fn(),
+      nextCheckInLookupFailed: vi.fn(),
     };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,
@@ -337,6 +341,8 @@ describe("RequestCheckInUseCase", () => {
     const incidents = {
       checkInNotificationFailed: vi.fn(),
       awaitingCheckInsCountFailed: vi.fn(),
+      awaitingCheckInsListFailed: vi.fn(),
+      nextCheckInLookupFailed: vi.fn(),
     };
     const { requestCheckIn } = createRequestCheckIn({
       notifications,

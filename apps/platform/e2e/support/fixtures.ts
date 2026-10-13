@@ -34,6 +34,7 @@ import { CoachClientPage } from "./coach-client-page";
 import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
+import { CoachDashboardPage } from "./coach-dashboard";
 import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -129,6 +130,7 @@ type PlatformFixtures = {
   coachClient: CoachClientPage;
   coachClientResources: CoachClientResourcesPage;
   coachCheckIns: CoachCheckInsPage;
+  coachDashboard: CoachDashboardPage;
   coachMeetingRoom: CoachMeetingRoom;
   coachAvailability: CoachAvailability;
   checkInRecords: CheckInRecords;
@@ -485,6 +487,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   coachCheckIns: async ({ page }, use) => {
     await use(new CoachCheckInsPage(page));
+  },
+
+  coachDashboard: async ({ page }, use) => {
+    await use(new CoachDashboardPage(page));
   },
 
   coachMeetingRoom: async ({ databasePool, page, scenarioTag }, use) => {

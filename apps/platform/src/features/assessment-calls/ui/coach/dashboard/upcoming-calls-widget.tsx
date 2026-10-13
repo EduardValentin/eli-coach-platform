@@ -48,7 +48,7 @@ export function UpcomingCallsWidget({
             size={18}
           />
         }
-        title="Upcoming calls"
+        title="Upcoming assessment calls"
       >
         <div
           className={cn("flex-1", {

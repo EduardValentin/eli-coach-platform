@@ -100,7 +100,7 @@ describe('the coach dashboard when the calls cannot be read', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { name: 'Upcoming calls' }),
+      screen.queryByRole('heading', { name: 'Upcoming assessment calls' }),
     ).not.toBeInTheDocument();
   });
 });
@@ -155,7 +155,7 @@ describe('the coach dashboard', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Upcoming calls' }),
+      screen.getByRole('heading', { level: 2, name: 'Upcoming assessment calls' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Maria Ionescu')).toBeInTheDocument();
   });

@@ -7,6 +7,7 @@ import {
   needsReviewCall,
   PROGRAM_READY_NOTIFICATION,
 } from '../utils/reviewCallListing';
+import { coachCheckinPath } from '../utils/checkinLinks';
 
 export type Notification = {
   id: string;
@@ -45,7 +46,7 @@ const COACH_NOTIFICATIONS: Notification[] = [
     message: 'Jessica Alba requested an ad-hoc check-in for Friday.',
     time: '1 hour ago',
     read: false,
-    link: '/coach/checkins?focus=ck-4'
+    link: coachCheckinPath('ck-4')
   },
   {
     id: '3',
@@ -53,7 +54,7 @@ const COACH_NOTIFICATIONS: Notification[] = [
     message: 'Emma Stone requested an ad-hoc check-in for Tuesday.',
     time: '2 hours ago',
     read: false,
-    link: '/coach/checkins?focus=ck-5'
+    link: coachCheckinPath('ck-5')
   }
 ];
 

@@ -105,6 +105,7 @@ type ClientShellOptions = {
   links?: readonly PortalNavigationLink[];
   reducedMotion?: "always" | "never";
   tabs?: readonly PortalNavigationLink[];
+  widget?: ReactNode;
 };
 
 function renderClientShell(options: ClientShellOptions = {}) {
@@ -113,6 +114,7 @@ function renderClientShell(options: ClientShellOptions = {}) {
     links = clientLinks,
     reducedMotion = "always",
     tabs = clientLinks.slice(0, 5),
+    widget,
   } = options;
 
   return render(
@@ -133,11 +135,13 @@ function renderClientShell(options: ClientShellOptions = {}) {
               ),
               navigationLabel: "Client portal more",
               title: "More",
+              widget,
             },
             tabs,
             tabsLabel: "Client portal tabs",
           }}
           navigationLabel="Client portal navigation"
+          sidebarWidget={widget}
           topBarBrand={<p>Top bar name block</p>}
           topBarLabel="Client portal top bar"
         >
@@ -1014,5 +1018,95 @@ describe("PortalShell counted navigation link", () => {
 
     expect(queryNavigationCount(document.body)).toBeNull();
     expect(link).toHaveTextContent(/^Check-ins$/);
+  });
+});
+
+const nextCheckInWidget = (
+  <section aria-label="Next check-in">
+    <Link to="/client/checkins">Manage check-ins</Link>
+  </section>
+);
+
+function follows(element: Element, earlier: Element) {
+  return Boolean(
+    earlier.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+}
+
+describe("PortalShell widget slots", () => {
+  it("places the sidebar widget below the sidebar navigation, outside its landmark", () => {
+    // arrange, act
+    renderClientShell({ widget: nextCheckInWidget });
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Client portal sidebar",
+    });
+    const navigation = within(sidebar).getByRole("navigation", {
+      name: "Client portal navigation",
+    });
+    const widget = within(sidebar).getByRole("region", {
+      name: "Next check-in",
+    });
+
+    expect(navigation).not.toContainElement(widget);
+    expect(follows(widget, navigation)).toBe(true);
+    expect(widget.parentElement).toHaveAttribute(
+      "data-parity",
+      "sidebar-widget",
+    );
+  });
+
+  it("places the sheet widget between the sheet navigation and its footer, outside the navigation landmark", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell({ widget: nextCheckInWidget });
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    const navigation = within(sheet).getByRole("navigation", {
+      name: "Client portal more",
+    });
+    const widget = within(sheet).getByRole("region", {
+      name: "Next check-in",
+    });
+    const signOut = within(sheet).getByRole("button", { name: "Sign out" });
+
+    expect(navigation).not.toContainElement(widget);
+    expect(follows(widget, navigation)).toBe(true);
+    expect(follows(signOut, widget)).toBe(true);
+    expect(widget.parentElement).toHaveAttribute("data-parity", "sheet-widget");
+  });
+
+  it("leaves no widget space in the sidebar or the sheet when none is given", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { baseElement } = renderClientShell();
+
+    // act
+    await openMoreSheet(user);
+
+    // assert
+    expect(
+      baseElement.querySelector('[data-parity="sidebar-widget"]'),
+    ).toBeNull();
+    expect(
+      baseElement.querySelector('[data-parity="sheet-widget"]'),
+    ).toBeNull();
+  });
+
+  it("has no obvious axe violations with a widget in the sidebar and the open sheet", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { baseElement } = renderClientShell({ widget: nextCheckInWidget });
+    await openMoreSheet(user);
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
   });
 });

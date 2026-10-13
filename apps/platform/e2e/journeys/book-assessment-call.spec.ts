@@ -44,7 +44,7 @@ test(
 
     // assert
     await expect(
-      page.getByRole("heading", { name: "Upcoming calls" }),
+      page.getByRole("heading", { name: "Upcoming assessment calls" }),
     ).toBeVisible();
 
     // act

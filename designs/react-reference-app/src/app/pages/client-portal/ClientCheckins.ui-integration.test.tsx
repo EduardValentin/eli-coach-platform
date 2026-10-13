@@ -176,6 +176,17 @@ describe('where her check-ins open', () => {
     // assert
     expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
   });
+
+  it('opens on the tab holding the check-in the address names and focuses its row', () => {
+    // arrange
+    // act
+    renderPage('&checkin=ck-6');
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+    expect(document.getElementById('checkin-ck-6')).toHaveFocus();
+    expect(document.getElementById('checkin-ck-6')?.closest('li')).toHaveAttribute('data-parity', 'checkin-row');
+  });
 });
 
 describe('requesting a check-in', () => {

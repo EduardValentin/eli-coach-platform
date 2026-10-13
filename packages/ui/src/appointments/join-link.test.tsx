@@ -114,6 +114,25 @@ describe("join link", () => {
     );
   });
 
+  it("keeps to its content width unless a card asks it to fill the width it is given", () => {
+    // arrange
+    // act
+    render(
+      <MemoryRouter>
+        <JoinLink label="Join Meet" to={JOIN_PATH} tone="quiet" />
+        <JoinLink label="Join card" to={JOIN_PATH} tone="quiet" width="full" />
+      </MemoryRouter>,
+    );
+
+    // assert
+    expect(screen.getByRole("link", { name: "Join Meet" })).not.toHaveClass(
+      "w-full",
+    );
+    const fullWidth = screen.getByRole("link", { name: "Join card" });
+    expect(fullWidth).toHaveClass("w-full", "shrink-0");
+    expect(fullWidth).not.toHaveClass("shrink");
+  });
+
   it("keeps its video glyph away from assistive technology", () => {
     // arrange
     // act

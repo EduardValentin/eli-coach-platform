@@ -15,10 +15,13 @@ import { MotionConfig } from "motion/react";
 import type { PropsWithChildren } from "react";
 import { createRoutesStub } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { configureAxe } from "vitest-axe";
 
 vi.mock("@clerk/react-router", () => ({
   SignOutButton: vi.fn(({ children }: PropsWithChildren) => children),
 }));
+
+import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
 
 import type { ClientShellPresentation } from "./client-identity-presentation";
 import ClientLayoutRoute, { meta } from "./layout";
@@ -31,6 +34,29 @@ const ANA: ClientShellPresentation = {
 
 const WAITING_CHECK_INS = /^Check-ins ?\(2 waiting on you\)$/;
 
+const NEXT_CHECK_IN: ClientCheckIn = {
+  id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+  kind: "ad_hoc",
+  status: "approved",
+  initiatedBy: "client",
+  proposedBy: "client",
+  awaitsViewer: false,
+  viewerMayWithdraw: false,
+  viewerProposal: "allowed",
+  viewerMayCancel: true,
+  newTimeWaits: false,
+  isWaitingRequest: false,
+  startsAt: "2026-10-14T07:00:00.000Z",
+  endsAt: "2026-10-14T08:00:00.000Z",
+  joinEmphasisFrom: "2026-10-14T06:50:00.000Z",
+  earlierStartsAt: null,
+  moves: 0,
+  note: null,
+  newTimeNote: null,
+};
+
+const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
+
 function ProfilePage() {
   return <h1>Her profile</h1>;
 }
@@ -40,10 +66,14 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+type ClientShellReads = Partial<ClientNavigationCounts> & {
+  nextCheckIn?: ClientCheckIn | null;
+};
+
 function renderClientLayout(
   presentation: ClientShellPresentation = ANA,
   entry = "/client",
-  counts: Partial<ClientNavigationCounts> = {},
+  reads: ClientShellReads = {},
 ) {
   const RoutesStub = createRoutesStub([
     {
@@ -57,9 +87,10 @@ function renderClientLayout(
       Component: ClientLayoutRoute,
       loader: () => ({
         presentation,
+        nextCheckIn: null,
         unopenedResources: 0,
         checkInsAwaiting: 0,
-        ...counts,
+        ...reads,
       }),
       path: "/client",
     },
@@ -418,6 +449,78 @@ describe("ClientLayoutRoute", () => {
       expect.objectContaining({ redirectUrl: "/" }),
       undefined,
     );
+  });
+
+  it("shows her next check-in below the sidebar navigation with a way to join it", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client", { nextCheckIn: NEXT_CHECK_IN });
+
+    // assert
+    const sidebar = await screen.findByRole("complementary", {
+      name: "Client portal sidebar",
+    });
+    const widget = within(sidebar).getByRole("region", {
+      name: "Next check-in",
+    });
+    expect(
+      within(sidebar).getByRole("navigation", {
+        name: "Client portal navigation",
+      }),
+    ).not.toContainElement(widget);
+    expect(
+      within(widget).getByRole("link", { name: "Join Meet" }),
+    ).toHaveAttribute("href", `/client/checkins/${NEXT_CHECK_IN.id}/join`);
+  });
+
+  it("shows her next check-in in the More sheet with a way to manage her check-ins", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientLayout(ANA, "/client", { nextCheckIn: NEXT_CHECK_IN });
+
+    // act
+    await user.click(await screen.findByRole("button", { name: "More" }));
+
+    // assert
+    const sheet = await screen.findByRole("dialog", { name: "More" });
+    const widget = within(sheet).getByRole("region", {
+      name: "Next check-in",
+    });
+    expect(
+      within(sheet).getByRole("navigation", { name: "Client portal more" }),
+    ).not.toContainElement(widget);
+    expect(
+      within(widget).getByRole("link", { name: "Manage check-ins" }),
+    ).toHaveAttribute("href", "/client/checkins");
+  });
+
+  it("shows no next check-in anywhere while she has none coming", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientLayout(ANA, "/client", { nextCheckIn: null });
+    await screen.findByRole("complementary", { name: "Client portal sidebar" });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "More" }));
+
+    // assert
+    await screen.findByRole("dialog", { name: "More" });
+    expect(
+      screen.queryByRole("region", { name: "Next check-in" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes the axe checks with her next check-in in the sidebar", async () => {
+    // arrange
+    const { baseElement } = renderClientLayout(ANA, "/client", {
+      nextCheckIn: NEXT_CHECK_IN,
+    });
+    await screen.findByRole("complementary", { name: "Client portal sidebar" });
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
   });
 
   it("titles the installed client portal Evoa", () => {
