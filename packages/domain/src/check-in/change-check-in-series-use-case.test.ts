@@ -246,6 +246,13 @@ describe("ChangeCheckInSeriesUseCase", () => {
       situation: "whose coaching ended",
       client: { ...ANA_REACH, portal: "ended" },
     },
+    {
+      situation: "whose coaching is cancelled and ends later",
+      client: {
+        ...ANA_REACH,
+        coachingEndsAt: new Date("2026-12-01T10:00:00.000Z"),
+      },
+    },
   ] as const)(
     "refuses changing the series of a client $situation",
     async ({ client }) => {

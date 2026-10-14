@@ -1,4 +1,4 @@
-import type { ClientIdentities } from "../client";
+import type { ClientIdentities, ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import type { CheckInIncidents } from "./check-in-incidents";
@@ -12,9 +12,11 @@ import {
 export type CoachClientSeries = {
   series: CheckInSeriesSnapshot | null;
   occurrences: CoachCheckInView[];
+  coachingEnds: boolean;
 };
 
 type ReadCoachClientSeriesUseCaseOptions = {
+  clients: Pick<ClientReach, "findById">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: Pick<CheckInIncidents, "checkInSeriesReadFailed">;
@@ -34,15 +36,19 @@ export class ReadCoachClientSeriesUseCase {
     } catch (error) {
       this.options.incidents.checkInSeriesReadFailed({ clientId, error });
 
-      return { series: null, occurrences: [] };
+      return { series: null, occurrences: [], coachingEnds: false };
     }
   }
 
   private async seriesOf(clientId: string): Promise<CoachClientSeries> {
-    const series = await this.options.series.findActiveForClient(clientId);
+    const [client, series] = await Promise.all([
+      this.options.clients.findById(clientId),
+      this.options.series.findActiveForClient(clientId),
+    ]);
+    const coachingEnds = client !== null && client.coachingEndsAt !== null;
 
     if (!series) {
-      return { series: null, occurrences: [] };
+      return { series: null, occurrences: [], coachingEnds };
     }
 
     const occurrences = await this.options.series.listOccurrences(series.id);
@@ -51,6 +57,7 @@ export class ReadCoachClientSeriesUseCase {
     return {
       series: series.toSnapshot(),
       occurrences: views.filter((view) => view.tab !== "past"),
+      coachingEnds,
     };
   }
 }

@@ -63,6 +63,7 @@ const FIRST_FRIDAY = "2026-10-23T15:00:00.000Z";
 const LAST_FRIDAY = "2027-01-15T16:00:00.000Z";
 const WEEKS_IN_HER_PERIOD = 13;
 const UNKNOWN_SERIES_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
+const SCHEDULED_END = new Date("2026-12-01T10:00:00.000Z");
 
 describe.sequential("check-in series integration", () => {
   beforeAll(async () => {
@@ -491,7 +492,9 @@ describe.sequential("check-in series integration", () => {
       expect(emails[0]?.text).toContain(
         "WHEN: Every Thursday at 3:00 PM — Europe/London (GMT+1)",
       );
-      expect(emails[0]?.text).toContain("The hours are free again.");
+      expect(emails[0]?.text).toContain(
+        "Your coach will arrange any next check-in with you.",
+      );
     });
 
     it("lets the coach set up a new weekly check-in once the last one stopped", async () => {
@@ -575,6 +578,29 @@ describe.sequential("check-in series integration", () => {
       expect(response.status).toBe(409);
       expect(await response.json()).toEqual({ error: "client_cannot_answer" });
     });
+
+    it("refuses to preview or set up a weekly check-in once her coaching is cancelled, before it ends", async () => {
+      // arrange
+      const clientId = await submittedAna();
+      await scheduleAnasEnd(SCHEDULED_END);
+
+      // act
+      const preview = await checkIns.previewSeries(COACH_SESSION, {
+        clientId,
+        weekday: "thursday",
+      });
+      const setUp = await checkIns.setUpSeries(COACH_SESSION, {
+        clientId,
+        ...THURSDAY_EVENINGS,
+      });
+
+      // assert
+      expect(preview.status).toBe(409);
+      expect(await preview.json()).toEqual({ error: "client_cannot_answer" });
+      expect(setUp.status).toBe(409);
+      expect(await setUp.json()).toEqual({ error: "client_cannot_answer" });
+      expect(await checkIns.seriesRowsOf(clientId)).toEqual([]);
+    });
   });
 });
 
@@ -584,6 +610,19 @@ async function submittedAna(): Promise<string> {
   await onboarding.submit(ANA_SESSION);
 
   return onboarding.clientIdOf(ANA_SESSION);
+}
+
+async function scheduleAnasEnd(endsAt: Date): Promise<void> {
+  const delivered = await lifecycle.deliverEvent({
+    id: "evt_checkin_series_end_scheduled",
+    type: "customer.subscription.updated",
+    object: stripeSubscriptionObject({ cancel_at: toUnixSeconds(endsAt) }),
+    previousAttributes: { cancel_at: null },
+  });
+
+  if (delivered.status !== 200) {
+    throw new Error(`Scheduling her end answered ${delivered.status}.`);
+  }
 }
 
 async function endAnasCoaching(): Promise<void> {

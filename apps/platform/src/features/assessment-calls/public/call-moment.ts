@@ -88,6 +88,10 @@ export function formatClockTime(instant: Date, timeZone: string): string {
   return formatterFor("clockTime", timeZone).format(instant);
 }
 
+export function formatClockHour(hour: number): string {
+  return formatClockTime(new Date(Date.UTC(2000, 0, 1, hour)), "UTC");
+}
+
 export function describeTimeZone(instant: Date, timeZone: string): string {
   const offset = zoneOffset(instant, timeZone);
 

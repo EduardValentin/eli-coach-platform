@@ -59,7 +59,7 @@ export class CoachCheckInSeriesController {
       throw unknownClient();
     }
 
-    const { series, occurrences } =
+    const { series, occurrences, coachingEnds } =
       await this.options.readCoachClientSeries.execute(id.data);
 
     return coachClientSeriesSchema.parse({
@@ -70,6 +70,7 @@ export class CoachCheckInSeriesController {
         timeZone: series.timeZone,
       },
       weeks: occurrences.map((view) => presentCoachCheckIn(view)),
+      coachingEnds,
     });
   }
 

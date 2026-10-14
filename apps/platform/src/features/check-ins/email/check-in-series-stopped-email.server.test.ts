@@ -47,16 +47,20 @@ describe("check-in series stopped email", () => {
     expect(text).not.toContain("FIRST WEEK");
   });
 
-  it("links to her check-ins and tells her the hours are free again", () => {
+  it("links to her check-ins and tells her the coach arranges any next one", () => {
     // act
     const html = renderHtml(PROPS);
     const text = checkInSeriesStoppedText(PROPS);
 
     // assert
     expect(html).toContain(`href="${CHECK_INS_URL}"`);
-    expect(html).toContain("The hours are free again.");
+    expect(html).toContain(
+      "Your coach will arrange any next check-in with you.",
+    );
     expect(text).toContain(`See your check-ins: ${CHECK_INS_URL}`);
-    expect(text).toContain("The hours are free again.");
+    expect(text).toContain(
+      "Your coach will arrange any next check-in with you.",
+    );
   });
 
   it("says why she got it and credits the year", () => {

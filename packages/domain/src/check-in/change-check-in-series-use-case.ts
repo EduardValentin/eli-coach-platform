@@ -9,6 +9,7 @@ import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
+import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import { CheckInSeriesRule } from "./check-in-series-rule";
 
@@ -61,7 +62,7 @@ export class ChangeCheckInSeriesUseCase {
 
     const client = await this.options.clients.findById(current.clientId);
 
-    if (client?.portal !== "reachable") {
+    if (!client || !CheckInSeriesBounds.admits(client)) {
       return { status: "client_cannot_answer" };
     }
 

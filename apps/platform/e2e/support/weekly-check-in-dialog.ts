@@ -71,6 +71,10 @@ export class WeeklyCheckInDialog {
     await expect(this.weekday(day)).toBeChecked();
   }
 
+  async expectHourPreselected(hour: string): Promise<void> {
+    await expect(this.hour(hour)).toHaveAttribute("aria-pressed", "true");
+  }
+
   async chooseWeekday(day: string): Promise<void> {
     const weekday = `weekday=${day.toLowerCase()}`;
     const previewed = this.page.waitForResponse(

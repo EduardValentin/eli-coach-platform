@@ -10,14 +10,13 @@ import type {
   CheckInScheduling,
   CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
+import { formatClockHour } from "~/features/assessment-calls/public/call-moment";
+import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import { awaitingOnboardingReason } from "~/features/check-ins/ui/coach/shared/awaiting-onboarding-reason";
 import { useCoachCheckInMenu } from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { clientFullName } from "~/features/clients/public/clients";
-import {
-  hourLabel,
-  WEEKDAY_LABELS,
-} from "~/features/coach-schedule/public/coach-schedule-settings";
+import { WEEKDAY_LABELS } from "~/features/coach-schedule/public/coach-schedule-settings";
 
 import { StopWeeklyCheckInDialog } from "./stop-weekly-check-in-dialog";
 import {
@@ -44,7 +43,15 @@ type Opening<Subject> = {
   subject: Subject;
 };
 
+type SeriesSummaryProps = {
+  coachingEnds: boolean;
+  gender: VisitorGender;
+  scheduling: CheckInScheduling;
+  series: WeeklyCheckInSeries | null;
+};
+
 type SeriesActionsProps = {
+  coachingEnds: boolean;
   gender: VisitorGender;
   onChange: (target: WeeklyCheckInTarget) => void;
   onStop: (seriesId: string) => void;
@@ -75,7 +82,8 @@ export function WeeklyCheckInPanel({
     useState<Opening<WeeklyCheckInTarget> | null>(null);
   const [stopConfirmation, setStopConfirmation] =
     useState<Opening<string> | null>(null);
-  const series = scheduling === "ended" ? null : weekly.series;
+  const coachingEnds = weekly.coachingEnds || scheduling === "ended";
+  const series = coachingEnds ? null : weekly.series;
 
   return (
     <PortalWidget
@@ -95,19 +103,14 @@ export function WeeklyCheckInPanel({
         className="flex flex-wrap items-center justify-between gap-3"
         data-parity="series-summary"
       >
-        {series ? (
-          <p
-            className="text-sm font-semibold text-text-primary"
-            data-parity="series-rule"
-          >
-            {ruleLineOf(series)}
-          </p>
-        ) : (
-          <p className="text-sm text-text-secondary" data-parity="series-empty">
-            No weekly check-in yet.
-          </p>
-        )}
+        <SeriesSummary
+          coachingEnds={coachingEnds}
+          gender={client.gender}
+          scheduling={scheduling}
+          series={series}
+        />
         <SeriesActions
+          coachingEnds={coachingEnds}
           gender={client.gender}
           onChange={(target) => setSeriesDialog(openingOf(target))}
           onStop={(seriesId) => setStopConfirmation(openingOf(seriesId))}
@@ -158,8 +161,43 @@ export function WeeklyCheckInPanel({
   );
 }
 
+function SeriesSummary({
+  coachingEnds,
+  gender,
+  scheduling,
+  series,
+}: SeriesSummaryProps) {
+  if (coachingEnds) {
+    return (
+      <p
+        className="text-sm text-text-secondary"
+        data-parity="series-coaching-ends"
+      >
+        {coachingEndsLineOf(gender, scheduling)}
+      </p>
+    );
+  }
+
+  if (series) {
+    return (
+      <p
+        className="text-sm font-semibold text-text-primary"
+        data-parity="series-rule"
+      >
+        {ruleLineOf(series)}
+      </p>
+    );
+  }
+
+  return (
+    <p className="text-sm text-text-secondary" data-parity="series-empty">
+      No weekly check-in yet.
+    </p>
+  );
+}
+
 function SeriesActions(props: SeriesActionsProps) {
-  if (props.scheduling === "ended") {
+  if (props.coachingEnds) {
     return null;
   }
 
@@ -270,5 +308,14 @@ function openingOf<Subject>(subject: Subject) {
 }
 
 function ruleLineOf({ hour, weekday }: WeeklyCheckInSeries): string {
-  return `Every ${WEEKDAY_LABELS[weekday].full} at ${hourLabel(hour)}`;
+  return `Every ${WEEKDAY_LABELS[weekday].full} at ${formatClockHour(hour)}`;
+}
+
+function coachingEndsLineOf(
+  gender: VisitorGender,
+  scheduling: CheckInScheduling,
+): string {
+  const coaching = scheduling === "ended" ? "has ended" : "is ending";
+
+  return `${possessivePronoun(gender).capitalised} coaching ${coaching}, so no weekly check-in can be set up.`;
 }

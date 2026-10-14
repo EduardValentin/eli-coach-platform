@@ -208,6 +208,14 @@ describe("PreviewCheckInSeriesUseCase", () => {
       client: { ...ANA_REACH, programStartsAt: null, paidThrough: null },
       status: "client_cannot_answer",
     },
+    {
+      situation: "a client whose coaching is cancelled and ends later",
+      client: {
+        ...ANA_REACH,
+        coachingEndsAt: new Date("2026-12-01T10:00:00.000Z"),
+      },
+      status: "client_cannot_answer",
+    },
   ] as const)("refuses $situation as $status", async ({ client, status }) => {
     // arrange
     const { ports, preview } = createPreview(client);

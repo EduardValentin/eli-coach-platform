@@ -76,6 +76,7 @@ const WEEKLY: CoachClientSeriesPanel = {
     timeZone: "Europe/Bucharest",
   },
   weeks: [],
+  coachingEnds: false,
 };
 
 const MEASUREMENTS: MeasurementRow[] = [

@@ -712,7 +712,14 @@
       "waitFor": "[data-sonner-toast]"
     }
   ],
-  "client-checkins-ready": [],
+  "client-checkins-ready": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    }
+  ],
   "client-ended": {
     "prototype": [
       {
@@ -2068,6 +2075,12 @@
   ],
   "open-checkin-row-menu": [
     {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
     {
@@ -3023,7 +3036,7 @@
       "use": "open-weekly-change"
     },
     {
-      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^19:00/]"
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^7:00 PM/]"
     },
     {
       "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"checkin-picker-step\"]"
@@ -3037,7 +3050,7 @@
       "use": "weekly-pick-weekday"
     },
     {
-      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^18:00/]"
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^6:00 PM/]"
     },
     {
       "hover": "[data-parity-root=\"WeeklyCheckinDialog\"] h3"

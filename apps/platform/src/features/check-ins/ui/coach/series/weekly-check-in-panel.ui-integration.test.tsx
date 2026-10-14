@@ -123,19 +123,29 @@ const SERIES = {
   timeZone: TIME_ZONE,
 } as const;
 
-const NO_SERIES: CoachClientSeriesPanel = { series: null, weeks: [] };
+const NO_SERIES: CoachClientSeriesPanel = {
+  series: null,
+  weeks: [],
+  coachingEnds: false,
+};
 
 const ACTIVE: CoachClientSeriesPanel = {
   series: SERIES,
   weeks: [FIRST_WEEK, LAST_WEEK],
+  coachingEnds: false,
 };
 
 const WITH_CLASH: CoachClientSeriesPanel = {
   series: SERIES,
   weeks: [FIRST_WEEK, CLASHING_WEEK, LAST_WEEK],
+  coachingEnds: false,
 };
 
-const NO_WEEKS_LEFT: CoachClientSeriesPanel = { series: SERIES, weeks: [] };
+const NO_WEEKS_LEFT: CoachClientSeriesPanel = {
+  series: SERIES,
+  weeks: [],
+  coachingEnds: false,
+};
 
 const FIRST_WEEK_MENU =
   "More actions for the check-in on Wed, Oct 14 at 6:00 PM";
@@ -253,22 +263,52 @@ describe("the weekly check-in panel on a client record", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("offers nothing once her coaching has ended", async () => {
+  it.each([
+    {
+      situation: "has ended",
+      scheduling: "ended",
+      line: "Her coaching has ended, so no weekly check-in can be set up.",
+    },
+    {
+      situation: "is cancelled and ends later",
+      scheduling: "allowed",
+      line: "Her coaching is ending, so no weekly check-in can be set up.",
+    },
+  ] as const)(
+    "offers nothing once her coaching $situation and says why",
+    async ({ scheduling, line }) => {
+      // arrange
+      weekly = { ...ACTIVE, coachingEnds: true };
+
+      // act
+      await renderPanel({ scheduling });
+
+      // assert
+      const panel = weeklyPanel();
+      expect(within(panel).getByText(line)).toBeInTheDocument();
+      expect(
+        within(panel).queryByText("No weekly check-in yet."),
+      ).not.toBeInTheDocument();
+      expect(within(panel).queryByRole("button")).not.toBeInTheDocument();
+      expect(
+        within(panel).queryByRole("list", { name: "Weeks to come" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("words why for a client who is male", async () => {
     // arrange
-    weekly = ACTIVE;
+    weekly = { ...NO_SERIES, coachingEnds: true };
 
     // act
-    await renderPanel({ scheduling: "ended" });
+    await renderPanel({ gender: "male" });
 
     // assert
-    const panel = weeklyPanel();
     expect(
-      within(panel).getByText("No weekly check-in yet."),
+      within(weeklyPanel()).getByText(
+        "His coaching is ending, so no weekly check-in can be set up.",
+      ),
     ).toBeInTheDocument();
-    expect(within(panel).queryByRole("button")).not.toBeInTheDocument();
-    expect(
-      within(panel).queryByRole("list", { name: "Weeks to come" }),
-    ).not.toBeInTheDocument();
   });
 
   it("reads the day and hour in the coach's zone and lists every week still to come", async () => {
@@ -281,7 +321,7 @@ describe("the weekly check-in panel on a client record", () => {
     // assert
     const panel = weeklyPanel();
     expect(
-      within(panel).getByText("Every Wednesday at 18:00"),
+      within(panel).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
     const weeks = within(
       within(panel).getByRole("list", { name: "Weeks to come" }),
@@ -351,7 +391,7 @@ describe("the weekly check-in panel on a client record", () => {
     server.use(
       http.post(CANCELLATION_URL, ({ params }) => {
         cancelled.push(String(params.checkInId));
-        weekly = { series: SERIES, weeks: [LAST_WEEK] };
+        weekly = { series: SERIES, weeks: [LAST_WEEK], coachingEnds: false };
         return HttpResponse.json({
           status: "cancelled",
           checkInId: FIRST_WEEK.id,
@@ -436,7 +476,7 @@ describe("setting up a weekly check-in", () => {
       within(hours)
         .getAllByRole("button")
         .map((hour) => hour.textContent),
-    ).toEqual(["17:00", "18:00 2 clashes", "19:00 1 clash"]);
+    ).toEqual(["5:00 PM", "6:00 PM 2 clashes", "7:00 PM 1 clash"]);
     expect(asked).toEqual([{ clientId: CLIENT_ID, weekday: "wednesday" }]);
     expect(stepButton(dialog)).toBeDisabled();
   });
@@ -502,7 +542,7 @@ describe("setting up a weekly check-in", () => {
       { clientId: CLIENT_ID, weekday: "wednesday", hour: 18 },
     ]);
     expect(
-      within(weeklyPanel()).getByText("Every Wednesday at 18:00"),
+      within(weeklyPanel()).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Change" })).toHaveFocus();
   });
@@ -669,6 +709,30 @@ describe("setting up a weekly check-in", () => {
 });
 
 describe("changing a weekly check-in", () => {
+  it("opens on the weekly check-in's day and hour rather than her onboarding day", async () => {
+    // arrange
+    weekly = ACTIVE;
+    answerPreview();
+    const user = await renderPanel({ suggestedWeekday: "monday" });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // assert
+    const dialog = await screen.findByRole("dialog", { name: CHANGE_TITLE });
+    const hours = await hourList(dialog);
+    expect(
+      within(dialog).getByRole("radio", { name: "Wednesday" }),
+    ).toBeChecked();
+    expect(
+      within(hours).getByRole("button", { name: /^6:00 PM/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(dialog).toHaveTextContent(
+      "Every week from the next Wednesday is moved.",
+    );
+    expect(stepButton(dialog)).toBeEnabled();
+  });
+
   it("opens on the weekly check-in's day and moves every week to come to the new day and hour", async () => {
     // arrange
     weekly = ACTIVE;
@@ -683,6 +747,7 @@ describe("changing a weekly check-in", () => {
         weekly = {
           series: { ...SERIES, weekday: "friday", hour: 19 },
           weeks: [],
+          coachingEnds: false,
         };
         return HttpResponse.json({ status: "changed", seriesId: SERIES_ID });
       }),
@@ -700,7 +765,7 @@ describe("changing a weekly check-in", () => {
     await user.click(within(dialog).getByRole("radio", { name: "Friday" }));
     await user.click(
       within(await hourList(dialog)).getByRole("button", {
-        name: /^19:00/,
+        name: /^7:00 PM/,
       }),
     );
     await user.click(stepButton(dialog));
@@ -717,7 +782,7 @@ describe("changing a weekly check-in", () => {
       { seriesId: SERIES_ID, body: { weekday: "friday", hour: 19 } },
     ]);
     expect(
-      await within(weeklyPanel()).findByText("Every Friday at 19:00"),
+      await within(weeklyPanel()).findByText("Every Friday at 7:00 PM"),
     ).toBeInTheDocument();
   });
 
@@ -734,7 +799,7 @@ describe("changing a weekly check-in", () => {
     await user.click(screen.getByRole("button", { name: "Change" }));
     const dialog = await screen.findByRole("dialog", { name: CHANGE_TITLE });
     await user.click(
-      within(await hourList(dialog)).getByRole("button", { name: /^18:00/ }),
+      within(await hourList(dialog)).getByRole("button", { name: /^6:00 PM/ }),
     );
 
     // act
@@ -828,7 +893,7 @@ describe("stopping a weekly check-in", () => {
     // assert
     expect(await screen.findByText(copy)).toBeInTheDocument();
     expect(
-      within(weeklyPanel()).getByText("Every Wednesday at 18:00"),
+      within(weeklyPanel()).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
   });
 
@@ -890,7 +955,7 @@ async function openSetUpOnSixPm(
   await user.click(setUpButton());
   const dialog = await screen.findByRole("dialog", { name: title });
   await user.click(
-    within(await hourList(dialog)).getByRole("button", { name: /^18:00/ }),
+    within(await hourList(dialog)).getByRole("button", { name: /^6:00 PM/ }),
   );
 
   return dialog;

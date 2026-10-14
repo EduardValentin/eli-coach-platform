@@ -4,6 +4,7 @@ import {
   describeTimeZone,
   formatCallMoment,
   formatCallSchedule,
+  formatClockHour,
   formatDayFirstDate,
   formatShortDay,
   formatWeekday,
@@ -131,5 +132,18 @@ describe("formatShortDay", () => {
 
     // assert
     expect(day).toBe("Sat, Sep 19");
+  });
+});
+
+describe("formatClockHour", () => {
+  it("words a wall-clock hour the way a time slot reads", () => {
+    // arrange
+    const hours = [0, 9, 12, 18];
+
+    // act
+    const labels = hours.map((hour) => formatClockHour(hour));
+
+    // assert
+    expect(labels).toEqual(["12:00 AM", "9:00 AM", "12:00 PM", "6:00 PM"]);
   });
 });

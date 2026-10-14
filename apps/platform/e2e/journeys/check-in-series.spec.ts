@@ -66,7 +66,7 @@ function weeklyAt(hour: number, day = ONBOARDING_DAY): WeeklyHour {
 }
 
 function hourLabelOf({ hour }: WeeklyHour): string {
-  return `${String(hour).padStart(2, "0")}:00`;
+  return clockTimeOf(new Date(Date.UTC(2000, 0, 1, hour)), "UTC");
 }
 
 function ruleOf(weekly: WeeklyHour): string {
@@ -290,7 +290,8 @@ test(
 
     // assert
     await weeklyCheckInDialog.expectOpen("change");
-    await weeklyCheckInDialog.expectWeekdayPreselected(ONBOARDING_DAY);
+    await weeklyCheckInDialog.expectWeekdayPreselected(setUp.day);
+    await weeklyCheckInDialog.expectHourPreselected(hourLabelOf(setUp));
 
     // act
     await weeklyCheckInDialog.chooseWeekday(CHANGED_DAY);
@@ -420,7 +421,7 @@ test.describe("on a touch screen", () => {
       await coachClient.open(ended.clientId);
 
       // assert
-      await coachClient.expectNoSetUp();
+      await coachClient.expectNoSetUpOnceCoachingEnded(ended.gender);
 
       // act
       const endedAnswer = await checkInRequests.setUpSeries(

@@ -3,12 +3,15 @@ import type { SlotPolicy } from "../coach-availability";
 
 export type CheckInSeriesBoundsSnapshot = { from: Date; until: Date };
 
+type CoachedClient = {
+  portal: PortalReach;
+  coachingEndsAt: Date | null;
+};
+
 type CoachingReading = {
-  client: {
-    portal: PortalReach;
+  client: CoachedClient & {
     programStartsAt: Date | null;
     paidThrough: Date | null;
-    coachingEndsAt: Date | null;
   };
   now: Date;
   lead: SlotPolicy;
@@ -27,16 +30,20 @@ export class CheckInSeriesBounds {
     return new CheckInSeriesBounds(snapshot);
   }
 
+  static admits(client: CoachedClient): boolean {
+    return client.portal === "reachable" && client.coachingEndsAt === null;
+  }
+
   static ofCoaching({
     client,
     now,
     lead,
   }: CoachingReading):
     CheckInSeriesBounds | "client_cannot_answer" | "nothing_to_create" {
-    const { programStartsAt, paidThrough, coachingEndsAt } = client;
+    const { programStartsAt, paidThrough } = client;
 
     if (
-      client.portal !== "reachable" ||
+      !CheckInSeriesBounds.admits(client) ||
       programStartsAt === null ||
       paidThrough === null
     ) {
@@ -47,10 +54,8 @@ export class CheckInSeriesBounds {
       from: programStartsAt,
       until: paidThrough,
     }).notBefore(new Date(now.getTime() + lead.leadMilliseconds()));
-    const coached =
-      coachingEndsAt === null ? paid : paid.notAfter(coachingEndsAt);
 
-    return coached.from < coached.until ? coached : "nothing_to_create";
+    return paid.from < paid.until ? paid : "nothing_to_create";
   }
 
   holds(instant: Date): boolean {
@@ -61,13 +66,6 @@ export class CheckInSeriesBounds {
     return new CheckInSeriesBounds({
       from: this.latestOf(this.from, instant),
       until: this.until,
-    });
-  }
-
-  notAfter(instant: Date): CheckInSeriesBounds {
-    return new CheckInSeriesBounds({
-      from: this.from,
-      until: this.earliestOf(this.until, instant),
     });
   }
 

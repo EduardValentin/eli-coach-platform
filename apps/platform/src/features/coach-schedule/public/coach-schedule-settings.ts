@@ -42,7 +42,7 @@ export const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> =
     sunday: { full: "Sunday", short: "Sun" },
   };
 
-export function hourLabel(hour: number): string {
+function hourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
 }
 

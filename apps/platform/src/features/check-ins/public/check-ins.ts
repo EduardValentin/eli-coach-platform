@@ -111,6 +111,7 @@ const checkInSeriesSchema = z.object({
 export const coachClientSeriesSchema = z.object({
   series: checkInSeriesSchema.nullable(),
   weeks: z.array(coachCheckInSchema),
+  coachingEnds: z.boolean(),
 });
 
 export type CoachClientSeriesPanel = z.infer<typeof coachClientSeriesSchema>;

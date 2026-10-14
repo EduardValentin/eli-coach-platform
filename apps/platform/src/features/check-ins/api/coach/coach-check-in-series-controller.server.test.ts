@@ -77,6 +77,7 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
             client: { firstName: "Ana", lastName: "Popescu" },
           },
         ],
+        coachingEnds: false,
       },
     });
 
@@ -103,6 +104,7 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
           client: { firstName: "Ana", lastName: "Popescu" },
         }),
       ],
+      coachingEnds: false,
     });
   });
 
@@ -114,7 +116,20 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
     const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(panel).toEqual({ series: null, weeks: [] });
+    expect(panel).toEqual({ series: null, weeks: [], coachingEnds: false });
+  });
+
+  it("hands that her coaching ends so the panel offers no weekly check-in", async () => {
+    // arrange
+    const { controller } = createController({
+      read: { series: null, occurrences: [], coachingEnds: true },
+    });
+
+    // act
+    const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(panel).toEqual({ series: null, weeks: [], coachingEnds: true });
   });
 
   it("answers 404 for a client id that is not one", async () => {
@@ -420,7 +435,9 @@ function createController(
 ) {
   const readCoachClientSeries = vi
     .fn()
-    .mockResolvedValue(answers.read ?? { series: null, occurrences: [] });
+    .mockResolvedValue(
+      answers.read ?? { series: null, occurrences: [], coachingEnds: false },
+    );
   const previewCheckInSeries = vi
     .fn()
     .mockResolvedValue(answers.previewed ?? { status: "unknown_client" });

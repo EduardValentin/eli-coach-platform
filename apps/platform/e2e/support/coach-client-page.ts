@@ -775,10 +775,18 @@ export class CoachClientPage {
     await this.setUpActionFor(gender).expectReasonOnTap();
   }
 
-  async expectNoSetUp(): Promise<void> {
+  async expectNoSetUpOnceCoachingEnded(gender: VisitorGender): Promise<void> {
+    const { possessiveCapitalised } = clientPronouns(gender);
+
+    await expect(
+      this.weeklyPanel.getByText(
+        `${possessiveCapitalised} coaching has ended, so no weekly check-in can be set up.`,
+        { exact: true },
+      ),
+    ).toBeVisible();
     await expect(
       this.weeklyPanel.getByText(NO_WEEKLY_CHECK_IN, { exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(this.weeklyPanel.getByRole("button")).toHaveCount(0);
   }
 

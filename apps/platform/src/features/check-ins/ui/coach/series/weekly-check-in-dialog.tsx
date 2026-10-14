@@ -18,6 +18,7 @@ import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { generatePath, useFetcher } from "react-router";
 
+import { formatClockHour } from "~/features/assessment-calls/public/call-moment";
 import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import {
   checkInRefusalSchema,
@@ -30,7 +31,6 @@ import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 import { PickerStepButton } from "~/features/check-ins/ui/shared/check-ins/check-in-picker";
 import { useLoadOnOpening } from "~/features/check-ins/ui/shared/check-ins/use-load-on-opening";
 import {
-  hourLabel,
   WEEKDAY_DISPLAY_ORDER,
   WEEKDAY_LABELS,
 } from "~/features/coach-schedule/public/coach-schedule-settings";
@@ -114,9 +114,9 @@ export function WeeklyCheckInDialog({
   const hourLabelId = useId();
   const series = target.mode === "change" ? target.series : null;
   const [weekday, setWeekday] = useState<Weekday>(
-    suggestedWeekday ?? series?.weekday ?? WEEKDAY_DISPLAY_ORDER[0],
+    series?.weekday ?? suggestedWeekday ?? WEEKDAY_DISPLAY_ORDER[0],
   );
-  const [hour, setHour] = useState<number | null>(null);
+  const [hour, setHour] = useState<number | null>(series?.hour ?? null);
   const wording = MODE_WORDING[target.mode];
   const preview = useSeriesPreview(client.clientId);
   const saving = useSeriesSaving({
@@ -442,7 +442,7 @@ function HourChoice({
                 clashes ? { parity: "hour-clashes", text: clashes } : undefined
               }
               isSelected={hour === offered.hour}
-              label={hourLabel(offered.hour)}
+              label={formatClockHour(offered.hour)}
               onSelect={() => onChooseHour(offered.hour)}
             />
           </li>

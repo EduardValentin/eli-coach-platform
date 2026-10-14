@@ -205,6 +205,10 @@ describe("ExtendCheckInSeriesUseCase", () => {
       situation: "a client whose coaching ended",
       client: { ...RENEWED_REACH, portal: "ended" },
     },
+    {
+      situation: "a client whose coaching is cancelled and ends later",
+      client: { ...RENEWED_REACH, coachingEndsAt: COVERS_UNTIL },
+    },
     { situation: "a client who no longer exists", client: null },
     {
       situation: "a paid period the series already covers",

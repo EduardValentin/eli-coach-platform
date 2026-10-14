@@ -14,7 +14,7 @@ export type CheckInSeriesStoppedEmailProps = {
 };
 
 const BUTTON_LABEL = "See your check-ins";
-const CLOSING_LINE = "The hours are free again.";
+const CLOSING_LINE = "Your coach will arrange any next check-in with you.";
 
 export function checkInSeriesStoppedSubject({
   coachName,

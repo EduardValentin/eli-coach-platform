@@ -220,7 +220,11 @@ const MEASUREMENTS_WITH_PHOTOS: MeasurementRow[] = [
   },
 ];
 
-const NO_WEEKLY: CoachClientSeriesPanel = { series: null, weeks: [] };
+const NO_WEEKLY: CoachClientSeriesPanel = {
+  series: null,
+  weeks: [],
+  coachingEnds: false,
+};
 
 const WEEKLY: CoachClientSeriesPanel = {
   series: {
@@ -230,6 +234,7 @@ const WEEKLY: CoachClientSeriesPanel = {
     timeZone: COACH_TIME_ZONE,
   },
   weeks: [],
+  coachingEnds: false,
 };
 
 const SERIES_PREVIEW = {
@@ -368,7 +373,7 @@ describe("the coach's client page", () => {
     // assert
     const weekly = screen.getByRole("region", { name: "Weekly check-in" });
     expect(
-      within(weekly).getByText("Every Wednesday at 18:00"),
+      within(weekly).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
     expect(
       within(weekly).getByRole("button", { name: "Change" }),

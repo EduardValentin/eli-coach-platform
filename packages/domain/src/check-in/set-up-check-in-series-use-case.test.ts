@@ -287,8 +287,13 @@ describe("SetUpCheckInSeriesUseCase", () => {
       status: "client_cannot_answer",
     },
     {
-      situation: "a client whose coaching ends within a day",
+      situation: "a client whose coaching is cancelled and ends later",
       client: { ...ANA_REACH, coachingEndsAt: A_DAY_LATER },
+      status: "client_cannot_answer",
+    },
+    {
+      situation: "a client whose paid period ends within a day",
+      client: { ...ANA_REACH, paidThrough: A_DAY_LATER },
       status: "nothing_to_create",
     },
   ] as const)(
