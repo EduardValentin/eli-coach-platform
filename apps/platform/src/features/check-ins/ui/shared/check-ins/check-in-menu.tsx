@@ -111,7 +111,7 @@ export function CheckInMenuDialogs<CheckIn extends ListedCheckIn>({
       {proposal && (
         <ProposeCheckInTimeDialog
           checkIn={proposal.checkIn}
-          key={proposal.opening}
+          key={`proposal-${proposal.opening}`}
           onOpenChange={onDialogOpenChange}
           open={proposal.open}
           proposer={wording.proposerOf(proposal.checkIn)}
@@ -129,7 +129,7 @@ export function CheckInMenuDialogs<CheckIn extends ListedCheckIn>({
             ),
           }}
           decisions={decisions}
-          key={cancellation.opening}
+          key={`cancellation-${cancellation.opening}`}
           onOpenChange={onDialogOpenChange}
           open={cancellation.open}
         />

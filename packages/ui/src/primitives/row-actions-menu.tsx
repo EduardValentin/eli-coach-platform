@@ -87,7 +87,7 @@ export function RowActionsMenu({
               variant={tone}
             >
               <Icon aria-hidden="true" />
-              {action.label}
+              <span>{action.label}</span>
             </DropdownMenuItem>
           );
 

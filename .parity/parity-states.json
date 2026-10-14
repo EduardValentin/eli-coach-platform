@@ -3110,6 +3110,71 @@
     ],
     "real": []
   },
+  "weekly-series-clashes-change": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-change\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-change\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+      },
+      {
+        "wait": 600
+      }
+    ]
+  },
+  "weekly-series-clashes-upcoming": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": []
+  },
   "weekly-series-stopped": {
     "prototype": [
       {

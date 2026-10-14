@@ -133,7 +133,7 @@ export function WeeklyCheckInPanel({
       {seriesDialog && (
         <WeeklyCheckInDialog
           client={client}
-          key={seriesDialog.openings}
+          key={`weekly-${seriesDialog.openings}`}
           onOpenChange={(open) =>
             setSeriesDialog((current) => current && { ...current, open })
           }
@@ -146,7 +146,7 @@ export function WeeklyCheckInPanel({
       {stopConfirmation && (
         <StopWeeklyCheckInDialog
           clientFirstName={client.firstName}
-          key={stopConfirmation.openings}
+          key={`stop-${stopConfirmation.openings}`}
           onOpenChange={(open) =>
             setStopConfirmation((current) => current && { ...current, open })
           }
