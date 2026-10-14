@@ -1,4 +1,3 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
 import type {
   CreateExerciseUseCase,
   EditExerciseUseCase,
@@ -19,7 +18,6 @@ import { z } from "zod";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import {
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
@@ -69,13 +67,13 @@ export class ExerciseLibraryController {
     const id = idSchema.safeParse(exerciseId);
 
     if (!id.success) {
-      throw this.backToLibrary(args);
+      throw this.backToLibrary();
     }
 
     const found = await this.options.findExercise.execute(id.data);
 
     if (found.status === "not-found") {
-      throw this.backToLibrary(args);
+      throw this.backToLibrary();
     }
 
     return {
@@ -146,10 +144,8 @@ export class ExerciseLibraryController {
     );
   }
 
-  private backToLibrary(args: LoaderFunctionArgs): Response {
-    const { appBasePath } = args.context.get(accountsContext).portal;
-
-    return redirect(buildRedirectPath(appBasePath, COACH_TRAINING_PATH));
+  private backToLibrary(): Response {
+    return redirect(COACH_TRAINING_PATH);
   }
 
   private savedResponse(): Response {

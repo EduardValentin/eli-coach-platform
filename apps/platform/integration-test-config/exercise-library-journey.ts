@@ -26,6 +26,8 @@ export type ExerciseRow = Omit<ExerciseFields, "cues"> & {
 
 const EXERCISES_API = "/api/coach/exercises";
 
+export const LIBRARY_PAGE = "/coach/training";
+
 const EXERCISE_ROW_SELECTION = `select id, name, form_cues as "formCues", type, unit, per_side as "perSide", difficulty,
   primary_muscles as "primaryMuscles", secondary_muscles as "secondaryMuscles", equipment, tags,
   created_at as "createdAt", updated_at as "updatedAt"
@@ -73,6 +75,18 @@ export class ExerciseLibraryJourney {
       headers: { "Content-Type": "application/json" },
       method: "PUT",
     });
+  }
+
+  openLibrary(requester: Requester): Promise<Response> {
+    return this.send(requester, LIBRARY_PAGE);
+  }
+
+  openNewExercise(requester: Requester): Promise<Response> {
+    return this.send(requester, `${LIBRARY_PAGE}/exercises/new`);
+  }
+
+  openExercise(requester: Requester, exerciseId: string): Promise<Response> {
+    return this.send(requester, `${LIBRARY_PAGE}/exercises/${exerciseId}`);
   }
 
   exerciseRows(): Promise<ExerciseRow[]> {

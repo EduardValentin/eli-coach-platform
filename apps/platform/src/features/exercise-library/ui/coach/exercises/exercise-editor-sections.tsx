@@ -102,6 +102,7 @@ export function ExerciseAboutSection({
           title="Name"
         >
           <Input
+            defaultValue={form.formState.defaultValues?.name}
             id={nameId}
             placeholder="e.g. Barbell back squat"
             {...describedBy(nameProblemId, problems.name)}
@@ -117,7 +118,7 @@ export function ExerciseAboutSection({
             value={values.type}
           >
             <SelectTrigger id={typeId}>
-              <SelectValue />
+              <SelectValue>{EXERCISE_TYPE_LABELS[values.type]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {EXERCISE_TYPES.map((type) => (
@@ -268,7 +269,7 @@ export function ExerciseWorkSection({
             value={values.difficulty}
           >
             <SelectTrigger id={difficultyId}>
-              <SelectValue />
+              <SelectValue>{DIFFICULTY_LABELS[values.difficulty]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {DIFFICULTIES.map((difficulty) => (
@@ -330,6 +331,7 @@ export function ExerciseCoachingSection({
           title="Form cues"
         >
           <Textarea
+            defaultValue={form.formState.defaultValues?.cues}
             id={cuesId}
             placeholder="Keep the chest up, drive through the heels…"
             rows={3}

@@ -11,6 +11,7 @@ import {
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import {
   ExerciseLibraryJourney,
+  LIBRARY_PAGE,
   VISITOR,
   type ExerciseFields,
 } from "~integration-test-config/exercise-library-journey";
@@ -19,6 +20,10 @@ import {
   COACH_SESSION,
   PlatformRig,
 } from "~integration-test-config/platform-rig";
+import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
@@ -67,6 +72,19 @@ const BOX_BREATHING: ExerciseFields = {
   difficulty: "Beginner",
   tags: ["Recovery"],
   cues: "Four counts each side of the box.",
+};
+
+const PLANK: ExerciseFields = {
+  name: "plank",
+  type: "resistance",
+  unit: "time",
+  perSide: false,
+  primaryMuscles: ["Core"],
+  secondaryMuscles: [],
+  equipment: [],
+  difficulty: "Beginner",
+  tags: [],
+  cues: "",
 };
 
 const FIVE_PROBLEMS = [
@@ -437,4 +455,148 @@ describe.sequential("exercise library integration", () => {
       },
     );
   });
+
+  describe("the coach's pages", () => {
+    it("lists every exercise A to Z with its type, equipment, tags, primary muscles and difficulty", async () => {
+      // arrange
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.createAccepted(COACH_SESSION, PLANK);
+      await library.createAccepted(COACH_SESSION, BOX_BREATHING);
+      await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+
+      // act
+      const response = await library.openLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain(
+        "Exercises Build the exercise library your plans draw from. New exercise",
+      );
+      expect(page).toContain(
+        [
+          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate",
+          "Box breathing Breathing · Mat Recovery Core Beginner",
+          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner",
+          "plank Resistance · No equipment Core Beginner",
+        ].join(" "),
+      );
+    });
+
+    it("tells her the library is empty before she adds an exercise", async () => {
+      // arrange, act
+      const response = await library.openLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await pageTextOf(response)).toContain(
+        "No exercises yet Exercises you add appear here.",
+      );
+    });
+
+    it("opens a blank exercise on the new exercise page", async () => {
+      // arrange, act
+      const response = await library.openNewExercise(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain(
+        "Back to exercises New exercise About the exercise",
+      );
+      expect(page).toContain("Resistance");
+      expect(page).toContain("Both sides together");
+      expect(page).toContain("Beginner");
+      expect(page).toContain("Cancel Create exercise");
+    });
+
+    it("opens a saved exercise's editor with its values", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+
+      // act
+      const response = await library.openExercise(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      const document = await visibleDocument(response);
+      expect(document).toContain('value="Back squat"');
+      const page = textOf(document);
+      expect(page).toContain("Back to exercises Edit exercise");
+      expect(page).toContain("Quadriceps Glutes");
+      expect(page).toContain("Intermediate");
+      expect(page).toContain("Brace, then sit between the hips.");
+      expect(page).toContain("Cancel Save changes");
+    });
+
+    it.each([
+      ["an unknown exercise", UNKNOWN_ID],
+      ["an id that is not a uuid", NOT_A_UUID],
+    ])("returns her to the library for %s", async (_case, exerciseId) => {
+      // arrange, act
+      const response = await library.openExercise(COACH_SESSION, exerciseId);
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe(suite.path(LIBRARY_PAGE));
+    });
+
+    it("refuses a signed-in client on the library and both editor pages", async () => {
+      // arrange
+      await rig.provisionClient();
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+
+      // act
+      const answers = await Promise.all([
+        library.openLibrary(CLIENT_SESSION),
+        library.openNewExercise(CLIENT_SESSION),
+        library.openExercise(CLIENT_SESSION, squat.id),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([403, 403, 403]);
+    });
+
+    it("sends a signed-out visitor to sign in from the library and both editor pages", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      const pages = [
+        LIBRARY_PAGE,
+        `${LIBRARY_PAGE}/exercises/new`,
+        `${LIBRARY_PAGE}/exercises/${squat.id}`,
+      ];
+
+      // act
+      const answers = await Promise.all([
+        library.openLibrary(VISITOR),
+        library.openNewExercise(VISITOR),
+        library.openExercise(VISITOR, squat.id),
+      ]);
+
+      // assert
+      expect(
+        answers.map((answer) => [
+          answer.status,
+          answer.headers.get("location"),
+        ]),
+      ).toEqual(
+        pages.map((page) => [
+          302,
+          `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+            `https://localhost:3000${suite.path(page)}`,
+          )}`,
+        ]),
+      );
+    });
+  });
 });
+
+async function pageTextOf(response: Response): Promise<string> {
+  return textOf(await visibleDocument(response));
+}
+
+function textOf(document: string): string {
+  return textNodesOf(document)
+    .filter((text) => text.length > 0)
+    .join(" ");
+}

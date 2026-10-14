@@ -231,7 +231,7 @@ describe("ExerciseLibraryController#load", () => {
     // assert
     expect((thrown as Response).status).toBe(302);
     expect((thrown as Response).headers.get("Location")).toBe(
-      "/app/coach/training",
+      "/coach/training",
     );
   });
 });
