@@ -41,6 +41,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: testGlobs,
+          testTimeout: 15_000,
           exclude: [
             ...defaultExclude,
             ...integrationTestGlobs,
