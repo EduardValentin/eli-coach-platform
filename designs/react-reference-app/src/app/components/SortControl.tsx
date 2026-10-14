@@ -87,7 +87,7 @@ export function SortControl<Key extends string>({
         type="button"
         variant="outline"
         size={size === 'md' ? 'icon-md' : 'icon-sm'}
-        className="shrink-0 hover:border-primary hover:text-primary aria-pressed:border-selected aria-pressed:bg-selected-surface aria-pressed:text-selected-ink aria-pressed:hover:border-selected-hover aria-pressed:hover:text-selected-hover"
+        className="shrink-0 hover:border-primary hover:text-primary aria-pressed:border-primary aria-pressed:bg-active-surface aria-pressed:text-primary-foreground"
         aria-pressed={sort.direction !== chosen.defaultDirection}
         aria-label={directionLabel}
         onClick={() =>

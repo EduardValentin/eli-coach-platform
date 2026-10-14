@@ -11,7 +11,7 @@ interface CheckboxChipProps {
 const BASE_CLASS =
   'relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors';
 const SELECTED_CLASS =
-  'border-selected bg-selected-surface text-selected-ink hover:border-selected-hover hover:text-selected-hover';
+  'border-primary bg-active-surface text-primary-foreground hover:bg-primary-hover';
 const UNSELECTED_CLASS =
   'border-border text-muted-foreground hover:border-primary hover:text-primary';
 

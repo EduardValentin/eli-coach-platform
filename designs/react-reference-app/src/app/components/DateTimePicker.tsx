@@ -159,8 +159,7 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, detail, on
       onClick={onSelect}
       className={cn('w-full rounded-control border px-4 py-3 text-sm font-medium transition-all duration-200', {
         'pointer-events-none border-primary/30 bg-surface-base text-primary opacity-50': isBooked,
-        'border-selected bg-selected-surface text-selected-ink hover:border-selected-hover hover:text-selected-hover':
-          !isBooked && isSelected,
+        'border-primary bg-primary text-primary-foreground shadow-card': !isBooked && isSelected,
         'border-primary/30 bg-surface-base text-primary hover:border-primary hover:bg-primary/5': !isBooked && !isSelected,
       })}
     >
