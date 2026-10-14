@@ -115,7 +115,7 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 37. **Exercise swaps are coach-controlled.** Only the coach defines swap variants for an exercise assignment; during a workout a client may swap only to those variants. Swap history is recorded per workout.
 38. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
 39. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
-40. **Exercise videos are raw `.mp4` uploads**, supplied through drag-and-drop or an upload button.
+40. **Exercise videos are raw `.mp4` or `.mov` uploads**, supplied through drag-and-drop or an upload button.
 41. **System messages record plan and scheduling events Post-MVP.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party. In the MVP, check-in events still notify the relevant party and remain visible in the check-in flow without creating a chat entry.
 
 ## Check-ins
@@ -338,7 +338,7 @@ Per Business Rule 53.
 
 ### Data model
 
-**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
+**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4` or `.mov`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
 
 **Goal**: client, name (e.g. "Strength & Recomp Block"), type (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, Custom), start date, status (active or completed).
 
@@ -352,7 +352,7 @@ Per Business Rule 53.
 
 ### Exercise Library
 
-1. The coach creates exercises with `.mp4` upload by drag-and-drop or button, and reuses them across plans.
+1. The coach creates exercises with `.mp4` or `.mov` upload by drag-and-drop or button, and reuses them across plans.
 2. The library supports search and filters for type, for Strength, Hypertrophy, and Recovery tags, and for no-equipment exercises. Tag filters combine as "any of"; the type filter narrows to one type; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
 
 ### Plan Builder

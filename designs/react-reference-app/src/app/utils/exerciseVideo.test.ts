@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MP4_MAX_BYTES, isMp4File, isWithinMp4Limit, mp4RejectionMessage, mp4TooLargeMessage } from './exerciseVideo';
+import { VIDEO_MAX_BYTES, isVideoFile, isWithinVideoLimit, videoRejectionMessage, videoTooLargeMessage } from './exerciseVideo';
 
 const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
 
@@ -9,13 +9,13 @@ function videoOfSize(name: string, size: number): File {
   return file;
 }
 
-describe('isMp4File', () => {
+describe('isVideoFile', () => {
   it('accepts a file the browser reports as video/mp4', () => {
     // arrange
     const file = fileNamed('squat-demo.mp4', 'video/mp4');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(true);
@@ -26,7 +26,7 @@ describe('isMp4File', () => {
     const file = fileNamed('squat-demo.mp4', '');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(true);
@@ -37,18 +37,40 @@ describe('isMp4File', () => {
     const file = fileNamed('SQUAT-DEMO.MP4', '');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(true);
   });
 
-  it('rejects a QuickTime video, which the library no longer accepts', () => {
+  it('accepts a file the browser reports as video/quicktime', () => {
     // arrange
-    const file = fileNamed('squat-demo.mov', 'video/quicktime');
+    const file = fileNamed('squat-demo', 'video/quicktime');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
+
+    // assert
+    expect(result).toBe(true);
+  });
+
+  it('accepts a .mov whose type the browser could not determine, in any case', () => {
+    // arrange
+    const file = fileNamed('SQUAT-DEMO.MOV', '');
+
+    // act
+    const result = isVideoFile(file);
+
+    // assert
+    expect(result).toBe(true);
+  });
+
+  it('rejects another video format', () => {
+    // arrange
+    const file = fileNamed('squat-demo.avi', 'video/x-msvideo');
+
+    // act
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(false);
@@ -59,7 +81,7 @@ describe('isMp4File', () => {
     const file = fileNamed('form-cues.pdf', 'application/pdf');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(false);
@@ -70,7 +92,7 @@ describe('isMp4File', () => {
     const file = fileNamed('mp4-notes.txt', 'text/plain');
 
     // act
-    const result = isMp4File(file);
+    const result = isVideoFile(file);
 
     // assert
     expect(result).toBe(false);
@@ -78,26 +100,27 @@ describe('isMp4File', () => {
 
   it('names the rejected file so a repeat rejection reads differently', () => {
     // arrange
-    const first = fileNamed('squat-demo.mov', 'video/quicktime');
-    const second = fileNamed('deadlift-demo.mov', 'video/quicktime');
+    const first = fileNamed('squat-demo.avi', 'video/x-msvideo');
+    const second = fileNamed('deadlift-demo.avi', 'video/x-msvideo');
 
     // act
-    const firstMessage = mp4RejectionMessage(first);
-    const secondMessage = mp4RejectionMessage(second);
+    const firstMessage = videoRejectionMessage(first);
+    const secondMessage = videoRejectionMessage(second);
 
     // assert
-    expect(firstMessage).toContain('squat-demo.mov');
+    expect(firstMessage).toContain('squat-demo.avi');
+    expect(firstMessage).toBe('squat-demo.avi is not an .mp4 or .mov — only .mp4 and .mov videos are supported');
     expect(firstMessage).not.toBe(secondMessage);
   });
 });
 
-describe('isWithinMp4Limit', () => {
+describe('isWithinVideoLimit', () => {
   it('accepts a video of exactly 50 MB', () => {
     // arrange
-    const file = videoOfSize('squat-demo.mp4', MP4_MAX_BYTES);
+    const file = videoOfSize('squat-demo.mp4', VIDEO_MAX_BYTES);
 
     // act
-    const result = isWithinMp4Limit(file);
+    const result = isWithinVideoLimit(file);
 
     // assert
     expect(result).toBe(true);
@@ -105,10 +128,10 @@ describe('isWithinMp4Limit', () => {
 
   it('refuses a video one byte over 50 MB', () => {
     // arrange
-    const file = videoOfSize('squat-demo.mp4', MP4_MAX_BYTES + 1);
+    const file = videoOfSize('squat-demo.mp4', VIDEO_MAX_BYTES + 1);
 
     // act
-    const result = isWithinMp4Limit(file);
+    const result = isWithinVideoLimit(file);
 
     // assert
     expect(result).toBe(false);
@@ -116,10 +139,10 @@ describe('isWithinMp4Limit', () => {
 
   it('names the oversize file', () => {
     // arrange
-    const file = videoOfSize('clip.mp4', MP4_MAX_BYTES + 1);
+    const file = videoOfSize('clip.mp4', VIDEO_MAX_BYTES + 1);
 
     // act
-    const message = mp4TooLargeMessage(file);
+    const message = videoTooLargeMessage(file);
 
     // assert
     expect(message).toBe('clip.mp4 is larger than 50 MB');

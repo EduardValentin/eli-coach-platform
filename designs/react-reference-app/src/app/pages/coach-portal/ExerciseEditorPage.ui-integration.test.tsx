@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate, type InitialEntr
 import { Toaster } from 'sonner';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseEditorPage } from './ExerciseEditorPage';
-import { MP4_ACCEPT, MP4_MAX_BYTES } from '../../utils/exerciseVideo';
+import { VIDEO_ACCEPT, VIDEO_MAX_BYTES } from '../../utils/exerciseVideo';
 import { AppProvider } from '../../context/AppContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider, useTraining } from '../../context/TrainingContext';
@@ -393,25 +393,25 @@ describe('editing an exercise', () => {
 });
 
 describe('the demo video', () => {
-  it('offers .mp4 to the file picker and says what to upload', () => {
+  it('offers .mp4 and .mov to the file picker and says what to upload', () => {
     // arrange & act
     renderEditor(NEW);
 
     // assert
-    expect(document.querySelector('input[type="file"]')).toHaveAttribute('accept', MP4_ACCEPT);
-    expect(screen.getByText('MP4 up to 50 MB, in a format that plays well on a phone.')).toBeInTheDocument();
+    expect(document.querySelector('input[type="file"]')).toHaveAttribute('accept', VIDEO_ACCEPT);
+    expect(screen.getByText('MP4 or MOV up to 50 MB, in a format that plays well on a phone.')).toBeInTheDocument();
   });
 
-  it('rejects a dropped .mov with a visible error tied to the control', () => {
+  it('rejects a dropped .avi with a visible error tied to the control', () => {
     // arrange
     renderEditor(NEW);
 
     // act
-    drop(fileNamed('clip.mov', 'video/quicktime'));
+    drop(fileNamed('clip.avi', 'video/x-msvideo'));
 
     // assert
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('clip.mov is not an .mp4');
+    expect(alert).toHaveTextContent('clip.avi is not an .mp4 or .mov');
     expect(screen.getByRole('button', { name: 'Browse files' })).toHaveAttribute('aria-describedby', alert.id);
   });
 
@@ -419,7 +419,7 @@ describe('the demo video', () => {
     // arrange
     renderEditor(NEW);
     const oversize = fileNamed('clip.mp4', 'video/mp4');
-    Object.defineProperty(oversize, 'size', { value: MP4_MAX_BYTES + 1 });
+    Object.defineProperty(oversize, 'size', { value: VIDEO_MAX_BYTES + 1 });
 
     // act
     drop(oversize);
@@ -435,11 +435,11 @@ describe('the demo video', () => {
     renderEditor(NEW);
 
     // act
-    drop(fileNamed('clip.mov', 'video/quicktime'));
+    drop(fileNamed('clip.avi', 'video/x-msvideo'));
     await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
 
     // assert
-    expect(screen.getAllByText(/clip\.mov is not an \.mp4/)).toHaveLength(1);
+    expect(screen.getAllByText(/clip\.avi is not an \.mp4 or \.mov/)).toHaveLength(1);
   });
 
   it('attaches an .mp4 chosen through the picker on save', async () => {
@@ -453,6 +453,19 @@ describe('the demo video', () => {
 
     // assert
     expect(screen.getByTestId('saved')).toHaveTextContent('squat.mp4');
+  });
+
+  it('attaches a .mov chosen through the picker on save', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    // act
+    await user.upload(input, fileNamed('squat.mov', 'video/quicktime'));
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByTestId('saved')).toHaveTextContent('squat.mov');
   });
 
   it('clears the stored video when the coach removes it and saves', async () => {
@@ -470,21 +483,21 @@ describe('the demo video', () => {
   it('names each rejected file, so a second rejection is announced too', () => {
     // arrange
     renderEditor(NEW);
-    drop(fileNamed('squat-demo.mov', 'video/quicktime'));
+    drop(fileNamed('squat-demo.avi', 'video/x-msvideo'));
     const first = screen.getByRole('alert').textContent;
 
     // act
-    drop(fileNamed('deadlift-demo.mov', 'video/quicktime'));
+    drop(fileNamed('deadlift-demo.avi', 'video/x-msvideo'));
 
     // assert
     expect(screen.getByRole('alert').textContent).not.toBe(first);
-    expect(screen.getByRole('alert')).toHaveTextContent('deadlift-demo.mov');
+    expect(screen.getByRole('alert')).toHaveTextContent('deadlift-demo.avi');
   });
 
   it('clears the error once a valid .mp4 is dropped', () => {
     // arrange
     renderEditor(NEW);
-    drop(fileNamed('squat-demo.mov', 'video/quicktime'));
+    drop(fileNamed('squat-demo.avi', 'video/x-msvideo'));
 
     // act
     drop(fileNamed('squat-demo.mp4', 'video/mp4'));
