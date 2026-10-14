@@ -43,7 +43,7 @@ export class CoachDashboardPage {
     await expect(
       this.page.getByRole("heading", {
         level: 1,
-        name: "Good morning, Coach.",
+        name: "Good morning, Eli.",
       }),
     ).toBeVisible();
   }

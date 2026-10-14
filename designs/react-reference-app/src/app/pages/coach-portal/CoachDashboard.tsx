@@ -131,7 +131,7 @@ export function CoachDashboard() {
   return (
     <div className="w-full">
       <PortalPageHeader
-        title="Good morning, Coach."
+        title="Good morning, Eli."
         subtitle={
           <>
             <span data-parity="today-count">

@@ -52,7 +52,7 @@ export default function CoachHomeRoute() {
               </span>
             </>
           }
-          title="Good morning, Coach."
+          title="Good morning, Eli."
         />
       </div>
 
