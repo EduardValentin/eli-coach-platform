@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalendarClock, CalendarX } from "lucide-react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { configureAxe } from "vitest-axe";
 
@@ -266,5 +267,24 @@ describe("a row menu action that is not allowed right now", () => {
 
     // assert
     expect(results.violations).toEqual([]);
+  });
+
+  it("hands its trigger to the caller's ref", () => {
+    // arrange
+    const triggerRef = createRef<HTMLButtonElement>();
+
+    // act
+    render(
+      <RowActionsMenu
+        actions={checkInActions({ onCancel: vi.fn(), onReschedule: vi.fn() })}
+        label="More actions"
+        triggerRef={triggerRef}
+      />,
+    );
+
+    // assert
+    expect(triggerRef.current).toBe(
+      screen.getByRole("button", { name: "More actions" }),
+    );
   });
 });
