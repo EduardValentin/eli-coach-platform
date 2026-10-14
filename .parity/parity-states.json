@@ -3992,5 +3992,32 @@
     {
       "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"hour-clashes-loading\"]"
     }
-  ]
+  ],
+  "coach-checkins-upcoming-series": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ]
+  }
 }
