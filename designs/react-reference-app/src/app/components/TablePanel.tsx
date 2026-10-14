@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { motion } from 'motion/react';
 import { cn } from './ui/utils';
 
 export function TablePanel({
@@ -12,16 +11,14 @@ export function TablePanel({
   children: ReactNode;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
-        'bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden',
+        'bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden motion-safe:animate-panel-enter',
         className,
       )}
       data-parity={parity}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
