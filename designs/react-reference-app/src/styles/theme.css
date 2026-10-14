@@ -13,10 +13,10 @@
   --primary-hover: var(--brand-hover);
   --primary-soft: var(--brand-soft);
   --active-surface: var(--primary);
-  --selected-surface: var(--primary-soft);
-  --selected-border: var(--primary);
-  --selected-ink: var(--primary);
-  --selected-hover: var(--primary-hover);
+  --selected-surface: color-mix(in srgb, var(--brand) 10%, #ffffff);
+  --selected-border: var(--brand);
+  --selected-ink: var(--brand);
+  --selected-hover: var(--brand-hover);
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;
@@ -277,10 +277,6 @@
   --focus-ring: var(--primary);
   --portal-accent: var(--text-secondary);
   --portal-accent-hover: var(--text-primary);
-  --selected-surface: var(--brand-secondary-surface);
-  --selected-border: var(--brand-secondary);
-  --selected-ink: var(--brand-secondary);
-  --selected-hover: var(--brand-secondary-hover);
 }
 
 @theme {

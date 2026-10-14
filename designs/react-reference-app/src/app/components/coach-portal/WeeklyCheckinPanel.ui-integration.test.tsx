@@ -136,6 +136,10 @@ function nextWeekLink(): HTMLElement {
   return within(panel()).getByRole('link', { name: NEXT_WEEK_LINK });
 }
 
+function setUpAction(): HTMLElement {
+  return within(panel()).getByRole('button', { name: 'Set up a weekly check-in' });
+}
+
 function panelMenus(): HTMLElement[] {
   return within(panel()).queryAllByRole('button', { name: /^More actions/ });
 }
@@ -161,15 +165,25 @@ describe('the weekly check-in panel on a client record', () => {
 
     // assert
     expect(within(panel()).getByText('No weekly check-in yet.')).toBeInTheDocument();
-    expect(within(panel()).getByRole('button', { name: 'Set up' })).not.toHaveAttribute(
-      'aria-disabled',
-    );
+    expect(setUpAction()).not.toHaveAttribute('aria-disabled');
+    expect(within(panel()).getAllByRole('button')).toEqual([setUpAction()]);
+  });
+
+  it('opens the set up dialog from the footer action', async () => {
+    // arrange
+    const user = renderPanel('jstage=submitted');
+
+    // act
+    await user.click(setUpAction());
+
+    // assert
+    expect(await screen.findByRole('dialog', { name: SET_UP_DIALOG })).toBeInTheDocument();
   });
 
   it('holds Set up back before she sends her onboarding and says why', async () => {
     // arrange
     const user = renderPanel('jstage=onboarding');
-    const setUp = within(panel()).getByRole('button', { name: 'Set up' });
+    const setUp = setUpAction();
 
     // act
     await user.hover(setUp);
@@ -226,12 +240,14 @@ describe('the weekly check-in panel on a client record', () => {
     await chooseWeeklySeries(user, 'Active');
 
     // assert
-    expect(within(panel()).getByText('Every Wednesday at 6:00 PM')).toBeInTheDocument();
+    const rule = within(panel()).getByText('Every Wednesday at 6:00 PM');
+    expect(rule.closest('button, a')).toBeNull();
     expect(nextWeekLink()).toHaveAttribute('href', expect.stringMatching(NEXT_WEEK_HREF));
     expect(within(panel()).getAllByRole('link', { name: NEXT_WEEK_LINK })).toHaveLength(1);
-    expect(panelMenus()).toEqual([
+    expect(within(panel()).getAllByRole('button')).toEqual([
       within(panel()).getByRole('button', { name: 'More actions for the weekly check-in' }),
     ]);
+    expect(panelMenus()).toHaveLength(1);
     expect(within(panel()).queryByText('Clash')).not.toBeInTheDocument();
     expect(within(panel()).getByRole('link', { name: 'View all check-ins' })).toHaveAttribute(
       'href',
@@ -279,7 +295,7 @@ describe('the weekly check-in panel on a client record', () => {
 
     // assert
     expect(within(panel()).getByText('No weekly check-in yet.')).toBeInTheDocument();
-    expect(within(panel()).getByRole('button', { name: 'Set up' })).toBeInTheDocument();
+    expect(setUpAction()).toBeInTheDocument();
   });
 });
 
@@ -289,7 +305,7 @@ describe('setting up a weekly check-in', () => {
     const user = renderPanel('jstage=submitted');
 
     // act
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
 
     // assert
     const dialog = await openedDialog(SET_UP_DIALOG);
@@ -311,7 +327,7 @@ describe('setting up a weekly check-in', () => {
     await user.click(screen.getByRole('button', { name: /^stand in for another check-in/ }));
 
     // act
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
 
     // assert
     const dialog = await openedDialog(SET_UP_DIALOG);
@@ -323,7 +339,7 @@ describe('setting up a weekly check-in', () => {
     // arrange
     const user = renderPanel('jstage=submitted');
     await user.click(screen.getByRole('button', { name: /^stand in for another check-in/ }));
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
     const dialog = await openedDialog(SET_UP_DIALOG);
     const chosenHour = hourButton(dialog, '6:00 PM');
     await user.click(chosenHour);
@@ -349,7 +365,7 @@ describe('setting up a weekly check-in', () => {
   it('books every week, says so and shows the next one on the panel', async () => {
     // arrange
     const user = renderPanel('jstage=submitted');
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
     const dialog = await openedDialog(SET_UP_DIALOG);
     await user.click(hourButton(dialog, '6:00 PM'));
 
@@ -368,7 +384,7 @@ describe('setting up a weekly check-in', () => {
   it('says when she cannot have a weekly check-in right now', async () => {
     // arrange
     const user = renderPanel('jstage=submitted&ckservice=cannot-answer');
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
     const dialog = await openedDialog(SET_UP_DIALOG);
     await user.click(hourButton(dialog, '5:00 PM'));
 
@@ -387,7 +403,7 @@ describe('setting up a weekly check-in', () => {
     const user = renderPanel('jstage=submitted&ckservice=fails');
 
     // act
-    await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
+    await user.click(setUpAction());
 
     // assert
     const dialog = await screen.findByRole('dialog', { name: SET_UP_DIALOG });

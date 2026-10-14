@@ -629,7 +629,7 @@ describe('the coach reading who a client is', () => {
     ]);
   });
 
-  it('pairs her subscription and her weekly check-in in one row, with the measurements below it', () => {
+  it('keeps her subscription on its own and her weekly check-in alone in a row of its own', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -637,8 +637,10 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
-    const row = subscriptionPanel().parentElement;
-    expect(screen.getByRole('region', { name: 'Weekly check-in' }).parentElement).toBe(row);
+    const weekly = screen.getByRole('region', { name: 'Weekly check-in' });
+    const row = weekly.parentElement;
+    expect(row?.children).toHaveLength(1);
+    expect(subscriptionPanel().parentElement).not.toBe(row);
     expect(screen.getByRole('region', { name: 'Measurements' }).parentElement).not.toBe(row);
   });
 

@@ -42,7 +42,7 @@ const BRAND_CLASSNAMES = {
 
 const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {
   selected:
-    'bg-primary text-white hover:bg-primary-hover! hover:text-white',
+    'border border-selected bg-selected-surface text-selected-ink hover:bg-selected-surface! hover:border-selected-hover hover:text-selected-hover',
   today: 'ring-2 ring-primary/30',
   outside: 'text-text-secondary hover:bg-surface-quiet',
   disabled: 'opacity-50 hover:bg-transparent',

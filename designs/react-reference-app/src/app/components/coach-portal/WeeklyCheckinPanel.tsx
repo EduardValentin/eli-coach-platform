@@ -21,10 +21,9 @@ import { DisabledActionHint } from '../DisabledActionHint';
 import { PortalWidget } from '../PortalWidget';
 import { RowActionsMenu } from '../RowActionsMenu';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
-import { WidgetLink } from '../WidgetLink';
+import { WidgetAction, WidgetLink } from '../WidgetLink';
 import { awaitingOnboardingReason, scheduledClientOf } from './checkinClient';
 import { DASHBOARD_ROW_CLASS } from './DashboardAppointmentRow';
 import {
@@ -64,7 +63,7 @@ function NextWeekLink({
   return (
     <Link
       to={coachSeriesCheckinPath(week.id, clientName)}
-      className={cn(DASHBOARD_ROW_CLASS, 'group mt-5')}
+      className={cn(DASHBOARD_ROW_CLASS, 'group mt-3')}
       data-parity="series-next-week"
     >
       <span className="flex min-w-0 flex-wrap items-center gap-2">
@@ -116,46 +115,76 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
     }
   };
 
-  const setUpButton = (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      data-parity="series-set-up"
-      onClick={() => openDialog('set-up')}
-    >
-      Set up
-    </Button>
+  const setUpAction = (
+    <WidgetAction trailing="arrow" data-parity="series-set-up" onClick={() => openDialog('set-up')}>
+      Set up a weekly check-in
+    </WidgetAction>
   );
 
-  const setUpAction = () => {
+  const footer = () => {
+    if (coachingEnds) return null;
+    if (series) {
+      return (
+        <WidgetLink trailing="arrow" to={coachCheckinsPath()} data-parity="series-view-all">
+          View all check-ins
+        </WidgetLink>
+      );
+    }
     if (scheduling === 'awaiting_onboarding') {
       return (
         <DisabledActionHint reason={awaitingOnboardingReason(journey.identity.gender)}>
-          {setUpButton}
+          {setUpAction}
         </DisabledActionHint>
       );
     }
 
-    return setUpButton;
+    return setUpAction;
   };
 
-  const summary = () => {
+  const body = () => {
     if (coachingEnds) {
       return (
-        <div data-parity="series-summary">
-          <p className="text-sm text-text-secondary" data-parity="series-coaching-ends">
-            {coachingEndsLine(journey.identity.gender, scheduling)}
-          </p>
-        </div>
+        <p className="text-sm text-text-secondary" data-parity="series-coaching-ends">
+          {coachingEndsLine(journey.identity.gender, scheduling)}
+        </p>
       );
     }
-    if (series) {
+    if (!series) {
       return (
-        <div className="flex items-center justify-between gap-3" data-parity="series-summary">
-          <p className="text-sm font-semibold text-text-primary" data-parity="series-rule">
-            {ruleLine(series)}
-          </p>
+        <p className="text-sm text-text-secondary" data-parity="series-empty">
+          No weekly check-in yet.
+        </p>
+      );
+    }
+    if (!nextWeek) {
+      return (
+        <p className="mt-1 text-sm text-text-secondary" data-parity="series-weeks-empty">
+          No week to come.
+        </p>
+      );
+    }
+
+    return (
+      <NextWeekLink
+        week={nextWeek}
+        clientName={client.name}
+        clashes={statusOf(nextWeek) === 'clash'}
+      />
+    );
+  };
+
+  return (
+    <PortalWidget
+      presentation="coach"
+      density="compact"
+      title="Weekly check-in"
+      icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={16} />}
+      headingId="weekly-check-in-panel-heading"
+      parityRoot="WeeklyCheckinPanel"
+      className="h-full"
+      hero={series && <span data-parity="series-rule">{ruleLine(series)}</span>}
+      action={
+        series && (
           <RowActionsMenu
             label="More actions for the weekly check-in"
             size="xs"
@@ -175,45 +204,11 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
               },
             ]}
           />
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-wrap items-center gap-3" data-parity="series-summary">
-        <p className="text-sm text-text-secondary" data-parity="series-empty">
-          No weekly check-in yet.
-        </p>
-        {setUpAction()}
-      </div>
-    );
-  };
-
-  return (
-    <PortalWidget
-      presentation="coach"
-      title="Weekly check-in"
-      icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={18} />}
-      headingId="weekly-check-in-panel-heading"
-      parityRoot="WeeklyCheckinPanel"
-      className="h-full"
-      footer={
-        series && (
-          <WidgetLink trailing="arrow" to={coachCheckinsPath()}>
-            View all check-ins
-          </WidgetLink>
         )
       }
+      footer={footer()}
     >
-      {summary()}
-
-      {nextWeek && (
-        <NextWeekLink
-          week={nextWeek}
-          clientName={client.name}
-          clashes={statusOf(nextWeek) === 'clash'}
-        />
-      )}
+      <div data-parity="series-summary">{body()}</div>
 
       <WeeklyCheckinDialog
         key={dialog.openings}
