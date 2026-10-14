@@ -333,7 +333,7 @@ describe("ListCoachCheckInsUseCase", () => {
 });
 
 describe("ListCoachCheckInsUseCase weekly check-ins", () => {
-  it("lists a clash under Requests and only the next approved week of the series under Upcoming", async () => {
+  it("lists a clash under Requests and every approved week of the series under Upcoming", async () => {
     // arrange
     const ports = createPorts({
       checkIns: [
@@ -352,6 +352,7 @@ describe("ListCoachCheckInsUseCase weekly check-ins", () => {
     expect(listed.map((view) => [view.id, view.tab])).toEqual([
       ["week-0", "requests"],
       ["week-1", "upcoming"],
+      ["week-2", "upcoming"],
       ["week-3", "requests"],
     ]);
   });

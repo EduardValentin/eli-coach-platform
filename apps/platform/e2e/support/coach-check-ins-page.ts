@@ -221,6 +221,14 @@ export class CoachCheckInsPage {
     return this.checkIn(tab, showing);
   }
 
+  private async weekRow(
+    tab: CheckInTab,
+    showing: string,
+    week: PickedCheckIn,
+  ): Promise<Locator> {
+    return this.rows.listedAt(await this.shownRow(tab, showing), week);
+  }
+
   async reschedule(tab: CheckInTab, showing: string): Promise<void> {
     await this.rows.choose(await this.shownRow(tab, showing), "Reschedule");
   }
@@ -245,6 +253,25 @@ export class CoachCheckInsPage {
 
   async cancel(tab: CheckInTab, showing: string): Promise<void> {
     await this.rows.choose(await this.shownRow(tab, showing), "Cancel");
+  }
+
+  async cancelWeek(
+    tab: CheckInTab,
+    showing: string,
+    week: PickedCheckIn,
+  ): Promise<void> {
+    await this.rows.choose(await this.weekRow(tab, showing, week), "Cancel");
+  }
+
+  async rescheduleWeek(
+    tab: CheckInTab,
+    showing: string,
+    week: PickedCheckIn,
+  ): Promise<void> {
+    await this.rows.choose(
+      await this.weekRow(tab, showing, week),
+      "Reschedule",
+    );
   }
 
   async expectCancelledToast(clientName: string): Promise<void> {
@@ -436,10 +463,16 @@ export class CoachCheckInsPage {
     await expect(this.checkIn(tab, showing)).toHaveCount(0);
   }
 
-  async expectOneWeeklyUpcoming(showing: string): Promise<void> {
+  async expectEveryWeeklyUpcoming(
+    showing: string,
+    weeks: PickedCheckIn[],
+  ): Promise<void> {
     const listed = await this.shownRow("Upcoming", showing);
 
-    await expect(listed).toHaveCount(1);
-    await expect(listed).not.toContainText(AD_HOC);
+    await expect(listed).toHaveCount(weeks.length);
+    await expect(listed.filter({ hasText: AD_HOC })).toHaveCount(0);
+    for (const week of weeks) {
+      await expect(this.rows.listedAt(listed, week)).toHaveCount(1);
+    }
   }
 }

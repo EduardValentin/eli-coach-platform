@@ -203,6 +203,14 @@ const ELENA_NEXT_WEEKLY: CoachCheckIn = {
   joinEmphasisFrom: "2026-10-14T14:50:00.000Z",
 };
 
+const ELENA_FOLLOWING_WEEKLY: CoachCheckIn = {
+  ...ELENA_NEXT_WEEKLY,
+  id: "1f2a3b4c-5d6e-4f7a-8b8c-0d1e2f3a4b5c",
+  startsAt: "2026-10-28T15:00:00.000Z",
+  endsAt: "2026-10-28T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-28T14:50:00.000Z",
+};
+
 const ELENA_CLASH_MENU =
   "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 
@@ -1037,22 +1045,28 @@ describe("a weekly check-in on the coach's check-ins page", () => {
     ).toEqual(["Reschedule", "Cancel"]);
   });
 
-  it("keeps the next weekly check-in under Upcoming beside a clash, read without a kind or who asked", async () => {
+  it("lists every weekly check-in under Upcoming beside a clash, read without a kind or who asked", async () => {
     // arrange
-    listing = { checkIns: [ELENA_CLASH, ELENA_NEXT_WEEKLY] };
+    listing = {
+      checkIns: [ELENA_CLASH, ELENA_NEXT_WEEKLY, ELENA_FOLLOWING_WEEKLY],
+    };
     const user = await renderCheckInsPage();
 
     // act
     await showTab(user, "Upcoming");
 
     // assert
-    const row = within(
+    const [row, followingRow, ...others] = within(
       await screen.findByRole("list", { name: "Upcoming check-ins" }),
-    ).getByRole("listitem");
+    ).getAllByRole("listitem");
+    expect(others).toHaveLength(0);
     expect(row).toHaveTextContent("Wed, Oct 14");
-    expect(row).not.toHaveTextContent("Requested by");
-    expect(row).not.toHaveTextContent("Ad-hoc");
-    expect(within(row).queryByText("Clash")).not.toBeInTheDocument();
+    expect(followingRow).toHaveTextContent("Wed, Oct 28");
+    for (const weekly of [row, followingRow]) {
+      expect(weekly).not.toHaveTextContent("Requested by");
+      expect(weekly).not.toHaveTextContent("Ad-hoc");
+      expect(within(weekly).queryByText("Clash")).not.toBeInTheDocument();
+    }
     expect(within(row).getByRole("link", { name: "Join Meet" })).toBeVisible();
   });
 

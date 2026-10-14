@@ -214,8 +214,10 @@ test(
 
     // assert
     await coachCheckIns.expectClashFirst(client.fullName);
-    await coachCheckIns.expectOneWeeklyUpcoming(client.fullName);
-    await coachCheckIns.expectUpcomingAt(client.fullName, shownIn(secondWeek!));
+    await coachCheckIns.expectEveryWeeklyUpcoming(
+      client.fullName,
+      weeks.slice(1).map(shownIn),
+    );
 
     // act
     await coachCheckIns.reschedule("Requests", client.fullName);
@@ -988,7 +990,11 @@ test(
     );
 
     // act
-    await coachCheckIns.cancel("Upcoming", client.fullName);
+    await coachCheckIns.cancelWeek(
+      "Upcoming",
+      client.fullName,
+      shownIn(cancelledWeek!),
+    );
 
     // assert
     await cancelCheckInDialog.expectOpen(
@@ -1026,7 +1032,11 @@ test(
     );
 
     // act
-    await coachCheckIns.reschedule("Upcoming", client.fullName);
+    await coachCheckIns.rescheduleWeek(
+      "Upcoming",
+      client.fullName,
+      shownIn(movedWeek!),
+    );
     const newTime = await checkInProposeDialog.sendSoonest(MOVED_WEEK_NOTE);
 
     // assert
