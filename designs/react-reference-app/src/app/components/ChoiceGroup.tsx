@@ -41,7 +41,7 @@ export function ChoiceOption({
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        'flex min-w-fit flex-1 h-[calc(var(--size-control-sm)-6px)] group-data-[size=md]/choice:h-[calc(var(--size-control-md)-8px)] items-center justify-center rounded-[calc(var(--radius-field)-3px)] border border-transparent px-3 text-sm font-medium text-text-secondary whitespace-nowrap outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=checked]:border-brand-secondary data-[state=checked]:bg-brand-secondary-surface data-[state=checked]:text-brand-secondary data-[state=checked]:hover:border-brand-secondary-hover data-[state=checked]:hover:text-brand-secondary-hover disabled:pointer-events-none disabled:opacity-50',
+        'flex min-w-fit flex-1 h-[calc(var(--size-control-sm)-6px)] group-data-[size=md]/choice:h-[calc(var(--size-control-md)-8px)] items-center justify-center rounded-[calc(var(--radius-field)-3px)] border border-transparent px-3 text-sm font-medium text-text-secondary whitespace-nowrap outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=checked]:border-selected data-[state=checked]:bg-selected-surface data-[state=checked]:text-selected-ink data-[state=checked]:hover:border-selected-hover data-[state=checked]:hover:text-selected-hover disabled:pointer-events-none disabled:opacity-50',
         className,
       )}
       {...props}

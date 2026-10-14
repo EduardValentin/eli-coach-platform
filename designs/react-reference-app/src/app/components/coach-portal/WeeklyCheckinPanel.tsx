@@ -1,27 +1,32 @@
 import { useState } from 'react';
-import { CalendarClock, CalendarRange, CalendarX } from 'lucide-react';
+import { Link } from 'react-router';
+import { CalendarClock, CalendarRange, CalendarX, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckins, type CheckinSeries } from '../../context/CheckinContext';
 import {
   checkinSchedulingFor,
+  checkinStartsAt,
   coachingEndsAt,
+  type CheckIn,
   type CheckinScheduling,
 } from '../../domain/checkins';
 import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../domain/onboardingAnswers';
-import { useCoachCheckinMenu } from '../../hooks/useCoachCheckinMenu';
-import { coachCheckinsPath } from '../../utils/checkinLinks';
+import { coachCheckinsPath, coachSeriesCheckinPath } from '../../utils/checkinLinks';
 import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
-import { CheckinCard } from '../CheckinCard';
+import { DateTimeLabel } from '../DateTimeLabel';
 import { DisabledActionHint } from '../DisabledActionHint';
 import { PortalWidget } from '../PortalWidget';
 import { RowActionsMenu } from '../RowActionsMenu';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { cn } from '../ui/utils';
 import { WidgetLink } from '../WidgetLink';
 import { awaitingOnboardingReason, scheduledClientOf } from './checkinClient';
+import { DASHBOARD_ROW_CLASS } from './DashboardAppointmentRow';
 import {
   WeeklyCheckinDialog,
   type WeeklyCheckinClient,
@@ -47,9 +52,42 @@ function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {
   return { ...scheduledClientOf(journey), gender: journey.identity.gender };
 }
 
+function NextWeekLink({
+  week,
+  clientName,
+  clashes,
+}: {
+  week: CheckIn;
+  clientName: string;
+  clashes: boolean;
+}) {
+  return (
+    <Link
+      to={coachSeriesCheckinPath(week.id, clientName)}
+      className={cn(DASHBOARD_ROW_CLASS, 'group mt-5')}
+      data-parity="series-next-week"
+    >
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="sr-only">Next weekly check-in: </span>
+        <DateTimeLabel startsAt={checkinStartsAt(week)} size="sm" />
+        {clashes && (
+          <Badge tone="pending" data-parity="clash-badge">
+            Clash
+          </Badge>
+        )}
+      </span>
+      <ChevronRight
+        aria-hidden="true"
+        size={16}
+        className="shrink-0 text-text-secondary transition-colors group-hover:text-text-primary"
+        data-parity="series-next-week-chevron"
+      />
+    </Link>
+  );
+}
+
 export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   const { seriesFor, seriesWeeks, statusOf, stopSeries } = useCheckins();
-  const { rescheduleOf, cancelOf, dialogs } = useCoachCheckinMenu();
   const [dialog, setDialog] = useState<DialogState>({ mode: 'set-up', open: false, openings: 0 });
   const [stop, setStop] = useState<StopState>('closed');
 
@@ -158,7 +196,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
       icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={18} />}
       headingId="weekly-check-in-panel-heading"
       parityRoot="WeeklyCheckinPanel"
-      className="mb-8"
+      className="h-full"
       footer={
         series && (
           <WidgetLink trailing="arrow" to={coachCheckinsPath()}>
@@ -170,16 +208,11 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
       {summary()}
 
       {nextWeek && (
-        <div className="mt-5" data-parity="series-next-week">
-          <CheckinCard
-            checkin={nextWeek}
-            status={statusOf(nextWeek)}
-            viewer={{ party: 'coach', counterpartName: client.firstName }}
-            attendee={{ name: client.name }}
-            actions={{ menu: { reschedule: rescheduleOf(nextWeek), cancel: cancelOf(nextWeek) } }}
-            actionSize="xs"
-          />
-        </div>
+        <NextWeekLink
+          week={nextWeek}
+          clientName={client.name}
+          clashes={statusOf(nextWeek) === 'clash'}
+        />
       )}
 
       <WeeklyCheckinDialog
@@ -205,8 +238,6 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
         onConfirm={() => void confirmStop()}
         tone="destructive"
       />
-
-      {dialogs}
     </PortalWidget>
   );
 }

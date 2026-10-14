@@ -629,6 +629,19 @@ describe('the coach reading who a client is', () => {
     ]);
   });
 
+  it('pairs her subscription and her weekly check-in in one row, with the measurements below it', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    const row = subscriptionPanel().parentElement;
+    expect(screen.getByRole('region', { name: 'Weekly check-in' }).parentElement).toBe(row);
+    expect(screen.getByRole('region', { name: 'Measurements' }).parentElement).not.toBe(row);
+  });
+
   it('reads who she is from her booking, her facts from the onboarding she sent and her weights from her first and latest measurements, in kilograms and centimetres', () => {
     // arrange
     window.localStorage.setItem(

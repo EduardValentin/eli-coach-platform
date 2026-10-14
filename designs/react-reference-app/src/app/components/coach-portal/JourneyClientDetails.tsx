@@ -77,17 +77,20 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         heightCm={statedHeightCm(journey.onboarding.answers)}
       />
       {journey.subscription && (
-        <>
+        <div
+          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8"
+          data-parity="record-widgets-row"
+        >
           <SubscriptionSummary
             subscription={journey.subscription}
             perspective="coach"
             clientGender={journey.identity.gender}
             pricing={journey.pricing}
             headingId="subscription-panel-heading"
-            className="mb-8"
+            className="h-full"
           />
           <WeeklyCheckinPanel journey={journey} />
-        </>
+        </div>
       )}
       <JourneyMeasurements
         journey={journey}

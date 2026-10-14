@@ -4,6 +4,7 @@ import {
   checkinIdFromSearch,
   coachCheckinPath,
   coachCheckinsPath,
+  coachSeriesCheckinPath,
 } from './checkinLinks';
 
 describe('checkinLinks', () => {
@@ -17,6 +18,21 @@ describe('checkinLinks', () => {
 
     expect(path.startsWith('/coach/checkins?')).toBe(true);
     expect(checkinIdFromSearch(search)).toBe('ci 3');
+  });
+
+  it('narrows the list to her recurring check-ins when it links one weekly check-in', () => {
+    // arrange
+    const checkinId = 'ci 3';
+
+    // act
+    const path = coachSeriesCheckinPath(checkinId, 'Jane Doe');
+
+    // assert
+    const search = new URLSearchParams(path.slice(path.indexOf('?')));
+    expect(path.startsWith('/coach/checkins?')).toBe(true);
+    expect(checkinIdFromSearch(search)).toBe('ci 3');
+    expect(search.get('kind')).toBe('recurring');
+    expect(search.get('q')).toBe('Jane Doe');
   });
 
   it('reads no target from a plain visit', () => {

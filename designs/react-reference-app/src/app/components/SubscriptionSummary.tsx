@@ -40,7 +40,7 @@ type Line = { term: string; value: string };
 
 const READINGS_GRID_CLASS: Record<SubscriptionAudience['perspective'], string> =
   {
-    coach: 'grid-cols-2 sm:grid-cols-3',
+    coach: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3',
     client: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
   };
 
@@ -109,7 +109,7 @@ function RefundReading({
   return (
     <Reading
       as="dl-item"
-      className="col-span-2 sm:col-span-3"
+      className="col-span-full"
       label="Refund due"
       value={`${outstanding} by ${formatJourneyDate(refund.dueBy)}`}
       valueParity="subscription-refund-due"

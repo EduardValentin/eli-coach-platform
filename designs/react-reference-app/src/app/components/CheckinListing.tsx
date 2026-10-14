@@ -21,7 +21,12 @@ import {
   type KindFilter,
   type WaitingFilter,
 } from "../utils/checkinListing";
-import { checkinAnchorId, checkinIdFromSearch } from "../utils/checkinLinks";
+import {
+  CHECKIN_KIND_PARAM,
+  CHECKIN_QUERY_PARAM,
+  checkinAnchorId,
+  checkinIdFromSearch,
+} from "../utils/checkinLinks";
 import { pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
 import { ListPager } from "./ListPager";
@@ -34,9 +39,7 @@ import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 const TAB_PARAM = "view";
-const KIND_PARAM = "kind";
 const WAITING_PARAM = "waiting";
-const QUERY_PARAM = "q";
 const DIRECTION_PARAM = "dir";
 const PAGE_PARAM = "page";
 const CHECKINS_PER_PAGE = 10;
@@ -121,12 +124,12 @@ export function CheckinListing({
 
   const tab = parseTab(searchParams.get(TAB_PARAM), defaultTab);
   const selection: CheckinSelection = {
-    kind: parseKindFilter(searchParams.get(KIND_PARAM)),
+    kind: parseKindFilter(searchParams.get(CHECKIN_KIND_PARAM)),
     waiting:
       tab === "requests"
         ? parseWaitingFilter(searchParams.get(WAITING_PARAM))
         : "any",
-    query: search ? (searchParams.get(QUERY_PARAM) ?? "") : "",
+    query: search ? (searchParams.get(CHECKIN_QUERY_PARAM) ?? "") : "",
   };
   const direction = parseDirection(searchParams.get(DIRECTION_PARAM), tab);
   const page = parsePage(searchParams.get(PAGE_PARAM));
@@ -172,7 +175,7 @@ export function CheckinListing({
   };
 
   const chooseKind = (kind: KindFilter) => {
-    updateSearchParams((params) => setOrClear(params, KIND_PARAM, kind, "any"));
+    updateSearchParams((params) => setOrClear(params, CHECKIN_KIND_PARAM, kind, "any"));
   };
 
   const chooseWaiting = (waiting: WaitingFilter) => {
@@ -193,14 +196,14 @@ export function CheckinListing({
   };
 
   const changeQuery = (value: string) => {
-    updateSearchParams((params) => setOrClear(params, QUERY_PARAM, value, ""));
+    updateSearchParams((params) => setOrClear(params, CHECKIN_QUERY_PARAM, value, ""));
   };
 
   const clearFilters = () => {
     updateSearchParams((params) => {
-      params.delete(KIND_PARAM);
+      params.delete(CHECKIN_KIND_PARAM);
       params.delete(WAITING_PARAM);
-      params.delete(QUERY_PARAM);
+      params.delete(CHECKIN_QUERY_PARAM);
     });
   };
 

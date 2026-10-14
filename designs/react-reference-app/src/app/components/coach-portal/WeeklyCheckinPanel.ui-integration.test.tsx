@@ -129,8 +129,15 @@ async function chooseSeriesAction(user: ReturnType<typeof userEvent.setup>, acti
   await user.click(await screen.findByRole('menuitem', { name: action }));
 }
 
-function weekRowMenus(): HTMLElement[] {
-  return within(panel()).queryAllByRole('button', { name: /^More actions for the check-in on / });
+const NEXT_WEEK_LINK = /^Next weekly check-in: /;
+const NEXT_WEEK_HREF = /^\/coach\/checkins\?checkin=[^&]+&kind=recurring&q=Jane\+Doe$/;
+
+function nextWeekLink(): HTMLElement {
+  return within(panel()).getByRole('link', { name: NEXT_WEEK_LINK });
+}
+
+function panelMenus(): HTMLElement[] {
+  return within(panel()).queryAllByRole('button', { name: /^More actions/ });
 }
 
 async function openedDialog(name: string): Promise<HTMLElement> {
@@ -220,7 +227,11 @@ describe('the weekly check-in panel on a client record', () => {
 
     // assert
     expect(within(panel()).getByText('Every Wednesday at 6:00 PM')).toBeInTheDocument();
-    expect(weekRowMenus()).toHaveLength(1);
+    expect(nextWeekLink()).toHaveAttribute('href', expect.stringMatching(NEXT_WEEK_HREF));
+    expect(within(panel()).getAllByRole('link', { name: NEXT_WEEK_LINK })).toHaveLength(1);
+    expect(panelMenus()).toEqual([
+      within(panel()).getByRole('button', { name: 'More actions for the weekly check-in' }),
+    ]);
     expect(within(panel()).queryByText('Clash')).not.toBeInTheDocument();
     expect(within(panel()).getByRole('link', { name: 'View all check-ins' })).toHaveAttribute(
       'href',
@@ -245,21 +256,18 @@ describe('the weekly check-in panel on a client record', () => {
     expect(within(panel()).queryByRole('button', { name: 'Stop' })).not.toBeInTheDocument();
   });
 
-  it('shows a next week whose hour is taken as a clash the coach can reschedule or cancel', async () => {
+  it('marks a next week whose hour is taken as a clash on its link', async () => {
     // arrange
     const user = renderPanel('jstage=submitted');
-    await chooseWeeklySeries(user, 'With clashes');
-    const [nextWeekMenu] = weekRowMenus();
 
     // act
-    await user.click(nextWeekMenu);
+    await chooseWeeklySeries(user, 'With clashes');
 
     // assert
-    expect(weekRowMenus()).toHaveLength(1);
+    expect(nextWeekLink()).toHaveTextContent('Clash');
     expect(within(panel()).getAllByText('Clash')).toHaveLength(1);
-    expect(within(panel()).getByText('Finding a new time')).toBeInTheDocument();
-    expect(await screen.findByRole('menuitem', { name: 'Reschedule' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Cancel' })).toBeInTheDocument();
+    expect(nextWeekLink()).toHaveAttribute('href', expect.stringMatching(NEXT_WEEK_HREF));
+    expect(panelMenus()).toHaveLength(1);
   });
 
   it('reads as having no weekly check-in once it stopped', async () => {
@@ -353,7 +361,7 @@ describe('setting up a weekly check-in', () => {
     expect(await screen.findByText('Weekly check-in set up', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: SET_UP_DIALOG })).not.toBeInTheDocument();
     expect(within(panel()).getByText('Every Monday at 6:00 PM')).toBeInTheDocument();
-    expect(weekRowMenus()).toHaveLength(1);
+    expect(nextWeekLink()).toHaveAttribute('href', expect.stringMatching(NEXT_WEEK_HREF));
     expect(within(panel()).getByRole('link', { name: 'View all check-ins' })).toBeInTheDocument();
   });
 
