@@ -19,6 +19,7 @@ import { clientPronouns } from '../../utils/journeyLabels';
 import { DateTimeLabel } from '../DateTimeLabel';
 import { DisabledActionHint } from '../DisabledActionHint';
 import { PortalWidget } from '../PortalWidget';
+import { Reading } from '../Reading';
 import { RowActionsMenu } from '../RowActionsMenu';
 import { Badge } from '../ui/badge';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -63,7 +64,7 @@ function NextWeekLink({
   return (
     <Link
       to={coachSeriesCheckinPath(week.id, clientName)}
-      className={cn(DASHBOARD_ROW_CLASS, 'group mt-3')}
+      className={cn(DASHBOARD_ROW_CLASS, 'group mt-5')}
       data-parity="series-next-week"
     >
       <span className="flex min-w-0 flex-wrap items-center gap-2">
@@ -156,33 +157,33 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
         </p>
       );
     }
-    if (!nextWeek) {
-      return (
-        <p className="mt-1 text-sm text-text-secondary" data-parity="series-weeks-empty">
-          No week to come.
-        </p>
-      );
-    }
 
     return (
-      <NextWeekLink
-        week={nextWeek}
-        clientName={client.name}
-        clashes={statusOf(nextWeek) === 'clash'}
-      />
+      <>
+        <Reading label="Schedule" value={ruleLine(series)} valueParity="series-rule" />
+        {nextWeek ? (
+          <NextWeekLink
+            week={nextWeek}
+            clientName={client.name}
+            clashes={statusOf(nextWeek) === 'clash'}
+          />
+        ) : (
+          <p className="mt-5 text-sm text-text-secondary" data-parity="series-weeks-empty">
+            No week to come.
+          </p>
+        )}
+      </>
     );
   };
 
   return (
     <PortalWidget
       presentation="coach"
-      density="compact"
       title="Weekly check-in"
-      icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={16} />}
+      icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={18} />}
       headingId="weekly-check-in-panel-heading"
       parityRoot="WeeklyCheckinPanel"
       className="h-full"
-      hero={series && <span data-parity="series-rule">{ruleLine(series)}</span>}
       action={
         series && (
           <RowActionsMenu
