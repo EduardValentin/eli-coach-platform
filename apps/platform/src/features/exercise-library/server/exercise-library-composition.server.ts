@@ -26,7 +26,7 @@ export function composeExerciseLibraryFeature(
   handles: ExerciseLibraryFeatureHandles,
 ): ExerciseLibraryFeature {
   const library = new PostgresExerciseLibrary(handles.database);
-  const writing = {
+  const exerciseWriteDependencies = {
     library,
     clock: handles.clock,
     incidents: handles.incidents,
@@ -37,10 +37,10 @@ export function composeExerciseLibraryFeature(
       listExercises: new ListExercisesUseCase({ library }),
       findExercise: new FindExerciseUseCase({ library }),
       createExercise: new CreateExerciseUseCase({
-        ...writing,
+        ...exerciseWriteDependencies,
         ids: new RandomExerciseIds(),
       }),
-      editExercise: new EditExerciseUseCase(writing),
+      editExercise: new EditExerciseUseCase(exerciseWriteDependencies),
     }),
   };
 }

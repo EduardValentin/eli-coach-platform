@@ -47,7 +47,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
 
       return "added";
     } catch (error) {
-      return this.nameTakenOr(error);
+      return this.nameTakenOrRethrow(error);
     }
   }
 
@@ -62,11 +62,11 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
 
       return "replaced";
     } catch (error) {
-      return this.nameTakenOr(error);
+      return this.nameTakenOrRethrow(error);
     }
   }
 
-  private nameTakenOr(error: unknown): "name-taken" {
+  private nameTakenOrRethrow(error: unknown): "name-taken" {
     const nameTaken = isCausedByDatabaseError(
       error,
       ({ code, constraint }) =>

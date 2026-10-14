@@ -30,6 +30,18 @@ export function selectTriggerClasses(size: FieldSize): string {
   );
 }
 
+export function SelectTriggerChevron(
+  slotProps: React.ComponentProps<typeof ChevronDown>,
+) {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className="size-4 shrink-0 text-text-muted opacity-50"
+      {...slotProps}
+    />
+  );
+}
+
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
   SelectTriggerProps
@@ -42,10 +54,7 @@ export const SelectTrigger = React.forwardRef<
   >
     {children}
     <RadixSelect.Icon asChild>
-      <ChevronDown
-        aria-hidden="true"
-        className="size-4 shrink-0 text-text-muted opacity-50"
-      />
+      <SelectTriggerChevron />
     </RadixSelect.Icon>
   </RadixSelect.Trigger>
 ));

@@ -15,7 +15,10 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ExerciseEditorView } from "~/features/exercise-library/public/exercises";
+import type {
+  ExerciseEditorView,
+  ExerciseProblems,
+} from "~/features/exercise-library/public/exercises";
 import { COACH_TRAINING_PATH } from "~/features/exercise-library/public/paths";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
@@ -30,6 +33,7 @@ import {
   exerciseFormResolver,
   exerciseFormValuesOf,
   exerciseRequestOf,
+  newExerciseFormValues,
   shownExerciseProblemsOf,
   type ExerciseFormValues,
 } from "./exercise-form";
@@ -65,7 +69,9 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     exerciseFormResolver(() => takenNames.current),
   );
   const form = useForm<ExerciseFormValues>({
-    defaultValues: exerciseFormValuesOf(exercise),
+    defaultValues: exercise
+      ? exerciseFormValuesOf(exercise)
+      : newExerciseFormValues(),
     mode: "onChange",
     resolver,
   });
@@ -81,27 +87,17 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     [form],
   );
 
-  const settle = (outcome: ExerciseSaveOutcome) => {
-    if (outcome.status === "saved") {
-      toast.success(exercise ? "Exercise updated" : "Exercise created");
-      void navigate(outcome.redirectTo);
-      return;
-    }
-
-    const refused =
-      outcome.status === "refused"
-        ? exerciseFieldProblemsOf(outcome.problems)
-        : {};
+  const showRefusedFields = (problems: ExerciseProblems): boolean => {
+    const refused = exerciseFieldProblemsOf(problems);
     const refusedFields = EXERCISE_PROBLEM_FIELDS.filter(
       (field) => refused[field],
     );
 
     if (refusedFields.length === 0) {
-      toast.error(SAVE_FAILED);
-      return;
+      return false;
     }
 
-    if (outcome.status === "refused" && outcome.problems.name === "taken") {
+    if (problems.name === "taken") {
       takenNames.current = [...takenNames.current, sentName.current];
     }
 
@@ -112,6 +108,21 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
         { shouldFocus: index === 0 },
       ),
     );
+    return true;
+  };
+
+  const settle = (outcome: ExerciseSaveOutcome) => {
+    if (outcome.status === "saved") {
+      toast.success(exercise ? "Exercise updated" : "Exercise created");
+      void navigate(outcome.redirectTo);
+      return;
+    }
+
+    if (outcome.status === "refused" && showRefusedFields(outcome.problems)) {
+      return;
+    }
+
+    toast.error(SAVE_FAILED);
   };
 
   const { save, saving } = useExerciseSave(exercise?.id ?? null, settle);

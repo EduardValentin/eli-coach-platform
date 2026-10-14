@@ -115,6 +115,12 @@ const FIVE_PROBLEMS = [
   },
 ];
 
+const MALFORMED_BODIES: [string, unknown][] = [
+  ["a body that is not JSON", "{"],
+  ["a body missing a field", { ...BACK_SQUAT, cues: undefined }],
+  ["a field of the wrong shape", { ...BACK_SQUAT, perSide: "no" }],
+];
+
 describe.sequential("exercise library integration", () => {
   beforeAll(async () => {
     process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID = COACH_SESSION.subjectId;
@@ -282,11 +288,7 @@ describe.sequential("exercise library integration", () => {
       });
     });
 
-    it.each([
-      ["a body that is not JSON", "{"],
-      ["a body missing a field", { ...BACK_SQUAT, cues: undefined }],
-      ["a field of the wrong shape", { ...BACK_SQUAT, perSide: "no" }],
-    ])("answers 400 to %s", async (_case, body) => {
+    it.each(MALFORMED_BODIES)("answers 400 to %s", async (_case, body) => {
       // arrange
       const malformed = body;
 
@@ -404,6 +406,21 @@ describe.sequential("exercise library integration", () => {
         expect(response.status).toBe(422);
         expect(await response.json()).toEqual({ problems });
         expect((await library.exerciseRows())[0]).toEqual(squat);
+      },
+    );
+
+    it.each(MALFORMED_BODIES)(
+      "answers 400 to %s, leaving the exercise as it was",
+      async (_case, body) => {
+        // arrange
+        const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+
+        // act
+        const response = await library.edit(COACH_SESSION, squat.id, body);
+
+        // assert
+        expect(response.status).toBe(400);
+        expect(await library.exerciseRows()).toEqual([squat]);
       },
     );
 

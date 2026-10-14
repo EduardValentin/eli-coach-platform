@@ -31,6 +31,14 @@ function outcomeOf(answer: unknown): ExerciseSaveOutcome {
   return { status: "failed" };
 }
 
+type ExerciseSaveTarget = { action: string; method: "post" | "put" };
+
+function saveTargetOf(exerciseId: string | null): ExerciseSaveTarget {
+  return exerciseId === null
+    ? { action: EXERCISE_LIBRARY_API_PATHS.exercises, method: "post" }
+    : { action: exercisePath(exerciseId), method: "put" };
+}
+
 export function useExerciseSave(
   exerciseId: string | null,
   onSettled: (outcome: ExerciseSaveOutcome) => void,
@@ -47,15 +55,13 @@ export function useExerciseSave(
     }
   }, [data]);
 
+  const target = saveTargetOf(exerciseId);
+
   const save = (request: ExerciseRequest) => {
     void submit(request, {
-      action:
-        exerciseId === null
-          ? EXERCISE_LIBRARY_API_PATHS.exercises
-          : exercisePath(exerciseId),
+      ...target,
       defaultShouldRevalidate: false,
       encType: "application/json",
-      method: exerciseId === null ? "post" : "put",
     });
   };
 

@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { cva } from "class-variance-authority";
 
@@ -9,7 +8,11 @@ import type { FieldControlAttributes } from "./field-layout";
 import type { FieldSize } from "./field-size";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { SearchField } from "./search-field";
-import { FIELD_TAB_INDEX, selectTriggerClasses } from "./select";
+import {
+  FIELD_TAB_INDEX,
+  SelectTriggerChevron,
+  selectTriggerClasses,
+} from "./select";
 
 type MultiSelectSummary = "count" | "names";
 
@@ -24,13 +27,13 @@ const growingTriggerHeight = cva("h-auto", {
   },
 });
 
-type ChoiceLists<Value extends string> = {
+type MultiSelectSelection<Value extends string> = {
   label: string;
   selected: readonly Value[];
   labels: Readonly<Record<Value, string>>;
 };
 
-type TriggerSummaryProps<Value extends string> = ChoiceLists<Value> & {
+type TriggerSummaryProps<Value extends string> = MultiSelectSelection<Value> & {
   summary: MultiSelectSummary;
   placeholder?: string;
 };
@@ -60,14 +63,12 @@ function TriggerSummary<Value extends string>({
   );
 }
 
-type OptionListProps<Value extends string> = ChoiceLists<Value> & {
+type OptionListProps<Value extends string> = MultiSelectSelection<Value> & {
   options: readonly Value[];
   onToggle: (value: Value) => void;
-  counts?: Readonly<Record<Value, number>>;
 };
 
 function OptionList<Value extends string>({
-  counts,
   label,
   labels,
   onToggle,
@@ -108,7 +109,6 @@ function OptionList<Value extends string>({
                   onCheckedChange={() => onToggle(option)}
                 />
                 {labels[option]}
-                {counts && <Badge tone="count">{counts[option]}</Badge>}
               </label>
             </li>
           ))}
@@ -125,12 +125,11 @@ type MultiSelectProps<Value extends string> = OptionListProps<Value> &
     placeholder?: string;
   };
 
-function accessibleTriggerName(label: string, chosen: number): string {
-  return chosen === 0 ? label : `${label}, ${chosen} selected`;
+function accessibleTriggerName(label: string, chosenCount: number): string {
+  return chosenCount === 0 ? label : `${label}, ${chosenCount} selected`;
 }
 
 export function MultiSelect<Value extends string>({
-  counts,
   label,
   labels,
   onToggle,
@@ -170,15 +169,11 @@ export function MultiSelect<Value extends string>({
               summary={summary}
             />
           </span>
-          <ChevronDown
-            aria-hidden="true"
-            className="size-4 shrink-0 text-text-muted opacity-50"
-          />
+          <SelectTriggerChevron />
         </button>
       </PopoverTrigger>
       <PopoverContent className="flex w-(--radix-popover-trigger-width) max-w-md min-w-56 flex-col gap-1 p-1">
         <OptionList
-          counts={counts}
           label={label}
           labels={labels}
           onToggle={onToggle}

@@ -13,13 +13,13 @@ type ChoiceOptionProps = React.ComponentPropsWithoutRef<
   typeof RadixRadioGroup.Item
 >;
 
-const ChoiceGroupSize = React.createContext<FieldSize>("sm");
+const ChoiceGroupSizeContext = React.createContext<FieldSize>("sm");
 
 export const ChoiceGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroup>,
   ChoiceGroupProps
 >(({ className, size = "sm", ...props }, ref) => (
-  <ChoiceGroupSize.Provider value={size}>
+  <ChoiceGroupSizeContext.Provider value={size}>
     <RadioGroup
       className={cn(
         "inline-flex w-full max-w-full flex-wrap gap-1 rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px]",
@@ -30,7 +30,7 @@ export const ChoiceGroup = React.forwardRef<
       ref={ref}
       {...props}
     />
-  </ChoiceGroupSize.Provider>
+  </ChoiceGroupSizeContext.Provider>
 ));
 
 ChoiceGroup.displayName = "ChoiceGroup";
@@ -39,7 +39,7 @@ export const ChoiceOption = React.forwardRef<
   React.ElementRef<typeof RadixRadioGroup.Item>,
   ChoiceOptionProps
 >(({ className, ...props }, ref) => {
-  const size = React.useContext(ChoiceGroupSize);
+  const size = React.useContext(ChoiceGroupSizeContext);
 
   return (
     <RadixRadioGroup.Item

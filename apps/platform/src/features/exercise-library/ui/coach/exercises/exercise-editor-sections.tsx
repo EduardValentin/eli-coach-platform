@@ -64,7 +64,10 @@ function changeValues(
   }
 }
 
-function describedBy(problemId: string, problem: string | undefined) {
+function fieldProblemAttributes(
+  problemId: string,
+  problem: string | undefined,
+) {
   return {
     "aria-describedby": problem ? problemId : undefined,
     "aria-invalid": problem ? true : undefined,
@@ -105,7 +108,7 @@ export function ExerciseAboutSection({
             defaultValue={form.formState.defaultValues?.name}
             id={nameId}
             placeholder="e.g. Barbell back squat"
-            {...describedBy(nameProblemId, problems.name)}
+            {...fieldProblemAttributes(nameProblemId, problems.name)}
             {...form.register("name")}
           />
         </SettingsRow>
@@ -214,7 +217,10 @@ export function ExerciseWorkSection({
             selected={values.primaryMuscles}
             size="md"
             summary="names"
-            {...describedBy(primaryProblemId, problems.primaryMuscles)}
+            {...fieldProblemAttributes(
+              primaryProblemId,
+              problems.primaryMuscles,
+            )}
           />
         </SettingsRow>
         <SettingsRow
@@ -250,8 +256,10 @@ export function ExerciseWorkSection({
             id={equipmentId}
             label="Equipment"
             labels={EQUIPMENT_LABELS}
-            onToggle={(item) =>
-              changeValues(form, { equipment: toggled(values.equipment, item) })
+            onToggle={(equipment) =>
+              changeValues(form, {
+                equipment: toggled(values.equipment, equipment),
+              })
             }
             options={EQUIPMENT}
             placeholder="Pick equipment"
@@ -335,7 +343,7 @@ export function ExerciseCoachingSection({
             id={cuesId}
             placeholder="Keep the chest up, drive through the heels…"
             rows={3}
-            {...describedBy(cuesProblemId, problems.cues)}
+            {...fieldProblemAttributes(cuesProblemId, problems.cues)}
             {...form.register("cues")}
           />
         </SettingsRow>

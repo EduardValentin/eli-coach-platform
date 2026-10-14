@@ -529,10 +529,10 @@ describe("editing an exercise", () => {
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // assert
-    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 1, name: "Exercises" }),
+      await screen.findByRole("heading", { level: 1, name: "Exercises" }),
     ).toBeInTheDocument();
+    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
     expect(sentBodies).toEqual([
       {
         method: "PUT",

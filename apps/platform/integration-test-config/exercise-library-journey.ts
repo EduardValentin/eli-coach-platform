@@ -37,11 +37,7 @@ export class ExerciseLibraryJourney {
   constructor(private readonly rig: PlatformRig) {}
 
   create(requester: Requester, fields: unknown): Promise<Response> {
-    return this.send(requester, EXERCISES_API, {
-      body: typeof fields === "string" ? fields : JSON.stringify(fields),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
+    return this.send(requester, EXERCISES_API, this.writeOf("POST", fields));
   }
 
   async createAccepted(
@@ -70,11 +66,11 @@ export class ExerciseLibraryJourney {
     exerciseId: string,
     fields: unknown,
   ): Promise<Response> {
-    return this.send(requester, `${EXERCISES_API}/${exerciseId}`, {
-      body: JSON.stringify(fields),
-      headers: { "Content-Type": "application/json" },
-      method: "PUT",
-    });
+    return this.send(
+      requester,
+      `${EXERCISES_API}/${exerciseId}`,
+      this.writeOf("PUT", fields),
+    );
   }
 
   openLibrary(requester: Requester): Promise<Response> {
@@ -101,6 +97,14 @@ export class ExerciseLibraryJourney {
       sql: `${EXERCISE_ROW_SELECTION} where name = $1`,
       values: [name],
     });
+  }
+
+  private writeOf(method: "POST" | "PUT", fields: unknown): RequestInit {
+    return {
+      body: typeof fields === "string" ? fields : JSON.stringify(fields),
+      headers: { "Content-Type": "application/json" },
+      method,
+    };
   }
 
   private send(

@@ -108,25 +108,25 @@ const PROBLEM_COPY = {
   },
 } as const;
 
-export function exerciseFormValuesOf(
-  exercise: ExerciseView | null,
-): ExerciseFormValues {
-  if (exercise === null) {
-    return {
-      name: "",
-      type: "resistance",
-      unit: defaultUnitFor("resistance"),
-      unitPicked: false,
-      perSide: false,
-      primaryMuscles: [],
-      secondaryMuscles: [],
-      equipment: [],
-      difficulty: "Beginner",
-      tags: [],
-      cues: "",
-    };
-  }
+export function newExerciseFormValues(): ExerciseFormValues {
+  return {
+    name: "",
+    type: "resistance",
+    unit: defaultUnitFor("resistance"),
+    unitPicked: false,
+    perSide: false,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    difficulty: "Beginner",
+    tags: [],
+    cues: "",
+  };
+}
 
+export function exerciseFormValuesOf(
+  exercise: ExerciseView,
+): ExerciseFormValues {
   return {
     name: exercise.name,
     type: exercise.type,

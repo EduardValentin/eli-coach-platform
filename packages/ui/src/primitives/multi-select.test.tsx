@@ -23,7 +23,6 @@ function renderTagFilter(selected: Tag[]) {
   const onToggle = vi.fn();
   render(
     <MultiSelect<Tag>
-      counts={{ strength: 7, recovery: 2 }}
       label="Tags"
       labels={TAG_LABELS}
       onToggle={onToggle}
@@ -97,7 +96,7 @@ describe("MultiSelect", () => {
     ).toHaveTextContent(/^Tags2$/);
   });
 
-  it("lists every option with its count and its chosen state", async () => {
+  it("lists every option with its chosen state", async () => {
     // arrange
     const { user } = renderTagFilter(["recovery"]);
 
@@ -112,8 +111,6 @@ describe("MultiSelect", () => {
     expect(
       within(list).getByRole("checkbox", { name: /Recovery/ }),
     ).toBeChecked();
-    expect(within(list).getByText("7")).toBeInTheDocument();
-    expect(within(list).getByText("2")).toBeInTheDocument();
   });
 
   it("hands back the option that was toggled and stays open for the next one", async () => {
@@ -127,27 +124,6 @@ describe("MultiSelect", () => {
     // assert
     expect(onToggle).toHaveBeenCalledWith("strength");
     expect(screen.getByRole("list", { name: "Tags" })).toBeInTheDocument();
-  });
-
-  it("renders no count badge for an option when no counts are given", async () => {
-    // arrange
-    const user = userEvent.setup();
-    render(
-      <MultiSelect
-        label="Equipment"
-        labels={{ Mat: "Mat" }}
-        onToggle={vi.fn()}
-        options={["Mat"]}
-        selected={[]}
-      />,
-    );
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Equipment" }));
-
-    // assert
-    expect(screen.getByRole("checkbox", { name: "Mat" })).toBeInTheDocument();
-    expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
   });
 });
 
