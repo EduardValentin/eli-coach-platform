@@ -333,6 +333,7 @@ export function ExerciseCoachingSection({
     >
       <SettingsRows>
         <SettingsRow
+          data-parity="exercise-cues-row"
           htmlFor={cuesId}
           layout="stacked"
           problem={shownProblem(cuesProblemId, problems.cues)}

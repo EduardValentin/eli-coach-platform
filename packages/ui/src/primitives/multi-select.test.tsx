@@ -113,6 +113,17 @@ describe("MultiSelect", () => {
     ).toBeChecked();
   });
 
+  it("names its open list after the field", async () => {
+    // arrange
+    const { user } = renderTagFilter([]);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+
+    // assert
+    expect(screen.getByRole("dialog", { name: "Tags" })).toBeInTheDocument();
+  });
+
   it("hands back the option that was toggled and stays open for the next one", async () => {
     // arrange
     const { user, onToggle } = renderTagFilter([]);

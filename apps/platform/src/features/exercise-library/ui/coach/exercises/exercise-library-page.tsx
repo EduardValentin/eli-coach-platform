@@ -59,7 +59,7 @@ export default function ExerciseLibraryRoute() {
       <Card data-parity="exercise-table" variant="table-panel">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow data-parity="exercise-header-row">
               <TableHead>Exercise</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Target muscles</TableHead>
@@ -144,7 +144,7 @@ function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
           {exercise.difficulty}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell data-parity="exercise-actions-cell">
         <div
           className="flex items-center justify-end"
           data-parity="library-item-actions"

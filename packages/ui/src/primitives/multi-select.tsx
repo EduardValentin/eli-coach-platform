@@ -103,7 +103,10 @@ function OptionList<Value extends string>({
         >
           {shown.map((option) => (
             <li key={option}>
-              <label className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary">
+              <label
+                className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-primary-soft hover:text-primary"
+                data-parity="multi-select-option"
+              >
                 <Checkbox
                   checked={selected.includes(option)}
                   onCheckedChange={() => onToggle(option)}
@@ -172,7 +175,10 @@ export function MultiSelect<Value extends string>({
           <SelectTriggerChevron />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="flex w-(--radix-popover-trigger-width) max-w-md min-w-56 flex-col gap-1 p-1">
+      <PopoverContent
+        aria-label={label}
+        className="flex w-(--radix-popover-trigger-width) max-w-md min-w-56 flex-col gap-1 p-1"
+      >
         <OptionList
           label={label}
           labels={labels}

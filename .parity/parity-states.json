@@ -1813,6 +1813,9 @@
     },
     {
       "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"OnboardingWizard\"] >> text=Food and daily life"
     }
   ],
   "onboarding-form5-default": [
@@ -3696,6 +3699,9 @@
   "coach-training-active": [
     {
       "click": "[data-parity=\"link-training\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"link-training\"][aria-current=\"page\"]"
     }
   ],
   "open-new-exercise": [
@@ -3759,6 +3765,9 @@
     },
     {
       "click": "role=menuitem[name=\"Edit\" s]"
+    },
+    {
+      "waitFor": "h1:has-text(\"Edit exercise\")"
     }
   ],
   "open-primary-muscles": [
@@ -3890,5 +3899,13 @@
         "click": "role=button[name=\"Create exercise\" s]"
       }
     ]
-  }
+  },
+  "open-measured-in": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
+    }
+  ]
 }
