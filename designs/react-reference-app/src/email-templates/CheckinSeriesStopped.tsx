@@ -17,7 +17,7 @@ const DEFAULT_WEEK_STARTS_AT = new Date('2026-10-14T15:00:00.000Z');
 const EYEBROW = 'Check-in — weekly';
 const HEADING = 'Your weekly check-in has stopped.';
 const BUTTON_LABEL = 'See your check-ins';
-const CLOSING_LINE = 'The hours are free again.';
+const CLOSING_LINE = 'Your coach will arrange any next check-in with you.';
 const FOOTER_LINE =
   'You received this email because your coach stopped your weekly check-in on the Evoa site.';
 

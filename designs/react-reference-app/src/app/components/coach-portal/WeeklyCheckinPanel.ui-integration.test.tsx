@@ -163,15 +163,40 @@ describe('the weekly check-in panel on a client record', () => {
     expect(screen.queryByRole('dialog', { name: SET_UP_DIALOG })).not.toBeInTheDocument();
   });
 
-  it('offers nothing once her coaching has ended', () => {
+  it.each([
+    { subscription: 'cancelled', line: 'Her coaching is ending, so no weekly check-in can be set up.' },
+    { subscription: 'ended', line: 'Her coaching has ended, so no weekly check-in can be set up.' },
+  ])('offers nothing once her coaching is $subscription and says why', ({ subscription, line }) => {
     // arrange
-    const urlQuery = 'jstage=submitted&jsub=ended';
+    const urlQuery = `jstage=submitted&jsub=${subscription}`;
 
     // act
     renderPanel(urlQuery);
 
     // assert
-    expect(within(panel()).getByText('No weekly check-in yet.')).toBeInTheDocument();
+    expect(within(panel()).getByText(line)).toBeInTheDocument();
+    expect(within(panel()).queryByText('No weekly check-in yet.')).not.toBeInTheDocument();
+    expect(within(panel()).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('hides her weekly check-in and its actions once her coaching is cancelled', async () => {
+    // arrange
+    const user = renderPanel('jstage=submitted');
+    await chooseWeeklySeries(user, 'Active');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+    await user.click(screen.getByRole('combobox', { name: 'Subscription state' }));
+    await user.click(await screen.findByRole('option', { name: 'Cancelled' }));
+    await user.click(screen.getByRole('button', { name: 'Close Dev Settings' }));
+
+    // assert
+    expect(
+      within(panel()).getByText('Her coaching is ending, so no weekly check-in can be set up.'),
+    ).toBeInTheDocument();
+    expect(within(panel()).queryByText('Every Wednesday at 6:00 PM')).not.toBeInTheDocument();
+    expect(within(panel()).queryByRole('list', { name: 'Weeks to come' })).not.toBeInTheDocument();
     expect(within(panel()).queryByRole('button')).not.toBeInTheDocument();
   });
 
@@ -183,7 +208,7 @@ describe('the weekly check-in panel on a client record', () => {
     await chooseWeeklySeries(user, 'Active');
 
     // assert
-    expect(within(panel()).getByText('Every Wednesday at 18:00')).toBeInTheDocument();
+    expect(within(panel()).getByText('Every Wednesday at 6:00 PM')).toBeInTheDocument();
     expect(within(panel()).getByRole('button', { name: 'Change' })).toBeInTheDocument();
     expect(within(panel()).getByRole('button', { name: 'Stop' })).toBeInTheDocument();
     const weeks = within(within(panel()).getByRole('list', { name: 'Weeks to come' })).getAllByRole(
@@ -243,7 +268,7 @@ describe('setting up a weekly check-in', () => {
       within(within(dialog).getByRole('list', { name: 'Hour' }))
         .getAllByRole('button')
         .map((hour) => hour.textContent),
-    ).toEqual(['17:00', '18:00', '19:00']);
+    ).toEqual(['5:00 PM', '6:00 PM', '7:00 PM']);
     expect(within(dialog).getByRole('button', { name: 'Set up' })).toBeDisabled();
   });
 
@@ -257,8 +282,8 @@ describe('setting up a weekly check-in', () => {
 
     // assert
     const dialog = await openedDialog(SET_UP_DIALOG);
-    expect(hourButton(dialog, '18:00')).toHaveTextContent(/^18:00 1 clash$/);
-    expect(hourButton(dialog, '17:00')).toHaveTextContent(/^17:00$/);
+    expect(hourButton(dialog, '6:00 PM')).toHaveTextContent(/^6:00 PM 1 clash$/);
+    expect(hourButton(dialog, '5:00 PM')).toHaveTextContent(/^5:00 PM$/);
   });
 
   it('reloads the hours for another weekday', async () => {
@@ -274,7 +299,7 @@ describe('setting up a weekly check-in', () => {
     // assert
     expect(within(dialog).getByRole('radio', { name: 'Wednesday' })).toBeChecked();
     await waitFor(
-      () => expect(hourButton(dialog, '18:00')).toHaveTextContent(/^18:00$/),
+      () => expect(hourButton(dialog, '6:00 PM')).toHaveTextContent(/^6:00 PM$/),
       SERVICE_TIMEOUT,
     );
   });
@@ -284,7 +309,7 @@ describe('setting up a weekly check-in', () => {
     const user = renderPanel('jstage=submitted');
     await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
     const dialog = await openedDialog(SET_UP_DIALOG);
-    await user.click(hourButton(dialog, '18:00'));
+    await user.click(hourButton(dialog, '6:00 PM'));
 
     // act
     await user.click(within(dialog).getByRole('button', { name: 'Set up' }));
@@ -293,7 +318,7 @@ describe('setting up a weekly check-in', () => {
     expect(within(dialog).getByRole('button', { name: 'Setting up…' })).toBeDisabled();
     expect(await screen.findByText('Weekly check-in set up', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: SET_UP_DIALOG })).not.toBeInTheDocument();
-    expect(within(panel()).getByText('Every Monday at 18:00')).toBeInTheDocument();
+    expect(within(panel()).getByText('Every Monday at 6:00 PM')).toBeInTheDocument();
     expect(within(panel()).getByRole('list', { name: 'Weeks to come' })).toBeInTheDocument();
   });
 
@@ -302,7 +327,7 @@ describe('setting up a weekly check-in', () => {
     const user = renderPanel('jstage=submitted&ckservice=cannot-answer');
     await user.click(within(panel()).getByRole('button', { name: 'Set up' }));
     const dialog = await openedDialog(SET_UP_DIALOG);
-    await user.click(hourButton(dialog, '17:00'));
+    await user.click(hourButton(dialog, '5:00 PM'));
 
     // act
     await user.click(within(dialog).getByRole('button', { name: 'Set up' }));
@@ -331,13 +356,31 @@ describe('setting up a weekly check-in', () => {
 });
 
 describe('changing and stopping a weekly check-in', () => {
+  it('opens on her current day and hour rather than her onboarding day', async () => {
+    // arrange
+    const user = renderPanel('jstage=submitted');
+    await chooseWeeklySeries(user, 'Active');
+
+    // act
+    await user.click(within(panel()).getByRole('button', { name: 'Change' }));
+
+    // assert
+    const dialog = await openedDialog(CHANGE_DIALOG);
+    expect(within(dialog).getByRole('radio', { name: 'Wednesday' })).toBeChecked();
+    expect(hourButton(dialog, '6:00 PM')).toHaveAttribute('aria-pressed', 'true');
+    expect(dialog).toHaveAccessibleDescription('Every week from the next Wednesday is moved.');
+    expect(within(dialog).getByRole('button', { name: 'Change' })).toBeEnabled();
+  });
+
   it('moves every week to come to the new day and hour', async () => {
     // arrange
     const user = renderPanel('jstage=submitted');
     await chooseWeeklySeries(user, 'Active');
     await user.click(within(panel()).getByRole('button', { name: 'Change' }));
     const dialog = await openedDialog(CHANGE_DIALOG);
-    await user.click(hourButton(dialog, '17:00'));
+    await user.click(within(dialog).getByRole('radio', { name: 'Monday' }));
+    await waitFor(() => expect(hourButton(dialog, '5:00 PM')).toBeInTheDocument(), SERVICE_TIMEOUT);
+    await user.click(hourButton(dialog, '5:00 PM'));
 
     // act
     await user.click(within(dialog).getByRole('button', { name: 'Change' }));
@@ -345,7 +388,7 @@ describe('changing and stopping a weekly check-in', () => {
     // assert
     expect(dialog).toHaveAccessibleDescription('Every week from the next Monday is moved.');
     expect(await screen.findByText('Weekly check-in changed', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
-    expect(within(panel()).getByText('Every Monday at 17:00')).toBeInTheDocument();
+    expect(within(panel()).getByText('Every Monday at 5:00 PM')).toBeInTheDocument();
   });
 
   it('asks before stopping, then cancels every week to come', async () => {
@@ -378,6 +421,6 @@ describe('changing and stopping a weekly check-in', () => {
 
     // assert
     expect(screen.queryByRole('dialog', { name: 'Stop the weekly check-in?' })).not.toBeInTheDocument();
-    expect(within(panel()).getByText('Every Wednesday at 18:00')).toBeInTheDocument();
+    expect(within(panel()).getByText('Every Wednesday at 6:00 PM')).toBeInTheDocument();
   });
 });

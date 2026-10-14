@@ -6,9 +6,10 @@ import {
   type SeriesChangeResult,
   type SeriesSetUpResult,
 } from '../../context/CheckinContext';
-import { hourLabel, WEEKDAY_NAMES } from '../../domain/checkinSeries';
+import { WEEKDAY_NAMES } from '../../domain/checkinSeries';
 import type { JourneyGender } from '../../domain/journey';
 import type { SeriesHourPreview } from '../../services/checkinService';
+import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
 import { StepButton } from '../CheckinSchedulerSheet';
 import { ChoiceGroup, ChoiceOption } from '../ChoiceGroup';
@@ -84,6 +85,17 @@ function descriptionOf(
   return `Every week from the next ${WEEKDAY_NAMES[weekday ?? 0]} is moved.`;
 }
 
+type SeriesChoiceDraft = { weekday: number | null; hour: number | null };
+
+function initialChoice(
+  mode: WeeklyCheckinMode,
+  { series, suggestedWeekday }: { series: CheckinSeries | null; suggestedWeekday: number | null },
+): SeriesChoiceDraft {
+  if (mode === 'change' && series) return { weekday: series.weekday, hour: series.hour };
+
+  return { weekday: suggestedWeekday, hour: null };
+}
+
 function fallbackWeekday(offered: number[], series: CheckinSeries | null): number | undefined {
   if (series && offered.includes(series.weekday)) return series.weekday;
 
@@ -110,12 +122,11 @@ export function WeeklyCheckinDialog({
   const latestLoad = useRef(0);
   const dayLabelId = useId();
   const hourLabelId = useId();
-  const [weekday, setWeekday] = useState<number | null>(
-    suggestedWeekday ?? series?.weekday ?? null,
-  );
+  const initial = initialChoice(mode, { series, suggestedWeekday });
+  const [weekday, setWeekday] = useState(initial.weekday);
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [listing, setListing] = useState<HoursListing>({ status: 'loading' });
-  const [hour, setHour] = useState<number | null>(null);
+  const [hour, setHour] = useState(initial.hour);
   const [problem, setProblem] = useState<SaveRefusal | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const wording = MODE_WORDING[mode];
@@ -284,7 +295,7 @@ function HourChoice({
         return (
           <li key={offered.hour}>
             <TimeSlotButton
-              label={hourLabel(offered.hour)}
+              label={formatClockHour(offered.hour)}
               isSelected={hour === offered.hour}
               detail={clashes ? { text: clashes, parity: 'hour-clashes' } : undefined}
               onSelect={() => onChooseHour(offered.hour)}

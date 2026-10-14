@@ -29,7 +29,7 @@ describe('CheckinSeriesStopped', () => {
     expect(parsed.title).toBe('Eli stopped your weekly check-in');
   });
 
-  it('says which weekly check-in stopped and that its hours are free', async () => {
+  it('says which weekly check-in stopped and that her coach arranges any next one', async () => {
     // arrange
     const props: CheckinSeriesStoppedProps = { coachName: 'Eli' };
 
@@ -44,7 +44,7 @@ describe('CheckinSeriesStopped', () => {
     expect(
       screen.getByText(/^Every Wednesday at 4:00\s?PM — Europe\/London \(GMT\+1\)$/),
     ).toBeInTheDocument();
-    expect(screen.getByText('The hours are free again.')).toBeInTheDocument();
+    expect(screen.getByText('Your coach will arrange any next check-in with you.')).toBeInTheDocument();
   });
 
   it('links to her check-ins', async () => {

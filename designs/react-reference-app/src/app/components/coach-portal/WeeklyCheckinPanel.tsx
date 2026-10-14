@@ -2,11 +2,18 @@ import { useState } from 'react';
 import { CalendarRange } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckins, type CheckinSeries } from '../../context/CheckinContext';
-import { checkinSchedulingFor, type CheckIn } from '../../domain/checkins';
-import { hourLabel, WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
-import type { ClientJourney } from '../../domain/journey';
+import {
+  checkinSchedulingFor,
+  coachingEndsAt,
+  type CheckIn,
+  type CheckinScheduling,
+} from '../../domain/checkins';
+import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
+import type { ClientJourney, JourneyGender } from '../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../domain/onboardingAnswers';
 import { useCoachCheckinMenu } from '../../hooks/useCoachCheckinMenu';
+import { formatClockHour } from '../../utils/dateFormatters';
+import { clientPronouns } from '../../utils/journeyLabels';
 import { CheckinCard } from '../CheckinCard';
 import { DisabledActionHint } from '../DisabledActionHint';
 import { PortalWidget } from '../PortalWidget';
@@ -24,7 +31,14 @@ type DialogState = { mode: WeeklyCheckinMode; open: boolean; openings: number };
 type StopState = 'closed' | 'confirming' | 'stopping';
 
 function ruleLine({ weekday, hour }: CheckinSeries): string {
-  return `Every ${WEEKDAY_NAMES[weekday]} at ${hourLabel(hour)}`;
+  return `Every ${WEEKDAY_NAMES[weekday]} at ${formatClockHour(hour)}`;
+}
+
+function coachingEndsLine(gender: JourneyGender, scheduling: CheckinScheduling): string {
+  const { possessive } = clientPronouns(gender);
+  const coaching = scheduling === 'ended' ? 'has ended' : 'is ending';
+
+  return `${possessive.capitalised} coaching ${coaching}, so no weekly check-in can be set up.`;
 }
 
 function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {
@@ -39,7 +53,8 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
 
   const client = weeklyClientOf(journey);
   const scheduling = checkinSchedulingFor(journey, new Date());
-  const series = scheduling === 'ended' ? null : seriesFor(client.id);
+  const coachingEnds = coachingEndsAt(journey.subscription) !== undefined;
+  const series = coachingEnds ? null : seriesFor(client.id);
   const weeks = series ? seriesWeeks(client.id) : [];
   const suggestedWeekday = weekdayNamed(
     collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY),
@@ -98,7 +113,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
         </>
       );
     }
-    if (scheduling === 'ended') return null;
+    if (coachingEnds) return null;
     if (scheduling === 'awaiting_onboarding') {
       return (
         <DisabledActionHint reason={awaitingOnboardingReason(journey.identity.gender)}>
@@ -111,6 +126,29 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   };
 
   const shownActions = actions();
+
+  const summary = () => {
+    if (coachingEnds) {
+      return (
+        <p className="text-sm text-text-secondary" data-parity="series-coaching-ends">
+          {coachingEndsLine(journey.identity.gender, scheduling)}
+        </p>
+      );
+    }
+    if (series) {
+      return (
+        <p className="text-sm font-semibold text-text-primary" data-parity="series-rule">
+          {ruleLine(series)}
+        </p>
+      );
+    }
+
+    return (
+      <p className="text-sm text-text-secondary" data-parity="series-empty">
+        No weekly check-in yet.
+      </p>
+    );
+  };
 
   const weekCard = (week: CheckIn) => (
     <CheckinCard
@@ -133,15 +171,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
       className="mb-8"
     >
       <div className="flex flex-wrap items-center justify-between gap-3" data-parity="series-summary">
-        {series ? (
-          <p className="text-sm font-semibold text-text-primary" data-parity="series-rule">
-            {ruleLine(series)}
-          </p>
-        ) : (
-          <p className="text-sm text-text-secondary" data-parity="series-empty">
-            No weekly check-in yet.
-          </p>
-        )}
+        {summary()}
         {shownActions && (
           <div className="flex flex-wrap gap-2" data-parity="series-actions">
             {shownActions}

@@ -1007,6 +1007,8 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
   const setUpSeries = useCallback(
     async (client: CheckinClient, choice: SeriesChoice): Promise<SeriesSetUpResult> => {
+      if (coachingEndFor(client.id)) return { status: 'client_cannot_answer' };
+
       const now = new Date();
       const rule = ruleOf(choice);
       const bounds = setUpBoundsFor(client.id, now);
@@ -1031,7 +1033,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       ]);
       return { status: 'set_up', series };
     },
-    [ruleOf, setUpBoundsFor, scheduleBeside, seriesFor, serviceOutcome],
+    [coachingEndFor, ruleOf, setUpBoundsFor, scheduleBeside, seriesFor, serviceOutcome],
   );
 
   const cancelWeeksOf = useCallback(
@@ -1045,6 +1047,8 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
   const changeSeries = useCallback(
     async (client: CheckinClient, choice: SeriesChoice): Promise<SeriesChangeResult> => {
+      if (coachingEndFor(client.id)) return { status: 'client_cannot_answer' };
+
       const current = seriesFor(client.id);
       if (!current) return { status: 'changed_meanwhile' };
 
@@ -1068,7 +1072,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       ]);
       return { status: 'changed', series };
     },
-    [seriesFor, ruleOf, scheduleBeside, serviceOutcome, cancelWeeksOf],
+    [coachingEndFor, seriesFor, ruleOf, scheduleBeside, serviceOutcome, cancelWeeksOf],
   );
 
   const stopSeries = useCallback(
