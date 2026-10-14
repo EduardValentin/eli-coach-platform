@@ -101,12 +101,16 @@ export function withPrimaryMuscleToggled(draft: ExerciseDraft, muscle: Muscle): 
   };
 }
 
-export type ExerciseDraftProblems ={ name?: string; primaryMuscles?: string };
+export const MAX_EXERCISE_NAME_LENGTH = 80;
+export const MAX_FORM_CUES_LENGTH = 1000;
+
+export type ExerciseDraftProblems = { name?: string; primaryMuscles?: string; cues?: string };
 
 const normalisedName = (name: string) => name.trim().toLowerCase();
 
 function nameProblem(name: string, others: readonly { name: string }[]): string | undefined {
   if (name.trim() === '') return 'Give the exercise a name';
+  if (name.trim().length > MAX_EXERCISE_NAME_LENGTH) return `Keep the name to ${MAX_EXERCISE_NAME_LENGTH} characters`;
   const taken = others.some((other) => normalisedName(other.name) === normalisedName(name));
   return taken ? 'An exercise with this name already exists' : undefined;
 }
@@ -114,6 +118,10 @@ function nameProblem(name: string, others: readonly { name: string }[]): string 
 function primaryMusclesProblem(draft: ExerciseDraft): string | undefined {
   if (draft.type === 'cardio' || draft.primaryMuscles.length > 0) return undefined;
   return 'Pick at least one primary muscle';
+}
+
+function cuesProblem(cues: string): string | undefined {
+  return cues.length > MAX_FORM_CUES_LENGTH ? 'Keep the form cues to 1,000 characters' : undefined;
 }
 
 export function draftProblems(
@@ -125,6 +133,8 @@ export function draftProblems(
   if (name) problems.name = name;
   const primaryMuscles = primaryMusclesProblem(draft);
   if (primaryMuscles) problems.primaryMuscles = primaryMuscles;
+  const cues = cuesProblem(draft.cues);
+  if (cues) problems.cues = cues;
   return problems;
 }
 

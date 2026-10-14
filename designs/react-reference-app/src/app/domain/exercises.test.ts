@@ -9,6 +9,8 @@ import {
   defaultMeasureFor,
   draftProblems,
   isValidDraft,
+  MAX_EXERCISE_NAME_LENGTH,
+  MAX_FORM_CUES_LENGTH,
   measureAllowedFor,
   measuresFor,
   needsEquipment,
@@ -147,6 +149,69 @@ describe('draftProblems', () => {
 
     // assert
     expect(problems.name).toBe('An exercise with this name already exists');
+  });
+
+  it('accepts a name of 80 characters and refuses one of 81', () => {
+    // arrange
+    const atLimit = { ...squat, name: 'a'.repeat(MAX_EXERCISE_NAME_LENGTH) };
+    const overLimit = { ...squat, name: 'a'.repeat(MAX_EXERCISE_NAME_LENGTH + 1) };
+
+    // act
+    const accepted = draftProblems(atLimit, []);
+    const refused = draftProblems(overLimit, []);
+
+    // assert
+    expect(accepted.name).toBeUndefined();
+    expect(refused.name).toBe('Keep the name to 80 characters');
+    expect(isValidDraft(refused)).toBe(false);
+  });
+
+  it('counts the name without its surrounding spaces', () => {
+    // arrange
+    const draft = { ...squat, name: `  ${'a'.repeat(MAX_EXERCISE_NAME_LENGTH)}  ` };
+
+    // act
+    const problems = draftProblems(draft, []);
+
+    // assert
+    expect(problems.name).toBeUndefined();
+  });
+
+  it('accepts form cues of 1,000 characters and refuses 1,001', () => {
+    // arrange
+    const atLimit = { ...squat, cues: 'a'.repeat(MAX_FORM_CUES_LENGTH) };
+    const overLimit = { ...squat, cues: 'a'.repeat(MAX_FORM_CUES_LENGTH + 1) };
+
+    // act
+    const accepted = draftProblems(atLimit, []);
+    const refused = draftProblems(overLimit, []);
+
+    // assert
+    expect(accepted.cues).toBeUndefined();
+    expect(refused.cues).toBe('Keep the form cues to 1,000 characters');
+    expect(isValidDraft(refused)).toBe(false);
+  });
+
+  it('counts the form cues as entered, spaces included', () => {
+    // arrange
+    const draft = { ...squat, cues: `${'a'.repeat(MAX_FORM_CUES_LENGTH)} ` };
+
+    // act
+    const problems = draftProblems(draft, []);
+
+    // assert
+    expect(problems.cues).toBe('Keep the form cues to 1,000 characters');
+  });
+
+  it('still asks for a name before it checks the length', () => {
+    // arrange
+    const draft = { ...squat, name: ' '.repeat(MAX_EXERCISE_NAME_LENGTH + 1) };
+
+    // act
+    const problems = draftProblems(draft, []);
+
+    // assert
+    expect(problems.name).toBe('Give the exercise a name');
   });
 
   it('requires a primary muscle for resistance and mobility but not for cardio', () => {

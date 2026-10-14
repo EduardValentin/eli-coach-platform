@@ -289,6 +289,65 @@ describe('a new exercise', () => {
     expect(primary()).toBeDisabled();
   });
 
+  it('says why Create is disabled when the name is longer than 80 characters', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await tick(user, multi('Primary muscles'), 'Glutes');
+
+    // act
+    await user.click(screen.getByLabelText('Name'));
+    await user.paste('a'.repeat(81));
+
+    // assert
+    const problem = screen.getByText('Keep the name to 80 characters');
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-describedby', problem.id);
+    expect(primary()).toBeDisabled();
+  });
+
+  it('says why Create is disabled when the form cues are longer than 1,000 characters', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await tick(user, multi('Primary muscles'), 'Glutes');
+    expect(primary()).toBeEnabled();
+
+    // act
+    await user.click(screen.getByLabelText('Form cues'));
+    await user.paste('a'.repeat(1001));
+
+    // assert
+    const problem = screen.getByText('Keep the form cues to 1,000 characters');
+    expect(screen.getByLabelText('Form cues')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Form cues')).toHaveAttribute('aria-describedby', problem.id);
+    expect(primary()).toBeDisabled();
+  });
+
+  it('enables Create again once the form cues are back within 1,000 characters', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await tick(user, multi('Primary muscles'), 'Glutes');
+    await user.click(screen.getByLabelText('Form cues'));
+    await user.paste('a'.repeat(1001));
+
+    // act
+    await user.type(screen.getByLabelText('Form cues'), '{Backspace}');
+
+    // assert
+    expect(screen.queryByText('Keep the form cues to 1,000 characters')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Form cues')).not.toHaveAttribute('aria-invalid');
+    expect(primary()).toBeEnabled();
+  });
+
+  it('shows no form cues problem before the coach changes anything', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(screen.getByLabelText('Form cues')).not.toHaveAttribute('aria-invalid');
+  });
+
   it('moves a muscle out of secondary when it becomes primary', async () => {
     // arrange
     const user = renderEditor(NEW);

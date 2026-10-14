@@ -189,7 +189,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const ids = {
     name: useId(), nameProblem: useId(), type: useId(), measure: useId(),
     sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
-    difficulty: useId(), tagsLabel: useId(), cues: useId(), videoLabel: useId(),
+    difficulty: useId(), tagsLabel: useId(), cues: useId(), cuesProblem: useId(), videoLabel: useId(),
   };
 
   const others = exercises.filter((exercise) => exercise.id !== editing?.id);
@@ -398,8 +398,21 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
           icon={<Film aria-hidden="true" className="text-brand-secondary" size={18} />}
         >
           <SettingsRows>
-            <SettingsRow htmlFor={ids.cues} title="Form cues" layout="stacked">
-              <Textarea id={ids.cues} rows={3} value={draft.cues} onChange={(event) => set('cues', event.target.value)} placeholder="Keep the chest up, drive through the heels…" />
+            <SettingsRow
+              htmlFor={ids.cues}
+              title="Form cues"
+              layout="stacked"
+              problem={shownProblems.cues && <InlineProblem id={ids.cuesProblem}>{shownProblems.cues}</InlineProblem>}
+            >
+              <Textarea
+                id={ids.cues}
+                rows={3}
+                value={draft.cues}
+                onChange={(event) => set('cues', event.target.value)}
+                placeholder="Keep the chest up, drive through the heels…"
+                aria-invalid={shownProblems.cues ? true : undefined}
+                aria-describedby={shownProblems.cues ? ids.cuesProblem : undefined}
+              />
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked">
               <VideoField video={video} onChange={changeVideo} />
