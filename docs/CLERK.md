@@ -349,18 +349,13 @@ than after.
 
 ## Lighthouse
 
-`lighthouserc.cjs` runs the built SSR server and audits it with a real
-Development-instance publishable key, so clerk-js actually initializes
-against the real instance rather than failing immediately. That in turn
-means `CLERK_SECRET_KEY` in that run also has to be real (not a placeholder):
-the audited pages mount `clerkMiddleware`, and a Development instance's first
-visit from a cookie-less browser — true of every Lighthouse run — is answered
-with a redirect through Clerk's own dev-browser handshake, which this app's
-server completes by fetching the instance's JWKS from the Clerk Backend API.
-That fetch requires a real secret key; see the `requireRealClerkSecretKey`
-comment in `lighthouserc.cjs` for the specifics. Locally this is picked up
-from the root `.env`; in CI it comes from the `CLERK_SECRET_KEY` repository
-secret (see [SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md)).
+`lighthouserc.cjs` runs the built SSR server and audits it with the real
+Development-instance publishable key, so clerk-js initializes against the real
+instance, and a dummy secret key. A Development instance answers a cookieless
+page request with a redirect through Clerk's dev-browser handshake, which a
+Production visitor never sees and which the dummy key cannot complete. The
+audit sends a dev-browser cookie with every request, so the handshake never
+starts and the audited pages need no real secret.
 
 The `best-practices` Lighthouse category is asserted per-audit rather than as
 a single category score, because two of its audits fail unconditionally

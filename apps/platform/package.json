@@ -29,6 +29,8 @@
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/infrastructure": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
+    "@fontsource-variable/dm-sans": "catalog:",
+    "@fontsource-variable/playfair-display": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@napi-rs/canvas": "catalog:",
     "@react-router/node": "catalog:",

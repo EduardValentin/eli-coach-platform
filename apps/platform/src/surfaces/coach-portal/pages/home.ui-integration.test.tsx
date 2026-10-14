@@ -169,7 +169,7 @@ describe("the coach's dashboard", () => {
 
     // assert
     expect(
-      screen.getByRole("heading", { level: 1, name: "Good morning, Coach." }),
+      screen.getByRole("heading", { level: 1, name: "Good morning, Eli." }),
     ).toBeInTheDocument();
     expect(
       screen.getByText("You have 2 assessment calls today."),
@@ -331,7 +331,7 @@ describe("the coach's check-ins on her dashboard", () => {
 
     // assert
     expect(
-      screen.getByRole("heading", { level: 1, name: "Good morning, Coach." })
+      screen.getByRole("heading", { level: 1, name: "Good morning, Eli." })
         .nextElementSibling,
     ).toHaveTextContent(
       "You have 1 assessment call today. 4 check-ins to review.",
@@ -499,7 +499,7 @@ async function renderDashboard(
   const rendered = render(<RouterProvider router={router} />);
   await screen.findByRole("heading", {
     level: 1,
-    name: "Good morning, Coach.",
+    name: "Good morning, Eli.",
   });
 
   return rendered;

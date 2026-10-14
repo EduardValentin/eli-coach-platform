@@ -10,7 +10,6 @@ import {
   EXERCISE_TAG_LABELS,
   EXERCISE_TYPES,
   EXERCISE_TYPE_LABELS,
-  MEASURES,
   MEASURE_EXAMPLES,
   MEASURE_LABELS,
   MUSCLES,
@@ -18,6 +17,8 @@ import {
   draftProblems,
   isValidDraft,
   labelsOf,
+  measureAllowedFor,
+  measuresFor,
   withPrimaryMuscleToggled,
   type Difficulty,
   type Equipment,
@@ -27,11 +28,11 @@ import {
   type Muscle,
 } from '../../domain/exercises';
 import {
-  MP4_ACCEPT,
-  isMp4File,
-  isWithinMp4Limit,
-  mp4RejectionMessage,
-  mp4TooLargeMessage,
+  VIDEO_ACCEPT,
+  isVideoFile,
+  isWithinVideoLimit,
+  videoRejectionMessage,
+  videoTooLargeMessage,
 } from '../../utils/exerciseVideo';
 import { toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
@@ -61,7 +62,7 @@ const EQUIPMENT_LABELS = labelsOf(EQUIPMENT);
 const DIFFICULTY_LABELS = labelsOf(DIFFICULTIES);
 const BOTH_SIDES = 'both';
 const ONE_SIDE = 'one';
-const VIDEO_GUIDANCE = 'MP4 up to 50 MB, in a format that plays well on a phone.';
+const VIDEO_GUIDANCE = 'MP4 or MOV up to 50 MB, in a format that plays well on a phone.';
 
 type Draft = ExerciseDraft & { measureTouched: boolean };
 
@@ -114,12 +115,12 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
 
   const take = (file: File | undefined) => {
     if (!file) return;
-    if (!isMp4File(file)) {
-      onChange({ ...video, error: mp4RejectionMessage(file) });
+    if (!isVideoFile(file)) {
+      onChange({ ...video, error: videoRejectionMessage(file) });
       return;
     }
-    if (!isWithinMp4Limit(file)) {
-      onChange({ ...video, error: mp4TooLargeMessage(file) });
+    if (!isWithinVideoLimit(file)) {
+      onChange({ ...video, error: videoTooLargeMessage(file) });
       return;
     }
     onChange({ file, preview: URL.createObjectURL(file), error: null });
@@ -130,7 +131,7 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
       <input
         ref={input}
         type="file"
-        accept={MP4_ACCEPT}
+        accept={VIDEO_ACCEPT}
         className="hidden"
         onChange={(event) => {
           take(event.target.files?.[0]);
@@ -206,11 +207,11 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
     change((previous) => ({ ...previous, [key]: value }));
 
   const chooseType = (type: ExerciseType) =>
-    change((previous) => ({
-      ...previous,
-      type,
-      measuredIn: previous.measureTouched ? previous.measuredIn : defaultMeasureFor(type),
-    }));
+    change((previous) => {
+      const keepsUnit = previous.measureTouched && measureAllowedFor(type, previous.measuredIn);
+      if (keepsUnit) return { ...previous, type };
+      return { ...previous, type, measuredIn: defaultMeasureFor(type), measureTouched: false };
+    });
   const chooseMeasure = (measuredIn: Measure) =>
     change((previous) => ({ ...previous, measuredIn, measureTouched: true }));
   const togglePrimary = (muscle: Muscle) =>
@@ -286,7 +287,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                   <SelectValue>{MEASURE_LABELS[draft.measuredIn]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {MEASURES.map((measure) => (
+                  {measuresFor(draft.type).map((measure) => (
                     <SelectItem key={measure} value={measure}>
                       {MEASURE_LABELS[measure]}{' '}
                       <span className="text-xs text-text-secondary in-data-[state=checked]:text-current">

@@ -231,7 +231,6 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 - `TEST_SSH_KNOWN_HOSTS`
 - `TEST_NODE_HOSTNAME` as a GitHub repository variable
 - `TEST_EDGE_HOSTNAME` as a GitHub repository variable or secret
-- `CLERK_SECRET_KEY`, for the Lighthouse CI job only
 
 `TEST_EDGE_HOSTNAME` should be only the hostname Traefik uses on the TEST VM.
 
@@ -240,12 +239,5 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 The TEST app mount path is part of the application architecture and is currently fixed to `/eli-coach-platform`.
 
 `GHCR_PULL_USERNAME` and `GHCR_PULL_TOKEN` are dedicated registry pull credentials for the remote deploy step.
-
-`CLERK_SECRET_KEY` here is the same Development-instance value LOCAL and TEST
-already use (see [CLERK.md](CLERK.md)), held as its own CI secret because the
-Lighthouse job runs the real app with clerkMiddleware active and needs it to
-complete Clerk's dev-browser handshake — see the comment on
-`requireRealClerkSecretKey` in `lighthouserc.cjs` for why a dummy value fails
-there. It is not a TEST or PROD deploy credential.
 
 The actual TEST and PROD runtime env contents remain owned by `terraform-infra`.

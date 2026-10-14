@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES, EQUIPMENT, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MUSCLES } from '../domain/exercises';
+import { DIFFICULTIES, EQUIPMENT, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MUSCLES, measureAllowedFor } from '../domain/exercises';
 import { SAMPLE_EXERCISES } from './exerciseSamples';
 
 describe('the sample exercises', () => {
@@ -30,6 +30,14 @@ describe('the sample exercises', () => {
     expect(SAMPLE_EXERCISES.some((exercise) => exercise.perSide)).toBe(true);
     expect(SAMPLE_EXERCISES.some((exercise) => exercise.measuredIn === 'time')).toBe(true);
     expect(SAMPLE_EXERCISES.some((exercise) => exercise.archivedAt)).toBe(true);
+  });
+
+  it('carries one exercise of each type, each measured in a unit its type allows', () => {
+    // assert
+    expect(new Set(SAMPLE_EXERCISES.map((exercise) => exercise.type))).toEqual(new Set(EXERCISE_TYPES));
+    for (const exercise of SAMPLE_EXERCISES) {
+      expect(measureAllowedFor(exercise.type, exercise.measuredIn)).toBe(true);
+    }
   });
 
   it('has no two exercises with the same name, ignoring case', () => {
