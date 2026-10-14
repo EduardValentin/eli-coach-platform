@@ -1,6 +1,6 @@
 # Units
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-14 at commit a18ff93a, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-14 at commit 795125d5, change review.
 
 | ID | Path:symbol | Component | Kind | Ring | Visibility | Actors | Status |
 |---|---|---|---|---|---|---|---|
@@ -1177,3 +1177,4 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | U3729 | apps/platform/db/drizzle/0046_subscription_periods.sql:migration (adds `paid_through` and `program_starts_at` to `coaching_subscriptions`, backfilled from the paid instant, months and start choice and then required, and the `coaching_program_starts_at`, `coaching_paid_through` standing columns to `clients`, backfilled from each client's most recently paid subscription) | C18, C24 | framework-glue | frameworks | migration journal | operator/platform | present |
 | U3730 | apps/platform/db/drizzle/0047_check_in_series.sql:migration (creates `check_in_series` with its weekday and hour checks, foreign key to `clients` and the partial unique index `check_in_series_active_per_client_unique`; adds `check_ins.series_id` with a restricting foreign key and the `(series_id, starts_at)` index; widens the kind and status checks to `recurring` and `clash`) | C22 | framework-glue | frameworks | migration journal | operator/platform | present |
 | U3731 | domain/check-in/check-in-series-bounds.ts:CheckInSeriesBounds (+CheckInSeriesBoundsSnapshot; `of`, static `ofCoaching` — from the later of the lead and the program start to the earlier of the paid-through date and the coaching end, or `client_cannot_answer` / `nothing_to_create` — `holds`, `notBefore`, `notAfter`, `spanning`, `toSnapshot`) | C1 | entity (value) | entities | private (slice) | coach | present |
+| U3732 | check-ins/ui/shared/check-ins/use-load-on-opening.ts:useLoadOnOpening (calls the given load once per opening of a dialog, a StrictMode replay included) — read by the shared picker body and the coach's weekly dialog | C22 | view (hook) | frameworks | private | client, coach | present |

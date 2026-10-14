@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-14 at commit a18ff93a, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-14 at commit 795125d5, change review.
 
 ## Component graph
 
