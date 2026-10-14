@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { BrandCalendar } from './BrandCalendar';
 import { to24h } from '../utils/dateFormatters';
+import { Skeleton } from './ui/skeleton';
 import { cn } from './ui/utils';
 
 const DEFAULT_TIME_SLOTS = [
@@ -111,7 +112,11 @@ export function SlotPickerFrame({
   );
 }
 
-type TimeSlotDetail = { text: string; parity: string };
+const DETAIL_PLACEMENT_CLASS = 'absolute top-1/2 left-full ml-2 -translate-y-1/2 whitespace-nowrap';
+
+export type TimeSlotDetail =
+  | { kind: 'text'; text: string; parity: string }
+  | { kind: 'loading'; parity: string };
 
 type TimeSlotButtonProps = {
   label: string;
@@ -121,6 +126,30 @@ type TimeSlotButtonProps = {
   onSelect: () => void;
 };
 
+function TimeSlotDetailSlot({ detail, isSelected }: { detail: TimeSlotDetail; isSelected: boolean }) {
+  if (detail.kind === 'loading') {
+    return (
+      <Skeleton
+        aria-hidden="true"
+        data-parity={detail.parity}
+        className={cn(DETAIL_PLACEMENT_CLASS, 'h-3 w-12')}
+      />
+    );
+  }
+
+  return (
+    <>
+      <span className="sr-only"> </span>
+      <span
+        data-parity={detail.parity}
+        className={cn(DETAIL_PLACEMENT_CLASS, 'text-xs', { 'text-status-pending': !isSelected })}
+      >
+        {detail.text}
+      </span>
+    </>
+  );
+}
+
 export function TimeSlotButton({ label, isSelected, isBooked = false, detail, onSelect }: TimeSlotButtonProps) {
   return (
     <button
@@ -128,27 +157,18 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, detail, on
       disabled={isBooked}
       aria-pressed={isSelected}
       onClick={onSelect}
-      className={`w-full py-3 px-4 rounded-control text-sm font-medium transition-all duration-200 border ${
-        isBooked
-          ? 'bg-surface-base border-primary/30 text-primary pointer-events-none opacity-50'
-          : isSelected
-            ? 'bg-primary border-primary text-primary-foreground shadow-card'
-            : 'bg-surface-base border-primary/30 text-primary hover:border-primary hover:bg-primary/5'
-      }`}
+      className={cn('w-full rounded-control border px-4 py-3 text-sm font-medium transition-all duration-200', {
+        'pointer-events-none border-primary/30 bg-surface-base text-primary opacity-50': isBooked,
+        'border-brand-secondary bg-brand-secondary-surface text-brand-secondary hover:border-brand-secondary-hover hover:text-brand-secondary-hover':
+          !isBooked && isSelected,
+        'border-primary/30 bg-surface-base text-primary hover:border-primary hover:bg-primary/5': !isBooked && !isSelected,
+      })}
     >
-      <span className={isBooked ? 'line-through' : ''}>{label}</span>
-      {isBooked && <span className="ml-1 text-xs uppercase tracking-label">Booked</span>}
-      {detail && (
-        <>
-          <span className="sr-only"> </span>
-          <span
-            data-parity={detail.parity}
-            className={cn('ml-2 text-xs', { 'text-status-pending': !isSelected })}
-          >
-            {detail.text}
-          </span>
-        </>
-      )}
+      <span className="relative">
+        <span className={cn({ 'line-through': isBooked })}>{label}</span>
+        {isBooked && <span className="ml-1 text-xs uppercase tracking-label">Booked</span>}
+        {detail && <TimeSlotDetailSlot detail={detail} isSelected={isSelected} />}
+      </span>
     </button>
   );
 }

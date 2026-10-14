@@ -13,7 +13,7 @@ import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
 import { StepButton } from '../CheckinSchedulerSheet';
 import { ChoiceGroup, ChoiceOption } from '../ChoiceGroup';
-import { TimeSlotButton } from '../DateTimePicker';
+import { TimeSlotButton, type TimeSlotDetail } from '../DateTimePicker';
 import type { ScheduledClient } from '../CheckinScheduleDialog';
 import { Alert, AlertAction } from '../ui/alert';
 import { cn } from '../ui/utils';
@@ -36,7 +36,7 @@ type SaveRefusal =
 type HoursListing =
   | { status: 'loading' }
   | { status: 'failed' }
-  | { status: 'ready'; hours: SeriesHourPreview[] };
+  | { status: 'ready'; hours: SeriesHourPreview[]; clashes: 'counted' | 'counting' };
 
 const WEEKDAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -47,10 +47,14 @@ const MODE_WORDING: Record<WeeklyCheckinMode, { action: string; busy: string; sa
   change: { action: 'Change', busy: 'Changing…', saved: 'Weekly check-in changed' },
 };
 
-function clashesLabel(clashes: number): string | null {
-  if (clashes === 0) return null;
+function clashesDetail(
+  clashes: number,
+  counting: 'counted' | 'counting',
+): TimeSlotDetail | undefined {
+  if (counting === 'counting') return { kind: 'loading', parity: 'hour-clashes-loading' };
+  if (clashes === 0) return undefined;
 
-  return clashes === 1 ? '1 clash' : `${clashes} clashes`;
+  return { kind: 'text', text: clashes === 1 ? '1 clash' : `${clashes} clashes`, parity: 'hour-clashes' };
 }
 
 function refusalCopy(refusal: SaveRefusal, client: WeeklyCheckinClient): string {
@@ -135,7 +139,9 @@ export function WeeklyCheckinDialog({
     async (day: number | null) => {
       const thisLoad = latestLoad.current + 1;
       latestLoad.current = thisLoad;
-      setListing({ status: 'loading' });
+      setListing((current) =>
+        current.status === 'ready' ? { ...current, clashes: 'counting' } : { status: 'loading' },
+      );
       try {
         const preview = await previewSeries(client.id, day);
         if (latestLoad.current !== thisLoad) return;
@@ -145,7 +151,7 @@ export function WeeklyCheckinDialog({
           setWeekday(fallback);
           return;
         }
-        setListing({ status: 'ready', hours: preview.hours });
+        setListing({ status: 'ready', hours: preview.hours, clashes: 'counted' });
       } catch {
         if (latestLoad.current === thisLoad) setListing({ status: 'failed' });
       }
@@ -289,20 +295,22 @@ function HourChoice({
   }
 
   return (
-    <ul aria-labelledby={labelledBy} data-parity="series-hours" className="grid gap-2">
-      {listing.hours.map((offered) => {
-        const clashes = clashesLabel(offered.clashes);
-        return (
-          <li key={offered.hour}>
-            <TimeSlotButton
-              label={formatClockHour(offered.hour)}
-              isSelected={hour === offered.hour}
-              detail={clashes ? { text: clashes, parity: 'hour-clashes' } : undefined}
-              onSelect={() => onChooseHour(offered.hour)}
-            />
-          </li>
-        );
-      })}
+    <ul
+      aria-labelledby={labelledBy}
+      aria-busy={listing.clashes === 'counting' || undefined}
+      data-parity="series-hours"
+      className="grid gap-2"
+    >
+      {listing.hours.map((offered) => (
+        <li key={offered.hour}>
+          <TimeSlotButton
+            label={formatClockHour(offered.hour)}
+            isSelected={hour === offered.hour}
+            detail={clashesDetail(offered.clashes, listing.clashes)}
+            onSelect={() => onChooseHour(offered.hour)}
+          />
+        </li>
+      ))}
     </ul>
   );
 }
