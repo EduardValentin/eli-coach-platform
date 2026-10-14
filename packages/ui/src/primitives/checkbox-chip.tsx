@@ -1,23 +1,24 @@
 import * as React from "react";
 
 import { cn } from "../lib/cn";
-import { chipVariants } from "./chip";
+import { chipVariants, type ChipSize } from "./chip";
 
 type CheckboxChipProps = Omit<
   React.ComponentPropsWithoutRef<"input">,
-  "checked"
+  "checked" | "size"
 > & {
   children: React.ReactNode;
   isChecked: boolean;
+  size?: ChipSize;
 };
 
 export const CheckboxChip = React.forwardRef<
   HTMLInputElement,
   CheckboxChipProps
->(({ children, className, isChecked, ...props }, ref) => (
+>(({ children, className, isChecked, size, ...props }, ref) => (
   <label
     className={cn(
-      chipVariants({ tone: "checkbox" }),
+      chipVariants({ tone: "checkbox", size }),
       "relative justify-center",
       className,
     )}

@@ -59,7 +59,7 @@ const twMerge = extendTailwindMerge({
       tracking: ["label", "section-eyebrow"],
       leading: ["display-snug"],
       container: ["reading", "content", "portal", "stage"],
-      animate: ["heartbeat", "progress-indeterminate"],
+      animate: ["heartbeat", "panel-enter", "progress-indeterminate"],
     },
   },
 });
