@@ -1,5 +1,7 @@
 import { ClerkProvider } from "@clerk/react-router";
 import { joinBasePath } from "@eli-coach-platform/config";
+import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
+import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
@@ -93,6 +95,13 @@ export const links: LinksFunction = () => [
     href: joinBasePath(assetBasePath, "icon.svg"),
     type: "image/svg+xml",
   },
+  ...[dmSansLatinFontUrl, playfairDisplayLatinFontUrl].map((href) => ({
+    rel: "preload",
+    href,
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous" as const,
+  })),
 ];
 
 // React Router renders `ErrorBoundary` *instead of* the default export, so the

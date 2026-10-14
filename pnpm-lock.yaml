@@ -25,6 +25,12 @@ catalogs:
     '@file-type/cfbf':
       specifier: 0.2.2
       version: 0.2.2
+    '@fontsource-variable/dm-sans':
+      specifier: 5.3.0
+      version: 5.3.0
+    '@fontsource-variable/playfair-display':
+      specifier: 5.3.0
+      version: 5.3.0
     '@hookform/resolvers':
       specifier: 5.9.1
       version: 5.9.1
@@ -311,6 +317,12 @@ importers:
       '@eli-coach-platform/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@fontsource-variable/dm-sans':
+        specifier: 'catalog:'
+        version: 5.3.0
+      '@fontsource-variable/playfair-display':
+        specifier: 'catalog:'
+        version: 5.3.0
       '@hookform/resolvers':
         specifier: 'catalog:'
         version: 5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.84.0(react@19.2.8))(valibot@1.3.1(typescript@6.0.3))(zod@4.3.6)
@@ -1515,6 +1527,12 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/dm-sans@5.3.0':
+    resolution: {integrity: sha512-BpUG5bqePiDFMBM4ZtLSlPdAIOM990uB1dlXzIf4aw21yQR7BmykedLXXXMqGWsR18aMLOsbWccwJNh3ztTQaA==}
+
+  '@fontsource-variable/playfair-display@5.3.0':
+    resolution: {integrity: sha512-IHdzTvE8eGIXHteZql7KXoqdc3Gfm+Zs1u4XlSC3MeplkwviT3sx/P6gI0tLwg/xIYLF4ZJYveZ5V+bl9cnDwA==}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -7740,6 +7758,10 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/dm-sans@5.3.0': {}
+
+  '@fontsource-variable/playfair-display@5.3.0': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
