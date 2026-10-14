@@ -39,6 +39,7 @@ import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
 import { ExerciseEditorPage } from "./exercise-editor-page";
 import { ExerciseLibraryPage } from "./exercise-library-page";
+import { ExerciseRequests } from "./exercise-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   insertMeasuredClientRecords,
@@ -140,6 +141,8 @@ type PlatformFixtures = {
   coachSettings: CoachSettingsPage;
   exerciseLibrary: ExerciseLibraryPage;
   exerciseEditor: ExerciseEditorPage;
+  exerciseRequests: ExerciseRequests;
+  visitorExerciseRequests: ExerciseRequests;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -533,6 +536,17 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   exerciseEditor: async ({ page }, use) => {
     await use(new ExerciseEditorPage(page));
+  },
+
+  exerciseRequests: async ({ page }, use) => {
+    await use(new ExerciseRequests(page.request));
+  },
+
+  visitorExerciseRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new ExerciseRequests(visitor));
+    await visitor.dispose();
   },
 
   addResourceDialog: async ({ page }, use) => {

@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { expectAccessRefused } from "./control-states";
+import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export type ListedExercise = {
@@ -21,6 +23,32 @@ export class ExerciseLibraryPage {
     });
   }
 
+  private get phoneMenu() {
+    return this.page.getByRole("dialog", {
+      name: "Coach portal mobile navigation",
+    });
+  }
+
+  private get newExerciseLink() {
+    return this.page.getByRole("link", { name: "New exercise" });
+  }
+
+  private get exerciseNames() {
+    return this.page
+      .getByRole("table")
+      .getByRole("row")
+      .locator("td:first-child p:first-child");
+  }
+
+  private async expectTrainingRightAfterDashboardIn(
+    menu: Locator,
+  ): Promise<void> {
+    const links = menu.getByRole("link");
+
+    await expect(links.nth(0)).toHaveAccessibleName("Dashboard");
+    await expect(links.nth(1)).toHaveAccessibleName("Training");
+  }
+
   private rowOf(name: string): Locator {
     return this.page
       .getByRole("table")
@@ -34,7 +62,6 @@ export class ExerciseLibraryPage {
 
   async open(): Promise<void> {
     await this.page.goto(LIBRARY_PATH);
-    await this.expectOpen();
   }
 
   async openFromNavigation(): Promise<void> {
@@ -50,15 +77,54 @@ export class ExerciseLibraryPage {
   }
 
   async expectTrainingRightAfterDashboard(): Promise<void> {
-    const links = this.navigation.getByRole("link");
+    await this.expectTrainingRightAfterDashboardIn(this.navigation);
+    await expect(
+      this.navigation.getByRole("link", { name: "Training" }),
+    ).toHaveAttribute("aria-current", "page");
+  }
 
-    await expect(links.nth(0)).toHaveAccessibleName("Dashboard");
-    await expect(links.nth(1)).toHaveAccessibleName("Training");
-    await expect(links.nth(1)).toHaveAttribute("aria-current", "page");
+  async openPhoneMenu(): Promise<void> {
+    await expect(async () => {
+      await this.page
+        .getByRole("banner", { name: "Coach portal top bar" })
+        .getByRole("button", { name: "Open menu" })
+        .click();
+      await expect(this.phoneMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  async expectPhoneMenuTrainingRightAfterDashboard(): Promise<void> {
+    await this.expectTrainingRightAfterDashboardIn(this.phoneMenu);
+  }
+
+  async openFromPhoneMenu(): Promise<void> {
+    await this.phoneMenu.getByRole("link", { name: "Training" }).click();
+    await this.expectOpen();
+    await expect(this.phoneMenu).toBeHidden();
   }
 
   async startNewExercise(): Promise<void> {
-    await this.page.getByRole("link", { name: "New exercise" }).click();
+    await this.newExerciseLink.click();
+  }
+
+  async startNewExerciseWithKeyboard(): Promise<void> {
+    await this.page
+      .getByRole("heading", { level: 1 })
+      .click({ position: { x: 1, y: 1 } });
+    await tabTo(this.page, this.newExerciseLink);
+    await this.page.keyboard.press("Enter");
+  }
+
+  async expectRefused(): Promise<void> {
+    await expectAccessRefused(this.page);
+  }
+
+  async expectListedInOrder(names: readonly string[]): Promise<void> {
+    const listed = await this.exerciseNames.allInnerTexts();
+
+    expect(listed.filter((name) => names.includes(name))).toEqual(names);
   }
 
   async expectConfirmation(message: string): Promise<void> {
