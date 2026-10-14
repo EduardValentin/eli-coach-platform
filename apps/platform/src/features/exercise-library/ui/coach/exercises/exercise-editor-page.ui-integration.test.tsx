@@ -3,7 +3,13 @@
 import "@testing-library/jest-dom/vitest";
 
 import { Toaster } from "@eli-coach-platform/ui/toast";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -495,12 +501,11 @@ describe("editing an exercise", () => {
     expect(screen.getByRole("textbox", { name: "Form cues" })).toHaveValue(
       "Exhale slowly.",
     );
-    expect(
-      await screen.findByRole("button", {
-        name: "Save changes",
-        disabled: false,
-      }),
-    ).toBeEnabled();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Save changes" }),
+      ).toBeEnabled(),
+    );
   });
 
   it("keeps its own name free while flagging another exercise's", async () => {
