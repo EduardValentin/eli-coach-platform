@@ -372,7 +372,7 @@ describe('a new exercise', () => {
     await tick(user, multi(/^Primary muscles/), 'Glutes');
     await tick(user, multi('Secondary muscles'), 'Core');
     await tick(user, multi('Equipment'), 'Kettlebell');
-    await user.click(screen.getByRole('button', { name: 'Hypertrophy' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Hypertrophy' }));
     await user.click(primary());
 
     // assert
@@ -391,7 +391,7 @@ describe('editing an exercise', () => {
     expect(screen.getByRole('radio', { name: 'One side at a time' })).toBeChecked();
     expect(within(multi(/^Primary muscles, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Quadriceps', 'Glutes']);
     expect(within(multi(/^Equipment, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Dumbbells', 'Bench']);
-    expect(screen.getByRole('button', { name: 'Hypertrophy' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('checkbox', { name: 'Hypertrophy' })).toBeChecked();
     expect(primary()).toHaveTextContent('Save changes');
     expect(primary()).toBeEnabled();
   });
@@ -410,7 +410,7 @@ describe('editing an exercise', () => {
 
     // act
     await choose(user, field('Difficulty'), 'Advanced');
-    await user.click(screen.getByRole('button', { name: 'Hypertrophy' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Hypertrophy' }));
     await user.click(primary());
 
     // assert

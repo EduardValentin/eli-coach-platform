@@ -66,6 +66,17 @@ describe("MultiSelect", () => {
     expect(within(list).getByText("2")).toBeInTheDocument();
   });
 
+  it("names its open list after the field", async () => {
+    // arrange
+    const { user } = renderFilter([]);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+
+    // assert
+    expect(screen.getByRole("dialog", { name: "Tags" })).toBeInTheDocument();
+  });
+
   it("hands back the option that was toggled and stays open for the next one", async () => {
     // arrange
     const { user, onToggle } = renderFilter([]);

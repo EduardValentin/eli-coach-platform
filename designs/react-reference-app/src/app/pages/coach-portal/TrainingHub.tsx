@@ -38,7 +38,7 @@ import { DeleteConfirmDialog } from '../../components/coach-portal/DeleteConfirm
 import { SearchField } from '../../components/SearchField';
 import { useAppState } from '../../context/AppContext';
 import { toast } from 'sonner';
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
   Popover,
   PopoverTrigger,
@@ -425,14 +425,6 @@ export function TrainingHub() {
     c.name.toLowerCase().includes(clientSearch.toLowerCase()),
   );
 
-  const handleCreate = () => {
-    if (activeTab === 'exercises') {
-      openExerciseEditor('/coach/training/exercises/new');
-    } else if (activeTab === 'templates') {
-      navigate('/coach/training/template-builder');
-    }
-  };
-
   return (
     <div className="w-full" data-parity-root="TrainingHub">
       <PortalPageHeader
@@ -456,10 +448,22 @@ export function TrainingHub() {
               <Plus aria-hidden="true" />
               New Client Plan
             </Button>
+          ) : activeTab === 'exercises' ? (
+            <Button asChild variant="primary" size="md">
+              <Link to="/coach/training/exercises/new" state={{ library: location.search }}>
+                <Plus aria-hidden="true" />
+                New exercise
+              </Link>
+            </Button>
           ) : (
-            <Button type="button" onClick={handleCreate} variant="primary" size="md">
+            <Button
+              type="button"
+              onClick={() => navigate('/coach/training/template-builder')}
+              variant="primary"
+              size="md"
+            >
               <Plus aria-hidden="true" />
-              {activeTab === 'exercises' ? 'New exercise' : 'New Template'}
+              New Template
             </Button>
           )
         }

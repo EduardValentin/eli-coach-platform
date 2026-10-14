@@ -42,7 +42,7 @@ import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -385,9 +385,14 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               <ul className="flex flex-wrap gap-2" data-parity="exercise-tag-chips">
                 {EXERCISE_TAGS.map((tag) => (
                   <li key={tag}>
-                    <ToggleChip pressed={draft.tags.includes(tag)} onPressedChange={() => set('tags', toggled(draft.tags, tag))}>
+                    <CheckboxChip
+                      size="compact"
+                      aria-label={EXERCISE_TAG_LABELS[tag]}
+                      checked={draft.tags.includes(tag)}
+                      onCheckedChange={() => set('tags', toggled(draft.tags, tag))}
+                    >
                       {EXERCISE_TAG_LABELS[tag]}
-                    </ToggleChip>
+                    </CheckboxChip>
                   </li>
                 ))}
               </ul>
@@ -405,6 +410,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               htmlFor={ids.cues}
               title="Form cues"
               layout="stacked"
+              data-parity="exercise-cues-row"
               problem={shownProblems.cues && <InlineProblem id={ids.cuesProblem}>{shownProblems.cues}</InlineProblem>}
             >
               <Textarea

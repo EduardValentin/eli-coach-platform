@@ -121,7 +121,7 @@ function ExerciseRow({
       <TableCell className="text-sm text-text-secondary" data-parity="exercise-video">
         {exercise.videoUrl ? 'Attached' : '—'}
       </TableCell>
-      <TableCell>{actions}</TableCell>
+      <TableCell data-parity="exercise-actions-cell">{actions}</TableCell>
     </TableRow>
   );
 }
@@ -202,7 +202,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
       <TablePanel parity="exercise-table">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow data-parity="exercise-header-row">
               <SortableTableHead
                 label="Exercise"
                 active={sort.key === 'name'}
