@@ -48,7 +48,7 @@ export default function ExerciseLibraryRoute() {
             className={buttonVariants({ size: "md", variant: "primary" })}
             to={NEW_EXERCISE_PATH}
           >
-            <Plus aria-hidden="true" />
+            <Plus aria-hidden="true" size={16} />
             New exercise
           </Link>
         }
@@ -147,7 +147,7 @@ function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
       <TableCell>
         <div
           className="flex items-center justify-end"
-          data-parity="exercise-actions"
+          data-parity="library-item-actions"
         >
           <RowActionsMenu
             actions={[

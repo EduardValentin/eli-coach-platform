@@ -245,7 +245,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   };
 
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-3xl" data-parity-root="ExerciseEditorPage">
       <PortalBackLink to={library}>Back to exercises</PortalBackLink>
       <PortalPageHeader title={editing ? 'Edit exercise' : 'New exercise'} />
 
@@ -290,7 +290,10 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                   {measuresFor(draft.type).map((measure) => (
                     <SelectItem key={measure} value={measure}>
                       {MEASURE_LABELS[measure]}{' '}
-                      <span className="text-xs text-text-secondary in-data-[state=checked]:text-current">
+                      <span
+                        className="text-xs text-text-secondary in-data-[state=checked]:text-current"
+                        data-parity="unit-example"
+                      >
                         {MEASURE_EXAMPLES[measure]}
                       </span>
                     </SelectItem>
@@ -379,7 +382,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               </Select>
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.tagsLabel} title="Tags" layout="stacked">
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap gap-2" data-parity="exercise-tag-chips">
                 {EXERCISE_TAGS.map((tag) => (
                   <li key={tag}>
                     <ToggleChip pressed={draft.tags.includes(tag)} onPressedChange={() => set('tags', toggled(draft.tags, tag))}>
@@ -421,7 +424,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         </SettingsSection>
       </div>
 
-      <div className="mt-8 flex items-center justify-end gap-3">
+      <div className="mt-8 flex items-center justify-end gap-3" data-parity="exercise-editor-actions">
         <Link to={library} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
           Cancel
         </Link>

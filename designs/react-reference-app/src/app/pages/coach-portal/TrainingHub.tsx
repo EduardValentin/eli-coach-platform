@@ -434,7 +434,7 @@ export function TrainingHub() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="TrainingHub">
       <PortalPageHeader
         title={isPostMvp ? 'Training & Programs' : 'Exercises'}
         subtitle={

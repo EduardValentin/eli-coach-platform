@@ -74,18 +74,19 @@ function ExerciseRow({
   actions: ReactNode;
 }) {
   return (
-    <TableRow>
+    <TableRow data-parity="exercise-row">
       <TableCell>
         <div className="flex items-center gap-3">
           <div
             aria-hidden="true"
             className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center text-text-secondary shrink-0"
+            data-parity="exercise-glyph"
           >
             <Activity size={18} />
           </div>
           <div>
             <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-            <p className="text-xs text-text-secondary mt-0.5">
+            <p className="text-xs text-text-secondary mt-0.5" data-parity="exercise-summary">
               {[
                 EXERCISE_TYPE_LABELS[exercise.type],
                 exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
@@ -95,7 +96,7 @@ function ExerciseRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1" data-parity="exercise-tags">
           {(exercise.tags ?? []).map((tag) => (
             <Badge key={tag} tone="brand-secondary">
               {tag}
@@ -104,7 +105,7 @@ function ExerciseRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1" data-parity="exercise-muscles">
           {exercise.primaryMuscles.map((muscle) => (
             <Badge key={muscle} tone="muted">
               {muscle}
@@ -113,7 +114,9 @@ function ExerciseRow({
         </div>
       </TableCell>
       <TableCell>
-        <Badge tone="secondary">{exercise.difficulty}</Badge>
+        <Badge tone="secondary" data-parity="exercise-difficulty">
+          {exercise.difficulty}
+        </Badge>
       </TableCell>
       <TableCell className="text-sm text-text-secondary">
         {exercise.videoUrl ? 'Attached' : '—'}
@@ -195,7 +198,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
         }
       />
 
-      <TablePanel>
+      <TablePanel parity="exercise-table">
         <Table>
           <TableHeader>
             <TableRow>
