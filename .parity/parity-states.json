@@ -3128,6 +3128,9 @@
         "click": "[aria-label=\"Close Dev Settings\"]"
       },
       {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+      },
+      {
         "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
       },
       {
@@ -3144,6 +3147,9 @@
       }
     ],
     "real": [
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+      },
       {
         "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
       },
@@ -3962,6 +3968,9 @@
   "open-weekly-menu": [
     {
       "use": "weekly-series-active"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
     },
     {
       "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
