@@ -110,7 +110,7 @@ const checkInSeriesSchema = z.object({
 
 export const coachClientSeriesSchema = z.object({
   series: checkInSeriesSchema.nullable(),
-  weeks: z.array(coachCheckInSchema),
+  nextWeek: coachCheckInSchema.nullable(),
   coachingEnds: z.boolean(),
 });
 

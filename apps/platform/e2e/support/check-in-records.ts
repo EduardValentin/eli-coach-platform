@@ -6,6 +6,12 @@ const FIND_CHECK_IN = `
   order by requested_at desc
   limit 1
 `;
+const LIST_WEEKS_TO_COME = `
+  select starts_at from app.check_ins
+  where client_id = $1 and series_id is not null
+    and status <> 'cancelled' and starts_at > now()
+  order by starts_at
+`;
 const COUNT_WAITING_REQUESTS = `
   select count(*)::int as waiting from app.check_ins
   where status = 'pending' and proposed_by = 'client' and starts_at > now()
@@ -121,6 +127,15 @@ export class CheckInRecords {
     }
 
     return row.id;
+  }
+
+  async weeksToComeOf(clientId: string): Promise<Date[]> {
+    const { rows } = await this.pool.query<{ starts_at: Date }>(
+      LIST_WEEKS_TO_COME,
+      [clientId],
+    );
+
+    return rows.map((row) => row.starts_at);
   }
 
   async countOf(clientId: string): Promise<number> {

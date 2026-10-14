@@ -215,6 +215,11 @@ export class CheckInRows {
     await expect(row.getByRole("link", { name: "Join Meet" })).toHaveCount(0);
   }
 
+  async expectNoClash(row: Locator): Promise<void> {
+    await expect(row).toBeVisible();
+    await expect(row.getByText(CLASH_BADGE, { exact: true })).toHaveCount(0);
+  }
+
   async expectNoCancel(row: Locator): Promise<void> {
     await this.openMenu(row);
     await expect(this.itemNamed("Reschedule")).toBeVisible();

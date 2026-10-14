@@ -155,12 +155,17 @@ export default function CoachClientRoute() {
             gender={client.gender}
             subscription={subscription}
           />
-          <WeeklyCheckInPanel
-            client={client}
-            scheduling={scheduling}
-            suggestedWeekday={review.submitted?.checkInWeekday ?? null}
-            weekly={weekly}
-          />
+          <div
+            className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8"
+            data-parity="record-widgets-row"
+          >
+            <WeeklyCheckInPanel
+              client={client}
+              scheduling={scheduling}
+              suggestedWeekday={review.submitted?.checkInWeekday ?? null}
+              weekly={weekly}
+            />
+          </div>
         </>
       )}
       <MeasurementsTable

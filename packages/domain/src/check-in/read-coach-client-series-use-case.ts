@@ -11,7 +11,7 @@ import {
 
 export type CoachClientSeries = {
   series: CheckInSeriesSnapshot | null;
-  occurrences: CoachCheckInView[];
+  nextWeek: CoachCheckInView | null;
   coachingEnds: boolean;
 };
 
@@ -36,7 +36,7 @@ export class ReadCoachClientSeriesUseCase {
     } catch (error) {
       this.options.incidents.checkInSeriesReadFailed({ clientId, error });
 
-      return { series: null, occurrences: [], coachingEnds: false };
+      return { series: null, nextWeek: null, coachingEnds: false };
     }
   }
 
@@ -48,7 +48,7 @@ export class ReadCoachClientSeriesUseCase {
     const coachingEnds = client !== null && client.coachingEndsAt !== null;
 
     if (!series) {
-      return { series: null, occurrences: [], coachingEnds };
+      return { series: null, nextWeek: null, coachingEnds };
     }
 
     const occurrences = await this.options.series.listOccurrences(series.id);
@@ -56,7 +56,7 @@ export class ReadCoachClientSeriesUseCase {
 
     return {
       series: series.toSnapshot(),
-      occurrences: views.filter((view) => view.tab !== "past"),
+      nextWeek: views.find((view) => view.tab !== "past") ?? null,
       coachingEnds,
     };
   }

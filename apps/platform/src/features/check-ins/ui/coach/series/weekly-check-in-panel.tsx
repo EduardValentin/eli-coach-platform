@@ -1,21 +1,41 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
-import { Button, DisabledActionHint } from "@eli-coach-platform/ui/primitives";
-import { CalendarRange } from "lucide-react";
+import { DASHBOARD_ROW_CLASS } from "@eli-coach-platform/ui/appointments";
+import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
+import {
+  PortalWidget,
+  Reading,
+  WidgetAction,
+  WidgetLink,
+} from "@eli-coach-platform/ui/portal";
+import {
+  Badge,
+  DateTimeLabel,
+  DisabledActionHint,
+  RowActionsMenu,
+} from "@eli-coach-platform/ui/primitives";
+import {
+  CalendarClock,
+  CalendarRange,
+  CalendarX,
+  ChevronRight,
+} from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
+import { Link } from "react-router";
 
 import type {
   CheckInScheduling,
+  CoachCheckIn,
   CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
+import {
+  COACH_CHECK_INS_PATH,
+  coachCheckInPath,
+} from "~/features/check-ins/public/paths";
 import { formatClockHour } from "~/features/assessment-calls/public/call-moment";
 import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import { awaitingOnboardingReason } from "~/features/check-ins/ui/coach/shared/awaiting-onboarding-reason";
-import { useCoachCheckInMenu } from "~/features/check-ins/ui/coach/shared/coach-check-in-menu";
-import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
-import { clientFullName } from "~/features/clients/public/clients";
+import { checkInMomentOf } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
 import { WEEKDAY_LABELS } from "~/features/coach-schedule/public/coach-schedule-settings";
 
 import { StopWeeklyCheckInDialog } from "./stop-weekly-check-in-dialog";
@@ -30,7 +50,6 @@ type WeeklyCheckInPanelProps = {
     clientId: string;
     firstName: string;
     gender: VisitorGender;
-    lastName: string;
   };
   scheduling: CheckInScheduling;
   suggestedWeekday: Weekday | null;
@@ -46,26 +65,17 @@ type Opening<Subject> = {
 type SeriesSummaryProps = {
   coachingEnds: boolean;
   gender: VisitorGender;
+  nextWeek: CoachCheckIn | null;
   scheduling: CheckInScheduling;
   series: WeeklyCheckInSeries | null;
 };
 
-type SeriesActionsProps = {
-  coachingEnds: boolean;
+type SeriesFooterProps = {
+  actionRef: RefObject<HTMLButtonElement | null>;
   gender: VisitorGender;
-  onChange: (target: WeeklyCheckInTarget) => void;
-  onStop: (seriesId: string) => void;
-  primaryActionRef: RefObject<HTMLButtonElement | null>;
+  onSetUp: () => void;
   scheduling: CheckInScheduling;
   series: WeeklyCheckInSeries | null;
-  stopRef: RefObject<HTMLButtonElement | null>;
-};
-
-type SeriesWeeksProps = {
-  client: WeeklyCheckInPanelProps["client"];
-  menuOf: ReturnType<typeof useCoachCheckInMenu>["menuOf"];
-  timeZone: string;
-  weeks: CoachClientSeriesPanel["weeks"];
 };
 
 export function WeeklyCheckInPanel({
@@ -74,10 +84,7 @@ export function WeeklyCheckInPanel({
   suggestedWeekday,
   weekly,
 }: WeeklyCheckInPanelProps) {
-  const timeZone = useCalendarDayTimeZone();
-  const { dialogs, menuOf } = useCoachCheckInMenu();
-  const primaryActionRef = useRef<HTMLButtonElement>(null);
-  const stopRef = useRef<HTMLButtonElement>(null);
+  const actionRef = useRef<HTMLButtonElement>(null);
   const [seriesDialog, setSeriesDialog] =
     useState<Opening<WeeklyCheckInTarget> | null>(null);
   const [stopConfirmation, setStopConfirmation] =
@@ -87,8 +94,50 @@ export function WeeklyCheckInPanel({
 
   return (
     <PortalWidget
-      className="mb-8"
+      action={
+        series && (
+          <RowActionsMenu
+            actions={[
+              {
+                icon: CalendarClock,
+                label: "Change",
+                name: "change",
+                onSelect: () =>
+                  setSeriesDialog(
+                    openingOf<WeeklyCheckInTarget>({ mode: "change", series }),
+                  ),
+              },
+              {
+                icon: CalendarX,
+                label: "Stop",
+                name: "stop",
+                onSelect: () => setStopConfirmation(openingOf(series.id)),
+                tone: "destructive",
+              },
+            ]}
+            label="More actions for the weekly check-in"
+            size="xs"
+            triggerRef={actionRef}
+          />
+        )
+      }
+      className="h-full"
       data-parity-root="WeeklyCheckinPanel"
+      footer={
+        !coachingEnds && (
+          <SeriesFooter
+            actionRef={actionRef}
+            gender={client.gender}
+            onSetUp={() =>
+              setSeriesDialog(
+                openingOf<WeeklyCheckInTarget>({ mode: "set-up" }),
+              )
+            }
+            scheduling={scheduling}
+            series={series}
+          />
+        )
+      }
       headingId="weekly-check-in-panel-heading"
       icon={
         <CalendarRange
@@ -99,36 +148,15 @@ export function WeeklyCheckInPanel({
       }
       title="Weekly check-in"
     >
-      <div
-        className="flex flex-wrap items-center justify-between gap-3"
-        data-parity="series-summary"
-      >
+      <div data-parity="series-summary">
         <SeriesSummary
           coachingEnds={coachingEnds}
           gender={client.gender}
+          nextWeek={weekly.nextWeek}
           scheduling={scheduling}
           series={series}
-        />
-        <SeriesActions
-          coachingEnds={coachingEnds}
-          gender={client.gender}
-          onChange={(target) => setSeriesDialog(openingOf(target))}
-          onStop={(seriesId) => setStopConfirmation(openingOf(seriesId))}
-          primaryActionRef={primaryActionRef}
-          scheduling={scheduling}
-          series={series}
-          stopRef={stopRef}
         />
       </div>
-
-      {series && (
-        <SeriesWeeks
-          client={client}
-          menuOf={menuOf}
-          timeZone={timeZone}
-          weeks={weekly.weeks}
-        />
-      )}
 
       {seriesDialog && (
         <WeeklyCheckInDialog
@@ -138,6 +166,7 @@ export function WeeklyCheckInPanel({
             setSeriesDialog((current) => current && { ...current, open })
           }
           open={seriesDialog.open}
+          returnFocusTo={actionRef}
           suggestedWeekday={suggestedWeekday}
           target={seriesDialog.subject}
         />
@@ -151,12 +180,10 @@ export function WeeklyCheckInPanel({
             setStopConfirmation((current) => current && { ...current, open })
           }
           open={stopConfirmation.open}
-          returnFocusTo={series ? stopRef : primaryActionRef}
+          returnFocusTo={actionRef}
           seriesId={stopConfirmation.subject}
         />
       )}
-
-      {dialogs}
     </PortalWidget>
   );
 }
@@ -164,6 +191,7 @@ export function WeeklyCheckInPanel({
 function SeriesSummary({
   coachingEnds,
   gender,
+  nextWeek,
   scheduling,
   series,
 }: SeriesSummaryProps) {
@@ -178,80 +206,94 @@ function SeriesSummary({
     );
   }
 
-  if (series) {
+  if (!series) {
     return (
-      <p
-        className="text-sm font-semibold text-text-primary"
-        data-parity="series-rule"
-      >
-        {ruleLineOf(series)}
+      <p className="text-sm text-text-secondary" data-parity="series-empty">
+        No weekly check-in yet.
       </p>
     );
   }
 
   return (
-    <p className="text-sm text-text-secondary" data-parity="series-empty">
-      No weekly check-in yet.
-    </p>
+    <>
+      <Reading
+        label="Schedule"
+        value={ruleLineOf(series)}
+        valueParity="series-rule"
+      />
+      {nextWeek ? (
+        <NextWeekLink week={nextWeek} />
+      ) : (
+        <p
+          className="mt-5 text-sm text-text-secondary"
+          data-parity="series-weeks-empty"
+        >
+          No week to come.
+        </p>
+      )}
+    </>
   );
 }
 
-function SeriesActions(props: SeriesActionsProps) {
-  if (props.coachingEnds) {
-    return null;
-  }
+function NextWeekLink({ week }: { week: CoachCheckIn }) {
+  const timeZone = useCalendarDayTimeZone();
 
   return (
-    <div className="flex flex-wrap gap-2" data-parity="series-actions">
-      <SeriesActionButtons {...props} />
-    </div>
+    <Link
+      className={cn(DASHBOARD_ROW_CLASS, "group mt-5")}
+      data-parity="series-next-week"
+      to={coachCheckInPath(week.id)}
+    >
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="sr-only">Next weekly check-in: </span>
+        <DateTimeLabel
+          size="sm"
+          when={checkInMomentOf(week.startsAt, timeZone)}
+        />
+        {week.status === "clash" && (
+          <Badge data-parity="clash-badge" tone="pending">
+            Clash
+          </Badge>
+        )}
+      </span>
+      <ChevronRight
+        aria-hidden="true"
+        className="shrink-0 text-text-secondary transition-colors group-hover:text-text-primary"
+        data-parity="series-next-week-chevron"
+        size={16}
+      />
+    </Link>
   );
 }
 
-function SeriesActionButtons({
+function SeriesFooter({
+  actionRef,
   gender,
-  onChange,
-  onStop,
-  primaryActionRef,
+  onSetUp,
   scheduling,
   series,
-  stopRef,
-}: SeriesActionsProps) {
+}: SeriesFooterProps) {
   if (series) {
     return (
-      <>
-        <Button
-          data-parity="series-change"
-          onClick={() => onChange({ mode: "change", series })}
-          ref={primaryActionRef}
-          size="sm"
-          variant="outline"
-        >
-          Change
-        </Button>
-        <Button
-          data-parity="series-stop"
-          onClick={() => onStop(series.id)}
-          ref={stopRef}
-          size="sm"
-          variant="destructive-outline"
-        >
-          Stop
-        </Button>
-      </>
+      <WidgetLink
+        data-parity="series-view-all"
+        to={COACH_CHECK_INS_PATH}
+        trailing="arrow"
+      >
+        View all check-ins
+      </WidgetLink>
     );
   }
 
   const setUp = (
-    <Button
+    <WidgetAction
       data-parity="series-set-up"
-      onClick={() => onChange({ mode: "set-up" })}
-      ref={primaryActionRef}
-      size="sm"
-      variant="outline"
+      onClick={onSetUp}
+      ref={actionRef}
+      trailing="arrow"
     >
-      Set up
-    </Button>
+      Set up a weekly check-in
+    </WidgetAction>
   );
 
   if (scheduling === "awaiting_onboarding") {
@@ -263,40 +305,6 @@ function SeriesActionButtons({
   }
 
   return setUp;
-}
-
-function SeriesWeeks({ client, menuOf, timeZone, weeks }: SeriesWeeksProps) {
-  if (weeks.length === 0) {
-    return (
-      <p
-        className="mt-5 text-sm text-text-secondary"
-        data-parity="series-weeks-empty"
-      >
-        No weeks to come.
-      </p>
-    );
-  }
-
-  return (
-    <ul
-      aria-label="Weeks to come"
-      className="mt-5 space-y-3"
-      data-parity="series-weeks"
-    >
-      {weeks.map((week) => (
-        <li key={week.id}>
-          <CheckInRow
-            attendee={{ name: clientFullName(client) }}
-            checkIn={week}
-            menu={menuOf(week)}
-            menuSize="xs"
-            timeZone={timeZone}
-            viewer={{ counterpartName: client.firstName, party: "coach" }}
-          />
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 function openingOf<Subject>(subject: Subject) {

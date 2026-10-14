@@ -222,7 +222,7 @@ const MEASUREMENTS_WITH_PHOTOS: MeasurementRow[] = [
 
 const NO_WEEKLY: CoachClientSeriesPanel = {
   series: null,
-  weeks: [],
+  nextWeek: null,
   coachingEnds: false,
 };
 
@@ -233,7 +233,7 @@ const WEEKLY: CoachClientSeriesPanel = {
     hour: 18,
     timeZone: COACH_TIME_ZONE,
   },
-  weeks: [],
+  nextWeek: null,
   coachingEnds: false,
 };
 
@@ -376,8 +376,26 @@ describe("the coach's client page", () => {
       within(weekly).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
     expect(
-      within(weekly).getByRole("button", { name: "Change" }),
+      within(weekly).getByRole("button", {
+        name: "More actions for the weekly check-in",
+      }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps her subscription on its own and her weekly check-in alone in a row of its own", async () => {
+    // arrange, act
+    await renderClientPage({ scheduling: "allowed", weekly: WEEKLY });
+
+    // assert
+    const weekly = screen.getByRole("region", { name: "Weekly check-in" });
+    const row = weekly.parentElement;
+    expect(row?.children).toHaveLength(1);
+    expect(
+      screen.getByRole("region", { name: "Subscription" }).parentElement,
+    ).not.toBe(row);
+    expect(
+      screen.getByRole("region", { name: "Measurements" }).parentElement,
+    ).not.toBe(row);
   });
 
   it("offers a weekly check-in on the day she chose in her onboarding", async () => {
@@ -401,7 +419,7 @@ describe("the coach's client page", () => {
     await user.click(
       within(screen.getByRole("region", { name: "Weekly check-in" })).getByRole(
         "button",
-        { name: "Set up" },
+        { name: "Set up a weekly check-in" },
       ),
     );
 

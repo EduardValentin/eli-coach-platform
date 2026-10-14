@@ -1,4 +1,11 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type ElementHandle,
+  type Locator,
+  type Page,
+  type Route,
+} from "@playwright/test";
 
 import { tabTo } from "./keyboard";
 import { escapedPattern } from "./locator-text";
@@ -16,6 +23,18 @@ export const WEEKLY_DIALOG_TITLE = new RegExp(
 );
 const SAVE_BUTTON = /^(Set up|Change)$/;
 const SHEET_HANDLE = '[data-parity="sheet-handle"]';
+const SHEET_FOOTER = '[data-parity="sheet-footer"]';
+const CLASHES_COUNTING = '[data-parity="hour-clashes-loading"]';
+const CLASHES_COUNTED = '[data-parity="hour-clashes"]';
+const PREVIEW_PATH = "/api/check-ins/series/preview";
+
+type DialogGeometry = { height: number; footerY: number };
+
+type WeekdaySwitch = {
+  day: string;
+  counting: DialogGeometry;
+  counted: DialogGeometry;
+};
 
 export class WeeklyCheckInDialog {
   constructor(private readonly page: Page) {}
@@ -42,6 +61,102 @@ export class WeeklyCheckInDialog {
     return this.hours.getByRole("button", {
       name: new RegExp(`^${escapedPattern(hour)}( |$)`),
     });
+  }
+
+  private readonly heldPreviews: Array<() => void> = [];
+
+  private readonly isPreview = (url: URL): boolean =>
+    url.pathname.startsWith(PREVIEW_PATH);
+
+  private readonly holdPreview = async (route: Route): Promise<void> => {
+    await new Promise<void>((release) => this.heldPreviews.push(release));
+    await route.continue();
+  };
+
+  private async geometry(): Promise<DialogGeometry> {
+    const dialog = await this.dialog.boundingBox();
+    const footer = await this.dialog.locator(SHEET_FOOTER).boundingBox();
+
+    if (!dialog || !footer) {
+      throw new Error("The weekly check-in dialog is not laid out.");
+    }
+
+    return { height: dialog.height, footerY: footer.y };
+  }
+
+  private async releaseHeldPreview(): Promise<void> {
+    await expect.poll(() => this.heldPreviews.length).toBe(1);
+    this.heldPreviews.shift()?.();
+  }
+
+  private async expectHourHeld(
+    hour: string,
+    mounted: ElementHandle,
+  ): Promise<void> {
+    await expect(this.hour(hour)).toHaveAttribute("aria-pressed", "true");
+    expect(
+      await mounted.evaluate((button) => button.isConnected),
+      "the chosen hour stays the same mounted button",
+    ).toBe(true);
+  }
+
+  private async switchWeekdayHoldingHour(
+    day: string,
+    hour: string,
+  ): Promise<WeekdaySwitch> {
+    const mounted = await this.hour(hour).elementHandle();
+    const offeredHours = await this.hours.getByRole("button").count();
+    const previewed = this.page.waitForResponse((response) =>
+      this.isPreview(new URL(response.url())),
+    );
+
+    await this.weekday(day).click();
+    await expect(this.hours).toHaveAttribute("aria-busy", "true");
+    await expect(this.hours.locator(CLASHES_COUNTING)).toHaveCount(
+      offeredHours,
+    );
+    await expect(this.hours.locator(CLASHES_COUNTING).first()).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+    await expect(this.hours.locator(CLASHES_COUNTED)).toHaveCount(0);
+    await this.expectHourHeld(hour, mounted!);
+    const counting = await this.geometry();
+
+    await this.releaseHeldPreview();
+    await (await previewed).finished();
+    await expect(this.hours).not.toHaveAttribute("aria-busy");
+    await expect(this.hours.locator(CLASHES_COUNTING)).toHaveCount(0);
+    await expect(this.weekday(day)).toBeChecked();
+    await this.expectHourHeld(hour, mounted!);
+
+    return { day, counting, counted: await this.geometry() };
+  }
+
+  async expectHoursHold(
+    hour: string,
+    weekdays: readonly string[],
+  ): Promise<void> {
+    const before = await this.geometry();
+    const switches: WeekdaySwitch[] = [];
+
+    await this.page.route(this.isPreview, this.holdPreview);
+    try {
+      for (const day of weekdays) {
+        switches.push(await this.switchWeekdayHoldingHour(day, hour));
+      }
+    } finally {
+      await this.page.unroute(this.isPreview, this.holdPreview);
+    }
+
+    test.info().annotations.push({
+      type: "weekly-dialog-geometry",
+      description: JSON.stringify({ before, switches }),
+    });
+    for (const { counting, counted } of switches) {
+      expect(counting).toEqual(before);
+      expect(counted).toEqual(before);
+    }
   }
 
   async expectOpen(mode: WeeklyDialogMode): Promise<void> {

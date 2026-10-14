@@ -20,6 +20,7 @@ import {
   createMemoryRouter,
   RouterProvider,
   useLoaderData,
+  useLocation,
 } from "react-router";
 import {
   afterAll,
@@ -40,13 +41,15 @@ import {
   shouldRevalidate as shouldRevalidateSeriesPreview,
 } from "~/features/check-ins/api/coach/series-preview";
 import { clientAction as stopSeries } from "~/features/check-ins/api/coach/series-stop";
-import { clientAction as cancelCheckIn } from "~/features/check-ins/api/shared/cancellation";
 import type {
   CheckInScheduling,
   CoachCheckIn,
   CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
-import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
+import {
+  CHECK_INS_API_PATHS,
+  COACH_CHECK_INS_PATH,
+} from "~/features/check-ins/public/paths";
 import {
   frameworkModeAction,
   frameworkModeLoader,
@@ -70,7 +73,8 @@ const SERIES_URL = `*${CHECK_INS_API_PATHS.series}`;
 const SERIES_PREVIEW_URL = `*${CHECK_INS_API_PATHS.seriesPreview}`;
 const SERIES_CHANGE_URL = `*${CHECK_INS_API_PATHS.seriesChange}`;
 const SERIES_STOP_URL = `*${CHECK_INS_API_PATHS.seriesStop}`;
-const CANCELLATION_URL = `*${CHECK_INS_API_PATHS.cancellation}`;
+const WEEKLY_MENU = "More actions for the weekly check-in";
+const SET_UP_ACTION = "Set up a weekly check-in";
 
 const FIRST_WEEK: CoachCheckIn = {
   id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
@@ -108,14 +112,6 @@ const CLASHING_WEEK: CoachCheckIn = {
   joinEmphasisFrom: "2026-10-21T14:50:00.000Z",
 };
 
-const LAST_WEEK: CoachCheckIn = {
-  ...FIRST_WEEK,
-  id: "2c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f",
-  startsAt: "2026-10-28T16:00:00.000Z",
-  endsAt: "2026-10-28T17:00:00.000Z",
-  joinEmphasisFrom: "2026-10-28T15:50:00.000Z",
-};
-
 const SERIES = {
   id: SERIES_ID,
   weekday: "wednesday",
@@ -125,32 +121,27 @@ const SERIES = {
 
 const NO_SERIES: CoachClientSeriesPanel = {
   series: null,
-  weeks: [],
+  nextWeek: null,
   coachingEnds: false,
 };
 
 const ACTIVE: CoachClientSeriesPanel = {
   series: SERIES,
-  weeks: [FIRST_WEEK, LAST_WEEK],
+  nextWeek: FIRST_WEEK,
   coachingEnds: false,
 };
 
-const WITH_CLASH: CoachClientSeriesPanel = {
+const NEXT_WEEK_CLASHES: CoachClientSeriesPanel = {
   series: SERIES,
-  weeks: [FIRST_WEEK, CLASHING_WEEK, LAST_WEEK],
+  nextWeek: CLASHING_WEEK,
   coachingEnds: false,
 };
 
 const NO_WEEKS_LEFT: CoachClientSeriesPanel = {
   series: SERIES,
-  weeks: [],
+  nextWeek: null,
   coachingEnds: false,
 };
-
-const FIRST_WEEK_MENU =
-  "More actions for the check-in on Wed, Oct 14 at 6:00 PM";
-const CLASHING_WEEK_MENU =
-  "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 
 const PREVIEW = {
   weekdays: ["wednesday", "monday", "friday"],
@@ -218,7 +209,7 @@ afterAll(() => {
 });
 
 describe("the weekly check-in panel on a client record", () => {
-  it("offers Set up while she has no weekly check-in, as when the panel could not be read", async () => {
+  it("offers to set up a weekly check-in from its footer while she has none, as when the panel could not be read", async () => {
     // arrange, act
     await renderPanel();
 
@@ -232,11 +223,14 @@ describe("the weekly check-in panel on a client record", () => {
     ).toBeInTheDocument();
     expect(setUpButton()).not.toHaveAttribute("aria-disabled");
     expect(
-      within(panel).queryByRole("list", { name: "Weeks to come" }),
-    ).not.toBeInTheDocument();
+      within(panel)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual([SET_UP_ACTION]);
+    expect(within(panel).queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("holds Set up back before she sends her onboarding and says why on hover", async () => {
+  it("holds the set-up action back before she sends her onboarding and says why on hover", async () => {
     // arrange
     const user = await renderPanel({ scheduling: "awaiting_onboarding" });
 
@@ -249,7 +243,7 @@ describe("the weekly check-in panel on a client record", () => {
     expect(setUpButton()).toHaveAccessibleDescription(AWAITING_REASON);
   });
 
-  it("explains why Set up is held back on a tap, without opening the dialog", async () => {
+  it("explains why the set-up action is held back on a tap, without opening the dialog", async () => {
     // arrange
     const user = await renderPanel({ scheduling: "awaiting_onboarding" });
 
@@ -290,9 +284,7 @@ describe("the weekly check-in panel on a client record", () => {
         within(panel).queryByText("No weekly check-in yet."),
       ).not.toBeInTheDocument();
       expect(within(panel).queryByRole("button")).not.toBeInTheDocument();
-      expect(
-        within(panel).queryByRole("list", { name: "Weeks to come" }),
-      ).not.toBeInTheDocument();
+      expect(within(panel).queryByRole("link")).not.toBeInTheDocument();
     },
   );
 
@@ -311,7 +303,7 @@ describe("the weekly check-in panel on a client record", () => {
     ).toBeInTheDocument();
   });
 
-  it("reads the day and hour in the coach's zone and lists every week still to come", async () => {
+  it("reads the schedule in the coach's zone, her next weekly check-in as one row and every check-in a link away", async () => {
     // arrange
     weekly = ACTIVE;
 
@@ -320,55 +312,40 @@ describe("the weekly check-in panel on a client record", () => {
 
     // assert
     const panel = weeklyPanel();
+    expect(within(panel).getByText("Schedule")).toBeInTheDocument();
     expect(
       within(panel).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
-    const weeks = within(
-      within(panel).getByRole("list", { name: "Weeks to come" }),
-    ).getAllByRole("listitem");
-    expect(weeks).toHaveLength(2);
-    expect(weeks[0]).toHaveTextContent("Wed, Oct 14");
-    expect(weeks[0]).toHaveTextContent("Ana Popescu");
-    expect(weeks[1]).toHaveTextContent("Wed, Oct 28");
+    const nextWeek = nextWeekRow();
+    expect(nextWeek).toHaveAttribute(
+      "href",
+      `${COACH_CHECK_INS_PATH}?checkin=${FIRST_WEEK.id}`,
+    );
+    expect(nextWeek).toHaveTextContent("Wed, Oct 14");
+    expect(nextWeek).toHaveTextContent("6:00 PM");
+    expect(within(nextWeek).queryByText("Clash")).not.toBeInTheDocument();
+    expect(
+      within(panel).getByRole("link", { name: "View all check-ins" }),
+    ).toHaveAttribute("href", COACH_CHECK_INS_PATH);
     expect(
       within(panel)
         .getAllByRole("button")
-        .map(
-          (button) => button.textContent || button.getAttribute("aria-label"),
-        ),
-    ).toEqual([
-      "Change",
-      "Stop",
-      FIRST_WEEK_MENU,
-      "More actions for the check-in on Wed, Oct 28 at 6:00 PM",
-    ]);
-    expect(
-      within(panel).queryByRole("link", { name: "Join Meet" }),
-    ).not.toBeInTheDocument();
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual([WEEKLY_MENU]);
+    expect(within(panel).getAllByRole("link")).toHaveLength(2);
   });
 
-  it("flags a week whose hour is taken and lets the coach reschedule or cancel it", async () => {
+  it("flags her next weekly check-in when its hour is taken", async () => {
     // arrange
-    weekly = WITH_CLASH;
-    const user = await renderPanel();
-    const weeks = within(
-      screen.getByRole("list", { name: "Weeks to come" }),
-    ).getAllByRole("listitem");
+    weekly = NEXT_WEEK_CLASHES;
 
     // act
-    await user.click(
-      within(weeks[1]).getByRole("button", { name: CLASHING_WEEK_MENU }),
-    );
+    await renderPanel();
 
     // assert
-    expect(within(weeks[1]).getByText("Clash")).toBeInTheDocument();
-    expect(weeks[1]).toHaveTextContent("Finding a new time");
-    expect(within(weeks[0]).queryByText("Clash")).not.toBeInTheDocument();
-    expect(
-      within(await screen.findByRole("menu"))
-        .getAllByRole("menuitem")
-        .map((item) => item.textContent),
-    ).toEqual(["Reschedule", "Cancel"]);
+    const nextWeek = nextWeekRow();
+    expect(within(nextWeek).getByText("Clash")).toBeInTheDocument();
+    expect(nextWeek).toHaveTextContent("Wed, Oct 21");
   });
 
   it("says so when no week is left to come", async () => {
@@ -379,57 +356,50 @@ describe("the weekly check-in panel on a client record", () => {
     await renderPanel();
 
     // assert
+    const panel = weeklyPanel();
+    expect(within(panel).getByText("No week to come.")).toBeInTheDocument();
     expect(
-      within(weeklyPanel()).getByText("No weeks to come."),
+      within(panel).queryByRole("link", { name: /^Next weekly check-in:/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(panel).getByRole("link", { name: "View all check-ins" }),
     ).toBeInTheDocument();
   });
 
-  it("cancels one week once the coach confirms, naming the client", async () => {
+  it("opens the Check-ins page on her next weekly check-in from its row", async () => {
     // arrange
     weekly = ACTIVE;
-    const cancelled: string[] = [];
-    server.use(
-      http.post(CANCELLATION_URL, ({ params }) => {
-        cancelled.push(String(params.checkInId));
-        weekly = { series: SERIES, weeks: [LAST_WEEK], coachingEnds: false };
-        return HttpResponse.json({
-          status: "cancelled",
-          checkInId: FIRST_WEEK.id,
-        });
-      }),
-    );
     const user = await renderPanel();
-    await user.click(screen.getByRole("button", { name: FIRST_WEEK_MENU }));
-    await user.click(await screen.findByRole("menuitem", { name: "Cancel" }));
-    const confirm = await screen.findByRole("dialog", {
-      name: "Cancel this check-in?",
-    });
 
     // act
-    await user.click(
-      within(confirm).getByRole("button", { name: "Cancel check-in" }),
-    );
+    await user.click(nextWeekRow());
 
     // assert
-    expect(confirm).toHaveTextContent(
-      "Wed, Oct 14 at 6:00 PM with Ana Popescu.",
-    );
     expect(
-      await screen.findByText("Cancelled check-in with Ana Popescu"),
+      await screen.findByRole("heading", { level: 1, name: "Check-ins" }),
     ).toBeInTheDocument();
-    expect(cancelled).toEqual([FIRST_WEEK.id]);
-    await waitFor(() => {
-      expect(
-        within(
-          screen.getByRole("list", { name: "Weeks to come" }),
-        ).getAllByRole("listitem"),
-      ).toHaveLength(1);
-    });
+    expect(screen.getByText(`Focused on ${FIRST_WEEK.id}`)).toBeInTheDocument();
   });
 
-  it("passes the axe checks with a clash among the weeks", async () => {
+  it("keeps Change and Stop in one menu in its header", async () => {
     // arrange
-    weekly = WITH_CLASH;
+    weekly = ACTIVE;
+    const user = await renderPanel();
+
+    // act
+    await user.click(weeklyMenu());
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Change", "Stop"]);
+  });
+
+  it("passes the axe checks with her next weekly check-in clashing", async () => {
+    // arrange
+    weekly = NEXT_WEEK_CLASHES;
     const { baseElement } = await renderPanelWithView();
 
     // act
@@ -515,7 +485,57 @@ describe("setting up a weekly check-in", () => {
     expect(await hourList(dialog)).toBeInTheDocument();
   });
 
-  it("books every week, says so and lists them on the panel, with focus back on the panel's action", async () => {
+  it("keeps the hours and the chosen hour in place while it counts another day's clashes", async () => {
+    // arrange
+    let release: () => void = () => {};
+    let reads = 0;
+    server.use(
+      http.get(SERIES_PREVIEW_URL, async () => {
+        reads += 1;
+        if (reads > 1) {
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+        return HttpResponse.json(PREVIEW);
+      }),
+    );
+    const user = await renderPanel({ suggestedWeekday: "wednesday" });
+    const dialog = await openSetUpOnSixPm(user);
+    const hours = await hourList(dialog);
+    const sixPm = within(hours).getByRole("button", { name: /^6:00 PM/ });
+
+    // act
+    await user.click(within(dialog).getByRole("radio", { name: "Friday" }));
+
+    // assert
+    await waitFor(() => {
+      expect(hours).toHaveAttribute("aria-busy", "true");
+    });
+    expect(
+      within(hours)
+        .getAllByRole("button")
+        .map((hour) => hour.textContent),
+    ).toEqual(["5:00 PM", "6:00 PM", "7:00 PM"]);
+    expect(within(hours).getByRole("button", { name: "6:00 PM" })).toBe(sixPm);
+    expect(sixPm).toHaveAttribute("aria-pressed", "true");
+    expect(
+      hours.querySelectorAll('[data-slot="skeleton"][aria-hidden="true"]'),
+    ).toHaveLength(3);
+    expect(screen.queryByText("Loading hours…")).not.toBeInTheDocument();
+    release();
+    await waitFor(() => {
+      expect(hours).not.toHaveAttribute("aria-busy");
+    });
+    expect(
+      within(hours)
+        .getAllByRole("button")
+        .map((hour) => hour.textContent),
+    ).toEqual(["5:00 PM", "6:00 PM 2 clashes", "7:00 PM 1 clash"]);
+    expect(sixPm).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("books every week, says so and shows the schedule on the panel, with focus on the panel's menu", async () => {
     // arrange
     answerPreview();
     const setUps = answerSetUp(() => {
@@ -544,7 +564,7 @@ describe("setting up a weekly check-in", () => {
     expect(
       within(weeklyPanel()).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Change" })).toHaveFocus();
+    expect(weeklyMenu()).toHaveFocus();
   });
 
   it("shows the setting up under way and holds the dialog until the server answers", async () => {
@@ -673,7 +693,7 @@ describe("setting up a weekly check-in", () => {
     expect(reads).toBe(2);
   });
 
-  it("can be reached and dismissed by keyboard, handing focus back to Set up", async () => {
+  it("can be reached and dismissed by keyboard, handing focus back to the set-up action", async () => {
     // arrange
     answerPreview();
     const user = await renderPanel({ suggestedWeekday: "wednesday" });
@@ -716,7 +736,7 @@ describe("changing a weekly check-in", () => {
     const user = await renderPanel({ suggestedWeekday: "monday" });
 
     // act
-    await user.click(screen.getByRole("button", { name: "Change" }));
+    await chooseFromMenu(user, "Change");
 
     // assert
     const dialog = await screen.findByRole("dialog", { name: CHANGE_TITLE });
@@ -746,14 +766,14 @@ describe("changing a weekly check-in", () => {
         });
         weekly = {
           series: { ...SERIES, weekday: "friday", hour: 19 },
-          weeks: [],
+          nextWeek: null,
           coachingEnds: false,
         };
         return HttpResponse.json({ status: "changed", seriesId: SERIES_ID });
       }),
     );
     const user = await renderPanel();
-    await user.click(screen.getByRole("button", { name: "Change" }));
+    await chooseFromMenu(user, "Change");
     const dialog = await screen.findByRole("dialog", { name: CHANGE_TITLE });
     await hourList(dialog);
     const preselected = within(dialog).getByRole("radio", {
@@ -796,7 +816,7 @@ describe("changing a weekly check-in", () => {
       ),
     );
     const user = await renderPanel();
-    await user.click(screen.getByRole("button", { name: "Change" }));
+    await chooseFromMenu(user, "Change");
     const dialog = await screen.findByRole("dialog", { name: CHANGE_TITLE });
     await user.click(
       within(await hourList(dialog)).getByRole("button", { name: /^6:00 PM/ }),
@@ -816,14 +836,14 @@ describe("changing a weekly check-in", () => {
 });
 
 describe("stopping a weekly check-in", () => {
-  it("keeps the weekly check-in when the coach keeps it, handing focus back to Stop", async () => {
+  it("keeps the weekly check-in when the coach keeps it, handing focus back to the panel's menu", async () => {
     // arrange
     weekly = ACTIVE;
     const stops = answerStop(() =>
       HttpResponse.json({ status: "stopped", seriesId: SERIES_ID }),
     );
     const user = await renderPanel();
-    await user.click(stopButton());
+    await chooseFromMenu(user, "Stop");
     const confirm = await screen.findByRole("dialog", { name: STOP_TITLE });
 
     // act
@@ -836,11 +856,11 @@ describe("stopping a weekly check-in", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
-    expect(stopButton()).toHaveFocus();
+    expect(weeklyMenu()).toHaveFocus();
     expect(stops).toEqual([]);
   });
 
-  it("asks before stopping, then cancels every week to come and offers Set up again", async () => {
+  it("asks before stopping, then cancels every week to come and offers to set one up again", async () => {
     // arrange
     weekly = ACTIVE;
     const stops = answerStop(() => {
@@ -848,7 +868,7 @@ describe("stopping a weekly check-in", () => {
       return HttpResponse.json({ status: "stopped", seriesId: SERIES_ID });
     });
     const user = await renderPanel();
-    await user.click(stopButton());
+    await chooseFromMenu(user, "Stop");
     const confirm = await screen.findByRole("dialog", { name: STOP_TITLE });
 
     // act
@@ -884,7 +904,7 @@ describe("stopping a weekly check-in", () => {
     weekly = ACTIVE;
     answerStop(answer);
     const user = await renderPanel();
-    await user.click(stopButton());
+    await chooseFromMenu(user, "Stop");
     const confirm = await screen.findByRole("dialog", { name: STOP_TITLE });
 
     // act
@@ -901,7 +921,7 @@ describe("stopping a weekly check-in", () => {
     // arrange
     weekly = ACTIVE;
     const { baseElement, user } = await renderPanelWithView();
-    await user.click(stopButton());
+    await chooseFromMenu(user, "Stop");
     await screen.findByRole("dialog", { name: STOP_TITLE });
 
     // act
@@ -970,11 +990,36 @@ function weeklyPanel(): HTMLElement {
 }
 
 function setUpButton(): HTMLElement {
-  return screen.getByRole("button", { name: "Set up" });
+  return within(weeklyPanel()).getByRole("button", { name: SET_UP_ACTION });
 }
 
-function stopButton(): HTMLElement {
-  return within(weeklyPanel()).getByRole("button", { name: "Stop" });
+function weeklyMenu(): HTMLElement {
+  return within(weeklyPanel()).getByRole("button", { name: WEEKLY_MENU });
+}
+
+function nextWeekRow(): HTMLElement {
+  return within(weeklyPanel()).getByRole("link", {
+    name: /^Next weekly check-in:/,
+  });
+}
+
+async function chooseFromMenu(
+  user: UserEvent,
+  action: "Change" | "Stop",
+): Promise<void> {
+  await user.click(weeklyMenu());
+  await user.click(await screen.findByRole("menuitem", { name: action }));
+}
+
+function FocusedCheckIn() {
+  const { search } = useLocation();
+
+  return (
+    <main aria-label="Coach portal content">
+      <h1>Check-ins</h1>
+      <p>Focused on {new URLSearchParams(search).get("checkin")}</p>
+    </main>
+  );
 }
 
 function stepButton(dialog: HTMLElement): HTMLElement {
@@ -1002,12 +1047,7 @@ async function renderPanelWithView({
           <main aria-label="Coach portal content">
             <h1>Ana Popescu</h1>
             <WeeklyCheckInPanel
-              client={{
-                clientId: CLIENT_ID,
-                firstName: "Ana",
-                gender,
-                lastName: "Popescu",
-              }}
+              client={{ clientId: CLIENT_ID, firstName: "Ana", gender }}
               scheduling={scheduling}
               suggestedWeekday={suggestedWeekday}
               weekly={useLoaderData<CoachClientSeriesPanel>()}
@@ -1035,8 +1075,8 @@ async function renderPanelWithView({
         path: CHECK_INS_API_PATHS.seriesStop,
       },
       {
-        action: frameworkModeAction(cancelCheckIn),
-        path: CHECK_INS_API_PATHS.cancellation,
+        Component: FocusedCheckIn,
+        path: COACH_CHECK_INS_PATH,
       },
     ],
     { initialEntries: [CLIENT_PAGE_PATH] },

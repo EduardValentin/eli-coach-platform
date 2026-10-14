@@ -75,7 +75,7 @@ const WEEKLY: CoachClientSeriesPanel = {
     hour: 18,
     timeZone: "Europe/Bucharest",
   },
-  weeks: [],
+  nextWeek: null,
   coachingEnds: false,
 };
 

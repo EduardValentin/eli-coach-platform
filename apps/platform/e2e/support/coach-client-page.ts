@@ -39,6 +39,16 @@ const SCHEDULE_DIALOG_TITLE = /^Schedule a check-in with \S+$/;
 
 const NO_WEEKLY_CHECK_IN = "No weekly check-in yet.";
 
+const SET_UP_WEEKLY = "Set up a weekly check-in";
+
+const WEEKLY_MENU_TRIGGER = "More actions for the weekly check-in";
+
+const NEXT_WEEKLY_ROW = /^Next weekly check-in:/;
+
+const CHECK_IN_FOCUS_URL = /\/coach\/checkins\?checkin=[^&]+$/;
+
+const ARROW_SETTLE_MS = 250;
+
 const DISABLED_ACTION_HINT = '[data-parity="disabled-action-hint"]';
 
 export const STOP_WEEKLY_CHECK_IN_LABELS: ConfirmationLabels = {
@@ -47,7 +57,7 @@ export const STOP_WEEKLY_CHECK_IN_LABELS: ConfirmationLabels = {
   dismiss: "Keep",
 };
 
-type WeeklyAction = "Set up" | "Change" | "Stop";
+type WeeklyAction = "Change" | "Stop";
 
 const ABSENT_READING = "—";
 
@@ -142,18 +152,58 @@ export class CoachClientPage {
     return this.page.getByRole("dialog", { name: WEEKLY_DIALOG_TITLE });
   }
 
-  private get weeks() {
+  private get setUpWeeklyButton() {
+    return this.weeklyPanel.getByRole("button", {
+      name: SET_UP_WEEKLY,
+      exact: true,
+    });
+  }
+
+  private get weeklyMenuTrigger() {
+    return this.weeklyPanel.getByRole("button", {
+      name: WEEKLY_MENU_TRIGGER,
+      exact: true,
+    });
+  }
+
+  private get weeklyMenu() {
+    return this.page.getByRole("menu");
+  }
+
+  private weeklyMenuItem(action: WeeklyAction): Locator {
+    return this.weeklyMenu.getByRole("menuitem", { name: action, exact: true });
+  }
+
+  private get weeklySchedule() {
     return this.weeklyPanel
-      .getByRole("list", { name: "Weeks to come" })
-      .getByRole("listitem");
+      .getByText("Schedule", { exact: true })
+      .locator("xpath=following-sibling::*[1]");
   }
 
-  private weekAt(week: PickedCheckIn): Locator {
-    return this.rows.listedAt(this.weeks, week);
+  private async openWeeklyMenuByKeyboard(): Promise<void> {
+    await expect(async () => {
+      if (!(await this.weeklyMenu.isVisible())) {
+        await tabTo(this.page, this.weeklyMenuTrigger);
+        await this.page.keyboard.press("Enter");
+      }
+      await expect(this.weeklyMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
   }
 
-  private weeklyButton(action: WeeklyAction): Locator {
-    return this.weeklyPanel.getByRole("button", { name: action, exact: true });
+  private async focusWeeklyMenuItemByKeyboard(
+    action: WeeklyAction,
+  ): Promise<void> {
+    await this.openWeeklyMenuByKeyboard();
+    const item = this.weeklyMenuItem(action);
+
+    await expect(async () => {
+      if (!(await isFocused(item))) {
+        await this.page.keyboard.press("ArrowDown");
+      }
+      expect(await isFocused(item)).toBe(true);
+    }).toPass({ intervals: [ARROW_SETTLE_MS] });
   }
 
   private awaitingOnboardingReason(gender: VisitorGender): string {
@@ -172,7 +222,7 @@ export class CoachClientPage {
 
   private setUpActionFor(gender: VisitorGender): DisabledAction {
     return new DisabledAction(this.page, {
-      button: this.weeklyButton("Set up"),
+      button: this.setUpWeeklyButton,
       opens: this.weeklyDialog,
       reason: this.awaitingOnboardingReason(gender),
       focusByKeyboard: () => this.tabToSetUpOnceHintsSettle(),
@@ -180,7 +230,7 @@ export class CoachClientPage {
   }
 
   private async tabToSetUpOnceHintsSettle(): Promise<void> {
-    const setUp = this.weeklyButton("Set up");
+    const setUp = this.setUpWeeklyButton;
 
     if (await isFocused(setUp)) {
       await this.page.keyboard.press("Shift+Tab");
@@ -754,9 +804,9 @@ export class CoachClientPage {
     await expect(
       this.weeklyPanel.getByText(NO_WEEKLY_CHECK_IN, { exact: true }),
     ).toBeVisible();
-    await expect(this.weeklyButton("Set up")).toBeEnabled();
-    await expect(this.weeklyButton("Stop")).toHaveCount(0);
-    await expect(this.weeks).toHaveCount(0);
+    await expect(this.setUpWeeklyButton).toBeEnabled();
+    await expect(this.weeklyMenuTrigger).toHaveCount(0);
+    await expect(this.nextWeeklyRow()).toHaveCount(0);
   }
 
   async expectSetUpBlocked(gender: VisitorGender): Promise<void> {
@@ -788,23 +838,38 @@ export class CoachClientPage {
       this.weeklyPanel.getByText(NO_WEEKLY_CHECK_IN, { exact: true }),
     ).toHaveCount(0);
     await expect(this.weeklyPanel.getByRole("button")).toHaveCount(0);
+    await expect(this.weeklyPanel.getByRole("link")).toHaveCount(0);
   }
 
   async openWeeklyDialog(): Promise<void> {
-    await this.openDialogWith(this.weeklyButton("Set up"), this.weeklyDialog);
+    await this.openDialogWith(this.setUpWeeklyButton, this.weeklyDialog);
+  }
+
+  async openWeeklyMenu(): Promise<void> {
+    await expect(async () => {
+      if (!(await this.weeklyMenu.isVisible())) {
+        await this.weeklyMenuTrigger.click();
+      }
+      await expect(this.weeklyMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
   }
 
   async openChangeDialog(): Promise<void> {
-    await this.openDialogWith(this.weeklyButton("Change"), this.weeklyDialog);
+    await this.openWeeklyMenu();
+    await this.weeklyMenuItem("Change").click();
+    await expect(this.weeklyDialog).toBeVisible();
   }
 
   async openStopWeekly(): Promise<void> {
-    await this.weeklyButton("Stop").click();
+    await this.openWeeklyMenu();
+    await this.weeklyMenuItem("Stop").click();
   }
 
   async openWeeklyDialogWithKeyboard(): Promise<void> {
     await expect(async () => {
-      await tabTo(this.page, this.weeklyButton("Set up"));
+      await tabTo(this.page, this.setUpWeeklyButton);
       await this.page.keyboard.press("Enter");
       await expect(this.weeklyDialog).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
@@ -813,53 +878,49 @@ export class CoachClientPage {
   }
 
   async openStopWeeklyWithKeyboard(): Promise<void> {
-    await tabTo(this.page, this.weeklyButton("Stop"));
+    await this.focusWeeklyMenuItemByKeyboard("Stop");
     await this.page.keyboard.press("Enter");
   }
 
-  async expectWeeklyActionFocused(action: WeeklyAction): Promise<void> {
-    await expect(this.weeklyButton(action)).toBeFocused();
+  async expectWeeklyMenuFocused(): Promise<void> {
+    await expect(this.weeklyMenuTrigger).toBeFocused();
+  }
+
+  async expectSetUpFocused(): Promise<void> {
+    await expect(this.setUpWeeklyButton).toBeFocused();
   }
 
   async expectWeeklyRule(rule: string): Promise<void> {
-    await expect(
-      this.weeklyPanel.getByText(rule, { exact: true }),
-    ).toBeVisible();
-    await expect(this.weeklyButton("Change")).toBeEnabled();
-    await expect(this.weeklyButton("Stop")).toBeEnabled();
+    await expect(this.weeklySchedule).toHaveText(rule);
+    await expect(this.weeklyMenuTrigger).toBeEnabled();
+    await expect(this.setUpWeeklyButton).toHaveCount(0);
   }
 
-  async expectWeeks(starts: readonly Date[], timeZone: string): Promise<void> {
-    await expect(this.weeks).toHaveCount(starts.length);
-
-    for (const [week, startsAt] of starts.entries()) {
-      await this.rows.expectShownAt(this.weeks.nth(week), {
-        startsAt,
-        timeZone,
-      });
-    }
+  nextWeeklyRow(): Locator {
+    return this.weeklyPanel.getByRole("link", { name: NEXT_WEEKLY_ROW });
   }
 
-  async expectOnlyClash(week: PickedCheckIn): Promise<void> {
-    await this.expectClashesAt([week]);
+  async expectNextWeeklyRow(week: PickedCheckIn): Promise<void> {
+    await this.expectNextWeeklyAt(week);
+    await this.rows.expectNoClash(this.nextWeeklyRow());
   }
 
-  async expectClashesAt(weeks: readonly PickedCheckIn[]): Promise<void> {
-    const clashes = this.weeks.filter({
-      has: this.page.getByText("Clash", { exact: true }),
-    });
-
-    await expect(clashes).toHaveCount(weeks.length);
-    for (const week of weeks) {
-      await this.rows.expectClash(this.rows.listedAt(clashes, week));
-    }
+  async expectNextWeeklyClash(week: PickedCheckIn): Promise<void> {
+    await this.expectNextWeeklyAt(week);
+    await this.rows.expectClash(this.nextWeeklyRow());
   }
 
-  async rescheduleWeek(week: PickedCheckIn): Promise<void> {
-    await this.rows.choose(this.weekAt(week), "Reschedule");
+  private async expectNextWeeklyAt(week: PickedCheckIn): Promise<void> {
+    await expect(this.nextWeeklyRow()).toHaveCount(1);
+    await expect(this.nextWeeklyRow()).toHaveAttribute(
+      "href",
+      CHECK_IN_FOCUS_URL,
+    );
+    await this.rows.expectShownAt(this.nextWeeklyRow(), week);
   }
 
-  async cancelWeek(week: PickedCheckIn): Promise<void> {
-    await this.rows.choose(this.weekAt(week), "Cancel");
+  async openNextWeeklyRow(): Promise<void> {
+    await this.nextWeeklyRow().click();
+    await expect(this.page).toHaveURL(CHECK_IN_FOCUS_URL);
   }
 }

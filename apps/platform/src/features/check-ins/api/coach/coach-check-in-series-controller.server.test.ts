@@ -66,17 +66,15 @@ const WEEK = CheckIn.seriesOccurrence({
 });
 
 describe("CoachCheckInSeriesController loadClientSeries", () => {
-  it("hands the coach her client's series with every week still to come", async () => {
+  it("hands the coach her client's series with her next week to come", async () => {
     // arrange
     const { controller } = createController({
       read: {
         series: SERIES,
-        occurrences: [
-          {
-            ...WEEK.viewFor({ party: "coach", at: NOW }),
-            client: { firstName: "Ana", lastName: "Popescu" },
-          },
-        ],
+        nextWeek: {
+          ...WEEK.viewFor({ party: "coach", at: NOW }),
+          client: { firstName: "Ana", lastName: "Popescu" },
+        },
         coachingEnds: false,
       },
     });
@@ -92,18 +90,16 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
         hour: 18,
         timeZone: "Europe/Bucharest",
       },
-      weeks: [
-        expect.objectContaining({
-          id: WEEK_ID,
-          seriesId: SERIES_ID,
-          kind: "recurring",
-          status: "approved",
-          tab: "upcoming",
-          startsAt: "2026-10-14T15:00:00.000Z",
-          clientId: CLIENT_ID,
-          client: { firstName: "Ana", lastName: "Popescu" },
-        }),
-      ],
+      nextWeek: expect.objectContaining({
+        id: WEEK_ID,
+        seriesId: SERIES_ID,
+        kind: "recurring",
+        status: "approved",
+        tab: "upcoming",
+        startsAt: "2026-10-14T15:00:00.000Z",
+        clientId: CLIENT_ID,
+        client: { firstName: "Ana", lastName: "Popescu" },
+      }),
       coachingEnds: false,
     });
   });
@@ -116,20 +112,24 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
     const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(panel).toEqual({ series: null, weeks: [], coachingEnds: false });
+    expect(panel).toEqual({
+      series: null,
+      nextWeek: null,
+      coachingEnds: false,
+    });
   });
 
   it("hands that her coaching ends so the panel offers no weekly check-in", async () => {
     // arrange
     const { controller } = createController({
-      read: { series: null, occurrences: [], coachingEnds: true },
+      read: { series: null, nextWeek: null, coachingEnds: true },
     });
 
     // act
     const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(panel).toEqual({ series: null, weeks: [], coachingEnds: true });
+    expect(panel).toEqual({ series: null, nextWeek: null, coachingEnds: true });
   });
 
   it("answers 404 for a client id that is not one", async () => {
@@ -436,7 +436,7 @@ function createController(
   const readCoachClientSeries = vi
     .fn()
     .mockResolvedValue(
-      answers.read ?? { series: null, occurrences: [], coachingEnds: false },
+      answers.read ?? { series: null, nextWeek: null, coachingEnds: false },
     );
   const previewCheckInSeries = vi
     .fn()

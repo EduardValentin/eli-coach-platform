@@ -77,6 +77,21 @@ export class CoachCheckInsPage {
     ).toBeFocused();
   }
 
+  async expectWeekLanded(
+    tab: CheckInTab,
+    showing: string,
+    week: PickedCheckIn,
+  ): Promise<void> {
+    await expect(this.page).toHaveURL(REVIEW_URL);
+    await expect(this.heading).toBeVisible();
+    await this.expectTabShown(tab);
+    await expect(
+      this.rows
+        .listedAt(this.checkIn(tab, showing), week)
+        .locator(CHECK_IN_ANCHOR),
+    ).toBeFocused();
+  }
+
   async expectReviewOpenedAsUsual(tab: CheckInTab): Promise<void> {
     await expect(this.page).toHaveURL(REVIEW_URL);
     await expect(this.heading).toBeVisible();
@@ -384,6 +399,18 @@ export class CoachCheckInsPage {
     await expect(first).toContainText(showing);
     await expect(first).toContainText(FINDING_A_NEW_TIME);
     await this.rows.expectClash(first);
+  }
+
+  async expectClashesAt(
+    showing: string,
+    weeks: readonly PickedCheckIn[],
+  ): Promise<void> {
+    const listed = await this.shownRow("Requests", showing);
+
+    await expect(listed).toHaveCount(weeks.length);
+    for (const week of weeks) {
+      await this.rows.expectClash(this.rows.listedAt(listed, week));
+    }
   }
 
   async expectCancelledInPast(

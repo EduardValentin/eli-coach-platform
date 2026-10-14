@@ -121,7 +121,7 @@ describe("ReadCoachClientSeriesUseCase", () => {
     // assert
     expect(result).toEqual({
       series: null,
-      occurrences: [],
+      nextWeek: null,
       coachingEnds: false,
     });
     expect(ports.incidents.checkInSeriesReadFailed).toHaveBeenCalledWith({
@@ -130,7 +130,7 @@ describe("ReadCoachClientSeriesUseCase", () => {
     });
   });
 
-  it("reads her active series with every week still to come for the coach, soonest first, untrimmed", async () => {
+  it("reads her active series with the soonest week still to come for the coach", async () => {
     // arrange
     const { ports, read } = createRead({
       active: CheckInSeries.reconstitute(SERIES),
@@ -151,13 +151,26 @@ describe("ReadCoachClientSeriesUseCase", () => {
     expect(ports.series.listOccurrences).toHaveBeenCalledWith("series-1");
     expect(result.series).toEqual(SERIES);
     expect(result.coachingEnds).toBe(false);
-    expect(
-      result.occurrences.map((view) => [view.id, view.tab, view.client]),
-    ).toEqual([
-      ["week-1", "requests", { firstName: "Ana", lastName: "Popescu" }],
-      ["week-2", "requests", { firstName: "Ana", lastName: "Popescu" }],
-      ["week-3", "upcoming", { firstName: "Ana", lastName: "Popescu" }],
-    ]);
+    expect(result.nextWeek).toMatchObject({
+      id: "week-1",
+      tab: "requests",
+      client: { firstName: "Ana", lastName: "Popescu" },
+    });
+  });
+
+  it("reads no week to come once every week of her series is past", async () => {
+    // arrange
+    const { read } = createRead({
+      active: CheckInSeries.reconstitute(SERIES),
+      occurrences: [weekOf(0), weekOf(4, { recordedStatus: "cancelled" })],
+    });
+
+    // act
+    const result = await read.execute("client-1");
+
+    // assert
+    expect(result.series).toEqual(SERIES);
+    expect(result.nextWeek).toBeNull();
   });
 
   it("reads no series and no week for a client without an active series", async () => {
@@ -170,7 +183,7 @@ describe("ReadCoachClientSeriesUseCase", () => {
     // assert
     expect(result).toEqual({
       series: null,
-      occurrences: [],
+      nextWeek: null,
       coachingEnds: false,
     });
     expect(ports.series.listOccurrences).not.toHaveBeenCalled();
@@ -204,7 +217,7 @@ describe("ReadCoachClientSeriesUseCase", () => {
       // assert
       expect(result).toEqual({
         series: null,
-        occurrences: [],
+        nextWeek: null,
         coachingEnds: true,
       });
     },

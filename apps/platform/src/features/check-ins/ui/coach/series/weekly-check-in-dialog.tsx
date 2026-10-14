@@ -1,6 +1,9 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
-import { TimeSlotButton } from "@eli-coach-platform/ui/calendar";
+import {
+  TimeSlotButton,
+  type TimeSlotDetail,
+} from "@eli-coach-platform/ui/calendar";
 import {
   ResponsiveSheetDialog,
   SheetDialogBody,
@@ -15,7 +18,14 @@ import {
   ChoiceOption,
 } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { generatePath, useFetcher } from "react-router";
 
 import { formatClockHour } from "~/features/assessment-calls/public/call-moment";
@@ -55,15 +65,22 @@ type SeriesHour = {
   hour: number;
 };
 
+type ClashCounting = "counted" | "counting";
+
 type HoursListing =
   | { status: "loading" }
   | { status: "failed" }
-  | { status: "ready"; hours: readonly SeriesHour[] };
+  | {
+      status: "ready";
+      hours: readonly SeriesHour[];
+      clashes: ClashCounting;
+    };
 
 type WeeklyCheckInDialogProps = {
   client: WeeklyCheckInClient;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  returnFocusTo: RefObject<HTMLElement | null>;
   suggestedWeekday: Weekday | null;
   target: WeeklyCheckInTarget;
 };
@@ -106,6 +123,7 @@ export function WeeklyCheckInDialog({
   client,
   onOpenChange,
   open,
+  returnFocusTo,
   suggestedWeekday,
   target,
 }: WeeklyCheckInDialogProps) {
@@ -181,6 +199,7 @@ export function WeeklyCheckInDialog({
       initialFocus={titleRef}
       onOpenChange={onOpenChange}
       open={open}
+      returnFocusTo={returnFocusTo}
       title={title}
       width="fit"
     >
@@ -350,10 +369,16 @@ function hoursListingOf(
   reply: ReturnType<typeof checkInSeriesPreviewSchema.safeParse>,
   { data, state }: { data: unknown; state: string },
 ): HoursListing {
-  if (state !== "idle" || data === undefined) return LOADING;
+  if (state !== "idle") {
+    return reply.success
+      ? { status: "ready", hours: reply.data.hours, clashes: "counting" }
+      : LOADING;
+  }
+
+  if (data === undefined) return LOADING;
 
   return reply.success
-    ? { status: "ready", hours: reply.data.hours }
+    ? { status: "ready", hours: reply.data.hours, clashes: "counted" }
     : { status: "failed" };
 }
 
@@ -391,10 +416,21 @@ function problemCopyOf(
   return copy[problem] ?? "The weekly check-in wasn't saved. Try again.";
 }
 
-function clashesLabel(clashes: number): string | null {
-  if (clashes === 0) return null;
+function clashesDetailOf(
+  clashes: number,
+  counting: ClashCounting,
+): TimeSlotDetail | undefined {
+  if (counting === "counting") {
+    return { kind: "loading", parity: "hour-clashes-loading" };
+  }
 
-  return clashes === 1 ? "1 clash" : `${clashes} clashes`;
+  if (clashes === 0) return undefined;
+
+  return {
+    kind: "text",
+    parity: "hour-clashes",
+    text: clashes === 1 ? "1 clash" : `${clashes} clashes`,
+  };
 }
 
 function HourChoice({
@@ -428,26 +464,21 @@ function HourChoice({
 
   return (
     <ul
+      aria-busy={listing.clashes === "counting" || undefined}
       aria-labelledby={labelledBy}
       className="grid gap-2"
       data-parity="series-hours"
     >
-      {listing.hours.map((offered) => {
-        const clashes = clashesLabel(offered.clashes);
-
-        return (
-          <li key={offered.hour}>
-            <TimeSlotButton
-              detail={
-                clashes ? { parity: "hour-clashes", text: clashes } : undefined
-              }
-              isSelected={hour === offered.hour}
-              label={formatClockHour(offered.hour)}
-              onSelect={() => onChooseHour(offered.hour)}
-            />
-          </li>
-        );
-      })}
+      {listing.hours.map((offered) => (
+        <li key={offered.hour}>
+          <TimeSlotButton
+            detail={clashesDetailOf(offered.clashes, listing.clashes)}
+            isSelected={hour === offered.hour}
+            label={formatClockHour(offered.hour)}
+            onSelect={() => onChooseHour(offered.hour)}
+          />
+        </li>
+      ))}
     </ul>
   );
 }
