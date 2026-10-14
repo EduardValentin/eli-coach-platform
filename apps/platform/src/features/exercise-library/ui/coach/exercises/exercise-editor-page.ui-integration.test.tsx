@@ -495,7 +495,12 @@ describe("editing an exercise", () => {
     expect(screen.getByRole("textbox", { name: "Form cues" })).toHaveValue(
       "Exhale slowly.",
     );
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+    expect(
+      await screen.findByRole("button", {
+        name: "Save changes",
+        disabled: false,
+      }),
+    ).toBeEnabled();
   });
 
   it("keeps its own name free while flagging another exercise's", async () => {
