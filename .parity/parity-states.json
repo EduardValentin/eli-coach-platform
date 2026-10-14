@@ -1941,6 +1941,12 @@
     "real": [
       {
         "use": "onboarding-complete-form1"
+      },
+      {
+        "wait": 500
+      },
+      {
+        "waitFor": "text=15 to 69"
       }
     ]
   },
@@ -3831,10 +3837,10 @@
         "click": "role=option[name=\"Intermediate\" s]"
       },
       {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Strength"
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Strength\" s]"
       },
       {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Hypertrophy"
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
       },
       {
         "fill": [
@@ -3878,7 +3884,7 @@
         "click": "role=option[name=\"Advanced\" s]"
       },
       {
-        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Hypertrophy"
+        "click": "[data-parity=\"exercise-tag-chips\"] >> role=checkbox[name=\"Hypertrophy\" s]"
       },
       {
         "click": "role=button[name=\"Create exercise\" s]"
