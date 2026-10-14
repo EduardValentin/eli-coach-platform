@@ -212,7 +212,10 @@ export class ExerciseEditorPage {
     await this.page.keyboard.type(exercise.name);
     await this.chooseByKeyboard("Type", exercise.type);
     await this.chooseByKeyboard("Measured in", exercise.unit);
-    await tabTo(this.page, this.page.getByRole("radiogroup", { name: "Sides" }));
+    await tabTo(
+      this.page,
+      this.page.getByRole("radiogroup", { name: "Sides" }),
+    );
     await this.page.keyboard.press(
       exercise.sides === "One side at a time" ? "ArrowRight" : "ArrowLeft",
       { delay: HELD_KEY_MS },
