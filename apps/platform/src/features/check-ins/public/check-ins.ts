@@ -38,6 +38,7 @@ const CHECK_IN_REFUSALS = [
   "client_cannot_answer",
   "time_taken",
   "moves_exhausted",
+  "not_next_weekly",
   "not_pending",
   "ended",
   "series_exists",

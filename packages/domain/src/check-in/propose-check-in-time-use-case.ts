@@ -4,6 +4,7 @@ import type { Clock } from "../shared";
 
 import {
   CheckIn,
+  type CheckInLaterWeekRefusal,
   type CheckInProposalRefusal,
   type CheckInSnapshot,
 } from "./check-in";
@@ -29,7 +30,8 @@ export type ProposeCheckInTimeResult =
   | { status: "note_too_long" }
   | { status: "time_taken" }
   | { status: "changed_meanwhile" }
-  | { status: CheckInProposalRefusal };
+  | { status: CheckInProposalRefusal }
+  | { status: CheckInLaterWeekRefusal };
 
 type OpenStartCheck = {
   startsAt: Date;
@@ -39,7 +41,7 @@ type OpenStartCheck = {
 
 type ProposeCheckInTimeUseCaseOptions = {
   availability: CoachAvailabilitySource;
-  checkIns: Pick<CheckIns, "find" | "move">;
+  checkIns: Pick<CheckIns, "find" | "listForClient" | "move">;
   clients: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
@@ -90,6 +92,18 @@ export class ProposeCheckInTimeUseCase {
 
     if (proposal.status !== "proposed") {
       return proposal;
+    }
+
+    const laterWeek = checkIn.laterWeekRefusalFor({
+      party,
+      at,
+      clientCheckIns: await this.options.checkIns.listForClient(
+        checkIn.clientId,
+      ),
+    });
+
+    if (laterWeek) {
+      return { status: laterWeek };
     }
 
     const client = await this.options.clients.findById(checkIn.clientId);

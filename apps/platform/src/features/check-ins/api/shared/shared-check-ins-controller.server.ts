@@ -230,6 +230,7 @@ export class SharedCheckInsController {
       case "ended":
       case "time_taken":
       case "moves_exhausted":
+      case "not_next_weekly":
         return refusedCheckIn(result.status);
       case "changed_meanwhile":
       case "not_pending":

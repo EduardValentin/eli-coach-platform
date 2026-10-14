@@ -29,6 +29,7 @@ export type CheckInOutcome = Exclude<
 >;
 export type CheckInAnswerRefusal = "not_pending" | "expired" | "not_your_turn";
 export type CheckInProposalRefusal = CheckInAnswerRefusal | "moves_exhausted";
+export type CheckInLaterWeekRefusal = "not_next_weekly";
 export type CheckInCancellationRefusal =
   "not_approved" | "expired" | "not_allowed";
 export type CheckInRefusal =
@@ -111,6 +112,10 @@ type LearnedOccurrence = {
 };
 
 type PartyAtInstant = { party: CheckInParty; at: Date };
+
+type ClientCheckInsTurn = PartyAtInstant & {
+  clientCheckIns: readonly CheckIn[];
+};
 
 type SettledAnswer = {
   outcome: CheckInOutcome;
@@ -410,6 +415,24 @@ export class CheckIn {
     };
   }
 
+  laterWeekRefusalFor({
+    clientCheckIns,
+    ...turn
+  }: ClientCheckInsTurn): CheckInLaterWeekRefusal | null {
+    if (turn.party === "coach" || !this.isUpcomingWeekFor(turn)) {
+      return null;
+    }
+
+    const followsUpcomingWeek = clientCheckIns.some(
+      (other) =>
+        other.seriesId === this.seriesId &&
+        other.startsAt < this.startsAt &&
+        other.isUpcomingWeekFor(turn),
+    );
+
+    return followsUpcomingWeek ? "not_next_weekly" : null;
+  }
+
   cancellationRefusalFor({
     party,
     at,
@@ -458,6 +481,10 @@ export class CheckIn {
 
   private wasMoved(): boolean {
     return this.earlierStartsAt !== null;
+  }
+
+  private isUpcomingWeekFor(viewer: PartyAtInstant): boolean {
+    return this.seriesId !== null && this.tabFor(viewer) === "upcoming";
   }
 
   private holdsNoAnswerYet(): boolean {

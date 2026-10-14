@@ -1598,6 +1598,116 @@ describe("CheckIn weekly rights", () => {
   });
 });
 
+describe("CheckIn#laterWeekRefusalFor", () => {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function weekOf(index: number, props?: Partial<CheckInProps>): CheckIn {
+    return weeklyCheckIn({
+      id: `week-${index}`,
+      startsAt: new Date(STARTS_AT.getTime() + index * WEEK_MS),
+      ...props,
+    });
+  }
+
+  it.each([
+    {
+      situation: "the next approved week",
+      subject: weekOf(0),
+      earlier: [],
+    },
+    {
+      situation: "a later week whose earlier week waits on her answer",
+      subject: weekOf(1),
+      earlier: [
+        weekOf(0, {
+          recordedStatus: "pending",
+          startsAt: NEW_START,
+          earlierStartsAt: STARTS_AT,
+          moves: 1,
+        }),
+      ],
+    },
+    {
+      situation: "a later week whose earlier week was cancelled",
+      subject: weekOf(1),
+      earlier: [weekOf(0, { recordedStatus: "cancelled" })],
+    },
+    {
+      situation: "a later week of another series",
+      subject: weekOf(1, { seriesId: "series-2" }),
+      earlier: [weekOf(0)],
+    },
+    {
+      situation: "a later week the coach moved, waiting on her answer",
+      subject: weekOf(1, {
+        recordedStatus: "pending",
+        earlierStartsAt: STARTS_AT,
+        moves: 1,
+      }),
+      earlier: [weekOf(0)],
+    },
+    {
+      situation: "an ad hoc check-in after another ad hoc one",
+      subject: approvedCheckIn({ startsAt: NEW_START }),
+      earlier: [approvedCheckIn({ id: "ad-hoc-0" })],
+    },
+  ])("lets the client move $situation", ({ subject, earlier }) => {
+    // arrange
+    const turn = {
+      party: "client" as const,
+      at: BEFORE_START,
+      clientCheckIns: [...earlier, subject],
+    };
+
+    // act
+    const refusal = subject.laterWeekRefusalFor(turn);
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+
+  it.each([
+    { situation: "an approved", earlier: weekOf(0) },
+    {
+      situation: "a clashing",
+      earlier: weekOf(0, { recordedStatus: "clash" }),
+    },
+  ])(
+    "refuses the client a later approved week while $situation week comes first",
+    ({ earlier }) => {
+      // arrange
+      const later = weekOf(1);
+      const turn = {
+        party: "client" as const,
+        at: BEFORE_START,
+        clientCheckIns: [later, earlier],
+      };
+
+      // act
+      const refusal = later.laterWeekRefusalFor(turn);
+
+      // assert
+      expect(refusal).toBe("not_next_weekly");
+    },
+  );
+
+  it("lets the coach move any week", () => {
+    // arrange
+    const later = weekOf(1);
+    const turn = {
+      party: "coach" as const,
+      at: BEFORE_START,
+      clientCheckIns: [weekOf(0), later],
+    };
+
+    // act
+    const refusal = later.laterWeekRefusalFor(turn);
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+});
+
 describe("CheckIn clash rights", () => {
   const clash = weeklyCheckIn({ recordedStatus: "clash" });
 

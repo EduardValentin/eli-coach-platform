@@ -337,6 +337,38 @@ describe.sequential("check-in series integration", () => {
         endsAt: new Date("2026-10-22T16:00:00.000Z"),
       });
     });
+
+    it("lets her move only her next week and refuses a later one with 409", async () => {
+      // arrange
+      const clientId = await submittedAna();
+      const seriesId = await checkIns.seriesSetUp({
+        clientId,
+        ...THURSDAY_EVENINGS,
+      });
+      const [next, later] = await checkIns.seriesWeekRowsOf(seriesId);
+
+      // act
+      const onLater = await checkIns.proposeNewTime(
+        ANA_SESSION,
+        later?.id ?? "",
+        { startsAt: FIRST_THURSDAY_LATER_HOUR },
+      );
+      const onNext = await checkIns.proposeNewTime(
+        ANA_SESSION,
+        next?.id ?? "",
+        { startsAt: FIRST_THURSDAY_LATER_HOUR },
+      );
+
+      // assert
+      expect(onLater.status).toBe(409);
+      expect(await onLater.json()).toEqual({ error: "not_next_weekly" });
+      expect(onNext.status).toBe(200);
+      expect(await checkIns.movedRowOf(later?.id ?? "")).toMatchObject({
+        status: "approved",
+        startsAt: new Date(SECOND_THURSDAY),
+        moves: 0,
+      });
+    });
   });
 
   describe("changing", () => {

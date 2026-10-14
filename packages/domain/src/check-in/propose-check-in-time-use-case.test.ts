@@ -87,6 +87,7 @@ function workingDays(): CoachAvailabilitySource {
 
 function createProposeCheckInTime(options?: {
   found?: CheckIn | null;
+  clientCheckIns?: CheckIn[];
   moved?: CheckInMove;
   reference?: ClientReachReading | null;
   client?: ClientReachReading | null;
@@ -98,7 +99,7 @@ function createProposeCheckInTime(options?: {
       .mockResolvedValue(
         options?.found === undefined ? checkIn() : options.found,
       ),
-    listForClient: vi.fn(),
+    listForClient: vi.fn().mockResolvedValue(options?.clientCheckIns ?? []),
     listAll: vi.fn(),
     settle: vi.fn(),
     move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
@@ -230,6 +231,65 @@ describe("ProposeCheckInTimeUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not_your_turn" });
     expect(ports.checkIns.move).not.toHaveBeenCalled();
+  });
+
+  describe("on a weekly check-in", () => {
+    const WEEKLY = {
+      seriesId: "series-1",
+      kind: "recurring",
+      initiatedBy: "coach",
+      proposedBy: "coach",
+      note: null,
+    } satisfies Partial<CheckInProps>;
+    const NEXT_WEEK = checkIn({ ...WEEKLY, id: "week-0" });
+    const LATER_WEEK = checkIn({
+      ...WEEKLY,
+      id: "week-1",
+      startsAt: new Date("2026-06-10T09:00:00.000Z"),
+    });
+
+    it("refuses the client a later week while an earlier one is upcoming, without moving or emailing", async () => {
+      // arrange
+      const { proposeCheckInTime, ports } = createProposeCheckInTime({
+        found: LATER_WEEK,
+        clientCheckIns: [NEXT_WEEK, LATER_WEEK],
+      });
+
+      // act
+      const result = await proposeCheckInTime.execute({
+        ...COACH_PROPOSAL,
+        checkInId: "week-1",
+        actor: ANA_ACTOR,
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not_next_weekly" });
+      expect(ports.checkIns.listForClient).toHaveBeenCalledWith("client-1");
+      expect(ports.checkIns.move).not.toHaveBeenCalled();
+      expect(ports.notifications.newTimeProposed).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { party: "client", actor: ANA_ACTOR, found: NEXT_WEEK },
+      { party: "coach", actor: COACH, found: LATER_WEEK },
+    ])("moves the week the $party may move", async ({ actor, found }) => {
+      // arrange
+      const { proposeCheckInTime, ports } = createProposeCheckInTime({
+        found,
+        clientCheckIns: [NEXT_WEEK, LATER_WEEK],
+      });
+
+      // act
+      const result = await proposeCheckInTime.execute({
+        ...COACH_PROPOSAL,
+        checkInId: found.id,
+        actor,
+      });
+
+      // assert
+      expect(result.status).toBe("proposed");
+      expect(ports.checkIns.move).toHaveBeenCalled();
+    });
   });
 
   it("emails the client the coach's new time", async () => {

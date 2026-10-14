@@ -54,6 +54,7 @@ const OK = 200;
 const CONFLICT = 409;
 const CANNOT_ANSWER = { error: "client_cannot_answer" };
 const MOVES_EXHAUSTED = { error: "moves_exhausted" };
+const NOT_NEXT_WEEKLY = { error: "not_next_weekly" };
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const HOURS_SINCE_PASSED = 3;
@@ -762,7 +763,7 @@ test.describe("while a clash waits for the coach", () => {
 });
 
 test(
-  "a new time for a clash spends neither of its two moves, either side then moves the weekly check-in with the usual emails, and the client sees only that next weekly check-in",
+  "a new time for a clash spends neither of its two moves, either side then moves the weekly check-in with the usual emails, and the client sees and moves only that next weekly check-in",
   { tag: "@completeness" },
   async ({
     checkInProposeDialog,
@@ -788,7 +789,7 @@ test(
     await provisionCoach();
     const client = await provisionSubmittedClient("waiting");
     const weekly = weeklyAt(14);
-    const [clashingWeek] = weeklyStartsBetween(
+    const [clashingWeek, secondWeek] = weeklyStartsBetween(
       weekly,
       waitingPeriodOf(client.paidAt),
     );
@@ -871,15 +872,27 @@ test(
       client.clientId,
       coachMove.startsAt,
     );
+    const secondWeekId = await checkInRecords.idOf(
+      client.clientId,
+      secondWeek!,
+    );
 
     // act
     const movedAgain = await checkInRequests.proposeNewTime(movedWeekId, {
       startsAt: openTime!,
       timeZone: CLIENT_TIME_ZONE,
     });
+    const secondWeekMoved = await checkInRequests.proposeNewTime(secondWeekId, {
+      startsAt: openTime!,
+      timeZone: CLIENT_TIME_ZONE,
+    });
 
     // assert
     expect(movedAgain).toEqual({ status: CONFLICT, body: MOVES_EXHAUSTED });
+    expect(secondWeekMoved).toEqual({
+      status: CONFLICT,
+      body: NOT_NEXT_WEEKLY,
+    });
     await clientCheckIns.expectOneWeeklyUpcoming(COACH_MOVE_NOTE);
     await clientCheckIns.expectUpcomingAt(COACH_MOVE_NOTE, coachMove);
   },

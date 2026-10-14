@@ -242,6 +242,11 @@ describe("SharedCheckInsController proposeNewTime", () => {
       status: 409,
       error: "moves_exhausted",
     },
+    {
+      result: { status: "not_next_weekly" },
+      status: 409,
+      error: "not_next_weekly",
+    },
     { result: { status: "not_pending" }, status: 409, error: "not_pending" },
     {
       result: { status: "changed_meanwhile" },
