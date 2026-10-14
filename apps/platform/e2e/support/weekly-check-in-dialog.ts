@@ -72,7 +72,14 @@ export class WeeklyCheckInDialog {
   }
 
   async chooseWeekday(day: string): Promise<void> {
+    const weekday = `weekday=${day.toLowerCase()}`;
+    const previewed = this.page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/check-ins/series/preview") &&
+        response.url().includes(weekday),
+    );
     await this.weekday(day).click();
+    await (await previewed).finished();
     await expect(this.weekday(day)).toBeChecked();
     await expect(this.hours).toBeVisible();
   }
