@@ -11,7 +11,7 @@ export type ExerciseView = Omit<ExerciseSnapshot, "createdAt" | "updatedAt">;
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
 
 export type ExerciseEditorView = {
-  exercise: ExerciseView;
+  exercise: ExerciseView | null;
   otherNames: string[];
 };
 
@@ -28,6 +28,8 @@ export const exerciseRequestSchema = z.object({
   cues: z.string(),
 }) satisfies z.ZodType<ExerciseDraftInput>;
 
+export type ExerciseRequest = z.infer<typeof exerciseRequestSchema>;
+
 export const exerciseSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });
@@ -43,6 +45,8 @@ const exerciseProblemsSchema = z.object({
   tags: z.enum(["unknown"]).optional(),
   cues: z.enum(["too-long"]).optional(),
 }) satisfies z.ZodType<ExerciseDraftProblems>;
+
+export type ExerciseProblems = z.infer<typeof exerciseProblemsSchema>;
 
 export const exerciseProblemsAnswerSchema = z.object({
   problems: exerciseProblemsSchema,

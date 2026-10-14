@@ -175,6 +175,32 @@ describe("ExerciseLibraryController#list", () => {
   });
 });
 
+describe("ExerciseLibraryController#loadNew", () => {
+  it("opens a blank exercise with the names of every exercise in the library", async () => {
+    // arrange
+    const { controller } = createController();
+
+    // act
+    const editor = await controller.loadNew(argsFor());
+
+    // assert
+    expect(editor).toEqual({ exercise: null, otherNames: ["Hip thrust"] });
+  });
+
+  it("refuses a signed-in client", async () => {
+    // arrange
+    const { controller } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadNew(argsFor({ session: CLIENT_SESSION })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+  });
+});
+
 describe("ExerciseLibraryController#load", () => {
   it("presents the exercise with the names of the other exercises", async () => {
     // arrange

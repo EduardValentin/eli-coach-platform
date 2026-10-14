@@ -51,6 +51,16 @@ export class ExerciseLibraryController {
     return { exercises: exercises.map(presentExercise) };
   }
 
+  async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
+    requirePortalAccess(args, { role: "COACH" });
+    const { exercises } = await this.options.listExercises.execute();
+
+    return {
+      exercise: null,
+      otherNames: exercises.map((exercise) => exercise.name),
+    };
+  }
+
   async load(
     args: LoaderFunctionArgs,
     exerciseId: string | undefined,

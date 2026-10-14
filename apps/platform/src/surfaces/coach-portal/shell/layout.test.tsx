@@ -23,6 +23,7 @@ function renderCoachLayout(
       children: [
         { Component: () => <p>Dashboard page</p>, index: true },
         { Component: () => <h1>Clients</h1>, path: "clients/*" },
+        { Component: () => <h1>Exercises</h1>, path: "training/*" },
         { Component: () => <h1>Check-ins</h1>, path: "checkins" },
         {
           Component: () => <h1>Assessment calls</h1>,
@@ -85,7 +86,7 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the coach pages that exist, Dashboard first", async () => {
+  it("shows the coach pages that exist, Dashboard first and Training right after it", async () => {
     // arrange, act
     renderCoachLayout();
 
@@ -93,17 +94,16 @@ describe("CoachLayoutRoute", () => {
     const navigation = await findNavigation();
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(5);
-    expect(links[0]).toHaveAccessibleName("Dashboard");
-    expect(links[0]).toHaveAttribute("href", "/coach");
-    expect(links[1]).toHaveAccessibleName("Clients");
-    expect(links[1]).toHaveAttribute("href", "/coach/clients");
-    expect(links[2]).toHaveAccessibleName("Check-ins");
-    expect(links[2]).toHaveAttribute("href", "/coach/checkins");
-    expect(links[3]).toHaveAccessibleName("Assessment calls");
-    expect(links[3]).toHaveAttribute("href", "/coach/assessment-calls");
-    expect(links[4]).toHaveAccessibleName("Settings");
-    expect(links[4]).toHaveAttribute("href", "/coach/settings");
+    expect(
+      links.map((link) => [link.textContent, link.getAttribute("href")]),
+    ).toEqual([
+      ["Dashboard", "/coach"],
+      ["Training", "/coach/training"],
+      ["Clients", "/coach/clients"],
+      ["Check-ins", "/coach/checkins"],
+      ["Assessment calls", "/coach/assessment-calls"],
+      ["Settings", "/coach/settings"],
+    ]);
   });
 
   it("counts the check-ins waiting for her answer on the Check-ins entry", async () => {
@@ -160,6 +160,38 @@ describe("CoachLayoutRoute", () => {
 
     expect(
       within(navigation).getByRole("link", { name: "Clients" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("opens the exercise library from the Training entry in the mobile navigation", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCoachLayout();
+    await user.click(await screen.findByRole("button", { name: "Open menu" }));
+    const menu = await screen.findByRole("dialog", {
+      name: "Coach portal mobile navigation",
+    });
+
+    // act
+    await user.click(within(menu).getByRole("link", { name: "Training" }));
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Exercises" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the Training entry marked while she edits an exercise", async () => {
+    // arrange, act
+    renderCoachLayout(
+      "/coach/training/exercises/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    );
+
+    // assert
+    const navigation = await findNavigation();
+
+    expect(
+      within(navigation).getByRole("link", { name: "Training" }),
     ).toHaveAttribute("aria-current", "page");
   });
 

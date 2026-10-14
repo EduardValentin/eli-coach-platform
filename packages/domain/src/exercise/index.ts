@@ -8,6 +8,7 @@ export {
 } from "./edit-exercise-use-case";
 export { Exercise, type ExerciseSnapshot } from "./exercise";
 export {
+  ExerciseDraft,
   type ExerciseDraftInput,
   type ExerciseDraftProblems,
 } from "./exercise-draft";
@@ -25,9 +26,15 @@ export {
 export { ListExercisesUseCase } from "./list-exercises-use-case";
 export {
   DIFFICULTIES,
+  EQUIPMENT,
+  EXERCISE_TAGS,
   EXERCISE_TYPES,
   EXERCISE_UNITS,
   MAX_EXERCISE_NAME_LENGTH,
+  MAX_FORM_CUES_LENGTH,
+  MUSCLES,
+  defaultUnitFor,
+  unitsFor,
   type Difficulty,
   type Equipment,
   type ExerciseTag,

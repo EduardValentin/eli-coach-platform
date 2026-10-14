@@ -1,8 +1,28 @@
 import { relative } from "@react-router/dev/routes";
 
-import { EXERCISE_LIBRARY_API_PATHS } from "./public/paths";
+import {
+  COACH_TRAINING_ROUTE_SEGMENT,
+  EXERCISE_EDITOR_ROUTE_SEGMENT,
+  EXERCISE_LIBRARY_API_PATHS,
+  NEW_EXERCISE_ROUTE_SEGMENT,
+} from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
+
+const EXERCISE_EDITOR_PAGE = "./ui/coach/exercises/exercise-editor-page.tsx";
+
+export const exerciseLibraryCoachRoutes = [
+  route(
+    COACH_TRAINING_ROUTE_SEGMENT,
+    "./ui/coach/exercises/exercise-library-page.tsx",
+  ),
+  route(NEW_EXERCISE_ROUTE_SEGMENT, EXERCISE_EDITOR_PAGE, {
+    id: "features/exercise-library/new-exercise",
+  }),
+  route(EXERCISE_EDITOR_ROUTE_SEGMENT, EXERCISE_EDITOR_PAGE, {
+    id: "features/exercise-library/edit-exercise",
+  }),
+];
 
 export const exerciseLibraryApiRoutes = [
   route(
