@@ -11,16 +11,6 @@ export function coachCheckinPath(checkinId: string): string {
   return `${COACH_CHECKINS_PATH}?${CHECKIN_PARAM}=${encodeURIComponent(checkinId)}`;
 }
 
-export function coachSeriesCheckinPath(checkinId: string, clientName: string): string {
-  const params = new URLSearchParams({
-    [CHECKIN_PARAM]: checkinId,
-    [CHECKIN_KIND_PARAM]: 'recurring',
-    [CHECKIN_QUERY_PARAM]: clientName,
-  });
-
-  return `${COACH_CHECKINS_PATH}?${params}`;
-}
-
 export function checkinIdFromSearch(search: URLSearchParams): string | null {
   return search.get(CHECKIN_PARAM);
 }

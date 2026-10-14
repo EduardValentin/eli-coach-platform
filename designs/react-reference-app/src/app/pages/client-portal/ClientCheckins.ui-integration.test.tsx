@@ -519,6 +519,21 @@ describe('a check-in her coach scheduled', () => {
     expect(within(rowWith(COACH_REQUEST_NOTE)).getByRole('link', { name: 'Join Meet' })).toBeInTheDocument();
   });
 
+  it('offers her no Cancel once she approves it, since only her coach may cancel it', async () => {
+    // arrange
+    renderPage();
+    await showTab('Requests');
+    await userEvent.click(within(rowWith(COACH_REQUEST_NOTE)).getByRole('button', { name: 'Approve' }));
+    await screen.findByText('Check-in approved', {}, SERVICE_TIMEOUT);
+    await showTab('Upcoming');
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(rowWith(COACH_REQUEST_NOTE)));
+
+    // assert
+    expect(items).toEqual(['Reschedule']);
+  });
+
   it('moves to Past as cancelled once she declines it', async () => {
     // arrange
     renderPage();
@@ -928,8 +943,11 @@ function listedRows(): HTMLElement[] {
   return within(screen.getByRole('list', { name: /check-ins$/ })).getAllByRole('listitem');
 }
 
+const LATER_WEEK_REASON =
+  'You can move only your next weekly check-in; your coach can move the later ones.';
+
 describe('a weekly check-in on the client check-ins page', () => {
-  it('shows a clashing next week as her coach finding a new time, with nothing to act on', async () => {
+  it('shows a clashing week as her coach finding a new time, with nothing to act on', async () => {
     // arrange
     renderPage('&jstage=submitted');
     await seedOnlyWeeklySeries('With clashes');
@@ -939,26 +957,49 @@ describe('a weekly check-in on the client check-ins page', () => {
 
     // assert
     const [row, ...others] = listedRows();
-    expect(others).toHaveLength(0);
+    expect(others.length).toBeGreaterThan(0);
     expect(within(row).getByText('Clash')).toBeInTheDocument();
     expect(within(row).getByText('Your coach is finding a new time')).toBeInTheDocument();
     expect(within(row).queryByRole('link', { name: /Join/ })).not.toBeInTheDocument();
     expect(within(row).queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('lets her move her next weekly check-in but never cancel it', async () => {
+  it('lists every week to come and lets her move only the next one, never cancel one', async () => {
     // arrange
     renderPage('&jstage=submitted');
     await seedOnlyWeeklySeries('Active');
     await userEvent.click(screen.getByRole('tab', { name: /^Upcoming/ }));
-    const [row, ...others] = listedRows();
+    const [next, ...later] = listedRows();
 
     // act
-    await userEvent.click(within(row).getByRole('button', { name: /^More actions/ }));
+    await userEvent.click(moreActionsIn(next));
+    const nextReschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
+    const nextCancel = screen.queryByRole('menuitem', { name: 'Cancel' });
+    await userEvent.keyboard('{Escape}');
+    const laterMenus = [];
+    for (const row of later) laterMenus.push(await menuItemsBehind(moreActionsIn(row)));
 
     // assert
-    expect(others).toHaveLength(0);
-    expect(await screen.findByRole('menuitem', { name: 'Reschedule' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Cancel' })).not.toBeInTheDocument();
+    expect(later.length).toBeGreaterThan(0);
+    expect(nextReschedule).not.toHaveAttribute('aria-disabled');
+    expect(nextCancel).not.toBeInTheDocument();
+    for (const items of laterMenus) expect(items).toEqual(['Reschedule']);
+  });
+
+  it('holds Reschedule back on a later week and says why', async () => {
+    // arrange
+    renderPage('&jstage=submitted');
+    await seedOnlyWeeklySeries('Active');
+    await userEvent.click(screen.getByRole('tab', { name: /^Upcoming/ }));
+    const [, laterWeek] = listedRows();
+    await userEvent.click(moreActionsIn(laterWeek));
+    const reschedule = await screen.findByRole('menuitem', { name: 'Reschedule' });
+
+    // act
+    await userEvent.hover(reschedule);
+
+    // assert
+    expect(reschedule).toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByText(LATER_WEEK_REASON)).toBeInTheDocument();
   });
 });

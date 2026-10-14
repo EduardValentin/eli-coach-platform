@@ -5,6 +5,7 @@ import {
   canProposeFor,
   awaitsResponseFrom,
   canWithdrawRequest,
+  clientProposalAmong,
   checkinNote,
   checkinTabFor,
   checkinSchedulingFor,
@@ -19,7 +20,6 @@ import {
   isComingUp,
   isJoinable,
   isOpenClientRequest,
-  nextUpcomingOfEachSeries,
   latestMove,
   programReviewCheckin,
   proposalFor,
@@ -449,15 +449,32 @@ describe('cancelling an approved check-in', () => {
     expect(allowed).toBe(true);
   });
 
-  it('lets the client cancel an ad-hoc check-in', () => {
+  it('lets only the client cancel an ad-hoc check-in she requested', () => {
     // arrange
-    const adHoc = checkin({ kind: 'ad-hoc' });
+    const requested = checkin({ kind: 'ad-hoc', initiatedBy: 'client', proposedBy: 'client' });
 
     // act
-    const allowed = canCancelApproved(adHoc, 'client');
+    const allowed = [
+      canCancelApproved(requested, 'client'),
+      canCancelApproved(requested, 'coach'),
+    ];
 
     // assert
-    expect(allowed).toBe(true);
+    expect(allowed).toEqual([true, false]);
+  });
+
+  it('lets only the coach cancel an ad-hoc check-in she scheduled', () => {
+    // arrange
+    const scheduled = checkin({ kind: 'ad-hoc', initiatedBy: 'coach', proposedBy: 'coach' });
+
+    // act
+    const allowed = [
+      canCancelApproved(scheduled, 'coach'),
+      canCancelApproved(scheduled, 'client'),
+    ];
+
+    // assert
+    expect(allowed).toEqual([true, false]);
   });
 
   it('does not let the client cancel a recurring check-in', () => {
@@ -875,19 +892,48 @@ describe('the tab a check-in is listed under', () => {
   });
 });
 
-describe('upcoming weekly check-ins', () => {
-  it('keeps only the soonest week of each series beside every single check-in', () => {
-    // arrange
-    const laterWeek = checkin({ id: 'week-2', seriesId: 'series-1', date: '2026-10-28', time: '18:00' });
-    const soonestWeek = checkin({ id: 'week-1', seriesId: 'series-1', date: '2026-10-21', time: '18:00' });
-    const otherSeries = checkin({ id: 'other-1', seriesId: 'series-2', date: '2026-10-30', time: '17:00' });
-    const single = checkin({ id: 'single', kind: 'ad-hoc', date: '2026-10-29', time: '10:00' });
+describe('moving a weekly check-in from her Upcoming', () => {
+  const soonestWeek = checkin({ id: 'week-1', seriesId: 'series-1', date: '2026-10-21', time: '18:00' });
+  const laterWeek = checkin({ id: 'week-2', seriesId: 'series-1', date: '2026-10-28', time: '18:00' });
+  const single = checkin({ id: 'single', kind: 'ad-hoc', date: '2026-10-29', time: '10:00' });
+  const upcoming = [soonestWeek, laterWeek, single];
 
+  it('lets her move her next weekly check-in', () => {
+    // arrange
     // act
-    const listed = nextUpcomingOfEachSeries([laterWeek, single, soonestWeek, otherSeries]);
+    const proposal = clientProposalAmong(soonestWeek, upcoming);
 
     // assert
-    expect(listed.map((c) => c.id)).toEqual(['single', 'week-1', 'other-1']);
+    expect(proposal).toBe('allowed');
+  });
+
+  it('holds back a later week of the same series', () => {
+    // arrange
+    // act
+    const proposal = clientProposalAmong(laterWeek, upcoming);
+
+    // assert
+    expect(proposal).toBe('later_week');
+  });
+
+  it('leaves a single check-in to its own moves', () => {
+    // arrange
+    // act
+    const proposal = clientProposalAmong(single, upcoming);
+
+    // assert
+    expect(proposal).toBe('allowed');
+  });
+
+  it('offers nothing on a later week she could not move anyway', () => {
+    // arrange
+    const clashingLaterWeek = { ...laterWeek, status: 'clash' as const };
+
+    // act
+    const proposal = clientProposalAmong(clashingLaterWeek, upcoming);
+
+    // assert
+    expect(proposal).toBe('none');
   });
 });
 

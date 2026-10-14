@@ -9,7 +9,6 @@ import {
   holdsCoachTime,
   isComingUp,
   isOpenClientRequest,
-  nextUpcomingOfEachSeries,
   programReviewCheckin,
   proposalFor,
   withProposedTime,
@@ -153,7 +152,6 @@ interface CheckinContextType {
   hasLiveCheckin: boolean;
   setLiveCheckin: (live: boolean) => void;
   seriesFor: (clientId: string) => CheckinSeries | null;
-  seriesWeeks: (clientId: string) => CheckIn[];
   previewSeries: (clientId: string, weekday: number | null) => Promise<SeriesPreview>;
   setUpSeries: (client: CheckinClient, choice: SeriesChoice) => Promise<SeriesSetUpResult>;
   changeSeries: (client: CheckinClient, choice: SeriesChoice) => Promise<SeriesChangeResult>;
@@ -876,11 +874,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       const inTab = checkins.filter(
         (c) => forClient(clientId)(c) && checkinTabFor(statusOf(c), party) === tab,
       );
-      if (tab === 'upcoming') {
-        const upcoming = party === 'client' ? nextUpcomingOfEachSeries(inTab) : inTab;
-
-        return upcoming.sort(byStartAscending);
-      }
+      if (tab === 'upcoming') return inTab.sort(byStartAscending);
       if (tab === 'requests') return inTab.sort(byNewestFirst);
 
       return inTab.sort((a, b) => byStartAscending(b, a));
@@ -950,11 +944,6 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         ? checkins.filter((c) => c.seriesId === series.id && isComingUp(statusOf(c)))
         : [],
     [checkins, statusOf],
-  );
-
-  const seriesWeeks = useCallback(
-    (clientId: string) => comingUpWeeksOf(seriesFor(clientId)).sort(byStartAscending),
-    [comingUpWeeksOf, seriesFor],
   );
 
   const setUpBoundsFor = useCallback(
@@ -1198,7 +1187,6 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         hasLiveCheckin,
         setLiveCheckin,
         seriesFor,
-        seriesWeeks,
         previewSeries,
         setUpSeries,
         changeSeries,

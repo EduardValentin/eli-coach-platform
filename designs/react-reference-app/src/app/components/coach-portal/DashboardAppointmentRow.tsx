@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { DateTimeLabel } from '../DateTimeLabel';
 import type { AppointmentTime } from './appointment';
 
-export const DASHBOARD_ROW_CLASS =
+const DASHBOARD_ROW_CLASS =
   'flex items-center justify-between gap-4 p-4 rounded-card border border-border bg-muted/50 hover:bg-card hover:shadow-card transition-all';
 
 export function DashboardAppointmentRow({

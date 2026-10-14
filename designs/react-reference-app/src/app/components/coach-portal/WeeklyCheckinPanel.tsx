@@ -1,32 +1,25 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
-import { CalendarClock, CalendarRange, CalendarX, ChevronRight } from 'lucide-react';
+import { CalendarClock, CalendarRange, CalendarX } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckins, type CheckinSeries } from '../../context/CheckinContext';
 import {
   checkinSchedulingFor,
-  checkinStartsAt,
   coachingEndsAt,
-  type CheckIn,
   type CheckinScheduling,
 } from '../../domain/checkins';
 import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../domain/onboardingAnswers';
-import { coachCheckinsPath, coachSeriesCheckinPath } from '../../utils/checkinLinks';
+import { coachCheckinsPath } from '../../utils/checkinLinks';
 import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
-import { DateTimeLabel } from '../DateTimeLabel';
 import { DisabledActionHint } from '../DisabledActionHint';
 import { PortalWidget } from '../PortalWidget';
-import { Reading } from '../Reading';
 import { RowActionsMenu } from '../RowActionsMenu';
-import { Badge } from '../ui/badge';
+import { VALUE_CLASS } from '../typography';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { cn } from '../ui/utils';
 import { WidgetAction, WidgetLink } from '../WidgetLink';
 import { awaitingOnboardingReason, scheduledClientOf } from './checkinClient';
-import { DASHBOARD_ROW_CLASS } from './DashboardAppointmentRow';
 import {
   WeeklyCheckinDialog,
   type WeeklyCheckinClient,
@@ -52,42 +45,8 @@ function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {
   return { ...scheduledClientOf(journey), gender: journey.identity.gender };
 }
 
-function NextWeekLink({
-  week,
-  clientName,
-  clashes,
-}: {
-  week: CheckIn;
-  clientName: string;
-  clashes: boolean;
-}) {
-  return (
-    <Link
-      to={coachSeriesCheckinPath(week.id, clientName)}
-      className={cn(DASHBOARD_ROW_CLASS, 'group mt-5')}
-      data-parity="series-next-week"
-    >
-      <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="sr-only">Next weekly check-in: </span>
-        <DateTimeLabel startsAt={checkinStartsAt(week)} size="sm" />
-        {clashes && (
-          <Badge tone="pending" data-parity="clash-badge">
-            Clash
-          </Badge>
-        )}
-      </span>
-      <ChevronRight
-        aria-hidden="true"
-        size={16}
-        className="shrink-0 text-text-secondary transition-colors group-hover:text-text-primary"
-        data-parity="series-next-week-chevron"
-      />
-    </Link>
-  );
-}
-
 export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
-  const { seriesFor, seriesWeeks, statusOf, stopSeries } = useCheckins();
+  const { seriesFor, stopSeries } = useCheckins();
   const [dialog, setDialog] = useState<DialogState>({ mode: 'set-up', open: false, openings: 0 });
   const [stop, setStop] = useState<StopState>('closed');
 
@@ -95,7 +54,6 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   const scheduling = checkinSchedulingFor(journey, new Date());
   const coachingEnds = coachingEndsAt(journey.subscription) !== undefined;
   const series = coachingEnds ? null : seriesFor(client.id);
-  const [nextWeek] = series ? seriesWeeks(client.id) : [];
   const suggestedWeekday = weekdayNamed(
     collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY),
   );
@@ -159,20 +117,9 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
     }
 
     return (
-      <>
-        <Reading label="Schedule" value={ruleLine(series)} valueParity="series-rule" />
-        {nextWeek ? (
-          <NextWeekLink
-            week={nextWeek}
-            clientName={client.name}
-            clashes={statusOf(nextWeek) === 'clash'}
-          />
-        ) : (
-          <p className="mt-5 text-sm text-text-secondary" data-parity="series-weeks-empty">
-            No week to come.
-          </p>
-        )}
-      </>
+      <p className={VALUE_CLASS} data-parity="series-rule">
+        {ruleLine(series)}
+      </p>
     );
   };
 

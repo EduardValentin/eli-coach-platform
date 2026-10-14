@@ -17,6 +17,9 @@ export const MAX_RESCHEDULES = 2;
 
 export const MOVES_EXHAUSTED_REASON = 'This check-in has already been moved twice.';
 
+export const LATER_WEEK_REASON =
+  'You can move only your next weekly check-in; your coach can move the later ones.';
+
 export const CHECKIN_DURATION_MINUTES = 60;
 
 export const JOIN_OPENS_MINUTES_BEFORE = 10;
@@ -173,22 +176,7 @@ export function checkinTabFor(status: CheckinStatus, party: CheckinParty): Check
   return 'past';
 }
 
-export function nextUpcomingOfEachSeries(upcoming: readonly CheckIn[]): CheckIn[] {
-  const soonestOfSeries = new Map<string, CheckIn>();
-  for (const checkin of upcoming) {
-    if (!checkin.seriesId) continue;
-    const soonest = soonestOfSeries.get(checkin.seriesId);
-    if (!soonest || checkinStartsAt(checkin) < checkinStartsAt(soonest)) {
-      soonestOfSeries.set(checkin.seriesId, checkin);
-    }
-  }
-
-  return upcoming.filter(
-    (checkin) => !checkin.seriesId || soonestOfSeries.get(checkin.seriesId) === checkin,
-  );
-}
-
-export type CheckinProposal = 'allowed' | 'exhausted' | 'none';
+export type CheckinProposal = 'allowed' | 'exhausted' | 'later_week' | 'none';
 
 function mayAnswerWithNewTime(checkin: CheckIn, party: CheckinParty): boolean {
   if (checkin.status === 'approved') return true;
@@ -202,6 +190,24 @@ export function proposalFor(checkin: CheckIn, party: CheckinParty): CheckinPropo
   if (checkin.status === 'clash') return 'allowed';
 
   return checkin.rescheduleCount < MAX_RESCHEDULES ? 'allowed' : 'exhausted';
+}
+
+function followsAnUpcomingWeek(checkin: CheckIn, clientUpcoming: readonly CheckIn[]): boolean {
+  return clientUpcoming.some(
+    (other) =>
+      other.seriesId === checkin.seriesId &&
+      checkinStartsAt(other) < checkinStartsAt(checkin),
+  );
+}
+
+export function clientProposalAmong(
+  checkin: CheckIn,
+  clientUpcoming: readonly CheckIn[],
+): CheckinProposal {
+  const proposal = proposalFor(checkin, 'client');
+  if (proposal === 'none' || !checkin.seriesId) return proposal;
+
+  return followsAnUpcomingWeek(checkin, clientUpcoming) ? 'later_week' : proposal;
 }
 
 export type NewTime = {
@@ -246,9 +252,9 @@ export function canCancelApproved(
 ): boolean {
   if (checkin.status === 'clash') return party === 'coach';
   if (checkin.status !== 'approved') return false;
-  if (party === 'coach') return checkin.kind !== 'program-review';
+  if (checkin.kind === 'ad-hoc') return party === checkin.initiatedBy;
 
-  return checkin.kind === 'ad-hoc';
+  return party === 'coach' && checkin.kind === 'recurring';
 }
 
 export function isOpenClientRequest(

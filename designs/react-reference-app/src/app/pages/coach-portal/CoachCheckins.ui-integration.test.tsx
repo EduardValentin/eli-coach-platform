@@ -314,6 +314,19 @@ describe('the actions on the coach’s check-in rows', () => {
     expect(items).toEqual(['Reschedule', 'Cancel']);
   });
 
+  it('offers only Reschedule on an approved check-in the client requested, since only she may cancel it', async () => {
+    // arrange
+    renderPage();
+    await showTab('Upcoming');
+    const row = rowWith(/Want to go over my food log/);
+
+    // act
+    const items = await menuItemsBehind(moreActionsIn(row));
+
+    // assert
+    expect(items).toEqual(['Reschedule']);
+  });
+
   it('shows Decline and Approve side by side on a client’s request with Reschedule in the menu', async () => {
     // arrange
     renderPage();

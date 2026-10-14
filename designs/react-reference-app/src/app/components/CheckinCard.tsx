@@ -6,6 +6,7 @@ import { RowActionsMenu, type RowMenuAction } from './RowActionsMenu';
 import { Badge } from './ui/badge';
 import {
   CHECKIN_KIND_LABEL,
+  LATER_WEEK_REASON,
   MOVES_EXHAUSTED_REASON,
   checkinNote,
   checkinStartsAt,
@@ -33,14 +34,22 @@ export type CheckinMenu = {
   disabled?: boolean;
 };
 
+const RESCHEDULE_HELD_BACK_REASON: Record<
+  Exclude<CheckinProposal, 'allowed' | 'none'>,
+  string
+> = {
+  exhausted: MOVES_EXHAUSTED_REASON,
+  later_week: LATER_WEEK_REASON,
+};
+
 export function rescheduleAction(
   proposal: CheckinProposal,
   onSelect: () => void,
 ): CheckinMenuAction | undefined {
   if (proposal === 'none') return undefined;
-  if (proposal === 'exhausted') return { onSelect, disabledReason: MOVES_EXHAUSTED_REASON };
+  if (proposal === 'allowed') return { onSelect };
 
-  return { onSelect };
+  return { onSelect, disabledReason: RESCHEDULE_HELD_BACK_REASON[proposal] };
 }
 
 export type CheckinRowActions = {
