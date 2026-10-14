@@ -417,7 +417,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 aria-describedby={shownProblems.cues ? ids.cuesProblem : undefined}
               />
             </SettingsRow>
-            <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked">
+            <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked" data-parity="exercise-video-field">
               <VideoField video={video} onChange={changeVideo} />
             </SettingsRow>
           </SettingsRows>

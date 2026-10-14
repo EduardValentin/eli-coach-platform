@@ -8,7 +8,8 @@ import type {
   Measure,
   Muscle,
 } from '../domain/exercises';
-import { SAMPLE_EXERCISES } from '../services/exerciseSamples';
+import { exercisesForSeed } from '../services/exerciseSamples';
+import { useAppState } from './AppContext';
 import {
   archivedItem,
   exerciseUsage,
@@ -781,7 +782,12 @@ const mockWorkoutLogs: WorkoutLog[] = [
 const TrainingContext = createContext<TrainingState | undefined>(undefined);
 
 export function TrainingProvider({ children }: { children: ReactNode }) {
-  const [exercises, setExercises] = useState<Exercise[]>([...SAMPLE_EXERCISES]);
+  const { appState } = useAppState();
+  const [exercises, setExercises] = useState<Exercise[]>(() => exercisesForSeed(appState.exerciseSeed));
+
+  useEffect(() => {
+    setExercises(exercisesForSeed(appState.exerciseSeed));
+  }, [appState.exerciseSeed]);
   const [planTemplates, setPlanTemplates] = useState<PlanTemplate[]>(mockTemplates);
   const [planInstances, setPlanInstances] = useState<PlanInstance[]>(mockPlanInstances);
   const [goals, setGoals] = useState<Goal[]>(mockGoals);

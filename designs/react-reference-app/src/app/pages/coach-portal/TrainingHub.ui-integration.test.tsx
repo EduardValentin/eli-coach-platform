@@ -286,6 +286,20 @@ describe('the exercise library filters', () => {
   });
 });
 
+describe('the empty exercise library seed', () => {
+  it('starts the library with no exercises', () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/training?session=coach&exseed=empty');
+
+    // act
+    renderHub('/coach/training?session=coach&exseed=empty');
+
+    // assert
+    expect(screen.getByText('No exercises yet')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+});
+
 describe('the Training page in MVP mode', () => {
   it('is the exercise library, without the plan tabs', () => {
     // arrange

@@ -32,6 +32,7 @@ export function SortableTableHead({
     >
       <button
         type="button"
+        data-parity="sortable-header-button"
         onClick={onSort}
         className="inline-flex items-center gap-1 rounded-field text-[length:inherit] font-semibold uppercase tracking-[inherit] text-inherit outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >

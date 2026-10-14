@@ -118,7 +118,7 @@ function ExerciseRow({
           {exercise.difficulty}
         </Badge>
       </TableCell>
-      <TableCell className="text-sm text-text-secondary">
+      <TableCell className="text-sm text-text-secondary" data-parity="exercise-video">
         {exercise.videoUrl ? 'Attached' : '—'}
       </TableCell>
       <TableCell>{actions}</TableCell>
@@ -172,6 +172,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
   return (
     <>
       <ListingToolbar
+        parity="exercise-toolbar"
         filters={
           <>
             <ExerciseFilters
@@ -218,7 +219,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
                 }
                 onSort={() => chooseSort('difficulty')}
               />
-              <TableHead>Video</TableHead>
+              <TableHead data-parity="exercise-video">Video</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
