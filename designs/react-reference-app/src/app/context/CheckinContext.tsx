@@ -876,7 +876,11 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       const inTab = checkins.filter(
         (c) => forClient(clientId)(c) && checkinTabFor(statusOf(c), party) === tab,
       );
-      if (tab === 'upcoming') return nextUpcomingOfEachSeries(inTab).sort(byStartAscending);
+      if (tab === 'upcoming') {
+        const upcoming = party === 'client' ? nextUpcomingOfEachSeries(inTab) : inTab;
+
+        return upcoming.sort(byStartAscending);
+      }
       if (tab === 'requests') return inTab.sort(byNewestFirst);
 
       return inTab.sort((a, b) => byStartAscending(b, a));

@@ -697,7 +697,7 @@ describe('a weekly check-in on the coach check-ins page', () => {
     expect(screen.getByRole('menuitem', { name: 'Cancel' })).toBeInTheDocument();
   });
 
-  it('lists only the next week of the series under Upcoming', async () => {
+  it('lists every upcoming week of the series under Upcoming', async () => {
     // arrange
     renderPage('&jstage=submitted');
     await seedOnlyWeeklySeries('With clashes');
@@ -706,9 +706,9 @@ describe('a weekly check-in on the coach check-ins page', () => {
     await showTab('Upcoming');
 
     // assert
-    const [row, ...others] = listedRows();
-    expect(others).toHaveLength(0);
-    expect(within(row).queryByText('Clash')).not.toBeInTheDocument();
+    const rows = listedRows();
+    expect(rows.length).toBeGreaterThan(1);
+    rows.forEach((row) => expect(within(row).queryByText('Clash')).not.toBeInTheDocument());
   });
 
   it('waits for the client once the coach gives a clash a new time', async () => {
