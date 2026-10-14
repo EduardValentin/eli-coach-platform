@@ -27,6 +27,8 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
+import { useLoadOnOpening } from "./use-load-on-opening";
+
 type CheckInRefusal = CheckInRefusalReply["error"];
 
 type CheckInPickerProblem = CheckInRefusal | "failed";
@@ -123,13 +125,7 @@ export function CheckInPicker({
     selectedDayKey && slotPickerProps.days.has(selectedDayKey)
       ? selectedDayKey
       : null;
-  const loadOpenTimesOnOpen = useEffectEvent(openTimes.load);
-
-  useEffect(() => {
-    if (open) {
-      loadOpenTimesOnOpen();
-    }
-  }, [open]);
+  useLoadOnOpening({ load: openTimes.load, open });
 
   const submit = () => {
     if (!selectedSlot) return;

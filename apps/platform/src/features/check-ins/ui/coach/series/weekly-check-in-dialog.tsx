@@ -28,6 +28,7 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 import { PickerStepButton } from "~/features/check-ins/ui/shared/check-ins/check-in-picker";
+import { useLoadOnOpening } from "~/features/check-ins/ui/shared/check-ins/use-load-on-opening";
 import {
   hourLabel,
   WEEKDAY_DISPLAY_ORDER,
@@ -127,7 +128,6 @@ export function WeeklyCheckInDialog({
       onOpenChange(false);
     },
   });
-  const loadOnOpen = useEffectEvent(() => preview.load(weekday));
 
   const chooseWeekday = (value: Weekday) => {
     setWeekday(value);
@@ -144,9 +144,7 @@ export function WeeklyCheckInDialog({
     },
   );
 
-  useEffect(() => {
-    if (open) loadOnOpen();
-  }, [open]);
+  useLoadOnOpening({ load: () => preview.load(weekday), open });
 
   useEffect(() => {
     fallBackFromUnofferedWeekday(preview.offered);
