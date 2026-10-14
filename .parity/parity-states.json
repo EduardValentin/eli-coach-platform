@@ -3686,5 +3686,203 @@
     {
       "use": "pending-checkins-empty"
     }
-  ]
+  ],
+  "coach-training-active": [
+    {
+      "click": "[data-parity=\"link-training\"]"
+    }
+  ],
+  "open-new-exercise": [
+    {
+      "click": "[data-parity-root=\"TrainingHub\"] header >> text=New exercise"
+    }
+  ],
+  "exercise-editor-name-missing": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "B"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        ""
+      ]
+    }
+  ],
+  "exercise-editor-too-long": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "Barbell back squat with a three-second pause at the bottom and a slow steady rise"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
+        "Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit betwee"
+      ]
+    }
+  ],
+  "exercise-editor-name-taken": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "Barbell Back Squat"
+      ]
+    }
+  ],
+  "open-exercise-actions": [
+    {
+      "click": "role=button[name=\"Actions for Barbell Back Squat\" s]"
+    }
+  ],
+  "open-exercise-editor-back-squat": [
+    {
+      "use": "open-exercise-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "open-primary-muscles": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "role=button[name=/^Primary muscles/]"
+    }
+  ],
+  "open-primary-muscles-chosen": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=button[name=/^Primary muscles/]"
+    }
+  ],
+  "seed-primary-quadriceps-glutes": {
+    "prototype": [],
+    "real": [
+      {
+        "click": "role=button[name=/^Primary muscles/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Quadriceps\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Glutes\" s]"
+      },
+      {
+        "press": "Escape"
+      }
+    ]
+  },
+  "seed-exercise-back-squat": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "Barbell Back Squat"
+        ]
+      },
+      {
+        "use": "seed-primary-quadriceps-glutes"
+      },
+      {
+        "click": "role=button[name=/^Secondary muscles/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Core\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Hamstrings\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=button[name=/^Equipment/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Barbell\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Squat rack\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=combobox[name=\"Difficulty\" s]"
+      },
+      {
+        "click": "role=option[name=\"Intermediate\" s]"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Strength"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Hypertrophy"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
+          "A compound lower body exercise that targets the quads, glutes, and core."
+        ]
+      },
+      {
+        "click": "role=button[name=\"Create exercise\" s]"
+      }
+    ]
+  },
+  "seed-exercise-split-squat": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "Bulgarian Split Squat"
+        ]
+      },
+      {
+        "use": "seed-primary-quadriceps-glutes"
+      },
+      {
+        "click": "role=button[name=/^Equipment/]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Dumbbells\" s]"
+      },
+      {
+        "click": "[role=\"dialog\"] >> role=checkbox[name=\"Bench\" s]"
+      },
+      {
+        "press": "Escape"
+      },
+      {
+        "click": "role=combobox[name=\"Difficulty\" s]"
+      },
+      {
+        "click": "role=option[name=\"Advanced\" s]"
+      },
+      {
+        "click": "[data-parity=\"exercise-tag-chips\"] >> text=Hypertrophy"
+      },
+      {
+        "click": "role=button[name=\"Create exercise\" s]"
+      }
+    ]
+  }
 }
