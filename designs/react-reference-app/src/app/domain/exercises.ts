@@ -1,32 +1,46 @@
-export const EXERCISE_TYPES = ['resistance', 'cardio', 'mobility'] as const;
+export const EXERCISE_TYPES = ['resistance', 'cardio', 'mobility', 'stretching', 'breathing'] as const;
 export type ExerciseType = (typeof EXERCISE_TYPES)[number];
 export const EXERCISE_TYPE_LABELS: Record<ExerciseType, string> = {
   resistance: 'Resistance',
   cardio: 'Cardio',
   mobility: 'Mobility',
+  stretching: 'Stretching',
+  breathing: 'Breathing',
 };
 
-export const MEASURES = ['reps', 'time', 'distance'] as const;
+export const MEASURES = ['reps', 'time', 'distance', 'breaths'] as const;
 export type Measure = (typeof MEASURES)[number];
 export const MEASURE_LABELS: Record<Measure, string> = {
   reps: 'Reps',
   time: 'Time',
   distance: 'Distance',
+  breaths: 'Breaths',
 };
 export const MEASURE_EXAMPLES: Record<Measure, string> = {
   reps: 'e.g. 3 × 10',
   time: 'e.g. 45 s hold',
   distance: 'e.g. 400 m',
+  breaths: 'e.g. 10 breaths',
 };
 
-const DEFAULT_MEASURE: Record<ExerciseType, Measure> = {
-  resistance: 'reps',
-  cardio: 'time',
-  mobility: 'time',
+const MEASURES_BY_TYPE: Record<ExerciseType, readonly Measure[]> = {
+  resistance: ['reps', 'time', 'distance'],
+  cardio: ['time', 'distance'],
+  mobility: ['time', 'reps'],
+  stretching: ['time'],
+  breathing: ['breaths', 'time'],
 };
+
+export function measuresFor(type: ExerciseType): readonly Measure[] {
+  return MEASURES_BY_TYPE[type];
+}
 
 export function defaultMeasureFor(type: ExerciseType): Measure {
-  return DEFAULT_MEASURE[type];
+  return MEASURES_BY_TYPE[type][0];
+}
+
+export function measureAllowedFor(type: ExerciseType, measure: Measure): boolean {
+  return MEASURES_BY_TYPE[type].includes(measure);
 }
 
 export const MUSCLES = [
