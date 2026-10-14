@@ -41,6 +41,7 @@ const FEATURE_ORDER = [
 
 const DOMAIN_SLICE_ORDER = [
   "shared",
+  "exercise",
   "email-address",
   "feature-flag",
   "product",
