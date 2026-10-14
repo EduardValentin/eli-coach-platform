@@ -895,6 +895,55 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs an exercise that could not be created by the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.exerciseCreationFailed({ error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise could not be created.",
+      {
+        errorCategory: "exercise_creation_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+      },
+    );
+  });
+
+  it("logs an exercise edit that could not be written by its id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.exerciseEditFailed({ exerciseId: "exercise-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise edit could not be written.",
+      {
+        errorCategory: "exercise_edit_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        exerciseId: "exercise-1",
+      },
+    );
+  });
+
   it("logs a client resource change that could not be written by its ids and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

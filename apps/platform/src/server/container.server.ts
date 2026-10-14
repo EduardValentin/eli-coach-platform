@@ -56,6 +56,10 @@ import { composeClientsFeature } from "~/features/clients/server/clients-composi
 import { composeCoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
+  composeExerciseLibraryFeature,
+  type ExerciseLibraryFeature,
+} from "~/features/exercise-library/server/exercise-library-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -85,6 +89,7 @@ export type PlatformContainer = {
   closeDatabase: () => Promise<void>;
   coachSchedule: ReturnType<typeof composeCoachScheduleFeature>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
+  exerciseLibrary: ExerciseLibraryFeature;
   featureFlagOverrides: FeatureFlagOverrides;
   platform: PlatformFeature;
   store: StoreFeature;
@@ -122,6 +127,11 @@ export function createPlatformContainer(options: {
   const featureFlags = featureFlagOverrides.featureFlags;
   const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
   const linkTokens = createLinkTokens();
+  const exerciseLibrary = composeExerciseLibraryFeature({
+    clock,
+    database: database.client,
+    incidents,
+  });
   const waitlist = composeWaitlistFeature({
     botVerifier,
     clock,
@@ -289,6 +299,7 @@ export function createPlatformContainer(options: {
     closeDatabase: () => database.close(),
     coachSchedule,
     coachingSales,
+    exerciseLibrary,
     featureFlagOverrides,
     platform,
     store: composeStoreFeature({
