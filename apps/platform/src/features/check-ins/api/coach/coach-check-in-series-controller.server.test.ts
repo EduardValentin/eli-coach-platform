@@ -1,16 +1,15 @@
-import {
-  CheckIn,
-  type ChangeCheckInSeriesResult,
-  type ChangeCheckInSeriesUseCase,
-  type CheckInSeriesSnapshot,
-  type CoachClientSeries,
-  type PreviewCheckInSeriesResult,
-  type PreviewCheckInSeriesUseCase,
-  type ReadCoachClientSeriesUseCase,
-  type SetUpCheckInSeriesResult,
-  type SetUpCheckInSeriesUseCase,
-  type StopCheckInSeriesResult,
-  type StopCheckInSeriesUseCase,
+import type {
+  ChangeCheckInSeriesResult,
+  ChangeCheckInSeriesUseCase,
+  CheckInSeriesSnapshot,
+  CoachClientSeries,
+  PreviewCheckInSeriesResult,
+  PreviewCheckInSeriesUseCase,
+  ReadCoachClientSeriesUseCase,
+  SetUpCheckInSeriesResult,
+  SetUpCheckInSeriesUseCase,
+  StopCheckInSeriesResult,
+  StopCheckInSeriesUseCase,
 } from "@eli-coach-platform/domain/check-in";
 import { describe, expect, it, vi } from "vitest";
 
@@ -29,7 +28,6 @@ import { CoachCheckInSeriesController } from "./coach-check-in-series-controller
 
 const CLIENT_ID = "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02";
 const SERIES_ID = "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a";
-const WEEK_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
 const NOW = new Date("2026-10-13T08:00:00.000Z");
 
 const COACH_SESSION: ResolvedSession = {
@@ -55,28 +53,11 @@ const SERIES: CheckInSeriesSnapshot = {
   stoppedAt: null,
 };
 
-const WEEK = CheckIn.seriesOccurrence({
-  id: WEEK_ID,
-  seriesId: SERIES_ID,
-  clientId: CLIENT_ID,
-  startsAt: new Date("2026-10-14T15:00:00.000Z"),
-  clientTimeZone: "Europe/London",
-  coachTimeZone: "Europe/Bucharest",
-  at: NOW,
-});
-
 describe("CoachCheckInSeriesController loadClientSeries", () => {
-  it("hands the coach her client's series with her next week to come", async () => {
+  it("hands the coach her client's series", async () => {
     // arrange
     const { controller } = createController({
-      read: {
-        series: SERIES,
-        nextWeek: {
-          ...WEEK.viewFor({ party: "coach", at: NOW }),
-          client: { firstName: "Ana", lastName: "Popescu" },
-        },
-        coachingEnds: false,
-      },
+      read: { series: SERIES, coachingEnds: false },
     });
 
     // act
@@ -90,16 +71,6 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
         hour: 18,
         timeZone: "Europe/Bucharest",
       },
-      nextWeek: expect.objectContaining({
-        id: WEEK_ID,
-        seriesId: SERIES_ID,
-        kind: "recurring",
-        status: "approved",
-        tab: "upcoming",
-        startsAt: "2026-10-14T15:00:00.000Z",
-        clientId: CLIENT_ID,
-        client: { firstName: "Ana", lastName: "Popescu" },
-      }),
       coachingEnds: false,
     });
   });
@@ -114,7 +85,6 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
     // assert
     expect(panel).toEqual({
       series: null,
-      nextWeek: null,
       coachingEnds: false,
     });
   });
@@ -122,14 +92,14 @@ describe("CoachCheckInSeriesController loadClientSeries", () => {
   it("hands that her coaching ends so the panel offers no weekly check-in", async () => {
     // arrange
     const { controller } = createController({
-      read: { series: null, nextWeek: null, coachingEnds: true },
+      read: { series: null, coachingEnds: true },
     });
 
     // act
     const panel = await controller.loadClientSeries(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(panel).toEqual({ series: null, nextWeek: null, coachingEnds: true });
+    expect(panel).toEqual({ series: null, coachingEnds: true });
   });
 
   it("answers 404 for a client id that is not one", async () => {
@@ -435,9 +405,7 @@ function createController(
 ) {
   const readCoachClientSeries = vi
     .fn()
-    .mockResolvedValue(
-      answers.read ?? { series: null, nextWeek: null, coachingEnds: false },
-    );
+    .mockResolvedValue(answers.read ?? { series: null, coachingEnds: false });
   const previewCheckInSeries = vi
     .fn()
     .mockResolvedValue(answers.previewed ?? { status: "unknown_client" });

@@ -119,6 +119,7 @@ const COACH_REQUEST_APPROVED: ClientCheckIn = {
   status: "approved",
   tab: "upcoming",
   awaitsViewer: false,
+  viewerMayCancel: false,
 };
 
 const PASSED: ClientCheckIn = {
@@ -237,8 +238,33 @@ const NEXT_WEEKLY_CLASH: ClientCheckIn = {
   viewerProposal: "none",
 };
 
+const LATER_WEEKLY: ClientCheckIn = {
+  ...NEXT_WEEKLY,
+  id: "c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f",
+  viewerProposal: "later_week",
+  startsAt: "2026-10-28T16:00:00.000Z",
+  endsAt: "2026-10-28T17:00:00.000Z",
+  joinEmphasisFrom: "2026-10-28T15:50:00.000Z",
+};
+
+const LAST_WEEKLY: ClientCheckIn = {
+  ...LATER_WEEKLY,
+  id: "d4e5f6a7-b8c9-4d0e-9f1a-3b4c5d6e7f8a",
+  startsAt: "2026-11-04T16:00:00.000Z",
+  endsAt: "2026-11-04T17:00:00.000Z",
+  joinEmphasisFrom: "2026-11-04T15:50:00.000Z",
+};
+
 const NEXT_WEEKLY_MENU =
   "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
+const LATER_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Oct 28 at 6:00 PM";
+const LAST_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Nov 4 at 6:00 PM";
+const LATER_WEEK_REASON =
+  "You can move only your next weekly check-in; your coach can move the later ones.";
+const COACH_REQUEST_APPROVED_MENU =
+  "More actions for the check-in on Mon, Oct 19 at 12:00 PM";
 
 const THURSDAY_AFTERNOON = "2026-10-15T14:00:00.000Z";
 const THURSDAY_EVENING = "2026-10-15T15:00:00.000Z";
@@ -1344,6 +1370,22 @@ describe("the client's upcoming check-in menu", () => {
     ]);
   });
 
+  it("offers only Reschedule on a check-in her coach scheduled, since only her coach may cancel it", async () => {
+    // arrange
+    listing = { checkIns: [COACH_REQUEST_APPROVED] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: COACH_REQUEST_APPROVED_MENU }),
+    );
+
+    // assert
+    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+      "Reschedule",
+    ]);
+  });
+
   it("leaves the menu out of her past and cancelled check-ins", async () => {
     // arrange
     listing = { checkIns: [PASSED, CANCELLED] };
@@ -1674,23 +1716,66 @@ describe("a weekly check-in on the client's check-ins page", () => {
     expect(within(row).queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("lets her move her next weekly check-in but never cancel it", async () => {
+  it("lists every week to come, lets her move only the next one and cancel none", async () => {
     // arrange
-    listing = { checkIns: [NEXT_WEEKLY] };
+    listing = { checkIns: [LAST_WEEKLY, NEXT_WEEKLY, LATER_WEEKLY] };
     const user = await renderCheckInsPage();
+    const rows = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getAllByRole("listitem");
 
     // act
-    await user.click(screen.getByRole("button", { name: NEXT_WEEKLY_MENU }));
+    const menus = [];
+    for (const name of [
+      NEXT_WEEKLY_MENU,
+      LATER_WEEKLY_MENU,
+      LAST_WEEKLY_MENU,
+    ]) {
+      await user.click(screen.getByRole("button", { name }));
+      const menu = await screen.findByRole("menu");
+      menus.push(
+        within(menu)
+          .getAllByRole("menuitem")
+          .map((item) => ({
+            name: item.textContent,
+            heldBack: item.getAttribute("aria-disabled") === "true",
+          })),
+      );
+      await user.keyboard("{Escape}");
+    }
 
     // assert
-    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
-      "Reschedule",
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Wed, Oct 21"),
+      expect.stringContaining("Wed, Oct 28"),
+      expect.stringContaining("Wed, Nov 4"),
     ]);
-    const row = within(
-      screen.getByRole("list", { name: "Upcoming check-ins" }),
-    ).getByRole("listitem");
-    expect(within(row).getByRole("link", { name: "Join Meet" })).toBeVisible();
-    expect(row).not.toHaveTextContent("Requested by");
+    expect(menus).toEqual([
+      [{ name: "Reschedule", heldBack: false }],
+      [{ name: "Reschedule", heldBack: true }],
+      [{ name: "Reschedule", heldBack: true }],
+    ]);
+    expect(
+      within(rows[0]).getByRole("link", { name: "Join Meet" }),
+    ).toBeVisible();
+    expect(rows[0]).not.toHaveTextContent("Requested by");
+  });
+
+  it("explains why Reschedule is held back on a later week", async () => {
+    // arrange
+    listing = { checkIns: [NEXT_WEEKLY, LATER_WEEKLY] };
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: LATER_WEEKLY_MENU }));
+
+    // act
+    await user.hover(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+
+    // assert
+    expect(await screen.findByText(LATER_WEEK_REASON)).toBeInTheDocument();
   });
 
   it("passes the axe checks with a clashing next week", async () => {

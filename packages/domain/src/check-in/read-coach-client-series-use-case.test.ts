@@ -1,29 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ClientIdentities,
-  ClientIdentity,
-  ClientReach,
-  ClientReachReading,
-} from "../client";
+import type { ClientReach, ClientReachReading } from "../client";
 
-import { CheckIn, type CheckInProps } from "./check-in";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 import { ReadCoachClientSeriesUseCase } from "./read-coach-client-series-use-case";
-
-const NOW = new Date("2026-10-13T12:00:00.000Z");
-
-const ANA: ClientIdentity = {
-  clientId: "client-1",
-  firstName: "Ana",
-  lastName: "Popescu",
-  email: "ana@example.com",
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: null,
-};
 
 const ANA_REACH: ClientReachReading = {
   clientId: "client-1",
@@ -47,37 +28,8 @@ const SERIES = {
   stoppedAt: null,
 } satisfies CheckInSeriesSnapshot;
 
-const WEEK = {
-  id: "week-0",
-  seriesId: "series-1",
-  clientId: "client-1",
-  startsAt: new Date("2026-10-07T15:00:00.000Z"),
-  clientTimeZone: "Europe/London",
-  coachTimeZone: "Europe/Bucharest",
-  kind: "recurring",
-  recordedStatus: "approved",
-  initiatedBy: "coach",
-  proposedBy: "coach",
-  note: null,
-  requestedAt: new Date("2026-10-05T09:00:00.000Z"),
-  answeredAt: new Date("2026-10-05T09:00:00.000Z"),
-  earlierStartsAt: null,
-  moves: 0,
-  newTimeNote: null,
-} satisfies CheckInProps;
-
-function weekOf(week: number, props?: Partial<CheckInProps>): CheckIn {
-  return CheckIn.reconstitute({
-    ...WEEK,
-    id: `week-${week}`,
-    startsAt: new Date(WEEK.startsAt.getTime() + week * 7 * 86_400_000),
-    ...props,
-  });
-}
-
 function createRead(options: {
   active: CheckInSeries | null;
-  occurrences?: CheckIn[];
   client?: ClientReachReading | null;
 }) {
   const clients = {
@@ -89,18 +41,9 @@ function createRead(options: {
   } satisfies Pick<ClientReach, "findById">;
   const series = {
     findActiveForClient: vi.fn().mockResolvedValue(options.active),
-    listOccurrences: vi.fn().mockResolvedValue(options.occurrences ?? []),
-  } satisfies Pick<
-    CheckInSeriesRecords,
-    "findActiveForClient" | "listOccurrences"
-  >;
-  const identities = {
-    findByClientIds: vi.fn().mockResolvedValue([ANA]),
-  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  } satisfies Pick<CheckInSeriesRecords, "findActiveForClient">;
   const ports = {
     clients,
-    clock: { now: () => NOW },
-    identities,
     incidents: { checkInSeriesReadFailed: vi.fn() },
     series,
   };
@@ -121,7 +64,6 @@ describe("ReadCoachClientSeriesUseCase", () => {
     // assert
     expect(result).toEqual({
       series: null,
-      nextWeek: null,
       coachingEnds: false,
     });
     expect(ports.incidents.checkInSeriesReadFailed).toHaveBeenCalledWith({
@@ -130,17 +72,10 @@ describe("ReadCoachClientSeriesUseCase", () => {
     });
   });
 
-  it("reads her active series with the soonest week still to come for the coach", async () => {
+  it("reads her active series", async () => {
     // arrange
     const { ports, read } = createRead({
       active: CheckInSeries.reconstitute(SERIES),
-      occurrences: [
-        weekOf(3),
-        weekOf(0),
-        weekOf(1, { recordedStatus: "clash" }),
-        weekOf(2, { recordedStatus: "pending", proposedBy: "client" }),
-        weekOf(4, { recordedStatus: "cancelled" }),
-      ],
     });
 
     // act
@@ -148,34 +83,12 @@ describe("ReadCoachClientSeriesUseCase", () => {
 
     // assert
     expect(ports.series.findActiveForClient).toHaveBeenCalledWith("client-1");
-    expect(ports.series.listOccurrences).toHaveBeenCalledWith("series-1");
-    expect(result.series).toEqual(SERIES);
-    expect(result.coachingEnds).toBe(false);
-    expect(result.nextWeek).toMatchObject({
-      id: "week-1",
-      tab: "requests",
-      client: { firstName: "Ana", lastName: "Popescu" },
-    });
+    expect(result).toEqual({ series: SERIES, coachingEnds: false });
   });
 
-  it("reads no week to come once every week of her series is past", async () => {
+  it("reads no series for a client without an active series", async () => {
     // arrange
-    const { read } = createRead({
-      active: CheckInSeries.reconstitute(SERIES),
-      occurrences: [weekOf(0), weekOf(4, { recordedStatus: "cancelled" })],
-    });
-
-    // act
-    const result = await read.execute("client-1");
-
-    // assert
-    expect(result.series).toEqual(SERIES);
-    expect(result.nextWeek).toBeNull();
-  });
-
-  it("reads no series and no week for a client without an active series", async () => {
-    // arrange
-    const { ports, read } = createRead({ active: null });
+    const { read } = createRead({ active: null });
 
     // act
     const result = await read.execute("client-1");
@@ -183,10 +96,8 @@ describe("ReadCoachClientSeriesUseCase", () => {
     // assert
     expect(result).toEqual({
       series: null,
-      nextWeek: null,
       coachingEnds: false,
     });
-    expect(ports.series.listOccurrences).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -217,7 +128,6 @@ describe("ReadCoachClientSeriesUseCase", () => {
       // assert
       expect(result).toEqual({
         series: null,
-        nextWeek: null,
         coachingEnds: true,
       });
     },

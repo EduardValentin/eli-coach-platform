@@ -1152,20 +1152,28 @@ describe("CheckIn#viewFor newTimeWaits", () => {
 });
 
 describe("CheckIn#cancellationRefusalFor", () => {
-  it.each(["client", "coach"] as const)(
-    "lets the %s cancel an approved ad-hoc check-in before it starts",
-    (party) => {
+  it.each([
+    { initiatedBy: "client", party: "client", refusal: null },
+    { initiatedBy: "client", party: "coach", refusal: "not_allowed" },
+    { initiatedBy: "coach", party: "coach", refusal: null },
+    { initiatedBy: "coach", party: "client", refusal: "not_allowed" },
+  ] as const)(
+    "answers $refusal when the $party cancels an approved ad-hoc check-in the $initiatedBy requested before it starts",
+    ({ initiatedBy, party, refusal }) => {
       // arrange
-      const approved = approvedCheckIn();
+      const approved = approvedCheckIn({
+        initiatedBy,
+        proposedBy: initiatedBy,
+      });
 
       // act
-      const refusal = approved.cancellationRefusalFor({
+      const result = approved.cancellationRefusalFor({
         party,
         at: BEFORE_START,
       });
 
       // assert
-      expect(refusal).toBeNull();
+      expect(result).toBe(refusal);
     },
   );
 
@@ -1276,15 +1284,27 @@ describe("CheckIn#viewFor proposal and cancellation rights", () => {
       expected: { viewerProposal: "allowed", viewerMayCancel: true },
     },
     {
-      situation: "an approved check-in to the coach",
+      situation: "her approved request to the coach",
       subject: approvedCheckIn(),
+      party: "coach",
+      expected: { viewerProposal: "allowed", viewerMayCancel: false },
+    },
+    {
+      situation: "an approved check-in the coach scheduled to the coach",
+      subject: approvedCheckIn({ initiatedBy: "coach" }),
       party: "coach",
       expected: { viewerProposal: "allowed", viewerMayCancel: true },
     },
     {
+      situation: "an approved check-in the coach scheduled to the client",
+      subject: approvedCheckIn({ initiatedBy: "coach" }),
+      party: "client",
+      expected: { viewerProposal: "allowed", viewerMayCancel: false },
+    },
+    {
       situation: "an approved check-in moved twice",
       subject: approvedCheckIn({ earlierStartsAt: NEW_START, moves: 2 }),
-      party: "coach",
+      party: "client",
       expected: { viewerProposal: "exhausted", viewerMayCancel: true },
     },
     {
@@ -1511,7 +1531,7 @@ describe("CheckIn#tabFor", () => {
   });
 });
 
-describe("CheckIn.nextUpcomingOfEachSeries", () => {
+describe("CheckIn#viewAmong", () => {
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
   function weekOf(index: number, props?: Partial<CheckInProps>): CheckIn {
@@ -1522,44 +1542,86 @@ describe("CheckIn.nextUpcomingOfEachSeries", () => {
     });
   }
 
-  it("keeps only the soonest upcoming check-in of each series, every other check-in as it is, in order", () => {
+  it.each([
+    {
+      situation: "her next weekly check-in",
+      subject: weekOf(0),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "client",
+      proposal: "allowed",
+    },
+    {
+      situation: "a later week of her series",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "a later week moved twice",
+      subject: weekOf(1, { moves: 2 }),
+      clientCheckIns: [weekOf(0), weekOf(1, { moves: 2 })],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "the week after a clash",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0, { recordedStatus: "clash" }), weekOf(1)],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "a later week to the coach",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "coach",
+      proposal: "allowed",
+    },
+    {
+      situation: "a clash after her next week",
+      subject: weekOf(1, { recordedStatus: "clash" }),
+      clientCheckIns: [weekOf(0), weekOf(1, { recordedStatus: "clash" })],
+      party: "client",
+      proposal: "none",
+    },
+    {
+      situation: "an ad-hoc check-in after her next week",
+      subject: approvedCheckIn({ startsAt: NEW_START }),
+      clientCheckIns: [weekOf(0), approvedCheckIn({ startsAt: NEW_START })],
+      party: "client",
+      proposal: "allowed",
+    },
+  ] as const)(
+    "offers $proposal on $situation",
+    ({ subject, clientCheckIns, party, proposal }) => {
+      // arrange
+      const viewer = { party, at: BEFORE_START, clientCheckIns };
+
+      // act
+      const view = subject.viewAmong(viewer);
+
+      // assert
+      expect(view.viewerProposal).toBe(proposal);
+    },
+  );
+
+  it("keeps every other part of the view", () => {
     // arrange
-    const views = [
-      checkIn({ id: "request-1" }),
-      weekOf(0, { recordedStatus: "clash" }),
-      weekOf(1),
-      weekOf(2),
-      weekOf(1, { id: "other-week-1", seriesId: "series-2" }),
-      weekOf(3, { id: "other-week-3", seriesId: "series-2" }),
-      approvedCheckIn({ id: "ad-hoc-1", startsAt: NEW_START }),
-      weekOf(-1, { recordedStatus: "cancelled" }),
-    ].map((subject) => subject.viewFor({ party: "coach", at: BEFORE_START }));
+    const later = weekOf(1);
+    const viewer = { party: "client" as const, at: BEFORE_START };
 
     // act
-    const trimmed = CheckIn.nextUpcomingOfEachSeries(views);
+    const view = later.viewAmong({
+      ...viewer,
+      clientCheckIns: [weekOf(0), later],
+    });
 
     // assert
-    expect(trimmed.map((view) => view.id)).toEqual([
-      "request-1",
-      "week-0",
-      "week-1",
-      "other-week-1",
-      "ad-hoc-1",
-      "week--1",
-    ]);
-  });
-
-  it("keeps the client's clash as the next upcoming check-in of her series", () => {
-    // arrange
-    const views = [weekOf(1), weekOf(0, { recordedStatus: "clash" })].map(
-      (subject) => subject.viewFor({ party: "client", at: BEFORE_START }),
-    );
-
-    // act
-    const trimmed = CheckIn.nextUpcomingOfEachSeries(views);
-
-    // assert
-    expect(trimmed.map((view) => view.id)).toEqual(["week-0"]);
+    expect(view).toEqual({
+      ...later.viewFor(viewer),
+      viewerProposal: "later_week",
+    });
   });
 });
 

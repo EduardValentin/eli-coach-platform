@@ -280,7 +280,10 @@ export class ClientCheckInsPage {
   }
 
   async expectRescheduleBlocked(tab: CheckInTab, note: string): Promise<void> {
-    await this.rows.expectRescheduleBlocked(await this.shownRow(tab, note));
+    await this.rows.expectRescheduleBlocked(
+      await this.shownRow(tab, note),
+      "moves_exhausted",
+    );
   }
 
   async expectRescheduleReasonOnHover(
@@ -289,6 +292,7 @@ export class ClientCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnHover(
       await this.shownRow(tab, note),
+      "moves_exhausted",
     );
   }
 
@@ -298,6 +302,7 @@ export class ClientCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnFocus(
       await this.shownRow(tab, note),
+      "moves_exhausted",
     );
   }
 
@@ -305,7 +310,10 @@ export class ClientCheckInsPage {
     tab: CheckInTab,
     note: string,
   ): Promise<void> {
-    await this.rows.expectRescheduleReasonOnTap(await this.shownRow(tab, note));
+    await this.rows.expectRescheduleReasonOnTap(
+      await this.shownRow(tab, note),
+      "moves_exhausted",
+    );
   }
 
   async expectNoActions(tab: CheckInTab, note: string): Promise<void> {
@@ -423,20 +431,59 @@ export class ClientCheckInsPage {
     await this.expectOpen();
   }
 
-  async expectCoachFindingTime(): Promise<void> {
+  async expectCoachFindingTimeFirst(): Promise<void> {
+    const first = checkInsListed(this.page, "Upcoming").first();
+
+    await this.showTab("Upcoming");
+    await expect(first).toContainText(COACH_FINDING_A_NEW_TIME);
+    await this.rows.expectClash(first);
+  }
+
+  async expectEveryWeeklyUpcoming(
+    weeks: readonly PickedCheckIn[],
+  ): Promise<void> {
     const listed = checkInsListed(this.page, "Upcoming");
 
     await this.showTab("Upcoming");
-    await expect(listed).toHaveCount(1);
-    await expect(listed).toContainText(COACH_FINDING_A_NEW_TIME);
-    await this.rows.expectClash(listed);
+    await expect(listed).toHaveCount(weeks.length);
+    await expect(listed.filter({ hasText: AD_HOC })).toHaveCount(0);
+    for (const week of weeks) {
+      await expect(this.rows.listedAt(listed, week)).toHaveCount(1);
+    }
   }
 
-  async expectOneWeeklyUpcoming(note: string): Promise<void> {
-    const listed = checkInsListed(this.page, "Upcoming");
+  private async upcomingWeekRow(week: PickedCheckIn): Promise<Locator> {
+    await this.showTab("Upcoming");
 
-    await this.expectInOrder("Upcoming", [note]);
-    await expect(listed).not.toContainText(AD_HOC);
+    return this.rows.listedAt(checkInsListed(this.page, "Upcoming"), week);
+  }
+
+  async expectNextWeekMovable(week: PickedCheckIn): Promise<void> {
+    const row = await this.upcomingWeekRow(week);
+
+    await this.rows.expectRescheduleAllowed(row);
+    await this.rows.expectNoCancel(row);
+  }
+
+  async expectLaterWeekHeldBack(week: PickedCheckIn): Promise<void> {
+    const row = await this.upcomingWeekRow(week);
+
+    await this.rows.expectRescheduleBlocked(row, "later_week");
+    await this.rows.expectNoCancel(row);
+  }
+
+  async expectLaterWeekReasonOnHover(week: PickedCheckIn): Promise<void> {
+    await this.rows.expectRescheduleReasonOnHover(
+      await this.upcomingWeekRow(week),
+      "later_week",
+    );
+  }
+
+  async expectLaterWeekReasonOnFocus(week: PickedCheckIn): Promise<void> {
+    await this.rows.expectRescheduleReasonOnFocus(
+      await this.upcomingWeekRow(week),
+      "later_week",
+    );
   }
 
   async expectCancelledInPast(shown: PickedCheckIn): Promise<void> {

@@ -222,7 +222,6 @@ const MEASUREMENTS_WITH_PHOTOS: MeasurementRow[] = [
 
 const NO_WEEKLY: CoachClientSeriesPanel = {
   series: null,
-  nextWeek: null,
   coachingEnds: false,
 };
 
@@ -233,7 +232,6 @@ const WEEKLY: CoachClientSeriesPanel = {
     hour: 18,
     timeZone: COACH_TIME_ZONE,
   },
-  nextWeek: null,
   coachingEnds: false,
 };
 

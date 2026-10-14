@@ -1,4 +1,5 @@
 import type {
+  CoachCheckInView,
   CountCheckInsAwaitingUseCase,
   ListCoachCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
@@ -19,8 +20,9 @@ import {
 import {
   checkInScheduleSchema,
   coachCheckInsSchema,
-  presentCoachCheckIn,
+  presentCheckIn,
   type CheckInScheduling,
+  type CoachCheckIn,
   type CoachCheckIns,
 } from "~/features/check-ins/public/check-ins";
 
@@ -46,7 +48,7 @@ export class CoachCheckInsController {
     const checkIns = await this.options.listCoachCheckIns.execute();
 
     return coachCheckInsSchema.parse({
-      checkIns: checkIns.map((view) => presentCoachCheckIn(view)),
+      checkIns: checkIns.map((view) => this.present(view)),
     });
   }
 
@@ -56,7 +58,7 @@ export class CoachCheckInsController {
     const checkIns = await this.options.listCoachCheckInsAwaiting.execute();
 
     return coachCheckInsSchema.parse({
-      checkIns: checkIns.map((view) => presentCoachCheckIn(view)),
+      checkIns: checkIns.map((view) => this.present(view)),
     });
   }
 
@@ -125,5 +127,16 @@ export class CoachCheckInsController {
       case "time_taken":
         return refusedCheckIn(result.status);
     }
+  }
+
+  private present(view: CoachCheckInView): CoachCheckIn {
+    return {
+      ...presentCheckIn(view),
+      clientId: view.clientId,
+      client: {
+        firstName: view.client.firstName,
+        lastName: view.client.lastName,
+      },
+    };
   }
 }

@@ -1,7 +1,7 @@
 import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
-import { CheckIn, type CheckInView } from "./check-in";
+import type { CheckInView } from "./check-in";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckIns } from "./check-ins";
 
@@ -33,10 +33,12 @@ export class ListClientCheckInsUseCase {
 
     return {
       status: "listed",
-      checkIns: CheckIn.nextUpcomingOfEachSeries(
-        checkIns.map((checkIn) =>
-          checkIn.viewFor({ party: "client", at: now }),
-        ),
+      checkIns: checkIns.map((checkIn) =>
+        checkIn.viewAmong({
+          party: "client",
+          at: now,
+          clientCheckIns: checkIns,
+        }),
       ),
     };
   }

@@ -25,7 +25,6 @@ import {
   checkInSeriesPreviewSchema,
   checkInSeriesSetUpSchema,
   coachClientSeriesSchema,
-  presentCoachCheckIn,
   type CheckInSeriesOutcomeReply,
   type CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
@@ -59,7 +58,7 @@ export class CoachCheckInSeriesController {
       throw unknownClient();
     }
 
-    const { series, nextWeek, coachingEnds } =
+    const { series, coachingEnds } =
       await this.options.readCoachClientSeries.execute(id.data);
 
     return coachClientSeriesSchema.parse({
@@ -69,7 +68,6 @@ export class CoachCheckInSeriesController {
         hour: series.hour,
         timeZone: series.timeZone,
       },
-      nextWeek: nextWeek && presentCoachCheckIn(nextWeek),
       coachingEnds,
     });
   }

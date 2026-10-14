@@ -5,7 +5,6 @@ import {
   type CheckInTab,
   type CheckInView,
   type ClientCheckInScheduling,
-  type CoachCheckInView,
 } from "@eli-coach-platform/domain/check-in";
 import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
 import { z } from "zod";
@@ -49,7 +48,12 @@ const CHECK_IN_REFUSALS = [
 
 const CHECK_IN_SERIES_OUTCOMES = ["set_up", "changed", "stopped"] as const;
 
-const CHECK_IN_VIEWER_PROPOSALS = ["allowed", "exhausted", "none"] as const;
+const CHECK_IN_VIEWER_PROPOSALS = [
+  "allowed",
+  "exhausted",
+  "later_week",
+  "none",
+] as const;
 
 const checkInSchema = z.object({
   id: z.uuid(),
@@ -110,7 +114,6 @@ const checkInSeriesSchema = z.object({
 
 export const coachClientSeriesSchema = z.object({
   series: checkInSeriesSchema.nullable(),
-  nextWeek: coachCheckInSchema.nullable(),
   coachingEnds: z.boolean(),
 });
 
@@ -219,16 +222,5 @@ export function presentCheckIn(view: CheckInView): ClientCheckIn {
     moves: view.moves,
     note: view.note,
     newTimeNote: view.newTimeNote,
-  };
-}
-
-export function presentCoachCheckIn(view: CoachCheckInView): CoachCheckIn {
-  return {
-    ...presentCheckIn(view),
-    clientId: view.clientId,
-    client: {
-      firstName: view.client.firstName,
-      lastName: view.client.lastName,
-    },
   };
 }

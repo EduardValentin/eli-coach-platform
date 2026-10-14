@@ -206,7 +206,7 @@ describe("ListClientCheckInsUseCase", () => {
 });
 
 describe("ListClientCheckInsUseCase weekly check-ins", () => {
-  it("lists only the next weekly check-in under Upcoming, the clash she waits on included", async () => {
+  it("lists every weekly check-in to come and holds back moving every week after her next one", async () => {
     // arrange
     const ports = createPorts({
       checkIns: [
@@ -224,8 +224,17 @@ describe("ListClientCheckInsUseCase weekly check-ins", () => {
 
     // assert
     expect(
-      result.status === "listed" && result.checkIns.map((view) => view.id),
-    ).toEqual(["week-0", "week--1"]);
+      result.status === "listed" &&
+        result.checkIns.map(({ id, viewerProposal }) => ({
+          id,
+          viewerProposal,
+        })),
+    ).toEqual([
+      { id: "week-2", viewerProposal: "later_week" },
+      { id: "week-0", viewerProposal: "none" },
+      { id: "week-1", viewerProposal: "later_week" },
+      { id: "week--1", viewerProposal: "none" },
+    ]);
   });
 });
 

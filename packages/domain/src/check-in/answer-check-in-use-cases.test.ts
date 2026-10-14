@@ -732,10 +732,15 @@ describe("CancelCheckInUseCase", () => {
     { canceller: "client", actor: ANA_ACTOR, recipient: "coach" },
     { canceller: "coach", actor: COACH, recipient: "client" },
   ] as const)(
-    "cancels an approved check-in for the $canceller from approved and emails the $recipient",
-    async ({ actor, recipient }) => {
+    "cancels an approved check-in the $canceller requested from approved and emails the $recipient",
+    async ({ canceller, actor, recipient }) => {
       // arrange
-      const ports = createPorts({ found: approvedCheckIn() });
+      const ports = createPorts({
+        found: approvedCheckIn({
+          initiatedBy: canceller,
+          proposedBy: canceller,
+        }),
+      });
 
       // act
       const result = await new CancelCheckInUseCase(ports).execute({
@@ -793,6 +798,33 @@ describe("CancelCheckInUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: refusal });
+      expect(ports.checkIns.settle).not.toHaveBeenCalled();
+      expect(ports.notifications.cancelled).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { canceller: "client", actor: ANA_ACTOR, requester: "coach" },
+    { canceller: "coach", actor: COACH, requester: "client" },
+  ] as const)(
+    "refuses the $canceller cancelling an approved check-in the $requester requested",
+    async ({ actor, requester }) => {
+      // arrange
+      const ports = createPorts({
+        found: approvedCheckIn({
+          initiatedBy: requester,
+          proposedBy: requester,
+        }),
+      });
+
+      // act
+      const result = await new CancelCheckInUseCase(ports).execute({
+        checkInId: "check-in-1",
+        actor,
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not_allowed" });
       expect(ports.checkIns.settle).not.toHaveBeenCalled();
       expect(ports.notifications.cancelled).not.toHaveBeenCalled();
     },
@@ -877,7 +909,9 @@ describe("CancelCheckInUseCase", () => {
 
   it("keeps the cancellation and reports the email the provider refused", async () => {
     // arrange
-    const ports = createPorts({ found: approvedCheckIn() });
+    const ports = createPorts({
+      found: approvedCheckIn({ initiatedBy: "coach", proposedBy: "coach" }),
+    });
     ports.notifications.cancelled.mockResolvedValue("failed");
 
     // act

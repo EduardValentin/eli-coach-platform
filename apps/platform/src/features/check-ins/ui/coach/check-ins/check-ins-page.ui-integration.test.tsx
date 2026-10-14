@@ -161,6 +161,8 @@ const ELENA_ID = "7b8c9d0e-1f2a-4b3c-9d4e-6f7a8b9c0d1e";
 
 const ELENA_CANCELLABLE: CoachCheckIn = {
   ...ELENA_UPCOMING,
+  initiatedBy: "coach",
+  proposedBy: "coach",
   viewerMayCancel: true,
   clientId: ELENA_ID,
 };
@@ -834,6 +836,40 @@ describe("the coach's moved check-ins", () => {
 });
 
 describe("the coach's upcoming check-in menu", () => {
+  it("offers only Reschedule on a check-in the client requested, since only she may cancel it", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_UPCOMING] };
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+
+    // act
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Reschedule"]);
+  });
+
+  it("offers Reschedule and Cancel on a check-in she scheduled", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+
+    // act
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Reschedule", "Cancel"]);
+  });
+
   it("proposes a new time from the open times of that client, with a note named for her", async () => {
     // arrange
     listing = { checkIns: [ELENA_CANCELLABLE] };

@@ -14,6 +14,8 @@ import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 type CheckInMenuItem = "Reschedule" | "Cancel";
 
+export type RescheduleHoldBack = "moves_exhausted" | "later_week";
+
 export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
   title: "Cancel this check-in?",
   confirm: "Cancel check-in",
@@ -23,7 +25,11 @@ export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
 const MENU_TRIGGER = /^More actions for the check-in on /;
 const CLASH_BADGE = "Clash";
 const CANCELLED_BADGE = "Cancelled";
-const MOVES_EXHAUSTED_REASON = "This check-in has already been moved twice.";
+const RESCHEDULE_HELD_BACK_REASONS: Record<RescheduleHoldBack, string> = {
+  moves_exhausted: "This check-in has already been moved twice.",
+  later_week:
+    "You can move only your next weekly check-in; your coach can move the later ones.",
+};
 const PROPOSE_DIALOG_TITLE = "Propose a new time";
 const ARROW_SETTLE_MS = 250;
 
@@ -46,11 +52,14 @@ export class CheckInRows {
     return this.menu.getByRole("menuitem", { name: item, exact: true });
   }
 
-  private rescheduleActionOf(row: Locator): DisabledAction {
+  private rescheduleActionOf(
+    row: Locator,
+    holdBack: RescheduleHoldBack,
+  ): DisabledAction {
     return new DisabledAction(this.page, {
       button: this.itemNamed("Reschedule"),
       opens: this.proposeDialog,
-      reason: MOVES_EXHAUSTED_REASON,
+      reason: RESCHEDULE_HELD_BACK_REASONS[holdBack],
       focusByKeyboard: () => this.focusItemByKeyboard(row, "Reschedule"),
     });
   }
@@ -109,27 +118,47 @@ export class CheckInRows {
     await this.page.keyboard.press("Enter");
   }
 
-  async expectRescheduleBlocked(row: Locator): Promise<void> {
+  async expectRescheduleBlocked(
+    row: Locator,
+    holdBack: RescheduleHoldBack,
+  ): Promise<void> {
     await this.openMenu(row);
-    await this.rescheduleActionOf(row).expectBlocked();
-    await expect(this.itemNamed("Cancel")).toBeEnabled();
+    await this.rescheduleActionOf(row, holdBack).expectBlocked();
     await this.closeMenu(row);
   }
 
-  async expectRescheduleReasonOnHover(row: Locator): Promise<void> {
+  async expectRescheduleAllowed(row: Locator): Promise<void> {
     await this.openMenu(row);
-    await this.rescheduleActionOf(row).expectReasonOnHover();
+    await expect(this.itemNamed("Reschedule")).toBeEnabled();
+    await expect(this.itemNamed("Reschedule")).not.toHaveAttribute(
+      "aria-disabled",
+    );
     await this.closeMenu(row);
   }
 
-  async expectRescheduleReasonOnFocus(row: Locator): Promise<void> {
-    await this.rescheduleActionOf(row).expectReasonOnFocus();
+  async expectRescheduleReasonOnHover(
+    row: Locator,
+    holdBack: RescheduleHoldBack,
+  ): Promise<void> {
+    await this.openMenu(row);
+    await this.rescheduleActionOf(row, holdBack).expectReasonOnHover();
     await this.closeMenu(row);
   }
 
-  async expectRescheduleReasonOnTap(row: Locator): Promise<void> {
+  async expectRescheduleReasonOnFocus(
+    row: Locator,
+    holdBack: RescheduleHoldBack,
+  ): Promise<void> {
+    await this.rescheduleActionOf(row, holdBack).expectReasonOnFocus();
+    await this.closeMenu(row);
+  }
+
+  async expectRescheduleReasonOnTap(
+    row: Locator,
+    holdBack: RescheduleHoldBack,
+  ): Promise<void> {
     await this.openMenu(row);
-    await this.rescheduleActionOf(row).expectReasonOnTap();
+    await this.rescheduleActionOf(row, holdBack).expectReasonOnTap();
     await this.closeMenu(row);
   }
 
@@ -213,11 +242,6 @@ export class CheckInRows {
   async expectClash(row: Locator): Promise<void> {
     await expect(row.getByText(CLASH_BADGE, { exact: true })).toBeVisible();
     await expect(row.getByRole("link", { name: "Join Meet" })).toHaveCount(0);
-  }
-
-  async expectNoClash(row: Locator): Promise<void> {
-    await expect(row).toBeVisible();
-    await expect(row.getByText(CLASH_BADGE, { exact: true })).toHaveCount(0);
   }
 
   async expectNoCancel(row: Locator): Promise<void> {

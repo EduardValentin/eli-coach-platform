@@ -1,8 +1,6 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import type { PickedCheckIn } from "./check-in-picker-dialog";
-import { CheckInRows } from "./check-in-rows";
 import { clientPronouns } from "./client-pronouns";
 import type { ConfirmationLabels } from "./confirmation-dialog";
 import { DisabledAction } from "./disabled-action";
@@ -43,9 +41,9 @@ const SET_UP_WEEKLY = "Set up a weekly check-in";
 
 const WEEKLY_MENU_TRIGGER = "More actions for the weekly check-in";
 
-const NEXT_WEEKLY_ROW = /^Next weekly check-in:/;
+const VIEW_ALL_CHECK_INS = "View all check-ins";
 
-const CHECK_IN_FOCUS_URL = /\/coach\/checkins\?checkin=[^&]+$/;
+const CHECK_INS_PATH = "/coach/checkins";
 
 const ARROW_SETTLE_MS = 250;
 
@@ -83,11 +81,9 @@ const ONBOARDING_PROFILE_TERMS = [
 
 export class CoachClientPage {
   private readonly measurementsHistory: MeasurementsHistory;
-  private readonly rows: CheckInRows;
 
   constructor(private readonly page: Page) {
     this.measurementsHistory = new MeasurementsHistory(page);
-    this.rows = new CheckInRows(page);
   }
 
   private block(heading: string): Locator {
@@ -174,10 +170,11 @@ export class CoachClientPage {
     return this.weeklyMenu.getByRole("menuitem", { name: action, exact: true });
   }
 
-  private get weeklySchedule() {
-    return this.weeklyPanel
-      .getByText("Schedule", { exact: true })
-      .locator("xpath=following-sibling::*[1]");
+  private get viewAllCheckInsLink() {
+    return this.weeklyPanel.getByRole("link", {
+      name: VIEW_ALL_CHECK_INS,
+      exact: true,
+    });
   }
 
   private async openWeeklyMenuByKeyboard(): Promise<void> {
@@ -806,7 +803,7 @@ export class CoachClientPage {
     ).toBeVisible();
     await expect(this.setUpWeeklyButton).toBeEnabled();
     await expect(this.weeklyMenuTrigger).toHaveCount(0);
-    await expect(this.nextWeeklyRow()).toHaveCount(0);
+    await expect(this.viewAllCheckInsLink).toHaveCount(0);
   }
 
   async expectSetUpBlocked(gender: VisitorGender): Promise<void> {
@@ -891,36 +888,19 @@ export class CoachClientPage {
   }
 
   async expectWeeklyRule(rule: string): Promise<void> {
-    await expect(this.weeklySchedule).toHaveText(rule);
+    await expect(
+      this.weeklyPanel.getByText(rule, { exact: true }),
+    ).toBeVisible();
     await expect(this.weeklyMenuTrigger).toBeEnabled();
     await expect(this.setUpWeeklyButton).toHaveCount(0);
-  }
-
-  nextWeeklyRow(): Locator {
-    return this.weeklyPanel.getByRole("link", { name: NEXT_WEEKLY_ROW });
-  }
-
-  async expectNextWeeklyRow(week: PickedCheckIn): Promise<void> {
-    await this.expectNextWeeklyAt(week);
-    await this.rows.expectNoClash(this.nextWeeklyRow());
-  }
-
-  async expectNextWeeklyClash(week: PickedCheckIn): Promise<void> {
-    await this.expectNextWeeklyAt(week);
-    await this.rows.expectClash(this.nextWeeklyRow());
-  }
-
-  private async expectNextWeeklyAt(week: PickedCheckIn): Promise<void> {
-    await expect(this.nextWeeklyRow()).toHaveCount(1);
-    await expect(this.nextWeeklyRow()).toHaveAttribute(
+    await expect(this.viewAllCheckInsLink).toHaveAttribute(
       "href",
-      CHECK_IN_FOCUS_URL,
+      CHECK_INS_PATH,
     );
-    await this.rows.expectShownAt(this.nextWeeklyRow(), week);
   }
 
-  async openNextWeeklyRow(): Promise<void> {
-    await this.nextWeeklyRow().click();
-    await expect(this.page).toHaveURL(CHECK_IN_FOCUS_URL);
+  async openAllCheckIns(): Promise<void> {
+    await this.viewAllCheckInsLink.click();
+    await expect(this.page).toHaveURL(CHECK_INS_PATH);
   }
 }

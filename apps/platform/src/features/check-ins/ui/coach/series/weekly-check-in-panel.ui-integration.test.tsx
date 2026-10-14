@@ -20,7 +20,6 @@ import {
   createMemoryRouter,
   RouterProvider,
   useLoaderData,
-  useLocation,
 } from "react-router";
 import {
   afterAll,
@@ -43,7 +42,6 @@ import {
 import { clientAction as stopSeries } from "~/features/check-ins/api/coach/series-stop";
 import type {
   CheckInScheduling,
-  CoachCheckIn,
   CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
 import {
@@ -76,42 +74,6 @@ const SERIES_STOP_URL = `*${CHECK_INS_API_PATHS.seriesStop}`;
 const WEEKLY_MENU = "More actions for the weekly check-in";
 const SET_UP_ACTION = "Set up a weekly check-in";
 
-const FIRST_WEEK: CoachCheckIn = {
-  id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
-  seriesId: SERIES_ID,
-  kind: "recurring",
-  status: "approved",
-  tab: "upcoming",
-  initiatedBy: "coach",
-  proposedBy: "coach",
-  awaitsViewer: false,
-  viewerMayWithdraw: false,
-  viewerProposal: "allowed",
-  viewerMayCancel: true,
-  newTimeWaits: false,
-  isWaitingRequest: false,
-  startsAt: "2026-10-14T15:00:00.000Z",
-  endsAt: "2026-10-14T16:00:00.000Z",
-  joinEmphasisFrom: "2026-10-14T14:50:00.000Z",
-  earlierStartsAt: null,
-  moves: 0,
-  note: null,
-  newTimeNote: null,
-  clientId: CLIENT_ID,
-  client: { firstName: "Ana", lastName: "Popescu" },
-};
-
-const CLASHING_WEEK: CoachCheckIn = {
-  ...FIRST_WEEK,
-  id: "1b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e",
-  status: "clash",
-  tab: "requests",
-  awaitsViewer: true,
-  startsAt: "2026-10-21T15:00:00.000Z",
-  endsAt: "2026-10-21T16:00:00.000Z",
-  joinEmphasisFrom: "2026-10-21T14:50:00.000Z",
-};
-
 const SERIES = {
   id: SERIES_ID,
   weekday: "wednesday",
@@ -121,25 +83,11 @@ const SERIES = {
 
 const NO_SERIES: CoachClientSeriesPanel = {
   series: null,
-  nextWeek: null,
   coachingEnds: false,
 };
 
 const ACTIVE: CoachClientSeriesPanel = {
   series: SERIES,
-  nextWeek: FIRST_WEEK,
-  coachingEnds: false,
-};
-
-const NEXT_WEEK_CLASHES: CoachClientSeriesPanel = {
-  series: SERIES,
-  nextWeek: CLASHING_WEEK,
-  coachingEnds: false,
-};
-
-const NO_WEEKS_LEFT: CoachClientSeriesPanel = {
-  series: SERIES,
-  nextWeek: null,
   coachingEnds: false,
 };
 
@@ -303,7 +251,7 @@ describe("the weekly check-in panel on a client record", () => {
     ).toBeInTheDocument();
   });
 
-  it("reads the schedule in the coach's zone, her next weekly check-in as one row and every check-in a link away", async () => {
+  it("reads the day and the hour in the coach's zone without a label and every check-in a link away", async () => {
     // arrange
     weekly = ACTIVE;
 
@@ -312,18 +260,13 @@ describe("the weekly check-in panel on a client record", () => {
 
     // assert
     const panel = weeklyPanel();
-    expect(within(panel).getByText("Schedule")).toBeInTheDocument();
     expect(
       within(panel).getByText("Every Wednesday at 6:00 PM"),
     ).toBeInTheDocument();
-    const nextWeek = nextWeekRow();
-    expect(nextWeek).toHaveAttribute(
-      "href",
-      `${COACH_CHECK_INS_PATH}?checkin=${FIRST_WEEK.id}`,
-    );
-    expect(nextWeek).toHaveTextContent("Wed, Oct 14");
-    expect(nextWeek).toHaveTextContent("6:00 PM");
-    expect(within(nextWeek).queryByText("Clash")).not.toBeInTheDocument();
+    expect(within(panel).queryByText("Schedule")).not.toBeInTheDocument();
+    expect(within(panel).getAllByRole("link")).toEqual([
+      within(panel).getByRole("link", { name: "View all check-ins" }),
+    ]);
     expect(
       within(panel).getByRole("link", { name: "View all check-ins" }),
     ).toHaveAttribute("href", COACH_CHECK_INS_PATH);
@@ -332,53 +275,22 @@ describe("the weekly check-in panel on a client record", () => {
         .getAllByRole("button")
         .map((button) => button.getAttribute("aria-label")),
     ).toEqual([WEEKLY_MENU]);
-    expect(within(panel).getAllByRole("link")).toHaveLength(2);
   });
 
-  it("flags her next weekly check-in when its hour is taken", async () => {
-    // arrange
-    weekly = NEXT_WEEK_CLASHES;
-
-    // act
-    await renderPanel();
-
-    // assert
-    const nextWeek = nextWeekRow();
-    expect(within(nextWeek).getByText("Clash")).toBeInTheDocument();
-    expect(nextWeek).toHaveTextContent("Wed, Oct 21");
-  });
-
-  it("says so when no week is left to come", async () => {
-    // arrange
-    weekly = NO_WEEKS_LEFT;
-
-    // act
-    await renderPanel();
-
-    // assert
-    const panel = weeklyPanel();
-    expect(within(panel).getByText("No week to come.")).toBeInTheDocument();
-    expect(
-      within(panel).queryByRole("link", { name: /^Next weekly check-in:/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(panel).getByRole("link", { name: "View all check-ins" }),
-    ).toBeInTheDocument();
-  });
-
-  it("opens the Check-ins page on her next weekly check-in from its row", async () => {
+  it("opens the Check-ins page from View all check-ins", async () => {
     // arrange
     weekly = ACTIVE;
     const user = await renderPanel();
 
     // act
-    await user.click(nextWeekRow());
+    await user.click(
+      within(weeklyPanel()).getByRole("link", { name: "View all check-ins" }),
+    );
 
     // assert
     expect(
       await screen.findByRole("heading", { level: 1, name: "Check-ins" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(`Focused on ${FIRST_WEEK.id}`)).toBeInTheDocument();
   });
 
   it("keeps Change and Stop in one menu in its header", async () => {
@@ -397,9 +309,9 @@ describe("the weekly check-in panel on a client record", () => {
     ).toEqual(["Change", "Stop"]);
   });
 
-  it("passes the axe checks with her next weekly check-in clashing", async () => {
+  it("passes the axe checks with a weekly check-in set up", async () => {
     // arrange
-    weekly = NEXT_WEEK_CLASHES;
+    weekly = ACTIVE;
     const { baseElement } = await renderPanelWithView();
 
     // act
@@ -766,7 +678,6 @@ describe("changing a weekly check-in", () => {
         });
         weekly = {
           series: { ...SERIES, weekday: "friday", hour: 19 },
-          nextWeek: null,
           coachingEnds: false,
         };
         return HttpResponse.json({ status: "changed", seriesId: SERIES_ID });
@@ -997,12 +908,6 @@ function weeklyMenu(): HTMLElement {
   return within(weeklyPanel()).getByRole("button", { name: WEEKLY_MENU });
 }
 
-function nextWeekRow(): HTMLElement {
-  return within(weeklyPanel()).getByRole("link", {
-    name: /^Next weekly check-in:/,
-  });
-}
-
 async function chooseFromMenu(
   user: UserEvent,
   action: "Change" | "Stop",
@@ -1011,13 +916,10 @@ async function chooseFromMenu(
   await user.click(await screen.findByRole("menuitem", { name: action }));
 }
 
-function FocusedCheckIn() {
-  const { search } = useLocation();
-
+function CheckInsPage() {
   return (
     <main aria-label="Coach portal content">
       <h1>Check-ins</h1>
-      <p>Focused on {new URLSearchParams(search).get("checkin")}</p>
     </main>
   );
 }
@@ -1075,7 +977,7 @@ async function renderPanelWithView({
         path: CHECK_INS_API_PATHS.seriesStop,
       },
       {
-        Component: FocusedCheckIn,
+        Component: CheckInsPage,
         path: COACH_CHECK_INS_PATH,
       },
     ],

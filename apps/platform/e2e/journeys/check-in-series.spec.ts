@@ -115,7 +115,7 @@ function weeklyHourOf(instant: Date): WeeklyHour {
 }
 
 test(
-  "the coach sets up a weekly check-in on her onboarding day, reschedules the one week that clashes, and the client keeps one weekly check-in she cannot cancel",
+  "the coach sets up a weekly check-in on her onboarding day, reschedules the one week that clashes, and the client sees every week, may move only the next one and cancel none",
   { tag: "@critical" },
   async ({
     bookingPage,
@@ -174,7 +174,6 @@ test(
     // assert
     await coachClient.expectToast(SET_UP_TOAST);
     await coachClient.expectWeeklyRule(ruleOf(weekly));
-    await coachClient.expectNextWeeklyClash(shownIn(clashingWeek!));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(weeks);
@@ -199,7 +198,7 @@ test(
     await clientCheckIns.open();
 
     // assert
-    await clientCheckIns.expectCoachFindingTime();
+    await clientCheckIns.expectCoachFindingTimeFirst();
     expect(clashProblems).toEqual([]);
 
     // arrange
@@ -238,9 +237,13 @@ test(
     await clientCheckIns.accept(RESCHEDULE_NOTE);
 
     // assert
-    await clientCheckIns.expectOneWeeklyUpcoming(RESCHEDULE_NOTE);
+    await clientCheckIns.expectEveryWeeklyUpcoming([
+      movedWeek,
+      ...weeks.slice(1).map(shownIn),
+    ]);
     await clientCheckIns.expectUpcomingAt(RESCHEDULE_NOTE, movedWeek);
-    await clientCheckIns.expectNoCancel("Upcoming", RESCHEDULE_NOTE);
+    await clientCheckIns.expectNextWeekMovable(movedWeek);
+    await clientCheckIns.expectLaterWeekHeldBack(shownIn(secondWeek!));
     expect(acceptingProblems).toEqual([]);
 
     // arrange
@@ -314,7 +317,6 @@ test(
     // assert
     await coachClient.expectToast(CHANGED_TOAST);
     await coachClient.expectWeeklyRule(ruleOf(changed));
-    await coachClient.expectNextWeeklyRow(shownIn(firstChangedWeek!));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(changedWeeks);
@@ -559,7 +561,7 @@ test(
     await coachClient.openWeeklyDialog();
     await weeklyCheckInDialog.chooseHour(hourLabelOf(weekly));
     await weeklyCheckInDialog.save();
-    await coachClient.expectNextWeeklyRow(shownIn(setUpWeeks[0]!));
+    await coachClient.expectWeeklyRule(ruleOf(weekly));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(setUpWeeks);
@@ -574,7 +576,7 @@ test(
 
     // assert
     expect(renewal.status).toBe(OK);
-    await coachClient.expectNextWeeklyRow(shownIn(setUpWeeks[0]!));
+    await coachClient.expectWeeklyRule(ruleOf(weekly));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(
@@ -610,7 +612,7 @@ test(
       from: daysAfter(startedAt, CHECK_IN_LEAD_DAYS),
       until: renewedThrough,
     });
-    await coachClient.expectNextWeeklyRow(shownIn(startedWeeks[0]!));
+    await coachClient.expectWeeklyRule(ruleOf(weekly));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(startedWeeks);
@@ -670,7 +672,7 @@ test.describe("while a clash waits for the coach", () => {
       await coachClient.openWeeklyDialog();
       await weeklyCheckInDialog.chooseHour(hourLabelOf(weekly));
       await weeklyCheckInDialog.save();
-      await coachClient.expectNextWeeklyClash(shownIn(clashingWeek!));
+      await coachClient.expectWeeklyRule(ruleOf(weekly));
       await emailTo(client.email, SET_UP_SUBJECT);
 
       // act
@@ -761,7 +763,7 @@ test.describe("while a clash waits for the coach", () => {
       await coachClient.openWeeklyDialog();
       await weeklyCheckInDialog.chooseHour(hourLabelOf(weekly));
       await weeklyCheckInDialog.save();
-      await coachClient.expectNextWeeklyRow(shownIn(setUpWeeks[0]!));
+      await coachClient.expectWeeklyRule(ruleOf(weekly));
 
       // act
       await coachSettings.open();
@@ -771,7 +773,6 @@ test.describe("while a clash waits for the coach", () => {
 
       // assert
       await coachClient.expectWeeklyRule(ruleOf(weekly));
-      await coachClient.expectNextWeeklyRow(shownIn(setUpWeeks[0]!));
       expect(await checkInRecords.weeksToComeOf(client.clientId)).toEqual(
         setUpWeeks,
       );
@@ -806,7 +807,7 @@ test.describe("while a clash waits for the coach", () => {
 });
 
 test(
-  "a new time for a clash spends neither of its two moves, either side then moves the weekly check-in with the usual emails, and the client sees and moves only that next weekly check-in",
+  "a new time for a clash spends neither of its two moves, either side then moves the weekly check-in with the usual emails, and the client sees every weekly check-in but may move only the next one, Reschedule on a later one held back with its reason",
   { tag: "@completeness" },
   async ({
     checkInProposeDialog,
@@ -849,8 +850,8 @@ test(
     await coachClient.openWeeklyDialog();
     await weeklyCheckInDialog.chooseHour(hourLabelOf(weekly));
     await weeklyCheckInDialog.save();
-    await coachClient.expectNextWeeklyClash(shownIn(clashingWeek!));
-    await coachCheckIns.open();
+    await coachClient.expectWeeklyRule(ruleOf(weekly));
+    await coachClient.openAllCheckIns();
 
     // act
     await coachCheckIns.reschedule("Requests", client.fullName);
@@ -936,13 +937,15 @@ test(
       status: CONFLICT,
       body: NOT_NEXT_WEEKLY,
     });
-    await clientCheckIns.expectOneWeeklyUpcoming(COACH_MOVE_NOTE);
     await clientCheckIns.expectUpcomingAt(COACH_MOVE_NOTE, coachMove);
+    await clientCheckIns.expectLaterWeekHeldBack(shownIn(secondWeek!));
+    await clientCheckIns.expectLaterWeekReasonOnHover(shownIn(secondWeek!));
+    await clientCheckIns.expectLaterWeekReasonOnFocus(shownIn(secondWeek!));
   },
 );
 
 test(
-  "the coach cancels the next week and moves the one after from the Check-ins page, reached each time from the client record's next weekly check-in, with the usual emails and none for the weeks themselves, and a change replaces the moved week while a past week stays",
+  "the coach cancels the next week and moves the one after from the Check-ins page, reached each time from the weekly check-in's View all check-ins link, with the usual emails and none for the weeks themselves, and a change replaces the moved week while a past week stays",
   { tag: "@completeness" },
   async ({
     cancelCheckInDialog,
@@ -976,17 +979,16 @@ test(
     await coachClient.openWeeklyDialog();
     await weeklyCheckInDialog.chooseHour(hourLabelOf(setUp));
     await weeklyCheckInDialog.save();
-    await coachClient.expectNextWeeklyRow(shownIn(cancelledWeek!));
+    await coachClient.expectWeeklyRule(ruleOf(setUp));
     await emailTo(client.email, SET_UP_SUBJECT);
 
     // act
-    await coachClient.openNextWeeklyRow();
+    await coachClient.openAllCheckIns();
 
     // assert
-    await coachCheckIns.expectWeekLanded(
-      "Upcoming",
+    await coachCheckIns.expectEveryWeeklyUpcoming(
       client.fullName,
-      shownIn(cancelledWeek!),
+      weeks.map(shownIn),
     );
 
     // act
@@ -1019,16 +1021,15 @@ test(
 
     // arrange
     await coachClient.open(client.clientId);
-    await coachClient.expectNextWeeklyRow(shownIn(movedWeek!));
+    await coachClient.expectWeeklyRule(ruleOf(setUp));
 
     // act
-    await coachClient.openNextWeeklyRow();
+    await coachClient.openAllCheckIns();
 
     // assert
-    await coachCheckIns.expectWeekLanded(
-      "Upcoming",
+    await coachCheckIns.expectEveryWeeklyUpcoming(
       client.fullName,
-      shownIn(movedWeek!),
+      weeks.slice(1).map(shownIn),
     );
 
     // act
@@ -1065,7 +1066,6 @@ test(
     // assert
     await coachClient.expectToast(CHANGED_TOAST);
     await coachClient.expectWeeklyRule(ruleOf(changed));
-    await coachClient.expectNextWeeklyRow(shownIn(changedWeeks[0]!));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(changedWeeks);
@@ -1126,7 +1126,6 @@ test(
     // assert
     await coachClient.expectToast(SET_UP_TOAST);
     await coachClient.expectWeeklyRule(ruleOf(weekly));
-    await coachClient.expectNextWeeklyRow(shownIn(firstWeek!));
     await expect
       .poll(() => checkInRecords.weeksToComeOf(client.clientId))
       .toEqual(weeks);

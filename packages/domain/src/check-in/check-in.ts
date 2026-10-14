@@ -36,7 +36,8 @@ export type CheckInRefusal =
   CheckInProposalRefusal | CheckInCancellationRefusal;
 export type CheckInRequestDecision =
   "requested" | "request_waiting" | "time_taken";
-export type CheckInViewerProposal = "allowed" | "exhausted" | "none";
+export type CheckInViewerProposal =
+  "allowed" | "exhausted" | "later_week" | "none";
 export type CheckInTab = "upcoming" | "requests" | "past";
 
 export type CheckInProps = {
@@ -217,31 +218,6 @@ export class CheckIn {
     return availability === "open" && coachTime === "reserved"
       ? occurrence
       : occurrence.asClash();
-  }
-
-  static nextUpcomingOfEachSeries<View extends CheckInView>(
-    views: readonly View[],
-  ): View[] {
-    const nextOfSeries = new Map<string, View>();
-
-    for (const view of views) {
-      if (view.tab !== "upcoming" || view.seriesId === null) {
-        continue;
-      }
-
-      const next = nextOfSeries.get(view.seriesId);
-
-      if (!next || view.startsAt < next.startsAt) {
-        nextOfSeries.set(view.seriesId, view);
-      }
-    }
-
-    return views.filter(
-      (view) =>
-        view.tab !== "upcoming" ||
-        view.seriesId === null ||
-        nextOfSeries.get(view.seriesId) === view,
-    );
   }
 
   static decideRequest(learned: {
@@ -471,6 +447,15 @@ export class CheckIn {
     };
   }
 
+  viewAmong({ clientCheckIns, ...viewer }: ClientCheckInsTurn): CheckInView {
+    const view = this.viewFor(viewer);
+    const laterWeek = this.laterWeekRefusalFor({ ...viewer, clientCheckIns });
+
+    return view.viewerProposal === "none" || laterWeek === null
+      ? view
+      : { ...view, viewerProposal: "later_week" };
+  }
+
   toSnapshot(): CheckInSnapshot {
     return {
       ...this.toProps(),
@@ -494,7 +479,10 @@ export class CheckIn {
   private mayCancel(party: CheckInParty): boolean {
     return this.recordedStatus === "clash"
       ? party === "coach"
-      : CHECK_IN_KIND_POLICIES[this.kind].mayCancelApproved(party);
+      : CHECK_IN_KIND_POLICIES[this.kind].mayCancelApproved({
+          party,
+          initiatedBy: this.initiatedBy,
+        });
   }
 
   private proposalRefusalFor(

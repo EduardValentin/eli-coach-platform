@@ -1,41 +1,26 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
-import { DASHBOARD_ROW_CLASS } from "@eli-coach-platform/ui/appointments";
-import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
+import { VALUE_CLASS } from "@eli-coach-platform/ui/lib";
 import {
   PortalWidget,
-  Reading,
   WidgetAction,
   WidgetLink,
 } from "@eli-coach-platform/ui/portal";
 import {
-  Badge,
-  DateTimeLabel,
   DisabledActionHint,
   RowActionsMenu,
 } from "@eli-coach-platform/ui/primitives";
-import {
-  CalendarClock,
-  CalendarRange,
-  CalendarX,
-  ChevronRight,
-} from "lucide-react";
+import { CalendarClock, CalendarRange, CalendarX } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
-import { Link } from "react-router";
 
 import type {
   CheckInScheduling,
-  CoachCheckIn,
   CoachClientSeriesPanel,
 } from "~/features/check-ins/public/check-ins";
-import {
-  COACH_CHECK_INS_PATH,
-  coachCheckInPath,
-} from "~/features/check-ins/public/paths";
+import { COACH_CHECK_INS_PATH } from "~/features/check-ins/public/paths";
 import { formatClockHour } from "~/features/assessment-calls/public/call-moment";
 import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";
 import { awaitingOnboardingReason } from "~/features/check-ins/ui/coach/shared/awaiting-onboarding-reason";
-import { checkInMomentOf } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
 import { WEEKDAY_LABELS } from "~/features/coach-schedule/public/coach-schedule-settings";
 
 import { StopWeeklyCheckInDialog } from "./stop-weekly-check-in-dialog";
@@ -65,7 +50,6 @@ type Opening<Subject> = {
 type SeriesSummaryProps = {
   coachingEnds: boolean;
   gender: VisitorGender;
-  nextWeek: CoachCheckIn | null;
   scheduling: CheckInScheduling;
   series: WeeklyCheckInSeries | null;
 };
@@ -152,7 +136,6 @@ export function WeeklyCheckInPanel({
         <SeriesSummary
           coachingEnds={coachingEnds}
           gender={client.gender}
-          nextWeek={weekly.nextWeek}
           scheduling={scheduling}
           series={series}
         />
@@ -191,7 +174,6 @@ export function WeeklyCheckInPanel({
 function SeriesSummary({
   coachingEnds,
   gender,
-  nextWeek,
   scheduling,
   series,
 }: SeriesSummaryProps) {
@@ -215,54 +197,9 @@ function SeriesSummary({
   }
 
   return (
-    <>
-      <Reading
-        label="Schedule"
-        value={ruleLineOf(series)}
-        valueParity="series-rule"
-      />
-      {nextWeek ? (
-        <NextWeekLink week={nextWeek} />
-      ) : (
-        <p
-          className="mt-5 text-sm text-text-secondary"
-          data-parity="series-weeks-empty"
-        >
-          No week to come.
-        </p>
-      )}
-    </>
-  );
-}
-
-function NextWeekLink({ week }: { week: CoachCheckIn }) {
-  const timeZone = useCalendarDayTimeZone();
-
-  return (
-    <Link
-      className={cn(DASHBOARD_ROW_CLASS, "group mt-5")}
-      data-parity="series-next-week"
-      to={coachCheckInPath(week.id)}
-    >
-      <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="sr-only">Next weekly check-in: </span>
-        <DateTimeLabel
-          size="sm"
-          when={checkInMomentOf(week.startsAt, timeZone)}
-        />
-        {week.status === "clash" && (
-          <Badge data-parity="clash-badge" tone="pending">
-            Clash
-          </Badge>
-        )}
-      </span>
-      <ChevronRight
-        aria-hidden="true"
-        className="shrink-0 text-text-secondary transition-colors group-hover:text-text-primary"
-        data-parity="series-next-week-chevron"
-        size={16}
-      />
-    </Link>
+    <p className={VALUE_CLASS} data-parity="series-rule">
+      {ruleLineOf(series)}
+    </p>
   );
 }
 

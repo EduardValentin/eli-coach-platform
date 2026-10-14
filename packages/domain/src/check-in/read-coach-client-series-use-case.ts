@@ -1,34 +1,22 @@
-import type { ClientIdentities, ClientReach } from "../client";
-import type { Clock } from "../shared";
+import type { ClientReach } from "../client";
 
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
-import {
-  CoachCheckInViews,
-  type CoachCheckInView,
-} from "./coach-check-in-views";
 
 export type CoachClientSeries = {
   series: CheckInSeriesSnapshot | null;
-  nextWeek: CoachCheckInView | null;
   coachingEnds: boolean;
 };
 
 type ReadCoachClientSeriesUseCaseOptions = {
   clients: Pick<ClientReach, "findById">;
-  clock: Clock;
-  identities: Pick<ClientIdentities, "findByClientIds">;
   incidents: Pick<CheckInIncidents, "checkInSeriesReadFailed">;
-  series: Pick<CheckInSeriesRecords, "findActiveForClient" | "listOccurrences">;
+  series: Pick<CheckInSeriesRecords, "findActiveForClient">;
 };
 
 export class ReadCoachClientSeriesUseCase {
-  private readonly views: CoachCheckInViews;
-
-  constructor(private readonly options: ReadCoachClientSeriesUseCaseOptions) {
-    this.views = new CoachCheckInViews(options);
-  }
+  constructor(private readonly options: ReadCoachClientSeriesUseCaseOptions) {}
 
   async execute(clientId: string): Promise<CoachClientSeries> {
     try {
@@ -36,7 +24,7 @@ export class ReadCoachClientSeriesUseCase {
     } catch (error) {
       this.options.incidents.checkInSeriesReadFailed({ clientId, error });
 
-      return { series: null, nextWeek: null, coachingEnds: false };
+      return { series: null, coachingEnds: false };
     }
   }
 
@@ -45,19 +33,10 @@ export class ReadCoachClientSeriesUseCase {
       this.options.clients.findById(clientId),
       this.options.series.findActiveForClient(clientId),
     ]);
-    const coachingEnds = client !== null && client.coachingEndsAt !== null;
-
-    if (!series) {
-      return { series: null, nextWeek: null, coachingEnds };
-    }
-
-    const occurrences = await this.options.series.listOccurrences(series.id);
-    const views = await this.views.viewsOf(occurrences);
 
     return {
-      series: series.toSnapshot(),
-      nextWeek: views.find((view) => view.tab !== "past") ?? null,
-      coachingEnds,
+      series: series?.toSnapshot() ?? null,
+      coachingEnds: client !== null && client.coachingEndsAt !== null,
     };
   }
 }

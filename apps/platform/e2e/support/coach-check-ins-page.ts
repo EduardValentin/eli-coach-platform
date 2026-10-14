@@ -77,21 +77,6 @@ export class CoachCheckInsPage {
     ).toBeFocused();
   }
 
-  async expectWeekLanded(
-    tab: CheckInTab,
-    showing: string,
-    week: PickedCheckIn,
-  ): Promise<void> {
-    await expect(this.page).toHaveURL(REVIEW_URL);
-    await expect(this.heading).toBeVisible();
-    await this.expectTabShown(tab);
-    await expect(
-      this.rows
-        .listedAt(this.checkIn(tab, showing), week)
-        .locator(CHECK_IN_ANCHOR),
-    ).toBeFocused();
-  }
-
   async expectReviewOpenedAsUsual(tab: CheckInTab): Promise<void> {
     await expect(this.page).toHaveURL(REVIEW_URL);
     await expect(this.heading).toBeVisible();
@@ -288,7 +273,10 @@ export class CoachCheckInsPage {
     tab: CheckInTab,
     showing: string,
   ): Promise<void> {
-    await this.rows.expectRescheduleBlocked(await this.shownRow(tab, showing));
+    await this.rows.expectRescheduleBlocked(
+      await this.shownRow(tab, showing),
+      "moves_exhausted",
+    );
   }
 
   async expectRescheduleReasonOnHover(
@@ -297,6 +285,7 @@ export class CoachCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnHover(
       await this.shownRow(tab, showing),
+      "moves_exhausted",
     );
   }
 
@@ -306,6 +295,7 @@ export class CoachCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnFocus(
       await this.shownRow(tab, showing),
+      "moves_exhausted",
     );
   }
 
@@ -315,7 +305,12 @@ export class CoachCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnTap(
       await this.shownRow(tab, showing),
+      "moves_exhausted",
     );
+  }
+
+  async expectNoCancel(tab: CheckInTab, showing: string): Promise<void> {
+    await this.rows.expectNoCancel(await this.shownRow(tab, showing));
   }
 
   async expectNoActions(tab: CheckInTab, showing: string): Promise<void> {
