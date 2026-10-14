@@ -1176,7 +1176,7 @@
   ],
   "coach-checkin-cancel-toast": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
@@ -1193,7 +1193,7 @@
   ],
   "coach-checkin-propose-toast": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
@@ -1263,7 +1263,7 @@
   ],
   "coach-open-checkin-cancel-confirm": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
@@ -1277,7 +1277,7 @@
   ],
   "coach-open-checkin-propose": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
@@ -1297,7 +1297,7 @@
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
     {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
     }
   ],
   "coach-resources-search-no-matches": [
@@ -4017,6 +4017,113 @@
       },
       {
         "wait": 900
+      }
+    ]
+  },
+  "coach-open-scheduled-checkin-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Jane Doe\"):has-text(\"10:00 AM\"):has([data-parity=\"row-actions-trigger\"]) >> nth=0 >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "open-later-weekly-row-menu": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ]
+  },
+  "hover-checkin-reschedule-later-week": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
       }
     ]
   }
