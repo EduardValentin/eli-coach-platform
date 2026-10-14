@@ -10,7 +10,6 @@ import {
   EXERCISE_TAG_LABELS,
   EXERCISE_TYPES,
   EXERCISE_TYPE_LABELS,
-  MEASURES,
   MEASURE_EXAMPLES,
   MEASURE_LABELS,
   MUSCLES,
@@ -18,6 +17,8 @@ import {
   draftProblems,
   isValidDraft,
   labelsOf,
+  measureAllowedFor,
+  measuresFor,
   withPrimaryMuscleToggled,
   type Difficulty,
   type Equipment,
@@ -206,11 +207,11 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
     change((previous) => ({ ...previous, [key]: value }));
 
   const chooseType = (type: ExerciseType) =>
-    change((previous) => ({
-      ...previous,
-      type,
-      measuredIn: previous.measureTouched ? previous.measuredIn : defaultMeasureFor(type),
-    }));
+    change((previous) => {
+      const keepsUnit = previous.measureTouched && measureAllowedFor(type, previous.measuredIn);
+      if (keepsUnit) return { ...previous, type };
+      return { ...previous, type, measuredIn: defaultMeasureFor(type), measureTouched: false };
+    });
   const chooseMeasure = (measuredIn: Measure) =>
     change((previous) => ({ ...previous, measuredIn, measureTouched: true }));
   const togglePrimary = (muscle: Muscle) =>
@@ -286,7 +287,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                   <SelectValue>{MEASURE_LABELS[draft.measuredIn]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {MEASURES.map((measure) => (
+                  {measuresFor(draft.type).map((measure) => (
                     <SelectItem key={measure} value={measure}>
                       {MEASURE_LABELS[measure]}{' '}
                       <span className="text-xs text-text-secondary in-data-[state=checked]:text-current">

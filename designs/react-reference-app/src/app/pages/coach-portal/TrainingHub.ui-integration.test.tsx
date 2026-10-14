@@ -77,10 +77,11 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Overhead Press')).toBeInTheDocument();
+    expect(screen.getByText('Lateral Raises')).toBeInTheDocument();
+    expect(screen.queryByText('Leg Press')).not.toBeInTheDocument();
     expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 14')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 16')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -117,7 +118,7 @@ describe('the exercise library filters', () => {
     await user.click(screen.getByRole('button', { name: 'Tags' }));
 
     // assert
-    expect(screen.getByRole('checkbox', { name: 'Recovery 4' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Recovery 6' })).toBeInTheDocument();
   });
 
   it('narrows to equipment-free exercises', async () => {
@@ -205,7 +206,7 @@ describe('the exercise library filters', () => {
       .getAllByRole('row')
       .slice(1)
       .map((row) => within(row).getAllByRole('cell')[0].textContent);
-    expect(names[0]).toMatch(/^Couch Stretch/);
+    expect(names[0]).toMatch(/^90\/90 Hip Switches/);
   });
 
   it('shows each exercise its tags so the coach can see why a row matched', () => {
@@ -249,6 +250,30 @@ describe('the exercise library filters', () => {
     // assert
     expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
+  it('offers every exercise type in the Type filter', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Type' }));
+
+    // assert
+    const labels = screen.getAllByRole('option').map((option) => option.textContent?.replace(/\s*\d*$/, ''));
+    expect(labels).toEqual(['Any type', 'Resistance', 'Cardio', 'Mobility', 'Stretching', 'Breathing']);
+  });
+
+  it('narrows to stretching from the Type filter', async () => {
+    // arrange
+    const user = renderLibrary();
+
+    // act
+    await chooseOption(user, 'Type', 'Stretching');
+
+    // assert
+    expect(screen.getByText('Couch Stretch')).toBeInTheDocument();
+    expect(screen.queryByText('90/90 Hip Switches')).not.toBeInTheDocument();
   });
 
   it('keeps the tag and equipment filters from an old link that names no type', () => {
@@ -361,7 +386,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 14' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 16' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 

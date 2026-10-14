@@ -228,7 +228,7 @@ describe('the type filter', () => {
     const counts = countsByType(exercises, { ...NO_EXERCISE_FILTERS, tags: ['Strength'] });
 
     // assert
-    expect(counts).toEqual({ any: 2, resistance: 1, cardio: 0, mobility: 1 });
+    expect(counts).toEqual({ any: 2, resistance: 1, cardio: 0, mobility: 1, stretching: 0, breathing: 0 });
   });
 
   it('reads an unknown type from the link as any', () => {

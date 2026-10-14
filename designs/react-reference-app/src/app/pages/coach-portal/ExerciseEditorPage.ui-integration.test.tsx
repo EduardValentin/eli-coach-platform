@@ -193,6 +193,36 @@ describe('a new exercise', () => {
     expect(field('Measured in')).toHaveTextContent('Distance');
   });
 
+  it('resets a hand-picked unit the new type does not allow to the new default', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await choose(user, field('Measured in'), /^Distance/);
+    await choose(user, field('Type'), 'Cardio');
+
+    // act
+    await choose(user, field('Type'), 'Stretching');
+
+    // assert
+    expect(field('Measured in')).toHaveTextContent('Time');
+  });
+
+  it('offers Breaths and Time, and defaults to Breaths, for a breathing exercise', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await choose(user, field('Type'), 'Breathing');
+    const unit = field('Measured in');
+    await user.click(unit);
+
+    // assert
+    expect(unit).toHaveTextContent('Breaths');
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Breaths e.g. 10 breaths',
+      'Time e.g. 45 s hold',
+    ]);
+  });
+
   it('gives each unit an example', async () => {
     // arrange
     const user = renderEditor(NEW);
@@ -204,6 +234,7 @@ describe('a new exercise', () => {
     expect(screen.getByRole('option', { name: 'Reps e.g. 3 × 10' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Time e.g. 45 s hold' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Distance e.g. 400 m' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /^Breaths/ })).not.toBeInTheDocument();
   });
 
   it('shows only the chosen unit, without its example', async () => {

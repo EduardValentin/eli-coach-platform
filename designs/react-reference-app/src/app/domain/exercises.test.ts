@@ -9,6 +9,8 @@ import {
   defaultMeasureFor,
   draftProblems,
   isValidDraft,
+  measureAllowedFor,
+  measuresFor,
   needsEquipment,
   withPrimaryMuscleToggled,
   type ExerciseDraft,
@@ -28,10 +30,10 @@ const squat: ExerciseDraft = {
 };
 
 describe('the exercise vocabularies', () => {
-  it('offers three types, three units, three difficulties and three tags', () => {
+  it('offers five types, four units, three difficulties and three tags', () => {
     // assert
-    expect(EXERCISE_TYPES).toEqual(['resistance', 'cardio', 'mobility']);
-    expect(MEASURES).toEqual(['reps', 'time', 'distance']);
+    expect(EXERCISE_TYPES).toEqual(['resistance', 'cardio', 'mobility', 'stretching', 'breathing']);
+    expect(MEASURES).toEqual(['reps', 'time', 'distance', 'breaths']);
     expect(DIFFICULTIES).toEqual(['Beginner', 'Intermediate', 'Advanced']);
     expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery']);
   });
@@ -46,16 +48,54 @@ describe('the exercise vocabularies', () => {
 });
 
 describe('the default unit', () => {
-  it('measures resistance in reps and cardio and mobility in time', () => {
+  it('is the first unit each type allows', () => {
     // act
-    const resistance = defaultMeasureFor('resistance');
-    const cardio = defaultMeasureFor('cardio');
-    const mobility = defaultMeasureFor('mobility');
+    const defaults = EXERCISE_TYPES.map((type) => defaultMeasureFor(type));
 
     // assert
-    expect(resistance).toBe('reps');
-    expect(cardio).toBe('time');
-    expect(mobility).toBe('time');
+    expect(defaults).toEqual(['reps', 'time', 'time', 'time', 'breaths']);
+  });
+});
+
+describe('measuresFor', () => {
+  it('lists the units each type allows, default first', () => {
+    // act
+    const lists = EXERCISE_TYPES.map((type) => measuresFor(type));
+
+    // assert
+    expect(lists).toEqual([
+      ['reps', 'time', 'distance'],
+      ['time', 'distance'],
+      ['time', 'reps'],
+      ['time'],
+      ['breaths', 'time'],
+    ]);
+  });
+});
+
+describe('measureAllowedFor', () => {
+  it('allows the units a type lists', () => {
+    // act
+    const distanceForCardio = measureAllowedFor('cardio', 'distance');
+    const repsForMobility = measureAllowedFor('mobility', 'reps');
+    const breathsForBreathing = measureAllowedFor('breathing', 'breaths');
+
+    // assert
+    expect(distanceForCardio).toBe(true);
+    expect(repsForMobility).toBe(true);
+    expect(breathsForBreathing).toBe(true);
+  });
+
+  it('refuses the units a type does not list', () => {
+    // act
+    const repsForCardio = measureAllowedFor('cardio', 'reps');
+    const distanceForStretching = measureAllowedFor('stretching', 'distance');
+    const breathsForResistance = measureAllowedFor('resistance', 'breaths');
+
+    // assert
+    expect(repsForCardio).toBe(false);
+    expect(distanceForStretching).toBe(false);
+    expect(breathsForResistance).toBe(false);
   });
 });
 
