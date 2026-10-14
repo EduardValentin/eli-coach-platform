@@ -148,6 +148,10 @@ export class CoachClientPage {
       .getByRole("listitem");
   }
 
+  private weekAt(week: PickedCheckIn): Locator {
+    return this.rows.listedAt(this.weeks, week);
+  }
+
   private weeklyButton(action: WeeklyAction): Locator {
     return this.weeklyPanel.getByRole("button", { name: action, exact: true });
   }
@@ -829,12 +833,25 @@ export class CoachClientPage {
   }
 
   async expectOnlyClash(week: PickedCheckIn): Promise<void> {
+    await this.expectClashesAt([week]);
+  }
+
+  async expectClashesAt(weeks: readonly PickedCheckIn[]): Promise<void> {
     const clashes = this.weeks.filter({
       has: this.page.getByText("Clash", { exact: true }),
     });
 
-    await expect(clashes).toHaveCount(1);
-    await this.rows.expectClash(clashes);
-    await this.rows.expectShownAt(clashes, week);
+    await expect(clashes).toHaveCount(weeks.length);
+    for (const week of weeks) {
+      await this.rows.expectClash(this.rows.listedAt(clashes, week));
+    }
+  }
+
+  async rescheduleWeek(week: PickedCheckIn): Promise<void> {
+    await this.rows.choose(this.weekAt(week), "Reschedule");
+  }
+
+  async cancelWeek(week: PickedCheckIn): Promise<void> {
+    await this.rows.choose(this.weekAt(week), "Cancel");
   }
 }

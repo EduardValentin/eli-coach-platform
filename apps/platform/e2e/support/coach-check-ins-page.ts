@@ -302,6 +302,15 @@ export class CoachCheckInsPage {
     await this.rows.expectNoActions(row);
   }
 
+  async expectOwnWeeklyNewTime(note: string): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+
+    await expect(row).toContainText("New time from you");
+    await expect(row).not.toContainText(AD_HOC);
+    await expect(row).toContainText(`You: "${note}"`);
+    await this.rows.expectNoActions(row);
+  }
+
   async expectEarlierTimeStruck(
     note: string,
     earlier: PickedCheckIn,
@@ -375,6 +384,29 @@ export class CoachCheckInsPage {
     await expect(first).toContainText(showing);
     await expect(first).toContainText(FINDING_A_NEW_TIME);
     await this.rows.expectClash(first);
+  }
+
+  async expectCancelledInPast(
+    showing: string,
+    shown: PickedCheckIn,
+  ): Promise<void> {
+    await this.showTab("Past");
+    await this.rows.expectCancelled(
+      this.rows.listedAt(this.checkIn("Past", showing), shown),
+    );
+  }
+
+  async expectHeldInPast(showing: string, shown: PickedCheckIn): Promise<void> {
+    await this.showTab("Past");
+    await this.rows.expectNotCancelled(
+      this.rows.listedAt(this.checkIn("Past", showing), shown),
+    );
+  }
+
+  async expectNotListed(tab: CheckInTab, showing: string): Promise<void> {
+    await this.showTab(tab);
+    await expect(checkInsListed(this.page, tab).first()).toBeVisible();
+    await expect(this.checkIn(tab, showing)).toHaveCount(0);
   }
 
   async expectOneWeeklyUpcoming(showing: string): Promise<void> {

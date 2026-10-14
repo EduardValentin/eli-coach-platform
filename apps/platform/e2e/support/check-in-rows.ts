@@ -22,6 +22,7 @@ export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
 
 const MENU_TRIGGER = /^More actions for the check-in on /;
 const CLASH_BADGE = "Clash";
+const CANCELLED_BADGE = "Cancelled";
 const MOVES_EXHAUSTED_REASON = "This check-in has already been moved twice.";
 const PROPOSE_DIALOG_TITLE = "Propose a new time";
 const ARROW_SETTLE_MS = 250;
@@ -180,6 +181,33 @@ export class CheckInRows {
       }),
     ).toBeVisible();
     await expect(row.locator("s")).toHaveCount(0);
+  }
+
+  listedAt(listed: Locator, shown: PickedCheckIn): Locator {
+    const { startsAt, timeZone } = shown;
+
+    return listed
+      .filter({
+        hasText: new RegExp(
+          `${spacedPattern(shortDayOf(startsAt, timeZone))}(?!\\d)`,
+        ),
+      })
+      .filter({
+        hasText: new RegExp(
+          `(?<!\\d)${spacedPattern(clockTimeOf(startsAt, timeZone))}`,
+        ),
+      });
+  }
+
+  async expectCancelled(row: Locator): Promise<void> {
+    await expect(row.getByText(CANCELLED_BADGE, { exact: true })).toBeVisible();
+  }
+
+  async expectNotCancelled(row: Locator): Promise<void> {
+    await expect(row).toBeVisible();
+    await expect(row.getByText(CANCELLED_BADGE, { exact: true })).toHaveCount(
+      0,
+    );
   }
 
   async expectClash(row: Locator): Promise<void> {

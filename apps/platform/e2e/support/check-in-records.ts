@@ -41,6 +41,15 @@ const MOVE_CHECK_IN_RESERVATION = `
       ends_at = now() + make_interval(mins => $2) + (ends_at - starts_at)
   where check_in_id = $1
 `;
+const MOVE_CHECK_IN_TO = `
+  update app.check_ins set starts_at = $2::timestamptz where id = $1
+`;
+const MOVE_CHECK_IN_RESERVATION_TO = `
+  update app.coach_time_reservations
+  set starts_at = $2::timestamptz,
+      ends_at = $2::timestamptz + (ends_at - starts_at)
+  where check_in_id = $1
+`;
 const MOVE_BOOKING_ZONE = `
   with client as (
     update app.clients set booking_time_zone = $2 where id = $1
@@ -88,6 +97,11 @@ const CANCEL_WAITING_REQUESTS = `
   )
   delete from app.coach_time_reservations
   where check_in_id in (select id from cancelled)
+`;
+
+const CANCEL_UPCOMING_CLASHES = `
+  update app.check_ins set status = 'cancelled'
+  where status = 'clash' and starts_at > now()
 `;
 
 type MovesRow = { moves: number; earlier_starts_at: Date | null };
@@ -162,6 +176,11 @@ export class CheckInRecords {
     ]);
   }
 
+  async moveStartTo(checkInId: string, startsAt: Date): Promise<void> {
+    await this.pool.query(MOVE_CHECK_IN_TO, [checkInId, startsAt]);
+    await this.pool.query(MOVE_CHECK_IN_RESERVATION_TO, [checkInId, startsAt]);
+  }
+
   async holdHourFor(
     clientId: string,
     startsAt: Date,
@@ -180,6 +199,10 @@ export class CheckInRecords {
 
   async cancelWaitingRequests(): Promise<void> {
     await this.pool.query(CANCEL_WAITING_REQUESTS);
+  }
+
+  async cancelUpcomingClashes(): Promise<void> {
+    await this.pool.query(CANCEL_UPCOMING_CLASHES);
   }
 
   async moveBookingZone(clientId: string, timeZone: string): Promise<void> {

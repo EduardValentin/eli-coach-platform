@@ -36,6 +36,8 @@ const EVERY_DAY = [
 ];
 const FIRST_OPEN_HOUR = 8;
 const END_HOUR = 20;
+const START_OF_DAY = 0;
+const END_OF_DAY = 24;
 
 export const COACH_TIME_ZONE = "Europe/Bucharest";
 
@@ -52,11 +54,22 @@ export class CoachAvailability {
   }
 
   async openEveryDay(): Promise<void> {
+    await this.openEveryDayBetween(FIRST_OPEN_HOUR, END_HOUR);
+  }
+
+  async openAroundTheClock(): Promise<void> {
+    await this.openEveryDayBetween(START_OF_DAY, END_OF_DAY);
+  }
+
+  private async openEveryDayBetween(
+    startHour: number,
+    endHour: number,
+  ): Promise<void> {
     await this.pool.query(SAVE_AVAILABILITY, [
       COACH_TIME_ZONE,
       EVERY_DAY,
-      FIRST_OPEN_HOUR,
-      END_HOUR,
+      startHour,
+      endHour,
       new Date(),
     ]);
   }

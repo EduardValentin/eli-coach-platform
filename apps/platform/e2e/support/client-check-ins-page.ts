@@ -329,6 +329,15 @@ export class ClientCheckInsPage {
     await this.rows.expectNoActions(row);
   }
 
+  async expectOwnWeeklyNewTime(note: string): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+
+    await expect(row).toContainText("New time from you");
+    await expect(row).not.toContainText(AD_HOC);
+    await expect(row).toContainText(`You: "${note}"`);
+    await this.rows.expectNoActions(row);
+  }
+
   async expectEarlierTimeStruck(
     note: string,
     earlier: PickedCheckIn,
@@ -428,6 +437,13 @@ export class ClientCheckInsPage {
 
     await this.expectInOrder("Upcoming", [note]);
     await expect(listed).not.toContainText(AD_HOC);
+  }
+
+  async expectCancelledInPast(shown: PickedCheckIn): Promise<void> {
+    await this.showTab("Past");
+    await this.rows.expectCancelled(
+      this.rows.listedAt(checkInsListed(this.page, "Past"), shown),
+    );
   }
 
   async expectNoCancel(tab: CheckInTab, note: string): Promise<void> {
