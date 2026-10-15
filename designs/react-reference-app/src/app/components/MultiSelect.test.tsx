@@ -33,6 +33,42 @@ describe("MultiSelect", () => {
     expect(screen.getByRole("button", { name: "Tags" })).toHaveAttribute("data-size", "sm");
   });
 
+  it("names itself as required, with how many options are chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        selected={["strength"]}
+        options={["strength", "recovery"]}
+        labels={LABELS}
+        required
+        onToggle={vi.fn()}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Tags (required), 1 selected" })).toBeInTheDocument();
+  });
+
+  it("names itself as required while nothing is chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        selected={[]}
+        options={["strength", "recovery"]}
+        labels={LABELS}
+        required
+        onToggle={vi.fn()}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Tags (required)" })).toBeInTheDocument();
+  });
+
   it("stays in Safari's tab order like the select it sits beside", () => {
     // arrange
     // act

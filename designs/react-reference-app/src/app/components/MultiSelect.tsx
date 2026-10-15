@@ -108,6 +108,7 @@ export function MultiSelect<Value extends string>({
   summary = "count",
   size = "sm",
   placeholder,
+  required,
   id,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
@@ -121,6 +122,7 @@ export function MultiSelect<Value extends string>({
   summary?: Summary;
   size?: TriggerSize;
   placeholder?: string;
+  required?: boolean;
   id?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
@@ -136,7 +138,7 @@ export function MultiSelect<Value extends string>({
           data-slot="select-trigger"
           data-size={size}
           tabIndex={FIELD_TAB_INDEX}
-          aria-label={triggerName(label, selected.length)}
+          aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           className={selectTriggerClasses("w-full")}

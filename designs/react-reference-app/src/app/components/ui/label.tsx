@@ -23,8 +23,10 @@ function Label({
       {children}
       {required && (
         <>
-          <span aria-hidden="true">*</span>
-          <span className="sr-only"> (required)</span>
+          <span aria-hidden="true" className="-ml-1.5">
+            *
+          </span>{" "}
+          <span className="sr-only">(required)</span>
         </>
       )}
     </LabelPrimitive.Root>

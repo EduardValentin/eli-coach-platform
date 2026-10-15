@@ -121,6 +121,7 @@ describe('a new exercise', () => {
     expect(nameField()).toBeInTheDocument();
     expect(screen.getByText('Primary muscles', { selector: 'label' })).toHaveTextContent('Primary muscles* (required)');
     expect(screen.getAllByText('*')).toHaveLength(2);
+    expect(multi('Primary muscles (required)')).toBeInTheDocument();
   });
 
   it('drops the star from Primary muscles for cardio', async () => {
@@ -133,6 +134,7 @@ describe('a new exercise', () => {
     // assert
     expect(screen.getByText('Primary muscles', { selector: 'label' })).toHaveTextContent(/^Primary muscles$/);
     expect(screen.getAllByText('*')).toHaveLength(1);
+    expect(multi('Primary muscles')).toBeInTheDocument();
   });
 
   it('names the Sides, Tags and Demo video groups', () => {
@@ -296,7 +298,7 @@ describe('a new exercise', () => {
     // assert
     expect(primary()).toBeDisabled();
     expect(screen.getByText('Pick at least one primary muscle')).toBeInTheDocument();
-    expect(multi('Primary muscles')).toHaveAttribute('aria-invalid', 'true');
+    expect(multi('Primary muscles (required)')).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('refuses a name an archived exercise already uses', async () => {
@@ -315,7 +317,7 @@ describe('a new exercise', () => {
   it('says why Create is disabled when the name is longer than 80 characters', async () => {
     // arrange
     const user = renderEditor(NEW);
-    await tick(user, multi('Primary muscles'), 'Glutes');
+    await tick(user, multi('Primary muscles (required)'), 'Glutes');
 
     // act
     await user.click(nameField());
@@ -332,7 +334,7 @@ describe('a new exercise', () => {
     // arrange
     const user = renderEditor(NEW);
     await user.type(nameField(), 'Cossack squat');
-    await tick(user, multi('Primary muscles'), 'Glutes');
+    await tick(user, multi('Primary muscles (required)'), 'Glutes');
     expect(primary()).toBeEnabled();
 
     // act
@@ -350,7 +352,7 @@ describe('a new exercise', () => {
     // arrange
     const user = renderEditor(NEW);
     await user.type(nameField(), 'Cossack squat');
-    await tick(user, multi('Primary muscles'), 'Glutes');
+    await tick(user, multi('Primary muscles (required)'), 'Glutes');
     await user.click(screen.getByLabelText('Form cues'));
     await user.paste('a'.repeat(1001));
 
@@ -377,11 +379,11 @@ describe('a new exercise', () => {
 
     // act
     await tick(user, multi('Secondary muscles'), 'Core');
-    await tick(user, multi('Primary muscles'), 'Core');
+    await tick(user, multi('Primary muscles (required)'), 'Core');
 
     // assert
     expect(multi(/^Secondary muscles$/)).toBeInTheDocument();
-    expect(multi(/^Primary muscles, 1 selected$/)).toHaveTextContent('Core');
+    expect(multi(/^Primary muscles \(required\), 1 selected$/)).toHaveTextContent('Core');
   });
 
   it('creates a per-side resistance exercise with the chosen muscles, equipment and tags', async () => {
@@ -391,8 +393,8 @@ describe('a new exercise', () => {
     // act
     await user.type(nameField(), 'Cossack squat');
     await user.click(screen.getByRole('radio', { name: 'One side at a time' }));
-    await tick(user, multi('Primary muscles'), 'Adductors');
-    await tick(user, multi(/^Primary muscles/), 'Glutes');
+    await tick(user, multi('Primary muscles (required)'), 'Adductors');
+    await tick(user, multi(/^Primary muscles \(required\)/), 'Glutes');
     await tick(user, multi('Secondary muscles'), 'Core');
     await tick(user, multi('Equipment'), 'Kettlebell');
     await user.click(screen.getByRole('checkbox', { name: 'Hypertrophy' }));
@@ -412,7 +414,7 @@ describe('editing an exercise', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Edit exercise' })).toBeInTheDocument();
     expect(nameField()).toHaveValue('Bulgarian Split Squat');
     expect(screen.getByRole('radio', { name: 'One side at a time' })).toBeChecked();
-    expect(within(multi(/^Primary muscles, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Quadriceps', 'Glutes']);
+    expect(within(multi(/^Primary muscles \(required\), 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Quadriceps', 'Glutes']);
     expect(within(multi(/^Equipment, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Dumbbells', 'Bench']);
     expect(screen.getByRole('checkbox', { name: 'Hypertrophy' })).toBeChecked();
     expect(primary()).toHaveTextContent('Save changes');

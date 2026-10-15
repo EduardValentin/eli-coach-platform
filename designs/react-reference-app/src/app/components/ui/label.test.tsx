@@ -17,6 +17,17 @@ describe('Label', () => {
     expect(screen.getByText('*')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('sets the star snug against the label text', () => {
+    // arrange
+    render(<Label htmlFor="name" required>Name</Label>);
+
+    // act
+    const star = screen.getByText('*');
+
+    // assert
+    expect(star).toHaveClass('-ml-1.5');
+  });
+
   it('shows nothing extra when the field is optional', () => {
     // arrange & act
     render(

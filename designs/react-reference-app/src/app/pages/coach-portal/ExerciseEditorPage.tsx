@@ -336,6 +336,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               <MultiSelect
                 id={ids.primary}
                 label="Primary muscles"
+                required={draft.type !== 'cardio'}
                 summary="names"
                 size="md"
                 placeholder="Pick muscles"
