@@ -11,7 +11,6 @@ import {
   CheckboxField,
   FieldCaption,
   FieldError,
-  LabelSuffix,
 } from "@eli-coach-platform/ui/primitives";
 import { Image as ImageIcon, X } from "lucide-react";
 import { useEffect, useId, useState, type ChangeEvent } from "react";
@@ -192,10 +191,7 @@ export function ProgressPhotoBlock({
   return (
     <Card className="grid gap-4" data-parity="progress-photos" variant="inset">
       <FieldCaption data-parity="progress-photos-caption">
-        {PHOTOS_COPY.caption}{" "}
-        <LabelSuffix data-parity="progress-photos-suffix">
-          {PHOTOS_COPY.optional}
-        </LabelSuffix>
+        {PHOTOS_COPY.caption}
       </FieldCaption>
 
       {consent.status !== "recorded" && (

@@ -16,6 +16,7 @@ import {
   AlertAction,
   ChoiceGroup,
   ChoiceOption,
+  RequiredMark,
 } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import {
@@ -223,6 +224,7 @@ export function WeeklyCheckInDialog({
             <>
               <p className={FIELD_LABEL_CLASS} id={dayLabelId}>
                 Day
+                <RequiredMark />
               </p>
               <ChoiceGroup
                 aria-labelledby={dayLabelId}
@@ -246,6 +248,7 @@ export function WeeklyCheckInDialog({
               </ChoiceGroup>
               <p className={cn("mt-6", FIELD_LABEL_CLASS)} id={hourLabelId}>
                 Hour
+                <RequiredMark />
               </p>
             </>
           )}

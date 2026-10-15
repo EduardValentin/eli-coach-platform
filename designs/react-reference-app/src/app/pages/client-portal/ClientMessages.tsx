@@ -478,7 +478,7 @@ export function ClientMessages() {
       <CheckinProposeTimeDialog
         checkin={proposingCheckin}
         party="client"
-        noteLabel="Add a note for your coach (optional)"
+        noteLabel="Add a note for your coach"
         onOpenChange={(open) => {
           if (!open) setProposingFor(null);
         }}

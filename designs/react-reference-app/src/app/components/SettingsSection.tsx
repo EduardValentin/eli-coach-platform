@@ -1,6 +1,6 @@
 import type { ElementType, ReactNode, Ref } from "react";
 import { cardVariants } from "./ui/card";
-import { Label } from "./ui/label";
+import { Label, RequiredMark } from "./ui/label";
 import { cn } from "./ui/utils";
 import { WIDGET_TITLE_CLASS } from "./typography";
 
@@ -106,6 +106,7 @@ export function SettingsRow({
   ) : (
     <p id={labelId} className="text-sm font-medium text-text-primary">
       {title}
+      {required && <RequiredMark />}
     </p>
   );
 

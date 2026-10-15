@@ -786,7 +786,7 @@ describe("the client asking for a check-in", () => {
     const afterTime = stepButton(dialog).textContent;
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
       "My knee feels off after lunges",
     );
@@ -910,7 +910,7 @@ describe("the client asking for a check-in", () => {
     await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
       "Form check",
     );
@@ -933,7 +933,7 @@ describe("the client asking for a check-in", () => {
     expect(stepButton(dialog)).toHaveTextContent("Select a time");
     expect(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
     ).toHaveValue("Form check");
     expect(reads).toBe(2);
@@ -1462,7 +1462,7 @@ describe("the client's upcoming check-in menu", () => {
     await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
       "Evenings work better",
     );

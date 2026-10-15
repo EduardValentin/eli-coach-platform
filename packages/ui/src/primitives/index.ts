@@ -24,7 +24,13 @@ export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { InlineProblem } from "./inline-problem";
 export { Input } from "./input";
-export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
+export {
+  FieldCaption,
+  Label,
+  LabelSuffix,
+  Legend,
+  RequiredMark,
+} from "./label";
 export { Link, linkVariants } from "./link";
 export { MultiSelect } from "./multi-select";
 export {

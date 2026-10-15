@@ -50,7 +50,7 @@ export function CheckinScheduleDialog({
       title={`Schedule a check-in with ${firstName}`}
       description={`Pick a date and time. ${firstName} will approve or decline it.`}
       wording={{
-        noteLabel: `Add a note for ${firstName} (optional)`,
+        noteLabel: `Add a note for ${firstName}`,
         stepVerb: 'Schedule',
         busyLabel: 'Scheduling…',
       }}

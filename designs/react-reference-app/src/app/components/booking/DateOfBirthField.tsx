@@ -53,7 +53,7 @@ export function DateOfBirthField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-text-label font-medium">
+      <Label htmlFor={id} className="text-text-label font-medium" required>
         {label}
       </Label>
       <Popover open={open} onOpenChange={setOpen}>

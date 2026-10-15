@@ -18,10 +18,10 @@ export class ResourceDetailsDialog {
 
   async fill(details: ResourceDetails): Promise<void> {
     await this.dialog
-      .getByRole("textbox", { name: "Title", exact: true })
+      .getByRole("textbox", { name: "Title (required)", exact: true })
       .fill(details.title);
     await this.dialog
-      .getByRole("textbox", { name: /^Description/ })
+      .getByRole("textbox", { name: "Description", exact: true })
       .fill(details.description);
   }
 

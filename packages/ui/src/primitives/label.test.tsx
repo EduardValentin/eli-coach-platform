@@ -5,7 +5,13 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { FieldCaption, Label, LabelSuffix, Legend } from "./label";
+import {
+  FieldCaption,
+  Label,
+  LabelSuffix,
+  Legend,
+  RequiredMark,
+} from "./label";
 
 afterEach(() => {
   cleanup();
@@ -166,6 +172,85 @@ describe("Legend", () => {
       "font-medium",
       "text-text-label",
     );
+  });
+});
+
+describe("required Legend", () => {
+  it("stars a required group and names it as required", () => {
+    // arrange
+    render(
+      <fieldset>
+        <Legend required>Where do you train?</Legend>
+        <input aria-label="Gym" type="radio" />
+      </fieldset>,
+    );
+
+    // act
+    const group = screen.getByRole("group", {
+      name: "Where do you train? (required)",
+    });
+
+    // assert
+    expect(group).toBeInTheDocument();
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("*")).toHaveClass("-ml-1");
+  });
+
+  it("shows no star when the group is optional", () => {
+    // arrange
+    render(
+      <fieldset>
+        <Legend>Where do you train?</Legend>
+      </fieldset>,
+    );
+
+    // act
+    const star = screen.queryByText("*");
+
+    // assert
+    expect(star).not.toBeInTheDocument();
+  });
+});
+
+describe("RequiredMark", () => {
+  it("stars running text with a hidden star and a spoken (required)", () => {
+    // arrange
+    render(
+      <p>
+        I agree to the terms.
+        <RequiredMark />
+      </p>,
+    );
+
+    // act
+    const star = screen.getByText("*");
+
+    // assert
+    expect(star).toHaveAttribute("aria-hidden", "true");
+    expect(star).toHaveClass("ml-0.5");
+    expect(screen.getByText("(required)")).toHaveClass("sr-only");
+  });
+});
+
+describe("Label with qualifiers", () => {
+  it("sets the star after the name and before its qualifiers", () => {
+    // arrange
+    render(
+      <Label
+        htmlFor="waist"
+        layout="wrap"
+        required
+        trailing={<LabelSuffix>(cm)</LabelSuffix>}
+      >
+        Waist
+      </Label>,
+    );
+
+    // act
+    const label = screen.getByText("Waist");
+
+    // assert
+    expect(label).toHaveTextContent(/^Waist\* \(required\)\(cm\)$/);
   });
 });
 

@@ -15,13 +15,13 @@ const SUBMISSION_API_PATH = "/api/client-onboarding/submission";
 const DRAFT_API_PATH = "/api/client-onboarding/draft";
 
 const FEMALE_HEALTH_CONSENT =
-  "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.";
+  "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time. (required)";
 const HEALTH_CONSENT =
-  "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.";
+  "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time. (required)";
 const PARQ_DECLARATION =
-  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
+  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again. (required)";
 const DISCLAIMER =
-  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
+  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor. (required)";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PARQ_QUESTIONS = [
@@ -224,9 +224,7 @@ test(
     await clientOnboarding.expectStep(2, 5);
 
     // act
-    await clientOnboarding.tick(
-      "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.",
-    );
+    await clientOnboarding.tick(FEMALE_HEALTH_CONSENT);
     await clientOnboarding.choose(
       "Has your doctor ever said that you have a heart condition",
       "No",
@@ -249,9 +247,7 @@ test(
       "should only do medically supervised physical activity",
       "No",
     );
-    await clientOnboarding.tick(
-      "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.",
-    );
+    await clientOnboarding.tick(PARQ_DECLARATION);
     await clientOnboarding.continueStep();
 
     // assert
@@ -344,9 +340,7 @@ test(
 
     // act
     await clientOnboarding.answerText("Waist", "30");
-    await clientOnboarding.tick(
-      "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.",
-    );
+    await clientOnboarding.tick(DISCLAIMER);
     await clientOnboarding.sendToCoach();
 
     // assert
@@ -624,6 +618,7 @@ test(
       "Waist",
       "Narrowest point, usually just above the belly button. Relaxed, don't pull the tape tight.",
     );
+    await clientOnboarding.expectRequired("Waist");
     await clientOnboarding.expectOptional("Hips");
     await clientOnboarding.expectEntryHint("Hips", "Widest point.");
     await clientOnboarding.expectOptional("Thigh");

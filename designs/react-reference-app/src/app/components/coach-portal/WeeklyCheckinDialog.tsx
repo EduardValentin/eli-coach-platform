@@ -16,6 +16,7 @@ import { ChoiceGroup, ChoiceOption } from '../ChoiceGroup';
 import { TimeSlotButton, type TimeSlotDetail } from '../DateTimePicker';
 import type { ScheduledClient } from '../CheckinScheduleDialog';
 import { Alert, AlertAction } from '../ui/alert';
+import { RequiredMark } from '../ui/label';
 import { cn } from '../ui/utils';
 import {
   ResponsiveSheetDialog,
@@ -225,6 +226,7 @@ export function WeeklyCheckinDialog({
             <>
               <p id={dayLabelId} className={FIELD_LABEL_CLASS}>
                 Day
+                <RequiredMark />
               </p>
               <ChoiceGroup
                 aria-labelledby={dayLabelId}
@@ -241,6 +243,7 @@ export function WeeklyCheckinDialog({
               </ChoiceGroup>
               <p id={hourLabelId} className={cn('mt-6', FIELD_LABEL_CLASS)}>
                 Hour
+                <RequiredMark />
               </p>
             </>
           )}

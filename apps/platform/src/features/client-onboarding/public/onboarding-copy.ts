@@ -27,5 +27,3 @@ export const SPECIAL_CATEGORY_CONSENT_COPY = {
 
 export const DISCLAIMER_ACKNOWLEDGEMENT =
   "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
-
-export const OPTIONAL_SUFFIX = "(optional)";

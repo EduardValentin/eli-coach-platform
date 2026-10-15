@@ -4,7 +4,7 @@ import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
 import { WIDGET_TITLE_CLASS } from "../lib/typography";
 import { cardVariants } from "../primitives/card";
-import { Label } from "../primitives/label";
+import { Label, RequiredMark } from "../primitives/label";
 
 type SettingsSectionProps = DataAttributes & {
   headingId: string;
@@ -115,6 +115,7 @@ function SettingsRowTitle({
   return (
     <p id={labelId} className={ROW_TITLE_CLASS}>
       {title}
+      {required && <RequiredMark />}
     </p>
   );
 }

@@ -180,7 +180,7 @@ function menuWordingIn(timeZone: string): CheckInMenuWording<ListedCheckIn> {
     }),
     proposerOf: () => ({
       clientTimeZone: timeZone,
-      noteLabel: "Add a note for your coach (optional)",
+      noteLabel: "Add a note for your coach",
     }),
   };
 }

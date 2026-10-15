@@ -141,7 +141,7 @@ function HourSelect({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} id={labelId}>
+      <Label htmlFor={id} id={labelId} required>
         {label}
       </Label>
       <Select
@@ -283,6 +283,7 @@ export function AssessmentCallSettingsSection() {
             as="fieldset"
             labelId="assessment-call-weekdays-label"
             title="Days I'm available"
+            required
             description="Calls and check-ins can be booked on these days."
             layout="stacked"
             aria-describedby={weekdaysErrorId}

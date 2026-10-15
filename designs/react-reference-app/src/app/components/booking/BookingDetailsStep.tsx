@@ -51,10 +51,10 @@ export function BookingDetailsStep({
   const { fieldErrors } = form;
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-5 flex-1">
+    <form noValidate onSubmit={onSubmit} className="space-y-5 flex-1" data-parity-root="BookingDetailsForm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="space-y-2">
-          <Label htmlFor={FIELD_IDS.firstName} className="text-text-label font-medium">First name</Label>
+          <Label htmlFor={FIELD_IDS.firstName} className="text-text-label font-medium" required>First name</Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
             <Input
@@ -75,7 +75,7 @@ export function BookingDetailsStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={FIELD_IDS.lastName} className="text-text-label font-medium">Last name</Label>
+          <Label htmlFor={FIELD_IDS.lastName} className="text-text-label font-medium" required>Last name</Label>
           <Input
             id={FIELD_IDS.lastName}
             required
@@ -93,7 +93,7 @@ export function BookingDetailsStep({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={FIELD_IDS.email} className="text-text-label font-medium">Email Address</Label>
+        <Label htmlFor={FIELD_IDS.email} className="text-text-label font-medium" required>Email Address</Label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
           <Input
@@ -165,7 +165,7 @@ export function BookingDetailsStep({
       />
 
       <div className="space-y-2">
-        <Label htmlFor={FIELD_IDS.notes} className="text-text-label font-medium">Anything to share beforehand? (Optional)</Label>
+        <Label htmlFor={FIELD_IDS.notes} className="text-text-label font-medium">Anything to share beforehand?</Label>
         <Textarea
           id={FIELD_IDS.notes}
           placeholder="e.g. recovering from a knee injury"

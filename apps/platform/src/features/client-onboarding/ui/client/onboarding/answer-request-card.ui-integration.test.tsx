@@ -205,7 +205,9 @@ describe("answering the coach's request", { timeout: 15_000 }, () => {
 
     // assert
     expect(
-      screen.getByRole("spinbutton", { name: /Your weight\s*\(kg\)/ }),
+      screen.getByRole("spinbutton", {
+        name: /Your weight \(required\)\s*\(kg\)/,
+      }),
     ).toHaveValue(66.1);
     expect(
       screen.getByRole("combobox", {
@@ -225,7 +227,9 @@ describe("answering the coach's request", { timeout: 15_000 }, () => {
 
     // assert
     expect(
-      screen.getByRole("spinbutton", { name: /Your weight\s*\(lb\)/ }),
+      screen.getByRole("spinbutton", {
+        name: /Your weight \(required\)\s*\(lb\)/,
+      }),
     ).toHaveValue(145.7);
   });
 

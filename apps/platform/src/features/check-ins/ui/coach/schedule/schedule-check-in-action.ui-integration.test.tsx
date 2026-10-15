@@ -56,7 +56,7 @@ const FRIDAY_AFTERNOON = "2026-10-16T14:00:00.000Z";
 const OPEN_TIMES = [THURSDAY_AFTERNOON, THURSDAY_EVENING, FRIDAY_AFTERNOON];
 
 const TITLE = "Schedule a check-in with Ana";
-const NOTE_LABEL = "Add a note for Ana (optional)";
+const NOTE_LABEL = "Add a note for Ana";
 const AWAITING_REASON =
   "She can answer a check-in once she has sent her onboarding.";
 

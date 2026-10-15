@@ -237,8 +237,10 @@ describe("the add measurements sheet", () => {
 
     // assert
     const sheet = screen.getByRole("dialog", { name: "Add measurements" });
-    expect(readingOf(sheet, /^Weight\s*\(lb\)/)).toHaveValue(145.7);
-    expect(readingOf(sheet, /^Waist\s*\(in\)/)).toHaveValue(29.25);
+    expect(readingOf(sheet, /^Weight \(required\)\s*\(lb\)/)).toHaveValue(
+      145.7,
+    );
+    expect(readingOf(sheet, /^Waist \(required\)\s*\(in\)/)).toHaveValue(29.25);
   });
 
   it("asks for a missing weight and turns down a waist outside the range in her units", async () => {
