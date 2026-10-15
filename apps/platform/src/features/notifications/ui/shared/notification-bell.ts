@@ -1,7 +1,7 @@
 import type { NotificationParty } from "@eli-coach-platform/domain/notification";
 import type { NotificationBellItem } from "@eli-coach-platform/ui/layout";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { pageFocusAction, toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { generatePath, useFetcher, useNavigate, useSubmit } from "react-router";
 
@@ -128,13 +128,13 @@ function useArrivalToasts(arrivals: BellArrivals): void {
     }
 
     toast(described.title, {
-      action: {
+      action: pageFocusAction({
         label: "View",
-        onClick: () => {
+        onSelect: () => {
           arrivals.markRead(notification.id);
           void navigate(described.href);
         },
-      },
+      }),
       description: described.line,
     });
   });
