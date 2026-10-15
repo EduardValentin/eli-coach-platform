@@ -19,11 +19,11 @@ const buttonClasses = cva(
         "outline-brand":
           "border border-brand-primary text-brand-primary not-aria-disabled:hover:bg-brand-primary/5",
         ghost:
-          "text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+          "text-text-label aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "ghost-ink":
-          "text-text-label not-aria-disabled:hover:bg-text-primary not-aria-disabled:hover:text-surface-base",
+          "text-text-label aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-text-primary not-aria-disabled:hover:text-surface-base",
         "ghost-muted":
-          "text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+          "text-text-secondary aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         destructive:
           "bg-feedback-danger text-text-inverted not-aria-disabled:hover:bg-feedback-danger/90",
         "destructive-outline":

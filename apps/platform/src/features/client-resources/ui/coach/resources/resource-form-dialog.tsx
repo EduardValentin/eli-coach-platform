@@ -323,21 +323,13 @@ function UploadStatus({ file, upload }: { file: File; upload: UploadState }) {
 
   if (upload.state === "sending") {
     return (
-      <Progress
-        aria-label="Upload progress"
-        className="h-1.5"
-        value={upload.fraction * 100}
-      />
+      <Progress aria-label="Upload progress" value={upload.fraction * 100} />
     );
   }
   if (upload.state === "preparing") {
     return (
       <>
-        <Progress
-          aria-describedby={hintId}
-          aria-label="Preparing pages"
-          className="h-1.5"
-        />
+        <Progress aria-describedby={hintId} aria-label="Preparing pages" />
         <p className="text-sm text-text-secondary" id={hintId}>
           {UPLOAD_COPY.preparingHint}
         </p>

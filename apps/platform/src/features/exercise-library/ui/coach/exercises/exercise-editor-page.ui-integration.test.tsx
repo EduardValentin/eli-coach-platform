@@ -751,7 +751,11 @@ describe("the demo video", () => {
     // assert
     const message =
       "squat.avi is not an .mp4 or .mov — only .mp4 and .mov videos are supported";
-    expect(within(videoField()).getByRole("alert")).toHaveTextContent(message);
+    const refusal = within(videoField()).getByRole("alert");
+    expect(refusal).toHaveTextContent(message);
+    expect(within(refusal).getByText(message)).toContainElement(
+      refusal.querySelector("svg[aria-hidden='true']"),
+    );
     const picker = screen.getByLabelText(VIDEO_PROMPT);
     expect(picker).toHaveAttribute("aria-invalid", "true");
     expect(picker).toHaveAccessibleDescription(`${VIDEO_GUIDANCE} ${message}`);
@@ -1050,10 +1054,11 @@ describe("saving with a demo video", () => {
       await user.click(screen.getByRole("button", { name: "Save changes" }));
 
       // assert
-      expect(await within(videoField()).findByText(message)).toHaveAttribute(
-        "role",
-        "alert",
-      );
+      expect(
+        (await within(videoField()).findByText(message)).closest(
+          "[role=alert]",
+        ),
+      ).toBeInTheDocument();
       expect(replaceButton()).toHaveAttribute("aria-invalid", "true");
       expect(replaceButton()).toHaveAccessibleDescription(message);
       expect(preview()).toHaveAttribute("src", "blob:thrust.mp4");

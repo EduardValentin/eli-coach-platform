@@ -364,14 +364,33 @@ describe("button marked aria-invalid", () => {
     // arrange
     // act
     render(
-      <Button aria-invalid variant="ghost">
+      <Button aria-invalid variant="outline">
         Replace
       </Button>,
     );
 
     // assert
     expect(screen.getByRole("button", { name: "Replace" })).toHaveClass(
+      "border",
       "aria-invalid:border-feedback-danger",
     );
   });
+
+  it.each(["ghost", "ghost-ink", "ghost-muted"] as const)(
+    "turns the borderless %s look's ink danger-toned",
+    (variant) => {
+      // arrange
+      // act
+      render(
+        <Button aria-invalid variant={variant}>
+          Replace
+        </Button>,
+      );
+
+      // assert
+      expect(screen.getByRole("button", { name: "Replace" })).toHaveClass(
+        "aria-invalid:text-feedback-danger",
+      );
+    },
+  );
 });

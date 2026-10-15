@@ -5,9 +5,11 @@ import {
   AlertAction,
   Button,
   FileDropzone,
+  InlineProblem,
+  MediaRemoveButton,
   Progress,
 } from "@eli-coach-platform/ui/primitives";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 
 import type { ExerciseView } from "~/features/exercise-library/public/exercises";
@@ -72,7 +74,6 @@ function VideoSaveProgress({ saving }: { saving: ExerciseVideoSaving }) {
           </p>
           <Progress
             aria-label="Video upload"
-            className="h-1.5"
             value={
               saving.state === "sending" ? saving.fraction * 100 : undefined
             }
@@ -154,16 +155,12 @@ export function ExerciseVideoField({
                 preload="metadata"
                 src={shownUrl}
               />
-              <Button
+              <MediaRemoveButton
                 aria-label="Remove video"
-                className="absolute top-2 right-2 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
+                className="absolute top-2 right-2"
                 disabled={busy}
                 onClick={remove}
-                size="icon-sm"
-                variant="outline"
-              >
-                <X aria-hidden="true" />
-              </Button>
+              />
             </div>
             <Button
               aria-label="Replace video"
@@ -198,13 +195,9 @@ export function ExerciseVideoField({
           />
         </div>
       )}
-      <p
-        className="max-w-md text-xs font-medium text-feedback-danger empty:hidden"
-        id={problemId}
-        role="alert"
-      >
-        {video.problem}
-      </p>
+      <div className="max-w-md empty:hidden" id={problemId} role="alert">
+        {video.problem && <InlineProblem>{video.problem}</InlineProblem>}
+      </div>
     </div>
   );
 }
