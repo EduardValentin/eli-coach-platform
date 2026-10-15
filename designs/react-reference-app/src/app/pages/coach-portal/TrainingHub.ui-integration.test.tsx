@@ -286,6 +286,20 @@ describe('the exercise library filters', () => {
   });
 });
 
+describe('the empty exercise library seed', () => {
+  it('starts the library with no exercises', () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/training?session=coach&exseed=empty');
+
+    // act
+    renderHub('/coach/training?session=coach&exseed=empty');
+
+    // assert
+    expect(screen.getByText('No exercises yet')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+});
+
 describe('the Training page in MVP mode', () => {
   it('is the exercise library, without the plan tabs', () => {
     // arrange
@@ -296,7 +310,7 @@ describe('the Training page in MVP mode', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Exercises' })).toBeInTheDocument();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New exercise' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'New exercise' })).toBeInTheDocument();
   });
 
   it('opens the exercise editor from New exercise', async () => {
@@ -304,7 +318,7 @@ describe('the Training page in MVP mode', () => {
     const user = renderLibrary();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'New exercise' }));
+    await user.click(screen.getByRole('link', { name: 'New exercise' }));
 
     // assert
     expect(screen.getByText('Exercise editor new')).toBeInTheDocument();

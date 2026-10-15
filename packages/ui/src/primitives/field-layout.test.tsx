@@ -33,6 +33,22 @@ describe("FieldLayout", () => {
     );
   });
 
+  it("stars a required field and names its control as required", () => {
+    // arrange
+    // act
+    render(
+      <FieldLayout label="Weight" required>
+        {(control) => <input {...control} />}
+      </FieldLayout>,
+    );
+
+    // assert
+    expect(screen.getByRole("textbox")).toHaveAccessibleName(
+      "Weight (required)",
+    );
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("describes its control with the hint", () => {
     // arrange
     const hint = HINT;

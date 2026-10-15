@@ -28,6 +28,7 @@ const ROUTE_MODULES = flatOrInConceptFolder([
 const FEATURE_ORDER = [
   "store",
   "accounts",
+  "exercise-library",
   "waitlist",
   "coach-schedule",
   "assessment-calls",
@@ -41,6 +42,7 @@ const FEATURE_ORDER = [
 
 const DOMAIN_SLICE_ORDER = [
   "shared",
+  "exercise",
   "email-address",
   "feature-flag",
   "product",

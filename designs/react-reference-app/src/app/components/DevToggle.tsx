@@ -59,6 +59,7 @@ import {
   type PrototypePaymentPortalOutcome,
   type PrototypeStartNowOutcome,
 } from '../services/subscriptionService';
+import { EXERCISE_SEEDS } from '../services/exerciseSamples';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1035,6 +1036,27 @@ export function DevToggle() {
                       <SelectItem value="unavailable">
                         Clients unavailable
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dev-exercise-seed" className={DEV_LABEL_CLASS}>
+                    Exercise library
+                  </Label>
+                  <Select
+                    value={appState.exerciseSeed}
+                    onValueChange={(value) =>
+                      setAppState({
+                        exerciseSeed: optionOrDefault(EXERCISE_SEEDS, value, 'seeded'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-exercise-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Populated</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

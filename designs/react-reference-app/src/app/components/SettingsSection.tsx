@@ -79,6 +79,7 @@ export function SettingsRow({
   description,
   hint,
   problem,
+  required,
   layout = "inline",
   children,
   ...rest
@@ -91,6 +92,7 @@ export function SettingsRow({
   description?: ReactNode;
   hint?: ReactNode;
   problem?: ReactNode;
+  required?: boolean;
   layout?: SettingsRowLayout;
   children?: ReactNode;
   [key: string]: unknown;
@@ -98,7 +100,7 @@ export function SettingsRow({
   const Container = as;
 
   const titleNode = htmlFor ? (
-    <Label htmlFor={htmlFor} id={labelId}>
+    <Label htmlFor={htmlFor} id={labelId} required={required}>
       {title}
     </Label>
   ) : (

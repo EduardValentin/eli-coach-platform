@@ -11,16 +11,35 @@ const LABEL_LAYOUT_CLASSES = {
   wrap: "flex flex-wrap items-baseline gap-1.5",
 } as const;
 
+const REQUIRED_MARK_CLASSES = {
+  inline: "-ml-1.5",
+  wrap: "-ml-1",
+} as const;
+
 export type LabelLayout = keyof typeof LABEL_LAYOUT_CLASSES;
 
 type LabelProps = React.ComponentPropsWithoutRef<"label"> & {
   htmlFor: string;
   invalid?: boolean;
   layout?: LabelLayout;
+  required?: boolean;
+  trailing?: React.ReactNode;
 };
 
 export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
-  ({ className, htmlFor, invalid, layout = "inline", ...props }, ref) => (
+  (
+    {
+      children,
+      className,
+      htmlFor,
+      invalid,
+      layout = "inline",
+      required,
+      trailing,
+      ...props
+    },
+    ref,
+  ) => (
     <label
       ref={ref}
       className={cn(
@@ -32,7 +51,18 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       data-error={invalid}
       htmlFor={htmlFor}
       {...props}
-    />
+    >
+      {children}
+      {required && (
+        <>
+          <span aria-hidden="true" className={REQUIRED_MARK_CLASSES[layout]}>
+            *
+          </span>{" "}
+          <span className="sr-only">(required)</span>
+        </>
+      )}
+      {trailing}
+    </label>
   ),
 );
 

@@ -45,6 +45,7 @@ const CLIENT_SIDEBAR_LINKS = [
 ];
 const COACH_NAVIGATION_LINKS = [
   "Dashboard",
+  "Training",
   "Clients",
   "Check-ins",
   "Assessment calls",

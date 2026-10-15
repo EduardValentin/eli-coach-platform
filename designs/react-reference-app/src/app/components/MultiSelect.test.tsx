@@ -33,6 +33,42 @@ describe("MultiSelect", () => {
     expect(screen.getByRole("button", { name: "Tags" })).toHaveAttribute("data-size", "sm");
   });
 
+  it("names itself as required, with how many options are chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        selected={["strength"]}
+        options={["strength", "recovery"]}
+        labels={LABELS}
+        required
+        onToggle={vi.fn()}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Tags (required), 1 selected" })).toBeInTheDocument();
+  });
+
+  it("names itself as required while nothing is chosen", () => {
+    // arrange
+    // act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        selected={[]}
+        options={["strength", "recovery"]}
+        labels={LABELS}
+        required
+        onToggle={vi.fn()}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Tags (required)" })).toBeInTheDocument();
+  });
+
   it("stays in Safari's tab order like the select it sits beside", () => {
     // arrange
     // act
@@ -64,6 +100,17 @@ describe("MultiSelect", () => {
     expect(within(list).getByRole("checkbox", { name: /Recovery/ })).toBeChecked();
     expect(within(list).getByText("7")).toBeInTheDocument();
     expect(within(list).getByText("2")).toBeInTheDocument();
+  });
+
+  it("names its open list after the field", async () => {
+    // arrange
+    const { user } = renderFilter([]);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+
+    // assert
+    expect(screen.getByRole("dialog", { name: "Tags" })).toBeInTheDocument();
   });
 
   it("hands back the option that was toggled and stays open for the next one", async () => {

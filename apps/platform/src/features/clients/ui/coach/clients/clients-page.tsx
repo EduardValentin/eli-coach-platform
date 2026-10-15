@@ -1,4 +1,3 @@
-import { cn } from "@eli-coach-platform/ui/lib";
 import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
@@ -114,10 +113,7 @@ function ClientsSection({ clients }: { clients: readonly RosterClient[] }) {
       </div>
 
       <div
-        className={cn(
-          cardVariants({ variant: "portal-panel" }),
-          "overflow-hidden",
-        )}
+        className={cardVariants({ variant: "table-panel" })}
         data-parity="roster-table"
       >
         <ClientsTable

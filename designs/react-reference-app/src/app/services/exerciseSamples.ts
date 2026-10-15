@@ -1,5 +1,8 @@
 import type { Exercise } from '../context/TrainingContext';
 
+export const EXERCISE_SEEDS = ['seeded', 'empty'] as const;
+export type ExerciseSeed = (typeof EXERCISE_SEEDS)[number];
+
 export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e1',
@@ -228,3 +231,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
     tags: ['Recovery'],
   },
 ];
+
+export function exercisesForSeed(seed: ExerciseSeed): Exercise[] {
+  return seed === 'seeded' ? [...SAMPLE_EXERCISES] : [];
+}

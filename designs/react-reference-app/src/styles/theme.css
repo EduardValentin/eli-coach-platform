@@ -447,6 +447,36 @@
   --container-stage: var(--container-stage);
   --shadow-raised: var(--shadow-raised);
   --animate-heartbeat: heartbeat 1.2s ease-in-out 1;
+  --animate-panel-enter:
+    ui-panel-fade-in 300ms cubic-bezier(0.25, 0.1, 0.35, 1),
+    ui-panel-rise-in 263ms
+      linear(
+        0,
+        0.027,
+        0.099,
+        0.2,
+        0.319,
+        0.445,
+        0.57,
+        0.688,
+        0.793,
+        0.884,
+        0.96,
+        1.019,
+        1.063,
+        1.093,
+        1.111,
+        1.119,
+        1.119,
+        1.113,
+        1.102,
+        1.089,
+        1.074,
+        1.059,
+        1.044,
+        1.031,
+        1
+      );
   --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
   --color-overlay-strong: var(--overlay-strong);
   --color-overlay-medium: var(--overlay-medium);
@@ -524,6 +554,18 @@
   }
   100% {
     transform: translateX(300%);
+  }
+}
+
+@keyframes ui-panel-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-panel-rise-in {
+  from {
+    translate: 0 10px;
   }
 }
 

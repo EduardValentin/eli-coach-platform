@@ -20,29 +20,41 @@ type SelectTriggerProps = React.ComponentPropsWithoutRef<
 // Safari's default Tab order visits text fields only and skips buttons unless
 // they carry an explicit tabindex; a control that stands in for a form field
 // must stay reachable like the native field it replaces.
-const FIELD_TAB_INDEX = 0;
+export const FIELD_TAB_INDEX = 0;
+
+export function selectTriggerClasses(size: FieldSize): string {
+  return cn(
+    FIELD_FRAME_CLASS,
+    "flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap [&_svg]:pointer-events-none",
+    fieldSizeClasses({ size }),
+  );
+}
+
+export function SelectTriggerChevron(
+  slotProps: React.ComponentProps<typeof ChevronDown>,
+) {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className="size-4 shrink-0 text-text-muted opacity-50"
+      {...slotProps}
+    />
+  );
+}
 
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
   SelectTriggerProps
 >(({ children, className, size = "md", ...props }, ref) => (
   <RadixSelect.Trigger
-    className={cn(
-      FIELD_FRAME_CLASS,
-      "flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap",
-      fieldSizeClasses({ size }),
-      className,
-    )}
+    className={cn(selectTriggerClasses(size), className)}
     ref={ref}
     tabIndex={FIELD_TAB_INDEX}
     {...props}
   >
     {children}
     <RadixSelect.Icon asChild>
-      <ChevronDown
-        aria-hidden="true"
-        className="size-4 shrink-0 text-text-muted opacity-50"
-      />
+      <SelectTriggerChevron />
     </RadixSelect.Icon>
   </RadixSelect.Trigger>
 ));

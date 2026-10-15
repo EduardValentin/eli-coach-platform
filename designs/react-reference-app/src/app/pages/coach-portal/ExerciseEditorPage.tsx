@@ -42,7 +42,7 @@ import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -189,7 +189,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const ids = {
     name: useId(), nameProblem: useId(), type: useId(), measure: useId(),
     sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
-    difficulty: useId(), tagsLabel: useId(), cues: useId(), videoLabel: useId(),
+    difficulty: useId(), tagsLabel: useId(), cues: useId(), cuesProblem: useId(), videoLabel: useId(),
   };
 
   const others = exercises.filter((exercise) => exercise.id !== editing?.id);
@@ -245,7 +245,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   };
 
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-3xl" data-parity-root="ExerciseEditorPage">
       <PortalBackLink to={library}>Back to exercises</PortalBackLink>
       <PortalPageHeader title={editing ? 'Edit exercise' : 'New exercise'} />
 
@@ -259,6 +259,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
             <SettingsRow
               htmlFor={ids.name}
               title="Name"
+              required
               layout="stacked"
               problem={shownProblems.name && <InlineProblem id={ids.nameProblem}>{shownProblems.name}</InlineProblem>}
             >
@@ -290,7 +291,10 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                   {measuresFor(draft.type).map((measure) => (
                     <SelectItem key={measure} value={measure}>
                       {MEASURE_LABELS[measure]}{' '}
-                      <span className="text-xs text-text-secondary in-data-[state=checked]:text-current">
+                      <span
+                        className="text-xs text-text-secondary in-data-[state=checked]:text-current"
+                        data-parity="unit-example"
+                      >
                         {MEASURE_EXAMPLES[measure]}
                       </span>
                     </SelectItem>
@@ -321,6 +325,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
             <SettingsRow
               htmlFor={ids.primary}
               title="Primary muscles"
+              required={draft.type !== 'cardio'}
               layout="stacked"
               problem={
                 shownProblems.primaryMuscles && (
@@ -331,6 +336,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               <MultiSelect
                 id={ids.primary}
                 label="Primary muscles"
+                required={draft.type !== 'cardio'}
                 summary="names"
                 size="md"
                 placeholder="Pick muscles"
@@ -379,12 +385,17 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               </Select>
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.tagsLabel} title="Tags" layout="stacked">
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap gap-2" data-parity="exercise-tag-chips">
                 {EXERCISE_TAGS.map((tag) => (
                   <li key={tag}>
-                    <ToggleChip pressed={draft.tags.includes(tag)} onPressedChange={() => set('tags', toggled(draft.tags, tag))}>
+                    <CheckboxChip
+                      size="compact"
+                      aria-label={EXERCISE_TAG_LABELS[tag]}
+                      checked={draft.tags.includes(tag)}
+                      onCheckedChange={() => set('tags', toggled(draft.tags, tag))}
+                    >
                       {EXERCISE_TAG_LABELS[tag]}
-                    </ToggleChip>
+                    </CheckboxChip>
                   </li>
                 ))}
               </ul>
@@ -398,17 +409,31 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
           icon={<Film aria-hidden="true" className="text-brand-secondary" size={18} />}
         >
           <SettingsRows>
-            <SettingsRow htmlFor={ids.cues} title="Form cues" layout="stacked">
-              <Textarea id={ids.cues} rows={3} value={draft.cues} onChange={(event) => set('cues', event.target.value)} placeholder="Keep the chest up, drive through the heels…" />
+            <SettingsRow
+              htmlFor={ids.cues}
+              title="Form cues"
+              layout="stacked"
+              data-parity="exercise-cues-row"
+              problem={shownProblems.cues && <InlineProblem id={ids.cuesProblem}>{shownProblems.cues}</InlineProblem>}
+            >
+              <Textarea
+                id={ids.cues}
+                rows={3}
+                value={draft.cues}
+                onChange={(event) => set('cues', event.target.value)}
+                placeholder="Keep the chest up, drive through the heels…"
+                aria-invalid={shownProblems.cues ? true : undefined}
+                aria-describedby={shownProblems.cues ? ids.cuesProblem : undefined}
+              />
             </SettingsRow>
-            <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked">
+            <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked" data-parity="exercise-video-field">
               <VideoField video={video} onChange={changeVideo} />
             </SettingsRow>
           </SettingsRows>
         </SettingsSection>
       </div>
 
-      <div className="mt-8 flex items-center justify-end gap-3">
+      <div className="mt-8 flex items-center justify-end gap-3" data-parity="exercise-editor-actions">
         <Link to={library} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
           Cancel
         </Link>

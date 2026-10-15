@@ -120,6 +120,20 @@ describe("SettingsSection heading focus", () => {
 });
 
 describe("SettingsRow", () => {
+  it("stars a required row's title and names its control as required", () => {
+    // arrange
+    // act
+    render(
+      <SettingsRow htmlFor="name" required title="Name">
+        <input id="name" />
+      </SettingsRow>,
+    );
+
+    // assert
+    expect(screen.getByRole("textbox")).toHaveAccessibleName("Name (required)");
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("states a problem under the title in the description's place", () => {
     // arrange
     // act

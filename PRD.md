@@ -27,15 +27,15 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 **Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to submit her onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
-**Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, and review client profiles and cycle data. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
+**Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, review client profiles and cycle data, and build her exercise library. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
 
 ## Delivery Stages
 
-The MVP includes every requirement in this document except the capabilities explicitly marked Post-MVP. Check-ins, including client and coach scheduling, approval, rescheduling, and Google Meet links, remain in the MVP.
+The MVP includes every requirement in this document except the capabilities explicitly marked Post-MVP. Check-ins, including client and coach scheduling, approval, rescheduling, and Google Meet links, remain in the MVP. The coach's exercise library is also in the MVP, ahead of the training programs that will draw from it.
 
 Post-MVP adds three capability groups:
 
-- Training programs: exercise and plan creation, assignment, client plan delivery, workout logging, and workout history or review.
+- Training programs: plan creation, assignment, client plan delivery, workout logging, and workout history or review.
 - Nutritional programs: coach nutritional-program creation and assignment, and client nutritional-program views.
 - In-app messaging: coach-client conversations and chat-specific system events. Check-in notifications and check-in notes remain available in the MVP without chat.
 
@@ -115,7 +115,7 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 37. **Exercise swaps are coach-controlled.** Only the coach defines swap variants for an exercise assignment; during a workout a client may swap only to those variants. Swap history is recorded per workout.
 38. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
 39. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
-40. **Exercise videos are raw `.mp4` or `.mov` uploads**, supplied through drag-and-drop or an upload button.
+40. **Exercise videos are raw `.mp4` or `.mov` uploads of up to 50 MB**, supplied through drag-and-drop or an upload button. This rule is in the MVP with the exercise library.
 41. **System messages record plan and scheduling events Post-MVP.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party. In the MVP, check-in events still notify the relevant party and remain visible in the check-in flow without creating a chat entry.
 
 ## Check-ins
@@ -334,11 +334,13 @@ Per Business Rule 53.
 15. The coach adds a resource by choosing a file, with the title prefilled from the file name. While she types a tag, existing tags are suggested (Business Rule 59). A failed upload keeps her entries for retry.
 16. From a resource she opens the same view the client sees, edits its details, or deletes it (Business Rule 60).
 
-## 6. Exercises and Plans (`/coach/training`) — Post-MVP
+## 6. Exercises and Plans (`/coach/training`)
 
 ### Data model
 
-**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4` or `.mov`), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. Names are unique across the library, archived exercises included. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
+The Exercise is in the MVP; every other entity in this section is Post-MVP.
+
+**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4` or `.mov`, up to 50 MB), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. A name is at most 80 characters and unique among active exercises, ignoring case and surrounding spaces; form cues are at most 1,000 characters. An exercise is active until the coach archives it. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
 
 **Goal**: client, name (e.g. "Strength & Recomp Block"), type (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, Custom), start date, status (active or completed).
 
@@ -352,30 +354,34 @@ Per Business Rule 53.
 
 ### Exercise Library
 
-1. The coach creates exercises with `.mp4` or `.mov` upload by drag-and-drop or button, and reuses them across plans.
-2. The library supports search and filters for type, for Strength, Hypertrophy, and Recovery tags, and for no-equipment exercises. Tag filters combine as "any of"; the type filter narrows to one type; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
+1. Reached from the coach's "Training" menu entry. The coach creates and edits exercises and reuses them across plans. Saving is refused while the name is missing, already held by another active exercise, or over 80 characters, while the form cues are over 1,000 characters, or while no primary muscle is chosen for a type other than Cardio; each problem is explained at its field, and her entries stay. A successful save confirms and returns her to the library.
+2. A demo video is added by drag-and-drop or button. A file that is not an `.mp4` or `.mov`, or is over 50 MB, is refused with a clear message, and the coach keeps what she entered.
+3. The library supports search and filters for type, for Strength, Hypertrophy, and Recovery tags, and for no-equipment exercises. Tag filters combine as "any of"; the type filter narrows to one type; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
+4. The library is ordered by name, A to Z, by default; the coach can sort it by name or by difficulty (Beginner, Intermediate, Advanced) in either direction. Long libraries are split into pages.
+5. The coach archives an exercise to take it out of the active library without losing it, and can view archived exercises and restore them. Archiving frees the exercise's name for another active exercise; restoring an exercise whose name an active exercise now holds restores it under a numbered name (for example "Hip thrust (2)") that she can edit later.
+6. Deleting an exercise is permanent and asks for confirmation first. Once plans exist, an exercise used in a template or plan cannot be deleted, and the coach is told where it is used.
 
-### Plan Builder
+### Plan Builder — Post-MVP
 
-3. A dedicated full-screen page, not a modal, with two contexts: a Template Builder for reusable templates and a Client Plan Builder for a specific client's plan. Save actions and pre-populated names make clear which is being saved.
-4. Defaults to 4 weeks. The coach adds and removes weeks, copies one week's contents to a single week or all weeks through a discoverable control, swaps two weeks, and inserts a deload week at any position. The deload week is visually distinguished and prompts manual volume and intensity adjustment.
-5. The day type selector visually distinguishes day types. The coach can see at a glance how many exercises each day has, which training days are still empty, and the overall structure of weeks and day types without scrolling through every week.
-6. Exercises are added from the library by drag-and-drop into a day, reordered within a day, and grouped into a superset by dragging one onto another with an obvious visual result. A quick-add "+" button and a structured non-drag alternative exist for accessibility. Exercise rows carry numbered order indicators, a comfortable drag area, never overflow, and clearly name the exercise.
-7. Per assignment, the coach sets sets, reps, RIR, rest time, swap variants from the library, and an expandable coaching note.
-8. The coach can save as draft and continue later, name the plan on save, preview the full structure before saving, and share a plan with one or more clients.
-9. The Client Plan Builder can optionally load a template with a preview of each day's exercises, sets, reps, and RIR before committing. When editing an active plan, the coach sees which weeks already existed and which are new in this session.
-10. The builder uses all available space on large displays; on small screens the library and structure are available on demand without cluttering the editing area.
+7. A dedicated full-screen page, not a modal, with two contexts: a Template Builder for reusable templates and a Client Plan Builder for a specific client's plan. Save actions and pre-populated names make clear which is being saved.
+8. Defaults to 4 weeks. The coach adds and removes weeks, copies one week's contents to a single week or all weeks through a discoverable control, swaps two weeks, and inserts a deload week at any position. The deload week is visually distinguished and prompts manual volume and intensity adjustment.
+9. The day type selector visually distinguishes day types. The coach can see at a glance how many exercises each day has, which training days are still empty, and the overall structure of weeks and day types without scrolling through every week.
+10. Exercises are added from the library by drag-and-drop into a day, reordered within a day, and grouped into a superset by dragging one onto another with an obvious visual result. A quick-add "+" button and a structured non-drag alternative exist for accessibility. Exercise rows carry numbered order indicators, a comfortable drag area, never overflow, and clearly name the exercise.
+11. Per assignment, the coach sets sets, reps, RIR, rest time, swap variants from the library, and an expandable coaching note.
+12. The coach can save as draft and continue later, name the plan on save, preview the full structure before saving, and share a plan with one or more clients.
+13. The Client Plan Builder can optionally load a template with a preview of each day's exercises, sets, reps, and RIR before committing. When editing an active plan, the coach sees which weeks already existed and which are new in this session.
+14. The builder uses all available space on large displays; on small screens the library and structure are available on demand without cluttering the editing area.
 
-### Training Hub
+### Training Hub — Post-MVP
 
-11. Active plan cards show client name, week progress, deload indicators, goal, training frequency, and start date, and are clearly distinguished from completed plans. Clicking a card opens the client plan builder; a context menu offers "Go to Client" and "Delete Plan".
-12. Creating a client plan starts by selecting a client; a template may then be loaded inside the builder.
-13. The Templates tab shows template cards with edit, start a plan from template, copy, and delete.
-14. Deleting a plan or template requires explicit confirmation in a styled dialog.
+15. Active plan cards show client name, week progress, deload indicators, goal, training frequency, and start date, and are clearly distinguished from completed plans. Clicking a card opens the client plan builder; a context menu offers "Go to Client" and "Delete Plan".
+16. Creating a client plan starts by selecting a client; a template may then be loaded inside the builder.
+17. The Templates tab shows template cards with edit, start a plan from template, copy, and delete.
+18. Deleting a plan or template requires explicit confirmation in a styled dialog.
 
-### Assignment
+### Assignment — Post-MVP
 
-15. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 42), and posts a system message (Business Rule 41).
+19. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 42), and posts a system message (Business Rule 41).
 
 ## 7. Notifications
 

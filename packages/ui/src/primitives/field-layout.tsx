@@ -27,6 +27,7 @@ type FieldLayoutProps = Omit<
   hintPlacement?: FieldHintPlacement;
   label: React.ReactNode;
   labelLayout?: LabelLayout;
+  required?: boolean;
   suffixes?: readonly FieldLabelSuffix[];
 };
 
@@ -39,6 +40,7 @@ export function FieldLayout({
   hintPlacement = "before-control",
   label,
   labelLayout = "wrap",
+  required,
   suffixes = [],
   ...props
 }: FieldLayoutProps) {
@@ -50,13 +52,18 @@ export function FieldLayout({
 
   return (
     <div className={cn("grid gap-2", className)} {...props}>
-      <Label htmlFor={controlId} invalid={invalid} layout={labelLayout}>
-        {label}
-        {suffixes.map((suffix) => (
+      <Label
+        htmlFor={controlId}
+        invalid={invalid}
+        layout={labelLayout}
+        required={required}
+        trailing={suffixes.map((suffix) => (
           <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
             {suffix.text}
           </LabelSuffix>
         ))}
+      >
+        {label}
       </Label>
       {hintPlacement === "before-control" && hintLine}
       {children({
