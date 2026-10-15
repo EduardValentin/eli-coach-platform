@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useNutrition } from '../../../context/NutritionContext';
 import type { Food } from '../../../context/NutritionContext';
 import type { SortChoice } from '../../SortControl';
-import { ItemGlyph } from '../../ItemGlyph';
+import { ItemIdentity } from '../../ItemIdentity';
 import { SortableTableHead } from '../../SortableTableHead';
 import {
   Table,
@@ -35,20 +35,6 @@ interface FoodTableProps {
   onSort: (key: FoodSortKey) => void;
   actionsFor: (food: Food) => ReactNode;
   empty: ReactNode;
-}
-
-function FoodName({ food }: { food: Food }) {
-  return (
-    <div className="flex items-center gap-3">
-      <ItemGlyph icon={foodIcon(food.icon)} parity="food-glyph" />
-      <div>
-        <p className="font-semibold text-sm text-text-primary">{food.name}</p>
-        <p className="text-xs text-text-secondary mt-0.5" data-parity="food-category">
-          {CATEGORY_LABELS[food.category]}
-        </p>
-      </div>
-    </div>
-  );
 }
 
 export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableProps) {
@@ -84,7 +70,13 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
               return (
                 <TableRow key={food.id} data-parity="food-row">
                   <TableCell>
-                    <FoodName food={food} />
+                    <ItemIdentity
+                      icon={foodIcon(food.icon)}
+                      title={food.name}
+                      summary={CATEGORY_LABELS[food.category]}
+                      glyphParity="food-glyph"
+                      summaryParity="food-category"
+                    />
                   </TableCell>
                   <TableCell className={VALUE_CELL}>{food.kcal}</TableCell>
                   <TableCell className={VALUE_CELL}>{food.protein}g</TableCell>

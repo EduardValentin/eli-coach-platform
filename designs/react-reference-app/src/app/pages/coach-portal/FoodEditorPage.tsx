@@ -19,7 +19,7 @@ import { IconChoiceGrid } from '../../components/IconChoiceGrid';
 import { InlineProblem } from '../../components/InlineProblem';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
+import { SettingsBody, SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Legend } from '../../components/ui/label';
@@ -199,12 +199,12 @@ function FoodEditor({ editing, library }: { editing: Food | undefined; library: 
         </SettingsSection>
 
         <SettingsSection headingId="food-tags-heading" title="Tags" icon={Tags}>
-          <div className="grid gap-6 px-5 py-5 sm:grid-cols-2 sm:px-6" data-parity="food-tag-chips">
+          <SettingsBody className="grid gap-6 sm:grid-cols-2" parity="food-tag-chips">
             {TAG_FAMILIES.map((family) => {
               const FamilyIcon = TAG_FAMILY_ICON[family];
               return (
                 <fieldset key={family}>
-                  <Legend className="items-center">
+                  <Legend layout="inline">
                     <FamilyIcon size={14} className="text-text-secondary" aria-hidden="true" />
                     {TAG_FAMILY_LABELS[family]}
                   </Legend>
@@ -227,7 +227,7 @@ function FoodEditor({ editing, library }: { editing: Food | undefined; library: 
                 </fieldset>
               );
             })}
-          </div>
+          </SettingsBody>
         </SettingsSection>
       </div>
 

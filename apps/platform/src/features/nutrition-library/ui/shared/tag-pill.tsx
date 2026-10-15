@@ -23,7 +23,7 @@ export function TagPill({ tag }: { tag: NutritionTagView }) {
 
   return (
     <Badge data-parity-root="TagPill" tone={tone}>
-      <Icon aria-hidden="true" className="text-text-secondary" />
+      <Icon aria-hidden="true" />
       {tag.label}
     </Badge>
   );

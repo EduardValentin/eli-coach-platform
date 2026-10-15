@@ -130,4 +130,17 @@ describe("badge", () => {
       );
     },
   );
+
+  it.each(["tint-slate", "tint-violet", "tint-lime", "tint-cyan"] as const)(
+    "draws the leading icon of a %s badge in secondary ink",
+    (tone) => {
+      // arrange, act
+      render(<Badge tone={tone}>Breakfast</Badge>);
+
+      // assert
+      expect(screen.getByText("Breakfast")).toHaveClass(
+        "[&>svg]:text-text-secondary",
+      );
+    },
+  );
 });

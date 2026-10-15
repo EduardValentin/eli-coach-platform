@@ -2,7 +2,7 @@ import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
   buttonVariants,
   Card,
-  ItemGlyph,
+  ItemIdentity,
   RowActionsMenu,
   Table,
   TableBody,
@@ -108,23 +108,13 @@ function FoodRow({
   return (
     <TableRow data-parity="food-row">
       <TableCell>
-        <div className="flex items-center gap-3">
-          <ItemGlyph
-            data-parity="food-glyph"
-            icon={FOOD_ICON_GLYPHS[food.icon]}
-          />
-          <div>
-            <p className="text-sm font-semibold text-text-primary">
-              {food.name}
-            </p>
-            <p
-              className="mt-0.5 text-xs text-text-secondary"
-              data-parity="food-category"
-            >
-              {CATEGORY_LABELS[food.category]}
-            </p>
-          </div>
-        </div>
+        <ItemIdentity
+          glyphAttributes={{ "data-parity": "food-glyph" }}
+          icon={FOOD_ICON_GLYPHS[food.icon]}
+          summary={CATEGORY_LABELS[food.category]}
+          summaryAttributes={{ "data-parity": "food-category" }}
+          title={food.name}
+        />
       </TableCell>
       <TableCell className={VALUE_CELL}>{food.kcal}</TableCell>
       <TableCell className={VALUE_CELL}>{`${food.protein}g`}</TableCell>

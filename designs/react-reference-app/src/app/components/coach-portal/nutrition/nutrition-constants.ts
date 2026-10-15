@@ -1,8 +1,10 @@
+import type { ComponentProps } from 'react';
 import type {
   FoodCategory,
   TagFamily,
   CookingMethod,
 } from '../../../context/NutritionContext';
+import type { Badge } from '../../ui/badge';
 
 export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   protein: 'Protein',
@@ -39,20 +41,11 @@ export const MACRO_TILE = {
   fat: 'bg-macro-fat-soft',
 } as const;
 
-// Tag pill: soft family-tinted fill (text stays dark for AAA).
-export const TAG_FAMILY_PILL: Record<TagFamily, string> = {
-  'meal-time': 'bg-tint-slate-soft',
-  'cycle-phase': 'bg-tint-violet-soft',
-  nutrient: 'bg-tint-lime-soft',
-  dietary: 'bg-tint-cyan-soft',
-};
-
-// Solid family-color dots (tag-picker chips in the food dialog).
-export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
-  'meal-time': 'bg-tint-slate',
-  'cycle-phase': 'bg-tint-violet',
-  nutrient: 'bg-tint-lime',
-  dietary: 'bg-tint-cyan',
+export const TAG_FAMILY_TONE: Record<TagFamily, NonNullable<ComponentProps<typeof Badge>['tone']>> = {
+  'meal-time': 'tint-slate',
+  'cycle-phase': 'tint-violet',
+  nutrient: 'tint-lime',
+  dietary: 'tint-cyan',
 };
 
 // Solid macro identity-color dots (used in the food table's macro column headers).

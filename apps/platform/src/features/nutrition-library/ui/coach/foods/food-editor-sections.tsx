@@ -1,5 +1,6 @@
 import { toggled } from "@eli-coach-platform/ui/lib";
 import {
+  SettingsBody,
   SettingsRow,
   SettingsRows,
   SettingsSection,
@@ -235,8 +236,8 @@ export function FoodTagsSection({
 }) {
   return (
     <SettingsSection headingId="food-tags-heading" icon={Tags} title="Tags">
-      <div
-        className="grid gap-6 px-5 py-5 sm:grid-cols-2 sm:px-6"
+      <SettingsBody
+        className="grid gap-6 sm:grid-cols-2"
         data-parity="food-tag-chips"
       >
         {TAG_FAMILIES.map((family) => {
@@ -244,7 +245,7 @@ export function FoodTagsSection({
 
           return (
             <fieldset key={family}>
-              <Legend className="items-center">
+              <Legend layout="inline">
                 <FamilyIcon
                   aria-hidden="true"
                   className="text-text-secondary"
@@ -277,7 +278,7 @@ export function FoodTagsSection({
             </fieldset>
           );
         })}
-      </div>
+      </SettingsBody>
     </SettingsSection>
   );
 }
