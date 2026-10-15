@@ -855,6 +855,56 @@ describe("the demo video", () => {
   });
 });
 
+describe("focus in the demo video field", () => {
+  it("moves to Replace once a video chosen from the drop zone takes its place", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("squat.mp4"),
+    );
+
+    // assert
+    expect(replaceButton()).toHaveFocus();
+  });
+
+  it("moves to the drop zone once the video is removed", async () => {
+    // arrange
+    const user = await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+
+  it("stays where it was when the editor opens on a saved video", async () => {
+    // arrange
+    // act
+    await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // assert
+    expect(replaceButton()).not.toHaveFocus();
+    expect(removeButton()).not.toHaveFocus();
+  });
+
+  it("stays on the drop zone when a dropped file is refused", async () => {
+    // arrange
+    await renderEditor(NEW_EXERCISE_PATH);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    dropVideo(new File(["avi"], "squat.avi", { type: "video/x-msvideo" }));
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+});
+
 describe("saving with a demo video", () => {
   it("sends the exercise and the chosen file in one request and returns to the library", async () => {
     // arrange

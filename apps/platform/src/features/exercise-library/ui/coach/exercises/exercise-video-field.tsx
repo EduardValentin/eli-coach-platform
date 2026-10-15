@@ -27,6 +27,8 @@ export type VideoUploadState = UploadState | { state: "failed" };
 
 type StoredExerciseVideo = ExerciseView["video"];
 
+type VideoFieldFocus = "replace" | "picker" | null;
+
 type ExerciseVideoFieldProps = {
   stored: StoredExerciseVideo;
   video: ExerciseVideoEntry;
@@ -92,9 +94,13 @@ export function ExerciseVideoField({
   onRetry,
 }: ExerciseVideoFieldProps) {
   const problemId = useId();
+  const pickerId = useId();
   const replaceInput = useRef<HTMLInputElement>(null);
+  const replaceButton = useRef<HTMLButtonElement>(null);
+  const focusAfterSwap = useRef<VideoFieldFocus>(null);
   const busy = isVideoUploading(upload);
   const shownUrl = shownVideoUrlOf(video, stored);
+  const showsPreview = shownUrl !== null;
   const previewUrl =
     video.chosen.kind === "attach" ? video.chosen.previewUrl : null;
   const problemDescription = {
@@ -108,6 +114,13 @@ export function ExerciseVideoField({
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
+  useEffect(() => {
+    const target = focusAfterSwap.current;
+    focusAfterSwap.current = null;
+    if (target === "replace") replaceButton.current?.focus();
+    if (target === "picker") document.getElementById(pickerId)?.focus();
+  }, [showsPreview, pickerId]);
+
   const chooseVideo = (file: File) => {
     const problem = browserVideoRefusalMessage(file);
     if (problem) {
@@ -115,14 +128,17 @@ export function ExerciseVideoField({
       return;
     }
 
+    if (!showsPreview) focusAfterSwap.current = "replace";
     onChange({
       chosen: { kind: "attach", file, previewUrl: URL.createObjectURL(file) },
       problem: null,
     });
   };
 
-  const remove = () =>
+  const remove = () => {
+    focusAfterSwap.current = "picker";
     onChange({ chosen: stored ? REMOVE_VIDEO : KEEP_VIDEO, problem: null });
+  };
 
   return (
     <div className="grid gap-3">
@@ -166,6 +182,7 @@ export function ExerciseVideoField({
               aria-label="Replace video"
               disabled={busy}
               onClick={() => replaceInput.current?.click()}
+              ref={replaceButton}
               size="sm"
               variant="ghost"
               {...problemDescription}
@@ -188,6 +205,7 @@ export function ExerciseVideoField({
         <div className="max-w-md">
           <FileDropzone
             accept={EXERCISE_VIDEO_ACCEPT}
+            id={pickerId}
             hint={VIDEO_GUIDANCE}
             onFileChosen={chooseVideo}
             prompt={VIDEO_PROMPT}
