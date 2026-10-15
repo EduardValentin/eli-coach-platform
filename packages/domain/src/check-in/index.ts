@@ -16,6 +16,7 @@ export {
   MAX_CHECK_IN_MOVES,
   OPEN_CHECK_IN_STATUSES,
   RECORDED_CHECK_IN_STATUSES,
+  UNANSWERED_CHECK_IN_STATUSES,
   type CheckInLapseKind,
   type CheckInOutcome,
   type CheckInTab,
@@ -58,6 +59,7 @@ export {
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
+  type CheckInStartWindow,
 } from "./check-ins";
 export { type CoachCheckInView } from "./coach-check-in-views";
 export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";

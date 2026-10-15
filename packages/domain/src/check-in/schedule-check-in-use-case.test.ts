@@ -68,6 +68,8 @@ function createScheduleCheckIn(options?: {
     find: vi.fn().mockResolvedValue(null),
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn().mockResolvedValue("settled"),
     move: vi.fn().mockResolvedValue("moved"),
     endCoaching: vi

@@ -101,6 +101,8 @@ function createProposeCheckInTime(options?: {
       ),
     listForClient: vi.fn().mockResolvedValue(options?.clientCheckIns ?? []),
     listAll: vi.fn(),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
     endCoaching: vi.fn(),

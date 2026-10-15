@@ -84,9 +84,12 @@ const EXPIRED_LONG_AGO = checkIn({
 
 function createListLapsed(listed: CheckIn[]) {
   const checkIns = {
-    listAll: vi.fn().mockResolvedValue(listed),
-    listForClient: vi.fn().mockResolvedValue(listed),
-  } satisfies Pick<CheckIns, "listAll" | "listForClient">;
+    listUnansweredStartedWithin: vi.fn().mockResolvedValue(listed),
+    listUnansweredForClientStartedWithin: vi.fn().mockResolvedValue(listed),
+  } satisfies Pick<
+    CheckIns,
+    "listUnansweredStartedWithin" | "listUnansweredForClientStartedWithin"
+  >;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue([ANA, MARA]),
   } satisfies Pick<ClientIdentities, "findByClientIds">;
@@ -96,7 +99,7 @@ function createListLapsed(listed: CheckIn[]) {
 }
 
 describe("ListLapsedCheckInsUseCase", () => {
-  it("lists every client's lapsed check-ins once for the coach, named by one identity read", async () => {
+  it("lists every client's lapsed check-ins once for the coach from the unanswered ones of the window, named by one identity read", async () => {
     // arrange
     const { listLapsed, ports } = createListLapsed([
       EXPIRED_REQUEST,
@@ -136,8 +139,13 @@ describe("ListLapsedCheckInsUseCase", () => {
         client: ANA,
       },
     ]);
-    expect(ports.checkIns.listAll).toHaveBeenCalledOnce();
-    expect(ports.checkIns.listForClient).not.toHaveBeenCalled();
+    expect(ports.checkIns.listUnansweredStartedWithin).toHaveBeenCalledWith({
+      since: SINCE,
+      at: NOW,
+    });
+    expect(
+      ports.checkIns.listUnansweredForClientStartedWithin,
+    ).not.toHaveBeenCalled();
     expect(ports.identities.findByClientIds).toHaveBeenCalledOnce();
     expect(ports.identities.findByClientIds).toHaveBeenCalledWith([
       "client-1",
@@ -145,7 +153,7 @@ describe("ListLapsedCheckInsUseCase", () => {
     ]);
   });
 
-  it("lists only her own lapsed check-ins for a client", async () => {
+  it("lists only her own lapsed check-ins for a client from her unanswered ones of the window", async () => {
     // arrange
     const { listLapsed, ports } = createListLapsed([EXPIRED_REQUEST]);
 
@@ -166,8 +174,10 @@ describe("ListLapsedCheckInsUseCase", () => {
         client: ANA,
       },
     ]);
-    expect(ports.checkIns.listForClient).toHaveBeenCalledWith("client-1");
-    expect(ports.checkIns.listAll).not.toHaveBeenCalled();
+    expect(
+      ports.checkIns.listUnansweredForClientStartedWithin,
+    ).toHaveBeenCalledWith("client-1", { since: SINCE, at: NOW });
+    expect(ports.checkIns.listUnansweredStartedWithin).not.toHaveBeenCalled();
   });
 
   it("leaves out check-ins that did not lapse and lapses before the window", async () => {

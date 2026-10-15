@@ -82,6 +82,8 @@ function createPorts(options: {
     find: vi.fn(),
     listForClient: vi.fn().mockResolvedValue(options.checkIns),
     listAll: vi.fn().mockResolvedValue(options.checkIns),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),

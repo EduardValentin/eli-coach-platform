@@ -13,6 +13,8 @@ export type CheckInSettlement = "settled" | "changed_meanwhile";
 
 export type CheckInMove = "moved" | "time_taken" | "changed_meanwhile";
 
+export type CheckInStartWindow = { since: Date; at: Date };
+
 export type CheckInsAtCoachingEnd = {
   cancelled: string[];
   seriesStopped: boolean;
@@ -26,6 +28,11 @@ export interface CheckIns {
   find(id: string): Promise<CheckIn | null>;
   listForClient(clientId: string): Promise<CheckIn[]>;
   listAll(): Promise<CheckIn[]>;
+  listUnansweredStartedWithin(window: CheckInStartWindow): Promise<CheckIn[]>;
+  listUnansweredForClientStartedWithin(
+    clientId: string,
+    window: CheckInStartWindow,
+  ): Promise<CheckIn[]>;
   settle(command: {
     id: string;
     outcome: CheckInOutcome;

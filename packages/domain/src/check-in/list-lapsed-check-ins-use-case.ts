@@ -22,7 +22,10 @@ export type ListLapsedCheckInsQuery = (
 ) & { since: Date; at: Date };
 
 type ListLapsedCheckInsUseCaseOptions = {
-  checkIns: Pick<CheckIns, "listAll" | "listForClient">;
+  checkIns: Pick<
+    CheckIns,
+    "listUnansweredStartedWithin" | "listUnansweredForClientStartedWithin"
+  >;
   identities: Pick<ClientIdentities, "findByClientIds">;
 };
 
@@ -32,10 +35,14 @@ export class ListLapsedCheckInsUseCase {
   constructor(private readonly options: ListLapsedCheckInsUseCaseOptions) {}
 
   async execute(query: ListLapsedCheckInsQuery): Promise<LapsedCheckIn[]> {
+    const window = { since: query.since, at: query.at };
     const listed =
       query.party === "coach"
-        ? await this.options.checkIns.listAll()
-        : await this.options.checkIns.listForClient(query.clientId);
+        ? await this.options.checkIns.listUnansweredStartedWithin(window)
+        : await this.options.checkIns.listUnansweredForClientStartedWithin(
+            query.clientId,
+            window,
+          );
     const lapsed = listed.flatMap((checkIn): Lapsed[] => {
       const lapse = checkIn.lapseAt(query.at);
 

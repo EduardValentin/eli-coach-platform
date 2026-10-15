@@ -1,4 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCheckIns } from "./postgres-check-ins.server";
@@ -21,6 +23,25 @@ const PENDING_ROW = {
   moves: 0,
   newTimeNote: null,
 };
+
+const WINDOW = {
+  since: new Date("2026-07-24T14:00:00.000Z"),
+  at: new Date("2026-10-22T14:00:00.000Z"),
+};
+
+const CLASH_ROW = {
+  ...PENDING_ROW,
+  id: "5e4d3c2b-1a09-4f8e-8d7c-6b5a4f3e2d1c",
+  seriesId: "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a",
+  startsAt: new Date("2026-10-15T14:00:00.000Z"),
+  kind: "recurring",
+  status: "clash",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+  note: null,
+};
+
+const dialect = new PgDialect();
 
 const APPROVED_ROW = {
   ...PENDING_ROW,
@@ -193,6 +214,63 @@ describe("PostgresCheckIns#listAll", () => {
   });
 });
 
+describe("PostgresCheckIns#listUnansweredStartedWithin", () => {
+  it("asks the database only for pending and clashing check-ins that started within the window", async () => {
+    // arrange
+    const database = createDatabaseFiltering([CLASH_ROW, PENDING_ROW]);
+    const checkIns = new PostgresCheckIns(repositoryOptions(database.client));
+
+    // act
+    const listed = await checkIns.listUnansweredStartedWithin(WINDOW);
+
+    // assert
+    const query = dialect.sqlToQuery(database.filterOf());
+    expect(query.sql).toBe(
+      `("app"."check_ins"."status" in ($1, $2) and "app"."check_ins"."starts_at" >= $3 and "app"."check_ins"."starts_at" <= $4)`,
+    );
+    expect(query.params).toEqual([
+      "pending",
+      "clash",
+      WINDOW.since.toISOString(),
+      WINDOW.at.toISOString(),
+    ]);
+    expect(
+      listed.map(({ id, recordedStatus }) => ({ id, recordedStatus })),
+    ).toEqual([
+      { id: CLASH_ROW.id, recordedStatus: "clash" },
+      { id: PENDING_ROW.id, recordedStatus: "pending" },
+    ]);
+  });
+});
+
+describe("PostgresCheckIns#listUnansweredForClientStartedWithin", () => {
+  it("asks the database only for the client's pending and clashing check-ins that started within the window", async () => {
+    // arrange
+    const database = createDatabaseFiltering([PENDING_ROW]);
+    const checkIns = new PostgresCheckIns(repositoryOptions(database.client));
+
+    // act
+    const listed = await checkIns.listUnansweredForClientStartedWithin(
+      PENDING_ROW.clientId,
+      WINDOW,
+    );
+
+    // assert
+    const query = dialect.sqlToQuery(database.filterOf());
+    expect(query.sql).toBe(
+      `("app"."check_ins"."client_id" = $1 and ("app"."check_ins"."status" in ($2, $3) and "app"."check_ins"."starts_at" >= $4 and "app"."check_ins"."starts_at" <= $5))`,
+    );
+    expect(query.params).toEqual([
+      PENDING_ROW.clientId,
+      "pending",
+      "clash",
+      WINDOW.since.toISOString(),
+      WINDOW.at.toISOString(),
+    ]);
+    expect(listed.map(({ id }) => id)).toEqual([PENDING_ROW.id]);
+  });
+});
+
 function repositoryOptions(database: DatabaseClient) {
   return {
     coachTime: {
@@ -220,4 +298,17 @@ function createQueryChain(rows: readonly unknown[]) {
   };
 
   return chain;
+}
+
+function createDatabaseFiltering(rows: readonly unknown[]) {
+  const where = vi.fn<(condition: SQL) => unknown>();
+  const chain = Object.assign(createQueryChain(rows), { where });
+  where.mockReturnValue(chain);
+
+  return {
+    client: {
+      select: vi.fn().mockReturnValue(chain),
+    } as unknown as DatabaseClient,
+    filterOf: () => where.mock.calls[0][0],
+  };
 }

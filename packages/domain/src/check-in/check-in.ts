@@ -22,6 +22,11 @@ export const OPEN_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
   ...COACH_TIME_HOLDING_STATUSES,
   "clash",
 ];
+
+export const UNANSWERED_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
+  "pending",
+  "clash",
+];
 export type CheckInStatus = RecordedCheckInStatus | "passed";
 export type CheckInOutcome = Exclude<
   RecordedCheckInStatus,
@@ -524,7 +529,7 @@ export class CheckIn {
   }
 
   private holdsNoAnswerYet(): boolean {
-    return this.recordedStatus === "pending" || this.recordedStatus === "clash";
+    return UNANSWERED_CHECK_IN_STATUSES.includes(this.recordedStatus);
   }
 
   private mayCancel(party: CheckInParty): boolean {
