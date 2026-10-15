@@ -70,13 +70,11 @@ function displayBound(
   return Math.round(toDisplayMeasure(field.kind, canonical, units));
 }
 
-function labelSuffixesOf(field: MeasureFieldDefinition, units: MeasureUnits) {
-  return [
-    {
-      parity: `field-${field.id}-suffix-unit`,
-      text: `(${measureUnitLabel(field.kind, units)})`,
-    },
-  ];
+function unitSuffixOf(field: MeasureFieldDefinition, units: MeasureUnits) {
+  return {
+    parity: `field-${field.id}-suffix-unit`,
+    text: `(${measureUnitLabel(field.kind, units)})`,
+  };
 }
 
 export function MeasureField<
@@ -103,7 +101,7 @@ export function MeasureField<
       hint={field.hint}
       label={<span>{field.label}</span>}
       required={field.requirement === "required"}
-      suffixes={labelSuffixesOf(field, units)}
+      suffixes={[unitSuffixOf(field, units)]}
     >
       {(controlAttributes) => (
         <Input
