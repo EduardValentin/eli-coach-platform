@@ -5,11 +5,10 @@ import {
   type ExerciseDraftInput,
   type ExerciseDraftProblems,
 } from "./exercise-draft";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 
-type EditExerciseCommand = {
-  exerciseId: string;
+type EditExerciseCommand = ExerciseReference & {
   draft: ExerciseDraftInput;
 };
 
@@ -42,13 +41,14 @@ export class EditExerciseUseCase {
   }
 
   private async edit({
+    ownerAccountId,
     exerciseId,
     draft: input,
   }: EditExerciseCommand): Promise<EditExerciseResult> {
     const { library, clock } = this.options;
     const [exercise, exercises] = await Promise.all([
-      library.find(exerciseId),
-      library.list(),
+      library.find({ ownerAccountId, exerciseId }),
+      library.list(ownerAccountId),
     ]);
 
     if (!exercise) return { status: "not-found" };

@@ -1,5 +1,5 @@
 import type { Exercise } from "./exercise";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 
 export type FindExerciseResult =
   | { status: "found"; exercise: Exercise; otherNames: string[] }
@@ -12,11 +12,11 @@ type FindExerciseUseCaseOptions = {
 export class FindExerciseUseCase {
   constructor(private readonly options: FindExerciseUseCaseOptions) {}
 
-  async execute(exerciseId: string): Promise<FindExerciseResult> {
+  async execute(reference: ExerciseReference): Promise<FindExerciseResult> {
     const { library } = this.options;
     const [exercise, exercises] = await Promise.all([
-      library.find(exerciseId),
-      library.list(),
+      library.find(reference),
+      library.list(reference.ownerAccountId),
     ]);
 
     if (!exercise) return { status: "not-found" };
@@ -25,7 +25,7 @@ export class FindExerciseUseCase {
       status: "found",
       exercise,
       otherNames: exercises
-        .filter(({ id }) => id !== exerciseId)
+        .filter(({ id }) => id !== reference.exerciseId)
         .map(({ name }) => name),
     };
   }

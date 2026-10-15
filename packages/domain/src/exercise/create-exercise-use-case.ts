@@ -9,6 +9,11 @@ import type { ExerciseIds } from "./exercise-ids";
 import type { ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 
+type CreateExerciseCommand = {
+  ownerAccountId: string;
+  draft: ExerciseDraftInput;
+};
+
 export type CreateExerciseResult =
   | { status: "created"; exercise: Exercise }
   | { status: "invalid"; problems: ExerciseDraftProblems }
@@ -24,9 +29,9 @@ type CreateExerciseUseCaseOptions = {
 export class CreateExerciseUseCase {
   constructor(private readonly options: CreateExerciseUseCaseOptions) {}
 
-  async execute(input: ExerciseDraftInput): Promise<CreateExerciseResult> {
+  async execute(command: CreateExerciseCommand): Promise<CreateExerciseResult> {
     try {
-      return await this.create(input);
+      return await this.create(command);
     } catch (error) {
       this.options.incidents.exerciseCreationFailed({ error });
 
@@ -34,17 +39,21 @@ export class CreateExerciseUseCase {
     }
   }
 
-  private async create(
-    input: ExerciseDraftInput,
-  ): Promise<CreateExerciseResult> {
+  private async create({
+    ownerAccountId,
+    draft: input,
+  }: CreateExerciseCommand): Promise<CreateExerciseResult> {
     const { library, ids, clock } = this.options;
-    const otherNames = (await library.list()).map(({ name }) => name);
+    const otherNames = (await library.list(ownerAccountId)).map(
+      ({ name }) => name,
+    );
     const draft = ExerciseDraft.from(input, otherNames);
 
     if (draft.status === "invalid") return draft;
 
     const exercise = Exercise.added({
       id: ids.generate(),
+      ownerAccountId,
       draft: draft.draft,
       at: clock.now(),
     });
