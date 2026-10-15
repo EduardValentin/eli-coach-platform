@@ -89,6 +89,25 @@ describe("OpenExerciseVideoUseCase", () => {
     expect(store.open).toHaveBeenCalledWith("video-1", requested);
   });
 
+  it("looks for the exercise in the coach's own library", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    await useCase.execute({
+      viewer: COACH,
+      exerciseId: "exercise-1",
+      videoId: "video-1",
+      requested: null,
+    });
+
+    // assert
+    expect(library.find).toHaveBeenCalledExactlyOnceWith({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "exercise-1",
+    });
+  });
+
   it("answers not found to another coach without opening the file", async () => {
     // arrange
     const { useCase, store } = createUseCase();

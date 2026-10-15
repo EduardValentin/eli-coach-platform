@@ -40,7 +40,9 @@ export class OpenExerciseVideoUseCase {
   async execute(
     command: OpenExerciseVideoCommand,
   ): Promise<OpenExerciseVideoResult> {
-    const ownerAccountId = await this.access.libraryOwnerFor(command.viewer);
+    const ownerAccountId = await this.access.libraryOwnerAccountIdFor(
+      command.viewer,
+    );
 
     if (!ownerAccountId) return NOT_FOUND;
 
@@ -50,6 +52,7 @@ export class OpenExerciseVideoUseCase {
     });
 
     if (!exercise) return NOT_FOUND;
+    if (!(await this.access.admits(command.viewer, exercise))) return NOT_FOUND;
 
     const video = exercise.video;
 
