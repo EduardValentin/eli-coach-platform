@@ -2171,6 +2171,14 @@
       "waitFor": "[role=\"dialog\"] [data-parity=\"drawer-backdrop\"][style*=\"opacity: 1\"] + [style*=\"transform: none\"]"
     }
   ],
+  "open-coach-drawer-without-pending-checkins": [
+    {
+      "use": "pending-checkins-empty"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
   "open-cycle-mode-tooltip": [
     {
       "hover": "[data-parity=\"fact-cycle-mode-info\"]"
@@ -4459,7 +4467,13 @@
   ],
   "coach-nutrition-active": [
     {
+      "use": "pending-checkins-empty"
+    },
+    {
       "click": "[data-parity=\"link-nutrition\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"link-nutrition\"][aria-current=\"page\"]"
     }
   ],
   "open-new-food": [
@@ -4567,6 +4581,17 @@
     },
     {
       "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "food-updated-toast": [
+    {
+      "use": "open-food-editor-chicken"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
     }
   ],
   "seed-food-chicken-breast": {
