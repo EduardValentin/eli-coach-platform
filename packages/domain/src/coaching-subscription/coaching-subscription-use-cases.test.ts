@@ -532,12 +532,15 @@ function createSubscriptionIncidents() {
     paymentCardEventMirrored: vi.fn(),
     paymentCardRefreshFailed: vi.fn(),
     coachingEndNotPropagated: vi.fn(),
+    coachingPeriodNotPropagated: vi.fn(),
+    renewalHoldLiftFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 
 function createPaymentSubscriptions() {
   return {
     holdRenewal: vi.fn().mockResolvedValue(undefined),
+    liftRenewalHold: vi.fn().mockResolvedValue(undefined),
     endNow: vi.fn(),
     endAt: vi.fn(),
     openPaymentMethodSession: vi.fn(),
@@ -612,7 +615,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     ["a recorded", RECORDED],
     ["a replayed", DUPLICATE],
   ])(
-    "holds the renewal of %s payment after admitting the client",
+    "holds the renewal of %s waiting payment until her program start, after admitting the client",
     async (_label, outcome) => {
       // arrange
       const dependencies = recordCheckoutDependencies(outcome);
@@ -624,7 +627,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
       // assert
       expect(
         dependencies.paymentSubscriptions.holdRenewal,
-      ).toHaveBeenCalledWith("sub_1");
+      ).toHaveBeenCalledWith({
+        paymentSubscriptionId: "sub_1",
+        until: new Date("2026-10-10T10:05:00.000Z"),
+      });
       expect(
         dependencies.admission.admit.mock.invocationCallOrder[0],
       ).toBeLessThan(
@@ -636,6 +642,28 @@ describe("RecordCheckoutCompletedUseCase", () => {
       });
     },
   );
+
+  it("holds no renewal when her program starts immediately", async () => {
+    // arrange
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    vi.mocked(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).mockResolvedValue({ ...completion, startChoice: "immediate" });
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
+    expect(
+      dependencies.paymentSubscriptions.holdRenewal,
+    ).not.toHaveBeenCalled();
+    expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
+  });
 
   it("reports a failed hold and propagates it so the payment event is delivered again, with the client already admitted", async () => {
     // arrange

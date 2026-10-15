@@ -27,6 +27,8 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
+import { useLoadOnOpening } from "./use-load-on-opening";
+
 type CheckInRefusal = CheckInRefusalReply["error"];
 
 type CheckInPickerProblem = CheckInRefusal | "failed";
@@ -63,6 +65,13 @@ type CheckInPickerProps = {
   submission: CheckInPickerSubmission;
   timeZone: string;
   wording: CheckInPickerWording;
+};
+
+type PickerStepButtonProps = {
+  busy: boolean;
+  disabled: boolean;
+  label: string;
+  onSubmit: () => void;
 };
 
 type OpenTimes =
@@ -116,13 +125,7 @@ export function CheckInPicker({
     selectedDayKey && slotPickerProps.days.has(selectedDayKey)
       ? selectedDayKey
       : null;
-  const loadOpenTimesOnOpen = useEffectEvent(openTimes.load);
-
-  useEffect(() => {
-    if (open) {
-      loadOpenTimesOnOpen();
-    }
-  }, [open]);
+  useLoadOnOpening({ load: openTimes.load, open });
 
   const submit = () => {
     if (!selectedSlot) return;
@@ -182,36 +185,50 @@ export function CheckInPicker({
           />
         </SheetDialogBody>
         <SheetDialogFooter rule="faint">
-          <Button
-            aria-busy={sending.submitting || undefined}
-            corner="control"
-            data-parity="checkin-picker-step"
-            disabled={
-              openTimes.listing.status !== "ready" ||
-              !selectedSlot ||
+          <PickerStepButton
+            busy={sending.submitting}
+            disabled={openTimes.listing.status !== "ready" || !selectedSlot}
+            label={
               sending.submitting
+                ? wording.busyLabel
+                : stepLabel({
+                    dayKey,
+                    stepVerb: wording.stepVerb,
+                    time:
+                      selectedSlot &&
+                      formatClockTime(new Date(selectedSlot), timeZone),
+                  })
             }
-            elevation="card"
-            onClick={submit}
-            press="scale"
-            size="md-grow"
-            textSize="sm"
-            weight="semibold"
-            width="full"
-          >
-            {sending.submitting
-              ? wording.busyLabel
-              : stepLabel({
-                  dayKey,
-                  stepVerb: wording.stepVerb,
-                  time:
-                    selectedSlot &&
-                    formatClockTime(new Date(selectedSlot), timeZone),
-                })}
-          </Button>
+            onSubmit={submit}
+          />
         </SheetDialogFooter>
       </div>
     </ResponsiveSheetDialog>
+  );
+}
+
+export function PickerStepButton({
+  busy,
+  disabled,
+  label,
+  onSubmit,
+}: PickerStepButtonProps) {
+  return (
+    <Button
+      aria-busy={busy || undefined}
+      corner="control"
+      data-parity="checkin-picker-step"
+      disabled={disabled || busy}
+      elevation="card"
+      onClick={onSubmit}
+      press="scale"
+      size="md-grow"
+      textSize="sm"
+      weight="semibold"
+      width="full"
+    >
+      {label}
+    </Button>
   );
 }
 

@@ -2,6 +2,7 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { clientPronouns } from "./client-pronouns";
+import type { ConfirmationLabels } from "./confirmation-dialog";
 import { DisabledAction } from "./disabled-action";
 import {
   expectAccessRefused,
@@ -16,6 +17,7 @@ import {
 } from "./locator-text";
 import { MeasurementsHistory } from "./measurements-history";
 import type { PaidClient } from "./paid-clients";
+import { WEEKLY_DIALOG_TITLE } from "./weekly-check-in-dialog";
 
 export type Readings = Readonly<Record<string, string>>;
 
@@ -32,6 +34,28 @@ export type AnsweredQuestion = {
 const FOCUS_TRAP_TAB_STOPS = 60;
 
 const SCHEDULE_DIALOG_TITLE = /^Schedule a check-in with \S+$/;
+
+const NO_WEEKLY_CHECK_IN = "No weekly check-in yet.";
+
+const SET_UP_WEEKLY = "Set up a weekly check-in";
+
+const WEEKLY_MENU_TRIGGER = "More actions for the weekly check-in";
+
+const VIEW_ALL_CHECK_INS = "View all check-ins";
+
+const CHECK_INS_PATH = "/coach/checkins";
+
+const ARROW_SETTLE_MS = 250;
+
+const DISABLED_ACTION_HINT = '[data-parity="disabled-action-hint"]';
+
+export const STOP_WEEKLY_CHECK_IN_LABELS: ConfirmationLabels = {
+  title: "Stop the weekly check-in?",
+  confirm: "Stop",
+  dismiss: "Keep",
+};
+
+type WeeklyAction = "Change" | "Stop";
 
 const ABSENT_READING = "—";
 
@@ -116,14 +140,100 @@ export class CoachClientPage {
     return this.page.getByRole("link", { name: "Resources", exact: true });
   }
 
-  private scheduleActionFor(gender: VisitorGender): DisabledAction {
+  private get weeklyPanel() {
+    return this.block("Weekly check-in");
+  }
+
+  private get weeklyDialog() {
+    return this.page.getByRole("dialog", { name: WEEKLY_DIALOG_TITLE });
+  }
+
+  private get setUpWeeklyButton() {
+    return this.weeklyPanel.getByRole("button", {
+      name: SET_UP_WEEKLY,
+      exact: true,
+    });
+  }
+
+  private get weeklyMenuTrigger() {
+    return this.weeklyPanel.getByRole("button", {
+      name: WEEKLY_MENU_TRIGGER,
+      exact: true,
+    });
+  }
+
+  private get weeklyMenu() {
+    return this.page.getByRole("menu");
+  }
+
+  private weeklyMenuItem(action: WeeklyAction): Locator {
+    return this.weeklyMenu.getByRole("menuitem", { name: action, exact: true });
+  }
+
+  private get viewAllCheckInsLink() {
+    return this.weeklyPanel.getByRole("link", {
+      name: VIEW_ALL_CHECK_INS,
+      exact: true,
+    });
+  }
+
+  private async openWeeklyMenuByKeyboard(): Promise<void> {
+    await expect(async () => {
+      if (!(await this.weeklyMenu.isVisible())) {
+        await tabTo(this.page, this.weeklyMenuTrigger);
+        await this.page.keyboard.press("Enter");
+      }
+      await expect(this.weeklyMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  private async focusWeeklyMenuItemByKeyboard(
+    action: WeeklyAction,
+  ): Promise<void> {
+    await this.openWeeklyMenuByKeyboard();
+    const item = this.weeklyMenuItem(action);
+
+    await expect(async () => {
+      if (!(await isFocused(item))) {
+        await this.page.keyboard.press("ArrowDown");
+      }
+      expect(await isFocused(item)).toBe(true);
+    }).toPass({ intervals: [ARROW_SETTLE_MS] });
+  }
+
+  private awaitingOnboardingReason(gender: VisitorGender): string {
     const { possessive, subject, subjectHas } = clientPronouns(gender);
 
+    return `${subject} can answer a check-in once ${subjectHas.toLowerCase()} sent ${possessive} onboarding.`;
+  }
+
+  private scheduleActionFor(gender: VisitorGender): DisabledAction {
     return new DisabledAction(this.page, {
       button: this.scheduleButton,
       opens: this.scheduleDialog,
-      reason: `${subject} can answer a check-in once ${subjectHas.toLowerCase()} sent ${possessive} onboarding.`,
+      reason: this.awaitingOnboardingReason(gender),
     });
+  }
+
+  private setUpActionFor(gender: VisitorGender): DisabledAction {
+    return new DisabledAction(this.page, {
+      button: this.setUpWeeklyButton,
+      opens: this.weeklyDialog,
+      reason: this.awaitingOnboardingReason(gender),
+      focusByKeyboard: () => this.tabToSetUpOnceHintsSettle(),
+    });
+  }
+
+  private async tabToSetUpOnceHintsSettle(): Promise<void> {
+    const setUp = this.setUpWeeklyButton;
+
+    if (await isFocused(setUp)) {
+      await this.page.keyboard.press("Shift+Tab");
+    }
+    await tabTo(this.page, setUp);
+    await expect(this.page.locator(DISABLED_ACTION_HINT)).toHaveCount(1);
   }
 
   private headerOf(fullName: string): Locator {
@@ -685,5 +795,112 @@ export class CoachClientPage {
       .click();
     await this.confirmApproval(firstName);
     await expect(this.reviewDialog).toBeHidden();
+  }
+
+  async expectNoWeeklyCheckIn(): Promise<void> {
+    await expect(
+      this.weeklyPanel.getByText(NO_WEEKLY_CHECK_IN, { exact: true }),
+    ).toBeVisible();
+    await expect(this.setUpWeeklyButton).toBeEnabled();
+    await expect(this.weeklyMenuTrigger).toHaveCount(0);
+    await expect(this.viewAllCheckInsLink).toHaveCount(0);
+  }
+
+  async expectSetUpBlocked(gender: VisitorGender): Promise<void> {
+    await this.setUpActionFor(gender).expectBlocked();
+  }
+
+  async expectSetUpReasonOnHover(gender: VisitorGender): Promise<void> {
+    await this.setUpActionFor(gender).expectReasonOnHover();
+  }
+
+  async expectSetUpReasonOnFocus(gender: VisitorGender): Promise<void> {
+    await this.setUpActionFor(gender).expectReasonOnFocus();
+  }
+
+  async expectSetUpReasonOnTap(gender: VisitorGender): Promise<void> {
+    await this.setUpActionFor(gender).expectReasonOnTap();
+  }
+
+  async expectNoSetUpOnceCoachingEnded(gender: VisitorGender): Promise<void> {
+    const { possessiveCapitalised } = clientPronouns(gender);
+
+    await expect(
+      this.weeklyPanel.getByText(
+        `${possessiveCapitalised} coaching has ended, so no weekly check-in can be set up.`,
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      this.weeklyPanel.getByText(NO_WEEKLY_CHECK_IN, { exact: true }),
+    ).toHaveCount(0);
+    await expect(this.weeklyPanel.getByRole("button")).toHaveCount(0);
+    await expect(this.weeklyPanel.getByRole("link")).toHaveCount(0);
+  }
+
+  async openWeeklyDialog(): Promise<void> {
+    await this.openDialogWith(this.setUpWeeklyButton, this.weeklyDialog);
+  }
+
+  async openWeeklyMenu(): Promise<void> {
+    await expect(async () => {
+      if (!(await this.weeklyMenu.isVisible())) {
+        await this.weeklyMenuTrigger.click();
+      }
+      await expect(this.weeklyMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  async openChangeDialog(): Promise<void> {
+    await this.openWeeklyMenu();
+    await this.weeklyMenuItem("Change").click();
+    await expect(this.weeklyDialog).toBeVisible();
+  }
+
+  async openStopWeekly(): Promise<void> {
+    await this.openWeeklyMenu();
+    await this.weeklyMenuItem("Stop").click();
+  }
+
+  async openWeeklyDialogWithKeyboard(): Promise<void> {
+    await expect(async () => {
+      await tabTo(this.page, this.setUpWeeklyButton);
+      await this.page.keyboard.press("Enter");
+      await expect(this.weeklyDialog).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  async openStopWeeklyWithKeyboard(): Promise<void> {
+    await this.focusWeeklyMenuItemByKeyboard("Stop");
+    await this.page.keyboard.press("Enter");
+  }
+
+  async expectWeeklyMenuFocused(): Promise<void> {
+    await expect(this.weeklyMenuTrigger).toBeFocused();
+  }
+
+  async expectSetUpFocused(): Promise<void> {
+    await expect(this.setUpWeeklyButton).toBeFocused();
+  }
+
+  async expectWeeklyRule(rule: string): Promise<void> {
+    await expect(
+      this.weeklyPanel.getByText(rule, { exact: true }),
+    ).toBeVisible();
+    await expect(this.weeklyMenuTrigger).toBeEnabled();
+    await expect(this.setUpWeeklyButton).toHaveCount(0);
+    await expect(this.viewAllCheckInsLink).toHaveAttribute(
+      "href",
+      CHECK_INS_PATH,
+    );
+  }
+
+  async openAllCheckIns(): Promise<void> {
+    await this.viewAllCheckInsLink.click();
+    await expect(this.page).toHaveURL(CHECK_INS_PATH);
   }
 }

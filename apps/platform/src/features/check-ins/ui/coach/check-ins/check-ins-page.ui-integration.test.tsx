@@ -58,8 +58,10 @@ const TIME_ZONE = "Europe/Bucharest";
 
 const ANDREEA_REQUEST: CoachCheckIn = {
   id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+  seriesId: null,
   kind: "ad_hoc",
   status: "pending",
+  tab: "requests",
   initiatedBy: "client",
   proposedBy: "client",
   awaitsViewer: true,
@@ -92,6 +94,7 @@ const MARIA_REQUEST: CoachCheckIn = {
 const ANDREEA_APPROVED: CoachCheckIn = {
   ...ANDREEA_REQUEST,
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
   isWaitingRequest: false,
 };
@@ -100,6 +103,7 @@ const ELENA_UPCOMING: CoachCheckIn = {
   ...ANDREEA_REQUEST,
   id: "2c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f",
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
   isWaitingRequest: false,
   startsAt: "2026-10-13T07:00:00.000Z",
@@ -146,6 +150,7 @@ const MARIA_CANCELLED: CoachCheckIn = {
   ...MARIA_REQUEST,
   id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
   status: "cancelled",
+  tab: "past",
   awaitsViewer: false,
   isWaitingRequest: false,
 };
@@ -156,6 +161,8 @@ const ELENA_ID = "7b8c9d0e-1f2a-4b3c-9d4e-6f7a8b9c0d1e";
 
 const ELENA_CANCELLABLE: CoachCheckIn = {
   ...ELENA_UPCOMING,
+  initiatedBy: "coach",
+  proposedBy: "coach",
   viewerMayCancel: true,
   clientId: ELENA_ID,
 };
@@ -166,6 +173,48 @@ const ELENA_MOVED_TWICE: CoachCheckIn = {
   earlierStartsAt: "2026-10-12T12:00:00.000Z",
   moves: 2,
 };
+
+const WEEKLY_SERIES_ID = "8c9d0e1f-2a3b-4c4d-8e5f-7a8b9c0d1e2f";
+
+const ELENA_CLASH: CoachCheckIn = {
+  ...ELENA_CANCELLABLE,
+  id: "9d0e1f2a-3b4c-4d5e-9f6a-8b9c0d1e2f3a",
+  seriesId: WEEKLY_SERIES_ID,
+  kind: "recurring",
+  status: "clash",
+  tab: "requests",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+  awaitsViewer: true,
+  viewerProposal: "allowed",
+  viewerMayCancel: true,
+  startsAt: "2026-10-21T15:00:00.000Z",
+  endsAt: "2026-10-21T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-21T14:50:00.000Z",
+  note: null,
+};
+
+const ELENA_NEXT_WEEKLY: CoachCheckIn = {
+  ...ELENA_CLASH,
+  id: "0e1f2a3b-4c5d-4e6f-8a7b-9c0d1e2f3a4b",
+  status: "approved",
+  tab: "upcoming",
+  awaitsViewer: false,
+  startsAt: "2026-10-14T15:00:00.000Z",
+  endsAt: "2026-10-14T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-14T14:50:00.000Z",
+};
+
+const ELENA_FOLLOWING_WEEKLY: CoachCheckIn = {
+  ...ELENA_NEXT_WEEKLY,
+  id: "1f2a3b4c-5d6e-4f7a-8b8c-0d1e2f3a4b5c",
+  startsAt: "2026-10-28T15:00:00.000Z",
+  endsAt: "2026-10-28T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-28T14:50:00.000Z",
+};
+
+const ELENA_CLASH_MENU =
+  "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 
 const ELENA_MENU = "More actions for the check-in on Tue, Oct 13 at 10:00 AM";
 const MOVED_TWICE_REASON = "This check-in has already been moved twice.";
@@ -787,6 +836,40 @@ describe("the coach's moved check-ins", () => {
 });
 
 describe("the coach's upcoming check-in menu", () => {
+  it("offers only Reschedule on a check-in the client requested, since only she may cancel it", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_UPCOMING] };
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+
+    // act
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Reschedule"]);
+  });
+
+  it("offers Reschedule and Cancel on a check-in she scheduled", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CANCELLABLE] };
+    const user = await renderCheckInsPage();
+    await showTab(user, "Upcoming");
+
+    // act
+    await user.click(screen.getByRole("button", { name: ELENA_MENU }));
+
+    // assert
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Reschedule", "Cancel"]);
+  });
+
   it("proposes a new time from the open times of that client, with a note named for her", async () => {
     // arrange
     listing = { checkIns: [ELENA_CANCELLABLE] };
@@ -868,6 +951,7 @@ describe("the coach's upcoming check-in menu", () => {
             {
               ...ELENA_CANCELLABLE,
               status: "cancelled",
+              tab: "past",
               viewerProposal: "none",
               viewerMayCancel: false,
             },
@@ -955,6 +1039,80 @@ describe("the coach's upcoming check-in menu", () => {
 
     // act
     const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
+describe("a weekly check-in on the coach's check-ins page", () => {
+  it("lists a week whose hour is taken first under Requests, before an earlier request waiting for her, counted, marked Clash and found a new time from its menu", async () => {
+    // arrange
+    listing = { checkIns: [ANDREEA_REQUEST, ELENA_CLASH, ELENA_NEXT_WEEKLY] };
+    const user = await renderCheckInsPage();
+    const rows = within(
+      screen.getByRole("list", { name: "Requests check-ins" }),
+    ).getAllByRole("listitem");
+
+    // act
+    await user.click(
+      within(rows[0]).getByRole("button", { name: ELENA_CLASH_MENU }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("tab", { name: /^Requests\s*2 waiting on you$/ }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(rows).toHaveLength(2);
+    expect(within(rows[0]).getByText("Elena Dumitru")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("Clash")).toBeInTheDocument();
+    expect(rows[0]).toHaveTextContent("Finding a new time");
+    expect(rows[1]).toHaveTextContent("Andreea");
+    expect(
+      within(rows[0]).queryByRole("button", { name: "Approve" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(rows[0]).queryByRole("button", { name: "Decline" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(await screen.findByRole("menu"))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Reschedule", "Cancel"]);
+  });
+
+  it("lists every weekly check-in under Upcoming beside a clash, read without a kind or who asked", async () => {
+    // arrange
+    listing = {
+      checkIns: [ELENA_CLASH, ELENA_NEXT_WEEKLY, ELENA_FOLLOWING_WEEKLY],
+    };
+    const user = await renderCheckInsPage();
+
+    // act
+    await showTab(user, "Upcoming");
+
+    // assert
+    const [row, followingRow, ...others] = within(
+      await screen.findByRole("list", { name: "Upcoming check-ins" }),
+    ).getAllByRole("listitem");
+    expect(others).toHaveLength(0);
+    expect(row).toHaveTextContent("Wed, Oct 14");
+    expect(followingRow).toHaveTextContent("Wed, Oct 28");
+    for (const weekly of [row, followingRow]) {
+      expect(weekly).not.toHaveTextContent("Requested by");
+      expect(weekly).not.toHaveTextContent("Ad-hoc");
+      expect(within(weekly).queryByText("Clash")).not.toBeInTheDocument();
+    }
+    expect(within(row).getByRole("link", { name: "Join Meet" })).toBeVisible();
+  });
+
+  it("passes the axe checks with a clash under Requests", async () => {
+    // arrange
+    listing = { checkIns: [ELENA_CLASH] };
+    const { baseElement } = await renderCheckInsPageWithView();
+
+    // act
+    const results = await axe(baseElement);
 
     // assert
     expect(results.violations).toEqual([]);

@@ -16,6 +16,10 @@ export const CHECK_INS_API_PATHS = {
   decline: `${CHECK_INS_API}/:checkInId/decline`,
   newTime: `${CHECK_INS_API}/:checkInId/new-time`,
   cancellation: `${CHECK_INS_API}/:checkInId/cancellation`,
+  series: `${CHECK_INS_API}/series`,
+  seriesPreview: `${CHECK_INS_API}/series/preview`,
+  seriesChange: `${CHECK_INS_API}/series/:seriesId`,
+  seriesStop: `${CHECK_INS_API}/series/:seriesId/stop`,
 } as const;
 
 export const CHECK_IN_JOIN_ROUTE_SEGMENT = `${CHECK_INS_ROUTE_SEGMENT}/:checkInId/join`;

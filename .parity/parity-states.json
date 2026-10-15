@@ -712,7 +712,14 @@
       "waitFor": "[data-sonner-toast]"
     }
   ],
-  "client-checkins-ready": [],
+  "client-checkins-ready": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    }
+  ],
   "client-ended": {
     "prototype": [
       {
@@ -1169,7 +1176,7 @@
   ],
   "coach-checkin-cancel-toast": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
@@ -1186,7 +1193,7 @@
   ],
   "coach-checkin-propose-toast": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
@@ -1256,7 +1263,7 @@
   ],
   "coach-open-checkin-cancel-confirm": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Cancel\" s]"
@@ -1270,7 +1277,7 @@
   ],
   "coach-open-checkin-propose": [
     {
-      "use": "open-rescheduled-checkin-menu"
+      "use": "coach-open-scheduled-checkin-menu"
     },
     {
       "click": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
@@ -1290,7 +1297,7 @@
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
     {
-      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+      "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
     }
   ],
   "coach-resources-search-no-matches": [
@@ -2077,6 +2084,12 @@
   ],
   "open-checkin-row-menu": [
     {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
     {
@@ -2089,6 +2102,17 @@
     },
     {
       "waitFor": "[data-parity-root=\"CheckinSchedulerSheet\"] td[data-day] button:not([disabled])"
+    }
+  ],
+  "open-clash-row-menu": [
+    {
+      "use": "weekly-series-clashes"
+    },
+    {
+      "click": "li:has([data-parity=\"clash-badge\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
     }
   ],
   "open-clients-status-filter": [
@@ -2273,6 +2297,45 @@
     },
     {
       "waitFor": "[data-parity=\"status-count-any\"]"
+    }
+  ],
+  "open-weekly-change": [
+    {
+      "use": "open-weekly-menu"
+    },
+    {
+      "click": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-change\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-weekly-dialog": [
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-set-up\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "open-weekly-stop": [
+    {
+      "use": "open-weekly-menu"
+    },
+    {
+      "click": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-stop\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
     }
   ],
   "payment-method-fails": {
@@ -2977,6 +3040,221 @@
     }
   ],
   "wait-welcome": [],
+  "weekly-changed-toast": [
+    {
+      "use": "open-weekly-change"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^7:00 PM/]"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"checkin-picker-step\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "weekly-pick-hour": [
+    {
+      "use": "weekly-pick-weekday"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"] >> role=button[name=/^6:00 PM/]"
+    },
+    {
+      "hover": "[data-parity-root=\"WeeklyCheckinDialog\"] h3"
+    }
+  ],
+  "weekly-pick-weekday": [
+    {
+      "use": "open-weekly-dialog"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-weekday\"] >> role=radio[name=\"Wednesday\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "weekly-series-active": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"Active\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-series-clashes": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-series-clashes-change": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+      },
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-change\"]"
+      },
+      {
+        "click": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-change\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+      },
+      {
+        "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-change\"]"
+      },
+      {
+        "click": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-change\"]"
+      },
+      {
+        "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-hours\"]"
+      },
+      {
+        "wait": 600
+      }
+    ]
+  },
+  "weekly-series-clashes-upcoming": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"With clashes\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "click": "role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": []
+  },
+  "weekly-series-stopped": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-weekly-series"
+      },
+      {
+        "click": "role=option[name=\"Stopped\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "weekly-set-up-toast": [
+    {
+      "use": "weekly-pick-hour"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"checkin-picker-step\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
+  "weekly-setup-hint-hover": [
+    {
+      "use": "client-onboarding"
+    },
+    {
+      "hover": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"series-set-up\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "weekly-stopped-toast": [
+    {
+      "use": "open-weekly-stop"
+    },
+    {
+      "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "waitFor": "[data-sonner-toast]"
+    }
+  ],
   "welcome-four-part": {
     "prototype": [
       {
@@ -3696,6 +3974,168 @@
       "use": "pending-checkins-empty"
     }
   ],
+  "open-weekly-menu": [
+    {
+      "use": "weekly-series-active"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] h2"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinPanel\"] [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"RowActionsMenu\"] [data-parity=\"row-action-stop\"]"
+    },
+    {
+      "wait": 300
+    }
+  ],
+  "weekly-counting": [
+    {
+      "use": "weekly-pick-hour"
+    },
+    {
+      "click": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"series-weekday\"] >> role=radio[name=\"Friday\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"WeeklyCheckinDialog\"] [data-parity=\"hour-clashes-loading\"]"
+    }
+  ],
+  "coach-checkins-upcoming-series": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 900
+      }
+    ]
+  },
+  "coach-open-scheduled-checkin-menu": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "wait": 600
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Jane Doe\"):has-text(\"10:00 AM\"):has([data-parity=\"row-actions-trigger\"]) >> nth=0 >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Cancel\" s]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "open-later-weekly-row-menu": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      }
+    ]
+  },
+  "hover-checkin-reschedule-later-week": {
+    "prototype": [
+      {
+        "use": "weekly-series-active"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "wait": 600
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"6:00 PM\") >> nth=1 >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "hover": "role=menu >> role=menuitem[name=\"Reschedule\" s]"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  },
   "coach-training-active": [
     {
       "click": "[data-parity=\"link-training\"]"

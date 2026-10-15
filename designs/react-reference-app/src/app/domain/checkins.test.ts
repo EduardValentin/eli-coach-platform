@@ -3,8 +3,11 @@ import {
   MOVES_EXHAUSTED_REASON,
   canCancelApproved,
   canProposeFor,
+  awaitsResponseFrom,
   canWithdrawRequest,
+  clientProposalAmong,
   checkinNote,
+  checkinTabFor,
   checkinSchedulingFor,
   checkinSlotAt,
   checkinStartsAt,
@@ -14,13 +17,18 @@ import {
   holdsCoachTime,
   spansOverlap,
   timeSpanFrom,
+  isComingUp,
   isJoinable,
   isOpenClientRequest,
   latestMove,
   programReviewCheckin,
   proposalFor,
   proposesNewTime,
+  withProposedTime,
   type CheckIn,
+  type CheckinParty,
+  type CheckinStatus,
+  type CheckinTab,
 } from './checkins';
 import type { CoachingSubscription } from './coachingSubscription';
 import type { ClientJourney } from './journey';
@@ -441,15 +449,32 @@ describe('cancelling an approved check-in', () => {
     expect(allowed).toBe(true);
   });
 
-  it('lets the client cancel an ad-hoc check-in', () => {
+  it('lets only the client cancel an ad-hoc check-in she requested', () => {
     // arrange
-    const adHoc = checkin({ kind: 'ad-hoc' });
+    const requested = checkin({ kind: 'ad-hoc', initiatedBy: 'client', proposedBy: 'client' });
 
     // act
-    const allowed = canCancelApproved(adHoc, 'client');
+    const allowed = [
+      canCancelApproved(requested, 'client'),
+      canCancelApproved(requested, 'coach'),
+    ];
 
     // assert
-    expect(allowed).toBe(true);
+    expect(allowed).toEqual([true, false]);
+  });
+
+  it('lets only the coach cancel an ad-hoc check-in she scheduled', () => {
+    // arrange
+    const scheduled = checkin({ kind: 'ad-hoc', initiatedBy: 'coach', proposedBy: 'coach' });
+
+    // act
+    const allowed = [
+      canCancelApproved(scheduled, 'coach'),
+      canCancelApproved(scheduled, 'client'),
+    ];
+
+    // assert
+    expect(allowed).toEqual([true, false]);
   });
 
   it('does not let the client cancel a recurring check-in', () => {
@@ -751,5 +776,178 @@ describe('the coach time a check-in holds', () => {
     // assert
     expect(overlapping).toBe(true);
     expect(touching).toBe(false);
+  });
+});
+
+describe('a weekly check-in whose hour is taken', () => {
+  const clash = () => checkin({ status: 'clash', seriesId: 'series-1', rescheduleCount: 1 });
+
+  it('stays a clash until its start, then reads as cancelled', () => {
+    // arrange
+    const startsAt = checkinStartsAt(clash());
+
+    // act
+    const before = checkinStatus(clash(), { now: new Date(startsAt.getTime() - 60_000) });
+    const atItsStart = checkinStatus(clash(), { now: startsAt });
+
+    // assert
+    expect(before).toBe('clash');
+    expect(atItsStart).toBe('cancelled');
+  });
+
+  it('holds no coach time but is still to come', () => {
+    // arrange
+    const status: CheckinStatus = 'clash';
+
+    // act
+    const held = holdsCoachTime(status);
+    const comingUp = isComingUp(status);
+
+    // assert
+    expect(held).toBe(false);
+    expect(comingUp).toBe(true);
+  });
+
+  it('waits for the coach', () => {
+    // arrange
+    // act
+    const awaited = awaitsResponseFrom(clash());
+
+    // assert
+    expect(awaited).toBe('coach');
+  });
+
+  it('lets the coach give it a new time without spending a move', () => {
+    // arrange
+    const taken = clash();
+
+    // act
+    const coachProposal = proposalFor(checkin({ ...taken, rescheduleCount: 2 }), 'coach');
+    const clientProposal = proposalFor(taken, 'client');
+    const moved = withProposedTime(taken, {
+      slot: { date: '2026-10-17', time: '11:00' },
+      party: 'coach',
+    });
+
+    // assert
+    expect(coachProposal).toBe('allowed');
+    expect(clientProposal).toBe('none');
+    expect(moved).toMatchObject({
+      status: 'pending',
+      proposedBy: 'coach',
+      date: '2026-10-17',
+      time: '11:00',
+      previousDate: taken.date,
+      previousTime: taken.time,
+      rescheduleCount: 1,
+    });
+  });
+
+  it('lets only the coach cancel it', () => {
+    // arrange
+    // act
+    const byCoach = canCancelApproved(clash(), 'coach');
+    const byClient = canCancelApproved(clash(), 'client');
+
+    // assert
+    expect(byCoach).toBe(true);
+    expect(byClient).toBe(false);
+  });
+});
+
+describe('moving an approved check-in', () => {
+  it('spends one of the two moves', () => {
+    // arrange
+    const approved = checkin({ status: 'approved', rescheduleCount: 0 });
+
+    // act
+    const moved = withProposedTime(approved, {
+      slot: { date: '2026-10-17', time: '11:00' },
+      party: 'client',
+      note: 'Friday suits me better.',
+    });
+
+    // assert
+    expect(moved).toMatchObject({ status: 'pending', proposedBy: 'client', rescheduleCount: 1, newTimeNote: 'Friday suits me better.' });
+  });
+});
+
+describe('the tab a check-in is listed under', () => {
+  it.each<[CheckinStatus, CheckinParty, CheckinTab]>([
+    ['approved', 'coach', 'upcoming'],
+    ['approved', 'client', 'upcoming'],
+    ['pending', 'coach', 'requests'],
+    ['pending', 'client', 'requests'],
+    ['clash', 'coach', 'requests'],
+    ['clash', 'client', 'upcoming'],
+    ['passed', 'coach', 'past'],
+    ['cancelled', 'client', 'past'],
+  ])('lists %s under the tab it belongs to for the %s', (status, party, tab) => {
+    // arrange
+    // act
+    const listedUnder = checkinTabFor(status, party);
+
+    // assert
+    expect(listedUnder).toBe(tab);
+  });
+});
+
+describe('moving a weekly check-in from her Upcoming', () => {
+  const soonestWeek = checkin({ id: 'week-1', seriesId: 'series-1', date: '2026-10-21', time: '18:00' });
+  const laterWeek = checkin({ id: 'week-2', seriesId: 'series-1', date: '2026-10-28', time: '18:00' });
+  const single = checkin({ id: 'single', kind: 'ad-hoc', date: '2026-10-29', time: '10:00' });
+  const upcoming = [soonestWeek, laterWeek, single];
+
+  it('lets her move her next weekly check-in', () => {
+    // arrange
+    // act
+    const proposal = clientProposalAmong(soonestWeek, upcoming);
+
+    // assert
+    expect(proposal).toBe('allowed');
+  });
+
+  it('holds back a later week of the same series', () => {
+    // arrange
+    // act
+    const proposal = clientProposalAmong(laterWeek, upcoming);
+
+    // assert
+    expect(proposal).toBe('later_week');
+  });
+
+  it('leaves a single check-in to its own moves', () => {
+    // arrange
+    // act
+    const proposal = clientProposalAmong(single, upcoming);
+
+    // assert
+    expect(proposal).toBe('allowed');
+  });
+
+  it('offers nothing on a later week she could not move anyway', () => {
+    // arrange
+    const clashingLaterWeek = { ...laterWeek, status: 'clash' as const };
+
+    // act
+    const proposal = clientProposalAmong(clashingLaterWeek, upcoming);
+
+    // assert
+    expect(proposal).toBe('none');
+  });
+});
+
+describe('cancelling a weekly check-in', () => {
+  it('is the coach’s alone once it is approved', () => {
+    // arrange
+    const weekly = checkin({ kind: 'recurring', status: 'approved', seriesId: 'series-1' });
+
+    // act
+    const byCoach = canCancelApproved(weekly, 'coach');
+    const byClient = canCancelApproved(weekly, 'client');
+
+    // assert
+    expect(byCoach).toBe(true);
+    expect(byClient).toBe(false);
   });
 });

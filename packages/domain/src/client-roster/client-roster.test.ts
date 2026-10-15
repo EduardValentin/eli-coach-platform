@@ -14,6 +14,8 @@ function standingOf(
     ...recorded,
     refundDue: false,
     bundleMonths: 3,
+    programStartsAt: null,
+    paidThrough: null,
   });
 }
 

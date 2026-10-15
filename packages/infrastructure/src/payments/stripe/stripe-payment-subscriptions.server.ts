@@ -33,9 +33,21 @@ export class StripePaymentSubscriptions implements PaymentSubscriptions {
     private readonly options: StripePaymentSubscriptionsOptions = {},
   ) {}
 
-  async holdRenewal(paymentSubscriptionId: string): Promise<void> {
+  async holdRenewal(command: {
+    paymentSubscriptionId: string;
+    until: Date;
+  }): Promise<void> {
+    await this.client.subscriptions.update(command.paymentSubscriptionId, {
+      pause_collection: {
+        behavior: "void",
+        resumes_at: this.unixSecondsOf(command.until),
+      },
+    });
+  }
+
+  async liftRenewalHold(paymentSubscriptionId: string): Promise<void> {
     await this.client.subscriptions.update(paymentSubscriptionId, {
-      pause_collection: { behavior: "void" },
+      pause_collection: "",
     });
   }
 
@@ -51,7 +63,7 @@ export class StripePaymentSubscriptions implements PaymentSubscriptions {
     at: Date;
   }): Promise<void> {
     await this.client.subscriptions.update(command.paymentSubscriptionId, {
-      cancel_at: Math.floor(command.at.getTime() / MILLISECONDS_PER_SECOND),
+      cancel_at: this.unixSecondsOf(command.at),
       proration_behavior: "none",
     });
   }
@@ -77,5 +89,9 @@ export class StripePaymentSubscriptions implements PaymentSubscriptions {
     });
 
     return { url: session.url };
+  }
+
+  private unixSecondsOf(instant: Date): number {
+    return Math.floor(instant.getTime() / MILLISECONDS_PER_SECOND);
   }
 }

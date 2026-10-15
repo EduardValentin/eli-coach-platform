@@ -324,6 +324,8 @@ describe("requireClientPortalStanding", () => {
           accessEndsAt: null,
           refundDue: false,
           bundleMonths: null,
+          programStartsAt: null,
+          paidThrough: null,
         },
       });
     },
@@ -450,6 +452,8 @@ function journeyOf(
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: null,
+      programStartsAt: null,
+      paidThrough: null,
     },
   });
 }

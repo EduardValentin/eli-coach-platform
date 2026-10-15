@@ -5,4 +5,6 @@ export const coachingStandingColumns = {
   accessEndsAt: clientsTable.coachingAccessEndsAt,
   refundDue: clientsTable.coachingRefundDue,
   bundleMonths: clientsTable.coachingBundleMonths,
+  programStartsAt: clientsTable.coachingProgramStartsAt,
+  paidThrough: clientsTable.coachingPaidThrough,
 };

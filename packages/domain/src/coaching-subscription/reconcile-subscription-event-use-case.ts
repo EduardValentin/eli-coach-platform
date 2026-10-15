@@ -1,5 +1,7 @@
 import type { CoachingEndHandler } from "./coaching-end-handler";
 import { CoachingEndPropagation } from "./coaching-end-propagation";
+import type { CoachingPeriodHandler } from "./coaching-period-handler";
+import { CoachingPeriodPropagation } from "./coaching-period-propagation";
 import type { CoachingSubscription } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
@@ -16,17 +18,20 @@ type ReconcileSubscriptionEventResult = {
 
 type ReconcileSubscriptionEventUseCaseOptions = {
   coachingEnds: readonly CoachingEndHandler[];
+  coachingPeriods: readonly CoachingPeriodHandler[];
   incidents: CoachingSubscriptionIncidents;
   subscriptions: CoachingSubscriptions;
 };
 
 export class ReconcileSubscriptionEventUseCase {
   private readonly coachingEnd: CoachingEndPropagation;
+  private readonly coachingPeriod: CoachingPeriodPropagation;
 
   constructor(
     private readonly options: ReconcileSubscriptionEventUseCaseOptions,
   ) {
     this.coachingEnd = new CoachingEndPropagation(options);
+    this.coachingPeriod = new CoachingPeriodPropagation(options);
   }
 
   async execute(
@@ -83,6 +88,10 @@ export class ReconcileSubscriptionEventUseCase {
     if (saved === "recorded") {
       this.reportSettledRefund(current, mirrored);
       await this.coachingEnd.propagate(mirrored);
+    }
+
+    if (saved === "recorded" && event.kind === "renewal-paid") {
+      await this.coachingPeriod.propagatePaidThrough(mirrored);
     }
 
     return { status: saved };
@@ -142,8 +151,9 @@ function mirror(
     case "payment-problem":
       return subscription.flagPaymentProblem(event.occurredAt);
     case "payment-recovered":
-    case "renewal-paid":
       return subscription.clearPaymentProblem();
+    case "renewal-paid":
+      return subscription.renewalPaid(event.paidThrough);
     case "charge-refunded":
       return subscription.settleRefund({
         refundedCents: event.refundedCents,

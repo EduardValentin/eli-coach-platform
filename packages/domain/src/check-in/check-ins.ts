@@ -13,6 +13,11 @@ export type CheckInSettlement = "settled" | "changed_meanwhile";
 
 export type CheckInMove = "moved" | "time_taken" | "changed_meanwhile";
 
+export type CheckInsAtCoachingEnd = {
+  cancelled: string[];
+  seriesStopped: boolean;
+};
+
 export interface CheckIns {
   request(command: {
     checkIn: CheckIn;
@@ -33,9 +38,9 @@ export interface CheckIns {
     expected: { recordedStatus: RecordedCheckInStatus; startsAt: Date };
     at: Date;
   }): Promise<CheckInMove>;
-  cancelStartingFrom(command: {
+  endCoaching(command: {
     clientId: string;
-    startsFrom: Date;
+    endsAt: Date;
     at: Date;
-  }): Promise<{ cancelled: string[] }>;
+  }): Promise<CheckInsAtCoachingEnd>;
 }

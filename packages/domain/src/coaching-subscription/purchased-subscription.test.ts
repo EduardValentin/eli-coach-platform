@@ -35,9 +35,36 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
       paymentIntentId: "pi_1",
       checkoutSessionId: "cs_1",
       paidAt: completion.paidAt,
+      paidThrough: new Date("2026-12-26T10:00:00.000Z"),
       startChoice: "waiting",
+      programStartsAt: new Date("2026-10-10T10:00:00.000Z"),
       status: "not-started",
     });
+  });
+
+  it("starts an immediate program at payment", () => {
+    // act
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      ...completion,
+      startChoice: "immediate",
+    });
+
+    // assert
+    expect(purchased.toSnapshot().programStartsAt).toEqual(completion.paidAt);
+  });
+
+  it("pays through the last day of a shorter month", () => {
+    // act
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      ...completion,
+      bundleId: "1-month",
+      paidAt: new Date("2027-01-31T10:00:00.000Z"),
+    });
+
+    // assert
+    expect(purchased.toSnapshot().paidThrough).toEqual(
+      new Date("2027-02-28T10:00:00.000Z"),
+    );
   });
 
   it("records a paid bundle whose payment intent is unknown without one", () => {
@@ -83,6 +110,35 @@ describe("PurchasedSubscription.standing", () => {
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: 3,
+      programStartsAt: new Date("2026-10-10T10:00:00.000Z"),
+      paidThrough: new Date("2026-12-26T10:00:00.000Z"),
     });
+  });
+});
+
+describe("PurchasedSubscription.renewalHoldUntil", () => {
+  it("holds a waiting start's renewal until her program start", () => {
+    // arrange
+    const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
+
+    // act
+    const holdUntil = purchased.renewalHoldUntil();
+
+    // assert
+    expect(holdUntil).toEqual(new Date("2026-10-10T10:00:00.000Z"));
+  });
+
+  it("holds no renewal for an immediate start", () => {
+    // arrange
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      ...completion,
+      startChoice: "immediate",
+    });
+
+    // act
+    const holdUntil = purchased.renewalHoldUntil();
+
+    // assert
+    expect(holdUntil).toBeNull();
   });
 });

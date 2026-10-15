@@ -10,9 +10,12 @@ type CheckInNewTime = {
 
 type OpenTimesBody = { times: string[] };
 
+export type WeeklyChoice = { weekday: string; hour: number };
+
 const REQUESTS_PATH = "/api/check-ins";
 const OPEN_TIMES_PATH = `${REQUESTS_PATH}/open-times`;
 const SCHEDULE_PATH = `${REQUESTS_PATH}/schedule`;
+const SERIES_PATH = `${REQUESTS_PATH}/series`;
 const OK = 200;
 
 export class CheckInRequests {
@@ -95,5 +98,12 @@ export class CheckInRequests {
 
   async cancel(checkInId: string): Promise<CheckInAnswer> {
     return this.answerOf(this.answerPathOf(checkInId, "cancellation"), {});
+  }
+
+  async setUpSeries(
+    clientId: string,
+    choice: WeeklyChoice,
+  ): Promise<CheckInAnswer> {
+    return this.answerOf(SERIES_PATH, { clientId, ...choice });
   }
 }

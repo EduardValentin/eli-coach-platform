@@ -51,4 +51,18 @@ describe("cleanUpRunAssessmentCalls", () => {
     expect(positionOf(checkIns)).toBeGreaterThan(-1);
     expect(positionOf(checkIns)).toBeLessThan(positionOf(clients));
   });
+
+  it("deletes the run's weekly check-in series after their check-ins and before any client", async () => {
+    // arrange
+    const checkIns = /delete from app\.check_ins\b/;
+    const series = /delete from app\.check_in_series/;
+    const clients = /delete from app\.clients/;
+
+    // act
+    await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
+
+    // assert
+    expect(positionOf(series)).toBeGreaterThan(positionOf(checkIns));
+    expect(positionOf(series)).toBeLessThan(positionOf(clients));
+  });
 });

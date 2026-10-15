@@ -100,6 +100,8 @@ const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
   paymentSubscriptionId: "sub_1",
   checkoutSessionId: "cs_1",
   paidAt: PAID_AT,
+  paidThrough: new Date("2026-12-26T10:00:00.000Z"),
+  programStartsAt: PAID_AT,
   startChoice: "immediate",
   status: "not-started",
   cancelledAt: null,

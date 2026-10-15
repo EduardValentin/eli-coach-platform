@@ -21,17 +21,34 @@ function createStubClient() {
 }
 
 describe("StripePaymentSubscriptions", () => {
-  it("holds the renewal by pausing collection with every cycle invoice voided", async () => {
+  it("holds the renewal until an instant by pausing collection with every cycle invoice voided", async () => {
     // arrange
     const client = createStubClient();
     const subscriptions = new StripePaymentSubscriptions(client);
 
     // act
-    await subscriptions.holdRenewal("sub_1");
+    await subscriptions.holdRenewal({
+      paymentSubscriptionId: "sub_1",
+      until: new Date("2027-01-02T10:00:00.000Z"),
+    });
 
     // assert
     expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
-      pause_collection: { behavior: "void" },
+      pause_collection: { behavior: "void", resumes_at: 1798884000 },
+    });
+  });
+
+  it("lifts the renewal hold by clearing the paused collection", async () => {
+    // arrange
+    const client = createStubClient();
+    const subscriptions = new StripePaymentSubscriptions(client);
+
+    // act
+    await subscriptions.liftRenewalHold("sub_1");
+
+    // assert
+    expect(client.subscriptions.update).toHaveBeenCalledWith("sub_1", {
+      pause_collection: "",
     });
   });
 

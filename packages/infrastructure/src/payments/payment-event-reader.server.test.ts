@@ -11,6 +11,8 @@ const CREATED = 1790960433;
 const OCCURRED_AT = new Date(CREATED * 1000);
 const PAID_AT_SECONDS = 1790003600;
 const PAID_AT = new Date("2026-09-21T15:13:20.000Z");
+const PERIOD_END_SECONDS = 1798736000;
+const PERIOD_END = new Date(PERIOD_END_SECONDS * 1000);
 
 const VISA_DETAILS = {
   paymentMethodId: "pm_visa",
@@ -64,6 +66,9 @@ function invoiceObject(overrides: Record<string, unknown> = {}) {
     object: "invoice",
     customer: "cus_1",
     billing_reason: "subscription_cycle",
+    lines: {
+      data: [{ period: { start: 1790960433, end: PERIOD_END_SECONDS } }],
+    },
     parent: {
       type: "subscription_details",
       subscription_details: {
@@ -409,11 +414,49 @@ describe("PaymentEventReader", () => {
             customerId: "cus_1",
             outcome,
             invoiceReason: "renewal",
+            periodEndsAt: PERIOD_END,
             occurredAt: OCCURRED_AT,
           },
         });
       },
     );
+
+    it("reads the latest line period end as the period the invoice pays for", () => {
+      // arrange
+      const event = providerEvent(
+        "invoice.paid",
+        invoiceObject({
+          lines: {
+            data: [
+              { period: { start: 1790960433, end: PERIOD_END_SECONDS } },
+              { period: { start: 1790960433, end: 1790960433 } },
+            ],
+          },
+        }),
+      );
+
+      // act
+      const verdict = read(event);
+
+      // assert
+      expect(verdict).toMatchObject({
+        change: { periodEndsAt: PERIOD_END },
+      });
+    });
+
+    it("ignores an invoice without a line", () => {
+      // arrange
+      const event = providerEvent(
+        "invoice.paid",
+        invoiceObject({ lines: { data: [] } }),
+      );
+
+      // act
+      const verdict = read(event);
+
+      // assert
+      expect(verdict).toEqual({ kind: "ignored" });
+    });
 
     it("reads the purchase invoice as the purchase, in the provider's vocabulary", () => {
       // arrange

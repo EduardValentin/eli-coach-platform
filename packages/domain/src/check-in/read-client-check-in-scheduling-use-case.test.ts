@@ -28,6 +28,8 @@ describe("ReadClientCheckInSchedulingUseCase", () => {
         clientId: "client-1",
         portal,
         coachingEndsAt: null,
+        programStartsAt: null,
+        paidThrough: null,
         timeZone: "Europe/London",
       });
 

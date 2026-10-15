@@ -30,6 +30,8 @@ const ANA_REACH: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "America/New_York",
 };
 
@@ -68,7 +70,9 @@ function createScheduleCheckIn(options?: {
     listAll: vi.fn().mockResolvedValue([]),
     settle: vi.fn().mockResolvedValue("settled"),
     move: vi.fn().mockResolvedValue("moved"),
-    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled: [] }),
+    endCoaching: vi
+      .fn()
+      .mockResolvedValue({ cancelled: [], seriesStopped: false }),
   } satisfies CheckIns;
   const clients = {
     findById: vi
@@ -89,6 +93,9 @@ function createScheduleCheckIn(options?: {
     newTimeAccepted: vi.fn().mockResolvedValue("sent"),
     newTimeDeclined: vi.fn().mockResolvedValue("sent"),
     cancelled: vi.fn().mockResolvedValue("sent"),
+    seriesSetUp: vi.fn().mockResolvedValue("sent"),
+    seriesChanged: vi.fn().mockResolvedValue("sent"),
+    seriesStopped: vi.fn().mockResolvedValue("sent"),
   } satisfies CheckInNotifications;
   const ports = {
     availability: workingDays(),
@@ -102,6 +109,9 @@ function createScheduleCheckIn(options?: {
       awaitingCheckInsCountFailed: vi.fn(),
       awaitingCheckInsListFailed: vi.fn(),
       nextCheckInLookupFailed: vi.fn(),
+      checkInSeriesNotificationFailed: vi.fn(),
+      checkInSeriesExtensionFailed: vi.fn(),
+      checkInSeriesReadFailed: vi.fn(),
     },
     notifications,
   };

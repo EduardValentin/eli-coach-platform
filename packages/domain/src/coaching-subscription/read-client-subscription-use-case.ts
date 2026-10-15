@@ -52,7 +52,7 @@ export class ReadClientSubscriptionUseCase {
       status: subscription.statusAt(now),
       cancellationRule: subscription.cancellationRule(now),
       withdrawalDeadline: withdrawalDeadline(subscription.paidAt),
-      paidThrough: subscription.paidThrough(),
+      paidThrough: subscription.paidThrough,
       refundOnCancellationCents: subscription.refundOnCancellationAt(now),
       startNowUntil: subscription.startNowUntil(now),
       paymentProblem: subscription.hasPaymentProblem(),

@@ -36,7 +36,6 @@ export class CancelCheckInUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.cancellationRefusalFor(turn),
       outcome: "cancelled",
-      expectedStatus: "approved",
       notificationOf: () => "cancelled",
     });
 

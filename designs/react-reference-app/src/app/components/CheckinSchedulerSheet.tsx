@@ -71,7 +71,7 @@ function stepLabel(dayChosen: boolean, time: string | null, submitLabel: string)
   return `${submitLabel} ${time}`;
 }
 
-function StepButton({
+export function StepButton({
   label,
   disabled,
   busy = false,

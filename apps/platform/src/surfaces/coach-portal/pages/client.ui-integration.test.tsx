@@ -19,7 +19,15 @@ import {
   vi,
 } from "vitest";
 
-import type { CheckInScheduling } from "~/features/check-ins/public/check-ins";
+import {
+  clientLoader as seriesPreviewLoader,
+  shouldRevalidate as shouldRevalidateSeriesPreview,
+} from "~/features/check-ins/api/coach/series-preview";
+import type {
+  CheckInScheduling,
+  CoachClientSeriesPanel,
+} from "~/features/check-ins/public/check-ins";
+import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 import type {
   OnboardingReviewView,
   SubmittedReview,
@@ -34,6 +42,7 @@ import {
   coachClientPath,
 } from "~/features/clients/public/paths";
 import type { ClientSubscription } from "~/features/coaching-sales/public/client-subscription";
+import { frameworkModeLoader } from "~/server/test-support/framework-mode-action";
 
 import CoachClientRoute, { ErrorBoundary } from "./client";
 
@@ -142,6 +151,7 @@ const ENDED_SUBSCRIPTION: ClientSubscription = {
 const SUBMITTED: SubmittedReview = {
   checkInChannel: "WhatsApp",
   checkInDay: "Monday",
+  checkInWeekday: "monday",
   cycleMode: "phase-based",
   forms: [
     {
@@ -209,6 +219,26 @@ const MEASUREMENTS_WITH_PHOTOS: MeasurementRow[] = [
     weightKg: 69.4,
   },
 ];
+
+const NO_WEEKLY: CoachClientSeriesPanel = {
+  series: null,
+  coachingEnds: false,
+};
+
+const WEEKLY: CoachClientSeriesPanel = {
+  series: {
+    id: "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+    weekday: "wednesday",
+    hour: 18,
+    timeZone: COACH_TIME_ZONE,
+  },
+  coachingEnds: false,
+};
+
+const SERIES_PREVIEW = {
+  weekdays: ["monday", "wednesday", "friday"],
+  hours: [{ hour: 18, weeks: 12, clashes: 0 }],
+};
 
 const server = setupServer();
 
@@ -314,7 +344,7 @@ describe("the coach's client page", () => {
     expect(screen.getByRole("link", { name: "Resources" })).toBeInTheDocument();
   });
 
-  it("lays out her profile, invitation, onboarding, subscription, measurements and assessment call in that order", async () => {
+  it("lays out her profile, invitation, onboarding, subscription, weekly check-in, measurements and assessment call in that order", async () => {
     // arrange, act
     await renderClientPage();
 
@@ -328,9 +358,75 @@ describe("the coach's client page", () => {
       "Invitation",
       "Onboarding",
       "Subscription",
+      "Weekly check-in",
       "Measurements",
       "Assessment call",
     ]);
+  });
+
+  it("reads her weekly check-in under her subscription", async () => {
+    // arrange, act
+    await renderClientPage({ scheduling: "allowed", weekly: WEEKLY });
+
+    // assert
+    const weekly = screen.getByRole("region", { name: "Weekly check-in" });
+    expect(
+      within(weekly).getByText("Every Wednesday at 6:00 PM"),
+    ).toBeInTheDocument();
+    expect(
+      within(weekly).getByRole("button", {
+        name: "More actions for the weekly check-in",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps her subscription on its own and her weekly check-in alone in a row of its own", async () => {
+    // arrange, act
+    await renderClientPage({ scheduling: "allowed", weekly: WEEKLY });
+
+    // assert
+    const weekly = screen.getByRole("region", { name: "Weekly check-in" });
+    const row = weekly.parentElement;
+    expect(row?.children).toHaveLength(1);
+    expect(
+      screen.getByRole("region", { name: "Subscription" }).parentElement,
+    ).not.toBe(row);
+    expect(
+      screen.getByRole("region", { name: "Measurements" }).parentElement,
+    ).not.toBe(row);
+  });
+
+  it("offers a weekly check-in on the day she chose in her onboarding", async () => {
+    // arrange
+    server.use(
+      http.get(`*${CHECK_INS_API_PATHS.seriesPreview}`, () =>
+        HttpResponse.json(SERIES_PREVIEW),
+      ),
+    );
+    const { user } = await renderClientRouter(() => ({
+      client: AWAITING_REVIEW,
+      subscription: SUBSCRIPTION,
+      review: SUBMITTED_REVIEW,
+      profile: PROFILE,
+      measurements: SUBMITTED_MEASUREMENTS,
+      scheduling: "allowed",
+      weekly: NO_WEEKLY,
+    }));
+
+    // act
+    await user.click(
+      within(screen.getByRole("region", { name: "Weekly check-in" })).getByRole(
+        "button",
+        { name: "Set up a weekly check-in" },
+      ),
+    );
+
+    // assert
+    const dialog = await screen.findByRole("dialog", {
+      name: "Set up a weekly check-in with Ana",
+    });
+    await within(dialog).findByRole("list", { name: "Hour" });
+    expect(within(dialog).getByRole("radio", { name: "Monday" })).toBeChecked();
   });
 
   it("keeps the assessment call collapsed until the coach opens it", async () => {
@@ -528,6 +624,9 @@ describe("the coach's client page", () => {
       screen.queryByRole("region", { name: "Subscription" }),
     ).not.toBeInTheDocument();
     expect(
+      screen.queryByRole("region", { name: "Weekly check-in" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByText("She has not sent any measurements yet."),
     ).toBeInTheDocument();
   });
@@ -704,6 +803,7 @@ type ClientPageData = {
   profile: ClientProfileView;
   measurements: MeasurementRow[];
   scheduling: CheckInScheduling;
+  weekly: CoachClientSeriesPanel;
 };
 
 function clientNotFound(): never {
@@ -718,6 +818,7 @@ async function renderClientRouter(
     profile: AWAITING_ONBOARDING_PROFILE,
     measurements: [],
     scheduling: "awaiting_onboarding",
+    weekly: NO_WEEKLY,
   }),
 ) {
   const user = userEvent.setup();
@@ -748,6 +849,11 @@ async function renderClientRouter(
         action: forwardToServer,
         path: CLIENTS_API_PATHS.invitationResends,
       },
+      {
+        loader: frameworkModeLoader(seriesPreviewLoader),
+        path: CHECK_INS_API_PATHS.seriesPreview,
+        shouldRevalidate: shouldRevalidateSeriesPreview,
+      },
     ],
     { initialEntries: [coachClientPath(CLIENT_ID)] },
   );
@@ -767,6 +873,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
     profile: options.profile ?? AWAITING_ONBOARDING_PROFILE,
     measurements: options.measurements ?? [],
     scheduling: options.scheduling ?? "awaiting_onboarding",
+    weekly: options.weekly ?? NO_WEEKLY,
   }));
 
   return user;

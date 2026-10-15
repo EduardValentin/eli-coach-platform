@@ -26,8 +26,14 @@ export async function writeCoachingStanding(
   transaction: DatabaseTransaction,
   input: { clientId: string; standing: CoachingStanding },
 ): Promise<void> {
-  const { status, accessEndsAt, refundDue, bundleMonths } =
-    input.standing.toSnapshot();
+  const {
+    status,
+    accessEndsAt,
+    refundDue,
+    bundleMonths,
+    programStartsAt,
+    paidThrough,
+  } = input.standing.toSnapshot();
 
   await transaction
     .update(clientsTable)
@@ -36,6 +42,8 @@ export async function writeCoachingStanding(
       coachingAccessEndsAt: accessEndsAt,
       coachingRefundDue: refundDue,
       coachingBundleMonths: bundleMonths,
+      coachingProgramStartsAt: programStartsAt,
+      coachingPaidThrough: paidThrough,
     })
     .where(eq(clientsTable.id, input.clientId));
 }

@@ -66,7 +66,9 @@ export type CoachingSubscriptionSnapshot = {
   paymentSubscriptionId: string;
   checkoutSessionId: string;
   paidAt: Date;
+  paidThrough: Date;
   startChoice: StartChoice;
+  programStartsAt: Date;
   status: CoachingStatus;
   cancelledAt: Date | null;
   accessEndsAt: Date | null;
@@ -102,7 +104,9 @@ export class CoachingSubscription {
   readonly paymentSubscriptionId: string;
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
+  readonly paidThrough: Date;
   readonly startChoice: StartChoice;
+  readonly programStartsAt: Date;
   readonly status: CoachingStatus;
   readonly cancelledAt: Date | null;
   readonly accessEndsAt: Date | null;
@@ -121,7 +125,9 @@ export class CoachingSubscription {
     this.paymentSubscriptionId = props.paymentSubscriptionId;
     this.checkoutSessionId = props.checkoutSessionId;
     this.paidAt = props.paidAt;
+    this.paidThrough = props.paidThrough;
     this.startChoice = props.startChoice;
+    this.programStartsAt = props.programStartsAt;
     this.status = props.status;
     this.cancelledAt = props.cancelledAt;
     this.accessEndsAt = props.accessEndsAt;
@@ -144,6 +150,8 @@ export class CoachingSubscription {
       accessEndsAt: this.accessEndsAt,
       refundDue: this.hasRefundOutstanding(),
       bundleMonths: this.months,
+      programStartsAt: this.programStartsAt,
+      paidThrough: this.paidThrough,
     });
   }
 
@@ -190,7 +198,7 @@ export class CoachingSubscription {
     }
 
     if (rule === "no-refund") {
-      const accessEndsAt = this.paidThrough();
+      const accessEndsAt = this.paidThrough;
 
       return {
         outcome: "cancelled",
@@ -221,14 +229,8 @@ export class CoachingSubscription {
     return this.cancellationRule(now) === "full-refund" ? this.amountCents : 0;
   }
 
-  paidThrough(): Date {
-    return addCalendarMonths(this.paidAt, this.months);
-  }
-
   programWorkStart(): Date | null {
-    return this.startChoice === "waiting"
-      ? withdrawalDeadline(this.paidAt)
-      : null;
+    return this.startChoice === "waiting" ? this.programStartsAt : null;
   }
 
   startNowUntil(now: Date): Date | null {
@@ -256,7 +258,10 @@ export class CoachingSubscription {
 
     return {
       outcome: "started",
-      subscription: this.with({ startChoice: "immediate" }),
+      subscription: this.with({
+        startChoice: "immediate",
+        programStartsAt: now,
+      }),
     };
   }
 
@@ -314,6 +319,10 @@ export class CoachingSubscription {
     return this.with({ paymentProblemSince: this.paymentProblemSince ?? at });
   }
 
+  renewalPaid(paidThrough: Date): CoachingSubscription {
+    return this.with({ paidThrough, paymentProblemSince: null });
+  }
+
   clearPaymentProblem(): CoachingSubscription {
     return this.with({ paymentProblemSince: null });
   }
@@ -359,7 +368,9 @@ export class CoachingSubscription {
       paymentSubscriptionId: this.paymentSubscriptionId,
       checkoutSessionId: this.checkoutSessionId,
       paidAt: this.paidAt,
+      paidThrough: this.paidThrough,
       startChoice: this.startChoice,
+      programStartsAt: this.programStartsAt,
       status: this.status,
       cancelledAt: this.cancelledAt,
       accessEndsAt: this.accessEndsAt,
@@ -369,7 +380,7 @@ export class CoachingSubscription {
   }
 }
 
-function addCalendarMonths(instant: Date, months: number): Date {
+export function addCalendarMonths(instant: Date, months: number): Date {
   const shifted = new Date(instant.getTime());
   const dayOfMonth = shifted.getUTCDate();
   shifted.setUTCDate(1);

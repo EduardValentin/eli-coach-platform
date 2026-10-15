@@ -2,14 +2,12 @@ import type { ClientIdentities, ClientIdentity } from "../client";
 import type { Clock } from "../shared";
 
 import { CheckIn, type CheckInView } from "./check-in";
-import type { CheckIns } from "./check-ins";
 
 export type CoachCheckInView = CheckInView & {
   client: Pick<ClientIdentity, "firstName" | "lastName">;
 };
 
 type CoachCheckInViewsOptions = {
-  checkIns: Pick<CheckIns, "listAll">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
 };
@@ -17,8 +15,7 @@ type CoachCheckInViewsOptions = {
 export class CoachCheckInViews {
   constructor(private readonly options: CoachCheckInViewsOptions) {}
 
-  async list(): Promise<CoachCheckInView[]> {
-    const checkIns = await this.options.checkIns.listAll();
+  async viewsOf(checkIns: readonly CheckIn[]): Promise<CoachCheckInView[]> {
     const identities = await this.options.identities.findByClientIds(
       this.clientIdsOf(checkIns),
     );

@@ -86,6 +86,10 @@ export function formatSlotTime(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
+export function formatClockHour(hour: number): string {
+  return formatSlotTime(new Date(Date.UTC(2000, 0, 1, hour)), 'UTC');
+}
+
 // Joined from parts because Node and Chromium disagree on the comma after the
 // weekday in en-GB; every runtime must word the day the same way.
 export function formatDayFirstDate(instant: Date, timeZone: string): string {

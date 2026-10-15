@@ -46,7 +46,15 @@ const WORDINGS: Record<
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 export function formatCallMoment(instant: Date, timeZone: string): string {
-  return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+  return `${formatCallSchedule(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+}
+
+export function formatCallSchedule(instant: Date, timeZone: string): string {
+  return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)}`;
+}
+
+export function formatWeekday(instant: Date, timeZone: string): string {
+  return partReader(formatterFor("dayFirstDate", timeZone), instant)("weekday");
 }
 
 // Joined from parts because Node and Chromium disagree on the comma after the
@@ -80,7 +88,11 @@ export function formatClockTime(instant: Date, timeZone: string): string {
   return formatterFor("clockTime", timeZone).format(instant);
 }
 
-function describeTimeZone(instant: Date, timeZone: string): string {
+export function formatClockHour(hour: number): string {
+  return formatClockTime(new Date(Date.UTC(2000, 0, 1, hour)), "UTC");
+}
+
+export function describeTimeZone(instant: Date, timeZone: string): string {
   const offset = zoneOffset(instant, timeZone);
 
   return offset ? `${timeZone} (${offset})` : timeZone;

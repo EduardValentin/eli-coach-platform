@@ -108,6 +108,8 @@ function createUseCase() {
       clientId: clientId,
       portal: "reachable" as const,
       coachingEndsAt: null,
+      programStartsAt: null,
+      paidThrough: null,
       timeZone: "Europe/Bucharest",
     })),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
@@ -116,6 +118,8 @@ function createUseCase() {
             clientId: "client-ana",
             portal: "reachable" as const,
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/Bucharest",
           }
         : null,

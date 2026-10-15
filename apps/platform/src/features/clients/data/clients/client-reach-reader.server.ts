@@ -56,6 +56,8 @@ export class PostgresClientReach implements ClientReach {
       }),
       coachingEndsAt: standing.coachingEndsAt(),
       timeZone: row.timeZone,
+      programStartsAt: standing.programStartsAt,
+      paidThrough: standing.paidThrough,
     };
   }
 }

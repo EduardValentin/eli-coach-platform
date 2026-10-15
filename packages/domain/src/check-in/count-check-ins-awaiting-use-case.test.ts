@@ -11,6 +11,7 @@ const NOW = new Date("2026-06-03T09:30:00.000Z");
 
 const CLIENT_REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-05T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -47,10 +48,28 @@ const LAPSED_REQUEST = {
   startsAt: new Date("2026-06-03T09:00:00.000Z"),
 } satisfies CheckInProps;
 
+const CLASH = {
+  ...CLIENT_REQUEST,
+  id: "check-in-5",
+  seriesId: "series-1",
+  kind: "recurring",
+  recordedStatus: "clash",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+} satisfies CheckInProps;
+
+const LAPSED_CLASH = {
+  ...CLASH,
+  id: "check-in-6",
+  startsAt: new Date("2026-06-03T09:00:00.000Z"),
+} satisfies CheckInProps;
+
 const REACHABLE: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/London",
 };
 
@@ -83,6 +102,9 @@ function createUseCase(options: {
     awaitingCheckInsCountFailed: vi.fn(),
     awaitingCheckInsListFailed: vi.fn(),
     nextCheckInLookupFailed: vi.fn(),
+    checkInSeriesNotificationFailed: vi.fn(),
+    checkInSeriesExtensionFailed: vi.fn(),
+    checkInSeriesReadFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new CountCheckInsAwaitingUseCase({
     checkIns,
@@ -111,6 +133,22 @@ describe("CountCheckInsAwaitingUseCase", () => {
 
     // assert
     expect(count).toBe(1);
+  });
+
+  it("counts a clash as waiting for the coach until its start, never for the client", async () => {
+    // arrange
+    const { useCase } = createUseCase({
+      checkIns: checkInsOf(CLASH, LAPSED_CLASH),
+    });
+
+    // act
+    const counts = [
+      await useCase.execute({ party: "coach" }),
+      await useCase.execute({ party: "client", authSubjectId: "user_ana" }),
+    ];
+
+    // assert
+    expect(counts).toEqual([1, 0]);
   });
 
   it("counts the client's own check-ins waiting for her answer", async () => {

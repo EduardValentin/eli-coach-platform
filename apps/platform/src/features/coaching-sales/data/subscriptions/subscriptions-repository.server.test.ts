@@ -13,6 +13,8 @@ const PAID_AT = new Date("2026-09-26T10:00:00.000Z");
 const CANCELLED_AT = new Date("2026-10-01T10:00:00.000Z");
 const ACCESS_ENDS_AT = new Date("2026-12-26T10:00:00.000Z");
 const PROBLEM_AT = new Date("2026-10-02T10:00:00.000Z");
+const PAID_THROUGH = new Date("2026-12-26T10:00:00.000Z");
+const RENEWED_THROUGH = new Date("2027-03-26T10:00:00.000Z");
 
 const dialect = new PgDialect();
 
@@ -31,6 +33,8 @@ function subscriptionOf(
     paymentSubscriptionId: "sub_1",
     checkoutSessionId: "cs_1",
     paidAt: PAID_AT,
+    paidThrough: PAID_THROUGH,
+    programStartsAt: PAID_AT,
     startChoice: "immediate",
     status: "cancelled",
     cancelledAt: CANCELLED_AT,
@@ -58,8 +62,57 @@ describe("PostgresCoachingSubscriptions#save", () => {
     expect(outcome).toBe("saved");
     const [condition] = database.conditions;
     expect(dialect.sqlToQuery(condition as SQL).sql).toBe(
-      `("app"."coaching_subscriptions"."id" = $1 and "app"."coaching_subscriptions"."status" = $2 and "app"."coaching_subscriptions"."start_choice" = $3 and "app"."coaching_subscriptions"."cancelled_at" = $4 and "app"."coaching_subscriptions"."access_ends_at" = $5 and "app"."coaching_subscriptions"."payment_problem_since" is null and "app"."coaching_subscriptions"."refunded_cents" is null)`,
+      `("app"."coaching_subscriptions"."id" = $1 and "app"."coaching_subscriptions"."status" = $2 and "app"."coaching_subscriptions"."start_choice" = $3 and "app"."coaching_subscriptions"."paid_through" = $4 and "app"."coaching_subscriptions"."program_starts_at" = $5 and "app"."coaching_subscriptions"."cancelled_at" = $6 and "app"."coaching_subscriptions"."access_ends_at" = $7 and "app"."coaching_subscriptions"."payment_problem_since" is null and "app"."coaching_subscriptions"."refunded_cents" is null)`,
     );
+  });
+
+  it("writes the renewed paid-through date", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions } = createSubscriptions(database.client);
+    const previous = subscriptionOf({
+      status: "active",
+      cancelledAt: null,
+      accessEndsAt: null,
+    });
+
+    // act
+    await subscriptions.save({
+      subscription: previous.renewalPaid(RENEWED_THROUGH),
+      previous,
+    });
+
+    // assert
+    expect(database.writes).toEqual([{ paidThrough: RENEWED_THROUGH }]);
+  });
+
+  it("writes the program start moved by an early start", async () => {
+    // arrange
+    const database = createDatabaseUpdating();
+    const { subscriptions } = createSubscriptions(database.client);
+    const waiting = {
+      status: "not-started",
+      cancelledAt: null,
+      accessEndsAt: null,
+    } as const;
+    const previous = subscriptionOf({
+      ...waiting,
+      startChoice: "waiting",
+      programStartsAt: new Date("2026-10-10T10:00:00.000Z"),
+    });
+    const subscription = subscriptionOf({
+      ...waiting,
+      startChoice: "immediate",
+      programStartsAt: PROBLEM_AT,
+    });
+
+    // act
+    await subscriptions.save({ subscription, previous });
+
+    // assert
+    expect(database.writes).toEqual([
+      { startChoice: "immediate", programStartsAt: PROBLEM_AT },
+    ]);
   });
 
   it("copies the saved subscription's standing onto her client in the same transaction", async () => {
@@ -223,6 +276,7 @@ function createDatabaseUpdating(
   },
 ) {
   const conditions: unknown[] = [];
+  const writes: unknown[] = [];
   const recordedEvents: string[] = [];
   const transaction = {
     insert: () => ({
@@ -242,7 +296,11 @@ function createDatabaseUpdating(
     }),
     update: () => {
       const statement = {
-        set: () => statement,
+        set: (columns: unknown) => {
+          writes.push(columns);
+
+          return statement;
+        },
         where: (condition: unknown) => {
           conditions.push(condition);
 
@@ -258,5 +316,5 @@ function createDatabaseUpdating(
     transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
   } as unknown as DatabaseClient;
 
-  return { client, conditions, recordedEvents, transaction };
+  return { client, conditions, writes, recordedEvents, transaction };
 }

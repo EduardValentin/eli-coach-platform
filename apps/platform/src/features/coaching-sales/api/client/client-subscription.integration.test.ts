@@ -508,6 +508,26 @@ describe.sequential("client subscription integration", () => {
       });
     });
 
+    it("starts her program now and lifts the renewal hold her waiting purchase set", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await rig.holdClock(DAY_13);
+
+      // act
+      const started = await startNow(ANA_SESSION);
+
+      // assert
+      const updates = await lifecycle.providerSubscriptionRequests("POST");
+
+      expect(started.status).toBe(200);
+      expect(updates).toHaveLength(2);
+      expect(updates[0]?.get("pause_collection[behavior]")).toBe("void");
+      expect(updates[1]?.get("pause_collection")).toBe("");
+      expect(await lifecycle.subscriptionPeriod()).toEqual([
+        { paidThrough: PAID_THROUGH, programStartsAt: DAY_13 },
+      ]);
+    });
+
     it("refuses once the withdrawal window has closed", async () => {
       // arrange
       await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);

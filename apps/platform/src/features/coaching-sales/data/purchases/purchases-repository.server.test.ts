@@ -8,6 +8,8 @@ import { describe, expect, it, vi } from "vitest";
 import { PostgresCoachingPurchases } from "./purchases-repository.server";
 
 const NOW = new Date("2026-10-20T10:00:00.000Z");
+const PROGRAM_STARTS_AT = new Date("2026-11-03T10:00:00.000Z");
+const PAID_THROUGH = new Date("2027-01-20T10:00:00.000Z");
 const HELD_CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const LINK_SENT_CALL_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
 const PAID_CALL_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
@@ -36,6 +38,8 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
         clientId: "client-1",
         assessmentCallId: PAID_CALL_ID,
         stripeCheckoutSessionId: "cs_1",
+        paidThrough: PAID_THROUGH,
+        programStartsAt: PROGRAM_STARTS_AT,
       }),
     ]);
     expect(writeCoachingStanding).toHaveBeenCalledWith(database.transaction, {
@@ -49,6 +53,8 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: 3,
+      programStartsAt: PROGRAM_STARTS_AT,
+      paidThrough: PAID_THROUGH,
     });
     expect(database.update).toHaveBeenCalledTimes(1);
   });

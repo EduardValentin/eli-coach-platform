@@ -89,7 +89,7 @@ import {
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
-import { DEMO_CLIENT, useCheckins } from '../context/CheckinContext';
+import { DEMO_CLIENT, useCheckins, WEEKLY_SERIES_SEEDS } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -422,6 +422,8 @@ export function DevToggle() {
     setOpenClientRequest,
     hasLiveCheckin,
     setLiveCheckin,
+    weeklySeries,
+    setWeeklySeries,
   } = useCheckins();
 
   const seedDashboardCalls = (value: string) => {
@@ -924,6 +926,27 @@ export function DevToggle() {
                   checked={hasLiveCheckin}
                   onCheckedChange={setLiveCheckin}
                 />
+                <div className="space-y-2">
+                  <Label htmlFor="dev-weekly-series" className={DEV_LABEL_CLASS}>
+                    Weekly series
+                  </Label>
+                  <Select
+                    value={weeklySeries}
+                    onValueChange={(value) =>
+                      setWeeklySeries(optionOrDefault(WEEKLY_SERIES_SEEDS, value, 'none'))
+                    }
+                  >
+                    <SelectTrigger id="dev-weekly-series" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="clashes">With clashes</SelectItem>
+                      <SelectItem value="stopped">Stopped</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="dev-checkin-service" className={DEV_LABEL_CLASS}>
                     Check-in service

@@ -39,6 +39,8 @@ const ANA: ClientReachReading = {
   clientId: "client-1",
   portal: "reachable",
   coachingEndsAt: null,
+  programStartsAt: null,
+  paidThrough: null,
   timeZone: "Europe/London",
 };
 

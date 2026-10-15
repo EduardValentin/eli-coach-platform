@@ -14,6 +14,8 @@ import { writeClient, writeCoachingStanding } from "./client-writers.server";
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const ADMITTED_AT = new Date("2026-10-12T10:00:00.000Z");
 const ACCESS_ENDS_AT = new Date("2027-01-12T10:00:00.000Z");
+const PROGRAM_STARTS_AT = new Date("2026-10-12T10:00:00.000Z");
+const PAID_THROUGH = new Date("2027-01-12T10:00:00.000Z");
 const INTAKE: ClientIntake = {
   assessmentCallId: "3f2b1c0d-9e8f-4a7b-8c6d-5e4f3a2b1c0d",
   firstName: "Ana",
@@ -73,6 +75,8 @@ describe("writeCoachingStanding", () => {
       accessEndsAt: ACCESS_ENDS_AT,
       refundDue: true,
       bundleMonths: 3,
+      programStartsAt: PROGRAM_STARTS_AT,
+      paidThrough: PAID_THROUGH,
     });
 
     // act
@@ -90,6 +94,8 @@ describe("writeCoachingStanding", () => {
           coachingAccessEndsAt: ACCESS_ENDS_AT,
           coachingRefundDue: true,
           coachingBundleMonths: 3,
+          coachingProgramStartsAt: PROGRAM_STARTS_AT,
+          coachingPaidThrough: PAID_THROUGH,
         },
       },
     ]);

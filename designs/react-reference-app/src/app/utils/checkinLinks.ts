@@ -1,5 +1,7 @@
 const COACH_CHECKINS_PATH = '/coach/checkins';
 const CHECKIN_PARAM = 'checkin';
+export const CHECKIN_KIND_PARAM = 'kind';
+export const CHECKIN_QUERY_PARAM = 'q';
 
 export function coachCheckinsPath(): string {
   return COACH_CHECKINS_PATH;

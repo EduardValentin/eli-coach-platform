@@ -16,11 +16,11 @@ type ListCoachCheckInsUseCaseOptions = {
 export class ListCoachCheckInsUseCase {
   private readonly views: CoachCheckInViews;
 
-  constructor(options: ListCoachCheckInsUseCaseOptions) {
+  constructor(private readonly options: ListCoachCheckInsUseCaseOptions) {
     this.views = new CoachCheckInViews(options);
   }
 
   async execute(): Promise<CoachCheckInView[]> {
-    return this.views.list();
+    return this.views.viewsOf(await this.options.checkIns.listAll());
   }
 }

@@ -9,6 +9,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
@@ -107,6 +108,42 @@ function RequestCheckIn() {
           Request a check-in
         </h3>
         <button type="button">Select a date</button>
+      </ResponsiveSheetDialog>
+    </MotionConfig>
+  );
+}
+
+function SetUpThenManage() {
+  const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const panelAction = useRef<HTMLButtonElement>(null);
+
+  return (
+    <MotionConfig reducedMotion="always">
+      {saved ? (
+        <button ref={panelAction} type="button">
+          Manage
+        </button>
+      ) : (
+        <button onClick={() => setOpen(true)} ref={panelAction} type="button">
+          Set up
+        </button>
+      )}
+      <ResponsiveSheetDialog
+        onOpenChange={setOpen}
+        open={open}
+        returnFocusTo={panelAction}
+        title="Set up"
+      >
+        <button
+          onClick={() => {
+            setSaved(true);
+            setOpen(false);
+          }}
+          type="button"
+        >
+          Save
+        </button>
       </ResponsiveSheetDialog>
     </MotionConfig>
   );
@@ -284,4 +321,28 @@ describe("ResponsiveSheetDialog", () => {
       await screen.findByRole("dialog", { name: "Request a check-in" }),
     ).toHaveClass("sm:max-w-2xl", "sm:w-fit");
   });
+
+  it.each([
+    { screenWidth: "a wide screen", width: DESKTOP_WIDTH },
+    { screenWidth: "a phone", width: PHONE_WIDTH },
+  ])(
+    "hands focus to the caller's element once its opener is gone, on $screenWidth",
+    async ({ width }) => {
+      // arrange
+      viewportIs(width);
+      const user = userEvent.setup();
+      render(<SetUpThenManage />);
+      await user.click(screen.getByRole("button", { name: "Set up" }));
+      const dialog = await screen.findByRole("dialog", { name: "Set up" });
+
+      // act
+      await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+      // assert
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      });
+      expect(screen.getByRole("button", { name: "Manage" })).toHaveFocus();
+    },
+  );
 });

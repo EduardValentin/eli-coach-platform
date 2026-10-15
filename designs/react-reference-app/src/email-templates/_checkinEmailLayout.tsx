@@ -1,5 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
+  describeTimeZone,
+  formatSlotTime,
+  formatZonedDate,
+} from '../app/utils/dateFormatters';
+import {
   EMAIL_BRAND as BRAND,
   EMAIL_FONT_SANS as FONT_SANS,
   EMAIL_FONT_SERIF as FONT_SERIF,
@@ -16,6 +21,12 @@ import {
 } from './_primitives';
 
 export type CheckinEmailDetail = { label: string; value: string };
+
+export function weeklyCheckinMoment(startsAt: Date, timeZone: string): string {
+  const weekday = formatZonedDate(startsAt, timeZone, 'EEEE');
+
+  return `Every ${weekday} at ${formatSlotTime(startsAt, timeZone)} — ${describeTimeZone(timeZone, startsAt)}`;
+}
 
 export type CheckinEmailLayoutProps = {
   subject: string;

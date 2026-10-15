@@ -33,6 +33,7 @@ import {
   useCheckInMenu,
   type CheckInMenuWording,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-menu";
+import { clientFullName } from "~/features/clients/public/clients";
 
 export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
   return args.context.get(checkInsContext).coachCheckIns.loadCheckIns(args);
@@ -61,8 +62,8 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
 
 const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
   cancellationOf: (checkIn, dayAndTime) => ({
-    description: `${dayAndTime} with ${fullNameOf(checkIn)}.`,
-    successMessage: `Cancelled check-in with ${fullNameOf(checkIn)}`,
+    description: `${dayAndTime} with ${clientFullName(checkIn.client)}.`,
+    successMessage: `Cancelled check-in with ${clientFullName(checkIn.client)}`,
   }),
   proposerOf: (checkIn) => ({
     noteLabel: `Add a note for ${checkIn.client.firstName} (optional)`,
@@ -89,7 +90,7 @@ export default function CoachCheckInsRoute() {
         renderCheckIn={(checkIn, tab) => (
           <CheckInRow
             actions={coachActionsFor(checkIn, tab, decisions)}
-            attendee={{ name: fullNameOf(checkIn) }}
+            attendee={{ name: clientFullName(checkIn.client) }}
             checkIn={checkIn}
             menu={menu.menuOf(checkIn)}
             menuSize="xs"
@@ -108,7 +109,6 @@ export default function CoachCheckInsRoute() {
         timeZone={timeZone}
         wording={MENU_WORDING}
       />
-
       <CheckInDecisionOutcomes decisions={decisions} />
     </div>
   );
@@ -129,10 +129,14 @@ function coachActionsFor(
     );
   }
 
+  if (checkIn.status === "clash") {
+    return undefined;
+  }
+
   if (checkIn.awaitsViewer) {
     return (
       <CheckInAnswers
-        approvedMessage={`Approved check-in with ${fullNameOf(checkIn)}`}
+        approvedMessage={`Approved check-in with ${clientFullName(checkIn.client)}`}
         checkIn={checkIn}
         decisions={decisions}
         size="xs"
@@ -151,8 +155,4 @@ function coachActionsFor(
   }
 
   return undefined;
-}
-
-function fullNameOf(checkIn: CoachCheckIn): string {
-  return `${checkIn.client.firstName} ${checkIn.client.lastName}`.trim();
 }

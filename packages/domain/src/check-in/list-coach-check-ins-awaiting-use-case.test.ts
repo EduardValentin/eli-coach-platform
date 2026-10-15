@@ -33,6 +33,7 @@ const MARIA: ClientIdentity = {
 
 const CLIENT_REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-06T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -78,6 +79,17 @@ const EXPIRED_REQUEST = {
   startsAt: new Date("2026-06-03T09:00:00.000Z"),
 } satisfies CheckInProps;
 
+const CLASH = {
+  ...CLIENT_REQUEST,
+  id: "check-in-6",
+  seriesId: "series-1",
+  kind: "recurring",
+  recordedStatus: "clash",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+  startsAt: new Date("2026-06-06T09:00:00.000Z"),
+} satisfies CheckInProps;
+
 function checkInsOf(...props: CheckInProps[]): CheckIn[] {
   return props.map((entry) => CheckIn.reconstitute(entry));
 }
@@ -102,6 +114,9 @@ function createUseCase(options: {
     awaitingCheckInsCountFailed: vi.fn(),
     awaitingCheckInsListFailed: vi.fn(),
     nextCheckInLookupFailed: vi.fn(),
+    checkInSeriesNotificationFailed: vi.fn(),
+    checkInSeriesExtensionFailed: vi.fn(),
+    checkInSeriesReadFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new ListCoachCheckInsAwaitingUseCase({
     checkIns,
@@ -135,6 +150,22 @@ describe("ListCoachCheckInsAwaitingUseCase", () => {
         awaitsViewer: true,
         client: { firstName: "Ana", lastName: "Popescu" },
       },
+    ]);
+  });
+
+  it("lists a clash as waiting for the coach to find a new time", async () => {
+    // arrange
+    const { useCase } = createUseCase({
+      checkIns: checkInsOf(CLASH, CLIENT_REQUEST),
+    });
+
+    // act
+    const listed = await useCase.execute();
+
+    // assert
+    expect(listed.map((view) => [view.id, view.status])).toEqual([
+      ["check-in-6", "clash"],
+      ["check-in-1", "pending"],
     ]);
   });
 

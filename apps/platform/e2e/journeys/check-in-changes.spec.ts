@@ -344,7 +344,7 @@ test.describe("on a touch screen", () => {
   test.use({ hasTouch: true });
 
   test(
-    "after two moves Reschedule is held back with its reason on both pages and a third new time is refused, and a proposer cannot take back her new time",
+    "after two moves Reschedule is held back with its reason on both pages and a third new time is refused, the client cannot cancel the check-in the coach asked for, and a proposer cannot take back her new time",
     { tag: "@completeness" },
     async ({
       checkInRecords,
@@ -423,6 +423,7 @@ test.describe("on a touch screen", () => {
         MOVED_NOTE,
       );
       await clientCheckIns.expectRescheduleReasonOnTap("Upcoming", MOVED_NOTE);
+      await clientCheckIns.expectNoCancel("Upcoming", MOVED_NOTE);
 
       // act
       const clientAnswer = await checkInRequests.proposeNewTime(movedId, {
@@ -509,7 +510,7 @@ test(
 );
 
 test(
-  "the client cancels an approved check-in after keeping it once, the coach cancels another, and each side is told and each hour offered again",
+  "each side may cancel only the approved check-in it asked for, the client cancels hers after keeping it once, the coach cancels the coach's, and each side is told and each hour offered again",
   { tag: "@completeness" },
   async ({
     bookingPage,
@@ -533,6 +534,7 @@ test(
     await coachAvailability.openEveryDay();
     await provisionCoach();
     const client = await provisionSubmittedClient("waiting");
+    await checkInRecords.moveBookingZone(client.clientId, BOOKING_TIME_ZONE);
     await page.goto("/store");
     await signIn();
     await clientCheckIns.open();
@@ -543,14 +545,39 @@ test(
     await checkInRecords.markApproved(
       await checkInRecords.idOf(client.clientId, clientCancelled.startsAt),
     );
-    await clientCheckIns.open();
-    await clientCheckIns.openRequestDialog();
-    const coachCancelled =
-      await checkInRequestDialog.sendSoonest(COACH_CANCELLED_NOTE);
-    await checkInRecords.markApproved(
-      await checkInRecords.idOf(client.clientId, coachCancelled.startsAt),
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+    const [coachCancelled] = await checkInRequests.openTimesFor(
+      client.clientId,
     );
+    await checkInRequests.schedule(
+      client.clientId,
+      coachCancelled!,
+      COACH_CANCELLED_NOTE,
+    );
+    await checkInRecords.markApproved(
+      await checkInRecords.idOf(client.clientId, coachCancelled!),
+    );
+
+    // act
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectNoCancel("Upcoming", CLIENT_CANCELLED_NOTE);
+
+    // arrange
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signIn();
+
+    // act
     await clientCheckIns.open();
+
+    // assert
+    await clientCheckIns.expectNoCancel("Upcoming", COACH_CANCELLED_NOTE);
 
     // act
     await clientCheckIns.cancel("Upcoming", CLIENT_CANCELLED_NOTE);
@@ -611,7 +638,7 @@ test(
 
     // assert
     await cancelCheckInDialog.expectOpen(
-      `${dayAndTimeOf(coachCancelled.startsAt)} with ${client.fullName}.`,
+      `${dayAndTimeOf(coachCancelled!)} with ${client.fullName}.`,
     );
 
     // act
@@ -628,7 +655,7 @@ test(
       COACH_CANCELLED_SUBJECT,
     );
     expect(coachCancellationEmail.text).toContain(
-      emailMomentOf(coachCancelled.startsAt, CLIENT_TIME_ZONE),
+      emailMomentOf(coachCancelled!, BOOKING_TIME_ZONE),
     );
 
     // arrange
@@ -640,10 +667,7 @@ test(
       clientCancelled.startsAt,
       CLIENT_TIME_ZONE,
     );
-    await bookingPage.expectHourOffered(
-      coachCancelled.startsAt,
-      CLIENT_TIME_ZONE,
-    );
+    await bookingPage.expectHourOffered(coachCancelled!, CLIENT_TIME_ZONE);
 
     // arrange
     await page.goto("/store");

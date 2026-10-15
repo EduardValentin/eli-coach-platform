@@ -5,6 +5,7 @@ import { PostgresCheckIns } from "./postgres-check-ins.server";
 
 const PENDING_ROW = {
   id: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+  seriesId: null,
   clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
   startsAt: new Date("2026-10-22T14:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -43,6 +44,7 @@ describe("PostgresCheckIns#find", () => {
     // assert
     expect(checkIn?.toSnapshot()).toEqual({
       id: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      seriesId: null,
       clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
       startsAt: new Date("2026-10-22T14:00:00.000Z"),
       endsAt: new Date("2026-10-22T15:00:00.000Z"),
@@ -84,6 +86,31 @@ describe("PostgresCheckIns#find", () => {
       earlierStartsAt: new Date("2026-10-21T14:00:00.000Z"),
       moves: 1,
       newTimeNote: "Does Thursday work instead?",
+    });
+  });
+
+  it("maps a weekly row's series, kind and clash status", async () => {
+    // arrange
+    const weeklyRow = {
+      ...APPROVED_ROW,
+      seriesId: "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a",
+      kind: "recurring",
+      status: "clash",
+      initiatedBy: "coach",
+      proposedBy: "coach",
+    };
+    const checkIns = new PostgresCheckIns(
+      repositoryOptions(createDatabaseReturning([weeklyRow])),
+    );
+
+    // act
+    const checkIn = await checkIns.find(weeklyRow.id);
+
+    // assert
+    expect(checkIn?.toSnapshot()).toMatchObject({
+      seriesId: "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a",
+      kind: "recurring",
+      recordedStatus: "clash",
     });
   });
 

@@ -1,5 +1,5 @@
 {
-  "id": "9e92481b-211a-4096-914b-e8a7f1ee4694",
+  "id": "9f20f1f3-93f9-4b0a-8650-8423f11f169f",
   "prevId": "37f43afe-ba54-4d84-82bb-12d312c09c57",
   "version": "7",
   "dialect": "postgresql",
@@ -1618,6 +1618,18 @@
           "type": "smallint",
           "primaryKey": false,
           "notNull": false
+        },
+        "coaching_program_starts_at": {
+          "name": "coaching_program_starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "coaching_paid_through": {
+          "name": "coaching_paid_through",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -2103,6 +2115,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "paid_through": {
+          "name": "paid_through",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "program_starts_at": {
+          "name": "program_starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
         "start_choice": {
           "name": "start_choice",
           "type": "varchar(16)",
@@ -2502,126 +2526,6 @@
         "payment_links_expires_after_creation": {
           "name": "payment_links_expires_after_creation",
           "value": "\"app\".\"payment_links\".\"expires_at\" > \"app\".\"payment_links\".\"created_at\""
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "app.exercises": {
-      "name": "exercises",
-      "schema": "app",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_cues": {
-          "name": "form_cues",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "unit": {
-          "name": "unit",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "per_side": {
-          "name": "per_side",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "difficulty": {
-          "name": "difficulty",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "primary_muscles": {
-          "name": "primary_muscles",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "secondary_muscles": {
-          "name": "secondary_muscles",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "equipment": {
-          "name": "equipment",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "exercises_name_unique": {
-          "name": "exercises_name_unique",
-          "columns": [
-            {
-              "expression": "lower(btrim(\"name\"))",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "exercises_type_check": {
-          "name": "exercises_type_check",
-          "value": "\"app\".\"exercises\".\"type\" in ('resistance', 'cardio', 'mobility', 'stretching', 'breathing')"
-        },
-        "exercises_unit_check": {
-          "name": "exercises_unit_check",
-          "value": "\"app\".\"exercises\".\"unit\" in ('reps', 'time', 'distance', 'breaths')"
-        },
-        "exercises_difficulty_check": {
-          "name": "exercises_difficulty_check",
-          "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
         }
       },
       "isRLSEnabled": false

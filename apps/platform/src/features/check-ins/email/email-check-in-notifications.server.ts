@@ -6,6 +6,8 @@ import {
   type CheckInNotice,
   type CheckInNotification,
   type CheckInNotifications,
+  type CheckInSeriesNotice,
+  type CheckInSeriesNotification,
 } from "@eli-coach-platform/domain/check-in";
 import type { ClientIdentity } from "@eli-coach-platform/domain/client";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -20,7 +22,13 @@ import type { ReactElement } from "react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatCallMoment } from "~/features/assessment-calls/public/call-moment";
+import {
+  describeTimeZone,
+  formatCallMoment,
+  formatCallSchedule,
+  formatClockTime,
+  formatWeekday,
+} from "~/features/assessment-calls/public/call-moment";
 import {
   CLIENT_CHECK_INS_PATH,
   clientCheckInJoinPath,
@@ -84,6 +92,21 @@ import {
   checkInScheduledText,
 } from "./check-in-scheduled-email.server";
 import {
+  CheckInSeriesChangedEmail,
+  checkInSeriesChangedSubject,
+  checkInSeriesChangedText,
+} from "./check-in-series-changed-email.server";
+import {
+  CheckInSeriesSetUpEmail,
+  checkInSeriesSetUpSubject,
+  checkInSeriesSetUpText,
+} from "./check-in-series-set-up-email.server";
+import {
+  CheckInSeriesStoppedEmail,
+  checkInSeriesStoppedSubject,
+  checkInSeriesStoppedText,
+} from "./check-in-series-stopped-email.server";
+import {
   CheckInWithdrawnEmail,
   checkInWithdrawnSubject,
   checkInWithdrawnText,
@@ -103,6 +126,25 @@ type CheckInEmail = {
   to: string;
   replyTo?: string;
   attachments?: readonly EmailAttachment[];
+  subject: string;
+  text: string;
+  body: ReactElement;
+};
+
+type OutgoingEmail = {
+  idempotencyKey: string;
+  to: string;
+  replyTo?: string;
+  attachments?: readonly EmailAttachment[];
+  subject: string;
+  text: string;
+  body: ReactElement;
+};
+
+type SeriesEmail = {
+  notice: CheckInSeriesNotice;
+  notification: CheckInSeriesNotification;
+  eventAt: Date | null;
   subject: string;
   text: string;
   body: ReactElement;
@@ -239,6 +281,51 @@ export class EmailCheckInNotifications implements CheckInNotifications {
       subject: checkInCancelledSubject(props),
       text: checkInCancelledText(props),
       body: createElement(CheckInCancelledEmail, props),
+    });
+  }
+
+  seriesSetUp(notice: CheckInSeriesNotice): Promise<CheckInDelivery> {
+    const props = {
+      ...this.seriesPropsOf(notice),
+      firstWeek: formatCallSchedule(notice.weekStartsAt, notice.clientTimeZone),
+    };
+
+    return this.sendSeries({
+      notice,
+      notification: "seriesSetUp",
+      eventAt: notice.series.setUpAt,
+      subject: checkInSeriesSetUpSubject(props),
+      text: checkInSeriesSetUpText(props),
+      body: createElement(CheckInSeriesSetUpEmail, props),
+    });
+  }
+
+  seriesChanged(notice: CheckInSeriesNotice): Promise<CheckInDelivery> {
+    const props = {
+      ...this.seriesPropsOf(notice),
+      firstWeek: formatCallSchedule(notice.weekStartsAt, notice.clientTimeZone),
+    };
+
+    return this.sendSeries({
+      notice,
+      notification: "seriesChanged",
+      eventAt: notice.series.changedAt,
+      subject: checkInSeriesChangedSubject(props),
+      text: checkInSeriesChangedText(props),
+      body: createElement(CheckInSeriesChangedEmail, props),
+    });
+  }
+
+  seriesStopped(notice: CheckInSeriesNotice): Promise<CheckInDelivery> {
+    const props = this.seriesPropsOf(notice);
+
+    return this.sendSeries({
+      notice,
+      notification: "seriesStopped",
+      eventAt: notice.series.stoppedAt,
+      subject: checkInSeriesStoppedSubject(props),
+      text: checkInSeriesStoppedText(props),
+      body: createElement(CheckInSeriesStoppedEmail, props),
     });
   }
 
@@ -445,10 +532,46 @@ export class EmailCheckInNotifications implements CheckInNotifications {
         };
   }
 
-  private async send(email: CheckInEmail): Promise<CheckInDelivery> {
+  private send(email: CheckInEmail): Promise<CheckInDelivery> {
+    return this.deliver({
+      ...email,
+      idempotencyKey: `check-in:${email.checkIn.id}:${email.checkIn.moves}:${email.notification}`,
+    });
+  }
+
+  private sendSeries(email: SeriesEmail): Promise<CheckInDelivery> {
+    const { notice, notification } = email;
+    const instant = email.eventAt ?? notice.series.setUpAt;
+
+    return this.deliver({
+      idempotencyKey: `check-in-series:${notice.series.id}:${instant.toISOString()}:${notification}`,
+      to: notice.client.email,
+      subject: email.subject,
+      text: email.text,
+      body: email.body,
+    });
+  }
+
+  private seriesPropsOf(notice: CheckInSeriesNotice) {
+    return {
+      coachName: COACH_DISPLAY_NAME,
+      when: this.weeklyMomentOf(notice),
+      checkInsUrl: this.publicUrlOf(CLIENT_CHECK_INS_PATH),
+      currentYear: this.currentYear(),
+    };
+  }
+
+  private weeklyMomentOf({
+    weekStartsAt,
+    clientTimeZone,
+  }: CheckInSeriesNotice): string {
+    return `Every ${formatWeekday(weekStartsAt, clientTimeZone)} at ${formatClockTime(weekStartsAt, clientTimeZone)} — ${describeTimeZone(weekStartsAt, clientTimeZone)}`;
+  }
+
+  private async deliver(email: OutgoingEmail): Promise<CheckInDelivery> {
     const delivery = await this.productEmail.send({
       html: `<!doctype html>${renderToStaticMarkup(email.body)}`,
-      idempotencyKey: `check-in:${email.checkIn.id}:${email.checkIn.moves}:${email.notification}`,
+      idempotencyKey: email.idempotencyKey,
       ...(email.replyTo ? { replyTo: email.replyTo } : {}),
       ...(email.attachments ? { attachments: email.attachments } : {}),
       subject: email.subject,

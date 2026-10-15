@@ -36,4 +36,14 @@ export const checkInsApiRoutes = [
     CHECK_INS_API_PATHS.cancellation.slice(1),
     "./api/shared/cancellation.ts",
   ),
+  route(CHECK_INS_API_PATHS.series.slice(1), "./api/coach/series.ts"),
+  route(
+    CHECK_INS_API_PATHS.seriesPreview.slice(1),
+    "./api/coach/series-preview.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.seriesChange.slice(1),
+    "./api/coach/series-change.ts",
+  ),
+  route(CHECK_INS_API_PATHS.seriesStop.slice(1), "./api/coach/series-stop.ts"),
 ];

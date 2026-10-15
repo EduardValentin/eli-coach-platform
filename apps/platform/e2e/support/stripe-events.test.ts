@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   selectRecordedEvent,
   simulatedRenewalFailureEvents,
+  simulatedRenewalPaidEvent,
   type RecordedStripeEvent,
 } from "./stripe-events";
 
@@ -10,6 +11,7 @@ const SUBSCRIPTION_ID = "sub_e2e_held";
 const OTHER_SUBSCRIPTION_ID = "sub_e2e_other";
 const HOLD_REQUEST_ID = "req_e2e_hold";
 const CANCEL_REQUEST_ID = "req_e2e_cancel";
+const PERIOD_END = new Date("2027-04-21T08:00:00.000Z");
 
 function recordedEvent(
   id: string,
@@ -113,22 +115,20 @@ describe("selectRecordedEvent", () => {
 });
 
 describe("simulatedRenewalFailureEvents", () => {
-  const subscription = {
-    id: SUBSCRIPTION_ID,
-    customer: "cus_e2e_held",
-    currency: "eur",
-    metadata: { purpose: "coaching-subscription" },
+  const renewal = {
+    subscription: {
+      id: SUBSCRIPTION_ID,
+      customer: "cus_e2e_held",
+      currency: "eur",
+      metadata: { purpose: "coaching-subscription" },
+    },
+    reference: "failure",
+    periodEnd: PERIOD_END,
   };
 
   it("reports the failed renewal invoice under the subscription it renews", () => {
-    // arrange
-    const reference = "failure";
-
     // act
-    const [invoiceFailed] = simulatedRenewalFailureEvents(
-      subscription,
-      reference,
-    );
+    const [invoiceFailed] = simulatedRenewalFailureEvents(renewal);
 
     // assert
     expect(invoiceFailed).toEqual({
@@ -138,6 +138,7 @@ describe("simulatedRenewalFailureEvents", () => {
         object: expect.objectContaining({
           customer: "cus_e2e_held",
           billing_reason: "subscription_cycle",
+          lines: { data: [{ period: { end: 1808294400 } }] },
           parent: {
             type: "subscription_details",
             subscription_details: {
@@ -151,19 +152,56 @@ describe("simulatedRenewalFailureEvents", () => {
   });
 
   it("moves the subscription from active to past due", () => {
-    // arrange
-    const reference = "failure";
-
     // act
-    const [, pastDue] = simulatedRenewalFailureEvents(subscription, reference);
+    const [, pastDue] = simulatedRenewalFailureEvents(renewal);
 
     // assert
     expect(pastDue).toEqual({
       id: "evt_e2e_failure_past_due",
       type: "customer.subscription.updated",
       data: {
-        object: { ...subscription, status: "past_due" },
+        object: { ...renewal.subscription, status: "past_due" },
         previous_attributes: { status: "active" },
+      },
+    });
+  });
+});
+
+describe("simulatedRenewalPaidEvent", () => {
+  it("reports the paid renewal invoice with the end of the period it pays for", () => {
+    // arrange
+    const renewal = {
+      subscription: {
+        id: SUBSCRIPTION_ID,
+        customer: "cus_e2e_held",
+        currency: "eur",
+        metadata: { purpose: "coaching-subscription" },
+      },
+      reference: "renewal",
+      periodEnd: PERIOD_END,
+    };
+
+    // act
+    const invoicePaid = simulatedRenewalPaidEvent(renewal);
+
+    // assert
+    expect(invoicePaid).toEqual({
+      id: "evt_e2e_renewal_paid",
+      type: "invoice.paid",
+      data: {
+        object: expect.objectContaining({
+          customer: "cus_e2e_held",
+          billing_reason: "subscription_cycle",
+          status: "paid",
+          lines: { data: [{ period: { end: 1808294400 } }] },
+          parent: {
+            type: "subscription_details",
+            subscription_details: {
+              subscription: SUBSCRIPTION_ID,
+              metadata: { purpose: "coaching-subscription" },
+            },
+          },
+        }),
       },
     });
   });

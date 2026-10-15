@@ -148,6 +148,8 @@ export class PostgresCoachingPurchases
       stripePaymentIntentId: purchased.paymentIntentId,
       stripeCheckoutSessionId: purchased.checkoutSessionId,
       paidAt: purchased.paidAt,
+      paidThrough: purchased.paidThrough,
+      programStartsAt: purchased.programStartsAt,
       startChoice: purchased.startChoice,
       status: purchased.status,
       createdAt: recording.receivedAt,

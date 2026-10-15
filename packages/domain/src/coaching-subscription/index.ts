@@ -20,6 +20,7 @@ export {
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
 export { type CoachingEndHandler } from "./coaching-end-handler";
+export { type CoachingPeriodHandler } from "./coaching-period-handler";
 export { type CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 export {
   type CoachingSubscriptions,
