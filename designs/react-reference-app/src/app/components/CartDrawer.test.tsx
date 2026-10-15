@@ -241,7 +241,17 @@ describe('CartDrawer', () => {
     // assert
     expect(submit).toBeDisabled();
     expect(
-      screen.getByRole('checkbox', { name: /keep me posted/i }),
+      screen.getByRole('textbox', { name: 'Email Address (required)' }),
+    ).toHaveValue('woman@example.com');
+    expect(
+      screen.getByRole('checkbox', {
+        name: /^I agree to the Terms of Service ?\. \(required\)$/,
+      }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'Keep me posted about new plans, guides, and offers.',
+      }),
     ).not.toBeChecked();
 
     // act

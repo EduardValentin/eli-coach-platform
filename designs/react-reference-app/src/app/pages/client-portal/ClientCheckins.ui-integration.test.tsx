@@ -114,7 +114,7 @@ async function pickFirstOpenTime(dialog: HTMLElement): Promise<string> {
 async function sendRequest(note = NOTE) {
   const dialog = await openRequestDialog();
   const time = await pickFirstOpenTime(dialog);
-  await userEvent.type(within(dialog).getByLabelText('Add a note for your coach (optional)'), note);
+  await userEvent.type(within(dialog).getByLabelText('Add a note for your coach'), note);
   await userEvent.click(within(dialog).getByRole('button', { name: `Request ${time}` }));
   await waitFor(
     () => expect(screen.queryByRole('dialog', { name: 'Request a check-in' })).not.toBeInTheDocument(),
@@ -238,7 +238,7 @@ describe('requesting a check-in', () => {
 
     // assert
     expect(within(dialog).getByRole('heading', { level: 3, name: 'Request a check-in' })).toHaveFocus();
-    expect(within(dialog).getByLabelText('Add a note for your coach (optional)')).not.toHaveFocus();
+    expect(within(dialog).getByLabelText('Add a note for your coach')).not.toHaveFocus();
   });
 
   it('keeps her note, clears the time and stops offering a time that was just taken', async () => {
@@ -246,7 +246,7 @@ describe('requesting a check-in', () => {
     renderPage('&ckservice=time-taken');
     const dialog = await openRequestDialog();
     const time = await pickFirstOpenTime(dialog);
-    const noteField = within(dialog).getByLabelText('Add a note for your coach (optional)');
+    const noteField = within(dialog).getByLabelText('Add a note for your coach');
     await userEvent.type(noteField, NOTE);
 
     // act
@@ -450,7 +450,7 @@ async function proposeNewTimeFor(rowText: RegExp, note: string) {
   await userEvent.click(await screen.findByRole('menuitem', { name: 'Reschedule' }));
   const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
   const time = await pickFirstOpenTime(sheet);
-  await userEvent.type(within(sheet).getByLabelText('Add a note for your coach (optional)'), note);
+  await userEvent.type(within(sheet).getByLabelText('Add a note for your coach'), note);
   await userEvent.click(within(sheet).getByRole('button', { name: `Propose ${time}` }));
   await waitFor(
     () => expect(screen.queryByRole('dialog', { name: 'Propose a new time' })).not.toBeInTheDocument(),
@@ -745,7 +745,7 @@ describe('proposing a new time', () => {
     // assert
     const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
     expect(sheet).toHaveAccessibleDescription(/^Currently set for \w{3}, \w{3} \d{1,2} · \d{1,2}:\d{2} [AP]M$/);
-    expect(within(sheet).getByLabelText('Add a note for your coach (optional)')).toBeInTheDocument();
+    expect(within(sheet).getByLabelText('Add a note for your coach')).toBeInTheDocument();
   });
 
   it('moves the check-in under Requests with the earlier time struck through and her note', async () => {

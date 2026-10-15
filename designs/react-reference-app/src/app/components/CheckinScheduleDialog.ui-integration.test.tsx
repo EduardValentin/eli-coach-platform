@@ -13,7 +13,7 @@ const SERVICE_TIMEOUT = { timeout: 4000 };
 const TIME_LABEL = /^\d{1,2}:\d{2}\s?[AP]M$/;
 const NOTE = 'Let us look at your squat depth.';
 const CLIENT: ScheduledClient = { id: 'c2', name: 'Jessica Alba', firstName: 'Jessica' };
-const NOTE_LABEL = 'Add a note for Jessica (optional)';
+const NOTE_LABEL = 'Add a note for Jessica';
 
 beforeEach(() => {
   vi.stubGlobal(

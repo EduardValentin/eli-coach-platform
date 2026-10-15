@@ -328,7 +328,7 @@ function ResourceForm({
               rules={{ validate: (title) => title.trim().length > 0 || 'Give it a title.' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel required>Title</FormLabel>
                   <FormControl>
                     <Input {...field} autoComplete="off" />
                   </FormControl>
@@ -342,10 +342,7 @@ function ResourceForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex flex-wrap items-baseline gap-1.5">
-                    Description
-                    <span data-parity="description-optional" className="font-normal text-text-secondary">(optional)</span>
-                  </FormLabel>
+                  <FormLabel layout="wrap">Description</FormLabel>
                   <FormControl>
                     <Textarea {...field} className="min-h-24" />
                   </FormControl>
@@ -358,10 +355,7 @@ function ResourceForm({
               name="tags"
               render={({ field }) => (
                 <FormItem data-parity="resource-tags-field">
-                  <FormLabel className="flex flex-wrap items-baseline gap-1.5">
-                    Tags
-                    <span className="font-normal text-text-secondary">(optional)</span>
-                  </FormLabel>
+                  <FormLabel layout="wrap">Tags</FormLabel>
                   <FormControl>
                     <TagInput
                       maxLength={MAX_TAG_LENGTH}

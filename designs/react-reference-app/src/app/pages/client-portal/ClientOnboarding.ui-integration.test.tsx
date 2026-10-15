@@ -176,7 +176,7 @@ const DISCLAIMER_WITHHELD: OnboardingConsents = {
 };
 
 const DISCLAIMER =
-  'The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.';
+  'The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor. (required)';
 
 const WITHHELD_CONSENTS: OnboardingConsents = {
   disclaimer: false,
@@ -446,15 +446,51 @@ describe('the onboarding', () => {
     ).toContainElement(document.activeElement as HTMLElement);
   });
 
-  it('marks the answers she can skip as optional', () => {
+  it('names the answers she must give as required and leaves the ones she can skip unmarked', async () => {
     // arrange
-    renderOnboarding('?session=client&jstage=onboarding');
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(0), 'working');
 
     // act
-    const optional = screen.getAllByText('(optional)');
+    renderOnboarding('?session=client&jstage=onboarding');
 
     // assert
-    expect(optional.length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('spinbutton', { name: /^Your weight \(required\) ?\(kg\)$/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'What is your primary goal? (required)' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', {
+        name: 'What is keeping you from reaching that goal? (required)',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('radiogroup', {
+        name: 'How many days per week do you want to train? (required)',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Is there anything else I should know when putting your program together?',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\(optional\)/)).not.toBeInTheDocument();
+  });
+
+  it('names the safety declaration as required', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1), 'working');
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // assert
+    expect(
+      screen.getByRole('checkbox', {
+        name: /^I have read, understood and completed this questionnaire\..* \(required\)$/,
+      }),
+    ).toBeInTheDocument();
   });
 
   it('reassures her plainly when she has no regular cycle', async () => {
@@ -638,7 +674,7 @@ describe('the onboarding', () => {
     expect(screen.getByText('Step 2 of 4')).toBeVisible();
     expect(
       screen.getByRole('checkbox', {
-        name: 'I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.',
+        name: 'I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time. (required)',
       }),
     ).not.toBeChecked();
   });

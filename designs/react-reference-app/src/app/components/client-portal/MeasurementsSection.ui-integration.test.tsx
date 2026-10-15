@@ -93,6 +93,27 @@ async function save() {
 }
 
 describe('her measurements on the profile page', () => {
+  it('names the weight and the waist as required and the other measurements as optional', async () => {
+    // arrange
+    renderSection();
+
+    // act
+    const sheet = await openSheet();
+
+    // assert
+    expect(
+      within(sheet).getByRole('spinbutton', { name: /^Weight \(required\) ?\(kg\)$/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).getByRole('spinbutton', { name: /^Waist \(required\) ?\(cm\)$/ }),
+    ).toBeInTheDocument();
+    for (const optional of ['Hips', 'Thigh', 'Arm']) {
+      expect(
+        within(sheet).getByRole('spinbutton', { name: new RegExp(`^${optional} ?\\(cm\\)$`) }),
+      ).toBeInTheDocument();
+    }
+  });
+
   it('adds a fresh entry prefilled with her latest values and keeps the earlier one', async () => {
     // arrange
     renderSection();

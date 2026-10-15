@@ -27,7 +27,7 @@ export function OnboardingReviewBar({
   return (
     <div className="sticky bottom-0 z-10 -mx-6 -mb-6 space-y-4 rounded-b-panel border-t border-border-subtle bg-surface-base px-6 pt-4 pb-6">
       <div className="space-y-2">
-        <Label htmlFor={noteId}>{NOTE_LABEL}</Label>
+        <Label htmlFor={noteId} required>{NOTE_LABEL}</Label>
         <Textarea
           id={noteId}
           data-parity="review-note"

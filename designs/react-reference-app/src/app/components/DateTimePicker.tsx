@@ -203,7 +203,7 @@ export function DateTimePicker({
   showMessageField = false,
   message = '',
   onMessageChange,
-  messagePlaceholder = 'Add a message (optional)',
+  messagePlaceholder = 'Add a message',
   disableWeekends = false,
   maxDate,
   timeSlots = DEFAULT_TIME_SLOTS,

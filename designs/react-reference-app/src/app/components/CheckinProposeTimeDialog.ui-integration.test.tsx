@@ -14,7 +14,7 @@ import { formatCheckinDate, formatCheckinTime } from '../utils/dateFormatters';
 const SERVICE_TIMEOUT = { timeout: 4000 };
 const TIME_LABEL = /^\d{1,2}:\d{2}\s?[AP]M$/;
 const NOTE = 'Thursday works better for me.';
-const NOTE_LABEL = 'Add a note for Jessica (optional)';
+const NOTE_LABEL = 'Add a note for Jessica';
 const JESSICA_UPCOMING = 'ck-3';
 
 beforeEach(() => {

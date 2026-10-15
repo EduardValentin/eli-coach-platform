@@ -6,6 +6,7 @@ import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { Checkbox } from '../../ui/checkbox';
 import { Input } from '../../ui/input';
+import { RequiredMark } from '../../ui/label';
 import {
   Select,
   SelectContent,
@@ -46,8 +47,6 @@ type FieldControlProps = {
 };
 
 type FieldController = ControllerRenderProps<OnboardingValues>;
-
-const OPTIONAL_SUFFIX = '(optional)';
 
 const WHOLE_STEP = '1';
 
@@ -159,50 +158,43 @@ function nextChipsValue(
   return [...withoutExclusive, option];
 }
 
-type SuffixRole = 'unit' | 'optional';
-
-type LabelSuffixEntry = { role: SuffixRole; text: string };
-
-function labelSuffixesOf(
+function unitQualifiersOf(
   field: OnboardingField,
   unit: string | null,
-): LabelSuffixEntry[] {
-  const suffixes: (LabelSuffixEntry | null)[] = [
-    unit ? { role: 'unit', text: `(${unit})` } : null,
-    field.unitSuffix ? { role: 'unit', text: `(${field.unitSuffix})` } : null,
-    field.requirement === 'optional'
-      ? { role: 'optional', text: OPTIONAL_SUFFIX }
-      : null,
-  ];
+): string[] {
+  return [unit, field.unitSuffix]
+    .filter((qualifier): qualifier is string => Boolean(qualifier))
+    .map((qualifier) => `(${qualifier})`);
+}
 
-  return suffixes.filter(
-    (suffix): suffix is LabelSuffixEntry => suffix !== null,
+function LabelLines({ field }: { field: OnboardingField }) {
+  return (
+    <>
+      {field.label.split('\n').map((line, index) => (
+        <span className={index > 0 ? 'block' : undefined} key={line}>
+          {line}
+        </span>
+      ))}
+    </>
   );
 }
 
-function LabelText({
+function UnitQualifiers({
   field,
   unit,
 }: {
   field: OnboardingField;
   unit: string | null;
 }) {
-  const lines = field.label.split('\n');
-
   return (
     <>
-      {lines.map((line, index) => (
-        <span className={index > 0 ? 'block' : undefined} key={line}>
-          {line}
-        </span>
-      ))}
-      {labelSuffixesOf(field, unit).map((suffix) => (
+      {unitQualifiersOf(field, unit).map((qualifier) => (
         <span
           className="font-normal text-text-secondary"
-          data-parity={`field-${field.id}-suffix-${suffix.role}`}
-          key={suffix.text}
+          data-parity={`field-${field.id}-suffix-unit`}
+          key={qualifier}
         >
-          {suffix.text}
+          {qualifier}
         </span>
       ))}
     </>
@@ -213,6 +205,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
   const parityHook = `field-${field.id}`;
+  const required = field.requirement === 'required';
   const unit = isMeasureField(field)
     ? measureUnitLabel(field.kind as MeasureKind, units)
     : null;
@@ -225,7 +218,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       render={({ field: controller }) => {
         if (field.kind === 'checkbox') {
           const checked = asText(controller.value) === 'true';
-          const isDeclaration = field.requirement === 'required';
+          const isDeclaration = required;
 
           return (
             <FormItem
@@ -259,6 +252,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                     htmlFor={legendId}
                   >
                     {field.label}
+                    {isDeclaration && <RequiredMark />}
                   </label>
                 </div>
               </FormControl>
@@ -273,7 +267,9 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
               <FormControl>
                 <fieldset>
                   <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
-                    <LabelText field={field} unit={unit} />
+                    <LabelLines field={field} />
+                    {required && <RequiredMark placement="wrap" />}
+                    <UnitQualifiers field={field} unit={unit} />
                   </legend>
                   {field.hint && (
                     <FormDescription>{field.hint}</FormDescription>
@@ -337,8 +333,12 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
 
         return (
           <FormItem data-parity={parityHook}>
-            <FormLabel className="flex flex-wrap items-baseline gap-1.5">
-              <LabelText field={field} unit={unit} />
+            <FormLabel
+              layout="wrap"
+              required={required}
+              trailing={<UnitQualifiers field={field} unit={unit} />}
+            >
+              <LabelLines field={field} />
             </FormLabel>
             {!equivalent && field.hint && (
               <FormDescription>{field.hint}</FormDescription>

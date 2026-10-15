@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link } from 'react-router';
 import type { OnboardingConsents } from '../../../domain/journey';
 import { Checkbox } from '../../ui/checkbox';
+import { RequiredMark } from '../../ui/label';
 import { FIELD_ERROR_CLASS } from '../../../utils/formFieldStyles';
 
 const PRIVACY_LINK_LABEL = 'How I handle your data →';
@@ -51,6 +52,7 @@ export function OnboardingConsent({
           htmlFor={checkboxId}
         >
           {statement}
+          <RequiredMark />
         </label>
       </div>
 

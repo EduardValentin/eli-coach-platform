@@ -48,7 +48,7 @@ export function useCoachCheckinMenu() {
         party="coach"
         noteLabel={
           proposingCheckin
-            ? `Add a note for ${firstNameOf(proposingCheckin.clientName)} (optional)`
+            ? `Add a note for ${firstNameOf(proposingCheckin.clientName)}`
             : ''
         }
         onOpenChange={(open) => {
