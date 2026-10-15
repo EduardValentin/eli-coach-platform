@@ -808,6 +808,26 @@ describe.sequential("exercise library integration", () => {
       },
     );
 
+    it("shows the exercise as having a video attached in the library", async () => {
+      // arrange
+      await squatWithVideo(landscape);
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+
+      // act
+      const response = await library.openLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain("Difficulty Video Actions");
+      expect(page).toContain(
+        [
+          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate Attached",
+          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
+        ].join(" "),
+      );
+    });
+
     it("refuses a write to the video address", async () => {
       // arrange
       const { squat, video } = await squatWithVideo(landscape);
@@ -853,7 +873,7 @@ describe.sequential("exercise library integration", () => {
   });
 
   describe("the coach's pages", () => {
-    it("lists every exercise A to Z with its type, equipment, tags, primary muscles and difficulty", async () => {
+    it("lists every exercise A to Z with its type, equipment, tags, primary muscles, difficulty and whether it has a video", async () => {
       // arrange
       await library.createAccepted(COACH_SESSION, HIP_THRUST);
       await library.createAccepted(COACH_SESSION, PLANK);
@@ -871,10 +891,10 @@ describe.sequential("exercise library integration", () => {
       );
       expect(page).toContain(
         [
-          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate",
-          "Box breathing Breathing · Mat Recovery Core Beginner",
-          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner",
-          "plank Resistance · No equipment Core Beginner",
+          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate —",
+          "Box breathing Breathing · Mat Recovery Core Beginner —",
+          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
+          "plank Resistance · No equipment Core Beginner —",
         ].join(" "),
       );
     });
