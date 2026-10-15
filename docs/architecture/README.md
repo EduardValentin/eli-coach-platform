@@ -17,7 +17,7 @@ Components: 23, units: 1057, edges: 3618, component cycles: 1, uncovered modules
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
-| C1 packages/domain | 275 | 217 | 0 | 0 | 0.33 | 0.67 | none |
+| C1 packages/domain | 275 | 217 | 0 | 0 | 0.57 | 0.43 | none |
 | C2 packages/db | 6 | 62 | 0 | 0 | 0.15 | 0.85 | pain |
 | C3 packages/config | 16 | 50 | 0 | 0 | 0.23 | 0.77 | none |
 | C4 packages/content | 9 | 22 | 0 | 0 | 0.17 | 0.83 | pain |
