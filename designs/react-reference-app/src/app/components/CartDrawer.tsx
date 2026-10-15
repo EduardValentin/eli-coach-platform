@@ -226,16 +226,7 @@ export function CartDrawer() {
                   Back
                 </Button>
                 <Button disabled={!canSubmit} size="lg-tight" type="submit" width="full">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
-                      Sending…
-                    </>
-                  ) : hasPaidProduct ? (
-                    'Complete order'
-                  ) : (
-                    'Send my resources'
-                  )}
+                  <SubmitLabel hasPaidProduct={hasPaidProduct} isSubmitting={isSubmitting} />
                 </Button>
               </div>
             </form>
@@ -245,6 +236,19 @@ export function CartDrawer() {
       </SheetContent>
     </Sheet>
   );
+}
+
+function SubmitLabel(props: { hasPaidProduct: boolean; isSubmitting: boolean }) {
+  if (props.isSubmitting) {
+    return (
+      <>
+        <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />
+        Sending…
+      </>
+    );
+  }
+
+  return props.hasPaidProduct ? 'Complete order' : 'Send my resources';
 }
 
 function CartReview(props: {
