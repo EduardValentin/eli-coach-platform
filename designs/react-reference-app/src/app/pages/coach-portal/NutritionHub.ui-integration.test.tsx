@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { NutritionHub } from './NutritionHub';
 import { AppProvider } from '../../context/AppContext';
@@ -10,18 +11,27 @@ afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
 
+function NewFoodStandIn() {
+  const { state } = useLocation();
+  return <p data-testid="new-food">{(state as { library?: string } | null)?.library}</p>;
+}
+
 function renderHub(path = '/coach/nutrition') {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <ClientProfileProvider>
           <NutritionProvider>
-            <NutritionHub />
+            <Routes>
+              <Route path="/coach/nutrition" element={<NutritionHub />} />
+              <Route path="/coach/nutrition/foods/new" element={<NewFoodStandIn />} />
+            </Routes>
           </NutritionProvider>
         </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
+  return userEvent.setup();
 }
 
 const tabNames = () => screen.getAllByRole('tab').map((tab) => tab.textContent);
@@ -58,5 +68,32 @@ describe('the Nutrition page in Post-MVP mode', () => {
     // assert
     expect(tabNames()).toEqual(['Foods', 'Recipes', 'Meal Plans']);
     expect(screen.getByRole('tab', { name: 'Meal Plans' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
+describe('the New food action', () => {
+  it('opens the new-food page carrying the library address', async () => {
+    // arrange
+    const user = renderHub('/coach/nutrition?tab=foods');
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'New food' }));
+
+    // assert
+    expect(screen.getByTestId('new-food')).toHaveTextContent('?tab=foods');
+  });
+});
+
+describe('the empty food library seed', () => {
+  it('starts the library with no foods', () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/nutrition?session=coach&nutseed=empty');
+
+    // act
+    renderHub('/coach/nutrition?session=coach&nutseed=empty');
+
+    // assert
+    expect(screen.getByText('No foods yet')).toBeInTheDocument();
+    expect(screen.queryByText('Chicken breast')).not.toBeInTheDocument();
   });
 });

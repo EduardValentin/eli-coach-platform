@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { Archive, LayoutGrid, SearchX, Shuffle, Tags, Utensils } from 'lucide-react';
 import { useNutrition, FOOD_CATEGORIES } from '../../../context/NutritionContext';
-import type { Food } from '../../../context/NutritionContext';
 import { useAppState } from '../../../context/AppContext';
 import {
   countsByStatus,
@@ -42,7 +42,6 @@ import { DeleteConfirmDialog } from '../DeleteConfirmDialog';
 import { LibraryItemActions, LibraryStatusFilter } from '../LibraryLifecycleControls';
 import { FoodTable } from './FoodTable';
 import { CATEGORY_LABELS } from './nutrition-constants';
-import { FoodFormDialog } from './FoodFormDialog';
 import { FoodTagBoard } from './FoodTagBoard';
 import { EquivalenceGroups } from './EquivalenceGroups';
 
@@ -73,7 +72,8 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
     restore: restoreFood,
     remove: deleteFood,
   });
-  const [editing, setEditing] = useState<Food | undefined>(undefined);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedView, setSelectedView] = useState<FoodView>('catalog');
   const view = isPostMvp ? selectedView : 'catalog';
 
@@ -186,7 +186,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
               itemName={food.name}
               status={status}
               usage={usageHint(getFoodUsage(food.id))}
-              onEdit={() => setEditing(food)}
+              onEdit={() => navigate(`/coach/nutrition/foods/${food.id}`, { state: { library: location.search } })}
               onArchive={() => lifecycle.archive(food)}
               onRestore={() => lifecycle.restore(food)}
               onDelete={() => lifecycle.requestDeletion(food)}
@@ -196,13 +196,6 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
       </TablePanel>
       {page.pageCount > 1 && <ListPager view={page} pathForPage={listing.pathForPage} />}
 
-      <FoodFormDialog
-        open={editing !== undefined}
-        food={editing}
-        onOpenChange={(open) => {
-          if (!open) setEditing(undefined);
-        }}
-      />
       <DeleteConfirmDialog
         subject={lifecycle.deletionSubject}
         onConfirm={lifecycle.confirmDeletion}

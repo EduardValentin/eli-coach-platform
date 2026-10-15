@@ -60,6 +60,7 @@ import {
   type PrototypeStartNowOutcome,
 } from '../services/subscriptionService';
 import { EXERCISE_SEEDS } from '../services/exerciseSamples';
+import { FOOD_SEEDS } from '../services/foodSamples';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1052,6 +1053,27 @@ export function DevToggle() {
                     }
                   >
                     <SelectTrigger id="dev-exercise-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Populated</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dev-food-seed" className={DEV_LABEL_CLASS}>
+                    Food library
+                  </Label>
+                  <Select
+                    value={appState.foodSeed}
+                    onValueChange={(value) =>
+                      setAppState({
+                        foodSeed: optionOrDefault(FOOD_SEEDS, value, 'seeded'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-food-seed" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>

@@ -40,6 +40,7 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
+import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -153,6 +154,7 @@ type AppState = {
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
+  foodSeed: FoodSeed;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
@@ -210,6 +212,7 @@ const defaultState: AppState = {
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
+  foodSeed: 'seeded',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
@@ -517,6 +520,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('exseed'),
     defaultState.exerciseSeed,
   );
+  state.foodSeed = optionOrDefault(
+    FOOD_SEEDS,
+    params.get('nutseed'),
+    defaultState.foodSeed,
+  );
   state.resourceSeed = optionOrDefault(
     RESOURCE_SEEDS,
     params.get('rseed'),
@@ -611,6 +619,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
+    url.searchParams.delete('nutseed');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
@@ -745,6 +754,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.exerciseSeed !== defaultState.exerciseSeed) {
       url.searchParams.set('exseed', appState.exerciseSeed);
+    }
+    if (appState.foodSeed !== defaultState.foodSeed) {
+      url.searchParams.set('nutseed', appState.foodSeed);
     }
     if (appState.resourceSeed !== defaultState.resourceSeed) {
       url.searchParams.set('rseed', appState.resourceSeed);

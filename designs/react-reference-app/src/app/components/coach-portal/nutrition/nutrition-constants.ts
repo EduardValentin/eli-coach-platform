@@ -41,18 +41,18 @@ export const MACRO_TILE = {
 
 // Tag pill: soft family-tinted fill (text stays dark for AAA).
 export const TAG_FAMILY_PILL: Record<TagFamily, string> = {
-  'meal-time': 'bg-tag-mealtime-soft',
-  'cycle-phase': 'bg-tag-cycle-soft',
-  nutrient: 'bg-tag-nutrient-soft',
-  dietary: 'bg-tag-dietary-soft',
+  'meal-time': 'bg-tint-slate-soft',
+  'cycle-phase': 'bg-tint-violet-soft',
+  nutrient: 'bg-tint-lime-soft',
+  dietary: 'bg-tint-cyan-soft',
 };
 
 // Solid family-color dots (tag-picker chips in the food dialog).
 export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
-  'meal-time': 'bg-tag-mealtime',
-  'cycle-phase': 'bg-tag-cycle',
-  nutrient: 'bg-tag-nutrient',
-  dietary: 'bg-tag-dietary',
+  'meal-time': 'bg-tint-slate',
+  'cycle-phase': 'bg-tint-violet',
+  nutrient: 'bg-tint-lime',
+  dietary: 'bg-tint-cyan',
 };
 
 // Solid macro identity-color dots (used in the food table's macro column headers).

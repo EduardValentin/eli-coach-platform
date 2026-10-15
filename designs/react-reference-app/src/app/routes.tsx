@@ -36,6 +36,7 @@ import { ClientDetails } from "./pages/coach-portal/ClientDetails";
 import { TrainingHub } from "./pages/coach-portal/TrainingHub";
 import { ExerciseEditorPage } from "./pages/coach-portal/ExerciseEditorPage";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
+import { FoodEditorPage } from "./pages/coach-portal/FoodEditorPage";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
 import { NutritionPlanBuilderPage } from "./pages/coach-portal/NutritionPlanBuilderPage";
 import { NutritionDayEditorPage } from "./pages/coach-portal/NutritionDayEditorPage";
@@ -187,6 +188,8 @@ export const router = createBrowserRouter(
             { path: "training/exercises/new", Component: ExerciseEditorPage },
             { path: "training/exercises/:exerciseId", Component: ExerciseEditorPage },
             { path: "nutrition", Component: NutritionHub },
+            { path: "nutrition/foods/new", Component: FoodEditorPage },
+            { path: "nutrition/foods/:foodId", Component: FoodEditorPage },
             { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },
             { path: "nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
             { path: "nutrition/client/:clientId/plan", Component: NutritionPlanBuilderPage },

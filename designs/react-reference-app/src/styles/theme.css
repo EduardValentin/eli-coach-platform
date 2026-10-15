@@ -101,11 +101,11 @@
   --nutrition-extra-soft: rgba(126, 34, 206, 0.1);
   --nutrition-seasoning: #0f766e;
   --nutrition-seasoning-soft: rgba(15, 118, 110, 0.1);
-  /* Tag-family colors (Food/Recipe tag pills) */
-  --tag-mealtime: #475569;  --tag-mealtime-soft: rgba(71, 85, 105, 0.12);
-  --tag-cycle: #9333ea;     --tag-cycle-soft: rgba(147, 51, 234, 0.12);
-  --tag-nutrient: #65a30d;  --tag-nutrient-soft: rgba(101, 163, 13, 0.12);
-  --tag-dietary: #0891b2;   --tag-dietary-soft: rgba(8, 145, 178, 0.12);
+  /* Categorical tints named by hue */
+  --tint-slate: #475569;   --tint-slate-soft: rgba(71, 85, 105, 0.12);
+  --tint-violet: #9333ea;  --tint-violet-soft: rgba(147, 51, 234, 0.12);
+  --tint-lime: #65a30d;    --tint-lime-soft: rgba(101, 163, 13, 0.12);
+  --tint-cyan: #0891b2;    --tint-cyan-soft: rgba(8, 145, 178, 0.12);
   /* === Marketing / public landing (mirrors production packages/ui/src/styles.css) === */
   /* Surfaces */
   --surface-page: #fafafa;
@@ -399,14 +399,14 @@
   --color-nutrition-extra-soft: var(--nutrition-extra-soft);
   --color-nutrition-seasoning: var(--nutrition-seasoning);
   --color-nutrition-seasoning-soft: var(--nutrition-seasoning-soft);
-  --color-tag-mealtime: var(--tag-mealtime);
-  --color-tag-mealtime-soft: var(--tag-mealtime-soft);
-  --color-tag-cycle: var(--tag-cycle);
-  --color-tag-cycle-soft: var(--tag-cycle-soft);
-  --color-tag-nutrient: var(--tag-nutrient);
-  --color-tag-nutrient-soft: var(--tag-nutrient-soft);
-  --color-tag-dietary: var(--tag-dietary);
-  --color-tag-dietary-soft: var(--tag-dietary-soft);
+  --color-tint-slate: var(--tint-slate);
+  --color-tint-slate-soft: var(--tint-slate-soft);
+  --color-tint-violet: var(--tint-violet);
+  --color-tint-violet-soft: var(--tint-violet-soft);
+  --color-tint-lime: var(--tint-lime);
+  --color-tint-lime-soft: var(--tint-lime-soft);
+  --color-tint-cyan: var(--tint-cyan);
+  --color-tint-cyan-soft: var(--tint-cyan-soft);
   --text-caption: var(--font-size-caption);
   --text-md: var(--font-size-md);
   --text-public-my-method-figure-heading: var(--font-size-public-my-method-figure-heading);

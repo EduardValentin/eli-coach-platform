@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FoodLibrary } from './FoodLibrary';
@@ -14,13 +14,25 @@ afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
 
+function FoodEditorStandIn() {
+  const { pathname, state } = useLocation();
+  return (
+    <p data-testid="editor">
+      {pathname} {(state as { library?: string } | null)?.library}
+    </p>
+  );
+}
+
 function renderLibrary(path = '/coach/nutrition'): User {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <ClientProfileProvider>
           <NutritionProvider>
-            <FoodLibrary tabs={null} />
+            <Routes>
+              <Route path="/coach/nutrition" element={<FoodLibrary tabs={null} />} />
+              <Route path="/coach/nutrition/foods/:foodId" element={<FoodEditorStandIn />} />
+            </Routes>
             <Toaster />
           </NutritionProvider>
         </ClientProfileProvider>
@@ -53,29 +65,6 @@ describe('the food library in MVP mode', () => {
     expect(within(catalog()).getByText('Chicken breast')).toBeInTheDocument();
   });
 
-  it('keeps swap groups out of the food form', async () => {
-    // arrange
-    const user = renderLibrary();
-
-    // act
-    await chooseAction(user, 'Chicken breast', 'Edit');
-
-    // assert
-    expect(screen.queryByText(/Swap group/)).not.toBeInTheDocument();
-  });
-
-  it('keeps the swap group field in Post-MVP mode', async () => {
-    // arrange
-    window.history.replaceState(null, '', '/?scope=post-mvp');
-    const user = renderLibrary();
-
-    // act
-    await chooseAction(user, 'Chicken breast', 'Edit');
-
-    // assert
-    expect(screen.getByLabelText('Swap group')).toBeInTheDocument();
-  });
-
   it('offers the view switcher in Post-MVP mode', () => {
     // arrange
     window.history.replaceState(null, '', '/?scope=post-mvp');
@@ -85,6 +74,19 @@ describe('the food library in MVP mode', () => {
 
     // assert
     expect(screen.getByRole('group', { name: 'Food library view' })).toBeInTheDocument();
+  });
+});
+
+describe('editing a food', () => {
+  it('opens its editor page carrying the library address', async () => {
+    // arrange
+    const user = renderLibrary('/coach/nutrition?tab=foods&category=protein');
+
+    // act
+    await chooseAction(user, 'Chicken breast', 'Edit');
+
+    // assert
+    expect(screen.getByTestId('editor')).toHaveTextContent('/coach/nutrition/foods/food-chicken ?tab=foods&category=protein');
   });
 });
 

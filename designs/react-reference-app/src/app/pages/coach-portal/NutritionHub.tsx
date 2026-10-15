@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import type { ReactNode } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { Button } from '../../components/ui/button';
@@ -10,7 +10,6 @@ import {
   TabsContent,
 } from '../../components/ui/tabs';
 import { FoodLibrary } from '../../components/coach-portal/nutrition/FoodLibrary';
-import { FoodFormDialog } from '../../components/coach-portal/nutrition/FoodFormDialog';
 import { RecipeLibrary } from '../../components/coach-portal/nutrition/RecipeLibrary';
 import { ClientPlansTab } from '../../components/coach-portal/nutrition/ClientPlansTab';
 import { useAppState } from '../../context/AppContext';
@@ -21,8 +20,8 @@ const POST_MVP_TABS = new Set(['foods', 'recipes', 'plans']);
 export function NutritionHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { appState } = useAppState();
-  const [addingFood, setAddingFood] = useState(false);
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const validTabs = isPostMvp ? POST_MVP_TABS : MVP_TABS;
   const rawTab = searchParams.get('tab') ?? 'foods';
@@ -46,9 +45,11 @@ export function NutritionHub() {
 
   const headerActions: Record<string, ReactNode> = {
     foods: (
-      <Button type="button" variant="primary" size="md" onClick={() => setAddingFood(true)}>
-        <Plus aria-hidden="true" />
-        Add food
+      <Button asChild variant="primary" size="md">
+        <Link to="/coach/nutrition/foods/new" state={{ library: location.search }}>
+          <Plus aria-hidden="true" />
+          New food
+        </Link>
       </Button>
     ),
     recipes: (
@@ -95,8 +96,6 @@ export function NutritionHub() {
           </TabsContent>
         )}
       </Tabs>
-
-      <FoodFormDialog open={addingFood} onOpenChange={setAddingFood} />
     </div>
   );
 }
