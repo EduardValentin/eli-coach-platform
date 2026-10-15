@@ -35,6 +35,7 @@
     "@napi-rs/canvas": "catalog:",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
+    "@remix-run/form-data-parser": "catalog:",
     "archiver": "catalog:",
     "canvas-confetti": "1.9.4",
     "drizzle-orm": "catalog:",

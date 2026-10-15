@@ -75,6 +75,19 @@ script creates, at `/srv/client-resources` as read-write in both blue and green
 platform containers. It must never be served by the edge proxy: the application
 streams a resource only to the client it was shared with and to the coach.
 
+Exercise demo videos, the clips the coach attaches to the exercises in her
+library, live in a fourth private root, configured by `EXERCISE_VIDEO_ROOT`.
+Like the resource root it is required in every runtime with no provider switch,
+a production runtime rejects the `replace-me` placeholder, and it holds plain
+private files: coaching content, not client data, so it is not encrypted. Local
+development uses the gitignored `local/exercise-videos/` directory, created by
+`pnpm exercise:videos:local:prepare`. TEST sets the value in
+`deploy/test/docker-compose.application.yml` and bind-mounts the persistent host
+directory `/srv/exercise-videos/eli-coach-platform`, which the deploy script
+creates, at `/srv/exercise-videos` as read-write in both blue and green platform
+containers. It must never be served by the edge proxy: the application streams
+a video only to a viewer the exercise's access rule admits, today the coach.
+
 Every photo is encrypted before it is written, so the runtime file must also expose:
 
 - `CLIENT_MEDIA_KEY` (base64 of 32 random bytes, for example `openssl rand -base64 32`; a production runtime rejects the `replace-me` placeholder)

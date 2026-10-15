@@ -31,6 +31,7 @@
     "dev:platform": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",
     "docker:local:down": "docker compose -f docker-compose.local.yml down",
     "docker:local:up": "docker compose -f docker-compose.local.yml up -d",
+    "exercise:videos:local:prepare": "./scripts/dev/prepare_local_exercise_videos.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint apps packages --ext .ts,.tsx && pnpm format:check",
@@ -46,7 +47,7 @@
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "validate": "pnpm validate:unit && pnpm test:integration",
-    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build CLIENT_RESOURCE_ROOT=/tmp/eli-coach-client-resources-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
+    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build CLIENT_RESOURCE_ROOT=/tmp/eli-coach-client-resources-build EXERCISE_VIDEO_ROOT=/tmp/eli-coach-exercise-videos-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {

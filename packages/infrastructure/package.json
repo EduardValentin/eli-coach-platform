@@ -37,6 +37,7 @@
     "@eli-coach-platform/domain": "workspace:*",
     "@file-type/cfbf": "catalog:",
     "@napi-rs/canvas": "catalog:",
+    "@remix-run/form-data-parser": "catalog:",
     "@tokenizer/inflate": "catalog:",
     "drizzle-orm": "catalog:",
     "file-type": "catalog:",

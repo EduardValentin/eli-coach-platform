@@ -346,6 +346,26 @@ module.exports = {
       to: { path: "(^|/)(pdfjs-dist|@napi-rs/canvas)(/|$)" },
     },
     {
+      name: "form-data-parser-confined",
+      comment:
+        "Streaming multipart parsing stays in one http module: nothing else names @remix-run/form-data-parser or the multipart parser under it.",
+      severity: "error",
+      from: {
+        pathNot: [
+          "^packages/infrastructure/src/http/streaming-form-data\\.server\\.ts$",
+        ],
+      },
+      to: { path: "(^|/)@remix-run/(form-data-parser|multipart-parser)(/|$)" },
+    },
+    {
+      name: "file-type-confined",
+      comment:
+        "File format detection stays behind the infrastructure documents concern: nothing else names file-type or @file-type/*.",
+      severity: "error",
+      from: { pathNot: ["^packages/infrastructure/src/documents/"] },
+      to: { path: "(^|/)(file-type|@file-type/[^/]+)(/|$)" },
+    },
+    {
       name: "feature-api-to-data",
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",

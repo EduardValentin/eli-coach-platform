@@ -49,6 +49,9 @@ catalogs:
     '@react-router/serve':
       specifier: 7.18.2
       version: 7.18.2
+    '@remix-run/form-data-parser':
+      specifier: 1.0.0
+      version: 1.0.0
     '@tailwindcss/vite':
       specifier: 4.2.4
       version: 4.2.4
@@ -335,6 +338,9 @@ importers:
       '@react-router/serve':
         specifier: 'catalog:'
         version: 7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@6.0.3)
+      '@remix-run/form-data-parser':
+        specifier: 'catalog:'
+        version: 1.0.0
       archiver:
         specifier: 'catalog:'
         version: 8.0.0
@@ -484,6 +490,9 @@ importers:
       '@napi-rs/canvas':
         specifier: 1.0.10
         version: 1.0.10
+      '@remix-run/form-data-parser':
+        specifier: 'catalog:'
+        version: 1.0.0
       '@tokenizer/inflate':
         specifier: 'catalog:'
         version: 0.4.1
@@ -3015,6 +3024,15 @@ packages:
     hasBin: true
     peerDependencies:
       react-router: 7.18.2
+
+  '@remix-run/form-data-parser@1.0.0':
+    resolution: {integrity: sha512-jvAQhOb4ZLW/Qk3MTEdAGrdDH++Vdd0ox34IKorUW2PqaRVqyPxO+P57gbLRJC5FFwiFWqwq/zm14/h7TBZXPw==}
+
+  '@remix-run/headers@1.0.0':
+    resolution: {integrity: sha512-EhZ8V2eqrRWZym4FwGRaEw21w9b8EgwnZ5NA8RCY/V4X/COKTyoEthUcH/w0wVgzIn+PeWgp+YLHq+9r4pqEUQ==}
+
+  '@remix-run/multipart-parser@1.0.0':
+    resolution: {integrity: sha512-ZrS2qvE5AfgOJmsZzILy3bCUTPoMXom1NVO58qZOg2R+3qOGnKjQxUP/JHfFnTWA/CcmFEtiGCsTuPpTPgGUfg==}
 
   '@remix-run/node-fetch-server@0.13.0':
     resolution: {integrity: sha512-1EsNo0ZpgXu/90AWoRZf/oE3RVTUS80tiTUpt+hv5pjtAkw7icN4WskDwz/KdAw5ARbJLMhZBrO1NqThmy/McA==}
@@ -9117,6 +9135,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  '@remix-run/form-data-parser@1.0.0':
+    dependencies:
+      '@remix-run/headers': 1.0.0
+      '@remix-run/multipart-parser': 1.0.0
+
+  '@remix-run/headers@1.0.0': {}
+
+  '@remix-run/multipart-parser@1.0.0':
+    dependencies:
+      '@remix-run/headers': 1.0.0
 
   '@remix-run/node-fetch-server@0.13.0': {}
 

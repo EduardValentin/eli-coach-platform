@@ -45,6 +45,7 @@ function buildEnvironment(
     MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
+    EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
     ...overrides,
   };
 }
@@ -117,6 +118,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
           NODE_ENV: "production",
           STORE_ASSET_ROOT: "/srv/store-assets",
           CLIENT_RESOURCE_ROOT: "/srv/client-resources",
+          EXERCISE_VIDEO_ROOT: "/srv/exercise-videos",
         }),
       ),
     ).toThrow(
@@ -267,6 +269,46 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.CLIENT_RESOURCE_ROOT).toBe("/srv/client-resources");
+  });
+
+  it("requires an exercise video root", () => {
+    // arrange
+    // act
+    const loadWithoutVideoRoot = () =>
+      loadTestRuntimeEnvironment({
+        EXERCISE_VIDEO_ROOT: undefined,
+      });
+
+    // assert
+    expect(loadWithoutVideoRoot).toThrow();
+  });
+
+  it("rejects a placeholder exercise video root in production", () => {
+    // arrange
+    // act
+    const loadPlaceholderVideoRoot = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "production",
+        EXERCISE_VIDEO_ROOT: "replace-me",
+        TURNSTILE_SECRET_KEY: "real-secret",
+        TURNSTILE_SITE_KEY: "real-site-key",
+      });
+
+    // assert
+    expect(loadPlaceholderVideoRoot).toThrow(
+      "Production exercise videos require a non-placeholder EXERCISE_VIDEO_ROOT.",
+    );
+  });
+
+  it("exposes the configured exercise video root", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      EXERCISE_VIDEO_ROOT: "/srv/exercise-videos",
+    });
+
+    // assert
+    expect(environment.EXERCISE_VIDEO_ROOT).toBe("/srv/exercise-videos");
   });
 
   it("requires a configured management API secret", () => {

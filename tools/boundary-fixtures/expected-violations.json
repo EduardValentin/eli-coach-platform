@@ -159,6 +159,14 @@
   "packages/infrastructure/src/bot-detection/infrastructure-browser-entries.ts": [
     "infrastructure-browser-entries"
   ],
+  "packages/infrastructure/src/email/file-type-confined.server.ts": [
+    "file-type-confined",
+    "not-to-unresolvable"
+  ],
+  "packages/infrastructure/src/email/form-data-parser-confined.server.ts": [
+    "form-data-parser-confined",
+    "not-to-unresolvable"
+  ],
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
   ],

@@ -14,6 +14,7 @@ function createRuntimeEnvironmentWithoutDatabase() {
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
+    EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
   });
 }
 
