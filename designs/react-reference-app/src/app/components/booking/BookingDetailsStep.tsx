@@ -51,7 +51,7 @@ export function BookingDetailsStep({
   const { fieldErrors } = form;
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-5 flex-1">
+    <form noValidate onSubmit={onSubmit} className="space-y-5 flex-1" data-parity-root="BookingDetailsForm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="space-y-2">
           <Label htmlFor={FIELD_IDS.firstName} className="text-text-label font-medium" required>First name</Label>

@@ -2075,6 +2075,9 @@
   ],
   "open-checkin-propose": [
     {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
     {
@@ -3702,6 +3705,9 @@
     }
   ],
   "reschedule-checkin-pick-time": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
     {
       "click": "[data-parity-root$=\"Checkins\"] li:has([aria-label^=\"Rescheduled from\"]) >> [data-parity=\"row-actions-trigger\"] >> nth=0"
     },
