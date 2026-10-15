@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-14 at commit 795125d5, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-15 at commit 2d0de004 (library follow-ups), change review.
 
 ## Component graph
 
@@ -4489,3 +4489,4 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E5252 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E5253 | packages/ui/src/appointments/join-link.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E5254 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/date-time-label.tsx | import | no | no | lateral | present |
+| E5400 | apps/platform/src/features/exercise-library/data/schema.server.ts | apps/platform/src/features/accounts/data/schema.server.ts | import | yes | no | lateral | present. The exercise's owner foreign key, under `feature-schema-foreign-key` |

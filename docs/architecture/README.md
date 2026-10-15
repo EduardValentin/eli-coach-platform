@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-14 at commit 795125d5, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-15 at commit 2d0de004, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
