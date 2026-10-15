@@ -53,17 +53,37 @@ describe("coach schedule settings section", () => {
     expect(
       screen.getByRole("checkbox", { name: "Saturday" }),
     ).not.toBeChecked();
-    expect(screen.getByRole("combobox", { name: "Start" })).toHaveTextContent(
-      "17:00",
-    );
-    expect(screen.getByRole("combobox", { name: "End" })).toHaveTextContent(
-      "20:00",
-    );
+    expect(
+      screen.getByRole("combobox", { name: "Start (required)" }),
+    ).toHaveTextContent("17:00");
+    expect(
+      screen.getByRole("combobox", { name: "End (required)" }),
+    ).toHaveTextContent("20:00");
     expect(screen.getByLabelText("Meeting link")).toHaveValue("");
     expect(
       screen.getByText(
         "No one can join calls or check-ins until a link is set.",
       ),
+    ).toBeInTheDocument();
+  });
+
+  it("marks the days and the hours as required and the meeting link as optional", async () => {
+    // arrange, act
+    await renderSection();
+
+    // assert
+    expect(
+      screen.getByRole("group", { name: "Days I'm available (required)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Hours" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Start (required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "End (required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Meeting link" }),
     ).toBeInTheDocument();
   });
 
@@ -175,9 +195,9 @@ describe("coach schedule settings section", () => {
       "role",
       "alert",
     );
-    expect(screen.getByRole("combobox", { name: "Start" })).toHaveTextContent(
-      "17:00",
-    );
+    expect(
+      screen.getByRole("combobox", { name: "Start (required)" }),
+    ).toHaveTextContent("17:00");
   });
 
   it("refuses an https-only meeting link and keeps the entered value", async () => {
@@ -250,7 +270,9 @@ describe("coach schedule settings section", () => {
     );
     const user = userEvent.setup();
     await renderSection();
-    const startHour = screen.getByRole("combobox", { name: "Start" });
+    const startHour = screen.getByRole("combobox", {
+      name: "Start (required)",
+    });
 
     // act
     startHour.focus();

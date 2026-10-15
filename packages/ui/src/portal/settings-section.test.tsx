@@ -194,6 +194,32 @@ describe("SettingsRow", () => {
     ).toBeInTheDocument();
   });
 
+  it("stars a required fieldset row and names its group as required", () => {
+    // arrange
+    // act
+    render(
+      <SettingsRows>
+        <SettingsRow
+          as="fieldset"
+          labelId="weekdays-label"
+          layout="stacked"
+          required
+          title="Days I take calls"
+        >
+          <label>
+            <input type="checkbox" /> Monday
+          </label>
+        </SettingsRow>
+      </SettingsRows>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("group", { name: "Days I take calls (required)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("labels the control it is given a field id for", () => {
     // arrange
     // act

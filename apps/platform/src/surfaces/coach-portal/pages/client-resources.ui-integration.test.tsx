@@ -557,9 +557,9 @@ describe("adding a resource", () => {
     // assert
     expect(within(dialog).getByText("meal-plan_week-one.pdf")).toBeVisible();
     expect(within(dialog).getByText("2.0 MB")).toBeVisible();
-    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
-      "Meal plan week one",
-    );
+    expect(
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
+    ).toHaveValue("Meal plan week one");
     expect(
       within(dialog).queryByLabelText(DROP_PROMPT),
     ).not.toBeInTheDocument();
@@ -575,9 +575,9 @@ describe("adding a resource", () => {
 
     // assert
     expect(await within(dialog).findByText("plate-portions.png")).toBeVisible();
-    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
-      "Plate portions",
-    );
+    expect(
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
+    ).toHaveValue("Plate portions");
   });
 
   it("replaces the chosen file and the title it suggested", async () => {
@@ -600,9 +600,9 @@ describe("adding a resource", () => {
     expect(
       within(dialog).queryByText("first-draft.pdf"),
     ).not.toBeInTheDocument();
-    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
-      "Final plan",
-    );
+    expect(
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
+    ).toHaveValue("Final plan");
   });
 
   it("keeps a title she typed when she replaces the file", async () => {
@@ -613,7 +613,9 @@ describe("adding a resource", () => {
       within(dialog).getByLabelText(DROP_PROMPT),
       fileNamed("first-draft.pdf"),
     );
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     await user.clear(title);
     await user.type(title, "Your plan");
 
@@ -651,7 +653,7 @@ describe("adding a resource", () => {
       "PDF, Word, Excel or image · up to 25 MB Choose a file to add.",
     );
     expect(
-      within(dialog).getByRole("textbox", { name: "Title" }),
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
     ).toHaveAccessibleDescription("Give it a title.");
     expect(sent).toEqual([]);
   });
@@ -683,7 +685,7 @@ describe("adding a resource", () => {
         `PDF, Word, Excel or image · up to 25 MB ${message}`,
       );
       expect(
-        within(dialog).getByRole("textbox", { name: "Title" }),
+        within(dialog).getByRole("textbox", { name: "Title (required)" }),
       ).toHaveValue("");
     },
   );
@@ -712,10 +714,10 @@ describe("adding a resource", () => {
       ).toHaveAccessibleDescription(message);
       expect(within(dialog).getByText("meal-plan-week-one.pdf")).toBeVisible();
       expect(
-        within(dialog).getByRole("textbox", { name: "Title" }),
+        within(dialog).getByRole("textbox", { name: "Title (required)" }),
       ).toHaveValue("Meal plan week one");
       expect(
-        within(dialog).getByRole("textbox", { name: "Description (optional)" }),
+        within(dialog).getByRole("textbox", { name: "Description" }),
       ).toHaveValue("Start on Monday.");
       expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
       expect(
@@ -758,7 +760,7 @@ describe("adding a resource", () => {
     const { user } = await renderResourcesPage({ resources: [] });
     const dialog = await openFilledAddDialog(user);
     const form = within(dialog)
-      .getByRole("textbox", { name: "Title" })
+      .getByRole("textbox", { name: "Title (required)" })
       .closest("form") as HTMLFormElement;
     HeldUploadRequest.whenSent = () => {
       HeldUploadRequest.whenSent = () => {};
@@ -836,11 +838,11 @@ describe("adding a resource", () => {
       "The upload didn’t go through. Try again.",
     );
     expect(within(dialog).getByText("meal-plan-week-one.pdf")).toBeVisible();
-    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
-      "Meal plan week one",
-    );
     expect(
-      within(dialog).getByRole("textbox", { name: "Description (optional)" }),
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
+    ).toHaveValue("Meal plan week one");
+    expect(
+      within(dialog).getByRole("textbox", { name: "Description" }),
     ).toHaveValue("Start on Monday.");
     expect(
       within(dialog).getByRole("button", { name: "Add resource" }),
@@ -888,7 +890,7 @@ describe("adding a resource", () => {
     const { user } = await renderResourcesRouter(store.load);
     const dialog = await openFilledAddDialog(user);
     await user.type(
-      within(dialog).getByRole("textbox", { name: "Title" }),
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
       "  ",
     );
 
@@ -1215,11 +1217,11 @@ describe("editing a resource's details", () => {
     // assert
     expect(within(dialog).getByText("food-diary-template.docx")).toBeVisible();
     expect(within(dialog).getByText("303 KB")).toBeVisible();
-    expect(within(dialog).getByRole("textbox", { name: "Title" })).toHaveValue(
-      "Food diary template",
-    );
     expect(
-      within(dialog).getByRole("textbox", { name: "Description (optional)" }),
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
+    ).toHaveValue("Food diary template");
+    expect(
+      within(dialog).getByRole("textbox", { name: "Description" }),
     ).toHaveValue("");
     expect(within(dialog).queryByLabelText("Replace")).not.toBeInTheDocument();
     expect(
@@ -1232,9 +1234,11 @@ describe("editing a resource's details", () => {
     // arrange
     const { user } = await renderResourcesPage();
     const dialog = await openEditDialog(user, "Plate portions guide");
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     const description = within(dialog).getByRole("textbox", {
-      name: "Description (optional)",
+      name: "Description",
     });
     const save = within(dialog).getByRole("button", { name: "Save" });
 
@@ -1268,7 +1272,9 @@ describe("editing a resource's details", () => {
       within(viewer).getByRole("button", { name: "Edit details" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Edit details" });
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     await user.clear(title);
     await user.type(title, "  Glute warm-up  ");
 
@@ -1318,7 +1324,9 @@ describe("editing a resource's details", () => {
     );
     const { user } = await renderResourcesPage();
     const dialog = await openEditDialog(user, "Plate portions guide");
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     await user.clear(title);
     await user.type(title, "Portions");
 
@@ -1354,7 +1362,9 @@ describe("editing a resource's details", () => {
     );
     const { user } = await renderResourcesRouter(store.load);
     const dialog = await openEditDialog(user, "Plate portions guide");
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     await user.clear(title);
     await user.type(title, "Portions");
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -1376,7 +1386,7 @@ describe("editing a resource's details", () => {
     const { user } = await renderResourcesPage();
     const dialog = await openEditDialog(user, "Plate portions guide");
     await user.type(
-      within(dialog).getByRole("textbox", { name: "Title" }),
+      within(dialog).getByRole("textbox", { name: "Title (required)" }),
       " v2",
     );
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -1410,7 +1420,9 @@ describe("editing a resource's details", () => {
     );
     const { user } = await renderResourcesPage();
     const dialog = await openEditDialog(user, "Plate portions guide");
-    const title = within(dialog).getByRole("textbox", { name: "Title" });
+    const title = within(dialog).getByRole("textbox", {
+      name: "Title (required)",
+    });
     await user.type(title, " for every meal");
 
     // act
@@ -1939,7 +1951,7 @@ async function openFilledAddDialog(user: ReturnType<typeof userEvent.setup>) {
     fileNamed("meal-plan-week-one.pdf", 2 * MEGABYTE),
   );
   await user.type(
-    within(dialog).getByRole("textbox", { name: "Description (optional)" }),
+    within(dialog).getByRole("textbox", { name: "Description" }),
     "Start on Monday.",
   );
 
@@ -2103,7 +2115,7 @@ function shownTitles(): string[] {
 }
 
 function tagField(dialog: HTMLElement): HTMLElement {
-  return within(dialog).getByRole("combobox", { name: "Tags (optional)" });
+  return within(dialog).getByRole("combobox", { name: "Tags" });
 }
 
 function chosenTags(dialog: HTMLElement): string[] {

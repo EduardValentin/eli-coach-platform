@@ -602,14 +602,18 @@ describe("reviewing her answers", () => {
       within(dialog).getByRole("checkbox", { name: "Flag Primary goal" }),
     );
     await user.type(
-      within(dialog).getByRole("textbox", { name: "What is missing?" }),
+      within(dialog).getByRole("textbox", {
+        name: "What is missing? (required)",
+      }),
       "   ",
     );
 
     // assert
     expect(askButton).toBeDisabled();
     await user.type(
-      within(dialog).getByRole("textbox", { name: "What is missing?" }),
+      within(dialog).getByRole("textbox", {
+        name: "What is missing? (required)",
+      }),
       "More, please",
     );
     expect(askButton).toBeEnabled();
@@ -650,7 +654,9 @@ describe("reviewing her answers", () => {
       within(dialog).getByRole("checkbox", { name: "Flag Heart condition" }),
     );
     await user.type(
-      within(dialog).getByRole("textbox", { name: "What is missing?" }),
+      within(dialog).getByRole("textbox", {
+        name: "What is missing? (required)",
+      }),
       "  Tell me more about your heart.  ",
     );
     loaded.review = reviewView({
@@ -694,7 +700,9 @@ describe("reviewing her answers", () => {
       within(dialog).getByRole("checkbox", { name: "Flag Primary goal" }),
     );
     await user.type(
-      within(dialog).getByRole("textbox", { name: "What is missing?" }),
+      within(dialog).getByRole("textbox", {
+        name: "What is missing? (required)",
+      }),
       "More, please",
     );
 

@@ -41,7 +41,7 @@ export const CHECK_IN_PROPOSE_PICKER: CheckInPickerKind = {
 };
 
 const CLOCK_TIME = /^\d{1,2}:\d{2}/;
-const NOTE_FIELD = /^Add a note for .+ \(optional\)$/;
+const NOTE_FIELD = /^Add a note for .+$/;
 const TIME_TAKEN = "That time is no longer free. Pick another one.";
 const SHEET_HANDLE = '[data-parity="sheet-handle"]';
 const NEXT_MONTH = /next month/i;
@@ -119,7 +119,7 @@ export class CheckInPickerDialog {
   async expectNoteFor(recipient: string): Promise<void> {
     await expect(
       this.dialog.getByRole("textbox", {
-        name: `Add a note for ${recipient} (optional)`,
+        name: `Add a note for ${recipient}`,
         exact: true,
       }),
     ).toBeVisible();

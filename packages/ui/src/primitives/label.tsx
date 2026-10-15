@@ -11,12 +11,30 @@ const LABEL_LAYOUT_CLASSES = {
   wrap: "flex flex-wrap items-baseline gap-1.5",
 } as const;
 
-const REQUIRED_MARK_CLASSES = {
+const REQUIRED_MARK_PLACEMENTS = {
   inline: "-ml-1.5",
   wrap: "-ml-1",
+  text: "ml-0.5",
 } as const;
 
 export type LabelLayout = keyof typeof LABEL_LAYOUT_CLASSES;
+
+type RequiredMarkPlacement = keyof typeof REQUIRED_MARK_PLACEMENTS;
+
+export function RequiredMark({
+  placement = "text",
+}: {
+  placement?: RequiredMarkPlacement;
+}) {
+  return (
+    <>
+      <span aria-hidden="true" className={REQUIRED_MARK_PLACEMENTS[placement]}>
+        *
+      </span>{" "}
+      <span className="sr-only">(required)</span>
+    </>
+  );
+}
 
 type LabelProps = React.ComponentPropsWithoutRef<"label"> & {
   htmlFor: string;
@@ -53,14 +71,7 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       {...props}
     >
       {children}
-      {required && (
-        <>
-          <span aria-hidden="true" className={REQUIRED_MARK_CLASSES[layout]}>
-            *
-          </span>{" "}
-          <span className="sr-only">(required)</span>
-        </>
-      )}
+      {required && <RequiredMark placement={layout} />}
       {trailing}
     </label>
   ),
@@ -68,10 +79,13 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
 
 Label.displayName = "Label";
 
-type LegendProps = React.ComponentPropsWithoutRef<"legend">;
+type LegendProps = React.ComponentPropsWithoutRef<"legend"> & {
+  required?: boolean;
+  trailing?: React.ReactNode;
+};
 
 export const Legend = React.forwardRef<HTMLLegendElement, LegendProps>(
-  ({ className, ...props }, ref) => (
+  ({ children, className, required, trailing, ...props }, ref) => (
     <legend
       ref={ref}
       className={cn(
@@ -82,7 +96,11 @@ export const Legend = React.forwardRef<HTMLLegendElement, LegendProps>(
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {required && <RequiredMark placement="wrap" />}
+      {trailing}
+    </legend>
   ),
 );
 

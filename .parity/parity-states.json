@@ -50,6 +50,22 @@
     }
   ],
   "book-slots-unavailable": [],
+  "book-details": [
+    {
+      "use": "book-time-picked"
+    },
+    {
+      "click": "role=button[name=\"Continue to your details\"]"
+    }
+  ],
+  "book-details-errors": [
+    {
+      "use": "book-details"
+    },
+    {
+      "click": "form button[type=\"submit\"]"
+    }
+  ],
   "book-time-picked": [
     {
       "click": "td[data-day] button:not([disabled])"
@@ -307,7 +323,7 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=\"Add a note for your coach (optional)\"]",
+        "[data-parity-root=\"CheckinSchedulerSheet\"] >> role=textbox[name=\"Add a note for your coach\"]",
         "Can we look at my squat form?"
       ]
     },
@@ -1382,7 +1398,7 @@
     },
     {
       "fill": [
-        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "[role=\"dialog\"] >> role=textbox[name=\"Description\"]",
         "Ten minutes before every lower-body session."
       ]
     },
@@ -1402,7 +1418,7 @@
     },
     {
       "fill": [
-        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "[role=\"dialog\"] >> role=textbox[name=\"Description\"]",
         "Ten minutes before every lower-body session."
       ]
     },
@@ -1425,7 +1441,7 @@
     },
     {
       "fill": [
-        "[role=\"dialog\"] >> role=textbox[name=\"Description (optional)\"]",
+        "[role=\"dialog\"] >> role=textbox[name=\"Description\"]",
         "Ten minutes before every lower-body session."
       ]
     },

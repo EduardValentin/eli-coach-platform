@@ -10,7 +10,7 @@ export class TagField {
 
   private get entry() {
     return this.dialog.getByRole("combobox", {
-      name: "Tags (optional)",
+      name: "Tags",
       exact: true,
     });
   }

@@ -37,8 +37,6 @@ type MeasureFieldProps<
   validate?: Validate<FieldPathValue<TValues, TName>, TValues>;
 };
 
-const OPTIONAL_SUFFIX = "(optional)";
-
 function enteredText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
@@ -73,16 +71,11 @@ function displayBound(
 }
 
 function labelSuffixesOf(field: MeasureFieldDefinition, units: MeasureUnits) {
-  const unitSuffix = {
-    parity: `field-${field.id}-suffix-unit`,
-    text: `(${measureUnitLabel(field.kind, units)})`,
-  };
-
-  if (field.requirement !== "optional") return [unitSuffix];
-
   return [
-    unitSuffix,
-    { parity: `field-${field.id}-suffix-optional`, text: OPTIONAL_SUFFIX },
+    {
+      parity: `field-${field.id}-suffix-unit`,
+      text: `(${measureUnitLabel(field.kind, units)})`,
+    },
   ];
 }
 
@@ -109,6 +102,7 @@ export function MeasureField<
       errorParity={`field-${field.id}-error`}
       hint={field.hint}
       label={<span>{field.label}</span>}
+      required={field.requirement === "required"}
       suffixes={labelSuffixesOf(field, units)}
     >
       {(controlAttributes) => (

@@ -145,4 +145,43 @@ describe("CheckboxField", () => {
     expect(label.parentElement).toHaveClass("flex", "items-center", "gap-2");
     expect(label.parentElement).not.toHaveClass("rounded-card");
   });
+
+  it("stars a statement she must tick and names it as required", () => {
+    // arrange
+    const onCheckedChange = vi.fn();
+
+    // act
+    render(
+      <CheckboxField
+        checked={false}
+        label={STATEMENT}
+        layout="statement"
+        onCheckedChange={onCheckedChange}
+        required
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("checkbox", { name: `${STATEMENT} (required)` }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows no star on a statement she may leave unticked", () => {
+    // arrange
+    const onCheckedChange = vi.fn();
+
+    // act
+    render(
+      <CheckboxField
+        checked={false}
+        label={STATEMENT}
+        onCheckedChange={onCheckedChange}
+      />,
+    );
+
+    // assert
+    expect(screen.queryByText("*")).not.toBeInTheDocument();
+  });
 });

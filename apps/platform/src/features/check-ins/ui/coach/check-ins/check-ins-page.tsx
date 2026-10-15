@@ -66,7 +66,7 @@ const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
     successMessage: `Cancelled check-in with ${clientFullName(checkIn.client)}`,
   }),
   proposerOf: (checkIn) => ({
-    noteLabel: `Add a note for ${checkIn.client.firstName} (optional)`,
+    noteLabel: `Add a note for ${checkIn.client.firstName}`,
     openTimesQuery: { clientId: checkIn.clientId },
   }),
 };

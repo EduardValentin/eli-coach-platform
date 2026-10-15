@@ -294,8 +294,12 @@ export class ClientOnboarding {
     await expect(this.entry(label)).toHaveAccessibleDescription(hint);
   }
 
+  async expectRequired(label: string): Promise<void> {
+    await expect(this.entry(label)).toHaveAccessibleName(/\(required\)/);
+  }
+
   async expectOptional(label: string): Promise<void> {
-    await expect(this.entry(label)).toHaveAccessibleName(/\(optional\)/);
+    await expect(this.entry(label)).not.toHaveAccessibleName(/\(required\)/);
   }
 
   async expectAnswer(label: string, value: string): Promise<void> {

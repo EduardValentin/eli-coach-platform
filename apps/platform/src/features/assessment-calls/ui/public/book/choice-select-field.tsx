@@ -40,7 +40,12 @@ export function ChoiceSelectField(props: ChoiceSelectFieldProps) {
 
   return (
     <div className="space-y-2">
-      <Label className="font-medium text-text-label" htmlFor={id} id={labelId}>
+      <Label
+        className="font-medium text-text-label"
+        htmlFor={id}
+        id={labelId}
+        required
+      >
         {label}
       </Label>
       <Select

@@ -185,6 +185,33 @@ describe("booking an assessment call: choosing a time", BOOKING_FLOW, () => {
 });
 
 describe("booking an assessment call: the details", BOOKING_FLOW, () => {
+  it("marks the details she must give as required and leaves the phone and the note optional", async () => {
+    // arrange
+    const user = renderBookingPage();
+
+    // act
+    await reachDetails(user);
+
+    // assert
+    for (const name of ["First name", "Last name", "Email Address"]) {
+      expect(
+        screen.getByRole("textbox", { name: `${name} (required)` }),
+      ).toBeInTheDocument();
+    }
+    expect(
+      screen.getByRole("button", { name: "Date of birth (required)" }),
+    ).toBeInTheDocument();
+    for (const name of ["Gender", "Primary goal", "Country"]) {
+      expect(
+        screen.getByRole("combobox", { name: `${name} (required)` }),
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByRole("group", { name: "Phone" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
+    ).toBeInTheDocument();
+  });
+
   it("explains every rejected detail under its field and keeps the chosen call", async () => {
     // arrange
     const user = renderBookingPage();
@@ -192,10 +219,13 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     const chosenCall = chosenCallSummary();
 
     // act
-    await user.type(screen.getByLabelText("Email Address"), "not-an-address");
+    await user.type(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+      "not-an-address",
+    );
     await user.type(screen.getByLabelText("Phone number"), "12ab");
     await user.click(
-      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
     );
     await user.paste("x".repeat(1001));
     await user.click(screen.getByRole("button", { name: "Schedule Call" }));
@@ -204,37 +234,38 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     expect(
       await screen.findByText("Enter your first name, up to 60 characters."),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("First name")).toHaveAccessibleDescription(
+    expect(
+      screen.getByRole("textbox", { name: "First name (required)" }),
+    ).toHaveAccessibleDescription(
       "Enter your first name, up to 60 characters.",
     );
-    expect(screen.getByLabelText("Last name")).toHaveAccessibleDescription(
-      "Enter your last name, up to 60 characters.",
-    );
-    expect(screen.getByLabelText("Email Address")).toHaveAccessibleDescription(
-      "Enter a valid email address.",
-    );
-    expect(screen.getByLabelText("Date of birth")).toHaveAccessibleDescription(
-      "Choose your date of birth.",
-    );
     expect(
-      screen.getByRole("combobox", { name: "Gender" }),
+      screen.getByRole("textbox", { name: "Last name (required)" }),
+    ).toHaveAccessibleDescription("Enter your last name, up to 60 characters.");
+    expect(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    ).toHaveAccessibleDescription("Enter a valid email address.");
+    expect(
+      screen.getByRole("button", { name: "Date of birth (required)" }),
+    ).toHaveAccessibleDescription("Choose your date of birth.");
+    expect(
+      screen.getByRole("combobox", { name: "Gender (required)" }),
     ).toHaveAccessibleDescription("Choose an option.");
     expect(
-      screen.getByRole("combobox", { name: "Primary goal" }),
+      screen.getByRole("combobox", { name: "Primary goal (required)" }),
     ).toHaveAccessibleDescription("Choose your primary goal.");
     expect(
-      screen.getByRole("combobox", { name: "Country" }),
+      screen.getByRole("combobox", { name: "Country (required)" }),
     ).toHaveAccessibleDescription("Choose your country.");
     expect(screen.getByLabelText("Phone number")).toHaveAccessibleDescription(
       "Enter a phone number with digits only, 4 to 14 digits after the country code.",
     );
     expect(
-      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
     ).toHaveAccessibleDescription("Keep your note under 1000 characters.");
-    expect(screen.getByLabelText("First name")).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "First name (required)" }),
+    ).toHaveAttribute("aria-invalid", "true");
     expect(chosenCallSummary()).toBe(chosenCall);
   });
 
@@ -242,7 +273,9 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     // arrange
     const user = renderBookingPage();
     await reachDetails(user);
-    await user.click(screen.getByLabelText("Date of birth"));
+    await user.click(
+      screen.getByRole("button", { name: "Date of birth (required)" }),
+    );
 
     // act
     await chooseOption(user, "Year", "2008");
@@ -258,7 +291,9 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     // arrange
     const user = renderBookingPage();
     await reachDetails(user);
-    await user.click(screen.getByLabelText("Date of birth"));
+    await user.click(
+      screen.getByRole("button", { name: "Date of birth (required)" }),
+    );
     await chooseOption(user, "Year", "2008");
     await chooseOption(user, "Month", "March");
 
@@ -266,9 +301,9 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     await user.click(calendarDayButton("2008-03-02"));
 
     // assert
-    expect(screen.getByLabelText("Date of birth")).toHaveTextContent(
-      "2 March 2008",
-    );
+    expect(
+      screen.getByRole("button", { name: "Date of birth (required)" }),
+    ).toHaveTextContent("2 March 2008");
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
   });
 
@@ -278,21 +313,21 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     await reachDetails(user);
 
     // act
-    await chooseOption(user, "Country", "Romania");
+    await chooseOption(user, "Country (required)", "Romania");
     const afterCountry = screen.getByRole("combobox", {
       name: "Country calling code",
     }).textContent;
     await chooseOption(user, "Country calling code", "+44 GB");
-    await chooseOption(user, "Country", "France");
+    await chooseOption(user, "Country (required)", "France");
 
     // assert
     expect(afterCountry).toBe("+40 RO");
     expect(
       screen.getByRole("combobox", { name: "Country calling code" }),
     ).toHaveTextContent("+44 GB");
-    expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent(
-      "France",
-    );
+    expect(
+      screen.getByRole("combobox", { name: "Country (required)" }),
+    ).toHaveTextContent("France");
   });
 
   it("moves focus to the first rejected detail", async () => {
@@ -300,15 +335,22 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     const user = renderBookingPage();
     await reachDetails(user);
     await fillDetails(user);
-    await user.clear(screen.getByLabelText("Email Address"));
-    await user.type(screen.getByLabelText("Email Address"), "not-an-address");
+    await user.clear(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+      "not-an-address",
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     await waitFor(() => {
-      expect(screen.getByLabelText("Email Address")).toHaveFocus();
+      expect(
+        screen.getByRole("textbox", { name: "Email Address (required)" }),
+      ).toHaveFocus();
     });
   });
 
@@ -325,8 +367,12 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     const user = renderBookingPage();
     await reachDetails(user);
     await fillDetails(user);
-    await user.clear(screen.getByLabelText("Email Address"));
-    await user.click(screen.getByLabelText("Email Address"));
+    await user.clear(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    );
+    await user.click(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    );
     await user.paste(`${"a".repeat(309)}@example.com`);
 
     // act
@@ -336,9 +382,9 @@ describe("booking an assessment call: the details", BOOKING_FLOW, () => {
     expect(
       await screen.findByText("Enter a valid email address."),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Email Address")).toHaveAccessibleDescription(
-      "Enter a valid email address.",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    ).toHaveAccessibleDescription("Enter a valid email address.");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(bookingRequests).toBe(0);
   });
@@ -469,7 +515,7 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     await reachDetails(user);
     await fillDetails(user);
     await user.type(
-      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
       "Knee injury last year",
     );
 
@@ -516,7 +562,7 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     await reachDetails(user);
     await fillDetails(user);
     await user.type(
-      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
       "Knee injury last year",
     );
 
@@ -549,9 +595,11 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     await reachDetails(user);
     const chosenCall = chosenCallSummary();
     await fillDetails(user);
-    await user.clear(screen.getByLabelText("Email Address"));
+    await user.clear(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    );
     await user.type(
-      screen.getByLabelText("Email Address"),
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
       "jane+coaching@example.com",
     );
 
@@ -560,15 +608,16 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
 
     // assert
     await waitFor(() => {
-      expect(screen.getByLabelText("Email Address")).toHaveFocus();
+      expect(
+        screen.getByRole("textbox", { name: "Email Address (required)" }),
+      ).toHaveFocus();
     });
-    expect(screen.getByLabelText("Email Address")).toHaveAccessibleDescription(
-      EMAIL_SUBADDRESS_REFUSED_MESSAGE,
-    );
-    expect(screen.getByLabelText("Email Address")).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    ).toHaveAccessibleDescription(EMAIL_SUBADDRESS_REFUSED_MESSAGE);
+    expect(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    ).toHaveAttribute("aria-invalid", "true");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "Almost there" }),
@@ -645,9 +694,9 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
         screen.getByRole("button", { name: "Schedule Call" }),
       ).toBeEnabled();
     });
-    expect(screen.getByLabelText("Email Address")).toHaveValue(
-      "jane@example.com",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Email Address (required)" }),
+    ).toHaveValue("jane@example.com");
   });
 
   it.each([
@@ -685,9 +734,9 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
       expect(
         within(alert).getByRole("link", { name: ELI_COACH_CONTACT_EMAIL }),
       ).toHaveAttribute("href", `mailto:${ELI_COACH_CONTACT_EMAIL}`);
-      expect(screen.getByLabelText("Email Address")).toHaveValue(
-        "jane@example.com",
-      );
+      expect(
+        screen.getByRole("textbox", { name: "Email Address (required)" }),
+      ).toHaveValue("jane@example.com");
       await waitFor(() => {
         expect(turnstile.resets).toBe(1);
       });
@@ -999,28 +1048,32 @@ function chosenCallSummary(): string | null {
 }
 
 async function expectEnteredDetails() {
-  expect(await screen.findByLabelText("First name")).toHaveValue("Jane");
-  expect(screen.getByLabelText("Last name")).toHaveValue("Doe");
-  expect(screen.getByLabelText("Email Address")).toHaveValue(
-    "jane@example.com",
-  );
-  expect(screen.getByLabelText("Date of birth")).toHaveTextContent(
-    "14 March 1994",
-  );
-  expect(screen.getByRole("combobox", { name: "Gender" })).toHaveTextContent(
-    "Female",
-  );
   expect(
-    screen.getByRole("combobox", { name: "Primary goal" }),
+    await screen.findByRole("textbox", { name: "First name (required)" }),
+  ).toHaveValue("Jane");
+  expect(
+    screen.getByRole("textbox", { name: "Last name (required)" }),
+  ).toHaveValue("Doe");
+  expect(
+    screen.getByRole("textbox", { name: "Email Address (required)" }),
+  ).toHaveValue("jane@example.com");
+  expect(
+    screen.getByRole("button", { name: "Date of birth (required)" }),
+  ).toHaveTextContent("14 March 1994");
+  expect(
+    screen.getByRole("combobox", { name: "Gender (required)" }),
+  ).toHaveTextContent("Female");
+  expect(
+    screen.getByRole("combobox", { name: "Primary goal (required)" }),
   ).toHaveTextContent("Build strength");
-  expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent(
-    "Romania",
-  );
+  expect(
+    screen.getByRole("combobox", { name: "Country (required)" }),
+  ).toHaveTextContent("Romania");
   expect(
     screen.getByRole("combobox", { name: "Country calling code" }),
   ).toHaveTextContent("+40 RO");
   expect(
-    screen.getByLabelText("Anything to share beforehand? (Optional)"),
+    screen.getByRole("textbox", { name: "Anything to share beforehand?" }),
   ).toHaveValue("Knee injury last year");
 }
 
@@ -1043,7 +1096,9 @@ function calendarDayButton(dayKey: string): HTMLButtonElement {
 
 async function chooseBirthDate(user: UserEvent, dayKey = "1994-03-14") {
   const [year, month] = dayKey.split("-");
-  await user.click(screen.getByLabelText("Date of birth"));
+  await user.click(
+    screen.getByRole("button", { name: "Date of birth (required)" }),
+  );
   await chooseOption(user, "Year", year);
   await chooseOption(user, "Month", MONTH_NAMES[Number(month) - 1]);
   await user.click(calendarDayButton(dayKey));
@@ -1084,13 +1139,22 @@ async function reachDetails(user: UserEvent) {
 }
 
 async function fillDetails(user: UserEvent) {
-  await user.type(screen.getByLabelText("First name"), "Jane");
-  await user.type(screen.getByLabelText("Last name"), "Doe");
-  await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
+  await user.type(
+    screen.getByRole("textbox", { name: "First name (required)" }),
+    "Jane",
+  );
+  await user.type(
+    screen.getByRole("textbox", { name: "Last name (required)" }),
+    "Doe",
+  );
+  await user.type(
+    screen.getByRole("textbox", { name: "Email Address (required)" }),
+    "jane@example.com",
+  );
   await chooseBirthDate(user);
-  await chooseOption(user, "Gender", "Female");
-  await chooseOption(user, "Primary goal", "Build strength");
-  await chooseOption(user, "Country", "Romania");
+  await chooseOption(user, "Gender (required)", "Female");
+  await chooseOption(user, "Primary goal (required)", "Build strength");
+  await chooseOption(user, "Country (required)", "Romania");
   await waitFor(() => {
     expect(screen.getByTestId("bot-detection-widget")).toBeInTheDocument();
   });
