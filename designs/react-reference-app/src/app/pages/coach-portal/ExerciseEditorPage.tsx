@@ -31,6 +31,7 @@ import {
   VIDEO_ACCEPT,
   isVideoFile,
   isWithinVideoLimit,
+  videoContentRejectionMessage,
   videoRejectionMessage,
   videoTooLargeMessage,
 } from '../../utils/exerciseVideo';
@@ -332,7 +333,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         return;
       }
       setSaving(NOT_SAVING);
-      setVideo((current) => ({ ...current, error: videoRejectionMessage(file) }));
+      setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
     } catch {
       setSaving(UPLOAD_FAILED_STATE);
     }

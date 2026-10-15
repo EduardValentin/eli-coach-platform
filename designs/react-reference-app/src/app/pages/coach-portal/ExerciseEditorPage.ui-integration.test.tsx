@@ -740,7 +740,7 @@ describe('saving with a newly chosen video', () => {
     await user.click(primary());
 
     // assert
-    const message = 'squat.mp4 is not an .mp4 or .mov — only .mp4 and .mov videos are supported';
+    const message = 'squat.mp4 doesn’t contain an MP4 or MOV video.';
     expect(await screen.findByText(message, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent(message);
     expect(screen.getByRole('button', { name: 'Replace video' })).toHaveAttribute('aria-invalid', 'true');

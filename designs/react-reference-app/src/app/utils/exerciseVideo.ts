@@ -29,3 +29,6 @@ export function isWithinVideoLimit(file: File): boolean {
 }
 
 export const videoTooLargeMessage = (file: File): string => `${file.name} is larger than 50 MB`;
+
+export const videoContentRejectionMessage = (file: File): string =>
+  `${file.name} doesn’t contain an MP4 or MOV video.`;

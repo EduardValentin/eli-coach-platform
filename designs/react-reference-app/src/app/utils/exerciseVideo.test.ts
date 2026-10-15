@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { VIDEO_MAX_BYTES, isVideoFile, isWithinVideoLimit, videoRejectionMessage, videoTooLargeMessage } from './exerciseVideo';
+import {
+  VIDEO_MAX_BYTES,
+  isVideoFile,
+  isWithinVideoLimit,
+  videoContentRejectionMessage,
+  videoRejectionMessage,
+  videoTooLargeMessage,
+} from './exerciseVideo';
 
 const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
 
@@ -146,5 +153,18 @@ describe('isWithinVideoLimit', () => {
 
     // assert
     expect(message).toBe('clip.mp4 is larger than 50 MB');
+  });
+});
+
+describe('videoContentRejectionMessage', () => {
+  it('names a file the server found holds no MP4 or MOV video by what it contains', () => {
+    // arrange
+    const file = fileNamed('squat.mp4', 'video/mp4');
+
+    // act
+    const message = videoContentRejectionMessage(file);
+
+    // assert
+    expect(message).toBe('squat.mp4 doesn’t contain an MP4 or MOV video.');
   });
 });
