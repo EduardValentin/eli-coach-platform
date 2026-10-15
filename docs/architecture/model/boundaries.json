@@ -135,7 +135,13 @@
     { "id": "B138", "path": "packages/domain/src/assessment-call/assessment-call-reader.ts", "symbol": "AssessmentCallReader", "owner": "C1" },
     { "id": "B139", "path": "packages/domain/src/client/client-reach.ts", "symbol": "ClientReach", "owner": "C1" },
     { "id": "B140", "path": "apps/platform/src/features/coaching-sales/data/client-writers.server.ts", "symbol": "ClientWriter", "owner": "C18" },
-    { "id": "B141", "path": "apps/platform/src/features/coaching-sales/data/client-writers.server.ts", "symbol": "CoachingStandingWriter", "owner": "C18" }
+    { "id": "B141", "path": "apps/platform/src/features/coaching-sales/data/client-writers.server.ts", "symbol": "CoachingStandingWriter", "owner": "C18" },
+    { "id": "B142", "path": "packages/domain/src/check-in/check-in-series-records.ts", "symbol": "CheckInSeriesRecords", "owner": "C1" },
+    { "id": "B143", "path": "packages/domain/src/coaching-subscription/coaching-period-handler.ts", "symbol": "CoachingPeriodHandler", "owner": "C1" },
+    { "id": "B144", "path": "packages/domain/src/exercise/exercise-library.ts", "symbol": "ExerciseLibrary", "owner": "C1" },
+    { "id": "B145", "path": "packages/domain/src/exercise/exercise-ids.ts", "symbol": "ExerciseIds", "owner": "C1" },
+    { "id": "B146", "path": "packages/domain/src/exercise/exercise-library-incidents.ts", "symbol": "ExerciseLibraryIncidents", "owner": "C1" },
+    { "id": "B147", "path": "apps/platform/src/features/exercise-library/server/guards/exercise-library-context.server.ts", "symbol": "exerciseLibraryContext", "owner": "C25" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C6", "C7", "C8", "C9", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ] },
@@ -183,11 +189,11 @@
     { "id": "S43", "name": "The coaching standing on `app.clients` (`coaching_status`, `coaching_access_ends_at`, `coaching_refund_due`, `coaching_bundle_months`)", "owner": "C24", "components": [ "C1", "C18", "C24" ] }
   ],
   "groups": [
-    { "name": "vertical-feature-slice", "components": [ "C1", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
+    { "name": "vertical-feature-slice", "components": [ "C1", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
     { "name": "waiting-list-mode", "components": [ "C1", "C3", "C6", "C8", "C14", "C15", "C17", "C18" ], "absorbs": "how waiting-list mode is stored, read and switched" },
     { "name": "coach-scheduling", "components": [ "C1", "C14", "C17", "C22", "C23" ], "absorbs": "the coach's own time and room: slot policy, reservations, overlap rules, window and meeting room" },
     { "name": "adapter-facing-contracts", "components": [ "C6", "C7", "C8", "C14", "C17", "C18", "C19", "C22", "C24" ], "absorbs": "a change to the email, bot-detection, management-auth or payments contract and every sender, verifier or handler of it" },
-    { "name": "design-system", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ], "absorbs": "a token, primitive or shared look changed once in the design system and taken up by every consumer" },
-    { "name": "coach-portal", "components": [ "C1", "C5", "C13", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ], "absorbs": "a coach-facing block: the use case and port, the portal primitive, the feature's coach UI and the page that composes it" }
+    { "name": "design-system", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25" ], "absorbs": "a token, primitive or shared look changed once in the design system and taken up by every consumer" },
+    { "name": "coach-portal", "components": [ "C1", "C5", "C13", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25" ], "absorbs": "a coach-facing block: the use case and port, the portal primitive, the feature's coach UI and the page that composes it" }
   ]
 }
