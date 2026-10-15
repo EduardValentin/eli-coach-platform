@@ -40,10 +40,16 @@ export class OpenExerciseVideoUseCase {
   async execute(
     command: OpenExerciseVideoCommand,
   ): Promise<OpenExerciseVideoResult> {
-    const exercise = await this.options.library.find(command.exerciseId);
+    const ownerAccountId = await this.access.libraryOwnerFor(command.viewer);
+
+    if (!ownerAccountId) return NOT_FOUND;
+
+    const exercise = await this.options.library.find({
+      ownerAccountId,
+      exerciseId: command.exerciseId,
+    });
 
     if (!exercise) return NOT_FOUND;
-    if (!(await this.access.admits(command.viewer, exercise))) return NOT_FOUND;
 
     const video = exercise.video;
 

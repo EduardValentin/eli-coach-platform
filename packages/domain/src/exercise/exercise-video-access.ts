@@ -1,17 +1,13 @@
-import type { Exercise } from "./exercise";
 import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 
 export class ExerciseVideoAccess {
-  async admits(
-    viewer: ExerciseVideoViewer,
-    _exercise: Exercise,
-  ): Promise<boolean> {
+  async libraryOwnerFor(viewer: ExerciseVideoViewer): Promise<string | null> {
     switch (viewer.kind) {
       case "coach":
-        return true;
+        return viewer.accountId;
       case "client":
       case "visitor":
-        return false;
+        return null;
     }
   }
 }

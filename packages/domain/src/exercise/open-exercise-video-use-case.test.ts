@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise, type ExerciseSnapshot } from "./exercise";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type {
   ExerciseVideoOpening,
   ExerciseVideoStore,
@@ -10,10 +10,15 @@ import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 import { OpenExerciseVideoUseCase } from "./open-exercise-video-use-case";
 
 const STORED_AT = new Date("2026-10-15T09:00:00.000Z");
-const COACH: ExerciseVideoViewer = { kind: "coach" };
+const COACH_ACCOUNT_ID = "coach-account-1";
+const COACH: ExerciseVideoViewer = {
+  kind: "coach",
+  accountId: COACH_ACCOUNT_ID,
+};
 
 const SQUAT: ExerciseSnapshot = {
   id: "exercise-1",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
   unit: "reps",
@@ -37,8 +42,10 @@ const BYTES: AsyncIterable<Uint8Array> = {
 
 function createUseCase(snapshot: ExerciseSnapshot | null = SQUAT) {
   const library = {
-    find: vi.fn(async () =>
-      snapshot ? Exercise.reconstitute(snapshot) : null,
+    find: vi.fn(async ({ ownerAccountId, exerciseId }: ExerciseReference) =>
+      snapshot?.ownerAccountId === ownerAccountId && snapshot.id === exerciseId
+        ? Exercise.reconstitute(snapshot)
+        : null,
     ),
   } satisfies Pick<ExerciseLibrary, "find">;
   const store = {
@@ -82,6 +89,23 @@ describe("OpenExerciseVideoUseCase", () => {
     expect(store.open).toHaveBeenCalledWith("video-1", requested);
   });
 
+  it("answers not found to another coach without opening the file", async () => {
+    // arrange
+    const { useCase, store } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      viewer: { kind: "coach", accountId: "coach-account-2" },
+      exerciseId: "exercise-1",
+      videoId: "video-1",
+      requested: null,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(store.open).not.toHaveBeenCalled();
+  });
+
   it("passes an unsatisfiable range through with the video's size", async () => {
     // arrange
     const { useCase, store } = createUseCase();
@@ -109,7 +133,7 @@ describe("OpenExerciseVideoUseCase", () => {
     "answers not found to a $viewer.kind without opening the file",
     async ({ viewer }) => {
       // arrange
-      const { useCase, store } = createUseCase();
+      const { useCase, library, store } = createUseCase();
 
       // act
       const result = await useCase.execute({
@@ -121,6 +145,7 @@ describe("OpenExerciseVideoUseCase", () => {
 
       // assert
       expect(result).toEqual({ status: "not-found" });
+      expect(library.find).not.toHaveBeenCalled();
       expect(store.open).not.toHaveBeenCalled();
     },
   );

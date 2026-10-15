@@ -792,12 +792,14 @@ describe.sequential("exercise library integration", () => {
     });
 
     it.each([
+      { who: "another coach", requester: OTHER_COACH_SESSION },
       { who: "a signed-in client", requester: CLIENT_SESSION },
       { who: "a signed-out visitor", requester: VISITOR },
     ] as const)(
       "refuses $who the video as not found",
       async ({ requester }) => {
         // arrange
+        await rig.provisionOtherCoach();
         await rig.provisionClient();
         const { squat, video } = await squatWithVideo(landscape);
 

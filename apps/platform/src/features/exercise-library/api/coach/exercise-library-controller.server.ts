@@ -215,7 +215,7 @@ export class ExerciseLibraryController {
   private viewerFor(account: AccountSnapshot): ExerciseVideoViewer {
     switch (account.role) {
       case "COACH":
-        return { kind: "coach" };
+        return { kind: "coach", accountId: account.id };
       case "CLIENT":
         return { kind: "client", authSubjectId: account.authSubjectId };
     }

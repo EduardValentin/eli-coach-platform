@@ -801,7 +801,7 @@ describe("ExerciseLibraryController#openVideo", () => {
       new Uint8Array([2, 3]),
     );
     expect(openExerciseVideo.execute).toHaveBeenCalledWith({
-      viewer: { kind: "coach" },
+      viewer: { kind: "coach", accountId: COACH.id },
       exerciseId: EXERCISE_ID,
       videoId: VIDEO_ID,
       requested: { kind: "from", start: 1, end: 2 },
