@@ -156,25 +156,32 @@ export class FilesystemExerciseVideoStore implements ExerciseVideoStore {
     sizeBytes: number,
   ): ServedByteRange | "whole" | "unsatisfiable" {
     if (requested === null) return "whole";
-
-    const lastByte = sizeBytes - 1;
-
     if (requested.kind === "suffix") {
-      if (requested.length <= 0 || sizeBytes === 0) return "unsatisfiable";
-
-      return {
-        start: Math.max(0, sizeBytes - requested.length),
-        end: lastByte,
-      };
+      return this.suffixRange(requested.length, sizeBytes);
     }
 
-    const end = Math.min(requested.end ?? lastByte, lastByte);
+    return this.fromRange(requested, sizeBytes);
+  }
 
-    if (requested.start >= sizeBytes || requested.start > end) {
-      return "unsatisfiable";
-    }
+  private suffixRange(
+    length: number,
+    sizeBytes: number,
+  ): ServedByteRange | "unsatisfiable" {
+    if (length <= 0 || sizeBytes === 0) return "unsatisfiable";
 
-    return { start: requested.start, end };
+    return { start: Math.max(0, sizeBytes - length), end: sizeBytes - 1 };
+  }
+
+  private fromRange(
+    { start, end }: Extract<RequestedByteRange, { kind: "from" }>,
+    sizeBytes: number,
+  ): ServedByteRange | "unsatisfiable" {
+    const lastByte = sizeBytes - 1;
+    const servedEnd = Math.min(end ?? lastByte, lastByte);
+
+    if (start >= sizeBytes || start > servedEnd) return "unsatisfiable";
+
+    return { start, end: servedEnd };
   }
 
   private async deleteFrom(
