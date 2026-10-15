@@ -953,6 +953,7 @@ test(
     // assert
     await exerciseEditor.expectVideoRefused(NO_VIDEO_INSIDE_REFUSAL);
     await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectFocusOnReplaceVideo();
     await exerciseEditor.expectStillNew();
     await exerciseEditor.expectEntries(entered);
     expect(storedExerciseVideoIds()).toEqual(storedBefore);
