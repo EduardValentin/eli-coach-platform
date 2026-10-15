@@ -43,15 +43,15 @@ export class ExerciseLibraryController {
   constructor(private readonly options: ExerciseLibraryControllerOptions) {}
 
   async list(args: LoaderFunctionArgs): Promise<ExerciseLibraryView> {
-    requirePortalAccess(args, { role: "COACH" });
-    const { exercises } = await this.options.listExercises.execute();
+    const coach = requirePortalAccess(args, { role: "COACH" });
+    const { exercises } = await this.options.listExercises.execute(coach.id);
 
     return { exercises: exercises.map(presentExercise) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
-    requirePortalAccess(args, { role: "COACH" });
-    const { exercises } = await this.options.listExercises.execute();
+    const coach = requirePortalAccess(args, { role: "COACH" });
+    const { exercises } = await this.options.listExercises.execute(coach.id);
 
     return {
       exercise: null,
@@ -63,14 +63,17 @@ export class ExerciseLibraryController {
     args: LoaderFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<ExerciseEditorView> {
-    requirePortalAccess(args, { role: "COACH" });
+    const coach = requirePortalAccess(args, { role: "COACH" });
     const id = idSchema.safeParse(exerciseId);
 
     if (!id.success) {
       throw this.backToLibrary();
     }
 
-    const found = await this.options.findExercise.execute(id.data);
+    const found = await this.options.findExercise.execute({
+      ownerAccountId: coach.id,
+      exerciseId: id.data,
+    });
 
     if (found.status === "not-found") {
       throw this.backToLibrary();
@@ -83,14 +86,17 @@ export class ExerciseLibraryController {
   }
 
   async create(args: ActionFunctionArgs): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    const coach = requireApiAccount(args, { role: "COACH" });
     const draft = await this.readDraft(args.request);
 
     if (!draft.success) {
       return createBadRequestResponse("The exercise could not be read.");
     }
 
-    const result = await this.options.createExercise.execute(draft.data);
+    const result = await this.options.createExercise.execute({
+      ownerAccountId: coach.id,
+      draft: draft.data,
+    });
 
     switch (result.status) {
       case "created":
@@ -106,7 +112,7 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    requireApiAccount(args, { role: "COACH" });
+    const coach = requireApiAccount(args, { role: "COACH" });
     const id = idSchema.safeParse(exerciseId);
 
     if (!id.success) {
@@ -120,6 +126,7 @@ export class ExerciseLibraryController {
     }
 
     const result = await this.options.editExercise.execute({
+      ownerAccountId: coach.id,
       exerciseId: id.data,
       draft: draft.data,
     });

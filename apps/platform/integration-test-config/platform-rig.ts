@@ -8,6 +8,11 @@ export const COACH_SESSION: AccountSession = {
   subjectId: "user_platformrigcoach",
 };
 
+export const OTHER_COACH_SESSION: AccountSession = {
+  sessionId: "sess_platformrigothercoach",
+  subjectId: "user_platformrigothercoach",
+};
+
 export const CLIENT_SESSION: AccountSession = {
   sessionId: "sess_platformrigclient",
   subjectId: "user_platformrigclient",
@@ -18,8 +23,9 @@ const WAITLIST_MODE_FLAG = "WAITLIST_MODE";
 /**
  * The state a case sets on the running instance before it drives an entry
  * point: its clock, its waiting-list mode and the accounts it signs in as.
- * The mode and the client account are written straight to Postgres, as an
- * operator would set them; no entry point exists for either.
+ * The mode, the client account and a second coach account are written
+ * straight to Postgres, as an operator would set them; no entry point exists
+ * for any of them.
  */
 export class PlatformRig {
   private heldInstant: Date | null = null;
@@ -62,10 +68,11 @@ export class PlatformRig {
   }
 
   async provisionClient(): Promise<void> {
-    await this.suite.postgres.executeSql({
-      sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
-      values: [CLIENT_SESSION.subjectId, "CLIENT"],
-    });
+    await this.insertAccount(CLIENT_SESSION, "CLIENT");
+  }
+
+  async provisionOtherCoach(): Promise<void> {
+    await this.insertAccount(OTHER_COACH_SESSION, "COACH");
   }
 
   async requestAs(
@@ -80,5 +87,15 @@ export class PlatformRig {
     return this.suite.request(
       new Request(this.suite.url(target), { ...init, headers }),
     );
+  }
+
+  private async insertAccount(
+    session: AccountSession,
+    role: "CLIENT" | "COACH",
+  ): Promise<void> {
+    await this.suite.postgres.executeSql({
+      sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
+      values: [session.subjectId, role],
+    });
   }
 }
