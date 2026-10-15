@@ -1089,8 +1089,10 @@ export function DevToggle() {
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
-                      <SelectItem value="holds">Holds while uploading</SelectItem>
+                      <SelectItem value="holds-uploading">Holds while uploading</SelectItem>
+                      <SelectItem value="holds-finishing">Holds while finishing</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
+                      <SelectItem value="refused">Refused as not a video</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

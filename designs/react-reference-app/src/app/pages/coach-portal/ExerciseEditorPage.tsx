@@ -246,12 +246,6 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
   );
 }
 
-function primaryLabel(saving: VideoSaving, editing: Exercise | undefined): string {
-  if (isSaving(saving)) return 'Saving…';
-
-  return editing ? 'Save changes' : 'Create exercise';
-}
-
 function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; library: string }) {
   const navigate = useNavigate();
   const { exercises, addExercise, updateExercise, uploadExerciseVideo } = useTraining();
@@ -331,15 +325,24 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const uploadThenCommit = async (file: File) => {
     setSaving(videoSavingAt(0));
     try {
-      const videoUrl = await uploadExerciseVideo(file, (progress) => setSaving(videoSavingAt(progress)));
-      if (onPage.current) commit(recordWith(videoUrl));
+      const answer = await uploadExerciseVideo(file, (progress) => setSaving(videoSavingAt(progress)));
+      if (!onPage.current) return;
+      if (answer.status === 'stored') {
+        commit(recordWith(answer.url));
+        return;
+      }
+      setSaving(NOT_SAVING);
+      setVideo((current) => ({ ...current, error: videoRejectionMessage(file) }));
     } catch {
       setSaving(UPLOAD_FAILED_STATE);
     }
   };
 
+  const busy = isSaving(saving);
+  const submitLabel = editing ? 'Save changes' : 'Create exercise';
+
   const save = () => {
-    if (isSaving(saving)) return;
+    if (busy) return;
     if (video.file) {
       void uploadThenCommit(video.file);
       return;
@@ -540,9 +543,21 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         <Link to={library} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
           Cancel
         </Link>
-        <Button onClick={save} variant="primary" size="md" disabled={!isValidDraft(problems) || isSaving(saving)}>
-          <Check size={16} />
-          {primaryLabel(saving, editing)}
+        <Button
+          onClick={save}
+          variant="primary"
+          size="md"
+          disabled={!isValidDraft(problems) || busy}
+          aria-busy={busy || undefined}
+        >
+          {busy ? (
+            'Saving…'
+          ) : (
+            <>
+              <Check size={16} />
+              {submitLabel}
+            </>
+          )}
         </Button>
       </div>
     </div>

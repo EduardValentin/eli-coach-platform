@@ -679,6 +679,7 @@ describe('the demo video', () => {
 describe('saving with a newly chosen video', () => {
   it('shows the upload progress politely and locks the video actions and Save', async () => {
     // arrange
+    answerVideoUploads('holds-uploading');
     const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
     await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
 
@@ -686,17 +687,76 @@ describe('saving with a newly chosen video', () => {
     await user.click(primary());
 
     // assert
-    expect(await screen.findByText(/^Uploading video… \d+%$/)).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/^Uploading video… \d+%$/);
-    expect(screen.getByRole('progressbar', { name: 'Video upload' })).toHaveAttribute('aria-valuenow');
+    expect(await screen.findByText('Uploading video… 40%', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Uploading video… 40%');
+    expect(screen.getByRole('progressbar', { name: 'Video upload' })).toHaveAttribute('aria-valuenow', '40');
     expect(screen.getByRole('button', { name: 'Replace video' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Remove video' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent(LANDSCAPE_DEMO_CLIP);
+  });
+
+  it('turns Save changes into a busy Saving… with no done mark while the video uploads', async () => {
+    // arrange
+    answerVideoUploads('holds-uploading');
+    const user = renderEditor(edit(SQUAT_ID));
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    const saving = screen.getByRole('button', { name: 'Saving…' });
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute('aria-busy', 'true');
+    expect(saving.querySelector('svg')).toBeNull();
+  });
+
+  it('turns Create exercise into a busy Saving… with no done mark while the video uploads', async () => {
+    // arrange
+    answerVideoUploads('holds-uploading');
+    const user = renderEditor(NEW);
+    await user.type(nameField(), 'Cossack squat');
+    await tick(user, multi('Primary muscles (required)'), 'Adductors');
+    await user.upload(screen.getByLabelText(VIDEO_PROMPT), fileNamed('cossack.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    const saving = screen.getByRole('button', { name: 'Saving…' });
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute('aria-busy', 'true');
+    expect(saving.querySelector('svg')).toBeNull();
+  });
+
+  it('shows the server refusing the file as not a video at the field, keeping the file and every entry', async () => {
+    // arrange
+    answerVideoUploads('refused');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await choose(user, field('Difficulty'), 'Advanced');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    const message = 'squat.mp4 is not an .mp4 or .mov — only .mp4 and .mov videos are supported';
+    expect(await screen.findByText(message, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveAccessibleDescription(message);
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.queryByText(UPLOAD_FAILED)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(preview()).toHaveAttribute('src', 'blob:squat.mp4');
+    expect(field('Difficulty')).toHaveTextContent('Advanced');
+    expect(primary()).toBeEnabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent(`${LANDSCAPE_DEMO_CLIP}|Intermediate`);
   });
 
   it('says it is finishing up once every byte is sent and the server is storing it', async () => {
     // arrange
-    answerVideoUploads('holds');
+    answerVideoUploads('holds-finishing');
     const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
     await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
 
@@ -758,7 +818,7 @@ describe('saving with a newly chosen video', () => {
 
   it('stays a plain save, with no upload progress, when no new file was chosen', async () => {
     // arrange
-    answerVideoUploads('holds');
+    answerVideoUploads('holds-uploading');
     const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
     await choose(user, field('Difficulty'), 'Advanced');
 

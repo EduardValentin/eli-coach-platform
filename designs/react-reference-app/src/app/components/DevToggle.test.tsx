@@ -145,7 +145,7 @@ describe('DevToggle resource upload', () => {
 });
 
 describe('DevToggle exercise video upload', () => {
-  it('drives the exercise video save through, holds it while uploading or fails it', async () => {
+  it('drives the exercise video save through, holds it, fails it or has the server refuse it', async () => {
     // arrange
     const user = userEvent.setup();
     renderDevToggle();
@@ -159,7 +159,9 @@ describe('DevToggle exercise video upload', () => {
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
       'Works',
       'Holds while uploading',
+      'Holds while finishing',
       'Fails',
+      'Refused as not a video',
     ]);
   });
 
@@ -178,7 +180,7 @@ describe('DevToggle exercise video upload', () => {
     expect(screen.getByRole('combobox', { name: 'Video upload' })).toHaveTextContent(
       'Holds while uploading',
     );
-    expect(new URLSearchParams(window.location.search).get('exupload')).toBe('holds');
+    expect(new URLSearchParams(window.location.search).get('exupload')).toBe('holds-uploading');
   });
 
   it('reads the outcome from a shared address', async () => {

@@ -9,7 +9,7 @@ import type {
   Muscle,
 } from '../domain/exercises';
 import { exercisesForSeed } from '../services/exerciseSamples';
-import { ExerciseVideoServer } from '../services/exerciseVideoService';
+import { ExerciseVideoServer, type ExerciseVideoAnswer } from '../services/exerciseVideoService';
 import { useAppState } from './AppContext';
 import {
   archivedItem,
@@ -180,7 +180,7 @@ interface TrainingState {
   exercises: Exercise[];
   addExercise: (exercise: Exercise) => void;
   updateExercise: (exercise: Exercise) => void;
-  uploadExerciseVideo: (file: File, onProgress: (fraction: number) => void) => Promise<string>;
+  uploadExerciseVideo: (file: File, onProgress: (fraction: number) => void) => Promise<ExerciseVideoAnswer>;
   archiveExercise: (id: string) => void;
   restoreExercise: (id: string) => void;
   deleteExercise: (id: string) => LibraryDeletion;
