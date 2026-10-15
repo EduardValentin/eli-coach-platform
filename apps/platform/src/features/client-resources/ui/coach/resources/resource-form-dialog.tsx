@@ -5,6 +5,7 @@ import {
   type ResourceDetailsProblems,
   type ResourceFileKind,
 } from "@eli-coach-platform/domain/client-resources";
+import type { UploadState } from "@eli-coach-platform/infrastructure/http";
 import {
   ResponsiveSheetDialog,
   SheetDialogActions,
@@ -59,7 +60,6 @@ import {
 import {
   useResourceUpload,
   type ResourceUploadOutcome,
-  type ResourceUploadState,
 } from "./use-resource-upload";
 
 export type ResourceFormMode =
@@ -311,20 +311,14 @@ function ResourceFormActions({
   );
 }
 
-function uploadSubmitLabelOf(upload: ResourceUploadState): string {
+function uploadSubmitLabelOf(upload: UploadState): string {
   if (upload.state === "sending") return COPY.add.sending;
   if (upload.state === "preparing") return UPLOAD_COPY.preparing;
 
   return COPY.add.submit;
 }
 
-function UploadStatus({
-  file,
-  upload,
-}: {
-  file: File;
-  upload: ResourceUploadState;
-}) {
+function UploadStatus({ file, upload }: { file: File; upload: UploadState }) {
   const hintId = useId();
 
   if (upload.state === "sending") {
