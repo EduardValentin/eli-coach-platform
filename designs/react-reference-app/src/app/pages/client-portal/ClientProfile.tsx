@@ -146,13 +146,7 @@ export function ClientProfile() {
         {/* Basic info */}
         <ClientWidget
           eyebrow="About you"
-          icon={
-            <User
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={User}
           headingId="about-you-heading"
         >
           <div className="space-y-4">
@@ -166,13 +160,7 @@ export function ClientProfile() {
         {/* Body metrics */}
         <ClientWidget
           eyebrow="Body & goals"
-          icon={
-            <Ruler
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Ruler}
           headingId="body-goals-heading"
         >
           <div className="space-y-4">
@@ -195,13 +183,7 @@ export function ClientProfile() {
         {isPostMvp && (
           <ClientWidget
             eyebrow="Nutrition"
-            icon={
-              <Utensils
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Utensils}
             headingId="profile-nutrition-heading"
           >
             <div className="space-y-4">
@@ -229,13 +211,7 @@ export function ClientProfile() {
         {menstrualProfile && (
           <ClientWidget
             eyebrow="Menstrual health"
-            icon={
-              <Droplet
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Droplet}
             headingId="menstrual-health-heading"
             className="lg:col-span-2"
           >

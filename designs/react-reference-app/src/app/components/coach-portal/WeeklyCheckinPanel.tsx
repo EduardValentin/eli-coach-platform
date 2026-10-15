@@ -127,7 +127,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
     <PortalWidget
       presentation="coach"
       title="Weekly check-in"
-      icon={<CalendarRange aria-hidden="true" className="text-brand-secondary" size={18} />}
+      icon={CalendarRange}
       headingId="weekly-check-in-panel-heading"
       parityRoot="WeeklyCheckinPanel"
       className="h-full"

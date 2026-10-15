@@ -72,13 +72,7 @@ export function CoachClientCycle() {
         <PortalWidget
           presentation="coach"
           title="Current Phase"
-          icon={
-            <Droplet
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Droplet}
           headingId="current-phase-heading"
         >
           {phase ? (
@@ -101,13 +95,7 @@ export function CoachClientCycle() {
         <PortalWidget
           presentation="coach"
           title="Cycle Info"
-          icon={
-            <Heart
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Heart}
           headingId="cycle-info-heading"
         >
           {profile ? (
@@ -129,13 +117,7 @@ export function CoachClientCycle() {
         <PortalWidget
           presentation="coach"
           title="Conditions"
-          icon={
-            <FileText
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={FileText}
           headingId="conditions-heading"
         >
           {profile && profile.conditions.length > 0 ? (
@@ -174,13 +156,7 @@ export function CoachClientCycle() {
         <PortalWidget
           presentation="coach"
           title="Cycle Calendar"
-          icon={
-            <CalendarDays
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={CalendarDays}
           headingId="cycle-calendar-heading"
         >
           <BrandCalendar
@@ -211,13 +187,7 @@ export function CoachClientCycle() {
         <PortalWidget
           presentation="coach"
           title="Period History"
-          icon={
-            <History
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={History}
           headingId="period-history-heading"
           className="self-start"
         >

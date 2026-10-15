@@ -95,9 +95,7 @@ export function InvitationBlock({
     <PortalWidget
       presentation="coach"
       title="Invitation"
-      icon={
-        <Mail aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Mail}
       headingId="invitation-panel-heading"
       parityRoot="InvitationBlock"
       action={resendAction}

@@ -160,13 +160,7 @@ export function CoachDashboard() {
       <PortalWidget
         presentation="coach"
         title="Active Clients"
-        icon={
-          <Users
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
+        icon={Users}
         headingId="active-clients-heading"
         footer={
           <WidgetLink trailing="arrow" to="/coach/clients">

@@ -246,13 +246,7 @@ export function EditClientProfile() {
         <SettingsSection
           headingId="basic-info-heading"
           title="Basic Information"
-          icon={
-            <User
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={User}
           description="Who they are and how to reach them."
         >
           <SettingsRows>
@@ -336,13 +330,7 @@ export function EditClientProfile() {
         <SettingsSection
           headingId="body-activity-heading"
           title="Body & Activity"
-          icon={
-            <Ruler
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Ruler}
           description="Measurements and training baseline."
         >
           <SettingsRows>
@@ -474,13 +462,7 @@ export function EditClientProfile() {
         <SettingsSection
           headingId="nutrition-heading"
           title="Nutrition"
-          icon={
-            <Utensils
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Utensils}
           description="Daily targets and macro breakdown."
         >
           <SettingsRows>
@@ -568,13 +550,7 @@ export function EditClientProfile() {
         <SettingsSection
           headingId="menstrual-health-heading"
           title="Menstrual Health"
-          icon={
-            <Droplet
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Droplet}
           description="Cycle information and conditions the client has shared."
         >
           <SettingsRows>
@@ -673,13 +649,7 @@ export function EditClientProfile() {
         <SettingsSection
           headingId="coach-notes-heading"
           title="Coach Notes"
-          icon={
-            <Lock
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
+          icon={Lock}
           description="Private notes visible only to you."
         >
           <SettingsRows>

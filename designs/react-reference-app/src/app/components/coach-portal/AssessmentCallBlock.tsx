@@ -27,9 +27,7 @@ export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
   return (
     <CollapsiblePortalWidget
       title="Assessment call"
-      icon={
-        <Video aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Video}
       headingId="assessment-call-panel-heading"
       parityRoot="AssessmentCallBlock"
       className="mb-8"

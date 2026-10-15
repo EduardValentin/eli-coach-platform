@@ -56,9 +56,7 @@ export function ProfileDetailsWidget({
     <PortalWidget
       presentation={presentation}
       title="Profile details"
-      icon={
-        <User aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={User}
       headingId={headingId}
       action={action}
       footer={footer}
