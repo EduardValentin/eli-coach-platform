@@ -44,12 +44,7 @@ export class ExerciseVideoServer {
   };
 
   async upload(file: File, options: ExerciseVideoUploadOptions): Promise<ExerciseVideoAnswer> {
-    let outcome = options.outcome;
-    for (let step = 1; step <= UPLOAD_STEPS; step += 1) {
-      await wait(UPLOAD_STEP_MS);
-      options.onProgress(step / UPLOAD_STEPS);
-      if (step === HELD_UPLOAD_STEP && holdsAt('uploading', outcome)) outcome = await this.heldAt('uploading');
-    }
+    const outcome = await this.progressThrough(options.outcome, options.onProgress);
     if (outcome === 'fails') throw new Error(EXERCISE_VIDEO_NOT_UPLOADED);
 
     const answer = await this.answerAfterStoring(outcome);
@@ -67,6 +62,20 @@ export class ExerciseVideoServer {
       this.heldAnswers[phase].clear();
       held.forEach((answer) => answer(outcome));
     }
+  }
+
+  private async progressThrough(
+    outcome: ExerciseVideoUpload,
+    onProgress: (fraction: number) => void,
+  ): Promise<ExerciseVideoUpload> {
+    let reached = outcome;
+    for (let step = 1; step <= UPLOAD_STEPS; step += 1) {
+      await wait(UPLOAD_STEP_MS);
+      onProgress(step / UPLOAD_STEPS);
+      if (step === HELD_UPLOAD_STEP && holdsAt('uploading', reached)) reached = await this.heldAt('uploading');
+    }
+
+    return reached;
   }
 
   private async answerAfterStoring(outcome: ExerciseVideoUpload): Promise<ExerciseVideoUpload> {

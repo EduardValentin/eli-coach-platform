@@ -324,18 +324,18 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
 
   const uploadThenCommit = async (file: File) => {
     setSaving(videoSavingAt(0));
-    try {
-      const answer = await uploadExerciseVideo(file, (progress) => setSaving(videoSavingAt(progress)));
-      if (!onPage.current) return;
-      if (answer.status === 'stored') {
-        commit(recordWith(answer.url));
-        return;
-      }
-      setSaving(NOT_SAVING);
-      setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
-    } catch {
+    const answer = await uploadExerciseVideo(file, (progress) => setSaving(videoSavingAt(progress))).catch(() => {
       setSaving(UPLOAD_FAILED_STATE);
+      return null;
+    });
+    if (answer === null || !onPage.current) return;
+    if (answer.status === 'stored') {
+      commit(recordWith(answer.url));
+      return;
     }
+
+    setSaving(NOT_SAVING);
+    setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
   };
 
   const busy = isSaving(saving);
