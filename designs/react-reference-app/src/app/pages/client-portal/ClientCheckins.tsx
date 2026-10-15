@@ -17,6 +17,7 @@ import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
 import {
   canCancelApproved,
   canWithdrawRequest,
+  clientProposalAmong,
   proposalFor,
   proposesNewTime,
   type CheckIn,
@@ -69,6 +70,7 @@ export function ClientCheckins() {
     statusOf,
     findCheckin,
     cancelCheckin,
+    getCheckinsInTab,
     hasOpenClientRequest,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
@@ -82,6 +84,7 @@ export function ClientCheckins() {
   const viewer = { party: 'client' as const, counterpartName: 'your coach' };
 
   const openRequest = hasOpenClientRequest(CLIENT_ID);
+  const upcoming = getCheckinsInTab('upcoming', 'client', CLIENT_ID);
 
   const [showRequest, setShowRequest] = useState(false);
   const [proposingFor, setProposingFor] = useState<string | null>(null);
@@ -182,9 +185,9 @@ export function ClientCheckins() {
   };
 
   const upcomingActions = (c: CheckIn): CheckinRowActions => ({
-    shown: <JoinMeetLink checkin={c} party="client" />,
+    shown: statusOf(c) === 'clash' ? undefined : <JoinMeetLink checkin={c} party="client" />,
     menu: {
-      reschedule: rescheduleAction(proposalFor(c, 'client'), () => openReschedule(c)),
+      reschedule: rescheduleAction(clientProposalAmong(c, upcoming), () => openReschedule(c)),
       cancel: canCancelApproved(c, 'client') ? { onSelect: () => setCancelTarget(c) } : undefined,
     },
   });

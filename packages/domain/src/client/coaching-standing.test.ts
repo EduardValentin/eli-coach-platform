@@ -18,6 +18,8 @@ function standingOf(
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
     ...overrides,
   });
 }
@@ -167,13 +169,15 @@ describe("CoachingStanding.refundDue", () => {
 });
 
 describe("CoachingStanding.toSnapshot", () => {
-  it("returns the recorded status, access end, refund due and bundle months", () => {
+  it("returns the recorded status, access end, refund due, bundle months, program start and paid-through date", () => {
     // arrange
     const snapshot: CoachingStandingSnapshot = {
       status: "cancelled",
       accessEndsAt: ACCESS_END,
       refundDue: true,
       bundleMonths: 6,
+      programStartsAt: new Date("2026-07-02T10:00:00.000Z"),
+      paidThrough: ACCESS_END,
     };
 
     // act

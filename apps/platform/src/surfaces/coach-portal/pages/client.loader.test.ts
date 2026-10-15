@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { CoachClientSeriesPanel } from "~/features/check-ins/public/check-ins";
 import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import type { OnboardingReviewView } from "~/features/client-onboarding/public/onboarding-review";
@@ -67,6 +68,16 @@ const REVIEW: OnboardingReviewView = {
   submitted: null,
 };
 
+const WEEKLY: CoachClientSeriesPanel = {
+  series: {
+    id: "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+    weekday: "wednesday",
+    hour: 18,
+    timeZone: "Europe/Bucharest",
+  },
+  coachingEnds: false,
+};
+
 const MEASUREMENTS: MeasurementRow[] = [
   {
     id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
@@ -99,12 +110,13 @@ const PROFILE: ClientProfileView = {
 };
 
 describe("coach client page loader", () => {
-  it("reads her record, her subscription, her onboarding review, her profile, her measurements and whether a check-in can be scheduled for this request, side by side", async () => {
+  it("reads her record, her subscription, her onboarding review, her profile, her measurements, whether a check-in can be scheduled and her weekly check-in for this request, side by side", async () => {
     // arrange
     const {
       args,
       loadClient,
       loadClientScheduling,
+      loadClientSeries,
       loadClientSubscription,
       loadMeasurements,
       loadProfile,
@@ -122,7 +134,9 @@ describe("coach client page loader", () => {
       profile: PROFILE,
       measurements: MEASUREMENTS,
       scheduling: "awaiting_onboarding",
+      weekly: WEEKLY,
     });
+    expect(loadClientSeries).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClientSubscription).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadClientScheduling).toHaveBeenCalledWith(args, CLIENT_ID);
@@ -184,6 +198,7 @@ describe("coach client page meta", () => {
       profile: PROFILE,
       measurements: MEASUREMENTS,
       scheduling: "awaiting_onboarding" as const,
+      weekly: WEEKLY,
     };
 
     // act
@@ -201,6 +216,7 @@ function routeArguments() {
   const loadProfile = vi.fn().mockResolvedValue(PROFILE);
   const loadMeasurements = vi.fn().mockResolvedValue(MEASUREMENTS);
   const loadClientScheduling = vi.fn().mockResolvedValue("awaiting_onboarding");
+  const loadClientSeries = vi.fn().mockResolvedValue(WEEKLY);
   const args = createRequestArgs({
     contexts: [
       contextEntry(clientsContext, {
@@ -217,6 +233,7 @@ function routeArguments() {
       } as unknown as ClientProfileFeature),
       contextEntry(checkInsContext, {
         coachCheckIns: { loadClientScheduling },
+        coachCheckInSeries: { loadClientSeries },
       } as unknown as CheckInsFeature),
     ],
     params: { clientId: CLIENT_ID },
@@ -227,6 +244,7 @@ function routeArguments() {
     args,
     loadClient,
     loadClientScheduling,
+    loadClientSeries,
     loadClientSubscription,
     loadMeasurements,
     loadProfile,

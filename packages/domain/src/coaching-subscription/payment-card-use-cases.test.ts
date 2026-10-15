@@ -39,7 +39,9 @@ const SUBSCRIPTION = CoachingSubscription.reconstitute({
   paymentSubscriptionId: "sub_1",
   checkoutSessionId: "cs_1",
   paidAt: new Date("2026-10-02T10:00:00.000Z"),
+  paidThrough: new Date("2027-01-02T10:00:00.000Z"),
   startChoice: "waiting",
+  programStartsAt: new Date("2026-10-16T10:00:00.000Z"),
   status: "not-started",
   cancelledAt: null,
   accessEndsAt: null,
@@ -87,6 +89,8 @@ function createIncidents() {
     paymentCardEventMirrored: vi.fn(),
     paymentCardRefreshFailed: vi.fn(),
     coachingEndNotPropagated: vi.fn(),
+    coachingPeriodNotPropagated: vi.fn(),
+    renewalHoldLiftFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 

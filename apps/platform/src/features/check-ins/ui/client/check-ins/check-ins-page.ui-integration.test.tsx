@@ -58,8 +58,10 @@ const TIME_ZONE = "Europe/Bucharest";
 
 const APPROVED_SOON: ClientCheckIn = {
   id: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+  seriesId: null,
   kind: "ad_hoc",
   status: "approved",
+  tab: "upcoming",
   initiatedBy: "client",
   proposedBy: "client",
   awaitsViewer: false,
@@ -89,6 +91,7 @@ const WAITING_REQUEST: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "2c3d4e5f-6a7b-4c8d-8e9f-1a2b3c4d5e6f",
   status: "pending",
+  tab: "requests",
   viewerMayWithdraw: true,
   isWaitingRequest: true,
   startsAt: "2026-10-16T09:00:00.000Z",
@@ -101,6 +104,7 @@ const COACH_REQUEST: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "5f6a7b8c-9d0e-4f1a-8b2c-4d5e6f7a8b9c",
   status: "pending",
+  tab: "requests",
   initiatedBy: "coach",
   proposedBy: "coach",
   awaitsViewer: true,
@@ -113,13 +117,16 @@ const COACH_REQUEST: ClientCheckIn = {
 const COACH_REQUEST_APPROVED: ClientCheckIn = {
   ...COACH_REQUEST,
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
+  viewerMayCancel: false,
 };
 
 const PASSED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "3d4e5f6a-7b8c-4d9e-8f0a-2b3c4d5e6f7a",
   status: "passed",
+  tab: "past",
   viewerProposal: "none",
   viewerMayCancel: false,
   startsAt: "2026-10-05T07:00:00.000Z",
@@ -131,6 +138,7 @@ const CANCELLED: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "4e5f6a7b-8c9d-4e0f-9a1b-3c4d5e6f7a8b",
   status: "cancelled",
+  tab: "past",
   viewerProposal: "none",
   viewerMayCancel: false,
   startsAt: "2026-10-08T13:00:00.000Z",
@@ -143,6 +151,7 @@ const COACH_NEW_TIME: ClientCheckIn = {
   ...APPROVED_SOON,
   id: "6a7b8c9d-0e1f-4a2b-9c3d-5e6f7a8b9c0d",
   status: "pending",
+  tab: "requests",
   proposedBy: "coach",
   awaitsViewer: true,
   viewerMayCancel: false,
@@ -160,6 +169,7 @@ const COACH_NEW_TIME: ClientCheckIn = {
 const COACH_NEW_TIME_ACCEPTED: ClientCheckIn = {
   ...COACH_NEW_TIME,
   status: "approved",
+  tab: "upcoming",
   awaitsViewer: false,
   viewerMayCancel: true,
   newTimeWaits: false,
@@ -206,6 +216,55 @@ const MOVED_TWICE: ClientCheckIn = {
   note: "Can we plan my holiday training?",
   newTimeNote: "Thursday afternoon suits me better.",
 };
+
+const WEEKLY_SERIES_ID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+
+const NEXT_WEEKLY: ClientCheckIn = {
+  ...APPROVED_SOON,
+  id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+  seriesId: WEEKLY_SERIES_ID,
+  kind: "recurring",
+  initiatedBy: "coach",
+  proposedBy: "coach",
+  viewerMayCancel: false,
+  startsAt: "2026-10-21T15:00:00.000Z",
+  endsAt: "2026-10-21T16:00:00.000Z",
+  joinEmphasisFrom: "2026-10-21T14:50:00.000Z",
+};
+
+const NEXT_WEEKLY_CLASH: ClientCheckIn = {
+  ...NEXT_WEEKLY,
+  status: "clash",
+  viewerProposal: "none",
+};
+
+const LATER_WEEKLY: ClientCheckIn = {
+  ...NEXT_WEEKLY,
+  id: "c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f",
+  viewerProposal: "later_week",
+  startsAt: "2026-10-28T16:00:00.000Z",
+  endsAt: "2026-10-28T17:00:00.000Z",
+  joinEmphasisFrom: "2026-10-28T15:50:00.000Z",
+};
+
+const LAST_WEEKLY: ClientCheckIn = {
+  ...LATER_WEEKLY,
+  id: "d4e5f6a7-b8c9-4d0e-9f1a-3b4c5d6e7f8a",
+  startsAt: "2026-11-04T16:00:00.000Z",
+  endsAt: "2026-11-04T17:00:00.000Z",
+  joinEmphasisFrom: "2026-11-04T15:50:00.000Z",
+};
+
+const NEXT_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
+const LATER_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Oct 28 at 6:00 PM";
+const LAST_WEEKLY_MENU =
+  "More actions for the check-in on Wed, Nov 4 at 6:00 PM";
+const LATER_WEEK_REASON =
+  "You can move only your next weekly check-in; your coach can move the later ones.";
+const COACH_REQUEST_APPROVED_MENU =
+  "More actions for the check-in on Mon, Oct 19 at 12:00 PM";
 
 const THURSDAY_AFTERNOON = "2026-10-15T14:00:00.000Z";
 const THURSDAY_EVENING = "2026-10-15T15:00:00.000Z";
@@ -1311,6 +1370,22 @@ describe("the client's upcoming check-in menu", () => {
     ]);
   });
 
+  it("offers only Reschedule on a check-in her coach scheduled, since only her coach may cancel it", async () => {
+    // arrange
+    listing = { checkIns: [COACH_REQUEST_APPROVED] };
+    const user = await renderCheckInsPage();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: COACH_REQUEST_APPROVED_MENU }),
+    );
+
+    // assert
+    expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+      "Reschedule",
+    ]);
+  });
+
   it("leaves the menu out of her past and cancelled check-ins", async () => {
     // arrange
     listing = { checkIns: [PASSED, CANCELLED] };
@@ -1423,6 +1498,7 @@ describe("the client's upcoming check-in menu", () => {
             {
               ...APPROVED_SOON,
               status: "cancelled",
+              tab: "past",
               viewerProposal: "none",
               viewerMayCancel: false,
             },
@@ -1615,6 +1691,100 @@ describe("Reschedule on a check-in moved twice", () => {
 
     // act
     const results = await axeWithMenuOpen(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
+describe("a weekly check-in on the client's check-ins page", () => {
+  it("shows a clashing next week under Upcoming as her coach finding a new time, with nothing to act on", async () => {
+    // arrange, act
+    listing = { checkIns: [NEXT_WEEKLY_CLASH] };
+    await renderCheckInsPage();
+
+    // assert
+    const row = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getByRole("listitem");
+    expect(row).toHaveTextContent("Wed, Oct 21");
+    expect(within(row).getByText("Clash")).toBeInTheDocument();
+    expect(row).toHaveTextContent("Your coach is finding a new time");
+    expect(
+      within(row).queryByRole("link", { name: "Join Meet" }),
+    ).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("lists every week to come, lets her move only the next one and cancel none", async () => {
+    // arrange
+    listing = { checkIns: [LAST_WEEKLY, NEXT_WEEKLY, LATER_WEEKLY] };
+    const user = await renderCheckInsPage();
+    const rows = within(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).getAllByRole("listitem");
+
+    // act
+    const menus = [];
+    for (const name of [
+      NEXT_WEEKLY_MENU,
+      LATER_WEEKLY_MENU,
+      LAST_WEEKLY_MENU,
+    ]) {
+      await user.click(screen.getByRole("button", { name }));
+      const menu = await screen.findByRole("menu");
+      menus.push(
+        within(menu)
+          .getAllByRole("menuitem")
+          .map((item) => ({
+            name: item.textContent,
+            heldBack: item.getAttribute("aria-disabled") === "true",
+          })),
+      );
+      await user.keyboard("{Escape}");
+    }
+
+    // assert
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Wed, Oct 21"),
+      expect.stringContaining("Wed, Oct 28"),
+      expect.stringContaining("Wed, Nov 4"),
+    ]);
+    expect(menus).toEqual([
+      [{ name: "Reschedule", heldBack: false }],
+      [{ name: "Reschedule", heldBack: true }],
+      [{ name: "Reschedule", heldBack: true }],
+    ]);
+    expect(
+      within(rows[0]).getByRole("link", { name: "Join Meet" }),
+    ).toBeVisible();
+    expect(rows[0]).not.toHaveTextContent("Requested by");
+  });
+
+  it("explains why Reschedule is held back on a later week", async () => {
+    // arrange
+    listing = { checkIns: [NEXT_WEEKLY, LATER_WEEKLY] };
+    const user = await renderCheckInsPage();
+    await user.click(screen.getByRole("button", { name: LATER_WEEKLY_MENU }));
+
+    // act
+    await user.hover(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Reschedule",
+      }),
+    );
+
+    // assert
+    expect(await screen.findByText(LATER_WEEK_REASON)).toBeInTheDocument();
+  });
+
+  it("passes the axe checks with a clashing next week", async () => {
+    // arrange
+    listing = { checkIns: [NEXT_WEEKLY_CLASH] };
+    const { baseElement } = await renderCheckInsPageWithView();
+
+    // act
+    const results = await axe(baseElement);
 
     // assert
     expect(results.violations).toEqual([]);

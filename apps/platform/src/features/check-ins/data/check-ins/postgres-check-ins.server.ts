@@ -5,18 +5,27 @@ import {
   type CheckInOutcome,
   type CheckInRequestResult,
   type CheckIns,
+  type CheckInsAtCoachingEnd,
   type CheckInSettlement,
+  OPEN_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
 import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
 import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { and, asc, eq, gt, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, isNull, sql } from "drizzle-orm";
 
-import { checkInsTable } from "~/features/check-ins/data/schema.server";
-
-type CheckInRow = typeof checkInsTable.$inferSelect;
+import {
+  checkInOf,
+  checkInRowOf,
+  lockCheckInsOfClient,
+  type CheckInRow,
+} from "~/features/check-ins/data/check-ins/check-in-rows.server";
+import {
+  checkInSeriesTable,
+  checkInsTable,
+} from "~/features/check-ins/data/schema.server";
 
 type CheckInRequest = { checkIn: CheckIn; at: Date };
 
@@ -36,7 +45,7 @@ type CheckInMoveCommand = {
   at: Date;
 };
 
-type ClientCancellation = { clientId: string; startsFrom: Date; at: Date };
+type CoachingEnd = { clientId: string; endsAt: Date; at: Date };
 
 type CheckInAppointment = {
   appointmentKind: "check_in";
@@ -59,10 +68,8 @@ type PostgresCheckInsOptions = {
   coachTime: CheckInCoachTime;
 };
 
-const CLIENT_REQUEST_LOCK_PREFIX = "check-in-request:";
 const REQUEST_SAVEPOINT = sql.identifier("check_in_request");
 const MOVE_SAVEPOINT = sql.identifier("check_in_move");
-const OPEN_STATUSES: RecordedStatus[] = ["pending", "approved"];
 
 export class PostgresCheckIns implements CheckIns {
   constructor(private readonly options: PostgresCheckInsOptions) {}
@@ -80,7 +87,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(eq(checkInsTable.id, id))
       .limit(1);
 
-    return row ? this.toCheckIn(row) : null;
+    return row ? checkInOf(row) : null;
   }
 
   async listForClient(clientId: string): Promise<CheckIn[]> {
@@ -90,7 +97,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(eq(checkInsTable.clientId, clientId))
       .orderBy(asc(checkInsTable.startsAt));
 
-    return rows.map((row) => this.toCheckIn(row));
+    return rows.map((row) => checkInOf(row));
   }
 
   async listAll(): Promise<CheckIn[]> {
@@ -99,7 +106,7 @@ export class PostgresCheckIns implements CheckIns {
       .from(checkInsTable)
       .orderBy(asc(checkInsTable.startsAt));
 
-    return rows.map((row) => this.toCheckIn(row));
+    return rows.map((row) => checkInOf(row));
   }
 
   settle(settlement: Settlement): Promise<CheckInSettlement> {
@@ -114,11 +121,9 @@ export class PostgresCheckIns implements CheckIns {
     );
   }
 
-  cancelStartingFrom(
-    cancellation: ClientCancellation,
-  ): Promise<{ cancelled: string[] }> {
+  endCoaching(end: CoachingEnd): Promise<CheckInsAtCoachingEnd> {
     return this.options.database.transaction((transaction) =>
-      this.cancelUpcomingStartingFrom(transaction, cancellation),
+      this.endCoachingUnderClientLock(transaction, end),
     );
   }
 
@@ -126,9 +131,7 @@ export class PostgresCheckIns implements CheckIns {
     transaction: DatabaseTransaction,
     { checkIn, at }: CheckInRequest,
   ): Promise<CheckInRequestResult> {
-    await transaction.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${CLIENT_REQUEST_LOCK_PREFIX + checkIn.clientId}))`,
-    );
+    await lockCheckInsOfClient(transaction, checkIn.clientId);
 
     const clientRows = await transaction
       .select()
@@ -136,7 +139,7 @@ export class PostgresCheckIns implements CheckIns {
       .where(eq(checkInsTable.clientId, checkIn.clientId));
 
     await transaction.execute(sql`savepoint ${REQUEST_SAVEPOINT}`);
-    await transaction.insert(checkInsTable).values(this.toRow(checkIn));
+    await transaction.insert(checkInsTable).values(checkInRowOf(checkIn));
 
     const coachTime = await this.options.coachTime.reserve(transaction, {
       ...CHECK_IN_RULES.coachTimeFrom(checkIn.startsAt),
@@ -146,7 +149,7 @@ export class PostgresCheckIns implements CheckIns {
     const decision = CheckIn.decideRequest({
       initiatedBy: checkIn.initiatedBy,
       coachTime: coachTime.status,
-      clientCheckIns: clientRows.map((row) => this.toCheckIn(row)),
+      clientCheckIns: clientRows.map((row) => checkInOf(row)),
       at,
     });
 
@@ -237,18 +240,20 @@ export class PostgresCheckIns implements CheckIns {
     return "moved";
   }
 
-  private async cancelUpcomingStartingFrom(
+  private async endCoachingUnderClientLock(
     transaction: DatabaseTransaction,
-    { clientId, startsFrom, at }: ClientCancellation,
-  ): Promise<{ cancelled: string[] }> {
+    { clientId, endsAt, at }: CoachingEnd,
+  ): Promise<CheckInsAtCoachingEnd> {
+    await lockCheckInsOfClient(transaction, clientId);
+
     const cancelled = await transaction
       .update(checkInsTable)
       .set({ status: "cancelled", answeredAt: at })
       .where(
         and(
           eq(checkInsTable.clientId, clientId),
-          inArray(checkInsTable.status, OPEN_STATUSES),
-          gte(checkInsTable.startsAt, startsFrom),
+          inArray(checkInsTable.status, [...OPEN_CHECK_IN_STATUSES]),
+          gte(checkInsTable.startsAt, endsAt),
           gt(checkInsTable.startsAt, at),
         ),
       )
@@ -258,7 +263,21 @@ export class PostgresCheckIns implements CheckIns {
       await this.releaseHourOf(transaction, id);
     }
 
-    return { cancelled: cancelled.map(({ id }) => id) };
+    const stopped = await transaction
+      .update(checkInSeriesTable)
+      .set({ stoppedAt: at })
+      .where(
+        and(
+          eq(checkInSeriesTable.clientId, clientId),
+          isNull(checkInSeriesTable.stoppedAt),
+        ),
+      )
+      .returning({ id: checkInSeriesTable.id });
+
+    return {
+      cancelled: cancelled.map(({ id }) => id),
+      seriesStopped: stopped.length > 0,
+    };
   }
 
   private releaseHourOf(
@@ -268,48 +287,6 @@ export class PostgresCheckIns implements CheckIns {
     return this.options.coachTime.release(transaction, {
       appointmentKind: "check_in",
       appointmentId: checkInId,
-    });
-  }
-
-  private toRow(checkIn: CheckIn): typeof checkInsTable.$inferInsert {
-    const snapshot = checkIn.toSnapshot();
-
-    return {
-      id: snapshot.id,
-      clientId: snapshot.clientId,
-      startsAt: snapshot.startsAt,
-      clientTimeZone: snapshot.clientTimeZone,
-      coachTimeZone: snapshot.coachTimeZone,
-      kind: snapshot.kind,
-      status: snapshot.recordedStatus,
-      initiatedBy: snapshot.initiatedBy,
-      proposedBy: snapshot.proposedBy,
-      note: snapshot.note,
-      requestedAt: snapshot.requestedAt,
-      answeredAt: snapshot.answeredAt,
-      earlierStartsAt: snapshot.earlierStartsAt,
-      moves: snapshot.moves,
-      newTimeNote: snapshot.newTimeNote,
-    };
-  }
-
-  private toCheckIn(row: CheckInRow): CheckIn {
-    return CheckIn.reconstitute({
-      id: row.id,
-      clientId: row.clientId,
-      startsAt: row.startsAt,
-      clientTimeZone: row.clientTimeZone,
-      coachTimeZone: row.coachTimeZone,
-      kind: row.kind,
-      recordedStatus: row.status,
-      initiatedBy: row.initiatedBy,
-      proposedBy: row.proposedBy,
-      note: row.note,
-      requestedAt: row.requestedAt,
-      answeredAt: row.answeredAt,
-      earlierStartsAt: row.earlierStartsAt,
-      moves: row.moves,
-      newTimeNote: row.newTimeNote,
     });
   }
 }

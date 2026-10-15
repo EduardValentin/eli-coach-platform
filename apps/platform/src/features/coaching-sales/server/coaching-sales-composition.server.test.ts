@@ -220,6 +220,12 @@ function createHandles(
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
     coachEmail: "eli@evoa.fit",
     coachingEnds: [{ coachingEnds: async () => undefined }],
+    coachingPeriods: [
+      {
+        paidThroughExtended: async () => undefined,
+        programStarted: async () => undefined,
+      },
+    ],
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
@@ -246,6 +252,7 @@ function createIncidents() {
   return {
     paymentCardRefreshFailed: vi.fn(),
     coachingEndNotPropagated: vi.fn(),
+    coachingPeriodNotPropagated: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),
@@ -254,6 +261,7 @@ function createIncidents() {
     refundSettled: vi.fn(),
     renewalHoldApplied: vi.fn(),
     renewalHoldFailed: vi.fn(),
+    renewalHoldLiftFailed: vi.fn(),
     subscriptionCancellationFailed: vi.fn(),
     subscriptionCancelled: vi.fn(),
     subscriptionEventReconciled: vi.fn(),

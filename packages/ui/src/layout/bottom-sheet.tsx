@@ -23,6 +23,7 @@ type BottomSheetProps = {
   initialFocus?: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  returnFocusTo?: RefObject<HTMLElement | null>;
   title: string;
 };
 
@@ -58,6 +59,7 @@ export function BottomSheet(props: BottomSheetProps) {
     initialFocus,
     onOpenChange,
     open,
+    returnFocusTo,
     title,
   } = props;
   const shouldReduceMotion = useReducedMotionConfig() === true;
@@ -73,7 +75,9 @@ export function BottomSheet(props: BottomSheetProps) {
   const returnFocusToOpener = (event: Event) => {
     event.preventDefault();
     if (isFocusLost()) {
-      opener.current?.focus();
+      [returnFocusTo?.current, opener.current]
+        .find((candidate) => candidate?.isConnected)
+        ?.focus();
     }
   };
   const descriptionAttributes = description

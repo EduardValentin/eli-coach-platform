@@ -3,6 +3,8 @@ import type { PaymentSubscriptions } from "@eli-coach-platform/domain/coaching-s
 export class InMemoryPaymentSubscriptions implements PaymentSubscriptions {
   async holdRenewal(): Promise<void> {}
 
+  async liftRenewalHold(): Promise<void> {}
+
   async endNow(): Promise<void> {}
 
   async endAt(): Promise<void> {}

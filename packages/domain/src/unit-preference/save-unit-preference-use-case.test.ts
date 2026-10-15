@@ -17,6 +17,8 @@ function reachOf(portal: ClientReachReading["portal"]): ClientReachReading {
     clientId: "client-1",
     portal,
     coachingEndsAt: null,
+    programStartsAt: null,
+    paidThrough: null,
     timeZone: "Europe/Bucharest",
   };
 }

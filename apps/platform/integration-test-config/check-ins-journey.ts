@@ -1,4 +1,7 @@
-import type { CheckInNotification } from "@eli-coach-platform/domain/check-in";
+import type {
+  CheckInNotification,
+  CheckInSeriesNotification,
+} from "@eli-coach-platform/domain/check-in";
 import { z } from "zod";
 
 import type { SentEmail } from "./api-integration-test-suite";
@@ -63,6 +66,30 @@ export type MovedCheckInRow = {
   answeredAt: Date | null;
 };
 
+export type WeeklyRule = { weekday: string; hour: number };
+
+export type WeeklySetUp = WeeklyRule & { clientId: string };
+
+export type SeriesRow = {
+  id: string;
+  clientId: string;
+  weekday: string;
+  hour: number;
+  timeZone: string;
+  coversFrom: Date;
+  coversUntil: Date;
+  changedAt: Date | null;
+  stoppedAt: Date | null;
+};
+
+export type SeriesWeekRow = {
+  id: string;
+  startsAt: Date;
+  kind: string;
+  status: string;
+  moves: number;
+};
+
 export type HeldCheckInHour = {
   checkInId: string;
   startsAt: Date;
@@ -84,6 +111,10 @@ const openTimesSchema = z.object({ times: z.array(z.string()) });
 const requestedSchema = z.object({
   status: z.literal("requested"),
   checkInId: z.uuid(),
+});
+const setUpSchema = z.object({
+  status: z.literal("set_up"),
+  seriesId: z.uuid(),
 });
 const scheduledSchema = z.object({
   status: z.literal("scheduled"),
@@ -236,6 +267,83 @@ export class CheckInsJourney {
     if (response.status !== 200) {
       throw new Error(`Saving the meeting room answered ${response.status}.`);
     }
+  }
+
+  previewSeries(
+    requester: Requester,
+    query: { clientId: string; weekday: string },
+  ): Promise<Response> {
+    return this.send(
+      requester,
+      `${CHECK_INS_API}/series/preview?${new URLSearchParams(query)}`,
+    );
+  }
+
+  setUpSeries(requester: Requester, setUp: WeeklySetUp): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/series`, {
+      body: JSON.stringify(setUp),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  }
+
+  async seriesSetUp(setUp: WeeklySetUp): Promise<string> {
+    const response = await this.setUpSeries(COACH_SESSION, setUp);
+
+    if (response.status !== 201) {
+      throw new Error(
+        `Setting up the weekly check-in answered ${response.status}: ${await response.text()}`,
+      );
+    }
+
+    return setUpSchema.parse(await response.json()).seriesId;
+  }
+
+  changeSeries(
+    requester: Requester,
+    seriesId: string,
+    rule: WeeklyRule,
+  ): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/series/${seriesId}`, {
+      body: JSON.stringify(rule),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+    });
+  }
+
+  stopSeries(requester: Requester, seriesId: string): Promise<Response> {
+    return this.send(requester, `${CHECK_INS_API}/series/${seriesId}/stop`, {
+      method: "POST",
+    });
+  }
+
+  seriesRowsOf(clientId: string): Promise<SeriesRow[]> {
+    return this.rig.suite.postgres.queryRows<SeriesRow>({
+      sql: 'select id, client_id as "clientId", weekday, hour, time_zone as "timeZone", covers_from as "coversFrom", covers_until as "coversUntil", changed_at as "changedAt", stopped_at as "stoppedAt" from app.check_in_series where client_id = $1 order by set_up_at',
+      values: [clientId],
+    });
+  }
+
+  seriesWeekRowsOf(seriesId: string): Promise<SeriesWeekRow[]> {
+    return this.rig.suite.postgres.queryRows<SeriesWeekRow>({
+      sql: 'select id, starts_at as "startsAt", kind, status, moves from app.check_ins where series_id = $1 order by starts_at',
+      values: [seriesId],
+    });
+  }
+
+  async sentSeriesEmails(
+    seriesId: string,
+    notification?: CheckInSeriesNotification,
+  ): Promise<SentEmail[]> {
+    const emails = await this.rig.suite.sentEmails();
+
+    return emails.filter(
+      ({ idempotencyKey }) =>
+        idempotencyKey !== null &&
+        idempotencyKey.startsWith(`check-in-series:${seriesId}:`) &&
+        (notification === undefined ||
+          idempotencyKey.endsWith(`:${notification}`)),
+    );
   }
 
   checkInRowsOf(clientId: string): Promise<CheckInRow[]> {

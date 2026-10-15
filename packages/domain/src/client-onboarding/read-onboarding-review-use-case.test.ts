@@ -48,6 +48,8 @@ const CLIENT: OnboardingClient = {
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
   }),
 };
 

@@ -61,6 +61,18 @@ export class ConfirmationDialog {
     await this.page.keyboard.press("Enter");
   }
 
+  async dismissByKeyboard(): Promise<void> {
+    await tabTo(
+      this.page,
+      this.dialog.getByRole("button", {
+        name: this.labels.dismiss,
+        exact: true,
+      }),
+    );
+    await this.page.keyboard.press("Enter");
+    await expect(this.dialog).toBeHidden();
+  }
+
   async dismiss(): Promise<void> {
     await this.dialog
       .getByRole("button", { name: this.labels.dismiss, exact: true })

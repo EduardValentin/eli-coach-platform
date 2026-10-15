@@ -7,6 +7,7 @@ import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { MessagingProvider } from '../../context/MessagingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   AWAITING_REVIEW_CALL_ID,
@@ -70,10 +71,12 @@ function renderDetails(
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <CheckinProvider>
-                <UnitPreferencesProvider>
-                  <DemoJourneyDetails callId={callId} />
-                  <Toaster />
-                </UnitPreferencesProvider>
+                <MessagingProvider>
+                  <UnitPreferencesProvider>
+                    <DemoJourneyDetails callId={callId} />
+                    <Toaster />
+                  </UnitPreferencesProvider>
+                </MessagingProvider>
               </CheckinProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
@@ -603,7 +606,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, invitation, onboarding, subscription, measurements and the assessment call last', () => {
+  it('lays the page out as profile, invitation, onboarding, subscription, weekly check-in, measurements and the assessment call last', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -620,9 +623,25 @@ describe('the coach reading who a client is', () => {
       'Invitation',
       'Onboarding',
       'Subscription',
+      'Weekly check-in',
       'Measurements',
       'Assessment call',
     ]);
+  });
+
+  it('keeps her subscription on its own and her weekly check-in alone in a row of its own', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    const weekly = screen.getByRole('region', { name: 'Weekly check-in' });
+    const row = weekly.parentElement;
+    expect(row?.children).toHaveLength(1);
+    expect(subscriptionPanel().parentElement).not.toBe(row);
+    expect(screen.getByRole('region', { name: 'Measurements' }).parentElement).not.toBe(row);
   });
 
   it('reads who she is from her booking, her facts from the onboarding she sent and her weights from her first and latest measurements, in kilograms and centimetres', () => {

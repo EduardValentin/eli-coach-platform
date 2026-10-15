@@ -34,7 +34,11 @@ export class ListClientCheckInsUseCase {
     return {
       status: "listed",
       checkIns: checkIns.map((checkIn) =>
-        checkIn.viewFor({ party: "client", at: now }),
+        checkIn.viewAmong({
+          party: "client",
+          at: now,
+          clientCheckIns: checkIns,
+        }),
       ),
     };
   }

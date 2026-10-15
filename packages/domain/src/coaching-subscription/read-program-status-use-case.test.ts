@@ -8,6 +8,7 @@ import {
 
 import {
   CoachingSubscription,
+  withdrawalDeadline,
   type CoachingSubscriptionSnapshot,
   type StartChoice,
 } from "./coaching-subscription";
@@ -47,6 +48,8 @@ function journey(
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: null,
+      programStartsAt: null,
+      paidThrough: null,
     },
     ...reviewStamps,
   });
@@ -75,6 +78,11 @@ function subscriptionOf(
     paymentSubscriptionId: "sub_1",
     checkoutSessionId: "cs_1",
     paidAt: PURCHASED_AT,
+    paidThrough: new Date("2026-12-26T10:00:00.000Z"),
+    programStartsAt:
+      overrides.startChoice === "waiting"
+        ? withdrawalDeadline(PURCHASED_AT)
+        : PURCHASED_AT,
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,

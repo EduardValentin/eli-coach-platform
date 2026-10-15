@@ -104,6 +104,8 @@ describe("client portal access middleware", () => {
           accessEndsAt: null,
           refundDue: false,
           bundleMonths: null,
+          programStartsAt: null,
+          paidThrough: null,
         },
       }),
       session: {
@@ -145,6 +147,8 @@ describe("client portal access middleware", () => {
           accessEndsAt: null,
           refundDue: false,
           bundleMonths: null,
+          programStartsAt: null,
+          paidThrough: null,
         },
       }),
       session: {

@@ -84,7 +84,6 @@ export function CoachMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useNotifications();
   const {
-    getPendingCheckins,
     getUpcomingCheckins,
     getCheckinsAwaiting,
     findCheckin,

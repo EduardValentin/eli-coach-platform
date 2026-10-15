@@ -46,7 +46,13 @@ type CheckInMenuDialogsProps<CheckIn extends ListedCheckIn> = {
   wording: CheckInMenuWording<CheckIn>;
 };
 
-const MOVES_EXHAUSTED_REASON = "This check-in has already been moved twice.";
+const RESCHEDULE_HELD_BACK_REASONS: Partial<
+  Record<ListedCheckIn["viewerProposal"], string>
+> = {
+  exhausted: "This check-in has already been moved twice.",
+  later_week:
+    "You can move only your next weekly check-in; your coach can move the later ones.",
+};
 
 export function useCheckInMenu<CheckIn extends ListedCheckIn>(
   decisions: CheckInDecisions,
@@ -66,15 +72,14 @@ export function useCheckInMenu<CheckIn extends ListedCheckIn>(
 
   const menuOf = (checkIn: CheckIn): RowMenuAction[] => {
     const deciding = decisions.decidingKindOf(checkIn.id) !== null;
+    const heldBackReason = RESCHEDULE_HELD_BACK_REASONS[checkIn.viewerProposal];
     const reschedule: RowMenuAction = {
       disabled: deciding,
       icon: CalendarClock,
       label: "Reschedule",
       name: "reschedule",
       onSelect: () => choose("propose", checkIn),
-      ...(checkIn.viewerProposal === "exhausted" && {
-        disabledReason: MOVES_EXHAUSTED_REASON,
-      }),
+      ...(heldBackReason && { disabledReason: heldBackReason }),
     };
     const cancel: RowMenuAction = {
       disabled: deciding,
@@ -111,7 +116,7 @@ export function CheckInMenuDialogs<CheckIn extends ListedCheckIn>({
       {proposal && (
         <ProposeCheckInTimeDialog
           checkIn={proposal.checkIn}
-          key={proposal.opening}
+          key={`proposal-${proposal.opening}`}
           onOpenChange={onDialogOpenChange}
           open={proposal.open}
           proposer={wording.proposerOf(proposal.checkIn)}
@@ -129,7 +134,7 @@ export function CheckInMenuDialogs<CheckIn extends ListedCheckIn>({
             ),
           }}
           decisions={decisions}
-          key={cancellation.opening}
+          key={`cancellation-${cancellation.opening}`}
           onOpenChange={onDialogOpenChange}
           open={cancellation.open}
         />

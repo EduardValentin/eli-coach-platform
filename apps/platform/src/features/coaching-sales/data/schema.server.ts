@@ -124,6 +124,10 @@ export const coachingSubscriptionsTable = appSchema.table(
       length: 255,
     }).notNull(),
     paidAt: timestamp("paid_at", { withTimezone: true }).notNull(),
+    paidThrough: timestamp("paid_through", { withTimezone: true }).notNull(),
+    programStartsAt: timestamp("program_starts_at", {
+      withTimezone: true,
+    }).notNull(),
     startChoice: varchar("start_choice", {
       enum: START_CHOICES,
       length: 16,

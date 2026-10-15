@@ -6,12 +6,9 @@ import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 
 import { formatShortDay } from "~/features/assessment-calls/public/call-moment";
-import {
-  possessivePronoun,
-  subjectPronoun,
-} from "~/features/assessment-calls/public/visitor-profile";
 import type { CheckInScheduling } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
+import { awaitingOnboardingReason } from "~/features/check-ins/ui/coach/shared/awaiting-onboarding-reason";
 import { CheckInPicker } from "~/features/check-ins/ui/shared/check-ins/check-in-picker";
 
 type ScheduledClient = {
@@ -112,10 +109,4 @@ function ScheduleCheckInDialog({
       }}
     />
   );
-}
-
-function awaitingOnboardingReason(gender: VisitorGender): string {
-  const subject = subjectPronoun(gender);
-
-  return `${subject.capitalised} can answer a check-in once ${subject.lower} ${subject.hasVerb} sent ${possessivePronoun(gender).lower} onboarding.`;
 }

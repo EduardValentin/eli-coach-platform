@@ -30,6 +30,8 @@ type SubscriptionWrite = Partial<
     typeof coachingSubscriptionsTable.$inferInsert,
     | "status"
     | "startChoice"
+    | "paidThrough"
+    | "programStartsAt"
     | "cancelledAt"
     | "accessEndsAt"
     | "paymentProblemSince"
@@ -151,6 +153,11 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
           eq(coachingSubscriptionsTable.id, previous.id),
           eq(coachingSubscriptionsTable.status, previous.status),
           eq(coachingSubscriptionsTable.startChoice, previous.startChoice),
+          eq(coachingSubscriptionsTable.paidThrough, previous.paidThrough),
+          eq(
+            coachingSubscriptionsTable.programStartsAt,
+            previous.programStartsAt,
+          ),
           this.holds(
             coachingSubscriptionsTable.cancelledAt,
             previous.cancelledAt,
@@ -189,6 +196,8 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
       paymentSubscriptionId: row.stripeSubscriptionId,
       checkoutSessionId: row.stripeCheckoutSessionId,
       paidAt: row.paidAt,
+      paidThrough: row.paidThrough,
+      programStartsAt: row.programStartsAt,
       startChoice: row.startChoice,
       status: row.status,
       cancelledAt: row.cancelledAt,
@@ -239,6 +248,8 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     return {
       status: snapshot.status,
       startChoice: snapshot.startChoice,
+      paidThrough: snapshot.paidThrough,
+      programStartsAt: snapshot.programStartsAt,
       cancelledAt: snapshot.cancelledAt,
       accessEndsAt: snapshot.accessEndsAt,
       paymentProblemSince: snapshot.paymentProblemSince,

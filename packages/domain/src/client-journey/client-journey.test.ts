@@ -21,6 +21,8 @@ function journey(
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: null,
+      programStartsAt: null,
+      paidThrough: null,
     },
     ...overrides,
   });
@@ -166,6 +168,8 @@ describe("ClientJourney#toSnapshot", () => {
       accessEndsAt: new Date("2026-12-26T10:00:00.000Z"),
       refundDue: true,
       bundleMonths: 3,
+      programStartsAt: null,
+      paidThrough: null,
     } as const;
     const clientJourney = journey({
       welcomeSeenAt,

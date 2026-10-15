@@ -34,6 +34,7 @@ export type PaymentInvoiceOutcome = {
   customerId: string;
   outcome: "paid" | "failed";
   invoiceReason: PaymentInvoiceReason;
+  periodEndsAt: Date;
   occurredAt: Date;
 };
 

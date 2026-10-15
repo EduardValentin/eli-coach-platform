@@ -265,6 +265,130 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a coaching period that did not reach the check-ins by subscription, client and error class only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.coachingPeriodNotPropagated({
+      subscriptionId: "subscription-1",
+      clientId: "client-1",
+      error: new TypeError("connection reset"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Coaching period did not reach the client's check-ins; her weekly check-in misses the new weeks.",
+      {
+        clientId: "client-1",
+        errorCategory: "coaching_period_propagation_failure",
+        errorClass: "TypeError",
+        subscriptionId: "subscription-1",
+      },
+    );
+  });
+
+  it("logs a renewal hold that could not be lifted by payment subscription and error class only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.renewalHoldLiftFailed({
+      paymentSubscriptionId: "sub_1",
+      error: new TypeError("provider down"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Coaching subscription renewal hold could not be lifted; it ends at its resume date.",
+      {
+        errorCategory: "coaching_subscription_renewal_hold_lift_failure",
+        errorClass: "TypeError",
+        paymentSubscriptionId: "sub_1",
+      },
+    );
+  });
+
+  it("logs a failed weekly check-in notification with the series and the event, without the recipient", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesNotificationFailed({
+      seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      notification: "seriesSetUp",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in notification failed.",
+      {
+        errorCategory: "check_in_series_notification_failure",
+        notification: "seriesSetUp",
+        seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      },
+    );
+  });
+
+  it("logs a weekly check-in that could not be extended by client and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesExtensionFailed({
+      clientId: "client-1",
+      error: Object.assign(new Error("deadlock detected"), { code: "40P01" }),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in could not be extended; its new weeks are missing.",
+      {
+        clientId: "client-1",
+        errorCategory: "check_in_series_extension_failure",
+        errorClass: "Error",
+        errorCode: "40P01",
+      },
+    );
+  });
+
+  it("logs a weekly check-in that could not be read by client and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesReadFailed({
+      clientId: "client-1",
+      error: Object.assign(new Error("connection reset"), { code: "08006" }),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in could not be read; the client record shows none.",
+      {
+        clientId: "client-1",
+        errorCategory: "check_in_series_read_failure",
+        errorClass: "Error",
+        errorCode: "08006",
+      },
+    );
+  });
+
   it("logs unreadable assessment call slots", () => {
     // arrange
     const consoleError = vi

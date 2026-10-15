@@ -8,11 +8,15 @@ const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const NOW = new Date("2026-10-12T10:00:00.000Z");
 const SUBMITTED_AT = new Date("2026-10-01T10:00:00.000Z");
 const ACCESS_ENDS_AT = new Date("2026-11-01T10:00:00.000Z");
+const PROGRAM_STARTS_AT = new Date("2026-10-02T10:00:00.000Z");
+const PAID_THROUGH = new Date("2027-01-02T10:00:00.000Z");
 const ACTIVE: CoachingStandingSnapshot = {
   status: "active",
   accessEndsAt: null,
   refundDue: false,
   bundleMonths: 3,
+  programStartsAt: PROGRAM_STARTS_AT,
+  paidThrough: PAID_THROUGH,
 };
 
 const CLIENT_ROW = {
@@ -30,7 +34,7 @@ function reachAnswering(rows: readonly Record<string, unknown>[]) {
 }
 
 describe("PostgresClientReach#findByAuthSubjectId", () => {
-  it("reads the client bound to the subject as reachable in her booking time zone", async () => {
+  it("reads the client bound to the subject as reachable in her booking time zone, with her program start and paid-through date", async () => {
     // arrange
     const reach = reachAnswering([CLIENT_ROW]);
 
@@ -43,6 +47,8 @@ describe("PostgresClientReach#findByAuthSubjectId", () => {
       portal: "reachable",
       coachingEndsAt: null,
       timeZone: "Europe/Bucharest",
+      programStartsAt: PROGRAM_STARTS_AT,
+      paidThrough: PAID_THROUGH,
     });
   });
 

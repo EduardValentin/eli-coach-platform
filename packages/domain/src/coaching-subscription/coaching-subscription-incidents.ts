@@ -60,4 +60,13 @@ export interface CoachingSubscriptionIncidents {
     endsAt: Date;
     error: unknown;
   }): void;
+  coachingPeriodNotPropagated(incident: {
+    subscriptionId: string;
+    clientId: string;
+    error: unknown;
+  }): void;
+  renewalHoldLiftFailed(incident: {
+    paymentSubscriptionId: string;
+    error: unknown;
+  }): void;
 }

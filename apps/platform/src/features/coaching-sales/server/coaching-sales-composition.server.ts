@@ -24,6 +24,7 @@ import {
   StartCheckoutUseCase,
   StartProgramNowUseCase,
   type CoachingEndHandler,
+  type CoachingPeriodHandler,
   type CoachingSubscriptionIncidents,
   type PaidClientAdmission,
   type PaymentCheckout,
@@ -96,6 +97,7 @@ export type CoachingSalesFeatureHandles = {
   clock: Clock;
   coachEmail: string;
   coachingEnds: readonly CoachingEndHandler[];
+  coachingPeriods: readonly CoachingPeriodHandler[];
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
@@ -153,6 +155,7 @@ export function composeCoachingSalesFeature(
   const subscriptionPorts = {
     clock,
     coachingEnds: handles.coachingEnds,
+    coachingPeriods: handles.coachingPeriods,
     incidents: handles.incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
@@ -197,10 +200,8 @@ export function composeCoachingSalesFeature(
       incidents: handles.incidents,
     }),
     startProgramNow: new StartProgramNowUseCase({
-      clock,
-      incidents: handles.incidents,
+      ...subscriptionPorts,
       signedInSubscriptions,
-      subscriptions,
     }),
   };
 

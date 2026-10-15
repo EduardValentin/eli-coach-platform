@@ -1,5 +1,5 @@
 import { Ellipsis, type LucideIcon } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type Ref } from "react";
 
 import { Button } from "./button";
 import { DisabledActionHint } from "./disabled-action-hint";
@@ -31,12 +31,14 @@ type RowActionsMenuProps = {
   actions: ReadonlyArray<RowMenuAction>;
   label: string;
   size?: RowActionsMenuSize;
+  triggerRef?: Ref<HTMLButtonElement>;
 };
 
 export function RowActionsMenu({
   actions,
   label,
   size = "sm",
+  triggerRef,
 }: RowActionsMenuProps) {
   const chosenAction = useRef<(() => void) | null>(null);
 
@@ -64,6 +66,7 @@ export function RowActionsMenu({
         <Button
           aria-label={label}
           data-parity="row-actions-trigger"
+          ref={triggerRef}
           size={TRIGGER_SIZE[size]}
           variant="ghost"
         >
@@ -87,7 +90,7 @@ export function RowActionsMenu({
               variant={tone}
             >
               <Icon aria-hidden="true" />
-              {action.label}
+              <span>{action.label}</span>
             </DropdownMenuItem>
           );
 

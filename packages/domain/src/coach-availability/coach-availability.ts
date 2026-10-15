@@ -22,6 +22,12 @@ export const WEEKDAYS = [
 
 export type Weekday = (typeof WEEKDAYS)[number];
 
+export function weekdayNamed(name: string): Weekday | null {
+  const candidate = name.trim().toLowerCase();
+
+  return WEEKDAYS.find((weekday) => weekday === candidate) ?? null;
+}
+
 export type CoachAvailabilityProps = {
   timeZone: string;
   weekdays: readonly Weekday[];
@@ -84,6 +90,21 @@ export class CoachAvailability {
       (start) =>
         this.isOpenStart({ start, now, policy }) &&
         !overlapsAny(policy.coachTimeFrom(start), busy),
+    );
+  }
+
+  holdsWeeklyHour(weekly: { weekday: Weekday; hour: number }): boolean {
+    return (
+      this.weekdays.includes(weekly.weekday) &&
+      weekly.hour >= this.startHour &&
+      weekly.hour < this.endHour
+    );
+  }
+
+  weeklyHours(): number[] {
+    return Array.from(
+      { length: this.endHour - this.startHour },
+      (_, offset) => this.startHour + offset,
     );
   }
 

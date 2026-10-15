@@ -58,6 +58,35 @@ export function createConsoleLogger(): ConsoleLogger {
         notification,
       });
     },
+    checkInSeriesNotificationFailed: ({ notification, seriesId }) => {
+      console.error("Weekly check-in notification failed.", {
+        errorCategory: "check_in_series_notification_failure",
+        notification,
+        seriesId,
+      });
+    },
+    checkInSeriesExtensionFailed: ({ clientId, error }) => {
+      console.error(
+        "Weekly check-in could not be extended; its new weeks are missing.",
+        {
+          clientId,
+          errorCategory: "check_in_series_extension_failure",
+          errorClass: errorClassOf(error),
+          ...errorCodeOf(error),
+        },
+      );
+    },
+    checkInSeriesReadFailed: ({ clientId, error }) => {
+      console.error(
+        "Weekly check-in could not be read; the client record shows none.",
+        {
+          clientId,
+          errorCategory: "check_in_series_read_failure",
+          errorClass: errorClassOf(error),
+          ...errorCodeOf(error),
+        },
+      );
+    },
     coachingEndNotPropagated: ({ clientId, endsAt, error, subscriptionId }) => {
       console.error(
         "Coaching end did not reach the client's check-ins; their later check-ins stay booked.",
@@ -65,6 +94,17 @@ export function createConsoleLogger(): ConsoleLogger {
           clientId,
           endsAt: endsAt.toISOString(),
           errorCategory: "coaching_end_propagation_failure",
+          errorClass: errorClassOf(error),
+          subscriptionId,
+        },
+      );
+    },
+    coachingPeriodNotPropagated: ({ clientId, error, subscriptionId }) => {
+      console.error(
+        "Coaching period did not reach the client's check-ins; her weekly check-in misses the new weeks.",
+        {
+          clientId,
+          errorCategory: "coaching_period_propagation_failure",
           errorClass: errorClassOf(error),
           subscriptionId,
         },
@@ -340,6 +380,16 @@ export function createConsoleLogger(): ConsoleLogger {
         "Coaching subscription renewal hold failed; Stripe will redeliver.",
         {
           errorCategory: "coaching_subscription_renewal_hold_failure",
+          errorClass: errorClassOf(error),
+          paymentSubscriptionId,
+        },
+      );
+    },
+    renewalHoldLiftFailed: ({ error, paymentSubscriptionId }) => {
+      console.error(
+        "Coaching subscription renewal hold could not be lifted; it ends at its resume date.",
+        {
+          errorCategory: "coaching_subscription_renewal_hold_lift_failure",
           errorClass: errorClassOf(error),
           paymentSubscriptionId,
         },

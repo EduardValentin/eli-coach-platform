@@ -14,6 +14,7 @@ import {
 
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { ScheduleCheckInAction } from "~/features/check-ins/ui/coach/schedule/schedule-check-in-action";
+import { WeeklyCheckInPanel } from "~/features/check-ins/ui/coach/series/weekly-check-in-panel";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
 import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
@@ -43,23 +44,39 @@ export async function loader(args: LoaderFunctionArgs) {
   }
 
   const { coachProfile } = args.context.get(clientProfileContext);
-  const [client, subscription, review, profile, measurements, scheduling] =
-    await Promise.all([
-      args.context.get(clientsContext).coachClients.loadClient(args, clientId),
-      args.context
-        .get(coachingSalesContext)
-        .coachSales.loadClientSubscription(args, clientId),
-      args.context
-        .get(clientOnboardingContext)
-        .coachReview.loadReview(args, clientId),
-      coachProfile.load(args, clientId),
-      coachProfile.loadMeasurements(args, clientId),
-      args.context
-        .get(checkInsContext)
-        .coachCheckIns.loadClientScheduling(args, clientId),
-    ]);
+  const { coachCheckIns, coachCheckInSeries } =
+    args.context.get(checkInsContext);
+  const [
+    client,
+    subscription,
+    review,
+    profile,
+    measurements,
+    scheduling,
+    weekly,
+  ] = await Promise.all([
+    args.context.get(clientsContext).coachClients.loadClient(args, clientId),
+    args.context
+      .get(coachingSalesContext)
+      .coachSales.loadClientSubscription(args, clientId),
+    args.context
+      .get(clientOnboardingContext)
+      .coachReview.loadReview(args, clientId),
+    coachProfile.load(args, clientId),
+    coachProfile.loadMeasurements(args, clientId),
+    coachCheckIns.loadClientScheduling(args, clientId),
+    coachCheckInSeries.loadClientSeries(args, clientId),
+  ]);
 
-  return { client, subscription, review, profile, measurements, scheduling };
+  return {
+    client,
+    subscription,
+    review,
+    profile,
+    measurements,
+    scheduling,
+    weekly,
+  };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -77,8 +94,15 @@ export function ErrorBoundary() {
 }
 
 export default function CoachClientRoute() {
-  const { client, subscription, review, profile, measurements, scheduling } =
-    useLoaderData<typeof loader>();
+  const {
+    client,
+    subscription,
+    review,
+    profile,
+    measurements,
+    scheduling,
+    weekly,
+  } = useLoaderData<typeof loader>();
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const viewedEntry = measurements.find((entry) => entry.id === viewingEntryId);
@@ -125,11 +149,24 @@ export default function CoachClientRoute() {
         statusBadge={<ClientStatusBadge status={client.status} />}
       />
       {subscription && (
-        <SubscriptionSummary
-          className="mb-8"
-          gender={client.gender}
-          subscription={subscription}
-        />
+        <>
+          <SubscriptionSummary
+            className="mb-8"
+            gender={client.gender}
+            subscription={subscription}
+          />
+          <div
+            className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8"
+            data-parity="record-widgets-row"
+          >
+            <WeeklyCheckInPanel
+              client={client}
+              scheduling={scheduling}
+              suggestedWeekday={review.submitted?.checkInWeekday ?? null}
+              weekly={weekly}
+            />
+          </div>
+        </>
       )}
       <MeasurementsTable
         className="mb-8"

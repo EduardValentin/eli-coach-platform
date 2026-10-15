@@ -21,6 +21,7 @@ type ResponsiveSheetDialogProps = {
   initialFocus?: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  returnFocusTo?: RefObject<HTMLElement | null>;
   title: string;
   width?: SheetDialogWidth;
 };
@@ -37,6 +38,7 @@ export function ResponsiveSheetDialog({
   initialFocus,
   onOpenChange,
   open,
+  returnFocusTo,
   title,
   width = "full",
 }: ResponsiveSheetDialogProps) {
@@ -50,6 +52,7 @@ export function ResponsiveSheetDialog({
         initialFocus={initialFocus}
         onOpenChange={onOpenChange}
         open={open}
+        returnFocusTo={returnFocusTo}
         title={title}
       >
         {children}
@@ -70,6 +73,7 @@ export function ResponsiveSheetDialog({
         )}
         dismissal={dismissal}
         initialFocus={initialFocus}
+        returnFocusTo={returnFocusTo}
         {...descriptionAttributes}
       >
         <DialogFrameTitle className="sr-only">{title}</DialogFrameTitle>

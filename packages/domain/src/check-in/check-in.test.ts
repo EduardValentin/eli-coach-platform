@@ -11,6 +11,7 @@ const BEFORE_START = new Date("2026-06-02T09:00:00.000Z");
 
 const CLIENT_REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: STARTS_AT,
   clientTimeZone: "Europe/London",
@@ -50,6 +51,20 @@ function newTimeFromCoach(props?: Partial<CheckInProps>): CheckIn {
   });
 }
 
+function weeklyCheckIn(props?: Partial<CheckInProps>): CheckIn {
+  return CheckIn.reconstitute({
+    ...CLIENT_REQUEST,
+    seriesId: "series-1",
+    kind: "recurring",
+    recordedStatus: "approved",
+    initiatedBy: "coach",
+    proposedBy: "coach",
+    note: null,
+    answeredAt: CLIENT_REQUEST.requestedAt,
+    ...props,
+  });
+}
+
 function zoneOf(name: string): CheckInTimeZone {
   const result = CheckInTimeZone.from(name);
 
@@ -68,6 +83,14 @@ function noteOf(raw: string): CheckInNote | null {
   }
 
   return written.note;
+}
+
+function snapshotOf(result: ReturnType<CheckIn["proposeNewTime"]>) {
+  if (result.status !== "proposed") {
+    throw new Error(`expected a proposed new time, got ${result.status}`);
+  }
+
+  return result.checkIn.toSnapshot();
 }
 
 describe("CheckIn.requestedByClient", () => {
@@ -89,6 +112,7 @@ describe("CheckIn.requestedByClient", () => {
     // assert
     expect(requested.toSnapshot()).toEqual({
       id: "check-in-2",
+      seriesId: null,
       clientId: "client-1",
       startsAt: STARTS_AT,
       endsAt: ENDS_AT,
@@ -147,6 +171,7 @@ describe("CheckIn.scheduledByCoach", () => {
     // assert
     expect(scheduled.toSnapshot()).toEqual({
       id: "check-in-3",
+      seriesId: null,
       clientId: "client-1",
       startsAt: STARTS_AT,
       endsAt: ENDS_AT,
@@ -224,6 +249,18 @@ describe("CheckIn#statusAt", () => {
       "passed",
     ],
     [
+      "a clash before its start",
+      checkIn({ recordedStatus: "clash" }),
+      "2026-06-03T08:59:59.999Z",
+      "clash",
+    ],
+    [
+      "a clash at its start",
+      checkIn({ recordedStatus: "clash" }),
+      "2026-06-03T09:00:00.000Z",
+      "cancelled",
+    ],
+    [
       "a cancelled check-in before its start",
       checkIn({ recordedStatus: "cancelled" }),
       "2026-06-02T09:00:00.000Z",
@@ -247,51 +284,60 @@ describe("CheckIn#statusAt", () => {
   });
 });
 
-describe("CheckIn#awaits", () => {
-  it("awaits the coach on a request the client proposed", () => {
-    // arrange
-    const requested = checkIn();
+describe("CheckIn#awaitsAnswerOf", () => {
+  it.each([
+    {
+      situation: "a request the client proposed",
+      subject: checkIn(),
+      at: BEFORE_START,
+      expected: { coach: true, client: false },
+    },
+    {
+      situation: "a time the coach proposed",
+      subject: checkIn({ initiatedBy: "coach", proposedBy: "coach" }),
+      at: BEFORE_START,
+      expected: { coach: false, client: true },
+    },
+    {
+      situation: "an approved check-in",
+      subject: approvedCheckIn(),
+      at: BEFORE_START,
+      expected: { coach: false, client: false },
+    },
+    {
+      situation: "a request whose start has passed",
+      subject: checkIn(),
+      at: STARTS_AT,
+      expected: { coach: false, client: false },
+    },
+    {
+      situation: "a clash before its start",
+      subject: checkIn({ recordedStatus: "clash" }),
+      at: BEFORE_START,
+      expected: { coach: true, client: false },
+    },
+    {
+      situation: "a clash whose start has passed",
+      subject: checkIn({ recordedStatus: "clash" }),
+      at: STARTS_AT,
+      expected: { coach: false, client: false },
+    },
+  ] as const)(
+    "awaits on $situation: $expected",
+    ({ subject, at, expected }) => {
+      // arrange
+      const instant = at;
 
-    // act
-    const awaitsCoach = requested.awaits("coach");
-    const awaitsClient = requested.awaits("client");
+      // act
+      const awaiting = {
+        coach: subject.awaitsAnswerOf({ party: "coach", at: instant }),
+        client: subject.awaitsAnswerOf({ party: "client", at: instant }),
+      };
 
-    // assert
-    expect({ awaitsCoach, awaitsClient }).toEqual({
-      awaitsCoach: true,
-      awaitsClient: false,
-    });
-  });
-
-  it("awaits the client on a time the coach proposed", () => {
-    // arrange
-    const proposed = checkIn({ initiatedBy: "coach", proposedBy: "coach" });
-
-    // act
-    const awaitsCoach = proposed.awaits("coach");
-    const awaitsClient = proposed.awaits("client");
-
-    // assert
-    expect({ awaitsCoach, awaitsClient }).toEqual({
-      awaitsCoach: false,
-      awaitsClient: true,
-    });
-  });
-
-  it("awaits nobody once the check-in is approved", () => {
-    // arrange
-    const approved = approvedCheckIn();
-
-    // act
-    const awaitsCoach = approved.awaits("coach");
-    const awaitsClient = approved.awaits("client");
-
-    // assert
-    expect({ awaitsCoach, awaitsClient }).toEqual({
-      awaitsCoach: false,
-      awaitsClient: false,
-    });
-  });
+      // assert
+      expect(awaiting).toEqual(expected);
+    },
+  );
 });
 
 describe("CheckIn#mayWithdraw", () => {
@@ -375,6 +421,59 @@ describe("CheckIn#isJoinableAt", () => {
     // assert
     expect(joinable).toBe(expected);
   });
+});
+
+describe("CheckIn#holdsCoachTimeAt", () => {
+  it.each([
+    [
+      "a pending request before its start",
+      checkIn(),
+      "2026-06-03T08:59:59.999Z",
+      true,
+    ],
+    [
+      "a pending request at its start",
+      checkIn(),
+      "2026-06-03T09:00:00.000Z",
+      false,
+    ],
+    [
+      "an approved check-in before its end",
+      approvedCheckIn(),
+      "2026-06-03T09:59:59.999Z",
+      true,
+    ],
+    [
+      "an approved check-in at its end",
+      approvedCheckIn(),
+      "2026-06-03T10:00:00.000Z",
+      false,
+    ],
+    [
+      "a clash before its start",
+      checkIn({ recordedStatus: "clash" }),
+      "2026-06-03T08:59:59.999Z",
+      false,
+    ],
+    [
+      "a cancelled check-in before its start",
+      checkIn({ recordedStatus: "cancelled" }),
+      "2026-06-02T09:00:00.000Z",
+      false,
+    ],
+  ])(
+    "judges whether %s holds the coach's time: %s",
+    (_situation, subject, instant, expected) => {
+      // arrange
+      const now = new Date(instant);
+
+      // act
+      const holds = subject.holdsCoachTimeAt(now);
+
+      // assert
+      expect(holds).toBe(expected);
+    },
+  );
 });
 
 describe("CheckIn#answerRefusalFor", () => {
@@ -616,6 +715,7 @@ describe("CheckIn#viewFor", () => {
     expect(view).toEqual({
       ...requested.toSnapshot(),
       status: "cancelled",
+      tab: "past",
       awaitsViewer: false,
       viewerMayWithdraw: false,
       isWaitingRequest: false,
@@ -980,14 +1080,6 @@ describe("CheckIn#proposeNewTime", () => {
       expect(result).toEqual({ status: refusal });
     },
   );
-
-  function snapshotOf(result: ReturnType<CheckIn["proposeNewTime"]>) {
-    if (result.status !== "proposed") {
-      throw new Error(`expected a proposed new time, got ${result.status}`);
-    }
-
-    return result.checkIn.toSnapshot();
-  }
 });
 
 describe("CheckIn#hasPendingNewTime", () => {
@@ -1060,20 +1152,28 @@ describe("CheckIn#viewFor newTimeWaits", () => {
 });
 
 describe("CheckIn#cancellationRefusalFor", () => {
-  it.each(["client", "coach"] as const)(
-    "lets the %s cancel an approved ad-hoc check-in before it starts",
-    (party) => {
+  it.each([
+    { initiatedBy: "client", party: "client", refusal: null },
+    { initiatedBy: "client", party: "coach", refusal: "not_allowed" },
+    { initiatedBy: "coach", party: "coach", refusal: null },
+    { initiatedBy: "coach", party: "client", refusal: "not_allowed" },
+  ] as const)(
+    "answers $refusal when the $party cancels an approved ad-hoc check-in the $initiatedBy requested before it starts",
+    ({ initiatedBy, party, refusal }) => {
       // arrange
-      const approved = approvedCheckIn();
+      const approved = approvedCheckIn({
+        initiatedBy,
+        proposedBy: initiatedBy,
+      });
 
       // act
-      const refusal = approved.cancellationRefusalFor({
+      const result = approved.cancellationRefusalFor({
         party,
         at: BEFORE_START,
       });
 
       // assert
-      expect(refusal).toBeNull();
+      expect(result).toBe(refusal);
     },
   );
 
@@ -1184,15 +1284,27 @@ describe("CheckIn#viewFor proposal and cancellation rights", () => {
       expected: { viewerProposal: "allowed", viewerMayCancel: true },
     },
     {
-      situation: "an approved check-in to the coach",
+      situation: "her approved request to the coach",
       subject: approvedCheckIn(),
+      party: "coach",
+      expected: { viewerProposal: "allowed", viewerMayCancel: false },
+    },
+    {
+      situation: "an approved check-in the coach scheduled to the coach",
+      subject: approvedCheckIn({ initiatedBy: "coach" }),
       party: "coach",
       expected: { viewerProposal: "allowed", viewerMayCancel: true },
     },
     {
+      situation: "an approved check-in the coach scheduled to the client",
+      subject: approvedCheckIn({ initiatedBy: "coach" }),
+      party: "client",
+      expected: { viewerProposal: "allowed", viewerMayCancel: false },
+    },
+    {
       situation: "an approved check-in moved twice",
       subject: approvedCheckIn({ earlierStartsAt: NEW_START, moves: 2 }),
-      party: "coach",
+      party: "client",
       expected: { viewerProposal: "exhausted", viewerMayCancel: true },
     },
     {
@@ -1250,5 +1362,538 @@ describe("CheckIn#viewFor proposal and cancellation rights", () => {
       viewerMayWithdraw: false,
       isWaitingRequest: false,
     });
+  });
+});
+
+describe("CheckIn.seriesOccurrence", () => {
+  it("records a recurring check-in of the series approved on creation, initiated and proposed by the coach, without a note", () => {
+    // arrange
+    const occurrence = {
+      id: "check-in-7",
+      seriesId: "series-1",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      at: BEFORE_START,
+    };
+
+    // act
+    const created = CheckIn.seriesOccurrence(occurrence);
+
+    // assert
+    expect(created.toSnapshot()).toEqual({
+      id: "check-in-7",
+      seriesId: "series-1",
+      clientId: "client-1",
+      startsAt: STARTS_AT,
+      endsAt: ENDS_AT,
+      joinEmphasisFrom: new Date("2026-06-03T08:50:00.000Z"),
+      clientTimeZone: "Europe/London",
+      coachTimeZone: "Europe/Bucharest",
+      kind: "recurring",
+      recordedStatus: "approved",
+      initiatedBy: "coach",
+      proposedBy: "coach",
+      note: null,
+      requestedAt: BEFORE_START,
+      answeredAt: BEFORE_START,
+      earlierStartsAt: null,
+      moves: 0,
+      newTimeNote: null,
+    });
+  });
+});
+
+describe("CheckIn#asClash", () => {
+  it("keeps the check-in as it is, recorded as a clash", () => {
+    // arrange
+    const occurrence = weeklyCheckIn();
+
+    // act
+    const clash = occurrence.asClash();
+
+    // assert
+    expect(clash.toSnapshot()).toEqual({
+      ...occurrence.toSnapshot(),
+      recordedStatus: "clash",
+    });
+  });
+});
+
+describe("CheckIn.decideOccurrence", () => {
+  it.each([
+    {
+      situation: "inside the availability with the hour reserved",
+      availability: "open",
+      coachTime: "reserved",
+      expected: "approved",
+    },
+    {
+      situation: "inside the availability with the hour taken",
+      availability: "open",
+      coachTime: "taken",
+      expected: "clash",
+    },
+    {
+      situation: "outside the availability",
+      availability: "closed",
+      coachTime: "not_attempted",
+      expected: "clash",
+    },
+  ] as const)(
+    "creates a weekly check-in $situation as $expected",
+    ({ availability, coachTime, expected }) => {
+      // arrange
+      const occurrence = weeklyCheckIn();
+
+      // act
+      const decided = CheckIn.decideOccurrence({
+        occurrence,
+        availability,
+        coachTime,
+      });
+
+      // assert
+      expect(decided.toSnapshot()).toEqual({
+        ...occurrence.toSnapshot(),
+        recordedStatus: expected,
+      });
+    },
+  );
+});
+
+describe("CheckIn#tabFor", () => {
+  it.each([
+    {
+      situation: "an approved check-in",
+      subject: approvedCheckIn(),
+      at: BEFORE_START,
+      expected: { coach: "upcoming", client: "upcoming" },
+    },
+    {
+      situation: "a waiting request",
+      subject: checkIn(),
+      at: BEFORE_START,
+      expected: { coach: "requests", client: "requests" },
+    },
+    {
+      situation: "a clash",
+      subject: checkIn({ recordedStatus: "clash" }),
+      at: BEFORE_START,
+      expected: { coach: "requests", client: "upcoming" },
+    },
+    {
+      situation: "a clash whose start has passed",
+      subject: checkIn({ recordedStatus: "clash" }),
+      at: STARTS_AT,
+      expected: { coach: "past", client: "past" },
+    },
+    {
+      situation: "a passed check-in",
+      subject: approvedCheckIn(),
+      at: ENDS_AT,
+      expected: { coach: "past", client: "past" },
+    },
+    {
+      situation: "a cancelled check-in",
+      subject: checkIn({ recordedStatus: "cancelled" }),
+      at: BEFORE_START,
+      expected: { coach: "past", client: "past" },
+    },
+  ] as const)(
+    "lists $situation under $expected",
+    ({ subject, at, expected }) => {
+      // arrange
+      const instant = at;
+
+      // act
+      const tabs = {
+        coach: subject.tabFor({ party: "coach", at: instant }),
+        client: subject.tabFor({ party: "client", at: instant }),
+      };
+
+      // assert
+      expect(tabs).toEqual(expected);
+    },
+  );
+
+  it("shows the tab in the viewer's view", () => {
+    // arrange
+    const clash = checkIn({ recordedStatus: "clash" });
+
+    // act
+    const coachView = clash.viewFor({ party: "coach", at: BEFORE_START });
+    const clientView = clash.viewFor({ party: "client", at: BEFORE_START });
+
+    // assert
+    expect([coachView.tab, clientView.tab]).toEqual(["requests", "upcoming"]);
+  });
+});
+
+describe("CheckIn#viewAmong", () => {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function weekOf(index: number, props?: Partial<CheckInProps>): CheckIn {
+    return weeklyCheckIn({
+      id: `week-${index}`,
+      startsAt: new Date(STARTS_AT.getTime() + index * WEEK_MS),
+      ...props,
+    });
+  }
+
+  it.each([
+    {
+      situation: "her next weekly check-in",
+      subject: weekOf(0),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "client",
+      proposal: "allowed",
+    },
+    {
+      situation: "a later week of her series",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "a later week moved twice",
+      subject: weekOf(1, { moves: 2 }),
+      clientCheckIns: [weekOf(0), weekOf(1, { moves: 2 })],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "the week after a clash",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0, { recordedStatus: "clash" }), weekOf(1)],
+      party: "client",
+      proposal: "later_week",
+    },
+    {
+      situation: "a later week to the coach",
+      subject: weekOf(1),
+      clientCheckIns: [weekOf(0), weekOf(1)],
+      party: "coach",
+      proposal: "allowed",
+    },
+    {
+      situation: "a clash after her next week",
+      subject: weekOf(1, { recordedStatus: "clash" }),
+      clientCheckIns: [weekOf(0), weekOf(1, { recordedStatus: "clash" })],
+      party: "client",
+      proposal: "none",
+    },
+    {
+      situation: "an ad-hoc check-in after her next week",
+      subject: approvedCheckIn({ startsAt: NEW_START }),
+      clientCheckIns: [weekOf(0), approvedCheckIn({ startsAt: NEW_START })],
+      party: "client",
+      proposal: "allowed",
+    },
+  ] as const)(
+    "offers $proposal on $situation",
+    ({ subject, clientCheckIns, party, proposal }) => {
+      // arrange
+      const viewer = { party, at: BEFORE_START, clientCheckIns };
+
+      // act
+      const view = subject.viewAmong(viewer);
+
+      // assert
+      expect(view.viewerProposal).toBe(proposal);
+    },
+  );
+
+  it("keeps every other part of the view", () => {
+    // arrange
+    const later = weekOf(1);
+    const viewer = { party: "client" as const, at: BEFORE_START };
+
+    // act
+    const view = later.viewAmong({
+      ...viewer,
+      clientCheckIns: [weekOf(0), later],
+    });
+
+    // assert
+    expect(view).toEqual({
+      ...later.viewFor(viewer),
+      viewerProposal: "later_week",
+    });
+  });
+});
+
+describe("CheckIn weekly rights", () => {
+  it("lets only the coach cancel an approved weekly check-in", () => {
+    // arrange
+    const weekly = weeklyCheckIn();
+
+    // act
+    const refusals = {
+      coach: weekly.cancellationRefusalFor({
+        party: "coach",
+        at: BEFORE_START,
+      }),
+      client: weekly.cancellationRefusalFor({
+        party: "client",
+        at: BEFORE_START,
+      }),
+    };
+
+    // assert
+    expect(refusals).toEqual({ coach: null, client: "not_allowed" });
+  });
+
+  it("lets either party propose a new time for an approved weekly check-in", () => {
+    // arrange
+    const weekly = weeklyCheckIn();
+
+    // act
+    const proposals = (["coach", "client"] as const).map(
+      (party) => weekly.viewFor({ party, at: BEFORE_START }).viewerProposal,
+    );
+
+    // assert
+    expect(proposals).toEqual(["allowed", "allowed"]);
+  });
+});
+
+describe("CheckIn#laterWeekRefusalFor", () => {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function weekOf(index: number, props?: Partial<CheckInProps>): CheckIn {
+    return weeklyCheckIn({
+      id: `week-${index}`,
+      startsAt: new Date(STARTS_AT.getTime() + index * WEEK_MS),
+      ...props,
+    });
+  }
+
+  it.each([
+    {
+      situation: "the next approved week",
+      subject: weekOf(0),
+      earlier: [],
+    },
+    {
+      situation: "a later week whose earlier week waits on her answer",
+      subject: weekOf(1),
+      earlier: [
+        weekOf(0, {
+          recordedStatus: "pending",
+          startsAt: NEW_START,
+          earlierStartsAt: STARTS_AT,
+          moves: 1,
+        }),
+      ],
+    },
+    {
+      situation: "a later week whose earlier week was cancelled",
+      subject: weekOf(1),
+      earlier: [weekOf(0, { recordedStatus: "cancelled" })],
+    },
+    {
+      situation: "a later week of another series",
+      subject: weekOf(1, { seriesId: "series-2" }),
+      earlier: [weekOf(0)],
+    },
+    {
+      situation: "a later week the coach moved, waiting on her answer",
+      subject: weekOf(1, {
+        recordedStatus: "pending",
+        earlierStartsAt: STARTS_AT,
+        moves: 1,
+      }),
+      earlier: [weekOf(0)],
+    },
+    {
+      situation: "an ad hoc check-in after another ad hoc one",
+      subject: approvedCheckIn({ startsAt: NEW_START }),
+      earlier: [approvedCheckIn({ id: "ad-hoc-0" })],
+    },
+  ])("lets the client move $situation", ({ subject, earlier }) => {
+    // arrange
+    const turn = {
+      party: "client" as const,
+      at: BEFORE_START,
+      clientCheckIns: [...earlier, subject],
+    };
+
+    // act
+    const refusal = subject.laterWeekRefusalFor(turn);
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+
+  it.each([
+    { situation: "an approved", earlier: weekOf(0) },
+    {
+      situation: "a clashing",
+      earlier: weekOf(0, { recordedStatus: "clash" }),
+    },
+  ])(
+    "refuses the client a later approved week while $situation week comes first",
+    ({ earlier }) => {
+      // arrange
+      const later = weekOf(1);
+      const turn = {
+        party: "client" as const,
+        at: BEFORE_START,
+        clientCheckIns: [later, earlier],
+      };
+
+      // act
+      const refusal = later.laterWeekRefusalFor(turn);
+
+      // assert
+      expect(refusal).toBe("not_next_weekly");
+    },
+  );
+
+  it("lets the coach move any week", () => {
+    // arrange
+    const later = weekOf(1);
+    const turn = {
+      party: "coach" as const,
+      at: BEFORE_START,
+      clientCheckIns: [weekOf(0), later],
+    };
+
+    // act
+    const refusal = later.laterWeekRefusalFor(turn);
+
+    // assert
+    expect(refusal).toBeNull();
+  });
+});
+
+describe("CheckIn clash rights", () => {
+  const clash = weeklyCheckIn({ recordedStatus: "clash" });
+
+  it.each([
+    {
+      situation: "the coach before its start",
+      party: "coach",
+      at: BEFORE_START,
+      expected: null,
+    },
+    {
+      situation: "the client before its start",
+      party: "client",
+      at: BEFORE_START,
+      expected: "not_allowed",
+    },
+    {
+      situation: "the coach once its start has passed",
+      party: "coach",
+      at: STARTS_AT,
+      expected: "expired",
+    },
+  ] as const)(
+    "answers cancelling a clash by $situation with $expected",
+    ({ party, at, expected }) => {
+      // arrange
+      const turn = { party, at };
+
+      // act
+      const refusal = clash.cancellationRefusalFor(turn);
+
+      // assert
+      expect(refusal).toBe(expected);
+    },
+  );
+
+  it.each([
+    { party: "coach", at: BEFORE_START, expected: "proposed" },
+    { party: "client", at: BEFORE_START, expected: "not_your_turn" },
+    { party: "coach", at: STARTS_AT, expected: "expired" },
+  ] as const)(
+    "answers a new time for a clash from the $party at $at with $expected",
+    ({ party, at, expected }) => {
+      // arrange
+      const newTime = { party, startsAt: NEW_START, note: null, at };
+
+      // act
+      const result = clash.proposeNewTime(newTime);
+
+      // assert
+      expect(result.status).toBe(expected);
+    },
+  );
+
+  it("lets the coach propose a new time for a clash without spending a move, waiting for the client", () => {
+    // arrange
+    const movedOnce = weeklyCheckIn({ recordedStatus: "clash", moves: 1 });
+
+    // act
+    const result = movedOnce.proposeNewTime({
+      party: "coach",
+      startsAt: NEW_START,
+      note: null,
+      at: BEFORE_START,
+    });
+
+    // assert
+    expect(snapshotOf(result)).toEqual({
+      ...movedOnce.toSnapshot(),
+      startsAt: NEW_START,
+      endsAt: new Date("2026-06-04T14:00:00.000Z"),
+      joinEmphasisFrom: new Date("2026-06-04T12:50:00.000Z"),
+      recordedStatus: "pending",
+      proposedBy: "coach",
+      answeredAt: null,
+      earlierStartsAt: STARTS_AT,
+      moves: 1,
+      newTimeNote: null,
+    });
+  });
+
+  it("refuses approving or declining a clash as not pending", () => {
+    // arrange
+    const turn = { party: "coach" as const, at: BEFORE_START };
+
+    // act
+    const refusal = clash.answerRefusalFor(turn);
+
+    // assert
+    expect(refusal).toBe("not_pending");
+  });
+
+  it("shows a clash as the coach's to move or cancel and nothing to the client", () => {
+    // arrange
+    const at = BEFORE_START;
+
+    // act
+    const coachView = clash.viewFor({ party: "coach", at });
+    const clientView = clash.viewFor({ party: "client", at });
+
+    // assert
+    expect(
+      [coachView, clientView].map((view) => ({
+        status: view.status,
+        awaitsViewer: view.awaitsViewer,
+        viewerMayWithdraw: view.viewerMayWithdraw,
+        viewerProposal: view.viewerProposal,
+        viewerMayCancel: view.viewerMayCancel,
+      })),
+    ).toEqual([
+      {
+        status: "clash",
+        awaitsViewer: true,
+        viewerMayWithdraw: false,
+        viewerProposal: "allowed",
+        viewerMayCancel: true,
+      },
+      {
+        status: "clash",
+        awaitsViewer: false,
+        viewerMayWithdraw: false,
+        viewerProposal: "none",
+        viewerMayCancel: false,
+      },
+    ]);
   });
 });

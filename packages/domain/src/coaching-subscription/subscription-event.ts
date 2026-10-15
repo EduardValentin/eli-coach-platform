@@ -13,7 +13,12 @@ export type SubscriptionEvent =
       paymentSubscriptionId: string;
       occurredAt: Date;
     }
-  | { kind: "renewal-paid"; paymentSubscriptionId: string; occurredAt: Date }
+  | {
+      kind: "renewal-paid";
+      paymentSubscriptionId: string;
+      paidThrough: Date;
+      occurredAt: Date;
+    }
   | {
       kind: "charge-refunded";
       paymentIntentId: string;

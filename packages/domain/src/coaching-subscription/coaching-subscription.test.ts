@@ -32,7 +32,9 @@ function snapshotOf(
     paymentSubscriptionId: "sub_1",
     checkoutSessionId: "cs_1",
     paidAt: PAID_AT,
+    paidThrough: ACCESS_END,
     startChoice: "waiting",
+    programStartsAt: WITHDRAWAL_DEADLINE,
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,
@@ -49,7 +51,10 @@ function subscriptionOf(
 }
 
 function onPath(startChoice: StartChoice): CoachingSubscription {
-  return subscriptionOf({ startChoice });
+  return subscriptionOf({
+    startChoice,
+    programStartsAt: startChoice === "waiting" ? WITHDRAWAL_DEADLINE : PAID_AT,
+  });
 }
 
 describe("CoachingSubscription.cancellationRule", () => {
@@ -131,6 +136,7 @@ describe("CoachingSubscription.cancel", () => {
     ).toEqual(
       snapshotOf({
         startChoice: "immediate",
+        programStartsAt: PAID_AT,
         status: "cancelled",
         cancelledAt: DAY_13,
         accessEndsAt: ACCESS_END,
@@ -163,22 +169,17 @@ describe("CoachingSubscription.cancel", () => {
     );
   });
 
-  it("keeps access until the last day of a shorter month", () => {
+  it("keeps access until the paid-through date a renewal extended", () => {
     // arrange
-    const subscription = subscriptionOf({
-      bundleId: "1-month",
-      months: 1,
-      paidAt: new Date("2027-01-31T10:00:00.000Z"),
-    });
+    const renewedThrough = new Date("2027-04-02T10:00:00.000Z");
+    const renewed = onPath("waiting").renewalPaid(renewedThrough);
 
     // act
-    const cancellation = subscription.cancel(
-      new Date("2027-02-20T10:00:00.000Z"),
-    );
+    const cancellation = renewed.cancel(new Date("2027-02-20T10:00:00.000Z"));
 
     // assert
     expect(cancellation).toMatchObject({
-      instruction: { kind: "end-at", at: new Date("2027-02-28T10:00:00.000Z") },
+      instruction: { kind: "end-at", at: renewedThrough },
     });
   });
 
@@ -264,6 +265,8 @@ describe("CoachingSubscription.standing", () => {
         accessEndsAt: null,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       },
     ],
     [
@@ -273,6 +276,8 @@ describe("CoachingSubscription.standing", () => {
         accessEndsAt: null,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       },
     ],
     [
@@ -282,6 +287,8 @@ describe("CoachingSubscription.standing", () => {
         accessEndsAt: ACCESS_END,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       },
     ],
     [
@@ -299,6 +306,8 @@ describe("CoachingSubscription.standing", () => {
         accessEndsAt: DAY_13,
         refundDue: true,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       },
     ],
     [
@@ -320,6 +329,8 @@ describe("CoachingSubscription.standing", () => {
         accessEndsAt: DAY_13,
         refundDue: false,
         bundleMonths: 3,
+        programStartsAt: WITHDRAWAL_DEADLINE,
+        paidThrough: ACCESS_END,
       },
     ],
   ] as const)("records the standing of %o as %o", (overrides, expected) => {
@@ -496,7 +507,9 @@ describe("CoachingSubscription start now", () => {
     // assert
     expect(
       decision.outcome === "started" && decision.subscription.toSnapshot(),
-    ).toEqual(snapshotOf({ startChoice: "immediate" }));
+    ).toEqual(
+      snapshotOf({ startChoice: "immediate", programStartsAt: DAY_13 }),
+    );
   });
 
   it("leaves only the no-refund cancellation after starting now", () => {
@@ -553,6 +566,17 @@ describe("CoachingSubscription start now", () => {
 
     // assert
     expect(workStart).toBeNull();
+  });
+
+  it("starts the work at the program start it records on the waiting path", () => {
+    // arrange
+    const subscription = subscriptionOf({ programStartsAt: DAY_13 });
+
+    // act
+    const workStart = subscription.programWorkStart();
+
+    // assert
+    expect(workStart).toEqual(DAY_13);
   });
 
   it("names the upcoming work start on the waiting path before the window closes", () => {
@@ -743,6 +767,22 @@ describe("CoachingSubscription mirror rules", () => {
 
     // assert
     expect(cleared.paymentProblemSince).toBeNull();
+  });
+
+  it("records the paid-through date of a paid renewal and clears a payment problem", () => {
+    // arrange
+    const renewedThrough = new Date("2027-04-02T10:00:00.000Z");
+    const flagged = onPath("waiting").flagPaymentProblem(SCHEDULED_AT);
+
+    // act
+    const renewed = flagged.renewalPaid(renewedThrough);
+
+    // assert
+    expect(renewed.toSnapshot()).toEqual({
+      ...onPath("waiting").toSnapshot(),
+      paidThrough: renewedThrough,
+    });
+    expect(renewed.paidThrough).toEqual(renewedThrough);
   });
 
   it("settles the refund it owes", () => {

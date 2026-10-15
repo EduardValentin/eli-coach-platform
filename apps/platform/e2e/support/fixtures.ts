@@ -30,7 +30,10 @@ import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachAvailability } from "./coach-availability";
 import { CoachCheckInsPage } from "./coach-check-ins-page";
-import { CoachClientPage } from "./coach-client-page";
+import {
+  CoachClientPage,
+  STOP_WEEKLY_CHECK_IN_LABELS,
+} from "./coach-client-page";
 import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
@@ -55,6 +58,7 @@ import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
 import { ResourceToolbar } from "./resource-toolbar";
 import { ResourceViewer } from "./resource-viewer";
+import { WeeklyCheckInDialog } from "./weekly-check-in-dialog";
 import {
   insertInvitedClientRecords,
   insertPaidClientRecords,
@@ -113,6 +117,8 @@ type PlatformFixtures = {
   checkInScheduleDialog: CheckInPickerDialog;
   checkInProposeDialog: CheckInPickerDialog;
   cancelCheckInDialog: ConfirmationDialog;
+  weeklyCheckInDialog: WeeklyCheckInDialog;
+  stopWeeklyDialog: ConfirmationDialog;
   privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
@@ -399,6 +405,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   cancelCheckInDialog: async ({ page }, use) => {
     await use(new ConfirmationDialog(page, CANCEL_CHECK_IN_LABELS));
+  },
+
+  weeklyCheckInDialog: async ({ page }, use) => {
+    await use(new WeeklyCheckInDialog(page));
+  },
+
+  stopWeeklyDialog: async ({ page }, use) => {
+    await use(new ConfirmationDialog(page, STOP_WEEKLY_CHECK_IN_LABELS));
   },
 
   measurementsSheet: async ({ page }, use) => {

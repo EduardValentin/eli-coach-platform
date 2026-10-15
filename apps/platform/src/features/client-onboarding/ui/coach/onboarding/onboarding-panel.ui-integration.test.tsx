@@ -49,6 +49,7 @@ const STATUS_BADGE = "Awaiting review";
 const SUBMITTED: SubmittedReview = {
   checkInChannel: "WhatsApp",
   checkInDay: "Monday",
+  checkInWeekday: "monday",
   cycleMode: "phase-based",
   forms: [
     {
@@ -344,6 +345,7 @@ describe("the onboarding facts", () => {
         ...SUBMITTED,
         checkInChannel: null,
         checkInDay: null,
+        checkInWeekday: null,
         cycleMode: null,
       }),
     });

@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CancelCheckInsAfterCoachingEndUseCase } from "./cancel-check-ins-after-coaching-end-use-case";
-import type { CheckIns } from "./check-ins";
+import type { CheckIns, CheckInsAtCoachingEnd } from "./check-ins";
 
 const NOW = new Date("2026-06-01T08:30:00.000Z");
 const COACHING_ENDS_AT = new Date("2026-07-01T10:00:00.000Z");
 
-function createCancelAfterEnd(cancelled: string[]) {
+function createCancelAfterEnd(ended: CheckInsAtCoachingEnd) {
   const checkIns = {
-    cancelStartingFrom: vi.fn().mockResolvedValue({ cancelled }),
-  } satisfies Pick<CheckIns, "cancelStartingFrom">;
+    endCoaching: vi.fn().mockResolvedValue(ended),
+  } satisfies Pick<CheckIns, "endCoaching">;
 
   return {
     checkIns,
@@ -21,12 +21,12 @@ function createCancelAfterEnd(cancelled: string[]) {
 }
 
 describe("CancelCheckInsAfterCoachingEndUseCase", () => {
-  it("cancels the client's check-ins from her coaching end at the clock's instant", async () => {
+  it("ends the client's check-ins from her coaching end at the clock's instant, stopping her weekly series", async () => {
     // arrange
-    const { cancelAfterEnd, checkIns } = createCancelAfterEnd([
-      "check-in-2",
-      "check-in-3",
-    ]);
+    const { cancelAfterEnd, checkIns } = createCancelAfterEnd({
+      cancelled: ["check-in-2", "check-in-3"],
+      seriesStopped: true,
+    });
 
     // act
     const result = await cancelAfterEnd.execute({
@@ -35,17 +35,20 @@ describe("CancelCheckInsAfterCoachingEndUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ cancelled: 2 });
-    expect(checkIns.cancelStartingFrom).toHaveBeenCalledWith({
+    expect(result).toEqual({ cancelled: 2, seriesStopped: true });
+    expect(checkIns.endCoaching).toHaveBeenCalledWith({
       clientId: "client-1",
-      startsFrom: COACHING_ENDS_AT,
+      endsAt: COACHING_ENDS_AT,
       at: NOW,
     });
   });
 
-  it("cancels nothing again once her later check-ins are cancelled", async () => {
+  it("cancels nothing again once her later check-ins are cancelled and her series stopped", async () => {
     // arrange
-    const { cancelAfterEnd } = createCancelAfterEnd([]);
+    const { cancelAfterEnd } = createCancelAfterEnd({
+      cancelled: [],
+      seriesStopped: false,
+    });
 
     // act
     const result = await cancelAfterEnd.execute({
@@ -54,6 +57,6 @@ describe("CancelCheckInsAfterCoachingEndUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ cancelled: 0 });
+    expect(result).toEqual({ cancelled: 0, seriesStopped: false });
   });
 });

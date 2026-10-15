@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClientIdentities, ClientIdentity } from "../client";
 
 import { CheckIn, type CheckInProps } from "./check-in";
-import type { CheckIns } from "./check-ins";
 import { CoachCheckInViews } from "./coach-check-in-views";
 
 const NOW = new Date("2026-06-03T09:30:00.000Z");
@@ -32,6 +31,7 @@ const MARIA: ClientIdentity = {
 
 const REQUEST = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-05T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -56,22 +56,18 @@ function createViews(options: {
   checkIns: CheckIn[];
   identities: ClientIdentity[];
 }) {
-  const checkIns = {
-    listAll: vi.fn().mockResolvedValue(options.checkIns),
-  } satisfies Pick<CheckIns, "listAll">;
   const identities = {
     findByClientIds: vi.fn().mockResolvedValue(options.identities),
   } satisfies Pick<ClientIdentities, "findByClientIds">;
   const views = new CoachCheckInViews({
-    checkIns,
     clock: { now: () => NOW },
     identities,
   });
 
-  return { identities, views };
+  return { checkIns: options.checkIns, identities, views };
 }
 
-describe("CoachCheckInViews", () => {
+describe("CoachCheckInViews#viewsOf", () => {
   it("views every client's check-in for the coach now with her name, soonest start first", async () => {
     // arrange
     const later = checkIn({
@@ -80,13 +76,13 @@ describe("CoachCheckInViews", () => {
       startsAt: new Date("2026-06-06T09:00:00.000Z"),
     });
     const sooner = checkIn({ id: "check-in-1" });
-    const { views } = createViews({
+    const { checkIns, views } = createViews({
       checkIns: [later, sooner],
       identities: [MARIA, ANA],
     });
 
     // act
-    const listed = await views.list();
+    const listed = await views.viewsOf(checkIns);
 
     // assert
     expect(listed).toEqual([
@@ -103,7 +99,7 @@ describe("CoachCheckInViews", () => {
 
   it("reads the names of every distinct client in one read", async () => {
     // arrange
-    const { identities, views } = createViews({
+    const { checkIns, identities, views } = createViews({
       checkIns: [
         checkIn(),
         checkIn({ id: "check-in-2" }),
@@ -113,7 +109,7 @@ describe("CoachCheckInViews", () => {
     });
 
     // act
-    await views.list();
+    await views.viewsOf(checkIns);
 
     // assert
     expect(identities.findByClientIds).toHaveBeenCalledTimes(1);
@@ -125,13 +121,13 @@ describe("CoachCheckInViews", () => {
 
   it("leaves out a check-in whose client has no identity", async () => {
     // arrange
-    const { views } = createViews({
+    const { checkIns, views } = createViews({
       checkIns: [checkIn({ id: "check-in-2", clientId: "gone" }), checkIn()],
       identities: [ANA],
     });
 
     // act
-    const listed = await views.list();
+    const listed = await views.viewsOf(checkIns);
 
     // assert
     expect(listed.map((view) => view.id)).toEqual(["check-in-1"]);

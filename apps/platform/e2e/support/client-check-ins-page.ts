@@ -28,6 +28,8 @@ const WAITING_REASON =
   "You can send another request once this one is answered.";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 const COACH = "your coach";
+const COACH_FINDING_A_NEW_TIME = "Your coach is finding a new time";
+const AD_HOC = "Ad-hoc";
 
 export class ClientCheckInsPage {
   private readonly requestAction: DisabledAction;
@@ -278,7 +280,10 @@ export class ClientCheckInsPage {
   }
 
   async expectRescheduleBlocked(tab: CheckInTab, note: string): Promise<void> {
-    await this.rows.expectRescheduleBlocked(await this.shownRow(tab, note));
+    await this.rows.expectRescheduleBlocked(
+      await this.shownRow(tab, note),
+      "moves_exhausted",
+    );
   }
 
   async expectRescheduleReasonOnHover(
@@ -287,6 +292,7 @@ export class ClientCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnHover(
       await this.shownRow(tab, note),
+      "moves_exhausted",
     );
   }
 
@@ -296,6 +302,7 @@ export class ClientCheckInsPage {
   ): Promise<void> {
     await this.rows.expectRescheduleReasonOnFocus(
       await this.shownRow(tab, note),
+      "moves_exhausted",
     );
   }
 
@@ -303,7 +310,10 @@ export class ClientCheckInsPage {
     tab: CheckInTab,
     note: string,
   ): Promise<void> {
-    await this.rows.expectRescheduleReasonOnTap(await this.shownRow(tab, note));
+    await this.rows.expectRescheduleReasonOnTap(
+      await this.shownRow(tab, note),
+      "moves_exhausted",
+    );
   }
 
   async expectNoActions(tab: CheckInTab, note: string): Promise<void> {
@@ -323,6 +333,15 @@ export class ClientCheckInsPage {
     const row = await this.shownRow("Requests", note);
 
     await expect(row).toContainText("Ad-hoc · New time from you");
+    await expect(row).toContainText(`You: "${note}"`);
+    await this.rows.expectNoActions(row);
+  }
+
+  async expectOwnWeeklyNewTime(note: string): Promise<void> {
+    const row = await this.shownRow("Requests", note);
+
+    await expect(row).toContainText("New time from you");
+    await expect(row).not.toContainText(AD_HOC);
     await expect(row).toContainText(`You: "${note}"`);
     await this.rows.expectNoActions(row);
   }
@@ -410,5 +429,71 @@ export class ClientCheckInsPage {
   async returnFromNotReadyJoin(): Promise<void> {
     await this.page.getByRole("link", { name: "Back to check-ins" }).click();
     await this.expectOpen();
+  }
+
+  async expectCoachFindingTimeFirst(): Promise<void> {
+    const first = checkInsListed(this.page, "Upcoming").first();
+
+    await this.showTab("Upcoming");
+    await expect(first).toContainText(COACH_FINDING_A_NEW_TIME);
+    await this.rows.expectClash(first);
+  }
+
+  async expectEveryWeeklyUpcoming(
+    weeks: readonly PickedCheckIn[],
+  ): Promise<void> {
+    const listed = checkInsListed(this.page, "Upcoming");
+
+    await this.showTab("Upcoming");
+    await expect(listed).toHaveCount(weeks.length);
+    await expect(listed.filter({ hasText: AD_HOC })).toHaveCount(0);
+    for (const week of weeks) {
+      await expect(this.rows.listedAt(listed, week)).toHaveCount(1);
+    }
+  }
+
+  private async upcomingWeekRow(week: PickedCheckIn): Promise<Locator> {
+    await this.showTab("Upcoming");
+
+    return this.rows.listedAt(checkInsListed(this.page, "Upcoming"), week);
+  }
+
+  async expectNextWeekMovable(week: PickedCheckIn): Promise<void> {
+    const row = await this.upcomingWeekRow(week);
+
+    await this.rows.expectRescheduleAllowed(row);
+    await this.rows.expectNoCancel(row);
+  }
+
+  async expectLaterWeekHeldBack(week: PickedCheckIn): Promise<void> {
+    const row = await this.upcomingWeekRow(week);
+
+    await this.rows.expectRescheduleBlocked(row, "later_week");
+    await this.rows.expectNoCancel(row);
+  }
+
+  async expectLaterWeekReasonOnHover(week: PickedCheckIn): Promise<void> {
+    await this.rows.expectRescheduleReasonOnHover(
+      await this.upcomingWeekRow(week),
+      "later_week",
+    );
+  }
+
+  async expectLaterWeekReasonOnFocus(week: PickedCheckIn): Promise<void> {
+    await this.rows.expectRescheduleReasonOnFocus(
+      await this.upcomingWeekRow(week),
+      "later_week",
+    );
+  }
+
+  async expectCancelledInPast(shown: PickedCheckIn): Promise<void> {
+    await this.showTab("Past");
+    await this.rows.expectCancelled(
+      this.rows.listedAt(checkInsListed(this.page, "Past"), shown),
+    );
+  }
+
+  async expectNoCancel(tab: CheckInTab, note: string): Promise<void> {
+    await this.rows.expectNoCancel(await this.shownRow(tab, note));
   }
 }

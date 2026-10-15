@@ -127,9 +127,9 @@ describe.sequential("check-in cancellations integration", () => {
     expect(sent?.attachments).toEqual([]);
   });
 
-  it("cancels the approved check-in on the coach's word and emails the client in her zone", async () => {
+  it("cancels the approved check-in the coach asked for on the coach's word and emails the client in her zone", async () => {
     // arrange
-    const checkInId = await approvedThursdayCheckIn();
+    const checkInId = await approvedCoachThursdayCheckIn();
     await rig.holdClock(CANCELLED_AT);
 
     // act
@@ -148,6 +148,46 @@ describe.sequential("check-in cancellations integration", () => {
     expect(sent?.subject).toBe("Eli cancelled the check-in");
     expect(sent?.text).toContain("WHEN: Thursday, 22 October 2026 at 3:00 PM");
     expect(sent?.text).toContain("Europe/London");
+  });
+
+  it("refuses the coach's cancellation of the check-in the client asked for and keeps its hour", async () => {
+    // arrange
+    const checkInId = await approvedThursdayCheckIn();
+    await rig.holdClock(CANCELLED_AT);
+
+    // act
+    const response = await checkIns.cancel(COACH_SESSION, checkInId);
+
+    // assert
+    expect(response.status).toBe(409);
+    expect((await checkIns.movedRowOf(checkInId)).status).toBe("approved");
+    expect(await checkIns.heldCheckInHours()).toHaveLength(1);
+    expect(
+      await checkIns.sentEmailsFor(checkInId, {
+        moves: 0,
+        notification: "cancelled",
+      }),
+    ).toEqual([]);
+  });
+
+  it("refuses the client's cancellation of the check-in the coach asked for and keeps its hour", async () => {
+    // arrange
+    const checkInId = await approvedCoachThursdayCheckIn();
+    await rig.holdClock(CANCELLED_AT);
+
+    // act
+    const response = await checkIns.cancel(ANA_SESSION, checkInId);
+
+    // assert
+    expect(response.status).toBe(409);
+    expect((await checkIns.movedRowOf(checkInId)).status).toBe("approved");
+    expect(await checkIns.heldCheckInHours()).toHaveLength(1);
+    expect(
+      await checkIns.sentEmailsFor(checkInId, {
+        moves: 0,
+        notification: "cancelled",
+      }),
+    ).toEqual([]);
   });
 
   it("refuses to cancel a check-in still waiting for an answer and keeps its hour", async () => {
@@ -194,7 +234,7 @@ describe.sequential("check-in cancellations integration", () => {
     await checkIns.cancel(ANA_SESSION, checkInId);
 
     // act
-    const response = await checkIns.cancel(COACH_SESSION, checkInId);
+    const response = await checkIns.cancel(ANA_SESSION, checkInId);
 
     // assert
     expect(response.status).toBe(409);
@@ -254,6 +294,23 @@ async function approvedThursdayCheckIn(): Promise<string> {
     startsAt: THURSDAY_FIRST_HOUR,
   });
   await checkIns.approved(checkInId);
+
+  return checkInId;
+}
+
+async function approvedCoachThursdayCheckIn(): Promise<string> {
+  const clientId = await submittedAna();
+  const checkInId = await checkIns.scheduled({
+    clientId,
+    startsAt: THURSDAY_FIRST_HOUR,
+  });
+  const response = await checkIns.approve(checkInId, ANA_SESSION);
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Approving the coach's check-in answered ${response.status}.`,
+    );
+  }
 
   return checkInId;
 }

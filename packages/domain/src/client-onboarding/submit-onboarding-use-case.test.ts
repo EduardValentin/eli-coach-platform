@@ -42,6 +42,8 @@ const CLIENT: OnboardingClient = {
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
   }),
 };
 const IDENTITY: ClientIdentity = {
@@ -132,6 +134,8 @@ function clientWithAccessEndingAt(accessEndsAt: Date): OnboardingClient {
       accessEndsAt,
       refundDue: false,
       bundleMonths: 3,
+      programStartsAt: null,
+      paidThrough: null,
     }),
   };
 }

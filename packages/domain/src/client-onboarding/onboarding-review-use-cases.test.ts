@@ -50,6 +50,8 @@ const CLIENT: OnboardingClient = {
     accessEndsAt: null,
     refundDue: false,
     bundleMonths: null,
+    programStartsAt: null,
+    paidThrough: null,
   }),
 };
 
@@ -60,6 +62,8 @@ const CANCELLED_OR_ENDED_CLIENT: OnboardingClient = {
     accessEndsAt: ASKED_AT,
     refundDue: false,
     bundleMonths: 3,
+    programStartsAt: null,
+    paidThrough: null,
   }),
 };
 

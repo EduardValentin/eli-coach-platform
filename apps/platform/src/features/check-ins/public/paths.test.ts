@@ -13,6 +13,7 @@ import {
 } from "./paths";
 
 const CHECK_IN_ID = "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c";
+const SERIES_ID = "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a";
 
 describe("check-ins paths", () => {
   it("links the client to the join route the client portal registers", () => {
@@ -90,5 +91,23 @@ describe("check-ins paths", () => {
 
     // assert
     expect(matched).toEqual([CHECK_IN_ID, CHECK_IN_ID, CHECK_IN_ID]);
+  });
+
+  it("answers every write of one weekly check-in under that series' own path", () => {
+    // arrange
+    const writes = [
+      CHECK_INS_API_PATHS.seriesChange,
+      CHECK_INS_API_PATHS.seriesStop,
+    ];
+
+    // act
+    const matched = writes.map(
+      (write) =>
+        matchPath(write, write.replace(":seriesId", SERIES_ID))?.params
+          .seriesId,
+    );
+
+    // assert
+    expect(matched).toEqual([SERIES_ID, SERIES_ID]);
   });
 });

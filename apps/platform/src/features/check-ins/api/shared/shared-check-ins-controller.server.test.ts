@@ -46,6 +46,7 @@ const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
 const PENDING = CheckIn.reconstitute({
   id: CHECK_IN_ID,
+  seriesId: null,
   clientId: "8f9a2c41-3b7e-4d55-9c1a-6e2f0b7d4c02",
   startsAt: STARTS_AT,
   clientTimeZone: "Europe/London",
@@ -240,6 +241,11 @@ describe("SharedCheckInsController proposeNewTime", () => {
       result: { status: "moves_exhausted" },
       status: 409,
       error: "moves_exhausted",
+    },
+    {
+      result: { status: "not_next_weekly" },
+      status: 409,
+      error: "not_next_weekly",
     },
     { result: { status: "not_pending" }, status: 409, error: "not_pending" },
     {

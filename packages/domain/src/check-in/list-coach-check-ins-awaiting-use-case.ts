@@ -26,7 +26,8 @@ export class ListCoachCheckInsAwaitingUseCase {
 
   async execute(): Promise<CoachCheckInView[]> {
     try {
-      const views = await this.views.list();
+      const checkIns = await this.options.checkIns.listAll();
+      const views = await this.views.viewsOf(checkIns);
 
       return views.filter((view) => view.awaitsViewer);
     } catch (error) {

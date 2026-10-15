@@ -69,6 +69,8 @@ function rosterEntry(
         accessEndsAt: null,
         refundDue: false,
         bundleMonths: overrides.bundleMonths ?? null,
+        programStartsAt: null,
+        paidThrough: null,
       },
     },
     accountBound: overrides.accountBound ?? false,

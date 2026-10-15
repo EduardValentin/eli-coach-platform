@@ -190,6 +190,10 @@ function clientActionsFor(
   tab: CheckInTab,
   decisions: CheckInDecisions,
 ): ReactNode | undefined {
+  if (checkIn.status === "clash") {
+    return undefined;
+  }
+
   if (tab === "upcoming") {
     return (
       <JoinMeetLink checkIn={checkIn} to={clientCheckInJoinPath(checkIn.id)} />

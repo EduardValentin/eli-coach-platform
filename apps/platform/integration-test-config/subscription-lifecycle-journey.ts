@@ -8,6 +8,7 @@ import {
   STRIPE_SUBSCRIPTION_ID,
   paymentIntentOf,
   stripeSubscriptionPath,
+  toUnixSeconds,
 } from "./wire-mock/expectations/stripe-api";
 import { STRIPE_WEBHOOKS_API } from "./coaching-sales-journey";
 
@@ -22,6 +23,11 @@ export type SubscriptionLifecycleRow = {
   refundedCents: number | null;
   startChoice: string;
   status: string;
+};
+
+export type SubscriptionPeriodRow = {
+  paidThrough: Date;
+  programStartsAt: Date;
 };
 
 export type PaymentCardRow = {
@@ -40,6 +46,7 @@ export type ProviderEvent = {
 };
 
 const COACHING_PURPOSE = { purpose: "coaching-subscription" };
+const RENEWED_PERIOD_END = new Date("2027-04-21T08:00:00.000Z");
 
 export class SubscriptionLifecycleJourney {
   constructor(private readonly rig: PlatformRig) {}
@@ -93,6 +100,21 @@ export class SubscriptionLifecycleJourney {
     }
 
     return row;
+  }
+
+  async subscriptionPeriod(
+    paymentSubscriptionId: string = STRIPE_SUBSCRIPTION_ID,
+  ): Promise<SubscriptionPeriodRow[]> {
+    return this.rig.suite.postgres.queryRows<SubscriptionPeriodRow>({
+      sql: `
+        select
+          paid_through as "paidThrough",
+          program_starts_at as "programStartsAt"
+        from app.coaching_subscriptions
+        where stripe_subscription_id = $1
+      `,
+      values: [paymentSubscriptionId],
+    });
   }
 
   async paymentCardRows(
@@ -157,12 +179,22 @@ export function stripeSubscriptionObject(
 
 export function stripeInvoiceObject(
   billingReason: string,
+  periodEnd: Date = RENEWED_PERIOD_END,
   subscriptionId: string = STRIPE_SUBSCRIPTION_ID,
 ): Record<string, unknown> {
   return {
     billing_reason: billingReason,
     customer: STRIPE_CUSTOMER_ID,
     id: "in_integration",
+    lines: {
+      data: [
+        {
+          object: "line_item",
+          period: { end: toUnixSeconds(periodEnd), start: 1_790_000_000 },
+        },
+      ],
+      object: "list",
+    },
     object: "invoice",
     parent: {
       subscription_details: {

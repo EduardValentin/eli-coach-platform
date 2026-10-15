@@ -16,6 +16,7 @@ const ROOM_URL = "https://meet.google.com/abc-defg-hij";
 
 const APPROVED = {
   id: "check-in-1",
+  seriesId: null,
   clientId: "client-1",
   startsAt: new Date("2026-06-03T09:00:00.000Z"),
   clientTimeZone: "Europe/London",
@@ -66,7 +67,7 @@ function createResolveJoin(options?: {
     listAll: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
-    cancelStartingFrom: vi.fn(),
+    endCoaching: vi.fn(),
   } satisfies CheckIns;
   const clients = {
     findByAuthSubjectId: vi.fn().mockResolvedValue(
@@ -75,6 +76,8 @@ function createResolveJoin(options?: {
             clientId: "client-1",
             portal: "reachable",
             coachingEndsAt: null,
+            programStartsAt: null,
+            paidThrough: null,
             timeZone: "Europe/London",
           }
         : options.client,
@@ -167,6 +170,8 @@ describe("ResolveCheckInJoinUseCase", () => {
           clientId: "client-1",
           portal: "ended",
           coachingEndsAt: null,
+          programStartsAt: null,
+          paidThrough: null,
           timeZone: "Europe/London",
         } as const,
       },

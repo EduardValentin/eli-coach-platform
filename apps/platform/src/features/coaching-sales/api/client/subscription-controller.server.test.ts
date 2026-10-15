@@ -52,6 +52,8 @@ const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
   paymentSubscriptionId: "sub_1",
   checkoutSessionId: "cs_1",
   paidAt: PAID_AT,
+  paidThrough: PAID_THROUGH,
+  programStartsAt: DEADLINE,
   startChoice: "waiting",
   status: "not-started",
   cancelledAt: null,

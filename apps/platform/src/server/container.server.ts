@@ -237,6 +237,7 @@ export function createPlatformContainer(options: {
     clock,
     coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     coachingEnds: [checkIns.handles.coachingEndHandler],
+    coachingPeriods: [checkIns.handles.coachingPeriodHandler],
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,

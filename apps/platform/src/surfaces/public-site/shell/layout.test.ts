@@ -88,6 +88,8 @@ describe("public layout loader", () => {
           accessEndsAt: null,
           refundDue: false,
           bundleMonths: null,
+          programStartsAt: null,
+          paidThrough: null,
         },
       }),
       session: {

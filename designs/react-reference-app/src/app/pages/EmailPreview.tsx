@@ -33,6 +33,10 @@ import { CheckinNewTime } from '../../email-templates/CheckinNewTime';
 import { CheckinNewTimeAccepted } from '../../email-templates/CheckinNewTimeAccepted';
 import { CheckinNewTimeDeclined } from '../../email-templates/CheckinNewTimeDeclined';
 import { CheckinCancelled } from '../../email-templates/CheckinCancelled';
+import { CheckinSeriesSetUp } from '../../email-templates/CheckinSeriesSetUp';
+import { CheckinSeriesChanged } from '../../email-templates/CheckinSeriesChanged';
+import { CheckinSeriesStopped } from '../../email-templates/CheckinSeriesStopped';
+import { WEEKDAY_NAMES, weekStartsBetween } from '../domain/checkinSeries';
 
 type TemplateKey =
   | 'waitlist-confirmation'
@@ -54,7 +58,10 @@ type TemplateKey =
   | 'checkin-new-time'
   | 'checkin-new-time-accepted'
   | 'checkin-new-time-declined'
-  | 'checkin-cancelled';
+  | 'checkin-cancelled'
+  | 'checkin-series-set-up'
+  | 'checkin-series-changed'
+  | 'checkin-series-stopped';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -105,6 +112,26 @@ function sampleCheckinCalendarUrl(withWhom: string): string {
   return `https://calendar.google.com/calendar/render?${query}`;
 }
 
+const SAMPLE_SERIES = { weekday: 'Wednesday', hour: 18 } as const;
+const SAMPLE_SERIES_NOTICE_MS = 24 * 60 * 60_000;
+const WEEK_MS = 7 * 24 * 60 * 60_000;
+
+function sampleSeriesFirstWeek(): Date {
+  const from = new Date(Date.now() + SAMPLE_SERIES_NOTICE_MS);
+  const [first] = weekStartsBetween(
+    {
+      weekday: WEEKDAY_NAMES.indexOf(SAMPLE_SERIES.weekday),
+      hour: SAMPLE_SERIES.hour,
+      timeZone: SAMPLE_COACH_TIME_ZONE,
+    },
+    { from, until: new Date(from.getTime() + WEEK_MS) },
+  );
+
+  return first;
+}
+
+const SAMPLE_SERIES_FIRST_WEEK = sampleSeriesFirstWeek();
+
 const SAMPLE_EARLIER_CHECKIN_START = new Date(SAMPLE_CHECKIN_START.getTime() - 24 * 60 * 60_000);
 const SAMPLE_NEW_TIME_NOTE = 'I am travelling that Wednesday. Could we do Thursday instead?';
 
@@ -141,6 +168,8 @@ const RECIPIENT_VARIANTS = [
   { value: 'to-client', label: 'To the client' },
   { value: 'to-coach', label: 'To the coach' },
 ];
+
+const CLIENT_ONLY_VARIANTS = [{ value: 'to-client', label: 'To the client' }];
 
 const TEMPLATES: TemplateOption[] = [
   {
@@ -266,6 +295,21 @@ const TEMPLATES: TemplateOption[] = [
     key: 'checkin-cancelled',
     label: 'Check-in cancelled',
     variants: RECIPIENT_VARIANTS,
+  },
+  {
+    key: 'checkin-series-set-up',
+    label: 'Weekly check-in set up',
+    variants: CLIENT_ONLY_VARIANTS,
+  },
+  {
+    key: 'checkin-series-changed',
+    label: 'Weekly check-in changed',
+    variants: CLIENT_ONLY_VARIANTS,
+  },
+  {
+    key: 'checkin-series-stopped',
+    label: 'Weekly check-in stopped',
+    variants: CLIENT_ONLY_VARIANTS,
   },
 ];
 
@@ -467,6 +511,36 @@ export function EmailPreview() {
           who={recipient.who}
           startsAt={SAMPLE_CHECKIN_START}
           timeZone={recipient.timeZone}
+        />
+      );
+    }
+    if (template === 'checkin-series-set-up') {
+      return (
+        <CheckinSeriesSetUp
+          coachName="Eli"
+          firstStartsAt={SAMPLE_SERIES_FIRST_WEEK}
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
+          checkinsUrl={recipient.checkinsUrl}
+        />
+      );
+    }
+    if (template === 'checkin-series-changed') {
+      return (
+        <CheckinSeriesChanged
+          coachName="Eli"
+          firstStartsAt={SAMPLE_SERIES_FIRST_WEEK}
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
+          checkinsUrl={recipient.checkinsUrl}
+        />
+      );
+    }
+    if (template === 'checkin-series-stopped') {
+      return (
+        <CheckinSeriesStopped
+          coachName="Eli"
+          weekStartsAt={SAMPLE_SERIES_FIRST_WEEK}
+          clientTimeZone={SAMPLE_CLIENT_TIME_ZONE}
+          checkinsUrl={recipient.checkinsUrl}
         />
       );
     }

@@ -14,8 +14,10 @@ const LISTING: ClientCheckIns = {
   checkIns: [
     {
       id: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      seriesId: null,
       kind: "ad_hoc",
       status: "pending",
+      tab: "requests",
       initiatedBy: "client",
       proposedBy: "client",
       awaitsViewer: false,
@@ -34,8 +36,10 @@ const LISTING: ClientCheckIns = {
     },
     {
       id: "7a3c0d2f-5e4b-4f9c-8b8d-2e3f4a5b6c7d",
+      seriesId: null,
       kind: "ad_hoc",
       status: "approved",
+      tab: "upcoming",
       initiatedBy: "client",
       proposedBy: "coach",
       awaitsViewer: false,

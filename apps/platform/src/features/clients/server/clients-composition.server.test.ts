@@ -27,6 +27,8 @@ const NOT_STARTED: CoachingStandingSnapshot = {
   accessEndsAt: null,
   refundDue: false,
   bundleMonths: 3,
+  programStartsAt: null,
+  paidThrough: null,
 };
 
 describe("composeClientsFeature invitation acceptance", () => {
@@ -150,6 +152,8 @@ describe("composeClientsFeature client reach", () => {
       portal: "reachable",
       coachingEndsAt: endsAt,
       timeZone: "America/New_York",
+      programStartsAt: null,
+      paidThrough: null,
     });
   });
 

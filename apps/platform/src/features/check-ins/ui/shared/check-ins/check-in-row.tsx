@@ -30,8 +30,14 @@ type CheckInRowProps = {
   viewer: CheckInViewer;
 };
 
-const KIND_LABELS: Record<ListedCheckIn["kind"], string> = {
+const KIND_LABELS: Record<ListedCheckIn["kind"], string | null> = {
   ad_hoc: "Ad-hoc",
+  recurring: null,
+};
+
+const CLASH_LABELS: Record<CheckInParty, string> = {
+  coach: "Finding a new time",
+  client: "Your coach is finding a new time",
 };
 
 export function CheckInRow({
@@ -72,11 +78,7 @@ export function CheckInRow({
         ) : undefined
       }
       attendee={attendee}
-      badges={
-        checkIn.status === "cancelled" ? (
-          <Badge tone="muted">Cancelled</Badge>
-        ) : undefined
-      }
+      badges={statusBadgeOf(checkIn)}
       parity="checkin-card-body"
       parityRoot="CheckinCard"
       quote={shownNote?.text}
@@ -86,15 +88,46 @@ export function CheckInRow({
       status={isOver ? "past" : "scheduled"}
       supersededWhen={newTimeWaits ? earlierWhen : undefined}
       when={when}
-      whenLabel={`${KIND_LABELS[checkIn.kind]} · ${moveLabelOf(checkIn, viewer)}`}
+      whenLabel={whenLabelOf(checkIn, viewer)}
     />
   );
 }
 
-function moveLabelOf(checkIn: ListedCheckIn, viewer: CheckInViewer): string {
-  return checkIn.newTimeWaits
-    ? `New time from ${nameFor(checkIn.proposedBy, viewer)}`
-    : `Requested by ${nameFor(checkIn.initiatedBy, viewer)}`;
+function whenLabelOf(checkIn: ListedCheckIn, viewer: CheckInViewer): string {
+  if (checkIn.status === "clash") return CLASH_LABELS[viewer.party];
+
+  return [KIND_LABELS[checkIn.kind], moveLabelOf(checkIn, viewer)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function moveLabelOf(
+  checkIn: ListedCheckIn,
+  viewer: CheckInViewer,
+): string | null {
+  if (checkIn.newTimeWaits) {
+    return `New time from ${nameFor(checkIn.proposedBy, viewer)}`;
+  }
+
+  return checkIn.kind === "ad_hoc"
+    ? `Requested by ${nameFor(checkIn.initiatedBy, viewer)}`
+    : null;
+}
+
+function statusBadgeOf(checkIn: ListedCheckIn): ReactNode {
+  if (checkIn.status === "cancelled") {
+    return <Badge tone="muted">Cancelled</Badge>;
+  }
+
+  if (checkIn.status === "clash") {
+    return (
+      <Badge data-parity="clash-badge" tone="pending">
+        Clash
+      </Badge>
+    );
+  }
+
+  return undefined;
 }
 
 function noteOf(

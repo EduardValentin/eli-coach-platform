@@ -38,7 +38,6 @@ export class WithdrawCheckInRequestUseCase {
       command,
       refusalOf: (checkIn, turn) => checkIn.withdrawalRefusalFor(turn),
       outcome: "cancelled",
-      expectedStatus: "pending",
       notificationOf: () => "withdrawn",
     });
 

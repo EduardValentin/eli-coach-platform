@@ -6,6 +6,7 @@ import { RowActionsMenu, type RowMenuAction } from './RowActionsMenu';
 import { Badge } from './ui/badge';
 import {
   CHECKIN_KIND_LABEL,
+  LATER_WEEK_REASON,
   MOVES_EXHAUSTED_REASON,
   checkinNote,
   checkinStartsAt,
@@ -33,14 +34,22 @@ export type CheckinMenu = {
   disabled?: boolean;
 };
 
+const RESCHEDULE_HELD_BACK_REASON: Record<
+  Exclude<CheckinProposal, 'allowed' | 'none'>,
+  string
+> = {
+  exhausted: MOVES_EXHAUSTED_REASON,
+  later_week: LATER_WEEK_REASON,
+};
+
 export function rescheduleAction(
   proposal: CheckinProposal,
   onSelect: () => void,
 ): CheckinMenuAction | undefined {
   if (proposal === 'none') return undefined;
-  if (proposal === 'exhausted') return { onSelect, disabledReason: MOVES_EXHAUSTED_REASON };
+  if (proposal === 'allowed') return { onSelect };
 
-  return { onSelect };
+  return { onSelect, disabledReason: RESCHEDULE_HELD_BACK_REASON[proposal] };
 }
 
 export type CheckinRowActions = {
@@ -63,6 +72,32 @@ function moveLabel(checkin: CheckIn, viewer: CheckinViewer): string | null {
 
   const who = nameFor(move.by, viewer);
   return move.move === 'new-time' ? `New time from ${who}` : `Requested by ${who}`;
+}
+
+const CLASH_LABEL: Record<CheckinParty, string> = {
+  coach: 'Finding a new time',
+  client: 'Your coach is finding a new time',
+};
+
+function whenLabelOf(checkin: CheckIn, status: CheckinStatus, viewer: CheckinViewer): string {
+  if (status === 'clash') return CLASH_LABEL[viewer.party];
+
+  return [CHECKIN_KIND_LABEL[checkin.kind], moveLabel(checkin, viewer)]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+function statusBadge(status: CheckinStatus): ReactNode {
+  if (status === 'cancelled') return <Badge tone="muted">Cancelled</Badge>;
+  if (status === 'clash') {
+    return (
+      <Badge tone="pending" data-parity="clash-badge">
+        Clash
+      </Badge>
+    );
+  }
+
+  return undefined;
 }
 
 function capitalized(text: string): string {
@@ -144,9 +179,7 @@ export function CheckinCard({
   const previousWhen = previous ? { startsAt: previous, timeZone } : undefined;
   const awaitingNewTime = status === 'pending' && previousWhen;
   const isOver = status === 'passed' || status === 'cancelled';
-  const whenLabel = [CHECKIN_KIND_LABEL[checkin.kind], moveLabel(checkin, viewer)]
-    .filter(Boolean)
-    .join(' · ');
+  const whenLabel = whenLabelOf(checkin, status, viewer);
   const note = checkinNote(checkin);
   const more = menuActions(actions.menu ?? {});
   const hasActions = Boolean(actions.shown) || more.length > 0;
@@ -159,9 +192,7 @@ export function CheckinCard({
       supersededWhen={awaitingNewTime ? previousWhen : undefined}
       rescheduledFrom={awaitingNewTime ? undefined : previousWhen}
       status={isOver ? 'past' : 'scheduled'}
-      badges={
-        status === 'cancelled' ? <Badge tone="muted">Cancelled</Badge> : undefined
-      }
+      badges={statusBadge(status)}
       quote={note?.text}
       quoteAuthor={note ? capitalized(nameFor(note.by, viewer)) : undefined}
       quoteParity="checkin-note"

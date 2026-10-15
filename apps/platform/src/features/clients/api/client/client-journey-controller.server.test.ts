@@ -209,6 +209,8 @@ function journeyOf(options: { gender: VisitorGender }): ClientJourney {
       accessEndsAt: null,
       refundDue: false,
       bundleMonths: null,
+      programStartsAt: null,
+      paidThrough: null,
     },
   });
 }

@@ -1,10 +1,56 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  describeTimeZone,
   formatCallMoment,
+  formatCallSchedule,
+  formatClockHour,
   formatDayFirstDate,
   formatShortDay,
+  formatWeekday,
 } from "./call-moment";
+
+describe("formatWeekday", () => {
+  it("names the weekday the reader lives the instant on", () => {
+    // arrange
+    const lateWednesdayInLondon = new Date("2026-10-14T22:30:00.000Z");
+
+    // act
+    const weekdays = [
+      formatWeekday(lateWednesdayInLondon, "Europe/London"),
+      formatWeekday(lateWednesdayInLondon, "Europe/Bucharest"),
+    ];
+
+    // assert
+    expect(weekdays).toEqual(["Wednesday", "Thursday"]);
+  });
+});
+
+describe("describeTimeZone", () => {
+  it("names the zone with the offset it keeps at that instant", () => {
+    // arrange
+    const startsAt = new Date("2026-10-14T15:00:00.000Z");
+
+    // act
+    const zone = describeTimeZone(startsAt, "Europe/London");
+
+    // assert
+    expect(zone).toBe("Europe/London (GMT+1)");
+  });
+});
+
+describe("formatCallSchedule", () => {
+  it("names the day and the time without the zone", () => {
+    // arrange
+    const startsAt = new Date("2026-10-14T15:00:00.000Z");
+
+    // act
+    const schedule = formatCallSchedule(startsAt, "Europe/London");
+
+    // assert
+    expect(schedule).toBe("Wednesday, 14 October 2026 at 4:00 PM");
+  });
+});
 
 describe("formatCallMoment", () => {
   it("names the day, the time and the zone the reader reads it in", () => {
@@ -86,5 +132,18 @@ describe("formatShortDay", () => {
 
     // assert
     expect(day).toBe("Sat, Sep 19");
+  });
+});
+
+describe("formatClockHour", () => {
+  it("words a wall-clock hour the way a time slot reads", () => {
+    // arrange
+    const hours = [0, 9, 12, 18];
+
+    // act
+    const labels = hours.map((hour) => formatClockHour(hour));
+
+    // assert
+    expect(labels).toEqual(["12:00 AM", "9:00 AM", "12:00 PM", "6:00 PM"]);
   });
 });

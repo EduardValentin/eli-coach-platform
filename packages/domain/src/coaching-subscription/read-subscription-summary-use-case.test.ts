@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   CoachingSubscription,
+  withdrawalDeadline,
   type CoachingSubscriptionSnapshot,
 } from "./coaching-subscription";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
@@ -27,7 +28,12 @@ function subscriptionOf(
     paymentSubscriptionId: "sub_1",
     checkoutSessionId: "cs_1",
     paidAt: PAID_AT,
+    paidThrough: new Date("2026-12-26T10:00:00.000Z"),
     startChoice: "immediate",
+    programStartsAt:
+      overrides.startChoice === "waiting"
+        ? withdrawalDeadline(PAID_AT)
+        : PAID_AT,
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,

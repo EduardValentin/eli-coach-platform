@@ -22,7 +22,7 @@ export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 
 export type CheckInParty = ListedCheckIn["initiatedBy"];
 
-export type CheckInTab = "upcoming" | "requests" | "past";
+export type CheckInTab = ListedCheckIn["tab"];
 
 export type CheckInMoment = {
   date: string;
@@ -63,13 +63,6 @@ const TAB_LABELS: Record<CheckInTab, string> = {
   past: "Past",
 };
 
-const TAB_OF_STATUS: Record<ListedCheckIn["status"], CheckInTab> = {
-  approved: "upcoming",
-  pending: "requests",
-  passed: "past",
-  cancelled: "past",
-};
-
 export function CheckInListing<CheckIn extends ListedCheckIn>({
   checkIns,
   emptyCopy,
@@ -83,7 +76,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   const { chooseTab, tab } = useCheckInTabParam(defaultTab);
   useBringCheckInIntoFocus(focusedId);
   const shown = ordered(
-    checkIns.filter((checkIn) => TAB_OF_STATUS[checkIn.status] === tab),
+    checkIns.filter((checkIn) => checkIn.tab === tab),
     tab,
   );
   const awaitingViewerCount = checkIns.filter(
@@ -193,7 +186,7 @@ function tabHolding(
 ): CheckInTab | undefined {
   const held = checkIns.find((checkIn) => checkIn.id === checkInId);
 
-  return held && TAB_OF_STATUS[held.status];
+  return held?.tab;
 }
 
 function openingTabOf(checkIns: readonly ListedCheckIn[]): CheckInTab {
@@ -211,13 +204,16 @@ function ordered<CheckIn extends ListedCheckIn>(
   tab: CheckInTab,
 ): CheckIn[] {
   const direction = tab === "past" ? -1 : 1;
-  const answerRank = (checkIn: CheckIn) =>
-    tab === "requests" && checkIn.awaitsViewer ? 0 : 1;
+  const requestRank = (checkIn: CheckIn) => {
+    if (tab !== "requests") return 0;
+    if (checkIn.status === "clash") return 0;
+    return checkIn.awaitsViewer ? 1 : 2;
+  };
   const byStart = (first: CheckIn, second: CheckIn) =>
     direction * (Date.parse(first.startsAt) - Date.parse(second.startsAt));
 
   return [...checkIns].sort(
     (first, second) =>
-      answerRank(first) - answerRank(second) || byStart(first, second),
+      requestRank(first) - requestRank(second) || byStart(first, second),
   );
 }

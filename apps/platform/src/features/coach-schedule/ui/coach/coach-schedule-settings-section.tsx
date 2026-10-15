@@ -34,6 +34,7 @@ import {
   coachScheduleSettingsSchema,
   HOUR_OPTIONS,
   WEEKDAY_DISPLAY_ORDER,
+  WEEKDAY_LABELS,
   type CoachScheduleSettings,
   type CoachScheduleSettingsErrorCode,
 } from "~/features/coach-schedule/public/coach-schedule-settings";
@@ -42,16 +43,6 @@ import { useSaveCoachScheduleSettingsFetcher } from "./api-client";
 
 type Weekday = CoachScheduleSettings["weekdays"][number];
 type HourField = "endHour" | "startHour";
-
-const WEEKDAY_LABELS: Record<Weekday, { full: string; short: string }> = {
-  monday: { full: "Monday", short: "Mon" },
-  tuesday: { full: "Tuesday", short: "Tue" },
-  wednesday: { full: "Wednesday", short: "Wed" },
-  thursday: { full: "Thursday", short: "Thu" },
-  friday: { full: "Friday", short: "Fri" },
-  saturday: { full: "Saturday", short: "Sat" },
-  sunday: { full: "Sunday", short: "Sun" },
-};
 
 const FIELD_BY_ERROR_CODE: Partial<
   Record<CoachScheduleSettingsErrorCode, HourField | "meetingLink" | "weekdays">

@@ -71,5 +71,10 @@ function fromInvoiceOutcome(
 
   return invoice.invoiceReason === "purchase"
     ? null
-    : { kind: "renewal-paid", paymentSubscriptionId, occurredAt };
+    : {
+        kind: "renewal-paid",
+        paymentSubscriptionId,
+        paidThrough: invoice.periodEndsAt,
+        occurredAt,
+      };
 }
