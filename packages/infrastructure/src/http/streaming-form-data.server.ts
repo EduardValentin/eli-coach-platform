@@ -183,7 +183,7 @@ export async function readStreamingFormData<Received>(
   return new StreamingFormDataReading(request, options).read();
 }
 
-function isFormDataRequest(request: Request): boolean {
+export function isFormDataRequest(request: Request): boolean {
   const mediaType = request.headers.get("Content-Type")?.split(";")[0];
 
   return mediaType?.trim().toLowerCase() === "multipart/form-data";

@@ -16,6 +16,7 @@ import {
 import {
   createBadRequestResponse,
   createPrivateMediaResponse,
+  isFormDataRequest,
   parseByteRange,
   readJsonRequestBody,
   readStreamingFormData,
@@ -216,9 +217,7 @@ export class ExerciseLibraryController {
   }
 
   private async readSave(request: Request): Promise<ExerciseSave> {
-    const contentType = request.headers.get("Content-Type") ?? "";
-
-    if (contentType.startsWith("multipart/form-data")) {
+    if (isFormDataRequest(request)) {
       return this.readMultipartSave(request);
     }
 

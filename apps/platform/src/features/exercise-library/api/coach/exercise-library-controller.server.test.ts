@@ -215,6 +215,21 @@ function multipartRequest(
   });
 }
 
+async function withMediaTypeSpelled(
+  request: Request,
+  spelling: string,
+): Promise<Request> {
+  const contentType = request.headers.get("Content-Type") ?? "";
+
+  return new Request(request.url, {
+    body: await request.arrayBuffer(),
+    headers: {
+      "Content-Type": contentType.replace("multipart/form-data", spelling),
+    },
+    method: request.method,
+  });
+}
+
 function videoRequest(range?: string): Request {
   return new Request(
     `https://evoa.fit/api/exercises/${EXERCISE_ID}/video/${VIDEO_ID}`,
@@ -366,6 +381,29 @@ describe("ExerciseLibraryController#create", () => {
       video: { kind: "attach", staged: STAGED },
     });
     expect(stageExerciseVideo.discard).not.toHaveBeenCalled();
+  });
+
+  it("reads a multipart save whose media type comes in capitals and padded before its parameters", async () => {
+    // arrange
+    const { controller, createExercise, received } = createController();
+    const request = await withMediaTypeSpelled(
+      multipartRequest("POST", {
+        exercise: { ...HIP_THRUST_DRAFT, video: "attach" },
+        video: VIDEO_BYTES,
+      }),
+      "Multipart/Form-Data ",
+    );
+
+    // act
+    const response = await controller.create(argsFor({ request }));
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(received()).toEqual(Buffer.from(VIDEO_BYTES));
+    expect(createExercise.execute).toHaveBeenCalledWith({
+      draft: HIP_THRUST_DRAFT,
+      video: { kind: "attach", staged: STAGED },
+    });
   });
 
   it("answers 422 naming the video when the save refuses its content", async () => {

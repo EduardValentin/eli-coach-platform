@@ -15,4 +15,7 @@ export {
 } from "./private-file-response.server";
 export { createPrivateMediaResponse } from "./private-media-response.server";
 export { resolveFieldErrorCode } from "./resolve-field-error-code";
-export { readStreamingFormData } from "./streaming-form-data.server";
+export {
+  isFormDataRequest,
+  readStreamingFormData,
+} from "./streaming-form-data.server";
