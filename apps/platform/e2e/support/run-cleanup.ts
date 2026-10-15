@@ -8,6 +8,7 @@ import {
   readUnreleasedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
+import { cleanUpRunExerciseVideos } from "./exercise-video-files";
 import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
 
 export async function cleanUpRun(
@@ -28,8 +29,14 @@ export async function cleanUpRun(
   );
   const stripe = await cleanUpRecordedStripeObjects(runId, logPrefix);
   const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
+  const videos = await cleanUpRunExerciseVideos(runId, logPrefix);
 
-  if (release.released && stripe.allCleaned && database.allCleaned) {
+  if (
+    release.released &&
+    stripe.allCleaned &&
+    database.allCleaned &&
+    videos.allCleaned
+  ) {
     deleteRegistryFile(runId);
   }
 }

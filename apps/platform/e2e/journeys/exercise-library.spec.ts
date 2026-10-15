@@ -1,3 +1,5 @@
+import { LANDSCAPE_SAMPLE_VIDEO_PATH } from "@eli-coach-platform/test-support/sample-videos";
+
 import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
@@ -23,7 +25,7 @@ function hipThrustNamed(name: string): ExerciseFields {
 }
 
 test(
-  "the coach reaches her exercise library from the menu, creates an exercise, finds it listed and edits it",
+  "the coach reaches her exercise library from the menu, creates an exercise with a demo video, finds it listed, plays the video and edits it",
   { tag: "@critical" },
   async ({
     coachDashboard,
@@ -82,6 +84,12 @@ test(
       toggledTags: created.tags,
       cues: created.cues,
     });
+    await exerciseEditor.attachVideo(LANDSCAPE_SAMPLE_VIDEO_PATH);
+
+    // assert
+    await exerciseEditor.expectVideoPreview();
+
+    // act
     await exerciseEditor.create();
 
     // assert
@@ -93,13 +101,20 @@ test(
       tags: created.tags,
       primaryMuscles: created.primaryMuscles,
       difficulty: created.difficulty,
+      video: "Attached",
     });
 
     // act
+    const servedStatus = exerciseEditor.servedVideoStatus();
     await exerciseLibrary.edit(created.name);
 
     // assert
     await exerciseEditor.expectEditing(created);
+    await exerciseEditor.expectServedVideo();
+    expect(await servedStatus).toBe(206);
+
+    // act
+    await exerciseEditor.playVideo();
 
     // act
     await exerciseEditor.enter({
@@ -119,6 +134,7 @@ test(
       tags: edited.tags,
       primaryMuscles: edited.primaryMuscles,
       difficulty: edited.difficulty,
+      video: "Attached",
     });
     await exerciseLibrary.expectNotListed(created.name);
 

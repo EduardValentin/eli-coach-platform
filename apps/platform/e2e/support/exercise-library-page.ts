@@ -10,6 +10,7 @@ export type ListedExercise = {
   tags: readonly string[];
   primaryMuscles: readonly string[];
   difficulty: string;
+  video?: "Attached" | "—";
 };
 
 const LIBRARY_PATH = "/coach/training";
@@ -137,6 +138,7 @@ export class ExerciseLibraryPage {
       exercise.tags.join(""),
       exercise.primaryMuscles.join(""),
       exercise.difficulty,
+      exercise.video ?? "—",
       "",
     ]);
   }

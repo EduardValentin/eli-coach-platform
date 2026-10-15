@@ -23,6 +23,9 @@ export type ExerciseEntries = Partial<Omit<SavedExercise, "tags">> & {
 export type ProblemField = "Name" | "Primary muscles" | "Form cues";
 
 const NEW_EXERCISE_PATH = "/coach/training/exercises/new";
+const VIDEO_PROMPT = "Drop a video here or choose one";
+const SERVED_VIDEO = /\/api\/exercises\/[^/]+\/video\/[^/]+$/;
+const PARTIAL_CONTENT = 206;
 const EXERCISE_PATH = /\/coach\/training\/exercises\/([^/]+)$/;
 const HELD_KEY_MS = 80;
 const PROBLEM_FIELDS: readonly ProblemField[] = [
@@ -61,6 +64,14 @@ export class ExerciseEditorPage {
     return field === "Primary muscles"
       ? this.multiSelect(field)
       : this.page.getByRole("textbox", { name: field });
+  }
+
+  private get videoField() {
+    return this.page.getByRole("group", { name: "Demo video" });
+  }
+
+  private get videoPreview() {
+    return this.videoField.getByLabel("Demo video preview", { exact: true });
   }
 
   private tag(tag: string): Locator {
@@ -136,6 +147,48 @@ export class ExerciseEditorPage {
     if (entries.difficulty) await this.choose("Difficulty", entries.difficulty);
     for (const tag of entries.toggledTags ?? []) await this.tag(tag).click();
     if (entries.cues !== undefined) await this.cuesField.fill(entries.cues);
+  }
+
+  async attachVideo(path: string): Promise<void> {
+    await this.waitUntilInteractive();
+    await this.videoField
+      .getByLabel(VIDEO_PROMPT, { exact: true })
+      .setInputFiles(path);
+  }
+
+  async expectVideoPreview(): Promise<void> {
+    await expect(this.videoPreview).toBeVisible();
+    await expect(this.videoPreview).toHaveAttribute("controls", "");
+  }
+
+  async expectServedVideo(): Promise<void> {
+    await this.expectVideoPreview();
+    await expect(this.videoPreview).toHaveAttribute("src", SERVED_VIDEO);
+  }
+
+  async servedVideoStatus(): Promise<number> {
+    const served = await this.page.waitForResponse(
+      (response) =>
+        SERVED_VIDEO.test(new URL(response.url()).pathname) &&
+        response.request().headers().range !== undefined,
+    );
+
+    return served.status();
+  }
+
+  async playVideo(): Promise<void> {
+    await this.videoPreview.evaluate((video: HTMLVideoElement) => {
+      video.muted = true;
+
+      return video.play();
+    });
+    await expect
+      .poll(() =>
+        this.videoPreview.evaluate(
+          (video: HTMLVideoElement) => video.currentTime,
+        ),
+      )
+      .toBeGreaterThan(0);
   }
 
   async create(): Promise<void> {
