@@ -31,6 +31,7 @@ const BACK_SQUAT: ExerciseView = {
   difficulty: "Intermediate",
   tags: ["Strength", "Hypertrophy"],
   cues: "Brace, then sit between the hips.",
+  video: null,
 };
 
 const BOX_BREATHING: ExerciseView = {
@@ -45,6 +46,7 @@ const BOX_BREATHING: ExerciseView = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
+  video: null,
 };
 
 afterEach(() => {

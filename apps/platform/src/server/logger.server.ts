@@ -158,6 +158,14 @@ export function createConsoleLogger(): ConsoleLogger {
         exerciseId,
       });
     },
+    videoCleanupFailed: ({ error, fileId }) => {
+      console.error("Exercise video file could not be removed.", {
+        errorCategory: "exercise_video_cleanup_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        fileId,
+      });
+    },
     invitationEmailFailed: ({ invitationId }) => {
       console.error("Client invitation email failed.", {
         errorCategory: "client_invitation_email_failure",

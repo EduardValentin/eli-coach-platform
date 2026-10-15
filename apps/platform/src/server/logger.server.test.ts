@@ -1068,6 +1068,31 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs an exercise video file it could not remove by its file id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("/srv/exercise-videos/videos/x"), {
+      code: "EACCES",
+    });
+
+    // act
+    logger.videoCleanupFailed({ fileId: "video-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise video file could not be removed.",
+      {
+        errorCategory: "exercise_video_cleanup_failure",
+        errorClass: "Error",
+        errorCode: "EACCES",
+        fileId: "video-1",
+      },
+    );
+  });
+
   it("logs a client resource change that could not be written by its ids and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

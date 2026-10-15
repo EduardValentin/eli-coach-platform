@@ -14,9 +14,11 @@ import {
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
   createClientResourceStore,
+  createExerciseVideoStore,
   createProgressPhotoStore,
 } from "@eli-coach-platform/infrastructure/private-files/server";
 import {
+  createExerciseVideoFormatDetector,
   createResourceDocumentPages,
   createResourceFileFormatDetector,
 } from "@eli-coach-platform/infrastructure/documents/server";
@@ -131,6 +133,8 @@ export function createPlatformContainer(options: {
     clock,
     database: database.client,
     incidents,
+    videoFormats: createExerciseVideoFormatDetector(),
+    videoStore: createExerciseVideoStore(environment.EXERCISE_VIDEO_ROOT),
   });
   const waitlist = composeWaitlistFeature({
     botVerifier,

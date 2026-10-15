@@ -31,7 +31,10 @@ const SQUAT_REQUEST = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
+  video: "keep",
 };
+
+const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 describe("composeExerciseLibraryFeature", () => {
   it("lists the library from the exercises table", async () => {
@@ -82,6 +85,40 @@ describe("composeExerciseLibraryFeature", () => {
   });
 });
 
+describe("composeExerciseLibraryFeature with exercise videos", () => {
+  it("stages an uploaded video in the store it is handed and discards it when the creation cannot reach the table", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeExerciseLibraryFeature(handles);
+
+    // act
+    const response = await feature.exerciseLibrary.create(
+      coachArgs(multipartRequest()),
+    );
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(handles.videoStore.receive).toHaveBeenCalledOnce();
+    expect(handles.videoStore.discard).toHaveBeenCalledWith("staging-1");
+  });
+
+  it("reads the exercise from the exercises table before opening its video", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeExerciseLibraryFeature(handles);
+
+    // act
+    const opening = feature.exerciseLibrary.openVideo(coachArgs(), {
+      exerciseId: EXERCISE_ID,
+      videoId: VIDEO_ID,
+    });
+
+    // assert
+    await expect(opening).rejects.toThrow("database down");
+    expect(handles.videoStore.open).not.toHaveBeenCalled();
+  });
+});
+
 function createHandles() {
   return {
     clock: { now: () => new Date("2026-10-14T09:00:00.000Z") },
@@ -89,6 +126,25 @@ function createHandles() {
     incidents: {
       exerciseCreationFailed: vi.fn(),
       exerciseEditFailed: vi.fn(),
+      videoCleanupFailed: vi.fn(),
+    },
+    videoFormats: { detect: vi.fn(async () => "mp4") },
+    videoStore: {
+      receive: vi.fn(async (bytes: AsyncIterable<Uint8Array>) => {
+        for await (const _chunk of bytes) {
+          continue;
+        }
+
+        return {
+          stagingId: "staging-1",
+          sizeBytes: 3,
+          leadingBytes: new Uint8Array([1, 2, 3]),
+        };
+      }),
+      keep: vi.fn(),
+      discard: vi.fn(async () => undefined),
+      remove: vi.fn(),
+      open: vi.fn(),
     },
   };
 }
@@ -99,6 +155,20 @@ function createUnreachableDatabase(): DatabaseClient {
       throw new Error("database down");
     },
   } as unknown as DatabaseClient;
+}
+
+function multipartRequest(): Request {
+  const form = new FormData();
+  form.set("exercise", JSON.stringify({ ...SQUAT_REQUEST, video: "attach" }));
+  form.set(
+    "video",
+    new File([new Uint8Array([1, 2, 3])], "squat.mp4", { type: "video/mp4" }),
+  );
+
+  return new Request("https://evoa.fit/api/coach/exercises", {
+    body: form,
+    method: "POST",
+  });
 }
 
 function jsonRequest(method: "POST" | "PUT"): Request {

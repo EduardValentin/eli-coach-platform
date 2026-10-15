@@ -7,6 +7,7 @@ import {
   type ExerciseAddition,
   type ExerciseLibrary,
   type ExerciseReplacement,
+  type ExerciseVideoSnapshot,
 } from "@eli-coach-platform/domain/exercise";
 import { asc, eq, sql } from "drizzle-orm";
 
@@ -82,12 +83,51 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
   }
 
   private rowOf(exercise: Exercise): ExerciseRow {
-    const { cues, ...snapshot } = exercise.toSnapshot();
+    const { cues, video, ...snapshot } = exercise.toSnapshot();
 
-    return { ...snapshot, formCues: cues };
+    return {
+      ...snapshot,
+      formCues: cues,
+      videoFileId: video?.fileId ?? null,
+      videoFormat: video?.format ?? null,
+      videoSizeBytes: video?.sizeBytes ?? null,
+    };
   }
 
-  private exerciseOf({ formCues, ...row }: ExerciseRow): Exercise {
-    return Exercise.reconstitute({ ...row, cues: formCues });
+  private exerciseOf({
+    formCues,
+    videoFileId,
+    videoFormat,
+    videoSizeBytes,
+    ...row
+  }: ExerciseRow): Exercise {
+    return Exercise.reconstitute({
+      ...row,
+      cues: formCues,
+      video: this.videoOf({ videoFileId, videoFormat, videoSizeBytes }),
+    });
+  }
+
+  private videoOf(
+    columns: Pick<
+      ExerciseRow,
+      "videoFileId" | "videoFormat" | "videoSizeBytes"
+    >,
+  ): ExerciseVideoSnapshot | null {
+    const { videoFileId, videoFormat, videoSizeBytes } = columns;
+
+    if (
+      videoFileId === null ||
+      videoFormat === null ||
+      videoSizeBytes === null
+    ) {
+      return null;
+    }
+
+    return {
+      fileId: videoFileId,
+      format: videoFormat,
+      sizeBytes: videoSizeBytes,
+    };
   }
 }

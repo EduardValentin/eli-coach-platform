@@ -33,4 +33,8 @@ export const exerciseLibraryApiRoutes = [
     EXERCISE_LIBRARY_API_PATHS.exercise.slice(1),
     "./api/exercises/exercise.ts",
   ),
+  route(
+    EXERCISE_LIBRARY_API_PATHS.exerciseVideo.slice(1),
+    "./api/exercises/exercise-video.ts",
+  ),
 ];

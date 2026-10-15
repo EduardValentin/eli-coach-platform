@@ -52,6 +52,7 @@ const HIP_THRUST: ExerciseView = {
   difficulty: "Beginner",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
+  video: null,
 };
 
 const BREATH_HOLD: ExerciseView = {
@@ -66,6 +67,7 @@ const BREATH_HOLD: ExerciseView = {
   difficulty: "Advanced",
   tags: ["Recovery"],
   cues: "Exhale slowly.",
+  video: null,
 };
 
 const LIBRARY = [BREATH_HOLD, HIP_THRUST];
@@ -330,6 +332,7 @@ describe("a new exercise", () => {
           difficulty: "Intermediate",
           tags: ["Strength"],
           cues: "Squeeze at the top.",
+          video: "keep",
         },
       },
     ]);
@@ -602,6 +605,7 @@ describe("editing an exercise", () => {
           difficulty: "Advanced",
           tags: ["Recovery"],
           cues: "Exhale slowly.",
+          video: "keep",
         },
       },
     ]);

@@ -6,12 +6,13 @@ const suite = new ApiIntegrationTestSuite();
 
 const FIRST_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const SECOND_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+const VIDEO_FILE_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 const insertExerciseSql = `
   insert into app.exercises
-    (id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, created_at, updated_at)
+    (id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, created_at, updated_at)
   values
-    ($1, $2, '', $3, $4, false, $5, '{Glutes}', '{}', '{}', '{}', '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+    ($1, $2, '', $3, $4, false, $5, '{Glutes}', '{}', '{}', '{}', $6, $7, $8, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
 `;
 
 type ExerciseRow = {
@@ -20,6 +21,7 @@ type ExerciseRow = {
   type?: string;
   unit?: string;
   difficulty?: string;
+  video?: { fileId?: string; format?: string; sizeBytes?: number };
 };
 
 describe.sequential("exercises schema", () => {
@@ -81,6 +83,51 @@ describe.sequential("exercises schema", () => {
     },
   );
 
+  it("keeps an exercise with a whole video", async () => {
+    // arrange
+    const video = { fileId: VIDEO_FILE_ID, format: "mp4", sizeBytes: 2_048 };
+
+    // act
+    await insertExercise({ video });
+
+    // assert
+    expect(await countExercises()).toBe(1);
+  });
+
+  it.each([
+    ["a file id without its format and size", { fileId: VIDEO_FILE_ID }],
+    [
+      "a format and size without a file id",
+      { format: "mp4", sizeBytes: 2_048 },
+    ],
+    [
+      "a file id and format without a size",
+      { fileId: VIDEO_FILE_ID, format: "mov" },
+    ],
+  ])("refuses %s", async (_case, video) => {
+    // arrange
+    const partial = video;
+
+    // act
+    const inserting = insertExercise({ video: partial });
+
+    // assert
+    await expect(inserting).rejects.toThrow(/exercises_video_complete_check/);
+    expect(await countExercises()).toBe(0);
+  });
+
+  it("refuses a video format outside .mp4 and .mov", async () => {
+    // arrange
+    const video = { fileId: VIDEO_FILE_ID, format: "webm", sizeBytes: 2_048 };
+
+    // act
+    const inserting = insertExercise({ video });
+
+    // assert
+    await expect(inserting).rejects.toThrow(/exercises_video_format_check/);
+    expect(await countExercises()).toBe(0);
+  });
+
   it("refuses a name longer than 80 characters", async () => {
     // arrange
     const name = "n".repeat(81);
@@ -103,6 +150,9 @@ function insertExercise(row: ExerciseRow): Promise<unknown> {
       row.type ?? "resistance",
       row.unit ?? "reps",
       row.difficulty ?? "Beginner",
+      row.video?.fileId ?? null,
+      row.video?.format ?? null,
+      row.video?.sizeBytes ?? null,
     ],
   });
 }

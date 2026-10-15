@@ -177,7 +177,7 @@ export function withPrimaryMuscleToggled(
 export function exerciseRequestOf(values: ExerciseFormValues): ExerciseRequest {
   const { unitPicked: _unitPicked, ...request } = values;
 
-  return request;
+  return { ...request, video: "keep" };
 }
 
 export function exerciseFieldProblemsOf(

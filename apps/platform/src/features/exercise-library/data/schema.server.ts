@@ -2,6 +2,7 @@ import { appSchema } from "@eli-coach-platform/db";
 import {
   DIFFICULTIES,
   EXERCISE_TYPES,
+  EXERCISE_VIDEO_FORMATS,
   EXERCISE_UNITS,
   MAX_EXERCISE_NAME_LENGTH,
   type Difficulty,
@@ -9,12 +10,14 @@ import {
   type ExerciseTag,
   type ExerciseType,
   type ExerciseUnit,
+  type ExerciseVideoFormat,
   type Muscle,
 } from "@eli-coach-platform/domain/exercise";
 import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,
   check,
+  integer,
   text,
   timestamp,
   uniqueIndex,
@@ -45,6 +48,11 @@ export const exercisesTable = appSchema.table(
       .notNull(),
     equipment: text("equipment").array().$type<Equipment[]>().notNull(),
     tags: text("tags").array().$type<ExerciseTag[]>().notNull(),
+    videoFileId: uuid("video_file_id"),
+    videoFormat: varchar("video_format", {
+      length: 8,
+    }).$type<ExerciseVideoFormat>(),
+    videoSizeBytes: integer("video_size_bytes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
@@ -63,6 +71,14 @@ export const exercisesTable = appSchema.table(
     check(
       "exercises_difficulty_check",
       sql`${table.difficulty} in (${quotedList(DIFFICULTIES)})`,
+    ),
+    check(
+      "exercises_video_complete_check",
+      sql`(${table.videoFileId} is null) = (${table.videoFormat} is null) and (${table.videoFileId} is null) = (${table.videoSizeBytes} is null)`,
+    ),
+    check(
+      "exercises_video_format_check",
+      sql`${table.videoFormat} in (${quotedList(EXERCISE_VIDEO_FORMATS)})`,
     ),
   ],
 );
