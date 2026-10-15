@@ -259,8 +259,8 @@ test(
     );
     await notificationBell.expectRow(APPROVED, approvedLine);
     await notificationBell.expectRow(DECLINED, declinedLine);
-    await notificationBell.expectRowUnread(APPROVED, approvedLine, true);
-    await notificationBell.expectRowUnread(DECLINED, declinedLine, true);
+    await notificationBell.expectRowUnread(APPROVED, approvedLine);
+    await notificationBell.expectRowUnread(DECLINED, declinedLine);
     await notificationBell.expectRowAge(APPROVED, approvedLine, JUST_ARRIVED);
 
     // act
@@ -268,15 +268,15 @@ test(
 
     // assert
     await expect(page).toHaveURL(clientReviewUrlOf(declinedId));
-    await clientCheckIns.expectReviewLanded("Past", DECLINED_NOTE);
+    await clientCheckIns.expectReviewLandedOn("Past", DECLINED_NOTE);
     await notificationBell.expectUnread(1);
 
     // act
     await notificationBell.open();
 
     // assert
-    await notificationBell.expectRowUnread(DECLINED, declinedLine, false);
-    await notificationBell.expectRowUnread(APPROVED, approvedLine, true);
+    await notificationBell.expectRowRead(DECLINED, declinedLine);
+    await notificationBell.expectRowUnread(APPROVED, approvedLine);
 
     // act
     await notificationBell.markAllRead();
@@ -296,7 +296,7 @@ test(
 
     // assert
     await expect(page).toHaveURL(clientReviewUrlOf(approvedId));
-    await clientCheckIns.expectReviewLanded("Upcoming", APPROVED_NOTE);
+    await clientCheckIns.expectReviewLandedOn("Upcoming", APPROVED_NOTE);
     await notificationBell.expectUnread(0);
 
     // act
@@ -852,5 +852,62 @@ test(
 
     // assert
     await notificationBell.expectUnread(0);
+  },
+);
+
+test(
+  "a toast's View pressed by keyboard, for the check-in the coach is already focused on, keeps focus on that check-in's row on the tab now holding it",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequestDialog,
+    clientCheckIns,
+    coachAvailability,
+    coachCheckIns,
+    notificationBell,
+    notificationRecords,
+    page,
+    provisionCoach,
+    provisionSubmittedClient,
+    publicNav,
+    signIn,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await clientCheckIns.open();
+    await clientCheckIns.openRequestDialog();
+    const requested = await checkInRequestDialog.sendSoonest(PHONE_NOTE);
+    const checkInId = await checkInRecords.idOf(
+      client.clientId,
+      requested.startsAt,
+    );
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+    await notificationBell.installClock();
+    await coachCheckIns.visitReview(checkInId);
+    await coachCheckIns.expectReviewLanded(client.fullName);
+    await checkInRecords.markApproved(checkInId);
+    await notificationRecords.arriveForCoach("check-in.cancelled", {
+      checkInId,
+      clientName: client.fullName,
+      startsAt: requested.startsAt.toISOString(),
+    });
+
+    // act
+    await notificationBell.waitForArrivalToast(CANCELLED);
+    await notificationBell.viewToastByKeyboard(CANCELLED);
+
+    // assert
+    await expect(page).toHaveURL(coachReviewUrlOf(checkInId));
+    await coachCheckIns.expectReviewLandedOn("Upcoming", client.fullName);
   },
 );

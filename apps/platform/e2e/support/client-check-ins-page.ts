@@ -85,7 +85,7 @@ export class ClientCheckInsPage {
     ).toBeVisible();
   }
 
-  async expectReviewLanded(tab: CheckInTab, note: string): Promise<void> {
+  async expectReviewLandedOn(tab: CheckInTab, note: string): Promise<void> {
     await expect(this.page).toHaveURL(REVIEW_URL);
     await expect(checkInTab(this.page, tab)).toHaveAttribute(
       "aria-selected",

@@ -12,6 +12,7 @@ const MARK_ALL_READ = "Mark all read";
 const EMPTY_BELL = "No notifications yet.";
 const TOAST = "[data-sonner-toast]";
 const MINUTE_CHECK_MS = 60_000;
+const ARRIVAL_TOAST_ATTEMPT_MS = 3_000;
 
 export class NotificationBell {
   constructor(private readonly page: Page) {}
@@ -147,18 +148,12 @@ export class NotificationBell {
     await expect(this.rows.filter({ hasText: title })).toHaveCount(1);
   }
 
-  async expectRowUnread(
-    title: string,
-    line: BellLine,
-    unread: boolean,
-  ): Promise<void> {
-    const row = this.rowOf(title, line);
+  async expectRowUnread(title: string, line: BellLine): Promise<void> {
+    await expect(this.rowOf(title, line)).toContainText("Unread:");
+  }
 
-    if (unread) {
-      await expect(row).toContainText("Unread:");
-      return;
-    }
-    await expect(row).not.toContainText("Unread:");
+  async expectRowRead(title: string, line: BellLine): Promise<void> {
+    await expect(this.rowOf(title, line)).not.toContainText("Unread:");
   }
 
   async expectRowAge(
@@ -194,6 +189,15 @@ export class NotificationBell {
       this.panel.getByText(EMPTY_BELL, { exact: true }),
     ).toBeVisible();
     await expect(this.panel.getByRole("link")).toHaveCount(0);
+  }
+
+  async waitForArrivalToast(title: string): Promise<void> {
+    await expect(async () => {
+      await this.waitForMinuteCheck();
+      await expect(this.toastOf(title)).toBeVisible({
+        timeout: ARRIVAL_TOAST_ATTEMPT_MS,
+      });
+    }).toPass();
   }
 
   async expectToast(title: string): Promise<void> {
