@@ -4369,5 +4369,55 @@
     {
       "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
     }
+  ],
+  "cart-one-item": {
+    "prototype": [
+      {
+        "click": "role=button[name=\"Get for Free\"] >> nth=0"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+      }
+    ]
+  },
+  "cart-details": {
+    "prototype": [
+      {
+        "use": "cart-one-item"
+      },
+      {
+        "click": "role=button[name=\"Checkout\"]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+          "visitor@example.com"
+        ]
+      }
+    ],
+    "real": [
+      {
+        "use": "cart-one-item"
+      },
+      {
+        "click": "role=button[name=\"Continue\"]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+          "visitor@example.com"
+        ]
+      }
+    ]
+  },
+  "cart-terms-accepted": [
+    {
+      "use": "cart-details"
+    },
+    {
+      "click": "role=checkbox[name=/^I agree to the Terms & Conditions/]"
+    }
   ]
 }
