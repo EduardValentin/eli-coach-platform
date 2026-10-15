@@ -14,6 +14,8 @@ const TIME_ZONE = "Europe/Bucharest";
 const EARLY_SLOT = "2026-03-03T15:00:00.000Z";
 const LATE_SLOT = "2026-03-03T16:00:00.000Z";
 const SLOT_DAY = "2026-03-03";
+const NEXT_MONTH_SLOT = "2026-04-06T15:00:00.000Z";
+const NEXT_MONTH_SLOT_DAY = "2026-04-06";
 const CALENDAR_TOP = 62;
 const CALENDAR_BOTTOM = 400;
 const TIMES_HEIGHT = 300;
@@ -88,8 +90,21 @@ function layOut(timesTop: number) {
   );
 }
 
-function Harness(props: { onSelectSlot?: (startsAt: string) => void }) {
-  const { onSelectSlot } = props;
+const NEXT_MONTH_DAYS: ReadonlyMap<string, SlotPickerDay> = new Map([
+  [
+    NEXT_MONTH_SLOT_DAY,
+    {
+      heading: "The sixth",
+      slots: [{ label: "Only", startsAt: NEXT_MONTH_SLOT }],
+    },
+  ],
+]);
+
+function Harness(props: {
+  days?: ReadonlyMap<string, SlotPickerDay>;
+  onSelectSlot?: (startsAt: string) => void;
+}) {
+  const { days = DAYS, onSelectSlot } = props;
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -97,7 +112,7 @@ function Harness(props: { onSelectSlot?: (startsAt: string) => void }) {
     <SlotPicker
       dayKeyOf={dayKeyOf}
       dayNameOf={dayNameOf}
-      days={DAYS}
+      days={days}
       onSelectDay={setSelectedDayKey}
       onSelectSlot={(startsAt) => {
         setSelectedSlot(startsAt);
@@ -143,6 +158,19 @@ describe("the slot picker's calendar", () => {
     ).toBeInTheDocument();
     expect(
       within(grid).getByRole("button", { name: "Day 2026-03-03" }),
+    ).toBeEnabled();
+  });
+
+  it("opens on the month of the first open day when the current month has none", () => {
+    // arrange
+    // act
+    render(<Harness days={NEXT_MONTH_DAYS} />);
+
+    // assert
+    expect(
+      within(
+        screen.getByRole("grid", { name: "Open days, April 2026" }),
+      ).getByRole("button", { name: "Day 2026-04-06" }),
     ).toBeEnabled();
   });
 
