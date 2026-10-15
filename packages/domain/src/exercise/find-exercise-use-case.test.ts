@@ -19,6 +19,7 @@ function exerciseCalled(id: string, name: string): Exercise {
     difficulty: "Beginner",
     tags: [],
     cues: "",
+    video: null,
     createdAt: AT,
     updatedAt: AT,
   });

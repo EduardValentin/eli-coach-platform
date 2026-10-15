@@ -18,6 +18,7 @@ const HIP_THRUST = Exercise.reconstitute({
   difficulty: "Beginner",
   tags: ["Hypertrophy"],
   cues: "",
+  video: null,
   createdAt: AT,
   updatedAt: AT,
 });

@@ -6,7 +6,11 @@ export {
   EditExerciseUseCase,
   type EditExerciseResult,
 } from "./edit-exercise-use-case";
-export { Exercise, type ExerciseSnapshot } from "./exercise";
+export {
+  Exercise,
+  type ExerciseProblems,
+  type ExerciseSnapshot,
+} from "./exercise";
 export {
   ExerciseDraft,
   type ExerciseDraftInput,
@@ -20,10 +24,33 @@ export {
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
 export {
+  EXERCISE_VIDEO_FORMATS,
+  type ExerciseVideoFormat,
+  type ExerciseVideoSnapshot,
+} from "./exercise-video";
+export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+export {
+  MAX_EXERCISE_VIDEO_BYTES,
+  type ExerciseVideoChoice,
+} from "./exercise-video-intake";
+export {
+  type ExerciseVideoOpening,
+  type ExerciseVideoStore,
+  type RequestedByteRange,
+  type ServedByteRange,
+  type StagedExerciseVideo,
+} from "./exercise-video-store";
+export { type ExerciseVideoViewer } from "./exercise-video-viewer";
+export {
   FindExerciseUseCase,
   type FindExerciseResult,
 } from "./find-exercise-use-case";
 export { ListExercisesUseCase } from "./list-exercises-use-case";
+export {
+  OpenExerciseVideoUseCase,
+  type OpenExerciseVideoResult,
+} from "./open-exercise-video-use-case";
+export { StageExerciseVideoUseCase } from "./stage-exercise-video-use-case";
 export {
   DIFFICULTIES,
   EQUIPMENT,
