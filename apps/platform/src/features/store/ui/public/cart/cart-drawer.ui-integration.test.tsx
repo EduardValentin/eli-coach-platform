@@ -23,6 +23,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import { clientAction as acquireResources } from "~/features/store/api/acquisitions/acquisitions";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
@@ -977,10 +979,6 @@ function termsCheckbox(dialog: HTMLElement): HTMLElement {
   return within(dialog).getByRole("checkbox", {
     name: requiredName("I agree to the Terms & Conditions."),
   });
-}
-
-function requiredName(label: string): string {
-  return `${label} (required)`;
 }
 
 function DisappearingStoreCartTestControl() {

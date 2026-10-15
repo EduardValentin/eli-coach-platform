@@ -32,6 +32,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import { clientAction as bookAssessmentCall } from "~/features/assessment-calls/api/booking/bookings";
 import {
   ASSESSMENT_CALL_API_PATHS,
@@ -1079,10 +1081,6 @@ async function reachDetails(user: UserEvent) {
     screen.getByRole("button", { name: "Continue to your details" }),
   );
   await screen.findByRole("heading", { level: 2, name: "Almost there" });
-}
-
-function requiredName(label: string): string {
-  return `${label} (required)`;
 }
 
 function firstNameField(): HTMLElement {

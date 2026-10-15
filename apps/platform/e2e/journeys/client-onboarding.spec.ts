@@ -1,3 +1,5 @@
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";
 import {
@@ -47,10 +49,6 @@ const dayMonthYearFormatter = new Intl.DateTimeFormat("en-GB", {
   month: "long",
   year: "numeric",
 });
-
-function requiredName(statement: string): string {
-  return `${statement} (required)`;
-}
 
 function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * MILLISECONDS_PER_DAY)

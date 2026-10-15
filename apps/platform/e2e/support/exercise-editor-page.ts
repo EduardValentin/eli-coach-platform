@@ -59,7 +59,7 @@ export class ExerciseEditorPage {
     return this.page.getByRole("option", { name: new RegExp(`^${name}\\b`) });
   }
 
-  private sides(name: SavedExercise["sides"]): Locator {
+  private sidesOption(name: SavedExercise["sides"]): Locator {
     return this.page.getByRole("radio", { name });
   }
 
@@ -147,7 +147,7 @@ export class ExerciseEditorPage {
     if (entries.name !== undefined) await this.nameField.fill(entries.name);
     if (entries.type) await this.choose("Type", entries.type);
     if (entries.unit) await this.choose("Measured in", entries.unit);
-    if (entries.sides) await this.sides(entries.sides).check();
+    if (entries.sides) await this.sidesOption(entries.sides).check();
     if (entries.primaryMuscles) {
       await this.pick("Primary muscles", entries.primaryMuscles);
     }
@@ -242,8 +242,8 @@ export class ExerciseEditorPage {
       exercise.sides === "One side at a time" ? "ArrowRight" : "ArrowLeft",
       { delay: HELD_KEY_MS },
     );
-    await expect(this.sides(exercise.sides)).toBeChecked();
-    await expect(this.sides(exercise.sides)).toBeFocused();
+    await expect(this.sidesOption(exercise.sides)).toBeChecked();
+    await expect(this.sidesOption(exercise.sides)).toBeFocused();
     await this.pickByKeyboard("Primary muscles", exercise.primaryMuscles);
     await this.pickByKeyboard("Secondary muscles", exercise.secondaryMuscles);
     await this.pickByKeyboard("Equipment", exercise.equipment);
@@ -267,7 +267,7 @@ export class ExerciseEditorPage {
     await expect(this.nameField).toHaveValue(exercise.name);
     await expect(this.select("Type")).toHaveText(exercise.type);
     await expect(this.select("Measured in")).toHaveText(exercise.unit);
-    await expect(this.sides(exercise.sides)).toBeChecked();
+    await expect(this.sidesOption(exercise.sides)).toBeChecked();
     await this.expectPicked("Primary muscles", exercise.primaryMuscles);
     await this.expectPicked("Secondary muscles", exercise.secondaryMuscles);
     await this.expectPicked("Equipment", exercise.equipment);

@@ -4,3 +4,7 @@ export const CLERK_TEST_ENVIRONMENT = {
   CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
   CLERK_SIGN_UP_URL: "https://evoa.fit/sign-up",
 } as const;
+
+export function requiredName(label: string): string {
+  return `${label} (required)`;
+}

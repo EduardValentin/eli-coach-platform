@@ -110,10 +110,10 @@ describe.sequential("exercises schema", () => {
     ],
   ])("refuses an exercise with %s", async (_case, ownerAccountId, problem) => {
     // arrange
-    const ownerless = { ownerAccountId };
+    const exerciseWithBadOwner = { ownerAccountId };
 
     // act
-    const inserting = insertExercise(ownerless);
+    const inserting = insertExercise(exerciseWithBadOwner);
 
     // assert
     await expect(inserting).rejects.toThrow(problem);

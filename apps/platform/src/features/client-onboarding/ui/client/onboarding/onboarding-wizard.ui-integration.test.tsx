@@ -29,6 +29,8 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/public/paths";
 import { clientAction } from "~/features/client-onboarding/api/client/submission";
 import type {
@@ -112,10 +114,6 @@ type PageOptions = {
   unitPreference?: OnboardingWizardPage["unitPreference"];
   answers?: OnboardingWizardPage["draft"]["answers"];
 };
-
-function requiredName(statement: string): string {
-  return `${statement} (required)`;
-}
 
 function emptyAnswers(): OnboardingWizardPage["draft"]["answers"] {
   return {
