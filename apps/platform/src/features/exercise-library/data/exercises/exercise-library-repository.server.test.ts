@@ -11,9 +11,11 @@ import { PostgresExerciseLibrary } from "./exercise-library-repository.server";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
 const LATER = new Date("2026-10-15T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a";
 
 const SQUAT: ExerciseSnapshot = {
   id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
   unit: "reps",
@@ -30,6 +32,7 @@ const SQUAT: ExerciseSnapshot = {
 
 const SQUAT_ROW = {
   id: SQUAT.id,
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   formCues: "Brace.",
   type: "resistance",
@@ -47,7 +50,7 @@ const SQUAT_ROW = {
 const NAME_TAKEN = Object.assign(new Error("Failed query"), {
   cause: Object.assign(new Error("duplicate key value"), {
     code: "23505",
-    constraint: "exercises_name_unique",
+    constraint: "exercises_owner_name_unique",
   }),
 });
 
@@ -126,7 +129,7 @@ describe("PostgresExerciseLibrary#add", () => {
 });
 
 describe("PostgresExerciseLibrary#replace", () => {
-  it("writes every field but the id and the moment it was created, and answers that it was replaced", async () => {
+  it("writes every field but the id, the owner and the moment it was created, and answers that it was replaced", async () => {
     // arrange
     const database = createDatabase();
     const library = new PostgresExerciseLibrary(database.client);
@@ -140,7 +143,12 @@ describe("PostgresExerciseLibrary#replace", () => {
     const answer = await library.replace(revised);
 
     // assert
-    const { id: _id, createdAt: _createdAt, ...columns } = SQUAT_ROW;
+    const {
+      id: _id,
+      ownerAccountId: _ownerAccountId,
+      createdAt: _createdAt,
+      ...columns
+    } = SQUAT_ROW;
     expect(answer).toBe("replaced");
     expect(database.writes).toEqual([
       {

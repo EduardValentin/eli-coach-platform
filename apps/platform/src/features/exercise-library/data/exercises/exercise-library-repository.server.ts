@@ -6,9 +6,10 @@ import {
   Exercise,
   type ExerciseAddition,
   type ExerciseLibrary,
+  type ExerciseReference,
   type ExerciseReplacement,
 } from "@eli-coach-platform/domain/exercise";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 import {
   exercisesConstraints,
@@ -22,20 +23,29 @@ const UNIQUE_VIOLATION_CODE = "23505";
 export class PostgresExerciseLibrary implements ExerciseLibrary {
   constructor(private readonly database: DatabaseClient) {}
 
-  async list(): Promise<Exercise[]> {
+  async list(ownerAccountId: string): Promise<Exercise[]> {
     const rows = await this.database
       .select()
       .from(exercisesTable)
+      .where(eq(exercisesTable.ownerAccountId, ownerAccountId))
       .orderBy(asc(sql`lower(${exercisesTable.name})`), asc(exercisesTable.id));
 
     return rows.map((row) => this.exerciseOf(row));
   }
 
-  async find(exerciseId: string): Promise<Exercise | null> {
+  async find({
+    ownerAccountId,
+    exerciseId,
+  }: ExerciseReference): Promise<Exercise | null> {
     const [row] = await this.database
       .select()
       .from(exercisesTable)
-      .where(eq(exercisesTable.id, exerciseId))
+      .where(
+        and(
+          eq(exercisesTable.id, exerciseId),
+          eq(exercisesTable.ownerAccountId, ownerAccountId),
+        ),
+      )
       .limit(1);
 
     return row ? this.exerciseOf(row) : null;
@@ -52,13 +62,23 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
   }
 
   async replace(exercise: Exercise): Promise<ExerciseReplacement> {
-    const { id, createdAt: _createdAt, ...columns } = this.rowOf(exercise);
+    const {
+      id,
+      ownerAccountId,
+      createdAt: _createdAt,
+      ...columns
+    } = this.rowOf(exercise);
 
     try {
       await this.database
         .update(exercisesTable)
         .set(columns)
-        .where(eq(exercisesTable.id, id));
+        .where(
+          and(
+            eq(exercisesTable.id, id),
+            eq(exercisesTable.ownerAccountId, ownerAccountId),
+          ),
+        );
 
       return "replaced";
     } catch (error) {
