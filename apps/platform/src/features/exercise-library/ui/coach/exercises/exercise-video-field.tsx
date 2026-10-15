@@ -29,7 +29,7 @@ type StoredExerciseVideo = ExerciseView["video"];
 
 type VideoFieldFocus = "replace" | "picker" | null;
 
-export type ExerciseVideoFieldHandle = { focusReplace: () => void };
+export type ExerciseVideoFieldHandle = { queueReplaceFocus: () => void };
 
 type ExerciseVideoFieldProps = {
   ref?: Ref<ExerciseVideoFieldHandle>;
@@ -119,7 +119,7 @@ export function ExerciseVideoField({
   }, [previewUrl]);
 
   useImperativeHandle(ref, () => ({
-    focusReplace: () => {
+    queueReplaceFocus: () => {
       pendingFocus.current = "replace";
     },
   }));

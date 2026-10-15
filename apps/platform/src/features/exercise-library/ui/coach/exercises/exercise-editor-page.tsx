@@ -161,7 +161,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     const fieldsShown = showRefusedFields(problems);
     const videoShown = showRefusedVideo(problems);
 
-    if (videoShown && !fieldsShown) videoField.current?.focusReplace();
+    if (videoShown && !fieldsShown) videoField.current?.queueReplaceFocus();
 
     return fieldsShown || videoShown;
   };
