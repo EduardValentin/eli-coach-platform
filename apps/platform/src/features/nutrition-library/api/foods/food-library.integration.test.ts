@@ -14,7 +14,7 @@ import {
   LIBRARY_PAGE,
   VISITOR,
   type FoodFields,
-} from "~integration-test-config/nutrition-library-journey";
+} from "~integration-test-config/food-library-journey";
 import {
   CLIENT_SESSION,
   COACH_SESSION,

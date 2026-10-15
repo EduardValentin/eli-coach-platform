@@ -22,7 +22,7 @@ test(
   async ({
     coachDashboard,
     foodEditor,
-    foodLibrary,
+    nutritionLibrary,
     page,
     provisionCoach,
     scenarioTag,
@@ -53,13 +53,13 @@ test(
     await coachDashboard.open();
 
     // act
-    await foodLibrary.openFromNavigation();
+    await nutritionLibrary.openFromNavigation();
 
     // assert
-    await foodLibrary.expectNutritionRightAfterTraining();
+    await nutritionLibrary.expectNutritionRightAfterTraining();
 
     // act
-    await foodLibrary.startNewFood();
+    await nutritionLibrary.startNewFood();
 
     // assert
     await foodEditor.expectNewFood();
@@ -79,9 +79,9 @@ test(
     await foodEditor.create();
 
     // assert
-    await foodLibrary.expectOpen();
-    await foodLibrary.expectConfirmation("Food created");
-    await foodLibrary.expectListed({
+    await nutritionLibrary.expectOpen();
+    await nutritionLibrary.expectConfirmation("Food created");
+    await nutritionLibrary.expectListed({
       name: created.name,
       category: created.category,
       kcal: created.kcal,
@@ -92,7 +92,7 @@ test(
     });
 
     // act
-    await foodLibrary.edit(created.name);
+    await nutritionLibrary.edit(created.name);
 
     // assert
     await foodEditor.expectEditing(created);
@@ -107,9 +107,9 @@ test(
     await foodEditor.saveChanges();
 
     // assert
-    await foodLibrary.expectOpen();
-    await foodLibrary.expectConfirmation("Food updated");
-    await foodLibrary.expectListed({
+    await nutritionLibrary.expectOpen();
+    await nutritionLibrary.expectConfirmation("Food updated");
+    await nutritionLibrary.expectListed({
       name: edited.name,
       category: edited.category,
       kcal: edited.kcal,
@@ -118,10 +118,10 @@ test(
       fat: edited.fat,
       tags: ["Luteal", "Vegetarian"],
     });
-    await foodLibrary.expectNotListed(created.name);
+    await nutritionLibrary.expectNotListed(created.name);
 
     // act
-    await foodLibrary.edit(edited.name);
+    await nutritionLibrary.edit(edited.name);
 
     // assert
     await foodEditor.expectEditing(edited);
@@ -228,7 +228,7 @@ test(
     accountPortal,
     coachDashboard,
     foodEditor,
-    foodLibrary,
+    nutritionLibrary,
     foodRequests,
     page,
     provisionAccount,
@@ -247,8 +247,8 @@ test(
     await signInAsCoach();
     await coachDashboard.open();
     await foodRequests.createAccepted(kept);
-    await foodLibrary.open();
-    await foodLibrary.edit(kept.name);
+    await nutritionLibrary.open();
+    await nutritionLibrary.edit(kept.name);
     const foodId = await foodEditor.foodId();
     await page.goto("/");
     await publicNav.signOut();
@@ -264,7 +264,7 @@ test(
     expect(visitorStatuses).toEqual([401, 401]);
 
     for (const open of [
-      () => foodLibrary.open(),
+      () => nutritionLibrary.open(),
       () => foodEditor.openNew(),
       () => foodEditor.open(foodId),
     ]) {
@@ -280,7 +280,7 @@ test(
     await signIn();
 
     for (const open of [
-      () => foodLibrary.open(),
+      () => nutritionLibrary.open(),
       () => foodEditor.openNew(),
       () => foodEditor.open(foodId),
     ]) {
@@ -288,7 +288,7 @@ test(
       await open();
 
       // assert
-      await foodLibrary.expectRefused();
+      await nutritionLibrary.expectRefused();
     }
 
     // act

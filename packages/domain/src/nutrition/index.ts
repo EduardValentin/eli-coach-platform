@@ -23,6 +23,8 @@ export {
   FOOD_CATEGORIES,
   FOOD_ICONS,
   MAX_FOOD_NAME_LENGTH,
+  MAX_MACRO_PER_100G,
+  MAX_PORTION_GRAMS,
   TAG_FAMILIES,
   type FoodCategory,
   type FoodIcon,

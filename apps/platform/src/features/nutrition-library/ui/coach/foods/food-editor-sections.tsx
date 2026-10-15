@@ -1,4 +1,4 @@
-import { toggled } from "@eli-coach-platform/ui/lib";
+import { describedByOf, toggled } from "@eli-coach-platform/ui/lib";
 import {
   SettingsBody,
   SettingsRow,
@@ -22,34 +22,52 @@ import { useId } from "react";
 import type { PathValue, UseFormReturn } from "react-hook-form";
 
 import type { NutritionTagView } from "~/features/nutrition-library/public/foods";
-import { FOOD_ICON_GLYPHS } from "~/features/nutrition-library/ui/shared/food-icons";
+import { FOOD_ICON_APPEARANCE } from "~/features/nutrition-library/ui/shared/food-icons";
 import { TAG_FAMILY_APPEARANCE } from "~/features/nutrition-library/ui/shared/tag-pill";
 
 import {
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
-  FOOD_ICON_LABELS,
   FOOD_ICONS,
   TAG_FAMILIES,
   TAG_FAMILY_LABELS,
   type FoodFieldProblems,
   type FoodFormValues,
+  type FoodProblemField,
 } from "./food-form";
 
 type FoodForm = UseFormReturn<FoodFormValues>;
 
 const FOOD_ICON_CHOICES = FOOD_ICONS.map((key) => ({
   key,
-  label: FOOD_ICON_LABELS[key],
-  icon: FOOD_ICON_GLYPHS[key],
+  label: FOOD_ICON_APPEARANCE[key].label,
+  icon: FOOD_ICON_APPEARANCE[key].glyph,
 }));
 
-const AMOUNT_FIELDS = [
-  { field: "kcal", title: "Calories" },
-  { field: "protein", title: "Protein (g)" },
-  { field: "carb", title: "Carbs (g)" },
-  { field: "fat", title: "Fat (g)" },
-] as const;
+const AMOUNT_PRECISIONS = {
+  hundredths: { inputMode: "decimal", step: "0.01" },
+  "whole-grams": { inputMode: "numeric", step: "1" },
+} as const;
+
+type AmountField = {
+  field: Exclude<FoodProblemField, "name">;
+  title: string;
+  precision: keyof typeof AMOUNT_PRECISIONS;
+  description?: string;
+};
+
+const AMOUNT_FIELDS: readonly AmountField[] = [
+  { field: "kcal", title: "Calories", precision: "hundredths" },
+  { field: "protein", title: "Protein (g)", precision: "hundredths" },
+  { field: "carb", title: "Carbs (g)", precision: "hundredths" },
+  { field: "fat", title: "Fat (g)", precision: "hundredths" },
+  {
+    field: "defaultPortionGrams",
+    title: "Default portion (g)",
+    precision: "whole-grams",
+    description: "Proposed when the food enters a recipe.",
+  },
+];
 
 function changeValue<Field extends "category" | "icon" | "tagIds">(
   form: FoodForm,
@@ -57,10 +75,6 @@ function changeValue<Field extends "category" | "icon" | "tagIds">(
   value: PathValue<FoodFormValues, Field>,
 ) {
   form.setValue(field, value, { shouldDirty: true });
-}
-
-function describedBy(...ids: (string | false | undefined)[]) {
-  return ids.filter(Boolean).join(" ") || undefined;
 }
 
 function shownProblem(id: string, problem: string | undefined) {
@@ -96,7 +110,9 @@ export function FoodAboutSection({
           title="Name"
         >
           <Input
-            aria-describedby={describedBy(problems.name && nameProblemId)}
+            aria-describedby={describedByOf(
+              problems.name ? nameProblemId : undefined,
+            )}
             aria-invalid={problems.name ? true : undefined}
             defaultValue={form.formState.defaultValues?.name}
             id={nameId}
@@ -159,22 +175,14 @@ export function FoodNutritionSection({
       title="Nutrition per 100 g"
     >
       <SettingsRows>
-        {AMOUNT_FIELDS.map(({ field, title }) => (
+        {AMOUNT_FIELDS.map((amount) => (
           <AmountRow
-            field={field}
+            amount={amount}
             form={form}
-            key={field}
-            problem={problems[field]}
-            title={title}
+            key={amount.field}
+            problem={problems[amount.field]}
           />
         ))}
-        <AmountRow
-          description="Proposed when the food enters a recipe."
-          field="defaultPortionGrams"
-          form={form}
-          problem={problems.defaultPortionGrams}
-          title="Default portion (g)"
-        />
       </SettingsRows>
     </SettingsSection>
   );
@@ -182,21 +190,17 @@ export function FoodNutritionSection({
 
 function AmountRow({
   form,
-  field,
-  title,
-  description,
+  amount: { field, title, precision, description },
   problem,
 }: {
   form: FoodForm;
-  field: "kcal" | "protein" | "carb" | "fat" | "defaultPortionGrams";
-  title: string;
-  description?: string;
+  amount: AmountField;
   problem: string | undefined;
 }) {
   const inputId = useId();
   const descriptionId = useId();
   const problemId = useId();
-  const wholeGrams = field === "defaultPortionGrams";
+  const { inputMode, step } = AMOUNT_PRECISIONS[precision];
 
   return (
     <SettingsRow
@@ -207,17 +211,17 @@ function AmountRow({
       title={title}
     >
       <Input
-        aria-describedby={describedBy(
-          description && descriptionId,
-          problem && problemId,
+        aria-describedby={describedByOf(
+          description ? descriptionId : undefined,
+          problem ? problemId : undefined,
         )}
         aria-invalid={problem ? true : undefined}
         className="sm:w-40"
         defaultValue={form.formState.defaultValues?.[field]}
         id={inputId}
-        inputMode={wholeGrams ? "numeric" : "decimal"}
+        inputMode={inputMode}
         min="0"
-        step={wholeGrams ? "1" : "0.01"}
+        step={step}
         type="number"
         {...form.register(field)}
       />

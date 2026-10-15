@@ -1,4 +1,6 @@
-import type { APIRequestContext, APIResponse } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
+
+import { answerOf, type ApiAnswer } from "./api-answers";
 
 export type FoodFields = {
   name: string;
@@ -12,8 +14,6 @@ export type FoodFields = {
   tagIds: readonly string[];
 };
 
-export type FoodAnswer = { status: number; body: unknown };
-
 const FOODS_PATH = "/api/coach/foods";
 
 const SAVED = 200;
@@ -21,18 +21,8 @@ const SAVED = 200;
 export class FoodRequests {
   constructor(private readonly request: APIRequestContext) {}
 
-  private async answerOf(response: APIResponse): Promise<FoodAnswer> {
-    const text = await response.text();
-
-    try {
-      return { status: response.status(), body: JSON.parse(text) };
-    } catch {
-      return { status: response.status(), body: text };
-    }
-  }
-
-  async create(fields: FoodFields): Promise<FoodAnswer> {
-    return this.answerOf(await this.request.post(FOODS_PATH, { data: fields }));
+  async create(fields: FoodFields): Promise<ApiAnswer> {
+    return answerOf(await this.request.post(FOODS_PATH, { data: fields }));
   }
 
   async createAccepted(fields: FoodFields): Promise<void> {
@@ -45,8 +35,8 @@ export class FoodRequests {
     }
   }
 
-  async edit(foodId: string, fields: FoodFields): Promise<FoodAnswer> {
-    return this.answerOf(
+  async edit(foodId: string, fields: FoodFields): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.put(`${FOODS_PATH}/${foodId}`, { data: fields }),
     );
   }

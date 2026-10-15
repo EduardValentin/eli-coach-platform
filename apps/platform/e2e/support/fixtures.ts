@@ -153,7 +153,7 @@ type PlatformFixtures = {
   exerciseEditor: ExerciseEditorPage;
   exerciseRequests: ExerciseRequests;
   visitorExerciseRequests: ExerciseRequests;
-  foodLibrary: NutritionLibraryPage;
+  nutritionLibrary: NutritionLibraryPage;
   foodEditor: FoodEditorPage;
   foodRequests: FoodRequests;
   visitorFoodRequests: FoodRequests;
@@ -571,7 +571,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await visitor.dispose();
   },
 
-  foodLibrary: async ({ page }, use) => {
+  nutritionLibrary: async ({ page }, use) => {
     await use(new NutritionLibraryPage(page));
   },
 

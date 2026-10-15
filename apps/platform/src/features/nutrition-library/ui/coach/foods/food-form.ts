@@ -4,8 +4,12 @@ import {
   FOOD_ICONS,
   FoodDraft,
   MAX_FOOD_NAME_LENGTH,
+  MAX_MACRO_PER_100G,
+  MAX_PORTION_GRAMS,
   TAG_FAMILIES,
+  type FoodCategory,
   type FoodDraftProblems,
+  type FoodIcon,
 } from "@eli-coach-platform/domain/nutrition";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
@@ -16,10 +20,6 @@ import type {
 } from "~/features/nutrition-library/public/foods";
 
 export { FOOD_CATEGORIES, FOOD_ICONS, TAG_FAMILIES };
-
-type FoodCategory = FoodView["category"];
-
-type FoodIcon = FoodView["icon"];
 
 export type FoodFormValues = {
   name: string;
@@ -64,46 +64,15 @@ export const TAG_FAMILY_LABELS: Readonly<
   dietary: "Dietary",
 };
 
-export const FOOD_ICON_LABELS: Readonly<Record<FoodIcon, string>> = {
-  egg: "Egg",
-  poultry: "Poultry",
-  meat: "Red meat",
-  fish: "Fish",
-  ham: "Deli / ham",
-  dairy: "Dairy",
-  grain: "Grain",
-  bread: "Bread",
-  sandwich: "Sandwich",
-  "root-veg": "Root veg",
-  leafy: "Leafy greens",
-  veg: "Vegetable",
-  herb: "Herb / spice",
-  apple: "Fruit",
-  banana: "Banana",
-  citrus: "Citrus",
-  cherry: "Berry",
-  grape: "Grapes",
-  legume: "Legume / bean",
-  nut: "Nut / seed",
-  oil: "Oil / fat",
-  chocolate: "Chocolate",
-  candy: "Candy",
-  "ice-cream": "Ice cream",
-  cake: "Cake / dessert",
-  soup: "Soup",
-  drink: "Drink",
-  other: "Other",
-};
-
 const NAME_PROBLEM_COPY = {
   missing: "Give the food a name",
   "too-long": `Keep the name to ${MAX_FOOD_NAME_LENGTH} characters`,
   taken: "A food with this name already exists",
 } as const;
 
-const MACRO_PROBLEM = "Enter a value from 0 to 9,999.99";
+const MACRO_PROBLEM = `Enter a value from 0 to ${MAX_MACRO_PER_100G.toLocaleString("en-GB")}`;
 
-const PORTION_PROBLEM = "Enter whole grams up to 99,999";
+const PORTION_PROBLEM = `Enter whole grams up to ${MAX_PORTION_GRAMS.toLocaleString("en-GB")}`;
 
 const MACRO_FIELDS = ["kcal", "protein", "carb", "fat"] as const;
 

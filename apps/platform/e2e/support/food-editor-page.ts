@@ -30,7 +30,9 @@ export type ProblemField =
 
 const NEW_FOOD_PATH = "/coach/nutrition/foods/new";
 const FOOD_PATH = /\/coach\/nutrition\/foods\/([^/]+)$/;
-const AMOUNT_TITLES: Readonly<Record<AmountField, ProblemField>> = {
+type AmountTitle = Exclude<ProblemField, "Name">;
+
+const AMOUNT_TITLES: Readonly<Record<AmountField, AmountTitle>> = {
   kcal: "Calories",
   protein: "Protein (g)",
   carb: "Carbs (g)",
@@ -83,7 +85,7 @@ export class FoodEditorPage {
     return this.page.getByRole("heading", { level: 1, name });
   }
 
-  private amount(title: ProblemField): Locator {
+  private amount(title: AmountTitle): Locator {
     return this.page.getByRole("spinbutton", { name: title });
   }
 

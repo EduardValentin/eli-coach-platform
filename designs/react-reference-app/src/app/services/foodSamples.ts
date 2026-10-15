@@ -3,7 +3,7 @@ import type { Food } from '../context/NutritionContext';
 export const FOOD_SEEDS = ['seeded', 'empty'] as const;
 export type FoodSeed = (typeof FOOD_SEEDS)[number];
 
-export const SAMPLE_FOODS: readonly Food[] = [
+const SAMPLE_FOODS: readonly Food[] = [
   { id: 'food-chicken', name: 'Chicken breast', category: 'protein', icon: 'poultry', kcal: 165, protein: 31, carb: 0, fat: 3.6, defaultPortionGrams: 150, tagIds: ['mt-lunch', 'mt-dinner', 'mt-post-workout'], equivalenceGroupId: 'eg-lean-proteins' },
   { id: 'food-eggs', name: 'Eggs', category: 'protein', icon: 'egg', kcal: 155, protein: 13, carb: 1.1, fat: 11, defaultPortionGrams: 100, tagIds: ['mt-breakfast', 'di-vegetarian'], equivalenceGroupId: 'eg-lean-proteins' },
   { id: 'food-tofu', name: 'Tofu', category: 'protein', icon: 'legume', kcal: 144, protein: 17, carb: 3, fat: 9, defaultPortionGrams: 150, tagIds: ['di-vegetarian', 'di-lactose-free'], equivalenceGroupId: 'eg-lean-proteins' },

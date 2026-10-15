@@ -29,7 +29,7 @@ import {
   NEW_FOOD_PATH,
 } from "~/features/nutrition-library/public/paths";
 import { nutritionLibraryContext } from "~/features/nutrition-library/server/guards/nutrition-library-context.server";
-import { FOOD_ICON_GLYPHS } from "~/features/nutrition-library/ui/shared/food-icons";
+import { FOOD_ICON_APPEARANCE } from "~/features/nutrition-library/ui/shared/food-icons";
 import { TagPill } from "~/features/nutrition-library/ui/shared/tag-pill";
 
 import { CATEGORY_LABELS } from "./food-form";
@@ -110,7 +110,7 @@ function FoodRow({
       <TableCell>
         <ItemIdentity
           glyphAttributes={{ "data-parity": "food-glyph" }}
-          icon={FOOD_ICON_GLYPHS[food.icon]}
+          icon={FOOD_ICON_APPEARANCE[food.icon].glyph}
           summary={CATEGORY_LABELS[food.category]}
           summaryAttributes={{ "data-parity": "food-category" }}
           title={food.name}

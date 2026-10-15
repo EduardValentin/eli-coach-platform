@@ -30,36 +30,39 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { FoodView } from "~/features/nutrition-library/public/foods";
+import type { FoodIcon } from "@eli-coach-platform/domain/nutrition";
 
-export const FOOD_ICON_GLYPHS: Readonly<Record<FoodView["icon"], LucideIcon>> =
-  {
-    egg: Egg,
-    poultry: Drumstick,
-    meat: Beef,
-    fish: Fish,
-    ham: Ham,
-    dairy: Milk,
-    grain: Wheat,
-    bread: Croissant,
-    sandwich: Sandwich,
-    "root-veg": Carrot,
-    leafy: LeafyGreen,
-    veg: Salad,
-    herb: Sprout,
-    apple: Apple,
-    banana: Banana,
-    citrus: Citrus,
-    cherry: Cherry,
-    grape: Grape,
-    legume: Bean,
-    nut: Nut,
-    oil: Droplet,
-    chocolate: Cookie,
-    candy: Candy,
-    "ice-cream": IceCream,
-    cake: Cake,
-    soup: Soup,
-    drink: Coffee,
-    other: Utensils,
-  };
+type FoodIconAppearance = { label: string; glyph: LucideIcon };
+
+export const FOOD_ICON_APPEARANCE: Readonly<
+  Record<FoodIcon, FoodIconAppearance>
+> = {
+  egg: { label: "Egg", glyph: Egg },
+  poultry: { label: "Poultry", glyph: Drumstick },
+  meat: { label: "Red meat", glyph: Beef },
+  fish: { label: "Fish", glyph: Fish },
+  ham: { label: "Deli / ham", glyph: Ham },
+  dairy: { label: "Dairy", glyph: Milk },
+  grain: { label: "Grain", glyph: Wheat },
+  bread: { label: "Bread", glyph: Croissant },
+  sandwich: { label: "Sandwich", glyph: Sandwich },
+  "root-veg": { label: "Root veg", glyph: Carrot },
+  leafy: { label: "Leafy greens", glyph: LeafyGreen },
+  veg: { label: "Vegetable", glyph: Salad },
+  herb: { label: "Herb / spice", glyph: Sprout },
+  apple: { label: "Fruit", glyph: Apple },
+  banana: { label: "Banana", glyph: Banana },
+  citrus: { label: "Citrus", glyph: Citrus },
+  cherry: { label: "Berry", glyph: Cherry },
+  grape: { label: "Grapes", glyph: Grape },
+  legume: { label: "Legume / bean", glyph: Bean },
+  nut: { label: "Nut / seed", glyph: Nut },
+  oil: { label: "Oil / fat", glyph: Droplet },
+  chocolate: { label: "Chocolate", glyph: Cookie },
+  candy: { label: "Candy", glyph: Candy },
+  "ice-cream": { label: "Ice cream", glyph: IceCream },
+  cake: { label: "Cake / dessert", glyph: Cake },
+  soup: { label: "Soup", glyph: Soup },
+  drink: { label: "Drink", glyph: Coffee },
+  other: { label: "Other", glyph: Utensils },
+};
