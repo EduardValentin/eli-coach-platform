@@ -112,6 +112,13 @@ function createScheduleCheckIn(options?: {
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
       checkInSeriesReadFailed: vi.fn(),
+      checkInInboxFailed: vi.fn(),
+      checkInSeriesInboxFailed: vi.fn(),
+    },
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
   };

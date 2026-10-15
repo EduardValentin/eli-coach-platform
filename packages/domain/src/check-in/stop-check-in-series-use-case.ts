@@ -2,6 +2,7 @@ import type { ClientIdentities, ClientReach } from "../client";
 import type { Clock } from "../shared";
 
 import { CheckInAnnouncer } from "./check-in-announcer";
+import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import type { CheckInSeriesSnapshot } from "./check-in-series";
@@ -15,6 +16,7 @@ type StopCheckInSeriesUseCaseOptions = {
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
+  inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
   series: Pick<CheckInSeriesRecords, "find" | "stop">;
@@ -54,6 +56,7 @@ export class StopCheckInSeriesUseCase {
       series: stopped,
       weekStartsAt: stopped.nextWeekStartFrom(now),
       clientTimeZone: client?.timeZone ?? stopped.timeZone,
+      firstWeekId: null,
     });
 
     return { status: "stopped", series: stopped.toSnapshot() };

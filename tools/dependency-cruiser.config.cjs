@@ -54,6 +54,7 @@ const DOMAIN_SLICE_ORDER = [
   "coach-schedule",
   "assessment-call",
   "client",
+  "notification",
   "unit-preference",
   "measurement",
   "client-invitation",

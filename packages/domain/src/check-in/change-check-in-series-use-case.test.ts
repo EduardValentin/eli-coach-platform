@@ -8,6 +8,7 @@ import type {
 import { CoachAvailability } from "../coach-availability";
 
 import { ChangeCheckInSeriesUseCase } from "./change-check-in-series-use-case";
+import { CheckIn } from "./check-in";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import type {
@@ -134,6 +135,13 @@ function createChange(options?: {
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
       checkInSeriesReadFailed: vi.fn(),
+      checkInInboxFailed: vi.fn(),
+      checkInSeriesInboxFailed: vi.fn(),
+    },
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
     series,
@@ -199,6 +207,58 @@ describe("ChangeCheckInSeriesUseCase", () => {
       client: ANA,
       recipient: "client",
     });
+  });
+
+  it("writes the changed series to her inbox, opening her earliest new week", async () => {
+    // arrange
+    const weekOf = (id: string, startsAt: string) =>
+      CheckIn.seriesOccurrence({
+        id,
+        seriesId: "series-1",
+        clientId: "client-1",
+        startsAt: new Date(startsAt),
+        clientTimeZone: "Europe/London",
+        coachTimeZone: "Europe/Bucharest",
+        at: TUESDAY_NOON,
+      });
+    const { change, ports } = createChange({
+      recorded: {
+        status: "changed",
+        occurrences: [
+          weekOf("week-2", FRIDAY_STARTS[1]),
+          weekOf("week-1", FRIDAY_STARTS[0]),
+        ],
+      },
+    });
+
+    // act
+    await change.execute(FRIDAY_MORNINGS);
+
+    // assert
+    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesChanged", {
+      series: expect.objectContaining({ weekday: "friday", hour: 10 }),
+      weekStartsAt: new Date(FRIDAY_STARTS[0]),
+      clientTimeZone: "Europe/London",
+      client: ANA,
+      recipient: "client",
+      firstWeekId: "week-1",
+    });
+  });
+
+  it("writes the changed series to her inbox without a week to open when no new week was recorded", async () => {
+    // arrange
+    const { change, ports } = createChange({
+      recorded: { status: "changed", occurrences: [] },
+    });
+
+    // act
+    await change.execute(FRIDAY_MORNINGS);
+
+    // assert
+    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith(
+      "seriesChanged",
+      expect.objectContaining({ firstWeekId: null }),
+    );
   });
 
   it("answers changed_meanwhile without emailing when the series changed since it was read", async () => {

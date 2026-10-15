@@ -9,6 +9,10 @@ export interface CheckInIncidents {
     checkInId: string;
     notification: CheckInNotification;
   }): void;
+  checkInInboxFailed(incident: {
+    checkInId: string;
+    notification: CheckInNotification;
+  }): void;
   awaitingCheckInsCountFailed(incident: {
     party: CheckInParty;
     error: unknown;
@@ -18,6 +22,10 @@ export interface CheckInIncidents {
   checkInSeriesNotificationFailed(incident: {
     seriesId: string;
     notification: CheckInSeriesNotification;
+  }): void;
+  checkInSeriesInboxFailed(incident: {
+    seriesId: string;
+    event: CheckInSeriesNotification | "clashesAdded";
   }): void;
   checkInSeriesExtensionFailed(incident: {
     clientId: string;

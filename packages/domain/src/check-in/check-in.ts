@@ -39,6 +39,9 @@ export type CheckInRequestDecision =
 export type CheckInViewerProposal =
   "allowed" | "exhausted" | "later_week" | "none";
 export type CheckInTab = "upcoming" | "requests" | "past";
+export type CheckInLapseKind =
+  "request_expired" | "new_time_expired" | "clash_missed";
+export type CheckInLapse = { lapse: CheckInLapseKind; lapsedAt: Date };
 
 export type CheckInProps = {
   id: string;
@@ -246,6 +249,10 @@ export class CheckIn {
     return a.startsAt.getTime() - b.startsAt.getTime();
   }
 
+  static earliestOf(checkIns: readonly CheckIn[]): CheckIn | null {
+    return [...checkIns].sort(CheckIn.byStart)[0] ?? null;
+  }
+
   static startsBeforeCoachingEnd({
     startsAt,
     coachingEndsAt,
@@ -295,6 +302,16 @@ export class CheckIn {
     }
 
     return this.recordedStatus;
+  }
+
+  lapseAt(now: Date): CheckInLapse | null {
+    const lapse = this.unansweredLapse();
+
+    if (!lapse || this.startsAt > now) {
+      return null;
+    }
+
+    return { lapse, lapsedAt: this.startsAt };
   }
 
   holdsCoachTimeAt(at: Date): boolean {
@@ -466,6 +483,18 @@ export class CheckIn {
 
   private wasMoved(): boolean {
     return this.earlierStartsAt !== null;
+  }
+
+  private unansweredLapse(): CheckInLapseKind | null {
+    if (this.recordedStatus === "clash") {
+      return "clash_missed";
+    }
+
+    if (this.recordedStatus !== "pending") {
+      return null;
+    }
+
+    return this.wasMoved() ? "new_time_expired" : "request_expired";
   }
 
   private isUpcomingWeekFor(viewer: PartyAtInstant): boolean {

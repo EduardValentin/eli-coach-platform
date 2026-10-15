@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientReach, ClientReachReading } from "../client";
+import type {
+  ClientIdentities,
+  ClientReach,
+  ClientReachReading,
+} from "../client";
 import { CoachAvailability, type Weekday } from "../coach-availability";
 
+import type { CheckInInbox } from "./check-in-inbox";
+import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSeries, type CheckInSeriesSnapshot } from "./check-in-series";
 import type {
   CheckInSeriesExtension,
@@ -38,6 +44,13 @@ const RENEWED_REACH: ClientReachReading = {
   timeZone: "Europe/London",
 };
 
+const ANA = {
+  clientId: "client-1",
+  firstName: "Ana",
+  lastName: "Popescu",
+  email: "ana@example.com",
+};
+
 const RENEWED_WEEKS = [
   "2026-11-11T16:00:00.000Z",
   "2026-11-18T16:00:00.000Z",
@@ -65,6 +78,7 @@ function createExtend(options?: {
   client?: ClientReachReading | null;
   now?: Date;
   weekdays?: Weekday[];
+  clashingWeeks?: number[];
 }) {
   let generated = 0;
   const series = {
@@ -80,7 +94,9 @@ function createExtend(options?: {
         command: Parameters<CheckInSeriesRecords["extend"]>[0],
       ): Promise<CheckInSeriesExtension> => ({
         status: "extended",
-        occurrences: command.occurrences.map(({ checkIn }) => checkIn),
+        occurrences: command.occurrences.map(({ checkIn }, week) =>
+          options?.clashingWeeks?.includes(week) ? checkIn.asClash() : checkIn,
+        ),
       }),
     ),
   } satisfies Pick<CheckInSeriesRecords, "findActiveForClient" | "extend">;
@@ -99,7 +115,30 @@ function createExtend(options?: {
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
     checkInSeriesReadFailed: vi.fn(),
+    checkInInboxFailed: vi.fn(),
+    checkInSeriesInboxFailed: vi.fn(),
   };
+  const identities = {
+    findByClientIds: vi.fn().mockResolvedValue([ANA]),
+  } satisfies Pick<ClientIdentities, "findByClientIds">;
+  const inbox = {
+    checkInEvent: vi.fn().mockResolvedValue(undefined),
+    seriesEvent: vi.fn().mockResolvedValue(undefined),
+    clashesAdded: vi.fn().mockResolvedValue(undefined),
+  } satisfies CheckInInbox;
+  const notifications = {
+    requested: vi.fn(),
+    withdrawn: vi.fn(),
+    approved: vi.fn(),
+    declined: vi.fn(),
+    newTimeProposed: vi.fn(),
+    newTimeAccepted: vi.fn(),
+    newTimeDeclined: vi.fn(),
+    cancelled: vi.fn(),
+    seriesSetUp: vi.fn(),
+    seriesChanged: vi.fn(),
+    seriesStopped: vi.fn(),
+  } satisfies CheckInNotifications;
   const now = options?.now ?? RENEWAL_DAY;
   const ports = {
     availability: availabilityOn(
@@ -107,8 +146,11 @@ function createExtend(options?: {
     ),
     clients,
     clock: { now: () => now },
+    identities,
     ids: { generate: () => `week-${(generated += 1)}` },
+    inbox,
     incidents,
+    notifications,
     series,
   };
 
@@ -199,6 +241,41 @@ describe("ExtendCheckInSeriesUseCase", () => {
     );
   });
 
+  it("writes one clash notice to the coach's inbox with the count and the earliest clashing week", async () => {
+    // arrange
+    const { extend, ports } = createExtend({ clashingWeeks: [3, 1] });
+
+    // act
+    const result = await extend.execute({ clientId: "client-1" });
+
+    // assert
+    expect(result).toEqual({ status: "extended", created: 4 });
+    expect(ports.inbox.clashesAdded).toHaveBeenCalledOnce();
+    expect(ports.inbox.clashesAdded).toHaveBeenCalledWith({
+      series: { ...SERIES, coversUntil: RENEWED_THROUGH },
+      client: ANA,
+      clashes: 2,
+      earliest: { id: "week-2", startsAt: new Date(RENEWED_WEEKS[1]) },
+    });
+    expect(
+      Object.values(ports.notifications).every(
+        (send) => send.mock.calls.length === 0,
+      ),
+    ).toBe(true);
+  });
+
+  it("writes no clash notice when the added weeks hold no clash", async () => {
+    // arrange
+    const { extend, ports } = createExtend();
+
+    // act
+    await extend.execute({ clientId: "client-1" });
+
+    // assert
+    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
+    expect(ports.identities.findByClientIds).not.toHaveBeenCalled();
+  });
+
   it.each([
     { situation: "a client without an active series", active: null },
     {
@@ -224,6 +301,7 @@ describe("ExtendCheckInSeriesUseCase", () => {
     // assert
     expect(result).toEqual({ status: "nothing_to_add" });
     expect(ports.series.extend).not.toHaveBeenCalled();
+    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
   });
 
   it("re-reads once when the series changed meanwhile", async () => {
@@ -250,6 +328,7 @@ describe("ExtendCheckInSeriesUseCase", () => {
     // assert
     expect(result).toEqual({ status: "failed" });
     expect(ports.series.extend).toHaveBeenCalledTimes(2);
+    expect(ports.inbox.clashesAdded).not.toHaveBeenCalled();
     expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledOnce();
     expect(ports.incidents.checkInSeriesExtensionFailed).toHaveBeenCalledWith({
       clientId: "client-1",

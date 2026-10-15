@@ -1,10 +1,15 @@
-import type { ClientReach } from "../client";
+import type { ClientIdentities, ClientReach } from "../client";
 import type { CoachAvailabilitySource } from "../coach-availability";
 import type { Clock } from "../shared";
 
+import type { CheckIn } from "./check-in";
+import { CheckInAnnouncer } from "./check-in-announcer";
 import type { CheckInIds } from "./check-in-ids";
+import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
+import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
+import type { CheckInSeries } from "./check-in-series";
 import { CheckInSeriesBounds } from "./check-in-series-bounds";
 import type { CheckInSeriesRecords } from "./check-in-series-records";
 
@@ -17,25 +22,47 @@ type ExtendCheckInSeriesUseCaseOptions = {
   availability: CoachAvailabilitySource;
   clients: Pick<ClientReach, "findById">;
   clock: Clock;
+  identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
+  inbox: CheckInInbox;
   incidents: CheckInIncidents;
+  notifications: CheckInNotifications;
   series: Pick<CheckInSeriesRecords, "findActiveForClient" | "extend">;
 };
 
-type ExtensionAttempt =
-  | Exclude<ExtendCheckInSeriesResult, { status: "failed" }>
-  | { status: "changed_meanwhile" };
+type Extension =
+  | { status: "extended"; series: CheckInSeries; occurrences: CheckIn[] }
+  | { status: "nothing_to_add" };
+
+type ExtensionAttempt = Extension | { status: "changed_meanwhile" };
 
 type ExtensionFailure = { clientId: string; error: unknown };
 
 export class ExtendCheckInSeriesUseCase {
-  constructor(private readonly options: ExtendCheckInSeriesUseCaseOptions) {}
+  private readonly announcer: CheckInAnnouncer;
+
+  constructor(private readonly options: ExtendCheckInSeriesUseCaseOptions) {
+    this.announcer = new CheckInAnnouncer(options);
+  }
 
   async execute(command: {
     clientId: string;
   }): Promise<ExtendCheckInSeriesResult> {
     try {
-      return await this.extendWithOneRetry(command.clientId);
+      const extension = await this.extendWithOneRetry(command.clientId);
+
+      if (extension.status !== "extended") {
+        return extension;
+      }
+
+      await this.announcer.announceClashes(
+        extension.series,
+        extension.occurrences.filter(
+          (occurrence) => occurrence.recordedStatus === "clash",
+        ),
+      );
+
+      return { status: "extended", created: extension.occurrences.length };
     } catch (error) {
       return this.failed({ clientId: command.clientId, error });
     }
@@ -43,7 +70,7 @@ export class ExtendCheckInSeriesUseCase {
 
   private async extendWithOneRetry(
     clientId: string,
-  ): Promise<ExtendCheckInSeriesResult> {
+  ): Promise<Extension | { status: "failed" }> {
     const first = await this.attempt(clientId);
     const result =
       first.status === "changed_meanwhile"
@@ -110,7 +137,7 @@ export class ExtendCheckInSeriesUseCase {
     });
 
     return extended.status === "extended"
-      ? { status: "extended", created: extended.occurrences.length }
+      ? { status: "extended", series, occurrences: extended.occurrences }
       : extended;
   }
 
