@@ -141,7 +141,9 @@
     { "id": "B144", "path": "packages/domain/src/exercise/exercise-library.ts", "symbol": "ExerciseLibrary", "owner": "C1" },
     { "id": "B145", "path": "packages/domain/src/exercise/exercise-ids.ts", "symbol": "ExerciseIds", "owner": "C1" },
     { "id": "B146", "path": "packages/domain/src/exercise/exercise-library-incidents.ts", "symbol": "ExerciseLibraryIncidents", "owner": "C1" },
-    { "id": "B147", "path": "apps/platform/src/features/exercise-library/server/guards/exercise-library-context.server.ts", "symbol": "exerciseLibraryContext", "owner": "C25" }
+    { "id": "B147", "path": "apps/platform/src/features/exercise-library/server/guards/exercise-library-context.server.ts", "symbol": "exerciseLibraryContext", "owner": "C25" },
+    { "id": "B148", "path": "packages/domain/src/exercise/exercise-video-store.ts", "symbol": "ExerciseVideoStore", "owner": "C1" },
+    { "id": "B149", "path": "packages/domain/src/exercise/exercise-video-format-detector.ts", "symbol": "ExerciseVideoFormatDetector", "owner": "C1" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C6", "C7", "C8", "C9", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ] },

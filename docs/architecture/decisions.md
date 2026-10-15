@@ -1,6 +1,6 @@
 # Decisions
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-15 at commit f025b7ae, model migration; then the library follow-ups change review; then the GEN-226 change review at commit f2f38ff1.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-16 at commit 9a55dcb0, change review.
 
 ## Deferred decisions
 
