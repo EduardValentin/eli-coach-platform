@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   IDLE_UPLOAD_PROGRESS,
@@ -26,12 +26,23 @@ function uploadStateOf(
   progress: UploadProgressSnapshot,
 ): UploadState {
   if (fetcherState !== "submitting") return IDLE_UPLOAD;
-  if (progress.phase === "sent") return PREPARING_UPLOAD;
+  if (progress.phase === "sent" || progress.phase === "ended") {
+    return PREPARING_UPLOAD;
+  }
 
   return {
     state: "sending",
     fraction: progress.phase === "sending" ? progress.fraction : 0,
   };
+}
+
+function thisSubmissionsProgress(
+  snapshot: UploadProgressSnapshot,
+  settled: UploadProgressSnapshot,
+): UploadProgressSnapshot {
+  return snapshot === settled && snapshot.phase === "ended"
+    ? IDLE_UPLOAD_PROGRESS
+    : snapshot;
 }
 
 export function useUploadState(
@@ -44,5 +55,14 @@ export function useUploadState(
     idleUploadProgress,
   );
 
-  return uploadStateOf(fetcherState, snapshot);
+  const [settled, setSettled] = useState(snapshot);
+
+  if (fetcherState !== "submitting" && settled !== snapshot) {
+    setSettled(snapshot);
+  }
+
+  return uploadStateOf(
+    fetcherState,
+    thisSubmissionsProgress(snapshot, settled),
+  );
 }

@@ -316,10 +316,10 @@ describe("uploadOutcomeOf", () => {
     // assert
     expect(FakeXmlHttpRequest.sent).toHaveLength(0);
     expect(response.status).toBe(503);
-    expect(progress.getSnapshot()).toEqual({ fraction: 0, phase: "idle" });
+    expect(progress.getSnapshot()).toEqual({ fraction: 0, phase: "ended" });
   });
 
-  it("is idle again once the server answers, ready for the next upload", async () => {
+  it("ends once the server answers and starts the next upload from nothing", async () => {
     // arrange
     const progress = createUploadProgress();
     const first = uploadOutcomeOf(uploadRequest(), progress);
@@ -338,7 +338,7 @@ describe("uploadOutcomeOf", () => {
     void uploadOutcomeOf(uploadRequest(), progress);
 
     // assert
-    expect(afterFirst).toEqual({ fraction: 0, phase: "idle" });
+    expect(afterFirst).toEqual({ fraction: 0, phase: "ended" });
     expect(progress.getSnapshot()).toEqual({ fraction: 0, phase: "sending" });
     await vi.waitFor(() => expect(FakeXmlHttpRequest.sent).toHaveLength(2));
   });
@@ -402,7 +402,7 @@ describe("uploadOutcomeOf", () => {
     expect(photos.getSnapshot()).toEqual({ fraction: 0, phase: "idle" });
   });
 
-  it("is idle again after a network failure", async () => {
+  it("ends after a network failure", async () => {
     // arrange
     const progress = createUploadProgress();
     const outcome = uploadOutcomeOf(uploadRequest(), progress);
@@ -414,6 +414,6 @@ describe("uploadOutcomeOf", () => {
     await outcome;
 
     // assert
-    expect(progress.getSnapshot()).toEqual({ fraction: 0, phase: "idle" });
+    expect(progress.getSnapshot()).toEqual({ fraction: 0, phase: "ended" });
   });
 });

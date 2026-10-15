@@ -95,11 +95,12 @@ describe("the upload state", () => {
     expect(result.current).toEqual({ state: "preparing" });
   });
 
-  it("sends from nothing again once the upload has ended", () => {
+  it("stays preparing once the upload has ended while the fetcher has not settled", () => {
     // arrange
     const progress = createUploadProgress();
     const { result } = renderUploadState(progress, "submitting");
     act(() => {
+      beginUpload(progress);
       reportAllBytesSent(progress);
     });
 
@@ -107,6 +108,41 @@ describe("the upload state", () => {
     act(() => {
       endUpload(progress);
     });
+
+    // assert
+    expect(result.current).toEqual({ state: "preparing" });
+  });
+
+  it("is preparing when the whole upload begins and ends between two renders", () => {
+    // arrange
+    const progress = createUploadProgress();
+    const { result } = renderUploadState(progress, "submitting");
+
+    // act
+    act(() => {
+      beginUpload(progress);
+      reportBytesSent(progress, 0.5);
+      reportAllBytesSent(progress);
+      endUpload(progress);
+    });
+
+    // assert
+    expect(result.current).toEqual({ state: "preparing" });
+  });
+
+  it("sends from nothing when the next submission starts after an earlier upload ended", () => {
+    // arrange
+    const progress = createUploadProgress();
+    const { result, rerender } = renderUploadState(progress, "submitting");
+    act(() => {
+      beginUpload(progress);
+      reportAllBytesSent(progress);
+      endUpload(progress);
+    });
+    rerender({ state: "idle" });
+
+    // act
+    rerender({ state: "submitting" });
 
     // assert
     expect(result.current).toEqual({ state: "sending", fraction: 0 });
