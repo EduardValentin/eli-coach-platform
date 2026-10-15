@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '../../ui/table';
 import { FOOD_SORT, type FoodSortKey } from '../../../utils/foodListing';
-import { CATEGORY_LABELS, CATEGORY_ICON_COLOR } from './nutrition-constants';
+import { CATEGORY_LABELS } from './nutrition-constants';
 import { foodIcon } from './food-icons';
 import { TagPill } from './TagPill';
 
@@ -40,7 +40,7 @@ interface FoodTableProps {
 function FoodName({ food }: { food: Food }) {
   return (
     <div className="flex items-center gap-3">
-      <ItemGlyph icon={foodIcon(food.icon)} className={CATEGORY_ICON_COLOR[food.category]} />
+      <ItemGlyph icon={foodIcon(food.icon)} />
       <div>
         <p className="font-semibold text-sm text-text-primary">{food.name}</p>
         <p className="text-xs text-text-secondary mt-0.5">{CATEGORY_LABELS[food.category]}</p>

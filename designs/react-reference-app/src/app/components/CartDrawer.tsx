@@ -1,5 +1,4 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useStore } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
@@ -11,11 +10,12 @@ import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
-import { Checkbox } from './ui/checkbox';
+import { CheckboxField } from './CheckboxField';
+import { Link } from './ui/link';
 import { InlineProblem } from './InlineProblem';
 import { Alert } from './ui/alert';
 import { Input } from './ui/input';
-import { Label, RequiredMark } from './ui/label';
+import { Label } from './ui/label';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -57,8 +57,6 @@ export function CartDrawer() {
   const headingId = useId();
   const emailErrorId = useId();
   const formErrorId = useId();
-  const termsId = useId();
-  const marketingId = useId();
 
   const drawerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -370,47 +368,34 @@ export function CartDrawer() {
                         </div>
 
                         <div className="flex flex-col gap-4 mt-4">
-                          <label
-                            htmlFor={termsId}
-                            className="flex items-start gap-3 cursor-pointer group"
+                          <CheckboxField
+                            checked={termsAccepted}
                             data-parity="terms-consent"
-                          >
-                            <Checkbox
-                              id={termsId}
-                              required
-                              checked={termsAccepted}
-                              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-                              className="mt-0.5"
-                            />
-                            <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
-                              I agree to the{' '}
-                              <Link to="/terms" className="text-brand hover:underline">
-                                Terms &amp; Conditions
-                              </Link>
-                              .
-                              <RequiredMark />
-                            </span>
-                          </label>
+                            label={
+                              <>
+                                I agree to the{' '}
+                                <Link to="/terms" variant="in-text">
+                                  Terms &amp; Conditions
+                                </Link>
+                                .
+                              </>
+                            }
+                            layout="statement"
+                            onCheckedChange={setTermsAccepted}
+                            required
+                          />
 
-                          <label
-                            htmlFor={marketingId}
-                            className="flex items-start gap-3 cursor-pointer group"
+                          <CheckboxField
+                            checked={marketingConsent}
                             data-parity="marketing-consent"
-                          >
-                            <Checkbox
-                              id={marketingId}
-                              checked={marketingConsent}
-                              onCheckedChange={(checked) => setMarketingConsent(checked === true)}
-                              className="mt-0.5"
-                            />
-                            <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
-                              Keep me posted about new plans, guides, and offers.
-                            </span>
-                          </label>
+                            label="Keep me posted about new plans, guides, and offers."
+                            layout="statement"
+                            onCheckedChange={setMarketingConsent}
+                          />
 
                           <p className="text-sm text-copy-muted leading-relaxed" data-parity="privacy-note">
                             See how we handle your data in our{' '}
-                            <Link to="/privacy" className="text-brand hover:underline">
+                            <Link to="/privacy" variant="in-text">
                               Privacy Policy
                             </Link>
                             .

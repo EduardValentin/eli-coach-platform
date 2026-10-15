@@ -29,7 +29,7 @@ import type {
 } from '../../context/NutritionContext';
 import { useAppState } from '../../context/AppContext';
 import { pickableItems } from '../../domain/libraryLifecycle';
-import { Label } from '../../components/ui/label';
+import { Label, Legend } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Checkbox } from '../../components/ui/checkbox';
 import { CheckboxChip } from '../../components/CheckboxChip';
@@ -733,9 +733,7 @@ function RecipeBuilderInner() {
             </div>
 
             <fieldset className="grid gap-3">
-              <legend className="mb-1 text-sm font-medium">
-                Meal role & tags
-              </legend>
+              <Legend>Meal role & tags</Legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {TAG_FAMILIES.map((family) => {
                   const isMealTime = family === 'meal-time';

@@ -1,22 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
-import { cn } from './ui/utils';
 
-export function ItemGlyph({
-  icon: Icon,
-  className,
-  parity,
-}: {
-  icon: LucideIcon;
-  className?: string;
-  parity?: string;
-}) {
+export function ItemGlyph({ icon: Icon, parity }: { icon: LucideIcon; parity?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        'flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-quiet text-text-secondary',
-        className,
-      )}
+      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-quiet text-text-secondary"
       data-parity={parity}
     >
       <Icon size={18} />

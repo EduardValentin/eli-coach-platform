@@ -493,6 +493,40 @@ describe('the onboarding', () => {
     ).toBeInTheDocument();
   });
 
+  it('describes the unticked safety declaration by its problem', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      await screen.findByRole('checkbox', {
+        name: /^I have read, understood and completed this questionnaire\..* \(required\)$/,
+      }),
+    ).toHaveAccessibleDescription('Tick the box to continue.');
+  });
+
+  it('ticks the safety declaration when she clicks its statement', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByText(/^I have read, understood and completed this questionnaire\./),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('checkbox', {
+        name: /^I have read, understood and completed this questionnaire\..* \(required\)$/,
+      }),
+    ).toBeChecked();
+  });
+
   it('reassures her plainly when she has no regular cycle', async () => {
     // arrange
     await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');

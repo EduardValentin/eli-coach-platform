@@ -21,7 +21,7 @@ import {
 } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+import { Label, LabelSuffix, Legend } from '../../ui/label';
 import {
   Select,
   SelectTrigger,
@@ -172,7 +172,7 @@ export function FoodFormDialog({
           </div>
 
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium">Icon</legend>
+            <Legend>Icon</Legend>
             <ul className="flex flex-wrap gap-2">
               {FOOD_ICONS.map(({ key, label, Icon }) => (
                 <li key={key}>
@@ -194,9 +194,7 @@ export function FoodFormDialog({
           </fieldset>
 
           <fieldset className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <legend className="text-sm font-medium mb-1 col-span-full">
-              Macros (per 100 g)
-            </legend>
+            <Legend trailing={<LabelSuffix>(per 100 g)</LabelSuffix>}>Macros</Legend>
             {(
               [
                 ['kcal', 'Calories'],
@@ -256,7 +254,7 @@ export function FoodFormDialog({
           )}
 
           <fieldset className="grid gap-3">
-            <legend className="mb-1 text-sm font-medium">Tags</legend>
+            <Legend>Tags</Legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {TAG_FAMILIES.map((family) => (
                 <div

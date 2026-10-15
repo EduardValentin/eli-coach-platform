@@ -1,15 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
+import type { WidgetDensity } from './PortalWidget';
 
-const TITLE_ICON_SIZES = { default: 18, compact: 16 } as const;
-
-type PanelTitleDensity = keyof typeof TITLE_ICON_SIZES;
+const TITLE_ICON_SIZES: Record<WidgetDensity, number> = { default: 18, compact: 16 };
 
 export function PanelTitleIcon({
   icon: Icon,
   density = 'default',
 }: {
   icon: LucideIcon;
-  density?: PanelTitleDensity;
+  density?: WidgetDensity;
 }) {
   return (
     <Icon

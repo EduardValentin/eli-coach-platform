@@ -4,9 +4,9 @@ import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
-import { Checkbox } from '../../ui/checkbox';
+import { CheckboxField } from '../../CheckboxField';
 import { Input } from '../../ui/input';
-import { LabelSuffix, Legend, RequiredMark } from '../../ui/label';
+import { LabelSuffix, Legend } from '../../ui/label';
 import {
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
+import { cn } from '../../ui/utils';
 import {
   FormControl,
   FormDescription,
@@ -210,47 +211,27 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       control={control}
       name={field.id}
       rules={fieldRules(field, units)}
-      render={({ field: controller }) => {
+      render={({ field: controller, fieldState }) => {
         if (field.kind === 'checkbox') {
-          const checked = asText(controller.value) === 'true';
+          const isAgreement = required;
+
           return (
-            <FormItem
-              className={required ? undefined : '-mt-2'}
+            <CheckboxField
+              checkboxParity={`${parityHook}-checkbox`}
+              checkboxRef={controller.ref}
+              checked={asText(controller.value) === 'true'}
+              className={cn({ '-mt-2': !isAgreement })}
               data-parity={parityHook}
-            >
-              <FormControl>
-                <div
-                  className={
-                    required
-                      ? 'flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4'
-                      : 'flex items-center gap-2'
-                  }
-                >
-                  <Checkbox
-                    checked={checked}
-                    className={required ? 'mt-0.5' : undefined}
-                    data-parity={`${parityHook}-checkbox`}
-                    id={legendId}
-                    onCheckedChange={(next) =>
-                      controller.onChange(next === true ? 'true' : 'false')
-                    }
-                    ref={controller.ref}
-                  />
-                  <label
-                    className={
-                      required
-                        ? 'text-sm leading-relaxed text-text-primary'
-                        : 'text-sm text-text-primary'
-                    }
-                    htmlFor={legendId}
-                  >
-                    {field.label}
-                    {required && <RequiredMark />}
-                  </label>
-                </div>
-              </FormControl>
-              <FormMessage data-parity={`${parityHook}-error`} />
-            </FormItem>
+              error={fieldState.error?.message}
+              errorParity={`${parityHook}-error`}
+              frame={isAgreement ? 'inset' : 'none'}
+              label={field.label}
+              layout={isAgreement ? 'statement' : 'inline'}
+              onCheckedChange={(checked) =>
+                controller.onChange(checked ? 'true' : 'false')
+              }
+              required={required}
+            />
           );
         }
 

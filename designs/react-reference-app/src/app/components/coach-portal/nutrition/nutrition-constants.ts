@@ -55,15 +55,6 @@ export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
   dietary: 'bg-tag-dietary',
 };
 
-export const CATEGORY_ICON_COLOR: Record<FoodCategory, string> = {
-  protein: 'text-nutrition-protein',
-  carb: 'text-nutrition-carb',
-  fat: 'text-nutrition-fat',
-  legume: 'text-nutrition-legume',
-  extra: 'text-nutrition-extra',
-  seasoning: 'text-nutrition-seasoning',
-};
-
 // Solid macro identity-color dots (used in the food table's macro column headers).
 export const MACRO_DOT = {
   protein: 'bg-macro-protein',

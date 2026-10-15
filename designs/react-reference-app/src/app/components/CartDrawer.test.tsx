@@ -226,6 +226,24 @@ describe('CartDrawer', () => {
     expect(screen.getByText('Your cart is empty.')).toBeInTheDocument();
   });
 
+  it('ticks the terms when the visitor clicks their statement', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCart([freeEbook]);
+    await openCartWith(user, [freeEbook]);
+    await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+
+    // act
+    await user.click(screen.getByText(/^I agree to the/));
+
+    // assert
+    expect(
+      screen.getByRole('checkbox', {
+        name: /^I agree to the Terms & Conditions ?\. \(required\)$/,
+      }),
+    ).toBeChecked();
+  });
+
   it('requires Terms acceptance but not marketing consent before sending', async () => {
     // arrange
     const user = userEvent.setup();
