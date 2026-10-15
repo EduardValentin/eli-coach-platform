@@ -189,20 +189,18 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
             }}
           />
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3" data-parity="exercise-video-row">
-            <div className="relative w-full max-w-md" data-parity="exercise-video-frame">
-              <div
-                className="flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted"
-                data-parity="exercise-video-screen"
-              >
-                <video
-                  src={video.preview}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  aria-label="Demo video preview"
-                  className="h-full w-full object-contain"
-                />
-              </div>
+            <div
+              className="relative flex aspect-video w-full max-w-md items-center justify-center overflow-hidden rounded-card bg-surface-inverted"
+              data-parity="exercise-video-frame"
+            >
+              <video
+                src={video.preview}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label="Demo video preview"
+                className="h-full w-full object-contain"
+              />
               <Button
                 type="button"
                 variant="outline"
@@ -210,7 +208,7 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
                 aria-label="Remove video"
                 disabled={busy}
                 onClick={() => onChange(NO_VIDEO)}
-                className="absolute top-0 right-0 size-8 translate-x-1/2 -translate-y-1/2 bg-surface-base shadow-card hover:bg-surface-muted"
+                className="absolute top-2 right-2 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
               >
                 <X aria-hidden="true" />
               </Button>

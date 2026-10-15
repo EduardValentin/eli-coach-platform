@@ -623,17 +623,15 @@ describe('the demo video', () => {
     expect(preview()).toHaveAttribute('preload', 'metadata');
   });
 
-  it('seats Remove on the frame, outside the player, and Replace beside the frame', () => {
+  it('seats Remove inside the video frame and Replace beside the frame', () => {
     // arrange & act
     renderEditor(edit(SQUAT_ID));
 
     // assert
-    const player = preview().parentElement as HTMLElement;
-    const frame = player.parentElement as HTMLElement;
+    const frame = preview().parentElement as HTMLElement;
     const remove = screen.getByRole('button', { name: 'Remove video' });
     const replace = screen.getByRole('button', { name: 'Replace video' });
     expect(frame).toContainElement(remove);
-    expect(player).not.toContainElement(remove);
     expect(frame).not.toContainElement(replace);
     expect(frame.parentElement).toContainElement(replace);
     expect(remove).toHaveAccessibleName('Remove video');
