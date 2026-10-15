@@ -4177,13 +4177,13 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "B"
       ]
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         ""
       ]
     }
@@ -4194,7 +4194,7 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "Barbell back squat with a three-second pause at the bottom and a slow steady rise"
       ]
     },
@@ -4211,7 +4211,7 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "Barbell Back Squat"
       ]
     }
@@ -4270,7 +4270,7 @@
     "real": [
       {
         "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
           "Barbell Back Squat"
         ]
       },
@@ -4329,7 +4329,7 @@
     "real": [
       {
         "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
           "Bulgarian Split Squat"
         ]
       },
@@ -4386,6 +4386,96 @@
     },
     {
       "click": "role=button[name=\"Save changes\" s]"
+    }
+  ],
+  "exercise-video-remove-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Remove video\" s]"
+    }
+  ],
+  "exercise-video-replace-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Replace video\" s]"
+    }
+  ],
+  "exercise-video-remove-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-replace-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-picker-focus-visible": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-dropzone-hover": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> text=Drop a video here or choose one"
     }
   ]
 }
