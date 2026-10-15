@@ -9,6 +9,7 @@ import { Toaster } from '../../components/ui/sonner';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import {
   AWAITING_REVIEW_CALL_ID,
   ClientJourneyProvider,
@@ -51,6 +52,7 @@ function renderPageTree(url: string, beside: ReactNode) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <NotificationProvider>
               <CheckinProvider>
                 <ResourceProvider>
                   <Routes>
@@ -60,6 +62,7 @@ function renderPageTree(url: string, beside: ReactNode) {
                   {beside}
                 </ResourceProvider>
               </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

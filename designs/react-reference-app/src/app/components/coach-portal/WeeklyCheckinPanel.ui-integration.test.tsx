@@ -90,15 +90,15 @@ function renderPanel(urlQuery: string) {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <CheckinProvider>
+                <NotificationProvider>
                   <MessagingProvider>
-                    <NotificationProvider>
+                    <CheckinProvider>
                       <DemoPanel />
                       <Toaster />
                       <DevToggle />
-                    </NotificationProvider>
+                    </CheckinProvider>
                   </MessagingProvider>
-                </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>

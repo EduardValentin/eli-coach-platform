@@ -26,6 +26,7 @@ import {
   CHECKIN_QUERY_PARAM,
   checkinAnchorId,
   checkinIdFromSearch,
+  withoutCheckinTarget,
 } from "../utils/checkinLinks";
 import { pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
@@ -102,7 +103,7 @@ export function CheckinListing({
   emptyCopy: Record<CheckinTab, CheckinEmptyCopy>;
   renderCheckin: (checkin: CheckIn, tab: CheckinTab) => ReactNode;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, key: locationKey } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { appState } = useAppState();
   const { getCheckinsInTab, getCheckinsAwaiting } = useCheckins();
@@ -114,13 +115,10 @@ export function CheckinListing({
     past: getCheckinsInTab("past", party, clientId),
   };
   const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
-  const [defaultTab] = useState<CheckinTab>(
-    () =>
-      tabHoldingCheckin(focusedCheckinId, tabCheckins) ??
-      openingTab(awaitingViewer),
-  );
+  const [openedOn] = useState<CheckinTab>(() => openingTab(awaitingViewer));
+  const defaultTab = tabHoldingCheckin(focusedCheckinId, tabCheckins) ?? openedOn;
 
-  useBringCheckinIntoFocus(focusedCheckinId);
+  useBringCheckinIntoFocus(focusedCheckinId, locationKey);
 
   const tab = parseTab(searchParams.get(TAB_PARAM), defaultTab);
   const selection: CheckinSelection = {
@@ -151,6 +149,10 @@ export function CheckinListing({
 
   const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
+    if (focusedCheckinId) {
+      setOrClear(next, TAB_PARAM, tab, openedOn);
+      withoutCheckinTarget(next);
+    }
     edit(next);
     next.delete(PAGE_PARAM);
     setSearchParams(next, { replace: true });
@@ -168,7 +170,7 @@ export function CheckinListing({
 
   const chooseTab = (value: string) => {
     updateSearchParams((params) => {
-      setOrClear(params, TAB_PARAM, parseTab(value, defaultTab), defaultTab);
+      setOrClear(params, TAB_PARAM, parseTab(value, openedOn), openedOn);
       params.delete(WAITING_PARAM);
       params.delete(DIRECTION_PARAM);
     });
@@ -343,11 +345,11 @@ export function CheckinListing({
   );
 }
 
-function useBringCheckinIntoFocus(focusedCheckinId: string | null) {
+function useBringCheckinIntoFocus(focusedCheckinId: string | null, locationKey: string) {
   useEffect(() => {
     if (!focusedCheckinId) return;
     const anchor = document.getElementById(checkinAnchorId(focusedCheckinId));
     anchor?.scrollIntoView({ block: "center" });
     anchor?.focus({ preventScroll: true });
-  }, [focusedCheckinId]);
+  }, [focusedCheckinId, locationKey]);
 }

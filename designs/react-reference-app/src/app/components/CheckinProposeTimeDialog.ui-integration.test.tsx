@@ -6,6 +6,7 @@ import { CheckinProposeTimeDialog } from './CheckinProposeTimeDialog';
 import { AppProvider, useAppState } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { CheckinProvider, useCheckins } from '../context/CheckinContext';
+import { NotificationProvider } from '../context/NotificationContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../context/ClientProfileContext';
 import type { CheckIn } from '../domain/checkins';
@@ -84,6 +85,7 @@ function renderDialog({ checkinId = JESSICA_UPCOMING, devParams = '' } = {}) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <NotificationProvider>
               <CheckinProvider>
                 <ProposingCoach
                   checkinId={checkinId}
@@ -93,6 +95,7 @@ function renderDialog({ checkinId = JESSICA_UPCOMING, devParams = '' } = {}) {
                 />
                 <ServiceFailureStandIn />
               </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

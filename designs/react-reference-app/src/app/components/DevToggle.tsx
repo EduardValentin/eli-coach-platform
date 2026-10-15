@@ -90,6 +90,8 @@ import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { DEMO_CLIENT, useCheckins, WEEKLY_SERIES_SEEDS } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Button } from './ui/button';
+import { BELL_SEEDS, MANY_BELL_ENTRIES, type BellSeed } from '../services/checkinBellSamples';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import {
@@ -423,7 +425,18 @@ export function DevToggle() {
     setLiveCheckin,
     weeklySeries,
     setWeeklySeries,
+    renewSeries,
+    seedBell,
+    deliverSampleNotification,
   } = useCheckins();
+  const [bellSeed, setBellSeed] = useState<BellSeed>('seeded');
+  const seriesRunning = weeklySeries === 'active' || weeklySeries === 'clashes';
+
+  const chooseBellSeed = (value: string) => {
+    const seed = optionOrDefault(BELL_SEEDS, value, 'seeded');
+    setBellSeed(seed);
+    seedBell(seed);
+  };
 
   const seedDashboardCalls = (value: string) => {
     const seed = parseDashboardCallsControl(value);
@@ -946,6 +959,45 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Button
+                    id="dev-series-renewal"
+                    variant="outline"
+                    className="w-full"
+                    disabled={!seriesRunning}
+                    onClick={() => renewSeries(DEMO_CLIENT)}
+                  >
+                    Renewal adds clashing weeks
+                  </Button>
+                  {!seriesRunning && (
+                    <p className="text-xs text-copy-muted">Set a weekly series first.</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dev-notification-bell" className={DEV_LABEL_CLASS}>
+                    Bell
+                  </Label>
+                  <Select value={bellSeed} onValueChange={chooseBellSeed}>
+                    <SelectTrigger id="dev-notification-bell" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Seeded</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
+                      <SelectItem value="many">Many ({MANY_BELL_ENTRIES}, shows 30)</SelectItem>
+                      <SelectItem value="all-read">All read</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  id="dev-notification-arrive"
+                  variant="outline"
+                  className="w-full"
+                  disabled={appState.session === 'anonymous'}
+                  onClick={deliverSampleNotification}
+                >
+                  Deliver a notification
+                </Button>
                 <div className="space-y-2">
                   <Label htmlFor="dev-checkin-service" className={DEV_LABEL_CLASS}>
                     Check-in service

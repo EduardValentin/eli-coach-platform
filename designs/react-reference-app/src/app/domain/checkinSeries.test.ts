@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   seriesBounds,
   seriesChangedTo,
+  seriesExtendedTo,
   seriesSetUp,
   seriesStoppedAt,
   weekStartsBetween,
@@ -192,6 +193,22 @@ describe('setting up, changing and stopping a weekly check-in', () => {
     expect(isoStarts(changed.starts)).toEqual([
       '2026-10-23T14:00:00.000Z',
       '2026-10-30T15:00:00.000Z',
+    ]);
+  });
+
+  it('adds only the weeks a renewal brings past its old cover', () => {
+    // arrange
+    const { series } = seriesSetUp({ id: 'series-1', clientId: 'c1', rule: WEDNESDAY_AT_SIX, bounds, at: setUpAt });
+    const until = new Date('2026-11-20T00:00:00.000Z');
+
+    // act
+    const extended = seriesExtendedTo(series, until);
+
+    // assert
+    expect(extended.series).toMatchObject({ coversFrom: bounds.from, coversUntil: until });
+    expect(isoStarts(extended.starts)).toEqual([
+      '2026-11-11T16:00:00.000Z',
+      '2026-11-18T16:00:00.000Z',
     ]);
   });
 

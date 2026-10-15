@@ -88,20 +88,20 @@ function Root() {
           <CycleProvider>
             <AssessmentCallProvider>
             <ClientJourneyProvider>
+            <NotificationProvider>
             <CheckinProvider>
             <MessagingProvider>
             <ResourceProvider>
-              <NotificationProvider>
-                <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
-                  <Toaster position="top-right" richColors />
-                  <DevToggle />
-                  <CartDrawer />
-                  <Outlet />
-                </div>
-              </NotificationProvider>
+              <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
+                <Toaster position="top-right" richColors />
+                <DevToggle />
+                <CartDrawer />
+                <Outlet />
+              </div>
             </ResourceProvider>
             </MessagingProvider>
             </CheckinProvider>
+            </NotificationProvider>
             </ClientJourneyProvider>
             </AssessmentCallProvider>
           </CycleProvider>

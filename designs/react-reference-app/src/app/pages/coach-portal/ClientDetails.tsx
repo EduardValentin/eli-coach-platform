@@ -53,7 +53,6 @@ import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
-import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import {
   formatCheckinDate,
@@ -117,7 +116,6 @@ function RosterClientDetails() {
   const { journeyForCall } = useClientJourneys();
   const { weightUnit, heightUnit } = useUnitPreferences();
   const measureUnits = useMeasureUnits();
-  const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
@@ -215,12 +213,6 @@ function RosterClientDetails() {
       ctxSendMessage(clientId, scheduleNote, 'coach');
     }
     toast.success(`Check-in scheduled with ${clientName}`);
-    addNotification({
-      title: 'Check-in Scheduled',
-      message: `Coach scheduled a check-in with ${clientName} for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/portal/messages',
-      mvpLink: '/portal/checkins',
-    });
 
     setShowScheduleDialog(false);
     setScheduleDate(undefined);

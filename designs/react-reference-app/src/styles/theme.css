@@ -635,12 +635,17 @@
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
+  outline-offset: var(--focus-ring-offset, 2px);
+  box-shadow: var(--focus-ring-halo, 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent));
 }
 
 [data-surface="inverted"] :focus-visible {
   --focus-ring: var(--brand-on-inverted);
+}
+
+[data-focus-inset] {
+  --focus-ring-offset: -2px;
+  --focus-ring-halo: inset 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
 }
 
 /* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline.

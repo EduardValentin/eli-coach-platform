@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import {
   awaitsResponseFrom,
+  checkinLapse,
   checkinSlotAt,
   checkinStartsAt,
   checkinStatus,
@@ -11,9 +12,11 @@ import {
   isOpenClientRequest,
   programReviewCheckin,
   proposalFor,
+  proposesNewTime,
   withProposedTime,
   type CheckIn,
   type CheckinClock,
+  type CheckinLapseKind,
   type CheckinParty,
   type CheckinStatus,
   type CheckinTab,
@@ -22,6 +25,7 @@ import {
   remainingCover,
   seriesBounds,
   seriesChangedTo,
+  seriesExtendedTo,
   seriesSetUp,
   seriesStoppedAt,
   type CheckinSeries,
@@ -59,13 +63,23 @@ import {
 import { useAppState } from './AppContext';
 import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientJourneys } from './ClientJourneyContext';
+import { useNotifications, type OnceDelivery } from './NotificationContext';
 import { toISODate } from '../utils/dateFormatters';
+import { DEMO_CLIENT } from '../services/demoClient';
+import {
+  bellSeedOf,
+  checkinMoment,
+  recipientOf,
+  sampleArrival,
+  type BellSeed,
+} from '../services/checkinBellSamples';
+import type { CheckinMomentKind, NotificationParty } from '../domain/notifications';
 
 export type { CheckIn } from '../domain/checkins';
 export type { CheckinSeries } from '../domain/checkinSeries';
 export type { SeriesPreview } from '../services/checkinService';
 
-export const DEMO_CLIENT = { id: 'c1', name: 'Jane Doe' } as const;
+export { DEMO_CLIENT };
 
 const LIVE_CHECKIN_ID = 'ck-live';
 const OPEN_REQUEST_ID = 'ck-open-request';
@@ -125,6 +139,16 @@ type RequestSettler = (
   outcome: CheckinServiceOutcome,
 ) => Promise<CheckinSettlement>;
 
+type RequestSettling = {
+  settle: RequestSettler;
+  change: (checkin: CheckIn) => CheckIn;
+  announce: (checkin: CheckIn) => void;
+};
+
+type CheckinAnnouncement = { checkin: CheckIn; to: CheckinParty };
+
+type SeriesAnnouncement = { client: CheckinClient; weeks: readonly CheckIn[] };
+
 interface CheckinContextType {
   checkins: CheckIn[];
   statusOf: (checkin: CheckIn) => CheckinStatus;
@@ -158,6 +182,9 @@ interface CheckinContextType {
   stopSeries: (clientId: string) => Promise<SeriesStopResult>;
   weeklySeries: WeeklySeriesSeed;
   setWeeklySeries: (seed: WeeklySeriesSeed) => void;
+  renewSeries: (client: CheckinClient) => void;
+  seedBell: (seed: BellSeed) => void;
+  deliverSampleNotification: () => void;
 }
 
 const CheckinContext = createContext<CheckinContextType | undefined>(undefined);
@@ -189,6 +216,20 @@ const SEEDED_SERIES_CHOICE: SeriesChoice = { weekday: 3, hour: 18 };
 const SEEDED_SERIES_WEEKS = 12;
 const SEEDED_CLASH_WEEKS = [0, 2];
 const WEEK_MS = 7 * 86400000;
+const RENEWAL_WEEKS = 4;
+const RENEWAL_CLASH_WEEKS = 2;
+
+const LAPSE_KINDS: Record<CheckinLapseKind, CheckinMomentKind> = {
+  'request-expired': 'check-in.request-expired',
+  'new-time-expired': 'check-in.new-time-expired',
+  'clash-missed': 'check-in.clash-missed',
+};
+
+const NOTIFICATION_PARTIES: readonly NotificationParty[] = ['coach', 'client'];
+
+function otherParty(party: CheckinParty): CheckinParty {
+  return party === 'coach' ? 'client' : 'coach';
+}
 
 type SeriesWeekCheckin = {
   series: CheckinSeries;
@@ -618,6 +659,31 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
   const { settings, bookedStarts } = useAssessmentCalls();
   const { appState } = useAppState();
   const serviceOutcome = appState.checkinService;
+  const { deliver, deliverOnce, replaceInbox, reading, checkedAt } = useNotifications();
+  const actingParty: CheckinParty | null =
+    appState.session === 'coach' || appState.session === 'client' ? appState.session : null;
+
+  const announceMoment = useCallback(
+    (kind: CheckinMomentKind, { checkin, to }: CheckinAnnouncement) =>
+      deliver(recipientOf(to, checkin), checkinMoment(kind, { checkin, to })),
+    [deliver],
+  );
+
+  const announceSeries = useCallback(
+    (kind: 'check-in.series-set-up' | 'check-in.series-changed', { client, weeks }: SeriesAnnouncement) => {
+      const [firstWeek] = [...weeks].sort(byStartAscending);
+      if (!firstWeek) return;
+
+      deliver(
+        { party: 'client', clientId: client.id },
+        {
+          kind,
+          facts: { firstWeekId: firstWeek.id, firstWeekStartsAt: checkinStartsAt(firstWeek).toISOString() },
+        },
+      );
+    },
+    [deliver],
+  );
 
   const programReview = useMemo(
     () => programReviewCheckin(demoJourney, DEMO_CLIENT),
@@ -652,6 +718,45 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     (checkin: CheckIn) => checkinStatus(checkin, clockFor(checkin)),
     [clockFor],
   );
+
+  const lapseDeliveries = useCallback(
+    (now: Date): OnceDelivery[] =>
+      checkins.flatMap((checkin) => {
+        const lapse = checkinLapse(checkin, { now, coachingEndsAt: coachingEndFor(checkin.clientId) });
+        if (!lapse) return [];
+
+        return NOTIFICATION_PARTIES.map((to) => ({
+          onceKey: `check-in:${checkin.id}:${lapse.lapse}:${to}`,
+          recipient: recipientOf(to, checkin),
+          event: checkinMoment(LAPSE_KINDS[lapse.lapse], { checkin, to }),
+          arrivedAt: lapse.lapsedAt,
+        }));
+      }),
+    [checkins, coachingEndFor],
+  );
+
+  useEffect(() => {
+    deliverOnce(lapseDeliveries(checkedAt));
+  }, [lapseDeliveries, checkedAt, deliverOnce]);
+
+  const seedBell = useCallback(
+    (seed: BellSeed) => {
+      const now = new Date();
+      replaceInbox(bellSeedOf(seed, { checkins, lapses: lapseDeliveries(now), now }));
+    },
+    [checkins, lapseDeliveries, replaceInbox],
+  );
+
+  useEffect(() => {
+    seedBell('seeded');
+  }, []);
+
+  const deliverSampleNotification = useCallback(() => {
+    if (!reading) return;
+
+    const recipient = reading.party === 'coach' ? { party: 'coach' as const } : { party: 'client' as const, clientId: DEMO_CLIENT.id };
+    deliver(recipient, sampleArrival(reading.party, checkins));
+  }, [reading, deliver, checkins]);
 
   const hasOpenClientRequest = useCallback(
     (clientId: string) =>
@@ -733,9 +838,10 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         rescheduleCount: 0,
       };
       setStored((prev) => [request, ...prev]);
+      announceMoment('check-in.requested', { checkin: request, to: 'coach' });
       return { status: 'requested', checkin: request };
     },
-    [scheduleFor, hasOpenClientRequest, serviceOutcome],
+    [scheduleFor, hasOpenClientRequest, serviceOutcome, announceMoment],
   );
 
   const coachInitiateCheckin = useCallback((data: CoachCheckinProposal): CheckIn => {
@@ -751,8 +857,9 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       rescheduleCount: 0,
     };
     setStored((prev) => [proposal, ...prev]);
+    announceMoment('check-in.requested', { checkin: proposal, to: 'client' });
     return proposal;
-  }, []);
+  }, [announceMoment]);
 
   const scheduleCheckin = useCallback(
     async ({
@@ -783,13 +890,15 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
   const settleRequest = useCallback(
     async (
       checkinId: string,
-      settle: RequestSettler,
-      change: (checkin: CheckIn) => CheckIn,
+      { settle, change, announce }: RequestSettling,
     ): Promise<CheckinSettlement> => {
       const checkin = checkins.find((c) => c.id === checkinId);
       const status = checkin ? statusOf(checkin) : 'cancelled';
       const settlement = await settle({ status }, serviceOutcome);
-      if (settlement === 'settled') updateCheckin(checkinId, change);
+      if (settlement === 'settled') {
+        updateCheckin(checkinId, change);
+        if (checkin) announce(checkin);
+      }
       return settlement;
     },
     [checkins, statusOf, serviceOutcome, updateCheckin],
@@ -797,36 +906,51 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
   const approveCheckin = useCallback(
     (checkinId: string) =>
-      settleRequest(checkinId, answerCheckinRequest, (c) => ({
-        ...c,
-        status: 'approved',
-      })),
-    [settleRequest],
+      settleRequest(checkinId, {
+        settle: answerCheckinRequest,
+        change: (c) => ({ ...c, status: 'approved' }),
+        announce: (c) =>
+          announceMoment(proposesNewTime(c) ? 'check-in.new-time-accepted' : 'check-in.approved', {
+            checkin: c,
+            to: c.proposedBy,
+          }),
+      }),
+    [settleRequest, announceMoment],
   );
 
   const declineCheckin = useCallback(
     (checkinId: string) =>
-      settleRequest(checkinId, answerCheckinRequest, (c) => ({
-        ...c,
-        status: 'cancelled',
-      })),
-    [settleRequest],
+      settleRequest(checkinId, {
+        settle: answerCheckinRequest,
+        change: (c) => ({ ...c, status: 'cancelled' }),
+        announce: (c) =>
+          announceMoment(proposesNewTime(c) ? 'check-in.new-time-declined' : 'check-in.declined', {
+            checkin: c,
+            to: c.proposedBy,
+          }),
+      }),
+    [settleRequest, announceMoment],
   );
 
   const withdrawCheckinRequestById = useCallback(
     (checkinId: string) =>
-      settleRequest(checkinId, withdrawCheckinRequest, (c) => ({
-        ...c,
-        status: 'cancelled',
-      })),
-    [settleRequest],
+      settleRequest(checkinId, {
+        settle: withdrawCheckinRequest,
+        change: (c) => ({ ...c, status: 'cancelled' }),
+        announce: (c) => announceMoment('check-in.withdrawn', { checkin: c, to: otherParty(c.proposedBy) }),
+      }),
+    [settleRequest, announceMoment],
   );
 
   const cancelCheckin = useCallback(
     (checkinId: string) => {
+      const checkin = checkins.find((c) => c.id === checkinId);
       updateCheckin(checkinId, (c) => ({ ...c, status: 'cancelled' }));
+      if (checkin && actingParty) {
+        announceMoment('check-in.cancelled', { checkin, to: otherParty(actingParty) });
+      }
     },
-    [updateCheckin],
+    [checkins, updateCheckin, actingParty, announceMoment],
   );
 
   const proposeNewTime = useCallback(
@@ -850,9 +974,10 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         note: noteOrNothing(note),
       });
       updateCheckin(checkinId, () => moved);
+      announceMoment('check-in.new-time-proposed', { checkin: moved, to: otherParty(party) });
       return { status: 'proposed', checkin: moved };
     },
-    [checkins, statusOf, scheduleFor, serviceOutcome, updateCheckin],
+    [checkins, statusOf, scheduleFor, serviceOutcome, updateCheckin, announceMoment],
   );
 
   const withStatus = useCallback(
@@ -1019,14 +1144,13 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       if (!planned) return { status: 'nothing_to_create' };
 
       const { series } = planned;
+      const created = weeks.map((week) => seriesWeekCheckin({ series, client, week }));
       setSeriesList((prev) => [...prev, series]);
-      setStored((prev) => [
-        ...weeks.map((week) => seriesWeekCheckin({ series, client, week })),
-        ...prev,
-      ]);
+      setStored((prev) => [...created, ...prev]);
+      announceSeries('check-in.series-set-up', { client, weeks: created });
       return { status: 'set_up', series };
     },
-    [coachingEndFor, ruleOf, setUpBoundsFor, scheduleBeside, seriesFor, serviceOutcome],
+    [coachingEndFor, ruleOf, setUpBoundsFor, scheduleBeside, seriesFor, serviceOutcome, announceSeries],
   );
 
   const cancelWeeksOf = useCallback(
@@ -1057,15 +1181,14 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
       const { series } = changed;
       const weeks = plannedSeriesWeeks(rule, { schedule, starts: changed.starts });
+      const created = weeks.map((week) => seriesWeekCheckin({ series, client, week }));
       const replaced = cancelWeeksOf(current);
       setSeriesList((prev) => prev.map((s) => (s.id === series.id ? series : s)));
-      setStored((prev) => [
-        ...weeks.map((week) => seriesWeekCheckin({ series, client, week })),
-        ...replaced(prev),
-      ]);
+      setStored((prev) => [...created, ...replaced(prev)]);
+      announceSeries('check-in.series-changed', { client, weeks: created });
       return { status: 'changed', series };
     },
-    [coachingEndFor, seriesFor, ruleOf, scheduleBeside, serviceOutcome, cancelWeeksOf],
+    [coachingEndFor, seriesFor, ruleOf, scheduleBeside, serviceOutcome, cancelWeeksOf, announceSeries],
   );
 
   const stopSeries = useCallback(
@@ -1079,9 +1202,43 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
       const stopped = seriesStoppedAt(current, new Date());
       setSeriesList((prev) => prev.map((s) => (s.id === stopped.id ? stopped : s)));
       setStored(cancelWeeksOf(current));
+      deliver({ party: 'client', clientId }, { kind: 'check-in.series-stopped', facts: {} });
       return { status: 'stopped' };
     },
-    [seriesFor, serviceOutcome, cancelWeeksOf],
+    [seriesFor, serviceOutcome, cancelWeeksOf, deliver],
+  );
+
+  const renewSeries = useCallback(
+    (client: CheckinClient) => {
+      const current = seriesFor(client.id);
+      if (!current) return;
+
+      const until = new Date(current.coversUntil.getTime() + RENEWAL_WEEKS * WEEK_MS);
+      const { series, starts } = seriesExtendedTo(current, until);
+      const clashStarts = starts.slice(0, RENEWAL_CLASH_WEEKS);
+      const created = starts.map((startsAt) =>
+        seriesWeekCheckin({ series, client, week: { startsAt, clash: clashStarts.includes(startsAt) } }),
+      );
+      setSeriesList((prev) => prev.map((s) => (s.id === series.id ? series : s)));
+      setStored((prev) => [...created, ...prev]);
+      setTakenElsewhere((taken) => [...taken, ...clashStarts]);
+
+      const [earliest] = created.filter((c) => c.status === 'clash').sort(byStartAscending);
+      if (!earliest) return;
+      deliver(
+        { party: 'coach' },
+        {
+          kind: 'check-in.series-clashes',
+          facts: {
+            clientName: client.name,
+            clashes: clashStarts.length,
+            earliestId: earliest.id,
+            earliestStartsAt: checkinStartsAt(earliest).toISOString(),
+          },
+        },
+      );
+    },
+    [seriesFor, deliver],
   );
 
   const weeklySeries = useMemo((): WeeklySeriesSeed => {
@@ -1193,6 +1350,9 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         stopSeries,
         weeklySeries,
         setWeeklySeries,
+        renewSeries,
+        seedBell,
+        deliverSampleNotification,
       }}
     >
       {children}

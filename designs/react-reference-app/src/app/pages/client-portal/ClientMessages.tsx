@@ -77,7 +77,7 @@ export function ClientMessages() {
   const [proposingFor, setProposingFor] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { addNotification } = useNotifications();
+  const { deliver } = useNotifications();
   const {
     hasOpenClientRequest,
     getUpcomingCheckins,
@@ -165,11 +165,17 @@ export function ClientMessages() {
         'Sounds like a great plan. Keep up the good work!',
         'coach',
       );
-      addNotification({
-        title: coachName,
-        message: 'Sounds like a great plan. Keep up the good work!',
-        link: '/portal/messages',
-      });
+      deliver(
+        { party: 'client', clientId: CLIENT_ID },
+        {
+          kind: 'message.received',
+          facts: {
+            senderName: coachName,
+            text: 'Sounds like a great plan. Keep up the good work!',
+            clientId: CLIENT_ID,
+          },
+        },
+      );
     }, 3000);
   };
 

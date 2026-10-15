@@ -130,6 +130,13 @@ export function seriesChangedTo(series: CheckinSeries, change: SeriesChange): Se
   };
 }
 
+export function seriesExtendedTo(series: CheckinSeries, until: Date): SeriesWeeks {
+  return {
+    series: { ...series, coversUntil: until },
+    starts: weekStartsBetween(series, { from: series.coversUntil, until }),
+  };
+}
+
 export function seriesStoppedAt(series: CheckinSeries, at: Date): CheckinSeries {
   return { ...series, stoppedAt: at };
 }

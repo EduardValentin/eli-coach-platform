@@ -6,6 +6,7 @@ import { CheckinScheduleDialog, type ScheduledClient } from './CheckinScheduleDi
 import { AppProvider, useAppState } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { CheckinProvider } from '../context/CheckinContext';
+import { NotificationProvider } from '../context/NotificationContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../context/ClientProfileContext';
 
@@ -58,6 +59,7 @@ function renderDialog(devParams = '') {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <NotificationProvider>
               <CheckinProvider>
                 <CheckinScheduleDialog
                   open
@@ -67,6 +69,7 @@ function renderDialog(devParams = '') {
                 />
                 <ServiceFailureStandIn />
               </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

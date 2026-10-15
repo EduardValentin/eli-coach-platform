@@ -73,9 +73,9 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
-              <CheckinProvider>
-                {checkins === 'none' && <ClearCheckins />}
-                <NotificationProvider>
+              <NotificationProvider>
+                <CheckinProvider>
+                  {checkins === 'none' && <ClearCheckins />}
                   <PortalSidebar
                     links={links}
                     markedHrefs={markedHrefs}
@@ -84,8 +84,8 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
                   <main id={PORTAL_MAIN_ID} tabIndex={-1}>
                     Dashboard content
                   </main>
-                </NotificationProvider>
-              </CheckinProvider>
+                </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

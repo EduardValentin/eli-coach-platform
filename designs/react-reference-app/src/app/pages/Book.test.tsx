@@ -11,6 +11,7 @@ import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { CheckinProvider, useCheckins } from '../context/CheckinContext';
+import { NotificationProvider } from '../context/NotificationContext';
 import { checkinSlotAt } from '../domain/checkins';
 import { formatSlotTime } from '../utils/dateFormatters';
 
@@ -51,10 +52,12 @@ function renderBook(search = '', heldCheckinAt?: Date) {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
+                <NotificationProvider>
                 <CheckinProvider>
                   {heldCheckinAt && <HoldCheckinAt startsAt={heldCheckinAt} />}
                   <Book />
                 </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>

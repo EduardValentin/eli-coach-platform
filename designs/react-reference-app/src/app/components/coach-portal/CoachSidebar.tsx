@@ -283,7 +283,7 @@ export function CoachSidebar() {
         <DesktopSidebar
           actions={
             <div className="contents" data-parity="notification-bell">
-              <NotificationBell align="left" />
+              <NotificationBell align="start" />
             </div>
           }
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}

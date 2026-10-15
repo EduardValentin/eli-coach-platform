@@ -6,6 +6,7 @@ import {
   awaitsResponseFrom,
   canWithdrawRequest,
   clientProposalAmong,
+  checkinLapse,
   checkinNote,
   checkinTabFor,
   checkinSchedulingFor,
@@ -949,5 +950,60 @@ describe('cancelling a weekly check-in', () => {
     // assert
     expect(byCoach).toBe(true);
     expect(byClient).toBe(false);
+  });
+});
+
+describe('a check-in that lapsed unanswered', () => {
+  const passed = { date: '2026-10-13', time: '15:00' };
+  const passedStart = new Date(2026, 9, 13, 15, 0);
+
+  it.each<[string, Partial<CheckIn>, string]>([
+    ['a request', { status: 'pending', kind: 'ad-hoc', initiatedBy: 'client', proposedBy: 'client' }, 'request-expired'],
+    [
+      'a new time',
+      { status: 'pending', proposedBy: 'client', previousDate: '2026-10-12', previousTime: '10:00' },
+      'new-time-expired',
+    ],
+    [
+      'a re-proposed clash',
+      { status: 'pending', proposedBy: 'coach', previousDate: '2026-10-12', previousTime: '10:00' },
+      'new-time-expired',
+    ],
+    ['a clash', { status: 'clash' }, 'clash-missed'],
+  ])('reads %s whose time passed as lapsed at its start', (_, overrides, lapse) => {
+    // arrange
+    const unanswered = checkin({ ...passed, ...overrides });
+
+    // act
+    const lapsed = checkinLapse(unanswered, { now: NOW });
+
+    // assert
+    expect(lapsed).toEqual({ lapse, lapsedAt: passedStart });
+  });
+
+  it.each<[string, Partial<CheckIn>]>([
+    ['an approved check-in', { ...passed, status: 'approved' }],
+    ['a cancelled request', { ...passed, status: 'cancelled' }],
+    ['a request still ahead', { status: 'pending' }],
+  ])('reads %s as not lapsed', (_, overrides) => {
+    // arrange
+    const answered = checkin(overrides);
+
+    // act
+    const lapsed = checkinLapse(answered, { now: NOW });
+
+    // assert
+    expect(lapsed).toBeNull();
+  });
+
+  it('reads a request past the end of her coaching as cancelled by the end, not lapsed', () => {
+    // arrange
+    const request = checkin({ ...passed, status: 'pending' });
+
+    // act
+    const lapsed = checkinLapse(request, { now: NOW, coachingEndsAt: new Date(2026, 9, 12) });
+
+    // assert
+    expect(lapsed).toBeNull();
   });
 });

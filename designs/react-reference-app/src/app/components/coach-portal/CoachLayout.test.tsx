@@ -40,15 +40,15 @@ function renderLayout() {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <CheckinProvider>
-                  <NotificationProvider>
+                <NotificationProvider>
+                  <CheckinProvider>
                     <Routes>
                       <Route path="/coach" element={<CoachLayout />}>
                         <Route index element={<h1>Dashboard</h1>} />
                       </Route>
                     </Routes>
-                  </NotificationProvider>
-                </CheckinProvider>
+                  </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>
