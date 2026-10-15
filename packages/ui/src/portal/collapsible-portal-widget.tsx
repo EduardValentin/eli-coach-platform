@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
@@ -9,11 +10,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../primitives/accordion";
+import { PanelTitleIcon } from "./panel-title-icon";
 import { PortalWidgetPanel } from "./portal-widget";
 
 type CollapsiblePortalWidgetProps = DataAttributes & {
   title: ReactNode;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   headingId: string;
   className?: string;
   children: ReactNode;
@@ -41,7 +43,7 @@ export function CollapsiblePortalWidget({
             layout="title"
           >
             <span className={cn("flex items-center gap-2", WIDGET_TITLE_CLASS)}>
-              {icon}
+              {icon && <PanelTitleIcon icon={icon} />}
               {title}
             </span>
           </AccordionTrigger>

@@ -150,13 +150,7 @@ export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
       data-parity-root="ClientProfileBlock"
       className="mb-8"
       headingId="profile-panel-heading"
-      icon={
-        <UserRound
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={UserRound}
       title="Profile"
     >
       <div className="space-y-5">

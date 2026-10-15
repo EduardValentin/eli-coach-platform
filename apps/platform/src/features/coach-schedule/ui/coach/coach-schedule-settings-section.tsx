@@ -156,13 +156,7 @@ export function CoachScheduleSettingsSection(
           </Button>
         }
         headingId={headingId}
-        icon={
-          <CalendarClock
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
+        icon={CalendarClock}
         title="Calls and check-ins"
       >
         <form
