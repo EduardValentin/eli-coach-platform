@@ -23,14 +23,14 @@ import {
   type ExerciseVideoEntry,
 } from "./exercise-form";
 
-export type ExerciseVideoSaving = UploadState | { state: "failed" };
+export type VideoUploadState = UploadState | { state: "failed" };
 
 type StoredExerciseVideo = ExerciseView["video"];
 
 type ExerciseVideoFieldProps = {
   stored: StoredExerciseVideo;
   video: ExerciseVideoEntry;
-  saving: ExerciseVideoSaving;
+  saving: VideoUploadState;
   onChange: (video: ExerciseVideoEntry) => void;
   onRetry: () => void;
 };
@@ -40,7 +40,7 @@ const VIDEO_PROMPT = "Drop a video here or choose one";
 const UPLOAD_FAILED =
   "The upload didn’t go through. Your entries are still here.";
 
-export function isVideoUploading(saving: ExerciseVideoSaving): boolean {
+export function isVideoUploading(saving: VideoUploadState): boolean {
   return saving.state === "sending" || saving.state === "preparing";
 }
 
@@ -54,13 +54,13 @@ function shownVideoUrlOf(
   return joinBasePath(import.meta.env.BASE_URL, stored.path);
 }
 
-function videoSavingMessage(saving: ExerciseVideoSaving): string {
+function videoSavingMessage(saving: VideoUploadState): string {
   return saving.state === "sending"
     ? `Uploading video… ${Math.round(saving.fraction * 100)}%`
     : "Finishing up…";
 }
 
-function VideoSaveProgress({ saving }: { saving: ExerciseVideoSaving }) {
+function VideoSaveProgress({ saving }: { saving: VideoUploadState }) {
   return (
     <div
       className="grid max-w-md gap-2 empty:hidden"

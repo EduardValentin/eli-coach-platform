@@ -45,21 +45,21 @@ import {
 import {
   ExerciseVideoField,
   isVideoUploading,
-  type ExerciseVideoSaving,
+  type VideoUploadState,
 } from "./exercise-video-field";
 import { useExerciseSave, type ExerciseSaveOutcome } from "./use-exercise-save";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
 
-const NOT_UPLOADING: ExerciseVideoSaving = { state: "idle" };
+const NOT_UPLOADING: VideoUploadState = { state: "idle" };
 
-const UPLOAD_FAILED: ExerciseVideoSaving = { state: "failed" };
+const UPLOAD_FAILED: VideoUploadState = { state: "failed" };
 
 function videoSavingOf(
   chosen: ChosenExerciseVideo,
   failedUpload: File | null,
   uploadState: UploadState,
-): ExerciseVideoSaving {
+): VideoUploadState {
   if (chosen.kind !== "attach") return NOT_UPLOADING;
   if (chosen.file === failedUpload) return UPLOAD_FAILED;
 
