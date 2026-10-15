@@ -6,7 +6,7 @@ import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { Checkbox } from '../../ui/checkbox';
 import { Input } from '../../ui/input';
-import { RequiredMark } from '../../ui/label';
+import { LabelSuffix, Legend, RequiredMark } from '../../ui/label';
 import {
   Select,
   SelectContent,
@@ -31,7 +31,6 @@ import {
   type MeasureKind,
   type MeasureUnits,
 } from '../measureUnits';
-import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
 import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
@@ -158,13 +157,13 @@ function nextChipsValue(
   return [...withoutExclusive, option];
 }
 
-function unitQualifiersOf(
+function unitSuffixesOf(
   field: OnboardingField,
   unit: string | null,
 ): string[] {
   return [unit, field.unitSuffix]
-    .filter((qualifier): qualifier is string => Boolean(qualifier))
-    .map((qualifier) => `(${qualifier})`);
+    .filter((suffix): suffix is string => Boolean(suffix))
+    .map((suffix) => `(${suffix})`);
 }
 
 function LabelLines({ field }: { field: OnboardingField }) {
@@ -179,7 +178,7 @@ function LabelLines({ field }: { field: OnboardingField }) {
   );
 }
 
-function UnitQualifiers({
+function UnitSuffixes({
   field,
   unit,
 }: {
@@ -188,14 +187,10 @@ function UnitQualifiers({
 }) {
   return (
     <>
-      {unitQualifiersOf(field, unit).map((qualifier) => (
-        <span
-          className="font-normal text-text-secondary"
-          data-parity={`field-${field.id}-suffix-unit`}
-          key={qualifier}
-        >
-          {qualifier}
-        </span>
+      {unitSuffixesOf(field, unit).map((suffix) => (
+        <LabelSuffix data-parity={`field-${field.id}-suffix-unit`} key={suffix}>
+          {suffix}
+        </LabelSuffix>
       ))}
     </>
   );
@@ -218,24 +213,22 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       render={({ field: controller }) => {
         if (field.kind === 'checkbox') {
           const checked = asText(controller.value) === 'true';
-          const isDeclaration = required;
-
           return (
             <FormItem
-              className={isDeclaration ? undefined : '-mt-2'}
+              className={required ? undefined : '-mt-2'}
               data-parity={parityHook}
             >
               <FormControl>
                 <div
                   className={
-                    isDeclaration
+                    required
                       ? 'flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4'
                       : 'flex items-center gap-2'
                   }
                 >
                   <Checkbox
                     checked={checked}
-                    className={isDeclaration ? 'mt-0.5' : undefined}
+                    className={required ? 'mt-0.5' : undefined}
                     data-parity={`${parityHook}-checkbox`}
                     id={legendId}
                     onCheckedChange={(next) =>
@@ -245,14 +238,14 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   />
                   <label
                     className={
-                      isDeclaration
+                      required
                         ? 'text-sm leading-relaxed text-text-primary'
                         : 'text-sm text-text-primary'
                     }
                     htmlFor={legendId}
                   >
                     {field.label}
-                    {isDeclaration && <RequiredMark />}
+                    {required && <RequiredMark />}
                   </label>
                 </div>
               </FormControl>
@@ -266,11 +259,13 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormItem data-parity={parityHook}>
               <FormControl>
                 <fieldset>
-                  <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
+                  <Legend
+                    id={legendId}
+                    required={required}
+                    trailing={<UnitSuffixes field={field} unit={unit} />}
+                  >
                     <LabelLines field={field} />
-                    {required && <RequiredMark placement="wrap" />}
-                    <UnitQualifiers field={field} unit={unit} />
-                  </legend>
+                  </Legend>
                   {field.hint && (
                     <FormDescription>{field.hint}</FormDescription>
                   )}
@@ -336,7 +331,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormLabel
               layout="wrap"
               required={required}
-              trailing={<UnitQualifiers field={field} unit={unit} />}
+              trailing={<UnitSuffixes field={field} unit={unit} />}
             >
               <LabelLines field={field} />
             </FormLabel>

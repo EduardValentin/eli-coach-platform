@@ -66,5 +66,43 @@ function Label({
   );
 }
 
-export { Label, RequiredMark };
+type LegendProps = React.ComponentProps<"legend"> & {
+  required?: boolean;
+  trailing?: React.ReactNode;
+};
+
+function Legend({
+  className,
+  children,
+  required,
+  trailing,
+  ...props
+}: LegendProps) {
+  return (
+    <legend
+      className={cn(
+        "text-sm font-medium text-text-label",
+        LABEL_LAYOUT_CLASSES.wrap,
+        "mb-1",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      {required && <RequiredMark placement="wrap" />}
+      {trailing}
+    </legend>
+  );
+}
+
+function LabelSuffix({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      className={cn("font-normal text-text-secondary", className)}
+      {...props}
+    />
+  );
+}
+
+export { Label, LabelSuffix, Legend, RequiredMark };
 export type { LabelProps };
