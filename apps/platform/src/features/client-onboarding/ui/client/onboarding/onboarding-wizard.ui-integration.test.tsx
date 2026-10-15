@@ -57,7 +57,11 @@ const SUBMIT_PROBLEM =
   "Your answers could not be sent just now. They're saved — try again in a moment.";
 const MISSING_CONSENT = "Tick the box to carry on.";
 const PARQ_DECLARATION =
-  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again. (required)";
+  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
+const FEMALE_HEALTH_CONSENT =
+  "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.";
+const HEALTH_CONSENT =
+  "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
@@ -92,7 +96,7 @@ const DISCLAIMER_WITHHELD: OnboardingConsentInstants = {
   progressPhotosAt: null,
 };
 const DISCLAIMER =
-  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor. (required)";
+  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
 const WITHHELD_CONSENTS: OnboardingConsentInstants = {
   specialCategoryAt: null,
   disclaimerAt: null,
@@ -108,6 +112,10 @@ type PageOptions = {
   unitPreference?: OnboardingWizardPage["unitPreference"];
   answers?: OnboardingWizardPage["draft"]["answers"];
 };
+
+function requiredName(statement: string): string {
+  return `${statement} (required)`;
+}
 
 function emptyAnswers(): OnboardingWizardPage["draft"]["answers"] {
   return {
@@ -406,7 +414,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     // act
     await user.click(
       screen.getByRole("checkbox", {
-        name: "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time. (required)",
+        name: requiredName(FEMALE_HEALTH_CONSENT),
       }),
     );
 
@@ -430,7 +438,9 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     const disabledBeforeTicking = send.hasAttribute("disabled");
 
     // act
-    await user.click(screen.getByRole("checkbox", { name: DISCLAIMER }));
+    await user.click(
+      screen.getByRole("checkbox", { name: requiredName(DISCLAIMER) }),
+    );
 
     // assert
     expect(disabledBeforeTicking).toBe(true);
@@ -854,7 +864,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     ).toBeVisible();
     expect(
       screen.getByRole("checkbox", {
-        name: "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time. (required)",
+        name: requiredName(HEALTH_CONSENT),
       }),
     ).not.toBeChecked();
   });
@@ -866,7 +876,9 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     for (const group of screen.getAllByRole("radiogroup")) {
       await user.click(within(group).getByRole("radio", { name: "No" }));
     }
-    await user.click(screen.getByRole("checkbox", { name: PARQ_DECLARATION }));
+    await user.click(
+      screen.getByRole("checkbox", { name: requiredName(PARQ_DECLARATION) }),
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -1188,7 +1200,9 @@ describe("the onboarding", { timeout: 15_000 }, () => {
       redirectTo: CLIENT_PORTAL_PATH,
     });
     await openOnboarding(pageAt(4, { consents: DISCLAIMER_WITHHELD }));
-    await user.click(screen.getByRole("checkbox", { name: DISCLAIMER }));
+    await user.click(
+      screen.getByRole("checkbox", { name: requiredName(DISCLAIMER) }),
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Send to my coach" }));
