@@ -42,6 +42,14 @@ export class ExerciseLibraryPage {
     return this.page.getByRole("link", { name: "New exercise" });
   }
 
+  private get editItem(): Locator {
+    return this.page.getByRole("menuitem", { name: "Edit" });
+  }
+
+  private get editorHeading(): Locator {
+    return this.page.getByRole("heading", { level: 1, name: "Edit exercise" });
+  }
+
   private get rows(): Locator {
     return this.page.getByRole("table").getByRole("row");
   }
@@ -150,12 +158,12 @@ export class ExerciseLibraryPage {
   }
 
   async edit(name: string): Promise<void> {
-    const edit = this.page.getByRole("menuitem", { name: "Edit" });
-
     await expect(async () => {
-      await this.actionsTriggerOf(name).click();
-      await expect(edit).toBeVisible({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await this.editItem.click({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
+      await expect(this.editorHeading).toBeVisible();
     }).toPass();
-    await edit.click();
   }
 }
