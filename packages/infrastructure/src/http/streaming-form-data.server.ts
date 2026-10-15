@@ -81,7 +81,9 @@ class StreamingFormDataReading<Received> {
 
       parser.on("file", (field, stream) => this.takeFile(field, stream));
       parser.on("field", (field, value, fieldTruncated, valueTruncated) =>
-        this.takeField(field, value, fieldTruncated || valueTruncated),
+        fieldTruncated || valueTruncated
+          ? this.refuse("malformed")
+          : this.takeField(field, value),
       );
       parser.on("filesLimit", () => this.refuse("malformed"));
       parser.on("fieldsLimit", () => this.refuse("malformed"));
@@ -133,8 +135,8 @@ class StreamingFormDataReading<Received> {
     );
   }
 
-  private takeField(field: string, value: string, truncated: boolean): void {
-    if (truncated || this.fields.has(field)) {
+  private takeField(field: string, value: string): void {
+    if (this.fields.has(field)) {
       this.refuse("malformed");
       return;
     }
