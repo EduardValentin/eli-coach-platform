@@ -147,7 +147,7 @@ function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
 
 type VideoFieldFocus = 'replace' | 'picker' | null;
 
-type VideoFieldHandle = { focusReplace: () => void };
+type VideoFieldHandle = { queueReplaceFocus: () => void };
 
 type VideoFieldProps = {
   video: VideoState;
@@ -190,7 +190,7 @@ const VideoField = forwardRef<VideoFieldHandle, VideoFieldProps>(function VideoF
   };
 
   useImperativeHandle(ref, () => ({
-    focusReplace: () => {
+    queueReplaceFocus: () => {
       pendingFocus.current = 'replace';
     },
   }));
@@ -368,7 +368,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
 
     setSaving(NOT_SAVING);
     setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
-    videoField.current?.focusReplace();
+    videoField.current?.queueReplaceFocus();
   };
 
   const busy = isSaving(saving);
