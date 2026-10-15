@@ -163,7 +163,7 @@ function BellHeader({
 function BellList({ items, onOpenItem, className }: BellListProps & { className: string }) {
   if (items.length === 0) {
     return (
-      <div className={cn('overflow-y-auto bg-white', className)}>
+      <div className={cn('overflow-y-auto bg-white', className)} data-parity="notification-scroll">
         <p className="p-8 text-center text-sm text-text-secondary" data-parity="notification-empty">
           No notifications yet.
         </p>
@@ -172,7 +172,7 @@ function BellList({ items, onOpenItem, className }: BellListProps & { className:
   }
 
   return (
-    <div className={cn('overflow-y-auto bg-white', className)}>
+    <div className={cn('overflow-y-auto bg-white', className)} data-parity="notification-scroll">
       <ul className="flex flex-col" data-parity="notification-list">
         {items.map((item) => (
           <li key={item.id} data-parity="notification-row">
@@ -180,6 +180,7 @@ function BellList({ items, onOpenItem, className }: BellListProps & { className:
               to={item.href}
               onClick={() => onOpenItem(item.id)}
               data-focus-inset
+              data-parity="notification-link"
               className={cn(
                 'flex gap-3 p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors',
                 { 'bg-neutral-50/50': item.unread },
@@ -205,7 +206,10 @@ function BellList({ items, onOpenItem, className }: BellListProps & { className:
                   {item.title}
                 </span>
                 <span className="block text-xs text-text-secondary mt-1 line-clamp-2">{item.line}</span>
-                <span className="block text-[10px] font-semibold text-text-secondary mt-2 uppercase tracking-widest">
+                <span
+                  className="block text-[10px] font-semibold text-text-secondary mt-2 uppercase tracking-widest"
+                  data-parity="notification-age"
+                >
                   {item.ago}
                 </span>
               </span>

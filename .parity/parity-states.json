@@ -4178,6 +4178,22 @@
     ],
     "real": []
   },
+  "drawer-bell-unread": [
+    {
+      "use": "bell-unread"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
+  "drawer-bell-empty": [
+    {
+      "use": "bell-empty"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
   "open-bell": [
     {
       "click": "role=button[name=/^Notifications/] >> visible=true"
@@ -4204,7 +4220,7 @@
       "use": "open-bell"
     },
     {
-      "hover": "role=dialog[name=\"Notifications\"] [data-parity=\"notification-row\"] >> nth=1"
+      "hover": "[role=\"dialog\"][aria-label=\"Notifications\"] [data-parity=\"notification-row\"] >> nth=1"
     }
   ],
   "bell-mark-all-focus": [
@@ -4239,15 +4255,8 @@
       },
       {
         "click": "[aria-label=\"Close Dev Settings\"]"
-      },
-      {
-        "hover": "h1"
       }
     ],
-    "real": [
-      {
-        "hover": "h1"
-      }
-    ]
+    "real": []
   }
 }

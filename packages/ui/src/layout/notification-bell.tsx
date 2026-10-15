@@ -226,7 +226,10 @@ function BellList(props: BellListProps) {
   const { className, items, onOpenItem } = props;
 
   return (
-    <div className={cn("overflow-y-auto bg-surface-base", className)}>
+    <div
+      className={cn("overflow-y-auto bg-surface-base", className)}
+      data-parity="notification-scroll"
+    >
       {items.length === 0 ? (
         <p
           className="p-8 text-center text-sm text-text-secondary"
@@ -262,6 +265,7 @@ function BellRow(props: BellRowProps) {
         { "bg-surface-quiet/50": item.unread },
       )}
       data-focus-inset
+      data-parity="notification-link"
       onClick={onOpen}
       to={item.href}
     >
@@ -287,7 +291,10 @@ function BellRow(props: BellRowProps) {
         <span className="mt-1 line-clamp-2 block text-xs text-text-secondary">
           {item.line}
         </span>
-        <span className="mt-2 block text-micro font-semibold tracking-widest text-text-secondary uppercase">
+        <span
+          className="mt-2 block text-micro font-semibold tracking-widest text-text-secondary uppercase"
+          data-parity="notification-age"
+        >
           {item.ago}
         </span>
       </span>
