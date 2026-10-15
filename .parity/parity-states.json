@@ -4424,42 +4424,37 @@
       }
     ]
   },
-  "cart-details": {
-    "prototype": [
-      {
-        "use": "cart-one-item"
-      },
-      {
-        "click": "role=button[name=\"Checkout\"]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-          "visitor@example.com"
-        ]
-      }
-    ],
-    "real": [
-      {
-        "use": "cart-one-item"
-      },
-      {
-        "click": "role=button[name=\"Continue\"]"
-      },
-      {
-        "fill": [
-          "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
-          "visitor@example.com"
-        ]
-      }
-    ]
-  },
+  "cart-details": [
+    {
+      "use": "cart-one-item"
+    },
+    {
+      "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    }
+  ],
   "cart-terms-accepted": [
     {
       "use": "cart-details"
     },
     {
       "click": "role=checkbox[name=/^I agree to the Terms & Conditions/]"
+    }
+  ],
+  "cart-sent": [
+    {
+      "use": "cart-terms-accepted"
+    },
+    {
+      "click": "role=button[name=\"Send my resources\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] h2:text-is(\"Check your inbox\")"
     }
   ]
 }

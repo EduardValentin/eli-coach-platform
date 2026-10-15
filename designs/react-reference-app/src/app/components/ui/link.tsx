@@ -19,7 +19,13 @@ const linkClasses = cva(
   },
 );
 
-type LinkProps = RouterLinkProps & VariantProps<typeof linkClasses>;
+type LinkVariantProps = VariantProps<typeof linkClasses>;
+
+function linkVariants(options?: LinkVariantProps): string {
+  return cn(linkClasses(options));
+}
+
+type LinkProps = RouterLinkProps & LinkVariantProps;
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
   ({ className, variant, ...props }, ref) => (
@@ -29,4 +35,4 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
 
 Link.displayName = 'Link';
 
-export { Link };
+export { Link, linkVariants };
