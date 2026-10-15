@@ -178,13 +178,13 @@ export function withPrimaryMuscleToggled(
   };
 }
 
-export type ExerciseVideoChoice =
+export type ChosenExerciseVideo =
   | { kind: "keep" }
   | { kind: "remove" }
   | { kind: "attach"; file: File; previewUrl: string };
 
 export type ExerciseVideoEntry = {
-  choice: ExerciseVideoChoice;
+  chosen: ChosenExerciseVideo;
   problem: string | null;
 };
 
@@ -199,12 +199,12 @@ export const EXERCISE_VIDEO_ACCEPT = [
   ...ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
 ].join(",");
 
-export const KEEP_VIDEO: ExerciseVideoChoice = { kind: "keep" };
+export const KEEP_VIDEO: ChosenExerciseVideo = { kind: "keep" };
 
-export const REMOVE_VIDEO: ExerciseVideoChoice = { kind: "remove" };
+export const REMOVE_VIDEO: ChosenExerciseVideo = { kind: "remove" };
 
 export const UNTOUCHED_VIDEO: ExerciseVideoEntry = {
-  choice: KEEP_VIDEO,
+  chosen: KEEP_VIDEO,
   problem: null,
 };
 
@@ -223,7 +223,7 @@ function videoTooLargeMessage(file: File): string {
   return `${file.name} is larger than ${MAX_EXERCISE_VIDEO_MEGABYTES} MB`;
 }
 
-export function exerciseVideoRefusalOf(file: File): string | null {
+export function browserVideoRefusalMessage(file: File): string | null {
   if (!isVideoFile(file)) {
     return `${file.name} is not an .mp4 or .mov — only .mp4 and .mov videos are supported`;
   }
@@ -235,7 +235,7 @@ export function exerciseVideoRefusalOf(file: File): string | null {
   return null;
 }
 
-export function exerciseVideoProblemCopy(
+export function serverVideoRefusalMessage(
   problem: ExerciseVideoProblem,
   file: File,
 ): string {
@@ -254,7 +254,7 @@ function exerciseDraftInputOf(
 
 export function exerciseRequestOf(
   values: ExerciseFormValues,
-  video: ExerciseVideoChoice,
+  video: ChosenExerciseVideo,
 ): ExerciseRequest {
   return { ...exerciseDraftInputOf(values), video: video.kind };
 }

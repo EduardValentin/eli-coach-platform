@@ -34,12 +34,12 @@ import {
   exerciseFormResolver,
   exerciseFormValuesOf,
   exerciseRequestOf,
-  exerciseVideoProblemCopy,
+  serverVideoRefusalMessage,
   newExerciseFormValues,
   shownExerciseProblemsOf,
   UNTOUCHED_VIDEO,
   type ExerciseFormValues,
-  type ExerciseVideoChoice,
+  type ChosenExerciseVideo,
   type ExerciseVideoEntry,
 } from "./exercise-form";
 import {
@@ -56,18 +56,18 @@ const NOT_UPLOADING: ExerciseVideoSaving = { state: "idle" };
 const UPLOAD_FAILED: ExerciseVideoSaving = { state: "failed" };
 
 function videoSavingOf(
-  choice: ExerciseVideoChoice,
+  chosen: ChosenExerciseVideo,
   failedUpload: File | null,
   uploadState: UploadState,
 ): ExerciseVideoSaving {
-  if (choice.kind !== "attach") return NOT_UPLOADING;
-  if (choice.file === failedUpload) return UPLOAD_FAILED;
+  if (chosen.kind !== "attach") return NOT_UPLOADING;
+  if (chosen.file === failedUpload) return UPLOAD_FAILED;
 
   return uploadState;
 }
 
-function attachedFileOf(choice: ExerciseVideoChoice): File | null {
-  return choice.kind === "attach" ? choice.file : null;
+function attachedFileOf(chosen: ChosenExerciseVideo): File | null {
+  return chosen.kind === "attach" ? chosen.file : null;
 }
 
 export async function loader(args: LoaderFunctionArgs) {
@@ -143,11 +143,14 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   };
 
   const showRefusedVideo = (problems: ExerciseProblems): boolean => {
-    if (problems.video === undefined || video.choice.kind !== "attach") {
+    if (problems.video === undefined || video.chosen.kind !== "attach") {
       return false;
     }
 
-    const problem = exerciseVideoProblemCopy(problems.video, video.choice.file);
+    const problem = serverVideoRefusalMessage(
+      problems.video,
+      video.chosen.file,
+    );
     setVideo((current) => ({ ...current, problem }));
     return true;
   };
@@ -170,8 +173,8 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
       return;
     }
 
-    if (video.choice.kind === "attach") {
-      setFailedUpload(video.choice.file);
+    if (video.chosen.kind === "attach") {
+      setFailedUpload(video.chosen.file);
       return;
     }
 
@@ -182,14 +185,14 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     exercise?.id ?? null,
     settle,
   );
-  const videoSaving = videoSavingOf(video.choice, failedUpload, uploadState);
+  const videoSaving = videoSavingOf(video.chosen, failedUpload, uploadState);
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
     setFailedUpload(null);
     save(
-      exerciseRequestOf(submitted, video.choice),
-      attachedFileOf(video.choice),
+      exerciseRequestOf(submitted, video.chosen),
+      attachedFileOf(video.chosen),
     );
   });
 

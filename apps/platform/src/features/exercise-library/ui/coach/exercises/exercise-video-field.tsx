@@ -16,7 +16,7 @@ import type { ExerciseView } from "~/features/exercise-library/public/exercises"
 
 import {
   EXERCISE_VIDEO_ACCEPT,
-  exerciseVideoRefusalOf,
+  browserVideoRefusalMessage,
   KEEP_VIDEO,
   MAX_EXERCISE_VIDEO_MEGABYTES,
   REMOVE_VIDEO,
@@ -48,8 +48,8 @@ function shownVideoUrlOf(
   video: ExerciseVideoEntry,
   stored: StoredExerciseVideo,
 ): string | null {
-  if (video.choice.kind === "attach") return video.choice.previewUrl;
-  if (video.choice.kind === "remove" || stored === null) return null;
+  if (video.chosen.kind === "attach") return video.chosen.previewUrl;
+  if (video.chosen.kind === "remove" || stored === null) return null;
 
   return joinBasePath(import.meta.env.BASE_URL, stored.path);
 }
@@ -96,8 +96,8 @@ export function ExerciseVideoField({
   const busy = isVideoUploading(saving);
   const shownUrl = shownVideoUrlOf(video, stored);
   const previewUrl =
-    video.choice.kind === "attach" ? video.choice.previewUrl : null;
-  const refusal = {
+    video.chosen.kind === "attach" ? video.chosen.previewUrl : null;
+  const problemDescription = {
     "aria-describedby": video.problem ? problemId : undefined,
     "aria-invalid": video.problem ? true : undefined,
   };
@@ -108,21 +108,21 @@ export function ExerciseVideoField({
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
-  const take = (file: File) => {
-    const problem = exerciseVideoRefusalOf(file);
+  const chooseVideo = (file: File) => {
+    const problem = browserVideoRefusalMessage(file);
     if (problem) {
       onChange({ ...video, problem });
       return;
     }
 
     onChange({
-      choice: { kind: "attach", file, previewUrl: URL.createObjectURL(file) },
+      chosen: { kind: "attach", file, previewUrl: URL.createObjectURL(file) },
       problem: null,
     });
   };
 
   const remove = () =>
-    onChange({ choice: stored ? REMOVE_VIDEO : KEEP_VIDEO, problem: null });
+    onChange({ chosen: stored ? REMOVE_VIDEO : KEEP_VIDEO, problem: null });
 
   return (
     <div className="grid gap-3">
@@ -134,7 +134,7 @@ export function ExerciseVideoField({
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
-              if (file) take(file);
+              if (file) chooseVideo(file);
             }}
             ref={replaceInput}
             type="file"
@@ -168,7 +168,7 @@ export function ExerciseVideoField({
               onClick={() => replaceInput.current?.click()}
               size="sm"
               variant="ghost"
-              {...refusal}
+              {...problemDescription}
             >
               <RefreshCw aria-hidden="true" size={16} />
               Replace
@@ -189,9 +189,9 @@ export function ExerciseVideoField({
           <FileDropzone
             accept={EXERCISE_VIDEO_ACCEPT}
             hint={VIDEO_GUIDANCE}
-            onFileChosen={take}
+            onFileChosen={chooseVideo}
             prompt={VIDEO_PROMPT}
-            {...refusal}
+            {...problemDescription}
           />
         </div>
       )}
