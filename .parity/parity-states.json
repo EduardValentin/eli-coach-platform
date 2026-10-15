@@ -4369,5 +4369,23 @@
     {
       "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
     }
+  ],
+  "exercise-video-chosen": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-file-refused": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-save-held": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    }
   ]
 }
