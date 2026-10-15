@@ -126,6 +126,7 @@ type MultiSelectProps<Value extends string> = OptionListProps<Value> &
     summary?: MultiSelectSummary;
     size?: FieldSize;
     placeholder?: string;
+    required?: boolean;
   };
 
 function accessibleTriggerName(label: string, chosenCount: number): string {
@@ -138,6 +139,7 @@ export function MultiSelect<Value extends string>({
   onToggle,
   options,
   placeholder,
+  required,
   selected,
   size = "sm",
   summary = "count",
@@ -149,7 +151,10 @@ export function MultiSelect<Value extends string>({
     <Popover>
       <PopoverTrigger asChild>
         <button
-          aria-label={accessibleTriggerName(label, selected.length)}
+          aria-label={accessibleTriggerName(
+            required ? `${label} (required)` : label,
+            selected.length,
+          )}
           className={cn(
             selectTriggerClasses(size),
             "min-w-auto",

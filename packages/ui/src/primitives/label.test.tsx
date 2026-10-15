@@ -47,6 +47,21 @@ describe("Label", () => {
     expect(field).toHaveAccessibleName("Your weight (required)");
   });
 
+  it("sets the star snug against the label text", () => {
+    // arrange
+    render(
+      <Label htmlFor="weight" required>
+        Your weight
+      </Label>,
+    );
+
+    // act
+    const star = screen.getByText("*");
+
+    // assert
+    expect(star).toHaveClass("-ml-1.5");
+  });
+
   it("shows no star when the field is optional", () => {
     // arrange
     render(<Label htmlFor="weight">Your weight</Label>);

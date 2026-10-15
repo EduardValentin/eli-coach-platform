@@ -57,13 +57,13 @@ export function FieldLayout({
         invalid={invalid}
         layout={labelLayout}
         required={required}
-      >
-        {label}
-        {suffixes.map((suffix) => (
+        trailing={suffixes.map((suffix) => (
           <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
             {suffix.text}
           </LabelSuffix>
         ))}
+      >
+        {label}
       </Label>
       {hintPlacement === "before-control" && hintLine}
       {children({

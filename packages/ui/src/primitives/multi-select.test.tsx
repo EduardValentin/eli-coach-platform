@@ -75,6 +75,44 @@ describe("MultiSelect", () => {
     );
   });
 
+  it("names itself as required, with how many options are chosen", () => {
+    // arrange, act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        labels={TAG_LABELS}
+        onToggle={vi.fn()}
+        options={["strength", "recovery"]}
+        required
+        selected={["strength"]}
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Tags (required), 1 selected" }),
+    ).toBeInTheDocument();
+  });
+
+  it("names itself as required while nothing is chosen", () => {
+    // arrange, act
+    render(
+      <MultiSelect<Tag>
+        label="Tags"
+        labels={TAG_LABELS}
+        onToggle={vi.fn()}
+        options={["strength", "recovery"]}
+        required
+        selected={[]}
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Tags (required)" }),
+    ).toBeInTheDocument();
+  });
+
   it("stays in Safari's tab order like the select it sits beside", () => {
     // arrange, act
     renderTagFilter([]);

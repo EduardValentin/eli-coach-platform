@@ -210,6 +210,7 @@ export function ExerciseWorkSection({
           <MultiSelect
             id={primaryId}
             label="Primary muscles"
+            required={values.type !== "cardio"}
             labels={MUSCLE_LABELS}
             onToggle={(muscle) =>
               changeValues(form, withPrimaryMuscleToggled(values, muscle))

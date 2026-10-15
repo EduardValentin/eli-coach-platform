@@ -49,7 +49,7 @@ export class ExerciseEditorPage {
 
   private multiSelect(label: string): Locator {
     return this.page.getByRole("button", {
-      name: new RegExp(`^${label}(, \\d+ selected)?$`),
+      name: new RegExp(`^${label}( \\(required\\))?(, \\d+ selected)?$`),
     });
   }
 
@@ -269,7 +269,11 @@ export class ExerciseEditorPage {
     picked: readonly string[],
   ): Promise<void> {
     await expect(this.multiSelect(label)).toHaveAccessibleName(
-      picked.length === 0 ? label : `${label}, ${picked.length} selected`,
+      new RegExp(
+        picked.length === 0
+          ? `^${label}( \\(required\\))?$`
+          : `^${label}( \\(required\\))?, ${picked.length} selected$`,
+      ),
     );
     for (const choice of picked) {
       await expect(

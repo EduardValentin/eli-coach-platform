@@ -44,7 +44,7 @@ describe("FieldLayout", () => {
 
     // assert
     expect(screen.getByRole("textbox")).toHaveAccessibleName(
-      "Weight(required)",
+      "Weight (required)",
     );
     expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
   });
