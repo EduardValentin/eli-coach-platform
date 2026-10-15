@@ -29,7 +29,7 @@ import { exerciseLibraryContext } from "~/features/exercise-library/server/guard
 
 import { EXERCISE_TYPE_LABELS } from "./exercise-form";
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 6;
 
 export async function loader(args: LoaderFunctionArgs) {
   return args.context.get(exerciseLibraryContext).exerciseLibrary.list(args);
@@ -64,6 +64,7 @@ export default function ExerciseLibraryRoute() {
               <TableHead>Tags</TableHead>
               <TableHead>Target muscles</TableHead>
               <TableHead>Difficulty</TableHead>
+              <TableHead data-parity="exercise-video">Video</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -143,6 +144,12 @@ function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
         <Badge data-parity="exercise-difficulty" tone="secondary">
           {exercise.difficulty}
         </Badge>
+      </TableCell>
+      <TableCell
+        className="text-sm text-text-secondary"
+        data-parity="exercise-video"
+      >
+        {exercise.video ? "Attached" : "—"}
       </TableCell>
       <TableCell data-parity="exercise-actions-cell">
         <div

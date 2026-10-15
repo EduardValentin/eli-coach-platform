@@ -358,3 +358,20 @@ describe("button marked aria-disabled", () => {
     expect(classes).not.toContain("not-aria-disabled:hover:bg-surface-quiet");
   });
 });
+
+describe("button marked aria-invalid", () => {
+  it("draws its border in the danger colour", () => {
+    // arrange
+    // act
+    render(
+      <Button aria-invalid variant="ghost">
+        Replace
+      </Button>,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Replace" })).toHaveClass(
+      "aria-invalid:border-feedback-danger",
+    );
+  });
+});

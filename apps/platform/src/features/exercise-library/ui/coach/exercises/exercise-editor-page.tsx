@@ -1,3 +1,4 @@
+import type { UploadState } from "@eli-coach-platform/infrastructure/http";
 import {
   PortalBackLink,
   PortalPageHeader,
@@ -33,13 +34,41 @@ import {
   exerciseFormResolver,
   exerciseFormValuesOf,
   exerciseRequestOf,
+  exerciseVideoProblemCopy,
   newExerciseFormValues,
   shownExerciseProblemsOf,
+  UNTOUCHED_VIDEO,
   type ExerciseFormValues,
+  type ExerciseVideoChoice,
+  type ExerciseVideoEntry,
 } from "./exercise-form";
+import {
+  ExerciseVideoField,
+  isVideoUploading,
+  type ExerciseVideoSaving,
+} from "./exercise-video-field";
 import { useExerciseSave, type ExerciseSaveOutcome } from "./use-exercise-save";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
+
+const NOT_UPLOADING: ExerciseVideoSaving = { state: "idle" };
+
+const UPLOAD_FAILED: ExerciseVideoSaving = { state: "failed" };
+
+function videoSavingOf(
+  choice: ExerciseVideoChoice,
+  failedUpload: File | null,
+  uploadState: UploadState,
+): ExerciseVideoSaving {
+  if (choice.kind !== "attach") return NOT_UPLOADING;
+  if (choice.file === failedUpload) return UPLOAD_FAILED;
+
+  return uploadState;
+}
+
+function attachedFileOf(choice: ExerciseVideoChoice): File | null {
+  return choice.kind === "attach" ? choice.file : null;
+}
 
 export async function loader(args: LoaderFunctionArgs) {
   const { exerciseLibrary } = args.context.get(exerciseLibraryContext);
@@ -77,6 +106,8 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   });
   const values = form.watch();
   const problems = shownExerciseProblemsOf(form.formState.errors);
+  const [video, setVideo] = useState<ExerciseVideoEntry>(UNTOUCHED_VIDEO);
+  const [failedUpload, setFailedUpload] = useState<File | null>(null);
 
   useEffect(
     () =>
@@ -111,6 +142,23 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     return true;
   };
 
+  const showRefusedVideo = (problems: ExerciseProblems): boolean => {
+    if (problems.video === undefined || video.choice.kind !== "attach") {
+      return false;
+    }
+
+    const problem = exerciseVideoProblemCopy(problems.video, video.choice.file);
+    setVideo((current) => ({ ...current, problem }));
+    return true;
+  };
+
+  const showRefusal = (problems: ExerciseProblems): boolean => {
+    const fieldsShown = showRefusedFields(problems);
+    const videoShown = showRefusedVideo(problems);
+
+    return fieldsShown || videoShown;
+  };
+
   const settle = (outcome: ExerciseSaveOutcome) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
@@ -118,18 +166,31 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
       return;
     }
 
-    if (outcome.status === "refused" && showRefusedFields(outcome.problems)) {
+    if (outcome.status === "refused" && showRefusal(outcome.problems)) {
+      return;
+    }
+
+    if (video.choice.kind === "attach") {
+      setFailedUpload(video.choice.file);
       return;
     }
 
     toast.error(SAVE_FAILED);
   };
 
-  const { save, saving } = useExerciseSave(exercise?.id ?? null, settle);
+  const { save, saving, uploadState } = useExerciseSave(
+    exercise?.id ?? null,
+    settle,
+  );
+  const videoSaving = videoSavingOf(video.choice, failedUpload, uploadState);
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
-    save(exerciseRequestOf(submitted));
+    setFailedUpload(null);
+    save(
+      exerciseRequestOf(submitted, video.choice),
+      attachedFileOf(video.choice),
+    );
   });
 
   return (
@@ -151,7 +212,19 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
             problems={problems}
             values={values}
           />
-          <ExerciseCoachingSection form={form} problems={problems} />
+          <ExerciseCoachingSection
+            form={form}
+            problems={problems}
+            videoField={
+              <ExerciseVideoField
+                onChange={setVideo}
+                onRetry={() => void submit()}
+                saving={videoSaving}
+                stored={exercise?.video ?? null}
+                video={video}
+              />
+            }
+          />
         </div>
 
         <div
@@ -171,8 +244,14 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
             type="submit"
             variant="primary"
           >
-            <Check aria-hidden="true" size={16} />
-            {exercise ? "Save changes" : "Create exercise"}
+            {isVideoUploading(videoSaving) ? (
+              "Saving…"
+            ) : (
+              <>
+                <Check aria-hidden="true" size={16} />
+                {exercise ? "Save changes" : "Create exercise"}
+              </>
+            )}
           </Button>
         </div>
       </form>

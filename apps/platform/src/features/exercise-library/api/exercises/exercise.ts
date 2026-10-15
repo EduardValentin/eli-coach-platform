@@ -4,11 +4,12 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
+import { uploadOutcomeOf } from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
+import { exerciseVideoUploadProgress } from "~/features/exercise-library/public/exercise-video-upload-progress";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
 const ALLOWED_METHODS = ["PUT"];
@@ -31,6 +32,6 @@ export async function loader(_args: LoaderFunctionArgs) {
   });
 }
 
-export function clientAction({ serverAction }: ClientActionFunctionArgs) {
-  return fetcherOutcomeOf(serverAction);
+export function clientAction({ request }: ClientActionFunctionArgs) {
+  return uploadOutcomeOf(request, exerciseVideoUploadProgress);
 }

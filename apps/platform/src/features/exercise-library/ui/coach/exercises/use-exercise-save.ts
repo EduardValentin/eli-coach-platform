@@ -1,7 +1,10 @@
-import { useEffect, useEffectEvent } from "react";
+import { useUploadState } from "@eli-coach-platform/infrastructure/http";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useFetcher } from "react-router";
 
+import { exerciseVideoUploadProgress } from "~/features/exercise-library/public/exercise-video-upload-progress";
 import {
+  EXERCISE_FORM_FIELDS,
   exerciseProblemsAnswerSchema,
   exerciseSavedAnswerSchema,
   type ExerciseProblems,
@@ -39,13 +42,24 @@ function saveTargetOf(exerciseId: string | null): ExerciseSaveTarget {
     : { action: exercisePath(exerciseId), method: "put" };
 }
 
+function multipartSaveOf(request: ExerciseRequest, video: File): FormData {
+  const formData = new FormData();
+  formData.append(EXERCISE_FORM_FIELDS.exercise, JSON.stringify(request));
+  formData.append(EXERCISE_FORM_FIELDS.video, video);
+
+  return formData;
+}
+
 export function useExerciseSave(
   exerciseId: string | null,
   onSettled: (outcome: ExerciseSaveOutcome) => void,
 ) {
   const { data, state, submit } = useFetcher<unknown>();
+  const awaitingAnswer = useRef(false);
+  const uploadState = useUploadState(exerciseVideoUploadProgress, state);
 
   const settle = useEffectEvent((answer: unknown) => {
+    awaitingAnswer.current = false;
     onSettled(outcomeOf(answer));
   });
 
@@ -57,13 +71,18 @@ export function useExerciseSave(
 
   const target = saveTargetOf(exerciseId);
 
-  const save = (request: ExerciseRequest) => {
-    void submit(request, {
-      ...target,
-      defaultShouldRevalidate: false,
-      encType: "application/json",
-    });
+  const save = (request: ExerciseRequest, video: File | null) => {
+    if (awaitingAnswer.current) return;
+
+    awaitingAnswer.current = true;
+    const options = { ...target, defaultShouldRevalidate: false };
+    void (video
+      ? submit(multipartSaveOf(request, video), {
+          ...options,
+          encType: "multipart/form-data",
+        })
+      : submit(request, { ...options, encType: "application/json" }));
   };
 
-  return { save, saving: state !== "idle" };
+  return { save, saving: state !== "idle", uploadState };
 }

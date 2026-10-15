@@ -30,6 +30,8 @@ export {
 } from "./exercise-video";
 export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 export {
+  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
+  EXERCISE_VIDEO_EXTENSIONS,
   MAX_EXERCISE_VIDEO_BYTES,
   type ExerciseVideoChoice,
 } from "./exercise-video-intake";

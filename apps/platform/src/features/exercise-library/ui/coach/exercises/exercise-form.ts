@@ -1,10 +1,13 @@
 import {
+  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
   DIFFICULTIES,
   EQUIPMENT,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
+  EXERCISE_VIDEO_EXTENSIONS,
   ExerciseDraft,
   MAX_EXERCISE_NAME_LENGTH,
+  MAX_EXERCISE_VIDEO_BYTES,
   MAX_FORM_CUES_LENGTH,
   MUSCLES,
   defaultUnitFor,
@@ -20,6 +23,7 @@ import {
 import type { FieldErrors, Resolver } from "react-hook-form";
 
 import type {
+  ExerciseProblems,
   ExerciseRequest,
   ExerciseView,
 } from "~/features/exercise-library/public/exercises";
@@ -174,10 +178,85 @@ export function withPrimaryMuscleToggled(
   };
 }
 
-export function exerciseRequestOf(values: ExerciseFormValues): ExerciseRequest {
-  const { unitPicked: _unitPicked, ...request } = values;
+export type ExerciseVideoChoice =
+  | { kind: "keep" }
+  | { kind: "remove" }
+  | { kind: "attach"; file: File; previewUrl: string };
 
-  return { ...request, video: "keep" };
+export type ExerciseVideoEntry = {
+  choice: ExerciseVideoChoice;
+  problem: string | null;
+};
+
+type ExerciseVideoProblem = NonNullable<ExerciseProblems["video"]>;
+
+const MEGABYTE = 1024 * 1024;
+
+export const MAX_EXERCISE_VIDEO_MEGABYTES = MAX_EXERCISE_VIDEO_BYTES / MEGABYTE;
+
+export const EXERCISE_VIDEO_ACCEPT = [
+  ...EXERCISE_VIDEO_EXTENSIONS.map((extension) => `.${extension}`),
+  ...ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
+].join(",");
+
+export const KEEP_VIDEO: ExerciseVideoChoice = { kind: "keep" };
+
+export const REMOVE_VIDEO: ExerciseVideoChoice = { kind: "remove" };
+
+export const UNTOUCHED_VIDEO: ExerciseVideoEntry = {
+  choice: KEEP_VIDEO,
+  problem: null,
+};
+
+function isVideoFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+
+  return (
+    ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES.includes(file.type) ||
+    EXERCISE_VIDEO_EXTENSIONS.some((extension) =>
+      name.endsWith(`.${extension}`),
+    )
+  );
+}
+
+function videoTooLargeMessage(file: File): string {
+  return `${file.name} is larger than ${MAX_EXERCISE_VIDEO_MEGABYTES} MB`;
+}
+
+export function exerciseVideoRefusalOf(file: File): string | null {
+  if (!isVideoFile(file)) {
+    return `${file.name} is not an .mp4 or .mov — only .mp4 and .mov videos are supported`;
+  }
+
+  if (file.size > MAX_EXERCISE_VIDEO_BYTES) {
+    return videoTooLargeMessage(file);
+  }
+
+  return null;
+}
+
+export function exerciseVideoProblemCopy(
+  problem: ExerciseVideoProblem,
+  file: File,
+): string {
+  return problem === "too-large"
+    ? videoTooLargeMessage(file)
+    : `${file.name} doesn’t contain an MP4 or MOV video.`;
+}
+
+function exerciseDraftInputOf(
+  values: ExerciseFormValues,
+): Omit<ExerciseFormValues, "unitPicked"> {
+  const { unitPicked: _unitPicked, ...draft } = values;
+
+  return draft;
+}
+
+export function exerciseRequestOf(
+  values: ExerciseFormValues,
+  video: ExerciseVideoChoice,
+): ExerciseRequest {
+  return { ...exerciseDraftInputOf(values), video: video.kind };
 }
 
 export function exerciseFieldProblemsOf(
@@ -209,7 +288,10 @@ export function exerciseFormResolver(
   otherNames: () => readonly string[],
 ): Resolver<ExerciseFormValues> {
   return (values) => {
-    const draft = ExerciseDraft.from(exerciseRequestOf(values), otherNames());
+    const draft = ExerciseDraft.from(
+      exerciseDraftInputOf(values),
+      otherNames(),
+    );
 
     if (draft.status === "valid") {
       return { values, errors: {} };
