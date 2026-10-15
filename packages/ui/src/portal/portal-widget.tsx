@@ -6,8 +6,7 @@ import type { DataAttributes } from "../lib/data-attributes";
 import { cardVariants } from "../primitives/card";
 import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
 import { PanelTitleIcon } from "./panel-title-icon";
-
-type WidgetDensity = "default" | "compact";
+import type { WidgetDensity } from "./widget-density";
 
 type PortalWidgetProps = DataAttributes & {
   title: ReactNode;

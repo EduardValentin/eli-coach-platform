@@ -279,6 +279,32 @@ describe("StoreCartDrawer", () => {
     ).toBeInTheDocument();
   });
 
+  it("ticks the terms when the visitor clicks their statement", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+
+    // act
+    await user.click(within(dialog).getByText(/^I agree to the/));
+
+    // assert
+    expect(termsCheckbox(dialog)).toBeChecked();
+  });
+
   it("delivers the selected resources and clears the cart only after accepted delivery", async () => {
     // arrange
     const user = userEvent.setup();
@@ -311,10 +337,8 @@ describe("StoreCartDrawer", () => {
     await continueToAcquisitionDetails(dialog, user);
     await user.type(emailField(dialog), "woman@example.com");
     expect(
-      within(dialog)
-        .getByRole("link", { name: "Terms & Conditions" })
-        .closest("label"),
-    ).toBeNull();
+      within(dialog).getByRole("link", { name: "Terms & Conditions" }),
+    ).toHaveAttribute("href", "/terms");
     await user.click(termsCheckbox(dialog));
     await user.click(
       within(dialog).getByRole("checkbox", {

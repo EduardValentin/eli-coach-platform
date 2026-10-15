@@ -11,11 +11,12 @@ import {
 import {
   Alert,
   Button,
-  Checkbox,
+  CheckboxField,
   InlineProblem,
   Input,
   Label,
-  RequiredMark,
+  Link,
+  linkVariants,
 } from "@eli-coach-platform/ui/primitives";
 import {
   AlertCircle,
@@ -25,13 +26,12 @@ import {
   ShoppingBag,
   Trash2,
 } from "lucide-react";
-import { type ReactNode, useId } from "react";
+import { useId } from "react";
 import {
   Controller,
   type SubmitHandler,
   type UseFormReturn,
 } from "react-hook-form";
-import { Link } from "react-router";
 
 import {
   BotDetectionWidget,
@@ -101,8 +101,6 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   });
   const emailErrorId = useId();
   const responseErrorId = useId();
-  const termsId = useId();
-  const marketingId = useId();
   const catalog = catalogQuery.data ?? [];
   const selectedProducts = selectStoreCartProducts(productSlugs, catalog);
 
@@ -169,12 +167,10 @@ export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
               emailErrorId={emailErrorId}
               form={acquisition.form}
               isSubmitting={acquisition.isSubmitting}
-              marketingId={marketingId}
               onBack={acquisition.showCart}
               onSubmit={acquisition.submit}
               responseError={acquisition.responseError}
               responseErrorId={responseErrorId}
-              termsId={termsId}
             />
           ) : null}
           {acquisition.step === "success" ? <AcquisitionSuccess /> : null}
@@ -303,12 +299,10 @@ function AcquisitionDetails(props: {
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
   isSubmitting: boolean;
-  marketingId: string;
   onBack: () => void;
   onSubmit: SubmitHandler<StoreAcquisitionForm>;
   responseError: string | null;
   responseErrorId: string;
-  termsId: string;
 }) {
   const {
     control,
@@ -357,69 +351,62 @@ function AcquisitionDetails(props: {
             {errors.email.message}
           </InlineProblem>
         ) : null}
-        <Controller
-          control={control}
-          name="termsAccepted"
-          render={({ field, fieldState }) => (
-            <ConsentRow
-              checked={field.value}
-              disabled={props.isSubmitting}
-              errorId={`${props.termsId}-error`}
-              errorMessage={fieldState.error?.message}
-              id={props.termsId}
-              inputRef={field.ref}
-              label="I agree to the"
-              onBlur={field.onBlur}
-              onCheckedChange={field.onChange}
-              parity="terms-consent"
-              trailingContent={
-                <>
-                  {" "}
-                  <Link
-                    className="-mx-1 px-1 py-3 text-brand-primary hover:underline"
-                    reloadDocument
-                    to="/terms"
-                  >
-                    Terms &amp; Conditions
-                  </Link>
-                  .
-                  <RequiredMark />
-                </>
-              }
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="marketingConsent"
-          render={({ field }) => (
-            <ConsentRow
-              checked={field.value}
-              disabled={props.isSubmitting}
-              id={props.marketingId}
-              inputRef={field.ref}
-              label={STORE_MARKETING_CONSENT}
-              onBlur={field.onBlur}
-              onCheckedChange={field.onChange}
-              parity="marketing-consent"
-            />
-          )}
-        />
-        <p
-          className="mt-4 text-sm leading-relaxed text-text-secondary"
-          data-parity="privacy-note"
-        >
-          We use your email to deliver these resources and keep evidence of this
-          request. Read our{" "}
-          <Link
-            className="-my-3 -mx-1 inline-flex min-h-11 items-center px-1 text-brand-primary hover:underline"
-            reloadDocument
-            to="/privacy"
+        <div className="mt-6 flex flex-col gap-4">
+          <Controller
+            control={control}
+            name="termsAccepted"
+            render={({ field, fieldState }) => (
+              <CheckboxField
+                checkboxRef={field.ref}
+                checked={field.value}
+                data-parity="terms-consent"
+                disabled={props.isSubmitting}
+                error={fieldState.error?.message}
+                errorRole="alert"
+                label={
+                  <>
+                    I agree to the{" "}
+                    <Link reloadDocument to="/terms" variant="in-text">
+                      Terms &amp; Conditions
+                    </Link>
+                    .
+                  </>
+                }
+                layout="statement"
+                onBlur={field.onBlur}
+                onCheckedChange={field.onChange}
+                required
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="marketingConsent"
+            render={({ field }) => (
+              <CheckboxField
+                checkboxRef={field.ref}
+                checked={field.value}
+                data-parity="marketing-consent"
+                disabled={props.isSubmitting}
+                label={STORE_MARKETING_CONSENT}
+                layout="statement"
+                onBlur={field.onBlur}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <p
+            className="text-sm leading-relaxed text-text-secondary"
+            data-parity="privacy-note"
           >
-            Privacy Policy
-          </Link>
-          .
-        </p>
+            We use your email to deliver these resources and keep evidence of
+            this request. Read our{" "}
+            <Link reloadDocument to="/privacy" variant="in-text">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
         <div className="absolute size-0 overflow-hidden">
           <BotDetectionWidget {...props.botDetectionWidgetProps} />
         </div>
@@ -468,62 +455,6 @@ function AcquisitionDetails(props: {
   );
 }
 
-function ConsentRow(props: {
-  checked: boolean;
-  disabled: boolean;
-  errorId?: string;
-  errorMessage?: string;
-  id: string;
-  inputRef: (instance: HTMLButtonElement | null) => void;
-  label: ReactNode;
-  onBlur: () => void;
-  onCheckedChange: (checked: boolean) => void;
-  parity: string;
-  trailingContent?: ReactNode;
-}) {
-  const statementId = `${props.id}-statement`;
-
-  return (
-    <>
-      <div className="mt-6 flex items-start gap-3" data-parity={props.parity}>
-        <label
-          className="flex min-h-11 shrink-0 cursor-pointer items-center"
-          htmlFor={props.id}
-        >
-          <Checkbox
-            aria-describedby={props.errorMessage ? props.errorId : undefined}
-            aria-invalid={props.errorMessage ? true : undefined}
-            aria-labelledby={statementId}
-            checked={props.checked}
-            disabled={props.disabled}
-            id={props.id}
-            onBlur={props.onBlur}
-            onCheckedChange={(checked) =>
-              props.onCheckedChange(checked === true)
-            }
-            ref={props.inputRef}
-          />
-        </label>
-        <span className="flex min-h-11 items-center text-sm leading-relaxed text-text-primary">
-          <span id={statementId}>
-            <label htmlFor={props.id}>{props.label}</label>
-            {props.trailingContent}
-          </span>
-        </span>
-      </div>
-      {props.errorMessage ? (
-        <p
-          className="ml-7 mt-2 text-sm text-feedback-danger"
-          id={props.errorId}
-          role="alert"
-        >
-          {props.errorMessage}
-        </p>
-      ) : null}
-    </>
-  );
-}
-
 function StoreAcquisitionError(props: { id?: string; message: string }) {
   return (
     <Alert id={props.id}>
@@ -548,7 +479,7 @@ function AcquisitionSuccess() {
       <p className="mt-5 text-sm text-text-secondary">
         Nothing there? Contact{" "}
         <a
-          className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"
+          className={linkVariants({ variant: "in-text" })}
           href={`mailto:${ELI_COACH_CONTACT_EMAIL}`}
         >
           {ELI_COACH_CONTACT_EMAIL}
