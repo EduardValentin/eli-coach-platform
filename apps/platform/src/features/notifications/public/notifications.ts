@@ -1,4 +1,3 @@
-import type { NotificationParty } from "@eli-coach-platform/domain/notification";
 import { z } from "zod";
 
 const notificationSchema = z.object({
@@ -15,11 +14,4 @@ export const notificationBellSchema = z.object({
   checkedAt: z.iso.datetime(),
 });
 
-type NotificationReply = z.infer<typeof notificationSchema>;
-
 export type NotificationBellReply = z.infer<typeof notificationBellSchema>;
-
-export type NotificationDescriber = (
-  notification: NotificationReply,
-  reading: { party: NotificationParty; timeZone: string },
-) => { title: string; line: string; href: string } | null;

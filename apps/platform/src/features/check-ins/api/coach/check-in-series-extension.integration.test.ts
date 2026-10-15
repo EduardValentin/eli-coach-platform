@@ -17,7 +17,9 @@ import {
   CoachingSalesJourney,
   FIRST_PURCHASE,
   type Purchase,
+  type Visitor,
 } from "~integration-test-config/coaching-sales-journey";
+import { NotificationsJourney } from "~integration-test-config/notifications-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -34,10 +36,25 @@ const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
+const notifications = new NotificationsJourney(rig);
 
 const ANA_SESSION: AccountSession = {
   sessionId: "sess_checkin_series_extension_ana",
   subjectId: "user_checkin_series_extension_ana",
+};
+
+const IOANA: Visitor = {
+  email: "ioana.series-extension@example.com",
+  firstName: "Ioana",
+  gender: "female",
+  lastName: "Vlad",
+};
+
+const ELENA: Visitor = {
+  email: "elena.series-extension@example.com",
+  firstName: "Elena",
+  gender: "female",
+  lastName: "Marin",
 };
 
 const PROGRAM_START_API = "/api/coaching-sales/program-start";
@@ -55,7 +72,9 @@ const FIRST_THURSDAY_AFTER_DAY_15 = "2026-11-05T15:00:00.000Z";
 const LAST_THURSDAY_OF_FIRST_PERIOD = "2027-01-14T15:00:00.000Z";
 const FIRST_THURSDAY_OF_RENEWAL = "2027-01-21T15:00:00.000Z";
 const LAST_THURSDAY_OF_RENEWAL = "2027-04-15T14:00:00.000Z";
+const SECOND_THURSDAY_OF_RENEWAL = "2027-01-28T15:00:00.000Z";
 const RENEWED_THROUGH = new Date("2027-04-21T08:00:00.000Z");
+const BEFORE_RENEWAL = new Date("2027-01-04T08:00:00.000Z");
 const WEEKS_IN_A_PERIOD = 13;
 
 describe.sequential("check-in series extension integration", () => {
@@ -118,6 +137,66 @@ describe.sequential("check-in series extension integration", () => {
       expect.objectContaining({ coversUntil: RENEWED_THROUGH }),
     ]);
     expect(await checkIns.sentSeriesEmails(seriesId)).toHaveLength(1);
+  });
+
+  it("gives the coach one entry naming how many renewed weeks fall on a taken hour and the earliest of them", async () => {
+    // arrange
+    const clientId = await submittedAna();
+    const seriesId = await checkIns.seriesSetUp({
+      clientId,
+      ...THURSDAY_EVENINGS,
+    });
+    await rig.holdClock(BEFORE_RENEWAL);
+    await sales.bookCallAt(IOANA, FIRST_THURSDAY_OF_RENEWAL);
+    await sales.bookCallAt(ELENA, SECOND_THURSDAY_OF_RENEWAL);
+    await rig.holdClock(BEFORE_RENEWAL);
+
+    // act
+    await lifecycle.deliverEvent({
+      id: "evt_checkin_series_renewed",
+      type: "invoice.paid",
+      object: stripeInvoiceObject("subscription_cycle", RENEWED_THROUGH),
+    });
+
+    // assert
+    const earliestClash = (await checkIns.seriesWeekRowsOf(seriesId)).find(
+      ({ startsAt }) => startsAt.toISOString() === FIRST_THURSDAY_OF_RENEWAL,
+    );
+    expect(earliestClash?.status).toBe("clash");
+    expect(
+      await notifications.entriesOf(COACH_SESSION, "check-in.series-clashes"),
+    ).toEqual([
+      expect.objectContaining({
+        facts: {
+          clientName: "Ana Popescu",
+          clashes: 2,
+          earliestId: earliestClash?.id,
+          earliestStartsAt: FIRST_THURSDAY_OF_RENEWAL,
+        },
+        unread: true,
+      }),
+    ]);
+    expect(
+      await notifications.entriesOf(ANA_SESSION, "check-in.series-clashes"),
+    ).toEqual([]);
+  });
+
+  it("gives the coach no clash entry when every renewed week is free", async () => {
+    // arrange
+    const clientId = await submittedAna();
+    await checkIns.seriesSetUp({ clientId, ...THURSDAY_EVENINGS });
+
+    // act
+    await lifecycle.deliverEvent({
+      id: "evt_checkin_series_renewed",
+      type: "invoice.paid",
+      object: stripeInvoiceObject("subscription_cycle", RENEWED_THROUGH),
+    });
+
+    // assert
+    expect(
+      await notifications.entriesOf(COACH_SESSION, "check-in.series-clashes"),
+    ).toEqual([]);
   });
 
   it("adds no week twice when the same renewal is delivered again", async () => {

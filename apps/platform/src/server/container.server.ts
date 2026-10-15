@@ -191,6 +191,7 @@ export function createPlatformContainer(options: {
     coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
+    inbox: notificationInbox.handles.inbox,
     incidents,
     meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,
@@ -199,7 +200,7 @@ export function createPlatformContainer(options: {
   const notifications = composeNotificationsFeature({
     clientReach: clients.handles.clientReach,
     clock,
-    expirySources: [],
+    expirySources: [checkIns.handles.expirySource],
     inbox: notificationInbox.handles.inbox,
     incidents,
   });

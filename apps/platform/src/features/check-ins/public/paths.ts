@@ -34,6 +34,10 @@ export function clientCheckInJoinPath(checkInId: string): string {
   return `${CLIENT_CHECK_INS_PATH}/${encodeURIComponent(checkInId)}/join`;
 }
 
+export function clientCheckInPath(checkInId: string): string {
+  return `${CLIENT_CHECK_INS_PATH}?${CHECK_IN_FOCUS_PARAM}=${encodeURIComponent(checkInId)}`;
+}
+
 export function coachCheckInPath(checkInId: string): string {
   return `${COACH_CHECK_INS_PATH}?${CHECK_IN_FOCUS_PARAM}=${encodeURIComponent(checkInId)}`;
 }
