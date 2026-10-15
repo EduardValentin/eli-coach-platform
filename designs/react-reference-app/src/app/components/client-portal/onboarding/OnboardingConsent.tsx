@@ -1,9 +1,6 @@
-import { useId } from 'react';
 import { Link } from 'react-router';
 import type { OnboardingConsents } from '../../../domain/journey';
-import { Checkbox } from '../../ui/checkbox';
-import { RequiredMark } from '../../ui/label';
-import { FIELD_ERROR_CLASS } from '../../../utils/formFieldStyles';
+import { CheckboxField } from '../../CheckboxField';
 
 const PRIVACY_LINK_LABEL = 'How I handle your data →';
 
@@ -32,30 +29,20 @@ export function OnboardingConsent({
   problem,
   onChange,
 }: OnboardingConsentProps) {
-  const checkboxId = useId();
-  const errorId = useId();
-
   return (
-    <div className="grid gap-2" data-parity={PARITY_HOOKS[agreement]}>
-      <div className="flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
-        <Checkbox
-          aria-describedby={problem ? errorId : undefined}
-          aria-invalid={problem !== null}
-          checked={checked}
-          className="mt-0.5"
-          data-parity={`${PARITY_HOOKS[agreement]}-checkbox`}
-          id={checkboxId}
-          onCheckedChange={(next) => onChange(next === true)}
-        />
-        <label
-          className="text-sm leading-relaxed text-text-primary"
-          htmlFor={checkboxId}
-        >
-          {statement}
-          <RequiredMark />
-        </label>
-      </div>
-
+    <CheckboxField
+      checkboxParity={`${PARITY_HOOKS[agreement]}-checkbox`}
+      checked={checked}
+      data-parity={PARITY_HOOKS[agreement]}
+      error={problem ?? undefined}
+      errorParity={`${PARITY_HOOKS[agreement]}-error`}
+      errorRole="alert"
+      frame="inset"
+      label={statement}
+      layout="statement"
+      onCheckedChange={onChange}
+      required
+    >
       {agreement === 'specialCategory' && (
         <Link
           className="mt-1 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
@@ -65,17 +52,6 @@ export function OnboardingConsent({
           {PRIVACY_LINK_LABEL}
         </Link>
       )}
-
-      {problem && (
-        <p
-          className={FIELD_ERROR_CLASS}
-          data-parity={`${PARITY_HOOKS[agreement]}-error`}
-          id={errorId}
-          role="alert"
-        >
-          {problem}
-        </p>
-      )}
-    </div>
+    </CheckboxField>
   );
 }

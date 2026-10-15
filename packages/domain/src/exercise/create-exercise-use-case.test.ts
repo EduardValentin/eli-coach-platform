@@ -14,9 +14,12 @@ import type {
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "coach-account-1";
+const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
 
 const HIP_THRUST = Exercise.reconstitute({
   id: "exercise-1",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Hip thrust",
   type: "resistance",
   unit: "reps",
@@ -30,6 +33,13 @@ const HIP_THRUST = Exercise.reconstitute({
   video: null,
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
+});
+
+const OTHER_COACHS_PLANK = Exercise.reconstitute({
+  ...HIP_THRUST.toSnapshot(),
+  id: "exercise-3",
+  ownerAccountId: OTHER_COACH_ACCOUNT_ID,
+  name: "Plank",
 });
 
 const SQUAT: ExerciseDraftInput = {
@@ -48,6 +58,7 @@ const SQUAT: ExerciseDraftInput = {
 const CREATED_SQUAT: ExerciseSnapshot = {
   ...SQUAT,
   id: "exercise-2",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
   unit: "reps",
@@ -70,8 +81,13 @@ const STAGED: StagedExerciseVideo = {
 const ATTACH = { kind: "attach", staged: STAGED } as const;
 
 function createUseCase() {
+  const stored = [HIP_THRUST, OTHER_COACHS_PLANK];
   const library = {
-    list: vi.fn(async (): Promise<Exercise[]> => [HIP_THRUST]),
+    list: vi.fn(async (ownerAccountId: string): Promise<Exercise[]> =>
+      stored.filter(
+        (exercise) => exercise.toSnapshot().ownerAccountId === ownerAccountId,
+      ),
+    ),
     find: vi.fn(),
     add: vi.fn(async (): Promise<ExerciseAddition> => "added"),
     replace: vi.fn(),
@@ -102,12 +118,13 @@ function createUseCase() {
 }
 
 describe("CreateExerciseUseCase", () => {
-  it("adds the exercise without a video under a new id, its name trimmed, created now", async () => {
+  it("adds the exercise without a video under a new id, owned by the coach who created it, its name trimmed, created now", async () => {
     // arrange
     const { useCase, library, store } = createUseCase();
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: { kind: "keep" },
     });
@@ -124,7 +141,11 @@ describe("CreateExerciseUseCase", () => {
     const { useCase, library, formats, store } = createUseCase();
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     const created = Exercise.reconstitute({
@@ -144,7 +165,11 @@ describe("CreateExerciseUseCase", () => {
     formats.detect.mockResolvedValueOnce(null);
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({
@@ -164,7 +189,11 @@ describe("CreateExerciseUseCase", () => {
     store.discard.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({
@@ -183,6 +212,7 @@ describe("CreateExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: {
         kind: "attach",
@@ -205,6 +235,7 @@ describe("CreateExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " ", primaryMuscles: [] },
       video: ATTACH,
     });
@@ -227,6 +258,7 @@ describe("CreateExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " HIP thrust  " },
       video: ATTACH,
     });
@@ -244,7 +276,11 @@ describe("CreateExerciseUseCase", () => {
     library.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
@@ -258,7 +294,11 @@ describe("CreateExerciseUseCase", () => {
     library.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({ status: "failed" });
@@ -275,7 +315,11 @@ describe("CreateExerciseUseCase", () => {
     library.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({ status: "failed" });
@@ -294,7 +338,11 @@ describe("CreateExerciseUseCase", () => {
     store.remove.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+      video: ATTACH,
+    });
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
@@ -304,12 +352,13 @@ describe("CreateExerciseUseCase", () => {
     });
   });
 
-  it("refuses a name another exercise already has, whatever its case and spaces, without adding it", async () => {
+  it("refuses a name another of her exercises already has, whatever its case and spaces, without adding it", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: " HIP thrust  " },
       video: { kind: "keep" },
     });
@@ -317,6 +366,22 @@ describe("CreateExerciseUseCase", () => {
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
     expect(library.add).not.toHaveBeenCalled();
+  });
+
+  it("adds a name only another coach's exercise has", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: "plank" },
+      video: { kind: "keep" },
+    });
+
+    // assert
+    expect(result.status).toBe("created");
+    expect(library.add).toHaveBeenCalledOnce();
   });
 
   it("reports a failed write and answers that the creation failed", async () => {
@@ -327,6 +392,7 @@ describe("CreateExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: SQUAT,
       video: { kind: "keep" },
     });

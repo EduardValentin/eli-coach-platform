@@ -29,10 +29,10 @@ import type {
 } from '../../context/NutritionContext';
 import { useAppState } from '../../context/AppContext';
 import { pickableItems } from '../../domain/libraryLifecycle';
-import { Label } from '../../components/ui/label';
+import { Label, Legend } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Checkbox } from '../../components/ui/checkbox';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
 import { Input } from '../../components/ui/input';
@@ -733,9 +733,7 @@ function RecipeBuilderInner() {
             </div>
 
             <fieldset className="grid gap-3">
-              <legend className="mb-1 text-sm font-medium">
-                Meal role & tags
-              </legend>
+              <Legend>Meal role & tags</Legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {TAG_FAMILIES.map((family) => {
                   const isMealTime = family === 'meal-time';
@@ -778,14 +776,16 @@ function RecipeBuilderInner() {
                                     onRemove={() => removeTag(family, t.id)}
                                   />
                                 ) : (
-                                  <ToggleChip
-                                    pressed={isSelected}
-                                    onPressedChange={() =>
+                                  <CheckboxChip
+                                    size="compact"
+                                    aria-label={t.label}
+                                    checked={isSelected}
+                                    onCheckedChange={() =>
                                       toggleTag(family, t.id)
                                     }
                                   >
                                     {t.label}
-                                  </ToggleChip>
+                                  </CheckboxChip>
                                 )}
                               </li>
                             );

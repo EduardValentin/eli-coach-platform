@@ -42,9 +42,7 @@ export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
       data-parity-root="AssessmentCallBlock"
       className="mb-8"
       headingId="assessment-call-panel-heading"
-      icon={
-        <Video aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Video}
       title="Assessment call"
     >
       <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">

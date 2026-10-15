@@ -20,8 +20,8 @@ import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from '../../progressPhotoFrame';
+import { CheckboxField } from '../../CheckboxField';
 import { MediaRemoveButton } from '../../MediaRemoveButton';
-import { Checkbox } from '../../ui/checkbox';
 import { cn } from '../../ui/utils';
 
 export type ProgressPhotoConsent =
@@ -120,34 +120,6 @@ function PhotoTile({
   );
 }
 
-function ConsentCheckbox({
-  ticked,
-  onTickedChange,
-}: {
-  ticked: boolean;
-  onTickedChange: (ticked: boolean) => void;
-}) {
-  const checkboxId = useId();
-
-  return (
-    <div className="flex items-start gap-3">
-      <Checkbox
-        checked={ticked}
-        className="mt-0.5"
-        data-parity="progress-photos-checkbox"
-        id={checkboxId}
-        onCheckedChange={(checked) => onTickedChange(checked === true)}
-      />
-      <label
-        className="text-sm leading-relaxed text-text-primary"
-        htmlFor={checkboxId}
-      >
-        {PROGRESS_PHOTO_CONSENT_COPY}
-      </label>
-    </div>
-  );
-}
-
 export function ProgressPhotoBlock({
   consent,
   photos,
@@ -186,12 +158,15 @@ export function ProgressPhotoBlock({
       </p>
 
       {consent.status !== 'recorded' &&  (
-        <ConsentCheckbox
-          onTickedChange={(ticked) => {
+        <CheckboxField
+          checkboxParity="progress-photos-checkbox"
+          checked={consent.ticked}
+          label={PROGRESS_PHOTO_CONSENT_COPY}
+          layout="statement"
+          onCheckedChange={(ticked) => {
             if (!ticked) clearPicks();
             consent.onTickedChange(ticked);
           }}
-          ticked={consent.ticked}
         />
       )}
 

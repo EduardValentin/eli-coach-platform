@@ -103,9 +103,7 @@ export function GoalWidget({
     <PortalWidget
       presentation={presentation}
       title="Goal"
-      icon={
-        <Target aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Target}
       hero={
         goal?.type ?? <span className="text-text-secondary">No goal yet</span>
       }

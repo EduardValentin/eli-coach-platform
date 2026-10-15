@@ -29,13 +29,7 @@ export function CyclePhaseWidget({
     <PortalWidget
       presentation={presentation}
       title="Cycle phase"
-      icon={
-        <Droplet
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={Droplet}
       headingId={headingId}
       footer={footer}
       className={className}

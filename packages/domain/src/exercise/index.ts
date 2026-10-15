@@ -20,6 +20,7 @@ export { type ExerciseIds } from "./exercise-ids";
 export {
   type ExerciseAddition,
   type ExerciseLibrary,
+  type ExerciseReference,
   type ExerciseReplacement,
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";

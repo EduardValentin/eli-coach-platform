@@ -392,7 +392,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         <SettingsSection
           headingId="exercise-about-heading"
           title="About the exercise"
-          icon={<Dumbbell aria-hidden="true" className="text-brand-secondary" size={18} />}
+          icon={Dumbbell}
         >
           <SettingsRows>
             <SettingsRow
@@ -458,7 +458,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         <SettingsSection
           headingId="exercise-work-heading"
           title="What it works"
-          icon={<Target aria-hidden="true" className="text-brand-secondary" size={18} />}
+          icon={Target}
         >
           <SettingsRows>
             <SettingsRow
@@ -545,7 +545,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         <SettingsSection
           headingId="exercise-coaching-heading"
           title="Coaching"
-          icon={<Film aria-hidden="true" className="text-brand-secondary" size={18} />}
+          icon={Film}
         >
           <SettingsRows>
             <SettingsRow

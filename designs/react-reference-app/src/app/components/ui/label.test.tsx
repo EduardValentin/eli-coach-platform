@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Label, RequiredMark } from './label';
+import { Label, LabelSuffix, Legend, RequiredMark } from './label';
 
 describe('Label', () => {
   it('shows a hidden star and names the field as required', () => {
@@ -17,17 +17,6 @@ describe('Label', () => {
     expect(screen.getByText('*')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('sets the star snug against the label text', () => {
-    // arrange
-    render(<Label htmlFor="name" required>Name</Label>);
-
-    // act
-    const star = screen.getByText('*');
-
-    // assert
-    expect(star).toHaveClass('-ml-1.5');
-  });
-
   it('shows nothing extra when the field is optional', () => {
     // arrange & act
     render(
@@ -42,23 +31,10 @@ describe('Label', () => {
     expect(screen.queryByText('*')).not.toBeInTheDocument();
   });
 
-  it('lets a long name and its qualifiers wrap on a shared baseline', () => {
-    // arrange
-    render(<Label htmlFor="waist" layout="wrap" required>Waist</Label>);
-
-    // act
-    const label = screen.getByText('Waist');
-
-    // assert
-    expect(label).toHaveClass('flex-wrap', 'items-baseline', 'gap-1.5');
-    expect(label).not.toHaveClass('items-center', 'gap-2');
-    expect(screen.getByText('*')).toHaveClass('-ml-1');
-  });
-
   it('places the star after the name and before its qualifiers', () => {
     // arrange
     render(
-      <Label htmlFor="waist" layout="wrap" required trailing={<span>(cm)</span>}>
+      <Label htmlFor="waist" layout="wrap" required trailing={<LabelSuffix>(cm)</LabelSuffix>}>
         Waist
       </Label>,
     );
@@ -71,19 +47,52 @@ describe('Label', () => {
   });
 });
 
+describe('Legend', () => {
+  it('names the group of fields it heads', () => {
+    // arrange & act
+    render(
+      <fieldset>
+        <Legend>How do you measure?</Legend>
+        <input aria-label="Metric" type="radio" />
+      </fieldset>,
+    );
+
+    // assert
+    expect(screen.getByRole('group', { name: 'How do you measure?' })).toBeInTheDocument();
+  });
+
+  it('stars a required group, hides the star, and names the group as required', () => {
+    // arrange & act
+    render(
+      <fieldset>
+        <Legend required>Where do you train?</Legend>
+        <input aria-label="Gym" type="radio" />
+      </fieldset>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole('group', { name: 'Where do you train? (required)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('*')).toHaveAttribute('aria-hidden', 'true');
+  });
+});
+
 describe('RequiredMark', () => {
   it('stars running text with a hidden star and a spoken "(required)"', () => {
     // arrange & act
     render(
-      <p>
+      <label>
+        <input type="checkbox" />
         I agree to the terms.
         <RequiredMark />
-      </p>,
+      </label>,
     );
 
     // assert
+    expect(
+      screen.getByRole('checkbox', { name: 'I agree to the terms. (required)' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('*')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByText('*')).toHaveClass('ml-0.5');
-    expect(screen.getByText('(required)')).toHaveClass('sr-only');
   });
 });

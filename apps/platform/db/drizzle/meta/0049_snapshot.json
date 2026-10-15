@@ -1,5 +1,5 @@
 {
-  "id": "e9cef239-4335-4f51-a790-6f84ec71b540",
+  "id": "efda85e6-1083-4a71-966b-57c787621672",
   "prevId": "6d03ebe1-e558-441e-9731-bbadf09cf097",
   "version": "7",
   "dialect": "postgresql",
@@ -2695,6 +2695,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "owner_account_id": {
+          "name": "owner_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "name": {
           "name": "name",
           "type": "varchar(80)",
@@ -2755,24 +2761,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "video_file_id": {
-          "name": "video_file_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_format": {
-          "name": "video_format",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_size_bytes": {
-          "name": "video_size_bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2787,9 +2775,15 @@
         }
       },
       "indexes": {
-        "exercises_name_unique": {
-          "name": "exercises_name_unique",
+        "exercises_owner_name_unique": {
+          "name": "exercises_owner_name_unique",
           "columns": [
+            {
+              "expression": "owner_account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "lower(btrim(\"name\"))",
               "asc": true,
@@ -2803,7 +2797,22 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "exercises_owner_account_id_accounts_id_fk": {
+          "name": "exercises_owner_account_id_accounts_id_fk",
+          "tableFrom": "exercises",
+          "tableTo": "accounts",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "owner_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2819,14 +2828,6 @@
         "exercises_difficulty_check": {
           "name": "exercises_difficulty_check",
           "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
-        },
-        "exercises_video_complete_check": {
-          "name": "exercises_video_complete_check",
-          "value": "(\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_format\" is null) and (\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_size_bytes\" is null)"
-        },
-        "exercises_video_format_check": {
-          "name": "exercises_video_format_check",
-          "value": "\"app\".\"exercises\".\"video_format\" in ('mp4', 'mov')"
         }
       },
       "isRLSEnabled": false

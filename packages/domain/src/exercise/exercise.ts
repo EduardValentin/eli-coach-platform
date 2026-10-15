@@ -11,6 +11,7 @@ import {
 
 export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   id: string;
+  ownerAccountId: string;
   video: ExerciseVideoSnapshot | null;
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +28,7 @@ export type ExerciseVideoChange =
 
 type AddedExerciseInput = {
   id: string;
+  ownerAccountId: string;
   draft: ExerciseDraft;
   at: Date;
   video: ExerciseVideoChange;
@@ -49,6 +51,7 @@ export class Exercise {
   static added(input: AddedExerciseInput): Exercise {
     return new Exercise({
       id: input.id,
+      ownerAccountId: input.ownerAccountId,
       ...input.draft.toSnapshot(),
       video:
         input.video.kind === "attach" ? input.video.video.toSnapshot() : null,

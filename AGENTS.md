@@ -7,7 +7,7 @@ Repository operating rules. `docs/architecture/`, `DESIGN.md`, and `PRD.md` are 
 This production app is backed by a reference prototype in `designs/react-reference-app`: a React single-page app with mocked backend, auth, email, and payments, and a global Dev Toggle for switching app states. The prototype is the source of truth for flows, design, domain objects, and business rules. Production must not contain features or design absent from the prototype; the prototype may run ahead of production.
 
 - Before any work that adds or changes user-visible UI, in production or in the prototype, load the `prototype-backed-workflow` skill and follow it, including its parity gate before a PR.
-- Parity artifacts live only under the gitignored `.parity/` root and are never committed. `DESIGN.md` records current state, never parity or history.
+- Parity artifacts live under `.parity/`: the map, pairings and states files are committed with the code, and per-session folders under the gitignored `.parity/sessions/` never are. `DESIGN.md` records current state, never parity or history.
 - The prototype sits outside the pnpm workspace: npm on the same Node version, verified by its own `npm test` and `npm run build`.
 
 ## Sources of Truth

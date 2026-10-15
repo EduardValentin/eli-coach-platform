@@ -6,6 +6,7 @@ import { ExerciseVideo } from "./exercise-video";
 
 const ADDED_AT = new Date("2026-10-14T09:00:00.000Z");
 const REVISED_AT = new Date("2026-10-15T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "coach-account-1";
 
 const SQUAT: ExerciseDraftInput = {
   name: "Back squat",
@@ -44,6 +45,7 @@ function validDraft(input: ExerciseDraftInput): ExerciseDraft {
 function addedWith(video: ExerciseVideo | null): Exercise {
   return Exercise.added({
     id: "exercise-1",
+    ownerAccountId: COACH_ACCOUNT_ID,
     draft: validDraft(SQUAT),
     at: ADDED_AT,
     video: video ? { kind: "attach", video } : { kind: "keep" },
@@ -51,13 +53,14 @@ function addedWith(video: ExerciseVideo | null): Exercise {
 }
 
 describe("Exercise", () => {
-  it("is added with its draft and no video, created and updated at the same moment", () => {
+  it("is added with its draft and no video, owned by the coach who added it, created and updated at the same moment", () => {
     // arrange
     const draft = validDraft(SQUAT);
 
     // act
     const exercise = Exercise.added({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft,
       at: ADDED_AT,
       video: { kind: "keep" },
@@ -66,6 +69,7 @@ describe("Exercise", () => {
     // assert
     expect(exercise.toSnapshot()).toEqual({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       video: null,
       createdAt: ADDED_AT,
@@ -86,7 +90,7 @@ describe("Exercise", () => {
     expect(exercise.video?.isStoredAs("video-1")).toBe(true);
   });
 
-  it("is revised as a whole, keeping its id, its video and the moment it was created", () => {
+  it("is revised as a whole, keeping its id, its owner, its video and the moment it was created", () => {
     // arrange
     const exercise = addedWith(FIRST_VIDEO);
     const draft = validDraft({
@@ -106,6 +110,7 @@ describe("Exercise", () => {
     // assert
     expect(revision.exercise.toSnapshot()).toEqual({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       video: FIRST_VIDEO.toSnapshot(),
       createdAt: ADDED_AT,

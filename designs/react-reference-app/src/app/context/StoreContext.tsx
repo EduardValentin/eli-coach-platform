@@ -121,7 +121,7 @@ export const STORE_PRODUCTS: Product[] = [
 
 export type Currency = 'USD' | 'EUR';
 
-interface CartItem {
+export interface CartItem {
   product: Product;
 }
 

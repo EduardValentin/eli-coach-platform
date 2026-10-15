@@ -125,13 +125,7 @@ export function SubscriptionSummary({
       data-parity-root="SubscriptionSummary"
       className={className}
       headingId="subscription-panel-heading"
-      icon={
-        <CreditCard
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CreditCard}
       title="Subscription"
     >
       <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3">

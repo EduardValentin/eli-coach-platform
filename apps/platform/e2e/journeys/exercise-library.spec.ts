@@ -48,12 +48,12 @@ test(
     exerciseLibrary,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
     const created: SavedExercise = {
-      name: `Glute bridge ${runId}`,
+      name: `Glute bridge ${scenarioTag}`,
       type: "Resistance",
       unit: "Time",
       sides: "One side at a time",
@@ -66,7 +66,7 @@ test(
     };
     const edited: SavedExercise = {
       ...created,
-      name: `Weighted glute bridge ${runId}`,
+      name: `Weighted glute bridge ${scenarioTag}`,
       equipment: ["Mat", "Barbell"],
       difficulty: "Intermediate",
       tags: ["Strength", "Hypertrophy"],
@@ -170,11 +170,11 @@ test(
     exerciseRequests,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const takenName = `Hip thrust ${runId}`;
+    const takenName = `Hip thrust ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -188,10 +188,10 @@ test(
     await exerciseEditor.expectNewExercise();
 
     // act
-    await exerciseEditor.enter({ name: `Lunge ${runId}` });
+    await exerciseEditor.enter({ name: `Lunge ${scenarioTag}` });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Primary muscles",
       "Pick at least one primary muscle",
     );
@@ -207,7 +207,7 @@ test(
     await exerciseEditor.enter({ type: "Resistance" });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Primary muscles",
       "Pick at least one primary muscle",
     );
@@ -223,13 +223,13 @@ test(
     await exerciseEditor.enter({ name: "   " });
 
     // assert
-    await exerciseEditor.expectProblem("Name", "Give the exercise a name");
+    await exerciseEditor.expectOnlyProblem("Name", "Give the exercise a name");
 
     // act
     await exerciseEditor.enter({ name: "n".repeat(81) });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "Keep the name to 80 characters",
     );
@@ -244,19 +244,19 @@ test(
     await exerciseEditor.enter({ name: `  ${takenName.toUpperCase()} ` });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "An exercise with this name already exists",
     );
 
     // act
     await exerciseEditor.enter({
-      name: `Lunge ${runId}`,
+      name: `Lunge ${scenarioTag}`,
       cues: "c".repeat(1_001),
     });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Form cues",
       "Keep the form cues to 1,000 characters",
     );
@@ -280,12 +280,12 @@ test(
     exerciseRequests,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
     const entered: SavedExercise = {
-      name: `Bulgarian split squat ${runId}`,
+      name: `Bulgarian split squat ${scenarioTag}`,
       type: "Resistance",
       unit: "Reps",
       sides: "One side at a time",
@@ -319,7 +319,7 @@ test(
     await exerciseEditor.create();
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "An exercise with this name already exists",
     );
@@ -354,12 +354,12 @@ test(
     exerciseRequests,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const pickedTime = `Wall sit ${runId}`;
-    const defaultReps = `Squat ${runId}`;
+    const pickedTime = `Wall sit ${scenarioTag}`;
+    const defaultReps = `Squat ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -494,13 +494,13 @@ test(
     exerciseRequests,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const later = `Calf raise ${runId}`;
+    const later = `Calf raise ${scenarioTag}`;
     const created: SavedExercise = {
-      name: `ab wheel ${runId}`,
+      name: `ab wheel ${scenarioTag}`,
       type: "Mobility",
       unit: "Reps",
       sides: "One side at a time",
@@ -609,12 +609,12 @@ test(
     exerciseRequests,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const saved = `Step up ${runId}`;
-    const discarded = `Box step up ${runId}`;
+    const saved = `Step up ${scenarioTag}`;
+    const discarded = `Box step up ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -671,13 +671,13 @@ test(
     provisionAccount,
     provisionCoach,
     publicNav,
+    scenarioTag,
     signIn,
     signInAsCoach,
     visitorExerciseRequests,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const kept = hipThrustNamed(`Good morning ${runId}`);
+    const kept = hipThrustNamed(`Good morning ${scenarioTag}`);
     await provisionCoach();
     await provisionAccount("CLIENT");
     await page.goto("/store");
@@ -692,8 +692,11 @@ test(
 
     // act
     const visitorStatuses = [
-      (await visitorExerciseRequests.create(hipThrustNamed(`Visitor ${runId}`)))
-        .status,
+      (
+        await visitorExerciseRequests.create(
+          hipThrustNamed(`Visitor ${scenarioTag}`),
+        )
+      ).status,
       (
         await visitorExerciseRequests.edit(
           exerciseId,
@@ -735,7 +738,8 @@ test(
 
     // act
     const clientStatuses = [
-      (await exerciseRequests.create(hipThrustNamed(`Client ${runId}`))).status,
+      (await exerciseRequests.create(hipThrustNamed(`Client ${scenarioTag}`)))
+        .status,
       (await exerciseRequests.edit(exerciseId, hipThrustNamed("Client")))
         .status,
     ];
@@ -1007,7 +1011,7 @@ test(
     await exerciseEditor.create();
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "An exercise with this name already exists",
     );

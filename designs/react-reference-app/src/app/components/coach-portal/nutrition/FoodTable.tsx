@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useNutrition } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
 import type { SortChoice } from '../../SortControl';
+import { ItemGlyph } from '../../ItemGlyph';
 import { SortableTableHead } from '../../SortableTableHead';
 import {
   Table,
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from '../../ui/table';
 import { FOOD_SORT, type FoodSortKey } from '../../../utils/foodListing';
-import { CATEGORY_LABELS, CATEGORY_ICON_COLOR } from './nutrition-constants';
+import { CATEGORY_LABELS } from './nutrition-constants';
 import { foodIcon } from './food-icons';
 import { TagPill } from './TagPill';
 
@@ -37,15 +38,9 @@ interface FoodTableProps {
 }
 
 function FoodName({ food }: { food: Food }) {
-  const Icon = foodIcon(food.icon);
   return (
     <div className="flex items-center gap-3">
-      <div
-        aria-hidden="true"
-        className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center shrink-0"
-      >
-        <Icon size={18} className={CATEGORY_ICON_COLOR[food.category]} />
-      </div>
+      <ItemGlyph icon={foodIcon(food.icon)} />
       <div>
         <p className="font-semibold text-sm text-text-primary">{food.name}</p>
         <p className="text-xs text-text-secondary mt-0.5">{CATEGORY_LABELS[food.category]}</p>

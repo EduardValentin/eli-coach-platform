@@ -1,15 +1,14 @@
 import type { Clock } from "../shared";
 import type { Exercise, ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
-import type { ExerciseLibrary } from "./exercise-library";
+import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 import type { ExerciseVideoChoice } from "./exercise-video-intake";
 import { ExerciseVideoSaving } from "./exercise-video-saving";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
-type EditExerciseCommand = {
-  exerciseId: string;
+type EditExerciseCommand = ExerciseReference & {
   draft: ExerciseDraftInput;
   video: ExerciseVideoChoice;
 };
@@ -50,14 +49,15 @@ export class EditExerciseUseCase {
   }
 
   private async edit({
+    ownerAccountId,
     exerciseId,
     draft: input,
     video: choice,
   }: EditExerciseCommand): Promise<EditExerciseResult> {
     const { library, clock } = this.options;
     const [exercise, exercises] = await Promise.all([
-      library.find(exerciseId),
-      library.list(),
+      library.find({ ownerAccountId, exerciseId }),
+      library.list(ownerAccountId),
     ]);
 
     if (!exercise) {

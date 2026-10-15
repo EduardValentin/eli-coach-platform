@@ -51,6 +51,54 @@ describe("CheckboxField", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true);
   });
 
+  it("keeps its checkbox out of reach while disabled", () => {
+    // arrange
+    const onCheckedChange = vi.fn();
+
+    // act
+    render(
+      <CheckboxField
+        checked
+        disabled
+        label={STATEMENT}
+        onCheckedChange={onCheckedChange}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("checkbox", { name: STATEMENT })).toBeDisabled();
+  });
+
+  it("names its checkbox with a statement that holds a link and a required mark", () => {
+    // arrange
+    const onCheckedChange = vi.fn();
+
+    // act
+    render(
+      <CheckboxField
+        checked={false}
+        label={
+          <>
+            I agree to the <a href="/terms">Terms &amp; Conditions</a>.
+          </>
+        }
+        layout="statement"
+        onCheckedChange={onCheckedChange}
+        required
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("checkbox", {
+        name: "I agree to the Terms & Conditions. (required)",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Terms & Conditions" }),
+    ).toHaveAttribute("href", "/terms");
+  });
+
   it("describes the checkbox with its problem and marks it invalid", () => {
     // arrange
     const error = "Tick the box to carry on.";

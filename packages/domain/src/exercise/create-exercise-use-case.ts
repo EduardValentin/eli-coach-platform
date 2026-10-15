@@ -10,6 +10,7 @@ import { ExerciseVideoSaving } from "./exercise-video-saving";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
 type CreateExerciseCommand = {
+  ownerAccountId: string;
   draft: ExerciseDraftInput;
   video: ExerciseVideoChoice;
 };
@@ -47,11 +48,14 @@ export class CreateExerciseUseCase {
   }
 
   private async create({
+    ownerAccountId,
     draft: input,
     video: choice,
   }: CreateExerciseCommand): Promise<CreateExerciseResult> {
     const { library, ids, clock } = this.options;
-    const otherNames = (await library.list()).map(({ name }) => name);
+    const otherNames = (await library.list(ownerAccountId)).map(
+      ({ name }) => name,
+    );
     const draft = ExerciseDraft.from(input, otherNames);
     const video = await this.videos.judged(choice);
 
@@ -70,6 +74,7 @@ export class CreateExerciseUseCase {
     const change = await this.videos.keepAccepted(video);
     const exercise = Exercise.added({
       id: ids.generate(),
+      ownerAccountId,
       draft: draft.draft,
       at: clock.now(),
       video: change,

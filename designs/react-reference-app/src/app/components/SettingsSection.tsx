@@ -1,6 +1,8 @@
+import type { LucideIcon } from "lucide-react";
 import type { ElementType, ReactNode, Ref } from "react";
 import { cardVariants } from "./ui/card";
 import { Label, RequiredMark } from "./ui/label";
+import { PanelTitleIcon } from "./PanelTitleIcon";
 import { cn } from "./ui/utils";
 import { WIDGET_TITLE_CLASS } from "./typography";
 
@@ -18,7 +20,7 @@ export function SettingsSection({
   headingId: string;
   headingRef?: Ref<HTMLHeadingElement>;
   title: ReactNode;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   description?: ReactNode;
   footer?: ReactNode;
   className?: string;
@@ -45,7 +47,7 @@ export function SettingsSection({
             WIDGET_TITLE_CLASS,
           )}
         >
-          {icon}
+          {icon && <PanelTitleIcon icon={icon} />}
           {title}
         </h2>
         {description && (

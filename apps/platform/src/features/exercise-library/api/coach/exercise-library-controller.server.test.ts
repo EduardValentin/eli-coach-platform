@@ -48,6 +48,7 @@ const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
 const HIP_THRUST: ExerciseSnapshot = {
   id: EXERCISE_ID,
+  ownerAccountId: COACH.id,
   name: "Hip thrust",
   type: "resistance",
   unit: "reps",
@@ -155,6 +156,7 @@ function createController() {
 
   return {
     controller,
+    listExercises,
     findExercise,
     createExercise,
     editExercise,
@@ -255,15 +257,16 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 }
 
 describe("ExerciseLibraryController#list", () => {
-  it("presents every exercise the library lists", async () => {
+  it("presents every exercise the signed-in coach's library lists", async () => {
     // arrange
-    const { controller } = createController();
+    const { controller, listExercises } = createController();
 
     // act
     const library = await controller.list(argsFor());
 
     // assert
     expect(library).toEqual({ exercises: [HIP_THRUST_VIEW] });
+    expect(listExercises.execute).toHaveBeenCalledWith(COACH.id);
   });
 
   it("refuses a signed-in client", async () => {
@@ -281,15 +284,16 @@ describe("ExerciseLibraryController#list", () => {
 });
 
 describe("ExerciseLibraryController#loadNew", () => {
-  it("opens a blank exercise with the names of every exercise in the library", async () => {
+  it("opens a blank exercise with the names of every exercise in the signed-in coach's library", async () => {
     // arrange
-    const { controller } = createController();
+    const { controller, listExercises } = createController();
 
     // act
     const editor = await controller.loadNew(argsFor());
 
     // assert
     expect(editor).toEqual({ exercise: null, otherNames: ["Hip thrust"] });
+    expect(listExercises.execute).toHaveBeenCalledWith(COACH.id);
   });
 
   it("refuses a signed-in client", async () => {
@@ -307,7 +311,7 @@ describe("ExerciseLibraryController#loadNew", () => {
 });
 
 describe("ExerciseLibraryController#load", () => {
-  it("presents the exercise with the names of the other exercises", async () => {
+  it("presents the signed-in coach's exercise with the names of her other exercises", async () => {
     // arrange
     const { controller, findExercise } = createController();
 
@@ -319,7 +323,10 @@ describe("ExerciseLibraryController#load", () => {
       exercise: HIP_THRUST_VIEW,
       otherNames: ["Back squat"],
     });
-    expect(findExercise.execute).toHaveBeenCalledWith(EXERCISE_ID);
+    expect(findExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      exerciseId: EXERCISE_ID,
+    });
   });
 
   it.each([
@@ -342,7 +349,7 @@ describe("ExerciseLibraryController#load", () => {
 });
 
 describe("ExerciseLibraryController#create", () => {
-  it("creates the exercise and names the library as the next page", async () => {
+  it("creates the exercise for the signed-in coach and names the library as the next page", async () => {
     // arrange
     const { controller, createExercise } = createController();
 
@@ -355,6 +362,7 @@ describe("ExerciseLibraryController#create", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ redirectTo: "/coach/training" });
     expect(createExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "keep" },
     });
@@ -377,6 +385,7 @@ describe("ExerciseLibraryController#create", () => {
     expect(await response.json()).toEqual({ redirectTo: "/coach/training" });
     expect(received()).toEqual(Buffer.from(VIDEO_BYTES));
     expect(createExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "attach", staged: STAGED },
     });
@@ -401,6 +410,7 @@ describe("ExerciseLibraryController#create", () => {
     expect(response.status).toBe(200);
     expect(received()).toEqual(Buffer.from(VIDEO_BYTES));
     expect(createExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "attach", staged: STAGED },
     });
@@ -588,7 +598,7 @@ describe("ExerciseLibraryController#create", () => {
 });
 
 describe("ExerciseLibraryController#edit", () => {
-  it("edits the exercise and names the library as the next page", async () => {
+  it("edits the signed-in coach's exercise and names the library as the next page", async () => {
     // arrange
     const { controller, editExercise } = createController();
 
@@ -602,6 +612,7 @@ describe("ExerciseLibraryController#edit", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ redirectTo: "/coach/training" });
     expect(editExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       exerciseId: EXERCISE_ID,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "keep" },
@@ -622,6 +633,7 @@ describe("ExerciseLibraryController#edit", () => {
 
     // assert
     expect(editExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       exerciseId: EXERCISE_ID,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "remove" },
@@ -642,6 +654,7 @@ describe("ExerciseLibraryController#edit", () => {
     // assert
     expect(response.status).toBe(200);
     expect(editExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
       exerciseId: EXERCISE_ID,
       draft: HIP_THRUST_DRAFT,
       video: { kind: "attach", staged: STAGED },

@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { EditExerciseUseCase } from "./edit-exercise-use-case";
 import { Exercise, type ExerciseSnapshot } from "./exercise";
 import type { ExerciseDraftInput } from "./exercise-draft";
-import type { ExerciseLibrary, ExerciseReplacement } from "./exercise-library";
+import type {
+  ExerciseLibrary,
+  ExerciseReference,
+  ExerciseReplacement,
+} from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 import type {
@@ -13,9 +17,12 @@ import type {
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "coach-account-1";
+const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
 
 const STORED_SQUAT: ExerciseSnapshot = {
   id: "exercise-1",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
   unit: "reps",
@@ -38,6 +45,13 @@ const HIP_THRUST = Exercise.reconstitute({
   primaryMuscles: ["Glutes"],
 });
 
+const OTHER_COACHS_PLANK = Exercise.reconstitute({
+  ...STORED_SQUAT,
+  id: "exercise-3",
+  ownerAccountId: OTHER_COACH_ACCOUNT_ID,
+  name: "Plank",
+});
+
 const SQUAT_REVISED: ExerciseDraftInput = {
   name: " Front squat ",
   type: "mobility",
@@ -53,6 +67,7 @@ const SQUAT_REVISED: ExerciseDraftInput = {
 
 const EDITED_SQUAT: ExerciseSnapshot = {
   id: "exercise-1",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Front squat",
   type: "mobility",
   unit: "time",
@@ -78,12 +93,25 @@ const KEEP = { kind: "keep" } as const;
 const ATTACH = { kind: "attach", staged: STAGED } as const;
 
 function createUseCase() {
-  const stored = [Exercise.reconstitute(STORED_SQUAT), HIP_THRUST];
+  const stored = [
+    Exercise.reconstitute(STORED_SQUAT),
+    HIP_THRUST,
+    OTHER_COACHS_PLANK,
+  ];
+  const ownedBy = (ownerAccountId: string) =>
+    stored.filter(
+      (exercise) => exercise.toSnapshot().ownerAccountId === ownerAccountId,
+    );
   const library = {
-    list: vi.fn(async (): Promise<Exercise[]> => stored),
+    list: vi.fn(async (ownerAccountId: string): Promise<Exercise[]> =>
+      ownedBy(ownerAccountId),
+    ),
     find: vi.fn(
-      async (exerciseId: string): Promise<Exercise | null> =>
-        stored.find(({ id }) => id === exerciseId) ?? null,
+      async ({
+        ownerAccountId,
+        exerciseId,
+      }: ExerciseReference): Promise<Exercise | null> =>
+        ownedBy(ownerAccountId).find(({ id }) => id === exerciseId) ?? null,
     ),
     add: vi.fn(),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
@@ -113,12 +141,13 @@ function createUseCase() {
 }
 
 describe("EditExerciseUseCase", () => {
-  it("replaces the whole exercise, its name trimmed, keeping its id and the moment it was created", async () => {
+  it("replaces the whole exercise, its name trimmed, keeping its id, its owner and the moment it was created", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: KEEP,
@@ -136,6 +165,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: { ...SQUAT_REVISED, name: " back SQUAT " },
       video: KEEP,
@@ -146,12 +176,13 @@ describe("EditExerciseUseCase", () => {
     expect(library.replace).toHaveBeenCalledOnce();
   });
 
-  it("refuses a rename onto another exercise's name without replacing it", async () => {
+  it("refuses a rename onto the name of another of her exercises without replacing it", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: { ...SQUAT_REVISED, name: "hip THRUST" },
       video: KEEP,
@@ -162,12 +193,30 @@ describe("EditExerciseUseCase", () => {
     expect(library.replace).not.toHaveBeenCalled();
   });
 
+  it("renames onto a name only another coach's exercise has", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "exercise-1",
+      draft: { ...SQUAT_REVISED, name: "plank" },
+      video: KEEP,
+    });
+
+    // assert
+    expect(result.status).toBe("edited");
+    expect(library.replace).toHaveBeenCalledOnce();
+  });
+
   it("refuses a draft that breaks a rule without replacing it", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: { ...SQUAT_REVISED, type: "stretching", unit: "reps" },
       video: KEEP,
@@ -188,6 +237,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: KEEP,
@@ -203,7 +253,25 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-404",
+      draft: SQUAT_REVISED,
+      video: KEEP,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(library.replace).not.toHaveBeenCalled();
+  });
+
+  it("finds nothing to edit in another coach's library", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: OTHER_COACH_ACCOUNT_ID,
+      exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -221,6 +289,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: KEEP,
@@ -243,6 +312,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: KEEP,
@@ -262,6 +332,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: ATTACH,
@@ -288,6 +359,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: { kind: "remove" },
@@ -308,6 +380,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: { kind: "remove" },
@@ -328,6 +401,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: ATTACH,
@@ -350,6 +424,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: ATTACH,
@@ -368,6 +443,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: ATTACH,
@@ -388,6 +464,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-404",
       draft: SQUAT_REVISED,
       video: ATTACH,
@@ -407,6 +484,7 @@ describe("EditExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
       exerciseId: "exercise-1",
       draft: SQUAT_REVISED,
       video: ATTACH,
