@@ -94,8 +94,8 @@ export function ExerciseVideoField({
   onRetry,
 }: ExerciseVideoFieldProps) {
   const problemId = useId();
-  const pickerId = useId();
   const replaceInput = useRef<HTMLInputElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
   const replaceButton = useRef<HTMLButtonElement>(null);
   const focusAfterSwap = useRef<VideoFieldFocus>(null);
   const busy = isVideoUploading(upload);
@@ -118,8 +118,8 @@ export function ExerciseVideoField({
     const target = focusAfterSwap.current;
     focusAfterSwap.current = null;
     if (target === "replace") replaceButton.current?.focus();
-    if (target === "picker") document.getElementById(pickerId)?.focus();
-  }, [showsPreview, pickerId]);
+    if (target === "picker") picker.current?.focus();
+  }, [showsPreview]);
 
   const chooseVideo = (file: File) => {
     const problem = browserVideoRefusalMessage(file);
@@ -205,7 +205,7 @@ export function ExerciseVideoField({
         <div className="max-w-md">
           <FileDropzone
             accept={EXERCISE_VIDEO_ACCEPT}
-            id={pickerId}
+            ref={picker}
             hint={VIDEO_GUIDANCE}
             onFileChosen={chooseVideo}
             prompt={VIDEO_PROMPT}
