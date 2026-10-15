@@ -10,7 +10,7 @@ import {
   Progress,
 } from "@eli-coach-platform/ui/primitives";
 import { RefreshCw } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useImperativeHandle, useRef, type Ref } from "react";
 
 import type { ExerciseView } from "~/features/exercise-library/public/exercises";
 
@@ -29,7 +29,10 @@ type StoredExerciseVideo = ExerciseView["video"];
 
 type VideoFieldFocus = "replace" | "picker" | null;
 
+export type ExerciseVideoFieldHandle = { focusReplace: () => void };
+
 type ExerciseVideoFieldProps = {
+  ref?: Ref<ExerciseVideoFieldHandle>;
   stored: StoredExerciseVideo;
   video: ExerciseVideoEntry;
   upload: VideoUploadState;
@@ -92,12 +95,13 @@ export function ExerciseVideoField({
   upload,
   onChange,
   onRetry,
+  ref,
 }: ExerciseVideoFieldProps) {
   const problemId = useId();
   const replaceInput = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const replaceButton = useRef<HTMLButtonElement>(null);
-  const focusAfterSwap = useRef<VideoFieldFocus>(null);
+  const pendingFocus = useRef<VideoFieldFocus>(null);
   const busy = isVideoUploading(upload);
   const shownUrl = shownVideoUrlOf(video, stored);
   const showsPreview = shownUrl !== null;
@@ -114,12 +118,18 @@ export function ExerciseVideoField({
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
+  useImperativeHandle(ref, () => ({
+    focusReplace: () => {
+      pendingFocus.current = "replace";
+    },
+  }));
+
   useEffect(() => {
-    const target = focusAfterSwap.current;
-    focusAfterSwap.current = null;
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
     if (target === "replace") replaceButton.current?.focus();
     if (target === "picker") picker.current?.focus();
-  }, [showsPreview]);
+  });
 
   const chooseVideo = (file: File) => {
     const problem = browserVideoRefusalMessage(file);
@@ -128,7 +138,7 @@ export function ExerciseVideoField({
       return;
     }
 
-    if (!showsPreview) focusAfterSwap.current = "replace";
+    if (!showsPreview) pendingFocus.current = "replace";
     onChange({
       chosen: { kind: "attach", file, previewUrl: URL.createObjectURL(file) },
       problem: null,
@@ -136,7 +146,7 @@ export function ExerciseVideoField({
   };
 
   const remove = () => {
-    focusAfterSwap.current = "picker";
+    pendingFocus.current = "picker";
     onChange({ chosen: stored ? REMOVE_VIDEO : KEEP_VIDEO, problem: null });
   };
 

@@ -892,6 +892,58 @@ describe("focus in the demo video field", () => {
     expect(removeButton()).not.toHaveFocus();
   });
 
+  it("moves to Replace when the server refuses the chosen video on save", async () => {
+    // arrange
+    server.use(
+      http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () =>
+        HttpResponse.json(
+          { problems: { video: "unsupported" } },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await within(videoField()).findByText(
+      "thrust.mp4 doesn’t contain an MP4 or MOV video.",
+    );
+    expect(replaceButton()).toHaveFocus();
+  });
+
+  it("leaves focus on Name when the server refuses the name and the video together", async () => {
+    // arrange
+    server.use(
+      http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () =>
+        HttpResponse.json(
+          { problems: { name: "taken", video: "unsupported" } },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await within(videoField()).findByText(
+      "thrust.mp4 doesn’t contain an MP4 or MOV video.",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Name (required)" }),
+    ).toHaveFocus();
+  });
+
   it("stays on the drop zone when a dropped file is refused", async () => {
     // arrange
     await renderEditor(NEW_EXERCISE_PATH);

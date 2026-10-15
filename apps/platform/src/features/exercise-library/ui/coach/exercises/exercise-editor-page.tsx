@@ -45,6 +45,7 @@ import {
 import {
   ExerciseVideoField,
   isVideoUploading,
+  type ExerciseVideoFieldHandle,
   type VideoUploadState,
 } from "./exercise-video-field";
 import { useExerciseSave, type ExerciseSaveOutcome } from "./use-exercise-save";
@@ -94,6 +95,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const navigate = useNavigate();
   const takenNames = useRef<readonly string[]>(editor.otherNames);
   const sentName = useRef("");
+  const videoField = useRef<ExerciseVideoFieldHandle>(null);
   const [resolver] = useState(() =>
     exerciseFormResolver(() => takenNames.current),
   );
@@ -158,6 +160,8 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const showRefusal = (problems: ExerciseProblems): boolean => {
     const fieldsShown = showRefusedFields(problems);
     const videoShown = showRefusedVideo(problems);
+
+    if (videoShown && !fieldsShown) videoField.current?.focusReplace();
 
     return fieldsShown || videoShown;
   };
@@ -226,6 +230,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
               <ExerciseVideoField
                 onChange={setVideo}
                 onRetry={() => void submit()}
+                ref={videoField}
                 upload={videoUpload}
                 stored={exercise?.video ?? null}
                 video={video}
