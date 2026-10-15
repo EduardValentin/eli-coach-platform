@@ -4,7 +4,6 @@ import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
 import { storedExerciseVideoIds } from "../support/exercise-video-files";
-import { resolveRunId } from "../support/run-id";
 import { setPhoneViewport } from "../support/viewport";
 
 const UNKNOWN_EXERCISE_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
@@ -840,12 +839,12 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const saved = hipThrustNamed(`Kickback ${runId}`);
-    const discarded = `Cable kickback ${runId}`;
+    const saved = hipThrustNamed(`Kickback ${scenarioTag}`);
+    const discarded = `Cable kickback ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -917,12 +916,12 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
     const entered: SavedExercise = {
-      name: `Goblet squat ${runId}`,
+      name: `Goblet squat ${scenarioTag}`,
       type: "Resistance",
       unit: "Reps",
       sides: "Both sides together",
@@ -991,12 +990,12 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const name = `Single-leg deadlift ${runId}`;
-    const renamed = `Banded single-leg deadlift ${runId}`;
+    const name = `Single-leg deadlift ${scenarioTag}`;
+    const renamed = `Banded single-leg deadlift ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -1047,11 +1046,11 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const name = `Hip thrust hold ${runId}`;
+    const name = `Hip thrust hold ${scenarioTag}`;
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -1093,12 +1092,12 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
     const entered: SavedExercise = {
-      name: `Reverse lunge ${runId}`,
+      name: `Reverse lunge ${scenarioTag}`,
       type: "Resistance",
       unit: "Reps",
       sides: "One side at a time",
@@ -1162,11 +1161,11 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const saved = hipThrustNamed(`Frog pump ${runId}`);
+    const saved = hipThrustNamed(`Frog pump ${scenarioTag}`);
     const listed = {
       name: saved.name,
       summary: "Resistance · Barbell, Bench",
@@ -1234,11 +1233,11 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const saved = hipThrustNamed(`Banded walk ${runId}`);
+    const saved = hipThrustNamed(`Banded walk ${scenarioTag}`);
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -1281,11 +1280,11 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const saved = hipThrustNamed(`Sumo deadlift ${runId}`);
+    const saved = hipThrustNamed(`Sumo deadlift ${scenarioTag}`);
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();
@@ -1294,15 +1293,15 @@ test(
     // act
     const refusals = [
       await exerciseRequests.createWithVideo(
-        hipThrustNamed(`Disguised ${runId}`),
+        hipThrustNamed(`Disguised ${scenarioTag}`),
         exerciseVideoSamples.textNamedAsVideo(),
       ),
       await exerciseRequests.createWithVideo(
-        hipThrustNamed(`Over the cap ${runId}`),
+        hipThrustNamed(`Over the cap ${scenarioTag}`),
         exerciseVideoSamples.overTheCap(),
       ),
       await exerciseRequests.createWithVideo(
-        hipThrustNamed(`Over the request cap ${runId}`),
+        hipThrustNamed(`Over the request cap ${scenarioTag}`),
         exerciseVideoSamples.overTheRequestCap(),
       ),
     ];
@@ -1374,13 +1373,13 @@ test(
     provisionAccount,
     provisionCoach,
     publicNav,
+    scenarioTag,
     signIn,
     signInAsCoach,
     visitorExerciseRequests,
   }) => {
     // arrange
-    const runId = resolveRunId();
-    const kept = hipThrustNamed(`Nordic curl ${runId}`);
+    const kept = hipThrustNamed(`Nordic curl ${scenarioTag}`);
     const video = exerciseVideoSamples.landscape;
     await provisionCoach();
     await provisionAccount("CLIENT");
@@ -1402,7 +1401,7 @@ test(
       (await visitorExerciseRequests.openVideo(videoPath, "bytes=0-99")).status,
       (
         await visitorExerciseRequests.createWithVideo(
-          hipThrustNamed(`Visitor ${runId}`),
+          hipThrustNamed(`Visitor ${scenarioTag}`),
           video,
         )
       ).status,
@@ -1427,7 +1426,7 @@ test(
       (await exerciseRequests.openVideo(videoPath, "bytes=0-99")).status,
       (
         await exerciseRequests.createWithVideo(
-          hipThrustNamed(`Client ${runId}`),
+          hipThrustNamed(`Client ${scenarioTag}`),
           video,
         )
       ).status,
@@ -1454,12 +1453,12 @@ test(
     exerciseVideoSamples,
     page,
     provisionCoach,
+    scenarioTag,
     signInAsCoach,
   }) => {
     // arrange
-    const runId = resolveRunId();
     const created: SavedExercise = {
-      name: `Dead bug ${runId}`,
+      name: `Dead bug ${scenarioTag}`,
       type: "Mobility",
       unit: "Reps",
       sides: "One side at a time",

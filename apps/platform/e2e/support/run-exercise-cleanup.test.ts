@@ -1,5 +1,12 @@
-import { existsSync, rmSync } from "node:fs";
-import { resolve } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { cleanUpRunExercises, recordCoachAccount } from "./coach-exercises";
@@ -8,6 +15,7 @@ import { e2eDirectory } from "./repo-paths";
 const issued = vi.hoisted(() => ({
   queries: [] as { statement: string; values: unknown[] }[],
   failure: null as Error | null,
+  deleted: [] as { videoId: string | null }[],
 }));
 
 vi.mock("./database", () => ({
@@ -19,7 +27,7 @@ vi.mock("./database", () => ({
 
       issued.queries.push({ statement, values });
 
-      return { rows: [], rowCount: 2 };
+      return { rows: issued.deleted, rowCount: issued.deleted.length };
     },
     end: async () => undefined,
   }),
@@ -37,14 +45,20 @@ function registryPathFor(runId: string): string {
 
 describe("cleanUpRunExercises", () => {
   let runId: string;
+  let videoRoot: string;
 
   beforeEach(() => {
     runId = uniqueRunId();
     issued.queries.length = 0;
     issued.failure = null;
+    issued.deleted = [];
+    videoRoot = mkdtempSync(join(tmpdir(), "exercise-videos-"));
+    vi.stubEnv("EXERCISE_VIDEO_ROOT", videoRoot);
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
+    rmSync(videoRoot, { force: true, recursive: true });
     if (existsSync(registryPathFor(runId))) {
       rmSync(registryPathFor(runId));
     }
@@ -67,6 +81,24 @@ describe("cleanUpRunExercises", () => {
       },
     ]);
     expect(existsSync(registryPathFor(runId))).toBe(false);
+  });
+
+  it("removes the stored video files of the exercises it deletes, and only those", async () => {
+    // arrange
+    const videos = join(videoRoot, "videos");
+    mkdirSync(videos);
+    writeFileSync(join(videos, "video-deleted"), "deleted");
+    writeFileSync(join(videos, "video-kept"), "kept");
+    recordCoachAccount("user_coach_one", runId);
+    issued.deleted = [{ videoId: "video-deleted" }, { videoId: null }];
+
+    // act
+    const result = await cleanUpRunExercises(runId, "[test]");
+
+    // assert
+    expect(result).toEqual({ allCleaned: true });
+    expect(existsSync(join(videos, "video-deleted"))).toBe(false);
+    expect(existsSync(join(videos, "video-kept"))).toBe(true);
   });
 
   it("touches nothing when the run recorded no coach account", async () => {
