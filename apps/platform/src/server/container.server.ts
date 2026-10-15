@@ -15,7 +15,7 @@ import {
 import {
   createClientResourceStore,
   createProgressPhotoStore,
-} from "@eli-coach-platform/infrastructure/client-files/server";
+} from "@eli-coach-platform/infrastructure/private-files/server";
 import {
   createResourceDocumentPages,
   createResourceFileFormatDetector,
