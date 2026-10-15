@@ -199,7 +199,6 @@ function ResourceForm({
   onSubmissionChange: (submission: Submission) => void;
   onClose: () => void;
 }) {
-  const fileInputId = useId();
   const fileErrorId = useId();
   const editing = mode.kind === 'edit' ? mode.resource : null;
   const copy = COPY[mode.kind];
@@ -314,7 +313,6 @@ function ResourceForm({
                   aria-describedby={fileError ? fileErrorId : undefined}
                   aria-invalid={fileError !== null}
                   hint={RESOURCE_UPLOAD_HINT}
-                  id={fileInputId}
                   onFileChosen={chooseFile}
                   prompt="Drop a file here or choose one"
                 />

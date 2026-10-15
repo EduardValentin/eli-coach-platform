@@ -156,8 +156,8 @@ type VideoFieldProps = {
 
 function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
   const errorId = useId();
-  const pickerId = useId();
   const input = useRef<HTMLInputElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
   const replaceButton = useRef<HTMLButtonElement>(null);
   const focusAfterSwap = useRef<VideoFieldFocus>(null);
   const busy = isSaving(saving);
@@ -190,8 +190,8 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
     const target = focusAfterSwap.current;
     focusAfterSwap.current = null;
     if (target === 'replace') replaceButton.current?.focus();
-    if (target === 'picker') document.getElementById(pickerId)?.focus();
-  }, [showsPreview, pickerId]);
+    if (target === 'picker') picker.current?.focus();
+  }, [showsPreview]);
 
   return (
     <div className="grid gap-3">
@@ -252,7 +252,7 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
       ) : (
         <div className="max-w-md">
           <FileDropzone
-            id={pickerId}
+            ref={picker}
             accept={VIDEO_ACCEPT}
             prompt={VIDEO_PROMPT}
             hint={VIDEO_GUIDANCE}
