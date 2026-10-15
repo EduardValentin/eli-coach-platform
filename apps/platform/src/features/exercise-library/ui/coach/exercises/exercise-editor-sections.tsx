@@ -1,3 +1,4 @@
+import { toggled } from "@eli-coach-platform/ui/lib";
 import {
   SettingsRow,
   SettingsRows,
@@ -32,7 +33,6 @@ import {
   EXERCISE_TYPES,
   MUSCLE_LABELS,
   MUSCLES,
-  toggled,
   UNIT_EXAMPLES,
   UNIT_LABELS,
   unitsFor,

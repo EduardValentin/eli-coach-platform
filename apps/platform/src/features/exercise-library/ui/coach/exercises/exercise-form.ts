@@ -17,6 +17,7 @@ import {
   type ExerciseUnit,
   type Muscle,
 } from "@eli-coach-platform/domain/exercise";
+import { toggled } from "@eli-coach-platform/ui/lib";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
 import type {
@@ -55,7 +56,7 @@ export const EXERCISE_PROBLEM_FIELDS = [
   "cues",
 ] as const;
 
-type ExerciseProblemField = (typeof EXERCISE_PROBLEM_FIELDS)[number];
+export type ExerciseProblemField = (typeof EXERCISE_PROBLEM_FIELDS)[number];
 
 export type ExerciseFieldProblems = Partial<
   Record<ExerciseProblemField, string>
@@ -151,15 +152,6 @@ export function withTypeChosen(
   }
 
   return { type, unit: defaultUnitFor(type), unitPicked: false };
-}
-
-export function toggled<Value>(
-  values: readonly Value[],
-  value: Value,
-): Value[] {
-  return values.includes(value)
-    ? values.filter((other) => other !== value)
-    : [...values, value];
 }
 
 export function withPrimaryMuscleToggled(

@@ -42,7 +42,7 @@ export const FOOD_PROBLEM_FIELDS = [
   "defaultPortionGrams",
 ] as const;
 
-type FoodProblemField = (typeof FOOD_PROBLEM_FIELDS)[number];
+export type FoodProblemField = (typeof FOOD_PROBLEM_FIELDS)[number];
 
 export type FoodFieldProblems = Partial<Record<FoodProblemField, string>>;
 
@@ -133,15 +133,6 @@ export function foodFormValuesOf(food: FoodView): FoodFormValues {
     defaultPortionGrams: String(food.defaultPortionGrams),
     tagIds: [...food.tagIds],
   };
-}
-
-export function toggled<Value>(
-  values: readonly Value[],
-  value: Value,
-): Value[] {
-  return values.includes(value)
-    ? values.filter((other) => other !== value)
-    : [...values, value];
 }
 
 export function foodRequestOf(values: FoodFormValues): FoodRequest {

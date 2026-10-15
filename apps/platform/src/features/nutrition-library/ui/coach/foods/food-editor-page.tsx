@@ -1,4 +1,8 @@
 import {
+  useJsonSaveFetcher,
+  type JsonSaveOutcome,
+} from "@eli-coach-platform/ui/lib";
+import {
   PortalBackLink,
   PortalPageHeader,
 } from "@eli-coach-platform/ui/portal";
@@ -15,11 +19,17 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type {
-  FoodEditorView,
-  FoodProblems,
+import {
+  foodProblemsAnswerSchema,
+  foodSavedAnswerSchema,
+  type FoodEditorView,
+  type FoodProblems,
 } from "~/features/nutrition-library/public/foods";
-import { COACH_NUTRITION_PATH } from "~/features/nutrition-library/public/paths";
+import {
+  COACH_NUTRITION_PATH,
+  foodPath,
+  NUTRITION_LIBRARY_API_PATHS,
+} from "~/features/nutrition-library/public/paths";
 import { nutritionLibraryContext } from "~/features/nutrition-library/server/guards/nutrition-library-context.server";
 
 import {
@@ -36,8 +46,8 @@ import {
   newFoodFormValues,
   shownFoodProblemsOf,
   type FoodFormValues,
+  type FoodProblemField,
 } from "./food-form";
-import { useFoodSave, type FoodSaveOutcome } from "./use-food-save";
 
 const SAVE_FAILED = "We couldn't save the food. Try again in a moment.";
 
@@ -88,17 +98,15 @@ function FoodEditor({ editor }: { editor: FoodEditorView }) {
     [form],
   );
 
-  const showRefusedFields = (problems: FoodProblems): boolean => {
-    const refused = foodFieldProblemsOf(problems);
-    const refusedFields = FOOD_PROBLEM_FIELDS.filter((field) => refused[field]);
-
-    if (refusedFields.length === 0) {
-      return false;
-    }
-
+  const rememberTakenName = (problems: FoodProblems) => {
     if (problems.name === "taken") {
       takenNames.current = [...takenNames.current, sentName.current];
     }
+  };
+
+  const showRefusedFields = (problems: FoodProblems): FoodProblemField[] => {
+    const refused = foodFieldProblemsOf(problems);
+    const refusedFields = FOOD_PROBLEM_FIELDS.filter((field) => refused[field]);
 
     refusedFields.forEach((field, index) =>
       form.setError(
@@ -107,24 +115,36 @@ function FoodEditor({ editor }: { editor: FoodEditorView }) {
         { shouldFocus: index === 0 },
       ),
     );
-    return true;
+    return refusedFields;
   };
 
-  const settle = (outcome: FoodSaveOutcome) => {
+  const settle = (outcome: JsonSaveOutcome<FoodProblems>) => {
     if (outcome.status === "saved") {
       toast.success(food ? "Food updated" : "Food created");
       void navigate(outcome.redirectTo);
       return;
     }
 
-    if (outcome.status === "refused" && showRefusedFields(outcome.problems)) {
+    if (outcome.status === "failed") {
+      toast.error(SAVE_FAILED);
       return;
     }
 
-    toast.error(SAVE_FAILED);
+    rememberTakenName(outcome.problems);
+
+    if (showRefusedFields(outcome.problems).length === 0) {
+      toast.error(SAVE_FAILED);
+    }
   };
 
-  const { save, saving } = useFoodSave(food?.id ?? null, settle);
+  const { save, saving } = useJsonSaveFetcher({
+    target: food
+      ? { action: foodPath(food.id), method: "put" }
+      : { action: NUTRITION_LIBRARY_API_PATHS.foods, method: "post" },
+    savedAnswer: foodSavedAnswerSchema,
+    refusedAnswer: foodProblemsAnswerSchema,
+    onSettled: settle,
+  });
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;

@@ -1,3 +1,4 @@
+import { toggled } from "@eli-coach-platform/ui/lib";
 import {
   SettingsRow,
   SettingsRows,
@@ -30,7 +31,6 @@ import {
   FOOD_ICONS,
   TAG_FAMILIES,
   TAG_FAMILY_LABELS,
-  toggled,
   type FoodFieldProblems,
   type FoodFormValues,
 } from "./food-form";
