@@ -16,8 +16,8 @@ The real app root is a CSS selector, or the value of a `data-parity-root`
 attribute the real app sets on that element; a surface built under the
 workflow carries that attribute, so its row uses the value. Routes are the
 real app route, then the prototype route. States are comma-separated names,
-each optionally followed by an action recipe file name in parentheses that
-lives under `.parity/parity-actions/`, next to this map. Viewports is empty
+each optionally followed in parentheses by the name of a state in
+`.parity/parity-states.json`, next to this map. Viewports is empty
 for the full viewport set or a comma-separated `WxH` subset. Ignore is empty
 or semicolon-separated
 `proto:` and `real:` entries, each `hook:<data-parity value>` or
