@@ -1,10 +1,8 @@
-import {
-  FormDataParseError,
-  MaxFileSizeExceededError,
-  MaxTotalSizeExceededError,
-  MultipartParseError,
-  parseFormData,
-} from "@remix-run/form-data-parser";
+import { Readable, Transform, type TransformCallback } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
+
+import { Busboy, type BusboyFileStream } from "@fastify/busboy";
 
 import { declaresLengthOver } from "./http.server";
 
@@ -23,9 +21,150 @@ type StreamingFormDataResult<Received> =
   | { status: "too_large"; received: Received | null }
   | { status: "malformed"; received: Received | null };
 
-const MAX_FORM_PARTS = 8;
+type FormRefusal = "too_large" | "malformed";
 
-class UnexpectedFilePartError extends Error {}
+const MAX_FORM_PARTS = 8;
+const MAX_FORM_FIELDS = 4;
+const MAX_FIELD_BYTES = 64 * 1024;
+
+class RefusedFormError extends Error {}
+
+class StreamingFormDataReading<Received> {
+  private readonly fields = new Map<string, string>();
+  private refusal: FormRefusal | null = null;
+  private received: Received | null = null;
+  private receiving: Promise<void> = Promise.resolve();
+  private receiverFailure: { error: unknown } | null = null;
+  private fileStream: BusboyFileStream | null = null;
+  private fileStreamFailed = false;
+  private source: Readable | null = null;
+  private receivedBytes = 0;
+
+  constructor(
+    private readonly request: Request,
+    private readonly options: StreamingFormDataOptions<Received>,
+  ) {}
+
+  async read(): Promise<StreamingFormDataResult<Received>> {
+    const parser = this.parser();
+
+    if (!parser || !this.request.body) return this.refused("malformed");
+
+    this.source = Readable.fromWeb(
+      this.request.body as NodeReadableStream<Uint8Array>,
+    );
+    await pipeline(this.source, this.byteCounter(), parser).catch(
+      (error: unknown) => this.stopAfter(error),
+    );
+    await this.receiving;
+
+    if (this.receiverFailure) throw this.receiverFailure.error;
+    if (this.refusal) return this.refused(this.refusal);
+
+    return { status: "valid", fields: this.fields, received: this.received };
+  }
+
+  private parser() {
+    try {
+      const parser = Busboy({
+        headers: {
+          "content-type": this.request.headers.get("Content-Type") ?? "",
+        },
+        limits: {
+          fieldSize: MAX_FIELD_BYTES,
+          fields: MAX_FORM_FIELDS,
+          fileSize: this.options.maxTotalBytes,
+          files: 1,
+          parts: MAX_FORM_PARTS,
+        },
+      });
+
+      parser.on("file", (field, stream) => this.takeFile(field, stream));
+      parser.on("field", (field, value, fieldTruncated, valueTruncated) =>
+        this.takeField(field, value, fieldTruncated || valueTruncated),
+      );
+      parser.on("filesLimit", () => this.refuse("malformed"));
+      parser.on("fieldsLimit", () => this.refuse("malformed"));
+      parser.on("partsLimit", () => this.refuse("malformed"));
+
+      return parser;
+    } catch {
+      return null;
+    }
+  }
+
+  private byteCounter(): Transform {
+    return new Transform({
+      transform: (
+        chunk: Uint8Array,
+        _encoding: BufferEncoding,
+        callback: TransformCallback,
+      ) => {
+        this.receivedBytes += chunk.byteLength;
+
+        if (this.receivedBytes > this.options.maxTotalBytes) {
+          this.refusal = "too_large";
+          callback(new RefusedFormError());
+          return;
+        }
+
+        callback(null, chunk);
+      },
+    });
+  }
+
+  private takeFile(field: string, stream: BusboyFileStream): void {
+    if (field !== this.options.fileField) {
+      this.refuse("malformed");
+      stream.resume();
+      return;
+    }
+
+    this.fileStream = stream;
+    stream.on("error", () => {
+      this.fileStreamFailed = true;
+    });
+    stream.on("limit", () => this.refuse("too_large"));
+    this.receiving = this.options.receiveFile(stream).then(
+      (received) => {
+        this.received = received;
+      },
+      (error: unknown) => this.receiverFailed(error),
+    );
+  }
+
+  private takeField(field: string, value: string, truncated: boolean): void {
+    if (truncated || this.fields.has(field)) {
+      this.refuse("malformed");
+      return;
+    }
+
+    this.fields.set(field, value);
+  }
+
+  private receiverFailed(error: unknown): void {
+    if (this.fileStreamFailed) return;
+
+    this.receiverFailure = { error };
+    this.source?.destroy(new RefusedFormError());
+  }
+
+  private stopAfter(error: unknown): void {
+    if (!this.refusal && !this.receiverFailure) this.refuse("malformed");
+
+    this.fileStream?.destroy(
+      error instanceof Error ? error : new RefusedFormError(),
+    );
+  }
+
+  private refuse(refusal: FormRefusal): void {
+    this.refusal ??= refusal;
+  }
+
+  private refused(refusal: FormRefusal): StreamingFormDataResult<Received> {
+    return { status: refusal, received: this.received };
+  }
+}
 
 export async function readStreamingFormData<Received>(
   request: Request,
@@ -39,68 +178,11 @@ export async function readStreamingFormData<Received>(
     return { status: "too_large", received: null };
   }
 
-  let received: Received | null = null;
-
-  try {
-    const formData = await parseFormData(
-      request,
-      {
-        maxFiles: 1,
-        maxFileSize: options.maxTotalBytes,
-        maxParts: MAX_FORM_PARTS,
-        maxTotalSize: options.maxTotalBytes,
-      },
-      async (file) => {
-        if (file.fieldName !== options.fileField) {
-          throw new UnexpectedFilePartError();
-        }
-
-        received = await options.receiveFile(file.stream());
-
-        return null;
-      },
-    );
-    const fields = textFieldsOf(formData);
-
-    return fields
-      ? { status: "valid", fields, received }
-      : { status: "malformed", received };
-  } catch (error) {
-    if (
-      error instanceof MaxTotalSizeExceededError ||
-      error instanceof MaxFileSizeExceededError
-    ) {
-      return { status: "too_large", received };
-    }
-
-    if (
-      error instanceof UnexpectedFilePartError ||
-      error instanceof FormDataParseError ||
-      error instanceof MultipartParseError
-    ) {
-      return { status: "malformed", received };
-    }
-
-    throw error;
-  }
+  return new StreamingFormDataReading(request, options).read();
 }
 
 function isFormDataRequest(request: Request): boolean {
   const mediaType = request.headers.get("Content-Type")?.split(";")[0];
 
   return mediaType?.trim().toLowerCase() === "multipart/form-data";
-}
-
-function textFieldsOf(formData: FormData): ReadonlyMap<string, string> | null {
-  const fields = new Map<string, string>();
-
-  for (const [name, value] of formData) {
-    if (fields.has(name) || typeof value !== "string") {
-      return null;
-    }
-
-    fields.set(name, value);
-  }
-
-  return fields;
 }

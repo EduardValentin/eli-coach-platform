@@ -346,16 +346,16 @@ module.exports = {
       to: { path: "(^|/)(pdfjs-dist|@napi-rs/canvas)(/|$)" },
     },
     {
-      name: "form-data-parser-confined",
+      name: "busboy-confined",
       comment:
-        "Streaming multipart parsing stays in one http module: nothing else names @remix-run/form-data-parser or the multipart parser under it.",
+        "Streaming multipart parsing stays in one http module: nothing else names @fastify/busboy.",
       severity: "error",
       from: {
         pathNot: [
           "^packages/infrastructure/src/http/streaming-form-data\\.server\\.ts$",
         ],
       },
-      to: { path: "(^|/)@remix-run/(form-data-parser|multipart-parser)(/|$)" },
+      to: { path: "(^|/)@fastify/busboy(/|$)" },
     },
     {
       name: "file-type-confined",

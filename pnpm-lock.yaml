@@ -22,6 +22,9 @@ catalogs:
     '@eslint/js':
       specifier: 9.39.1
       version: 9.39.1
+    '@fastify/busboy':
+      specifier: 3.2.3
+      version: 3.2.3
     '@file-type/cfbf':
       specifier: 0.2.2
       version: 0.2.2
@@ -49,9 +52,6 @@ catalogs:
     '@react-router/serve':
       specifier: 7.18.2
       version: 7.18.2
-    '@remix-run/form-data-parser':
-      specifier: 1.0.0
-      version: 1.0.0
     '@tailwindcss/vite':
       specifier: 4.2.4
       version: 4.2.4
@@ -320,6 +320,9 @@ importers:
       '@eli-coach-platform/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@fastify/busboy':
+        specifier: 'catalog:'
+        version: 3.2.3
       '@fontsource-variable/dm-sans':
         specifier: 'catalog:'
         version: 5.3.0
@@ -338,9 +341,6 @@ importers:
       '@react-router/serve':
         specifier: 'catalog:'
         version: 7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@6.0.3)
-      '@remix-run/form-data-parser':
-        specifier: 'catalog:'
-        version: 1.0.0
       archiver:
         specifier: 'catalog:'
         version: 8.0.0
@@ -484,15 +484,15 @@ importers:
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../domain
+      '@fastify/busboy':
+        specifier: 'catalog:'
+        version: 3.2.3
       '@file-type/cfbf':
         specifier: 'catalog:'
         version: 0.2.2
       '@napi-rs/canvas':
         specifier: 1.0.10
         version: 1.0.10
-      '@remix-run/form-data-parser':
-        specifier: 'catalog:'
-        version: 1.0.0
       '@tokenizer/inflate':
         specifier: 'catalog:'
         version: 0.4.1
@@ -1518,6 +1518,9 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fastify/busboy@3.2.3':
+    resolution: {integrity: sha512-fmo/IKgkenPzz3qTKG+sIUXdF/Kv83AkvvOXJHPTHJeKJbat8SsL1ihUaFaDotqoEl4UZ1Lf8Eb/3vK6eaWX2A==}
 
   '@file-type/cfbf@0.2.2':
     resolution: {integrity: sha512-+Vk6LMdsOFTUUYIjHY6T7ft7DfU4tKzJ8EO3eQbezCPD208rNmL396iJN6tR4mM55SeNco/nseEIbHIoKVf7IQ==}
@@ -3024,15 +3027,6 @@ packages:
     hasBin: true
     peerDependencies:
       react-router: 7.18.2
-
-  '@remix-run/form-data-parser@1.0.0':
-    resolution: {integrity: sha512-jvAQhOb4ZLW/Qk3MTEdAGrdDH++Vdd0ox34IKorUW2PqaRVqyPxO+P57gbLRJC5FFwiFWqwq/zm14/h7TBZXPw==}
-
-  '@remix-run/headers@1.0.0':
-    resolution: {integrity: sha512-EhZ8V2eqrRWZym4FwGRaEw21w9b8EgwnZ5NA8RCY/V4X/COKTyoEthUcH/w0wVgzIn+PeWgp+YLHq+9r4pqEUQ==}
-
-  '@remix-run/multipart-parser@1.0.0':
-    resolution: {integrity: sha512-ZrS2qvE5AfgOJmsZzILy3bCUTPoMXom1NVO58qZOg2R+3qOGnKjQxUP/JHfFnTWA/CcmFEtiGCsTuPpTPgGUfg==}
 
   '@remix-run/node-fetch-server@0.13.0':
     resolution: {integrity: sha512-1EsNo0ZpgXu/90AWoRZf/oE3RVTUS80tiTUpt+hv5pjtAkw7icN4WskDwz/KdAw5ARbJLMhZBrO1NqThmy/McA==}
@@ -7754,6 +7748,8 @@ snapshots:
     optionalDependencies:
       '@noble/hashes': 1.8.0
 
+  '@fastify/busboy@3.2.3': {}
+
   '@file-type/cfbf@0.2.2':
     dependencies:
       sax: 1.6.1
@@ -9135,17 +9131,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
-
-  '@remix-run/form-data-parser@1.0.0':
-    dependencies:
-      '@remix-run/headers': 1.0.0
-      '@remix-run/multipart-parser': 1.0.0
-
-  '@remix-run/headers@1.0.0': {}
-
-  '@remix-run/multipart-parser@1.0.0':
-    dependencies:
-      '@remix-run/headers': 1.0.0
 
   '@remix-run/node-fetch-server@0.13.0': {}
 

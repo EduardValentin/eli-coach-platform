@@ -45,7 +45,7 @@
         "sharp",
         "@napi-rs/canvas",
         "pdfjs-dist",
-        "@remix-run/form-data-parser"
+        "@fastify/busboy"
       ]
     },
     "packages/*": {
