@@ -68,14 +68,18 @@ export class ExerciseVideoServer {
     outcome: ExerciseVideoUpload,
     onProgress: (fraction: number) => void,
   ): Promise<ExerciseVideoUpload> {
-    let reached = outcome;
-    for (let step = 1; step <= UPLOAD_STEPS; step += 1) {
-      await wait(UPLOAD_STEP_MS);
-      onProgress(step / UPLOAD_STEPS);
-      if (step === HELD_UPLOAD_STEP && holdsAt('uploading', reached)) reached = await this.heldAt('uploading');
-    }
+    await this.advance(1, HELD_UPLOAD_STEP, onProgress);
+    const reached = holdsAt('uploading', outcome) ? await this.heldAt('uploading') : outcome;
+    await this.advance(HELD_UPLOAD_STEP + 1, UPLOAD_STEPS, onProgress);
 
     return reached;
+  }
+
+  private async advance(from: number, to: number, onProgress: (fraction: number) => void): Promise<void> {
+    for (let step = from; step <= to; step += 1) {
+      await wait(UPLOAD_STEP_MS);
+      onProgress(step / UPLOAD_STEPS);
+    }
   }
 
   private async answerAfterStoring(outcome: ExerciseVideoUpload): Promise<ExerciseVideoUpload> {
