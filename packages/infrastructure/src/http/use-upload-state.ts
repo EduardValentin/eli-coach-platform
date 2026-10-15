@@ -36,11 +36,11 @@ function uploadStateOf(
   };
 }
 
-function thisSubmissionsProgress(
+function currentSubmissionProgress(
   snapshot: UploadProgressSnapshot,
-  settled: UploadProgressSnapshot,
+  lastIdleSnapshot: UploadProgressSnapshot,
 ): UploadProgressSnapshot {
-  return snapshot === settled && snapshot.phase === "ended"
+  return snapshot === lastIdleSnapshot && snapshot.phase === "ended"
     ? IDLE_UPLOAD_PROGRESS
     : snapshot;
 }
@@ -55,14 +55,14 @@ export function useUploadState(
     idleUploadProgress,
   );
 
-  const [settled, setSettled] = useState(snapshot);
+  const [lastIdleSnapshot, setLastIdleSnapshot] = useState(snapshot);
 
-  if (fetcherState !== "submitting" && settled !== snapshot) {
-    setSettled(snapshot);
+  if (fetcherState !== "submitting" && lastIdleSnapshot !== snapshot) {
+    setLastIdleSnapshot(snapshot);
   }
 
   return uploadStateOf(
     fetcherState,
-    thisSubmissionsProgress(snapshot, settled),
+    currentSubmissionProgress(snapshot, lastIdleSnapshot),
   );
 }
