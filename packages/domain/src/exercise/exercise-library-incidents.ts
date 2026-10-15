@@ -7,8 +7,10 @@ type ExerciseEditFailedIncident = {
   error: unknown;
 };
 
-type ExerciseVideoCleanupFailedIncident = {
-  videoId: string;
+export type UncleanedExerciseVideoFile =
+  { stagingId: string } | { videoId: string };
+
+type ExerciseVideoCleanupFailedIncident = UncleanedExerciseVideoFile & {
   error: unknown;
 };
 

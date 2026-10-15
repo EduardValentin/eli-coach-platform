@@ -156,6 +156,27 @@ describe("CreateExerciseUseCase", () => {
     expect(library.add).not.toHaveBeenCalled();
   });
 
+  it("reports a refused upload it could not discard by its staging id and still answers the refusal", async () => {
+    // arrange
+    const failure = new Error("disk unavailable");
+    const { useCase, formats, incidents, store } = createUseCase();
+    formats.detect.mockResolvedValueOnce(null);
+    store.discard.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({ draft: SQUAT, video: ATTACH });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { video: "unsupported" },
+    });
+    expect(incidents.videoCleanupFailed).toHaveBeenCalledExactlyOnceWith({
+      stagingId: "staging-1",
+      error: failure,
+    });
+  });
+
   it("refuses a video over 50 MB and discards it", async () => {
     // arrange
     const { useCase, store } = createUseCase();

@@ -1,5 +1,8 @@
 import type { ExerciseVideoChange } from "./exercise";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type {
+  ExerciseLibraryIncidents,
+  UncleanedExerciseVideoFile,
+} from "./exercise-library-incidents";
 import {
   ExerciseVideo,
   type ExerciseVideoFormat,
@@ -89,17 +92,19 @@ export class ExerciseVideoSaving {
   async discard(choice: ExerciseVideoChoice): Promise<void> {
     if (choice.kind !== "attach") return;
 
-    await this.cleanUp(choice.staged.stagingId, () =>
-      this.options.store.discard(choice.staged.stagingId),
+    const { stagingId } = choice.staged;
+
+    await this.cleanUp({ stagingId }, () =>
+      this.options.store.discard(stagingId),
     );
   }
 
   async removeStored(video: ExerciseVideo | null): Promise<void> {
     if (!video) return;
 
-    await this.cleanUp(video.videoId, () =>
-      this.options.store.remove(video.videoId),
-    );
+    const { videoId } = video;
+
+    await this.cleanUp({ videoId }, () => this.options.store.remove(videoId));
   }
 
   private async removeUnwritten(change: ExerciseVideoChange): Promise<void> {
@@ -109,13 +114,13 @@ export class ExerciseVideoSaving {
   }
 
   private async cleanUp(
-    videoId: string,
+    file: UncleanedExerciseVideoFile,
     removal: () => Promise<void>,
   ): Promise<void> {
     try {
       await removal();
     } catch (error) {
-      this.options.incidents.videoCleanupFailed({ videoId, error });
+      this.options.incidents.videoCleanupFailed({ ...file, error });
     }
   }
 }
