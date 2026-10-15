@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-15 at commit 2d0de004 (library follow-ups), change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-15 at commit e4a84cbe (library follow-ups), change review.
 
 ## Component graph
 
@@ -463,7 +463,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | check-ins zod contracts (`public/check-ins.ts`, `public/paths.ts`) and loader data (the client's and the coach's check-in lists, the open times, the coach's client series panel and preview) | C22 server half and C22 ui half; C12 and C13 read the paths | C22 |
 | The calendar invite attachment (an `.ics` with `METHOD:PUBLISH`, content type `text/calendar; charset=utf-8; method=PUBLISH`, filename `invite.ics`) | C6's `buildCalendarInvite` builds it from a `CalendarEvent` each feature maps its appointment to; C17's visitor confirmation and C22's approval attach it | C6 |
 | Email HTML rendered from React primitives (Email*), the email theme (`EMAIL_COLORS`, `EMAIL_FONTS`), the brand frame (`EMAIL_FRAME_STYLES`) and the primary button (`EMAIL_PRIMARY_BUTTON_STYLE`) | C6 owns the primitives, the theme, the frame and the primary button; the content builders and their hero, letter and details styles live in each feature's `email/` folder (C7, C8, C17, C18, C19, C22, C24; accepted exception); C17, C18, C19, C22 and C24 render the C6 frame, and C18 and C24 share C6's letter styles, C7 and C8 keep their own | C6 |
-| CLERK_TEST_ENVIRONMENT and the Stripe webhook signature scheme (`./stripe-webhook-signature`) | read only by tests (the integration rig and the e2e suite) | C16 |
+| CLERK_TEST_ENVIRONMENT, requiredName and the Stripe webhook signature scheme (`./stripe-webhook-signature`) | read only by tests (the integration rig, UI integration tests and the e2e suite) | C16 |
 | The auth subject id: `app.accounts.auth_subject_id` (C9) and `app.clients.auth_subject_id` (C24, unique, no foreign key) | C9 writes the account on provisioning; C24's `PostgresClientInvitations.accept` binds the client in the acceptance transaction; C1's `InvitationAcceptance` carries it between the two; account deletion leaves the client bound | C9 (the identity provider's user id) |
 | The client journey step (`ClientJourneyStep`: `welcome \| onboarding \| submitted \| in-review \| needs-details \| approved`) and its paths | C1 `/client-journey` owns the steps (`ClientJourney.step` over the welcome, submission and four review stamps); C1 `/client-roster` maps each step to a `ClientStatus`; C24 `public/client-journey.ts` maps each step and portal reach to a gate (destination and admitted paths, `clientJourneyRedirect`) and to the nav's portal link (`clientJourneyPortalLink`, none from `submitted` on or once ended); C18 `public/program-status.ts` maps the post-submission steps to the program-status kinds; C24 `public/client-status.ts` labels, groups and tones the statuses; C11's portal destination and C12's access layout read them through C24, C12's dashboard through C18 | C1 (steps) / C24 (paths and wording) / C18 (program status) |
 | The client status (`CLIENT_STATUSES`: `invited \| onboarding \| awaiting-review \| in-review \| needs-details \| approved \| active \| cancelled \| inactive`) | C1 `/client-roster` owns the vocabulary and `clientStatusOf` (unbound account → `invited`, else the standing's status at now, else the journey step's); `ListClientsUseCase` and `ReadClientRecordUseCase` attach it to each entry; C24 `public/coach-clients.ts` builds its wire schema from `CLIENT_STATUSES` and `ui/coach/clients/` labels, tones and filters it | C1 (vocabulary and rule) / C24 (labels and filters) |
@@ -3326,7 +3326,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3947 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | apps/platform/src/features/coaching-sales/public/subscription-refunds.ts | import | no | yes | inward | present |
 | E3948 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/shared/immediate-start-copy.ts | import | no | yes | inward | present |
 | E3949 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | external:react-hook-form | import | n/a | no | lateral | present |
-| E3950 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | external:react-router | import | n/a | no | lateral | present |
 | E3951 | apps/platform/src/server/logger.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | no | lateral | present |
 | E3952 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/coaching-sales/public/paths.ts | import | yes | no | lateral | present |
 | E3953 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/clients/ui/shared/needs-refund-badge.tsx | import | yes | yes | lateral | present |
@@ -4489,4 +4488,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E5252 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E5253 | packages/ui/src/appointments/join-link.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E5254 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/date-time-label.tsx | import | no | no | lateral | present |
+| E5401 | packages/ui/src/portal/portal-widget.tsx | packages/ui/src/portal/widget-density.ts | type-import | no | no | lateral | present |
+| E5402 | packages/ui/src/portal/panel-title-icon.tsx | packages/ui/src/portal/widget-density.ts | type-import | no | no | lateral | present |
 | E5400 | apps/platform/src/features/exercise-library/data/schema.server.ts | apps/platform/src/features/accounts/data/schema.server.ts | import | yes | no | lateral | present. The exercise's owner foreign key, under `feature-schema-foreign-key` |
