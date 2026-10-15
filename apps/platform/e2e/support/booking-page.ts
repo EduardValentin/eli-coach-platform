@@ -1,6 +1,7 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { clockTimeOf, dayNameOf, spacedPattern } from "./check-in-moments";
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export type BookingVisitor = {
   email: string;
@@ -36,14 +37,29 @@ export class BookingPage {
       .click();
   }
 
+  private get days(): Locator {
+    return this.page.getByRole("grid", { name: "Available days" });
+  }
+
+  private get times(): Locator {
+    return this.page
+      .getByRole("main")
+      .getByRole("button", { name: CLOCK_TIME });
+  }
+
+  private timeOf(instant: Date, timeZone: string): Locator {
+    return this.page.getByRole("main").getByRole("button", {
+      name: new RegExp(`^${spacedPattern(clockTimeOf(instant, timeZone))}$`),
+    });
+  }
+
   private async showDayOf(instant: Date, timeZone: string): Promise<void> {
-    const days = this.page.getByRole("grid", { name: "Available days" });
-    const day = days.getByRole("button", {
+    const day = this.days.getByRole("button", {
       name: new RegExp(`^${spacedPattern(dayNameOf(instant, timeZone))}`),
     });
 
     await this.page.goto("/book");
-    await expect(days.getByRole("button").first()).toBeVisible();
+    await expect(this.days.getByRole("button").first()).toBeVisible();
     for (
       let shown = 0;
       shown < MONTHS_AHEAD &&
@@ -52,20 +68,18 @@ export class BookingPage {
     ) {
       await this.page.getByRole("button", { name: NEXT_MONTH }).click();
     }
-    await day.click();
-    await expect(this.times).not.toHaveCount(0);
+    await this.chooseDay(day);
   }
 
-  private get times() {
-    return this.page
-      .getByRole("main")
-      .getByRole("button", { name: CLOCK_TIME });
-  }
-
-  private timeOf(instant: Date, timeZone: string) {
-    return this.page.getByRole("main").getByRole("button", {
-      name: new RegExp(`^${spacedPattern(clockTimeOf(instant, timeZone))}$`),
-    });
+  private async chooseDay(day: Locator): Promise<void> {
+    await expect(async () => {
+      if ((await this.times.count()) === 0) {
+        await day.click();
+      }
+      await expect(this.times.first()).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
   }
 
   async expectHourNotOffered(instant: Date, timeZone: string): Promise<void> {
@@ -79,9 +93,7 @@ export class BookingPage {
   }
 
   async expectGenderOptions(options: readonly string[]): Promise<void> {
-    await this.page
-      .getByRole("combobox", { name: "Gender (required)", exact: true })
-      .click();
+    await this.combobox("Gender (required)").click();
     await expect(this.page.getByRole("option")).toHaveText([...options]);
     await this.page.keyboard.press("Escape");
   }
@@ -93,48 +105,29 @@ export class BookingPage {
   }
 
   private async pickSoonestOpenSlot(): Promise<void> {
-    await this.page
-      .getByRole("grid", { name: "Available days" })
-      .getByRole("button", { disabled: false })
-      .first()
-      .click();
-    await this.page
-      .getByRole("main")
-      .getByRole("button", { name: CLOCK_TIME })
-      .first()
-      .click();
+    await this.chooseDay(
+      this.days.getByRole("button", { disabled: false }).first(),
+    );
+    await this.times.first().click();
   }
 
   private async fillDetails(visitor: BookingVisitor): Promise<void> {
-    await this.page
-      .getByRole("textbox", { name: "First name (required)", exact: true })
-      .fill(visitor.firstName);
-    await this.page
-      .getByRole("textbox", { name: "Last name (required)", exact: true })
-      .fill(visitor.lastName);
-    await this.page
-      .getByRole("textbox", { name: "Email Address (required)", exact: true })
-      .fill(visitor.email);
+    await this.textbox("First name (required)").fill(visitor.firstName);
+    await this.textbox("Last name (required)").fill(visitor.lastName);
+    await this.textbox("Email Address (required)").fill(visitor.email);
     await this.pickBirthDate();
     await this.chooseOption("Gender (required)", BOOKING_PROFILE.gender);
-    await this.page
-      .getByRole("combobox", { name: "Primary goal (required)", exact: true })
-      .click();
-    await this.page
-      .getByRole("option", { name: BOOKING_PROFILE.primaryGoal })
-      .click();
+    await this.chooseOption(
+      "Primary goal (required)",
+      BOOKING_PROFILE.primaryGoal,
+    );
     await this.chooseOption("Country (required)", BOOKING_PROFILE.country);
     await this.page
       .getByLabel("Phone number")
       .fill(BOOKING_PROFILE.phoneNumber);
 
     if (visitor.notes) {
-      await this.page
-        .getByRole("textbox", {
-          name: "Anything to share beforehand?",
-          exact: true,
-        })
-        .fill(visitor.notes);
+      await this.textbox("Anything to share beforehand?").fill(visitor.notes);
     }
   }
 
@@ -150,8 +143,16 @@ export class BookingPage {
       .click();
   }
 
+  private textbox(name: string): Locator {
+    return this.page.getByRole("textbox", { name, exact: true });
+  }
+
+  private combobox(name: string): Locator {
+    return this.page.getByRole("combobox", { name, exact: true });
+  }
+
   private async chooseOption(field: string, option: string): Promise<void> {
-    await this.page.getByRole("combobox", { name: field, exact: true }).click();
+    await this.combobox(field).click();
     await this.page.getByRole("option", { name: option, exact: true }).click();
   }
 }
