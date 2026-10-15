@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNutrition } from '../../../context/NutritionContext';
-import type { Food, Tag } from '../../../context/NutritionContext';
+import type { Food } from '../../../context/NutritionContext';
 import type { SortChoice } from '../../SortControl';
 import { ItemGlyph } from '../../ItemGlyph';
 import { SortableTableHead } from '../../SortableTableHead';
@@ -80,9 +80,7 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
           </TableRow>
         ) : (
           foods.map((food) => {
-              const foodTags = food.tagIds
-                .map((id) => tags.find((t) => t.id === id))
-                .filter((t): t is Tag => Boolean(t));
+              const foodTags = tags.filter((t) => food.tagIds.includes(t.id));
               return (
                 <TableRow key={food.id} data-parity="food-row">
                   <TableCell>
