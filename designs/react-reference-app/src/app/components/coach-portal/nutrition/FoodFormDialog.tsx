@@ -29,7 +29,7 @@ import {
   SelectContent,
   SelectItem,
 } from '../../ui/select';
-import { ToggleChip } from '../../ToggleChip';
+import { CheckboxChip } from '../../CheckboxChip';
 import { cn } from '../../ui/utils';
 import {
   CATEGORY_LABELS,
@@ -283,12 +283,14 @@ export function FoodFormDialog({
                       .filter((t) => t.family === family)
                       .map((t) => (
                         <li key={t.id}>
-                          <ToggleChip
-                            pressed={draft.tagIds.includes(t.id)}
-                            onPressedChange={() => toggleTag(t.id)}
+                          <CheckboxChip
+                            size="compact"
+                            aria-label={t.label}
+                            checked={draft.tagIds.includes(t.id)}
+                            onCheckedChange={() => toggleTag(t.id)}
                           >
                             {t.label}
-                          </ToggleChip>
+                          </CheckboxChip>
                         </li>
                       ))}
                   </ul>

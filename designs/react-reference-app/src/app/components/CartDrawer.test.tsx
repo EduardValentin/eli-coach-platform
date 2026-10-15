@@ -89,7 +89,7 @@ async function fillCheckoutForm(
     email,
   );
   await user.click(
-    screen.getByRole('checkbox', { name: /i agree to the terms of service/i }),
+    screen.getByRole('checkbox', { name: /i agree to the terms & conditions/i }),
   );
 }
 
@@ -245,7 +245,7 @@ describe('CartDrawer', () => {
     ).toHaveValue('woman@example.com');
     expect(
       screen.getByRole('checkbox', {
-        name: /^I agree to the Terms of Service ?\. \(required\)$/,
+        name: /^I agree to the Terms & Conditions ?\. \(required\)$/,
       }),
     ).not.toBeChecked();
     expect(
@@ -257,7 +257,7 @@ describe('CartDrawer', () => {
     // act
     await user.click(
       screen.getByRole('checkbox', {
-        name: /i agree to the terms of service/i,
+        name: /i agree to the terms & conditions/i,
       }),
     );
     expect(submit).toBeEnabled();

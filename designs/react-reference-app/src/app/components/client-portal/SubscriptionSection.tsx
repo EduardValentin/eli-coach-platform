@@ -236,13 +236,7 @@ export function SubscriptionSection() {
       headingRef={headingRef}
       parityRoot="SubscriptionSection"
       title="Subscription"
-      icon={
-        <CreditCard
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CreditCard}
     >
       <SettingsRows>
         <SettingsRow

@@ -124,13 +124,7 @@ export function ProgramStatusCard() {
             {eyebrowFor(demoJourney.stage)}
           </span>
         }
-        icon={
-          <ClipboardList
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
+        icon={ClipboardList}
         headingId="program-status-heading"
         voice={<span data-parity="status-label">{label}</span>}
       >

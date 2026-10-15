@@ -39,13 +39,7 @@ export function PendingCheckInsWidget({
         </WidgetLink>
       }
       headingId={headingId}
-      icon={
-        <ClipboardCheck
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={ClipboardCheck}
       title="Pending Check-ins"
     >
       <div

@@ -3,7 +3,7 @@ import { motion, useMotionValue, useTransform, animate } from 'motion/react';
 import { Droplet, Plus, X, Trash2 } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Label } from '../../components/ui/label';
@@ -410,13 +410,15 @@ export function ClientCycleTracker() {
                     ? CYCLE_SYMPTOMS
                     : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)
                   ).map((s) => (
-                    <ToggleChip
+                    <CheckboxChip
                       key={s.value}
-                      pressed={symptoms.includes(s.value)}
-                      onPressedChange={() => toggleSymptom(s.value)}
+                      size="compact"
+                      aria-label={s.label}
+                      checked={symptoms.includes(s.value)}
+                      onCheckedChange={() => toggleSymptom(s.value)}
                     >
                       {s.label}
-                    </ToggleChip>
+                    </CheckboxChip>
                   ))}
                   {CYCLE_SYMPTOMS.length > VISIBLE_SYMPTOMS_COUNT && (
                     <Button

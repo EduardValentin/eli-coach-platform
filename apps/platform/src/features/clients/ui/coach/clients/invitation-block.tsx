@@ -66,9 +66,7 @@ export function InvitationBlock({ client, invitation }: InvitationBlockProps) {
       }
       className="mb-8"
       headingId="invitation-panel-heading"
-      icon={
-        <Mail aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Mail}
       title="Invitation"
     >
       <p

@@ -41,13 +41,7 @@ export function UpcomingCallsWidget({
           </WidgetLink>
         }
         headingId={headingId}
-        icon={
-          <Video
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
+        icon={Video}
         title="Upcoming assessment calls"
       >
         <div

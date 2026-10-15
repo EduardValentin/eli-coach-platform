@@ -295,13 +295,7 @@ export function OnboardingPanel({
       className="mb-8"
       data-parity-root="OnboardingPanel"
       headingId="onboarding-panel-heading"
-      icon={
-        <ClipboardList
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={ClipboardList}
       title={PANEL_TITLE}
       titleAdornment={
         submitted ? <ScreeningWarning submitted={submitted} /> : null

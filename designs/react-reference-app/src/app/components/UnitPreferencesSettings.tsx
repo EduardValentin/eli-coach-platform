@@ -23,13 +23,7 @@ export function UnitPreferencesSettings({
     <SettingsSection
       headingId="units-heading"
       title="Units & Measurements"
-      icon={
-        <SlidersHorizontal
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={SlidersHorizontal}
       description="Preferences are saved to this device."
     >
       <SettingsRows>

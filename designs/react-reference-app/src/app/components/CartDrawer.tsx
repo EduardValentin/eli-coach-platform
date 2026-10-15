@@ -195,6 +195,7 @@ export function CartDrawer() {
             role="dialog"
             aria-modal="true"
             aria-labelledby={headingId}
+            data-parity-root="CartDrawer"
             tabIndex={-1}
             onKeyDown={handleDrawerKeyDown}
             initial={shouldReduceMotion ? false : { x: '100%' }}
@@ -207,7 +208,10 @@ export function CartDrawer() {
             }
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-card z-[80] shadow-2xl flex flex-col focus:outline-none"
           >
-            <div className="flex items-center justify-between p-6 px-3 border-b border-stroke-faint bg-surface-page">
+            <div
+              className="flex items-center justify-between p-6 px-3 border-b border-stroke-faint bg-surface-page"
+              data-parity="cart-header"
+            >
               <h2 id={headingId} className="font-serif text-2xl text-foreground flex items-center gap-2">
                 <ShoppingBag aria-hidden="true" className="text-brand" />
                 Your Cart
@@ -221,7 +225,7 @@ export function CartDrawer() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col" data-parity="cart-body">
               {cart.length === 0 && checkoutStep === 'cart' ? (
                 <div className="flex flex-col items-center justify-center flex-1 text-center h-full gap-4">
                   <ShoppingBag size={64} aria-hidden="true" className="text-icon-muted mb-4" />
@@ -243,7 +247,11 @@ export function CartDrawer() {
                     <div className="flex flex-col gap-6 flex-1">
                       <div className="flex-1">
                         {cart.map((item) => (
-                          <div key={item.product.id} className="flex gap-4 py-4 px-3 border-b border-stroke-faint last:border-0">
+                          <div
+                            key={item.product.id}
+                            className="flex gap-4 py-4 px-3 border-b border-stroke-faint last:border-0"
+                            data-parity="cart-item"
+                          >
                             <img
                               src={item.product.imageUrl}
                               alt={item.product.title}
@@ -251,11 +259,17 @@ export function CartDrawer() {
                             />
                             <div className="flex-1 flex flex-col justify-between">
                               <div>
-                                <h3 className="font-serif text-foreground font-medium leading-tight mb-1">
+                                <h3
+                                  className="font-serif text-foreground font-medium leading-tight mb-1"
+                                  data-parity="cart-item-title"
+                                >
                                   {item.product.title}
                                 </h3>
                                 {item.product.priceUSD === 0 && (
-                                  <span className="text-label uppercase px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft">
+                                  <span
+                                    className="text-label uppercase px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft"
+                                    data-parity="cart-item-type"
+                                  >
                                     {item.product.type}
                                   </span>
                                 )}
@@ -277,7 +291,7 @@ export function CartDrawer() {
                         ))}
                       </div>
 
-                      <div className="border-t border-control-border-soft pt-6 mt-auto">
+                      <div className="border-t border-control-border-soft pt-6 mt-auto" data-parity="cart-summary">
                         {serviceError && (
                           <div className="mb-4">
                             <AcquisitionErrorAlert id={formErrorId} error={serviceError} />
@@ -313,12 +327,12 @@ export function CartDrawer() {
                       className="flex flex-col h-full"
                     >
                       <h3 className="font-serif text-2xl text-foreground mb-2">Almost there</h3>
-                      <p className="text-copy-muted mb-8 text-sm">
+                      <p className="text-copy-muted mb-8 text-sm" data-parity="details-intro">
                         Please provide your email where we should send your digital products.
                       </p>
 
                       <form onSubmit={submitCheckout} noValidate className="flex flex-col gap-6 flex-1">
-                        <div>
+                        <div data-parity="email-field">
                           <Label htmlFor="email" className="mb-2 text-foreground" required>
                             Email Address
                           </Label>
@@ -356,7 +370,11 @@ export function CartDrawer() {
                         </div>
 
                         <div className="flex flex-col gap-4 mt-4">
-                          <label htmlFor={termsId} className="flex items-start gap-3 cursor-pointer group">
+                          <label
+                            htmlFor={termsId}
+                            className="flex items-start gap-3 cursor-pointer group"
+                            data-parity="terms-consent"
+                          >
                             <Checkbox
                               id={termsId}
                               required
@@ -367,14 +385,18 @@ export function CartDrawer() {
                             <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
                               I agree to the{' '}
                               <Link to="/terms" className="text-brand hover:underline">
-                                Terms of Service
+                                Terms &amp; Conditions
                               </Link>
                               .
                               <RequiredMark />
                             </span>
                           </label>
 
-                          <label htmlFor={marketingId} className="flex items-start gap-3 cursor-pointer group">
+                          <label
+                            htmlFor={marketingId}
+                            className="flex items-start gap-3 cursor-pointer group"
+                            data-parity="marketing-consent"
+                          >
                             <Checkbox
                               id={marketingId}
                               checked={marketingConsent}
@@ -386,7 +408,7 @@ export function CartDrawer() {
                             </span>
                           </label>
 
-                          <p className="text-sm text-copy-muted leading-relaxed">
+                          <p className="text-sm text-copy-muted leading-relaxed" data-parity="privacy-note">
                             See how we handle your data in our{' '}
                             <Link to="/privacy" className="text-brand hover:underline">
                               Privacy Policy
@@ -399,7 +421,10 @@ export function CartDrawer() {
                           <AcquisitionErrorAlert id={formErrorId} error={serviceError} />
                         )}
 
-                        <div className="mt-auto pt-6 border-t border-control-border-soft flex gap-4">
+                        <div
+                          className="mt-auto pt-6 border-t border-control-border-soft flex gap-4"
+                          data-parity="details-actions"
+                        >
                           <ThemeButton
                             onClick={() => setCheckoutStep('cart')}
                             size="lg"

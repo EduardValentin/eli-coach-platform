@@ -42,6 +42,16 @@ function selectTriggerClasses(className?: string): string {
   );
 }
 
+function SelectTriggerChevron(props: React.ComponentProps<typeof ChevronDownIcon>) {
+  return (
+    <ChevronDownIcon
+      aria-hidden="true"
+      className="size-4 shrink-0 text-text-muted opacity-50"
+      {...props}
+    />
+  );
+}
+
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
   ({ className, size = "md", children, ...props }, ref) => (
     <SelectPrimitive.Trigger
@@ -54,7 +64,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <SelectTriggerChevron />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   ),
@@ -233,5 +243,6 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
+  SelectTriggerChevron,
   selectTriggerClasses,
 };

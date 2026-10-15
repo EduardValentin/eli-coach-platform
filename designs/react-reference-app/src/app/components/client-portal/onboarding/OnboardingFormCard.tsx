@@ -11,13 +11,13 @@ import {
 } from '../../../domain/onboardingSchema';
 import { Button } from '../../ui/button';
 import { Form } from '../../ui/form';
+import { Legend } from '../../ui/label';
 import { useMeasureUnits } from '../measureUnits';
 import { OnboardingFieldControl } from './OnboardingFieldControl';
 import {
   ONBOARDING_CARD_CLASS,
   ONBOARDING_HEADING_CLASS,
   ONBOARDING_INTRO_CLASS,
-  ONBOARDING_LEGEND_CLASS,
 } from './onboardingCard';
 import {
   toAnswers,
@@ -164,9 +164,7 @@ function OnboardingAnswerForm({
             {groupByLegend(group.fields).map((item) =>
               item.kind === 'legend' ? (
                 <fieldset key={item.legend}>
-                  <legend className={ONBOARDING_LEGEND_CLASS}>
-                    {item.legend}
-                  </legend>
+                  <Legend>{item.legend}</Legend>
                   <div className="mt-2 grid gap-4 sm:grid-cols-2">
                     {item.fields.map((field) => (
                       <OnboardingFieldControl

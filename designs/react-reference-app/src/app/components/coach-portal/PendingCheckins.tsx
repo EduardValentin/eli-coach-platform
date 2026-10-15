@@ -27,13 +27,7 @@ export function PendingCheckins({
     <PortalWidget
       presentation="coach"
       title="Pending Check-ins"
-      icon={
-        <ClipboardCheck
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={ClipboardCheck}
       headingId="pending-checkins-heading"
       className="flex h-full flex-col"
       parityRoot="PendingCheckins"

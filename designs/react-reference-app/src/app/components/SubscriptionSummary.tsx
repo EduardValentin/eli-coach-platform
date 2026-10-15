@@ -128,13 +128,7 @@ export function SubscriptionSummary(props: SubscriptionSummaryProps) {
     <PortalWidget
       presentation={props.perspective}
       title="Subscription"
-      icon={
-        <CreditCard
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CreditCard}
       headingId={headingId}
       parityRoot="SubscriptionSummary"
       className={className}

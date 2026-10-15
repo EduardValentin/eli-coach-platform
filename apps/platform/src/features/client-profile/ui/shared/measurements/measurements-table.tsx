@@ -135,9 +135,7 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
       className={className}
       data-parity-root="MeasurementsTable"
       headingId={headingId}
-      icon={
-        <Ruler aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Ruler}
       title={MEASUREMENTS_COPY.title}
     >
       {history.length === 0 ? (

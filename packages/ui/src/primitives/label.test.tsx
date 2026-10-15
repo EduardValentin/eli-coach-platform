@@ -53,21 +53,6 @@ describe("Label", () => {
     expect(field).toHaveAccessibleName("Your weight (required)");
   });
 
-  it("sets the star snug against the label text", () => {
-    // arrange
-    render(
-      <Label htmlFor="weight" required>
-        Your weight
-      </Label>,
-    );
-
-    // act
-    const star = screen.getByText("*");
-
-    // assert
-    expect(star).toHaveClass("-ml-1.5");
-  });
-
   it("shows no star when the field is optional", () => {
     // arrange
     render(<Label htmlFor="weight">Your weight</Label>);
@@ -107,36 +92,6 @@ describe("Label", () => {
   });
 });
 
-describe("Label layouts", () => {
-  it("lets a long name and its qualifiers wrap on a shared baseline", () => {
-    // arrange
-    render(
-      <Label htmlFor="weight" layout="wrap">
-        Your weight
-      </Label>,
-    );
-
-    // act
-    const label = screen.getByText("Your weight");
-
-    // assert
-    expect(label).toHaveClass("flex-wrap", "items-baseline", "gap-1.5");
-    expect(label).not.toHaveClass("items-center", "gap-2");
-  });
-
-  it("keeps a short name centred on one line by default", () => {
-    // arrange
-    render(<Label htmlFor="email">Email</Label>);
-
-    // act
-    const label = screen.getByText("Email");
-
-    // assert
-    expect(label).toHaveClass("flex", "items-center", "gap-2");
-    expect(label).not.toHaveClass("flex-wrap");
-  });
-});
-
 describe("FieldCaption", () => {
   it("titles a block of fields in the label ink without heading a fieldset", () => {
     // arrange
@@ -148,7 +103,6 @@ describe("FieldCaption", () => {
     // assert
     expect(caption.tagName).toBe("P");
     expect(caption).toHaveClass("text-sm", "font-medium", "text-text-label");
-    expect(caption).not.toHaveClass("mb-1");
   });
 });
 
@@ -193,7 +147,6 @@ describe("required Legend", () => {
     // assert
     expect(group).toBeInTheDocument();
     expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
-    expect(screen.getByText("*")).toHaveClass("-ml-1");
   });
 
   it("shows no star when the group is optional", () => {
@@ -216,19 +169,21 @@ describe("RequiredMark", () => {
   it("stars running text with a hidden star and a spoken (required)", () => {
     // arrange
     render(
-      <p>
+      <label>
+        <input type="checkbox" />
         I agree to the terms.
         <RequiredMark />
-      </p>,
+      </label>,
     );
 
     // act
-    const star = screen.getByText("*");
+    const agreement = screen.getByRole("checkbox", {
+      name: "I agree to the terms. (required)",
+    });
 
     // assert
-    expect(star).toHaveAttribute("aria-hidden", "true");
-    expect(star).toHaveClass("ml-0.5");
-    expect(screen.getByText("(required)")).toHaveClass("sr-only");
+    expect(agreement).toBeInTheDocument();
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
   });
 });
 

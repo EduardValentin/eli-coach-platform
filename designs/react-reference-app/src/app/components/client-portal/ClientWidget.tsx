@@ -1,9 +1,10 @@
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PortalWidget, type WidgetDensity } from '../PortalWidget';
 
 interface ClientWidgetProps {
   eyebrow: ReactNode;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   hero?: ReactNode;
   density?: WidgetDensity;
   voice?: ReactNode;

@@ -334,6 +334,49 @@ function TemplateCard({
 
 // ── Main Hub ────────────────────────────────────────────────────
 
+function TrainingHubCreateAction({
+  activeTab,
+  onNewClientPlan,
+}: {
+  activeTab: HubTab;
+  onNewClientPlan: () => void;
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (activeTab === 'instances') {
+    return (
+      <Button type="button" onClick={onNewClientPlan} variant="primary" size="md">
+        <Plus aria-hidden="true" />
+        New Client Plan
+      </Button>
+    );
+  }
+
+  if (activeTab === 'exercises') {
+    return (
+      <Button asChild variant="primary" size="md">
+        <Link to="/coach/training/exercises/new" state={{ library: location.search }}>
+          <Plus aria-hidden="true" />
+          New exercise
+        </Link>
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      onClick={() => navigate('/coach/training/template-builder')}
+      variant="primary"
+      size="md"
+    >
+      <Plus aria-hidden="true" />
+      New Template
+    </Button>
+  );
+}
+
 export function TrainingHub() {
   const {
     planTemplates,
@@ -435,37 +478,13 @@ export function TrainingHub() {
             : 'Build the exercise library your plans draw from.'
         }
         actions={
-          activeTab === 'instances' ? (
-            <Button
-              type="button"
-              onClick={() => {
-                setNewPlanClientSearch('');
-                setShowNewPlanClientPicker(true);
-              }}
-              variant="primary"
-              size="md"
-            >
-              <Plus aria-hidden="true" />
-              New Client Plan
-            </Button>
-          ) : activeTab === 'exercises' ? (
-            <Button asChild variant="primary" size="md">
-              <Link to="/coach/training/exercises/new" state={{ library: location.search }}>
-                <Plus aria-hidden="true" />
-                New exercise
-              </Link>
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => navigate('/coach/training/template-builder')}
-              variant="primary"
-              size="md"
-            >
-              <Plus aria-hidden="true" />
-              New Template
-            </Button>
-          )
+          <TrainingHubCreateAction
+            activeTab={activeTab}
+            onNewClientPlan={() => {
+              setNewPlanClientSearch('');
+              setShowNewPlanClientPicker(true);
+            }}
+          />
         }
       />
 
