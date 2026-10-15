@@ -16,7 +16,7 @@ export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   updatedAt: Date;
 };
 
-export type ExerciseProblems = ExerciseDraftProblems & {
+export type ExerciseSaveProblems = ExerciseDraftProblems & {
   video?: ExerciseVideoRefusal;
 };
 
@@ -47,17 +47,13 @@ export class Exercise {
   private constructor(private readonly snapshot: ExerciseSnapshot) {}
 
   static added(input: AddedExerciseInput): Exercise {
-    const withoutVideo = new Exercise({
+    return new Exercise({
       id: input.id,
       ...input.draft.toSnapshot(),
-      video: null,
+      video:
+        input.video.kind === "attach" ? input.video.video.toSnapshot() : null,
       createdAt: input.at,
       updatedAt: input.at,
-    });
-
-    return new Exercise({
-      ...withoutVideo.snapshot,
-      video: withoutVideo.videoAfter(input.video),
     });
   }
 

@@ -1,14 +1,12 @@
 import type { Clock } from "../shared";
-import { Exercise, type ExerciseProblems } from "./exercise";
+import { Exercise, type ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseIds } from "./exercise-ids";
 import type { ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import {
-  ExerciseVideoIntake,
-  type ExerciseVideoChoice,
-} from "./exercise-video-intake";
+import type { ExerciseVideoChoice } from "./exercise-video-intake";
+import { ExerciseVideoSaving } from "./exercise-video-saving";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
 type CreateExerciseCommand = {
@@ -18,7 +16,7 @@ type CreateExerciseCommand = {
 
 export type CreateExerciseResult =
   | { status: "created"; exercise: Exercise }
-  | { status: "invalid"; problems: ExerciseProblems }
+  | { status: "invalid"; problems: ExerciseSaveProblems }
   | { status: "failed" };
 
 type CreateExerciseUseCaseOptions = {
@@ -31,10 +29,10 @@ type CreateExerciseUseCaseOptions = {
 };
 
 export class CreateExerciseUseCase {
-  private readonly videos: ExerciseVideoIntake;
+  private readonly videos: ExerciseVideoSaving;
 
   constructor(private readonly options: CreateExerciseUseCaseOptions) {
-    this.videos = new ExerciseVideoIntake(options);
+    this.videos = new ExerciseVideoSaving(options);
   }
 
   async execute(command: CreateExerciseCommand): Promise<CreateExerciseResult> {
@@ -69,7 +67,7 @@ export class CreateExerciseUseCase {
       };
     }
 
-    const change = await this.videos.changeFor(video);
+    const change = await this.videos.keepAccepted(video);
     const exercise = Exercise.added({
       id: ids.generate(),
       draft: draft.draft,
@@ -78,8 +76,9 @@ export class CreateExerciseUseCase {
     });
 
     if (
-      (await this.videos.writtenWith(change, () => library.add(exercise))) ===
-      "name-taken"
+      (await this.videos.writeOrRemoveKept(change, () =>
+        library.add(exercise),
+      )) === "name-taken"
     ) {
       return { status: "invalid", problems: { name: "taken" } };
     }

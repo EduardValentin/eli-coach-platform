@@ -4,7 +4,7 @@ import {
   type CreateExerciseUseCase,
   type EditExerciseUseCase,
   type ExerciseDraftInput,
-  type ExerciseProblems,
+  type ExerciseSaveProblems,
   type ExerciseVideoChoice,
   type ExerciseVideoViewer,
   type FindExerciseUseCase,
@@ -318,7 +318,7 @@ export class ExerciseLibraryController {
     );
   }
 
-  private problemsResponse(problems: ExerciseProblems): Response {
+  private problemsResponse(problems: ExerciseSaveProblems): Response {
     return Response.json(exerciseProblemsAnswerSchema.parse({ problems }), {
       status: 422,
     });

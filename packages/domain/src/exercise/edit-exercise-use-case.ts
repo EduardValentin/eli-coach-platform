@@ -1,13 +1,11 @@
 import type { Clock } from "../shared";
-import type { Exercise, ExerciseProblems } from "./exercise";
+import type { Exercise, ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import {
-  ExerciseVideoIntake,
-  type ExerciseVideoChoice,
-} from "./exercise-video-intake";
+import type { ExerciseVideoChoice } from "./exercise-video-intake";
+import { ExerciseVideoSaving } from "./exercise-video-saving";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
 type EditExerciseCommand = {
@@ -18,7 +16,7 @@ type EditExerciseCommand = {
 
 export type EditExerciseResult =
   | { status: "edited"; exercise: Exercise }
-  | { status: "invalid"; problems: ExerciseProblems }
+  | { status: "invalid"; problems: ExerciseSaveProblems }
   | { status: "not-found" }
   | { status: "failed" };
 
@@ -31,10 +29,10 @@ type EditExerciseUseCaseOptions = {
 };
 
 export class EditExerciseUseCase {
-  private readonly videos: ExerciseVideoIntake;
+  private readonly videos: ExerciseVideoSaving;
 
   constructor(private readonly options: EditExerciseUseCaseOptions) {
-    this.videos = new ExerciseVideoIntake(options);
+    this.videos = new ExerciseVideoSaving(options);
   }
 
   async execute(command: EditExerciseCommand): Promise<EditExerciseResult> {
@@ -86,7 +84,7 @@ export class EditExerciseUseCase {
       };
     }
 
-    const change = await this.videos.changeFor(video);
+    const change = await this.videos.keepAccepted(video);
     const revision = exercise.revised({
       draft: draft.draft,
       at: clock.now(),
@@ -94,7 +92,7 @@ export class EditExerciseUseCase {
     });
 
     if (
-      (await this.videos.writtenWith(change, () =>
+      (await this.videos.writeOrRemoveKept(change, () =>
         library.replace(revision.exercise),
       )) === "name-taken"
     ) {

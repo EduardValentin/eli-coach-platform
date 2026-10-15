@@ -1,7 +1,7 @@
 import type {
   Exercise,
   ExerciseDraftInput,
-  ExerciseProblems as ExerciseSaveProblems,
+  ExerciseSaveProblems,
   ExerciseSnapshot,
   ExerciseVideoFormat,
 } from "@eli-coach-platform/domain/exercise";

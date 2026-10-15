@@ -8,7 +8,7 @@ export {
 } from "./edit-exercise-use-case";
 export {
   Exercise,
-  type ExerciseProblems,
+  type ExerciseSaveProblems,
   type ExerciseSnapshot,
 } from "./exercise";
 export {
