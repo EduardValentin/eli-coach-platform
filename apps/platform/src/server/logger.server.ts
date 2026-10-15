@@ -7,6 +7,7 @@ import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-pro
 import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
+import type { NotificationIncidents } from "@eli-coach-platform/domain/notification";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -21,6 +22,7 @@ type ConsoleLogger = AcquisitionIncidents &
   CoachingSalesIncidents &
   CoachingSubscriptionIncidents &
   MeasurementIncidents &
+  NotificationIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
 
@@ -51,12 +53,32 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "assessment_call_listing_failure",
       });
     },
+    checkInInboxFailed: ({ checkInId, notification }) => {
+      console.error(
+        "Check-in notification could not be recorded in the bell.",
+        {
+          checkInId,
+          errorCategory: "check_in_inbox_failure",
+          notification,
+        },
+      );
+    },
     checkInNotificationFailed: ({ checkInId, notification }) => {
       console.error("Check-in notification failed.", {
         checkInId,
         errorCategory: "check_in_notification_failure",
         notification,
       });
+    },
+    checkInSeriesInboxFailed: ({ event, seriesId }) => {
+      console.error(
+        "Weekly check-in notification could not be recorded in the bell.",
+        {
+          errorCategory: "check_in_series_inbox_failure",
+          event,
+          seriesId,
+        },
+      );
     },
     checkInSeriesNotificationFailed: ({ notification, seriesId }) => {
       console.error("Weekly check-in notification failed.", {
@@ -173,6 +195,28 @@ export function createConsoleLogger(): ConsoleLogger {
         errorClass: errorClassOf(error),
         ...errorCodeOf(error),
       });
+    },
+    notificationBellReadFailed: ({ error, party }) => {
+      console.error(
+        "The notification bell could not be read; it shows no notifications.",
+        {
+          errorCategory: "notification_bell_read_failure",
+          errorClass: errorClassOf(error),
+          party,
+          ...errorCodeOf(error),
+        },
+      );
+    },
+    notificationExpiriesFailed: ({ error, party }) => {
+      console.error(
+        "Expired notifications could not be recorded in the bell; it shows what it already holds.",
+        {
+          errorCategory: "notification_expiries_failure",
+          errorClass: errorClassOf(error),
+          party,
+          ...errorCodeOf(error),
+        },
+      );
     },
     notificationFailed: ({ recipient }) => {
       console.error("Assessment call notification failed.", {

@@ -309,6 +309,13 @@
       "when": 1791918410915,
       "tag": "0047_check_in_series",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792070540964,
+      "tag": "0048_notifications",
+      "breakpoints": true
     }
   ]
 }

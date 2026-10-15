@@ -56,6 +56,11 @@ import { composeClientsFeature } from "~/features/clients/server/clients-composi
 import { composeCoachScheduleFeature } from "~/features/coach-schedule/server/coach-schedule-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
+  composeNotificationInbox,
+  composeNotificationsFeature,
+  type NotificationsFeature,
+} from "~/features/notifications/server/notifications-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -86,6 +91,7 @@ export type PlatformContainer = {
   coachSchedule: ReturnType<typeof composeCoachScheduleFeature>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
+  notifications: NotificationsFeature;
   platform: PlatformFeature;
   store: StoreFeature;
   waitlist: ReturnType<typeof composeWaitlistFeature>;
@@ -171,6 +177,9 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const notificationInbox = composeNotificationInbox({
+    database: database.client,
+  });
   const checkIns = composeCheckInsFeature({
     appBasePath: environment.APP_BASE_PATH,
     availability: coachSchedule.handles.availability,
@@ -186,6 +195,13 @@ export function createPlatformContainer(options: {
     meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
+  });
+  const notifications = composeNotificationsFeature({
+    clientReach: clients.handles.clientReach,
+    clock,
+    expirySources: [],
+    inbox: notificationInbox.handles.inbox,
+    incidents,
   });
   const clientProfile = composeClientProfileFeature({
     clientIdentities: clients.handles.clientIdentities,
@@ -291,6 +307,7 @@ export function createPlatformContainer(options: {
     coachSchedule,
     coachingSales,
     featureFlagOverrides,
+    notifications,
     platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,

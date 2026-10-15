@@ -32,6 +32,7 @@ const FEATURE_ORDER = [
   "coach-schedule",
   "assessment-calls",
   "clients",
+  "notifications",
   "client-profile",
   "client-resources",
   "client-onboarding",
