@@ -7,8 +7,36 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRoutesStub } from "react-router";
 
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+
 import CoachLayoutRoute, { meta } from "./layout";
 import type { CoachNavigationCounts } from "./navigation-links";
+
+const CHECK_IN_ID = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
+
+const EMPTY_BELL: NotificationBellReply = {
+  notifications: [],
+  unreadCount: 0,
+  checkedAt: "2026-10-15T12:00:00.000Z",
+};
+
+const REQUEST_BELL: NotificationBellReply = {
+  notifications: [
+    {
+      id: "1b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e",
+      kind: "check-in.requested",
+      facts: {
+        checkInId: CHECK_IN_ID,
+        startsAt: "2026-10-16T15:00:00.000Z",
+        clientName: "Jane Doe",
+      },
+      arrivedAt: "2026-10-15T11:00:00.000Z",
+      unread: true,
+    },
+  ],
+  unreadCount: 1,
+  checkedAt: "2026-10-15T12:00:00.000Z",
+};
 
 afterEach(() => {
   cleanup();
@@ -17,6 +45,7 @@ afterEach(() => {
 function renderCoachLayout(
   entry = "/coach",
   counts: CoachNavigationCounts = { checkInsAwaiting: 0 },
+  bell: NotificationBellReply = EMPTY_BELL,
 ) {
   const RoutesStub = createRoutesStub([
     {
@@ -30,7 +59,7 @@ function renderCoachLayout(
         },
       ],
       Component: CoachLayoutRoute,
-      loader: () => counts,
+      loader: () => ({ ...counts, bell }),
       path: "/coach",
     },
   ]);
@@ -202,15 +231,56 @@ describe("CoachLayoutRoute", () => {
     expect(within(sidebar).getByText("Evoa").closest("a")).toBeNull();
   });
 
-  it("contains no notification bell until the coach notifications story", async () => {
+  it("carries her notification bell in the sidebar and the top bar, named for what waits unread", async () => {
+    // arrange, act
+    renderCoachLayout("/coach", { checkInsAwaiting: 0 }, REQUEST_BELL);
+
+    // assert
+    const sidebar = await screen.findByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+    const topBar = screen.getByRole("banner", { name: "Coach portal top bar" });
+    expect(
+      within(sidebar).getByRole("button", { name: "Notifications, 1 unread" }),
+    ).toBeInTheDocument();
+    expect(
+      within(topBar).getByRole("button", { name: "Notifications, 1 unread" }),
+    ).toBeInTheDocument();
+  });
+
+  it("words a check-in notification for her and opens the check-in it names", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCoachLayout("/coach", { checkInsAwaiting: 0 }, REQUEST_BELL);
+    const sidebar = await screen.findByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+
+    // act
+    await user.click(
+      within(sidebar).getByRole("button", { name: "Notifications, 1 unread" }),
+    );
+
+    // assert
+    const bell = await screen.findByRole("dialog", { name: "Notifications" });
+    const row = within(bell).getByRole("link");
+    expect(row).toHaveTextContent("Check-in requested");
+    expect(row).toHaveTextContent(/Jane Doe asked for a check-in on /);
+    expect(row).toHaveAttribute(
+      "href",
+      `/coach/checkins?checkin=${CHECK_IN_ID}`,
+    );
+  });
+
+  it("names her bell plainly while nothing is unread", async () => {
     // arrange, act
     renderCoachLayout();
 
     // assert
     await findNavigation();
     expect(
-      screen.queryByRole("button", { name: /notification/i }),
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: "Notifications" }),
+    ).toHaveLength(2);
   });
 
   it("titles the document for the Evoa coach portal without referencing a manifest", () => {

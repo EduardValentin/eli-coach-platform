@@ -10,6 +10,7 @@ export { type NotificationInbox } from "./notification-inbox";
 export { type NotificationIncidents } from "./notification-incidents";
 export {
   NOTIFICATION_PARTIES,
+  type NotificationParty,
   type NotificationRecipientSnapshot,
 } from "./notification-recipient";
 export { type NotificationReader } from "./notification-recipient-reach";

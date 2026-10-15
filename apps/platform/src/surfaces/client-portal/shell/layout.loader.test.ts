@@ -15,6 +15,9 @@ import { ClientJourneyController } from "~/features/clients/api/client/client-jo
 import type { ClientsFeature } from "~/features/clients/server/clients-composition.server";
 import { clientJourneyContext } from "~/features/clients/server/guards/client-journey-context.server";
 import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
+import type { NotificationsFeature } from "~/features/notifications/server/notifications-composition.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -67,15 +70,40 @@ const NEXT_CHECK_IN: ClientCheckIn = {
   newTimeNote: null,
 };
 
+const EMPTY_BELL: NotificationBellReply = {
+  notifications: [],
+  unreadCount: 0,
+  checkedAt: "2026-10-15T12:00:00.000Z",
+};
+
+const UNREAD_BELL: NotificationBellReply = {
+  notifications: [
+    {
+      id: "1b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e",
+      kind: "check-in.approved",
+      facts: {
+        checkInId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+        startsAt: "2026-10-14T07:00:00.000Z",
+      },
+      arrivedAt: "2026-10-13T07:00:00.000Z",
+      unread: true,
+    },
+  ],
+  unreadCount: 1,
+  checkedAt: "2026-10-13T08:00:00.000Z",
+};
+
 describe("client shell loader", () => {
-  it("names the client the gate handed over, reads her next check-in and counts the resources she has not opened and the check-ins waiting for her", async () => {
+  it("names the client the gate handed over, reads her next check-in and her notification bell and counts the resources she has not opened and the check-ins waiting for her", async () => {
     // arrange
     const countUnopened = vi.fn().mockResolvedValue(2);
     const loadAwaitingCount = vi.fn().mockResolvedValue(3);
     const loadNextCheckIn = vi.fn().mockResolvedValue(NEXT_CHECK_IN);
+    const loadBell = vi.fn().mockResolvedValue(UNREAD_BELL);
     const args = shellArguments([contextEntry(clientJourneyContext, ANA)], {
       countUnopened,
       loadAwaitingCount,
+      loadBell,
       loadNextCheckIn,
     });
 
@@ -91,7 +119,9 @@ describe("client shell loader", () => {
       nextCheckIn: NEXT_CHECK_IN,
       unopenedResources: 2,
       checkInsAwaiting: 3,
+      bell: UNREAD_BELL,
     });
+    expect(loadBell).toHaveBeenCalledWith(args);
     expect(countUnopened).toHaveBeenCalledWith(args);
     expect(loadAwaitingCount).toHaveBeenCalledWith(args);
     expect(loadNextCheckIn).toHaveBeenCalledWith(args);
@@ -121,6 +151,7 @@ describe("client shell loader", () => {
       nextCheckIn: null,
       unopenedResources: 0,
       checkInsAwaiting: 0,
+      bell: EMPTY_BELL,
     });
   });
 
@@ -129,9 +160,11 @@ describe("client shell loader", () => {
     const countUnopened = vi.fn().mockResolvedValue(0);
     const loadAwaitingCount = vi.fn().mockResolvedValue(0);
     const loadNextCheckIn = vi.fn().mockResolvedValue(null);
+    const loadBell = vi.fn().mockResolvedValue(EMPTY_BELL);
     const args = shellArguments([], {
       countUnopened,
       loadAwaitingCount,
+      loadBell,
       loadNextCheckIn,
     });
 
@@ -143,6 +176,7 @@ describe("client shell loader", () => {
     expect(countUnopened).not.toHaveBeenCalled();
     expect(loadAwaitingCount).not.toHaveBeenCalled();
     expect(loadNextCheckIn).not.toHaveBeenCalled();
+    expect(loadBell).not.toHaveBeenCalled();
   });
 });
 
@@ -198,12 +232,14 @@ function shellArguments(
   reads: {
     countUnopened?: ReturnType<typeof vi.fn>;
     loadAwaitingCount?: ReturnType<typeof vi.fn>;
+    loadBell?: ReturnType<typeof vi.fn>;
     loadNextCheckIn?: ReturnType<typeof vi.fn>;
   } = {},
 ) {
   const {
     countUnopened = vi.fn().mockResolvedValue(0),
     loadAwaitingCount = vi.fn().mockResolvedValue(0),
+    loadBell = vi.fn().mockResolvedValue(EMPTY_BELL),
     loadNextCheckIn = vi.fn().mockResolvedValue(null),
   } = reads;
   const clientJourney = new ClientJourneyController({
@@ -222,6 +258,9 @@ function shellArguments(
       contextEntry(checkInsContext, {
         clientCheckIns: { loadAwaitingCount, loadNextCheckIn },
       } as unknown as CheckInsFeature),
+      contextEntry(notificationsContext, {
+        notificationBell: { loadBell },
+      } as unknown as NotificationsFeature),
       ...journeyEntries,
     ],
     request: new Request("https://evoa.fit/client"),

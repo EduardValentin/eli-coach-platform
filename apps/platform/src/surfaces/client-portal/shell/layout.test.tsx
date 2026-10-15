@@ -14,7 +14,7 @@ import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import type { PropsWithChildren } from "react";
 import { createRoutesStub } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureAxe } from "vitest-axe";
 
 vi.mock("@clerk/react-router", () => ({
@@ -22,6 +22,7 @@ vi.mock("@clerk/react-router", () => ({
 }));
 
 import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
 
 import type { ClientShellPresentation } from "./client-identity-presentation";
 import ClientLayoutRoute, { meta } from "./layout";
@@ -57,18 +58,54 @@ const NEXT_CHECK_IN: ClientCheckIn = {
   newTimeNote: null,
 };
 
+const APPROVED_BELL: NotificationBellReply = {
+  notifications: [
+    {
+      id: "1b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e",
+      kind: "check-in.approved",
+      facts: {
+        checkInId: NEXT_CHECK_IN.id,
+        startsAt: NEXT_CHECK_IN.startsAt,
+      },
+      arrivedAt: "2026-10-13T07:00:00.000Z",
+      unread: true,
+    },
+  ],
+  unreadCount: 1,
+  checkedAt: "2026-10-13T08:00:00.000Z",
+};
+
 const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
 
 function ProfilePage() {
   return <h1>Her profile</h1>;
 }
 
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    addEventListener: () => {},
+    matches: query.includes("min-width"),
+    media: query,
+    removeEventListener: () => {},
+  }));
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      disconnect() {}
+      observe() {}
+      unobserve() {}
+    },
+  );
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 type ClientShellReads = Partial<ClientNavigationCounts> & {
+  bell?: NotificationBellReply;
   nextCheckIn?: ClientCheckIn | null;
 };
 
@@ -92,6 +129,11 @@ function renderClientLayout(
         nextCheckIn: null,
         unopenedResources: 0,
         checkInsAwaiting: 0,
+        bell: {
+          notifications: [],
+          unreadCount: 0,
+          checkedAt: "2026-10-13T08:00:00.000Z",
+        },
         ...reads,
       }),
       path: "/client",
@@ -379,18 +421,50 @@ describe("ClientLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("carries no notification bell and no way back to the public site", async () => {
+  it("carries her notification bell in the sidebar and the top bar, and no way back to the public site", async () => {
     // arrange, act
-    renderClientLayout();
+    renderClientLayout(ANA, "/client", { bell: APPROVED_BELL });
 
     // assert
-    await screen.findByRole("complementary", { name: "Client portal sidebar" });
+    const sidebar = await screen.findByRole("complementary", {
+      name: "Client portal sidebar",
+    });
+    const topBar = screen.getByRole("banner", {
+      name: "Client portal top bar",
+    });
     expect(
-      screen.queryByRole("button", { name: /notification/i }),
-    ).not.toBeInTheDocument();
+      within(sidebar).getByRole("button", { name: "Notifications, 1 unread" }),
+    ).toBeInTheDocument();
+    expect(
+      within(topBar).getByRole("button", { name: "Notifications, 1 unread" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Public Site" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("words a check-in notification for her, naming her coach, and opens her check-in", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientLayout(ANA, "/client", { bell: APPROVED_BELL });
+    const sidebar = await screen.findByRole("complementary", {
+      name: "Client portal sidebar",
+    });
+
+    // act
+    await user.click(
+      within(sidebar).getByRole("button", { name: "Notifications, 1 unread" }),
+    );
+
+    // assert
+    const bell = await screen.findByRole("dialog", { name: "Notifications" });
+    const row = within(bell).getByRole("link");
+    expect(row).toHaveTextContent("Check-in approved");
+    expect(row).toHaveTextContent(/Eli approved the check-in on /);
+    expect(row).toHaveAttribute(
+      "href",
+      `/client/checkins?checkin=${NEXT_CHECK_IN.id}`,
+    );
   });
 
   it("marks her settings as the page being read on the settings page", async () => {
