@@ -65,4 +65,17 @@ describe("cleanUpRunAssessmentCalls", () => {
     expect(positionOf(series)).toBeGreaterThan(positionOf(checkIns));
     expect(positionOf(series)).toBeLessThan(positionOf(clients));
   });
+
+  it("deletes the run's client notifications before any client", async () => {
+    // arrange
+    const notifications = /delete from app\.notifications/;
+    const clients = /delete from app\.clients/;
+
+    // act
+    await cleanUpRunAssessmentCalls(RUN_ID, "[test]");
+
+    // assert
+    expect(positionOf(notifications)).toBeGreaterThan(-1);
+    expect(positionOf(notifications)).toBeLessThan(positionOf(clients));
+  });
 });

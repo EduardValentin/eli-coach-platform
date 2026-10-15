@@ -47,6 +47,8 @@ import {
 } from "./measured-clients";
 import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
+import { NotificationBell } from "./notification-bell";
+import { NotificationRecords } from "./notification-records";
 import { OnboardingRecords } from "./onboarding-records";
 import { PaymentCardRecords } from "./payment-card-records";
 import { PhotoRequests } from "./photo-requests";
@@ -141,6 +143,8 @@ type PlatformFixtures = {
   coachAvailability: CoachAvailability;
   checkInRecords: CheckInRecords;
   checkInRequests: CheckInRequests;
+  notificationBell: NotificationBell;
+  notificationRecords: NotificationRecords;
   coachSettings: CoachSettingsPage;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
@@ -531,6 +535,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   checkInRequests: async ({ page }, use) => {
     await use(new CheckInRequests(page));
+  },
+
+  notificationBell: async ({ page }, use) => {
+    await use(new NotificationBell(page));
+  },
+
+  notificationRecords: async ({ databasePool }, use) => {
+    await use(new NotificationRecords(databasePool));
   },
 
   coachSettings: async ({ page }, use) => {
