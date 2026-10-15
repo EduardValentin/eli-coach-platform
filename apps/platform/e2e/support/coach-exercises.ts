@@ -4,12 +4,18 @@ import { runRegistry } from "./run-registry";
 
 const coachAccounts = runRegistry("coach-accounts-");
 
+const RUN_COACHES = `
+  select id from app.accounts where auth_subject_id = any($1::text[])
+`;
+
+const VIDEOS_OWNED_BY = `
+  select video_file_id as "videoId" from app.exercises
+  where owner_account_id in (${RUN_COACHES}) and video_file_id is not null
+`;
+
 const DELETE_EXERCISES_OWNED_BY = `
   delete from app.exercises
-  where owner_account_id in (
-    select id from app.accounts where auth_subject_id = any($1::text[])
-  )
-  returning video_file_id as "videoId"
+  where owner_account_id in (${RUN_COACHES})
 `;
 
 export function recordCoachAccount(authSubjectId: string, runId: string): void {
@@ -29,15 +35,17 @@ export async function cleanUpRunExercises(
   const pool = createE2eDatabasePool();
 
   try {
-    const { rows } = await pool.query<{ videoId: string | null }>(
-      DELETE_EXERCISES_OWNED_BY,
-      [authSubjectIds],
+    const { rows } = await pool.query<{ videoId: string }>(VIDEOS_OWNED_BY, [
+      authSubjectIds,
+    ]);
+    removeExerciseVideoFiles(
+      rows.map(({ videoId }) => videoId),
+      logPrefix,
     );
-    const videoIds = rows.flatMap(({ videoId }) => (videoId ? [videoId] : []));
-    removeExerciseVideoFiles(videoIds);
-    console.log(
-      `${logPrefix} Exercises: removed ${rows.length}, with ${videoIds.length} videos`,
-    );
+    const { rowCount } = await pool.query(DELETE_EXERCISES_OWNED_BY, [
+      authSubjectIds,
+    ]);
+    console.log(`${logPrefix} Exercises: removed ${rowCount ?? 0}`);
     coachAccounts.remove(runId);
 
     return { allCleaned: true };

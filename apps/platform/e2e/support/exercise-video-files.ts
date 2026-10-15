@@ -107,12 +107,27 @@ export class ExerciseVideoSamples {
   }
 }
 
-export function removeExerciseVideoFiles(videoIds: readonly string[]): void {
+export function removeExerciseVideoFiles(
+  videoIds: readonly string[],
+  logPrefix: string,
+): void {
   const videoRoot = exerciseVideoRoot();
 
-  if (!videoRoot) return;
+  if (!videoRoot) {
+    console.log(
+      `${logPrefix} Exercise videos: skipped, EXERCISE_VIDEO_ROOT is not set`,
+    );
 
-  for (const videoId of videoIds) {
-    rmSync(resolve(videoRoot, "videos", videoId), { force: true });
+    return;
   }
+
+  const stored = videoIds
+    .map((videoId) => resolve(videoRoot, "videos", videoId))
+    .filter((path) => existsSync(path));
+
+  for (const path of stored) {
+    rmSync(path);
+  }
+
+  console.log(`${logPrefix} Exercise videos: removed ${stored.length}`);
 }
