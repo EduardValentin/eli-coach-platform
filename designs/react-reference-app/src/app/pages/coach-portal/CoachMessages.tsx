@@ -621,7 +621,7 @@ export function CoachMessages() {
           showMessageField
           message={scheduleNote}
           onMessageChange={setScheduleNote}
-          messagePlaceholder="Add a note (optional)"
+          messagePlaceholder="Add a note"
         />
 
         <CheckinProposeTimeDialog
@@ -629,7 +629,7 @@ export function CoachMessages() {
           party="coach"
           noteLabel={
             proposingCheckin
-              ? `Add a note for ${proposingCheckin.clientName.split(' ')[0]} (optional)`
+              ? `Add a note for ${proposingCheckin.clientName.split(' ')[0]}`
               : ''
           }
           onOpenChange={(open) => {

@@ -41,7 +41,7 @@ function requestSheet(times: Date[]) {
       onOpenChange={() => {}}
       title="Request a check-in"
       wording={{
-        noteLabel: 'Add a note for your coach (optional)',
+        noteLabel: 'Add a note for your coach',
         stepVerb: 'Request',
         busyLabel: 'Requesting…',
       }}

@@ -15,7 +15,7 @@ import { Checkbox } from './ui/checkbox';
 import { InlineProblem } from './InlineProblem';
 import { Alert } from './ui/alert';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Label, RequiredMark } from './ui/label';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -319,7 +319,7 @@ export function CartDrawer() {
 
                       <form onSubmit={submitCheckout} noValidate className="flex flex-col gap-6 flex-1">
                         <div>
-                          <Label htmlFor="email" className="mb-2 text-foreground">
+                          <Label htmlFor="email" className="mb-2 text-foreground" required>
                             Email Address
                           </Label>
                           <Input
@@ -370,6 +370,7 @@ export function CartDrawer() {
                                 Terms of Service
                               </Link>
                               .
+                              <RequiredMark />
                             </span>
                           </label>
 
@@ -381,7 +382,7 @@ export function CartDrawer() {
                               className="mt-0.5"
                             />
                             <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
-                              Keep me posted about new plans, guides, and offers. (Optional)
+                              Keep me posted about new plans, guides, and offers.
                             </span>
                           </label>
 

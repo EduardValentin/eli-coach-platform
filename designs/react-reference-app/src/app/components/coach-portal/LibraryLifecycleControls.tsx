@@ -64,7 +64,7 @@ export function LibraryItemActions({
   };
 
   return (
-    <div className="flex items-center justify-end">
+    <div className="flex items-center justify-end" data-parity="library-item-actions">
       <RowActionsMenu
         label={`Actions for ${itemName}`}
         parityRoot="LibraryItemActions"

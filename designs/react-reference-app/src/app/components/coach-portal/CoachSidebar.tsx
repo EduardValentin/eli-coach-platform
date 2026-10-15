@@ -261,6 +261,7 @@ export function CoachSidebar() {
           <>
             <motion.div
               className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
+              data-parity="drawer-backdrop"
               transition={prefersReducedMotion ? { duration: 0 } : undefined}
               variants={{ closed: { opacity: 0 }, open: { opacity: 1 } }}
             />

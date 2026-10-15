@@ -11,7 +11,7 @@ import type { ChangeEvent } from "react";
 
 import { COUNTRIES } from "~/features/assessment-calls/public/countries";
 
-const PHONE_FIELD_LABEL = "Phone (optional)";
+const PHONE_FIELD_LABEL = "Phone";
 const CALLING_CODE_LABEL = "Country calling code";
 const PHONE_NUMBER_LABEL = "Phone number";
 

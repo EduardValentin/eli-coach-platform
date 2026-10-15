@@ -425,7 +425,7 @@ describe('the coach view of a client in onboarding', () => {
     expect(send).toBeDisabled();
 
     await user.type(
-      within(dialog).getByRole('textbox', { name: 'What is missing?' }),
+      within(dialog).getByRole('textbox', { name: 'What is missing? (required)' }),
       'Tell me more about your sleep.',
     );
     expect(send).toBeEnabled();
@@ -442,7 +442,7 @@ describe('the coach view of a client in onboarding', () => {
       within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     );
     await user.type(
-      within(dialog).getByRole('textbox', { name: 'What is missing?' }),
+      within(dialog).getByRole('textbox', { name: 'What is missing? (required)' }),
       'Tell me more about your sleep.',
     );
     await user.click(

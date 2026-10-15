@@ -83,11 +83,11 @@ const OPEN_TIMES = [THURSDAY_AFTERNOON, THURSDAY_EVENING, FRIDAY_AFTERNOON];
 
 const CLIENT_PROPOSER: CheckInProposer = {
   clientTimeZone: TIME_ZONE,
-  noteLabel: "Add a note for your coach (optional)",
+  noteLabel: "Add a note for your coach",
 };
 
 const COACH_PROPOSER: CheckInProposer = {
-  noteLabel: "Add a note for Andreea (optional)",
+  noteLabel: "Add a note for Andreea",
   openTimesQuery: { clientId: CLIENT_ID },
 };
 
@@ -177,7 +177,7 @@ describe("proposing a new time for a check-in", () => {
     const afterTime = stepButton(dialog).textContent;
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
       "Thursday evening suits me better",
     );
@@ -225,7 +225,7 @@ describe("proposing a new time for a check-in", () => {
     // act
     const dialog = await openOnThursdayEvening(user);
     const noteField = within(dialog).queryByRole("textbox", {
-      name: "Add a note for Andreea (optional)",
+      name: "Add a note for Andreea",
     });
     await user.click(stepButton(dialog));
 
@@ -291,7 +291,7 @@ describe("proposing a new time for a check-in", () => {
     const dialog = await openOnThursdayEvening(user);
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
       "Form check",
     );
@@ -312,7 +312,7 @@ describe("proposing a new time for a check-in", () => {
     expect(stepButton(dialog)).toHaveTextContent("Select a time");
     expect(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for your coach (optional)",
+        name: "Add a note for your coach",
       }),
     ).toHaveValue("Form check");
     await waitFor(() => {

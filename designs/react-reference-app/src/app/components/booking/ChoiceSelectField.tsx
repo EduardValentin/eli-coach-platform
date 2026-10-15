@@ -34,7 +34,7 @@ export function ChoiceSelectField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} id={labelId} className="text-text-label font-medium">
+      <Label htmlFor={id} id={labelId} className="text-text-label font-medium" required>
         {label}
       </Label>
       <Select value={value} onValueChange={onValueChange} autoComplete={autoComplete}>

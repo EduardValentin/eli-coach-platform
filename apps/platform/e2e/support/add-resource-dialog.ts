@@ -44,11 +44,17 @@ export class AddResourceDialog {
   }
 
   private get titleField() {
-    return this.dialog.getByRole("textbox", { name: "Title", exact: true });
+    return this.dialog.getByRole("textbox", {
+      name: "Title (required)",
+      exact: true,
+    });
   }
 
   private get descriptionField() {
-    return this.dialog.getByRole("textbox", { name: /^Description/ });
+    return this.dialog.getByRole("textbox", {
+      name: "Description",
+      exact: true,
+    });
   }
 
   private get closeButton() {

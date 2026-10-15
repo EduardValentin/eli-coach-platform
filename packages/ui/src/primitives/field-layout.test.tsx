@@ -18,7 +18,7 @@ afterEach(() => {
 describe("FieldLayout", () => {
   it("names its control with the label and its suffixes", () => {
     // arrange
-    const suffixes = [{ text: "(kg)" }, { text: "(optional)" }];
+    const suffixes = [{ text: "(kg)" }, { text: "(per week)" }];
 
     // act
     render(
@@ -29,8 +29,24 @@ describe("FieldLayout", () => {
 
     // assert
     expect(screen.getByRole("textbox")).toHaveAccessibleName(
-      "Weight(kg)(optional)",
+      "Weight(kg)(per week)",
     );
+  });
+
+  it("stars a required field and names its control as required", () => {
+    // arrange
+    // act
+    render(
+      <FieldLayout label="Weight" required>
+        {(control) => <input {...control} />}
+      </FieldLayout>,
+    );
+
+    // assert
+    expect(screen.getByRole("textbox")).toHaveAccessibleName(
+      "Weight (required)",
+    );
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("describes its control with the hint", () => {
@@ -90,13 +106,13 @@ describe("FieldLayout", () => {
     // arrange
     // act
     render(
-      <FieldLayout label="Description" suffixes={[{ text: "(optional)" }]}>
+      <FieldLayout label="Sessions" suffixes={[{ text: "(per week)" }]}>
         {(control) => <textarea {...control} />}
       </FieldLayout>,
     );
 
     // assert
-    const label = screen.getByText("Description");
+    const label = screen.getByText("Sessions");
     expect(label).toHaveClass("flex-wrap", "items-baseline", "gap-1.5");
   });
 

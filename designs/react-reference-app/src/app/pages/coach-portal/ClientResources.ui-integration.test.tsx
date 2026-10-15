@@ -108,7 +108,7 @@ async function chooseAndSend() {
   await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
   const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
   await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
-  await userEvent.type(within(dialog).getByLabelText(/Description/), NOTE);
+  await userEvent.type(within(dialog).getByRole('textbox', { name: 'Description' }), NOTE);
   await userEvent.click(within(dialog).getByRole('button', { name: 'Add resource' }));
 
   return dialog;
@@ -341,7 +341,7 @@ describe('coach resources page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
     const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
     await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
-    const tags = within(dialog).getByRole('combobox', { name: /^Tags/ });
+    const tags = within(dialog).getByRole('combobox', { name: 'Tags' });
 
     // act
     await userEvent.type(tags, 'm'.repeat(35));
@@ -357,8 +357,8 @@ describe('coach resources page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
     const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
     await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
-    const prefilledTitle = within(dialog).getByLabelText('Title').getAttribute('value');
-    const tags = within(dialog).getByRole('combobox', { name: /^Tags/ });
+    const prefilledTitle = within(dialog).getByRole('textbox', { name: 'Title (required)' }).getAttribute('value');
+    const tags = within(dialog).getByRole('combobox', { name: 'Tags' });
     await userEvent.type(tags, 'nutr');
     const suggestions = screen.getAllByRole('option').map((option) => option.textContent);
     await userEvent.keyboard('{Enter}');
@@ -388,7 +388,7 @@ describe('coach resources page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
     const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
     await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
-    await userEvent.type(within(dialog).getByLabelText(/Description/), 'Read before Monday.');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Description' }), 'Read before Monday.');
 
     // act
     await userEvent.click(within(dialog).getByRole('button', { name: 'Add resource' }));
@@ -397,8 +397,8 @@ describe('coach resources page', () => {
     expect(await within(dialog).findByRole('alert', {}, SERVICE_TIMEOUT)).toHaveTextContent(
       'The upload didn’t go through. Try again.',
     );
-    expect(within(dialog).getByLabelText('Title')).toHaveValue('Cycle syncing starter guide');
-    expect(within(dialog).getByLabelText(/Description/)).toHaveValue('Read before Monday.');
+    expect(within(dialog).getByRole('textbox', { name: 'Title (required)' })).toHaveValue('Cycle syncing starter guide');
+    expect(within(dialog).getByRole('textbox', { name: 'Description' })).toHaveValue('Read before Monday.');
     expect(within(dialog).getByText('Cycle-syncing_starter-guide.pdf')).toBeInTheDocument();
   });
 
@@ -511,8 +511,8 @@ describe('coach resources page', () => {
       expect(within(dialog).getByLabelText('Replace')).toHaveAccessibleDescription(message);
       expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
       expect(within(dialog).getByText('Cycle-syncing_starter-guide.pdf')).toBeInTheDocument();
-      expect(within(dialog).getByLabelText('Title')).toHaveValue('Cycle syncing starter guide');
-      expect(within(dialog).getByLabelText(/Description/)).toHaveValue('Read before Monday.');
+      expect(within(dialog).getByRole('textbox', { name: 'Title (required)' })).toHaveValue('Cycle syncing starter guide');
+      expect(within(dialog).getByRole('textbox', { name: 'Description' })).toHaveValue('Read before Monday.');
       expect(within(dialog).getByRole('button', { name: 'Add resource' })).toBeEnabled();
     },
   );
@@ -543,7 +543,7 @@ describe('coach resources page', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Edit details' });
     const save = within(dialog).getByRole('button', { name: 'Save' });
     const disabledBeforeChange = save.hasAttribute('disabled');
-    const title = within(dialog).getByLabelText('Title');
+    const title = within(dialog).getByRole('textbox', { name: 'Title (required)' });
     await userEvent.clear(title);
     await userEvent.type(title, 'Daily macro tracker');
 
@@ -676,7 +676,7 @@ describe('coach resources page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Actions for Weekly macro tracker' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Edit details' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit details' });
-    const title = within(dialog).getByLabelText('Title');
+    const title = within(dialog).getByRole('textbox', { name: 'Title (required)' });
     await userEvent.clear(title);
     await userEvent.type(title, 'Daily macro tracker');
 
@@ -687,7 +687,7 @@ describe('coach resources page', () => {
     expect(await within(dialog).findByRole('alert', {}, SERVICE_TIMEOUT)).toHaveTextContent(
       'Your changes weren’t saved. Try again.',
     );
-    expect(within(dialog).getByLabelText('Title')).toHaveValue('Daily macro tracker');
+    expect(within(dialog).getByRole('textbox', { name: 'Title (required)' })).toHaveValue('Daily macro tracker');
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeEnabled();
   });
 

@@ -32,7 +32,7 @@ function renderSection(search = "") {
 }
 
 async function selectHour(user: UserEvent, label: string, hour: string) {
-  await user.click(screen.getByLabelText(label));
+  await user.click(screen.getByRole("combobox", { name: label }));
   await user.click(await screen.findByRole("option", { name: hour }));
 }
 
@@ -55,13 +55,22 @@ afterEach(() => {
 });
 
 describe("AssessmentCallSettingsSection", () => {
-  it("names the weekday group for assistive technology", () => {
+  it("names the weekday group and the hours as required, and the meeting link as optional", () => {
     // arrange, act
     renderSection();
 
     // assert
     expect(
-      screen.getByRole("group", { name: "Days I'm available" }),
+      screen.getByRole("group", { name: "Days I'm available (required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "Start (required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "End (required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Meeting link" }),
     ).toBeInTheDocument();
   });
 
@@ -77,8 +86,8 @@ describe("AssessmentCallSettingsSection", () => {
       screen.getByRole("checkbox", { name: "Saturday" }),
     ).not.toBeChecked();
     expect(screen.getByRole("checkbox", { name: "Sunday" })).not.toBeChecked();
-    expect(screen.getByLabelText("Start")).toHaveTextContent("17:00");
-    expect(screen.getByLabelText("End")).toHaveTextContent("20:00");
+    expect(screen.getByRole("combobox", { name: "Start (required)" })).toHaveTextContent("17:00");
+    expect(screen.getByRole("combobox", { name: "End (required)" })).toHaveTextContent("20:00");
     expect(screen.getByLabelText("Meeting link")).toHaveValue("");
     expect(
       screen.getByText("No one can join calls or check-ins until a link is set."),
@@ -118,8 +127,8 @@ describe("AssessmentCallSettingsSection", () => {
     // arrange
     const user = userEvent.setup();
     renderSection();
-    await selectHour(user, "Start", "20:00");
-    await selectHour(user, "End", "20:00");
+    await selectHour(user, "Start (required)", "20:00");
+    await selectHour(user, "End (required)", "20:00");
     await fillValidMeetingLink(user);
 
     // act
@@ -129,9 +138,9 @@ describe("AssessmentCallSettingsSection", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The start hour must be before the end hour.",
     );
-    expect(screen.getByLabelText("Start")).toHaveTextContent("20:00");
-    expect(screen.getByLabelText("End")).toHaveTextContent("20:00");
-    expect(screen.getByLabelText("Start")).toHaveFocus();
+    expect(screen.getByRole("combobox", { name: "Start (required)" })).toHaveTextContent("20:00");
+    expect(screen.getByRole("combobox", { name: "End (required)" })).toHaveTextContent("20:00");
+    expect(screen.getByRole("combobox", { name: "Start (required)" })).toHaveFocus();
   });
 
   it("refuses a save with an invalid meeting link, and keeps it as typed", async () => {

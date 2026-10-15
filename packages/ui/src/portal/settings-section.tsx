@@ -4,7 +4,7 @@ import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
 import { WIDGET_TITLE_CLASS } from "../lib/typography";
 import { cardVariants } from "../primitives/card";
-import { Label } from "../primitives/label";
+import { Label, RequiredMark } from "../primitives/label";
 
 type SettingsSectionProps = DataAttributes & {
   headingId: string;
@@ -87,20 +87,26 @@ type SettingsRowProps = Omit<
   hint?: ReactNode;
   problem?: ReactNode;
   layout?: SettingsRowLayout;
+  required?: boolean;
   children?: ReactNode;
 };
 
 type SettingsRowTitleProps = Pick<
   SettingsRowProps,
-  "labelId" | "htmlFor" | "title"
+  "labelId" | "htmlFor" | "required" | "title"
 >;
 
 const ROW_TITLE_CLASS = "text-sm font-medium text-text-primary";
 
-function SettingsRowTitle({ labelId, htmlFor, title }: SettingsRowTitleProps) {
+function SettingsRowTitle({
+  labelId,
+  htmlFor,
+  required,
+  title,
+}: SettingsRowTitleProps) {
   if (htmlFor) {
     return (
-      <Label htmlFor={htmlFor} id={labelId}>
+      <Label htmlFor={htmlFor} id={labelId} required={required}>
         {title}
       </Label>
     );
@@ -109,6 +115,7 @@ function SettingsRowTitle({ labelId, htmlFor, title }: SettingsRowTitleProps) {
   return (
     <p id={labelId} className={ROW_TITLE_CLASS}>
       {title}
+      {required && <RequiredMark />}
     </p>
   );
 }
@@ -123,6 +130,7 @@ export function SettingsRow({
   hint,
   problem,
   layout = "inline",
+  required,
   children,
   ...rest
 }: SettingsRowProps) {
@@ -143,7 +151,12 @@ export function SettingsRow({
         })}
       >
         <div className="min-w-0">
-          <SettingsRowTitle htmlFor={htmlFor} labelId={labelId} title={title} />
+          <SettingsRowTitle
+            htmlFor={htmlFor}
+            labelId={labelId}
+            required={required}
+            title={title}
+          />
           {description && (
             <p
               id={descriptionId}

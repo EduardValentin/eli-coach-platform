@@ -120,6 +120,20 @@ describe("SettingsSection heading focus", () => {
 });
 
 describe("SettingsRow", () => {
+  it("stars a required row's title and names its control as required", () => {
+    // arrange
+    // act
+    render(
+      <SettingsRow htmlFor="name" required title="Name">
+        <input id="name" />
+      </SettingsRow>,
+    );
+
+    // assert
+    expect(screen.getByRole("textbox")).toHaveAccessibleName("Name (required)");
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("states a problem under the title in the description's place", () => {
     // arrange
     // act
@@ -178,6 +192,32 @@ describe("SettingsRow", () => {
     expect(
       screen.getByRole("checkbox", { name: "Monday" }),
     ).toBeInTheDocument();
+  });
+
+  it("stars a required fieldset row and names its group as required", () => {
+    // arrange
+    // act
+    render(
+      <SettingsRows>
+        <SettingsRow
+          as="fieldset"
+          labelId="weekdays-label"
+          layout="stacked"
+          required
+          title="Days I take calls"
+        >
+          <label>
+            <input type="checkbox" /> Monday
+          </label>
+        </SettingsRow>
+      </SettingsRows>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("group", { name: "Days I take calls (required)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("labels the control it is given a field id for", () => {

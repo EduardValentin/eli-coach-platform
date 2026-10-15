@@ -99,7 +99,7 @@ function ScheduleCheckInDialog({
       wording={{
         busyLabel: "Scheduling…",
         description: `Pick a date and time. ${firstName} will approve or decline it.`,
-        noteLabel: `Add a note for ${firstName} (optional)`,
+        noteLabel: `Add a note for ${firstName}`,
         problemCopy: {
           client_cannot_answer: `${firstName} can't answer a check-in right now.`,
           failed: "The check-in wasn't scheduled. Try again.",

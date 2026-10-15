@@ -837,7 +837,7 @@ function RosterClientDetails() {
         showMessageField
         message={scheduleNote}
         onMessageChange={setScheduleNote}
-        messagePlaceholder="Add a note (optional)"
+        messagePlaceholder="Add a note"
       />
     </div>
   );

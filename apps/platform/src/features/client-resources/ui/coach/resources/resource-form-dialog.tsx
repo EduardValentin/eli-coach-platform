@@ -115,12 +115,6 @@ const UPLOAD_COPY = {
   replace: "Replace",
 } as const;
 
-const OPTIONAL_SUFFIX = [
-  { parity: "description-optional", text: "(optional)" },
-];
-
-const TAGS_OPTIONAL_SUFFIX = [{ text: "(optional)" }];
-
 type ResourceFormProps = {
   vocabulary: readonly string[];
   onClose: () => void;
@@ -228,6 +222,7 @@ function ResourceDetailsFields({
         error={form.formState.errors.title?.message}
         label="Title"
         labelLayout="inline"
+        required
       >
         {(controlAttributes) => (
           <Input
@@ -245,7 +240,6 @@ function ResourceDetailsFields({
       <FieldLayout
         error={form.formState.errors.description?.message}
         label="Description"
-        suffixes={OPTIONAL_SUFFIX}
       >
         {(controlAttributes) => (
           <Textarea
@@ -261,7 +255,6 @@ function ResourceDetailsFields({
         data-parity="resource-tags-field"
         error={form.formState.errors.tags?.message}
         label="Tags"
-        suffixes={TAGS_OPTIONAL_SUFFIX}
       >
         {(controlAttributes) => (
           <Controller

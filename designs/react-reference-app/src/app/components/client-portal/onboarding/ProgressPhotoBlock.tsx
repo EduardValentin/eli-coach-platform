@@ -187,13 +187,7 @@ export function ProgressPhotoBlock({
         className="text-sm font-medium text-text-label"
         data-parity="progress-photos-caption"
       >
-        Progress photos{' '}
-        <span
-          className="font-normal text-text-secondary"
-          data-parity="progress-photos-suffix"
-        >
-          (optional)
-        </span>
+        Progress photos
       </p>
 
       {consent.status !== 'recorded' &&  (

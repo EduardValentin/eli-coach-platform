@@ -21,7 +21,7 @@ const PROBLEM_COPY: Record<RequestRefusal | 'failed', string> = {
 };
 
 const WORDING: CheckinPickerWording = {
-  noteLabel: 'Add a note for your coach (optional)',
+  noteLabel: 'Add a note for your coach',
   stepVerb: 'Request',
   busyLabel: 'Requesting…',
 };

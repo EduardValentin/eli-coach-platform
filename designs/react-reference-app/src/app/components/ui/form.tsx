@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
   Controller,
@@ -15,7 +14,7 @@ import {
 
 import { FIELD_ERROR_CLASS } from "../../utils/formFieldStyles";
 import { cn } from "./utils";
-import { Label } from "./label";
+import { Label, type LabelProps } from "./label";
 
 const Form = FormProvider;
 
@@ -88,10 +87,7 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FormLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+function FormLabel({ className, ...props }: LabelProps) {
   const { error, formItemId } = useFormField();
 
   return (

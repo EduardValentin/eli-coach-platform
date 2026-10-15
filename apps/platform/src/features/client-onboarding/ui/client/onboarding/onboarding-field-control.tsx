@@ -37,7 +37,6 @@ import {
   type ControllerRenderProps,
 } from "react-hook-form";
 
-import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/public/onboarding-copy";
 import {
   MeasureField,
   type MeasureFieldDefinition,
@@ -121,29 +120,25 @@ function feetAndInchesHint(
     : null;
 }
 
-type SuffixRole = "unit" | "optional";
-
 type LabelSuffixEntry = { parity: string; text: string };
 
 function labelSuffixesOf(
   field: OnboardingField,
   unit: string | null,
 ): LabelSuffixEntry[] {
-  const suffixOf = (role: SuffixRole, text: string): LabelSuffixEntry => ({
-    parity: `field-${field.id}-suffix-${role}`,
-    text,
-  });
+  const parity = `field-${field.id}-suffix-unit`;
   const suffixes: (LabelSuffixEntry | null)[] = [
-    unit ? suffixOf("unit", `(${unit})`) : null,
-    field.unitSuffix ? suffixOf("unit", `(${field.unitSuffix})`) : null,
-    field.requirement === "optional"
-      ? suffixOf("optional", OPTIONAL_SUFFIX)
-      : null,
+    unit ? { parity, text: `(${unit})` } : null,
+    field.unitSuffix ? { parity, text: `(${field.unitSuffix})` } : null,
   ];
 
   return suffixes.filter(
     (suffix): suffix is LabelSuffixEntry => suffix !== null,
   );
+}
+
+function isRequired(field: OnboardingField): boolean {
+  return field.requirement === "required";
 }
 
 function LabelLines({ field }: { field: OnboardingField }) {
@@ -154,23 +149,18 @@ function LabelLines({ field }: { field: OnboardingField }) {
   ));
 }
 
-function LabelText({
+function UnitSuffixes({
   field,
   unit,
 }: {
   field: OnboardingField;
   unit: string | null;
 }) {
-  return (
-    <>
-      <LabelLines field={field} />
-      {labelSuffixesOf(field, unit).map((suffix) => (
-        <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
-          {suffix.text}
-        </LabelSuffix>
-      ))}
-    </>
-  );
+  return labelSuffixesOf(field, unit).map((suffix) => (
+    <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
+      {suffix.text}
+    </LabelSuffix>
+  ));
 }
 
 function NumberEntry({
@@ -275,7 +265,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
 }
 
 function CheckboxAnswer({ controller, error, field }: AnswerLayoutProps) {
-  const isDeclaration = field.requirement === "required";
+  const isDeclaration = isRequired(field);
 
   return (
     <CheckboxField
@@ -292,6 +282,7 @@ function CheckboxAnswer({ controller, error, field }: AnswerLayoutProps) {
       onCheckedChange={(checked) =>
         controller.onChange(checked ? TICKED : UNTICKED)
       }
+      required={isDeclaration}
     />
   );
 }
@@ -323,8 +314,12 @@ function ChoiceFieldset({
   return (
     <div className="grid gap-2" data-parity={`field-${field.id}`}>
       <fieldset aria-describedby={describedBy}>
-        <Legend id={ids.legend}>
-          <LabelText field={field} unit={unitOf(field, units)} />
+        <Legend
+          id={ids.legend}
+          required={isRequired(field)}
+          trailing={<UnitSuffixes field={field} unit={unitOf(field, units)} />}
+        >
+          <LabelLines field={field} />
         </Legend>
         {field.hint && <FieldHint id={ids.hint}>{field.hint}</FieldHint>}
         {children}
@@ -402,6 +397,7 @@ function EntryField({ controller, error, field, units }: AnswerLayoutProps) {
       hint={equivalent ?? field.hint}
       hintPlacement={equivalent ? "after-control" : "before-control"}
       label={<LabelLines field={field} />}
+      required={isRequired(field)}
       suffixes={labelSuffixesOf(field, unitOf(field, units))}
     >
       {(controlAttributes) => (

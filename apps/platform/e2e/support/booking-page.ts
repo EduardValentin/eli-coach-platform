@@ -80,7 +80,7 @@ export class BookingPage {
 
   async expectGenderOptions(options: readonly string[]): Promise<void> {
     await this.page
-      .getByRole("combobox", { name: "Gender", exact: true })
+      .getByRole("combobox", { name: "Gender (required)", exact: true })
       .click();
     await expect(this.page.getByRole("option")).toHaveText([...options]);
     await this.page.keyboard.press("Escape");
@@ -106,29 +106,42 @@ export class BookingPage {
   }
 
   private async fillDetails(visitor: BookingVisitor): Promise<void> {
-    await this.page.getByLabel("First name").fill(visitor.firstName);
-    await this.page.getByLabel("Last name").fill(visitor.lastName);
-    await this.page.getByLabel("Email Address").fill(visitor.email);
+    await this.page
+      .getByRole("textbox", { name: "First name (required)", exact: true })
+      .fill(visitor.firstName);
+    await this.page
+      .getByRole("textbox", { name: "Last name (required)", exact: true })
+      .fill(visitor.lastName);
+    await this.page
+      .getByRole("textbox", { name: "Email Address (required)", exact: true })
+      .fill(visitor.email);
     await this.pickBirthDate();
-    await this.chooseOption("Gender", BOOKING_PROFILE.gender);
-    await this.page.getByRole("combobox", { name: "Primary goal" }).click();
+    await this.chooseOption("Gender (required)", BOOKING_PROFILE.gender);
+    await this.page
+      .getByRole("combobox", { name: "Primary goal (required)", exact: true })
+      .click();
     await this.page
       .getByRole("option", { name: BOOKING_PROFILE.primaryGoal })
       .click();
-    await this.chooseOption("Country", BOOKING_PROFILE.country);
+    await this.chooseOption("Country (required)", BOOKING_PROFILE.country);
     await this.page
       .getByLabel("Phone number")
       .fill(BOOKING_PROFILE.phoneNumber);
 
     if (visitor.notes) {
       await this.page
-        .getByLabel("Anything to share beforehand? (Optional)")
+        .getByRole("textbox", {
+          name: "Anything to share beforehand?",
+          exact: true,
+        })
         .fill(visitor.notes);
     }
   }
 
   private async pickBirthDate(): Promise<void> {
-    await this.page.getByRole("button", { name: "Date of birth" }).click();
+    await this.page
+      .getByRole("button", { name: "Date of birth (required)", exact: true })
+      .click();
     await this.chooseOption("Year", BOOKING_PROFILE.birthYear);
     await this.chooseOption("Month", BOOKING_PROFILE.birthMonth);
     await this.page

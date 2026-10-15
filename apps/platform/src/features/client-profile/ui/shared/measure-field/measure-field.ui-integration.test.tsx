@@ -53,13 +53,13 @@ afterEach(() => {
 });
 
 describe("a measure field", () => {
-  it("names the reading with its unit and describes how to take it", () => {
+  it("names a required reading with its star and unit and describes how to take it", () => {
     // arrange, act
     render(<ReadingForm field={WEIGHT_MEASUREMENT_FIELD} units={METRIC} />);
 
     // assert
     const weight = screen.getByRole("spinbutton", {
-      name: /^Weight\s*\(kg\)$/,
+      name: /^Weight \(required\)\s*\(kg\)$/,
     });
     expect(weight).toHaveAccessibleDescription(
       "First thing in the morning, before eating, after the bathroom.",
@@ -70,13 +70,13 @@ describe("a measure field", () => {
     expect(weight).toHaveAttribute("max", "300");
   });
 
-  it("marks an optional reading and takes it in her units", () => {
+  it("leaves an optional reading unmarked and takes it in her units", () => {
     // arrange, act
     render(<ReadingForm field={HIPS_FIELD} units={IMPERIAL} />);
 
     // assert
     const hips = screen.getByRole("spinbutton", {
-      name: /^Hips\s*\(in\)\s*\(optional\)$/,
+      name: /^Hips\s*\(in\)$/,
     });
     expect(hips).toHaveAttribute("step", "0.25");
     expect(hips).toHaveAttribute("min", "20");
@@ -89,7 +89,7 @@ describe("a measure field", () => {
 
     // assert
     expect(
-      screen.getByRole("spinbutton", { name: /^Waist\s*\(cm\)$/ }),
+      screen.getByRole("spinbutton", { name: /^Waist \(required\)\s*\(cm\)$/ }),
     ).toHaveValue(76.5);
   });
 

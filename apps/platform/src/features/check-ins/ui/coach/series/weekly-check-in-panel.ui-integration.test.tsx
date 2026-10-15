@@ -341,7 +341,9 @@ describe("setting up a weekly check-in", () => {
     expect(dialog).toHaveTextContent(
       "Pick the day and hour. Every week until her paid period ends is booked.",
     );
-    const days = within(dialog).getByRole("radiogroup", { name: "Day" });
+    const days = within(dialog).getByRole("radiogroup", {
+      name: "Day (required)",
+    });
     expect(
       within(days)
         .getAllByRole("radio")
@@ -893,7 +895,7 @@ async function openSetUpOnSixPm(
 }
 
 function hourList(dialog: HTMLElement): Promise<HTMLElement> {
-  return within(dialog).findByRole("list", { name: "Hour" });
+  return within(dialog).findByRole("list", { name: "Hour (required)" });
 }
 
 function weeklyPanel(): HTMLElement {

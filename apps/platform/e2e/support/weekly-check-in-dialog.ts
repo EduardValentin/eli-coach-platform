@@ -44,7 +44,10 @@ export class WeeklyCheckInDialog {
   }
 
   private get hours() {
-    return this.dialog.getByRole("list", { name: "Hour" });
+    return this.dialog.getByRole("list", {
+      name: "Hour (required)",
+      exact: true,
+    });
   }
 
   private get saveButton() {
@@ -53,7 +56,7 @@ export class WeeklyCheckInDialog {
 
   private weekday(day: string): Locator {
     return this.dialog
-      .getByRole("radiogroup", { name: "Day" })
+      .getByRole("radiogroup", { name: "Day (required)", exact: true })
       .getByRole("radio", { name: day, exact: true });
   }
 

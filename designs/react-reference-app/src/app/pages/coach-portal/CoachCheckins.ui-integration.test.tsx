@@ -522,7 +522,7 @@ describe('new times on the coach’s check-ins', () => {
     // assert
     const sheet = await screen.findByRole('dialog', { name: 'Propose a new time' });
     expect(sheet).toHaveAccessibleDescription(/^Currently set for \w{3}, \w{3} \d{1,2} · \d{1,2}:\d{2} [AP]M$/);
-    expect(within(sheet).getByLabelText('Add a note for Jessica (optional)')).toBeInTheDocument();
+    expect(within(sheet).getByLabelText('Add a note for Jessica')).toBeInTheDocument();
   });
 
   it('moves an upcoming check-in under Requests once she proposes a new time', async () => {
@@ -532,7 +532,7 @@ describe('new times on the coach’s check-ins', () => {
 
     // act
     await proposeNewTimeFor(rowFor('Jessica Alba'), {
-      noteLabel: 'Add a note for Jessica (optional)',
+      noteLabel: 'Add a note for Jessica',
       note: 'Could we move to the evening?',
     });
 

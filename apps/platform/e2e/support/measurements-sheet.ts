@@ -78,12 +78,12 @@ export class MeasurementsSheet {
   ): Promise<void> {
     for (const field of MEASUREMENT_FIELDS) {
       const prompt = prompts[field];
-      const optional =
-        prompt.requirement === "optional" ? "\\s*\\(optional\\)" : "";
+      const required =
+        prompt.requirement === "required" ? "\\s*\\(required\\)" : "";
       const input = this.field(field);
 
       await expect(input).toHaveAccessibleName(
-        new RegExp(`^${field}\\s*\\(${prompt.unit}\\)${optional}$`),
+        new RegExp(`^${field}${required}\\s*\\(${prompt.unit}\\)$`),
       );
       await expect(input).toHaveAccessibleDescription(prompt.instruction);
     }

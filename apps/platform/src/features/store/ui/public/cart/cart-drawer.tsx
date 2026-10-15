@@ -14,6 +14,8 @@ import {
   Checkbox,
   InlineProblem,
   Input,
+  Label,
+  RequiredMark,
 } from "@eli-coach-platform/ui/primitives";
 import {
   AlertCircle,
@@ -315,8 +317,10 @@ function AcquisitionDetails(props: {
           Enter your email and we&apos;ll send one private download link for
           everything in your cart.
         </p>
-        <label className="mt-7 block" htmlFor="store-acquisition-email">
-          <span className="mb-2 block text-sm font-medium">Email address</span>
+        <div className="mt-7">
+          <Label className="mb-2" htmlFor="store-acquisition-email" required>
+            Email address
+          </Label>
           <Input
             aria-describedby={errors.email ? props.emailErrorId : undefined}
             aria-invalid={errors.email ? true : undefined}
@@ -328,7 +332,7 @@ function AcquisitionDetails(props: {
             type="email"
             {...register("email")}
           />
-        </label>
+        </div>
         {errors.email ? (
           <InlineProblem className="mt-2" id={props.emailErrorId} role="alert">
             {errors.email.message}
@@ -339,7 +343,7 @@ function AcquisitionDetails(props: {
           name="termsAccepted"
           render={({ field, fieldState }) => (
             <ConsentRow
-              accessibleLabel="I agree to the Terms & Conditions."
+              accessibleLabel="I agree to the Terms & Conditions. (required)"
               checked={field.value}
               disabled={props.isSubmitting}
               errorId={`${props.termsId}-error`}
@@ -359,6 +363,7 @@ function AcquisitionDetails(props: {
                     Terms &amp; Conditions
                   </Link>
                   .
+                  <RequiredMark />
                 </>
               }
             />

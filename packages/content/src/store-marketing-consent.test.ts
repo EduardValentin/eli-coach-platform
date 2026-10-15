@@ -6,14 +6,13 @@ import {
 } from "./index";
 
 describe("Store marketing consent", () => {
-  it("keeps optional Store marketing consent independently versioned", () => {
+  it("keeps Store marketing consent independently versioned", () => {
     // arrange
     // act
     const consent = STORE_MARKETING_CONSENT;
 
     // assert
-    expect(STORE_MARKETING_CONSENT_VERSION).toBe("1.0");
-    expect(consent).toContain("Optional");
-    expect(consent).toContain("plans, guides, and offers");
+    expect(STORE_MARKETING_CONSENT_VERSION).toBe("1.1");
+    expect(consent).toBe("Keep me posted about new plans, guides, and offers.");
   });
 });

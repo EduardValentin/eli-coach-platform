@@ -66,7 +66,7 @@ export function DateOfBirthField(props: DateOfBirthFieldProps) {
 
   return (
     <div className="space-y-2" data-parity-root="DateOfBirthField">
-      <Label className="font-medium text-text-label" htmlFor={id}>
+      <Label className="font-medium text-text-label" htmlFor={id} required>
         {label}
       </Label>
       <Popover onOpenChange={setOpen} open={open}>

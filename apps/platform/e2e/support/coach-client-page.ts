@@ -590,7 +590,7 @@ export class CoachClientPage {
 
   async writeNote(note: string): Promise<void> {
     await this.reviewDialog
-      .getByRole("textbox", { name: "What is missing?" })
+      .getByRole("textbox", { name: "What is missing? (required)" })
       .fill(note);
   }
 
@@ -766,7 +766,9 @@ export class CoachClientPage {
   async writeNoteWithKeyboard(note: string): Promise<void> {
     await tabTo(
       this.page,
-      this.reviewDialog.getByRole("textbox", { name: "What is missing?" }),
+      this.reviewDialog.getByRole("textbox", {
+        name: "What is missing? (required)",
+      }),
     );
     await this.page.keyboard.type(note);
   }

@@ -27,6 +27,7 @@
     "./coaching-subscription": "./src/coaching-subscription/index.ts",
     "./download-grant": "./src/download-grant/index.ts",
     "./email-address": "./src/email-address/index.ts",
+    "./exercise": "./src/exercise/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
     "./measurement": "./src/measurement/index.ts",
     "./notification": "./src/notification/index.ts",

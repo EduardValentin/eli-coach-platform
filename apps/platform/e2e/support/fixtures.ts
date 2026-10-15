@@ -40,6 +40,9 @@ import { CoachClientsPage } from "./coach-clients-page";
 import { CoachDashboardPage } from "./coach-dashboard";
 import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
+import { ExerciseEditorPage } from "./exercise-editor-page";
+import { ExerciseLibraryPage } from "./exercise-library-page";
+import { ExerciseRequests } from "./exercise-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   insertMeasuredClientRecords,
@@ -146,6 +149,10 @@ type PlatformFixtures = {
   notificationBell: NotificationBell;
   notificationRecords: NotificationRecords;
   coachSettings: CoachSettingsPage;
+  exerciseLibrary: ExerciseLibraryPage;
+  exerciseEditor: ExerciseEditorPage;
+  exerciseRequests: ExerciseRequests;
+  visitorExerciseRequests: ExerciseRequests;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -547,6 +554,25 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   coachSettings: async ({ page }, use) => {
     await use(new CoachSettingsPage(page));
+  },
+
+  exerciseLibrary: async ({ page }, use) => {
+    await use(new ExerciseLibraryPage(page));
+  },
+
+  exerciseEditor: async ({ page }, use) => {
+    await use(new ExerciseEditorPage(page));
+  },
+
+  exerciseRequests: async ({ page }, use) => {
+    await use(new ExerciseRequests(page.request));
+  },
+
+  visitorExerciseRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new ExerciseRequests(visitor));
+    await visitor.dispose();
   },
 
   addResourceDialog: async ({ page }, use) => {

@@ -39,6 +39,7 @@ export function OnboardingConsent({
       label={statement}
       layout="statement"
       onCheckedChange={onChange}
+      required
     >
       {agreement === "specialCategory" && (
         <Link

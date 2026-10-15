@@ -313,8 +313,15 @@
     {
       "idx": 48,
       "version": "7",
-      "when": 1792070540964,
-      "tag": "0048_notifications",
+      "when": 1792011635181,
+      "tag": "0048_create_exercises",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792085094322,
+      "tag": "0049_notifications",
       "breakpoints": true
     }
   ]

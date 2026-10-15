@@ -1,6 +1,6 @@
 import type { ElementType, ReactNode, Ref } from "react";
 import { cardVariants } from "./ui/card";
-import { Label } from "./ui/label";
+import { Label, RequiredMark } from "./ui/label";
 import { cn } from "./ui/utils";
 import { WIDGET_TITLE_CLASS } from "./typography";
 
@@ -79,6 +79,7 @@ export function SettingsRow({
   description,
   hint,
   problem,
+  required,
   layout = "inline",
   children,
   ...rest
@@ -91,6 +92,7 @@ export function SettingsRow({
   description?: ReactNode;
   hint?: ReactNode;
   problem?: ReactNode;
+  required?: boolean;
   layout?: SettingsRowLayout;
   children?: ReactNode;
   [key: string]: unknown;
@@ -98,12 +100,13 @@ export function SettingsRow({
   const Container = as;
 
   const titleNode = htmlFor ? (
-    <Label htmlFor={htmlFor} id={labelId}>
+    <Label htmlFor={htmlFor} id={labelId} required={required}>
       {title}
     </Label>
   ) : (
     <p id={labelId} className="text-sm font-medium text-text-primary">
       {title}
+      {required && <RequiredMark />}
     </p>
   );
 

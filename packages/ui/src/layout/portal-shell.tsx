@@ -636,6 +636,7 @@ function PortalMobileDrawer(props: PropsWithChildren) {
     <>
       <motion.div
         className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
+        data-parity="drawer-backdrop"
         variants={BACKDROP_VARIANTS}
       />
       <motion.div

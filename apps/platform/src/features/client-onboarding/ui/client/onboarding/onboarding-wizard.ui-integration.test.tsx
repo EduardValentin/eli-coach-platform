@@ -57,7 +57,7 @@ const SUBMIT_PROBLEM =
   "Your answers could not be sent just now. They're saved — try again in a moment.";
 const MISSING_CONSENT = "Tick the box to carry on.";
 const PARQ_DECLARATION =
-  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
+  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again. (required)";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
@@ -92,7 +92,7 @@ const DISCLAIMER_WITHHELD: OnboardingConsentInstants = {
   progressPhotosAt: null,
 };
 const DISCLAIMER =
-  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
+  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor. (required)";
 const WITHHELD_CONSENTS: OnboardingConsentInstants = {
   specialCategoryAt: null,
   disclaimerAt: null,
@@ -406,7 +406,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     // act
     await user.click(
       screen.getByRole("checkbox", {
-        name: "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.",
+        name: "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time. (required)",
       }),
     );
 
@@ -445,7 +445,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
 
     // act
     const group = screen.getByRole("radiogroup", {
-      name: /Where you want to hear from me/,
+      name: /^Where you want to hear from me \(required\)$/,
     });
 
     // assert
@@ -644,22 +644,22 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     );
   });
 
-  it("marks the answers she can skip as optional", async () => {
+  it("marks the answers she must give as required and leaves the ones she can skip unmarked", async () => {
     // arrange
     await openOnboarding(firstVisit());
 
     // act
     const note = screen.getByRole("textbox", {
-      name: /Is there anything else I should know when putting your program together\?\s*\(optional\)/,
+      name: /^Is there anything else I should know when putting your program together\?$/,
     });
 
     // assert
     expect(note).toBeVisible();
     expect(
-      screen.getByRole("combobox", { name: /Where you train$/ }),
+      screen.getByRole("combobox", { name: /^Where you train \(required\)$/ }),
     ).toBeVisible();
-    expect(screen.getByLabelText(/Your weight/)).not.toHaveAccessibleName(
-      /\(optional\)/,
+    expect(screen.getByLabelText(/Your weight/)).toHaveAccessibleName(
+      /^Your weight \(required\)\s*\(kg\)$/,
     );
   });
 
@@ -854,7 +854,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     ).toBeVisible();
     expect(
       screen.getByRole("checkbox", {
-        name: "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.",
+        name: "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time. (required)",
       }),
     ).not.toBeChecked();
   });

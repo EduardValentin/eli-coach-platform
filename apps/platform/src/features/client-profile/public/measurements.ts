@@ -108,7 +108,6 @@ export const MEASUREMENTS_COPY = {
   },
   photos: {
     caption: "Progress photos",
-    optional: "(optional)",
     locked: "Tick the box to add your photos.",
     viewLabels: PROGRESS_PHOTO_VIEW_LABELS,
     addView: (view: ProgressPhotoView) => `Add ${view} photo`,

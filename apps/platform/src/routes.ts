@@ -9,6 +9,7 @@ import { clientResourcesApiRoutes } from "./features/client-resources/routes";
 import { clientsApiRoutes } from "./features/clients/routes";
 import { coachScheduleApiRoutes } from "./features/coach-schedule/routes";
 import { coachingSalesApiRoutes } from "./features/coaching-sales/routes";
+import { exerciseLibraryApiRoutes } from "./features/exercise-library/routes";
 import { notificationsApiRoutes } from "./features/notifications/routes";
 import { storeApiRoutes } from "./features/store/routes";
 import { waitlistApiRoutes } from "./features/waitlist/routes";
@@ -21,6 +22,7 @@ export default [
   ...publicSiteRoutes,
   ...platformApiRoutes,
   ...accountsApiRoutes,
+  ...exerciseLibraryApiRoutes,
   ...coachScheduleApiRoutes,
   ...assessmentCallsApiRoutes,
   ...clientsApiRoutes,

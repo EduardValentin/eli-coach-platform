@@ -15,7 +15,7 @@ const WORDING: CheckInPickerWording = {
   busyLabel: "Requesting…",
   description:
     "Pick a date and time that works for you. Your coach will approve or decline it.",
-  noteLabel: "Add a note for your coach (optional)",
+  noteLabel: "Add a note for your coach",
   problemCopy: {
     request_waiting:
       "You already have a check-in request waiting. You can send another once it is answered.",

@@ -85,7 +85,7 @@ function OptionList<Value extends string>({
         <ul aria-label={label} className="flex max-h-72 min-h-0 flex-col overflow-y-auto">
           {shown.map((option) => (
             <li key={option}>
-              <label className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+              <label className="flex cursor-default items-center gap-2 rounded-tile px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground" data-parity="multi-select-option">
                 <Checkbox checked={selected.includes(option)} onCheckedChange={() => onToggle(option)} />
                 {labels[option]}
                 {counts && <Badge tone="count">{counts[option]}</Badge>}
@@ -108,6 +108,7 @@ export function MultiSelect<Value extends string>({
   summary = "count",
   size = "sm",
   placeholder,
+  required,
   id,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
@@ -121,6 +122,7 @@ export function MultiSelect<Value extends string>({
   summary?: Summary;
   size?: TriggerSize;
   placeholder?: string;
+  required?: boolean;
   id?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
@@ -136,7 +138,7 @@ export function MultiSelect<Value extends string>({
           data-slot="select-trigger"
           data-size={size}
           tabIndex={FIELD_TAB_INDEX}
-          aria-label={triggerName(label, selected.length)}
+          aria-label={triggerName(required ? `${label} (required)` : label, selected.length)}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           className={selectTriggerClasses("w-full")}
@@ -150,7 +152,7 @@ export function MultiSelect<Value extends string>({
           <ChevronDownIcon className="size-4 opacity-50" aria-hidden="true" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="flex w-(--radix-popover-trigger-width) min-w-56 max-w-md flex-col gap-1 p-1">
+      <PopoverContent aria-label={label} align="start" className="flex w-(--radix-popover-trigger-width) min-w-56 max-w-md flex-col gap-1 p-1">
         <OptionList label={label} selected={selected} options={options} labels={labels} onToggle={onToggle} counts={counts} />
       </PopoverContent>
     </Popover>

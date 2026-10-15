@@ -3,6 +3,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 
+const PORTAL_PANEL_SURFACE =
+  "rounded-panel border-border-default/50 bg-surface-base shadow-soft";
+
 const cardClasses = cva("border", {
   variants: {
     variant: {
@@ -10,8 +13,8 @@ const cardClasses = cva("border", {
       quiet: "rounded-card border-stroke-faint bg-surface-quiet",
       inset: "rounded-card border-border-subtle bg-surface-quiet/60 p-4",
       panel: "rounded-panel border-border-subtle bg-surface-base shadow-soft",
-      "portal-panel":
-        "rounded-panel border-border-default/50 bg-surface-base shadow-soft",
+      "portal-panel": PORTAL_PANEL_SURFACE,
+      "table-panel": `${PORTAL_PANEL_SURFACE} overflow-hidden motion-safe:animate-panel-enter`,
     },
   },
   defaultVariants: {

@@ -962,7 +962,7 @@ describe("the coach's upcoming check-in menu", () => {
     await user.click(within(dialog).getByRole("button", { name: "6:00 PM" }));
     await user.type(
       within(dialog).getByRole("textbox", {
-        name: "Add a note for Elena (optional)",
+        name: "Add a note for Elena",
       }),
       "I'm travelling that morning",
     );

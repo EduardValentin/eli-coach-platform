@@ -98,4 +98,78 @@ describe("CheckboxChip", () => {
       "data-[state=off]:hover:text-primary",
     );
   });
+
+  it("sets a compact chip at the small height in medium extra-small text, tinting an unselected one on hover", () => {
+    // arrange, act
+    render(
+      <>
+        <CheckboxChip
+          isChecked={true}
+          onChange={vi.fn()}
+          size="compact"
+          aria-label="Strength"
+        >
+          Strength
+        </CheckboxChip>
+        <CheckboxChip
+          isChecked={false}
+          onChange={vi.fn()}
+          size="compact"
+          aria-label="Recovery"
+        >
+          Recovery
+        </CheckboxChip>
+      </>,
+    );
+
+    // assert
+    const selected = screen
+      .getByRole("checkbox", { name: "Strength" })
+      .closest("label");
+    const unselected = screen
+      .getByRole("checkbox", { name: "Recovery" })
+      .closest("label");
+    expect(selected).toHaveClass(
+      "h-8",
+      "min-w-8",
+      "px-3",
+      "text-xs",
+      "font-medium",
+      "data-[state=on]:border-primary",
+      "data-[state=on]:bg-primary",
+      "data-[state=on]:text-primary-foreground",
+    );
+    expect(selected).not.toHaveClass("min-h-11", "font-semibold");
+    expect(unselected).toHaveClass(
+      "data-[state=off]:border-border-default",
+      "data-[state=off]:text-text-muted",
+      "data-[state=off]:hover:bg-primary-soft",
+      "data-[state=off]:hover:text-primary",
+      "data-[state=off]:has-focus-visible:border-focus-ring",
+    );
+  });
+
+  it("toggles a compact chip from the keyboard as a native checkbox", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <CheckboxChip
+        isChecked={false}
+        onChange={onChange}
+        size="compact"
+        aria-label="Strength"
+      >
+        Strength
+      </CheckboxChip>,
+    );
+
+    // act
+    await user.tab();
+    await user.keyboard(" ");
+
+    // assert
+    expect(screen.getByRole("checkbox", { name: "Strength" })).toHaveFocus();
+    expect(onChange).toHaveBeenCalledOnce();
+  });
 });

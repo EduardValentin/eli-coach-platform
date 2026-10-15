@@ -425,7 +425,7 @@ describe("the coach's client page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Set up a weekly check-in with Ana",
     });
-    await within(dialog).findByRole("list", { name: "Hour" });
+    await within(dialog).findByRole("list", { name: "Hour (required)" });
     expect(within(dialog).getByRole("radio", { name: "Monday" })).toBeChecked();
   });
 

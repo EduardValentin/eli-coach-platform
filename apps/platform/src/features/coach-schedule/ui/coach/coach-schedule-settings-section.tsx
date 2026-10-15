@@ -220,6 +220,7 @@ function WeekdaysRow({ error, register, selected }: WeekdaysRowProps) {
       description="Calls and check-ins can be booked on these days."
       labelId={labelId}
       layout="stacked"
+      required
       title="Days I'm available"
     >
       <div className="flex flex-wrap gap-2">
@@ -336,7 +337,7 @@ function HourSelectField(props: {
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} id={labelId}>
+      <Label htmlFor={id} id={labelId} required>
         {label}
       </Label>
       <Controller

@@ -244,6 +244,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             htmlFor={fieldId("first-name")}
             icon={User}
             label="First name"
+            required
           >
             <Input
               aria-describedby={describedBy(
@@ -264,6 +265,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             error={errors.lastName?.message}
             htmlFor={fieldId("last-name")}
             label="Last name"
+            required
           >
             <Input
               aria-describedby={describedBy(
@@ -285,6 +287,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
           htmlFor={fieldId("email")}
           icon={Mail}
           label="Email Address"
+          required
         >
           <Input
             aria-describedby={describedBy(fieldId("email"), errors.email)}
@@ -383,7 +386,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
         <BookingField
           error={errors.notes?.message}
           htmlFor={fieldId("notes")}
-          label="Anything to share beforehand? (Optional)"
+          label="Anything to share beforehand?"
         >
           <Textarea
             aria-describedby={describedBy(fieldId("notes"), errors.notes)}
@@ -440,12 +443,17 @@ function BookingField(props: {
   htmlFor: string;
   icon?: LucideIcon;
   label: string;
+  required?: boolean;
 }) {
-  const { children, error, htmlFor, icon: Icon, label } = props;
+  const { children, error, htmlFor, icon: Icon, label, required } = props;
 
   return (
     <div className="space-y-2">
-      <Label className="font-medium text-text-label" htmlFor={htmlFor}>
+      <Label
+        className="font-medium text-text-label"
+        htmlFor={htmlFor}
+        required={required}
+      >
         {label}
       </Label>
       {Icon ? (

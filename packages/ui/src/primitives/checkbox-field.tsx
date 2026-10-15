@@ -4,6 +4,7 @@ import { cn } from "../lib/cn";
 import { cardVariants } from "./card";
 import { Checkbox } from "./checkbox";
 import { FieldError } from "./field-error";
+import { RequiredMark } from "./label";
 
 type CheckboxFieldLayout = "inline" | "statement";
 
@@ -23,6 +24,7 @@ type CheckboxFieldProps = Omit<
   label: React.ReactNode;
   layout?: CheckboxFieldLayout;
   onCheckedChange: (checked: boolean) => void;
+  required?: boolean;
 };
 
 export const CheckboxField = React.forwardRef<
@@ -43,6 +45,7 @@ export const CheckboxField = React.forwardRef<
       label,
       layout = "inline",
       onCheckedChange,
+      required,
       ...props
     },
     ref,
@@ -78,6 +81,7 @@ export const CheckboxField = React.forwardRef<
             htmlFor={checkboxId}
           >
             {label}
+            {required && <RequiredMark />}
           </label>
         </div>
         {children}

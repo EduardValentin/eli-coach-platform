@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { PlanBuilder } from './PlanBuilder';
+import { AppProvider } from '../../context/AppContext';
 import { TrainingProvider, type PlanWeek } from '../../context/TrainingContext';
 
 /** One week of rest days, so every exercise name on screen comes from the library. */
@@ -24,14 +26,18 @@ function makeRestWeek(dayZeroType: 'Rest' | 'Strength' = 'Rest'): PlanWeek[] {
 async function renderBuilderLibrary(dayZeroType: 'Rest' | 'Strength' = 'Rest') {
   const user = userEvent.setup();
   render(
-    <TrainingProvider>
-      <PlanBuilder
-        headerCenter={<span>Test Plan</span>}
-        headerRight={<span />}
-        initialWeeks={makeRestWeek(dayZeroType)}
-        onBack={() => {}}
-      />
-    </TrainingProvider>
+    <MemoryRouter>
+      <AppProvider>
+        <TrainingProvider>
+          <PlanBuilder
+            headerCenter={<span>Test Plan</span>}
+            headerRight={<span />}
+            initialWeeks={makeRestWeek(dayZeroType)}
+            onBack={() => {}}
+          />
+        </TrainingProvider>
+      </AppProvider>
+    </MemoryRouter>
   );
   return user;
 }

@@ -7,6 +7,7 @@ import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-pro
 import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
+import type { ExerciseLibraryIncidents } from "@eli-coach-platform/domain/exercise";
 import type { NotificationIncidents } from "@eli-coach-platform/domain/notification";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
@@ -21,6 +22,7 @@ type ConsoleLogger = AcquisitionIncidents &
   ClientRosterIncidents &
   CoachingSalesIncidents &
   CoachingSubscriptionIncidents &
+  ExerciseLibraryIncidents &
   MeasurementIncidents &
   NotificationIncidents &
   PaymentWebhookIncidents &
@@ -161,6 +163,21 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "store_delivery_rejected",
         providerRejectionReason: reason,
         requestId,
+      });
+    },
+    exerciseCreationFailed: ({ error }) => {
+      console.error("Exercise could not be created.", {
+        errorCategory: "exercise_creation_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
+    exerciseEditFailed: ({ error, exerciseId }) => {
+      console.error("Exercise edit could not be written.", {
+        errorCategory: "exercise_edit_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        exerciseId,
       });
     },
     invitationEmailFailed: ({ invitationId }) => {

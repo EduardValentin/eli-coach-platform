@@ -139,7 +139,7 @@ function panelMenus(): HTMLElement[] {
 
 async function openedDialog(name: string): Promise<HTMLElement> {
   const dialog = await screen.findByRole('dialog', { name });
-  await within(dialog).findByRole('list', { name: 'Hour' }, SERVICE_TIMEOUT);
+  await within(dialog).findByRole('list', { name: 'Hour (required)' }, SERVICE_TIMEOUT);
 
   return dialog;
 }
@@ -306,9 +306,14 @@ describe('setting up a weekly check-in', () => {
     expect(dialog).toHaveAccessibleDescription(
       'Pick the day and hour. Every week until her paid period ends is booked.',
     );
-    expect(within(dialog).getByRole('radio', { name: 'Monday' })).toBeChecked();
     expect(
-      within(within(dialog).getByRole('list', { name: 'Hour' }))
+      within(within(dialog).getByRole('radiogroup', { name: 'Day (required)' })).getByRole(
+        'radio',
+        { name: 'Monday' },
+      ),
+    ).toBeChecked();
+    expect(
+      within(within(dialog).getByRole('list', { name: 'Hour (required)' }))
         .getAllByRole('button')
         .map((hour) => hour.textContent),
     ).toEqual(['5:00 PM', '6:00 PM', '7:00 PM']);
@@ -343,13 +348,13 @@ describe('setting up a weekly check-in', () => {
 
     // assert
     expect(within(dialog).getByRole('radio', { name: 'Wednesday' })).toBeChecked();
-    expect(within(dialog).getByRole('list', { name: 'Hour' })).toHaveAttribute('aria-busy', 'true');
+    expect(within(dialog).getByRole('list', { name: 'Hour (required)' })).toHaveAttribute('aria-busy', 'true');
     expect(chosenHour).toBeInTheDocument();
     expect(chosenHour).toHaveAttribute('aria-pressed', 'true');
     expect(within(dialog).queryByText('Loading hours…')).not.toBeInTheDocument();
     await waitFor(
       () =>
-        expect(within(dialog).getByRole('list', { name: 'Hour' })).not.toHaveAttribute('aria-busy'),
+        expect(within(dialog).getByRole('list', { name: 'Hour (required)' })).not.toHaveAttribute('aria-busy'),
       SERVICE_TIMEOUT,
     );
     expect(chosenHour).toHaveTextContent(/^6:00 PM$/);
