@@ -10,6 +10,7 @@ import { clientsContext } from "~/features/clients/server/guards/clients-context
 import { coachScheduleContext } from "~/features/coach-schedule/server/guards/coach-schedule-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
+import { nutritionLibraryContext } from "~/features/nutrition-library/server/guards/nutrition-library-context.server";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { PlatformContainer } from "~/server/container.server";
@@ -32,6 +33,7 @@ export function createFeatureContextMiddleware(
     context.set(coachScheduleContext, container.coachSchedule.feature);
     context.set(coachingSalesContext, container.coachingSales.feature);
     context.set(exerciseLibraryContext, container.exerciseLibrary);
+    context.set(nutritionLibraryContext, container.nutritionLibrary);
     context.set(platformContext, {
       featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
