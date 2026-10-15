@@ -12,3 +12,4 @@ designs
 .parity
 .claude
 *.md
+docs/architecture/model

@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-14 at commit 795125d5, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-15 at commit f025b7ae, model migration. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
@@ -10,13 +10,209 @@ Details plug in through those ports. Each feature under `apps/platform/src/featu
 
 Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` declares 53 forbidden rules — package export maps and dependency-absence for the workspace packages, and named rules for every app-level boundary (feature internals, surface-to-feature and surface-to-surface, composition root, browser half, route thinness, guards, domain slices, infrastructure subpaths, the feature-flag override folder's single importer, a feature's shared UI never importing its own actor UI, the browser-only design system (a feature's `public/` and every `.server` module never import `packages/ui`), four feature-direction rules — the assessment-calls feature never reaching the coaching-sales feature, the coaching-sales feature never reaching the client-onboarding or the client-profile feature, and the client-profile feature never reaching the client-onboarding feature — Clerk confined to the accounts feature, the root and the identity adapter, `sharp` confined to the infrastructure images concern, UI layering, workspace-by-name, stability and five hygiene rules) — `knip.json` holds published surfaces at zero unused exports, files, dependencies and unlisted dependencies, and `tools/domain-layout.mjs` checks the domain package's per-entity folder layout. All three run in `pnpm check:boundaries`, directly inside `pnpm validate` and the Docker builder stage, so a crossing fails workspace validation and image builds. `tools/boundaries.test.mjs` proves the dependency-cruiser rules against `tools/boundary-fixtures/`: 52 of the 53 rules have a fixture (the ten generated `feature-order-*` rules share one backward and one forward fixture, and a schema file reaching a later feature's schema is the fixture that proves schema files sit outside them), and `stability` has none because `moreUnstable` needs dependent counts a fixture tree cannot express — the real-tree cruise is its only proof. `tools/domain-layout.test.mjs` exercises `tools/domain-layout.mjs` against `tools/domain-layout-fixtures/` and against the real domain package; all six of the tool's checks have a failing fixture. Two rules stay review-owned by decision: controller shape (no base controller, no per-request instance field) and failure mapping (an adapter never swallows an infrastructure failure into a result-union member; a named expected condition may be classified and everything else is rethrown). The classified conditions are ENOENT in the filesystem asset store; ENOENT in the encrypted progress-photo store (a missing photo opens as nothing and deletes as a no-op) and EEXIST on a folder it creates; Postgres `22P02` in the assessment-call repository (a malformed booking id is a mistyped URL) and Postgres `23P01` on the `coach_time_reservations_no_overlap` exclusion constraint in C23's `reserveCoachTime` (losing a race for the coach's time is a taken slot), both read through C2's `isCausedByDatabaseError`; the waitlist signup's unique and check violations on its three named constraints, which register at the regular price or refresh consent; Postgres `23505` on `clients_assessment_call_id_unique` in the coaching purchases repository (a second payment for one call) and on `clients_auth_subject_id_unique` in the client invitations repository (a lost acceptance race); Postgres `23505` on `client_onboarding_submissions_client_id_unique` in the client onboardings repository (a second submission is `already-submitted`) and on the partial `client_onboarding_detail_requests_open_per_client_unique` in the onboarding reviews repository (a request while one is open answers `not-in-review`); in the Clerk identity adapter, a revoke answered 404, or 400 with `invitation_revoked`, `invitation_already_revoked` or `invitation_cannot_be_revoked_code` (the earlier invitation is already settled, so the replacement goes on); in the Stripe adapters, a missing checkout session, an already-closed session on expiry, and an unverifiable webhook signature or body; and, in the progress-photo renditions adapter, any throw from `sharp` while reading or re-encoding an upload, answered `refused` like a format outside JPEG, PNG and WebP. Each is recorded in `decisions.md`. The component graph has no cycles at module, component, domain-slice or UI-subpath level. Deployment adds artifact controls outside the dependency rules: the platform package's `files` allowlist emits only `build`, the config, content, domain, infrastructure and UI packlists keep production source and artifacts while excluding colocated test/spec files, and the Docker builder asserts that the deployed artifact contains `build/server/index.js`, has no top-level `src` or `e2e`, has no test/spec file under `node_modules/@eli-coach-platform`, and omits the dev-only test-support package. `tools/check-deploy-resolves.mjs`, proven by `tools/check-deploy-resolves.test.mjs`, resolves every bare import of every emitted server module under `build/server/` (the entry, the PDF worker and the renderer chunk the worker imports) from the `pnpm --prod deploy` layout, in the Docker builder and in `pnpm check:deploy`, the last step of `pnpm validate`; because the server bundle inlines the workspace packages, a vendor their adapters import (`@clerk/backend`, `stripe`, `sharp`) is also declared by the platform package. Environment, Docker, CI, integration and Lighthouse wiring no longer carry `WAITLIST_MODE`; the seed folder `apps/platform/db/seeds/` inserts the persisted flag true after every migrate, and the Playwright suite leaves it alone, taking bookings out of waiting-list mode per browser through the public `ff.WAITLIST_MODE=false` override.
 
+## Current shape (generated)
+
+<!-- arch:summary -->
+Components: 24, units: 1114, edges: 3887, component cycles: 1, uncovered modules: 0.
+
+| Component | Units | Fan-in | Fan-out | I | A | D | Zone |
+|---|---|---|---|---|---|---|---|
+| C1 packages/domain | 298 | 230 | 0 | 0 | 0.58 | 0.42 | none |
+| C2 packages/db | 6 | 67 | 0 | 0 | 0.15 | 0.85 | pain |
+| C3 packages/config | 16 | 50 | 0 | 0 | 0.23 | 0.77 | none |
+| C4 packages/content | 9 | 22 | 0 | 0 | 0.17 | 0.83 | pain |
+| C5 packages/ui | 109 | 158 | 0 | 0 | 0.08 | 0.92 | pain |
+| C6 packages/infrastructure | 97 | 135 | 31 | 0.19 | 0.17 | 0.64 | pain |
+| C7 apps/platform/src/features/store | 50 | 10 | 38 | 0.79 | 0.15 | 0.06 | none |
+| C8 apps/platform/src/features/waitlist | 22 | 10 | 15 | 0.6 | 0.2 | 0.2 | none |
+| C9 apps/platform/src/features/accounts | 19 | 53 | 14 | 0.21 | 0.24 | 0.55 | none |
+| C11 apps/platform/src/surfaces/public-site | 31 | 1 | 23 | 0.96 | 0.18 | 0.14 | none |
+| C12 apps/platform/src/surfaces/client-portal | 13 | 1 | 9 | 0.9 | 0.09 | 0.01 | none |
+| C13 apps/platform/src/surfaces/coach-portal | 11 | 1 | 9 | 0.9 | 0.03 | 0.07 | none |
+| C14 apps/platform/src/server | 27 | 3 | 18 | 0.86 | 0.22 | 0.07 | none |
+| C15 apps/platform | 5 | 0 | 4 | 1 | 0 | 0 | none |
+| C16 packages/test-support | 3 | 0 | 0 | undefined | 0.14 | undefined | none |
+| C17 apps/platform/src/features/assessment-calls | 46 | 31 | 37 | 0.54 | 0.21 | 0.25 | none |
+| C18 apps/platform/src/features/coaching-sales | 74 | 10 | 63 | 0.86 | 0.15 | 0.01 | none |
+| C19 apps/platform/src/features/client-onboarding | 52 | 6 | 46 | 0.88 | 0.21 | 0.1 | none |
+| C20 apps/platform/src/features/client-profile | 40 | 16 | 36 | 0.69 | 0.14 | 0.17 | none |
+| C21 apps/platform/src/features/client-resources | 41 | 9 | 36 | 0.8 | 0.15 | 0.05 | none |
+| C22 apps/platform/src/features/check-ins | 67 | 12 | 52 | 0.81 | 0.18 | 0.01 | none |
+| C23 apps/platform/src/features/coach-schedule | 16 | 9 | 12 | 0.57 | 0.12 | 0.31 | none |
+| C24 apps/platform/src/features/clients | 46 | 31 | 38 | 0.55 | 0.19 | 0.26 | none |
+| C25 apps/platform/src/features/exercise-library | 16 | 5 | 13 | 0.72 | 0.13 | 0.15 | none |
+
+| From | To | Importing modules |
+|---|---|---|
+| C6 | C1 | 21 |
+| C6 | C2 | 4 |
+| C6 | C3 | 10 |
+| C7 | C1 | 18 |
+| C7 | C2 | 6 |
+| C7 | C3 | 5 |
+| C7 | C4 | 3 |
+| C7 | C5 | 6 |
+| C7 | C6 | 17 |
+| C8 | C1 | 8 |
+| C8 | C2 | 3 |
+| C8 | C3 | 2 |
+| C8 | C4 | 3 |
+| C8 | C5 | 2 |
+| C8 | C6 | 8 |
+| C9 | C1 | 9 |
+| C9 | C2 | 3 |
+| C9 | C3 | 2 |
+| C9 | C5 | 3 |
+| C9 | C6 | 3 |
+| C9 | C7 | 2 |
+| C11 | C1 | 1 |
+| C11 | C3 | 4 |
+| C11 | C4 | 4 |
+| C11 | C5 | 16 |
+| C11 | C6 | 4 |
+| C11 | C7 | 5 |
+| C11 | C8 | 7 |
+| C11 | C9 | 5 |
+| C11 | C14 | 1 |
+| C11 | C17 | 4 |
+| C11 | C18 | 2 |
+| C11 | C24 | 4 |
+| C12 | C3 | 1 |
+| C12 | C5 | 4 |
+| C12 | C6 | 3 |
+| C12 | C9 | 5 |
+| C12 | C18 | 3 |
+| C12 | C19 | 2 |
+| C12 | C20 | 4 |
+| C12 | C21 | 3 |
+| C12 | C22 | 3 |
+| C12 | C24 | 4 |
+| C13 | C5 | 7 |
+| C13 | C9 | 4 |
+| C13 | C17 | 4 |
+| C13 | C18 | 2 |
+| C13 | C19 | 1 |
+| C13 | C20 | 1 |
+| C13 | C21 | 3 |
+| C13 | C22 | 5 |
+| C13 | C23 | 2 |
+| C13 | C24 | 5 |
+| C13 | C25 | 2 |
+| C14 | C1 | 9 |
+| C14 | C2 | 1 |
+| C14 | C3 | 7 |
+| C14 | C4 | 1 |
+| C14 | C6 | 8 |
+| C14 | C7 | 2 |
+| C14 | C8 | 2 |
+| C14 | C9 | 2 |
+| C14 | C17 | 2 |
+| C14 | C18 | 2 |
+| C14 | C19 | 2 |
+| C14 | C20 | 2 |
+| C14 | C21 | 2 |
+| C14 | C22 | 2 |
+| C14 | C23 | 2 |
+| C14 | C24 | 2 |
+| C14 | C25 | 2 |
+| C15 | C3 | 1 |
+| C15 | C5 | 2 |
+| C15 | C7 | 1 |
+| C15 | C8 | 1 |
+| C15 | C9 | 3 |
+| C15 | C11 | 1 |
+| C15 | C12 | 1 |
+| C15 | C13 | 1 |
+| C15 | C14 | 2 |
+| C15 | C17 | 1 |
+| C15 | C18 | 1 |
+| C15 | C19 | 1 |
+| C15 | C20 | 1 |
+| C15 | C21 | 1 |
+| C15 | C22 | 1 |
+| C15 | C23 | 1 |
+| C15 | C24 | 1 |
+| C15 | C25 | 1 |
+| C17 | C1 | 12 |
+| C17 | C2 | 3 |
+| C17 | C3 | 4 |
+| C17 | C4 | 3 |
+| C17 | C5 | 17 |
+| C17 | C6 | 12 |
+| C17 | C9 | 1 |
+| C17 | C23 | 1 |
+| C18 | C1 | 29 |
+| C18 | C2 | 7 |
+| C18 | C3 | 6 |
+| C18 | C5 | 25 |
+| C18 | C6 | 21 |
+| C18 | C9 | 4 |
+| C18 | C17 | 5 |
+| C18 | C24 | 8 |
+| C19 | C1 | 29 |
+| C19 | C2 | 5 |
+| C19 | C3 | 2 |
+| C19 | C4 | 1 |
+| C19 | C5 | 15 |
+| C19 | C6 | 12 |
+| C19 | C9 | 5 |
+| C19 | C17 | 1 |
+| C19 | C20 | 8 |
+| C19 | C24 | 2 |
+| C20 | C1 | 26 |
+| C20 | C2 | 7 |
+| C20 | C3 | 1 |
+| C20 | C5 | 12 |
+| C20 | C6 | 7 |
+| C20 | C9 | 5 |
+| C20 | C17 | 2 |
+| C20 | C24 | 1 |
+| C21 | C1 | 17 |
+| C21 | C2 | 3 |
+| C21 | C3 | 1 |
+| C21 | C5 | 13 |
+| C21 | C6 | 10 |
+| C21 | C9 | 4 |
+| C21 | C24 | 2 |
+| C22 | C1 | 18 |
+| C22 | C2 | 5 |
+| C22 | C3 | 2 |
+| C22 | C4 | 6 |
+| C22 | C5 | 18 |
+| C22 | C6 | 18 |
+| C22 | C9 | 6 |
+| C22 | C17 | 8 |
+| C22 | C23 | 3 |
+| C22 | C24 | 2 |
+| C23 | C1 | 6 |
+| C23 | C2 | 6 |
+| C23 | C5 | 2 |
+| C23 | C6 | 2 |
+| C23 | C9 | 2 |
+| C23 | C17 | 1 |
+| C23 | C22 | 1 |
+| C24 | C1 | 20 |
+| C24 | C2 | 11 |
+| C24 | C3 | 2 |
+| C24 | C4 | 1 |
+| C24 | C5 | 13 |
+| C24 | C6 | 7 |
+| C24 | C9 | 5 |
+| C24 | C17 | 3 |
+| C25 | C1 | 7 |
+| C25 | C2 | 3 |
+| C25 | C5 | 3 |
+| C25 | C6 | 3 |
+| C25 | C9 | 2 |
+<!-- /arch:summary -->
+
 ## Reading this folder
 
-- `components.md`: the enforced units and what each publishes.
-- `units.md`: classes, modules, functions, interfaces, and data structures, with their kind and ring.
-- `dependencies.md`: every source dependency, the forbidden edges, the ports, entry points, and shared data shapes.
-- `metrics.md`: stability and abstractness per component.
-- `decisions.md`: deferred decisions, cohesion groups, cohesion position per component, intended exceptions, open questions.
+- `model/components.json`: the enforced components and the path globs that belong to each.
+- `model/rules.json`: the rings and the glob rules that classify a path's ring, kind, and actors.
+- `model/overrides.json`: per-path exceptions to the rules, by exact path.
+- `model/boundaries.json`: the ports rules declare, their owners and humble sides, shared data shapes, and cohesion groups.
+- `decisions.md`: deferred decisions, why each cohesion group exists, cohesion position per component, intended exceptions, open questions.
 - `conventions.md`: where a file goes and what it may import; the folder layout the dependency rules assume.
 
 Terms: a *unit* is a class, module, function, interface, or data structure. A *component* is a group of units behind one published interface that tooling enforces. An *edge* from A to B means A's source code names B. *Policy* is business rules; *detail* is databases, frameworks, transports, vendors, UI, and the data shapes they produce. A *ring* is a band of units at one level of distance from inputs and outputs; dependencies point inward.
