@@ -11,7 +11,7 @@ import {
   Utensils,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import {
   SettingsSection,
@@ -618,13 +618,15 @@ export function EditClientProfile() {
                 aria-labelledby={CONDITIONS_LABEL_ID}
               >
                 {CYCLE_CONDITIONS.map((c) => (
-                  <ToggleChip
+                  <CheckboxChip
                     key={c}
-                    pressed={form.conditions.includes(c)}
-                    onPressedChange={() => toggleCondition(c)}
+                    size="compact"
+                    aria-label={c}
+                    checked={form.conditions.includes(c)}
+                    onCheckedChange={() => toggleCondition(c)}
                   >
                     {c}
-                  </ToggleChip>
+                  </CheckboxChip>
                 ))}
               </div>
             </SettingsRow>

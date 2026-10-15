@@ -32,7 +32,7 @@ import { pickableItems } from '../../domain/libraryLifecycle';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Checkbox } from '../../components/ui/checkbox';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
 import { Input } from '../../components/ui/input';
@@ -778,14 +778,16 @@ function RecipeBuilderInner() {
                                     onRemove={() => removeTag(family, t.id)}
                                   />
                                 ) : (
-                                  <ToggleChip
-                                    pressed={isSelected}
-                                    onPressedChange={() =>
+                                  <CheckboxChip
+                                    size="compact"
+                                    aria-label={t.label}
+                                    checked={isSelected}
+                                    onCheckedChange={() =>
                                       toggleTag(family, t.id)
                                     }
                                   >
                                     {t.label}
-                                  </ToggleChip>
+                                  </CheckboxChip>
                                 )}
                               </li>
                             );
