@@ -130,7 +130,7 @@ function videoSavingMessage(saving: VideoSaving): string {
 
 function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
   return (
-    <div role="status" className="grid gap-2 empty:hidden" data-parity="exercise-video-progress">
+    <div role="status" className="grid max-w-md gap-2 empty:hidden" data-parity="exercise-video-progress">
       {isSaving(saving) && (
         <>
           <p className="text-sm text-text-secondary tabular-nums">{videoSavingMessage(saving)}</p>
@@ -174,7 +174,7 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
   };
 
   return (
-    <div className="grid max-w-md gap-3">
+    <div className="grid gap-3">
       {video.preview ? (
         <>
           <input
@@ -188,23 +188,36 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
               if (file) take(file);
             }}
           />
-          <div
-            className="flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted"
-            data-parity="exercise-video-frame"
-          >
-            <video
-              src={video.preview}
-              controls
-              playsInline
-              preload="metadata"
-              aria-label="Demo video preview"
-              className="h-full w-full object-contain"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2" data-parity="exercise-video-actions">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3" data-parity="exercise-video-row">
+            <div className="relative w-full max-w-md" data-parity="exercise-video-frame">
+              <div
+                className="flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted"
+                data-parity="exercise-video-screen"
+              >
+                <video
+                  src={video.preview}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label="Demo video preview"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                aria-label="Remove video"
+                disabled={busy}
+                onClick={() => onChange(NO_VIDEO)}
+                className="absolute top-0 right-0 size-8 translate-x-1/2 -translate-y-1/2 bg-surface-base shadow-card hover:bg-surface-muted"
+              >
+                <X aria-hidden="true" />
+              </Button>
+            </div>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               aria-label="Replace video"
               disabled={busy}
@@ -214,33 +227,26 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
               <RefreshCw aria-hidden="true" />
               Replace
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label="Remove video"
-              disabled={busy}
-              onClick={() => onChange(NO_VIDEO)}
-            >
-              <X aria-hidden="true" />
-              Remove
-            </Button>
           </div>
           <VideoSaveProgress saving={saving} />
           {saving.state === 'failed' && (
-            <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>{UPLOAD_FAILED}</Alert>
+            <Alert className="max-w-md" action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>
+              {UPLOAD_FAILED}
+            </Alert>
           )}
         </>
       ) : (
-        <FileDropzone
-          accept={VIDEO_ACCEPT}
-          prompt={VIDEO_PROMPT}
-          hint={VIDEO_GUIDANCE}
-          onFileChosen={take}
-          {...refusal}
-        />
+        <div className="max-w-md">
+          <FileDropzone
+            accept={VIDEO_ACCEPT}
+            prompt={VIDEO_PROMPT}
+            hint={VIDEO_GUIDANCE}
+            onFileChosen={take}
+            {...refusal}
+          />
+        </div>
       )}
-      <p id={errorId} role="alert" className="text-xs font-medium text-destructive empty:hidden">
+      <p id={errorId} role="alert" className="max-w-md text-xs font-medium text-destructive empty:hidden">
         {video.error}
       </p>
     </div>
