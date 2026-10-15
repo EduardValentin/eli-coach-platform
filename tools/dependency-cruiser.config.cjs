@@ -28,12 +28,12 @@ const ROUTE_MODULES = flatOrInConceptFolder([
 const FEATURE_ORDER = [
   "store",
   "accounts",
+  "notifications",
   "exercise-library",
   "waitlist",
   "coach-schedule",
   "assessment-calls",
   "clients",
-  "notifications",
   "client-profile",
   "client-resources",
   "client-onboarding",
