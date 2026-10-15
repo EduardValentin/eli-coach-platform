@@ -1486,6 +1486,7 @@ test(
 
     // assert
     await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectFocusOnReplaceVideo();
     await exerciseEditor.expectNoVideoProblem();
 
     // act
@@ -1512,6 +1513,7 @@ test(
 
     // assert
     await exerciseEditor.expectNoVideo();
+    await exerciseEditor.expectFocusOnVideoDropzone();
 
     // act
     await exerciseEditor.chooseVideoWithKeyboard(

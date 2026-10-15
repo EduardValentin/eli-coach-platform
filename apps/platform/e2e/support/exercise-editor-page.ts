@@ -287,6 +287,14 @@ export class ExerciseEditorPage {
     await this.page.keyboard.press("Enter");
   }
 
+  async expectFocusOnReplaceVideo(): Promise<void> {
+    await expect(this.replaceVideoButton).toBeFocused();
+  }
+
+  async expectFocusOnVideoDropzone(): Promise<void> {
+    await expect(this.videoDropzone).toBeFocused();
+  }
+
   async playVideoWithKeyboard(): Promise<void> {
     await tabTo(this.page, this.videoPreview);
     await this.page.keyboard.press("Space");
@@ -526,6 +534,7 @@ export class ExerciseEditorPage {
       .map((message) => Number(UPLOAD_PROGRESS.exec(message)?.[1] ?? NaN));
 
     expect(finishing).toBeGreaterThan(1);
+    expect(messages.slice(finishing + 1)).toEqual([]);
     expect(percents.every((percent) => percent >= 0 && percent <= 100)).toBe(
       true,
     );
