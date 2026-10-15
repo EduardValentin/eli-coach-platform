@@ -55,7 +55,7 @@ const NOT_UPLOADING: VideoUploadState = { state: "idle" };
 
 const UPLOAD_FAILED: VideoUploadState = { state: "failed" };
 
-function videoSavingOf(
+function videoUploadStateOf(
   chosen: ChosenExerciseVideo,
   failedUpload: File | null,
   uploadState: UploadState,
@@ -185,7 +185,11 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     exercise?.id ?? null,
     settle,
   );
-  const videoSaving = videoSavingOf(video.chosen, failedUpload, uploadState);
+  const videoUpload = videoUploadStateOf(
+    video.chosen,
+    failedUpload,
+    uploadState,
+  );
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
@@ -222,7 +226,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
               <ExerciseVideoField
                 onChange={setVideo}
                 onRetry={() => void submit()}
-                saving={videoSaving}
+                upload={videoUpload}
                 stored={exercise?.video ?? null}
                 video={video}
               />
@@ -247,7 +251,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
             type="submit"
             variant="primary"
           >
-            {isVideoUploading(videoSaving) ? (
+            {isVideoUploading(videoUpload) ? (
               "Saving…"
             ) : (
               <>

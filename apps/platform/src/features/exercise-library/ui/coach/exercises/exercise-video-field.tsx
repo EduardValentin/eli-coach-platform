@@ -30,7 +30,7 @@ type StoredExerciseVideo = ExerciseView["video"];
 type ExerciseVideoFieldProps = {
   stored: StoredExerciseVideo;
   video: ExerciseVideoEntry;
-  saving: VideoUploadState;
+  upload: VideoUploadState;
   onChange: (video: ExerciseVideoEntry) => void;
   onRetry: () => void;
 };
@@ -40,8 +40,8 @@ const VIDEO_PROMPT = "Drop a video here or choose one";
 const UPLOAD_FAILED =
   "The upload didn’t go through. Your entries are still here.";
 
-export function isVideoUploading(saving: VideoUploadState): boolean {
-  return saving.state === "sending" || saving.state === "preparing";
+export function isVideoUploading(upload: VideoUploadState): boolean {
+  return upload.state === "sending" || upload.state === "preparing";
 }
 
 function shownVideoUrlOf(
@@ -54,28 +54,28 @@ function shownVideoUrlOf(
   return joinBasePath(import.meta.env.BASE_URL, stored.path);
 }
 
-function videoSavingMessage(saving: VideoUploadState): string {
-  return saving.state === "sending"
-    ? `Uploading video… ${Math.round(saving.fraction * 100)}%`
+function videoUploadMessage(upload: VideoUploadState): string {
+  return upload.state === "sending"
+    ? `Uploading video… ${Math.round(upload.fraction * 100)}%`
     : "Finishing up…";
 }
 
-function VideoSaveProgress({ saving }: { saving: VideoUploadState }) {
+function VideoUploadProgress({ upload }: { upload: VideoUploadState }) {
   return (
     <div
       className="grid max-w-md gap-2 empty:hidden"
       data-parity="exercise-video-progress"
       role="status"
     >
-      {isVideoUploading(saving) && (
+      {isVideoUploading(upload) && (
         <>
           <p className="text-sm text-text-secondary tabular-nums">
-            {videoSavingMessage(saving)}
+            {videoUploadMessage(upload)}
           </p>
           <Progress
             aria-label="Video upload"
             value={
-              saving.state === "sending" ? saving.fraction * 100 : undefined
+              upload.state === "sending" ? upload.fraction * 100 : undefined
             }
           />
         </>
@@ -87,13 +87,13 @@ function VideoSaveProgress({ saving }: { saving: VideoUploadState }) {
 export function ExerciseVideoField({
   stored,
   video,
-  saving,
+  upload,
   onChange,
   onRetry,
 }: ExerciseVideoFieldProps) {
   const problemId = useId();
   const replaceInput = useRef<HTMLInputElement>(null);
-  const busy = isVideoUploading(saving);
+  const busy = isVideoUploading(upload);
   const shownUrl = shownVideoUrlOf(video, stored);
   const previewUrl =
     video.chosen.kind === "attach" ? video.chosen.previewUrl : null;
@@ -174,8 +174,8 @@ export function ExerciseVideoField({
               Replace
             </Button>
           </div>
-          <VideoSaveProgress saving={saving} />
-          {saving.state === "failed" && (
+          <VideoUploadProgress upload={upload} />
+          {upload.state === "failed" && (
             <Alert
               action={<AlertAction onClick={onRetry}>Try again</AlertAction>}
               className="max-w-md"
