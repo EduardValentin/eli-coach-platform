@@ -24,6 +24,7 @@ export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { InlineProblem } from "./inline-problem";
 export { Input } from "./input";
+export { ItemGlyph } from "./item-glyph";
 export {
   FieldCaption,
   Label,
