@@ -60,6 +60,7 @@ const NEW = '/coach/training/exercises/new';
 const edit = (id: string) => `/coach/training/exercises/${id}`;
 const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
 const field = (name: string | RegExp) => screen.getByRole('combobox', { name });
+const nameField = () => screen.getByRole('textbox', { name: 'Name (required)' });
 const multi = (name: string | RegExp) => screen.getByRole('button', { name });
 const primary = () => screen.getByRole('button', { name: /^(Create exercise|Save changes)$/ });
 const dropzone = () => screen.getByText('Drag and drop video').closest('div') as HTMLElement;
@@ -108,8 +109,30 @@ describe('a new exercise', () => {
 
     // assert
     expect(titles.map((title) => title.textContent)).toEqual([
-      'Name', 'Type', 'Measured in', 'Sides', 'Primary muscles', 'Secondary muscles', 'Equipment', 'Difficulty', 'Tags', 'Form cues', 'Demo video',
+      'Name* (required)', 'Type', 'Measured in', 'Sides', 'Primary muscles* (required)', 'Secondary muscles', 'Equipment', 'Difficulty', 'Tags', 'Form cues', 'Demo video',
     ]);
+  });
+
+  it('stars the mandatory fields and names them as required', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    expect(nameField()).toBeInTheDocument();
+    expect(screen.getByText('Primary muscles', { selector: 'label' })).toHaveTextContent('Primary muscles* (required)');
+    expect(screen.getAllByText('*')).toHaveLength(2);
+  });
+
+  it('drops the star from Primary muscles for cardio', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await choose(user, field('Type'), 'Cardio');
+
+    // assert
+    expect(screen.getByText('Primary muscles', { selector: 'label' })).toHaveTextContent(/^Primary muscles$/);
+    expect(screen.getAllByText('*')).toHaveLength(1);
   });
 
   it('names the Sides, Tags and Demo video groups', () => {
@@ -129,20 +152,20 @@ describe('a new exercise', () => {
     // assert
     expect(screen.queryByText('Give the exercise a name')).not.toBeInTheDocument();
     expect(screen.queryByText('Pick at least one primary muscle')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).not.toHaveAttribute('aria-invalid');
+    expect(nameField()).not.toHaveAttribute('aria-invalid');
   });
 
   it('says why Create is disabled once a typed name is cleared', async () => {
     // arrange
     const user = renderEditor(NEW);
-    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.type(nameField(), 'Cossack squat');
 
     // act
-    await user.clear(screen.getByLabelText('Name'));
+    await user.clear(nameField());
 
     // assert
     expect(screen.getByText('Give the exercise a name')).toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(nameField()).toHaveAttribute('aria-invalid', 'true');
     expect(primary()).toBeDisabled();
   });
 
@@ -159,7 +182,7 @@ describe('a new exercise', () => {
     const user = renderEditor({ pathname: NEW, state: { library: '?type=cardio' } }, 'Rowing intervals');
 
     // act
-    await user.type(screen.getByLabelText('Name'), 'Rowing intervals');
+    await user.type(nameField(), 'Rowing intervals');
     await choose(user, field('Type'), 'Cardio');
     const cancel = screen.getByRole('link', { name: 'Cancel' });
     await user.click(primary());
@@ -253,7 +276,7 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW, 'Rowing intervals');
 
     // act
-    await user.type(screen.getByLabelText('Name'), 'Rowing intervals');
+    await user.type(nameField(), 'Rowing intervals');
     await choose(user, field('Type'), 'Cardio');
     await tick(user, multi('Equipment'), 'Rower');
     await user.click(primary());
@@ -268,7 +291,7 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW);
 
     // act
-    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.type(nameField(), 'Cossack squat');
 
     // assert
     expect(primary()).toBeDisabled();
@@ -281,11 +304,11 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW);
 
     // act
-    await user.type(screen.getByLabelText('Name'), 'smith machine squat');
+    await user.type(nameField(), 'smith machine squat');
 
     // assert
     expect(screen.getByText('An exercise with this name already exists')).toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(nameField()).toHaveAttribute('aria-invalid', 'true');
     expect(primary()).toBeDisabled();
   });
 
@@ -295,20 +318,20 @@ describe('a new exercise', () => {
     await tick(user, multi('Primary muscles'), 'Glutes');
 
     // act
-    await user.click(screen.getByLabelText('Name'));
+    await user.click(nameField());
     await user.paste('a'.repeat(81));
 
     // assert
     const problem = screen.getByText('Keep the name to 80 characters');
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-describedby', problem.id);
+    expect(nameField()).toHaveAttribute('aria-invalid', 'true');
+    expect(nameField()).toHaveAttribute('aria-describedby', problem.id);
     expect(primary()).toBeDisabled();
   });
 
   it('says why Create is disabled when the form cues are longer than 1,000 characters', async () => {
     // arrange
     const user = renderEditor(NEW);
-    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.type(nameField(), 'Cossack squat');
     await tick(user, multi('Primary muscles'), 'Glutes');
     expect(primary()).toBeEnabled();
 
@@ -326,7 +349,7 @@ describe('a new exercise', () => {
   it('enables Create again once the form cues are back within 1,000 characters', async () => {
     // arrange
     const user = renderEditor(NEW);
-    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.type(nameField(), 'Cossack squat');
     await tick(user, multi('Primary muscles'), 'Glutes');
     await user.click(screen.getByLabelText('Form cues'));
     await user.paste('a'.repeat(1001));
@@ -366,7 +389,7 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW, 'Cossack squat');
 
     // act
-    await user.type(screen.getByLabelText('Name'), 'Cossack squat');
+    await user.type(nameField(), 'Cossack squat');
     await user.click(screen.getByRole('radio', { name: 'One side at a time' }));
     await tick(user, multi('Primary muscles'), 'Adductors');
     await tick(user, multi(/^Primary muscles/), 'Glutes');
@@ -387,7 +410,7 @@ describe('editing an exercise', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 1, name: 'Edit exercise' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toHaveValue('Bulgarian Split Squat');
+    expect(nameField()).toHaveValue('Bulgarian Split Squat');
     expect(screen.getByRole('radio', { name: 'One side at a time' })).toBeChecked();
     expect(within(multi(/^Primary muscles, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Quadriceps', 'Glutes']);
     expect(within(multi(/^Equipment, 2 selected$/)).getAllByText(/./).map((pill) => pill.textContent)).toEqual(['Dumbbells', 'Bench']);
@@ -422,8 +445,8 @@ describe('editing an exercise', () => {
     const user = renderEditor(edit(ARCHIVED_SMITH_SQUAT_ID));
 
     // act
-    await user.clear(screen.getByLabelText('Name'));
-    await user.type(screen.getByLabelText('Name'), 'Plank');
+    await user.clear(nameField());
+    await user.type(nameField(), 'Plank');
 
     // assert
     expect(screen.getByText('An exercise with this name already exists')).toBeInTheDocument();

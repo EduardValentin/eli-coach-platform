@@ -259,6 +259,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
             <SettingsRow
               htmlFor={ids.name}
               title="Name"
+              required
               layout="stacked"
               problem={shownProblems.name && <InlineProblem id={ids.nameProblem}>{shownProblems.name}</InlineProblem>}
             >
@@ -324,6 +325,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
             <SettingsRow
               htmlFor={ids.primary}
               title="Primary muscles"
+              required={draft.type !== 'cardio'}
               layout="stacked"
               problem={
                 shownProblems.primaryMuscles && (
