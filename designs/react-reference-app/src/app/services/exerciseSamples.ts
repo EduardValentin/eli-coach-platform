@@ -3,6 +3,10 @@ import type { Exercise } from '../context/TrainingContext';
 export const EXERCISE_SEEDS = ['seeded', 'empty'] as const;
 export type ExerciseSeed = (typeof EXERCISE_SEEDS)[number];
 
+const DEMO_CLIP_ROOT = `${import.meta.env.BASE_URL}media/exercise-demos/`;
+export const LANDSCAPE_DEMO_CLIP = `${DEMO_CLIP_ROOT}landscape.mp4`;
+export const PORTRAIT_DEMO_CLIP = `${DEMO_CLIP_ROOT}portrait.mp4`;
+
 export const SAMPLE_EXERCISES: readonly Exercise[] = [
   {
     id: 'e1',
@@ -16,7 +20,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
     primaryMuscles: ['Quadriceps', 'Glutes'],
     secondaryMuscles: ['Core', 'Hamstrings'],
     tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-1.mp4'
+    videoUrl: LANDSCAPE_DEMO_CLIP
   },
   {
     id: 'e2',
@@ -30,7 +34,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
     primaryMuscles: ['Hamstrings', 'Glutes'],
     secondaryMuscles: ['Lower back'],
     tags: ['Strength', 'Recovery'],
-    videoUrl: 'demo-video-2.mp4'
+    videoUrl: PORTRAIT_DEMO_CLIP
   },
   {
     id: 'e3',
@@ -57,7 +61,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
     primaryMuscles: ['Chest', 'Triceps'],
     secondaryMuscles: ['Shoulders'],
     tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-4.mp4'
+    videoUrl: LANDSCAPE_DEMO_CLIP
   },
   {
     id: 'e5',
@@ -123,7 +127,7 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
     primaryMuscles: ['Glutes', 'Hamstrings'],
     secondaryMuscles: ['Core'],
     tags: ['Strength', 'Hypertrophy'],
-    videoUrl: 'demo-video-9.mp4'
+    videoUrl: PORTRAIT_DEMO_CLIP
   },
   {
     id: 'e10',

@@ -41,6 +41,10 @@ import {
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
 import {
+  EXERCISE_VIDEO_UPLOAD_OUTCOMES,
+  type ExerciseVideoUpload,
+} from '../services/exerciseVideoService';
+import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
@@ -153,6 +157,7 @@ type AppState = {
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
+  exerciseVideoUpload: ExerciseVideoUpload;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
@@ -210,6 +215,7 @@ const defaultState: AppState = {
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
+  exerciseVideoUpload: 'works',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
@@ -517,6 +523,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('exseed'),
     defaultState.exerciseSeed,
   );
+  state.exerciseVideoUpload = optionOrDefault(
+    EXERCISE_VIDEO_UPLOAD_OUTCOMES,
+    params.get('exupload'),
+    defaultState.exerciseVideoUpload,
+  );
   state.resourceSeed = optionOrDefault(
     RESOURCE_SEEDS,
     params.get('rseed'),
@@ -611,6 +622,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
+    url.searchParams.delete('exupload');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
@@ -745,6 +757,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.exerciseSeed !== defaultState.exerciseSeed) {
       url.searchParams.set('exseed', appState.exerciseSeed);
+    }
+    if (appState.exerciseVideoUpload !== defaultState.exerciseVideoUpload) {
+      url.searchParams.set('exupload', appState.exerciseVideoUpload);
     }
     if (appState.resourceSeed !== defaultState.resourceSeed) {
       url.searchParams.set('rseed', appState.resourceSeed);

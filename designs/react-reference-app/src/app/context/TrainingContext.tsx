@@ -9,6 +9,7 @@ import type {
   Muscle,
 } from '../domain/exercises';
 import { exercisesForSeed } from '../services/exerciseSamples';
+import { ExerciseVideoServer } from '../services/exerciseVideoService';
 import { useAppState } from './AppContext';
 import {
   archivedItem,
@@ -179,6 +180,7 @@ interface TrainingState {
   exercises: Exercise[];
   addExercise: (exercise: Exercise) => void;
   updateExercise: (exercise: Exercise) => void;
+  uploadExerciseVideo: (file: File, onProgress: (fraction: number) => void) => Promise<string>;
   archiveExercise: (id: string) => void;
   restoreExercise: (id: string) => void;
   deleteExercise: (id: string) => LibraryDeletion;
@@ -788,6 +790,11 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setExercises(exercisesForSeed(appState.exerciseSeed));
   }, [appState.exerciseSeed]);
+  const [videoServer] = useState(() => new ExerciseVideoServer());
+
+  useEffect(() => {
+    videoServer.releaseHeldUploads(appState.exerciseVideoUpload);
+  }, [videoServer, appState.exerciseVideoUpload]);
   const [planTemplates, setPlanTemplates] = useState<PlanTemplate[]>(mockTemplates);
   const [planInstances, setPlanInstances] = useState<PlanInstance[]>(mockPlanInstances);
   const [goals, setGoals] = useState<Goal[]>(mockGoals);
@@ -798,6 +805,11 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     setExercises(prev => [...prev, exercise]), []);
   const updateExercise = useCallback((exercise: Exercise) =>
     setExercises(prev => prev.map(e => e.id === exercise.id ? exercise : e)), []);
+  const uploadExerciseVideo = useCallback(
+    (file: File, onProgress: (fraction: number) => void) =>
+      videoServer.upload(file, { outcome: appState.exerciseVideoUpload, onProgress }),
+    [videoServer, appState.exerciseVideoUpload],
+  );
   const archiveExercise = useCallback((id: string) =>
     setExercises(prev => prev.map(e => e.id === id ? archivedItem(e, new Date()) : e)), []);
   const restoreExercise = useCallback((id: string) =>
@@ -1064,7 +1076,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   return (
     <TrainingContext.Provider value={{
       exercises,
-      addExercise, updateExercise, archiveExercise, restoreExercise, deleteExercise, getExerciseUsage,
+      addExercise, updateExercise, uploadExerciseVideo, archiveExercise, restoreExercise, deleteExercise, getExerciseUsage,
       planTemplates,
       addTemplate, updateTemplate, deleteTemplate,
       planInstances,

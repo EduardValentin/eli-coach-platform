@@ -2,15 +2,21 @@ import { act, render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate, type InitialEntry } from 'react-router';
 import { Toaster } from 'sonner';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseEditorPage } from './ExerciseEditorPage';
 import { VIDEO_ACCEPT, VIDEO_MAX_BYTES } from '../../utils/exerciseVideo';
 import { AppProvider } from '../../context/AppContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider, useTraining } from '../../context/TrainingContext';
+import { LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP } from '../../services/exerciseSamples';
+import type { ExerciseVideoUpload } from '../../services/exerciseVideoService';
 
 const SQUAT_ID = 'e1';
 const SPLIT_SQUAT_ID = 'e3';
+const ROMANIAN_DEADLIFT_ID = 'e2';
+const SERVICE_TIMEOUT = { timeout: 4000 };
+const VIDEO_PROMPT = 'Drop a video here or choose one';
+const UPLOAD_FAILED = 'The upload didn’t go through. Your entries are still here.';
 const ARCHIVED_SMITH_SQUAT_ID = 'e13';
 
 function SavedExerciseProbe({ name }: { name: string }) {
@@ -63,7 +69,7 @@ const field = (name: string | RegExp) => screen.getByRole('combobox', { name });
 const nameField = () => screen.getByRole('textbox', { name: 'Name (required)' });
 const multi = (name: string | RegExp) => screen.getByRole('button', { name });
 const primary = () => screen.getByRole('button', { name: /^(Create exercise|Save changes)$/ });
-const dropzone = () => screen.getByText('Drag and drop video').closest('div') as HTMLElement;
+const dropzone = () => screen.getByText(VIDEO_PROMPT).closest('label') as HTMLElement;
 const drop = (file: File) => fireEvent.drop(dropzone(), { dataTransfer: { files: [file] } });
 
 async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLElement, option: string | RegExp) {
@@ -77,13 +83,24 @@ async function tick(user: ReturnType<typeof userEvent.setup>, trigger: HTMLEleme
   await user.keyboard('{Escape}');
 }
 
+const preview = () => screen.getByLabelText('Demo video preview');
+const replaceInput = () => document.querySelector('input[type="file"]') as HTMLInputElement;
+
+function answerVideoUploads(outcome: ExerciseVideoUpload) {
+  window.history.replaceState({}, '', `/?exupload=${outcome}`);
+}
+
 beforeAll(() => {
-  URL.createObjectURL = vi.fn(() => 'blob:preview');
+  URL.createObjectURL = vi.fn((file: Blob) => `blob:${(file as File).name}`);
   URL.revokeObjectURL = vi.fn();
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  window.history.replaceState({}, '', '/');
 });
 
 describe('a new exercise', () => {
@@ -439,7 +456,7 @@ describe('editing an exercise', () => {
     await user.click(primary());
 
     // assert
-    expect(screen.getByTestId('saved')).toHaveTextContent('resistance|reps|both-sides|Quadriceps+Glutes|Core+Hamstrings|Barbell+Squat rack|Strength|demo-video-1.mp4');
+    expect(screen.getByTestId('saved')).toHaveTextContent(`resistance|reps|both-sides|Quadriceps+Glutes|Core+Hamstrings|Barbell+Squat rack|Strength|${LANDSCAPE_DEMO_CLIP}`);
   });
 
   it('refuses, for an archived exercise, a name an active exercise already uses', async () => {
@@ -486,6 +503,16 @@ describe('the demo video', () => {
     expect(screen.getByText('MP4 or MOV up to 50 MB, in a format that plays well on a phone.')).toBeInTheDocument();
   });
 
+  it('offers the whole drop zone as the picker, named by its prompt and described by the guidance', () => {
+    // arrange & act
+    renderEditor(NEW);
+
+    // assert
+    const picker = screen.getByLabelText(VIDEO_PROMPT);
+    expect(picker).toHaveAttribute('type', 'file');
+    expect(picker).toHaveAccessibleDescription('MP4 or MOV up to 50 MB, in a format that plays well on a phone.');
+  });
+
   it('rejects a dropped .avi with a visible error tied to the control', () => {
     // arrange
     renderEditor(NEW);
@@ -496,7 +523,9 @@ describe('the demo video', () => {
     // assert
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('clip.avi is not an .mp4 or .mov');
-    expect(screen.getByRole('button', { name: 'Browse files' })).toHaveAttribute('aria-describedby', alert.id);
+    const picker = screen.getByLabelText(VIDEO_PROMPT);
+    expect(picker).toHaveAttribute('aria-invalid', 'true');
+    expect(picker.getAttribute('aria-describedby')?.split(' ')).toContain(alert.id);
   });
 
   it('refuses an .mp4 over 50 MB and attaches nothing', () => {
@@ -510,7 +539,7 @@ describe('the demo video', () => {
 
     // assert
     expect(screen.getByRole('alert')).toHaveTextContent('clip.mp4 is larger than 50 MB');
-    expect(screen.getByText('Drag and drop video')).toBeInTheDocument();
+    expect(screen.getByText(VIDEO_PROMPT)).toBeInTheDocument();
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
@@ -526,30 +555,20 @@ describe('the demo video', () => {
     expect(screen.getAllByText(/clip\.avi is not an \.mp4 or \.mov/)).toHaveLength(1);
   });
 
-  it('attaches an .mp4 chosen through the picker on save', async () => {
+  it.each([
+    ['an .mp4', 'squat.mp4', 'video/mp4'],
+    ['a .mov', 'squat.mov', 'video/quicktime'],
+  ])('uploads %s chosen through Replace on save and keeps the stored video', async (_kind, name, type) => {
     // arrange
     const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
 
     // act
-    await user.upload(input, fileNamed('squat.mp4', 'video/mp4'));
+    await user.upload(replaceInput(), fileNamed(name, type));
     await user.click(primary());
 
     // assert
-    expect(screen.getByTestId('saved')).toHaveTextContent('squat.mp4');
-  });
-
-  it('attaches a .mov chosen through the picker on save', async () => {
-    // arrange
-    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    // act
-    await user.upload(input, fileNamed('squat.mov', 'video/quicktime'));
-    await user.click(primary());
-
-    // assert
-    expect(screen.getByTestId('saved')).toHaveTextContent('squat.mov');
+    expect(await screen.findByText('Exercise library', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByTestId('saved')).toHaveTextContent(`blob:${name}`);
   });
 
   it('clears the stored video when the coach removes it and saves', async () => {
@@ -588,7 +607,168 @@ describe('the demo video', () => {
 
     // assert
     expect(screen.getByRole('alert')).toBeEmptyDOMElement();
-    expect(screen.queryByText('Drag and drop video')).not.toBeInTheDocument();
+    expect(screen.queryByText(VIDEO_PROMPT)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['a landscape', SQUAT_ID, LANDSCAPE_DEMO_CLIP],
+    ['a portrait', ROMANIAN_DEADLIFT_ID, PORTRAIT_DEMO_CLIP],
+  ])('plays %s stored video with the player controls, ready to seek', (_shape, id, clip) => {
+    // arrange & act
+    renderEditor(edit(id));
+
+    // assert
+    expect(preview()).toHaveAttribute('src', clip);
+    expect(preview()).toHaveAttribute('controls');
+    expect(preview()).toHaveAttribute('preload', 'metadata');
+  });
+
+  it('keeps Replace and Remove outside the video frame, clear of the player controls', () => {
+    // arrange & act
+    renderEditor(edit(SQUAT_ID));
+
+    // assert
+    const frame = preview().parentElement as HTMLElement;
+    expect(frame).not.toContainElement(screen.getByRole('button', { name: 'Replace video' }));
+    expect(frame).not.toContainElement(screen.getByRole('button', { name: 'Remove video' }));
+  });
+
+  it('previews a chosen file at once, with controls', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // act
+    await user.upload(screen.getByLabelText(VIDEO_PROMPT), fileNamed('cossack.mp4', 'video/mp4'));
+
+    // assert
+    expect(preview()).toHaveAttribute('src', 'blob:cossack.mp4');
+    expect(preview()).toHaveAttribute('controls');
+    expect(screen.getByRole('button', { name: 'Replace video' })).toBeEnabled();
+  });
+
+  it('keeps the current video when a replacement is refused', () => {
+    // arrange
+    renderEditor(edit(SQUAT_ID));
+
+    // act
+    fireEvent.change(replaceInput(), { target: { files: [fileNamed('squat.avi', 'video/x-msvideo')] } });
+
+    // assert
+    expect(screen.getByRole('alert')).toHaveTextContent('squat.avi is not an .mp4 or .mov');
+    expect(preview()).toHaveAttribute('src', LANDSCAPE_DEMO_CLIP);
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveAccessibleDescription('squat.avi is not an .mp4 or .mov — only .mp4 and .mov videos are supported');
+  });
+
+  it('keeps a chosen file when an oversized replacement is refused', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    await user.upload(screen.getByLabelText(VIDEO_PROMPT), fileNamed('cossack.mp4', 'video/mp4'));
+    const oversize = fileNamed('cossack-long.mp4', 'video/mp4');
+    Object.defineProperty(oversize, 'size', { value: VIDEO_MAX_BYTES + 1 });
+
+    // act
+    fireEvent.change(replaceInput(), { target: { files: [oversize] } });
+
+    // assert
+    expect(screen.getByRole('alert')).toHaveTextContent('cossack-long.mp4 is larger than 50 MB');
+    expect(preview()).toHaveAttribute('src', 'blob:cossack.mp4');
+  });
+});
+
+describe('saving with a newly chosen video', () => {
+  it('shows the upload progress politely and locks the video actions and Save', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(await screen.findByText(/^Uploading video… \d+%$/)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/^Uploading video… \d+%$/);
+    expect(screen.getByRole('progressbar', { name: 'Video upload' })).toHaveAttribute('aria-valuenow');
+    expect(screen.getByRole('button', { name: 'Replace video' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove video' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+  });
+
+  it('says it is finishing up once every byte is sent and the server is storing it', async () => {
+    // arrange
+    answerVideoUploads('holds');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(await screen.findByText('Finishing up…', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Finishing up…');
+    expect(screen.getByRole('progressbar', { name: 'Video upload' })).not.toHaveAttribute('aria-valuenow');
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Replace video' })).toBeDisabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent(LANDSCAPE_DEMO_CLIP);
+  });
+
+  it('keeps every entry and the chosen file when the upload fails, and offers Try again', async () => {
+    // arrange
+    answerVideoUploads('fails');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await choose(user, field('Difficulty'), 'Advanced');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT);
+    const alert = screen.getAllByRole('alert').find((candidate) => candidate.textContent?.includes(UPLOAD_FAILED));
+    expect(alert).toBeDefined();
+    expect(within(alert as HTMLElement).getByRole('button', { name: 'Try again' })).toBeEnabled();
+    expect(within(screen.getByRole('group', { name: 'Demo video' })).getByText(UPLOAD_FAILED)).toBeInTheDocument();
+    expect(nameField()).toHaveValue('Barbell Back Squat');
+    expect(field('Difficulty')).toHaveTextContent('Advanced');
+    expect(preview()).toHaveAttribute('src', 'blob:squat.mp4');
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(primary()).toBeEnabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent('Intermediate');
+  });
+
+  it('saves again from Try again, keeping the entries', async () => {
+    // arrange
+    answerVideoUploads('fails');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await choose(user, field('Difficulty'), 'Advanced');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+    await user.click(primary());
+    await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    // assert
+    expect(screen.queryByText(UPLOAD_FAILED)).not.toBeInTheDocument();
+    expect(await screen.findByText(/^Uploading video… \d+%$/)).toBeInTheDocument();
+    expect(await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(field('Difficulty')).toHaveTextContent('Advanced');
+    expect(preview()).toHaveAttribute('src', 'blob:squat.mp4');
+  });
+
+  it('stays a plain save, with no upload progress, when no new file was chosen', async () => {
+    // arrange
+    answerVideoUploads('holds');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await choose(user, field('Difficulty'), 'Advanced');
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(screen.getByText('Exercise library')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.getByTestId('saved')).toHaveTextContent(`${LANDSCAPE_DEMO_CLIP}|Advanced`);
   });
 });
 

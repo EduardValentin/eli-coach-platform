@@ -60,6 +60,7 @@ import {
   type PrototypeStartNowOutcome,
 } from '../services/subscriptionService';
 import { EXERCISE_SEEDS } from '../services/exerciseSamples';
+import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -547,6 +548,9 @@ export function DevToggle() {
                 )}
                 <TabsTrigger value="coach" className={TAB_TRIGGER_CLASS}>
                   Coach
+                </TabsTrigger>
+                <TabsTrigger value="exercises" className={TAB_TRIGGER_CLASS}>
+                  Exercises
                 </TabsTrigger>
                 <TabsTrigger value="checkins" className={TAB_TRIGGER_CLASS}>
                   Check-ins
@@ -1039,6 +1043,9 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="exercises" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label htmlFor="dev-exercise-seed" className={DEV_LABEL_CLASS}>
                     Exercise library
@@ -1057,6 +1064,33 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Populated</SelectItem>
                       <SelectItem value="empty">Empty</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-exercise-video-upload" className={DEV_LABEL_CLASS}>
+                    Video upload
+                  </Label>
+                  <Select
+                    value={appState.exerciseVideoUpload}
+                    onValueChange={(value) =>
+                      setAppState({
+                        exerciseVideoUpload: optionOrDefault(
+                          EXERCISE_VIDEO_UPLOAD_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-exercise-video-upload" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="holds">Holds while uploading</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
