@@ -422,6 +422,54 @@ describe("StoreCartDrawer", () => {
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
+  it("names the terms problem on their checkbox when she unticks them after a declined send", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "rate_limited_cooldown",
+              message: "Unable to deliver store resources.",
+            },
+            success: false,
+          },
+          { status: 429 },
+        ),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+    await within(dialog).findByText(/Requests are limited to one per minute/);
+
+    // act
+    await user.click(termsCheckbox(dialog));
+    await user.tab();
+
+    // assert
+    expect(termsCheckbox(dialog)).toHaveAccessibleDescription(
+      "Accept the Terms & Conditions to continue.",
+    );
+    expect(termsCheckbox(dialog)).toHaveAttribute("aria-invalid", "true");
+  });
+
   it("shows a refused subaddress as the email field's own error, not as a form alert", async () => {
     // arrange
     const user = userEvent.setup();
