@@ -145,6 +145,8 @@ function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
   );
 }
 
+type VideoFieldFocus = 'replace' | 'picker' | null;
+
 type VideoFieldProps = {
   video: VideoState;
   saving: VideoSaving;
@@ -154,7 +156,10 @@ type VideoFieldProps = {
 
 function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
   const errorId = useId();
+  const pickerId = useId();
   const input = useRef<HTMLInputElement>(null);
+  const replaceButton = useRef<HTMLButtonElement>(null);
+  const focusAfterSwap = useRef<VideoFieldFocus>(null);
   const busy = isSaving(saving);
   const refusal = {
     'aria-invalid': video.error ? true : undefined,
@@ -170,8 +175,23 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
       onChange({ ...video, error: videoTooLargeMessage(file) });
       return;
     }
+    if (!video.preview) focusAfterSwap.current = 'replace';
     onChange({ file, preview: URL.createObjectURL(file), error: null });
   };
+
+  const remove = () => {
+    focusAfterSwap.current = 'picker';
+    onChange(NO_VIDEO);
+  };
+
+  const showsPreview = Boolean(video.preview);
+
+  useEffect(() => {
+    const target = focusAfterSwap.current;
+    focusAfterSwap.current = null;
+    if (target === 'replace') replaceButton.current?.focus();
+    if (target === 'picker') document.getElementById(pickerId)?.focus();
+  }, [showsPreview, pickerId]);
 
   return (
     <div className="grid gap-3">
@@ -204,11 +224,12 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
               <MediaRemoveButton
                 aria-label="Remove video"
                 disabled={busy}
-                onClick={() => onChange(NO_VIDEO)}
+                onClick={remove}
                 className="absolute top-2 right-2"
               />
             </div>
             <Button
+              ref={replaceButton}
               type="button"
               variant="ghost"
               size="sm"
@@ -231,6 +252,7 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
       ) : (
         <div className="max-w-md">
           <FileDropzone
+            id={pickerId}
             accept={VIDEO_ACCEPT}
             prompt={VIDEO_PROMPT}
             hint={VIDEO_GUIDANCE}

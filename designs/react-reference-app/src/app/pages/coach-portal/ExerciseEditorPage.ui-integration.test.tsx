@@ -681,6 +681,53 @@ describe('the demo video', () => {
   });
 });
 
+describe('focus in the demo video field', () => {
+  it('moves to Replace once a video chosen from the drop zone takes its place', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    await user.upload(screen.getByLabelText(VIDEO_PROMPT), fileNamed('cossack.mp4', 'video/mp4'));
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveFocus();
+  });
+
+  it('moves to the drop zone once the video is removed', async () => {
+    // arrange
+    const user = renderEditor(edit(SQUAT_ID));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Remove video' }));
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+
+  it('stays where it was when the editor opens on a saved video', () => {
+    // arrange
+    // act
+    renderEditor(edit(SQUAT_ID));
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Replace video' })).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Remove video' })).not.toHaveFocus();
+  });
+
+  it('stays on the drop zone when a dropped file is refused', () => {
+    // arrange
+    renderEditor(NEW);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    drop(fileNamed('squat.avi', 'video/x-msvideo'));
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+});
+
 describe('saving with a newly chosen video', () => {
   it('shows the upload progress politely and locks the video actions and Save', async () => {
     // arrange
