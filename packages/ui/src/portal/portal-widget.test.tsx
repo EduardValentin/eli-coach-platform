@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import { Video } from "lucide-react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PortalWidget } from "./portal-widget";
@@ -28,6 +29,29 @@ describe("PortalWidget", () => {
       screen.getByRole("heading", { level: 2, name: "Upcoming calls" }),
     ).toHaveAttribute("id", "upcoming-calls-heading");
     expect(region).toHaveTextContent("Two calls");
+  });
+
+  it("draws its title icon before the title, hidden from assistive technology", () => {
+    // arrange
+    render(
+      <PortalWidget
+        headingId="upcoming-calls-heading"
+        icon={Video}
+        title="Upcoming calls"
+      >
+        Two calls
+      </PortalWidget>,
+    );
+
+    // act
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Upcoming calls",
+    });
+
+    // assert
+    expect(heading.querySelector("svg")).toHaveClass("lucide-video");
+    expect(heading.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("sets the hero in the large value rung with its unit beside it", () => {

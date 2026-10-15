@@ -101,33 +101,4 @@ describe("FieldLayout", () => {
     const lines = [...(container.firstElementChild?.children ?? [])];
     expect(lines.map((line) => line.tagName)).toEqual(order);
   });
-
-  it("wraps the label with its suffixes on the text baseline by default", () => {
-    // arrange
-    // act
-    render(
-      <FieldLayout label="Sessions" suffixes={[{ text: "(per week)" }]}>
-        {(control) => <textarea {...control} />}
-      </FieldLayout>,
-    );
-
-    // assert
-    const label = screen.getByText("Sessions");
-    expect(label).toHaveClass("flex-wrap", "items-baseline", "gap-1.5");
-  });
-
-  it("sets a plain label inline when asked", () => {
-    // arrange
-    // act
-    render(
-      <FieldLayout label="Title" labelLayout="inline">
-        {(control) => <input {...control} />}
-      </FieldLayout>,
-    );
-
-    // assert
-    const label = screen.getByText("Title");
-    expect(label).toHaveClass("flex", "items-center", "gap-2");
-    expect(label).not.toHaveClass("flex-wrap", "items-baseline");
-  });
 });

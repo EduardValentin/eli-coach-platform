@@ -4,9 +4,9 @@ import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
-import { Checkbox } from '../../ui/checkbox';
+import { CheckboxField } from '../../CheckboxField';
 import { Input } from '../../ui/input';
-import { RequiredMark } from '../../ui/label';
+import { LabelSuffix, Legend } from '../../ui/label';
 import {
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
+import { cn } from '../../ui/utils';
 import {
   FormControl,
   FormDescription,
@@ -31,7 +32,6 @@ import {
   type MeasureKind,
   type MeasureUnits,
 } from '../measureUnits';
-import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
 import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
@@ -158,13 +158,13 @@ function nextChipsValue(
   return [...withoutExclusive, option];
 }
 
-function unitQualifiersOf(
+function unitSuffixesOf(
   field: OnboardingField,
   unit: string | null,
 ): string[] {
   return [unit, field.unitSuffix]
-    .filter((qualifier): qualifier is string => Boolean(qualifier))
-    .map((qualifier) => `(${qualifier})`);
+    .filter((suffix): suffix is string => Boolean(suffix))
+    .map((suffix) => `(${suffix})`);
 }
 
 function LabelLines({ field }: { field: OnboardingField }) {
@@ -179,7 +179,7 @@ function LabelLines({ field }: { field: OnboardingField }) {
   );
 }
 
-function UnitQualifiers({
+function UnitSuffixes({
   field,
   unit,
 }: {
@@ -188,14 +188,10 @@ function UnitQualifiers({
 }) {
   return (
     <>
-      {unitQualifiersOf(field, unit).map((qualifier) => (
-        <span
-          className="font-normal text-text-secondary"
-          data-parity={`field-${field.id}-suffix-unit`}
-          key={qualifier}
-        >
-          {qualifier}
-        </span>
+      {unitSuffixesOf(field, unit).map((suffix) => (
+        <LabelSuffix data-parity={`field-${field.id}-suffix-unit`} key={suffix}>
+          {suffix}
+        </LabelSuffix>
       ))}
     </>
   );
@@ -215,49 +211,27 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       control={control}
       name={field.id}
       rules={fieldRules(field, units)}
-      render={({ field: controller }) => {
+      render={({ field: controller, fieldState }) => {
         if (field.kind === 'checkbox') {
-          const checked = asText(controller.value) === 'true';
-          const isDeclaration = required;
+          const isAgreement = required;
 
           return (
-            <FormItem
-              className={isDeclaration ? undefined : '-mt-2'}
+            <CheckboxField
+              checkboxParity={`${parityHook}-checkbox`}
+              checkboxRef={controller.ref}
+              checked={asText(controller.value) === 'true'}
+              className={cn({ '-mt-2': !isAgreement })}
               data-parity={parityHook}
-            >
-              <FormControl>
-                <div
-                  className={
-                    isDeclaration
-                      ? 'flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4'
-                      : 'flex items-center gap-2'
-                  }
-                >
-                  <Checkbox
-                    checked={checked}
-                    className={isDeclaration ? 'mt-0.5' : undefined}
-                    data-parity={`${parityHook}-checkbox`}
-                    id={legendId}
-                    onCheckedChange={(next) =>
-                      controller.onChange(next === true ? 'true' : 'false')
-                    }
-                    ref={controller.ref}
-                  />
-                  <label
-                    className={
-                      isDeclaration
-                        ? 'text-sm leading-relaxed text-text-primary'
-                        : 'text-sm text-text-primary'
-                    }
-                    htmlFor={legendId}
-                  >
-                    {field.label}
-                    {isDeclaration && <RequiredMark />}
-                  </label>
-                </div>
-              </FormControl>
-              <FormMessage data-parity={`${parityHook}-error`} />
-            </FormItem>
+              error={fieldState.error?.message}
+              errorParity={`${parityHook}-error`}
+              frame={isAgreement ? 'inset' : 'none'}
+              label={field.label}
+              layout={isAgreement ? 'statement' : 'inline'}
+              onCheckedChange={(checked) =>
+                controller.onChange(checked ? 'true' : 'false')
+              }
+              required={required}
+            />
           );
         }
 
@@ -266,11 +240,13 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormItem data-parity={parityHook}>
               <FormControl>
                 <fieldset>
-                  <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
+                  <Legend
+                    id={legendId}
+                    required={required}
+                    trailing={<UnitSuffixes field={field} unit={unit} />}
+                  >
                     <LabelLines field={field} />
-                    {required && <RequiredMark placement="wrap" />}
-                    <UnitQualifiers field={field} unit={unit} />
-                  </legend>
+                  </Legend>
                   {field.hint && (
                     <FormDescription>{field.hint}</FormDescription>
                   )}
@@ -336,7 +312,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormLabel
               layout="wrap"
               required={required}
-              trailing={<UnitQualifiers field={field} unit={unit} />}
+              trailing={<UnitSuffixes field={field} unit={unit} />}
             >
               <LabelLines field={field} />
             </FormLabel>

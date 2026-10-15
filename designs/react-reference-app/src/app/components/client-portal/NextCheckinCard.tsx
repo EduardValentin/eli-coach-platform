@@ -12,13 +12,7 @@ export function NextCheckinCard({ checkin }: { checkin: CheckIn }) {
   return (
     <ClientWidget
       eyebrow="Next check-in"
-      icon={
-        <CalendarCheck
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={16}
-        />
-      }
+      icon={CalendarCheck}
       headingId={headingId}
       density="compact"
       parityRoot="NextCheckinCard"

@@ -22,14 +22,19 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { accountsTable } from "~/features/accounts/data/schema.server";
+
 export const exercisesConstraints = {
-  nameUnique: "exercises_name_unique",
+  nameUnique: "exercises_owner_name_unique",
 } as const;
 
 export const exercisesTable = appSchema.table(
   "exercises",
   {
     id: uuid("id").primaryKey(),
+    ownerAccountId: uuid("owner_account_id")
+      .notNull()
+      .references(() => accountsTable.id),
     name: varchar("name", { length: MAX_EXERCISE_NAME_LENGTH }).notNull(),
     formCues: text("form_cues").notNull(),
     type: varchar("type", { length: 16 }).$type<ExerciseType>().notNull(),
@@ -50,6 +55,7 @@ export const exercisesTable = appSchema.table(
   },
   (table) => [
     uniqueIndex(exercisesConstraints.nameUnique).on(
+      table.ownerAccountId,
       sql`lower(btrim(${table.name}))`,
     ),
     check(

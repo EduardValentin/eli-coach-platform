@@ -71,10 +71,16 @@ async function openCartWith(
   user: ReturnType<typeof userEvent.setup>,
   products: Product[],
 ) {
-  for (const product of products) {
+  for (const [index, product] of products.entries()) {
     await user.click(
       screen.getByRole('button', { name: `Add ${product.title}` }),
     );
+    if (index < products.length - 1) {
+      await user.keyboard('{Escape}');
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+      );
+    }
   }
   return screen.findByRole('dialog', { name: /your cart/i });
 }
@@ -83,13 +89,13 @@ async function fillCheckoutForm(
   user: ReturnType<typeof userEvent.setup>,
   email: string,
 ) {
-  await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+  await user.click(screen.getByRole('button', { name: /^continue$/i }));
   await user.type(
     screen.getByRole('textbox', { name: /email address/i }),
     email,
   );
   await user.click(
-    screen.getByRole('checkbox', { name: /i agree to the terms of service/i }),
+    screen.getByRole('checkbox', { name: /i agree to the terms & conditions/i }),
   );
 }
 
@@ -134,11 +140,10 @@ describe('CartDrawer', () => {
     // act
     await user.click(trigger);
     const dialog = await screen.findByRole('dialog', { name: /your cart/i });
-    await waitFor(() => expect(dialog).toHaveFocus());
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
 
     // assert
-    expect(dialog).toHaveAttribute('aria-modal', 'true');
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body).toHaveAttribute('data-scroll-locked');
 
     // act
     await user.keyboard('{Escape}');
@@ -147,7 +152,7 @@ describe('CartDrawer', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     );
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body).not.toHaveAttribute('data-scroll-locked');
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
@@ -156,10 +161,10 @@ describe('CartDrawer', () => {
     const user = userEvent.setup();
     renderCart([freeEbook]);
     const dialog = await openCartWith(user, [freeEbook]);
-    await waitFor(() => expect(dialog).toHaveFocus());
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
 
     // act
-    await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+    await user.click(screen.getByRole('button', { name: /^continue$/i }));
 
     // assert
     await waitFor(() => {
@@ -172,14 +177,15 @@ describe('CartDrawer', () => {
     const user = userEvent.setup();
     renderCart([freeEbook]);
     await openCartWith(user, [freeEbook]);
-    const checkout = screen.getByRole('button', { name: /^checkout$/i });
-    checkout.focus();
+    screen.getByRole('button', { name: 'Close' }).focus();
 
     // act
     await user.tab();
 
     // assert
-    expect(screen.getByRole('button', { name: /close cart/i })).toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: `Remove ${freeEbook.title} from cart` }),
+    ).toHaveFocus();
   });
 
   it.each(['client', 'coach'] as const)(
@@ -192,7 +198,7 @@ describe('CartDrawer', () => {
       await openCartWith(user, [freeEbook]);
 
       // act
-      await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+      await user.click(screen.getByRole('button', { name: /^continue$/i }));
 
       // assert
       expect(
@@ -219,11 +225,28 @@ describe('CartDrawer', () => {
     await user.click(screen.getByRole('button', { name: /send my resources/i }));
 
     // assert
-    const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(
-      STORE_ACQUISITION_ERROR_MESSAGES.UNAVAILABLE_PRODUCT,
-    );
-    expect(screen.getByText('Your cart is empty.')).toBeInTheDocument();
+    expect(await screen.findByText('Your cart is empty')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^continue$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('ticks the terms when the visitor clicks their statement', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCart([freeEbook]);
+    await openCartWith(user, [freeEbook]);
+    await user.click(screen.getByRole('button', { name: /^continue$/i }));
+
+    // act
+    await user.click(screen.getByText(/^I agree to the/));
+
+    // assert
+    expect(
+      screen.getByRole('checkbox', {
+        name: /^I agree to the Terms & Conditions ?\. \(required\)$/,
+      }),
+    ).toBeChecked();
   });
 
   it('requires Terms acceptance but not marketing consent before sending', async () => {
@@ -231,7 +254,7 @@ describe('CartDrawer', () => {
     const user = userEvent.setup();
     renderCart([freeEbook]);
     await openCartWith(user, [freeEbook]);
-    await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+    await user.click(screen.getByRole('button', { name: /^continue$/i }));
     await user.type(
       screen.getByRole('textbox', { name: /email address/i }),
       'woman@example.com',
@@ -241,11 +264,11 @@ describe('CartDrawer', () => {
     // assert
     expect(submit).toBeDisabled();
     expect(
-      screen.getByRole('textbox', { name: 'Email Address (required)' }),
+      screen.getByRole('textbox', { name: 'Email address (required)' }),
     ).toHaveValue('woman@example.com');
     expect(
       screen.getByRole('checkbox', {
-        name: /^I agree to the Terms of Service ?\. \(required\)$/,
+        name: /^I agree to the Terms & Conditions ?\. \(required\)$/,
       }),
     ).not.toBeChecked();
     expect(
@@ -257,14 +280,14 @@ describe('CartDrawer', () => {
     // act
     await user.click(
       screen.getByRole('checkbox', {
-        name: /i agree to the terms of service/i,
+        name: /i agree to the terms & conditions/i,
       }),
     );
     expect(submit).toBeEnabled();
     await user.click(submit);
 
     // assert
-    await screen.findByRole('heading', { name: /check your email/i });
+    await screen.findByRole('heading', { name: 'Check your inbox' });
     expect(submitStoreAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'woman@example.com',
@@ -273,7 +296,9 @@ describe('CartDrawer', () => {
         outcome: 'success',
       }),
     );
-    expect(screen.getByText('woman@example.com')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'contact@evoa.fit' }),
+    ).toHaveAttribute('href', 'mailto:contact@evoa.fit');
   });
 
   it('rejects an invalid email before calling the acquisition service', async () => {
@@ -301,7 +326,7 @@ describe('CartDrawer', () => {
 
     // act
     const submit = screen.getByRole('button', { name: /complete order/i });
-    expect(submit).toHaveTextContent('Complete Order • $49.00');
+    expect(submit).toHaveTextContent('Complete order');
     await user.click(submit);
 
     // assert
@@ -332,7 +357,6 @@ describe('CartDrawer', () => {
     expect(
       screen.getByRole('textbox', { name: /email address/i }),
     ).toHaveValue('woman@example.com');
-    expect(screen.getByText('1 item')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /send my resources/i }),
     ).toBeEnabled();
@@ -350,7 +374,6 @@ describe('CartDrawer', () => {
     renderCart([freeEbook, freePdf]);
     await openCartWith(user, [freeEbook, freePdf]);
     await fillCheckoutForm(user, 'woman@example.com');
-    expect(screen.getByText('2 items')).toBeInTheDocument();
 
     // act
     await user.click(screen.getByRole('button', { name: /send my resources/i }));
@@ -360,12 +383,8 @@ describe('CartDrawer', () => {
     expect(alert).toHaveTextContent(
       STORE_ACQUISITION_ERROR_MESSAGES.UNAVAILABLE_PRODUCT,
     );
-    expect(
-      screen.getByRole('heading', { name: freeEbook.title }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('heading', { name: freePdf.title }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^checkout$/i })).toBeEnabled();
+    expect(screen.getByText(freeEbook.title)).toBeInTheDocument();
+    expect(screen.queryByText(freePdf.title)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
   });
 });

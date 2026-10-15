@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Video } from "lucide-react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { CollapsiblePortalWidget } from "./collapsible-portal-widget";
@@ -18,7 +19,7 @@ function AssessmentCallWidget() {
       className="mb-8"
       data-parity-root="AssessmentCallBlock"
       headingId="assessment-call-heading"
-      icon={<svg aria-hidden="true" />}
+      icon={Video}
       title="Assessment call"
     >
       <p>Booked for Monday.</p>

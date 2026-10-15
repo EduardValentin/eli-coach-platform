@@ -8,9 +8,12 @@ import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "coach-account-1";
+const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
 
 const HIP_THRUST = Exercise.reconstitute({
   id: "exercise-1",
+  ownerAccountId: COACH_ACCOUNT_ID,
   name: "Hip thrust",
   type: "resistance",
   unit: "reps",
@@ -23,6 +26,13 @@ const HIP_THRUST = Exercise.reconstitute({
   cues: "",
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
+});
+
+const OTHER_COACHS_PLANK = Exercise.reconstitute({
+  ...HIP_THRUST.toSnapshot(),
+  id: "exercise-3",
+  ownerAccountId: OTHER_COACH_ACCOUNT_ID,
+  name: "Plank",
 });
 
 const SQUAT: ExerciseDraftInput = {
@@ -39,8 +49,13 @@ const SQUAT: ExerciseDraftInput = {
 };
 
 function createUseCase() {
+  const stored = [HIP_THRUST, OTHER_COACHS_PLANK];
   const library = {
-    list: vi.fn(async (): Promise<Exercise[]> => [HIP_THRUST]),
+    list: vi.fn(async (ownerAccountId: string): Promise<Exercise[]> =>
+      stored.filter(
+        (exercise) => exercise.toSnapshot().ownerAccountId === ownerAccountId,
+      ),
+    ),
     find: vi.fn(),
     add: vi.fn(async (): Promise<ExerciseAddition> => "added"),
     replace: vi.fn(),
@@ -60,17 +75,21 @@ function createUseCase() {
 }
 
 describe("CreateExerciseUseCase", () => {
-  it("adds the exercise under a new id, its name trimmed, created now", async () => {
+  it("adds the exercise under a new id, owned by the coach who created it, its name trimmed, created now", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute(SQUAT);
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+    });
 
     // assert
     const created = Exercise.reconstitute({
       ...SQUAT,
       id: "exercise-2",
+      ownerAccountId: COACH_ACCOUNT_ID,
       name: "Back squat",
       type: "resistance",
       unit: "reps",
@@ -92,9 +111,8 @@ describe("CreateExerciseUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      ...SQUAT,
-      name: " ",
-      primaryMuscles: [],
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: " ", primaryMuscles: [] },
     });
 
     // assert
@@ -105,16 +123,34 @@ describe("CreateExerciseUseCase", () => {
     expect(library.add).not.toHaveBeenCalled();
   });
 
-  it("refuses a name another exercise already has, whatever its case and spaces, without adding it", async () => {
+  it("refuses a name another of her exercises already has, whatever its case and spaces, without adding it", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
     // act
-    const result = await useCase.execute({ ...SQUAT, name: " HIP thrust  " });
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: " HIP thrust  " },
+    });
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
     expect(library.add).not.toHaveBeenCalled();
+  });
+
+  it("adds a name only another coach's exercise has", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: "plank" },
+    });
+
+    // assert
+    expect(result.status).toBe("created");
+    expect(library.add).toHaveBeenCalledOnce();
   });
 
   it("refuses the name when the library finds it taken by an exercise added meanwhile", async () => {
@@ -123,7 +159,10 @@ describe("CreateExerciseUseCase", () => {
     library.add.mockResolvedValueOnce("name-taken");
 
     // act
-    const result = await useCase.execute(SQUAT);
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+    });
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
@@ -136,7 +175,10 @@ describe("CreateExerciseUseCase", () => {
     library.list.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute(SQUAT);
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+    });
 
     // assert
     expect(result).toEqual({ status: "failed" });
@@ -153,7 +195,10 @@ describe("CreateExerciseUseCase", () => {
     library.add.mockRejectedValueOnce(failure);
 
     // act
-    const result = await useCase.execute(SQUAT);
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: SQUAT,
+    });
 
     // assert
     expect(result).toEqual({ status: "failed" });

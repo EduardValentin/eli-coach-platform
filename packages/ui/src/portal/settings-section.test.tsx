@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import { CalendarClock } from "lucide-react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -36,6 +37,29 @@ describe("SettingsSection", () => {
     expect(
       screen.getByText("Visitors book inside the days and hours you set here."),
     ).toHaveClass("mt-1", "text-sm", "text-text-secondary");
+  });
+
+  it("draws its title icon before the title, hidden from assistive technology", () => {
+    // arrange
+    render(
+      <SettingsSection
+        headingId="calls-heading"
+        icon={CalendarClock}
+        title="Assessment calls"
+      >
+        <p>Rows</p>
+      </SettingsSection>,
+    );
+
+    // act
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Assessment calls",
+    });
+
+    // assert
+    expect(heading.querySelector("svg")).toHaveClass("lucide-calendar-clock");
+    expect(heading.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("shows the footer when given", () => {

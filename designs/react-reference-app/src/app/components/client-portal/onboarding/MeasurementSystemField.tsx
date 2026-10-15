@@ -8,7 +8,7 @@ import {
   type MeasurementSystem,
 } from '../../../utils/units';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
-import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
+import { Legend } from '../../ui/label';
 
 const LEGEND = 'How do you measure?';
 
@@ -31,9 +31,7 @@ export function MeasurementSystemField({
 
   return (
     <fieldset>
-      <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
-        {LEGEND}
-      </legend>
+      <Legend id={legendId}>{LEGEND}</Legend>
       <ChoiceGroup
         aria-labelledby={legendId}
         className="mt-2"

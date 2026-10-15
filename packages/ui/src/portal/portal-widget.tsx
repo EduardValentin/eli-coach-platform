@@ -1,15 +1,16 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
 import { cardVariants } from "../primitives/card";
 import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
-
-type WidgetDensity = "default" | "compact";
+import { PanelTitleIcon } from "./panel-title-icon";
+import type { WidgetDensity } from "./widget-density";
 
 type PortalWidgetProps = DataAttributes & {
   title: ReactNode;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   titleAdornment?: ReactNode;
   hero?: ReactNode;
   heroUnit?: ReactNode;
@@ -110,7 +111,7 @@ export function PortalWidget({
             id={headingId}
             className={cn("flex items-center gap-2", TITLE_CLASS[density])}
           >
-            {icon}
+            {icon && <PanelTitleIcon density={density} icon={icon} />}
             {title}
           </h2>
           {titleAdornment}

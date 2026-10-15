@@ -17,6 +17,7 @@ type CheckboxFieldProps = Omit<
   checkboxParity?: string;
   checkboxRef?: React.Ref<HTMLButtonElement>;
   checked: boolean;
+  disabled?: boolean;
   error?: string;
   errorParity?: string;
   errorRole?: "alert";
@@ -38,6 +39,7 @@ export const CheckboxField = React.forwardRef<
       checked,
       children,
       className,
+      disabled,
       error,
       errorParity,
       errorRole,
@@ -70,6 +72,7 @@ export const CheckboxField = React.forwardRef<
             checked={checked}
             className={cn({ "mt-0.5": isStatement })}
             data-parity={checkboxParity}
+            disabled={disabled}
             id={checkboxId}
             onCheckedChange={(next) => onCheckedChange(next === true)}
             ref={checkboxRef}

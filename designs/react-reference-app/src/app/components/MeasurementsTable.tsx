@@ -80,9 +80,7 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
       presentation={props.perspective}
       title="Measurements"
       action={history.length > 0 ? action : undefined}
-      icon={
-        <Ruler aria-hidden="true" className="text-brand-secondary" size={18} />
-      }
+      icon={Ruler}
       headingId={headingId}
       parityRoot="MeasurementsTable"
       className={className}

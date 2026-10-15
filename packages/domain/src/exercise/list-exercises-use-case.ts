@@ -10,7 +10,10 @@ type ListExercisesUseCaseOptions = {
 export class ListExercisesUseCase {
   constructor(private readonly options: ListExercisesUseCaseOptions) {}
 
-  async execute(): Promise<ListExercisesResult> {
-    return { status: "listed", exercises: await this.options.library.list() };
+  async execute(ownerAccountId: string): Promise<ListExercisesResult> {
+    return {
+      status: "listed",
+      exercises: await this.options.library.list(ownerAccountId),
+    };
   }
 }

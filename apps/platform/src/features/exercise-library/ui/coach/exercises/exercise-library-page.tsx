@@ -3,6 +3,7 @@ import {
   Badge,
   buttonVariants,
   Card,
+  ItemGlyph,
   RowActionsMenu,
   Table,
   TableBody,
@@ -101,13 +102,7 @@ function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
     <TableRow data-parity="exercise-row">
       <TableCell>
         <div className="flex items-center gap-3">
-          <div
-            aria-hidden="true"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-quiet text-text-secondary"
-            data-parity="exercise-glyph"
-          >
-            <Activity size={18} />
-          </div>
+          <ItemGlyph data-parity="exercise-glyph" icon={Activity} />
           <div>
             <p className="text-sm font-semibold text-text-primary">
               {exercise.name}

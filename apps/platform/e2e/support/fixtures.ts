@@ -38,6 +38,7 @@ import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { CoachDashboardPage } from "./coach-dashboard";
+import { recordCoachAccount } from "./coach-exercises";
 import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
 import { ExerciseEditorPage } from "./exercise-editor-page";
@@ -611,6 +612,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       const authSubjectId = await createClerkUser();
 
       await databasePool.query(INSERT_ACCOUNT, [authSubjectId, role]);
+
+      if (role === "COACH") {
+        recordCoachAccount(authSubjectId, RUN_ID);
+      }
     });
   },
 
@@ -859,6 +864,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       });
 
       await databasePool.query(INSERT_ACCOUNT, [coach.id, "COACH"]);
+      recordCoachAccount(coach.id, RUN_ID);
     });
   },
 

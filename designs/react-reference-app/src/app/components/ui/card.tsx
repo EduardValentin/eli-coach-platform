@@ -10,6 +10,7 @@ const cardClasses = cva("border", {
       quiet: "rounded-card border-stroke-faint bg-surface-quiet",
       panel: "rounded-panel border-border-subtle bg-surface-base shadow-soft",
       item: "rounded-card border-border-subtle bg-surface-base shadow-soft",
+      inset: "rounded-card border-border-subtle bg-surface-quiet/60 p-4",
     },
   },
   defaultVariants: {

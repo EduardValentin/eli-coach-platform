@@ -26,7 +26,7 @@ function renderBuilder() {
 }
 
 const breakfastChip = () =>
-  within(screen.getByRole('group', { name: 'Meal-time' })).getByRole('button', { name: 'Breakfast' });
+  within(screen.getByRole('group', { name: 'Meal-time' })).getByRole('checkbox', { name: 'Breakfast' });
 
 describe('the recipe builder in MVP mode', () => {
   it('adds an ingredient without adding its tags', async () => {
@@ -37,7 +37,7 @@ describe('the recipe builder in MVP mode', () => {
     await user.click(screen.getByRole('button', { name: 'Add Oats to recipe' }));
 
     // assert
-    expect(breakfastChip()).toHaveAttribute('aria-pressed', 'false');
+    expect(breakfastChip()).not.toBeChecked();
   });
 
   it('shows computed macros without a manual override', () => {
@@ -60,7 +60,7 @@ describe('the recipe builder in Post-MVP mode', () => {
     await user.click(screen.getByRole('button', { name: 'Add Oats to recipe' }));
 
     // assert
-    expect(breakfastChip()).toHaveAttribute('aria-pressed', 'true');
+    expect(breakfastChip()).toBeChecked();
     expect(screen.getByText('Override manually')).toBeInTheDocument();
   });
 });

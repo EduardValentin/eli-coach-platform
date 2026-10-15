@@ -4,9 +4,14 @@ export type ExerciseAddition = "added" | "name-taken";
 
 export type ExerciseReplacement = "replaced" | "name-taken";
 
+export type ExerciseReference = {
+  ownerAccountId: string;
+  exerciseId: string;
+};
+
 export interface ExerciseLibrary {
-  list(): Promise<Exercise[]>;
-  find(exerciseId: string): Promise<Exercise | null>;
+  list(ownerAccountId: string): Promise<Exercise[]>;
+  find(reference: ExerciseReference): Promise<Exercise | null>;
   add(exercise: Exercise): Promise<ExerciseAddition>;
   replace(exercise: Exercise): Promise<ExerciseReplacement>;
 }

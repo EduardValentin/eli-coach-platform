@@ -568,13 +568,7 @@ export function OnboardingPanel({
     <PortalWidget
       presentation="coach"
       title="Onboarding"
-      icon={
-        <ClipboardList
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={ClipboardList}
       headingId="onboarding-panel-heading"
       titleAdornment={submitted && <ScreeningWarning journey={journey} />}
       action={<ClientStatusBadge status={clientStatus(journey, new Date())} />}

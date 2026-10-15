@@ -120,20 +120,20 @@ function feetAndInchesHint(
     : null;
 }
 
-type LabelSuffixEntry = { parity: string; text: string };
+type UnitSuffixEntry = { parity: string; text: string };
 
-function labelSuffixesOf(
+function unitSuffixesOf(
   field: OnboardingField,
   unit: string | null,
-): LabelSuffixEntry[] {
+): UnitSuffixEntry[] {
   const parity = `field-${field.id}-suffix-unit`;
-  const suffixes: (LabelSuffixEntry | null)[] = [
+  const suffixes: (UnitSuffixEntry | null)[] = [
     unit ? { parity, text: `(${unit})` } : null,
     field.unitSuffix ? { parity, text: `(${field.unitSuffix})` } : null,
   ];
 
   return suffixes.filter(
-    (suffix): suffix is LabelSuffixEntry => suffix !== null,
+    (suffix): suffix is UnitSuffixEntry => suffix !== null,
   );
 }
 
@@ -156,7 +156,7 @@ function UnitSuffixes({
   field: OnboardingField;
   unit: string | null;
 }) {
-  return labelSuffixesOf(field, unit).map((suffix) => (
+  return unitSuffixesOf(field, unit).map((suffix) => (
     <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
       {suffix.text}
     </LabelSuffix>
@@ -265,24 +265,24 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
 }
 
 function CheckboxAnswer({ controller, error, field }: AnswerLayoutProps) {
-  const isDeclaration = isRequired(field);
+  const isAgreement = isRequired(field);
 
   return (
     <CheckboxField
       checkboxParity={`field-${field.id}-checkbox`}
       checkboxRef={controller.ref}
       checked={isTicked(controller.value)}
-      className={cn({ "-mt-2": !isDeclaration })}
+      className={cn({ "-mt-2": !isAgreement })}
       data-parity={`field-${field.id}`}
       error={error}
       errorParity={`field-${field.id}-error`}
-      frame={isDeclaration ? "inset" : "none"}
+      frame={isAgreement ? "inset" : "none"}
       label={field.label}
-      layout={isDeclaration ? "statement" : "inline"}
+      layout={isAgreement ? "statement" : "inline"}
       onCheckedChange={(checked) =>
         controller.onChange(checked ? TICKED : UNTICKED)
       }
-      required={isDeclaration}
+      required={isAgreement}
     />
   );
 }
@@ -398,7 +398,7 @@ function EntryField({ controller, error, field, units }: AnswerLayoutProps) {
       hintPlacement={equivalent ? "after-control" : "before-control"}
       label={<LabelLines field={field} />}
       required={isRequired(field)}
-      suffixes={labelSuffixesOf(field, unitOf(field, units))}
+      suffixes={unitSuffixesOf(field, unitOf(field, units))}
     >
       {(controlAttributes) => (
         <FieldEntry

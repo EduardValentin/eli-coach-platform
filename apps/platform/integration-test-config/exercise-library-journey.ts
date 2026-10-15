@@ -19,6 +19,7 @@ export type ExerciseFields = {
 
 export type ExerciseRow = Omit<ExerciseFields, "cues"> & {
   id: string;
+  ownerSubjectId: string;
   formCues: string;
   createdAt: Date;
   updatedAt: Date;
@@ -28,10 +29,14 @@ const EXERCISES_API = "/api/coach/exercises";
 
 export const LIBRARY_PAGE = "/coach/training";
 
-const EXERCISE_ROW_SELECTION = `select id, name, form_cues as "formCues", type, unit, per_side as "perSide", difficulty,
-  primary_muscles as "primaryMuscles", secondary_muscles as "secondaryMuscles", equipment, tags,
-  created_at as "createdAt", updated_at as "updatedAt"
-  from app.exercises`;
+const EXERCISE_ROW_SELECTION = `select exercises.id, exercises.name, exercises.form_cues as "formCues",
+  exercises.type, exercises.unit, exercises.per_side as "perSide", exercises.difficulty,
+  exercises.primary_muscles as "primaryMuscles", exercises.secondary_muscles as "secondaryMuscles",
+  exercises.equipment, exercises.tags,
+  exercises.created_at as "createdAt", exercises.updated_at as "updatedAt",
+  owners.auth_subject_id as "ownerSubjectId"
+  from app.exercises
+  join app.accounts owners on owners.id = exercises.owner_account_id`;
 
 export class ExerciseLibraryJourney {
   constructor(private readonly rig: PlatformRig) {}
@@ -52,7 +57,10 @@ export class ExerciseLibraryJourney {
       );
     }
 
-    const [created] = await this.exerciseRowsNamed(fields.name.trim());
+    const [created] = await this.exerciseRowsNamed(
+      requester,
+      fields.name.trim(),
+    );
 
     if (!created) {
       throw new Error(`${fields.name} was not stored.`);
@@ -87,15 +95,18 @@ export class ExerciseLibraryJourney {
 
   exerciseRows(): Promise<ExerciseRow[]> {
     return this.rig.suite.postgres.queryRows<ExerciseRow>({
-      sql: `${EXERCISE_ROW_SELECTION} order by lower(name), id`,
+      sql: `${EXERCISE_ROW_SELECTION} order by lower(exercises.name), owners.auth_subject_id, exercises.id`,
       values: [],
     });
   }
 
-  private exerciseRowsNamed(name: string): Promise<ExerciseRow[]> {
+  private exerciseRowsNamed(
+    requester: AccountSession,
+    name: string,
+  ): Promise<ExerciseRow[]> {
     return this.rig.suite.postgres.queryRows<ExerciseRow>({
-      sql: `${EXERCISE_ROW_SELECTION} where name = $1`,
-      values: [name],
+      sql: `${EXERCISE_ROW_SELECTION} where exercises.name = $1 and owners.auth_subject_id = $2`,
+      values: [name, requester.subjectId],
     });
   }
 

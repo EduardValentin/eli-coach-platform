@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { HTMLAttributes, ReactNode, Ref } from "react";
 
 import { cn } from "../lib/cn";
@@ -5,12 +6,13 @@ import type { DataAttributes } from "../lib/data-attributes";
 import { WIDGET_TITLE_CLASS } from "../lib/typography";
 import { cardVariants } from "../primitives/card";
 import { Label, RequiredMark } from "../primitives/label";
+import { PanelTitleIcon } from "./panel-title-icon";
 
 type SettingsSectionProps = DataAttributes & {
   headingId: string;
   headingRef?: Ref<HTMLHeadingElement>;
   title: ReactNode;
-  icon?: ReactNode;
+  icon?: LucideIcon;
   description?: ReactNode;
   footer?: ReactNode;
   className?: string;
@@ -48,7 +50,7 @@ export function SettingsSection({
             WIDGET_TITLE_CLASS,
           )}
         >
-          {icon}
+          {icon && <PanelTitleIcon icon={icon} />}
           {title}
         </h2>
         {description && (

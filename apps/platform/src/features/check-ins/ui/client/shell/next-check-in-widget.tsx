@@ -41,13 +41,7 @@ export function NextCheckInWidget({
           when={checkInMomentOf(checkIn.startsAt, timeZone)}
         />
       }
-      icon={
-        <CalendarCheck
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={16}
-        />
-      }
+      icon={CalendarCheck}
       title="Next check-in"
     >
       <JoinMeetLink

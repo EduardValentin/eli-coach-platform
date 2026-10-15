@@ -336,9 +336,9 @@ export class ClientOnboarding {
     await expect(this.page.getByLabel(label)).toHaveCount(0);
   }
 
-  async expectConsentStatement(statement: string): Promise<void> {
+  async expectConsentStatement(checkboxName: string): Promise<void> {
     await expect(
-      this.page.getByRole("checkbox", { name: statement, exact: true }),
+      this.page.getByRole("checkbox", { name: checkboxName, exact: true }),
     ).toBeVisible();
   }
 
