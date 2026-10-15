@@ -28,7 +28,7 @@ import {
   checkinIdFromSearch,
   withoutCheckinTarget,
 } from "../utils/checkinLinks";
-import { pageOf, parsePage } from "../utils/listPaging";
+import { pageHolding, pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
 import { ListPager } from "./ListPager";
 import { ListingToolbar } from "./ListingToolbar";
@@ -130,14 +130,20 @@ export function CheckinListing({
     query: search ? (searchParams.get(CHECKIN_QUERY_PARAM) ?? "") : "",
   };
   const direction = parseDirection(searchParams.get(DIRECTION_PARAM), tab);
-  const page = parsePage(searchParams.get(PAGE_PARAM));
-
   const inTab = tabCheckins[tab];
   const shown = orderCheckins(filterCheckins(inTab, selection, party), {
     tab,
     direction,
     party,
   });
+  const pageWithTarget =
+    focusedCheckinId && !searchParams.has(PAGE_PARAM)
+      ? pageHolding(shown, {
+          holds: (c) => c.id === focusedCheckinId,
+          perPage: CHECKINS_PER_PAGE,
+        })
+      : null;
+  const page = pageWithTarget ?? parsePage(searchParams.get(PAGE_PARAM));
   const view = pageOf(shown, { page, perPage: CHECKINS_PER_PAGE });
   const kinds =
     appState.prototypeMode === "post-mvp" ? POST_MVP_KINDS : MVP_KINDS;
@@ -211,6 +217,10 @@ export function CheckinListing({
 
   const pathForPage = (chosen: number) => {
     const params = new URLSearchParams(searchParams);
+    if (focusedCheckinId) {
+      setOrClear(params, TAB_PARAM, tab, openedOn);
+      withoutCheckinTarget(params);
+    }
     setOrClear(params, PAGE_PARAM, String(chosen), "1");
     const query = params.toString();
     return query.length > 0 ? `${pathname}?${query}` : pathname;

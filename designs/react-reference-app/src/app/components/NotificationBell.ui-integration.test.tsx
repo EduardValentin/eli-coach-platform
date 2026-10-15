@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DevToggle } from './DevToggle';
@@ -16,10 +16,12 @@ import { MessagingProvider } from '../context/MessagingContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ClientCheckins } from '../pages/client-portal/ClientCheckins';
 import { CoachCheckins } from '../pages/coach-portal/CoachCheckins';
+import { coachCheckinPath } from '../utils/checkinLinks';
 
 const SERVICE_TIMEOUT = { timeout: 4000 };
 const DESKTOP_WIDTH = 1024;
 const PHONE_WIDTH = 390;
+const OLDEST_PAST_CHECKIN = 'ck-many-c1-past-11';
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -58,6 +60,7 @@ function renderAt(path: string) {
                   <CheckinProvider>
                     <MessagingProvider>
                       <NotificationBell />
+                      <Link to={coachCheckinPath(OLDEST_PAST_CHECKIN)}>Open the oldest check-in</Link>
                       <Routes>
                         <Route path="/coach" element={<p>Dashboard</p>} />
                         <Route path="/coach/checkins" element={<CoachCheckins />} />
@@ -184,6 +187,31 @@ describe('the coach’s bell', () => {
     expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(document.getElementById('checkin-ck-12')).toHaveFocus());
     expect(bellTrigger()).toHaveAccessibleName('Notifications, 2 unread');
+  });
+
+  it('opens a check-in link on the page of its tab holding it, also from the check-ins page', async () => {
+    // arrange
+    renderAt('/coach?session=coach');
+    await openDevTab('Check-ins');
+    await chooseDevOption('Pending check-ins', 'Many check-ins');
+    await closeDevToggle();
+
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Open the oldest check-in' }));
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('link', { name: 'Go to page 1' })).not.toHaveAttribute('aria-current', 'page');
+    await waitFor(() => expect(document.getElementById(`checkin-${OLDEST_PAST_CHECKIN}`)).toHaveFocus());
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Go to page 1' }));
+    // assert
+    expect(document.getElementById(`checkin-${OLDEST_PAST_CHECKIN}`)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Past' })).toHaveAttribute('aria-selected', 'true');
+    // act
+    await userEvent.click(screen.getByRole('link', { name: 'Open the oldest check-in' }));
+    // assert
+    await waitFor(() => expect(document.getElementById(`checkin-${OLDEST_PAST_CHECKIN}`)).toHaveFocus());
   });
 
   it('gets one entry when a renewal adds clashing weeks', async () => {

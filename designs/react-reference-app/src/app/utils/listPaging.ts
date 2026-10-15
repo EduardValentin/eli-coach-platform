@@ -19,6 +19,15 @@ export function parsePage(raw: string | null): number {
   return parsed;
 }
 
+export function pageHolding<Item>(
+  items: Item[],
+  { holds, perPage }: { holds: (item: Item) => boolean; perPage: number },
+): number | null {
+  const index = items.findIndex(holds);
+
+  return index === -1 ? null : Math.floor(index / perPage) + 1;
+}
+
 export function pageOf<Item>(
   items: Item[],
   paging: { page: number; perPage: number },
