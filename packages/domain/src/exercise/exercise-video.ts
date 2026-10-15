@@ -10,7 +10,7 @@ export const EXERCISE_VIDEO_MEDIA_TYPES = {
 export type ExerciseVideoRefusal = "unsupported" | "too-large";
 
 export type ExerciseVideoSnapshot = {
-  fileId: string;
+  videoId: string;
   format: ExerciseVideoFormat;
   sizeBytes: number;
 };
@@ -22,16 +22,16 @@ export class ExerciseVideo {
     return new ExerciseVideo({ ...snapshot });
   }
 
-  get fileId(): string {
-    return this.snapshot.fileId;
+  get videoId(): string {
+    return this.snapshot.videoId;
   }
 
   get mediaType(): string {
     return EXERCISE_VIDEO_MEDIA_TYPES[this.snapshot.format];
   }
 
-  isStoredAs(fileId: string): boolean {
-    return this.snapshot.fileId === fileId;
+  isStoredAs(videoId: string): boolean {
+    return this.snapshot.videoId === videoId;
   }
 
   toSnapshot(): ExerciseVideoSnapshot {

@@ -88,7 +88,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     return {
       ...snapshot,
       formCues: cues,
-      videoFileId: video?.fileId ?? null,
+      videoId: video?.videoId ?? null,
       videoFormat: video?.format ?? null,
       videoSizeBytes: video?.sizeBytes ?? null,
     };
@@ -96,7 +96,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
 
   private exerciseOf({
     formCues,
-    videoFileId,
+    videoId,
     videoFormat,
     videoSizeBytes,
     ...row
@@ -104,28 +104,21 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     return Exercise.reconstitute({
       ...row,
       cues: formCues,
-      video: this.videoOf({ videoFileId, videoFormat, videoSizeBytes }),
+      video: this.videoOf({ videoId, videoFormat, videoSizeBytes }),
     });
   }
 
   private videoOf(
-    columns: Pick<
-      ExerciseRow,
-      "videoFileId" | "videoFormat" | "videoSizeBytes"
-    >,
+    columns: Pick<ExerciseRow, "videoId" | "videoFormat" | "videoSizeBytes">,
   ): ExerciseVideoSnapshot | null {
-    const { videoFileId, videoFormat, videoSizeBytes } = columns;
+    const { videoId, videoFormat, videoSizeBytes } = columns;
 
-    if (
-      videoFileId === null ||
-      videoFormat === null ||
-      videoSizeBytes === null
-    ) {
+    if (videoId === null || videoFormat === null || videoSizeBytes === null) {
       return null;
     }
 
     return {
-      fileId: videoFileId,
+      videoId: videoId,
       format: videoFormat,
       sizeBytes: videoSizeBytes,
     };

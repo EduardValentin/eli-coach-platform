@@ -21,12 +21,12 @@ const SQUAT: ExerciseDraftInput = {
 };
 
 const FIRST_VIDEO = ExerciseVideo.of({
-  fileId: "video-1",
+  videoId: "video-1",
   format: "mp4",
   sizeBytes: 2_048,
 });
 const SECOND_VIDEO = ExerciseVideo.of({
-  fileId: "video-2",
+  videoId: "video-2",
   format: "mov",
   sizeBytes: 4_096,
 });

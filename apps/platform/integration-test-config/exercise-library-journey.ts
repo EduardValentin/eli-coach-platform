@@ -30,7 +30,7 @@ export type ExerciseRow = Omit<ExerciseFields, "cues"> & {
 export type UploadedVideo = { name: string; type: string; bytes: Uint8Array };
 
 export type ExerciseVideoColumns = {
-  videoFileId: string | null;
+  videoId: string | null;
   videoFormat: string | null;
   videoSizeBytes: number | null;
 };
@@ -113,11 +113,11 @@ export class ExerciseLibraryJourney {
   playVideo(
     requester: Requester,
     exerciseId: string,
-    play: { fileId: string; range?: string },
+    play: { videoId: string; range?: string },
   ): Promise<Response> {
     return this.send(
       requester,
-      `/api/exercises/${exerciseId}/video/${play.fileId}`,
+      `/api/exercises/${exerciseId}/video/${play.videoId}`,
       { headers: play.range ? { Range: play.range } : {} },
     );
   }
@@ -125,7 +125,7 @@ export class ExerciseLibraryJourney {
   async videoColumnsOf(exerciseId: string): Promise<ExerciseVideoColumns> {
     const [columns] =
       await this.rig.suite.postgres.queryRows<ExerciseVideoColumns>({
-        sql: `select video_file_id as "videoFileId", video_format as "videoFormat", video_size_bytes as "videoSizeBytes"
+        sql: `select video_file_id as "videoId", video_format as "videoFormat", video_size_bytes as "videoSizeBytes"
         from app.exercises where id = $1`,
         values: [exerciseId],
       });
@@ -153,8 +153,8 @@ export class ExerciseLibraryJourney {
     await rm(join(root, ".incoming"), { force: true, recursive: true });
   }
 
-  keptVideoPath(fileId: string): string {
-    return join(this.rig.suite.videoRoot(), "videos", fileId);
+  keptVideoPath(videoId: string): string {
+    return join(this.rig.suite.videoRoot(), "videos", videoId);
   }
 
   openLibrary(requester: Requester): Promise<Response> {

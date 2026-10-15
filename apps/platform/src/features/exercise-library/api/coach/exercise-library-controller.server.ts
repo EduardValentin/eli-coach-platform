@@ -185,7 +185,7 @@ export class ExerciseLibraryController {
     const result = await this.options.openExerciseVideo.execute({
       viewer: this.viewerOf(args),
       exerciseId: exerciseId.data,
-      fileId: videoId.data,
+      videoId: videoId.data,
       requested: parseByteRange(args.request.headers.get("Range")),
     });
 

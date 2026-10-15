@@ -8,7 +8,7 @@ type ExerciseEditFailedIncident = {
 };
 
 type ExerciseVideoCleanupFailedIncident = {
-  fileId: string;
+  videoId: string;
   error: unknown;
 };
 

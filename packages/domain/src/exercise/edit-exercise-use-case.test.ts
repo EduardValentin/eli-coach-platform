@@ -26,7 +26,7 @@ const STORED_SQUAT: ExerciseSnapshot = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
-  video: { fileId: "video-1", format: "mp4", sizeBytes: 2_048 },
+  video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
 };
@@ -63,7 +63,7 @@ const EDITED_SQUAT: ExerciseSnapshot = {
   difficulty: "Advanced",
   tags: ["Strength", "Recovery"],
   cues: "Elbows high.",
-  video: { fileId: "video-1", format: "mp4", sizeBytes: 2_048 },
+  video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
   createdAt: CREATED_AT,
   updatedAt: NOW,
 };
@@ -270,7 +270,7 @@ describe("EditExerciseUseCase", () => {
     // assert
     const edited = Exercise.reconstitute({
       ...EDITED_SQUAT,
-      video: { fileId: "video-2", format: "mov", sizeBytes: 4_096 },
+      video: { videoId: "video-2", format: "mov", sizeBytes: 4_096 },
     });
     expect(result).toEqual({ status: "edited", exercise: edited });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
@@ -316,7 +316,7 @@ describe("EditExerciseUseCase", () => {
     // assert
     expect(result.status).toBe("edited");
     expect(incidents.videoCleanupFailed).toHaveBeenCalledWith({
-      fileId: "video-1",
+      videoId: "video-1",
       error: failure,
     });
   });

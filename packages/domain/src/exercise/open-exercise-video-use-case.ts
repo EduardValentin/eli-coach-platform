@@ -10,7 +10,7 @@ import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 type OpenExerciseVideoCommand = {
   viewer: ExerciseVideoViewer;
   exerciseId: string;
-  fileId: string;
+  videoId: string;
   requested: RequestedByteRange | null;
 };
 
@@ -47,10 +47,10 @@ export class OpenExerciseVideoUseCase {
 
     const video = exercise.video;
 
-    if (!video?.isStoredAs(command.fileId)) return NOT_FOUND;
+    if (!video?.isStoredAs(command.videoId)) return NOT_FOUND;
 
     const opening = await this.options.store.open(
-      video.fileId,
+      video.videoId,
       command.requested,
     );
 

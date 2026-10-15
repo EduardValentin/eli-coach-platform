@@ -525,17 +525,17 @@ describe.sequential("exercise library integration", () => {
       const [squat] = await library.exerciseRows();
       const columns = await library.videoColumnsOf(squat?.id ?? "");
       expect(columns).toEqual({
-        videoFileId: expect.any(String),
+        videoId: expect.any(String),
         videoFormat: "mp4",
         videoSizeBytes: video.bytes.byteLength,
       });
       expect(await library.videoFiles()).toEqual({
-        kept: [columns.videoFileId],
+        kept: [columns.videoId],
         incoming: [],
       });
       expect(
         new Uint8Array(
-          await readFile(library.keptVideoPath(columns.videoFileId ?? "")),
+          await readFile(library.keptVideoPath(columns.videoId ?? "")),
         ),
       ).toEqual(video.bytes);
     });
@@ -554,13 +554,13 @@ describe.sequential("exercise library integration", () => {
       expect(response.status).toBe(200);
       const second = await library.videoColumnsOf(squat.id);
       expect(second).toEqual({
-        videoFileId: expect.any(String),
+        videoId: expect.any(String),
         videoFormat: "mov",
         videoSizeBytes: portrait.bytes.byteLength,
       });
-      expect(second.videoFileId).not.toBe(first.videoFileId);
+      expect(second.videoId).not.toBe(first.videoId);
       expect(await library.videoFiles()).toEqual({
-        kept: [second.videoFileId],
+        kept: [second.videoId],
         incoming: [],
       });
     });
@@ -579,7 +579,7 @@ describe.sequential("exercise library integration", () => {
       // assert
       expect(response.status).toBe(200);
       expect(await library.videoColumnsOf(squat.id)).toEqual(video);
-      expect((await library.videoFiles()).kept).toEqual([video.videoFileId]);
+      expect((await library.videoFiles()).kept).toEqual([video.videoId]);
     });
 
     it("removes the video and deletes its file", async () => {
@@ -595,7 +595,7 @@ describe.sequential("exercise library integration", () => {
       // assert
       expect(response.status).toBe(200);
       expect(await library.videoColumnsOf(squat.id)).toEqual({
-        videoFileId: null,
+        videoId: null,
         videoFormat: null,
         videoSizeBytes: null,
       });
@@ -694,7 +694,7 @@ describe.sequential("exercise library integration", () => {
 
       // act
       const response = await library.playVideo(COACH_SESSION, squat.id, {
-        fileId: video.videoFileId ?? "",
+        videoId: video.videoId ?? "",
       });
 
       // assert
@@ -719,7 +719,7 @@ describe.sequential("exercise library integration", () => {
 
       // act
       const response = await library.playVideo(COACH_SESSION, squat.id, {
-        fileId: video.videoFileId ?? "",
+        videoId: video.videoId ?? "",
         range: "bytes=100-199",
       });
 
@@ -740,7 +740,7 @@ describe.sequential("exercise library integration", () => {
 
       // act
       const response = await library.playVideo(COACH_SESSION, squat.id, {
-        fileId: video.videoFileId ?? "",
+        videoId: video.videoId ?? "",
         range: "bytes=-64",
       });
 
@@ -762,7 +762,7 @@ describe.sequential("exercise library integration", () => {
 
       // act
       const response = await library.playVideo(COACH_SESSION, squat.id, {
-        fileId: video.videoFileId ?? "",
+        videoId: video.videoId ?? "",
         range: `bytes=${size}-`,
       });
 
@@ -781,7 +781,7 @@ describe.sequential("exercise library integration", () => {
 
       // act
       const response = await library.playVideo(COACH_SESSION, squat.id, {
-        fileId: replaced.videoFileId ?? "",
+        videoId: replaced.videoId ?? "",
       });
 
       // assert
@@ -800,7 +800,7 @@ describe.sequential("exercise library integration", () => {
 
         // act
         const response = await library.playVideo(requester, squat.id, {
-          fileId: video.videoFileId ?? "",
+          videoId: video.videoId ?? "",
         });
 
         // assert
@@ -835,13 +835,13 @@ describe.sequential("exercise library integration", () => {
       // act
       const response = await rig.requestAs(
         COACH_SESSION,
-        `/api/exercises/${squat.id}/video/${video.videoFileId}`,
+        `/api/exercises/${squat.id}/video/${video.videoId}`,
         { method: "DELETE" },
       );
 
       // assert
       expect(response.status).toBe(405);
-      expect((await library.videoFiles()).kept).toEqual([video.videoFileId]);
+      expect((await library.videoFiles()).kept).toEqual([video.videoId]);
     });
   });
 

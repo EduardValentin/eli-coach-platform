@@ -27,9 +27,9 @@ export interface ExerciseVideoStore {
   ): Promise<StagedExerciseVideo>;
   keep(stagingId: string): Promise<string>;
   discard(stagingId: string): Promise<void>;
-  remove(fileId: string): Promise<void>;
+  remove(videoId: string): Promise<void>;
   open(
-    fileId: string,
+    videoId: string,
     requested: RequestedByteRange | null,
   ): Promise<ExerciseVideoOpening>;
 }

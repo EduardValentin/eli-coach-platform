@@ -1079,7 +1079,7 @@ describe("createConsoleLogger", () => {
     });
 
     // act
-    logger.videoCleanupFailed({ fileId: "video-1", error: cause });
+    logger.videoCleanupFailed({ videoId: "video-1", error: cause });
 
     // assert
     expect(consoleError).toHaveBeenCalledWith(
@@ -1088,7 +1088,7 @@ describe("createConsoleLogger", () => {
         errorCategory: "exercise_video_cleanup_failure",
         errorClass: "Error",
         errorCode: "EACCES",
-        fileId: "video-1",
+        videoId: "video-1",
       },
     );
   });

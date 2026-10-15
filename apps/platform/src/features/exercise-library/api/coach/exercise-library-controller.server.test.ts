@@ -58,7 +58,7 @@ const HIP_THRUST: ExerciseSnapshot = {
   difficulty: "Beginner",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
-  video: { fileId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
+  video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
   createdAt: AT,
   updatedAt: AT,
 };
@@ -752,7 +752,7 @@ describe("ExerciseLibraryController#openVideo", () => {
     expect(openExerciseVideo.execute).toHaveBeenCalledWith({
       viewer: { kind: "coach" },
       exerciseId: EXERCISE_ID,
-      fileId: VIDEO_ID,
+      videoId: VIDEO_ID,
       requested: { kind: "from", start: 1, end: 2 },
     });
   });

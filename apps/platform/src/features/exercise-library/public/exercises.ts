@@ -78,7 +78,7 @@ export function presentExercise(exercise: Exercise): ExerciseView {
   return {
     ...view,
     video: video && {
-      path: exerciseVideoPath(view.id, video.fileId),
+      path: exerciseVideoPath(view.id, video.videoId),
       format: video.format,
     },
   };

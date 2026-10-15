@@ -24,7 +24,7 @@ const SQUAT: ExerciseSnapshot = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
-  video: { fileId: "video-1", format: "mov", sizeBytes: 4_096 },
+  video: { videoId: "video-1", format: "mov", sizeBytes: 4_096 },
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
 };
@@ -67,7 +67,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-1",
-      fileId: "video-1",
+      videoId: "video-1",
       requested,
     });
 
@@ -94,7 +94,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-1",
-      fileId: "video-1",
+      videoId: "video-1",
       requested: { kind: "from", start: 9_000, end: null },
     });
 
@@ -115,7 +115,7 @@ describe("OpenExerciseVideoUseCase", () => {
       const result = await useCase.execute({
         viewer,
         exerciseId: "exercise-1",
-        fileId: "video-1",
+        videoId: "video-1",
         requested: null,
       });
 
@@ -125,7 +125,7 @@ describe("OpenExerciseVideoUseCase", () => {
     },
   );
 
-  it("answers not found for a file id that is no longer the exercise's video", async () => {
+  it("answers not found for a video id that is no longer the exercise's video", async () => {
     // arrange
     const { useCase, store } = createUseCase();
 
@@ -133,7 +133,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-1",
-      fileId: "video-0",
+      videoId: "video-0",
       requested: null,
     });
 
@@ -150,7 +150,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-1",
-      fileId: "video-1",
+      videoId: "video-1",
       requested: null,
     });
 
@@ -166,7 +166,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-9",
-      fileId: "video-1",
+      videoId: "video-1",
       requested: null,
     });
 
@@ -183,7 +183,7 @@ describe("OpenExerciseVideoUseCase", () => {
     const result = await useCase.execute({
       viewer: COACH,
       exerciseId: "exercise-1",
-      fileId: "video-1",
+      videoId: "video-1",
       requested: null,
     });
 

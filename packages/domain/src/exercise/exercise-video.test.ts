@@ -11,7 +11,7 @@ describe("ExerciseVideo", () => {
     ({ format, mediaType }) => {
       // arrange
       const video = ExerciseVideo.of({
-        fileId: "video-1",
+        videoId: "video-1",
         format,
         sizeBytes: 2_048,
       });
@@ -24,10 +24,10 @@ describe("ExerciseVideo", () => {
     },
   );
 
-  it("is stored as its own file id only", () => {
+  it("is stored as its own video id only", () => {
     // arrange
     const video = ExerciseVideo.of({
-      fileId: "video-1",
+      videoId: "video-1",
       format: "mp4",
       sizeBytes: 2_048,
     });
@@ -42,7 +42,7 @@ describe("ExerciseVideo", () => {
   it("answers the snapshot it was made of", () => {
     // arrange
     const snapshot = {
-      fileId: "video-1",
+      videoId: "video-1",
       format: "mov",
       sizeBytes: 4_096,
     } as const;
@@ -52,6 +52,6 @@ describe("ExerciseVideo", () => {
 
     // assert
     expect(video.toSnapshot()).toEqual(snapshot);
-    expect(video.fileId).toBe("video-1");
+    expect(video.videoId).toBe("video-1");
   });
 });

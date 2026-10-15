@@ -69,26 +69,26 @@ export class FilesystemExerciseVideoStore implements ExerciseVideoStore {
     await this.requireFolderWithinRoot(INCOMING_FOLDER);
     await this.createFolder(VIDEOS_FOLDER);
 
-    const fileId = randomUUID();
-    await rename(incoming, this.pathOf(VIDEOS_FOLDER, fileId));
+    const videoId = randomUUID();
+    await rename(incoming, this.pathOf(VIDEOS_FOLDER, videoId));
     await this.syncFolder(VIDEOS_FOLDER);
 
-    return fileId;
+    return videoId;
   }
 
   async discard(stagingId: string): Promise<void> {
     await this.deleteFrom(INCOMING_FOLDER, stagingId);
   }
 
-  async remove(fileId: string): Promise<void> {
-    await this.deleteFrom(VIDEOS_FOLDER, fileId);
+  async remove(videoId: string): Promise<void> {
+    await this.deleteFrom(VIDEOS_FOLDER, videoId);
   }
 
   async open(
-    fileId: string,
+    videoId: string,
     requested: RequestedByteRange | null,
   ): Promise<ExerciseVideoOpening> {
-    const path = this.pathOf(VIDEOS_FOLDER, fileId);
+    const path = this.pathOf(VIDEOS_FOLDER, videoId);
     const finding = await findConfinedFile(this.root, path);
 
     if (finding.kind === "outside-root") {

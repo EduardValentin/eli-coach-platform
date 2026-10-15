@@ -119,7 +119,7 @@ describe("CreateExerciseUseCase", () => {
     expect(store.keep).not.toHaveBeenCalled();
   });
 
-  it("keeps an accepted video under a new file id and adds the exercise with it", async () => {
+  it("keeps an accepted video under a new video id and adds the exercise with it", async () => {
     // arrange
     const { useCase, library, formats, store } = createUseCase();
 
@@ -129,7 +129,7 @@ describe("CreateExerciseUseCase", () => {
     // assert
     const created = Exercise.reconstitute({
       ...CREATED_SQUAT,
-      video: { fileId: "video-1", format: "mp4", sizeBytes: 2_048 },
+      video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
     });
     expect(result).toEqual({ status: "created", exercise: created });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
@@ -278,7 +278,7 @@ describe("CreateExerciseUseCase", () => {
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
     expect(incidents.videoCleanupFailed).toHaveBeenCalledWith({
-      fileId: "video-1",
+      videoId: "video-1",
       error: failure,
     });
   });

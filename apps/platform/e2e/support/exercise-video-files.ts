@@ -13,7 +13,7 @@ const RELEASE_RUN_VIDEOS = `
   set video_file_id = null, video_format = null, video_size_bytes = null
   from run_videos
   where app.exercises.id = run_videos.id
-  returning run_videos.video_file_id as "fileId"
+  returning run_videos.video_file_id as "videoId"
 `;
 
 function exerciseVideoRoot(): string | undefined {
@@ -39,12 +39,12 @@ export async function cleanUpRunExerciseVideos(
   const pool = createE2eDatabasePool();
 
   try {
-    const { rows } = await pool.query<{ fileId: string }>(RELEASE_RUN_VIDEOS, [
+    const { rows } = await pool.query<{ videoId: string }>(RELEASE_RUN_VIDEOS, [
       runId,
     ]);
 
-    for (const { fileId } of rows) {
-      rmSync(resolve(videoRoot, "videos", fileId), { force: true });
+    for (const { videoId } of rows) {
+      rmSync(resolve(videoRoot, "videos", videoId), { force: true });
     }
 
     console.log(`${logPrefix} Exercise videos: removed ${rows.length}`);

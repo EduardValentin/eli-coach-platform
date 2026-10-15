@@ -29,7 +29,7 @@ const SQUAT: ExerciseSnapshot = {
   updatedAt: AT,
 };
 
-const VIDEO_FILE_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
+const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 const SQUAT_ROW = {
   id: SQUAT.id,
@@ -43,7 +43,7 @@ const SQUAT_ROW = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell"],
   tags: ["Strength"],
-  videoFileId: null,
+  videoId: null,
   videoFormat: null,
   videoSizeBytes: null,
   createdAt: AT,
@@ -111,13 +111,13 @@ describe("PostgresExerciseLibrary#add", () => {
     ]);
   });
 
-  it("writes the exercise's video in its file id, format and size columns", async () => {
+  it("writes the exercise's video in its video id, format and size columns", async () => {
     // arrange
     const database = createDatabase();
     const library = new PostgresExerciseLibrary(database.client);
     const withVideo = Exercise.reconstitute({
       ...SQUAT,
-      video: { fileId: VIDEO_FILE_ID, format: "mov", sizeBytes: 4_096 },
+      video: { videoId: VIDEO_ID, format: "mov", sizeBytes: 4_096 },
     });
 
     // act
@@ -129,7 +129,7 @@ describe("PostgresExerciseLibrary#add", () => {
         insert: exercisesTable,
         row: {
           ...SQUAT_ROW,
-          videoFileId: VIDEO_FILE_ID,
+          videoId: VIDEO_ID,
           videoFormat: "mov",
           videoSizeBytes: 4_096,
         },
@@ -169,7 +169,7 @@ describe("PostgresExerciseLibrary#list", () => {
       SQUAT_ROW,
       {
         ...SQUAT_ROW,
-        videoFileId: VIDEO_FILE_ID,
+        videoId: VIDEO_ID,
         videoFormat: "mp4",
         videoSizeBytes: 2_048,
       },
@@ -182,7 +182,7 @@ describe("PostgresExerciseLibrary#list", () => {
     // assert
     expect(exercises.map((exercise) => exercise.toSnapshot().video)).toEqual([
       null,
-      { fileId: VIDEO_FILE_ID, format: "mp4", sizeBytes: 2_048 },
+      { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
     ]);
   });
 });

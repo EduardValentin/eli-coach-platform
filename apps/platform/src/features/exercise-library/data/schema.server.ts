@@ -48,7 +48,7 @@ export const exercisesTable = appSchema.table(
       .notNull(),
     equipment: text("equipment").array().$type<Equipment[]>().notNull(),
     tags: text("tags").array().$type<ExerciseTag[]>().notNull(),
-    videoFileId: uuid("video_file_id"),
+    videoId: uuid("video_file_id"),
     videoFormat: varchar("video_format", {
       length: 8,
     }).$type<ExerciseVideoFormat>(),
@@ -74,7 +74,7 @@ export const exercisesTable = appSchema.table(
     ),
     check(
       "exercises_video_complete_check",
-      sql`(${table.videoFileId} is null) = (${table.videoFormat} is null) and (${table.videoFileId} is null) = (${table.videoSizeBytes} is null)`,
+      sql`(${table.videoId} is null) = (${table.videoFormat} is null) and (${table.videoId} is null) = (${table.videoSizeBytes} is null)`,
     ),
     check(
       "exercises_video_format_check",

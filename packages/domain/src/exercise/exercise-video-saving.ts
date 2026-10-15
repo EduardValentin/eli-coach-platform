@@ -59,12 +59,12 @@ export class ExerciseVideoSaving {
   ): Promise<ExerciseVideoChange> {
     if (choice.kind !== "attach") return choice;
 
-    const fileId = await this.options.store.keep(choice.staged.stagingId);
+    const videoId = await this.options.store.keep(choice.staged.stagingId);
 
     return {
       kind: "attach",
       video: ExerciseVideo.of({
-        fileId,
+        videoId,
         format: choice.format,
         sizeBytes: choice.staged.sizeBytes,
       }),
@@ -97,8 +97,8 @@ export class ExerciseVideoSaving {
   async removeStored(video: ExerciseVideo | null): Promise<void> {
     if (!video) return;
 
-    await this.cleanUp(video.fileId, () =>
-      this.options.store.remove(video.fileId),
+    await this.cleanUp(video.videoId, () =>
+      this.options.store.remove(video.videoId),
     );
   }
 
@@ -109,13 +109,13 @@ export class ExerciseVideoSaving {
   }
 
   private async cleanUp(
-    fileId: string,
+    videoId: string,
     removal: () => Promise<void>,
   ): Promise<void> {
     try {
       await removal();
     } catch (error) {
-      this.options.incidents.videoCleanupFailed({ fileId, error });
+      this.options.incidents.videoCleanupFailed({ videoId, error });
     }
   }
 }

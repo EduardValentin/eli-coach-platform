@@ -33,9 +33,9 @@ describe("createExerciseVideoStore", () => {
 
     // assert
     const staged = await store.receive(sourceOf(video), video.length);
-    const fileId = await store.keep(staged.stagingId);
+    const videoId = await store.keep(staged.stagingId);
     expect(
-      await store.open(fileId, { kind: "suffix", length: 1 }),
+      await store.open(videoId, { kind: "suffix", length: 1 }),
     ).toMatchObject({
       status: "opened",
       sizeBytes: video.length,

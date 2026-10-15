@@ -185,11 +185,11 @@ describe("FilesystemExerciseVideoStore", () => {
       const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
 
       // act
-      const fileId = await store.keep(staged.stagingId);
+      const videoId = await store.keep(staged.stagingId);
 
       // assert
-      expect(fileId).not.toBe(staged.stagingId);
-      expect(await readFile(join(root, "videos", fileId))).toEqual(VIDEO);
+      expect(videoId).not.toBe(staged.stagingId);
+      expect(await readFile(join(root, "videos", videoId))).toEqual(VIDEO);
       expect(await readdir(join(root, ".incoming"))).toEqual([]);
       expect(everyOpenedFileIsClosed()).toBe(true);
     });
@@ -207,25 +207,25 @@ describe("FilesystemExerciseVideoStore", () => {
 
     it("removes a kept video and leaves the other videos alone", async () => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
+      const videoId = await keptVideo(VIDEO);
       const otherId = await keptVideo(VIDEO);
 
       // act
-      await store.remove(fileId);
+      await store.remove(videoId);
 
       // assert
       expect(await readdir(join(root, "videos"))).toEqual([otherId]);
-      expect(await store.open(fileId, null)).toEqual({ status: "missing" });
+      expect(await store.open(videoId, null)).toEqual({ status: "missing" });
     });
 
     it("discards and removes what is not there without failing", async () => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
-      await store.remove(fileId);
+      const videoId = await keptVideo(VIDEO);
+      await store.remove(videoId);
 
       // act
       const outcomes = await Promise.allSettled([
-        store.remove(fileId),
+        store.remove(videoId),
         store.discard("never-staged"),
         new FilesystemExerciseVideoStore(join(workspace, "empty")).remove(
           "never-kept",
@@ -275,14 +275,14 @@ describe("FilesystemExerciseVideoStore", () => {
       "serves $requested as $served with the whole file's size",
       async ({ requested, served }) => {
         // arrange
-        const fileId = await keptVideo(VIDEO);
+        const videoId = await keptVideo(VIDEO);
         const expected =
           served === "whole"
             ? VIDEO
             : VIDEO.subarray(served.start, served.end + 1);
 
         // act
-        const opening = await store.open(fileId, requested);
+        const opening = await store.open(videoId, requested);
 
         // assert
         expect(opening).toMatchObject({
@@ -304,10 +304,10 @@ describe("FilesystemExerciseVideoStore", () => {
       { kind: "suffix", length: 0 },
     ])("answers the range %j as unsatisfiable", async (requested) => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
+      const videoId = await keptVideo(VIDEO);
 
       // act
-      const opening = await store.open(fileId, requested);
+      const opening = await store.open(videoId, requested);
 
       // assert
       expect(opening).toEqual({
@@ -323,10 +323,10 @@ describe("FilesystemExerciseVideoStore", () => {
       "answers range %j of an empty video as unsatisfiable",
       async (requested) => {
         // arrange
-        const fileId = await keptVideo(Buffer.alloc(0));
+        const videoId = await keptVideo(Buffer.alloc(0));
 
         // act
-        const opening = await store.open(fileId, requested);
+        const opening = await store.open(videoId, requested);
 
         // assert
         expect(opening).toEqual({ status: "unsatisfiable", sizeBytes: 0 });
@@ -346,11 +346,11 @@ describe("FilesystemExerciseVideoStore", () => {
 
     it("opens the video's file only once its bytes are first pulled", async () => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
+      const videoId = await keptVideo(VIDEO);
       openedFiles.length = 0;
 
       // act
-      const opening = await store.open(fileId, null);
+      const opening = await store.open(videoId, null);
       const openedBeforePulling = openedFiles.length;
       const firstChunk =
         opening.status === "opened" &&
@@ -364,8 +364,8 @@ describe("FilesystemExerciseVideoStore", () => {
 
     it("releases the video's file when the reader stops after the first chunk", async () => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
-      const opening = await store.open(fileId, null);
+      const videoId = await keptVideo(VIDEO);
+      const opening = await store.open(videoId, null);
 
       // act
       if (opening.status === "opened") {
@@ -381,9 +381,9 @@ describe("FilesystemExerciseVideoStore", () => {
 
     it("leaves no file open when the video is opened and dropped unread", async () => {
       // arrange
-      const fileId = await keptVideo(VIDEO);
+      const videoId = await keptVideo(VIDEO);
       openedFiles.length = 0;
-      const opening = await store.open(fileId, null);
+      const opening = await store.open(videoId, null);
 
       // act
       if (opening.status === "opened") {

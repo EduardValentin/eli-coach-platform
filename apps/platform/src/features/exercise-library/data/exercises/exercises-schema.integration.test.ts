@@ -6,7 +6,7 @@ const suite = new ApiIntegrationTestSuite();
 
 const FIRST_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const SECOND_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
-const VIDEO_FILE_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
+const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 const insertExerciseSql = `
   insert into app.exercises
@@ -21,7 +21,7 @@ type ExerciseRow = {
   type?: string;
   unit?: string;
   difficulty?: string;
-  video?: { fileId?: string; format?: string; sizeBytes?: number };
+  video?: { videoId?: string; format?: string; sizeBytes?: number };
 };
 
 describe.sequential("exercises schema", () => {
@@ -85,7 +85,7 @@ describe.sequential("exercises schema", () => {
 
   it("keeps an exercise with a whole video", async () => {
     // arrange
-    const video = { fileId: VIDEO_FILE_ID, format: "mp4", sizeBytes: 2_048 };
+    const video = { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 };
 
     // act
     await insertExercise({ video });
@@ -95,14 +95,14 @@ describe.sequential("exercises schema", () => {
   });
 
   it.each([
-    ["a file id without its format and size", { fileId: VIDEO_FILE_ID }],
+    ["a video id without its format and size", { videoId: VIDEO_ID }],
     [
-      "a format and size without a file id",
+      "a format and size without a video id",
       { format: "mp4", sizeBytes: 2_048 },
     ],
     [
-      "a file id and format without a size",
-      { fileId: VIDEO_FILE_ID, format: "mov" },
+      "a video id and format without a size",
+      { videoId: VIDEO_ID, format: "mov" },
     ],
   ])("refuses %s", async (_case, video) => {
     // arrange
@@ -118,7 +118,7 @@ describe.sequential("exercises schema", () => {
 
   it("refuses a video format outside .mp4 and .mov", async () => {
     // arrange
-    const video = { fileId: VIDEO_FILE_ID, format: "webm", sizeBytes: 2_048 };
+    const video = { videoId: VIDEO_ID, format: "webm", sizeBytes: 2_048 };
 
     // act
     const inserting = insertExercise({ video });
@@ -150,7 +150,7 @@ function insertExercise(row: ExerciseRow): Promise<unknown> {
       row.type ?? "resistance",
       row.unit ?? "reps",
       row.difficulty ?? "Beginner",
-      row.video?.fileId ?? null,
+      row.video?.videoId ?? null,
       row.video?.format ?? null,
       row.video?.sizeBytes ?? null,
     ],
