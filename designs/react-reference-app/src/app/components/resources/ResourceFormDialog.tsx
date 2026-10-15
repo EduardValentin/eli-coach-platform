@@ -125,13 +125,13 @@ function FileRowStatus({ file, row }: { file: ChosenFile; row: FileRowState }) {
 
   if (row.state === 'sending') {
     return (
-      <Progress aria-label="Upload progress" className="h-1.5" value={row.progress * 100} />
+      <Progress aria-label="Upload progress" value={row.progress * 100} />
     );
   }
   if (row.state === 'preparing') {
     return (
       <>
-        <Progress aria-describedby={hintId} aria-label="Preparing pages" className="h-1.5" />
+        <Progress aria-describedby={hintId} aria-label="Preparing pages" />
         <p className="text-sm text-text-secondary" id={hintId}>
           {PREPARING_HINT}
         </p>

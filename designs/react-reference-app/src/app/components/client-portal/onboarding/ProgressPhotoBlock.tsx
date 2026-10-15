@@ -1,5 +1,5 @@
 import { useId, useState, type ChangeEvent } from 'react';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import {
   NO_PROGRESS_PHOTOS,
   PROGRESS_PHOTO_VIEW_LABELS,
@@ -20,7 +20,7 @@ import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from '../../progressPhotoFrame';
-import { Button } from '../../ui/button';
+import { MediaRemoveButton } from '../../MediaRemoveButton';
 import { Checkbox } from '../../ui/checkbox';
 import { cn } from '../../ui/utils';
 
@@ -83,16 +83,11 @@ function PhotoTile({
           className={progressPhotoImageClass('square')}
           src={photo.url}
         />
-        <Button
+        <MediaRemoveButton
           aria-label={`Remove ${view} photo`}
-          className="absolute top-1 right-1 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
+          className="absolute top-1 right-1"
           onClick={onRemove}
-          size="icon-sm"
-          type="button"
-          variant="outline"
-        >
-          <X aria-hidden="true" />
-        </Button>
+        />
       </div>
     );
   }

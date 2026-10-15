@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { Check, Dumbbell, Film, RefreshCw, Target, X } from 'lucide-react';
+import { Check, Dumbbell, Film, RefreshCw, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
@@ -39,6 +39,7 @@ import { toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import { FileDropzone } from '../../components/FileDropzone';
+import { MediaRemoveButton } from '../../components/MediaRemoveButton';
 import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
@@ -136,7 +137,6 @@ function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
           <p className="text-sm text-text-secondary tabular-nums">{videoSavingMessage(saving)}</p>
           <Progress
             aria-label="Video upload"
-            className="h-1.5"
             value={saving.state === 'uploading' ? saving.progress * 100 : undefined}
           />
         </>
@@ -201,17 +201,12 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
                 aria-label="Demo video preview"
                 className="h-full w-full object-contain"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
+              <MediaRemoveButton
                 aria-label="Remove video"
                 disabled={busy}
                 onClick={() => onChange(NO_VIDEO)}
-                className="absolute top-2 right-2 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
-              >
-                <X aria-hidden="true" />
-              </Button>
+                className="absolute top-2 right-2"
+              />
             </div>
             <Button
               type="button"
@@ -244,9 +239,9 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
           />
         </div>
       )}
-      <p id={errorId} role="alert" className="max-w-md text-xs font-medium text-destructive empty:hidden">
-        {video.error}
-      </p>
+      <div id={errorId} role="alert" className="max-w-md empty:hidden">
+        {video.error && <InlineProblem>{video.error}</InlineProblem>}
+      </div>
     </div>
   );
 }
