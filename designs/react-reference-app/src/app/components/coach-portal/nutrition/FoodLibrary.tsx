@@ -130,6 +130,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
   return (
     <>
       <ListingToolbar
+        parity="food-toolbar"
         view={<>{tabs}{viewSwitch}</>}
         filters={
           <>
@@ -162,7 +163,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
         }
       />
 
-      <TablePanel>
+      <TablePanel parity="food-table">
         <FoodTable
           foods={page.items}
           sort={sort}

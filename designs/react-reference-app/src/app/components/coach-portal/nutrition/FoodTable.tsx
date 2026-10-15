@@ -40,10 +40,12 @@ interface FoodTableProps {
 function FoodName({ food }: { food: Food }) {
   return (
     <div className="flex items-center gap-3">
-      <ItemGlyph icon={foodIcon(food.icon)} />
+      <ItemGlyph icon={foodIcon(food.icon)} parity="food-glyph" />
       <div>
         <p className="font-semibold text-sm text-text-primary">{food.name}</p>
-        <p className="text-xs text-text-secondary mt-0.5">{CATEGORY_LABELS[food.category]}</p>
+        <p className="text-xs text-text-secondary mt-0.5" data-parity="food-category">
+          {CATEGORY_LABELS[food.category]}
+        </p>
       </div>
     </div>
   );
@@ -55,7 +57,7 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
   return (
     <Table>
       <TableHeader>
-        <TableRow>
+        <TableRow data-parity="food-header-row">
           {SORTED_COLUMNS.map(({ key, label }) => (
             <SortableTableHead
               key={key}
@@ -82,7 +84,7 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
                 .map((id) => tags.find((t) => t.id === id))
                 .filter((t): t is Tag => Boolean(t));
               return (
-                <TableRow key={food.id}>
+                <TableRow key={food.id} data-parity="food-row">
                   <TableCell>
                     <FoodName food={food} />
                   </TableCell>
@@ -91,7 +93,7 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
                   <TableCell className={VALUE_CELL}>{food.carb}g</TableCell>
                   <TableCell className={VALUE_CELL}>{food.fat}g</TableCell>
                   <TableCell>
-                    <ul className="flex flex-wrap gap-1">
+                    <ul className="flex flex-wrap gap-1" data-parity="food-tags">
                       {foodTags.map((t) => (
                         <li key={t.id}>
                           <TagPill tag={t} />
@@ -99,7 +101,7 @@ export function FoodTable({ foods, sort, onSort, actionsFor, empty }: FoodTableP
                       ))}
                     </ul>
                   </TableCell>
-                  <TableCell>{actionsFor(food)}</TableCell>
+                  <TableCell data-parity="food-actions-cell">{actionsFor(food)}</TableCell>
                 </TableRow>
               );
             })

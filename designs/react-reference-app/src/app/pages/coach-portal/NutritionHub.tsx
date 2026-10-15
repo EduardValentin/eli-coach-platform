@@ -66,7 +66,7 @@ export function NutritionHub() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="NutritionHub">
       <PortalPageHeader
         title="Nutrition"
         subtitle={

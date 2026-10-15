@@ -9,7 +9,7 @@ import { TAG_FAMILY_PILL } from './nutrition-constants';
 export function TagPill({ tag }: { tag: Tag }) {
   const Icon = TAG_FAMILY_ICON[tag.family];
   return (
-    <Badge className={`text-text-primary ${TAG_FAMILY_PILL[tag.family]}`}>
+    <Badge className={`text-text-primary ${TAG_FAMILY_PILL[tag.family]}`} data-parity-root="TagPill">
       <Icon size={11} className="text-text-secondary" aria-hidden="true" />
       {tag.label}
     </Badge>
