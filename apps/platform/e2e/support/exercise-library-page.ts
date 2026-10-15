@@ -29,15 +29,24 @@ export class ExerciseLibraryPage {
     });
   }
 
+  private get trainingLink(): Locator {
+    return this.navigation.getByRole("link", { name: "Training" });
+  }
+
+  private get heading(): Locator {
+    return this.page.getByRole("heading", { level: 1 });
+  }
+
   private get newExerciseLink() {
     return this.page.getByRole("link", { name: "New exercise" });
   }
 
+  private get rows(): Locator {
+    return this.page.getByRole("table").getByRole("row");
+  }
+
   private get exerciseNames() {
-    return this.page
-      .getByRole("table")
-      .getByRole("row")
-      .locator("td:first-child p:first-child");
+    return this.rows.locator("td:first-child p:first-child");
   }
 
   private async expectTrainingRightAfterDashboardIn(
@@ -50,10 +59,9 @@ export class ExerciseLibraryPage {
   }
 
   private rowOf(name: string): Locator {
-    return this.page
-      .getByRole("table")
-      .getByRole("row")
-      .filter({ has: this.page.getByText(name, { exact: true }) });
+    return this.rows.filter({
+      has: this.page.getByText(name, { exact: true }),
+    });
   }
 
   private actionsTriggerOf(name: string): Locator {
@@ -65,22 +73,18 @@ export class ExerciseLibraryPage {
   }
 
   async openFromNavigation(): Promise<void> {
-    await this.navigation.getByRole("link", { name: "Training" }).click();
+    await this.trainingLink.click();
     await this.expectOpen();
   }
 
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(LIBRARY_PATH);
-    await expect(
-      this.page.getByRole("heading", { level: 1, name: "Exercises" }),
-    ).toBeVisible();
+    await expect(this.heading).toHaveText("Exercises");
   }
 
   async expectTrainingRightAfterDashboard(): Promise<void> {
     await this.expectTrainingRightAfterDashboardIn(this.navigation);
-    await expect(
-      this.navigation.getByRole("link", { name: "Training" }),
-    ).toHaveAttribute("aria-current", "page");
+    await expect(this.trainingLink).toHaveAttribute("aria-current", "page");
   }
 
   async openPhoneMenu(): Promise<void> {
@@ -110,9 +114,7 @@ export class ExerciseLibraryPage {
   }
 
   async startNewExerciseWithKeyboard(): Promise<void> {
-    await this.page
-      .getByRole("heading", { level: 1 })
-      .click({ position: { x: 1, y: 1 } });
+    await this.heading.click({ position: { x: 1, y: 1 } });
     await tabTo(this.page, this.newExerciseLink);
     await this.page.keyboard.press("Enter");
   }

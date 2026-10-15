@@ -159,7 +159,7 @@ test(
     await exerciseEditor.enter({ name: `Lunge ${scenarioTag}` });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Primary muscles",
       "Pick at least one primary muscle",
     );
@@ -175,7 +175,7 @@ test(
     await exerciseEditor.enter({ type: "Resistance" });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Primary muscles",
       "Pick at least one primary muscle",
     );
@@ -191,13 +191,13 @@ test(
     await exerciseEditor.enter({ name: "   " });
 
     // assert
-    await exerciseEditor.expectProblem("Name", "Give the exercise a name");
+    await exerciseEditor.expectOnlyProblem("Name", "Give the exercise a name");
 
     // act
     await exerciseEditor.enter({ name: "n".repeat(81) });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "Keep the name to 80 characters",
     );
@@ -212,7 +212,7 @@ test(
     await exerciseEditor.enter({ name: `  ${takenName.toUpperCase()} ` });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "An exercise with this name already exists",
     );
@@ -224,7 +224,7 @@ test(
     });
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Form cues",
       "Keep the form cues to 1,000 characters",
     );
@@ -287,7 +287,7 @@ test(
     await exerciseEditor.create();
 
     // assert
-    await exerciseEditor.expectProblem(
+    await exerciseEditor.expectOnlyProblem(
       "Name",
       "An exercise with this name already exists",
     );

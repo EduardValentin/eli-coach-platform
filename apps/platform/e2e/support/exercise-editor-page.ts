@@ -43,6 +43,30 @@ export class ExerciseEditorPage {
     return this.page.getByRole("textbox", { name: "Form cues" });
   }
 
+  private get listbox(): Locator {
+    return this.page.getByRole("listbox");
+  }
+
+  private get choices(): Locator {
+    return this.page.getByRole("dialog");
+  }
+
+  private choice(name: string): Locator {
+    return this.choices.getByRole("checkbox", { name, exact: true });
+  }
+
+  private option(name: string): Locator {
+    return this.page.getByRole("option", { name: new RegExp(`^${name}\\b`) });
+  }
+
+  private sides(name: SavedExercise["sides"]): Locator {
+    return this.page.getByRole("radio", { name });
+  }
+
+  private heading(name?: string): Locator {
+    return this.page.getByRole("heading", { level: 1, name });
+  }
+
   private select(label: string): Locator {
     return this.page.getByRole("combobox", { name: label });
   }
@@ -58,9 +82,13 @@ export class ExerciseEditorPage {
   }
 
   private fieldOf(field: ProblemField): Locator {
-    return field === "Primary muscles"
-      ? this.multiSelect(field)
-      : this.page.getByRole("textbox", { name: field });
+    const fields: Record<ProblemField, Locator> = {
+      Name: this.nameField,
+      "Primary muscles": this.multiSelect(field),
+      "Form cues": this.cuesField,
+    };
+
+    return fields[field];
   }
 
   private tag(tag: string): Locator {
@@ -88,9 +116,7 @@ export class ExerciseEditorPage {
 
   async expectNewExercise(): Promise<void> {
     await expect(this.page).toHaveURL(NEW_EXERCISE_PATH);
-    await expect(
-      this.page.getByRole("heading", { level: 1, name: "New exercise" }),
-    ).toBeVisible();
+    await expect(this.heading("New exercise")).toBeVisible();
     await this.expectEntries({
       name: "",
       type: "Resistance",
@@ -112,9 +138,7 @@ export class ExerciseEditorPage {
   }
 
   async expectEditing(exercise: SavedExercise): Promise<void> {
-    await expect(
-      this.page.getByRole("heading", { level: 1, name: "Edit exercise" }),
-    ).toBeVisible();
+    await expect(this.heading("Edit exercise")).toBeVisible();
     await this.expectEntries(exercise);
   }
 
@@ -123,9 +147,7 @@ export class ExerciseEditorPage {
     if (entries.name !== undefined) await this.nameField.fill(entries.name);
     if (entries.type) await this.choose("Type", entries.type);
     if (entries.unit) await this.choose("Measured in", entries.unit);
-    if (entries.sides) {
-      await this.page.getByRole("radio", { name: entries.sides }).check();
-    }
+    if (entries.sides) await this.sides(entries.sides).check();
     if (entries.primaryMuscles) {
       await this.pick("Primary muscles", entries.primaryMuscles);
     }
@@ -158,7 +180,7 @@ export class ExerciseEditorPage {
     await this.page.getByRole("link", { name: "Back to exercises" }).click();
   }
 
-  async expectProblem(field: ProblemField, problem: string): Promise<void> {
+  async expectOnlyProblem(field: ProblemField, problem: string): Promise<void> {
     await expect(this.page.getByText(problem, { exact: true })).toBeVisible();
     await expect(this.fieldOf(field)).toHaveAttribute("aria-invalid", "true");
     await expect(this.fieldOf(field)).toHaveAccessibleDescription(problem);
@@ -182,28 +204,28 @@ export class ExerciseEditorPage {
 
   async expectUnitChoices(units: readonly string[]): Promise<void> {
     await this.select("Measured in").click();
-    await expect(this.page.getByRole("option")).toHaveText(
+    await expect(this.listbox.getByRole("option")).toHaveText(
       units.map((unit) => new RegExp(`^${unit}\\b`)),
     );
     await this.page.keyboard.press("Escape");
-    await expect(this.page.getByRole("listbox")).toBeHidden();
+    await expect(this.listbox).toBeHidden();
   }
 
   async expectSecondaryChoicesWithout(
     muscles: readonly string[],
   ): Promise<void> {
     await this.multiSelect("Secondary muscles").click();
-    const choices = this.page
-      .getByRole("dialog")
-      .getByRole("list", { name: "Secondary muscles" });
-    await expect(choices.getByRole("checkbox").first()).toBeVisible();
+    await expect(
+      this.choices
+        .getByRole("list", { name: "Secondary muscles" })
+        .getByRole("checkbox")
+        .first(),
+    ).toBeVisible();
     for (const muscle of muscles) {
-      await expect(
-        choices.getByRole("checkbox", { name: muscle, exact: true }),
-      ).toHaveCount(0);
+      await expect(this.choice(muscle)).toHaveCount(0);
     }
     await this.page.keyboard.press("Escape");
-    await expect(this.page.getByRole("dialog")).toBeHidden();
+    await expect(this.choices).toBeHidden();
   }
 
   async createWithKeyboard(exercise: SavedExercise): Promise<void> {
@@ -220,12 +242,8 @@ export class ExerciseEditorPage {
       exercise.sides === "One side at a time" ? "ArrowRight" : "ArrowLeft",
       { delay: HELD_KEY_MS },
     );
-    await expect(
-      this.page.getByRole("radio", { name: exercise.sides }),
-    ).toBeChecked();
-    await expect(
-      this.page.getByRole("radio", { name: exercise.sides }),
-    ).toBeFocused();
+    await expect(this.sides(exercise.sides)).toBeChecked();
+    await expect(this.sides(exercise.sides)).toBeFocused();
     await this.pickByKeyboard("Primary muscles", exercise.primaryMuscles);
     await this.pickByKeyboard("Secondary muscles", exercise.secondaryMuscles);
     await this.pickByKeyboard("Equipment", exercise.equipment);
@@ -249,9 +267,7 @@ export class ExerciseEditorPage {
     await expect(this.nameField).toHaveValue(exercise.name);
     await expect(this.select("Type")).toHaveText(exercise.type);
     await expect(this.select("Measured in")).toHaveText(exercise.unit);
-    await expect(
-      this.page.getByRole("radio", { name: exercise.sides }),
-    ).toBeChecked();
+    await expect(this.sides(exercise.sides)).toBeChecked();
     await this.expectPicked("Primary muscles", exercise.primaryMuscles);
     await this.expectPicked("Secondary muscles", exercise.secondaryMuscles);
     await this.expectPicked("Equipment", exercise.equipment);
@@ -285,12 +301,12 @@ export class ExerciseEditorPage {
   private async waitUntilInteractive(): Promise<void> {
     await expect(async () => {
       await this.select("Type").click();
-      await expect(this.page.getByRole("listbox")).toBeVisible({
+      await expect(this.listbox).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
     }).toPass();
     await this.page.keyboard.press("Escape");
-    await expect(this.page.getByRole("listbox")).toBeHidden();
+    await expect(this.listbox).toBeHidden();
   }
 
   private async expectNoProblem(field: ProblemField): Promise<void> {
@@ -300,17 +316,15 @@ export class ExerciseEditorPage {
 
   private async waitUntilInteractiveByKeyboard(): Promise<void> {
     await expect(async () => {
-      await this.page
-        .getByRole("heading", { level: 1 })
-        .click({ position: { x: 1, y: 1 } });
+      await this.heading().click({ position: { x: 1, y: 1 } });
       await tabTo(this.page, this.select("Type"));
       await this.page.keyboard.press("Enter");
-      await expect(this.page.getByRole("listbox")).toBeVisible({
+      await expect(this.listbox).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
     }).toPass();
     await this.page.keyboard.press("Escape");
-    await expect(this.page.getByRole("listbox")).toBeHidden();
+    await expect(this.listbox).toBeHidden();
     await expect(this.select("Type")).toBeFocused();
     await this.page.keyboard.press("Shift+Tab");
   }
@@ -318,14 +332,11 @@ export class ExerciseEditorPage {
   private async chooseByKeyboard(label: string, option: string) {
     await tabTo(this.page, this.select(label));
     await this.page.keyboard.press("Enter");
-    const choice = this.page.getByRole("option", {
-      name: new RegExp(`^${option}\\b`),
-    });
-    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.listbox).toBeVisible();
     await this.page.keyboard.type(option);
-    await expect(choice).toBeFocused();
+    await expect(this.option(option)).toBeFocused();
     await this.page.keyboard.press("Enter");
-    await expect(this.page.getByRole("listbox")).toBeHidden();
+    await expect(this.listbox).toBeHidden();
     await expect(this.select(label)).toHaveText(option);
     await expect(this.select(label)).toBeFocused();
   }
@@ -334,36 +345,26 @@ export class ExerciseEditorPage {
     if (choices.length === 0) return;
     await tabTo(this.page, this.multiSelect(label));
     await this.page.keyboard.press("Enter");
-    const options = this.page.getByRole("dialog");
-    await expect(options).toBeVisible();
+    await expect(this.choices).toBeVisible();
     for (const choice of choices) {
-      await tabTo(
-        this.page,
-        options.getByRole("checkbox", { name: choice, exact: true }),
-      );
+      await tabTo(this.page, this.choice(choice));
       await this.page.keyboard.press("Space");
     }
     await this.page.keyboard.press("Escape");
-    await expect(options).toBeHidden();
+    await expect(this.choices).toBeHidden();
     await expect(this.multiSelect(label)).toBeFocused();
   }
 
   private async choose(label: string, option: string): Promise<void> {
     await this.select(label).click();
-    await this.page
-      .getByRole("option", { name: new RegExp(`^${option}\\b`) })
-      .click();
+    await this.option(option).click();
     await expect(this.select(label)).toHaveText(option);
   }
 
   private async pick(label: string, choices: readonly string[]) {
     await this.multiSelect(label).click();
-    for (const choice of choices) {
-      await this.page
-        .getByRole("checkbox", { name: choice, exact: true })
-        .click();
-    }
+    for (const choice of choices) await this.choice(choice).click();
     await this.page.keyboard.press("Escape");
-    await expect(this.page.getByRole("dialog")).toBeHidden();
+    await expect(this.choices).toBeHidden();
   }
 }
