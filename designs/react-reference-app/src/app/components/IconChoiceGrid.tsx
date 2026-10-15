@@ -8,6 +8,7 @@ type IconChoiceGridProps<Key extends string> = Omit<ComponentProps<'ul'>, 'onCha
   options: readonly IconChoice<Key>[];
   value: Key;
   onChange: (key: Key) => void;
+  'aria-labelledby': string;
 };
 
 export function IconChoiceGrid<Key extends string>({

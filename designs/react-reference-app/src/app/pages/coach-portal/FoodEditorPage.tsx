@@ -169,6 +169,7 @@ function FoodEditor({ editing, library }: { editing: Food | undefined; library: 
                 options={FOOD_ICONS}
                 value={draft.icon}
                 onChange={(icon) => set('icon', icon)}
+                aria-labelledby={ids.iconLabel}
                 data-parity="food-icon-grid"
               />
             </SettingsRow>

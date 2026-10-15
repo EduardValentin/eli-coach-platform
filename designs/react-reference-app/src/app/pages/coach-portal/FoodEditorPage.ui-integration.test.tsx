@@ -235,6 +235,15 @@ describe('a new food', () => {
     expect(iconChoice('Other')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('names the icon choice list after the Icon row', () => {
+    // arrange
+    // act
+    renderEditor(NEW);
+
+    // assert
+    expect(within(screen.getByRole('list', { name: 'Icon' })).getAllByRole('button')).toHaveLength(28);
+  });
+
   it('toggles a tag on and off', async () => {
     // arrange
     const user = renderEditor(NEW);
