@@ -17,10 +17,22 @@ type LabelProps = React.ComponentPropsWithoutRef<"label"> & {
   htmlFor: string;
   invalid?: boolean;
   layout?: LabelLayout;
+  required?: boolean;
 };
 
 export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
-  ({ className, htmlFor, invalid, layout = "inline", ...props }, ref) => (
+  (
+    {
+      children,
+      className,
+      htmlFor,
+      invalid,
+      layout = "inline",
+      required,
+      ...props
+    },
+    ref,
+  ) => (
     <label
       ref={ref}
       className={cn(
@@ -32,7 +44,15 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       data-error={invalid}
       htmlFor={htmlFor}
       {...props}
-    />
+    >
+      {children}
+      {required && (
+        <>
+          <span aria-hidden="true">*</span>
+          <span className="sr-only"> (required)</span>
+        </>
+      )}
+    </label>
   ),
 );
 

@@ -28,6 +28,36 @@ describe("Label", () => {
     expect(field).toHaveAttribute("id", "weight");
   });
 
+  it("stars a required field, hides the star, and names the field as required", () => {
+    // arrange
+    render(
+      <>
+        <Label htmlFor="weight" required>
+          Your weight
+        </Label>
+        <input id="weight" />
+      </>,
+    );
+
+    // act
+    const field = screen.getByRole("textbox");
+
+    // assert
+    expect(screen.getByText("*")).toHaveAttribute("aria-hidden", "true");
+    expect(field).toHaveAccessibleName("Your weight (required)");
+  });
+
+  it("shows no star when the field is optional", () => {
+    // arrange
+    render(<Label htmlFor="weight">Your weight</Label>);
+
+    // act
+    const star = screen.queryByText("*");
+
+    // assert
+    expect(star).not.toBeInTheDocument();
+  });
+
   it("turns to the danger colour while its field is in error", () => {
     // arrange
     render(

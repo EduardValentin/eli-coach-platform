@@ -102,6 +102,7 @@ export function ExerciseAboutSection({
           htmlFor={nameId}
           layout="stacked"
           problem={shownProblem(nameProblemId, problems.name)}
+          required
           title="Name"
         >
           <Input
@@ -203,6 +204,7 @@ export function ExerciseWorkSection({
           htmlFor={primaryId}
           layout="stacked"
           problem={shownProblem(primaryProblemId, problems.primaryMuscles)}
+          required={values.type !== "cardio"}
           title="Primary muscles"
         >
           <MultiSelect

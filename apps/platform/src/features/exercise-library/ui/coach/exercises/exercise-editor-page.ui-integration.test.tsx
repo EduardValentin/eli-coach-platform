@@ -114,7 +114,9 @@ describe("a new exercise", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "New exercise" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: "Name(required)" })).toHaveValue(
+      "",
+    );
     expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
       "Resistance",
     );
@@ -153,7 +155,10 @@ describe("a new exercise", () => {
     const user = await renderEditor(NEW_EXERCISE_PATH);
 
     // act
-    await user.type(screen.getByRole("textbox", { name: "Name" }), "B");
+    await user.type(
+      screen.getByRole("textbox", { name: "Name(required)" }),
+      "B",
+    );
 
     // assert
     expect(screen.queryByText("Give the exercise a name")).toBeNull();
@@ -165,16 +170,15 @@ describe("a new exercise", () => {
     ).toHaveAttribute("aria-invalid", "true");
 
     // act
-    await user.clear(screen.getByRole("textbox", { name: "Name" }));
+    await user.clear(screen.getByRole("textbox", { name: "Name(required)" }));
 
     // assert
     expect(
-      screen.getByRole("textbox", { name: "Name" }),
+      screen.getByRole("textbox", { name: "Name(required)" }),
     ).toHaveAccessibleDescription("Give the exercise a name");
-    expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Name(required)" }),
+    ).toHaveAttribute("aria-invalid", "true");
   });
 
   it.each([
@@ -191,11 +195,11 @@ describe("a new exercise", () => {
       await pickMuscles(user, "Primary muscles", ["Glutes"]);
 
       // act
-      await enter(user, "Name", entered);
+      await enter(user, "Name(required)", entered);
 
       // assert
       expect(
-        screen.getByRole("textbox", { name: "Name" }),
+        screen.getByRole("textbox", { name: "Name(required)" }),
       ).toHaveAccessibleDescription(problem);
       expect(
         screen.getByRole("button", { name: "Create exercise" }),
@@ -209,12 +213,12 @@ describe("a new exercise", () => {
     await pickMuscles(user, "Primary muscles", ["Glutes"]);
 
     // act
-    await enter(user, "Name", `  ${"n".repeat(80)}  `);
+    await enter(user, "Name(required)", `  ${"n".repeat(80)}  `);
 
     // assert
-    expect(screen.getByRole("textbox", { name: "Name" })).not.toHaveAttribute(
-      "aria-invalid",
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Name(required)" }),
+    ).not.toHaveAttribute("aria-invalid");
     expect(
       screen.getByRole("button", { name: "Create exercise" }),
     ).toBeEnabled();
@@ -223,7 +227,7 @@ describe("a new exercise", () => {
   it("refuses form cues over 1,000 characters and keeps everything she typed", async () => {
     // arrange
     const user = await renderEditor(NEW_EXERCISE_PATH);
-    await enter(user, "Name", "Glute bridge");
+    await enter(user, "Name(required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles", ["Glutes"]);
 
     // act
@@ -240,10 +244,38 @@ describe("a new exercise", () => {
     ).toBeDisabled();
   });
 
+  it("stars Name and Primary muscles as mandatory", async () => {
+    // arrange, act
+    await renderEditor(NEW_EXERCISE_PATH);
+
+    // assert
+    expect(
+      screen.getByRole("textbox", { name: "Name(required)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Primary muscles", { selector: "label" }),
+    ).toHaveTextContent("Primary muscles* (required)");
+    expect(screen.getAllByText("*")).toHaveLength(2);
+  });
+
+  it("drops the star from Primary muscles on a cardio exercise", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    await choose(user, "Type", "Cardio");
+
+    // assert
+    expect(
+      screen.getByText("Primary muscles", { selector: "label" }),
+    ).toHaveTextContent(/^Primary muscles$/);
+    expect(screen.getAllByText("*")).toHaveLength(1);
+  });
+
   it("asks for no primary muscle on a cardio exercise", async () => {
     // arrange
     const user = await renderEditor(NEW_EXERCISE_PATH);
-    await enter(user, "Name", "Easy run");
+    await enter(user, "Name(required)", "Easy run");
 
     // act
     await choose(user, "Type", "Cardio");
@@ -259,7 +291,7 @@ describe("a new exercise", () => {
     // arrange
     acceptSaves();
     const user = await renderEditor(NEW_EXERCISE_PATH);
-    await enter(user, "Name", "  Glute bridge ");
+    await enter(user, "Name(required)", "  Glute bridge ");
     await choose(user, "Measured in", /^Time/);
     await user.click(screen.getByRole("radio", { name: "One side at a time" }));
     await pickMuscles(user, "Primary muscles", ["Glutes"]);
@@ -305,14 +337,14 @@ describe("a new exercise", () => {
       ),
     );
     const user = await renderEditor(NEW_EXERCISE_PATH);
-    await enter(user, "Name", "Glute bridge");
+    await enter(user, "Name(required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles", ["Glutes"]);
 
     // act
     await user.click(screen.getByRole("button", { name: "Create exercise" }));
 
     // assert
-    const name = screen.getByRole("textbox", { name: "Name" });
+    const name = screen.getByRole("textbox", { name: "Name(required)" });
     expect(
       await screen.findByText("An exercise with this name already exists"),
     ).toBeInTheDocument();
@@ -336,7 +368,7 @@ describe("a new exercise", () => {
     );
 
     // act
-    await enter(user, "Name", "Single-leg glute bridge");
+    await enter(user, "Name(required)", "Single-leg glute bridge");
 
     // assert
     expect(name).not.toHaveAttribute("aria-invalid");
@@ -354,7 +386,7 @@ describe("a new exercise", () => {
       ),
     );
     const user = await renderEditor(NEW_EXERCISE_PATH);
-    await enter(user, "Name", "Glute bridge");
+    await enter(user, "Name(required)", "Glute bridge");
     await pickMuscles(user, "Primary muscles", ["Glutes"]);
 
     // act
@@ -362,7 +394,7 @@ describe("a new exercise", () => {
 
     // assert
     expect(await screen.findByText(SAVE_FAILED)).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "Name(required)" })).toHaveValue(
       "Glute bridge",
     );
     expect(
@@ -476,7 +508,7 @@ describe("editing an exercise", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Edit exercise" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "Name(required)" })).toHaveValue(
       "Breath hold",
     );
     expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
@@ -513,19 +545,19 @@ describe("editing an exercise", () => {
     const user = await renderEditor(exerciseEditorPath(BREATH_HOLD.id));
 
     // act
-    await enter(user, "Name", "BREATH HOLD");
-
-    // assert
-    expect(screen.getByRole("textbox", { name: "Name" })).not.toHaveAttribute(
-      "aria-invalid",
-    );
-
-    // act
-    await enter(user, "Name", "Hip thrust");
+    await enter(user, "Name(required)", "BREATH HOLD");
 
     // assert
     expect(
-      screen.getByRole("textbox", { name: "Name" }),
+      screen.getByRole("textbox", { name: "Name(required)" }),
+    ).not.toHaveAttribute("aria-invalid");
+
+    // act
+    await enter(user, "Name(required)", "Hip thrust");
+
+    // assert
+    expect(
+      screen.getByRole("textbox", { name: "Name(required)" }),
     ).toHaveAccessibleDescription("An exercise with this name already exists");
   });
 
@@ -533,7 +565,7 @@ describe("editing an exercise", () => {
     // arrange
     acceptSaves();
     const user = await renderEditor(exerciseEditorPath(BREATH_HOLD.id));
-    await enter(user, "Name", "Long breath hold");
+    await enter(user, "Name(required)", "Long breath hold");
 
     // act
     await user.click(screen.getByRole("button", { name: "Save changes" }));
@@ -576,7 +608,7 @@ describe("editing an exercise", () => {
     async (leave) => {
       // arrange
       const user = await renderEditor(exerciseEditorPath(BREATH_HOLD.id));
-      await enter(user, "Name", "Long breath hold");
+      await enter(user, "Name(required)", "Long breath hold");
 
       // act
       await user.click(screen.getByRole("link", { name: leave }));
