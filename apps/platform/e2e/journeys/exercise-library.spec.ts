@@ -3,11 +3,26 @@ import { LANDSCAPE_SAMPLE_VIDEO_PATH } from "@eli-coach-platform/test-support/sa
 import { expect, test } from "../support/fixtures";
 import type { SavedExercise } from "../support/exercise-editor-page";
 import type { ExerciseFields } from "../support/exercise-requests";
+import { storedExerciseVideoIds } from "../support/exercise-video-files";
 import { resolveRunId } from "../support/run-id";
 import { setPhoneViewport } from "../support/viewport";
 
 const UNKNOWN_EXERCISE_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_AN_EXERCISE_ID = "not-an-exercise";
+const NOT_A_VIDEO_REFUSAL =
+  "squat-notes.txt is not an .mp4 or .mov — only .mp4 and .mov videos are supported";
+const OVER_THE_CAP_REFUSAL = "deadlift-demo.mp4 is larger than 50 MB";
+const NO_VIDEO_INSIDE_REFUSAL =
+  "squat-demo.mp4 doesn’t contain an MP4 or MOV video.";
+const SEEK_TO_SECONDS = 1.2;
+
+function videoIdOf(videoPath: string): string {
+  const videoId = videoPath.split("/").pop();
+
+  if (!videoId) throw new Error(`${videoPath} names no video.`);
+
+  return videoId;
+}
 
 function hipThrustNamed(name: string): ExerciseFields {
   return {
@@ -727,5 +742,793 @@ test(
 
     // assert
     expect(clientStatuses).toEqual([403, 403]);
+  },
+);
+
+test(
+  "the demo video field takes a video by drop or browse and refuses a non-video or one over 50 MB on the spot, keeping what was there",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+
+    // assert
+    await exerciseEditor.expectVideoGuidance();
+    await exerciseEditor.expectNoVideo();
+
+    // act
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.notAVideo());
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NOT_A_VIDEO_REFUSAL);
+    await exerciseEditor.expectNoVideo();
+
+    // act
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.overTheCap());
+
+    // assert
+    await exerciseEditor.expectVideoRefused(OVER_THE_CAP_REFUSAL);
+    await exerciseEditor.expectNoVideo();
+
+    // act
+    await exerciseEditor.dropVideo(exerciseVideoSamples.notAVideo());
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NOT_A_VIDEO_REFUSAL);
+    await exerciseEditor.expectNoVideo();
+
+    // act
+    await exerciseEditor.dropVideo(exerciseVideoSamples.landscape);
+
+    // assert
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectNoVideoProblem();
+
+    // act
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.notAVideo());
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NOT_A_VIDEO_REFUSAL);
+    await exerciseEditor.expectChosenVideoPreview();
+
+    // act
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.overTheCap());
+
+    // assert
+    await exerciseEditor.expectVideoRefused(OVER_THE_CAP_REFUSAL);
+    await exerciseEditor.expectChosenVideoPreview();
+
+    // act
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.portrait);
+
+    // assert
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectNoVideoProblem();
+
+    // act
+    await exerciseEditor.removeVideo();
+
+    // assert
+    await exerciseEditor.expectNoVideo();
+    await exerciseEditor.expectNoVideoProblem();
+  },
+);
+
+test(
+  "Cancel and the back link discard a chosen, replaced or removed video",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const saved = hipThrustNamed(`Kickback ${runId}`);
+    const discarded = `Cable kickback ${runId}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createWithVideo(
+      saved,
+      exerciseVideoSamples.landscape,
+    );
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(saved.name);
+    const savedVideo = await exerciseEditor.servedVideoPath();
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.portrait);
+    await exerciseEditor.expectChosenVideoPreview();
+
+    // act
+    await exerciseEditor.cancel();
+    await exerciseLibrary.edit(saved.name);
+
+    // assert
+    expect(await exerciseEditor.servedVideoPath()).toBe(savedVideo);
+
+    // act
+    await exerciseEditor.removeVideo();
+    await exerciseEditor.expectNoVideo();
+    await exerciseEditor.goBack();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectListed({
+      name: saved.name,
+      summary: "Resistance · Barbell, Bench",
+      tags: saved.tags,
+      primaryMuscles: saved.primaryMuscles,
+      difficulty: saved.difficulty,
+      video: "Attached",
+    });
+
+    // act
+    await exerciseLibrary.edit(saved.name);
+
+    // assert
+    expect(await exerciseEditor.servedVideoPath()).toBe(savedVideo);
+
+    // arrange
+    const storedBefore = storedExerciseVideoIds();
+    await exerciseLibrary.open();
+    await exerciseLibrary.startNewExercise();
+    await exerciseEditor.enter({ name: discarded, primaryMuscles: ["Glutes"] });
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.landscape);
+    await exerciseEditor.expectChosenVideoPreview();
+
+    // act
+    await exerciseEditor.cancel();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectNotListed(discarded);
+    expect(storedExerciseVideoIds()).toEqual(storedBefore);
+  },
+);
+
+test(
+  "a file that only looks like a video is refused on save on the video field and her entries and choice stay",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const entered: SavedExercise = {
+      name: `Goblet squat ${runId}`,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "Both sides together",
+      primaryMuscles: ["Quadriceps"],
+      secondaryMuscles: ["Glutes"],
+      equipment: ["Dumbbells"],
+      difficulty: "Intermediate",
+      tags: ["Strength"],
+      cues: "Elbows inside the knees.",
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({
+      name: entered.name,
+      primaryMuscles: entered.primaryMuscles,
+      secondaryMuscles: entered.secondaryMuscles,
+      equipment: entered.equipment,
+      difficulty: entered.difficulty,
+      toggledTags: entered.tags,
+      cues: entered.cues,
+    });
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.textNamedAsVideo());
+    await exerciseEditor.expectNoVideoProblem();
+    const storedBefore = storedExerciseVideoIds();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NO_VIDEO_INSIDE_REFUSAL);
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectStillNew();
+    await exerciseEditor.expectEntries(entered);
+    expect(storedExerciseVideoIds()).toEqual(storedBefore);
+
+    // act
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.landscape);
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectListed({
+      name: entered.name,
+      summary: "Resistance · Dumbbells",
+      tags: entered.tags,
+      primaryMuscles: entered.primaryMuscles,
+      difficulty: entered.difficulty,
+      video: "Attached",
+    });
+  },
+);
+
+test(
+  "a name taken on a save with a video is shown on the name field and keeps the chosen video",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const name = `Single-leg deadlift ${runId}`;
+    const renamed = `Banded single-leg deadlift ${runId}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({ name, primaryMuscles: ["Hamstrings"] });
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.landscape);
+    await exerciseRequests.createAccepted(hipThrustNamed(name));
+    const storedBefore = storedExerciseVideoIds();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseEditor.expectProblem(
+      "Name",
+      "An exercise with this name already exists",
+    );
+    await exerciseEditor.expectStillNew();
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectNoVideoProblem();
+    expect(storedExerciseVideoIds()).toEqual(storedBefore);
+
+    // act
+    await exerciseEditor.enter({ name: renamed });
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectListed({
+      name: renamed,
+      summary: "Resistance · No equipment",
+      tags: [],
+      primaryMuscles: ["Hamstrings"],
+      difficulty: "Beginner",
+      video: "Attached",
+    });
+  },
+);
+
+test(
+  "the save uploads the video with its progress announced, refuses a second submit and finishes up before it lands",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const name = `Hip thrust hold ${runId}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({ name, primaryMuscles: ["Glutes"] });
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.slowToUpload());
+    const saves = exerciseEditor.countSaves();
+    await exerciseEditor.recordUploadMessages();
+    const restoreUploads = await exerciseEditor.slowUploadsDown();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseEditor.expectUploading();
+    await exerciseEditor.expectUploadAdvancing();
+
+    // act
+    await exerciseEditor.submitAgainWhileSaving();
+    await exerciseEditor.waitForUploadToLand();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectConfirmation("Exercise created");
+    expect(saves()).toBe(1);
+    await exerciseEditor.expectUploadAnnouncedThenFinishedUp();
+    await restoreUploads();
+  },
+);
+
+test(
+  "a failed upload tells her so, keeps her entries and the video, and Try again saves them",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const entered: SavedExercise = {
+      name: `Reverse lunge ${runId}`,
+      type: "Resistance",
+      unit: "Reps",
+      sides: "One side at a time",
+      primaryMuscles: ["Glutes"],
+      secondaryMuscles: ["Quadriceps"],
+      equipment: ["Dumbbells"],
+      difficulty: "Beginner",
+      tags: ["Hypertrophy"],
+      cues: "Step long, knee kisses the floor.",
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({
+      name: entered.name,
+      sides: entered.sides,
+      primaryMuscles: entered.primaryMuscles,
+      secondaryMuscles: entered.secondaryMuscles,
+      equipment: entered.equipment,
+      toggledTags: entered.tags,
+      cues: entered.cues,
+    });
+    await exerciseEditor.chooseVideo(exerciseVideoSamples.landscape);
+    await exerciseEditor.failNextSave();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseEditor.expectUploadFailed();
+    await exerciseEditor.expectStillNew();
+    await exerciseEditor.expectEntries(entered);
+
+    // act
+    await exerciseEditor.retryUpload();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectListed({
+      name: entered.name,
+      summary: "Resistance · Dumbbells",
+      tags: entered.tags,
+      primaryMuscles: entered.primaryMuscles,
+      difficulty: entered.difficulty,
+      video: "Attached",
+    });
+  },
+);
+
+test(
+  "replacing or removing a saved video keeps only what she saved and deletes the file it replaced",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const saved = hipThrustNamed(`Frog pump ${runId}`);
+    const listed = {
+      name: saved.name,
+      summary: "Resistance · Barbell, Bench",
+      tags: saved.tags,
+      primaryMuscles: saved.primaryMuscles,
+      difficulty: saved.difficulty,
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createWithVideo(
+      saved,
+      exerciseVideoSamples.landscape,
+    );
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(saved.name);
+    const firstVideo = await exerciseEditor.servedVideoPath();
+
+    // act
+    await exerciseEditor.replaceVideo(exerciseVideoSamples.portrait);
+    await exerciseEditor.saveChanges();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectListed({ ...listed, video: "Attached" });
+
+    // act
+    await exerciseLibrary.edit(saved.name);
+    const secondVideo = await exerciseEditor.servedVideoPath();
+
+    // assert
+    expect(secondVideo).not.toBe(firstVideo);
+    await exerciseEditor.expectVideoShownWhole();
+    expect(storedExerciseVideoIds()).toContain(videoIdOf(secondVideo));
+    expect(storedExerciseVideoIds()).not.toContain(videoIdOf(firstVideo));
+    expect((await exerciseRequests.openVideo(firstVideo)).status).toBe(404);
+
+    // act
+    await exerciseEditor.removeVideo();
+    await exerciseEditor.saveChanges();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectListed({ ...listed, video: "—" });
+
+    // act
+    await exerciseLibrary.edit(saved.name);
+
+    // assert
+    await exerciseEditor.expectNoVideo();
+    expect(storedExerciseVideoIds()).not.toContain(videoIdOf(secondVideo));
+    expect((await exerciseRequests.openVideo(secondVideo)).status).toBe(404);
+  },
+);
+
+test(
+  "a saved video plays from the server with seeking, and Replace and Remove leave the player's controls clear on desktop and phone",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const saved = hipThrustNamed(`Banded walk ${runId}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createWithVideo(
+      saved,
+      exerciseVideoSamples.portrait,
+    );
+    await exerciseLibrary.open();
+
+    // act
+    await exerciseLibrary.edit(saved.name);
+
+    // assert
+    await exerciseEditor.expectServedVideo();
+    await exerciseEditor.expectVideoShownWhole();
+    await exerciseEditor.expectPlayerControlsUncovered();
+
+    // act
+    await exerciseEditor.seekVideoTo(SEEK_TO_SECONDS);
+    await exerciseEditor.playVideoFromControls();
+
+    // act
+    await setPhoneViewport(page);
+
+    // assert
+    await exerciseEditor.expectVideoShownWhole();
+    await exerciseEditor.expectPlayerControlsUncovered();
+  },
+);
+
+test(
+  "the save endpoint judges an uploaded video by its content and size, and the served video answers byte ranges",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const saved = hipThrustNamed(`Sumo deadlift ${runId}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+
+    // act
+    const refusals = [
+      await exerciseRequests.createWithVideo(
+        hipThrustNamed(`Disguised ${runId}`),
+        exerciseVideoSamples.textNamedAsVideo(),
+      ),
+      await exerciseRequests.createWithVideo(
+        hipThrustNamed(`Over the cap ${runId}`),
+        exerciseVideoSamples.overTheCap(),
+      ),
+      await exerciseRequests.createWithVideo(
+        hipThrustNamed(`Over the request cap ${runId}`),
+        exerciseVideoSamples.overTheRequestCap(),
+      ),
+    ];
+
+    // assert
+    expect(refusals).toEqual([
+      { status: 422, body: { problems: { video: "unsupported" } } },
+      { status: 422, body: { problems: { video: "too-large" } } },
+      { status: 413, body: { problems: { video: "too-large" } } },
+    ]);
+
+    // act
+    const created = await exerciseRequests.createWithVideoUnder(
+      "Multipart/Form-Data",
+      { fields: saved, video: exerciseVideoSamples.landscape },
+    );
+
+    // assert
+    expect(created.status).toBe(200);
+
+    // act
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(saved.name);
+    const videoPath = await exerciseEditor.servedVideoPath();
+    const [whole, head, tail, beyond] = [
+      await exerciseRequests.openVideo(videoPath),
+      await exerciseRequests.openVideo(videoPath, "bytes=0-99"),
+      await exerciseRequests.openVideo(videoPath, "bytes=-100"),
+      await exerciseRequests.openVideo(videoPath, "bytes=99999999-"),
+    ];
+    const size = whole.byteCount;
+
+    // assert
+    expect(whole).toMatchObject({
+      status: 200,
+      headers: {
+        "accept-ranges": "bytes",
+        "content-type": "video/mp4",
+        "x-content-type-options": "nosniff",
+      },
+    });
+    expect(head).toMatchObject({
+      status: 206,
+      byteCount: 100,
+      headers: { "content-range": `bytes 0-99/${size}` },
+    });
+    expect(tail).toMatchObject({
+      status: 206,
+      byteCount: 100,
+      headers: { "content-range": `bytes ${size - 100}-${size - 1}/${size}` },
+    });
+    expect(beyond).toMatchObject({
+      status: 416,
+      headers: { "content-range": `bytes */${size}` },
+    });
+  },
+);
+
+test(
+  "a signed-out visitor and a signed-in client can neither play an exercise's demo video nor upload one",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    exerciseVideoSamples,
+    page,
+    provisionAccount,
+    provisionCoach,
+    publicNav,
+    signIn,
+    signInAsCoach,
+    visitorExerciseRequests,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const kept = hipThrustNamed(`Nordic curl ${runId}`);
+    const video = exerciseVideoSamples.landscape;
+    await provisionCoach();
+    await provisionAccount("CLIENT");
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createWithVideo(kept, video);
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(kept.name);
+    const exerciseId = await exerciseEditor.exerciseId();
+    const videoPath = await exerciseEditor.servedVideoPath();
+    expect((await exerciseRequests.openVideo(videoPath)).status).toBe(200);
+    await page.goto("/");
+    await publicNav.signOut();
+
+    // act
+    const visitorStatuses = [
+      (await visitorExerciseRequests.openVideo(videoPath)).status,
+      (await visitorExerciseRequests.openVideo(videoPath, "bytes=0-99")).status,
+      (
+        await visitorExerciseRequests.createWithVideo(
+          hipThrustNamed(`Visitor ${runId}`),
+          video,
+        )
+      ).status,
+      (
+        await visitorExerciseRequests.editWithVideo(exerciseId, {
+          fields: kept,
+          video,
+        })
+      ).status,
+    ];
+
+    // assert
+    expect(visitorStatuses).toEqual([404, 404, 401, 401]);
+
+    // arrange
+    await page.goto("/store");
+    await signIn();
+
+    // act
+    const clientStatuses = [
+      (await exerciseRequests.openVideo(videoPath)).status,
+      (await exerciseRequests.openVideo(videoPath, "bytes=0-99")).status,
+      (
+        await exerciseRequests.createWithVideo(
+          hipThrustNamed(`Client ${runId}`),
+          video,
+        )
+      ).status,
+      (
+        await exerciseRequests.editWithVideo(exerciseId, {
+          fields: kept,
+          video,
+        })
+      ).status,
+    ];
+
+    // assert
+    expect(clientStatuses).toEqual([404, 404, 403, 403]);
+  },
+);
+
+test(
+  "the coach chooses, replaces, removes and plays a demo video by keyboard alone, with every refusal announced on the field",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseVideoSamples,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const runId = resolveRunId();
+    const created: SavedExercise = {
+      name: `Dead bug ${runId}`,
+      type: "Mobility",
+      unit: "Reps",
+      sides: "One side at a time",
+      primaryMuscles: ["Core"],
+      secondaryMuscles: [],
+      equipment: ["Mat"],
+      difficulty: "Beginner",
+      tags: ["Recovery"],
+      cues: "Low back stays on the mat.",
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseEditor.openNew();
+
+    // act
+    await exerciseEditor.chooseVideoWithKeyboard(
+      exerciseVideoSamples.notAVideo(),
+    );
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NOT_A_VIDEO_REFUSAL);
+
+    // act
+    await exerciseEditor.chooseVideoWithKeyboard(
+      exerciseVideoSamples.landscape,
+    );
+
+    // assert
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectNoVideoProblem();
+
+    // act
+    await exerciseEditor.playVideoWithKeyboard();
+    await exerciseEditor.replaceVideoWithKeyboard(
+      exerciseVideoSamples.notAVideo(),
+    );
+
+    // assert
+    await exerciseEditor.expectVideoRefused(NOT_A_VIDEO_REFUSAL);
+    await exerciseEditor.expectChosenVideoPreview();
+
+    // act
+    await exerciseEditor.replaceVideoWithKeyboard(
+      exerciseVideoSamples.portrait,
+    );
+
+    // assert
+    await exerciseEditor.expectChosenVideoPreview();
+    await exerciseEditor.expectNoVideoProblem();
+
+    // act
+    await exerciseEditor.removeVideoWithKeyboard();
+
+    // assert
+    await exerciseEditor.expectNoVideo();
+
+    // act
+    await exerciseEditor.chooseVideoWithKeyboard(
+      exerciseVideoSamples.landscape,
+    );
+    await exerciseEditor.createWithKeyboard(created);
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectListed({
+      name: created.name,
+      summary: "Mobility · Mat",
+      tags: created.tags,
+      primaryMuscles: created.primaryMuscles,
+      difficulty: created.difficulty,
+      video: "Attached",
+    });
   },
 );

@@ -43,6 +43,7 @@ import { CoachSettingsPage } from "./coach-settings-page";
 import { ExerciseEditorPage } from "./exercise-editor-page";
 import { ExerciseLibraryPage } from "./exercise-library-page";
 import { ExerciseRequests } from "./exercise-requests";
+import { ExerciseVideoSamples } from "./exercise-video-files";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   insertMeasuredClientRecords,
@@ -149,6 +150,7 @@ type PlatformFixtures = {
   exerciseEditor: ExerciseEditorPage;
   exerciseRequests: ExerciseRequests;
   visitorExerciseRequests: ExerciseRequests;
+  exerciseVideoSamples: ExerciseVideoSamples;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -561,6 +563,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
     await use(new ExerciseRequests(visitor));
     await visitor.dispose();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  exerciseVideoSamples: async ({}, use) => {
+    const samples = new ExerciseVideoSamples();
+
+    await use(samples);
+    samples.dispose();
   },
 
   addResourceDialog: async ({ page }, use) => {
