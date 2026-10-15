@@ -57,13 +57,7 @@ export function ProgramStatusCard({
     >
       <PortalWidget
         headingId="program-status-heading"
-        icon={
-          <ClipboardList
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
+        icon={ClipboardList}
         title={
           <span data-parity="status-eyebrow">
             {programStatusEyebrow(status.kind)}

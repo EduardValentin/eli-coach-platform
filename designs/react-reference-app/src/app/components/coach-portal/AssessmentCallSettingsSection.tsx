@@ -241,13 +241,7 @@ export function AssessmentCallSettingsSection() {
     <SettingsSection
       headingId="assessment-call-heading"
       title="Calls and check-ins"
-      icon={
-        <CalendarClock
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CalendarClock}
       description="Visitors book calls and clients pick check-in times inside the days and hours you set here."
       footer={
         <Button

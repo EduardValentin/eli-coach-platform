@@ -168,13 +168,7 @@ export function ClientDashboard() {
         {isPostMvp && (
           <ClientWidget
             eyebrow="Daily nutrition"
-            icon={
-              <Flame
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Flame}
             headingId="nutrition-heading"
             className="h-full lg:col-span-2"
           >
@@ -313,13 +307,7 @@ export function ClientDashboard() {
         {isPostMvp && (
           <ClientWidget
             eyebrow="Today's focus"
-            icon={
-              <Activity
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Activity}
             headingId="focus-heading"
             className="h-full lg:col-span-2"
             action={

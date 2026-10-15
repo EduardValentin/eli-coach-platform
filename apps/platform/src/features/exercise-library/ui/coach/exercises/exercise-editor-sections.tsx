@@ -51,8 +51,6 @@ type ExerciseSectionProps = {
 const BOTH_SIDES = "both";
 const ONE_SIDE = "one";
 
-const SECTION_ICON_CLASS = "text-brand-secondary";
-
 function changeValues(
   form: UseFormReturn<ExerciseFormValues>,
   changes: Partial<ExerciseFormValues>,
@@ -92,9 +90,7 @@ export function ExerciseAboutSection({
   return (
     <SettingsSection
       headingId="exercise-about-heading"
-      icon={
-        <Dumbbell aria-hidden="true" className={SECTION_ICON_CLASS} size={18} />
-      }
+      icon={Dumbbell}
       title="About the exercise"
     >
       <SettingsRows>
@@ -194,9 +190,7 @@ export function ExerciseWorkSection({
   return (
     <SettingsSection
       headingId="exercise-work-heading"
-      icon={
-        <Target aria-hidden="true" className={SECTION_ICON_CLASS} size={18} />
-      }
+      icon={Target}
       title="What it works"
     >
       <SettingsRows>
@@ -329,9 +323,7 @@ export function ExerciseCoachingSection({
   return (
     <SettingsSection
       headingId="exercise-coaching-heading"
-      icon={
-        <Film aria-hidden="true" className={SECTION_ICON_CLASS} size={18} />
-      }
+      icon={Film}
       title="Coaching"
     >
       <SettingsRows>

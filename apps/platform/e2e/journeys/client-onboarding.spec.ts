@@ -1,3 +1,5 @@
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";
 import {
@@ -15,13 +17,13 @@ const SUBMISSION_API_PATH = "/api/client-onboarding/submission";
 const DRAFT_API_PATH = "/api/client-onboarding/draft";
 
 const FEMALE_HEALTH_CONSENT =
-  "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time. (required)";
+  "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.";
 const HEALTH_CONSENT =
-  "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time. (required)";
+  "I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.";
 const PARQ_DECLARATION =
-  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again. (required)";
+  "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
 const DISCLAIMER =
-  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor. (required)";
+  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PARQ_QUESTIONS = [
@@ -90,13 +92,13 @@ async function clearSafetyScreening(
   onboarding: ClientOnboarding,
   consent: string,
 ) {
-  await onboarding.tick(consent);
+  await onboarding.tick(requiredName(consent));
 
   for (const question of PARQ_QUESTIONS) {
     await onboarding.choose(question, "No");
   }
 
-  await onboarding.tick(PARQ_DECLARATION);
+  await onboarding.tick(requiredName(PARQ_DECLARATION));
 }
 
 async function answerFoodAndDailyLife(onboarding: ClientOnboarding) {
@@ -143,7 +145,7 @@ async function answerEverythingButPhotos(onboarding: ClientOnboarding) {
   await onboarding.continueStep();
   await onboarding.expectStep(4, 4);
   await onboarding.answerText("Waist", "76");
-  await onboarding.tick(DISCLAIMER);
+  await onboarding.tick(requiredName(DISCLAIMER));
 }
 
 function workStartsOnLine(paidAt: Date): string {
@@ -224,7 +226,7 @@ test(
     await clientOnboarding.expectStep(2, 5);
 
     // act
-    await clientOnboarding.tick(FEMALE_HEALTH_CONSENT);
+    await clientOnboarding.tick(requiredName(FEMALE_HEALTH_CONSENT));
     await clientOnboarding.choose(
       "Has your doctor ever said that you have a heart condition",
       "No",
@@ -247,7 +249,7 @@ test(
       "should only do medically supervised physical activity",
       "No",
     );
-    await clientOnboarding.tick(PARQ_DECLARATION);
+    await clientOnboarding.tick(requiredName(PARQ_DECLARATION));
     await clientOnboarding.continueStep();
 
     // assert
@@ -340,7 +342,7 @@ test(
 
     // act
     await clientOnboarding.answerText("Waist", "30");
-    await clientOnboarding.tick(DISCLAIMER);
+    await clientOnboarding.tick(requiredName(DISCLAIMER));
     await clientOnboarding.sendToCoach();
 
     // assert
@@ -480,14 +482,16 @@ test(
     // assert
     await clientOnboarding.expectStep(2, 5);
     await clientOnboarding.expectStepHeadingFocused("A few safety questions");
-    await clientOnboarding.expectConsentStatement(FEMALE_HEALTH_CONSENT);
+    await clientOnboarding.expectConsentStatement(
+      requiredName(FEMALE_HEALTH_CONSENT),
+    );
     await clientOnboarding.expectPrivacyLink();
 
     // act
     for (const question of PARQ_QUESTIONS) {
       await clientOnboarding.choose(question, "No");
     }
-    await clientOnboarding.tick(PARQ_DECLARATION);
+    await clientOnboarding.tick(requiredName(PARQ_DECLARATION));
     await clientOnboarding.continueStep();
 
     // assert
@@ -495,7 +499,7 @@ test(
     await clientOnboarding.expectConsentProblem();
 
     // act
-    await clientOnboarding.tick(FEMALE_HEALTH_CONSENT);
+    await clientOnboarding.tick(requiredName(FEMALE_HEALTH_CONSENT));
     await clientOnboarding.continueStep();
 
     // assert
@@ -596,16 +600,16 @@ test(
     for (const question of PARQ_QUESTIONS) {
       await clientOnboarding.choose(question, "No");
     }
-    await clientOnboarding.tick(PARQ_DECLARATION);
+    await clientOnboarding.tick(requiredName(PARQ_DECLARATION));
     await clientOnboarding.continueStep();
 
     // assert
     await clientOnboarding.expectStep(2, 4);
-    await clientOnboarding.expectConsentStatement(HEALTH_CONSENT);
+    await clientOnboarding.expectConsentStatement(requiredName(HEALTH_CONSENT));
     await clientOnboarding.expectConsentProblem();
 
     // act
-    await clientOnboarding.tick(HEALTH_CONSENT);
+    await clientOnboarding.tick(requiredName(HEALTH_CONSENT));
     await clientOnboarding.continueStep();
     await clientOnboarding.expectStep(3, 4);
     await answerFoodAndDailyLife(clientOnboarding);
@@ -638,7 +642,7 @@ test(
     await clientOnboarding.expectSendToCoach("disabled");
 
     // act
-    await clientOnboarding.tick(DISCLAIMER);
+    await clientOnboarding.tick(requiredName(DISCLAIMER));
 
     // assert
     await clientOnboarding.expectSendToCoach("enabled");
@@ -986,7 +990,7 @@ test(
 
     // act
     await clientOnboarding.blockDraftSaves();
-    await clientOnboarding.tick(HEALTH_CONSENT);
+    await clientOnboarding.tick(requiredName(HEALTH_CONSENT));
     await clientOnboarding.choose(PARQ_QUESTIONS[0], "No");
 
     // assert
@@ -1000,7 +1004,7 @@ test(
 
     // assert
     await clientOnboarding.expectStep(2, 4);
-    await clientOnboarding.expectTicked(HEALTH_CONSENT);
+    await clientOnboarding.expectTicked(requiredName(HEALTH_CONSENT));
     await clientOnboarding.expectChosen(PARQ_QUESTIONS[0], "No");
     await clientOnboarding.expectUnsaved();
 
@@ -1027,7 +1031,7 @@ test(
     await expect(page).toHaveURL(/\/client\/onboarding$/);
     await clientOnboarding.expectStep(2, 4);
     await clientOnboarding.expectResumeNote();
-    await clientOnboarding.expectTicked(HEALTH_CONSENT);
+    await clientOnboarding.expectTicked(requiredName(HEALTH_CONSENT));
     await clientOnboarding.expectChosen(PARQ_QUESTIONS[0], "No");
   },
 );
@@ -1054,7 +1058,9 @@ test(
     // assert
     await clientOnboarding.expectStep(2, 5);
     await clientOnboarding.expectManualScreening();
-    await clientOnboarding.expectConsentStatement(FEMALE_HEALTH_CONSENT);
+    await clientOnboarding.expectConsentStatement(
+      requiredName(FEMALE_HEALTH_CONSENT),
+    );
 
     // act
     await clientOnboarding.continueStep();
@@ -1064,7 +1070,7 @@ test(
     await clientOnboarding.expectConsentProblem();
 
     // act
-    await clientOnboarding.tick(FEMALE_HEALTH_CONSENT);
+    await clientOnboarding.tick(requiredName(FEMALE_HEALTH_CONSENT));
     await clientOnboarding.continueStep();
 
     // assert
@@ -1106,11 +1112,11 @@ test(
     );
 
     // act
-    await clientOnboarding.keyboardTick(HEALTH_CONSENT);
+    await clientOnboarding.keyboardTick(requiredName(HEALTH_CONSENT));
     for (const question of PARQ_QUESTIONS) {
       await clientOnboarding.keyboardChoose(question, "No");
     }
-    await clientOnboarding.keyboardTick(PARQ_DECLARATION);
+    await clientOnboarding.keyboardTick(requiredName(PARQ_DECLARATION));
     await clientOnboarding.keyboardContinue();
 
     // assert

@@ -1,10 +1,9 @@
 import { useState, type ComponentProps } from "react";
-import { ChevronDownIcon } from "lucide-react";
 import { SearchField } from "./SearchField";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { FIELD_TAB_INDEX, SelectTrigger, selectTriggerClasses } from "./ui/select";
+import { FIELD_TAB_INDEX, SelectTrigger, SelectTriggerChevron, selectTriggerClasses } from "./ui/select";
 import { cn } from "./ui/utils";
 
 type Summary = "count" | "names";
@@ -149,7 +148,7 @@ export function MultiSelect<Value extends string>({
           >
             <TriggerSummary label={label} selected={selected} labels={labels} summary={summary} placeholder={placeholder} />
           </span>
-          <ChevronDownIcon className="size-4 opacity-50" aria-hidden="true" />
+          <SelectTriggerChevron />
         </button>
       </PopoverTrigger>
       <PopoverContent aria-label={label} align="start" className="flex w-(--radix-popover-trigger-width) min-w-56 max-w-md flex-col gap-1 p-1">

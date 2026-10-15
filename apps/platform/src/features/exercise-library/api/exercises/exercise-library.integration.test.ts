@@ -18,6 +18,7 @@ import {
 import {
   CLIENT_SESSION,
   COACH_SESSION,
+  OTHER_COACH_SESSION,
   PlatformRig,
 } from "~integration-test-config/platform-rig";
 import {
@@ -143,7 +144,7 @@ describe.sequential("exercise library integration", () => {
   });
 
   describe("creating an exercise", () => {
-    it("stores every entry, the name trimmed, and names the library as the next page", async () => {
+    it("stores every entry, the name trimmed, as the signed-in coach's, and names the library as the next page", async () => {
       // arrange
       await rig.holdClock(CREATED_AT);
 
@@ -161,6 +162,7 @@ describe.sequential("exercise library integration", () => {
         {
           ...columns,
           id: expect.any(String),
+          ownerSubjectId: COACH_SESSION.subjectId,
           formCues: cues,
           createdAt: CREATED_AT,
           updatedAt: CREATED_AT,
@@ -302,7 +304,7 @@ describe.sequential("exercise library integration", () => {
   });
 
   describe("editing an exercise", () => {
-    it("replaces every entry, keeps the moment it was created and names the library as the next page", async () => {
+    it("replaces every entry, keeps its owner and the moment it was created and names the library as the next page", async () => {
       // arrange
       await rig.holdClock(CREATED_AT);
       const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
@@ -332,6 +334,7 @@ describe.sequential("exercise library integration", () => {
         {
           ...columns,
           id: squat.id,
+          ownerSubjectId: COACH_SESSION.subjectId,
           name: "Front squat",
           formCues: cues,
           createdAt: CREATED_AT,
@@ -443,6 +446,111 @@ describe.sequential("exercise library integration", () => {
       expect((await library.exerciseRows()).map(({ name }) => name)).toEqual([
         "Back squat",
       ]);
+    });
+  });
+
+  describe("whose library it is", () => {
+    beforeEach(async () => {
+      await rig.provisionOtherCoach();
+    });
+
+    it("stores a name another coach's exercise already has as her own", async () => {
+      // arrange
+      await library.createAccepted(OTHER_COACH_SESSION, HIP_THRUST);
+
+      // act
+      const response = await library.create(COACH_SESSION, {
+        ...HIP_THRUST,
+        name: " hip THRUST",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(
+        (await library.exerciseRows()).map(({ name, ownerSubjectId }) => [
+          name,
+          ownerSubjectId,
+        ]),
+      ).toEqual([
+        ["hip THRUST", COACH_SESSION.subjectId],
+        ["Hip thrust", OTHER_COACH_SESSION.subjectId],
+      ]);
+    });
+
+    it("renames her exercise onto a name only another coach's exercise has", async () => {
+      // arrange
+      await library.createAccepted(OTHER_COACH_SESSION, HIP_THRUST);
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+
+      // act
+      const response = await library.edit(COACH_SESSION, squat.id, {
+        ...BACK_SQUAT,
+        name: "Hip thrust",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(
+        (await library.exerciseRows()).map(({ id, ownerSubjectId }) => [
+          id,
+          ownerSubjectId,
+        ]),
+      ).toEqual([
+        [squat.id, COACH_SESSION.subjectId],
+        [expect.any(String), OTHER_COACH_SESSION.subjectId],
+      ]);
+    });
+
+    it("answers 404 to editing another coach's exercise, leaving it as it was", async () => {
+      // arrange
+      const othersSquat = await library.createAccepted(
+        OTHER_COACH_SESSION,
+        BACK_SQUAT,
+      );
+
+      // act
+      const response = await library.edit(
+        COACH_SESSION,
+        othersSquat.id,
+        HIP_THRUST,
+      );
+
+      // assert
+      expect(response.status).toBe(404);
+      expect(await library.exerciseRows()).toEqual([othersSquat]);
+    });
+
+    it("lists only her own exercises", async () => {
+      // arrange
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.createAccepted(OTHER_COACH_SESSION, BOX_BREATHING);
+
+      // act
+      const response = await library.openLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain("Hip thrust");
+      expect(page).not.toContain("Box breathing");
+    });
+
+    it("returns her to the library when she opens another coach's exercise", async () => {
+      // arrange
+      const othersSquat = await library.createAccepted(
+        OTHER_COACH_SESSION,
+        BACK_SQUAT,
+      );
+
+      // act
+      const response = await library.openExercise(
+        COACH_SESSION,
+        othersSquat.id,
+      );
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe(suite.path(LIBRARY_PAGE));
     });
   });
 

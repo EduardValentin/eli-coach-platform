@@ -1,4 +1,4 @@
-import { Scale, TrendingDown, TrendingUp } from 'lucide-react';
+import { Scale, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react';
 import { weightChangeKg } from '../domain/bodyMetrics';
 import {
   displayWeightValue,
@@ -21,10 +21,10 @@ interface ProgressWidgetProps {
   className?: string;
 }
 
-function TrendIcon({ change }: { change: number | null }) {
-  const Icon = change === null ? Scale : change < 0 ? TrendingDown : TrendingUp;
+function trendIconOf(change: number | null): LucideIcon {
+  if (change === null) return Scale;
 
-  return <Icon aria-hidden="true" className="text-brand-secondary" size={18} />;
+  return change < 0 ? TrendingDown : TrendingUp;
 }
 
 export function ProgressWidget({
@@ -39,7 +39,7 @@ export function ProgressWidget({
       <PortalWidget
         presentation={presentation}
         title="Weight"
-        icon={<TrendIcon change={null} />}
+        icon={trendIconOf(null)}
         headingId={headingId}
         className={className}
       >
@@ -57,7 +57,7 @@ export function ProgressWidget({
     <PortalWidget
       presentation={presentation}
       title="Weight"
-      icon={<TrendIcon change={change} />}
+      icon={trendIconOf(change)}
       headingId={headingId}
       className={className}
       hero={

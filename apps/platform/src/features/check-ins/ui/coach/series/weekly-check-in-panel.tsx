@@ -123,13 +123,7 @@ export function WeeklyCheckInPanel({
         )
       }
       headingId="weekly-check-in-panel-heading"
-      icon={
-        <CalendarRange
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CalendarRange}
       title="Weekly check-in"
     >
       <div data-parity="series-summary">

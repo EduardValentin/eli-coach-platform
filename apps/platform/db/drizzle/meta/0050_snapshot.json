@@ -1,6 +1,6 @@
 {
-  "id": "358a5a2d-37eb-4776-860b-b395cf4f8332",
-  "prevId": "98b071ae-d9ba-4e36-8e44-d6eec1f7a6a7",
+  "id": "21da20e6-45e3-477a-b299-00666218fa82",
+  "prevId": "efda85e6-1083-4a71-966b-57c787621672",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -515,27 +515,6 @@
           "columns": [
             {
               "expression": "series_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "starts_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "check_ins_status_starts_at_idx": {
-          "name": "check_ins_status_starts_at_idx",
-          "columns": [
-            {
-              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2716,6 +2695,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "owner_account_id": {
+          "name": "owner_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "name": {
           "name": "name",
           "type": "varchar(80)",
@@ -2790,9 +2775,15 @@
         }
       },
       "indexes": {
-        "exercises_name_unique": {
-          "name": "exercises_name_unique",
+        "exercises_owner_name_unique": {
+          "name": "exercises_owner_name_unique",
           "columns": [
+            {
+              "expression": "owner_account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "lower(btrim(\"name\"))",
               "asc": true,
@@ -2806,7 +2797,22 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "exercises_owner_account_id_accounts_id_fk": {
+          "name": "exercises_owner_account_id_accounts_id_fk",
+          "tableFrom": "exercises",
+          "tableTo": "accounts",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "owner_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

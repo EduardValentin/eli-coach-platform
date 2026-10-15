@@ -2,12 +2,14 @@ import type { ExerciseDraft, ExerciseDraftSnapshot } from "./exercise-draft";
 
 export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   id: string;
+  ownerAccountId: string;
   createdAt: Date;
   updatedAt: Date;
 };
 
 type AddedExerciseInput = {
   id: string;
+  ownerAccountId: string;
   draft: ExerciseDraft;
   at: Date;
 };
@@ -18,6 +20,7 @@ export class Exercise {
   static added(input: AddedExerciseInput): Exercise {
     return new Exercise({
       id: input.id,
+      ownerAccountId: input.ownerAccountId,
       ...input.draft.toSnapshot(),
       createdAt: input.at,
       updatedAt: input.at,

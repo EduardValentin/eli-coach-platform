@@ -23,6 +23,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { requiredName } from "@eli-coach-platform/test-support";
+
 import { clientAction as acquireResources } from "~/features/store/api/acquisitions/acquisitions";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
@@ -270,19 +272,39 @@ describe("StoreCartDrawer", () => {
     await continueToAcquisitionDetails(dialog, user);
 
     // assert
-    expect(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByRole("checkbox", {
-        name: "I agree to the Terms & Conditions. (required)",
-      }),
-    ).toBeInTheDocument();
+    expect(emailField(dialog)).toBeInTheDocument();
+    expect(termsCheckbox(dialog)).toBeInTheDocument();
     expect(
       within(dialog).getByRole("checkbox", {
         name: "Keep me posted about new plans, guides, and offers.",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("ticks the terms when the visitor clicks their statement", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+
+    // act
+    await user.click(within(dialog).getByText(/^I agree to the/));
+
+    // assert
+    expect(termsCheckbox(dialog)).toBeChecked();
   });
 
   it("delivers the selected resources and clears the cart only after accepted delivery", async () => {
@@ -315,20 +337,11 @@ describe("StoreCartDrawer", () => {
       within(dialog).queryByText("Free", { exact: true }),
     ).not.toBeInTheDocument();
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
+    await user.type(emailField(dialog), "woman@example.com");
     expect(
-      within(dialog)
-        .getByRole("link", { name: "Terms & Conditions" })
-        .closest("label"),
-    ).toBeNull();
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+      within(dialog).getByRole("link", { name: "Terms & Conditions" }),
+    ).toHaveAttribute("href", "/terms");
+    await user.click(termsCheckbox(dialog));
     await user.click(
       within(dialog).getByRole("checkbox", {
         name: STORE_MARKETING_CONSENT,
@@ -390,15 +403,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
     await user.click(
       within(dialog).getByRole("button", { name: "Send my resources" }),
     );
@@ -412,10 +418,56 @@ describe("StoreCartDrawer", () => {
     expect(
       within(dialog).queryByRole("heading", { name: "Check your inbox" }),
     ).not.toBeInTheDocument();
-    expect(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-    ).toHaveValue("woman@example.com");
+    expect(emailField(dialog)).toHaveValue("woman@example.com");
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
+  });
+
+  it("names the terms problem on their checkbox when she unticks them after a declined send", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "rate_limited_cooldown",
+              message: "Unable to deliver store resources.",
+            },
+            success: false,
+          },
+          { status: 429 },
+        ),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+    await within(dialog).findByText(/Requests are limited to one per minute/);
+
+    // act
+    await user.click(termsCheckbox(dialog));
+    await user.tab();
+
+    // assert
+    expect(termsCheckbox(dialog)).toHaveAccessibleDescription(
+      "Accept the Terms & Conditions to continue.",
+    );
+    expect(termsCheckbox(dialog)).toHaveAttribute("aria-invalid", "true");
   });
 
   it("shows a refused subaddress as the email field's own error, not as a form alert", async () => {
@@ -448,15 +500,9 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    const emailInput = within(dialog).getByRole("textbox", {
-      name: "Email address (required)",
-    });
+    const emailInput = emailField(dialog);
     await user.type(emailInput, "woman+guides@example.com");
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.click(termsCheckbox(dialog));
 
     // act
     await user.click(
@@ -497,14 +543,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
-    const emailInput = within(dialog).getByRole("textbox", {
-      name: "Email address (required)",
-    });
+    await user.click(termsCheckbox(dialog));
+    const emailInput = emailField(dialog);
     await user.type(emailInput, "not-an-email");
 
     // act
@@ -543,19 +583,13 @@ describe("StoreCartDrawer", () => {
     });
 
     // act
-    const emailInput = within(dialog).getByRole("textbox", {
-      name: "Email address (required)",
-    });
+    const emailInput = emailField(dialog);
 
     // assert
     expect(submitButton).toBeDisabled();
     await user.type(emailInput, "woman@example.com");
     expect(submitButton).toBeDisabled();
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.click(termsCheckbox(dialog));
     expect(submitButton).toBeEnabled();
   });
 
@@ -589,15 +623,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
 
     // act
     await user.click(
@@ -608,9 +635,7 @@ describe("StoreCartDrawer", () => {
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
       "couldn't send your resources",
     );
-    expect(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-    ).toHaveValue("woman@example.com");
+    expect(emailField(dialog)).toHaveValue("woman@example.com");
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
@@ -663,17 +688,8 @@ describe("StoreCartDrawer", () => {
       );
       const dialog = await screen.findByRole("dialog", { name: "Your cart" });
       await continueToAcquisitionDetails(dialog, user);
-      await user.type(
-        within(dialog).getByRole("textbox", {
-          name: "Email address (required)",
-        }),
-        "woman@example.com",
-      );
-      await user.click(
-        within(dialog).getByRole("checkbox", {
-          name: /agree to the terms/i,
-        }),
-      );
+      await user.type(emailField(dialog), "woman@example.com");
+      await user.click(termsCheckbox(dialog));
 
       // act
       await user.click(
@@ -684,11 +700,7 @@ describe("StoreCartDrawer", () => {
       expect(await within(dialog).findByRole("alert")).toHaveTextContent(
         "We couldn't send your resources right now. Your cart is saved, so please try again.",
       );
-      expect(
-        within(dialog).getByRole("textbox", {
-          name: "Email address (required)",
-        }),
-      ).toHaveValue("woman@example.com");
+      expect(emailField(dialog)).toHaveValue("woman@example.com");
       expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
       await waitFor(() => {
         expect(challengeResets).toBe(1);
@@ -736,15 +748,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
 
     // act
     await user.click(
@@ -756,9 +761,7 @@ describe("StoreCartDrawer", () => {
       "couldn't verify this request",
     );
     expect(acquisitionRequests).toBe(0);
-    expect(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-    ).toHaveValue("woman@example.com");
+    expect(emailField(dialog)).toHaveValue("woman@example.com");
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
@@ -805,12 +808,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    const email = within(dialog).getByRole("textbox", {
-      name: "Email address (required)",
-    });
-    const terms = within(dialog).getByRole("checkbox", {
-      name: /agree to the terms/i,
-    });
+    const email = emailField(dialog);
+    const terms = termsCheckbox(dialog);
     const marketing = within(dialog).getByRole("checkbox", {
       name: STORE_MARKETING_CONSENT,
     });
@@ -886,15 +885,8 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
     const submitButton = within(dialog).getByRole("button", {
       name: "Send my resources",
     });
@@ -940,15 +932,8 @@ describe("StoreCartDrawer", () => {
     );
     let dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address (required)" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
+    await user.type(emailField(dialog), "woman@example.com");
+    await user.click(termsCheckbox(dialog));
     await user.click(
       within(dialog).getByRole("checkbox", {
         name: STORE_MARKETING_CONSENT,
@@ -966,19 +951,17 @@ describe("StoreCartDrawer", () => {
     await user.click(screen.getByRole("button", { name: "Add test resource" }));
     dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    const termsCheckbox = within(dialog).getByRole("checkbox", {
-      name: /agree to the terms/i,
-    });
+    const terms = termsCheckbox(dialog);
     const marketingCheckbox = within(dialog).getByRole("checkbox", {
       name: STORE_MARKETING_CONSENT,
     });
     const submitButton = within(dialog).getByRole("button", {
       name: "Send my resources",
     });
-    expect(termsCheckbox).not.toBeChecked();
+    expect(terms).not.toBeChecked();
     expect(marketingCheckbox).not.toBeChecked();
     expect(submitButton).toBeDisabled();
-    await user.click(termsCheckbox);
+    await user.click(terms);
     await user.click(submitButton);
 
     // assert
@@ -1032,6 +1015,18 @@ async function continueToAcquisitionDetails(
   await user.click(
     await within(dialog).findByRole("button", { name: "Continue" }),
   );
+}
+
+function emailField(dialog: HTMLElement): HTMLElement {
+  return within(dialog).getByRole("textbox", {
+    name: requiredName("Email address"),
+  });
+}
+
+function termsCheckbox(dialog: HTMLElement): HTMLElement {
+  return within(dialog).getByRole("checkbox", {
+    name: requiredName("I agree to the Terms & Conditions."),
+  });
 }
 
 function DisappearingStoreCartTestControl() {

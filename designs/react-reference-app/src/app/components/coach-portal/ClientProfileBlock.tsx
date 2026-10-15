@@ -145,13 +145,7 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
     <PortalWidget
       presentation="coach"
       title="Profile"
-      icon={
-        <UserRound
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={UserRound}
       headingId="profile-panel-heading"
       parityRoot="ClientProfileBlock"
       className="mb-8"

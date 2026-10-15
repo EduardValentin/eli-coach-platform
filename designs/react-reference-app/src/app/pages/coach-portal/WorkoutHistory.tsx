@@ -38,7 +38,7 @@ import {
   LABEL_CLASS,
   WIDGET_SUBHEADING_CLASS,
 } from '../../components/typography';
-import { ToggleChip } from '../../components/ToggleChip';
+import { CheckboxChip } from '../../components/CheckboxChip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -540,17 +540,19 @@ export function WorkoutHistory() {
               >
                 <div className="flex flex-wrap gap-2">
                   {muscleOptions.map((m) => (
-                    <ToggleChip
+                    <CheckboxChip
                       key={m}
-                      pressed={selectedMuscles.includes(m)}
-                      onPressedChange={(on) =>
+                      size="compact"
+                      aria-label={m}
+                      checked={selectedMuscles.includes(m)}
+                      onCheckedChange={(checked) =>
                         setSelectedMuscles((prev) =>
-                          on ? [...prev, m] : prev.filter((x) => x !== m),
+                          checked ? [...prev, m] : prev.filter((x) => x !== m),
                         )
                       }
                     >
                       {m}
-                    </ToggleChip>
+                    </CheckboxChip>
                   ))}
                 </div>
               </FilterField>

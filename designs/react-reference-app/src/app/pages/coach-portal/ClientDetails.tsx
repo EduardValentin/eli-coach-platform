@@ -360,13 +360,7 @@ function RosterClientDetails() {
           <PortalWidget
             presentation="coach"
             title="Daily Target"
-            icon={
-              <Flame
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Flame}
             headingId="daily-target-heading"
             className="h-full"
             hero={
@@ -387,13 +381,7 @@ function RosterClientDetails() {
           <PortalWidget
             presentation="coach"
             title="Avg Compliance"
-            icon={
-              <Percent
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Percent}
             headingId="avg-compliance-heading"
             className="h-full"
             hero={<span className="tabular-nums">95</span>}
@@ -405,13 +393,7 @@ function RosterClientDetails() {
           <PortalWidget
             presentation="coach"
             title="Active Plan"
-            icon={
-              <Activity
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={Activity}
             headingId="active-plan-heading"
             className="h-full"
           >
@@ -519,13 +501,7 @@ function RosterClientDetails() {
               <PortalWidget
                 presentation="coach"
                 title="Nutrition"
-                icon={
-                  <Utensils
-                    aria-hidden="true"
-                    className="text-brand-secondary"
-                    size={18}
-                  />
-                }
+                icon={Utensils}
                 headingId="nutrition-tile-heading"
                 className="h-full"
               >
@@ -608,13 +584,7 @@ function RosterClientDetails() {
           <PortalWidget
             presentation="coach"
             title="Workout History"
-            icon={
-              <History
-                aria-hidden="true"
-                className="text-brand-secondary"
-                size={18}
-              />
-            }
+            icon={History}
             headingId="workout-history-heading"
             className="lg:col-span-2 self-start"
             action={

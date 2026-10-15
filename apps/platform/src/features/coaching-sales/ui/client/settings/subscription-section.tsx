@@ -208,13 +208,7 @@ export function SubscriptionSection({
       data-parity-root="SubscriptionSection"
       headingId="subscription-heading"
       headingRef={subscriptionHeading}
-      icon={
-        <CreditCard
-          aria-hidden="true"
-          className="text-brand-secondary"
-          size={18}
-        />
-      }
+      icon={CreditCard}
       title={SUBSCRIPTION_TITLE}
     >
       <SettingsRows>

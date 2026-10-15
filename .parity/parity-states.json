@@ -1777,10 +1777,16 @@
       "use": "onboarding-complete-form1"
     },
     {
-      "wait": 500
+      "waitFor": "[data-parity=\"field-heartCondition\"]"
     },
     {
       "click": "[data-parity=\"continue\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"consent-checkbox\"][aria-invalid=\"true\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"field-heartCondition\"] [aria-invalid=\"true\"] :focus"
     }
   ],
   "onboarding-form3-regular-cycle": [
@@ -1804,6 +1810,12 @@
     },
     {
       "click": "role=option[name=\"No\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"][aria-expanded=\"false\"]:focus:has-text(\"No\")"
+    },
+    {
+      "waitFor": "body:not(:has([role=\"listbox\"]))"
     }
   ],
   "onboarding-form4-default": [
@@ -1869,6 +1881,9 @@
   "onboarding-imperial": [
     {
       "click": "[data-parity=\"units-choice\"] >> text=lb · in"
+    },
+    {
+      "waitFor": "[data-parity=\"units-choice\"] [role=\"radio\"][aria-checked=\"true\"]:focus:has-text(\"lb\")"
     }
   ],
   "onboarding-manual-screening": {
@@ -2150,10 +2165,10 @@
       "waitFor": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]"
     },
     {
-      "wait": 1500
+      "hover": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]"
     },
     {
-      "hover": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]"
+      "waitFor": "[role=\"dialog\"] [data-parity=\"drawer-backdrop\"][style*=\"opacity: 1\"] + [style*=\"transform: none\"]"
     }
   ],
   "open-cycle-mode-tooltip": [
@@ -4296,6 +4311,9 @@
     },
     {
       "waitFor": "[data-parity=\"link-training\"][aria-current=\"page\"]"
+    },
+    {
+      "waitFor": "main h1:has-text(\"Exercises\")"
     }
   ],
   "open-new-exercise": [
@@ -4309,15 +4327,18 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "B"
       ]
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         ""
       ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
     }
   ],
   "exercise-editor-too-long": [
@@ -4326,7 +4347,7 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "Barbell back squat with a three-second pause at the bottom and a slow steady rise"
       ]
     },
@@ -4335,6 +4356,12 @@
         "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Form cues\" s]",
         "Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit between the hips, drive the floor away and stand tall. Brace before every rep, keep the chest proud, sit betwee"
       ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] textarea[aria-invalid=\"true\"]:focus"
     }
   ],
   "exercise-editor-name-taken": [
@@ -4343,14 +4370,20 @@
     },
     {
       "fill": [
-        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+        "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
         "Barbell Back Squat"
       ]
+    },
+    {
+      "waitFor": "[data-parity-root=\"ExerciseEditorPage\"] input[aria-invalid=\"true\"]:focus"
     }
   ],
   "open-exercise-actions": [
     {
       "click": "role=button[name=\"Actions for Barbell Back Squat\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
     }
   ],
   "open-exercise-editor-back-squat": [
@@ -4370,6 +4403,9 @@
     },
     {
       "click": "role=button[name=/^Primary muscles/]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
     }
   ],
   "open-primary-muscles-chosen": [
@@ -4378,6 +4414,9 @@
     },
     {
       "click": "role=button[name=/^Primary muscles/]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"dialog\"][data-state=\"open\"] input:focus"
     }
   ],
   "seed-primary-quadriceps-glutes": {
@@ -4402,7 +4441,7 @@
     "real": [
       {
         "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
           "Barbell Back Squat"
         ]
       },
@@ -4461,7 +4500,7 @@
     "real": [
       {
         "fill": [
-          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name\" s]",
+          "[data-parity-root=\"ExerciseEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
           "Bulgarian Split Squat"
         ]
       },
@@ -4500,6 +4539,54 @@
     },
     {
       "click": "[data-parity-root=\"ExerciseEditorPage\"] >> role=combobox[name=\"Measured in\" s]"
+    },
+    {
+      "waitFor": "[data-radix-popper-content-wrapper] > [role=\"listbox\"][data-state=\"open\"] [role=\"option\"][aria-selected=\"true\"]:focus"
+    }
+  ],
+  "cart-one-item": {
+    "prototype": [
+      {
+        "click": "role=button[name=\"Get for Free\"] >> nth=0"
+      }
+    ],
+    "real": [
+      {
+        "click": "role=button[name=/^Get .+ for free$/] >> nth=0"
+      }
+    ]
+  },
+  "cart-details": [
+    {
+      "use": "cart-one-item"
+    },
+    {
+      "click": "role=button[name=\"Continue\"]"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"CartDrawer\"] input[type=\"email\"]",
+        "visitor@example.com"
+      ]
+    }
+  ],
+  "cart-terms-accepted": [
+    {
+      "use": "cart-details"
+    },
+    {
+      "click": "role=checkbox[name=/^I agree to the Terms & Conditions/]"
+    }
+  ],
+  "cart-sent": [
+    {
+      "use": "cart-terms-accepted"
+    },
+    {
+      "click": "role=button[name=\"Send my resources\"]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"CartDrawer\"] h2:text-is(\"Check your inbox\")"
     }
   ]
 }

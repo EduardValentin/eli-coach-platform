@@ -19,6 +19,7 @@ export default {
   basename,
   buildDirectory: "build",
   future: {
+    unstable_optimizeDeps: true,
     v8_middleware: true,
   },
   ssr: true,

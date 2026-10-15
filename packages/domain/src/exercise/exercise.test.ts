@@ -5,6 +5,7 @@ import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 
 const ADDED_AT = new Date("2026-10-14T09:00:00.000Z");
 const REVISED_AT = new Date("2026-10-15T09:00:00.000Z");
+const COACH_ACCOUNT_ID = "coach-account-1";
 
 const SQUAT: ExerciseDraftInput = {
   name: "Back squat",
@@ -30,26 +31,33 @@ function validDraft(input: ExerciseDraftInput): ExerciseDraft {
 }
 
 describe("Exercise", () => {
-  it("is added with its draft, created and updated at the same moment", () => {
+  it("is added with its draft, owned by the coach who added it, created and updated at the same moment", () => {
     // arrange
     const draft = validDraft(SQUAT);
 
     // act
-    const exercise = Exercise.added({ id: "exercise-1", draft, at: ADDED_AT });
+    const exercise = Exercise.added({
+      id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft,
+      at: ADDED_AT,
+    });
 
     // assert
     expect(exercise.toSnapshot()).toEqual({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       createdAt: ADDED_AT,
       updatedAt: ADDED_AT,
     });
   });
 
-  it("is revised as a whole, keeping its id and the moment it was created", () => {
+  it("is revised as a whole, keeping its id, its owner and the moment it was created", () => {
     // arrange
     const exercise = Exercise.added({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: validDraft(SQUAT),
       at: ADDED_AT,
     });
@@ -66,6 +74,7 @@ describe("Exercise", () => {
     // assert
     expect(revised.toSnapshot()).toEqual({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       createdAt: ADDED_AT,
       updatedAt: REVISED_AT,
@@ -77,6 +86,7 @@ describe("Exercise", () => {
     // arrange
     const snapshot = Exercise.added({
       id: "exercise-1",
+      ownerAccountId: COACH_ACCOUNT_ID,
       draft: validDraft(SQUAT),
       at: ADDED_AT,
     }).toSnapshot();

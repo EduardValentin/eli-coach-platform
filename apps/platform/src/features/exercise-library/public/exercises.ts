@@ -6,7 +6,10 @@ import type {
 } from "@eli-coach-platform/domain/exercise";
 import { z } from "zod";
 
-export type ExerciseView = Omit<ExerciseSnapshot, "createdAt" | "updatedAt">;
+export type ExerciseView = Omit<
+  ExerciseSnapshot,
+  "ownerAccountId" | "createdAt" | "updatedAt"
+>;
 
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
 
@@ -54,6 +57,7 @@ export const exerciseProblemsAnswerSchema = z.object({
 
 export function presentExercise(exercise: Exercise): ExerciseView {
   const {
+    ownerAccountId: _ownerAccountId,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
     ...view

@@ -31,6 +31,7 @@ import {
 } from '../../utils/libraryListing';
 import { pageOf } from '../../utils/listPaging';
 import { EmptyState } from '../EmptyState';
+import { ItemGlyph } from '../ItemGlyph';
 import { ListingToolbar } from '../ListingToolbar';
 import { ListPager } from '../ListPager';
 import { SearchField } from '../SearchField';
@@ -77,13 +78,7 @@ function ExerciseRow({
     <TableRow data-parity="exercise-row">
       <TableCell>
         <div className="flex items-center gap-3">
-          <div
-            aria-hidden="true"
-            className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center text-text-secondary shrink-0"
-            data-parity="exercise-glyph"
-          >
-            <Activity size={18} />
-          </div>
+          <ItemGlyph icon={Activity} parity="exercise-glyph" />
           <div>
             <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
             <p className="text-xs text-text-secondary mt-0.5" data-parity="exercise-summary">
