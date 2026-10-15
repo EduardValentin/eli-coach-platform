@@ -116,22 +116,22 @@ describe("ListLapsedCheckInsUseCase", () => {
     expect(lapsed).toEqual([
       {
         checkIn: EXPIRED_REQUEST.toSnapshot(),
-        lapse: "request_expired",
-        lapsedAt: EXPIRED_REQUEST.startsAt,
+        lapse: { kind: "request_expired", lapsedAt: EXPIRED_REQUEST.startsAt },
         party: "coach",
         client: ANA,
       },
       {
         checkIn: EXPIRED_NEW_TIME.toSnapshot(),
-        lapse: "new_time_expired",
-        lapsedAt: EXPIRED_NEW_TIME.startsAt,
+        lapse: {
+          kind: "new_time_expired",
+          lapsedAt: EXPIRED_NEW_TIME.startsAt,
+        },
         party: "coach",
         client: MARA,
       },
       {
         checkIn: MISSED_CLASH.toSnapshot(),
-        lapse: "clash_missed",
-        lapsedAt: MISSED_CLASH.startsAt,
+        lapse: { kind: "clash_missed", lapsedAt: MISSED_CLASH.startsAt },
         party: "coach",
         client: ANA,
       },
@@ -161,8 +161,7 @@ describe("ListLapsedCheckInsUseCase", () => {
     expect(lapsed).toEqual([
       {
         checkIn: EXPIRED_REQUEST.toSnapshot(),
-        lapse: "request_expired",
-        lapsedAt: EXPIRED_REQUEST.startsAt,
+        lapse: { kind: "request_expired", lapsedAt: EXPIRED_REQUEST.startsAt },
         party: "client",
         client: ANA,
       },
@@ -208,7 +207,7 @@ describe("ListLapsedCheckInsUseCase", () => {
     });
 
     // assert
-    expect(lapsed.map((item) => item.lapsedAt)).toEqual([SINCE]);
+    expect(lapsed.map(({ lapse }) => lapse.lapsedAt)).toEqual([SINCE]);
   });
 
   it("reads no identity when nothing lapsed", async () => {

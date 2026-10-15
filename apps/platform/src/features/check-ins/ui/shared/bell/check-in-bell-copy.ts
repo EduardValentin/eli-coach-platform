@@ -121,7 +121,7 @@ function momentCopyOf(
   const instant = new Date(facts.startsAt);
   const when = `${formatShortDay(instant, reading.timeZone)} at ${formatClockTime(instant, reading.timeZone)}`;
   const namedClient = reading.party === "coach" ? facts.clientName : undefined;
-  const name =
+  const actorName =
     reading.party === "coach"
       ? (facts.clientName ?? UNNAMED_CLIENT)
       : COACH_DISPLAY_NAME;
@@ -130,35 +130,35 @@ function momentCopyOf(
   const copy: Record<MomentKind, Copy> = {
     [CHECK_IN_BELL_KINDS.requested]: {
       title: "Check-in requested",
-      line: `${name} asked for a check-in on ${when}.`,
+      line: `${actorName} asked for a check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.withdrawn]: {
       title: "Check-in request withdrawn",
-      line: `${name} withdrew the check-in on ${when}.`,
+      line: `${actorName} withdrew the check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.approved]: {
       title: "Check-in approved",
-      line: `${name} approved the check-in on ${when}.`,
+      line: `${actorName} approved the check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.declined]: {
       title: "Check-in declined",
-      line: `${name} declined the check-in on ${when}.`,
+      line: `${actorName} declined the check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.newTimeProposed]: {
       title: "New time proposed",
-      line: `${name} proposed ${when} instead.`,
+      line: `${actorName} proposed ${when} instead.`,
     },
     [CHECK_IN_BELL_KINDS.newTimeAccepted]: {
       title: "New time accepted",
-      line: `${name} accepted the check-in on ${when}.`,
+      line: `${actorName} accepted the check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.newTimeDeclined]: {
       title: "New time declined",
-      line: `${name} declined the new time, ${when}.`,
+      line: `${actorName} declined the new time, ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.cancelled]: {
       title: "Check-in cancelled",
-      line: `${name} cancelled the check-in on ${when}.`,
+      line: `${actorName} cancelled the check-in on ${when}.`,
     },
     [CHECK_IN_BELL_KINDS.requestExpired]: {
       title: "Check-in request expired",

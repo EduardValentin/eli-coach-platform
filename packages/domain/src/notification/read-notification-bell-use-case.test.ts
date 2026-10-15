@@ -29,6 +29,15 @@ const APPROVED = Notification.reconstitute({
   readAt: null,
 });
 
+const SEEN = Notification.reconstitute({
+  id: "notification-2",
+  recipient: { party: "client", clientId: "client-1" },
+  kind: "check-in.declined",
+  facts: { checkInId: "check-in-3", startsAt: "2026-10-16T15:00:00.000Z" },
+  arrivedAt: new Date("2026-10-13T09:00:00.000Z"),
+  readAt: new Date("2026-10-13T10:00:00.000Z"),
+});
+
 const EXPIRED: NotificationDraft = {
   recipient: { party: "client", clientId: "client-1" },
   kind: "check-in.request-expired",
@@ -86,6 +95,23 @@ function createReadBell(options?: { client?: ClientReachReading | null }) {
 const ANA_READS = { party: "client", authSubjectId: "user_ana" } as const;
 
 describe("ReadNotificationBellUseCase", () => {
+  it("tells each notification apart as unread or read", async () => {
+    // arrange
+    const { readBell, ports } = createReadBell();
+    ports.inbox.latestFor.mockResolvedValue([APPROVED, SEEN]);
+
+    // act
+    const bell = await readBell.execute(ANA_READS);
+
+    // assert
+    expect(
+      bell.notifications.map(({ id, unread }) => ({ id, unread })),
+    ).toEqual([
+      { id: "notification-1", unread: true },
+      { id: "notification-2", unread: false },
+    ]);
+  });
+
   it("answers her latest notifications and unread count from the last 90 days", async () => {
     // arrange
     const { readBell, ports } = createReadBell();
@@ -95,7 +121,7 @@ describe("ReadNotificationBellUseCase", () => {
 
     // assert
     expect(bell).toEqual({
-      notifications: [APPROVED.toSnapshot()],
+      notifications: [{ ...APPROVED.toSnapshot(), unread: true }],
       unreadCount: 1,
       checkedAt: NOW,
     });
@@ -184,7 +210,7 @@ describe("ReadNotificationBellUseCase", () => {
     });
     expect(ports.inbox.record).not.toHaveBeenCalled();
     expect(bell).toEqual({
-      notifications: [APPROVED.toSnapshot()],
+      notifications: [{ ...APPROVED.toSnapshot(), unread: true }],
       unreadCount: 1,
       checkedAt: NOW,
     });

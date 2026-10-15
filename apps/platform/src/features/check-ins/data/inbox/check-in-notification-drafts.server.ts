@@ -78,19 +78,16 @@ export class CheckInNotificationDrafts {
     });
   }
 
-  lapsed(lapsed: LapsedCheckIn): NotificationDraft {
-    const notice: CheckInNotice = {
-      checkIn: lapsed.checkIn,
-      client: lapsed.client,
-      recipient: lapsed.party,
-    };
+  lapseOf(lapsedCheckIn: LapsedCheckIn): NotificationDraft {
+    const { checkIn, lapse, party, client } = lapsedCheckIn;
+    const notice: CheckInNotice = { checkIn, client, recipient: party };
 
     return this.draftOf({
-      kind: LAPSE_KINDS[lapsed.lapse],
+      kind: LAPSE_KINDS[lapse.kind],
       recipient: this.recipientOf(notice),
       facts: this.momentFactsOf(notice),
-      arrivedAt: lapsed.lapsedAt,
-      onceKey: `check-in:${lapsed.checkIn.id}:${lapsed.lapse}:${lapsed.party}`,
+      arrivedAt: lapse.lapsedAt,
+      onceKey: `check-in:${checkIn.id}:${lapse.kind}:${party}`,
     });
   }
 

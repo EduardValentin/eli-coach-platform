@@ -19,7 +19,9 @@ export async function action(_args: ActionFunctionArgs) {
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    args.context.get(notificationsContext).notificationBell.bell(args),
+    args.context
+      .get(notificationsContext)
+      .notificationBell.respondWithBell(args),
   );
 }
 

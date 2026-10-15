@@ -1906,25 +1906,25 @@ describe("CheckIn#lapseAt", () => {
       situation: "a request whose start has passed unanswered",
       subject: checkIn(),
       at: ENDS_AT,
-      expected: { lapse: "request_expired", lapsedAt: STARTS_AT },
+      expected: { kind: "request_expired", lapsedAt: STARTS_AT },
     },
     {
       situation: "a request reaching its start unanswered",
       subject: checkIn(),
       at: STARTS_AT,
-      expected: { lapse: "request_expired", lapsedAt: STARTS_AT },
+      expected: { kind: "request_expired", lapsedAt: STARTS_AT },
     },
     {
       situation: "a new time whose start has passed unanswered",
       subject: newTimeFromCoach(),
       at: AFTER_NEW_START,
-      expected: { lapse: "new_time_expired", lapsedAt: NEW_START },
+      expected: { kind: "new_time_expired", lapsedAt: NEW_START },
     },
     {
       situation: "a clash whose start has passed unfixed",
       subject: weeklyCheckIn({ recordedStatus: "clash" }),
       at: ENDS_AT,
-      expected: { lapse: "clash_missed", lapsedAt: STARTS_AT },
+      expected: { kind: "clash_missed", lapsedAt: STARTS_AT },
     },
   ] as const)(
     "names $situation with the moment its time passed",
@@ -1936,7 +1936,7 @@ describe("CheckIn#lapseAt", () => {
       const lapse = subject.lapseAt(now);
 
       // assert
-      expect(lapse).toEqual(expected);
+      expect(lapse?.toSnapshot()).toEqual(expected);
     },
   );
 
@@ -1957,7 +1957,10 @@ describe("CheckIn#lapseAt", () => {
     const lapse = proposed.checkIn.lapseAt(AFTER_NEW_START);
 
     // assert
-    expect(lapse).toEqual({ lapse: "new_time_expired", lapsedAt: NEW_START });
+    expect(lapse?.toSnapshot()).toEqual({
+      kind: "new_time_expired",
+      lapsedAt: NEW_START,
+    });
   });
 
   it.each([
@@ -2003,6 +2006,31 @@ describe("CheckIn#lapseAt", () => {
 
     // assert
     expect(lapse).toBeNull();
+  });
+});
+
+describe("CheckIn#isClash", () => {
+  it.each([
+    {
+      situation: "a weekly check-in that clashed",
+      subject: weeklyCheckIn({ recordedStatus: "clash" }),
+      expected: true,
+    },
+    { situation: "a pending request", subject: checkIn(), expected: false },
+    {
+      situation: "an approved check-in",
+      subject: approvedCheckIn(),
+      expected: false,
+    },
+  ])("answers $expected for $situation", ({ subject, expected }) => {
+    // arrange
+    const candidate = subject;
+
+    // act
+    const clashes = candidate.isClash();
+
+    // assert
+    expect(clashes).toBe(expected);
   });
 });
 

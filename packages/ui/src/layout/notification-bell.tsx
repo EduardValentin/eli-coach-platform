@@ -37,7 +37,7 @@ type NotificationBellProps = {
 type BellLayout = "popover" | "sheet";
 
 type BellHeaderLayout = {
-  check: number;
+  checkIconSize: number;
   frame: string;
   markAll: string;
   title: string;
@@ -47,13 +47,13 @@ const BELL_TITLE = "Notifications";
 
 const HEADER_LAYOUTS: Record<BellLayout, BellHeaderLayout> = {
   popover: {
-    check: 12,
+    checkIconSize: 12,
     frame: "border-stroke-quiet p-4 px-3",
     markAll: "",
     title: "text-sm",
   },
   sheet: {
-    check: 14,
+    checkIconSize: 14,
     frame: "border-stroke-faint px-5 pt-2 pb-3",
     markAll: "min-h-10 px-2",
     title: "text-base",
@@ -147,16 +147,17 @@ type BellTriggerProps = Omit<
 
 const BellTrigger = forwardRef<HTMLButtonElement, BellTriggerProps>(
   function BellTrigger(props, ref) {
-    const { unreadCount, ...buttonProps } = props;
+    const { className, unreadCount, ...buttonProps } = props;
 
     return (
       <IconButton
         aria-label={
           unreadCount > 0 ? `${BELL_TITLE}, ${unreadCount} unread` : BELL_TITLE
         }
+        className={cn("relative", className)}
         data-parity-root="NotificationBell"
         ref={ref}
-        variant="muted"
+        variant="filled"
         {...buttonProps}
       >
         <Bell aria-hidden="true" size={18} />
@@ -203,7 +204,11 @@ function BellHeader(props: BellHeaderProps) {
           onClick={onMarkAllRead}
           type="button"
         >
-          <Check aria-hidden="true" size={styles.check} strokeWidth={3} />
+          <Check
+            aria-hidden="true"
+            size={styles.checkIconSize}
+            strokeWidth={3}
+          />
           Mark all read
         </button>
       )}

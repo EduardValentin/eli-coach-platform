@@ -36,7 +36,7 @@ export class NotificationBellController {
     return this.replyOf(bell);
   }
 
-  async bell(args: LoaderFunctionArgs): Promise<Response> {
+  async respondWithBell(args: LoaderFunctionArgs): Promise<Response> {
     return Response.json(await this.loadBell(args), {
       headers: { "Cache-Control": "no-store" },
     });
@@ -76,7 +76,7 @@ export class NotificationBellController {
         kind: notification.kind,
         facts: notification.facts,
         arrivedAt: notification.arrivedAt.toISOString(),
-        unread: notification.readAt === null,
+        unread: notification.unread,
       })),
       unreadCount: bell.unreadCount,
       checkedAt: bell.checkedAt.toISOString(),

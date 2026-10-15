@@ -14,8 +14,10 @@ import {
   type NotificationReader,
 } from "./notification-recipient-reach";
 
+type BellNotification = NotificationSnapshot & { unread: boolean };
+
 export type NotificationBell = {
-  notifications: NotificationSnapshot[];
+  notifications: BellNotification[];
   unreadCount: number;
   checkedAt: Date;
 };
@@ -108,9 +110,10 @@ export class ReadNotificationBellUseCase {
     ]);
 
     return {
-      notifications: notifications.map((notification) =>
-        notification.toSnapshot(),
-      ),
+      notifications: notifications.map((notification) => ({
+        ...notification.toSnapshot(),
+        unread: notification.isUnread(),
+      })),
       unreadCount,
       checkedAt: at,
     };

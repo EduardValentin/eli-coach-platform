@@ -25,7 +25,7 @@ export class CheckInExpiryNotifications implements NotificationExpirySource {
       this.lapsedQueryOf(query),
     );
 
-    return lapsed.map((item) => this.drafts.lapsed(item));
+    return lapsed.map((lapsedCheckIn) => this.drafts.lapseOf(lapsedCheckIn));
   }
 
   private lapsedQueryOf({

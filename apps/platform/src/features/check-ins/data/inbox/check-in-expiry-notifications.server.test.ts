@@ -94,8 +94,7 @@ describe("CheckInExpiryNotifications", () => {
     const { source } = createSource([
       {
         checkIn: CHECK_IN,
-        lapse: "request_expired",
-        lapsedAt: STARTS_AT,
+        lapse: { kind: "request_expired", lapsedAt: STARTS_AT },
         party: "client",
         client: ANA,
       },

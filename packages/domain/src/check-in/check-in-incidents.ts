@@ -11,7 +11,7 @@ export interface CheckInIncidents {
   }): void;
   checkInInboxFailed(incident: {
     checkInId: string;
-    notification: CheckInNotification;
+    event: CheckInNotification;
   }): void;
   awaitingCheckInsCountFailed(incident: {
     party: CheckInParty;

@@ -41,7 +41,25 @@ export type CheckInViewerProposal =
 export type CheckInTab = "upcoming" | "requests" | "past";
 export type CheckInLapseKind =
   "request_expired" | "new_time_expired" | "clash_missed";
-export type CheckInLapse = { lapse: CheckInLapseKind; lapsedAt: Date };
+export type CheckInLapseSnapshot = { kind: CheckInLapseKind; lapsedAt: Date };
+
+export class CheckInLapse {
+  readonly kind: CheckInLapseKind;
+  readonly lapsedAt: Date;
+
+  private constructor(snapshot: CheckInLapseSnapshot) {
+    this.kind = snapshot.kind;
+    this.lapsedAt = snapshot.lapsedAt;
+  }
+
+  static at(snapshot: CheckInLapseSnapshot): CheckInLapse {
+    return new CheckInLapse(snapshot);
+  }
+
+  toSnapshot(): CheckInLapseSnapshot {
+    return { kind: this.kind, lapsedAt: this.lapsedAt };
+  }
+}
 
 export type CheckInProps = {
   id: string;
@@ -304,14 +322,18 @@ export class CheckIn {
     return this.recordedStatus;
   }
 
-  lapseAt(now: Date): CheckInLapse | null {
-    const lapse = this.unansweredLapse();
+  isClash(): boolean {
+    return this.recordedStatus === "clash";
+  }
 
-    if (!lapse || this.startsAt > now) {
+  lapseAt(now: Date): CheckInLapse | null {
+    const kind = this.unansweredLapse();
+
+    if (!kind || this.startsAt > now) {
       return null;
     }
 
-    return { lapse, lapsedAt: this.startsAt };
+    return CheckInLapse.at({ kind, lapsedAt: this.startsAt });
   }
 
   holdsCoachTimeAt(at: Date): boolean {

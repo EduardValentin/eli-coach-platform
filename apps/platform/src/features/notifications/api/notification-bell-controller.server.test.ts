@@ -48,6 +48,7 @@ const BELL: NotificationBell = {
       },
       arrivedAt: ARRIVED_AT,
       readAt: null,
+      unread: true,
     },
     {
       id: "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0",
@@ -56,6 +57,7 @@ const BELL: NotificationBell = {
       facts: { checkInId: "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a" },
       arrivedAt: ARRIVED_AT,
       readAt: CHECKED_AT,
+      unread: false,
     },
   ],
   unreadCount: 1,
@@ -137,13 +139,13 @@ describe("NotificationBellController loadBell", () => {
   });
 });
 
-describe("NotificationBellController bell", () => {
+describe("NotificationBellController respondWithBell", () => {
   it("answers the bell as JSON that is never cached", async () => {
     // arrange
     const { controller } = createController();
 
     // act
-    const response = await controller.bell(
+    const response = await controller.respondWithBell(
       argsFor({ session: CLIENT_SESSION }),
     );
 

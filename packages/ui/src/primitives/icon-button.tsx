@@ -10,8 +10,8 @@ const iconButtonVariants = cva(
       variant: {
         ghost:
           "inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-current transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out hover:text-brand-primary",
-        muted:
-          "relative flex size-10 items-center justify-center rounded-full bg-surface-muted text-text-secondary transition-colors hover:bg-surface-muted-hover",
+        filled:
+          "flex size-10 items-center justify-center rounded-full bg-surface-muted text-text-secondary transition-colors hover:bg-surface-muted-hover",
         plain: "p-2",
         soft: "flex size-10 items-center justify-center rounded-full bg-surface-quiet text-text-secondary transition-colors hover:bg-surface-muted",
       },

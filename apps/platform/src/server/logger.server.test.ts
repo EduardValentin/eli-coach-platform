@@ -349,7 +349,7 @@ describe("createConsoleLogger", () => {
     // act
     logger.checkInInboxFailed({
       checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
-      notification: "approved",
+      event: "approved",
     });
 
     // assert
@@ -358,7 +358,7 @@ describe("createConsoleLogger", () => {
       {
         checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
         errorCategory: "check_in_inbox_failure",
-        notification: "approved",
+        event: "approved",
       },
     );
   });

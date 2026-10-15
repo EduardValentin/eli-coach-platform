@@ -178,7 +178,7 @@ describe("CheckInAnnouncer#announce", () => {
     expect(ports.notifications.declined).toHaveBeenCalledOnce();
     expect(ports.incidents.checkInInboxFailed).toHaveBeenCalledWith({
       checkInId: "check-in-1",
-      notification: "declined",
+      event: "declined",
     });
     expect(ports.incidents.checkInNotificationFailed).not.toHaveBeenCalled();
   });
@@ -209,7 +209,7 @@ describe("CheckInAnnouncer#announce", () => {
       });
       expect(ports.incidents.checkInInboxFailed).toHaveBeenCalledWith({
         checkInId: "check-in-1",
-        notification: "cancelled",
+        event: "cancelled",
       });
     },
   );

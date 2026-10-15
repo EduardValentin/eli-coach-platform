@@ -74,8 +74,7 @@ function seriesNotice(firstWeekId: string | null) {
 function lapsedFor(party: LapsedCheckIn["party"]): LapsedCheckIn {
   return {
     checkIn: CHECK_IN,
-    lapse: "request_expired",
-    lapsedAt: STARTS_AT,
+    lapse: { kind: "request_expired", lapsedAt: STARTS_AT },
     party,
     client: ANA,
   };
@@ -246,13 +245,13 @@ describe("CheckInNotificationDrafts#clashesAdded", () => {
   });
 });
 
-describe("CheckInNotificationDrafts#lapsed", () => {
+describe("CheckInNotificationDrafts#lapseOf", () => {
   it("records the coach's expiry once, arriving when the check-in's time passed and naming the client", () => {
     // arrange
     const drafts = new CheckInNotificationDrafts();
 
     // act
-    const draft = drafts.lapsed(lapsedFor("coach"));
+    const draft = drafts.lapseOf(lapsedFor("coach"));
 
     // assert
     expect(draft).toEqual({
@@ -273,7 +272,7 @@ describe("CheckInNotificationDrafts#lapsed", () => {
     const drafts = new CheckInNotificationDrafts();
 
     // act
-    const draft = drafts.lapsed(lapsedFor("client"));
+    const draft = drafts.lapseOf(lapsedFor("client"));
 
     // assert
     expect(draft.recipient).toEqual({ party: "client", clientId: CLIENT_ID });
@@ -287,15 +286,18 @@ describe("CheckInNotificationDrafts#lapsed", () => {
   });
 
   it.each([
-    { lapse: "request_expired", kind: "check-in.request-expired" },
-    { lapse: "new_time_expired", kind: "check-in.new-time-expired" },
-    { lapse: "clash_missed", kind: "check-in.clash-missed" },
-  ] as const)("names the $lapse lapse $kind", ({ lapse, kind }) => {
+    { lapseKind: "request_expired", kind: "check-in.request-expired" },
+    { lapseKind: "new_time_expired", kind: "check-in.new-time-expired" },
+    { lapseKind: "clash_missed", kind: "check-in.clash-missed" },
+  ] as const)("names the $lapseKind lapse $kind", ({ lapseKind, kind }) => {
     // arrange
     const drafts = new CheckInNotificationDrafts();
 
     // act
-    const draft = drafts.lapsed({ ...lapsedFor("coach"), lapse });
+    const draft = drafts.lapseOf({
+      ...lapsedFor("coach"),
+      lapse: { kind: lapseKind, lapsedAt: STARTS_AT },
+    });
 
     // assert
     expect(draft.kind).toBe(kind);

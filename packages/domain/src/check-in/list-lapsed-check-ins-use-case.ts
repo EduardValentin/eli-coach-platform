@@ -3,7 +3,7 @@ import type { ClientIdentities } from "../client";
 import type {
   CheckIn,
   CheckInLapse,
-  CheckInLapseKind,
+  CheckInLapseSnapshot,
   CheckInSnapshot,
 } from "./check-in";
 import type { CheckInNotice } from "./check-in-notifications";
@@ -12,8 +12,7 @@ import type { CheckIns } from "./check-ins";
 
 export type LapsedCheckIn = {
   checkIn: CheckInSnapshot;
-  lapse: CheckInLapseKind;
-  lapsedAt: Date;
+  lapse: CheckInLapseSnapshot;
   party: CheckInParty;
   client: CheckInNotice["client"];
 };
@@ -60,7 +59,7 @@ export class ListLapsedCheckInsUseCase {
         ? [
             {
               checkIn: checkIn.toSnapshot(),
-              ...lapse,
+              lapse: lapse.toSnapshot(),
               party: query.party,
               client,
             },

@@ -31,7 +31,7 @@ type AnnouncedSeries = {
 
 type AnnouncementChannel = {
   deliver: (client: AnnouncedClient) => Promise<CheckInDelivery>;
-  failed: () => void;
+  reportFailure: () => void;
 };
 
 export class CheckInAnnouncer {
@@ -42,7 +42,7 @@ export class CheckInAnnouncer {
     checkIn: CheckIn,
     actedBy: CheckInParty,
   ): Promise<void> {
-    const failure = { checkInId: checkIn.id, notification };
+    const checkInId = checkIn.id;
     const noticeFor = (client: AnnouncedClient): CheckInNotice => ({
       checkIn: checkIn.toSnapshot(),
       client,
@@ -53,14 +53,22 @@ export class CheckInAnnouncer {
       {
         deliver: (client) =>
           this.options.notifications[notification](noticeFor(client)),
-        failed: () => this.options.incidents.checkInNotificationFailed(failure),
+        reportFailure: () =>
+          this.options.incidents.checkInNotificationFailed({
+            checkInId,
+            notification,
+          }),
       },
       {
         deliver: (client) =>
-          this.written(
+          this.sentOnceRecorded(
             this.options.inbox.checkInEvent(notification, noticeFor(client)),
           ),
-        failed: () => this.options.incidents.checkInInboxFailed(failure),
+        reportFailure: () =>
+          this.options.incidents.checkInInboxFailed({
+            checkInId,
+            event: notification,
+          }),
       },
     ]);
   }
@@ -82,7 +90,7 @@ export class CheckInAnnouncer {
       {
         deliver: (client) =>
           this.options.notifications[notification](noticeFor(client)),
-        failed: () =>
+        reportFailure: () =>
           this.options.incidents.checkInSeriesNotificationFailed({
             seriesId: series.id,
             notification,
@@ -90,13 +98,13 @@ export class CheckInAnnouncer {
       },
       {
         deliver: (client) =>
-          this.written(
+          this.sentOnceRecorded(
             this.options.inbox.seriesEvent(notification, {
               ...noticeFor(client),
               firstWeekId,
             }),
           ),
-        failed: () =>
+        reportFailure: () =>
           this.options.incidents.checkInSeriesInboxFailed({
             seriesId: series.id,
             event: notification,
@@ -118,7 +126,7 @@ export class CheckInAnnouncer {
     await this.deliverTo(series.clientId, [
       {
         deliver: (client) =>
-          this.written(
+          this.sentOnceRecorded(
             this.options.inbox.clashesAdded({
               series: series.toSnapshot(),
               client,
@@ -126,7 +134,7 @@ export class CheckInAnnouncer {
               earliest: { id: earliest.id, startsAt: earliest.startsAt },
             }),
           ),
-        failed: () =>
+        reportFailure: () =>
           this.options.incidents.checkInSeriesInboxFailed({
             seriesId: series.id,
             event: "clashesAdded",
@@ -155,7 +163,7 @@ export class CheckInAnnouncer {
       : "failed";
 
     if (delivery !== "sent") {
-      channel.failed();
+      channel.reportFailure();
     }
   }
 
@@ -171,8 +179,10 @@ export class CheckInAnnouncer {
     }
   }
 
-  private async written(write: Promise<void>): Promise<CheckInDelivery> {
-    await write;
+  private async sentOnceRecorded(
+    recording: Promise<void>,
+  ): Promise<CheckInDelivery> {
+    await recording;
 
     return "sent";
   }

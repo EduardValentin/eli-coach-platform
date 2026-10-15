@@ -57,9 +57,7 @@ export class ExtendCheckInSeriesUseCase {
 
       await this.announcer.announceClashes(
         extension.series,
-        extension.occurrences.filter(
-          (occurrence) => occurrence.recordedStatus === "clash",
-        ),
+        extension.occurrences.filter((occurrence) => occurrence.isClash()),
       );
 
       return { status: "extended", created: extension.occurrences.length };

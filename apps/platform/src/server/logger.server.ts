@@ -53,13 +53,13 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "assessment_call_listing_failure",
       });
     },
-    checkInInboxFailed: ({ checkInId, notification }) => {
+    checkInInboxFailed: ({ checkInId, event }) => {
       console.error(
         "Check-in notification could not be recorded in the bell.",
         {
           checkInId,
           errorCategory: "check_in_inbox_failure",
-          notification,
+          event,
         },
       );
     },

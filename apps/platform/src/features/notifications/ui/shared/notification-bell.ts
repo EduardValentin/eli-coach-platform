@@ -2,7 +2,7 @@ import type { NotificationParty } from "@eli-coach-platform/domain/notification"
 import type { NotificationBellItem } from "@eli-coach-platform/ui/layout";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { generatePath, useFetcher, useNavigate, useSubmit } from "react-router";
 
 import {
@@ -34,72 +34,59 @@ const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
+type BellArrivals = {
+  bell: NotificationBellReply;
+  checked: NotificationBellReply | null;
+  describe: (notification: NotificationReply) => DescribedNotification | null;
+  markRead: (id: string) => void;
+};
+
+type OptimisticReads = {
+  isReadHere: (id: string) => boolean;
+  markAllRead: () => void;
+  markRead: (id: string) => void;
+  unreadCount: number;
+};
+
 export function useNotificationBell(
   options: NotificationBellOptions,
 ): NotificationBellBinding {
   const { bell, describers, party } = options;
-  const check = useFetcher<unknown>({ key: BELL_CHECK_KEY });
-  const markAll = useFetcher<unknown>({ key: MARK_ALL_READ_KEY });
-  const submit = useSubmit();
-  const navigate = useNavigate();
   const timeZone = useCalendarDayTimeZone();
-  const [readIds, setReadIds] = useState<ReadonlySet<string>>(new Set());
-  const known = useRef(new Set<string>());
-  const checked = checkedBellOf(check.data);
-  const shown =
-    checked !== null &&
-    Date.parse(checked.checkedAt) > Date.parse(bell.checkedAt)
-      ? checked
-      : bell;
+  const checked = useMinuteBellCheck();
+  const shown = newerBellOf(bell, checked);
+  const reads = useOptimisticReads(shown);
   const reading: NotificationReading = { party, timeZone };
   const describe = (notification: NotificationReply) =>
-    describedBy(describers, { notification, reading });
+    firstDescriptionOf(describers, { notification, reading });
 
-  const markRead = (id: string) => {
-    setReadIds((current) => new Set([...current, id]));
-    void submit(null, {
-      action: generatePath(NOTIFICATIONS_API_PATHS.read, {
-        notificationId: id,
-      }),
-      fetcherKey: `notification-read:${id}`,
-      method: "post",
-      navigate: false,
-    });
-  };
+  useArrivalToasts({ bell, checked, describe, markRead: reads.markRead });
 
-  useEffect(() => {
-    bell.notifications.forEach(({ id }) => known.current.add(id));
-  }, [bell]);
+  const items = shown.notifications.flatMap((notification) => {
+    const described = describe(notification);
 
-  useEffect(() => {
-    const answered = checkedBellOf(check.data);
-
-    if (answered === null) {
-      return;
-    }
-
-    answered.notifications.forEach((notification) => {
-      if (known.current.has(notification.id)) {
-        return;
-      }
-
-      known.current.add(notification.id);
-      const described = notification.unread ? describe(notification) : null;
-
-      if (described !== null) {
-        toast(described.title, {
-          action: {
-            label: "View",
-            onClick: () => {
-              markRead(notification.id);
-              void navigate(described.href);
-            },
+    return described === null
+      ? []
+      : [
+          {
+            ...described,
+            ago: timeAgo(notification.arrivedAt, shown.checkedAt),
+            id: notification.id,
+            unread: notification.unread && !reads.isReadHere(notification.id),
           },
-          description: described.line,
-        });
-      }
-    });
-  }, [check.data]);
+        ];
+  });
+
+  return {
+    items,
+    onMarkAllRead: reads.markAllRead,
+    onOpenItem: reads.markRead,
+    unreadCount: reads.unreadCount,
+  };
+}
+
+function useMinuteBellCheck(): NotificationBellReply | null {
+  const check = useFetcher<unknown>({ key: BELL_CHECK_KEY });
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -126,27 +113,68 @@ export function useNotificationBell(
     };
   }, [check.load]);
 
-  const items = shown.notifications.flatMap((notification) => {
-    const described = describe(notification);
+  return useMemo(() => checkedBellOf(check.data), [check.data]);
+}
 
-    return described === null
-      ? []
-      : [
-          {
-            ...described,
-            ago: timeAgo(notification.arrivedAt, shown.checkedAt),
-            id: notification.id,
-            unread: notification.unread && !readIds.has(notification.id),
-          },
-        ];
+function useArrivalToasts(arrivals: BellArrivals): void {
+  const { bell, checked } = arrivals;
+  const navigate = useNavigate();
+  const known = useRef(new Set<string>());
+  const toastArrival = useEffectEvent((notification: NotificationReply) => {
+    const described = arrivals.describe(notification);
+
+    if (described === null) {
+      return;
+    }
+
+    toast(described.title, {
+      action: {
+        label: "View",
+        onClick: () => {
+          arrivals.markRead(notification.id);
+          void navigate(described.href);
+        },
+      },
+      description: described.line,
+    });
   });
+
+  useEffect(() => {
+    bell.notifications.forEach(({ id }) => known.current.add(id));
+  }, [bell]);
+
+  useEffect(() => {
+    if (checked === null) {
+      return;
+    }
+
+    checked.notifications.forEach((notification) => {
+      if (known.current.has(notification.id)) {
+        return;
+      }
+
+      known.current.add(notification.id);
+
+      if (!notification.unread) {
+        return;
+      }
+
+      toastArrival(notification);
+    });
+  }, [checked]);
+}
+
+function useOptimisticReads(shown: NotificationBellReply): OptimisticReads {
+  const submit = useSubmit();
+  const markAll = useFetcher<unknown>({ key: MARK_ALL_READ_KEY });
+  const [readIds, setReadIds] = useState<ReadonlySet<string>>(new Set());
   const readHere = shown.notifications.filter(
     (notification) => notification.unread && readIds.has(notification.id),
   ).length;
 
   return {
-    items,
-    onMarkAllRead: () => {
+    isReadHere: (id) => readIds.has(id),
+    markAllRead: () => {
       setReadIds(
         (current) =>
           new Set([
@@ -159,9 +187,29 @@ export function useNotificationBell(
         method: "post",
       });
     },
-    onOpenItem: markRead,
+    markRead: (id) => {
+      setReadIds((current) => new Set([...current, id]));
+      void submit(null, {
+        action: generatePath(NOTIFICATIONS_API_PATHS.read, {
+          notificationId: id,
+        }),
+        fetcherKey: `notification-read:${id}`,
+        method: "post",
+        navigate: false,
+      });
+    },
     unreadCount: Math.max(0, shown.unreadCount - readHere),
   };
+}
+
+function newerBellOf(
+  bell: NotificationBellReply,
+  checked: NotificationBellReply | null,
+): NotificationBellReply {
+  return checked !== null &&
+    Date.parse(checked.checkedAt) > Date.parse(bell.checkedAt)
+    ? checked
+    : bell;
 }
 
 function checkedBellOf(data: unknown): NotificationBellReply | null {
@@ -170,12 +218,12 @@ function checkedBellOf(data: unknown): NotificationBellReply | null {
   return parsed.success ? parsed.data : null;
 }
 
-function describedBy(
+function firstDescriptionOf(
   describers: readonly NotificationDescriber[],
-  described: { notification: NotificationReply; reading: NotificationReading },
+  subject: { notification: NotificationReply; reading: NotificationReading },
 ): DescribedNotification | null {
   for (const describe of describers) {
-    const answer = describe(described.notification, described.reading);
+    const answer = describe(subject.notification, subject.reading);
 
     if (answer !== null) {
       return answer;
