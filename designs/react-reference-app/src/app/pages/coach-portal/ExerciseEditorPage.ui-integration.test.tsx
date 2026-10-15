@@ -715,6 +715,20 @@ describe('focus in the demo video field', () => {
     expect(screen.getByRole('button', { name: 'Remove video' })).not.toHaveFocus();
   });
 
+  it('moves to Replace when the server refuses the chosen video on save', async () => {
+    // arrange
+    answerVideoUploads('refused');
+    const user = renderEditor(edit(SQUAT_ID), 'Barbell Back Squat');
+    await user.upload(replaceInput(), fileNamed('squat.mp4', 'video/mp4'));
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(await screen.findByText('squat.mp4 doesn’t contain an MP4 or MOV video.', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Replace video' })).toHaveFocus();
+  });
+
   it('stays on the drop zone when a dropped file is refused', () => {
     // arrange
     renderEditor(NEW);

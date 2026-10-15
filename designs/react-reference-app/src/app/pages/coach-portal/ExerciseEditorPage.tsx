@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { Check, Dumbbell, Film, RefreshCw, Target } from 'lucide-react';
 import { toast } from 'sonner';
@@ -147,6 +147,8 @@ function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
 
 type VideoFieldFocus = 'replace' | 'picker' | null;
 
+type VideoFieldHandle = { focusReplace: () => void };
+
 type VideoFieldProps = {
   video: VideoState;
   saving: VideoSaving;
@@ -154,12 +156,15 @@ type VideoFieldProps = {
   onRetry: () => void;
 };
 
-function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
+const VideoField = forwardRef<VideoFieldHandle, VideoFieldProps>(function VideoField(
+  { video, saving, onChange, onRetry },
+  ref,
+) {
   const errorId = useId();
   const input = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const replaceButton = useRef<HTMLButtonElement>(null);
-  const focusAfterSwap = useRef<VideoFieldFocus>(null);
+  const pendingFocus = useRef<VideoFieldFocus>(null);
   const busy = isSaving(saving);
   const refusal = {
     'aria-invalid': video.error ? true : undefined,
@@ -175,23 +180,27 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
       onChange({ ...video, error: videoTooLargeMessage(file) });
       return;
     }
-    if (!video.preview) focusAfterSwap.current = 'replace';
+    if (!video.preview) pendingFocus.current = 'replace';
     onChange({ file, preview: URL.createObjectURL(file), error: null });
   };
 
   const remove = () => {
-    focusAfterSwap.current = 'picker';
+    pendingFocus.current = 'picker';
     onChange(NO_VIDEO);
   };
 
-  const showsPreview = Boolean(video.preview);
+  useImperativeHandle(ref, () => ({
+    focusReplace: () => {
+      pendingFocus.current = 'replace';
+    },
+  }));
 
   useEffect(() => {
-    const target = focusAfterSwap.current;
-    focusAfterSwap.current = null;
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
     if (target === 'replace') replaceButton.current?.focus();
     if (target === 'picker') picker.current?.focus();
-  }, [showsPreview]);
+  });
 
   return (
     <div className="grid gap-3">
@@ -266,7 +275,7 @@ function VideoField({ video, saving, onChange, onRetry }: VideoFieldProps) {
       </div>
     </div>
   );
-}
+});
 
 function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; library: string }) {
   const navigate = useNavigate();
@@ -276,6 +285,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const [saving, setSaving] = useState<VideoSaving>(NOT_SAVING);
   const [touched, setTouched] = useState(false);
   const onPage = useRef(false);
+  const videoField = useRef<VideoFieldHandle>(null);
 
   useEffect(() => {
     onPage.current = true;
@@ -358,6 +368,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
 
     setSaving(NOT_SAVING);
     setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
+    videoField.current?.focusReplace();
   };
 
   const busy = isSaving(saving);
@@ -555,7 +566,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               />
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked" data-parity="exercise-video-field">
-              <VideoField video={video} saving={saving} onChange={changeVideo} onRetry={save} />
+              <VideoField ref={videoField} video={video} saving={saving} onChange={changeVideo} onRetry={save} />
             </SettingsRow>
           </SettingsRows>
         </SettingsSection>
