@@ -128,7 +128,7 @@ export default function ClientCheckInsRoute() {
   };
 
   return (
-    <div className="w-full" data-parity-root="ClientCheckins">
+    <div className="w-full pb-16 sm:pb-0" data-parity-root="ClientCheckins">
       <PortalPageHeader
         actions={renderRequestButton("hidden sm:inline-flex")}
         subtitle="Request a check-in, answer proposals, and look back at past sessions."

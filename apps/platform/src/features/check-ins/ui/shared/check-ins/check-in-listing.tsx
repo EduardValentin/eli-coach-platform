@@ -240,7 +240,11 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
           <EmptyState
             action={
               offersClearFilters && (
-                <Button onClick={listing.clearFilters} variant="outline">
+                <Button
+                  onClick={listing.clearFilters}
+                  size="sm"
+                  variant="outline"
+                >
                   Clear filters
                 </Button>
               )
