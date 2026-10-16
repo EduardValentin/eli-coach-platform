@@ -67,6 +67,14 @@ export class ExerciseRequests {
     }
   }
 
+  async createManyAccepted(
+    exercises: readonly ExerciseFields[],
+  ): Promise<void> {
+    for (const fields of exercises) {
+      await this.createAccepted(fields);
+    }
+  }
+
   async createWithVideo(
     fields: ExerciseFields,
     video: SampleVideo,
