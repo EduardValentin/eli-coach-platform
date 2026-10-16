@@ -80,7 +80,7 @@ describe("ExerciseDraft", () => {
 
     // act
     const changed =
-      result.status === "valid" && result.draft.fieldsChangedFrom(input);
+      result.status === "valid" && result.draft.fieldsNormalizedFrom(input);
 
     // assert
     expect(changed).toEqual(["name", "primaryMuscles", "tags"]);
@@ -92,7 +92,7 @@ describe("ExerciseDraft", () => {
 
     // act
     const changed =
-      result.status === "valid" && result.draft.fieldsChangedFrom(SQUAT);
+      result.status === "valid" && result.draft.fieldsNormalizedFrom(SQUAT);
 
     // assert
     expect(changed).toEqual([]);

@@ -127,7 +127,7 @@ export class ExerciseDraft {
     return { status: "valid", draft };
   }
 
-  fieldsChangedFrom(input: ExerciseDraftInput): string[] {
+  fieldsNormalizedFrom(input: ExerciseDraftInput): string[] {
     return [
       ...(input.name === this.snapshot.name ? [] : ["name"]),
       ...DRAFT_LISTS.filter(

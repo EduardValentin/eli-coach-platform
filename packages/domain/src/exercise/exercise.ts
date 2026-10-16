@@ -82,7 +82,7 @@ export class Exercise {
       ...(isUuid(ownerAccountId) ? [] : ["ownerAccountId"]),
       ...(draft.status === "invalid"
         ? Object.keys(draft.problems)
-        : draft.draft.fieldsChangedFrom(fields)),
+        : draft.draft.fieldsNormalizedFrom(fields)),
     ];
 
     if (draft.status === "invalid" || broken.length > 0) {
