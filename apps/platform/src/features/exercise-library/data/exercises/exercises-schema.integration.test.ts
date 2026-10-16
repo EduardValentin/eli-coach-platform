@@ -27,7 +27,7 @@ const insertExerciseSql = `
   insert into app.exercises
     (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, created_at, updated_at)
   values
-    ($1, $2, $3, '', $4, $5, false, $6, '{Glutes}', '{}', '{}', '{}', $7, $8, $9, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+    ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
 `;
 
 type ExerciseRow = {
@@ -37,8 +37,26 @@ type ExerciseRow = {
   type?: string;
   unit?: string;
   difficulty?: string;
+  cues?: string;
+  primaryMuscles?: (string | null)[];
+  secondaryMuscles?: (string | null)[];
+  equipment?: (string | null)[];
+  tags?: (string | null)[];
   video?: { videoId?: string; format?: string; sizeBytes?: number };
 };
+
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+
+const UPDATABLE_COLUMNS = {
+  name: "name",
+  formCues: "form_cues",
+  type: "type",
+  primaryMuscles: "primary_muscles",
+  secondaryMuscles: "secondary_muscles",
+  equipment: "equipment",
+  tags: "tags",
+  videoSizeBytes: "video_size_bytes",
+} as const;
 
 describe.sequential("exercises schema", () => {
   beforeAll(async () => {
@@ -72,7 +90,6 @@ describe.sequential("exercises schema", () => {
   it.each([
     ["the same name", "Hip thrust"],
     ["a differently cased name", "HIP THRUST"],
-    ["a name with surrounding spaces", "  hip Thrust "],
   ])(
     "refuses a second exercise of the same coach with %s",
     async (_case, name) => {
@@ -186,6 +203,191 @@ describe.sequential("exercises schema", () => {
     expect(await countExercises()).toBe(0);
   });
 
+  it.each([
+    [
+      "a cardio exercise without a primary muscle",
+      { type: "cardio", unit: "time", primaryMuscles: [] },
+    ],
+    ["an 80-character name", { name: "n".repeat(80) }],
+    ["1,000 characters of form cues", { cues: "c".repeat(1_000) }],
+    [
+      "every list within its vocabulary",
+      {
+        primaryMuscles: ["Glutes", "Hamstrings"],
+        secondaryMuscles: ["Core"],
+        equipment: ["Barbell", "Bench"],
+        tags: ["Strength", "Recovery"],
+      },
+    ],
+    [
+      "a video of one byte",
+      { video: { videoId: VIDEO_ID, format: "mov", sizeBytes: 1 } },
+    ],
+    [
+      "a video of exactly 50 MB",
+      {
+        video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: MAX_VIDEO_BYTES },
+      },
+    ],
+  ])("keeps %s", async (_case, row) => {
+    // arrange
+    const valid = row;
+
+    // act
+    await insertExercise(valid);
+
+    // assert
+    expect(await countExercises()).toBe(1);
+  });
+
+  it.each([
+    ["an empty name", { name: "" }, /exercises_name_check/],
+    ["a blank name", { name: "   " }, /exercises_name_check/],
+    [
+      "a name with surrounding spaces",
+      { name: " Hip thrust " },
+      /exercises_name_check/,
+    ],
+    [
+      "form cues over 1,000 characters",
+      { cues: "c".repeat(1_001) },
+      /exercises_form_cues_check/,
+    ],
+    [
+      "a unit its type does not allow",
+      { type: "stretching", unit: "reps" },
+      /exercises_unit_for_type_check/,
+    ],
+    [
+      "no primary muscle for a type other than cardio",
+      { primaryMuscles: [] },
+      /exercises_primary_muscle_check/,
+    ],
+    [
+      "an unknown primary muscle",
+      { primaryMuscles: ["Wings"] },
+      /exercises_primary_muscles_vocabulary_check/,
+    ],
+    [
+      "an empty primary muscle",
+      { primaryMuscles: [null] },
+      /exercises_primary_muscles_vocabulary_check/,
+    ],
+    [
+      "an unknown secondary muscle",
+      { secondaryMuscles: ["Wings"] },
+      /exercises_secondary_muscles_vocabulary_check/,
+    ],
+    [
+      "a secondary muscle that is also primary",
+      { secondaryMuscles: ["Glutes"] },
+      /exercises_muscles_overlap_check/,
+    ],
+    [
+      "unknown equipment",
+      { equipment: ["Sled"] },
+      /exercises_equipment_vocabulary_check/,
+    ],
+    ["an unknown tag", { tags: ["Power"] }, /exercises_tags_vocabulary_check/],
+    [
+      "a video of no bytes",
+      { video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 0 } },
+      /exercises_video_size_check/,
+    ],
+    [
+      "a video of a negative size",
+      { video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: -1 } },
+      /exercises_video_size_check/,
+    ],
+    [
+      "a video over 50 MB",
+      {
+        video: {
+          videoId: VIDEO_ID,
+          format: "mp4",
+          sizeBytes: MAX_VIDEO_BYTES + 1,
+        },
+      },
+      /exercises_video_size_check/,
+    ],
+  ])("refuses an exercise with %s", async (_case, row, constraint) => {
+    // arrange
+    const invalid = row;
+
+    // act
+    const inserting = insertExercise(invalid);
+
+    // assert
+    await expect(inserting).rejects.toThrow(constraint);
+    expect(await countExercises()).toBe(0);
+  });
+
+  it.each([
+    ["its name to a blank one", "name", "  ", /exercises_name_check/],
+    [
+      "its form cues past 1,000 characters",
+      "formCues",
+      "c".repeat(1_001),
+      /exercises_form_cues_check/,
+    ],
+    [
+      "its type to one its unit does not suit",
+      "type",
+      "breathing",
+      /exercises_unit_for_type_check/,
+    ],
+    [
+      "its primary muscles to none",
+      "primaryMuscles",
+      [],
+      /exercises_primary_muscle_check/,
+    ],
+    [
+      "a primary muscle to an unknown one",
+      "primaryMuscles",
+      ["Wings"],
+      /exercises_primary_muscles_vocabulary_check/,
+    ],
+    [
+      "a secondary muscle to its primary one",
+      "secondaryMuscles",
+      ["Glutes"],
+      /exercises_muscles_overlap_check/,
+    ],
+    [
+      "its equipment to an unknown piece",
+      "equipment",
+      ["Sled"],
+      /exercises_equipment_vocabulary_check/,
+    ],
+    [
+      "a tag to an unknown one",
+      "tags",
+      ["Power"],
+      /exercises_tags_vocabulary_check/,
+    ],
+    [
+      "its video's size to nothing",
+      "videoSizeBytes",
+      0,
+      /exercises_video_size_check/,
+    ],
+  ] as const)(
+    "refuses changing a stored exercise's %s",
+    async (_case, column, value, constraint) => {
+      // arrange
+      await insertExercise({
+        video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
+      });
+
+      // act
+      const updating = updateExercise(column, value);
+
+      // assert
+      await expect(updating).rejects.toThrow(constraint);
+    },
+  );
+
   it("refuses a name longer than 80 characters", async () => {
     // arrange
     const name = "n".repeat(81);
@@ -212,7 +414,22 @@ function insertExercise(row: ExerciseRow): Promise<unknown> {
       row.video?.videoId ?? null,
       row.video?.format ?? null,
       row.video?.sizeBytes ?? null,
+      row.cues ?? "",
+      row.primaryMuscles ?? ["Glutes"],
+      row.secondaryMuscles ?? [],
+      row.equipment ?? [],
+      row.tags ?? [],
     ],
+  });
+}
+
+function updateExercise(
+  column: keyof typeof UPDATABLE_COLUMNS,
+  value: unknown,
+): Promise<unknown> {
+  return suite.postgres.executeSql({
+    sql: `update app.exercises set ${UPDATABLE_COLUMNS[column]} = $1 where id = $2`,
+    values: [value, FIRST_ID],
   });
 }
 
