@@ -204,6 +204,7 @@ async function seedAssessmentCall(): Promise<string> {
   const [row] = await suite.postgres.queryRows<{ id: string }>({
     sql: `
       insert into app.assessment_calls (
+        id,
         first_name,
         last_name,
         visitor_email,
@@ -218,7 +219,7 @@ async function seedAssessmentCall(): Promise<string> {
         coach_time_zone,
         booked_at
       )
-      values ($1, $2, $3, null, $4, $5, $6, $7, null, $8, $9, $10, $11)
+      values (gen_random_uuid(), $1, $2, $3, null, $4, $5, $6, $7, null, $8, $9, $10, $11)
       returning id
     `,
     values: [

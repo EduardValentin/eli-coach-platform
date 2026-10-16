@@ -32,9 +32,9 @@ export type MeasuredClientSeed = {
 
 const INSERT_MEASUREMENT_ENTRY = `
   insert into app.client_measurements (
-    client_id, recorded_at, weight_kg, waist_cm, hips_cm, thigh_cm, arm_cm
+    id, client_id, recorded_at, weight_kg, waist_cm, hips_cm, thigh_cm, arm_cm
   )
-  values ($1, $2, $3, $4, $5, $6, $7)
+  values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)
 `;
 const INSERT_UNIT_PREFERENCE = `
   insert into app.client_unit_preferences (

@@ -844,9 +844,9 @@ async function insertCallDirectly(columns: {
   await suite.postgres.executeSql({
     sql: `
       insert into app.assessment_calls
-        (first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+        (id, first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
          country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     `,
     values: [
       "Ana",
@@ -872,9 +872,9 @@ async function bookAnotherCallAt(occupied: {
     sql: `
       with call as (
         insert into app.assessment_calls
-          (first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+          (id, first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
            country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
-        values ('Irina', 'Dobre', 'irina@example.com', '1990-06-02', 'female',
+        values (gen_random_uuid(), 'Irina', 'Dobre', 'irina@example.com', '1990-06-02', 'female',
                 'build_strength', 'RO', $1, 'Europe/Bucharest', 'Europe/Bucharest', $3)
         returning id
       )

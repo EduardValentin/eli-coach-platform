@@ -29,7 +29,7 @@ export const clientsConstraints = {
 export const clientsTable = appSchema.table(
   "clients",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     assessmentCallId: uuid("assessment_call_id")
       .notNull()
       .references(() => assessmentCallsTable.id),
@@ -102,7 +102,7 @@ export const clientsTable = appSchema.table(
 export const clientInvitationsTable = appSchema.table(
   "client_invitations",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     clientId: uuid("client_id")
       .notNull()
       .references(() => clientsTable.id),
