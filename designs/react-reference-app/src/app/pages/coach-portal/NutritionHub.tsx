@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
@@ -27,16 +27,39 @@ export function NutritionHub() {
   const rawTab = searchParams.get('tab') ?? 'foods';
   const activeTab = validTabs.has(rawTab) ? rawTab : 'foods';
 
-  const tabs = (
+  const chosenTab = useRef<string | null>(null);
+  const chooseTab = (tab: string) => {
+    chosenTab.current = tab;
+    setSearchParams({ tab }, { replace: true });
+  };
+  const focusWhenChosen = (tab: string) => (trigger: HTMLButtonElement | null) => {
+    if (!trigger || chosenTab.current !== tab) return;
+    chosenTab.current = null;
+    trigger.focus();
+  };
+
+  const tabsIn = (content: string) => (
     <TabsList>
-      <TabsTrigger value="foods" className="px-4 sm:px-5">
+      <TabsTrigger
+        ref={content === 'foods' ? focusWhenChosen('foods') : undefined}
+        value="foods"
+        className="px-4 sm:px-5"
+      >
         Foods
       </TabsTrigger>
-      <TabsTrigger value="recipes" className="px-4 sm:px-5">
+      <TabsTrigger
+        ref={content === 'recipes' ? focusWhenChosen('recipes') : undefined}
+        value="recipes"
+        className="px-4 sm:px-5"
+      >
         Recipes
       </TabsTrigger>
       {isPostMvp && (
-        <TabsTrigger value="plans" className="px-4 sm:px-5">
+        <TabsTrigger
+          ref={content === 'plans' ? focusWhenChosen('plans') : undefined}
+          value="plans"
+          className="px-4 sm:px-5"
+        >
           Meal Plans
         </TabsTrigger>
       )}
@@ -80,18 +103,18 @@ export function NutritionHub() {
       <Tabs
         variant="segmented"
         value={activeTab}
-        onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}
+        onValueChange={chooseTab}
         className="w-full"
       >
         <TabsContent value="foods">
-          <FoodLibrary tabs={tabs} />
+          <FoodLibrary tabs={tabsIn('foods')} />
         </TabsContent>
         <TabsContent value="recipes">
-          <RecipeLibrary tabs={tabs} />
+          <RecipeLibrary tabs={tabsIn('recipes')} />
         </TabsContent>
         {isPostMvp && (
           <TabsContent value="plans">
-            <div className="mb-6">{tabs}</div>
+            <div className="mb-6">{tabsIn('plans')}</div>
             <ClientPlansTab />
           </TabsContent>
         )}

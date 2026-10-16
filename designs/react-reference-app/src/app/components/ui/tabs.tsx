@@ -89,20 +89,22 @@ function TabsList({
   );
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => {
   const variant = React.useContext(TabsVariantContext);
 
   return (
     <TabsPrimitive.Trigger
+      ref={ref}
       data-slot="tabs-trigger"
       className={cn(tabsTriggerVariants({ variant }), className)}
       {...props}
     />
   );
-}
+});
+TabsTrigger.displayName = 'TabsTrigger';
 
 function TabsContent({
   className,

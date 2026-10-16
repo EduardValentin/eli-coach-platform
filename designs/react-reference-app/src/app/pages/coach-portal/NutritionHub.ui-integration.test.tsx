@@ -111,3 +111,17 @@ describe('the empty nutrition library seed', () => {
     expect(screen.queryByRole('article', { name: 'Chicken rice bowl' })).not.toBeInTheDocument();
   });
 });
+
+describe('moving between the Nutrition tabs', () => {
+  it('keeps her keyboard on the tab she moves to with the arrow keys', async () => {
+    // arrange
+    const user = renderHub('/coach/nutrition?tab=foods');
+    screen.getByRole('tab', { name: 'Foods' }).focus();
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(await screen.findByRole('tab', { name: 'Recipes', selected: true })).toHaveFocus();
+  });
+});
