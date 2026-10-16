@@ -35,6 +35,8 @@ const SEARCH_PARAM = "q";
 
 const MAX_OPTION_STOPS = 10;
 
+const HUMAN_KEYSTROKE_DELAY_MS = 60;
+
 export class ExerciseLibraryPage {
   constructor(private readonly page: Page) {}
 
@@ -107,6 +109,10 @@ export class ExerciseLibraryPage {
 
   private get noMatchTitle(): Locator {
     return this.page.getByText("No exercises match", { exact: true });
+  }
+
+  private get noExercisesTitle(): Locator {
+    return this.page.getByText("No exercises yet", { exact: true });
   }
 
   private get clearFiltersButton(): Locator {
@@ -388,6 +394,14 @@ export class ExerciseLibraryPage {
     }).toPass();
   }
 
+  async typeSearch(term: string): Promise<void> {
+    await this.searchField.fill("");
+    await this.expectSearchSettledOn("");
+    await this.searchField.pressSequentially(term, {
+      delay: HUMAN_KEYSTROKE_DELAY_MS,
+    });
+  }
+
   async expectSearch(term: string): Promise<void> {
     await expect(this.searchField).toHaveValue(term);
   }
@@ -449,6 +463,15 @@ export class ExerciseLibraryPage {
       this.page.getByText("Try another filter or search.", { exact: true }),
     ).toBeVisible();
     await expect(this.clearFiltersButton).toBeVisible();
+  }
+
+  async expectNoExercisesYet(): Promise<void> {
+    await expect(this.noExercisesTitle).toBeVisible();
+    await expect(
+      this.page.getByText("Exercises you add appear here.", { exact: true }),
+    ).toBeVisible();
+    await expect(this.noMatchTitle).toHaveCount(0);
+    await expect(this.clearFiltersButton).toHaveCount(0);
   }
 
   async clearFilters(): Promise<void> {

@@ -2029,3 +2029,325 @@ test(
     );
   },
 );
+
+test(
+  "the tags filter matches any chosen tag and every count follows the search and the other filters",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const tagged = (names: readonly string[]) =>
+      namesTagged(scenarioTag, names);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+
+    // act
+    await exerciseLibrary.toggleTag("Strength");
+    await exerciseLibrary.toggleTag("Recovery");
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly(
+      tagged([
+        "Back squat",
+        "Box breathing",
+        "Cat cow",
+        "Hip flexor stretch",
+        "Romanian deadlift",
+        "Single-leg glute bridge",
+      ]),
+    );
+    await exerciseLibrary.expectOptionCounts("Tags", {
+      Strength: 3,
+      Hypertrophy: 6,
+      Recovery: 3,
+    });
+    await exerciseLibrary.expectOptionCounts("Type", {
+      "Any type": 6,
+      Resistance: 3,
+      Cardio: 0,
+      Mobility: 1,
+      Stretching: 1,
+      Breathing: 1,
+    });
+
+    // act
+    await exerciseLibrary.toggleTag("Strength");
+    await exerciseLibrary.toggleTag("Recovery");
+    await exerciseLibrary.search("glutes");
+
+    // assert
+    await exerciseLibrary.expectOptionCounts("Type", {
+      "Any type": 6,
+      Resistance: 6,
+      Cardio: 0,
+      Mobility: 0,
+      Stretching: 0,
+      Breathing: 0,
+    });
+    await exerciseLibrary.expectOptionCounts("Tags", {
+      Strength: 3,
+      Hypertrophy: 5,
+      Recovery: 0,
+    });
+    await exerciseLibrary.expectOptionCounts("Equipment", {
+      "Any equipment": 6,
+      "No equipment": 3,
+    });
+  },
+);
+
+test(
+  "a search matches part of a name or a primary muscle in any case",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const tagged = (names: readonly string[]) =>
+      namesTagged(scenarioTag, names);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+
+    // act
+    await exerciseLibrary.search("GLUTE BR");
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly(
+      tagged(["Glute bridge", "Single-leg glute bridge"]),
+    );
+
+    // act
+    await exerciseLibrary.search("hamSTRINGS");
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly(
+      tagged(["Romanian deadlift", "Single-leg glute bridge"]),
+    );
+
+    // act
+    await exerciseLibrary.search("lower BACK");
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly(tagged(["Cat cow"]));
+  },
+);
+
+test(
+  "a filter, search or sort change from a later page returns to the first page",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+    await exerciseLibrary.goToPage(2);
+
+    // act
+    await exerciseLibrary.sortBy("Difficulty");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ sort: "difficulty" });
+    await exerciseLibrary.expectShowing("Showing 1–10 of 12");
+
+    // act
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.search("a");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ sort: "difficulty", q: "a" });
+
+    // act
+    await exerciseLibrary.search("");
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.toggleTag("Recovery");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({
+      sort: "difficulty",
+      tags: "Recovery",
+    });
+
+    // act
+    await exerciseLibrary.toggleTag("Recovery");
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.chooseEquipment("No equipment");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({
+      sort: "difficulty",
+      equipment: "none",
+    });
+
+    // act
+    await exerciseLibrary.chooseEquipment("Any equipment");
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.chooseType("Cardio");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({
+      sort: "difficulty",
+      type: "cardio",
+    });
+  },
+);
+
+test(
+  "New exercise, the back link and Cancel return to the same view, and an editor opened by its address returns to the plain library",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const view = "?sort=difficulty&dir=desc&page=2";
+    const added = `Air squat ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+    await exerciseLibrary.sortBy("Difficulty");
+    await exerciseLibrary.sortBy("Difficulty");
+    await exerciseLibrary.goToPage(2);
+
+    // act
+    await exerciseLibrary.edit(`Cat cow ${scenarioTag}`);
+    await exerciseEditor.goBack();
+
+    // assert
+    await exerciseLibrary.expectOpen(view);
+
+    // act
+    await exerciseLibrary.startNewExercise();
+    await exerciseEditor.expectNewExercise();
+    await exerciseEditor.goBack();
+
+    // assert
+    await exerciseLibrary.expectOpen(view);
+
+    // act
+    await exerciseLibrary.startNewExercise();
+    await exerciseEditor.cancel();
+
+    // assert
+    await exerciseLibrary.expectOpen(view);
+
+    // act
+    await exerciseLibrary.startNewExercise();
+    await exerciseEditor.enter({
+      name: added,
+      type: "Resistance",
+      primaryMuscles: ["Quadriceps"],
+      difficulty: "Beginner",
+    });
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen(view);
+    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectListedNamesExactly(
+      namesTagged(scenarioTag, ["Cat cow", "Box breathing", "Air squat"]),
+    );
+    await exerciseLibrary.expectShowing("Showing 11–13 of 13");
+
+    // act
+    await exerciseLibrary.edit(`Cat cow ${scenarioTag}`);
+    const catCowId = await exerciseEditor.exerciseId();
+    await coachDashboard.open();
+    await exerciseEditor.open(catCowId);
+    await exerciseEditor.goBack();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+  },
+);
+
+test(
+  "an empty library keeps its own empty state, even with filters in the address",
+  { tag: "@completeness" },
+  async ({ exerciseLibrary, page, provisionCoach, signInAsCoach }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+
+    // act
+    await exerciseLibrary.open();
+
+    // assert
+    await exerciseLibrary.expectNoExercisesYet();
+    await exerciseLibrary.expectNoPager();
+
+    // act
+    await page.goto("/coach/training?type=cardio&q=squat&sort=difficulty");
+
+    // assert
+    await exerciseLibrary.expectNoExercisesYet();
+  },
+);
+
+test(
+  "a search typed at human speed keeps every character",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+    await exerciseLibrary.sortBy("Difficulty");
+
+    // act
+    await exerciseLibrary.typeSearch("single-leg glute");
+
+    // assert
+    await exerciseLibrary.expectSearch("single-leg glute");
+    await exerciseLibrary.expectAddressParams({
+      sort: "difficulty",
+      q: "single-leg glute",
+    });
+    await exerciseLibrary.expectListedNamesExactly(
+      namesTagged(scenarioTag, ["Single-leg glute bridge"]),
+    );
+  },
+);
