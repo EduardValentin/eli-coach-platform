@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit 2d9b2ea8, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit 2e160978, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
@@ -13,7 +13,7 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 26, units: 1232, edges: 4301, component cycles: 1, uncovered modules: 0.
+Components: 26, units: 1232, edges: 4302, component cycles: 1, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
@@ -40,7 +40,7 @@ Components: 26, units: 1232, edges: 4301, component cycles: 1, uncovered modules
 | C22 apps/platform/src/features/check-ins | 72 | 12 | 56 | 0.82 | 0.17 | 0 | none |
 | C23 apps/platform/src/features/coach-schedule | 16 | 9 | 12 | 0.57 | 0.12 | 0.31 | none |
 | C24 apps/platform/src/features/clients | 47 | 32 | 39 | 0.55 | 0.18 | 0.27 | none |
-| C25 apps/platform/src/features/exercise-library | 22 | 5 | 19 | 0.79 | 0.13 | 0.07 | none |
+| C25 apps/platform/src/features/exercise-library | 22 | 5 | 19 | 0.79 | 0.14 | 0.07 | none |
 | C26 apps/platform/src/features/nutrition-library | 18 | 5 | 16 | 0.76 | 0.15 | 0.08 | none |
 | C27 apps/platform/src/features/notifications | 12 | 6 | 9 | 0.6 | 0.22 | 0.18 | none |
 
