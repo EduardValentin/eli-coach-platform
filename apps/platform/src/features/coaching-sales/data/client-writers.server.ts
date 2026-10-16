@@ -1,12 +1,12 @@
 import type { DatabaseTransaction } from "@eli-coach-platform/db";
 import type {
-  ClientIntake,
+  Client,
   CoachingStanding,
 } from "@eli-coach-platform/domain/client";
 
 export type ClientWriter = (
   transaction: DatabaseTransaction,
-  admission: { intake: ClientIntake; admittedAt: Date },
+  client: Client,
 ) => Promise<{ clientId: string } | "call_already_has_client">;
 
 export type CoachingStandingWriter = (

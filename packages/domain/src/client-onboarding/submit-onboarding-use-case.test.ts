@@ -168,7 +168,6 @@ function createUnitPreferences(preference: UnitPreference | null = null) {
 function createChanges(
   recorded: Awaited<ReturnType<ClientOnboardingChanges["recordSubmission"]>> = {
     status: "recorded",
-    entryId: "entry-1",
   },
 ) {
   return {
@@ -218,6 +217,7 @@ function createUseCase(
     onboardings: ports.onboardings ?? createOnboardings(),
     unitPreferences: ports.unitPreferences ?? createUnitPreferences(),
     changes: ports.changes ?? createChanges(),
+    measurementIds: { generate: () => "entry-1" },
     stamps: ports.stamps ?? createStamps(),
     clock: { now: () => NOW },
     incidents: ports.incidents ?? createIncidents(),
@@ -245,7 +245,7 @@ describe("SubmitOnboardingUseCase", () => {
     );
   });
 
-  it("records her submission with her first measurements, then stamps her journey", async () => {
+  it("records her submission with her first measurements under a fresh entry id, then stamps her journey", async () => {
     // arrange
     const changes = createChanges();
     const stamps = createStamps();
@@ -270,6 +270,7 @@ describe("SubmitOnboardingUseCase", () => {
     expect(changes.recordSubmission).toHaveBeenCalledWith({
       clientId: "client-1",
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
+      entryId: "entry-1",
       measurementEntry: { recordedAt: NOW, weightKg: 82.5, waistCm: 88 },
       profile: expect.any(ClientProfile),
     });

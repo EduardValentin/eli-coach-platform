@@ -2,10 +2,12 @@ import type {
   AssessmentCallReader,
   AssessmentCallSnapshot,
 } from "../assessment-call";
-import type { ClientIntake } from "../client";
+import { Client, type ClientIds, type ClientIntake } from "../client";
+import type { Clock } from "../shared";
 
 import type { CoachingPurchases } from "./coaching-purchases";
 import type { CheckoutCompletion } from "./coaching-subscription";
+import type { CoachingSubscriptionIds } from "./coaching-subscription-ids";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { PaidClientAdmission } from "./paid-client-admission";
 import type { PaymentCheckout } from "./payment-checkout";
@@ -27,10 +29,13 @@ type RecordCheckoutCompletedResult =
 type RecordCheckoutCompletedUseCaseOptions = {
   admission: PaidClientAdmission;
   calls: AssessmentCallReader;
+  clientIds: ClientIds;
+  clock: Clock;
   incidents: CoachingSubscriptionIncidents;
   paymentCheckout: PaymentCheckout;
   paymentSubscriptions: PaymentSubscriptions;
   purchases: CoachingPurchases;
+  subscriptionIds: CoachingSubscriptionIds;
 };
 
 const STATUS_BY_PURCHASE_OUTCOME = {
@@ -80,11 +85,18 @@ export class RecordCheckoutCompletedUseCase {
       return { status: "call_not_found" };
     }
 
+    const receivedAt = this.options.clock.now();
     const subscription =
       PurchasedSubscription.fromCompletedCheckout(completion);
     const purchase = await this.options.purchases.recordCompletion({
       eventId,
-      intake: this.intakeOf(call),
+      receivedAt,
+      client: Client.admitted({
+        id: this.options.clientIds.generate(),
+        intake: this.intakeOf(call),
+        at: receivedAt,
+      }),
+      subscriptionId: this.options.subscriptionIds.generate(),
       subscription,
     });
 

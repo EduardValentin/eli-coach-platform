@@ -2,14 +2,12 @@ import type { CoachAvailabilitySource } from "../coach-availability";
 import { EmailAddress, type EmailSubaddressPolicy } from "../email-address";
 import type { Clock } from "../shared";
 
-import type { AssessmentCall } from "./assessment-call";
+import { AssessmentCall, type ReservationDecision } from "./assessment-call";
 import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
+import type { AssessmentCallIds } from "./assessment-call-ids";
 import type { AssessmentCallIncidents } from "./assessment-call-incidents";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
-import type {
-  AssessmentCallReservations,
-  ReservationResult,
-} from "./assessment-call-reservations";
+import type { AssessmentCallReservations } from "./assessment-call-reservations";
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
@@ -39,6 +37,7 @@ type BookAssessmentCallUseCaseOptions = {
   bookingWindow: AssessmentCallBookingWindow;
   clock: Clock;
   emailSubaddresses: EmailSubaddressPolicy;
+  ids: AssessmentCallIds;
   incidents: AssessmentCallIncidents;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
@@ -75,28 +74,30 @@ export class BookAssessmentCallUseCase {
       return { status: "slot_unavailable" };
     }
 
-    const reservation = await this.options.reservations.reserve({
-      bookedAt: now,
-      coachTimeZone: availability.timeZone,
-      country: command.country,
-      dateOfBirth: command.dateOfBirth,
+    const call = AssessmentCall.booked({
+      id: this.options.ids.generate(),
       firstName: command.firstName,
-      gender: command.gender,
       lastName: command.lastName,
-      normalizedEmail: email.value,
-      notes: command.notes,
-      now,
-      phone: command.phone,
+      visitorEmail: email.value,
+      visitorNotes: command.notes,
+      dateOfBirth: command.dateOfBirth,
+      gender: command.gender,
       primaryGoal: command.primaryGoal,
+      country: command.country,
+      phone: command.phone,
       startsAt: command.startsAt,
       visitorTimeZone: command.visitorTimeZone,
+      coachTimeZone: availability.timeZone,
+      at: now,
     });
+    const reservation = await this.options.reservations.reserve({ call, now });
 
-    return this.resolveReservation(reservation);
+    return this.resolveReservation(call, reservation);
   }
 
   private async resolveReservation(
-    reservation: ReservationResult,
+    call: AssessmentCall,
+    reservation: ReservationDecision,
   ): Promise<BookAssessmentCallResult> {
     if (reservation.status === "email_has_upcoming_call") {
       return { status: "email_already_booked" };
@@ -106,9 +107,9 @@ export class BookAssessmentCallUseCase {
       return { status: "slot_unavailable" };
     }
 
-    await this.notifyBooked(reservation.call);
+    await this.notifyBooked(call);
 
-    return { status: "booked", call: reservation.call };
+    return { status: "booked", call };
   }
 
   private async notifyBooked(call: AssessmentCall): Promise<void> {

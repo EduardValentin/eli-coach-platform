@@ -2,6 +2,7 @@ import type { ClientReach } from "../client";
 import {
   hasMeasurementProblem,
   measurementEntryOf,
+  type MeasurementIds,
   type MeasurementValues,
 } from "../measurement";
 import type { Clock } from "../shared";
@@ -39,6 +40,7 @@ type RecordMeasurementsUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   profiles: ClientProfiles;
   records: ClientMeasurementRecords;
+  measurementIds: MeasurementIds;
   photos: ProgressPhotos;
   photoIds: ProgressPhotoIds;
   store: ProgressPhotoStore;
@@ -84,7 +86,12 @@ export class RecordMeasurementsUseCase {
       await this.options.profiles.recordPhotoConsent(client.clientId, now);
     }
 
-    const entryId = await this.options.records.record(client.clientId, entry);
+    const entryId = this.options.measurementIds.generate();
+    await this.options.records.record({
+      clientId: client.clientId,
+      entryId,
+      entry,
+    });
     this.options.incidents.measurementEntrySaved({
       clientId: client.clientId,
       entryId,

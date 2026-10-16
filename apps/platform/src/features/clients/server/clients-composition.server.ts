@@ -3,6 +3,7 @@ import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
 import type {
   ClientIdentities,
+  ClientIds,
   ClientReach,
 } from "@eli-coach-platform/domain/client";
 import {
@@ -46,6 +47,7 @@ import {
   writeCoachingStanding,
 } from "~/features/clients/data/clients/client-writers.server";
 import { PostgresOnboardingClients } from "~/features/clients/data/clients/onboarding-clients-reader.server";
+import { RandomClientIds } from "~/features/clients/data/clients/random-client-ids.server";
 import { RandomClientInvitationIds } from "~/features/clients/data/invitations/random-client-invitation-ids.server";
 import { PostgresClientInvitations } from "~/features/clients/data/invitations/invitations-repository.server";
 import { PostgresInvitedClients } from "~/features/clients/data/invitations/invited-clients-repository.server";
@@ -64,6 +66,7 @@ type ClientsComposition = {
   feature: ClientsFeature;
   handles: {
     clientIdentities: ClientIdentities;
+    clientIds: ClientIds;
     clientJourneys: ClientJourneys;
     clientReach: ClientReach;
     invitationAcceptance: InvitationAcceptance;
@@ -169,6 +172,7 @@ export function composeClientsFeature(
     },
     handles: {
       clientIdentities,
+      clientIds: new RandomClientIds(),
       clientJourneys: journeys,
       clientReach,
       invitationAcceptance: {

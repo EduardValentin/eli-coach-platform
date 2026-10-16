@@ -3,13 +3,13 @@ import type {
   ClientMeasurementRecords,
   MeasurementRecord,
 } from "@eli-coach-platform/domain/client-profile";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { asc, eq } from "drizzle-orm";
 
 import {
   MEASUREMENT_SELECTION,
   measurementEntryOfStored,
   measurementInsertOf,
+  type MeasurementEntryRecord,
   type StoredMeasurement,
 } from "~/features/client-profile/data/measurements/client-measurements-repository.server";
 import {
@@ -46,17 +46,10 @@ export class PostgresClientMeasurementRecords implements ClientMeasurementRecord
     return recordsWithTheirPhotos(rows);
   }
 
-  async record(clientId: string, entry: MeasurementEntry): Promise<string> {
-    const [inserted] = await this.database
+  async record(record: MeasurementEntryRecord): Promise<void> {
+    await this.database
       .insert(clientMeasurementsTable)
-      .values(measurementInsertOf(clientId, entry))
-      .returning({ id: clientMeasurementsTable.id });
-
-    if (!inserted) {
-      throw new Error("The measurement entry was not recorded.");
-    }
-
-    return inserted.id;
+      .values(measurementInsertOf(record));
   }
 }
 

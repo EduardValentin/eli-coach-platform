@@ -1,4 +1,9 @@
-export { AssessmentCall, type AssessmentCallSnapshot } from "./assessment-call";
+export {
+  AssessmentCall,
+  type AssessmentCallSnapshot,
+  type ReservationDecision,
+} from "./assessment-call";
+export { type AssessmentCallIds } from "./assessment-call-ids";
 export { type AssessmentCallReader } from "./assessment-call-reader";
 export { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 export { type AssessmentCallIncidents } from "./assessment-call-incidents";
@@ -8,7 +13,6 @@ export {
 } from "./assessment-call-notifications";
 export {
   type AssessmentCallReservations,
-  type ReservationResult,
   type ReserveAssessmentCallCommand,
 } from "./assessment-call-reservations";
 export { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";

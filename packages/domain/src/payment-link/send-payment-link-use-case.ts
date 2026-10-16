@@ -15,6 +15,7 @@ import type {
 } from "./coaching-sales-notifications";
 import type { CoachingSalesWindow } from "./coaching-sales-window";
 import { PaymentLink } from "./payment-link";
+import type { PaymentLinkIds } from "./payment-link-ids";
 import type { PaymentLinks, PaymentLinkTokenGenerator } from "./payment-links";
 
 type SendPaymentLinkResult =
@@ -29,6 +30,7 @@ type SendPaymentLinkUseCaseOptions = {
   calls: AssessmentCallReader;
   callSalesStates: CallSalesStates;
   clock: Clock;
+  ids: PaymentLinkIds;
   incidents: CoachingSalesIncidents;
   notifications: CoachingSalesNotifications;
   paymentLinks: PaymentLinks;
@@ -76,13 +78,14 @@ export class SendPaymentLinkUseCase {
       EmailAddress.normalize(call.visitorEmail),
     );
     const token = this.options.tokenGenerator.create();
-    const link = await this.options.paymentLinks.issue(
-      PaymentLink.issue({
-        assessmentCallId: call.id,
-        tokenSha256: token.sha256,
-        now,
-      }),
-    );
+    const link = PaymentLink.issued({
+      id: this.options.ids.generate(),
+      assessmentCallId: call.id,
+      tokenSha256: token.sha256,
+      at: now,
+    });
+
+    await this.options.paymentLinks.issue(link);
 
     const delivery = await this.deliver({
       call,

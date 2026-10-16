@@ -8,6 +8,7 @@ export {
   type CoachingPurchaseOutcome,
   type CoachingPurchases,
 } from "./coaching-purchases";
+export { type CoachingSubscriptionIds } from "./coaching-subscription-ids";
 export {
   COACHING_SUBSCRIPTION_PURPOSE,
   CoachingSubscription,

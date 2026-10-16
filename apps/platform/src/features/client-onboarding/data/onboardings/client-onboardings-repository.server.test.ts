@@ -25,7 +25,7 @@ const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const UPDATED_AT = new Date("2026-10-22T09:00:00.000Z");
 const CONSENTED_AT = new Date("2026-10-22T08:55:00.000Z");
 const SUBMITTED_AT = new Date("2026-10-23T09:00:00.000Z");
-const RECORDED_ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
+const ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
 
 describe("PostgresClientOnboardings#findByClientId", () => {
   it("reads her draft with its consents and no submission", async () => {
@@ -205,15 +205,13 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     const outcome = await onboardings.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
+      entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
       profile: profile(),
     });
 
     // assert
-    expect(outcome).toEqual({
-      status: "recorded",
-      entryId: RECORDED_ENTRY_ID,
-    });
+    expect(outcome).toEqual({ status: "recorded" });
     expect(database.transactions).toHaveLength(1);
     expect(database.inserted).toEqual([
       {
@@ -231,7 +229,11 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     expect(writers.measurementEntries).toEqual([
       {
         transaction: database.transactions[0],
-        input: { clientId: CLIENT_ID, entry: measurementEntry() },
+        input: {
+          clientId: CLIENT_ID,
+          entryId: ENTRY_ID,
+          entry: measurementEntry(),
+        },
       },
     ]);
     expect(writers.profiles).toEqual([
@@ -252,6 +254,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     const outcome = await onboardings.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
+      entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
       profile: profile(),
     });
@@ -271,6 +274,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     const recording = onboardings.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
+      entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
       profile: profile(),
     });
@@ -293,6 +297,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
     const recording = onboardings.recordSubmission({
       clientId: CLIENT_ID,
       submission: submission(),
+      entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
       profile: profile(),
     });
@@ -423,8 +428,6 @@ function createRecordingWriters() {
     input,
   ) => {
     measurementEntries.push({ transaction, input });
-
-    return RECORDED_ENTRY_ID;
   };
 
   return {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Account } from "./account";
+import type { AccountIds } from "./account-ids";
 import type { Accounts } from "./accounts";
 import type { InvitationAcceptance } from "./invitation-acceptance";
 import { ProvisionAccountUseCase } from "./provision-account-use-case";
@@ -16,6 +17,8 @@ function buildAccount(
     ...overrides,
   });
 }
+
+const accountIds: AccountIds = { generate: () => "account-new" };
 
 function acceptanceAnswering(
   outcome: "accepted" | "refused",
@@ -34,6 +37,7 @@ describe("ProvisionAccountUseCase", () => {
     const invitationAcceptance = acceptanceAnswering("refused");
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
@@ -49,16 +53,16 @@ describe("ProvisionAccountUseCase", () => {
     expect(accounts.insert).not.toHaveBeenCalled();
   });
 
-  it("inserts a CLIENT account for a subject whose invitation is accepted", async () => {
+  it("inserts a CLIENT account under a fresh id for a subject whose invitation is accepted", async () => {
     // arrange
-    const inserted = buildAccount({ role: "CLIENT" });
     const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-      insert: vi.fn().mockResolvedValue(inserted),
+      insert: vi.fn().mockResolvedValue(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("accepted"),
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
@@ -69,28 +73,35 @@ describe("ProvisionAccountUseCase", () => {
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: inserted.toSnapshot(),
+      account: {
+        id: "account-new",
+        authSubjectId: "auth-subject-1",
+        role: "CLIENT",
+      },
     });
-    expect(accounts.insert).toHaveBeenCalledWith({
-      authSubjectId: "auth-subject-1",
-      role: "CLIENT",
-    });
+    expect(accounts.insert).toHaveBeenCalledWith(
+      Account.provisioned({
+        id: "account-new",
+        authSubjectId: "auth-subject-1",
+        role: "CLIENT",
+      }),
+    );
   });
 
   it("provisions the CLIENT account on the request after an accepted invitation whose account insert failed", async () => {
     // arrange
-    const inserted = buildAccount({ role: "CLIENT" });
     const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi
         .fn()
         .mockRejectedValueOnce(new Error("connection reset"))
-        .mockResolvedValueOnce(inserted),
+        .mockResolvedValueOnce(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationAcceptance = acceptanceAnswering("accepted");
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance,
     });
     await expect(useCase.execute("auth-subject-1")).rejects.toThrow(
@@ -103,7 +114,11 @@ describe("ProvisionAccountUseCase", () => {
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: inserted.toSnapshot(),
+      account: {
+        id: "account-new",
+        authSubjectId: "auth-subject-1",
+        role: "CLIENT",
+      },
     });
     expect(invitationAcceptance.accept).toHaveBeenCalledTimes(2);
   });
@@ -125,6 +140,7 @@ describe("ProvisionAccountUseCase", () => {
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("accepted"),
     });
 
@@ -147,6 +163,7 @@ describe("ProvisionAccountUseCase", () => {
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("refused"),
     });
 
@@ -160,15 +177,15 @@ describe("ProvisionAccountUseCase", () => {
 
   it("inserts a new COACH account when the auth subject matches the bootstrap coach id", async () => {
     // arrange
-    const inserted = buildAccount({ role: "COACH" });
     const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-      insert: vi.fn().mockResolvedValue(inserted),
+      insert: vi.fn().mockResolvedValue(undefined),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationAcceptance = acceptanceAnswering("accepted");
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
@@ -179,12 +196,19 @@ describe("ProvisionAccountUseCase", () => {
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: inserted.toSnapshot(),
+      account: {
+        id: "account-new",
+        authSubjectId: "auth-subject-1",
+        role: "COACH",
+      },
     });
-    expect(accounts.insert).toHaveBeenCalledWith({
-      authSubjectId: "auth-subject-1",
-      role: "COACH",
-    });
+    expect(accounts.insert).toHaveBeenCalledWith(
+      Account.provisioned({
+        id: "account-new",
+        authSubjectId: "auth-subject-1",
+        role: "COACH",
+      }),
+    );
     expect(invitationAcceptance.accept).not.toHaveBeenCalled();
   });
 
@@ -193,12 +217,13 @@ describe("ProvisionAccountUseCase", () => {
     const existing = buildAccount({ role: "COACH" });
     const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(existing),
-      insert: vi.fn().mockResolvedValue(existing),
+      insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const invitationAcceptance = acceptanceAnswering("accepted");
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
@@ -222,11 +247,12 @@ describe("ProvisionAccountUseCase", () => {
     });
     const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(deleted),
-      insert: vi.fn().mockResolvedValue(deleted),
+      insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("refused"),
     });
 
@@ -255,6 +281,7 @@ describe("ProvisionAccountUseCase", () => {
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("refused"),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
@@ -289,6 +316,7 @@ describe("ProvisionAccountUseCase", () => {
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("refused"),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
@@ -310,6 +338,7 @@ describe("ProvisionAccountUseCase", () => {
     };
     const useCase = new ProvisionAccountUseCase({
       accounts,
+      ids: accountIds,
       invitationAcceptance: acceptanceAnswering("refused"),
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });

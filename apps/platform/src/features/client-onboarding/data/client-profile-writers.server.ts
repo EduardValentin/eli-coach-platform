@@ -9,5 +9,5 @@ export type ClientProfileWriter = (
 
 export type MeasurementEntryWriter = (
   transaction: DatabaseTransaction,
-  input: { clientId: string; entry: MeasurementEntry },
-) => Promise<string>;
+  record: { clientId: string; entryId: string; entry: MeasurementEntry },
+) => Promise<void>;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClientReach, ClientReachReading } from "../client";
-import type { MeasurementEntry } from "../measurement";
+import type { MeasurementEntry, MeasurementIds } from "../measurement";
 import { ClientProfile } from "./client-profile";
 import type { ClientProfiles } from "./client-profiles";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
@@ -108,12 +108,11 @@ function createPorts(
     records: {
       entries,
       listByClientId: vi.fn().mockResolvedValue([]),
-      record: vi.fn(async (_clientId: string, entry: MeasurementEntry) => {
+      record: vi.fn(async ({ entry }: { entry: MeasurementEntry }) => {
         entries.push(entry);
-
-        return "entry-1";
       }),
     } satisfies ClientMeasurementRecords & { entries: MeasurementEntry[] },
+    measurementIds: { generate: () => "entry-1" } satisfies MeasurementIds,
     photos: new InMemoryProgressPhotos(),
     photoIds: {
       generate: () => `photo-${++photoNumber}`,
@@ -163,7 +162,7 @@ function receivedPhoto(
 }
 
 describe("RecordMeasurementsUseCase", () => {
-  it("records a new entry dated now with the readings she gave", async () => {
+  it("records a new entry under a fresh id, dated now with the readings she gave", async () => {
     // arrange
     const ports = createPorts();
     const useCase = new RecordMeasurementsUseCase(ports);
@@ -183,11 +182,15 @@ describe("RecordMeasurementsUseCase", () => {
       photos: {},
     });
     expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
-    expect(ports.records.record).toHaveBeenCalledWith("client-1", {
-      recordedAt: NOW,
-      weightKg: 67.5,
-      waistCm: 71,
-      hipsCm: 97,
+    expect(ports.records.record).toHaveBeenCalledWith({
+      clientId: "client-1",
+      entryId: "entry-1",
+      entry: {
+        recordedAt: NOW,
+        weightKg: 67.5,
+        waistCm: 71,
+        hipsCm: 97,
+      },
     });
     expect(ports.incidents.measurementEntrySaved).toHaveBeenCalledWith({
       clientId: "client-1",

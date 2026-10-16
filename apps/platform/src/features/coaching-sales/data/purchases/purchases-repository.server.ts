@@ -33,11 +33,6 @@ type PostgresCoachingPurchasesOptions = {
   writeCoachingStanding: CoachingStandingWriter;
 };
 
-type PurchaseRecording = {
-  purchase: CoachingPurchase;
-  receivedAt: Date;
-};
-
 class CallAlreadyPaid extends Error {}
 
 const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
@@ -54,11 +49,9 @@ export class PostgresCoachingPurchases
   async recordCompletion(
     purchase: CoachingPurchase,
   ): Promise<CoachingPurchaseOutcome> {
-    const receivedAt = this.options.clock.now();
-
     try {
       return await this.options.database.transaction((transaction) =>
-        this.recordPurchase(transaction, { purchase, receivedAt }),
+        this.recordPurchase(transaction, purchase),
       );
     } catch (error) {
       if (error instanceof CallAlreadyPaid) {
@@ -106,12 +99,12 @@ export class PostgresCoachingPurchases
 
   private async recordPurchase(
     transaction: DatabaseTransaction,
-    recording: PurchaseRecording,
+    purchase: CoachingPurchase,
   ): Promise<CoachingPurchaseOutcome> {
-    const { intake, eventId, subscription } = recording.purchase;
+    const { client, eventId, receivedAt, subscription } = purchase;
     const ledgerOutcome = await recordPaymentEvent(transaction, {
       eventId,
-      receivedAt: recording.receivedAt,
+      receivedAt,
     });
 
     if (ledgerOutcome === "duplicate") {
@@ -119,15 +112,12 @@ export class PostgresCoachingPurchases
         outcome: "duplicate_event",
         clientId: await this.findClientIdForCall(
           transaction,
-          intake.assessmentCallId,
+          client.assessmentCallId,
         ),
       };
     }
 
-    const admitted = await this.options.writeClient(transaction, {
-      intake,
-      admittedAt: recording.receivedAt,
-    });
+    const admitted = await this.options.writeClient(transaction, client);
 
     if (admitted === "call_already_has_client") {
       throw new CallAlreadyPaid();
@@ -136,8 +126,9 @@ export class PostgresCoachingPurchases
     const purchased = subscription.toSnapshot();
 
     await transaction.insert(coachingSubscriptionsTable).values({
+      id: purchase.subscriptionId,
       clientId: admitted.clientId,
-      assessmentCallId: intake.assessmentCallId,
+      assessmentCallId: client.assessmentCallId,
       bundleId: purchased.bundleId,
       months: purchased.months,
       tier: purchased.tier,
@@ -152,7 +143,7 @@ export class PostgresCoachingPurchases
       programStartsAt: purchased.programStartsAt,
       startChoice: purchased.startChoice,
       status: purchased.status,
-      createdAt: recording.receivedAt,
+      createdAt: receivedAt,
     });
     await this.options.writeCoachingStanding(transaction, {
       clientId: admitted.clientId,

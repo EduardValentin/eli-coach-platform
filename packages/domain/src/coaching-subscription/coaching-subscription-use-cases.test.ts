@@ -5,6 +5,7 @@ import {
   type AssessmentCallReader,
   type AssessmentCallSnapshot,
 } from "../assessment-call";
+import { Client } from "../client";
 import type { PriceTier, PricingEligibility } from "../coaching-bundle";
 import { EmailAddress } from "../email-address";
 import {
@@ -555,6 +556,9 @@ function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
     paymentCheckout: createPaymentCheckout(completion),
     paymentSubscriptions: createPaymentSubscriptions(),
     purchases: createPurchases(purchaseOutcome),
+    clientIds: { generate: () => PAID_CLIENT_ID },
+    subscriptionIds: { generate: () => "subscription-1" },
+    clock,
   };
 }
 
@@ -563,13 +567,15 @@ const RECORDED: CoachingPurchaseOutcome = {
   clientId: PAID_CLIENT_ID,
 };
 
+const CLIENT_RECORDED_EARLIER_ID = "client-recorded-earlier";
+
 const DUPLICATE: CoachingPurchaseOutcome = {
   outcome: "duplicate_event",
-  clientId: PAID_CLIENT_ID,
+  clientId: CLIENT_RECORDED_EARLIER_ID,
 };
 
 describe("RecordCheckoutCompletedUseCase", () => {
-  it("records the client's intake from the booking and the subscription the provider reports paid for the session, then admits the paid client, with no sales window consulted", async () => {
+  it("records the client from the booking under a fresh id and the subscription the provider reports paid for the session under a fresh id, then admits the paid client, with no sales window consulted", async () => {
     // arrange
     const dependencies = recordCheckoutDependencies(RECORDED);
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
@@ -587,18 +593,24 @@ describe("RecordCheckoutCompletedUseCase", () => {
     ).toHaveBeenCalledWith("cs_2");
     expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
       eventId: "evt_1",
-      intake: {
-        assessmentCallId: "call-1",
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-        dateOfBirth: "1994-03-14",
-        gender: "female",
-        primaryGoal: "build_strength",
-        country: "RO",
-        phone: "+40712345678",
-        bookingTimeZone: "Europe/Bucharest",
-      },
+      receivedAt: NOW,
+      client: Client.admitted({
+        id: PAID_CLIENT_ID,
+        intake: {
+          assessmentCallId: "call-1",
+          firstName: "Ana",
+          lastName: "Popescu",
+          email: "ana@example.com",
+          dateOfBirth: "1994-03-14",
+          gender: "female",
+          primaryGoal: "build_strength",
+          country: "RO",
+          phone: "+40712345678",
+          bookingTimeZone: "Europe/Bucharest",
+        },
+        at: NOW,
+      }),
+      subscriptionId: "subscription-1",
       subscription: PurchasedSubscription.fromCompletedCheckout(completion),
     });
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
@@ -690,7 +702,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(dependencies.incidents.renewalHoldApplied).not.toHaveBeenCalled();
   });
 
-  it("answers duplicate for a replayed event without raising an incident and admits the paid client again", async () => {
+  it("answers duplicate for a replayed event without raising an incident and admits the client recorded earlier again, never the unused fresh id", async () => {
     // arrange
     const dependencies = recordCheckoutDependencies(DUPLICATE);
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
@@ -705,7 +717,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
     expect(result).toEqual({ status: "duplicate", paymentCustomerId: "cus_1" });
     expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
-      clientId: PAID_CLIENT_ID,
+      clientId: CLIENT_RECORDED_EARLIER_ID,
     });
   });
 

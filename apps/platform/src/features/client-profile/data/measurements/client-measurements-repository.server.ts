@@ -47,20 +47,19 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
   }
 }
 
+export type MeasurementEntryRecord = {
+  clientId: string;
+  entryId: string;
+  entry: MeasurementEntry;
+};
+
 export async function recordMeasurementEntry(
   transaction: DatabaseTransaction,
-  input: { clientId: string; entry: MeasurementEntry },
-): Promise<string> {
-  const [inserted] = await transaction
+  record: MeasurementEntryRecord,
+): Promise<void> {
+  await transaction
     .insert(clientMeasurementsTable)
-    .values(measurementInsertOf(input.clientId, input.entry))
-    .returning({ id: clientMeasurementsTable.id });
-
-  if (!inserted) {
-    throw new Error("The measurement entry was not recorded.");
-  }
-
-  return inserted.id;
+    .values(measurementInsertOf(record));
 }
 
 export function measurementEntryOfStored(
@@ -78,11 +77,13 @@ export function measurementEntryOfStored(
   );
 }
 
-export function measurementInsertOf(
-  clientId: string,
-  entry: MeasurementEntry,
-): typeof clientMeasurementsTable.$inferInsert {
+export function measurementInsertOf({
+  clientId,
+  entryId,
+  entry,
+}: MeasurementEntryRecord): typeof clientMeasurementsTable.$inferInsert {
   return {
+    id: entryId,
     clientId,
     recordedAt: entry.recordedAt,
     weightKg: entry.weightKg,

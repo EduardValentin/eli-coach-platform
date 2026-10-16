@@ -1,8 +1,8 @@
-import type { NewPaymentLink, PaymentLink } from "./payment-link";
+import type { PaymentLink } from "./payment-link";
 
 export interface PaymentLinks {
   findByTokenSha256(tokenSha256: string): Promise<PaymentLink | null>;
-  issue(link: NewPaymentLink): Promise<PaymentLink>;
+  issue(link: PaymentLink): Promise<void>;
   voidOtherLinksOf(assessmentCallId: string, keepId: string): Promise<void>;
   void(id: string): Promise<void>;
   findPaymentCustomerForCall(assessmentCallId: string): Promise<string | null>;

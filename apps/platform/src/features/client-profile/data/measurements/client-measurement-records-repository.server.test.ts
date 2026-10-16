@@ -91,25 +91,29 @@ describe("PostgresClientMeasurementRecords#listByClientId", () => {
 });
 
 describe("PostgresClientMeasurementRecords#record", () => {
-  it("inserts her entry with the circumferences she skipped left empty and answers its id", async () => {
+  it("inserts her entry under the id the domain gave it, with the circumferences she skipped left empty", async () => {
     // arrange
-    const database = createDatabaseRecordingInserts(FIRST_ENTRY_ID);
+    const database = createDatabaseRecordingInserts();
     const records = new PostgresClientMeasurementRecords(database.client);
 
     // act
-    const entryId = await records.record(CLIENT_ID, {
-      recordedAt: FIRST_RECORDED_AT,
-      weightKg: 64.5,
-      waistCm: 72,
-      armCm: 28.5,
+    await records.record({
+      clientId: CLIENT_ID,
+      entryId: FIRST_ENTRY_ID,
+      entry: {
+        recordedAt: FIRST_RECORDED_AT,
+        weightKg: 64.5,
+        waistCm: 72,
+        armCm: 28.5,
+      },
     });
 
     // assert
-    expect(entryId).toBe(FIRST_ENTRY_ID);
     expect(database.inserted).toEqual([
       {
         table: clientMeasurementsTable,
         row: {
+          id: FIRST_ENTRY_ID,
           clientId: CLIENT_ID,
           recordedAt: FIRST_RECORDED_AT,
           weightKg: 64.5,
@@ -169,17 +173,13 @@ function createDatabaseAnswering(rows: readonly unknown[]): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function createDatabaseRecordingInserts(insertedId: string) {
+function createDatabaseRecordingInserts() {
   const inserted: { table: unknown; row: unknown }[] = [];
   const client = {
     insert: (table: unknown) => ({
-      values: (row: unknown) => ({
-        returning: async () => {
-          inserted.push({ table, row });
-
-          return [{ id: insertedId }];
-        },
-      }),
+      values: async (row: unknown) => {
+        inserted.push({ table, row });
+      },
     }),
   } as unknown as DatabaseClient;
 

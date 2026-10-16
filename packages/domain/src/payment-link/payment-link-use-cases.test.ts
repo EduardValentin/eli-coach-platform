@@ -113,14 +113,7 @@ function createCallSalesStates(
 function createPaymentLinks(found: PaymentLink | null): PaymentLinks {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(found),
-    issue: vi.fn().mockImplementation(async (link) =>
-      PaymentLink.reconstitute({
-        ...link,
-        id: NEW_LINK_ID,
-        state: "valid",
-        paymentCustomerId: null,
-      }),
-    ),
+    issue: vi.fn().mockResolvedValue(undefined),
     voidOtherLinksOf: vi.fn().mockResolvedValue(undefined),
     void: vi.fn().mockResolvedValue(undefined),
     findPaymentCustomerForCall: vi.fn().mockResolvedValue(null),
@@ -168,6 +161,7 @@ function sendPaymentLinkDependencies(
     pricingEligibility: createPricingEligibility("regular"),
     salesWindow: openSalesWindow(),
     tokenGenerator: createTokenGenerator(),
+    ids: { generate: () => NEW_LINK_ID },
     ...overrides,
   };
 }
@@ -335,12 +329,14 @@ describe("SendPaymentLinkUseCase", () => {
     expect(dependencies.pricingEligibility.tierForEmail).toHaveBeenCalledWith(
       EmailAddress.normalize(call.visitorEmail),
     );
-    expect(dependencies.paymentLinks.issue).toHaveBeenCalledWith({
-      assessmentCallId: call.id,
-      tokenSha256: TOKEN_SHA256,
-      createdAt: NOW,
-      expiresAt: new Date("2026-10-26T10:00:00.000Z"),
-    });
+    expect(dependencies.paymentLinks.issue).toHaveBeenCalledWith(
+      PaymentLink.issued({
+        id: NEW_LINK_ID,
+        assessmentCallId: call.id,
+        tokenSha256: TOKEN_SHA256,
+        at: NOW,
+      }),
+    );
     expect(dependencies.notifications.sendPaymentLink).toHaveBeenCalledWith({
       call,
       paymentLinkId: NEW_LINK_ID,

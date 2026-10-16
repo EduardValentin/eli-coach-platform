@@ -19,30 +19,34 @@ function intakeWith(phone: string | null): ClientIntake {
   };
 }
 
-describe("Client.fromIntake", () => {
+describe("Client.admitted", () => {
   it.each([
     ["without a phone", null],
     ["with a phone", "+40712345678"],
-  ])("copies the intake %s and becomes a client now", (_label, phone) => {
-    // arrange
-    const intake = intakeWith(phone);
+  ])(
+    "copies the intake %s and becomes a client now under the given id",
+    (_label, phone) => {
+      // arrange
+      const intake = intakeWith(phone);
 
-    // act
-    const client = Client.fromIntake(intake, NOW);
+      // act
+      const client = Client.admitted({ id: "client-1", intake, at: NOW });
 
-    // assert
-    expect(client.toSnapshot()).toEqual({
-      assessmentCallId: "call-1",
-      firstName: "Ana",
-      lastName: "Popescu",
-      email: "ana@example.com",
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      primaryGoal: "build_strength",
-      country: "RO",
-      phone,
-      bookingTimeZone: "Europe/Bucharest",
-      createdAt: NOW,
-    });
-  });
+      // assert
+      expect(client.toSnapshot()).toEqual({
+        id: "client-1",
+        assessmentCallId: "call-1",
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone,
+        bookingTimeZone: "Europe/Bucharest",
+        createdAt: NOW,
+      });
+    },
+  );
 });

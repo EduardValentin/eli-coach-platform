@@ -191,6 +191,7 @@ function createHandles() {
       onboardingSubmissionAccepted: vi.fn(),
       onboardingSubmissionRefused: vi.fn(),
     },
+    measurementIds: { generate: () => "entry-1" },
     measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
     onboardingClients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
@@ -202,7 +203,7 @@ function createHandles() {
     },
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
-    recordMeasurementEntry: vi.fn().mockResolvedValue(UNKNOWN_CLIENT_ID),
+    recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
     reviewStampWriter: vi.fn().mockResolvedValue(undefined),
     saveClientProfile: vi.fn().mockResolvedValue(undefined),
     unitPreferences: { findByClientId: vi.fn().mockResolvedValue(null) },

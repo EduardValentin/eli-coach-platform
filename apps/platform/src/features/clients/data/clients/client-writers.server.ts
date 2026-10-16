@@ -1,8 +1,7 @@
 import type { DatabaseTransaction } from "@eli-coach-platform/db";
-import {
+import type {
   Client,
-  type ClientIntake,
-  type CoachingStanding,
+  CoachingStanding,
 } from "@eli-coach-platform/domain/client";
 import { eq } from "drizzle-orm";
 
@@ -10,9 +9,8 @@ import { clientsTable } from "~/features/clients/data/schema.server";
 
 export async function writeClient(
   transaction: DatabaseTransaction,
-  admission: { intake: ClientIntake; admittedAt: Date },
+  client: Client,
 ): Promise<{ clientId: string } | "call_already_has_client"> {
-  const client = Client.fromIntake(admission.intake, admission.admittedAt);
   const [written] = await transaction
     .insert(clientsTable)
     .values(client.toSnapshot())

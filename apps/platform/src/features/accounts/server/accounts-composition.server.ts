@@ -8,6 +8,7 @@ import {
 import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
+import { RandomAccountIds } from "~/features/accounts/data/random-account-ids.server";
 
 export type AccountsFeature = {
   account: AccountController;
@@ -38,6 +39,7 @@ export function composeAccountsFeature(
     portal: handles.portal,
     provisioning: new ProvisionAccountUseCase({
       accounts: repository,
+      ids: new RandomAccountIds(),
       bootstrapCoachAuthSubjectId: handles.bootstrapCoachAuthSubjectId,
       invitationAcceptance: handles.invitationAcceptance,
     }),
