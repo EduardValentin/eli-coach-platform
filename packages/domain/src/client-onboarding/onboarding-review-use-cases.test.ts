@@ -18,10 +18,7 @@ import type {
   OnboardingReviewStamps,
   ReviewStamps,
 } from "./onboarding-review-stamps";
-import type {
-  DetailRequestIdGenerator,
-  OnboardingReviews,
-} from "./onboarding-reviews";
+import type { DetailRequestIds, OnboardingReviews } from "./onboarding-reviews";
 import type { OnboardingSubmission } from "./onboarding-submission";
 import { OpenOnboardingReviewUseCase } from "./open-onboarding-review-use-case";
 import { ReadOpenDetailRequestUseCase } from "./read-open-detail-request-use-case";
@@ -154,7 +151,7 @@ function createNotifications(delivery: "sent" | "failed" = "sent") {
 function createRequestIds() {
   return {
     generate: vi.fn().mockReturnValue("request-1"),
-  } satisfies DetailRequestIdGenerator;
+  } satisfies DetailRequestIds;
 }
 
 function createIncidents() {

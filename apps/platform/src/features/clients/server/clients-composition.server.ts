@@ -46,7 +46,7 @@ import {
   writeCoachingStanding,
 } from "~/features/clients/data/clients/client-writers.server";
 import { PostgresOnboardingClients } from "~/features/clients/data/clients/onboarding-clients-reader.server";
-import { RandomClientInvitationIdGenerator } from "~/features/clients/data/invitations/client-invitation-ids.server";
+import { RandomClientInvitationIds } from "~/features/clients/data/invitations/random-client-invitation-ids.server";
 import { PostgresClientInvitations } from "~/features/clients/data/invitations/invitations-repository.server";
 import { PostgresInvitedClients } from "~/features/clients/data/invitations/invited-clients-repository.server";
 import { PostgresClientJourneys } from "~/features/clients/data/journeys/client-journeys-repository.server";
@@ -128,7 +128,7 @@ export function composeClientsFeature(
   });
   const admitPaidClient = new AdmitPaidClientUseCase({
     ...invitationPorts,
-    invitationIds: new RandomClientInvitationIdGenerator(),
+    invitationIds: new RandomClientInvitationIds(),
   });
   const readClientPortalStanding = new ReadClientPortalStandingUseCase({
     clock,

@@ -16,10 +16,7 @@ import {
 } from "./progress-photo-intake";
 import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
 import type { ProgressPhotoStore } from "./progress-photo-store";
-import type {
-  ProgressPhotoIdGenerator,
-  ProgressPhotos,
-} from "./progress-photos";
+import type { ProgressPhotoIds, ProgressPhotos } from "./progress-photos";
 
 type RecordMeasurementsCommand = {
   authSubjectId: string;
@@ -43,7 +40,7 @@ type RecordMeasurementsUseCaseOptions = {
   profiles: ClientProfiles;
   records: ClientMeasurementRecords;
   photos: ProgressPhotos;
-  photoIds: ProgressPhotoIdGenerator;
+  photoIds: ProgressPhotoIds;
   store: ProgressPhotoStore;
   renditions: ProgressPhotoRenditions;
   clock: Clock;

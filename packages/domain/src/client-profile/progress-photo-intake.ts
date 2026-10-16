@@ -12,10 +12,7 @@ import type {
   ProgressPhotoRenditions,
 } from "./progress-photo-renditions";
 import type { ProgressPhotoStore } from "./progress-photo-store";
-import type {
-  ProgressPhotoIdGenerator,
-  ProgressPhotos,
-} from "./progress-photos";
+import type { ProgressPhotoIds, ProgressPhotos } from "./progress-photos";
 
 export type ReceivedProgressPhoto = ProgressPhotoFileFacts & {
   view: ProgressPhotoView;
@@ -37,7 +34,7 @@ export type EntryReceivingPhotos = {
 
 type ProgressPhotoIntakeOptions = {
   photos: ProgressPhotos;
-  photoIds: ProgressPhotoIdGenerator;
+  photoIds: ProgressPhotoIds;
   store: ProgressPhotoStore;
   renditions: ProgressPhotoRenditions;
   incidents: MeasurementIncidents;

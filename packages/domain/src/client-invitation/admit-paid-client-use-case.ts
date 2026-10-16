@@ -7,7 +7,7 @@ import type {
   ClientInvitationNotifications,
 } from "./client-invitation-notifications";
 import type {
-  ClientInvitationIdGenerator,
+  ClientInvitationIds,
   ClientInvitations,
 } from "./client-invitations";
 import type { IdentityInvitations } from "./identity-invitations";
@@ -22,7 +22,7 @@ type AdmitPaidClientUseCaseOptions = {
   clock: Clock;
   identity: IdentityInvitations;
   incidents: ClientInvitationIncidents;
-  invitationIds: ClientInvitationIdGenerator;
+  invitationIds: ClientInvitationIds;
   invitations: ClientInvitations;
   notifications: ClientInvitationNotifications;
   tokenGenerator: InvitationTokenGenerator;

@@ -6,6 +6,6 @@ export interface ProgressPhotos {
   delete(photoId: string): Promise<void>;
 }
 
-export interface ProgressPhotoIdGenerator {
+export interface ProgressPhotoIds {
   generate(): string;
 }

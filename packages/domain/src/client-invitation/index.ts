@@ -11,7 +11,7 @@ export {
   type ClientInvitationNotifications,
 } from "./client-invitation-notifications";
 export {
-  type ClientInvitationIdGenerator,
+  type ClientInvitationIds,
   type ClientInvitations,
 } from "./client-invitations";
 export { type IdentityInvitations } from "./identity-invitations";

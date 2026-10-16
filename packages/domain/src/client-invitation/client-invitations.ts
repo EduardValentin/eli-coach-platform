@@ -22,6 +22,6 @@ export interface ClientInvitations {
   }): Promise<"accepted" | "raced">;
 }
 
-export interface ClientInvitationIdGenerator {
+export interface ClientInvitationIds {
   generate(): string;
 }

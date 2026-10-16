@@ -40,6 +40,6 @@ export interface OnboardingReviews {
   recordApproval(moment: ReviewMoment): Promise<void>;
 }
 
-export interface DetailRequestIdGenerator {
+export interface DetailRequestIds {
   generate(): string;
 }

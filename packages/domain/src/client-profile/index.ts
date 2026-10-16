@@ -33,10 +33,7 @@ export {
   type ProgressPhotoOwner,
   type ProgressPhotoStore,
 } from "./progress-photo-store";
-export {
-  type ProgressPhotoIdGenerator,
-  type ProgressPhotos,
-} from "./progress-photos";
+export { type ProgressPhotoIds, type ProgressPhotos } from "./progress-photos";
 export { ReadClientMeasurementHistoryUseCase } from "./read-client-measurement-history-use-case";
 export {
   ReadClientProfileUseCase,

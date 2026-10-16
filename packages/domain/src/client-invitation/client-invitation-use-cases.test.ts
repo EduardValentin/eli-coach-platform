@@ -6,7 +6,7 @@ import { ClientInvitation } from "./client-invitation";
 import type { ClientInvitationIncidents } from "./client-invitation-incidents";
 import type { ClientInvitationNotifications } from "./client-invitation-notifications";
 import type {
-  ClientInvitationIdGenerator,
+  ClientInvitationIds,
   ClientInvitations,
 } from "./client-invitations";
 import type { IdentityInvitations } from "./identity-invitations";
@@ -117,7 +117,7 @@ function createTokenHasher() {
 function createIds() {
   return {
     generate: vi.fn().mockReturnValue("invitation-1"),
-  } satisfies ClientInvitationIdGenerator;
+  } satisfies ClientInvitationIds;
 }
 
 function admitDependencies(overrides: {

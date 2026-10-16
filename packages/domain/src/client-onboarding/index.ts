@@ -29,7 +29,7 @@ export {
   type ReviewStamps,
 } from "./onboarding-review-stamps";
 export {
-  type DetailRequestIdGenerator,
+  type DetailRequestIds,
   type OnboardingReviews,
 } from "./onboarding-reviews";
 export {

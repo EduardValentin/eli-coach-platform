@@ -11,10 +11,7 @@ import {
   OnboardingReview,
   type DetailRequestRefusal,
 } from "./onboarding-review";
-import type {
-  DetailRequestIdGenerator,
-  OnboardingReviews,
-} from "./onboarding-reviews";
+import type { DetailRequestIds, OnboardingReviews } from "./onboarding-reviews";
 
 type RequestOnboardingDetailsCommand = {
   clientId: string;
@@ -33,7 +30,7 @@ type RequestOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
-  requestIds: DetailRequestIdGenerator;
+  requestIds: DetailRequestIds;
   notifications: OnboardingDetailsNotifications;
   clock: Clock;
   incidents: ClientOnboardingIncidents;

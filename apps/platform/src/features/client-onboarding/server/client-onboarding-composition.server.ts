@@ -29,7 +29,7 @@ import type {
   MeasurementEntryWriter,
 } from "~/features/client-onboarding/data/client-profile-writers.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
-import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/detail-request-ids.server";
+import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/random-detail-request-ids.server";
 import {
   PostgresOnboardingReviews,
   type ReviewStampWriter,

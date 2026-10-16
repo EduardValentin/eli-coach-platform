@@ -16,10 +16,7 @@ import type {
   ProgressPhotoOwner,
   ProgressPhotoStore,
 } from "./progress-photo-store";
-import type {
-  ProgressPhotoIdGenerator,
-  ProgressPhotos,
-} from "./progress-photos";
+import type { ProgressPhotoIds, ProgressPhotos } from "./progress-photos";
 import { RecordMeasurementsUseCase } from "./record-measurements-use-case";
 
 const NOW = new Date("2026-10-01T08:00:00.000Z");
@@ -120,7 +117,7 @@ function createPorts(
     photos: new InMemoryProgressPhotos(),
     photoIds: {
       generate: () => `photo-${++photoNumber}`,
-    } satisfies ProgressPhotoIdGenerator,
+    } satisfies ProgressPhotoIds,
     store: new InMemoryProgressPhotoStore(),
     renditions: {
       render: vi.fn().mockResolvedValue(
