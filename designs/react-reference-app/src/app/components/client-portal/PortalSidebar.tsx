@@ -177,7 +177,7 @@ function DesktopSidebar({
         >
           <ClientNameBlock size="md" />
           <div className="contents" data-parity="notification-bell">
-            <NotificationBell align="left" />
+            <NotificationBell align="start" />
           </div>
         </div>
 

@@ -26,8 +26,9 @@ import {
   CHECKIN_QUERY_PARAM,
   checkinAnchorId,
   checkinIdFromSearch,
+  withoutCheckinTarget,
 } from "../utils/checkinLinks";
-import { pageOf, parsePage } from "../utils/listPaging";
+import { pageHolding, pageOf, parsePage } from "../utils/listPaging";
 import { EmptyState } from "./EmptyState";
 import { ListPager } from "./ListPager";
 import { ListingToolbar } from "./ListingToolbar";
@@ -102,7 +103,7 @@ export function CheckinListing({
   emptyCopy: Record<CheckinTab, CheckinEmptyCopy>;
   renderCheckin: (checkin: CheckIn, tab: CheckinTab) => ReactNode;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, key: locationKey } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { appState } = useAppState();
   const { getCheckinsInTab, getCheckinsAwaiting } = useCheckins();
@@ -114,13 +115,10 @@ export function CheckinListing({
     past: getCheckinsInTab("past", party, clientId),
   };
   const awaitingViewer = getCheckinsAwaiting(party, clientId).length;
-  const [defaultTab] = useState<CheckinTab>(
-    () =>
-      tabHoldingCheckin(focusedCheckinId, tabCheckins) ??
-      openingTab(awaitingViewer),
-  );
+  const [openedOn] = useState<CheckinTab>(() => openingTab(awaitingViewer));
+  const defaultTab = tabHoldingCheckin(focusedCheckinId, tabCheckins) ?? openedOn;
 
-  useBringCheckinIntoFocus(focusedCheckinId);
+  useBringCheckinIntoFocus(focusedCheckinId, locationKey);
 
   const tab = parseTab(searchParams.get(TAB_PARAM), defaultTab);
   const selection: CheckinSelection = {
@@ -132,14 +130,20 @@ export function CheckinListing({
     query: search ? (searchParams.get(CHECKIN_QUERY_PARAM) ?? "") : "",
   };
   const direction = parseDirection(searchParams.get(DIRECTION_PARAM), tab);
-  const page = parsePage(searchParams.get(PAGE_PARAM));
-
   const inTab = tabCheckins[tab];
   const shown = orderCheckins(filterCheckins(inTab, selection, party), {
     tab,
     direction,
     party,
   });
+  const pageWithTarget =
+    focusedCheckinId && !searchParams.has(PAGE_PARAM)
+      ? pageHolding(shown, {
+          holds: (c) => c.id === focusedCheckinId,
+          perPage: CHECKINS_PER_PAGE,
+        })
+      : null;
+  const page = pageWithTarget ?? parsePage(searchParams.get(PAGE_PARAM));
   const view = pageOf(shown, { page, perPage: CHECKINS_PER_PAGE });
   const kinds =
     appState.prototypeMode === "post-mvp" ? POST_MVP_KINDS : MVP_KINDS;
@@ -151,6 +155,10 @@ export function CheckinListing({
 
   const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
+    if (focusedCheckinId) {
+      setOrClear(next, TAB_PARAM, tab, openedOn);
+      withoutCheckinTarget(next);
+    }
     edit(next);
     next.delete(PAGE_PARAM);
     setSearchParams(next, { replace: true });
@@ -168,7 +176,7 @@ export function CheckinListing({
 
   const chooseTab = (value: string) => {
     updateSearchParams((params) => {
-      setOrClear(params, TAB_PARAM, parseTab(value, defaultTab), defaultTab);
+      setOrClear(params, TAB_PARAM, parseTab(value, openedOn), openedOn);
       params.delete(WAITING_PARAM);
       params.delete(DIRECTION_PARAM);
     });
@@ -209,6 +217,10 @@ export function CheckinListing({
 
   const pathForPage = (chosen: number) => {
     const params = new URLSearchParams(searchParams);
+    if (focusedCheckinId) {
+      setOrClear(params, TAB_PARAM, tab, openedOn);
+      withoutCheckinTarget(params);
+    }
     setOrClear(params, PAGE_PARAM, String(chosen), "1");
     const query = params.toString();
     return query.length > 0 ? `${pathname}?${query}` : pathname;
@@ -343,11 +355,11 @@ export function CheckinListing({
   );
 }
 
-function useBringCheckinIntoFocus(focusedCheckinId: string | null) {
+function useBringCheckinIntoFocus(focusedCheckinId: string | null, locationKey: string) {
   useEffect(() => {
     if (!focusedCheckinId) return;
     const anchor = document.getElementById(checkinAnchorId(focusedCheckinId));
     anchor?.scrollIntoView({ block: "center" });
     anchor?.focus({ preventScroll: true });
-  }, [focusedCheckinId]);
+  }, [focusedCheckinId, locationKey]);
 }

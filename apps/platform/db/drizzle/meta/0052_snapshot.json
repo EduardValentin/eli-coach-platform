@@ -1,6 +1,6 @@
 {
-  "id": "980e9425-7551-4481-a9ea-58604fcbac42",
-  "prevId": "11d2d6dd-69f5-4062-adb6-7db4dccf833d",
+  "id": "2a93443e-ae03-4b1a-b8df-5c1dc63dcbe3",
+  "prevId": "b6e14cd8-26cb-4163-9814-e38c230fb16c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -515,6 +515,27 @@
           "columns": [
             {
               "expression": "series_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "check_ins_status_starts_at_idx": {
+          "name": "check_ins_status_starts_at_idx",
+          "columns": [
+            {
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2761,24 +2782,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "video_file_id": {
-          "name": "video_file_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_format": {
-          "name": "video_format",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_size_bytes": {
-          "name": "video_size_bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2846,54 +2849,160 @@
         "exercises_difficulty_check": {
           "name": "exercises_difficulty_check",
           "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "app.notifications": {
+      "name": "notifications",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
-        "exercises_video_complete_check": {
-          "name": "exercises_video_complete_check",
-          "value": "(\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_format\" is null) and (\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_size_bytes\" is null)"
+        "recipient_party": {
+          "name": "recipient_party",
+          "type": "varchar(6)",
+          "primaryKey": false,
+          "notNull": true
         },
-        "exercises_unit_for_type_check": {
-          "name": "exercises_unit_for_type_check",
-          "value": "(\"app\".\"exercises\".\"type\", \"app\".\"exercises\".\"unit\") in (('resistance', 'reps'), ('resistance', 'time'), ('resistance', 'distance'), ('cardio', 'time'), ('cardio', 'distance'), ('mobility', 'time'), ('mobility', 'reps'), ('stretching', 'time'), ('breathing', 'breaths'), ('breathing', 'time'))"
+        "recipient_client_id": {
+          "name": "recipient_client_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
-        "exercises_name_check": {
-          "name": "exercises_name_check",
-          "value": "\"app\".\"exercises\".\"name\" = btrim(\"app\".\"exercises\".\"name\") and char_length(\"app\".\"exercises\".\"name\") between 1 and 80"
+        "kind": {
+          "name": "kind",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
         },
-        "exercises_form_cues_check": {
-          "name": "exercises_form_cues_check",
-          "value": "char_length(\"app\".\"exercises\".\"form_cues\") <= 1000"
+        "facts": {
+          "name": "facts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
         },
-        "exercises_primary_muscle_check": {
-          "name": "exercises_primary_muscle_check",
-          "value": "\"app\".\"exercises\".\"type\" = 'cardio' or cardinality(\"app\".\"exercises\".\"primary_muscles\") > 0"
+        "arrived_at": {
+          "name": "arrived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
         },
-        "exercises_primary_muscles_vocabulary_check": {
-          "name": "exercises_primary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"primary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
-        "exercises_secondary_muscles_vocabulary_check": {
-          "name": "exercises_secondary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"secondary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
+        "once_key": {
+          "name": "once_key",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "notifications_recipient_arrived_idx": {
+          "name": "notifications_recipient_arrived_idx",
+          "columns": [
+            {
+              "expression": "recipient_party",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recipient_client_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "arrived_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
-        "exercises_muscles_overlap_check": {
-          "name": "exercises_muscles_overlap_check",
-          "value": "not (\"app\".\"exercises\".\"primary_muscles\" && \"app\".\"exercises\".\"secondary_muscles\")"
+        "notifications_unread_idx": {
+          "name": "notifications_unread_idx",
+          "columns": [
+            {
+              "expression": "recipient_party",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recipient_client_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"app\".\"notifications\".\"read_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
-        "exercises_equipment_vocabulary_check": {
-          "name": "exercises_equipment_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"equipment\" <@ array['Barbell', 'Dumbbells', 'Kettlebell', 'EZ bar', 'Trap bar', 'Cable', 'Machine', 'Smith machine', 'Bands', 'Suspension trainer', 'Pull-up bar', 'Squat rack', 'Bench', 'Box or step', 'Medicine ball', 'Stability ball', 'Mat', 'Foam roller', 'Treadmill', 'Bike', 'Rower', 'Stair climber', 'Jump rope']::text[]"
-        },
-        "exercises_tags_vocabulary_check": {
-          "name": "exercises_tags_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"tags\" <@ array['Strength', 'Hypertrophy', 'Recovery']::text[]"
-        },
-        "exercises_video_format_check": {
-          "name": "exercises_video_format_check",
-          "value": "\"app\".\"exercises\".\"video_format\" in ('mp4', 'mov')"
-        },
-        "exercises_video_size_check": {
-          "name": "exercises_video_size_check",
-          "value": "\"app\".\"exercises\".\"video_size_bytes\" between 1 and 52428800"
+        "notifications_once_key_unique": {
+          "name": "notifications_once_key_unique",
+          "columns": [
+            {
+              "expression": "once_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"app\".\"notifications\".\"once_key\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notifications_recipient_client_id_clients_id_fk": {
+          "name": "notifications_recipient_client_id_clients_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "clients",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "recipient_client_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "notifications_recipient_check": {
+          "name": "notifications_recipient_check",
+          "value": "(\"app\".\"notifications\".\"recipient_party\" = 'coach' and \"app\".\"notifications\".\"recipient_client_id\" is null) or (\"app\".\"notifications\".\"recipient_party\" = 'client' and \"app\".\"notifications\".\"recipient_client_id\" is not null)"
         }
       },
       "isRLSEnabled": false

@@ -90,6 +90,13 @@ function createStop(options?: {
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
       checkInSeriesReadFailed: vi.fn(),
+      checkInInboxFailed: vi.fn(),
+      checkInSeriesInboxFailed: vi.fn(),
+    },
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
     series,
@@ -120,6 +127,24 @@ describe("StopCheckInSeriesUseCase", () => {
       clientTimeZone: "Europe/London",
       client: ANA,
       recipient: "client",
+    });
+  });
+
+  it("writes the stop to her inbox without a week to open", async () => {
+    // arrange
+    const { ports, stop } = createStop();
+
+    // act
+    await stop.execute({ seriesId: "series-1" });
+
+    // assert
+    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesStopped", {
+      series: { ...SERIES, stoppedAt: NOW },
+      weekStartsAt: NEXT_WEDNESDAY_SIX_PM,
+      clientTimeZone: "Europe/London",
+      client: ANA,
+      recipient: "client",
+      firstWeekId: null,
     });
   });
 

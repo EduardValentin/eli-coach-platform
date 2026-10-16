@@ -62,6 +62,11 @@ import {
   type ExerciseLibraryFeature,
 } from "~/features/exercise-library/server/exercise-library-composition.server";
 import {
+  composeNotificationInbox,
+  composeNotificationsFeature,
+  type NotificationsFeature,
+} from "~/features/notifications/server/notifications-composition.server";
+import {
   composeNutritionLibraryFeature,
   type NutritionLibraryFeature,
 } from "~/features/nutrition-library/server/nutrition-library-composition.server";
@@ -97,6 +102,7 @@ export type PlatformContainer = {
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   exerciseLibrary: ExerciseLibraryFeature;
   featureFlagOverrides: FeatureFlagOverrides;
+  notifications: NotificationsFeature;
   nutritionLibrary: NutritionLibraryFeature;
   platform: PlatformFeature;
   store: StoreFeature;
@@ -195,6 +201,9 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const notificationInbox = composeNotificationInbox({
+    database: database.client,
+  });
   const checkIns = composeCheckInsFeature({
     appBasePath: environment.APP_BASE_PATH,
     availability: coachSchedule.handles.availability,
@@ -206,10 +215,18 @@ export function createPlatformContainer(options: {
     coachTime: coachSchedule.handles.coachTime,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
+    inbox: notificationInbox.handles.inbox,
     incidents,
     meetingRoom: coachSchedule.handles.meetingRoom,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
+  });
+  const notifications = composeNotificationsFeature({
+    clientReach: clients.handles.clientReach,
+    clock,
+    expirySources: [checkIns.handles.expirySource],
+    inbox: notificationInbox.handles.inbox,
+    incidents,
   });
   const clientProfile = composeClientProfileFeature({
     clientIdentities: clients.handles.clientIdentities,
@@ -316,6 +333,7 @@ export function createPlatformContainer(options: {
     coachingSales,
     exerciseLibrary,
     featureFlagOverrides,
+    notifications,
     nutritionLibrary,
     platform,
     store: composeStoreFeature({

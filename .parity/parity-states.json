@@ -4181,6 +4181,138 @@
       }
     ]
   },
+  "bell-unread": [
+    {
+      "waitFor": "role=button[name=/^Notifications, \\d+ unread$/] >> visible=true"
+    }
+  ],
+  "bell-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-bell"
+      },
+      {
+        "click": "role=option[name=\"Empty\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": []
+  },
+  "bell-many": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-bell"
+      },
+      {
+        "click": "role=option[name=\"Many (40, shows 30)\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      }
+    ],
+    "real": []
+  },
+  "drawer-bell-unread": [
+    {
+      "use": "bell-unread"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
+  "drawer-bell-empty": [
+    {
+      "use": "bell-empty"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
+  "open-bell": [
+    {
+      "click": "role=button[name=/^Notifications/] >> visible=true"
+    }
+  ],
+  "open-bell-empty": [
+    {
+      "use": "bell-empty"
+    },
+    {
+      "use": "open-bell"
+    }
+  ],
+  "open-bell-many": [
+    {
+      "use": "bell-many"
+    },
+    {
+      "use": "open-bell"
+    }
+  ],
+  "bell-row-hover": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "hover": "[role=\"dialog\"][aria-label=\"Notifications\"] [data-parity=\"notification-row\"] >> nth=1"
+    }
+  ],
+  "bell-mark-all-focus": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "bell-row-focus": [
+    {
+      "use": "open-bell"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "bell-arrival-toast": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-notification-arrive"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
   "coach-training-active": [
     {
       "click": "[data-parity=\"link-training\"]"

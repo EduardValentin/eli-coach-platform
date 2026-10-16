@@ -26,6 +26,7 @@
     { "id": "C23", "name": "apps/platform/src/features/coach-schedule", "paths": [ "apps/platform/src/features/coach-schedule/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C24", "name": "apps/platform/src/features/clients", "paths": [ "apps/platform/src/features/clients/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C25", "name": "apps/platform/src/features/exercise-library", "paths": [ "apps/platform/src/features/exercise-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
-    { "id": "C26", "name": "apps/platform/src/features/nutrition-library", "paths": [ "apps/platform/src/features/nutrition-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] }
+    { "id": "C26", "name": "apps/platform/src/features/nutrition-library", "paths": [ "apps/platform/src/features/nutrition-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C27", "name": "apps/platform/src/features/notifications", "paths": [ "apps/platform/src/features/notifications/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] }
   ]
 }

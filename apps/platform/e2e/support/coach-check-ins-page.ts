@@ -77,6 +77,22 @@ export class CoachCheckInsPage {
     ).toBeFocused();
   }
 
+  async expectReviewLandedOn(tab: CheckInTab, showing: string): Promise<void> {
+    await expect(this.page).toHaveURL(REVIEW_URL);
+    await this.expectTabShown(tab);
+    await expect(
+      this.checkIn(tab, showing).locator(CHECK_IN_ANCHOR),
+    ).toBeFocused();
+  }
+
+  async expectCheckInFocused(
+    tab: CheckInTab,
+    checkInId: string,
+  ): Promise<void> {
+    await this.expectTabShown(tab);
+    await expect(this.page.locator(`#checkin-${checkInId}`)).toBeFocused();
+  }
+
   async expectReviewOpenedAsUsual(tab: CheckInTab): Promise<void> {
     await expect(this.page).toHaveURL(REVIEW_URL);
     await expect(this.heading).toBeVisible();

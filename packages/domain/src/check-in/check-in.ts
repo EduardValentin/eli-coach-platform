@@ -22,6 +22,11 @@ export const OPEN_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
   ...COACH_TIME_HOLDING_STATUSES,
   "clash",
 ];
+
+export const UNANSWERED_CHECK_IN_STATUSES: readonly RecordedCheckInStatus[] = [
+  "pending",
+  "clash",
+];
 export type CheckInStatus = RecordedCheckInStatus | "passed";
 export type CheckInOutcome = Exclude<
   RecordedCheckInStatus,
@@ -39,6 +44,27 @@ export type CheckInRequestDecision =
 export type CheckInViewerProposal =
   "allowed" | "exhausted" | "later_week" | "none";
 export type CheckInTab = "upcoming" | "requests" | "past";
+export type CheckInLapseKind =
+  "request_expired" | "new_time_expired" | "clash_missed";
+export type CheckInLapseSnapshot = { kind: CheckInLapseKind; lapsedAt: Date };
+
+export class CheckInLapse {
+  readonly kind: CheckInLapseKind;
+  readonly lapsedAt: Date;
+
+  private constructor(snapshot: CheckInLapseSnapshot) {
+    this.kind = snapshot.kind;
+    this.lapsedAt = snapshot.lapsedAt;
+  }
+
+  static at(snapshot: CheckInLapseSnapshot): CheckInLapse {
+    return new CheckInLapse(snapshot);
+  }
+
+  toSnapshot(): CheckInLapseSnapshot {
+    return { kind: this.kind, lapsedAt: this.lapsedAt };
+  }
+}
 
 export type CheckInProps = {
   id: string;
@@ -246,6 +272,10 @@ export class CheckIn {
     return a.startsAt.getTime() - b.startsAt.getTime();
   }
 
+  static earliestOf(checkIns: readonly CheckIn[]): CheckIn | null {
+    return [...checkIns].sort(CheckIn.byStart)[0] ?? null;
+  }
+
   static startsBeforeCoachingEnd({
     startsAt,
     coachingEndsAt,
@@ -295,6 +325,20 @@ export class CheckIn {
     }
 
     return this.recordedStatus;
+  }
+
+  isClash(): boolean {
+    return this.recordedStatus === "clash";
+  }
+
+  lapseAt(now: Date): CheckInLapse | null {
+    const kind = this.unansweredLapse();
+
+    if (!kind || this.startsAt > now) {
+      return null;
+    }
+
+    return CheckInLapse.at({ kind, lapsedAt: this.startsAt });
   }
 
   holdsCoachTimeAt(at: Date): boolean {
@@ -468,12 +512,24 @@ export class CheckIn {
     return this.earlierStartsAt !== null;
   }
 
+  private unansweredLapse(): CheckInLapseKind | null {
+    if (this.recordedStatus === "clash") {
+      return "clash_missed";
+    }
+
+    if (this.recordedStatus !== "pending") {
+      return null;
+    }
+
+    return this.wasMoved() ? "new_time_expired" : "request_expired";
+  }
+
   private isUpcomingWeekFor(viewer: PartyAtInstant): boolean {
     return this.seriesId !== null && this.tabFor(viewer) === "upcoming";
   }
 
   private holdsNoAnswerYet(): boolean {
-    return this.recordedStatus === "pending" || this.recordedStatus === "clash";
+    return UNANSWERED_CHECK_IN_STATUSES.includes(this.recordedStatus);
   }
 
   private mayCancel(party: CheckInParty): boolean {

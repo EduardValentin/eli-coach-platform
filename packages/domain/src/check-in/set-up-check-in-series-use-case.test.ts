@@ -112,6 +112,8 @@ function createSetUp(options?: {
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
     checkInSeriesReadFailed: vi.fn(),
+    checkInInboxFailed: vi.fn(),
+    checkInSeriesInboxFailed: vi.fn(),
   };
   const ports = {
     availability: availabilityOf(),
@@ -120,6 +122,11 @@ function createSetUp(options?: {
     identities,
     ids: { generate: () => `id-${(generated += 1)}` },
     incidents,
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
+    },
     notifications,
     series,
   };
@@ -234,6 +241,42 @@ describe("SetUpCheckInSeriesUseCase", () => {
     expect(
       ports.incidents.checkInSeriesNotificationFailed,
     ).toHaveBeenCalledWith({ seriesId: "id-1", notification: "seriesSetUp" });
+  });
+
+  it("writes the series to her inbox, opening her earliest recorded week", async () => {
+    // arrange
+    const weekOf = (id: string, startsAt: string) =>
+      CheckIn.seriesOccurrence({
+        id,
+        seriesId: "id-1",
+        clientId: "client-1",
+        startsAt: new Date(startsAt),
+        clientTimeZone: "Europe/London",
+        coachTimeZone: "Europe/Bucharest",
+        at: NOW,
+      });
+    const { ports, setUp } = createSetUp({
+      recorded: {
+        status: "set_up",
+        occurrences: [
+          weekOf("week-2", WEEK_STARTS[1]),
+          weekOf("week-1", WEEK_STARTS[0]),
+        ],
+      },
+    });
+
+    // act
+    await setUp.execute(WEDNESDAY_EVENINGS);
+
+    // assert
+    expect(ports.inbox.seriesEvent).toHaveBeenCalledWith("seriesSetUp", {
+      series: expect.objectContaining({ id: "id-1" }),
+      weekStartsAt: new Date(WEEK_STARTS[0]),
+      clientTimeZone: "Europe/London",
+      client: ANA,
+      recipient: "client",
+      firstWeekId: "week-1",
+    });
   });
 
   it("starts a waiting client's weeks at her program start", async () => {

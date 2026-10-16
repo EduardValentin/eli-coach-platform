@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
+import type { NotificationsFeature } from "~/features/notifications/server/notifications-composition.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -10,15 +13,37 @@ import {
 
 import { loader, shouldRevalidate } from "./layout";
 
+const BELL: NotificationBellReply = {
+  notifications: [
+    {
+      id: "1b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e",
+      kind: "check-in.requested",
+      facts: {
+        checkInId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+        startsAt: "2026-10-16T15:00:00.000Z",
+        clientName: "Jane Doe",
+      },
+      arrivedAt: "2026-10-15T11:00:00.000Z",
+      unread: true,
+    },
+  ],
+  unreadCount: 1,
+  checkedAt: "2026-10-15T12:00:00.000Z",
+};
+
 describe("coach shell loader", () => {
-  it("counts the check-ins waiting for the coach's answer", async () => {
+  it("counts the check-ins waiting for the coach's answer and reads her notification bell", async () => {
     // arrange
     const loadAwaitingCount = vi.fn().mockResolvedValue(4);
+    const loadBell = vi.fn().mockResolvedValue(BELL);
     const args = createRequestArgs({
       contexts: [
         contextEntry(checkInsContext, {
           coachCheckIns: { loadAwaitingCount },
         } as unknown as CheckInsFeature),
+        contextEntry(notificationsContext, {
+          notificationBell: { loadBell },
+        } as unknown as NotificationsFeature),
       ],
       request: new Request("https://evoa.fit/coach"),
     });
@@ -27,8 +52,9 @@ describe("coach shell loader", () => {
     const shell = await loader(args);
 
     // assert
-    expect(shell).toEqual({ checkInsAwaiting: 4 });
+    expect(shell).toEqual({ checkInsAwaiting: 4, bell: BELL });
     expect(loadAwaitingCount).toHaveBeenCalledWith(args);
+    expect(loadBell).toHaveBeenCalledWith(args);
   });
 });
 

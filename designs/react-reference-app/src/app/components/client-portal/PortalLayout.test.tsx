@@ -39,8 +39,8 @@ function renderLayout() {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
-              <CheckinProvider>
-                <NotificationProvider>
+              <NotificationProvider>
+                <CheckinProvider>
                   <ResourceProvider>
                     <Routes>
                       <Route path="/portal" element={<PortalLayout />}>
@@ -48,8 +48,8 @@ function renderLayout() {
                       </Route>
                     </Routes>
                   </ResourceProvider>
-                </NotificationProvider>
-              </CheckinProvider>
+                </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

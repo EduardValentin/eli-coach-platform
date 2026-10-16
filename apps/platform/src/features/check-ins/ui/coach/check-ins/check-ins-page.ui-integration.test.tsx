@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
+  act,
   cleanup,
   render,
   screen,
@@ -781,6 +782,55 @@ describe("the coach's check-in named in the address", () => {
     expect(
       screen.getByRole("list", { name: "Upcoming check-ins" }),
     ).toHaveTextContent("Elena Dumitru");
+  });
+});
+
+describe("the coach following a check-in link on her check-ins page", () => {
+  it("switches to the tab holding the check-in and focuses it, every time she follows it", async () => {
+    // arrange
+    const { router } = await renderCheckInsPageWithView();
+    const anchor = () =>
+      document.getElementById(`checkin-${ELENA_UPCOMING.id}`);
+
+    // act
+    await act(() => router.navigate(coachCheckInPath(ELENA_UPCOMING.id)));
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() => expect(anchor()).toHaveFocus());
+
+    // act
+    anchor()?.blur();
+    await act(() => router.navigate(coachCheckInPath(ELENA_UPCOMING.id)));
+
+    // assert
+    await waitFor(() => expect(anchor()).toHaveFocus());
+  });
+
+  it("drops the check-in from the address and keeps the tab she chose", async () => {
+    // arrange
+    const { router, user } = await renderCheckInsPageWithView(
+      coachCheckInPath(ELENA_UPCOMING.id),
+    );
+
+    // act
+    await showTab(user, "Past");
+
+    // assert
+    expect(router.state.location.search).toBe("?view=past");
+    expect(screen.getByRole("tab", { name: "Past" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    // act
+    await showTab(user, /^Requests/);
+
+    // assert
+    expect(router.state.location.search).toBe("");
   });
 });
 

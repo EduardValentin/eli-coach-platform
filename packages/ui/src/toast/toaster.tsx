@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { Toaster as SonnerToaster, type ToasterProps } from "sonner";
 
 export { toast } from "sonner";
@@ -20,4 +20,16 @@ export function Toaster(props: ToasterProps) {
       {...props}
     />
   );
+}
+
+type PageFocusChoice = { label: string; onSelect: () => void };
+
+export function pageFocusAction({ label, onSelect }: PageFocusChoice) {
+  return {
+    label,
+    onClick: (event: MouseEvent<HTMLButtonElement>) => {
+      event.currentTarget.blur();
+      onSelect();
+    },
+  };
 }

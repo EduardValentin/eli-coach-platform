@@ -100,6 +100,8 @@ function createUseCase(options: {
     checkInSeriesNotificationFailed: vi.fn(),
     checkInSeriesExtensionFailed: vi.fn(),
     checkInSeriesReadFailed: vi.fn(),
+    checkInInboxFailed: vi.fn(),
+    checkInSeriesInboxFailed: vi.fn(),
   } satisfies CheckInIncidents;
   const useCase = new FindNextClientCheckInUseCase({
     checkIns,

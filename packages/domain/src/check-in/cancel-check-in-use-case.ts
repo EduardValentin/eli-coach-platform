@@ -3,6 +3,7 @@ import type { Clock } from "../shared";
 
 import type { CheckInCancellationRefusal, CheckInSnapshot } from "./check-in";
 import type { CheckInActorCommand } from "./check-in-actor";
+import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CheckInSettler } from "./check-in-settler";
@@ -20,6 +21,7 @@ type CancelCheckInUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
+  inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };

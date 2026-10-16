@@ -65,6 +65,8 @@ function createResolveJoin(options?: {
       ),
     listForClient: vi.fn(),
     listAll: vi.fn(),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn(),
     endCoaching: vi.fn(),
