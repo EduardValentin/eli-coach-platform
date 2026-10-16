@@ -12,7 +12,7 @@ export type FindFoodResult =
   | { status: "not-found" };
 
 type FindFoodUseCaseOptions = {
-  library: Pick<FoodLibrary, "find" | "list">;
+  library: Pick<FoodLibrary, "list">;
   tags: Pick<NutritionTags, "list">;
 };
 
@@ -21,11 +21,11 @@ export class FindFoodUseCase {
 
   async execute(reference: FoodReference): Promise<FindFoodResult> {
     const { library, tags } = this.options;
-    const [food, foods, vocabulary] = await Promise.all([
-      library.find(reference),
+    const [foods, vocabulary] = await Promise.all([
       library.list(reference.ownerAccountId),
       tags.list(),
     ]);
+    const food = foods.find(({ id }) => id === reference.foodId);
 
     if (!food) return { status: "not-found" };
 

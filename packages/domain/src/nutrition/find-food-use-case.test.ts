@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Food } from "./food";
-import type { FoodReference } from "./food-library";
+import type { FoodLibrary } from "./food-library";
 import { FindFoodUseCase } from "./find-food-use-case";
 import type { NutritionTag } from "./nutrition-tags";
 
@@ -49,20 +49,16 @@ function createUseCase() {
     );
   const library = {
     list: vi.fn(async (ownerAccountId: string) => ownedBy(ownerAccountId)),
-    find: vi.fn(
-      async ({ ownerAccountId, foodId }: FoodReference) =>
-        ownedBy(ownerAccountId).find(({ id }) => id === foodId) ?? null,
-    ),
-  };
+  } satisfies Pick<FoodLibrary, "list">;
   const tags = { list: vi.fn(async () => TAGS) };
 
-  return { useCase: new FindFoodUseCase({ library, tags }) };
+  return { useCase: new FindFoodUseCase({ library, tags }), library };
 }
 
 describe("FindFoodUseCase", () => {
-  it("finds her food with the names of every other food of hers, its own left out, and the tag vocabulary", async () => {
+  it("finds her food in one read of her library, with the names of every other food of hers, its own left out, and the tag vocabulary", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
@@ -77,6 +73,7 @@ describe("FindFoodUseCase", () => {
       otherNames: ["Quinoa", "Rice"],
       tags: TAGS,
     });
+    expect(library.list).toHaveBeenCalledOnce();
   });
 
   it("finds nothing for an unknown food", async () => {
