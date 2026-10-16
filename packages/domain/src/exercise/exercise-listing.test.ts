@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ExerciseSelection, sortExercises } from "./exercise-listing";
+import {
+  countExercisesByStatus,
+  ExerciseSelection,
+  sortExercises,
+} from "./exercise-listing";
 import type { ExerciseSnapshot } from "./exercise";
 
 type Item = Pick<
@@ -474,5 +478,33 @@ describe("sortExercises", () => {
     // assert
     expect(sorted).not.toBe(input);
     expect(input).toEqual(sortable);
+  });
+});
+
+describe("countExercisesByStatus", () => {
+  it("counts the exercises of each status", () => {
+    // arrange
+    const items = [
+      { status: "active" as const },
+      { status: "archived" as const },
+      { status: "active" as const },
+    ];
+
+    // act
+    const counts = countExercisesByStatus(items);
+
+    // assert
+    expect(counts).toEqual({ active: 2, archived: 1 });
+  });
+
+  it("counts none of either status in an empty list", () => {
+    // arrange
+    const items: { status: "active" | "archived" }[] = [];
+
+    // act
+    const counts = countExercisesByStatus(items);
+
+    // assert
+    expect(counts).toEqual({ active: 0, archived: 0 });
   });
 });

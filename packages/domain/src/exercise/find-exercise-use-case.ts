@@ -1,9 +1,11 @@
 import type { Exercise } from "./exercise";
 import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import { ExerciseNames } from "./exercise-names";
 
 export type FindExerciseResult =
   | { status: "found"; exercise: Exercise; otherNames: string[] }
-  | { status: "not-found" };
+  | { status: "not-found" }
+  | { status: "archived" };
 
 type FindExerciseUseCaseOptions = {
   library: Pick<ExerciseLibrary, "list">;
@@ -18,12 +20,15 @@ export class FindExerciseUseCase {
 
     if (!exercise) return { status: "not-found" };
 
+    if (exercise.status === "archived") return { status: "archived" };
+
     return {
       status: "found",
       exercise,
-      otherNames: exercises
-        .filter(({ id }) => id !== reference.exerciseId)
-        .map(({ name }) => name),
+      otherNames: ExerciseNames.reservedBy(
+        exercises,
+        reference.exerciseId,
+      ).toArray(),
     };
   }
 }

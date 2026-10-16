@@ -223,6 +223,21 @@ export class ExerciseSelection {
   }
 }
 
+export type ExerciseStatus = "active" | "archived";
+export const EXERCISE_STATUSES: readonly ExerciseStatus[] = [
+  "active",
+  "archived",
+];
+
+export function countExercisesByStatus(
+  items: readonly { status: ExerciseStatus }[],
+): Record<ExerciseStatus, number> {
+  return {
+    active: items.filter(({ status }) => status === "active").length,
+    archived: items.filter(({ status }) => status === "archived").length,
+  };
+}
+
 export type ExerciseSortKey = "name" | "difficulty";
 export const DEFAULT_EXERCISE_SORT_KEY: ExerciseSortKey = "name";
 export const EXERCISE_SORT_DEFAULT_DIRECTIONS: Record<

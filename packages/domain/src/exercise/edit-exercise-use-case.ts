@@ -21,6 +21,7 @@ export type EditExerciseResult =
   | { status: "edited"; exercise: Exercise }
   | { status: "invalid"; problems: ExerciseSaveProblems }
   | { status: "not-found" }
+  | { status: "archived" }
   | { status: "failed" };
 
 type EditExerciseUseCaseOptions = {
@@ -71,9 +72,13 @@ export class EditExerciseUseCase {
       return { status: "not-found" };
     }
 
-    const otherNames = ExerciseNames.of(
-      exercises.filter(({ id }) => id !== exerciseId).map(({ name }) => name),
-    );
+    if (exercise.status === "archived") {
+      await this.videos.discard(choice);
+
+      return { status: "archived" };
+    }
+
+    const otherNames = ExerciseNames.reservedBy(exercises, exerciseId);
     const draft = ExerciseDraft.from(input);
     const nameTaken = otherNames.includes(input.name);
     const video = await this.videos.judged(choice);

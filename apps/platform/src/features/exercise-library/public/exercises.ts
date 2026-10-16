@@ -13,7 +13,7 @@ type ExerciseVideoView = { path: string; format: ExerciseVideoFormat };
 
 export type ExerciseView = Omit<
   ExerciseSnapshot,
-  "ownerAccountId" | "createdAt" | "updatedAt" | "video"
+  "ownerAccountId" | "archivedAt" | "createdAt" | "updatedAt" | "video"
 > & { video: ExerciseVideoView | null };
 
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
@@ -70,6 +70,7 @@ export const exerciseProblemsAnswerSchema = z.object({
 export function presentExercise(exercise: Exercise): ExerciseView {
   const {
     ownerAccountId: _ownerAccountId,
+    archivedAt: _archivedAt,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
     video,

@@ -182,6 +182,14 @@ export function createConsoleLogger(): ConsoleLogger {
         exerciseId,
       });
     },
+    exerciseRestoreFailed: ({ error, exerciseId }) => {
+      console.error("Exercise restore could not be written.", {
+        errorCategory: "exercise_restore_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        exerciseId,
+      });
+    },
     videoCleanupFailed: ({ error, ...file }) => {
       console.error("Exercise video file could not be removed.", {
         errorCategory: "exercise_video_cleanup_failure",

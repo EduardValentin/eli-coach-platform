@@ -126,6 +126,7 @@ function createHandles() {
     incidents: {
       exerciseCreationFailed: vi.fn(),
       exerciseEditFailed: vi.fn(),
+      exerciseRestoreFailed: vi.fn(),
       videoCleanupFailed: vi.fn(),
     },
     videoFormats: { detect: vi.fn(async () => "mp4") },

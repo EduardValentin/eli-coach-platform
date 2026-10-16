@@ -60,6 +60,7 @@ const HIP_THRUST: ExerciseSnapshot = {
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
+  archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
 };
@@ -339,6 +340,23 @@ describe("ExerciseLibraryController#load", () => {
 
     // act
     const thrown = await captureThrown(() => controller.load(argsFor(), id));
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/coach/training",
+    );
+  });
+
+  it("sends the coach back to the library for an archived exercise", async () => {
+    // arrange
+    const { controller, findExercise } = createController();
+    findExercise.execute.mockResolvedValueOnce({ status: "archived" });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.load(argsFor(), EXERCISE_ID),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -714,6 +732,21 @@ describe("ExerciseLibraryController#edit", () => {
 
     // assert
     expect(response.status).toBe(404);
+  });
+
+  it("answers 409 for an archived exercise", async () => {
+    // arrange
+    const { controller, editExercise } = createController();
+    editExercise.execute.mockResolvedValueOnce({ status: "archived" });
+
+    // act
+    const response = await controller.edit(
+      argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(409);
   });
 
   it("answers 404 for an id that is not a uuid without editing", async () => {

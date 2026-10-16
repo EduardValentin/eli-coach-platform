@@ -58,8 +58,8 @@ export class CreateExerciseUseCase {
     video: choice,
   }: CreateExerciseCommand): Promise<CreateExerciseResult> {
     const { library, ids, clock } = this.options;
-    const otherNames = ExerciseNames.of(
-      (await library.list(ownerAccountId)).map(({ name }) => name),
+    const otherNames = ExerciseNames.reservedBy(
+      await library.list(ownerAccountId),
     );
     const draft = ExerciseDraft.from(input);
     const nameTaken = otherNames.includes(input.name);

@@ -28,6 +28,7 @@ const SQUAT: ExerciseSnapshot = {
   tags: ["Strength"],
   cues: "Brace.",
   video: null,
+  archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
 };

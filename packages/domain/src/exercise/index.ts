@@ -1,7 +1,15 @@
 export {
+  ArchiveExerciseUseCase,
+  type ArchiveExerciseResult,
+} from "./archive-exercise-use-case";
+export {
   CreateExerciseUseCase,
   type CreateExerciseResult,
 } from "./create-exercise-use-case";
+export {
+  DeleteExerciseUseCase,
+  type DeleteExerciseResult,
+} from "./delete-exercise-use-case";
 export {
   EditExerciseUseCase,
   type EditExerciseResult,
@@ -17,6 +25,7 @@ export {
   type ExerciseAddition,
   type ExerciseLibrary,
   type ExerciseReference,
+  type ExerciseRemoval,
   type ExerciseReplacement,
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
@@ -24,11 +33,14 @@ export {
   DEFAULT_EXERCISE_SORT_KEY,
   EXERCISE_EQUIPMENT_FILTERS,
   EXERCISE_SORT_DEFAULT_DIRECTIONS,
+  EXERCISE_STATUSES,
   EXERCISE_TYPE_FILTERS,
   ExerciseSelection,
+  countExercisesByStatus,
   sortExercises,
   type ExerciseEquipmentFilter,
   type ExerciseSortKey,
+  type ExerciseStatus,
   type ExerciseTypeFilter,
 } from "./exercise-listing";
 export { ExerciseNames } from "./exercise-names";
@@ -61,6 +73,10 @@ export {
   OpenExerciseVideoUseCase,
   type OpenExerciseVideoResult,
 } from "./open-exercise-video-use-case";
+export {
+  RestoreExerciseUseCase,
+  type RestoreExerciseResult,
+} from "./restore-exercise-use-case";
 export { StageExerciseVideoUseCase } from "./stage-exercise-video-use-case";
 export {
   DIFFICULTIES,

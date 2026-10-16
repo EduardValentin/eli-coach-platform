@@ -23,6 +23,7 @@ function exerciseCalled(id: string, name: string): Exercise {
     tags: [],
     cues: "",
     video: null,
+    archivedAt: null,
     createdAt: AT,
     updatedAt: AT,
   });
@@ -37,6 +38,10 @@ const BACK_SQUAT = exerciseCalled(
   "Back squat",
 );
 const LUNGE = exerciseCalled("e0000000-0000-4000-8000-000000000003", "Lunge");
+const ARCHIVED_DEADLIFT = exerciseCalled(
+  "e0000000-0000-4000-8000-000000000005",
+  "Deadlift",
+).archived(AT);
 const OTHER_COACHS_PLANK = Exercise.reconstitute({
   ...exerciseCalled(
     "e0000000-0000-4000-8000-000000000004",
@@ -46,7 +51,13 @@ const OTHER_COACHS_PLANK = Exercise.reconstitute({
 });
 
 function createUseCase() {
-  const stored = [BACK_SQUAT, HIP_THRUST, LUNGE, OTHER_COACHS_PLANK];
+  const stored = [
+    BACK_SQUAT,
+    ARCHIVED_DEADLIFT,
+    HIP_THRUST,
+    LUNGE,
+    OTHER_COACHS_PLANK,
+  ];
   const ownedBy = (ownerAccountId: string) =>
     stored.filter(
       (exercise) => exercise.toSnapshot().ownerAccountId === ownerAccountId,
@@ -59,7 +70,7 @@ function createUseCase() {
 }
 
 describe("FindExerciseUseCase", () => {
-  it("finds her exercise in one read of her library, with the names of every other exercise of hers, its own left out", async () => {
+  it("finds her exercise in one read of her library, with the names of her other active exercises, its own left out", async () => {
     // arrange
     const { useCase, library } = createUseCase();
 
@@ -76,6 +87,20 @@ describe("FindExerciseUseCase", () => {
       otherNames: ["Back squat", "Lunge"],
     });
     expect(library.list).toHaveBeenCalledOnce();
+  });
+
+  it("answers an archived exercise as archived", async () => {
+    // arrange
+    const { useCase } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000005",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "archived" });
   });
 
   it("finds nothing for an unknown exercise", async () => {

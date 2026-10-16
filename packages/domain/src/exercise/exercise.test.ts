@@ -7,6 +7,8 @@ import { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
 
 const ADDED_AT = new Date("2026-10-14T09:00:00.000Z");
 const REVISED_AT = new Date("2026-10-15T09:00:00.000Z");
+const ARCHIVED_AT = new Date("2026-10-16T09:00:00.000Z");
+const RESTORED_AT = new Date("2026-10-17T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
 
 const SQUAT: ExerciseDraftInput = {
@@ -73,10 +75,12 @@ describe("Exercise", () => {
       ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       video: null,
+      archivedAt: null,
       createdAt: ADDED_AT,
       updatedAt: ADDED_AT,
     });
     expect(exercise.video).toBeNull();
+    expect(exercise.status).toBe("active");
   });
 
   it("is added with the video attached to it", () => {
@@ -116,6 +120,7 @@ describe("Exercise", () => {
       ownerAccountId: COACH_ACCOUNT_ID,
       ...draft.toSnapshot(),
       video: FIRST_VIDEO.toSnapshot(),
+      archivedAt: null,
       createdAt: ADDED_AT,
       updatedAt: REVISED_AT,
     });
@@ -177,6 +182,54 @@ describe("Exercise", () => {
     expect(revision.replacedVideo).toBeNull();
   });
 
+  it("is archived at a moment, keeping everything else", () => {
+    // arrange
+    const exercise = addedWith(FIRST_VIDEO);
+
+    // act
+    const archived = exercise.archived(ARCHIVED_AT);
+
+    // assert
+    expect(archived.status).toBe("archived");
+    expect(archived.toSnapshot()).toEqual({
+      ...exercise.toSnapshot(),
+      archivedAt: ARCHIVED_AT,
+      updatedAt: ARCHIVED_AT,
+    });
+    expect(exercise.status).toBe("active");
+  });
+
+  it("stays archived from the moment it was first archived when archived again", () => {
+    // arrange
+    const archived = addedWith(null).archived(ARCHIVED_AT);
+
+    // act
+    const again = archived.archived(RESTORED_AT);
+
+    // assert
+    expect(again.toSnapshot()).toEqual(archived.toSnapshot());
+  });
+
+  it("is restored under the name it is given, active again", () => {
+    // arrange
+    const archived = addedWith(FIRST_VIDEO).archived(ARCHIVED_AT);
+
+    // act
+    const restored = archived.restored({
+      name: "Back squat (2)",
+      at: RESTORED_AT,
+    });
+
+    // assert
+    expect(restored.status).toBe("active");
+    expect(restored.toSnapshot()).toEqual({
+      ...archived.toSnapshot(),
+      name: "Back squat (2)",
+      archivedAt: null,
+      updatedAt: RESTORED_AT,
+    });
+  });
+
   it("is reconstituted from its snapshot", () => {
     // arrange
     const snapshot = addedWith(FIRST_VIDEO).toSnapshot();
@@ -199,6 +252,7 @@ describe("Exercise.reconstitute", () => {
     equipment: ["Barbell"],
     tags: ["Strength"],
     video: FIRST_VIDEO.toSnapshot(),
+    archivedAt: null,
     createdAt: ADDED_AT,
     updatedAt: REVISED_AT,
   };
@@ -215,6 +269,10 @@ describe("Exercise.reconstitute", () => {
       change: { cues: "c".repeat(1_000) },
     },
     { description: "no video", change: { video: null } },
+    {
+      description: "an archived exercise",
+      change: { archivedAt: new Date("2026-10-16T09:00:00.000Z") },
+    },
   ])("reads back $description as it was stored", ({ change }) => {
     // arrange
     const stored = { ...STORED, ...change };

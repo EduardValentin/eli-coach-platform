@@ -34,6 +34,7 @@ const SQUAT: ExerciseSnapshot = {
     format: "mov",
     sizeBytes: 4_096,
   },
+  archivedAt: null,
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
 };

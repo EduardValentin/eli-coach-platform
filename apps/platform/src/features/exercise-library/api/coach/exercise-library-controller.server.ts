@@ -107,7 +107,7 @@ export class ExerciseLibraryController {
       exerciseId: id.data,
     });
 
-    if (found.status === "not-found") {
+    if (found.status !== "found") {
       throw this.backToLibrary();
     }
 
@@ -172,6 +172,8 @@ export class ExerciseLibraryController {
         return this.problemsResponse(result.problems);
       case "not-found":
         return this.notFoundResponse();
+      case "archived":
+        return this.conflictResponse();
       case "failed":
         return this.serverErrorResponse();
     }
@@ -330,6 +332,10 @@ export class ExerciseLibraryController {
 
   private notFoundResponse(): Response {
     return new Response("Not Found", { status: 404 });
+  }
+
+  private conflictResponse(): Response {
+    return new Response("Conflict", { status: 409 });
   }
 
   private serverErrorResponse(): Response {
