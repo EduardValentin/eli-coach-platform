@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
+  link,
   open as openFile,
-  rename,
   rm,
+  unlink,
   type FileHandle,
 } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -70,7 +71,8 @@ export class FilesystemExerciseVideoStore implements ExerciseVideoStore {
     await this.requireFolderWithinRoot(INCOMING_FOLDER);
     await this.createFolder(VIDEOS_FOLDER);
 
-    await rename(incoming, kept);
+    await link(incoming, kept);
+    await unlink(incoming);
     await this.syncFolder(VIDEOS_FOLDER);
   }
 

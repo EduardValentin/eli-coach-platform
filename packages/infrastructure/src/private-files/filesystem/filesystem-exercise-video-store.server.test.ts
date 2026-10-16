@@ -197,6 +197,26 @@ describe("FilesystemExerciseVideoStore", () => {
       expect(everyOpenedFileIsClosed()).toBe(true);
     });
 
+    it("refuses to keep a staged video under an id already stored and leaves the stored file and the staged one in place", async () => {
+      // arrange
+      const stored = randomBytes(1024);
+      const first = await store.receive(sourceOf(stored).bytes, stored.length);
+      await store.keep(first.stagingId, VIDEO_ID);
+      const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
+
+      // act
+      const keeping = store.keep(staged.stagingId, VIDEO_ID);
+
+      // assert
+      await expect(keeping).rejects.toMatchObject({ code: "EEXIST" });
+      expect(await readFile(join(root, "videos", VIDEO_ID))).toEqual(stored);
+      expect(await readdir(join(root, ".incoming"))).toEqual([
+        staged.stagingId,
+      ]);
+      await store.discard(staged.stagingId);
+      expect(await readdir(join(root, ".incoming"))).toEqual([]);
+    });
+
     it("discards a staged video", async () => {
       // arrange
       const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
