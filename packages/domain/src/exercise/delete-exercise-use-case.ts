@@ -1,16 +1,13 @@
 import type { Exercise } from "./exercise";
 import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
-import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
-import type { ExerciseVideo } from "./exercise-video";
-import type { ExerciseVideoStore } from "./exercise-video-store";
+import type { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 
 export type DeleteExerciseResult =
   { status: "deleted"; exercise: Exercise } | { status: "not-found" };
 
 type DeleteExerciseUseCaseOptions = {
   library: Pick<ExerciseLibrary, "find" | "remove">;
-  store: Pick<ExerciseVideoStore, "remove">;
-  incidents: Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
+  videos: Pick<ExerciseVideoCleanup, "removeStored">;
 };
 
 export class DeleteExerciseUseCase {
@@ -20,24 +17,18 @@ export class DeleteExerciseUseCase {
     const { library } = this.options;
     const exercise = await library.find(reference);
 
-    if (!exercise || (await library.remove(reference)) === "missing") {
+    if (!exercise) {
       return { status: "not-found" };
     }
 
-    await this.removeVideo(exercise.video);
+    const removal = await library.remove(reference);
+
+    if (removal === "missing") {
+      return { status: "not-found" };
+    }
+
+    await this.options.videos.removeStored(exercise.video);
 
     return { status: "deleted", exercise };
-  }
-
-  private async removeVideo(video: ExerciseVideo | null): Promise<void> {
-    if (!video) return;
-
-    const { videoId } = video;
-
-    try {
-      await this.options.store.remove(videoId);
-    } catch (error) {
-      this.options.incidents.videoCleanupFailed({ videoId, error });
-    }
   }
 }

@@ -56,7 +56,7 @@ import {
   SearchX,
   Trash2,
 } from "lucide-react";
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import type { ExerciseView } from "~/features/exercise-library/public/exercises";
@@ -79,7 +79,7 @@ import { libraryReturnState, type LibraryReturnState } from "./library-address";
 import {
   useExerciseLifecycle,
   useExerciseLifecycleAnswer,
-  type ExerciseLifecycleAnswered,
+  type ExerciseLifecycleAnswers,
   type PendingExerciseWrite,
 } from "./use-exercise-lifecycle";
 
@@ -111,6 +111,11 @@ const HEAD_SORTS: Readonly<Record<SortDirection, TableSort>> = {
 
 type ExerciseSortChoice = SortChoice<ExerciseSortKey>;
 
+type PendingDeletion = {
+  exercise: ExerciseView;
+  stage: "asking" | "kept" | "confirmed";
+};
+
 type ExerciseListingControls = {
   chooseSelection: (next: ExerciseSelection) => void;
   chooseSortKey: (key: ExerciseSortKey) => void;
@@ -133,6 +138,7 @@ export function ExerciseListing({
 }) {
   const listing = useExerciseListingParams();
   const lifecycle = useExerciseLifecycle(heading);
+  const deletion = useExerciseDeletion(heading, lifecycle.remove);
   const navigate = useNavigate();
   const { selection, sort, status } = listing;
   const inStatus = exercises.filter((exercise) => exercise.status === status);
@@ -228,7 +234,7 @@ export function ExerciseListing({
                   exercise={exercise}
                   key={exercise.id}
                   onArchive={() => lifecycle.archive(exercise)}
-                  onDelete={() => lifecycle.deletion.ask(exercise)}
+                  onDelete={() => deletion.ask(exercise)}
                   onEdit={() => edit(exercise)}
                   onRestore={() => lifecycle.restore(exercise)}
                 />
@@ -245,25 +251,50 @@ export function ExerciseListing({
         cancelLabel="Cancel"
         confirmLabel="Delete"
         description="It’s removed for good. This can’t be undone."
-        onConfirm={lifecycle.deletion.confirm}
+        onConfirm={deletion.confirm}
         onOpenChange={(open) => {
-          if (!open) lifecycle.deletion.keep();
+          if (!open) deletion.keep();
         }}
-        open={lifecycle.deletion.asking}
-        returnFocusTo={lifecycle.deletion.returnFocusTo}
-        title={`Delete “${lifecycle.deletion.name}”?`}
+        open={deletion.asking}
+        returnFocusTo={deletion.returnFocusTo}
+        title={`Delete “${deletion.name}”?`}
         tone="destructive"
       />
 
-      {lifecycle.pending.map((written) => (
+      {lifecycle.pending.map((pendingWrite) => (
         <ExerciseLifecycleAnswer
-          key={written.key}
-          onAnswered={lifecycle.answered}
-          written={written}
+          answers={lifecycle.answers}
+          key={pendingWrite.key}
+          pendingWrite={pendingWrite}
         />
       ))}
     </div>
   );
+}
+
+function useExerciseDeletion(
+  heading: RefObject<HTMLHeadingElement | null>,
+  onConfirmed: (exercise: ExerciseView) => void,
+) {
+  const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
+
+  return {
+    asking: deletion?.stage === "asking",
+    name: deletion?.exercise.name ?? "",
+    returnFocusTo: deletion?.stage === "confirmed" ? heading : undefined,
+    ask: (exercise: ExerciseView) => setDeletion({ exercise, stage: "asking" }),
+    keep: () => {
+      if (deletion?.stage === "asking") {
+        setDeletion({ ...deletion, stage: "kept" });
+      }
+    },
+    confirm: () => {
+      if (!deletion) return;
+
+      setDeletion({ ...deletion, stage: "confirmed" });
+      onConfirmed(deletion.exercise);
+    },
+  };
 }
 
 function useExerciseListingParams(): ExerciseListingControls {
@@ -467,32 +498,8 @@ type ExerciseRowProps = {
   onRestore: () => void;
 };
 
-function ExerciseRow({
-  exercise,
-  onArchive,
-  onDelete,
-  onEdit,
-  onRestore,
-}: ExerciseRowProps) {
-  const lifecycleActions: RowMenuAction[] =
-    exercise.status === "active"
-      ? [
-          { icon: Pencil, label: "Edit", name: "edit", onSelect: onEdit },
-          {
-            icon: Archive,
-            label: "Archive",
-            name: "archive",
-            onSelect: onArchive,
-          },
-        ]
-      : [
-          {
-            icon: ArchiveRestore,
-            label: "Restore",
-            name: "restore",
-            onSelect: onRestore,
-          },
-        ];
+function ExerciseRow(props: ExerciseRowProps) {
+  const { exercise } = props;
   const equipment =
     exercise.equipment.length > 0
       ? exercise.equipment.join(", ")
@@ -544,16 +551,7 @@ function ExerciseRow({
           data-parity="library-item-actions"
         >
           <RowActionsMenu
-            actions={[
-              ...lifecycleActions,
-              {
-                icon: Trash2,
-                label: "Delete",
-                name: "delete",
-                onSelect: onDelete,
-                tone: "destructive",
-              },
-            ]}
+            actions={rowActionsFor(props)}
             label={`Actions for ${exercise.name}`}
           />
         </div>
@@ -562,14 +560,48 @@ function ExerciseRow({
   );
 }
 
+function rowActionsFor({
+  exercise,
+  onArchive,
+  onDelete,
+  onEdit,
+  onRestore,
+}: ExerciseRowProps): RowMenuAction[] {
+  const deleteAction: RowMenuAction = {
+    icon: Trash2,
+    label: "Delete",
+    name: "delete",
+    onSelect: onDelete,
+    tone: "destructive",
+  };
+
+  if (exercise.status === "active") {
+    return [
+      { icon: Pencil, label: "Edit", name: "edit", onSelect: onEdit },
+      { icon: Archive, label: "Archive", name: "archive", onSelect: onArchive },
+      deleteAction,
+    ];
+  }
+
+  return [
+    {
+      icon: ArchiveRestore,
+      label: "Restore",
+      name: "restore",
+      onSelect: onRestore,
+    },
+    deleteAction,
+  ];
+}
+
 function ExerciseLifecycleAnswer({
-  onAnswered,
-  written,
+  answers,
+  pendingWrite,
 }: {
-  onAnswered: ExerciseLifecycleAnswered;
-  written: PendingExerciseWrite;
+  answers: ExerciseLifecycleAnswers;
+  pendingWrite: PendingExerciseWrite;
 }) {
-  useExerciseLifecycleAnswer(written, onAnswered);
+  useExerciseLifecycleAnswer(pendingWrite, answers);
 
   return null;
 }

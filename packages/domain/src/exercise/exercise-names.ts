@@ -12,11 +12,13 @@ export class ExerciseNames {
 
   static reservedBy(
     exercises: readonly Exercise[],
-    except?: string,
+    exceptExerciseId?: string,
   ): ExerciseNames {
     return new ExerciseNames(
       exercises
-        .filter(({ id, status }) => id !== except && status === "active")
+        .filter(
+          ({ id, status }) => id !== exceptExerciseId && status === "active",
+        )
         .map(({ name }) => name),
     );
   }

@@ -14,12 +14,10 @@ import {
 
 type ExerciseLifecycleAction = "archive" | "restore" | "delete";
 
-type ExerciseLifecycleOutcome = "succeeded" | "failed";
-
-export type ExerciseLifecycleAnswered = (
-  key: string,
-  outcome: ExerciseLifecycleOutcome,
-) => void;
+export type ExerciseLifecycleAnswers = {
+  succeeded: (key: string) => void;
+  failed: (key: string) => void;
+};
 
 type ExerciseWrite = {
   method: "post" | "delete";
@@ -30,11 +28,6 @@ export type PendingExerciseWrite = {
   action: ExerciseLifecycleAction;
   key: string;
   name: string;
-};
-
-type PendingDeletion = {
-  exercise: ExerciseView;
-  stage: "asking" | "kept" | "confirmed";
 };
 
 const WRITES: Readonly<Record<ExerciseLifecycleAction, ExerciseWrite>> = {
@@ -54,14 +47,13 @@ export function useExerciseLifecycle(
 ) {
   const submit = useSubmit();
   const [pending, setPending] = useState<readonly PendingExerciseWrite[]>([]);
-  const [deletion, setDeletion] = useState<PendingDeletion | null>(null);
 
   const write = (action: ExerciseLifecycleAction, exercise: ExerciseView) => {
     const { method, pathOf } = WRITES[action];
     const key = pathOf(exercise.id);
 
     setPending((current) => [
-      ...current.filter((written) => written.key !== key),
+      ...current.filter((pendingWrite) => pendingWrite.key !== key),
       { action, key, name: exercise.name },
     ]);
     void submit(null, {
@@ -72,73 +64,62 @@ export function useExerciseLifecycle(
     });
   };
 
-  const answered: ExerciseLifecycleAnswered = (key, outcome) => {
-    setPending((current) => current.filter((written) => written.key !== key));
-    if (outcome === "succeeded") {
+  const drop = (key: string) =>
+    setPending((current) =>
+      current.filter((pendingWrite) => pendingWrite.key !== key),
+    );
+
+  const answers: ExerciseLifecycleAnswers = {
+    succeeded: (key) => {
+      drop(key);
       heading.current?.focus();
-    }
+    },
+    failed: drop,
   };
 
   return {
     pending,
-    answered,
+    answers,
     archive: (exercise: ExerciseView) => write("archive", exercise),
     restore: (exercise: ExerciseView) => write("restore", exercise),
-    deletion: {
-      asking: deletion?.stage === "asking",
-      name: deletion?.exercise.name ?? "",
-      returnFocusTo: deletion?.stage === "confirmed" ? heading : undefined,
-      ask: (exercise: ExerciseView) =>
-        setDeletion({ exercise, stage: "asking" }),
-      keep: () => {
-        if (deletion?.stage === "asking") {
-          setDeletion({ ...deletion, stage: "kept" });
-        }
-      },
-      confirm: () => {
-        if (!deletion) return;
-
-        setDeletion({ ...deletion, stage: "confirmed" });
-        write("delete", deletion.exercise);
-      },
-    },
+    remove: (exercise: ExerciseView) => write("delete", exercise),
   };
 }
 
 export function useExerciseLifecycleAnswer(
-  written: PendingExerciseWrite,
-  onAnswered: ExerciseLifecycleAnswered,
+  pendingWrite: PendingExerciseWrite,
+  answers: ExerciseLifecycleAnswers,
 ) {
-  const { data, state } = useFetcher<unknown>({ key: written.key });
+  const { data, state } = useFetcher<unknown>({ key: pendingWrite.key });
 
-  const answer = useEffectEvent((received: unknown) => {
-    const answered = exerciseLifecycleAnswerSchema.safeParse(received);
+  const settle = useEffectEvent((received: unknown) => {
+    const answer = exerciseLifecycleAnswerSchema.safeParse(received);
 
-    if (answered.success) {
-      toast.success(successCopyOf(written, answered.data.name));
-      onAnswered(written.key, "succeeded");
+    if (answer.success) {
+      toast.success(successCopyOf(pendingWrite, answer.data.name));
+      answers.succeeded(pendingWrite.key);
     } else {
       toast.error(
-        `"${written.name}" wasn’t ${PAST_TENSE[written.action]}. Try again.`,
+        `"${pendingWrite.name}" wasn’t ${PAST_TENSE[pendingWrite.action]}. Try again.`,
       );
-      onAnswered(written.key, "failed");
+      answers.failed(pendingWrite.key);
     }
   });
 
   useEffect(() => {
     if (state === "idle" && data !== undefined) {
-      answer(data);
+      settle(data);
     }
   }, [data, state]);
 }
 
 function successCopyOf(
-  written: PendingExerciseWrite,
+  pendingWrite: PendingExerciseWrite,
   answeredName: string,
 ): string {
-  if (written.action === "restore" && answeredName !== written.name) {
-    return `"${written.name}" restored as "${answeredName}"`;
+  if (pendingWrite.action === "restore" && answeredName !== pendingWrite.name) {
+    return `"${pendingWrite.name}" restored as "${answeredName}"`;
   }
 
-  return `"${written.name}" ${PAST_TENSE[written.action]}`;
+  return `"${pendingWrite.name}" ${PAST_TENSE[pendingWrite.action]}`;
 }

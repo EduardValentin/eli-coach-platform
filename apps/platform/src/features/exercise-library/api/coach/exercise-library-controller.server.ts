@@ -193,7 +193,8 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const reference = this.exerciseReferenceOf(args, exerciseId);
+    const coach = requireApiAccount(args, { role: "COACH" });
+    const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
       return this.notFoundResponse();
@@ -213,7 +214,8 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const reference = this.exerciseReferenceOf(args, exerciseId);
+    const coach = requireApiAccount(args, { role: "COACH" });
+    const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
       return this.notFoundResponse();
@@ -235,7 +237,8 @@ export class ExerciseLibraryController {
     args: ActionFunctionArgs,
     exerciseId: string | undefined,
   ): Promise<Response> {
-    const reference = this.exerciseReferenceOf(args, exerciseId);
+    const coach = requireApiAccount(args, { role: "COACH" });
+    const reference = this.exerciseReferenceFor(coach, exerciseId);
 
     if (!reference) {
       return this.notFoundResponse();
@@ -386,11 +389,10 @@ export class ExerciseLibraryController {
     return createBadRequestResponse("The exercise could not be read.");
   }
 
-  private exerciseReferenceOf(
-    args: ActionFunctionArgs,
+  private exerciseReferenceFor(
+    coach: AccountSnapshot,
     exerciseId: string | undefined,
   ): ExerciseReference | null {
-    const coach = requireApiAccount(args, { role: "COACH" });
     const id = idSchema.safeParse(exerciseId);
 
     return id.success

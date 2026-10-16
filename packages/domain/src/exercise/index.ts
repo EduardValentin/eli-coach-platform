@@ -54,6 +54,7 @@ export {
 } from "./exercise-video";
 export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 export { type ExerciseVideoIds } from "./exercise-video-ids";
+export { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 export { type ExerciseVideoChoice } from "./exercise-video-saving";
 export {
   type ExerciseVideoOpening,

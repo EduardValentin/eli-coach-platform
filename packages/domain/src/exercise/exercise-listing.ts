@@ -230,11 +230,11 @@ export const EXERCISE_STATUSES: readonly ExerciseStatus[] = [
 ];
 
 export function countExercisesByStatus(
-  items: readonly { status: ExerciseStatus }[],
+  exercises: readonly { status: ExerciseStatus }[],
 ): Record<ExerciseStatus, number> {
   return {
-    active: items.filter(({ status }) => status === "active").length,
-    archived: items.filter(({ status }) => status === "archived").length,
+    active: exercises.filter(({ status }) => status === "active").length,
+    archived: exercises.filter(({ status }) => status === "archived").length,
   };
 }
 

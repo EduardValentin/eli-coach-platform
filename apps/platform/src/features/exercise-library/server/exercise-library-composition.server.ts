@@ -4,6 +4,7 @@ import {
   CreateExerciseUseCase,
   DeleteExerciseUseCase,
   EditExerciseUseCase,
+  ExerciseVideoCleanup,
   FindExerciseUseCase,
   ListExercisesUseCase,
   OpenExerciseVideoUseCase,
@@ -71,8 +72,10 @@ export function composeExerciseLibraryFeature(
       }),
       deleteExercise: new DeleteExerciseUseCase({
         library,
-        store: videoStore,
-        incidents: handles.incidents,
+        videos: new ExerciseVideoCleanup({
+          store: videoStore,
+          incidents: handles.incidents,
+        }),
       }),
     }),
   };

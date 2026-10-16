@@ -8,6 +8,7 @@ import type {
   ExerciseRemoval,
 } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
@@ -66,12 +67,16 @@ function createUseCase() {
     ),
   } satisfies Pick<ExerciseLibrary, "find" | "remove">;
   const store = {
+    discard: vi.fn(async (_stagingId: string) => undefined),
     remove: vi.fn(async (_videoId: string) => undefined),
-  } satisfies Pick<ExerciseVideoStore, "remove">;
+  } satisfies Pick<ExerciseVideoStore, "discard" | "remove">;
   const incidents = {
     videoCleanupFailed: vi.fn(),
   } satisfies Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
-  const useCase = new DeleteExerciseUseCase({ library, store, incidents });
+  const useCase = new DeleteExerciseUseCase({
+    library,
+    videos: new ExerciseVideoCleanup({ store, incidents }),
+  });
 
   return { useCase, library, store, incidents };
 }
