@@ -7,8 +7,8 @@ import {
   Pagination,
   PaginationEllipsis,
   PaginationList,
-  PaginationPage,
   PaginationNext,
+  PaginationPage,
   PaginationPrevious,
 } from "../primitives/pagination";
 
