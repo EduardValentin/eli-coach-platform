@@ -1,7 +1,7 @@
-import type { Account, AccountRole } from "./account";
+import type { Account } from "./account";
 
 export type Accounts = {
   findByAuthSubjectId(authSubjectId: string): Promise<Account | null>;
-  insert(input: { authSubjectId: string; role: AccountRole }): Promise<Account>;
+  insert(account: Account): Promise<void>;
   softDeleteByAuthSubjectId(authSubjectId: string): Promise<void>;
 };

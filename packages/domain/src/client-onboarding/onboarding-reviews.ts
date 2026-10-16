@@ -39,7 +39,3 @@ export interface OnboardingReviews {
   recordAnswer(input: RecordDetailsAnswer): Promise<void>;
   recordApproval(moment: ReviewMoment): Promise<void>;
 }
-
-export interface DetailRequestIdGenerator {
-  generate(): string;
-}

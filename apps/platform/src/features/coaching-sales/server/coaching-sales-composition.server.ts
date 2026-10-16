@@ -2,6 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
 import type {
   ClientIdentities,
+  ClientIds,
   ClientReach,
 } from "@eli-coach-platform/domain/client";
 import type { ClientJourneys } from "@eli-coach-platform/domain/client-journey";
@@ -64,7 +65,9 @@ import type {
 } from "~/features/coaching-sales/data/client-writers.server";
 import { PostgresPaymentCards } from "~/features/coaching-sales/data/payment-cards/payment-cards-repository.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
+import { RandomPaymentLinkIds } from "~/features/coaching-sales/data/payment-links/random-payment-link-ids.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
+import { RandomCoachingSubscriptionIds } from "~/features/coaching-sales/data/subscriptions/random-coaching-subscription-ids.server";
 import { PostgresCoachingSubscriptions } from "~/features/coaching-sales/data/subscriptions/subscriptions-repository.server";
 import {
   createCoachingSalesNotifications,
@@ -92,6 +95,7 @@ export type CoachingSalesFeatureHandles = {
   appBasePath: string;
   assessmentCallReader: AssessmentCallReader;
   clientIdentities: ClientIdentities;
+  clientIds: ClientIds;
   clientJourneys: Pick<ClientJourneys, "findByAuthSubjectId">;
   clientReach: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
@@ -224,10 +228,13 @@ export function composeCoachingSalesFeature(
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
       admission: handles.paidClientAdmission,
       calls: handles.assessmentCallReader,
+      clientIds: handles.clientIds,
+      clock,
       incidents: handles.incidents,
       paymentCheckout: handles.paymentCheckout,
       paymentSubscriptions: handles.paymentSubscriptions,
       purchases,
+      subscriptionIds: new RandomCoachingSubscriptionIds(),
     }),
     resolvePaymentLink: new ResolvePaymentLinkUseCase({
       ...paymentLinkPorts,
@@ -235,6 +242,7 @@ export function composeCoachingSalesFeature(
     }),
     sendPaymentLink: new SendPaymentLinkUseCase({
       ...paymentLinkPorts,
+      ids: new RandomPaymentLinkIds(),
       incidents: handles.incidents,
       notifications: createCoachingSalesNotifications(handles.productEmail, {
         appBasePath: handles.appBasePath,

@@ -17,7 +17,10 @@ import {
   type OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
-import type { ClientMeasurementsSource } from "@eli-coach-platform/domain/measurement";
+import type {
+  ClientMeasurementsSource,
+  MeasurementIds,
+} from "@eli-coach-platform/domain/measurement";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ClientUnitPreferencesSource } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
@@ -29,7 +32,7 @@ import type {
   MeasurementEntryWriter,
 } from "~/features/client-onboarding/data/client-profile-writers.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
-import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/detail-request-ids.server";
+import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/random-detail-request-ids.server";
 import {
   PostgresOnboardingReviews,
   type ReviewStampWriter,
@@ -49,6 +52,7 @@ type ClientOnboardingFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   incidents: ClientOnboardingIncidents;
+  measurementIds: MeasurementIds;
   measurements: ClientMeasurementsSource;
   onboardingClients: OnboardingClients;
   onboardingReviewStamps: OnboardingReviewStamps;
@@ -111,6 +115,7 @@ export function composeClientOnboardingFeature(
         changes: onboardings,
         clock,
         incidents,
+        measurementIds: handles.measurementIds,
         onboardings,
         participants,
         stamps: handles.onboardingSubmissionStamps,
@@ -142,7 +147,7 @@ export function composeClientOnboardingFeature(
             publicAppUrl: handles.publicAppUrl,
           },
         ),
-        requestIds: new RandomDetailRequestIds(),
+        ids: new RandomDetailRequestIds(),
       }),
     }),
   };

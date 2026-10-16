@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 
-import type { ProgressPhotoIdGenerator } from "@eli-coach-platform/domain/client-profile";
+import type { ProgressPhotoIds } from "@eli-coach-platform/domain/client-profile";
 
-export class RandomProgressPhotoIds implements ProgressPhotoIdGenerator {
+export class RandomProgressPhotoIds implements ProgressPhotoIds {
   generate(): string {
     return randomUUID();
   }

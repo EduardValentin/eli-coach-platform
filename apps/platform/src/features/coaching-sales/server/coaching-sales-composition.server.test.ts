@@ -215,6 +215,7 @@ function createHandles(
       findByClientId: async () => null,
       findByClientIds: async () => [],
     },
+    clientIds: { generate: () => "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22" },
     clientJourneys: { findByAuthSubjectId: async () => null },
     clientReach: { findByAuthSubjectId: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },

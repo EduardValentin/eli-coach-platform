@@ -1,4 +1,5 @@
-import type { Account, AccountRole, AccountSnapshot } from "./account";
+import { Account, type AccountRole, type AccountSnapshot } from "./account";
+import type { AccountIds } from "./account-ids";
 import type { Accounts } from "./accounts";
 import type { InvitationAcceptance } from "./invitation-acceptance";
 
@@ -9,6 +10,7 @@ export type ProvisionAccountResult =
 
 type ProvisionAccountUseCaseOptions = {
   accounts: Accounts;
+  ids: AccountIds;
   bootstrapCoachAuthSubjectId?: string;
   invitationAcceptance: InvitationAcceptance;
 };
@@ -34,7 +36,13 @@ export class ProvisionAccountUseCase {
       return { outcome: "rejected-unprovisioned" };
     }
 
-    return this.insert({ authSubjectId, role });
+    return this.insert(
+      Account.provisioned({
+        id: this.options.ids.generate(),
+        authSubjectId,
+        role,
+      }),
+    );
   }
 
   private async admitSubject(
@@ -51,18 +59,17 @@ export class ProvisionAccountUseCase {
     return acceptance === "accepted" ? "CLIENT" : null;
   }
 
-  private async insert(input: {
-    authSubjectId: string;
-    role: AccountRole;
-  }): Promise<ProvisionAccountResult> {
+  private async insert(account: Account): Promise<ProvisionAccountResult> {
     try {
-      return toProvisioningResult(await this.options.accounts.insert(input));
+      await this.options.accounts.insert(account);
+
+      return toProvisioningResult(account);
     } catch (error) {
       // Another request may have inserted the same auth subject concurrently.
       // Re-reading lets both requests converge on the row that won, instead
       // of surfacing a database-shaped error to the caller.
       const wonByConcurrentInsert =
-        await this.options.accounts.findByAuthSubjectId(input.authSubjectId);
+        await this.options.accounts.findByAuthSubjectId(account.authSubjectId);
       if (!wonByConcurrentInsert) {
         throw error;
       }

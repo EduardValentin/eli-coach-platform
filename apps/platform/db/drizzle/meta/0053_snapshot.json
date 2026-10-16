@@ -1,5 +1,5 @@
 {
-  "id": "7d50b74d-68e8-44d5-8f45-9b906def25ac",
+  "id": "643fd8c6-1e9f-49e2-9526-5a4e22f16288",
   "prevId": "2a93443e-ae03-4b1a-b8df-5c1dc63dcbe3",
   "version": "7",
   "dialect": "postgresql",
@@ -97,8 +97,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "auth_subject_id": {
           "name": "auth_subject_id",
@@ -151,8 +150,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "first_name": {
           "name": "first_name",
@@ -931,8 +929,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -1112,8 +1109,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "entry_id": {
           "name": "entry_id",
@@ -1503,8 +1499,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -1658,8 +1653,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2216,8 +2210,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -2598,8 +2591,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2782,24 +2774,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "video_file_id": {
-          "name": "video_file_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_format": {
-          "name": "video_format",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_size_bytes": {
-          "name": "video_size_bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2867,14 +2841,6 @@
         "exercises_difficulty_check": {
           "name": "exercises_difficulty_check",
           "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
-        },
-        "exercises_video_complete_check": {
-          "name": "exercises_video_complete_check",
-          "value": "(\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_format\" is null) and (\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_size_bytes\" is null)"
-        },
-        "exercises_video_format_check": {
-          "name": "exercises_video_format_check",
-          "value": "\"app\".\"exercises\".\"video_format\" in ('mp4', 'mov')"
         }
       },
       "isRLSEnabled": false

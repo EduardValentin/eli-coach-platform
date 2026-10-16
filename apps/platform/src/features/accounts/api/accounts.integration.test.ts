@@ -437,7 +437,7 @@ async function provisionAccount(
   role: AccountRole,
 ): Promise<void> {
   await suite.postgres.executeSql({
-    sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
+    sql: "insert into app.accounts (id, auth_subject_id, role) values (gen_random_uuid(), $1, $2)",
     values: [session.subjectId, role],
   });
 }

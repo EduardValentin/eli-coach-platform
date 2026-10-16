@@ -12,12 +12,13 @@ type SaveOnboardingDraft = {
 type RecordOnboardingSubmission = {
   clientId: string;
   submission: OnboardingSubmission;
+  entryId: string;
   measurementEntry: MeasurementEntry;
   profile: ClientProfile;
 };
 
 type RecordedOnboardingSubmission =
-  { status: "recorded"; entryId: string } | { status: "already-submitted" };
+  { status: "recorded" } | { status: "already-submitted" };
 
 export interface ClientOnboardingChanges {
   saveDraft(input: SaveOnboardingDraft): Promise<"saved" | "already-submitted">;

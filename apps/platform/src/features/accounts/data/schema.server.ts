@@ -29,7 +29,7 @@ export const accountRoleEnum = appSchema.enum(
 );
 
 export const accountsTable = appSchema.table("accounts", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey(),
   authSubjectId: varchar("auth_subject_id", { length: 255 }).notNull().unique(),
   role: accountRoleEnum("role").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })

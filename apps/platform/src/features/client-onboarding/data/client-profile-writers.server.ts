@@ -1,6 +1,8 @@
 import type { DatabaseTransaction } from "@eli-coach-platform/db";
-import type { ClientProfile } from "@eli-coach-platform/domain/client-profile";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
+import type {
+  ClientMeasurementEntry,
+  ClientProfile,
+} from "@eli-coach-platform/domain/client-profile";
 
 export type ClientProfileWriter = (
   transaction: DatabaseTransaction,
@@ -9,5 +11,5 @@ export type ClientProfileWriter = (
 
 export type MeasurementEntryWriter = (
   transaction: DatabaseTransaction,
-  input: { clientId: string; entry: MeasurementEntry },
-) => Promise<string>;
+  record: ClientMeasurementEntry,
+) => Promise<void>;

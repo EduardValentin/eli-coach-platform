@@ -134,32 +134,32 @@ export class PostgresClientOnboardings
   async recordSubmission(input: {
     clientId: string;
     submission: OnboardingSubmission;
+    entryId: string;
     measurementEntry: MeasurementEntry;
     profile: ClientProfile;
   }): Promise<RecordedSubmission> {
-    const { clientId, measurementEntry, submission } = input;
+    const { clientId, entryId, measurementEntry, submission } = input;
 
     try {
-      const entryId = await this.database.transaction(async (transaction) => {
+      await this.database.transaction(async (transaction) => {
         await transaction.insert(clientOnboardingSubmissionsTable).values({
           clientId,
           answers: submission.answers,
           ...consentColumnsOf(submission.consents),
           submittedAt: submission.submittedAt,
         });
-        const recordedEntryId = await this.measurementEntryWriter(transaction, {
+        await this.measurementEntryWriter(transaction, {
           clientId,
+          entryId,
           entry: measurementEntry,
         });
         await this.clientProfileWriter(transaction, input.profile);
         await transaction
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));
-
-        return recordedEntryId;
       });
 
-      return { status: "recorded", entryId };
+      return { status: "recorded" };
     } catch (error) {
       if (violatesSubmissionPerClient(error)) {
         return { status: "already-submitted" };

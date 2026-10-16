@@ -18,7 +18,7 @@ import {
 export const assessmentCallsTable = appSchema.table(
   "assessment_calls",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     firstName: varchar("first_name", { length: 60 }).notNull(),
     lastName: varchar("last_name", { length: 60 }).notNull(),
     visitorEmail: varchar("visitor_email", { length: 320 }).notNull(),

@@ -14,7 +14,7 @@ import {
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const FIRST_RECORDED_AT = new Date("2026-09-29T09:00:00.000Z");
 const SECOND_RECORDED_AT = new Date("2026-10-29T09:00:00.000Z");
-const INSERTED_ENTRY_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
+const ENTRY_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
 
 describe("PostgresClientMeasurements#listByClientId", () => {
   it("maps her rows oldest first and leaves out the circumferences she never took", async () => {
@@ -77,13 +77,14 @@ describe("PostgresClientMeasurements#listByClientId", () => {
 });
 
 describe("recordMeasurementEntry", () => {
-  it("inserts her entry through the transaction it is handed, with the circumferences she skipped left empty, and answers its id", async () => {
+  it("inserts her entry under the id the domain gave it, through the transaction it is handed, with the circumferences she skipped left empty", async () => {
     // arrange
     const transaction = createTransactionRecordingInserts();
 
     // act
-    const entryId = await recordMeasurementEntry(transaction.handle, {
+    await recordMeasurementEntry(transaction.handle, {
       clientId: CLIENT_ID,
+      entryId: ENTRY_ID,
       entry: {
         recordedAt: FIRST_RECORDED_AT,
         weightKg: 64.5,
@@ -93,11 +94,11 @@ describe("recordMeasurementEntry", () => {
     });
 
     // assert
-    expect(entryId).toBe(INSERTED_ENTRY_ID);
     expect(transaction.inserted).toEqual([
       {
         table: clientMeasurementsTable,
         row: {
+          id: ENTRY_ID,
           clientId: CLIENT_ID,
           recordedAt: FIRST_RECORDED_AT,
           weightKg: 64.5,
@@ -115,10 +116,8 @@ function createTransactionRecordingInserts() {
   const inserted: { table: unknown; row: unknown }[] = [];
   const handle = {
     insert: (table: unknown) => ({
-      values: (row: unknown) => {
+      values: async (row: unknown) => {
         inserted.push({ table, row });
-
-        return { returning: async () => [{ id: INSERTED_ENTRY_ID }] };
       },
     }),
   } as unknown as DatabaseTransaction;

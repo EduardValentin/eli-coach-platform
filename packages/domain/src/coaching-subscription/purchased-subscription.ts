@@ -13,6 +13,7 @@ import {
 } from "./coaching-subscription";
 
 export type PurchasedSubscriptionSnapshot = {
+  id: string;
   bundleId: CoachingBundleId;
   months: number;
   tier: PriceTier;
@@ -30,6 +31,7 @@ export type PurchasedSubscriptionSnapshot = {
 };
 
 export class PurchasedSubscription {
+  readonly id: string;
   readonly bundleId: CoachingBundleId;
   readonly months: number;
   readonly tier: PriceTier;
@@ -46,6 +48,7 @@ export class PurchasedSubscription {
   readonly status: CoachingStatus;
 
   private constructor(snapshot: PurchasedSubscriptionSnapshot) {
+    this.id = snapshot.id;
     this.bundleId = snapshot.bundleId;
     this.months = snapshot.months;
     this.tier = snapshot.tier;
@@ -62,12 +65,17 @@ export class PurchasedSubscription {
     this.status = snapshot.status;
   }
 
-  static fromCompletedCheckout(
-    completion: CheckoutCompletion,
-  ): PurchasedSubscription {
+  static fromCompletedCheckout({
+    id,
+    completion,
+  }: {
+    id: string;
+    completion: CheckoutCompletion;
+  }): PurchasedSubscription {
     const months = getCoachingBundle(completion.bundleId).months;
 
     return new PurchasedSubscription({
+      id,
       bundleId: completion.bundleId,
       months,
       tier: completion.tier,
@@ -105,6 +113,7 @@ export class PurchasedSubscription {
 
   toSnapshot(): PurchasedSubscriptionSnapshot {
     return {
+      id: this.id,
       bundleId: this.bundleId,
       months: this.months,
       tier: this.tier,

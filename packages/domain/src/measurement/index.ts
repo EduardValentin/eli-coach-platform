@@ -7,6 +7,7 @@ export {
   type MeasurementEntry,
   type MeasurementValues,
 } from "./measurement";
+export { type MeasurementIds } from "./measurement-ids";
 export {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
   MEASUREMENT_FIELDS,

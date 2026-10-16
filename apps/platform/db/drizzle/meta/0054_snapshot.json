@@ -1,6 +1,6 @@
 {
-  "id": "9d355645-eefb-4564-9a80-de56266ddec6",
-  "prevId": "7d50b74d-68e8-44d5-8f45-9b906def25ac",
+  "id": "795307a6-8859-426f-abfc-7d81eabb6a17",
+  "prevId": "643fd8c6-1e9f-49e2-9526-5a4e22f16288",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -97,8 +97,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "auth_subject_id": {
           "name": "auth_subject_id",
@@ -151,8 +150,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "first_name": {
           "name": "first_name",
@@ -931,8 +929,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -1112,8 +1109,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "entry_id": {
           "name": "entry_id",
@@ -1503,8 +1499,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -1658,8 +1653,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2216,8 +2210,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "client_id": {
           "name": "client_id",
@@ -2598,8 +2591,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2872,49 +2864,9 @@
           "name": "exercises_video_complete_check",
           "value": "(\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_format\" is null) and (\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_size_bytes\" is null)"
         },
-        "exercises_unit_for_type_check": {
-          "name": "exercises_unit_for_type_check",
-          "value": "(\"app\".\"exercises\".\"type\", \"app\".\"exercises\".\"unit\") in (('resistance', 'reps'), ('resistance', 'time'), ('resistance', 'distance'), ('cardio', 'time'), ('cardio', 'distance'), ('mobility', 'time'), ('mobility', 'reps'), ('stretching', 'time'), ('breathing', 'breaths'), ('breathing', 'time'))"
-        },
-        "exercises_name_check": {
-          "name": "exercises_name_check",
-          "value": "\"app\".\"exercises\".\"name\" = btrim(\"app\".\"exercises\".\"name\") and char_length(\"app\".\"exercises\".\"name\") between 1 and 80"
-        },
-        "exercises_form_cues_check": {
-          "name": "exercises_form_cues_check",
-          "value": "char_length(\"app\".\"exercises\".\"form_cues\") <= 1000"
-        },
-        "exercises_primary_muscle_check": {
-          "name": "exercises_primary_muscle_check",
-          "value": "\"app\".\"exercises\".\"type\" = 'cardio' or cardinality(\"app\".\"exercises\".\"primary_muscles\") > 0"
-        },
-        "exercises_primary_muscles_vocabulary_check": {
-          "name": "exercises_primary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"primary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
-        },
-        "exercises_secondary_muscles_vocabulary_check": {
-          "name": "exercises_secondary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"secondary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
-        },
-        "exercises_muscles_overlap_check": {
-          "name": "exercises_muscles_overlap_check",
-          "value": "not (\"app\".\"exercises\".\"primary_muscles\" && \"app\".\"exercises\".\"secondary_muscles\")"
-        },
-        "exercises_equipment_vocabulary_check": {
-          "name": "exercises_equipment_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"equipment\" <@ array['Barbell', 'Dumbbells', 'Kettlebell', 'EZ bar', 'Trap bar', 'Cable', 'Machine', 'Smith machine', 'Bands', 'Suspension trainer', 'Pull-up bar', 'Squat rack', 'Bench', 'Box or step', 'Medicine ball', 'Stability ball', 'Mat', 'Foam roller', 'Treadmill', 'Bike', 'Rower', 'Stair climber', 'Jump rope']::text[]"
-        },
-        "exercises_tags_vocabulary_check": {
-          "name": "exercises_tags_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"tags\" <@ array['Strength', 'Hypertrophy', 'Recovery']::text[]"
-        },
         "exercises_video_format_check": {
           "name": "exercises_video_format_check",
           "value": "\"app\".\"exercises\".\"video_format\" in ('mp4', 'mov')"
-        },
-        "exercises_video_size_check": {
-          "name": "exercises_video_size_check",
-          "value": "\"app\".\"exercises\".\"video_size_bytes\" between 1 and 52428800"
         }
       },
       "isRLSEnabled": false

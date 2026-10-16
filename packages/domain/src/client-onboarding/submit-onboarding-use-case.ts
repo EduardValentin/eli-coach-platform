@@ -1,4 +1,5 @@
 import { ClientProfile } from "../client-profile";
+import type { MeasurementIds } from "../measurement";
 import type { Clock } from "../shared";
 import {
   measureUnitsOf,
@@ -45,6 +46,7 @@ type SubmitOnboardingUseCaseOptions = {
   onboardings: ClientOnboardingSource;
   unitPreferences: ClientUnitPreferencesSource;
   changes: ClientOnboardingChanges;
+  measurementIds: MeasurementIds;
   stamps: OnboardingSubmissionStamps;
   clock: Clock;
   incidents: ClientOnboardingIncidents;
@@ -104,9 +106,11 @@ export class SubmitOnboardingUseCase {
       return outcome;
     }
 
+    const entryId = this.options.measurementIds.generate();
     const recorded = await this.options.changes.recordSubmission({
       clientId: client.clientId,
       submission: outcome.submission,
+      entryId,
       measurementEntry: outcome.measurementEntry,
       profile: ClientProfile.fromOnboarding({
         clientId: client.clientId,
@@ -141,7 +145,7 @@ export class SubmitOnboardingUseCase {
       status: "submitted",
       submittedAt,
       clientId: client.clientId,
-      entryId: recorded.entryId,
+      entryId,
     };
   }
 

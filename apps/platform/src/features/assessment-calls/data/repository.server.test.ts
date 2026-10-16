@@ -1,7 +1,9 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import { AssessmentCall } from "@eli-coach-platform/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";
+import { assessmentCallsTable } from "./schema.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -10,8 +12,8 @@ const STORED_ROW = {
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
   dateOfBirth: "1994-03-14",
-  gender: "female",
-  primaryGoal: "build_strength",
+  gender: "female" as const,
+  primaryGoal: "build_strength" as const,
   country: "RO",
   phone: "+40712345678",
   startsAt: new Date("2026-10-01T14:00:00.000Z"),
@@ -179,6 +181,57 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe("PostgresAssessmentCallRepository#reserve", () => {
+  it("stores the call under the id the domain gave it and reserves the coach's time for that id", async () => {
+    // arrange
+    const { bookedAt, ...visitorAndSlot } = STORED_ROW;
+    const call = AssessmentCall.booked({ ...visitorAndSlot, at: bookedAt });
+    const database = createDatabaseRecordingReservation();
+    const coachTime = {
+      reserve: vi.fn().mockResolvedValue({ status: "reserved" }),
+    };
+    const repository = new PostgresAssessmentCallRepository({
+      coachTime,
+      database: database.handle,
+    });
+
+    // act
+    const decision = await repository.reserve({ call, now: bookedAt });
+
+    // assert
+    expect(decision).toEqual({ status: "reserved" });
+    expect(database.inserts).toEqual([
+      { table: assessmentCallsTable, values: STORED_ROW },
+    ]);
+    expect(coachTime.reserve).toHaveBeenCalledWith(
+      database.transaction,
+      expect.objectContaining({
+        appointmentKind: "assessment_call",
+        appointmentId: STORED_ROW.id,
+      }),
+    );
+  });
+});
+
+function createDatabaseRecordingReservation() {
+  const inserts: { table: unknown; values: unknown }[] = [];
+  const transaction = {
+    execute: vi.fn().mockResolvedValue(undefined),
+    select: vi.fn().mockReturnValue(createQueryChain([])),
+    insert: (table: unknown) => ({
+      values: async (values: unknown) => {
+        inserts.push({ table, values });
+      },
+    }),
+  };
+  const handle = {
+    transaction: (work: (handle: unknown) => Promise<unknown>) =>
+      work(transaction),
+  } as unknown as DatabaseClient;
+
+  return { handle, inserts, transaction };
+}
 
 function repositoryOptions(database: DatabaseClient) {
   return {

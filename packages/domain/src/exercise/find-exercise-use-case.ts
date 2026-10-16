@@ -6,18 +6,15 @@ export type FindExerciseResult =
   | { status: "not-found" };
 
 type FindExerciseUseCaseOptions = {
-  library: ExerciseLibrary;
+  library: Pick<ExerciseLibrary, "list">;
 };
 
 export class FindExerciseUseCase {
   constructor(private readonly options: FindExerciseUseCaseOptions) {}
 
   async execute(reference: ExerciseReference): Promise<FindExerciseResult> {
-    const { library } = this.options;
-    const [exercise, exercises] = await Promise.all([
-      library.find(reference),
-      library.list(reference.ownerAccountId),
-    ]);
+    const exercises = await this.options.library.list(reference.ownerAccountId);
+    const exercise = exercises.find(({ id }) => id === reference.exerciseId);
 
     if (!exercise) return { status: "not-found" };
 

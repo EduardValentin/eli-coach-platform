@@ -15,7 +15,10 @@ import {
   type ProgressPhotoRenditions,
   type ProgressPhotoStore,
 } from "@eli-coach-platform/domain/client-profile";
-import type { ClientMeasurementsSource } from "@eli-coach-platform/domain/measurement";
+import type {
+  ClientMeasurementsSource,
+  MeasurementIds,
+} from "@eli-coach-platform/domain/measurement";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   SaveUnitPreferenceUseCase,
@@ -31,6 +34,7 @@ import {
   PostgresClientMeasurements,
   recordMeasurementEntry,
 } from "~/features/client-profile/data/measurements/client-measurements-repository.server";
+import { RandomMeasurementIds } from "~/features/client-profile/data/measurements/random-measurement-ids.server";
 import { PostgresProgressPhotos } from "~/features/client-profile/data/photos/client-progress-photos-repository.server";
 import { RandomProgressPhotoIds } from "~/features/client-profile/data/photos/random-progress-photo-ids.server";
 import {
@@ -50,6 +54,7 @@ type ClientProfileComposition = {
   feature: ClientProfileFeature;
   handles: {
     attachProgressPhotos: AttachProgressPhotosUseCase;
+    measurementIds: MeasurementIds;
     measurements: ClientMeasurementsSource;
     recordMeasurementEntry: typeof recordMeasurementEntry;
     saveClientProfile: typeof saveClientProfile;
@@ -75,6 +80,7 @@ export function composeClientProfileFeature(
   const photos = new PostgresProgressPhotos(handles.database);
   const profiles = new PostgresClientProfiles(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
+  const measurementIds = new RandomMeasurementIds();
   const progressPhotoPorts = {
     clients: handles.clientReach,
     photos,
@@ -100,6 +106,7 @@ export function composeClientProfileFeature(
         }),
         recordMeasurements: new RecordMeasurementsUseCase({
           ...photoIntakePorts,
+          measurementIds,
           profiles,
           records,
         }),
@@ -131,6 +138,7 @@ export function composeClientProfileFeature(
         ...photoIntakePorts,
         profiles,
       }),
+      measurementIds,
       measurements,
       recordMeasurementEntry,
       saveClientProfile,

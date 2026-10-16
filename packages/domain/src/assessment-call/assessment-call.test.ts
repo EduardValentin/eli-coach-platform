@@ -24,6 +24,19 @@ function bookedCall(props?: Partial<AssessmentCallProps>): AssessmentCall {
   return AssessmentCall.reconstitute({ ...BOOKED_CALL, ...props });
 }
 
+describe("AssessmentCall.booked", () => {
+  it("books the call under the given id at the booking instant", () => {
+    // arrange
+    const { bookedAt, ...visitorAndSlot } = BOOKED_CALL;
+
+    // act
+    const call = AssessmentCall.booked({ ...visitorAndSlot, at: bookedAt });
+
+    // assert
+    expect(call).toEqual(bookedCall());
+  });
+});
+
 describe("AssessmentCall#endsAt", () => {
   it("ends one assessment call duration after the start", () => {
     // arrange

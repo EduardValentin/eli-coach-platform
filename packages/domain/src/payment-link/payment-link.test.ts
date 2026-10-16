@@ -17,22 +17,18 @@ function linkIn(state: PaymentLinkState): PaymentLink {
   });
 }
 
-describe("PaymentLink.issue", () => {
-  it("issues a link that expires 30 days after it was created", () => {
+describe("PaymentLink.issued", () => {
+  it("issues a valid link under the given id that expires 30 days after it was created", () => {
     // act
-    const link = PaymentLink.issue({
+    const link = PaymentLink.issued({
+      id: "link-1",
       assessmentCallId: "call-1",
       tokenSha256: "a".repeat(64),
-      now: NOW,
+      at: NOW,
     });
 
     // assert
-    expect(link).toEqual({
-      assessmentCallId: "call-1",
-      tokenSha256: "a".repeat(64),
-      createdAt: NOW,
-      expiresAt: EXPIRES_AT,
-    });
+    expect(link).toEqual(linkIn("valid"));
   });
 });
 

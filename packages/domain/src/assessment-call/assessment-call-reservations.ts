@@ -1,30 +1,12 @@
-import type { AssessmentCall } from "./assessment-call";
-import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
+import type { AssessmentCall, ReservationDecision } from "./assessment-call";
 
 export type ReserveAssessmentCallCommand = {
-  bookedAt: Date;
-  coachTimeZone: string;
-  country: string;
-  dateOfBirth: string;
-  firstName: string;
-  gender: VisitorGender;
-  lastName: string;
-  normalizedEmail: string;
-  notes: string | null;
+  call: AssessmentCall;
   now: Date;
-  phone: string | null;
-  primaryGoal: VisitorPrimaryGoal;
-  startsAt: Date;
-  visitorTimeZone: string;
 };
 
-export type ReservationResult =
-  | { status: "reserved"; call: AssessmentCall }
-  | { status: "slot_taken" }
-  | { status: "email_has_upcoming_call" };
-
 export interface AssessmentCallReservations {
-  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult>;
+  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationDecision>;
   findById(id: string): Promise<AssessmentCall | null>;
   listAll(): Promise<AssessmentCall[]>;
 }

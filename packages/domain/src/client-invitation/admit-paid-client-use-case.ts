@@ -6,10 +6,8 @@ import type {
   ClientInvitationMessage,
   ClientInvitationNotifications,
 } from "./client-invitation-notifications";
-import type {
-  ClientInvitationIdGenerator,
-  ClientInvitations,
-} from "./client-invitations";
+import type { ClientInvitations } from "./client-invitations";
+import type { ClientInvitationIds } from "./client-invitation-ids";
 import type { IdentityInvitations } from "./identity-invitations";
 import type { InvitationTokenGenerator } from "./invitation-token";
 import type { InvitedClient, InvitedClients } from "./invited-client";
@@ -22,7 +20,7 @@ type AdmitPaidClientUseCaseOptions = {
   clock: Clock;
   identity: IdentityInvitations;
   incidents: ClientInvitationIncidents;
-  invitationIds: ClientInvitationIdGenerator;
+  ids: ClientInvitationIds;
   invitations: ClientInvitations;
   notifications: ClientInvitationNotifications;
   tokenGenerator: InvitationTokenGenerator;
@@ -90,7 +88,7 @@ export class AdmitPaidClientUseCase {
   ): Promise<PreparedInvitation> {
     const token = this.options.tokenGenerator.create();
     const invitation = ClientInvitation.issue({
-      id: this.options.invitationIds.generate(),
+      id: this.options.ids.generate(),
       clientId: client.id,
       email: client.email,
       tokenHash: token.sha256,

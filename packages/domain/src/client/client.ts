@@ -14,10 +14,12 @@ export type ClientIntake = {
 };
 
 export type ClientSnapshot = ClientIntake & {
+  id: string;
   createdAt: Date;
 };
 
 export class Client {
+  readonly id: string;
   readonly assessmentCallId: string;
   readonly firstName: string;
   readonly lastName: string;
@@ -31,6 +33,7 @@ export class Client {
   readonly createdAt: Date;
 
   private constructor(props: ClientSnapshot) {
+    this.id = props.id;
     this.assessmentCallId = props.assessmentCallId;
     this.firstName = props.firstName;
     this.lastName = props.lastName;
@@ -44,12 +47,17 @@ export class Client {
     this.createdAt = props.createdAt;
   }
 
-  static fromIntake(intake: ClientIntake, now: Date): Client {
-    return new Client({ ...intake, createdAt: now });
+  static admitted(input: {
+    id: string;
+    intake: ClientIntake;
+    at: Date;
+  }): Client {
+    return new Client({ ...input.intake, id: input.id, createdAt: input.at });
   }
 
   toSnapshot(): ClientSnapshot {
     return {
+      id: this.id,
       assessmentCallId: this.assessmentCallId,
       firstName: this.firstName,
       lastName: this.lastName,

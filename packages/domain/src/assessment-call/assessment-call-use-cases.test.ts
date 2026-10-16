@@ -116,13 +116,30 @@ function existingCall(props?: {
   });
 }
 
+const bookedCall = AssessmentCall.booked({
+  id: "call-new",
+  firstName: "Ana",
+  lastName: "Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training around a desk job.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
+  startsAt: OPEN_START,
+  visitorTimeZone: "Europe/Bucharest",
+  coachTimeZone: COACH_TIME_ZONE,
+  at: NOW,
+});
+
+const callIds = { generate: () => "call-new" };
+
 function createReservations(
   options?: Partial<AssessmentCallReservations>,
 ): AssessmentCallReservations {
   return {
-    reserve: vi
-      .fn()
-      .mockResolvedValue({ status: "reserved", call: existingCall() }),
+    reserve: vi.fn().mockResolvedValue({ status: "reserved" }),
     findById: vi.fn().mockResolvedValue(null),
     listAll: vi.fn().mockResolvedValue([]),
     ...options,
@@ -172,6 +189,7 @@ function createBookAssessmentCall(options: {
     bookingWindow: openBookingWindow(),
     clock,
     emailSubaddresses: options.emailSubaddresses ?? "allowed",
+    ids: callIds,
     incidents: options.incidents,
     notifications: options.notifications,
     reservations: options.reservations,
@@ -482,6 +500,7 @@ describe("BookAssessmentCallUseCase", () => {
       bookingWindow: closedBookingWindow(),
       clock,
       emailSubaddresses: "allowed",
+      ids: callIds,
       incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
@@ -516,7 +535,7 @@ describe("BookAssessmentCallUseCase", () => {
     expect(reservations.reserve).not.toHaveBeenCalled();
   });
 
-  it("reserves with the visitor's profile, the normalised email and the clock instants, then notifies", async () => {
+  it("reserves a call under a fresh id with the visitor's profile, the normalised email and the clock instants, then notifies", async () => {
     // arrange
     const reservations = createReservations();
     const notifications = createNotifications();
@@ -532,25 +551,13 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(reservations.reserve).toHaveBeenCalledWith({
-      bookedAt: NOW,
-      coachTimeZone: COACH_TIME_ZONE,
-      country: "RO",
-      dateOfBirth: "1994-03-14",
-      firstName: "Ana",
-      gender: "female",
-      lastName: "Popescu",
-      normalizedEmail: "ana@example.com",
-      notes: "Training around a desk job.",
+      call: bookedCall,
       now: NOW,
-      phone: "+40712345678",
-      primaryGoal: "build_strength",
-      startsAt: OPEN_START,
-      visitorTimeZone: "Europe/Bucharest",
     });
     expect(notifications.notifyBooked).toHaveBeenCalledWith(
-      existingCall().toSnapshot(),
+      bookedCall.toSnapshot(),
     );
-    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(result).toEqual({ status: "booked", call: bookedCall });
   });
 
   it("reserves with the time zone the availability source carries", async () => {
@@ -568,7 +575,9 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(reservations.reserve).toHaveBeenCalledWith(
-      expect.objectContaining({ coachTimeZone: "Europe/Chisinau" }),
+      expect.objectContaining({
+        call: expect.objectContaining({ coachTimeZone: "Europe/Chisinau" }),
+      }),
     );
   });
 
@@ -590,7 +599,7 @@ describe("BookAssessmentCallUseCase", () => {
     const result = await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(result).toEqual({ status: "booked", call: bookedCall });
     expect(incidents.notificationFailed).toHaveBeenCalledTimes(failures);
   });
 
@@ -608,7 +617,7 @@ describe("BookAssessmentCallUseCase", () => {
     const result = await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(result).toEqual({ status: "booked", call: bookedCall });
     expect(incidents.notificationFailed).toHaveBeenCalledWith({
       recipient: "visitor",
     });
@@ -670,6 +679,7 @@ describe("BookAssessmentCallUseCase", () => {
       bookingWindow: createBookingWindow({ featureFlags }),
       clock,
       emailSubaddresses: "refused",
+      ids: callIds,
       incidents: createIncidents(),
       notifications,
       reservations,
@@ -703,7 +713,7 @@ describe("BookAssessmentCallUseCase", () => {
     const result = await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(result).toEqual({ status: "booked", call: bookedCall });
   });
 
   it("reserves a subaddressed email as entered where subaddresses are allowed", async () => {
@@ -724,9 +734,19 @@ describe("BookAssessmentCallUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(result).toEqual({
+      status: "booked",
+      call: expect.objectContaining({
+        id: "call-new",
+        visitorEmail: "ana+coaching@example.com",
+      }),
+    });
     expect(reservations.reserve).toHaveBeenCalledWith(
-      expect.objectContaining({ normalizedEmail: "ana+coaching@example.com" }),
+      expect.objectContaining({
+        call: expect.objectContaining({
+          visitorEmail: "ana+coaching@example.com",
+        }),
+      }),
     );
   });
 });

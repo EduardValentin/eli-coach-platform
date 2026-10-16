@@ -26,6 +26,10 @@ export class Account {
     this.deletedAt = props.deletedAt;
   }
 
+  static provisioned(input: Omit<AccountProps, "deletedAt">): Account {
+    return new Account({ ...input, deletedAt: null });
+  }
+
   static reconstitute(props: AccountProps): Account {
     return new Account(props);
   }

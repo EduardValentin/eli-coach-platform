@@ -1,5 +1,6 @@
 import type { DatabaseTransaction } from "@eli-coach-platform/db";
 import {
+  Client,
   CoachingStanding,
   type ClientIntake,
 } from "@eli-coach-platform/domain/client";
@@ -29,23 +30,26 @@ const INTAKE: ClientIntake = {
   bookingTimeZone: "Europe/Bucharest",
 };
 
+const ADMITTED_CLIENT = Client.admitted({
+  id: CLIENT_ID,
+  intake: INTAKE,
+  at: ADMITTED_AT,
+});
+
 describe("writeClient", () => {
-  it("inserts the admitted client's row from her intake through the caller's transaction and answers its id", async () => {
+  it("inserts the admitted client's row under the id the domain gave her, through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingInserts([{ id: CLIENT_ID }]);
 
     // act
-    const written = await writeClient(transaction.handle, {
-      intake: INTAKE,
-      admittedAt: ADMITTED_AT,
-    });
+    const written = await writeClient(transaction.handle, ADMITTED_CLIENT);
 
     // assert
-    expect(written).toEqual({ clientId: CLIENT_ID });
+    expect(written).toBe("written");
     expect(transaction.inserts).toEqual([
       {
         table: clientsTable,
-        values: { ...INTAKE, createdAt: ADMITTED_AT },
+        values: { ...INTAKE, id: CLIENT_ID, createdAt: ADMITTED_AT },
         conflictTarget: clientsTable.assessmentCallId,
       },
     ]);
@@ -56,10 +60,7 @@ describe("writeClient", () => {
     const transaction = createTransactionRecordingInserts([]);
 
     // act
-    const written = await writeClient(transaction.handle, {
-      intake: INTAKE,
-      admittedAt: ADMITTED_AT,
-    });
+    const written = await writeClient(transaction.handle, ADMITTED_CLIENT);
 
     // assert
     expect(written).toBe("call_already_has_client");
