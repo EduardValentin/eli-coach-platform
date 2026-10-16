@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import {
   Link,
   useLoaderData,
+  useLocation,
   useNavigate,
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -28,7 +29,6 @@ import {
   type ExerciseProblems,
 } from "~/features/exercise-library/public/exercises";
 import {
-  COACH_TRAINING_PATH,
   EXERCISE_LIBRARY_API_PATHS,
   exercisePath,
 } from "~/features/exercise-library/public/paths";
@@ -60,6 +60,7 @@ import {
   type ExerciseVideoFieldHandle,
   type VideoUploadState,
 } from "./exercise-video-field";
+import { libraryReturnPath, returnPathAfterSave } from "./library-address";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
 
@@ -100,6 +101,8 @@ export default function ExerciseEditorRoute() {
 function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const { exercise } = editor;
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const library = libraryReturnPath(state);
   const takenNames = useRef<readonly string[]>(editor.otherNames);
   const sentName = useRef("");
   const videoField = useRef<ExerciseVideoFieldHandle>(null);
@@ -176,7 +179,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const settle = (outcome: SaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
-      void navigate(outcome.redirectTo);
+      void navigate(returnPathAfterSave(outcome.redirectTo, state));
       return;
     }
 
@@ -217,9 +220,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
 
   return (
     <div className="w-full max-w-3xl" data-parity-root="ExerciseEditorPage">
-      <PortalBackLink to={COACH_TRAINING_PATH}>
-        Back to exercises
-      </PortalBackLink>
+      <PortalBackLink to={library}>Back to exercises</PortalBackLink>
       <PortalPageHeader title={exercise ? "Edit exercise" : "New exercise"} />
 
       <form noValidate onSubmit={submit}>
@@ -256,7 +257,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
         >
           <Link
             className={buttonVariants({ size: "md", variant: "ghost" })}
-            to={COACH_TRAINING_PATH}
+            to={library}
           >
             Cancel
           </Link>

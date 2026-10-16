@@ -1,36 +1,22 @@
-import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import {
-  Badge,
-  buttonVariants,
-  Card,
-  ItemIdentity,
-  RowActionsMenu,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@eli-coach-platform/ui/primitives";
-import { Activity, Dumbbell, Pencil, Plus } from "lucide-react";
+import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
+import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { Plus } from "lucide-react";
 import {
   Link,
   useLoaderData,
-  useNavigate,
+  useLocation,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type { ExerciseView } from "~/features/exercise-library/public/exercises";
-import {
-  exerciseEditorPath,
-  NEW_EXERCISE_PATH,
-} from "~/features/exercise-library/public/paths";
+import { NEW_EXERCISE_PATH } from "~/features/exercise-library/public/paths";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
-import { EXERCISE_TYPE_LABELS } from "./exercise-form";
-
-const COLUMN_COUNT = 6;
+import { ExerciseListing } from "./exercise-listing";
+import { EXERCISE_LISTING_PARAMS } from "./exercise-listing-params";
+import { libraryReturnState } from "./library-address";
 
 export async function loader(args: LoaderFunctionArgs) {
   return args.context.get(exerciseLibraryContext).exerciseLibrary.list(args);
@@ -38,8 +24,23 @@ export async function loader(args: LoaderFunctionArgs) {
 
 export const meta: MetaFunction = () => [{ title: "Exercises | Evoa" }];
 
+export function shouldRevalidate({
+  currentUrl,
+  defaultShouldRevalidate,
+  nextUrl,
+}: ShouldRevalidateFunctionArgs) {
+  return haveOnlyListingParamsChanged(
+    currentUrl,
+    nextUrl,
+    Object.values(EXERCISE_LISTING_PARAMS),
+  )
+    ? false
+    : defaultShouldRevalidate;
+}
+
 export default function ExerciseLibraryRoute() {
   const { exercises } = useLoaderData<typeof loader>();
+  const { search } = useLocation();
 
   return (
     <div className="w-full" data-parity-root="TrainingHub">
@@ -47,6 +48,7 @@ export default function ExerciseLibraryRoute() {
         actions={
           <Link
             className={buttonVariants({ size: "md", variant: "primary" })}
+            state={libraryReturnState(search)}
             to={NEW_EXERCISE_PATH}
           >
             <Plus aria-hidden="true" size={16} />
@@ -57,106 +59,7 @@ export default function ExerciseLibraryRoute() {
         title="Exercises"
       />
 
-      <Card data-parity="exercise-table" variant="table-panel">
-        <Table>
-          <TableHeader>
-            <TableRow data-parity="exercise-header-row">
-              <TableHead>Exercise</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead>Target muscles</TableHead>
-              <TableHead>Difficulty</TableHead>
-              <TableHead data-parity="exercise-video">Video</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {exercises.length === 0 ? (
-              <TableRow>
-                <TableCell className="p-0" colSpan={COLUMN_COUNT}>
-                  <EmptyState
-                    description="Exercises you add appear here."
-                    icon={Dumbbell}
-                    title="No exercises yet"
-                  />
-                </TableCell>
-              </TableRow>
-            ) : (
-              exercises.map((exercise) => (
-                <ExerciseRow exercise={exercise} key={exercise.id} />
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+      <ExerciseListing exercises={exercises} />
     </div>
-  );
-}
-
-function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
-  const navigate = useNavigate();
-  const equipment =
-    exercise.equipment.length > 0
-      ? exercise.equipment.join(", ")
-      : "No equipment";
-
-  return (
-    <TableRow data-parity="exercise-row">
-      <TableCell>
-        <ItemIdentity
-          glyphAttributes={{ "data-parity": "exercise-glyph" }}
-          icon={Activity}
-          summary={`${EXERCISE_TYPE_LABELS[exercise.type]} · ${equipment}`}
-          summaryAttributes={{ "data-parity": "exercise-summary" }}
-          title={exercise.name}
-        />
-      </TableCell>
-      <TableCell>
-        <div className="flex flex-wrap gap-1" data-parity="exercise-tags">
-          {exercise.tags.map((tag) => (
-            <Badge key={tag} tone="brand-secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="flex flex-wrap gap-1" data-parity="exercise-muscles">
-          {exercise.primaryMuscles.map((muscle) => (
-            <Badge key={muscle} tone="muted">
-              {muscle}
-            </Badge>
-          ))}
-        </div>
-      </TableCell>
-      <TableCell>
-        <Badge data-parity="exercise-difficulty" tone="secondary">
-          {exercise.difficulty}
-        </Badge>
-      </TableCell>
-      <TableCell
-        className="text-sm text-text-secondary"
-        data-parity="exercise-video"
-      >
-        {exercise.video ? "Attached" : "—"}
-      </TableCell>
-      <TableCell data-parity="exercise-actions-cell">
-        <div
-          className="flex items-center justify-end"
-          data-parity="library-item-actions"
-        >
-          <RowActionsMenu
-            actions={[
-              {
-                icon: Pencil,
-                label: "Edit",
-                name: "edit",
-                onSelect: () => void navigate(exerciseEditorPath(exercise.id)),
-              },
-            ]}
-            label={`Actions for ${exercise.name}`}
-          />
-        </div>
-      </TableCell>
-    </TableRow>
   );
 }
