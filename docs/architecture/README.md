@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit 2c92f73e, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit 9564e20f, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
@@ -13,11 +13,11 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 26, units: 1264, edges: 4445, component cycles: 1, uncovered modules: 0.
+Components: 26, units: 1264, edges: 4444, component cycles: 1, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
-| C1 packages/domain | 355 | 271 | 0 | 0 | 0.58 | 0.42 | none |
+| C1 packages/domain | 355 | 270 | 0 | 0 | 0.58 | 0.42 | none |
 | C2 packages/db | 6 | 75 | 0 | 0 | 0.15 | 0.85 | pain |
 | C3 packages/config | 17 | 51 | 0 | 0 | 0.23 | 0.77 | none |
 | C4 packages/content | 9 | 23 | 0 | 0 | 0.17 | 0.83 | pain |
@@ -215,7 +215,7 @@ Components: 26, units: 1264, edges: 4445, component cycles: 1, uncovered modules
 | C25 | C5 | 7 |
 | C25 | C6 | 7 |
 | C25 | C9 | 3 |
-| C26 | C1 | 19 |
+| C26 | C1 | 18 |
 | C26 | C2 | 5 |
 | C26 | C5 | 12 |
 | C26 | C6 | 6 |
