@@ -101,13 +101,14 @@ function createUseCase() {
     detect: vi.fn(async (): Promise<string | null> => "mp4"),
   } satisfies ExerciseVideoFormatDetector;
   const store = {
-    keep: vi.fn(async () => "9c1b0000-0000-4000-8000-000000000001"),
+    keep: vi.fn(async () => undefined),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
   const useCase = new CreateExerciseUseCase({
     library,
     ids: { generate: () => "e0000000-0000-4000-8000-000000000002" },
+    videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000001" },
     clock: { now: () => NOW },
     incidents,
     formats,
@@ -136,7 +137,7 @@ describe("CreateExerciseUseCase", () => {
     expect(store.keep).not.toHaveBeenCalled();
   });
 
-  it("keeps an accepted video under a new video id and adds the exercise with it", async () => {
+  it("keeps an accepted video under a video id it hands out and adds the exercise with it", async () => {
     // arrange
     const { useCase, library, formats, store } = createUseCase();
 
@@ -158,7 +159,10 @@ describe("CreateExerciseUseCase", () => {
     });
     expect(result).toEqual({ status: "created", exercise: created });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
-    expect(store.keep).toHaveBeenCalledWith("staging-1");
+    expect(store.keep).toHaveBeenCalledWith(
+      "staging-1",
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
     expect(library.add).toHaveBeenCalledWith(created);
     expect(store.remove).not.toHaveBeenCalled();
   });

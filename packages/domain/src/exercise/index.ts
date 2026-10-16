@@ -30,6 +30,7 @@ export {
   type ExerciseVideoSnapshot,
 } from "./exercise-video";
 export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+export { type ExerciseVideoIds } from "./exercise-video-ids";
 export { type ExerciseVideoChoice } from "./exercise-video-saving";
 export {
   type ExerciseVideoOpening,

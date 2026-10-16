@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
@@ -38,6 +38,7 @@ const LEADING_BYTE_COUNT = 4100;
 const VIDEO = randomBytes(256 * 1024);
 const LOCATION_LEAVES_ROOT = "Exercise video location leaves the storage root.";
 const HOSTILE_IDS = ["..", "a/b", ""];
+const VIDEO_ID = "9c1b0000-0000-4000-8000-000000000001";
 
 type Source = { bytes: AsyncIterable<Uint8Array>; drained: () => boolean };
 
@@ -102,8 +103,10 @@ describe("FilesystemExerciseVideoStore", () => {
 
   async function keptVideo(bytes: Buffer): Promise<string> {
     const staged = await store.receive(sourceOf(bytes).bytes, bytes.length);
+    const videoId = randomUUID();
+    await store.keep(staged.stagingId, videoId);
 
-    return store.keep(staged.stagingId);
+    return videoId;
   }
 
   describe("receiving", () => {
@@ -180,16 +183,16 @@ describe("FilesystemExerciseVideoStore", () => {
   });
 
   describe("keeping and discarding", () => {
-    it("moves a staged video under a new file id and forgets the staging id", async () => {
+    it("moves a staged video under the file id it is given and forgets the staging id", async () => {
       // arrange
       const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
 
       // act
-      const videoId = await store.keep(staged.stagingId);
+      await store.keep(staged.stagingId, VIDEO_ID);
 
       // assert
-      expect(videoId).not.toBe(staged.stagingId);
-      expect(await readFile(join(root, "videos", videoId))).toEqual(VIDEO);
+      expect(await readdir(join(root, "videos"))).toEqual([VIDEO_ID]);
+      expect(await readFile(join(root, "videos", VIDEO_ID))).toEqual(VIDEO);
       expect(await readdir(join(root, ".incoming"))).toEqual([]);
       expect(everyOpenedFileIsClosed()).toBe(true);
     });
@@ -401,7 +404,8 @@ describe("FilesystemExerciseVideoStore", () => {
     async (id) => {
       // arrange
       const calls = [
-        () => store.keep(id),
+        () => store.keep(id, VIDEO_ID),
+        () => store.keep(VIDEO_ID, id),
         () => store.discard(id),
         () => store.remove(id),
         () => store.open(id, null),
@@ -437,7 +441,7 @@ describe("FilesystemExerciseVideoStore", () => {
       const staged = await store.receive(sourceOf(VIDEO).bytes, VIDEO.length);
 
       // act
-      const keeping = store.keep(staged.stagingId);
+      const keeping = store.keep(staged.stagingId, VIDEO_ID);
 
       // assert
       await expect(keeping).rejects.toThrow(LOCATION_LEAVES_ROOT);

@@ -5,6 +5,7 @@ import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import { ExerciseNames } from "./exercise-names";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+import type { ExerciseVideoIds } from "./exercise-video-ids";
 import {
   ExerciseVideoSaving,
   type ExerciseVideoChoice,
@@ -27,6 +28,7 @@ type EditExerciseUseCaseOptions = {
   clock: Clock;
   incidents: ExerciseLibraryIncidents;
   formats: ExerciseVideoFormatDetector;
+  videoIds: ExerciseVideoIds;
   store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
 };
 

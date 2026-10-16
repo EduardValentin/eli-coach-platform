@@ -15,6 +15,7 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import { ExerciseLibraryController } from "~/features/exercise-library/api/coach/exercise-library-controller.server";
 import { PostgresExerciseLibrary } from "~/features/exercise-library/data/exercises/exercise-library-repository.server";
 import { RandomExerciseIds } from "~/features/exercise-library/data/exercises/random-exercise-ids.server";
+import { RandomExerciseVideoIds } from "~/features/exercise-library/data/exercises/random-exercise-video-ids.server";
 
 export type ExerciseLibraryFeature = {
   exerciseLibrary: ExerciseLibraryController;
@@ -38,6 +39,7 @@ export function composeExerciseLibraryFeature(
     clock: handles.clock,
     incidents: handles.incidents,
     formats: handles.videoFormats,
+    videoIds: new RandomExerciseVideoIds(),
     store: videoStore,
   };
 

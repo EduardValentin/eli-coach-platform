@@ -25,7 +25,7 @@ export interface ExerciseVideoStore {
     bytes: AsyncIterable<Uint8Array>,
     countUpTo: number,
   ): Promise<StagedExerciseVideo>;
-  keep(stagingId: string): Promise<string>;
+  keep(stagingId: string, videoId: string): Promise<void>;
   discard(stagingId: string): Promise<void>;
   remove(videoId: string): Promise<void>;
   open(

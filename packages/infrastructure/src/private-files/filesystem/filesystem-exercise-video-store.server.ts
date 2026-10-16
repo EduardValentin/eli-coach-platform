@@ -64,16 +64,14 @@ export class FilesystemExerciseVideoStore implements ExerciseVideoStore {
     }
   }
 
-  async keep(stagingId: string): Promise<string> {
+  async keep(stagingId: string, videoId: string): Promise<void> {
     const incoming = this.pathOf(INCOMING_FOLDER, stagingId);
+    const kept = this.pathOf(VIDEOS_FOLDER, videoId);
     await this.requireFolderWithinRoot(INCOMING_FOLDER);
     await this.createFolder(VIDEOS_FOLDER);
 
-    const videoId = randomUUID();
-    await rename(incoming, this.pathOf(VIDEOS_FOLDER, videoId));
+    await rename(incoming, kept);
     await this.syncFolder(VIDEOS_FOLDER);
-
-    return videoId;
   }
 
   async discard(stagingId: string): Promise<void> {

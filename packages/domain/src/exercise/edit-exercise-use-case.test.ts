@@ -133,12 +133,13 @@ function createUseCase() {
     detect: vi.fn(async (): Promise<string | null> => "mov"),
   } satisfies ExerciseVideoFormatDetector;
   const store = {
-    keep: vi.fn(async () => "9c1b0000-0000-4000-8000-000000000002"),
+    keep: vi.fn(async () => undefined),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
   const useCase = new EditExerciseUseCase({
     library,
+    videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000002" },
     clock: { now: () => NOW },
     incidents,
     formats,
@@ -357,7 +358,10 @@ describe("EditExerciseUseCase", () => {
     });
     expect(result).toEqual({ status: "edited", exercise: edited });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
-    expect(store.keep).toHaveBeenCalledWith("staging-2");
+    expect(store.keep).toHaveBeenCalledWith(
+      "staging-2",
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
     expect(library.replace).toHaveBeenCalledWith(edited);
     expect(store.remove).toHaveBeenCalledExactlyOnceWith(
       "9c1b0000-0000-4000-8000-000000000001",

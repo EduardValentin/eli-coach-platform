@@ -5,6 +5,7 @@ import type {
 } from "./exercise-library-incidents";
 import type { ExerciseVideo } from "./exercise-video";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+import type { ExerciseVideoIds } from "./exercise-video-ids";
 import type {
   ExerciseVideoStore,
   StagedExerciseVideo,
@@ -37,6 +38,7 @@ type AcceptedVideoChoice = Exclude<JudgedVideoChoice, { kind: "refused" }>;
 
 type ExerciseVideoSavingOptions = {
   formats: ExerciseVideoFormatDetector;
+  videoIds: ExerciseVideoIds;
   store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
   incidents: Pick<ExerciseLibraryIncidents, "videoCleanupFailed">;
 };
@@ -63,7 +65,8 @@ export class ExerciseVideoSaving {
   ): Promise<ExerciseVideoChange> {
     if (choice.kind !== "attach") return choice;
 
-    const videoId = await this.options.store.keep(choice.staged.stagingId);
+    const videoId = this.options.videoIds.generate();
+    await this.options.store.keep(choice.staged.stagingId, videoId);
 
     return { kind: "attach", video: choice.upload.storedAs(videoId) };
   }
