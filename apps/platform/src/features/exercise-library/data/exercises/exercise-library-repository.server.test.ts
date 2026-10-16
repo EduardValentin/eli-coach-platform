@@ -51,6 +51,7 @@ const SQUAT_ROW = {
   videoId: null,
   videoFormat: null,
   videoSizeBytes: null,
+  archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
 };

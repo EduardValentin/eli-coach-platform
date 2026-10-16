@@ -365,6 +365,13 @@
       "when": 1792152937491,
       "tag": "0055_exercise_integrity_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792186273277,
+      "tag": "0056_exercise_archiving",
+      "breakpoints": true
     }
   ]
 }

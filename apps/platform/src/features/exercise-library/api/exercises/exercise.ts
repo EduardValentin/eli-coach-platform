@@ -4,7 +4,10 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import { uploadOutcomeOf } from "@eli-coach-platform/infrastructure/http";
+import {
+  fetcherOutcomeOf,
+  uploadOutcomeOf,
+} from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -12,17 +15,20 @@ import {
 import { exerciseVideoUploadProgress } from "~/features/exercise-library/public/exercise-video-upload-progress";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
-const ALLOWED_METHODS = ["PUT"];
+const ALLOWED_METHODS = ["PUT", "DELETE"];
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    if (args.request.method !== "PUT") {
-      throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
-    }
+    const { exerciseLibrary } = args.context.get(exerciseLibraryContext);
 
-    return args.context
-      .get(exerciseLibraryContext)
-      .exerciseLibrary.edit(args, args.params.exerciseId);
+    switch (args.request.method) {
+      case "PUT":
+        return exerciseLibrary.edit(args, args.params.exerciseId);
+      case "DELETE":
+        return exerciseLibrary.delete(args, args.params.exerciseId);
+      default:
+        throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
+    }
   });
 }
 
@@ -32,6 +38,11 @@ export async function loader(_args: LoaderFunctionArgs) {
   });
 }
 
-export function clientAction({ request }: ClientActionFunctionArgs) {
-  return uploadOutcomeOf(request, exerciseVideoUploadProgress);
+export function clientAction({
+  request,
+  serverAction,
+}: ClientActionFunctionArgs) {
+  return request.method === "DELETE"
+    ? fetcherOutcomeOf(serverAction)
+    : uploadOutcomeOf(request, exerciseVideoUploadProgress);
 }

@@ -48,6 +48,7 @@ const BACK_SQUAT: ExerciseView = {
     path: "/api/exercises/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/video/7c6b5a49-3827-4161-a5b4-c3d2e1f0a9b8",
     format: "mp4",
   },
+  status: "active",
 };
 
 const BOX_BREATHING: ExerciseView = {
@@ -63,6 +64,7 @@ const BOX_BREATHING: ExerciseView = {
   tags: [],
   cues: "",
   video: null,
+  status: "active",
 };
 
 const CAT_COW: ExerciseView = {

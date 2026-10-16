@@ -39,6 +39,8 @@ const library = new ExerciseLibraryJourney(rig);
 
 const CREATED_AT = new Date("2026-10-14T09:00:00.000Z");
 const EDITED_AT = new Date("2026-10-15T10:30:00.000Z");
+const ARCHIVED_AT = new Date("2026-10-16T08:00:00.000Z");
+const RESTORED_AT = new Date("2026-10-17T08:00:00.000Z");
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_UUID = "not-an-exercise";
 const LIBRARY = { redirectTo: "/coach/training" };
@@ -187,6 +189,7 @@ describe.sequential("exercise library integration", () => {
           id: expect.any(String),
           ownerSubjectId: COACH_SESSION.subjectId,
           formCues: cues,
+          archivedAt: null,
           createdAt: CREATED_AT,
           updatedAt: CREATED_AT,
         },
@@ -360,6 +363,7 @@ describe.sequential("exercise library integration", () => {
           ownerSubjectId: COACH_SESSION.subjectId,
           name: "Front squat",
           formCues: cues,
+          archivedAt: null,
           createdAt: CREATED_AT,
           updatedAt: EDITED_AT,
         },
@@ -955,6 +959,283 @@ describe.sequential("exercise library integration", () => {
     });
   });
 
+  describe("archiving and restoring an exercise", () => {
+    it("archives her exercise from now on and answers its name", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await rig.holdClock(ARCHIVED_AT);
+
+      // act
+      const response = await library.archive(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ name: "Back squat" });
+      expect(await library.exerciseRows()).toEqual([
+        { ...squat, archivedAt: ARCHIVED_AT, updatedAt: ARCHIVED_AT },
+      ]);
+    });
+
+    it("restores an archived exercise under its own name, active again", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await library.archive(COACH_SESSION, squat.id);
+      await rig.holdClock(RESTORED_AT);
+
+      // act
+      const response = await library.restore(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ name: "Back squat" });
+      expect(await library.exerciseRows()).toEqual([
+        { ...squat, archivedAt: null, updatedAt: RESTORED_AT },
+      ]);
+    });
+
+    it("gives the name of an archived exercise to a new one", async () => {
+      // arrange
+      const archived = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.archive(COACH_SESSION, archived.id);
+
+      // act
+      const response = await library.create(COACH_SESSION, {
+        ...BACK_SQUAT,
+        name: " hip THRUST",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      const rows = await library.exerciseRows();
+      expect(rows).toHaveLength(2);
+      expect(
+        rows.map(({ name, archivedAt }) => [name, archivedAt === null]),
+      ).toEqual(
+        expect.arrayContaining([
+          ["Hip thrust", false],
+          ["hip THRUST", true],
+        ]),
+      );
+    });
+
+    it("still refuses a name another active exercise of hers has", async () => {
+      // arrange
+      const archived = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.archive(COACH_SESSION, archived.id);
+      await library.createAccepted(COACH_SESSION, {
+        ...BACK_SQUAT,
+        name: "Hip thrust",
+      });
+
+      // act
+      const response = await library.create(COACH_SESSION, {
+        ...BOX_BREATHING,
+        name: "HIP thrust",
+      });
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({ problems: { name: "taken" } });
+    });
+
+    it("restores it as the name followed by 2 when an active exercise now holds its name", async () => {
+      // arrange
+      const archived = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.archive(COACH_SESSION, archived.id);
+      await library.createAccepted(COACH_SESSION, {
+        ...BACK_SQUAT,
+        name: "Hip thrust",
+      });
+
+      // act
+      const response = await library.restore(COACH_SESSION, archived.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ name: "Hip thrust (2)" });
+      expect(
+        (await library.exerciseRows()).map(({ id, name, archivedAt }) => [
+          id === archived.id,
+          name,
+          archivedAt,
+        ]),
+      ).toEqual([
+        [false, "Hip thrust", null],
+        [true, "Hip thrust (2)", null],
+      ]);
+    });
+
+    it("restores it as the name followed by 3 when the name followed by 2 is held too", async () => {
+      // arrange
+      const archived = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+      await library.archive(COACH_SESSION, archived.id);
+      await library.createAccepted(COACH_SESSION, {
+        ...BACK_SQUAT,
+        name: "Hip thrust",
+      });
+      await library.createAccepted(COACH_SESSION, {
+        ...BOX_BREATHING,
+        name: "Hip thrust (2)",
+      });
+
+      // act
+      const response = await library.restore(COACH_SESSION, archived.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ name: "Hip thrust (3)" });
+    });
+
+    it("answers 409 to editing an archived exercise, leaving it as it was", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await library.archive(COACH_SESSION, squat.id);
+      const [archived] = await library.exerciseRows();
+
+      // act
+      const response = await library.edit(COACH_SESSION, squat.id, {
+        ...BACK_SQUAT,
+        name: "Front squat",
+      });
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await library.exerciseRows()).toEqual([archived]);
+    });
+
+    it("returns her to the library when she opens an archived exercise", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await library.archive(COACH_SESSION, squat.id);
+
+      // act
+      const response = await library.openExercise(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe(suite.path(LIBRARY_PAGE));
+    });
+
+    it.each([
+      ["an unknown exercise", UNKNOWN_ID],
+      ["an id that is not a uuid", NOT_A_UUID],
+    ])(
+      "answers 404 to archiving or restoring %s",
+      async (_case, exerciseId) => {
+        // arrange, act
+        const answers = await Promise.all([
+          library.archive(COACH_SESSION, exerciseId),
+          library.restore(COACH_SESSION, exerciseId),
+        ]);
+
+        // assert
+        expect(answers.map(({ status }) => status)).toEqual([404, 404]);
+      },
+    );
+
+    it("answers 404 to archiving or restoring another coach's exercise, leaving it as it was", async () => {
+      // arrange
+      await rig.provisionOtherCoach();
+      const othersSquat = await library.createAccepted(
+        OTHER_COACH_SESSION,
+        BACK_SQUAT,
+      );
+
+      // act
+      const answers = await Promise.all([
+        library.archive(COACH_SESSION, othersSquat.id),
+        library.restore(COACH_SESSION, othersSquat.id),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([404, 404]);
+      expect(await library.exerciseRows()).toEqual([othersSquat]);
+    });
+  });
+
+  describe("deleting an exercise", () => {
+    it("removes her exercise for good and answers its name", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      const hipThrust = await library.createAccepted(COACH_SESSION, HIP_THRUST);
+
+      // act
+      const response = await library.remove(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ name: "Back squat" });
+      expect(await library.exerciseRows()).toEqual([hipThrust]);
+    });
+
+    it("removes an archived exercise", async () => {
+      // arrange
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await library.archive(COACH_SESSION, squat.id);
+
+      // act
+      const response = await library.remove(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.exerciseRows()).toEqual([]);
+    });
+
+    it("deletes the exercise's video file with it", async () => {
+      // arrange
+      await library.clearVideoFiles();
+      const video = await sampleVideo(LANDSCAPE_SAMPLE_VIDEO_PATH, {
+        name: "squat.mp4",
+        type: "video/mp4",
+      });
+      await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        video,
+      );
+      const [squat] = await library.exerciseRows();
+
+      if (!squat) {
+        throw new Error("The exercise was not stored.");
+      }
+
+      // act
+      const response = await library.remove(COACH_SESSION, squat.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.exerciseRows()).toEqual([]);
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it.each([
+      ["an unknown exercise", UNKNOWN_ID],
+      ["an id that is not a uuid", NOT_A_UUID],
+    ])("answers 404 to deleting %s", async (_case, exerciseId) => {
+      // arrange, act
+      const response = await library.remove(COACH_SESSION, exerciseId);
+
+      // assert
+      expect(response.status).toBe(404);
+    });
+
+    it("answers 404 to deleting another coach's exercise, leaving it as it was", async () => {
+      // arrange
+      await rig.provisionOtherCoach();
+      const othersSquat = await library.createAccepted(
+        OTHER_COACH_SESSION,
+        BACK_SQUAT,
+      );
+
+      // act
+      const response = await library.remove(COACH_SESSION, othersSquat.id);
+
+      // assert
+      expect(response.status).toBe(404);
+      expect(await library.exerciseRows()).toEqual([othersSquat]);
+    });
+  });
+
   describe("who may write", () => {
     it.each([
       { who: "a signed-in client", requester: CLIENT_SESSION, status: 403 },
@@ -970,13 +1251,15 @@ describe.sequential("exercise library integration", () => {
         const answers = await Promise.all([
           library.create(requester, HIP_THRUST),
           library.edit(requester, squat.id, HIP_THRUST),
+          library.archive(requester, squat.id),
+          library.restore(requester, squat.id),
+          library.remove(requester, squat.id),
         ]);
 
         // assert
-        expect(answers.map((answer) => answer.status)).toEqual([
-          status,
-          status,
-        ]);
+        expect(answers.map((answer) => answer.status)).toEqual(
+          Array(5).fill(status),
+        );
         expect(await library.exerciseRows()).toEqual([squat]);
       },
     );

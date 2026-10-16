@@ -1,8 +1,13 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
+  ExerciseNames,
   MAX_EXERCISE_VIDEO_BYTES,
+  type ArchiveExerciseUseCase,
   type CreateExerciseUseCase,
+  type DeleteExerciseUseCase,
   type EditExerciseUseCase,
+  type Exercise,
+  type ExerciseReference,
   type ExerciseDraftInput,
   type ExerciseSaveProblems,
   type ExerciseVideoChoice,
@@ -10,6 +15,7 @@ import {
   type FindExerciseUseCase,
   type ListExercisesUseCase,
   type OpenExerciseVideoUseCase,
+  type RestoreExerciseUseCase,
   type StageExerciseVideoUseCase,
   type StagedExerciseVideo,
 } from "@eli-coach-platform/domain/exercise";
@@ -33,6 +39,7 @@ import { requirePortalAccess } from "~/features/accounts/server/guards/require-p
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 import {
   EXERCISE_FORM_FIELDS,
+  exerciseLifecycleAnswerSchema,
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
   exerciseSavedAnswerSchema,
@@ -49,6 +56,9 @@ type ExerciseLibraryControllerOptions = {
   editExercise: EditExerciseUseCase;
   stageExerciseVideo: StageExerciseVideoUseCase;
   openExerciseVideo: OpenExerciseVideoUseCase;
+  archiveExercise: ArchiveExerciseUseCase;
+  restoreExercise: RestoreExerciseUseCase;
+  deleteExercise: DeleteExerciseUseCase;
 };
 
 type ExerciseVideoAddress = {
@@ -87,7 +97,7 @@ export class ExerciseLibraryController {
 
     return {
       exercise: null,
-      otherNames: exercises.map((exercise) => exercise.name),
+      otherNames: ExerciseNames.reservedBy(exercises).toArray(),
     };
   }
 
@@ -176,6 +186,68 @@ export class ExerciseLibraryController {
         return this.conflictResponse();
       case "failed":
         return this.serverErrorResponse();
+    }
+  }
+
+  async archive(
+    args: ActionFunctionArgs,
+    exerciseId: string | undefined,
+  ): Promise<Response> {
+    const reference = this.exerciseReferenceOf(args, exerciseId);
+
+    if (!reference) {
+      return this.notFoundResponse();
+    }
+
+    const result = await this.options.archiveExercise.execute(reference);
+
+    switch (result.status) {
+      case "archived":
+        return this.lifecycleResponse(result.exercise);
+      case "not-found":
+        return this.notFoundResponse();
+    }
+  }
+
+  async restore(
+    args: ActionFunctionArgs,
+    exerciseId: string | undefined,
+  ): Promise<Response> {
+    const reference = this.exerciseReferenceOf(args, exerciseId);
+
+    if (!reference) {
+      return this.notFoundResponse();
+    }
+
+    const result = await this.options.restoreExercise.execute(reference);
+
+    switch (result.status) {
+      case "restored":
+        return this.lifecycleResponse(result.exercise);
+      case "not-found":
+        return this.notFoundResponse();
+      case "failed":
+        return this.serverErrorResponse();
+    }
+  }
+
+  async delete(
+    args: ActionFunctionArgs,
+    exerciseId: string | undefined,
+  ): Promise<Response> {
+    const reference = this.exerciseReferenceOf(args, exerciseId);
+
+    if (!reference) {
+      return this.notFoundResponse();
+    }
+
+    const result = await this.options.deleteExercise.execute(reference);
+
+    switch (result.status) {
+      case "deleted":
+        return this.lifecycleResponse(result.exercise);
+      case "not-found":
+        return this.notFoundResponse();
     }
   }
 
@@ -312,6 +384,24 @@ export class ExerciseLibraryController {
     }
 
     return createBadRequestResponse("The exercise could not be read.");
+  }
+
+  private exerciseReferenceOf(
+    args: ActionFunctionArgs,
+    exerciseId: string | undefined,
+  ): ExerciseReference | null {
+    const coach = requireApiAccount(args, { role: "COACH" });
+    const id = idSchema.safeParse(exerciseId);
+
+    return id.success
+      ? { ownerAccountId: coach.id, exerciseId: id.data }
+      : null;
+  }
+
+  private lifecycleResponse(exercise: Exercise): Response {
+    return Response.json(
+      exerciseLifecycleAnswerSchema.parse({ name: exercise.name }),
+    );
   }
 
   private backToLibrary(): Response {

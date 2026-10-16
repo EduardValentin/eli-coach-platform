@@ -24,6 +24,7 @@ export type ExerciseRow = Omit<ExerciseFields, "cues"> & {
   id: string;
   ownerSubjectId: string;
   formCues: string;
+  archivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -46,7 +47,7 @@ const EXERCISE_ROW_SELECTION = `select exercises.id, exercises.name, exercises.f
   exercises.type, exercises.unit, exercises.per_side as "perSide", exercises.difficulty,
   exercises.primary_muscles as "primaryMuscles", exercises.secondary_muscles as "secondaryMuscles",
   exercises.equipment, exercises.tags,
-  exercises.created_at as "createdAt", exercises.updated_at as "updatedAt",
+  exercises.archived_at as "archivedAt", exercises.created_at as "createdAt", exercises.updated_at as "updatedAt",
   owners.auth_subject_id as "ownerSubjectId"
   from app.exercises
   join app.accounts owners on owners.id = exercises.owner_account_id`;
@@ -92,6 +93,24 @@ export class ExerciseLibraryJourney {
       `${EXERCISES_API}/${exerciseId}`,
       this.writeOf("PUT", fields),
     );
+  }
+
+  archive(requester: Requester, exerciseId: string): Promise<Response> {
+    return this.send(requester, `${EXERCISES_API}/${exerciseId}/archive`, {
+      method: "POST",
+    });
+  }
+
+  restore(requester: Requester, exerciseId: string): Promise<Response> {
+    return this.send(requester, `${EXERCISES_API}/${exerciseId}/restore`, {
+      method: "POST",
+    });
+  }
+
+  remove(requester: Requester, exerciseId: string): Promise<Response> {
+    return this.send(requester, `${EXERCISES_API}/${exerciseId}`, {
+      method: "DELETE",
+    });
   }
 
   createWithVideo(

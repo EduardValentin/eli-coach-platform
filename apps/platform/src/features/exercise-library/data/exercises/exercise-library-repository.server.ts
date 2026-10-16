@@ -121,12 +121,7 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
   }
 
   private rowOf(exercise: Exercise): ExerciseRow {
-    const {
-      cues,
-      video,
-      archivedAt: _archivedAt,
-      ...snapshot
-    } = exercise.toSnapshot();
+    const { cues, video, ...snapshot } = exercise.toSnapshot();
 
     return {
       ...snapshot,
@@ -148,7 +143,6 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
       ...row,
       cues: formCues,
       video: this.videoOf({ videoId, videoFormat, videoSizeBytes }),
-      archivedAt: null,
     });
   }
 

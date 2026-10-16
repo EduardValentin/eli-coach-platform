@@ -30,12 +30,7 @@ export class RestoreExerciseUseCase {
     try {
       return await this.restore(reference);
     } catch (error) {
-      this.options.incidents.exerciseRestoreFailed({
-        exerciseId: reference.exerciseId,
-        error,
-      });
-
-      return { status: "failed" };
+      return this.failed(reference.exerciseId, error);
     }
   }
 
@@ -61,8 +56,11 @@ export class RestoreExerciseUseCase {
     attemptsLeft,
   }: RestoreAttempt): Promise<RestoreExerciseResult> {
     if (attemptsLeft === 0) {
-      throw new Error(
-        `No free name found for the restored exercise after ${RESTORE_ATTEMPTS} attempts.`,
+      return this.failed(
+        exercise.id,
+        new Error(
+          `No free name found for the restored exercise after ${RESTORE_ATTEMPTS} attempts.`,
+        ),
       );
     }
 
@@ -80,5 +78,11 @@ export class RestoreExerciseUseCase {
       names: names.with(restored.name),
       attemptsLeft: attemptsLeft - 1,
     });
+  }
+
+  private failed(exerciseId: string, error: unknown): RestoreExerciseResult {
+    this.options.incidents.exerciseRestoreFailed({ exerciseId, error });
+
+    return { status: "failed" };
   }
 }
