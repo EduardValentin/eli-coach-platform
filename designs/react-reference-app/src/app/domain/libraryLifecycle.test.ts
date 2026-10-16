@@ -127,6 +127,18 @@ describe('restoring a library item whose name is taken', () => {
     expect(restored.name).toHaveLength(80);
   });
 
+  it('drops the spaces the shortening leaves at the end of the name', () => {
+    // arrange
+    const longName = `${'a'.repeat(75)} aaaa`;
+    const archived = archivedItem({ id: 'e6', name: longName }, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, [longName]);
+
+    // assert
+    expect(restored.name).toBe(`${'a'.repeat(75)} (2)`);
+  });
+
   it('compares names ignoring case and surrounding spaces', () => {
     // arrange
     const archived = archivedItem(squat, ARCHIVED_AT);

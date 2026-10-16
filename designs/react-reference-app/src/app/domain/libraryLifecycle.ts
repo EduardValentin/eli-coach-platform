@@ -7,11 +7,11 @@ export type ArchivableItem = {
   archivedAt?: string;
 };
 
-export type NamedArchivableItem = ArchivableItem & {
+type NamedArchivableItem = ArchivableItem & {
   name: string;
 };
 
-export const MAX_LIBRARY_NAME_LENGTH = 80;
+const MAX_LIBRARY_NAME_LENGTH = 80;
 
 export type UsageKind = 'template' | 'plan' | 'recipe' | 'meal-plan';
 
@@ -98,7 +98,8 @@ function restoredName(name: string, activeNames: readonly string[]): string {
   let candidate = name;
   for (let number = 2; taken.has(nameKey(candidate)); number += 1) {
     const suffix = ` (${number})`;
-    candidate = `${name.slice(0, MAX_LIBRARY_NAME_LENGTH - suffix.length)}${suffix}`;
+    const base = name.slice(0, MAX_LIBRARY_NAME_LENGTH - suffix.length).trimEnd();
+    candidate = `${base}${suffix}`;
   }
   return candidate;
 }

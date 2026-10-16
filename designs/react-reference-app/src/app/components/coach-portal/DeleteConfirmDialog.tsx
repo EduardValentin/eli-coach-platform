@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 
 export type DeletionSubject = {
-  noun: string;
   name: string;
 };
 
@@ -14,11 +14,16 @@ export function DeleteConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const [shownName, setShownName] = useState(subject?.name ?? '');
+  if (subject && subject.name !== shownName) {
+    setShownName(subject.name);
+  }
+
   return (
     <ConfirmDialog
       open={subject !== null}
       onOpenChange={(open) => !open && onCancel()}
-      title={`Delete “${subject?.name}”?`}
+      title={`Delete “${shownName}”?`}
       description="It’s removed for good. This can’t be undone."
       confirmLabel="Delete"
       cancelLabel="Cancel"

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { DeletionSubject } from '../components/coach-portal/DeleteConfirmDialog';
 import type { LibraryDeletion } from '../domain/libraryLifecycle';
 
 type LibraryItem = {
@@ -9,7 +8,6 @@ type LibraryItem = {
 };
 
 type LibraryOperations = {
-  noun: string;
   archive: (id: string) => void;
   restore: (id: string) => LibraryItem;
   remove: (id: string) => LibraryDeletion;
@@ -42,15 +40,11 @@ export function useLibraryLifecycle(operations: LibraryOperations) {
     setPendingDeletion(null);
   };
 
-  const deletionSubject: DeletionSubject | null = pendingDeletion
-    ? { noun: operations.noun, name: pendingDeletion.name }
-    : null;
-
   return {
     archive,
     restore,
     requestDeletion: setPendingDeletion,
-    deletionSubject,
+    deletionSubject: pendingDeletion,
     confirmDeletion,
     cancelDeletion: () => setPendingDeletion(null),
   };

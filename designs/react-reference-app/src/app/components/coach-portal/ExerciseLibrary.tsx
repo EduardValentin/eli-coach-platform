@@ -124,7 +124,6 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
     useTraining();
   const listing = useListingSearchParams();
   const lifecycle = useLibraryLifecycle({
-    noun: 'exercise',
     archive: archiveExercise,
     restore: restoreExercise,
     remove: deleteExercise,
