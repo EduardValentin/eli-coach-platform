@@ -15,14 +15,19 @@ import {
   formatClockTime,
   formatShortDay,
 } from "~/features/assessment-calls/public/call-moment";
-import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 import { CHECK_IN_FOCUS_PARAM } from "~/features/check-ins/public/paths";
 
-export type ListedCheckIn = ClientCheckIns["checkIns"][number];
-
-export type CheckInParty = ListedCheckIn["initiatedBy"];
-
-export type CheckInTab = ListedCheckIn["tab"];
+import {
+  CHECK_IN_LISTING_PARAMS,
+  CHECK_IN_TABS,
+  dateSortRuleFor,
+  openingTabOf,
+  orderCheckIns,
+  parseTab,
+  tabHolding,
+  type CheckInTab,
+  type ListedCheckIn,
+} from "./check-in-listing-rules";
 
 export type CheckInMoment = {
   date: string;
@@ -53,10 +58,6 @@ export function checkInMomentOf(
   };
 }
 
-const CHECK_IN_TABS: readonly CheckInTab[] = ["upcoming", "requests", "past"];
-
-const TAB_PARAM = "view";
-
 const TAB_LABELS: Record<CheckInTab, string> = {
   upcoming: "Upcoming",
   requests: "Requests",
@@ -77,9 +78,9 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
     openedOn,
   });
   useBringCheckInIntoFocus(focusedId, locationKey);
-  const shown = ordered(
+  const shown = orderCheckIns(
     checkIns.filter((checkIn) => checkIn.tab === tab),
-    tab,
+    { direction: dateSortRuleFor(tab).defaultDirection.date, tab },
   );
   const awaitingViewerCount = checkIns.filter(
     (checkIn) => checkIn.awaitsViewer,
@@ -155,21 +156,24 @@ function useCheckInTabParam(tabs: {
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
 
   const chooseTab = (value: string) => {
-    const chosen = tabNamed(value, openedOn);
+    const chosen = parseTab(value, openedOn);
 
     replaceSearchParams((params) => {
       params.delete(CHECK_IN_FOCUS_PARAM);
 
       if (chosen === openedOn) {
-        params.delete(TAB_PARAM);
+        params.delete(CHECK_IN_LISTING_PARAMS.tab);
         return;
       }
 
-      params.set(TAB_PARAM, chosen);
+      params.set(CHECK_IN_LISTING_PARAMS.tab, chosen);
     });
   };
 
-  return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
+  return {
+    chooseTab,
+    tab: parseTab(searchParams.get(CHECK_IN_LISTING_PARAMS.tab), defaultTab),
+  };
 }
 
 function useBringCheckInIntoFocus(
@@ -189,42 +193,4 @@ function useBringCheckInIntoFocus(
 
 function anchorIdOf(checkInId: string): string {
   return `checkin-${checkInId}`;
-}
-
-function tabHolding(
-  checkInId: string | null,
-  checkIns: readonly ListedCheckIn[],
-): CheckInTab | undefined {
-  const held = checkIns.find((checkIn) => checkIn.id === checkInId);
-
-  return held?.tab;
-}
-
-function openingTabOf(checkIns: readonly ListedCheckIn[]): CheckInTab {
-  return checkIns.some((checkIn) => checkIn.awaitsViewer)
-    ? "requests"
-    : "upcoming";
-}
-
-function tabNamed(name: string | null, fallback: CheckInTab): CheckInTab {
-  return CHECK_IN_TABS.find((tab) => tab === name) ?? fallback;
-}
-
-function ordered<CheckIn extends ListedCheckIn>(
-  checkIns: readonly CheckIn[],
-  tab: CheckInTab,
-): CheckIn[] {
-  const direction = tab === "past" ? -1 : 1;
-  const requestRank = (checkIn: CheckIn) => {
-    if (tab !== "requests") return 0;
-    if (checkIn.status === "clash") return 0;
-    return checkIn.awaitsViewer ? 1 : 2;
-  };
-  const byStart = (first: CheckIn, second: CheckIn) =>
-    direction * (Date.parse(first.startsAt) - Date.parse(second.startsAt));
-
-  return [...checkIns].sort(
-    (first, second) =>
-      requestRank(first) - requestRank(second) || byStart(first, second),
-  );
 }

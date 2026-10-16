@@ -17,8 +17,8 @@ import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-co
 import {
   CheckInListing,
   type CheckInEmptyCopy,
-  type CheckInTab,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
+import type { CheckInTab } from "~/features/check-ins/ui/shared/check-ins/check-in-listing-rules";
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
 import {
