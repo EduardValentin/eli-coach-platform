@@ -1,7 +1,12 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS, escapedPattern } from "./locator-text";
 import { expectMacroTiles, NO_MACROS, type MacroValues } from "./macro-tiles";
+import {
+  NUTRITION_TAG_FAMILIES,
+  NUTRITION_TAGS,
+} from "./nutrition-tag-families";
 
 export type RecipeIngredient = {
   food: string;
@@ -37,6 +42,34 @@ const EMPTY_ZONE =
 const TEXT_FIELDS: readonly ProblemField[] = ["Recipe name", "Instructions"];
 const DRAG_HANDLE_POSITION = { x: 6, y: 6 };
 const DRAG_STEPS = 8;
+const BACKDROP_POSITION = { x: 370, y: 420 };
+const ICONS = [
+  "Soup",
+  "Salad",
+  "Sandwich",
+  "Pizza",
+  "Steak",
+  "Poultry",
+  "Fish",
+  "Eggs",
+  "Pastry",
+  "Stew",
+  "Cake",
+  "Ice cream",
+  "Cookie",
+  "Donut",
+  "Coffee",
+  "Smoothie",
+  "Meal",
+] as const;
+const COOKING_METHODS = [
+  "Raw",
+  "Boiled",
+  "Grilled",
+  "Baked",
+  "Pan-fried",
+  "Steamed",
+] as const;
 
 export class RecipeBuilderPage {
   constructor(private readonly page: Page) {}
@@ -85,6 +118,18 @@ export class RecipeBuilderPage {
 
   private get invalidFields(): Locator {
     return this.page.locator('[aria-invalid="true"]');
+  }
+
+  private get searchField(): Locator {
+    return this.library.getByRole("searchbox", { name: "Search foods" });
+  }
+
+  private get offeredFoods(): Locator {
+    return this.library.getByRole("button", { name: /^Add .+ to recipe$/ });
+  }
+
+  private iconOption(icon: string): Locator {
+    return this.iconListbox.getByRole("option", { name: icon, exact: true });
   }
 
   private addButtonOf(food: string): Locator {
@@ -171,6 +216,75 @@ export class RecipeBuilderPage {
     await this.addButtonOf(food).click();
   }
 
+  async searchFoods(query: string): Promise<void> {
+    await this.searchField.fill(query);
+  }
+
+  async expectOffered(foods: readonly string[]): Promise<void> {
+    await expect(this.offeredFoods).toHaveCount(foods.length);
+    for (const food of foods) {
+      await expect(this.addButtonOf(food)).toBeVisible();
+    }
+  }
+
+  async expectChoices(food: string): Promise<void> {
+    await this.iconTrigger.click();
+    await expect(this.iconListbox.getByRole("option")).toHaveText([
+      "None",
+      ...ICONS,
+    ]);
+    await this.page.keyboard.press("Escape");
+    await expect(this.iconListbox).toBeHidden();
+    await this.methodOf(food).click();
+    await expect(this.page.getByRole("option")).toHaveText([
+      ...COOKING_METHODS,
+    ]);
+    await this.page.keyboard.press("Escape");
+    await expect(this.page.getByRole("checkbox")).toHaveCount(
+      NUTRITION_TAGS.length,
+    );
+    for (const [family, tags] of Object.entries(NUTRITION_TAG_FAMILIES)) {
+      const choices = this.page
+        .getByRole("group", { name: family, exact: true })
+        .getByRole("checkbox");
+
+      await expect(choices).toHaveCount(tags.length);
+      for (const [index, tag] of tags.entries()) {
+        await expect(choices.nth(index)).toHaveAccessibleName(tag);
+      }
+    }
+  }
+
+  async composeWithKeyboard(recipe: SavedRecipe): Promise<void> {
+    await this.waitUntilInteractiveByKeyboard();
+    await tabTo(this.page, this.nameField);
+    await this.page.keyboard.type(recipe.name);
+    for (const { food, grams, method } of recipe.ingredients) {
+      await tabTo(this.page, this.addButtonOf(food));
+      await this.page.keyboard.press("Enter");
+      await this.retypeWithKeyboard(this.gramsOf(food), grams);
+      await this.chooseMethodWithKeyboard(food, method);
+    }
+    await this.retypeWithKeyboard(
+      this.minutes("Prep (min)"),
+      recipe.prepMinutes,
+    );
+    await this.retypeWithKeyboard(
+      this.minutes("Cook (min)"),
+      recipe.cookMinutes,
+    );
+    await tabTo(this.page, this.fieldOf("Instructions"));
+    await this.page.keyboard.type(recipe.instructions);
+    for (const tag of recipe.tags) {
+      await tabTo(this.page, this.tag(tag));
+      await this.page.keyboard.press("Space");
+    }
+    if (recipe.icon !== null) await this.chooseIconWithKeyboard(recipe.icon);
+    await this.expectEntries(recipe);
+    await tabTo(this.page, this.saveButton);
+    await this.page.keyboard.press("Enter");
+  }
+
   async dragFood(food: string): Promise<void> {
     await this.addButtonOf(food)
       .locator("..")
@@ -213,9 +327,7 @@ export class RecipeBuilderPage {
 
   async chooseIcon(icon: string | null): Promise<void> {
     await this.iconTrigger.click();
-    await this.iconListbox
-      .getByRole("option", { name: icon ?? "None", exact: true })
-      .click();
+    await this.iconOption(icon ?? "None").click();
     await expect(this.iconListbox).toBeHidden();
     await expect(this.iconTrigger).toHaveAccessibleName(
       this.iconTriggerLabelOf(icon),
@@ -313,10 +425,65 @@ export class RecipeBuilderPage {
     await expect(this.closeLibraryButton).toBeFocused();
   }
 
+  async closeLibraryDrawerFromBackdrop(): Promise<void> {
+    await this.page.mouse.click(BACKDROP_POSITION.x, BACKDROP_POSITION.y);
+    await expect(this.library).toBeHidden();
+    await expect(this.openLibraryButton).toBeFocused();
+  }
+
   async closeLibraryDrawer(): Promise<void> {
     await this.closeLibraryButton.click();
     await expect(this.library).toBeHidden();
     await expect(this.openLibraryButton).toBeFocused();
+  }
+
+  private async retypeWithKeyboard(
+    field: Locator,
+    value: string,
+  ): Promise<void> {
+    await tabTo(this.page, field);
+    await this.page.keyboard.press("ControlOrMeta+A");
+    await this.page.keyboard.type(value);
+  }
+
+  private async chooseMethodWithKeyboard(
+    food: string,
+    method: string,
+  ): Promise<void> {
+    await tabTo(this.page, this.methodOf(food));
+    await this.page.keyboard.press("Enter");
+    await this.page.keyboard.type(method);
+    await expect(
+      this.page.getByRole("option", { name: method, exact: true }),
+    ).toBeFocused();
+    await this.page.keyboard.press("Enter");
+    await expect(this.methodOf(food)).toHaveText(method);
+    await expect(this.methodOf(food)).toBeFocused();
+  }
+
+  private async chooseIconWithKeyboard(icon: string): Promise<void> {
+    await tabTo(this.page, this.iconTrigger);
+    await this.page.keyboard.press("Enter");
+    await expect(this.iconListbox).toBeVisible();
+    await tabTo(this.page, this.iconOption(icon));
+    await this.page.keyboard.press("Enter");
+    await expect(this.iconListbox).toBeHidden();
+    await expect(this.iconTrigger).toHaveAccessibleName(`Icon: ${icon}`);
+    await expect(this.iconTrigger).toBeFocused();
+  }
+
+  private async waitUntilInteractiveByKeyboard(): Promise<void> {
+    await expect(async () => {
+      await this.emptyZone.click();
+      await tabTo(this.page, this.iconTrigger);
+      await this.page.keyboard.press("Enter");
+      await expect(this.iconListbox).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.page.keyboard.press("Escape");
+    await expect(this.iconListbox).toBeHidden();
+    await expect(this.iconTrigger).toBeFocused();
   }
 
   private async waitUntilInteractive(): Promise<void> {

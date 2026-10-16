@@ -46,6 +46,7 @@ import { ExerciseLibraryPage } from "./exercise-library-page";
 import { ExerciseRequests } from "./exercise-requests";
 import { ExerciseVideoSamples } from "./exercise-video-files";
 import { FoodEditorPage } from "./food-editor-page";
+import { FoodRecords } from "./food-records";
 import { FoodRequests } from "./food-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
@@ -164,6 +165,7 @@ type PlatformFixtures = {
   nutritionLibrary: NutritionLibraryPage;
   foodEditor: FoodEditorPage;
   foodRequests: FoodRequests;
+  foodRecords: FoodRecords;
   visitorFoodRequests: FoodRequests;
   recipeBuilder: RecipeBuilderPage;
   recipeRequests: RecipeRequests;
@@ -608,6 +610,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   foodRequests: async ({ page }, use) => {
     await use(new FoodRequests(page.request));
+  },
+
+  foodRecords: async ({ databasePool }, use) => {
+    await use(new FoodRecords(databasePool));
   },
 
   visitorFoodRequests: async ({ baseURL, playwright }, use) => {

@@ -2,6 +2,10 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import {
+  NUTRITION_TAG_FAMILIES,
+  NUTRITION_TAGS,
+} from "./nutrition-tag-families";
 
 export type SavedFood = {
   name: string;
@@ -82,25 +86,6 @@ const ICONS = [
   "Drink",
   "Other",
 ] as const;
-const TAG_FAMILIES: Readonly<Record<string, readonly string[]>> = {
-  "Meal-time": [
-    "Breakfast",
-    "Lunch",
-    "Dinner",
-    "Snack",
-    "Pre-workout",
-    "Post-workout",
-  ],
-  "Cycle phase": ["Menstrual", "Follicular", "Ovulatory", "Luteal"],
-  "Nutrient / benefit": [
-    "Iron-rich",
-    "Omega-3",
-    "Magnesium",
-    "Anti-inflammatory",
-  ],
-  Dietary: ["Vegetarian", "Lactose-free"],
-};
-const TAGS = Object.values(TAG_FAMILIES).flat();
 
 export class FoodEditorPage {
   constructor(private readonly page: Page) {}
@@ -239,8 +224,10 @@ export class FoodEditorPage {
     for (const [index, label] of ICONS.entries()) {
       await expect(this.iconChoices.nth(index)).toHaveAccessibleName(label);
     }
-    await expect(this.page.getByRole("checkbox")).toHaveCount(TAGS.length);
-    for (const [family, tags] of Object.entries(TAG_FAMILIES)) {
+    await expect(this.page.getByRole("checkbox")).toHaveCount(
+      NUTRITION_TAGS.length,
+    );
+    for (const [family, tags] of Object.entries(NUTRITION_TAG_FAMILIES)) {
       const choices = this.page
         .getByRole("group", { name: family, exact: true })
         .getByRole("checkbox");
@@ -303,7 +290,7 @@ export class FoodEditorPage {
     for (const [field, title] of Object.entries(AMOUNT_TITLES)) {
       await expect(this.amount(title)).toHaveValue(food[field as AmountField]);
     }
-    for (const tag of TAGS) {
+    for (const tag of NUTRITION_TAGS) {
       await expect(this.tag(tag)).toBeChecked({
         checked: food.tags.includes(tag),
       });

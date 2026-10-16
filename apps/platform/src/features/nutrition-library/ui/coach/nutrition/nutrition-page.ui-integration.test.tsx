@@ -258,6 +258,44 @@ describe("choosing between foods and recipes", () => {
     expect(router.state.location.search).toBe("?tab=foods");
     expect(screen.getByRole("link", { name: "New food" })).toBeVisible();
   });
+
+  it("keeps her keyboard on the tab she moves to with the arrow keys", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderLibrary({ foods: [CHICKEN], tags: TAGS, recipes: [PORRIDGE] });
+    screen.getByRole("tab", { name: "Foods" }).focus();
+
+    // act
+    await user.keyboard("{ArrowRight}");
+
+    // assert
+    expect(
+      await screen.findByRole("article", { name: "Porridge" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Recipes" })).toHaveFocus();
+
+    // act
+    await user.keyboard("{ArrowLeft}");
+
+    // assert
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Foods" })).toHaveFocus();
+  });
+
+  it("keeps her focus on the tab she clicks", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderLibrary({ foods: [CHICKEN], tags: TAGS, recipes: [PORRIDGE] });
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Recipes" }));
+
+    // assert
+    expect(
+      await screen.findByRole("article", { name: "Porridge" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Recipes" })).toHaveFocus();
+  });
 });
 
 describe("the Recipes tab", () => {

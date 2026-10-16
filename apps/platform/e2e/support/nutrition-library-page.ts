@@ -63,6 +63,10 @@ export class NutritionLibraryPage {
     return this.page.getByRole("link", { name: "New food" });
   }
 
+  private get newRecipeLink(): Locator {
+    return this.page.getByRole("link", { name: "New recipe" });
+  }
+
   private get rows(): Locator {
     return this.page.getByRole("table").getByRole("row");
   }
@@ -140,8 +144,27 @@ export class NutritionLibraryPage {
     ).toBeVisible();
   }
 
+  async openRecipesWithKeyboard(): Promise<void> {
+    await this.heading.click({ position: { x: 1, y: 1 } });
+    await tabTo(this.page, this.tabOf("Foods"));
+    await this.page.keyboard.press("ArrowRight");
+    await expect(this.tabOf("Recipes")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  }
+
+  async expectTabFocused(tab: NutritionTab): Promise<void> {
+    await expect(this.tabOf(tab)).toBeFocused();
+  }
+
   async startNewRecipe(): Promise<void> {
-    await this.page.getByRole("link", { name: "New recipe" }).click();
+    await this.newRecipeLink.click();
+  }
+
+  async startNewRecipeWithKeyboard(): Promise<void> {
+    await tabTo(this.page, this.newRecipeLink);
+    await this.page.keyboard.press("Enter");
   }
 
   async expectRecipesEmpty(): Promise<void> {
@@ -167,6 +190,20 @@ export class NutritionLibraryPage {
     await expect(listed.getByText("Per recipe", { exact: true })).toBeVisible();
     await expectMacroTiles(listed, card.macros);
     await expect(listed.getByRole("listitem")).toHaveText([...card.tags]);
+  }
+
+  async expectRecipesPerRow(count: number): Promise<void> {
+    await expect
+      .poll(() =>
+        this.page.getByRole("article").evaluateAll((cards) => {
+          const tops = cards.map((card) =>
+            Math.round(card.getBoundingClientRect().top),
+          );
+
+          return tops.filter((top) => top === tops[0]).length;
+        }),
+      )
+      .toBe(count);
   }
 
   async expectRecipeNames(names: readonly string[]): Promise<void> {

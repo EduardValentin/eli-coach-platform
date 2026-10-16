@@ -9,6 +9,7 @@ import {
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import { Link } from "react-router";
 
 import type {
@@ -45,18 +46,43 @@ type NutritionHubProps = {
   recipes: readonly RecipeCardView[];
 };
 
+function useFocusFollowingTheChosenTab() {
+  const chosenTab = useRef<string | null>(null);
+
+  const markTabChosen = (tab: string) => {
+    chosenTab.current = tab;
+  };
+
+  const focusWhenChosen =
+    (tab: NutritionTab) => (trigger: HTMLButtonElement | null) => {
+      if (!trigger || chosenTab.current !== tab) return;
+      chosenTab.current = null;
+      trigger.focus();
+    };
+
+  return { focusWhenChosen, markTabChosen };
+}
+
 export function NutritionHub({ foods, tags, recipes }: NutritionHubProps) {
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
   const tab = nutritionTabOf(searchParams);
   const action = HEADER_ACTIONS[tab];
+  const { focusWhenChosen, markTabChosen } = useFocusFollowingTheChosenTab();
 
-  const chooseTab = (chosen: string) =>
+  const chooseTab = (chosen: string) => {
+    markTabChosen(chosen);
     replaceSearchParams((params) => params.set(NUTRITION_TAB_PARAM, chosen));
+  };
 
-  const tabs = (
+  const tabsIn = (content: NutritionTab) => (
     <TabsList>
       {NUTRITION_TABS.map((value) => (
-        <TabsTrigger className="px-4 sm:px-5" key={value} value={value}>
+        <TabsTrigger
+          className="px-4 sm:px-5"
+          key={value}
+          ref={content === value ? focusWhenChosen(value) : undefined}
+          value={value}
+        >
           {TAB_LABELS[value]}
         </TabsTrigger>
       ))}
@@ -86,11 +112,11 @@ export function NutritionHub({ foods, tags, recipes }: NutritionHubProps) {
         variant="segmented"
       >
         <TabsContent value="foods">
-          <ListingToolbar parity="nutrition-toolbar" view={tabs} />
+          <ListingToolbar parity="nutrition-toolbar" view={tabsIn("foods")} />
           <FoodTable foods={foods} tags={tags} />
         </TabsContent>
         <TabsContent value="recipes">
-          <ListingToolbar parity="nutrition-toolbar" view={tabs} />
+          <ListingToolbar parity="nutrition-toolbar" view={tabsIn("recipes")} />
           <RecipeGrid recipes={recipes} tags={tags} />
         </TabsContent>
       </Tabs>

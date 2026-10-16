@@ -141,7 +141,14 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
     save(recipeRequestOf(submitted));
   });
 
-  return { submit, saving };
+  if (saving) return { submit, saveState: "saving" as const };
+
+  return {
+    submit,
+    saveState: form.formState.isValid
+      ? ("ready" as const)
+      : ("blocked" as const),
+  };
 }
 
 function RecipeWorkspace({ view }: RecipeBuilderProps) {
@@ -166,7 +173,7 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
     control: form.control,
     name: "ingredients",
   });
-  const { submit, saving } = useRecipeSave({ form, recipe, takenNames });
+  const { submit, saveState } = useRecipeSave({ form, recipe, takenNames });
   const values = form.watch();
   const problems = shownRecipeProblemsOf(form.formState.errors);
   const isDragging = useDragLayer((monitor) => monitor.isDragging());
@@ -205,9 +212,7 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
         onSave={() => void submit()}
         openLibraryRef={library.openButton}
         problem={problems.name}
-        saveState={
-          saving ? "saving" : form.formState.isValid ? "ready" : "blocked"
-        }
+        saveState={saveState}
       />
 
       <div className="flex min-h-0 flex-1">
