@@ -199,6 +199,7 @@ export function FoodLibraryAside({
         <div
           aria-hidden="true"
           className="fixed inset-0 z-40 bg-overlay-medium lg:hidden"
+          data-parity="drawer-backdrop"
           onClick={onClose}
         />
       )}
@@ -280,6 +281,7 @@ function DraggableFood({
       <span
         aria-hidden="true"
         className={cn("size-2.5 rounded-full", CATEGORY_DOT[food.category])}
+        data-parity="food-category-dot"
       />
       <span className="flex-1 text-sm font-medium text-text-primary">
         {food.name}

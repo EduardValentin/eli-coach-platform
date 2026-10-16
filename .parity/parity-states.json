@@ -5704,5 +5704,24 @@
         "click": "role=button[name=\"Save recipe\" s]"
       }
     ]
-  }
+  },
+  "recipe-builder-dragging": [
+    {
+      "use": "recipe-builder-library-narrowed"
+    }
+  ],
+  "recipe-save-failed-toast": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Quinoa bowl"
+      ]
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ]
 }
