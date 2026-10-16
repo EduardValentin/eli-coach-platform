@@ -1,4 +1,4 @@
-import { useId, useState, useRef } from 'react';
+import { useEffect, useId, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -211,6 +211,21 @@ function RecipeBuilderInner() {
   const [icon, setIcon] = useState<RecipeIcon | undefined>(existing?.icon);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const openLibraryButton = useRef<HTMLButtonElement>(null);
+  const closeLibraryButton = useRef<HTMLButtonElement>(null);
+  const libraryToggled = useRef(false);
+  const openLibrary = () => {
+    libraryToggled.current = true;
+    setLibraryOpen(true);
+  };
+  const closeLibrary = () => {
+    libraryToggled.current = true;
+    setLibraryOpen(false);
+  };
+  useEffect(() => {
+    if (!libraryToggled.current) return;
+    (libraryOpen ? closeLibraryButton : openLibraryButton).current?.focus();
+  }, [libraryOpen]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeDraftIngredient[]>(
     existing?.ingredients.map(draftIngredientOf) ?? [],
@@ -419,7 +434,8 @@ function RecipeBuilderInner() {
               <ArrowLeft size={20} />
             </Button>
             <Button
-              onClick={() => setLibraryOpen(true)}
+              ref={openLibraryButton}
+              onClick={openLibrary}
               variant="ghost"
               size="icon-sm"
               className="lg:hidden"
@@ -474,23 +490,24 @@ function RecipeBuilderInner() {
         {libraryOpen && (
           <div
             aria-hidden="true"
-            className="lg:hidden fixed inset-0 bg-black/30 z-40"
-            onClick={() => setLibraryOpen(false)}
+            className="lg:hidden fixed inset-0 bg-overlay-medium z-40"
+            onClick={closeLibrary}
           />
         )}
         <aside
           aria-label="Food library"
           data-parity="recipe-builder-library"
           className={cn(
-            'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
-            { 'translate-x-0 shadow-2xl': libraryOpen, '-translate-x-full': !libraryOpen },
+            'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col transition-[translate,visibility] duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0',
+            { 'translate-x-0 shadow-2xl': libraryOpen, 'invisible -translate-x-full': !libraryOpen },
           )}
         >
           <div className="p-4 px-3 border-b border-border rounded-field bg-card">
             <div className="flex items-center justify-between mb-3">
               <p className={LABEL_CLASS}>Food library</p>
               <Button
-                onClick={() => setLibraryOpen(false)}
+                ref={closeLibraryButton}
+                onClick={closeLibrary}
                 variant="ghost"
                 size="icon-sm"
                 className="lg:hidden"
@@ -623,7 +640,7 @@ function RecipeBuilderInner() {
             ref={drop}
             data-parity="recipe-ingredients"
             className={cn(
-              'rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200',
+              'rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200 motion-reduce:transition-none',
               {
                 'border-primary bg-primary-soft': isOver && canDrop,
                 'border-primary/30 bg-primary-soft': canDrop && !isOver,
