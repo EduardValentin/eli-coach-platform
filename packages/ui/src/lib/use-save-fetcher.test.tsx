@@ -12,10 +12,10 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-  type JsonSaveTarget,
-} from "./use-json-save-fetcher";
+  useSaveFetcher,
+  type SaveOutcome,
+  type SaveTarget,
+} from "./use-save-fetcher";
 
 type Problems = { name?: string };
 
@@ -57,10 +57,10 @@ function SaveProbe({
   target,
   onSettled,
 }: {
-  target: JsonSaveTarget;
-  onSettled: (outcome: JsonSaveOutcome<Problems>) => void;
+  target: SaveTarget;
+  onSettled: (outcome: SaveOutcome<Problems>) => void;
 }) {
-  const { save, saving, fetcherState } = useJsonSaveFetcher({
+  const { save, saving, fetcherState } = useSaveFetcher({
     onSettled,
     refusedAnswer,
     savedAnswer,
@@ -85,10 +85,10 @@ function renderProbe({
   target = { action: "/foods", method: "post" },
   answer,
 }: {
-  target?: JsonSaveTarget;
+  target?: SaveTarget;
   answer: (args: ActionFunctionArgs) => Promise<unknown>;
 }) {
-  const onSettled = vi.fn<(outcome: JsonSaveOutcome<Problems>) => void>();
+  const onSettled = vi.fn<(outcome: SaveOutcome<Problems>) => void>();
   const router = createMemoryRouter([
     { element: <SaveProbe onSettled={onSettled} target={target} />, path: "/" },
     { action: answer, path: "/foods" },
@@ -100,7 +100,7 @@ function renderProbe({
   return { onSettled };
 }
 
-describe("useJsonSaveFetcher", () => {
+describe("useSaveFetcher", () => {
   it("settles as saved with the page the answer sends the coach to", async () => {
     // arrange
     const user = userEvent.setup();

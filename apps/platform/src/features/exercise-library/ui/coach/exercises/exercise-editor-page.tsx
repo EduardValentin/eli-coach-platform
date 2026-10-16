@@ -2,10 +2,7 @@ import {
   useUploadState,
   type UploadState,
 } from "@eli-coach-platform/infrastructure/http";
-import {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-} from "@eli-coach-platform/ui/lib";
+import { useSaveFetcher, type SaveOutcome } from "@eli-coach-platform/ui/lib";
 import {
   PortalBackLink,
   PortalPageHeader,
@@ -176,7 +173,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     return fieldsShown || videoShown;
   };
 
-  const settle = (outcome: JsonSaveOutcome<ExerciseProblems>) => {
+  const settle = (outcome: SaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
       void navigate(outcome.redirectTo);
@@ -197,7 +194,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     toast.error(SAVE_FAILED);
   };
 
-  const { save, saving, fetcherState } = useJsonSaveFetcher({
+  const { save, saving, fetcherState } = useSaveFetcher({
     target: exercise
       ? { action: exercisePath(exercise.id), method: "put" }
       : { action: EXERCISE_LIBRARY_API_PATHS.exercises, method: "post" },
