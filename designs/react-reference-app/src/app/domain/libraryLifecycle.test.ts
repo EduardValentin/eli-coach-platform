@@ -44,7 +44,7 @@ describe('archiving a library item', () => {
     const archived = archivedItem(squat, ARCHIVED_AT);
 
     // act
-    const restored = restoredItem(archived);
+    const restored = restoredItem(archived, []);
 
     // assert
     expect(restored).toEqual(squat);
@@ -77,6 +77,65 @@ describe('archiving a library item', () => {
 
     // assert
     expect(status).toBe(expected);
+  });
+});
+
+describe('restoring a library item whose name is taken', () => {
+  it('keeps its name while no active item holds it', () => {
+    // arrange
+    const archived = archivedItem(squat, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, ['Lunge']);
+
+    // assert
+    expect(restored.name).toBe('Back squat');
+  });
+
+  it('takes the name followed by (2) when an active item holds it', () => {
+    // arrange
+    const archived = archivedItem(squat, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, ['Back squat']);
+
+    // assert
+    expect(restored).toEqual({ id: 'e1', name: 'Back squat (2)' });
+  });
+
+  it('skips to (3) when (2) is taken as well', () => {
+    // arrange
+    const archived = archivedItem(squat, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, ['Back squat', 'Back squat (2)']);
+
+    // assert
+    expect(restored.name).toBe('Back squat (3)');
+  });
+
+  it('shortens a long name so the numbered name stays within 80 characters', () => {
+    // arrange
+    const longName = 'a'.repeat(80);
+    const archived = archivedItem({ id: 'e5', name: longName }, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, [longName]);
+
+    // assert
+    expect(restored.name).toBe(`${'a'.repeat(76)} (2)`);
+    expect(restored.name).toHaveLength(80);
+  });
+
+  it('compares names ignoring case and surrounding spaces', () => {
+    // arrange
+    const archived = archivedItem(squat, ARCHIVED_AT);
+
+    // act
+    const restored = restoredItem(archived, ['  BACK SQUAT ', 'back squat (2)']);
+
+    // assert
+    expect(restored.name).toBe('Back squat (3)');
   });
 });
 

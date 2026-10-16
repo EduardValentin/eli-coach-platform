@@ -15,7 +15,7 @@ import {
   archivedItem,
   exerciseUsage,
   isDeletable,
-  restoredItem,
+  restoredItemIn,
   type LibraryDeletion,
   type LibraryUsage,
 } from '../domain/libraryLifecycle';
@@ -182,7 +182,7 @@ interface TrainingState {
   updateExercise: (exercise: Exercise) => void;
   uploadExerciseVideo: (file: File, onProgress: (fraction: number) => void) => Promise<ExerciseVideoAnswer>;
   archiveExercise: (id: string) => void;
-  restoreExercise: (id: string) => void;
+  restoreExercise: (id: string) => Exercise;
   deleteExercise: (id: string) => LibraryDeletion;
   getExerciseUsage: (id: string) => LibraryUsage;
 
@@ -812,8 +812,11 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   );
   const archiveExercise = useCallback((id: string) =>
     setExercises(prev => prev.map(e => e.id === id ? archivedItem(e, new Date()) : e)), []);
-  const restoreExercise = useCallback((id: string) =>
-    setExercises(prev => prev.map(e => e.id === id ? restoredItem(e) : e)), []);
+  const restoreExercise = useCallback((id: string): Exercise => {
+    const restored = restoredItemIn(exercises, id);
+    setExercises(prev => prev.map(e => e.id === id ? restored : e));
+    return restored;
+  }, [exercises]);
   const getExerciseUsage = useCallback((id: string): LibraryUsage =>
     exerciseUsage(id, { templates: planTemplates, plans: planInstances }),
     [planTemplates, planInstances]);

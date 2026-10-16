@@ -11,7 +11,7 @@ type LibraryItem = {
 type LibraryOperations = {
   noun: string;
   archive: (id: string) => void;
-  restore: (id: string) => void;
+  restore: (id: string) => LibraryItem;
   remove: (id: string) => LibraryDeletion;
 };
 
@@ -24,8 +24,12 @@ export function useLibraryLifecycle(operations: LibraryOperations) {
   };
 
   const restore = (item: LibraryItem) => {
-    operations.restore(item.id);
-    toast.success(`"${item.name}" restored`);
+    const restored = operations.restore(item.id);
+    toast.success(
+      restored.name === item.name
+        ? `"${item.name}" restored`
+        : `"${item.name}" restored as "${restored.name}"`,
+    );
   };
 
   const confirmDeletion = () => {

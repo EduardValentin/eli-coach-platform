@@ -153,7 +153,7 @@ describe('deleting a recipe', () => {
 
     // act
     await user.click(
-      within(screen.getByRole('alertdialog', { name: 'Delete this recipe?' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Delete “Rice cake & yogurt stack”?' })).getByRole('button', {
         name: 'Delete',
       }),
     );

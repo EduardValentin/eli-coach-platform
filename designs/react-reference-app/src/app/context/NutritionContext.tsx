@@ -9,7 +9,7 @@ import {
   foodUsage,
   isDeletable,
   recipeUsage,
-  restoredItem,
+  restoredItemIn,
   type LibraryDeletion,
   type LibraryUsage,
 } from '../domain/libraryLifecycle';
@@ -506,7 +506,7 @@ interface NutritionContextType {
   addFood(input: Omit<Food, 'id'>): Food;
   updateFood(id: string, patch: Partial<Omit<Food, 'id'>>): void;
   archiveFood(id: string): void;
-  restoreFood(id: string): void;
+  restoreFood(id: string): Food;
   deleteFood(id: string): LibraryDeletion;
   getFoodUsage(id: string): LibraryUsage;
   addFoodTag(foodId: string, tagId: string): void;
@@ -518,7 +518,7 @@ interface NutritionContextType {
   addRecipe(input: Omit<Recipe, 'id'>): Recipe;
   updateRecipe(id: string, patch: Partial<Omit<Recipe, 'id'>>): void;
   archiveRecipe(id: string): void;
-  restoreRecipe(id: string): void;
+  restoreRecipe(id: string): Recipe;
   deleteRecipe(id: string): LibraryDeletion;
   getRecipeUsage(id: string): LibraryUsage;
   getPlan(clientId: string): ClientNutritionPlan | undefined;
@@ -718,8 +718,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setRecipes((prev) => prev.map((r) => (r.id === id ? archivedItem(r, new Date()) : r)));
   };
 
-  const restoreRecipe = (id: string) => {
-    setRecipes((prev) => prev.map((r) => (r.id === id ? restoredItem(r) : r)));
+  const restoreRecipe = (id: string): Recipe => {
+    const restored = restoredItemIn(recipes, id);
+    setRecipes((prev) => prev.map((r) => (r.id === id ? restored : r)));
+    return restored;
   };
 
   const getRecipeUsage = (id: string): LibraryUsage => recipeUsage(id, plans);
@@ -746,8 +748,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setFoods((prev) => prev.map((f) => (f.id === id ? archivedItem(f, new Date()) : f)));
   };
 
-  const restoreFood = (id: string) => {
-    setFoods((prev) => prev.map((f) => (f.id === id ? restoredItem(f) : f)));
+  const restoreFood = (id: string): Food => {
+    const restored = restoredItemIn(foods, id);
+    setFoods((prev) => prev.map((f) => (f.id === id ? restored : f)));
+    return restored;
   };
 
   const getFoodUsage = (id: string): LibraryUsage => foodUsage(id, recipes);

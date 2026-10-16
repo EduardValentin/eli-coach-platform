@@ -392,6 +392,22 @@ describe('archiving an exercise', () => {
     expect(await screen.findByText('"Barbell Back Squat" restored')).toBeInTheDocument();
   });
 
+  it('restores under the next free number when an active exercise now holds its name', async () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/training?session=coach&exseed=clash');
+    const user = renderLibrary('/coach/training?session=coach&exseed=clash');
+    await chooseOption(user, 'Status', 'Archived');
+
+    // act
+    await chooseAction(user, 'Hip Thrust', 'Restore');
+    await chooseOption(user, 'Status', 'Active');
+
+    // assert
+    expect(await screen.findByText('"Hip Thrust" restored as "Hip Thrust (2)"')).toBeInTheDocument();
+    expect(exerciseRow('Hip Thrust (2)')).toBeInTheDocument();
+    expect(exerciseRow('Hip Thrust')).toBeInTheDocument();
+  });
+
   it('counts the exercises in each status', async () => {
     // arrange
     const user = renderLibrary();
@@ -446,6 +462,21 @@ describe('deleting an exercise', () => {
     );
   });
 
+  it('asks to confirm, naming the exercise and saying it is removed for good', async () => {
+    // arrange
+    const user = renderLibrary();
+    await chooseOption(user, 'Status', 'Archived');
+
+    // act
+    await chooseAction(user, 'Smith Machine Squat', 'Delete');
+
+    // assert
+    const confirmation = screen.getByRole('dialog', { name: 'Delete “Smith Machine Squat”?' });
+    expect(confirmation).toHaveAccessibleDescription('It’s removed for good. This can’t be undone.');
+    expect(within(confirmation).getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(within(confirmation).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
   it('removes an unused exercise once confirmed', async () => {
     // arrange
     const user = renderLibrary();
@@ -454,10 +485,9 @@ describe('deleting an exercise', () => {
 
     // act
     await user.click(
-      within(screen.getByRole('alertdialog', { name: 'Delete this exercise?' })).getByRole(
-        'button',
-        { name: 'Delete' },
-      ),
+      within(screen.getByRole('dialog', { name: 'Delete “Smith Machine Squat”?' })).getByRole('button', {
+        name: 'Delete',
+      }),
     );
 
     // assert

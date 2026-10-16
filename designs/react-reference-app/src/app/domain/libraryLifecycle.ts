@@ -7,6 +7,12 @@ export type ArchivableItem = {
   archivedAt?: string;
 };
 
+export type NamedArchivableItem = ArchivableItem & {
+  name: string;
+};
+
+export const MAX_LIBRARY_NAME_LENGTH = 80;
+
 export type UsageKind = 'template' | 'plan' | 'recipe' | 'meal-plan';
 
 export type LibraryUsage = Readonly<Partial<Record<UsageKind, number>>>;
@@ -83,9 +89,31 @@ export function archivedItem<T extends ArchivableItem>(item: T, at: Date): T {
   return { ...item, archivedAt: at.toISOString() };
 }
 
-export function restoredItem<T extends ArchivableItem>(item: T): T {
+function nameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function restoredName(name: string, activeNames: readonly string[]): string {
+  const taken = new Set(activeNames.map(nameKey));
+  let candidate = name;
+  for (let number = 2; taken.has(nameKey(candidate)); number += 1) {
+    const suffix = ` (${number})`;
+    candidate = `${name.slice(0, MAX_LIBRARY_NAME_LENGTH - suffix.length)}${suffix}`;
+  }
+  return candidate;
+}
+
+export function restoredItem<T extends NamedArchivableItem>(item: T, activeNames: readonly string[]): T {
   const { archivedAt: _archivedAt, ...restored } = item;
-  return restored as T;
+  return { ...restored, name: restoredName(item.name, activeNames) } as T;
+}
+
+export function restoredItemIn<T extends NamedArchivableItem>(items: readonly T[], id: string): T {
+  const item = items.find((candidate) => candidate.id === id);
+  if (!item) throw new Error(`No library item ${id}`);
+
+  const activeNames = itemsWithStatus(items, 'active').map((active) => active.name);
+  return restoredItem(item, activeNames);
 }
 
 function usedCount(usage: LibraryUsage, kind: UsageKind): number {

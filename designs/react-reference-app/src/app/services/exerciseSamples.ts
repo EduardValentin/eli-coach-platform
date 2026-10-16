@@ -1,6 +1,6 @@
 import type { Exercise } from '../context/TrainingContext';
 
-export const EXERCISE_SEEDS = ['seeded', 'empty'] as const;
+export const EXERCISE_SEEDS = ['seeded', 'empty', 'clash'] as const;
 export type ExerciseSeed = (typeof EXERCISE_SEEDS)[number];
 
 const DEMO_CLIP_ROOT = `${import.meta.env.BASE_URL}media/exercise-demos/`;
@@ -236,6 +236,28 @@ export const SAMPLE_EXERCISES: readonly Exercise[] = [
   },
 ];
 
+const ARCHIVED_HIP_THRUST: Exercise = {
+  id: 'e18',
+  name: 'Hip Thrust',
+  cues: 'Glute-focused hip extension movement with barbell loading.',
+  type: 'resistance',
+  measuredIn: 'reps',
+  perSide: false,
+  equipment: ['Barbell', 'Bench'],
+  difficulty: 'Intermediate',
+  primaryMuscles: ['Glutes', 'Hamstrings'],
+  secondaryMuscles: ['Core'],
+  tags: ['Strength', 'Hypertrophy'],
+  videoUrl: PORTRAIT_DEMO_CLIP,
+  archivedAt: '2026-09-29T10:00:00.000Z',
+};
+
+const EXERCISES_BY_SEED: Record<ExerciseSeed, readonly Exercise[]> = {
+  seeded: SAMPLE_EXERCISES,
+  empty: [],
+  clash: [...SAMPLE_EXERCISES, ARCHIVED_HIP_THRUST],
+};
+
 export function exercisesForSeed(seed: ExerciseSeed): Exercise[] {
-  return seed === 'seeded' ? [...SAMPLE_EXERCISES] : [];
+  return [...EXERCISES_BY_SEED[seed]];
 }

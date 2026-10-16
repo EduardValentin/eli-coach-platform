@@ -318,7 +318,7 @@ describe('a new exercise', () => {
     expect(multi('Primary muscles (required)')).toHaveAttribute('aria-invalid', 'true');
   });
 
-  it('refuses a name an archived exercise already uses', async () => {
+  it('accepts a name only an archived exercise uses', async () => {
     // arrange
     const user = renderEditor(NEW);
 
@@ -326,9 +326,8 @@ describe('a new exercise', () => {
     await user.type(nameField(), 'smith machine squat');
 
     // assert
-    expect(screen.getByText('An exercise with this name already exists')).toBeInTheDocument();
-    expect(nameField()).toHaveAttribute('aria-invalid', 'true');
-    expect(primary()).toBeDisabled();
+    expect(screen.queryByText('An exercise with this name already exists')).not.toBeInTheDocument();
+    expect(nameField()).not.toHaveAttribute('aria-invalid', 'true');
   });
 
   it('says why Create is disabled when the name is longer than 80 characters', async () => {
@@ -459,29 +458,14 @@ describe('editing an exercise', () => {
     expect(screen.getByTestId('saved')).toHaveTextContent(`resistance|reps|both-sides|Quadriceps+Glutes|Core+Hamstrings|Barbell+Squat rack|Strength|${LANDSCAPE_DEMO_CLIP}`);
   });
 
-  it('refuses, for an archived exercise, a name an active exercise already uses', async () => {
+  it('returns to the library for an archived exercise', () => {
     // arrange
-    const user = renderEditor(edit(ARCHIVED_SMITH_SQUAT_ID));
-
     // act
-    await user.clear(nameField());
-    await user.type(nameField(), 'Plank');
+    renderEditor(edit(ARCHIVED_SMITH_SQUAT_ID));
 
     // assert
-    expect(screen.getByText('An exercise with this name already exists')).toBeInTheDocument();
-    expect(primary()).toBeDisabled();
-  });
-
-  it('keeps an archived exercise archived when only its difficulty changes', async () => {
-    // arrange
-    const user = renderEditor(edit(ARCHIVED_SMITH_SQUAT_ID), 'Smith Machine Squat');
-
-    // act
-    await choose(user, field('Difficulty'), 'Intermediate');
-    await user.click(primary());
-
-    // assert
-    expect(screen.getByTestId('saved')).toHaveTextContent('|Intermediate|archived');
+    expect(screen.getByText('Exercise library')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Name (required)' })).not.toBeInTheDocument();
   });
 
   it('sends an unknown id back to the library', () => {
