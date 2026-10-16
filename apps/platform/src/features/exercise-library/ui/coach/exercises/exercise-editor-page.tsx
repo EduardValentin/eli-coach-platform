@@ -10,7 +10,7 @@ import {
 import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { Check } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useForm } from "react-hook-form";
 import {
   Link,
@@ -98,11 +98,28 @@ export default function ExerciseEditorRoute() {
   return <ExerciseEditor editor={editor} key={editor.exercise?.id ?? "new"} />;
 }
 
+function subscribeToNothing() {
+  return () => {};
+}
+
+function useLibraryPathCarriedByInAppNavigation(): string {
+  const { state } = useLocation();
+  const reachedInApp = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+  const [libraryPath] = useState(() =>
+    libraryReturnPath(reachedInApp ? state : null),
+  );
+
+  return libraryPath;
+}
+
 function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const { exercise } = editor;
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const libraryPath = libraryReturnPath(state);
+  const libraryPath = useLibraryPathCarriedByInAppNavigation();
   const takenNames = useRef<readonly string[]>(editor.otherNames);
   const sentName = useRef("");
   const videoField = useRef<ExerciseVideoFieldHandle>(null);
@@ -179,7 +196,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const settle = (outcome: SaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
-      void navigate(returnPathAfterSave(outcome.redirectTo, state));
+      void navigate(returnPathAfterSave(outcome.redirectTo, libraryPath));
       return;
     }
 

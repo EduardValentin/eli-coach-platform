@@ -22,9 +22,7 @@ export function libraryReturnPath(state: unknown): string {
 
 export function returnPathAfterSave(
   redirectTo: string,
-  state: unknown,
+  libraryPath: string,
 ): string {
-  return redirectTo === COACH_TRAINING_PATH
-    ? libraryReturnPath(state)
-    : redirectTo;
+  return redirectTo === COACH_TRAINING_PATH ? libraryPath : redirectTo;
 }

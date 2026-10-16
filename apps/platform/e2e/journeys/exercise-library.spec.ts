@@ -2295,6 +2295,43 @@ test(
 );
 
 test(
+  "a reloaded editor goes back to the plain library",
+  { tag: "@completeness" },
+  async ({
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+    await exerciseLibrary.sortBy("Difficulty");
+    await exerciseLibrary.sortBy("Difficulty");
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.edit(`Cat cow ${scenarioTag}`);
+
+    // act
+    await exerciseEditor.reload();
+
+    // assert
+    await exerciseEditor.expectWayBackTo("/coach/training");
+
+    // act
+    await exerciseEditor.goBack();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+  },
+);
+
+test(
   "an empty library keeps its own empty state, even with filters in the address",
   { tag: "@completeness" },
   async ({ exerciseLibrary, page, provisionCoach, signInAsCoach }) => {

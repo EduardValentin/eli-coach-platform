@@ -50,24 +50,24 @@ describe("the library's address carried into the editor", () => {
     expect(path).toBe(COACH_TRAINING_PATH);
   });
 
-  it("lands a save that redirects to the library on the saved search", () => {
+  it("lands a save that redirects to the library on the view she came from", () => {
     // arrange
-    const state = libraryReturnState(LIBRARY_SEARCH);
+    const libraryPath = `${COACH_TRAINING_PATH}${LIBRARY_SEARCH}`;
 
     // act
-    const path = returnPathAfterSave(COACH_TRAINING_PATH, state);
+    const path = returnPathAfterSave(COACH_TRAINING_PATH, libraryPath);
 
     // assert
-    expect(path).toBe(`${COACH_TRAINING_PATH}${LIBRARY_SEARCH}`);
+    expect(path).toBe(libraryPath);
   });
 
   it("follows a save that redirects anywhere else as it is", () => {
     // arrange
-    const state = libraryReturnState(LIBRARY_SEARCH);
+    const libraryPath = `${COACH_TRAINING_PATH}${LIBRARY_SEARCH}`;
     const elsewhere = exerciseEditorPath(EXERCISE_ID);
 
     // act
-    const path = returnPathAfterSave(elsewhere, state);
+    const path = returnPathAfterSave(elsewhere, libraryPath);
 
     // assert
     expect(path).toBe(elsewhere);

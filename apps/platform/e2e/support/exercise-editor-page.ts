@@ -658,6 +658,20 @@ export class ExerciseEditorPage {
     await this.page.getByRole("link", { name: "Back to exercises" }).click();
   }
 
+  async reload(): Promise<void> {
+    await this.page.reload();
+    await this.waitUntilInteractive();
+  }
+
+  async expectWayBackTo(path: string): Promise<void> {
+    for (const name of ["Back to exercises", "Cancel"]) {
+      await expect(this.page.getByRole("link", { name })).toHaveAttribute(
+        "href",
+        path,
+      );
+    }
+  }
+
   async expectOnlyProblem(field: ProblemField, problem: string): Promise<void> {
     await expect(this.page.getByText(problem, { exact: true })).toBeVisible();
     await expect(this.fieldOf(field)).toHaveAttribute("aria-invalid", "true");
