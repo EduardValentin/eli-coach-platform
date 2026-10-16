@@ -1550,7 +1550,7 @@ describe("a check-in the coach is sent to on a later page", () => {
     await waitFor(() => {
       expect(addressOf(router)).toEqual({ view: "upcoming" });
     });
-    expect(screen.getByText("Showing 1–10 of 11")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 1–10 of 11")).toBeInTheDocument();
   });
 });
 

@@ -2111,7 +2111,7 @@ describe("a check-in the client is sent to on a later page", () => {
     await waitFor(() => {
       expect(addressOf(router)).toEqual({ dir: "desc" });
     });
-    expect(screen.getByText("Showing 1–10 of 11")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 1–10 of 11")).toBeInTheDocument();
   });
 });
 
