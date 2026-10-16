@@ -11,6 +11,7 @@ import { coachScheduleApiRoutes } from "./features/coach-schedule/routes";
 import { coachingSalesApiRoutes } from "./features/coaching-sales/routes";
 import { exerciseLibraryApiRoutes } from "./features/exercise-library/routes";
 import { notificationsApiRoutes } from "./features/notifications/routes";
+import { nutritionLibraryApiRoutes } from "./features/nutrition-library/routes";
 import { storeApiRoutes } from "./features/store/routes";
 import { waitlistApiRoutes } from "./features/waitlist/routes";
 import { platformApiRoutes } from "./server/api/routes";
@@ -23,6 +24,7 @@ export default [
   ...platformApiRoutes,
   ...accountsApiRoutes,
   ...exerciseLibraryApiRoutes,
+  ...nutritionLibraryApiRoutes,
   ...coachScheduleApiRoutes,
   ...assessmentCallsApiRoutes,
   ...clientsApiRoutes,

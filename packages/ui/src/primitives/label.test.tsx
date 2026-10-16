@@ -129,6 +129,39 @@ describe("Legend", () => {
   });
 });
 
+describe("Legend layout", () => {
+  it("wraps its words on the text baseline by default", () => {
+    // arrange
+    render(
+      <fieldset>
+        <Legend>Where do you train?</Legend>
+      </fieldset>,
+    );
+
+    // act
+    const legend = screen.getByText("Where do you train?");
+
+    // assert
+    expect(legend).toHaveClass("flex", "flex-wrap", "items-baseline");
+  });
+
+  it("centres a leading icon on its title in the inline layout", () => {
+    // arrange
+    render(
+      <fieldset>
+        <Legend layout="inline">Meal-time</Legend>
+      </fieldset>,
+    );
+
+    // act
+    const legend = screen.getByText("Meal-time");
+
+    // assert
+    expect(legend).toHaveClass("flex", "items-center", "gap-2");
+    expect(legend).not.toHaveClass("flex-wrap", "items-baseline");
+  });
+});
+
 describe("required Legend", () => {
   it("stars a required group and names it as required", () => {
     // arrange

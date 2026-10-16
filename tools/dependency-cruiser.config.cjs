@@ -30,6 +30,7 @@ const FEATURE_ORDER = [
   "accounts",
   "notifications",
   "exercise-library",
+  "nutrition-library",
   "waitlist",
   "coach-schedule",
   "assessment-calls",
@@ -44,6 +45,7 @@ const FEATURE_ORDER = [
 const DOMAIN_SLICE_ORDER = [
   "shared",
   "exercise",
+  "nutrition",
   "email-address",
   "feature-flag",
   "product",

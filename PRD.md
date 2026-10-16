@@ -27,11 +27,11 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 **Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to submit her onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
-**Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, review client profiles and cycle data, and build her exercise library. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
+**Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, review client profiles and cycle data, and build her exercise, food and recipe libraries. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
 
 ## Delivery Stages
 
-The MVP includes every requirement in this document except the capabilities explicitly marked Post-MVP. Check-ins, including client and coach scheduling, approval, rescheduling, and Google Meet links, remain in the MVP. The coach's exercise library is also in the MVP, ahead of the training programs that will draw from it.
+The MVP includes every requirement in this document except the capabilities explicitly marked Post-MVP. Check-ins, including client and coach scheduling, approval, rescheduling, and Google Meet links, remain in the MVP. The coach's exercise library is also in the MVP, ahead of the training programs that will draw from it, and so are her food and recipe libraries, ahead of the nutritional programs that will draw from them.
 
 Post-MVP adds three capability groups:
 
@@ -383,13 +383,33 @@ The Exercise is in the MVP; every other entity in this section is Post-MVP.
 
 19. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 42), and posts a system message (Business Rule 41).
 
-## 7. Notifications
+## 7. Foods and Recipes (`/coach/nutrition`)
+
+### Data model
+
+The Tag, the Food and the Recipe are in the MVP; the client meal plans that will draw on them are Post-MVP.
+
+**Tag**: a fixed vocabulary shared by foods and recipes, in four families: Meal-time (Breakfast, Lunch, Dinner, Snack, Pre-workout, Post-workout), Cycle phase (Menstrual, Follicular, Ovulatory, Luteal), Nutrient / benefit (Iron-rich, Omega-3, Magnesium, Anti-inflammatory), and Dietary (Vegetarian, Lactose-free). The vocabulary is fixed for now: the coach chooses among its tags but does not add, rename or remove them.
+
+**Food**: name, category (Protein, Carb, Fat, Legumes, Extra, or Seasoning), an icon, calories, protein, carbs, and fat per 100 g, a default portion in grams, and any number of tags. A food belongs to the coach who created it, and her library holds only her own foods. A name is at most 80 characters and unique among her active foods, ignoring case and surrounding spaces. Calories, protein, carbs, and fat are each from 0 to 9,999.99 with at most two decimals, and a value left blank counts as 0. The default portion is a whole number of grams from 1 to 99,999, proposed when the food enters a recipe; a portion left blank or set to 0 becomes 100 g. A food is active until the coach archives it.
+
+**Recipe**: name, ingredients (each one of her foods with its grams and a cooking method: Raw, Boiled, Grilled, Baked, Pan-fried, or Steamed), prep and cook time in minutes, instructions, meal roles (from the Meal-time tags), other tags, and a photo or an icon. Its calories and macros are calculated from its ingredients, each food's values per 100 g scaled to its grams and summed, and are never typed. A recipe belongs to the coach who created it, and its name follows the food name rule among her active recipes. A recipe is active until the coach archives it.
+
+### Food and Recipe Libraries
+
+1. Reached from the coach's "Nutrition" menu entry, right after Training. The food library lists her active foods by name, A to Z, with each food's category, values per 100 g, and tags. The coach creates and edits foods; saving writes the whole food. Saving is refused while the name is missing, already held by another of her active foods, or over 80 characters, or while a value per 100 g or the default portion is out of its range; each problem is explained at its field, and her entries stay. A successful save confirms and returns her to the library.
+2. The coach composes a recipe from her active foods, setting each ingredient's grams and cooking method; its calories and macros follow her ingredients as she composes. A recipe is saved with its whole content and confirmed the same way as a food.
+3. Both libraries support search by name, filters by category or by tags, sorting, and pages for long lists.
+4. The coach archives a food or a recipe to take it out of the active library without losing it, and can view archived items and restore them. An archived item is not editable. Archiving frees its name for another active item; restoring an item whose name an active item now holds restores it under a numbered name (for example "Oats (2)") that she can edit later. Deleting is permanent and asks for confirmation first. A food used in a recipe cannot be deleted, and the coach is told where it is used.
+5. Post-MVP: swap groups of interchangeable foods, a manual override of a recipe's calculated macros, tags suggested from a recipe's ingredients, and client meal plans built from recipes.
+
+## 8. Notifications
 
 1. A notification bell in both portals' sidebar headers and phone top bars, marked while anything is unread. Notifications are role-aware; each person sees only her own. The bell lists the latest 30 notifications from the last 90 days, newest first, and can mark them all read. In the MVP, check-in notifications link to the appropriate Check-ins page. Post-MVP, message and program notifications link to routes such as `/client/messages` and `/coach/messages?client=id`.
 2. Opening a notification, from the bell or a toast's "View" action, marks it read and opens it without losing app state; a check-in notification opens that check-in on the reader's Check-ins page. An open portal page notices new notifications within about a minute and shows each as a toast with "View".
 3. Types: new message; check-in requested (by client or coach); check-in approved; reschedule proposed; check-in cancelled (by decline, withdrawal, or cancellation). The requesting party is notified on approval and on decline; the other party is notified when a request is withdrawn and on cancellation of an approved check-in. The bell carries every check-in event that is emailed, plus the client's weekly check-in set up, changed, or stopped, the coach's clashing weeks added by a renewal or an early program start, and, in both parties' bells, requests, new times, and clashes that reached their time unanswered; email carries only the events listed below. A request that reaches its time unanswered is cancelled with no email; both bells say it expired. In the MVP, each request, approval, decline, and withdrawal is emailed to the party that did not act, with the check-in's date and time in the recipient's time zone; an approval email carries the check-in's join link and a calendar invite. A proposed new time is emailed to the other party with the earlier and the new time in their time zone and the proposer's note; the proposer is emailed when the new time is accepted, with the join link and a calendar invite, or declined; cancelling an approved check-in is emailed to the other party. The client is emailed when the coach sets up, changes, or stops her weekly check-in, naming the day and time of the first week in her time zone and linking to her Check-ins page; the individual weeks send no email of their own, and moving one sends the usual new-time emails. Cancellations caused by the end of a client's coaching send no email and reach neither bell. An email that cannot be sent never undoes the action that triggered it.
 
-## 8. Shared Requirements
+## 9. Shared Requirements
 
 1. One consistent visual language across all pages and portals; cards, modals, forms, and navigation feel familiar throughout. The design system in code is the source of truth for visual decisions.
 2. WCAG AA: 4.5:1 contrast for normal text, 3:1 for large text, controls, and meaningful graphics. Complex interactions, especially plan building, have accessible alternatives. All animations respect reduced motion.
@@ -419,5 +439,4 @@ The Exercise is in the MVP; every other entity in this section is Post-MVP.
 3. What product metadata does the store need beyond type, goal, and price?
 4. What happens to a plan's recurring check-ins when the plan is ended: are they cancelled automatically or kept?
 5. Should the system track plan version history when the coach adds weeks to an active plan?
-6. The Post-MVP prototype includes a nutrition module (recipe builder, per-client nutrition plans, client nutrition view) that this document does not yet specify.
-7. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
+6. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?

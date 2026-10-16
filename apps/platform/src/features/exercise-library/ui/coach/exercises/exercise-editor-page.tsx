@@ -1,4 +1,8 @@
 import {
+  useJsonSaveFetcher,
+  type JsonSaveOutcome,
+} from "@eli-coach-platform/ui/lib";
+import {
   PortalBackLink,
   PortalPageHeader,
 } from "@eli-coach-platform/ui/portal";
@@ -15,11 +19,17 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type {
-  ExerciseEditorView,
-  ExerciseProblems,
+import {
+  exerciseProblemsAnswerSchema,
+  exerciseSavedAnswerSchema,
+  type ExerciseEditorView,
+  type ExerciseProblems,
 } from "~/features/exercise-library/public/exercises";
-import { COACH_TRAINING_PATH } from "~/features/exercise-library/public/paths";
+import {
+  COACH_TRAINING_PATH,
+  EXERCISE_LIBRARY_API_PATHS,
+  exercisePath,
+} from "~/features/exercise-library/public/paths";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
 import {
@@ -36,8 +46,8 @@ import {
   newExerciseFormValues,
   shownExerciseProblemsOf,
   type ExerciseFormValues,
+  type ExerciseProblemField,
 } from "./exercise-form";
-import { useExerciseSave, type ExerciseSaveOutcome } from "./use-exercise-save";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
 
@@ -87,19 +97,19 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     [form],
   );
 
-  const showRefusedFields = (problems: ExerciseProblems): boolean => {
+  const rememberTakenName = (problems: ExerciseProblems) => {
+    if (problems.name === "taken") {
+      takenNames.current = [...takenNames.current, sentName.current];
+    }
+  };
+
+  const showRefusedFields = (
+    problems: ExerciseProblems,
+  ): ExerciseProblemField[] => {
     const refused = exerciseFieldProblemsOf(problems);
     const refusedFields = EXERCISE_PROBLEM_FIELDS.filter(
       (field) => refused[field],
     );
-
-    if (refusedFields.length === 0) {
-      return false;
-    }
-
-    if (problems.name === "taken") {
-      takenNames.current = [...takenNames.current, sentName.current];
-    }
 
     refusedFields.forEach((field, index) =>
       form.setError(
@@ -108,24 +118,36 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
         { shouldFocus: index === 0 },
       ),
     );
-    return true;
+    return refusedFields;
   };
 
-  const settle = (outcome: ExerciseSaveOutcome) => {
+  const settle = (outcome: JsonSaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
       void navigate(outcome.redirectTo);
       return;
     }
 
-    if (outcome.status === "refused" && showRefusedFields(outcome.problems)) {
+    if (outcome.status === "failed") {
+      toast.error(SAVE_FAILED);
       return;
     }
 
-    toast.error(SAVE_FAILED);
+    rememberTakenName(outcome.problems);
+
+    if (showRefusedFields(outcome.problems).length === 0) {
+      toast.error(SAVE_FAILED);
+    }
   };
 
-  const { save, saving } = useExerciseSave(exercise?.id ?? null, settle);
+  const { save, saving } = useJsonSaveFetcher({
+    target: exercise
+      ? { action: exercisePath(exercise.id), method: "put" }
+      : { action: EXERCISE_LIBRARY_API_PATHS.exercises, method: "post" },
+    savedAnswer: exerciseSavedAnswerSchema,
+    refusedAnswer: exerciseProblemsAnswerSchema,
+    onSettled: settle,
+  });
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;

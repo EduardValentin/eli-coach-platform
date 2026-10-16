@@ -71,8 +71,8 @@ function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
   );
 }
 
-const SidebarSurface = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col h-full bg-white text-text-primary border-r border-stroke-faint">
+const SidebarSurface = ({ children, ...attributes }: { children: ReactNode; 'data-parity'?: string }) => (
+  <div className="flex flex-col h-full bg-white text-text-primary border-r border-stroke-faint" {...attributes}>
     {children}
   </div>
 );
@@ -142,6 +142,7 @@ const CoachPortalDrawer = ({
   return (
     <motion.div
       className="absolute top-16 left-0 bottom-0 w-64 shadow-floating"
+      data-parity="drawer-panel"
       transition={
         prefersReducedMotion
           ? { duration: 0 }
@@ -149,7 +150,7 @@ const CoachPortalDrawer = ({
       }
       variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
     >
-      <SidebarSurface>
+      <SidebarSurface data-parity="drawer-body">
         <SidebarNavigation
           firstLinkRef={firstLinkRef}
           links={links}

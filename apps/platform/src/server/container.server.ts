@@ -65,6 +65,10 @@ import {
   type NotificationsFeature,
 } from "~/features/notifications/server/notifications-composition.server";
 import {
+  composeNutritionLibraryFeature,
+  type NutritionLibraryFeature,
+} from "~/features/nutrition-library/server/nutrition-library-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -97,6 +101,7 @@ export type PlatformContainer = {
   exerciseLibrary: ExerciseLibraryFeature;
   featureFlagOverrides: FeatureFlagOverrides;
   notifications: NotificationsFeature;
+  nutritionLibrary: NutritionLibraryFeature;
   platform: PlatformFeature;
   store: StoreFeature;
   waitlist: ReturnType<typeof composeWaitlistFeature>;
@@ -134,6 +139,11 @@ export function createPlatformContainer(options: {
   const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
   const linkTokens = createLinkTokens();
   const exerciseLibrary = composeExerciseLibraryFeature({
+    clock,
+    database: database.client,
+    incidents,
+  });
+  const nutritionLibrary = composeNutritionLibraryFeature({
     clock,
     database: database.client,
     incidents,
@@ -320,6 +330,7 @@ export function createPlatformContainer(options: {
     exerciseLibrary,
     featureFlagOverrides,
     notifications,
+    nutritionLibrary,
     platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,

@@ -1,5 +1,6 @@
 import type { APIRequestContext, APIResponse } from "@playwright/test";
 
+import { answerOf, type ApiAnswer } from "./api-answers";
 import type { SampleResource } from "./sample-resources";
 
 export type ResourceResponse = {
@@ -12,8 +13,6 @@ export type ResourceDetails = {
   description: string;
   tags?: readonly string[];
 };
-
-export type UploadAnswer = { status: number; body: unknown };
 
 type AddedResourceAnswer = { resource: { id: string } };
 
@@ -80,15 +79,8 @@ export class ResourceRequests {
     clientId: string,
     sample: SampleResource,
     details: ResourceDetails,
-  ): Promise<UploadAnswer> {
-    const response = await this.post(clientId, sample, details);
-    const text = await response.text();
-
-    try {
-      return { status: response.status(), body: JSON.parse(text) };
-    } catch {
-      return { status: response.status(), body: text };
-    }
+  ): Promise<ApiAnswer> {
+    return answerOf(await this.post(clientId, sample, details));
   }
 
   async pageImageBytes(

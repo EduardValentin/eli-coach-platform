@@ -38,12 +38,14 @@ import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { CoachDashboardPage } from "./coach-dashboard";
-import { recordCoachAccount } from "./coach-exercises";
+import { recordCoachAccount } from "./coach-libraries";
 import { CoachMeetingRoom } from "./coach-meeting-room";
 import { CoachSettingsPage } from "./coach-settings-page";
 import { ExerciseEditorPage } from "./exercise-editor-page";
 import { ExerciseLibraryPage } from "./exercise-library-page";
 import { ExerciseRequests } from "./exercise-requests";
+import { FoodEditorPage } from "./food-editor-page";
+import { FoodRequests } from "./food-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   insertMeasuredClientRecords,
@@ -53,6 +55,7 @@ import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { NotificationBell } from "./notification-bell";
 import { NotificationRecords } from "./notification-records";
+import { NutritionLibraryPage } from "./nutrition-library-page";
 import { OnboardingRecords } from "./onboarding-records";
 import { PaymentCardRecords } from "./payment-card-records";
 import { PhotoRequests } from "./photo-requests";
@@ -154,6 +157,10 @@ type PlatformFixtures = {
   exerciseEditor: ExerciseEditorPage;
   exerciseRequests: ExerciseRequests;
   visitorExerciseRequests: ExerciseRequests;
+  nutritionLibrary: NutritionLibraryPage;
+  foodEditor: FoodEditorPage;
+  foodRequests: FoodRequests;
+  visitorFoodRequests: FoodRequests;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -573,6 +580,25 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     const visitor = await playwright.request.newContext({ baseURL });
 
     await use(new ExerciseRequests(visitor));
+    await visitor.dispose();
+  },
+
+  nutritionLibrary: async ({ page }, use) => {
+    await use(new NutritionLibraryPage(page));
+  },
+
+  foodEditor: async ({ page }, use) => {
+    await use(new FoodEditorPage(page));
+  },
+
+  foodRequests: async ({ page }, use) => {
+    await use(new FoodRequests(page.request));
+  },
+
+  visitorFoodRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new FoodRequests(visitor));
     await visitor.dispose();
   },
 

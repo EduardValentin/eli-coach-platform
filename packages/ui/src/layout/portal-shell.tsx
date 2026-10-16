@@ -13,6 +13,7 @@ import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
+import type { DataAttributes } from "../lib/data-attributes";
 import { focusMainContent } from "../lib/focus-main-content";
 import { AttentionDot } from "../primitives/attention-dot";
 import { buttonVariants } from "../primitives/button";
@@ -236,7 +237,7 @@ function PortalDrawerNavigation(props: PortalDrawerNavigationProps) {
     >
       {(menu) => (
         <PortalMobileDrawer>
-          <PortalSidebarSurface>
+          <PortalSidebarSurface data-parity="drawer-body">
             <PortalSidebarNavigation
               firstLinkRef={menu.firstLinkRef}
               links={links}
@@ -641,6 +642,7 @@ function PortalMobileDrawer(props: PropsWithChildren) {
       />
       <motion.div
         className="absolute bottom-0 left-0 top-16 w-64 shadow-floating"
+        data-parity="drawer-panel"
         data-parity-root="PortalMobileDrawer"
         variants={DRAWER_VARIANTS}
       >
@@ -650,11 +652,14 @@ function PortalMobileDrawer(props: PropsWithChildren) {
   );
 }
 
-function PortalSidebarSurface(props: PropsWithChildren) {
-  const { children } = props;
+function PortalSidebarSurface(props: PropsWithChildren<DataAttributes>) {
+  const { children, ...attributes } = props;
 
   return (
-    <div className="flex h-full flex-col border-r border-stroke-faint bg-surface-base text-text-primary">
+    <div
+      className="flex h-full flex-col border-r border-stroke-faint bg-surface-base text-text-primary"
+      {...attributes}
+    >
       {children}
     </div>
   );
