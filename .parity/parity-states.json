@@ -5019,5 +5019,127 @@
     {
       "hover": "[data-parity=\"exercise-video-field\"] >> text=Drop a video here or choose one"
     }
+  ],
+  "exercise-type-open": [
+    {
+      "click": "role=combobox[name=\"Type\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-equipment-open": [
+    {
+      "click": "role=combobox[name=\"Equipment\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-tags-open": [
+    {
+      "click": "role=button[name=/^Tags/]"
+    },
+    {
+      "waitFor": "[role=\"dialog\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-tags-chosen": [
+    {
+      "use": "exercise-tags-open"
+    },
+    {
+      "click": "[role=\"dialog\"] >> role=checkbox[name=/^Strength/]"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "waitFor": "role=button[name=\"Tags, 1 selected\" s]"
+    }
+  ],
+  "exercise-type-resistance": [
+    {
+      "use": "exercise-type-open"
+    },
+    {
+      "click": "role=option[name=/^Resistance/]"
+    },
+    {
+      "waitFor": "role=combobox[name=\"Type\" s] >> text=Resistance"
+    }
+  ],
+  "exercise-search-typed": [
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\" s]",
+        "squat"
+      ]
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-table\"] >> text=Bulgarian Split Squat"
+    }
+  ],
+  "exercise-no-match": [
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\" s]",
+        "zzzz"
+      ]
+    },
+    {
+      "waitFor": "text=No exercises match"
+    }
+  ],
+  "exercise-sort-difficulty-desc": [
+    {
+      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"ascending\"] >> text=Difficulty"
+    },
+    {
+      "click": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"exercise-header-row\"] th[aria-sort=\"descending\"]"
+    }
+  ],
+  "exercise-sort-hover": [
+    {
+      "hover": "[data-parity=\"exercise-header-row\"] >> role=button[name=\"Difficulty\" s]"
+    }
+  ],
+  "exercise-sort-focus-visible": [
+    {
+      "click": "role=searchbox[name=\"Search exercises\" s]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-page-2": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    }
+  ],
+  "exercise-pager-next-hover": [
+    {
+      "hover": "role=link[name=\"Go to next page\" s]"
+    }
+  ],
+  "exercise-pager-focus-visible": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    },
+    {
+      "press": "Shift+Tab"
+    }
   ]
 }

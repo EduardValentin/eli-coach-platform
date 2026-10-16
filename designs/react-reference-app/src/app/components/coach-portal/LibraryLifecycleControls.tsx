@@ -24,6 +24,7 @@ export function LibraryStatusFilter({
       labels={STATUS_LABELS}
       counts={counts}
       onChoose={onChoose}
+      parity="library-status-filter"
     />
   );
 }
