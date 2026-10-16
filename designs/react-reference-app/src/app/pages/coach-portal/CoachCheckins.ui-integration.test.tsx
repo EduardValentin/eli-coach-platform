@@ -51,9 +51,9 @@ function renderAt(path: string) {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <CheckinProvider>
+                <NotificationProvider>
                   <MessagingProvider>
-                    <NotificationProvider>
+                    <CheckinProvider>
                       <Routes>
                         <Route
                           path="/coach"
@@ -67,9 +67,9 @@ function renderAt(path: string) {
                       </Routes>
                       <Toaster />
                       <DevToggle />
-                    </NotificationProvider>
+                    </CheckinProvider>
                   </MessagingProvider>
-                </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>

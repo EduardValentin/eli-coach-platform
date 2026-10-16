@@ -16,6 +16,8 @@ export {
   MAX_CHECK_IN_MOVES,
   OPEN_CHECK_IN_STATUSES,
   RECORDED_CHECK_IN_STATUSES,
+  UNANSWERED_CHECK_IN_STATUSES,
+  type CheckInLapseKind,
   type CheckInOutcome,
   type CheckInTab,
   type CheckInView,
@@ -24,6 +26,11 @@ export { CHECK_IN_KINDS } from "./check-in-kind";
 export { CHECK_IN_PARTIES } from "./check-in-party";
 export { type CheckInActor, type CheckInActorCommand } from "./check-in-actor";
 export { type CheckInIds } from "./check-in-ids";
+export {
+  type CheckInClashesNotice,
+  type CheckInInbox,
+  type CheckInSeriesInboxNotice,
+} from "./check-in-inbox";
 export { type CheckInIncidents } from "./check-in-incidents";
 export { MAX_CHECK_IN_NOTE_LENGTH } from "./check-in-note";
 export {
@@ -52,6 +59,7 @@ export {
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
+  type CheckInStartWindow,
 } from "./check-ins";
 export { type CoachCheckInView } from "./coach-check-in-views";
 export { CountCheckInsAwaitingUseCase } from "./count-check-ins-awaiting-use-case";
@@ -64,6 +72,11 @@ export { FindNextClientCheckInUseCase } from "./find-next-client-check-in-use-ca
 export { ListClientCheckInsUseCase } from "./list-client-check-ins-use-case";
 export { ListCoachCheckInsUseCase } from "./list-coach-check-ins-use-case";
 export { ListCoachCheckInsAwaitingUseCase } from "./list-coach-check-ins-awaiting-use-case";
+export {
+  ListLapsedCheckInsUseCase,
+  type LapsedCheckIn,
+  type ListLapsedCheckInsQuery,
+} from "./list-lapsed-check-ins-use-case";
 export {
   ListOpenCheckInTimesUseCase,
   type ListOpenCheckInTimesCommand,

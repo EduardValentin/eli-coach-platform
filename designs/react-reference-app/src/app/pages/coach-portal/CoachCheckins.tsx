@@ -5,7 +5,6 @@ import {
   proposesNewTime,
   type CheckIn,
 } from "../../domain/checkins";
-import { useNotifications } from "../../context/NotificationContext";
 import { useMessaging } from "../../context/MessagingContext";
 import {
   formatCheckinDate,
@@ -66,7 +65,6 @@ const BUSY_LABEL: Record<CheckinAnswer, string> = {
 
 export function CoachCheckins() {
   const { statusOf } = useCheckins();
-  const { addNotification } = useNotifications();
   const { addSystemMessage } = useMessaging();
   const { answer, answerInFlight } = useCheckinAnswers();
   const { rescheduleOf, cancelOf, dialogs } = useCoachCheckinMenu();
@@ -79,11 +77,6 @@ export function CoachCheckins() {
         "checkin-scheduled",
       );
       toast.success(`Approved check-in with ${c.clientName}`);
-      addNotification({
-        title: "Check-in Approved",
-        message: `${c.clientName}'s check-in on ${formatCheckinDate(c.date)} has been confirmed.`,
-        link: "/coach/checkins",
-      });
     });
 
   const handleDecline = (c: CheckIn) =>

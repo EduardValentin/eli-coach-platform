@@ -1,5 +1,6 @@
-import { PortalShell } from "@eli-coach-platform/ui/layout";
+import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
 import { Dumbbell } from "lucide-react";
+import { useState } from "react";
 import {
   Outlet,
   useLoaderData,
@@ -13,6 +14,10 @@ import {
   type PortalRouteHandle,
 } from "~/features/accounts/public/paths";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
+import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
 
 import {
   coachSurfaceLinksOf,
@@ -24,14 +29,19 @@ const COACH_PORTAL_DESCRIPTION =
   "Coach-facing workspace for client management, planning, scheduling, and communication.";
 const COACH_PORTAL_THEME_COLOR = "#17212f";
 
-export async function loader(
-  args: LoaderFunctionArgs,
-): Promise<CoachNavigationCounts> {
-  return {
-    checkInsAwaiting: await args.context
-      .get(checkInsContext)
-      .coachCheckIns.loadAwaitingCount(args),
-  };
+const NOTIFICATION_DESCRIBERS = [describeCheckInNotification];
+
+type CoachShell = CoachNavigationCounts & {
+  bell: NotificationBellReply;
+};
+
+export async function loader(args: LoaderFunctionArgs): Promise<CoachShell> {
+  const [checkInsAwaiting, bell] = await Promise.all([
+    args.context.get(checkInsContext).coachCheckIns.loadAwaitingCount(args),
+    args.context.get(notificationsContext).notificationBell.loadBell(args),
+  ]);
+
+  return { checkInsAwaiting, bell };
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({
@@ -96,7 +106,13 @@ function CoachTopBarBrand() {
 }
 
 export default function CoachLayoutRoute() {
-  const counts = useLoaderData<typeof loader>();
+  const { bell, ...counts } = useLoaderData<typeof loader>();
+  const notificationBell = useNotificationBell({
+    bell,
+    describers: NOTIFICATION_DESCRIBERS,
+    party: "coach",
+  });
+  const [isTopBarBellOpen, setIsTopBarBellOpen] = useState(false);
 
   return (
     <PortalShell
@@ -108,6 +124,20 @@ export default function CoachLayoutRoute() {
         label: "Coach portal mobile navigation",
       }}
       navigationLabel="Coach portal navigation"
+      sidebarActions={
+        <div className="contents" data-parity="notification-bell">
+          <NotificationBell {...notificationBell} align="start" />
+        </div>
+      }
+      topBarActions={
+        <div className="contents" data-parity="notification-bell">
+          <NotificationBell
+            {...notificationBell}
+            onOpenChange={setIsTopBarBellOpen}
+            open={isTopBarBellOpen}
+          />
+        </div>
+      }
       topBarBrand={<CoachTopBarBrand />}
       topBarLabel="Coach portal top bar"
     >

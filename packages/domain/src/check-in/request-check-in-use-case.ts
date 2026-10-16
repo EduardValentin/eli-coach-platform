@@ -6,6 +6,7 @@ import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import { CheckInActorReach } from "./check-in-actor-reach";
 import type { CheckInIds } from "./check-in-ids";
+import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import { CheckInNote } from "./check-in-note";
 import type { CheckInNotifications } from "./check-in-notifications";
@@ -35,6 +36,7 @@ type RequestCheckInUseCaseOptions = {
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
+  inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
 };

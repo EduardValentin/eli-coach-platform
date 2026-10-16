@@ -101,6 +101,8 @@ function createProposeCheckInTime(options?: {
       ),
     listForClient: vi.fn().mockResolvedValue(options?.clientCheckIns ?? []),
     listAll: vi.fn(),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn(),
     move: vi.fn().mockResolvedValue(options?.moved ?? "moved"),
     endCoaching: vi.fn(),
@@ -147,6 +149,13 @@ function createProposeCheckInTime(options?: {
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
       checkInSeriesReadFailed: vi.fn(),
+      checkInInboxFailed: vi.fn(),
+      checkInSeriesInboxFailed: vi.fn(),
+    },
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
   };

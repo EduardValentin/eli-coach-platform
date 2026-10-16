@@ -7,6 +7,7 @@ import {
 
 import {
   checkInsListed,
+  checkInTab,
   expectCheckInsInOrder,
   expectEmptyCheckInTab,
   expectJoinEmphasis,
@@ -30,6 +31,8 @@ const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 const COACH = "your coach";
 const COACH_FINDING_A_NEW_TIME = "Your coach is finding a new time";
 const AD_HOC = "Ad-hoc";
+const REVIEW_URL = /[?&]checkin=/;
+const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 
 export class ClientCheckInsPage {
   private readonly requestAction: DisabledAction;
@@ -80,6 +83,17 @@ export class ClientCheckInsPage {
     await expect(
       this.page.getByRole("heading", { level: 1, name: "Check-ins" }),
     ).toBeVisible();
+  }
+
+  async expectReviewLandedOn(tab: CheckInTab, note: string): Promise<void> {
+    await expect(this.page).toHaveURL(REVIEW_URL);
+    await expect(checkInTab(this.page, tab)).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(
+      this.checkIn(tab, note).locator(CHECK_IN_ANCHOR),
+    ).toBeFocused();
   }
 
   async showTab(tab: CheckInTab): Promise<void> {

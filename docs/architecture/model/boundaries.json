@@ -146,7 +146,12 @@
     { "id": "B149", "path": "packages/domain/src/nutrition/food-ids.ts", "symbol": "FoodIds", "owner": "C1" },
     { "id": "B150", "path": "packages/domain/src/nutrition/nutrition-tags.ts", "symbol": "NutritionTags", "owner": "C1" },
     { "id": "B151", "path": "packages/domain/src/nutrition/nutrition-library-incidents.ts", "symbol": "NutritionLibraryIncidents", "owner": "C1" },
-    { "id": "B152", "path": "apps/platform/src/features/nutrition-library/server/guards/nutrition-library-context.server.ts", "symbol": "nutritionLibraryContext", "owner": "C26" }
+    { "id": "B152", "path": "apps/platform/src/features/nutrition-library/server/guards/nutrition-library-context.server.ts", "symbol": "nutritionLibraryContext", "owner": "C26" },
+    { "id": "B153", "path": "packages/domain/src/notification/notification-inbox.ts", "symbol": "NotificationInbox", "owner": "C1" },
+    { "id": "B154", "path": "packages/domain/src/notification/notification-expiry-source.ts", "symbol": "NotificationExpirySource", "owner": "C1" },
+    { "id": "B155", "path": "packages/domain/src/notification/notification-incidents.ts", "symbol": "NotificationIncidents", "owner": "C1" },
+    { "id": "B156", "path": "packages/domain/src/check-in/check-in-inbox.ts", "symbol": "CheckInInbox", "owner": "C1" },
+    { "id": "B157", "path": "apps/platform/src/features/notifications/server/guards/notifications-context.server.ts", "symbol": "notificationsContext", "owner": "C27" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C6", "C7", "C8", "C9", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ] },
@@ -191,14 +196,16 @@
     { "id": "S40", "name": "Clerk invitation public metadata `invitationId`", "owner": "C6", "components": [ "C6" ] },
     { "id": "S41", "name": "C24's tables (`app.clients`, `app.client_invitations`) with the client's foreign key to C17's `app.assessment_calls`; migrations 0026–0030 and 0045 (the standing columns and `booking_time_zone`)", "owner": "C24", "components": [ "C18", "C19", "C20", "C21", "C22", "C24" ] },
     { "id": "S42", "name": "clients zod contracts (public/client-journey.ts, coach-clients.ts, client-status.ts, invitation.ts, clients.ts, paths.ts) and loader data (`ClientIdentity`, `WelcomePage`, `ClientRoster`, `CoachClient`, `InvitationResolution`)", "owner": "C24", "components": [ "C11", "C12", "C13", "C18", "C19", "C21", "C24" ] },
-    { "id": "S43", "name": "The coaching standing on `app.clients` (`coaching_status`, `coaching_access_ends_at`, `coaching_refund_due`, `coaching_bundle_months`)", "owner": "C24", "components": [ "C1", "C18", "C24" ] }
+    { "id": "S43", "name": "The coaching standing on `app.clients` (`coaching_status`, `coaching_access_ends_at`, `coaching_refund_due`, `coaching_bundle_months`)", "owner": "C24", "components": [ "C1", "C18", "C24" ] },
+    { "id": "S44", "name": "Bell entries: C27's `app.notifications` (recipient party and client, `kind`, `facts` jsonb, arrival, read moment, partial unique `once_key`; foreign key to C24's `app.clients`; migration 0051) storing each writer's `kind` and `facts` opaquely; C22 owns `CHECK_IN_BELL_KINDS` and `CHECK_IN_BELL_FACTS` (`public/check-in-bell.ts`), so a facts-schema change must still parse every row of the 90-day window", "owner": "C27", "components": [ "C1", "C22", "C24", "C27" ] },
+    { "id": "S45", "name": "notifications zod contracts (`public/notifications.ts`, `public/paths.ts`: the bell, `NotificationDescriber`) and loader data (the bell both shell loaders read)", "owner": "C27", "components": [ "C12", "C13", "C22", "C27" ] }
   ],
   "groups": [
-    { "name": "vertical-feature-slice", "components": [ "C1", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25", "C26" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
+    { "name": "vertical-feature-slice", "components": [ "C1", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27" ], "absorbs": "one user-visible capability delivered end to end, from the domain rule to the surface that registers it" },
     { "name": "waiting-list-mode", "components": [ "C1", "C3", "C6", "C8", "C14", "C15", "C17", "C18" ], "absorbs": "how waiting-list mode is stored, read and switched" },
     { "name": "coach-scheduling", "components": [ "C1", "C14", "C17", "C22", "C23" ], "absorbs": "the coach's own time and room: slot policy, reservations, overlap rules, window and meeting room" },
     { "name": "adapter-facing-contracts", "components": [ "C6", "C7", "C8", "C14", "C17", "C18", "C19", "C22", "C24" ], "absorbs": "a change to the email, bot-detection, management-auth or payments contract and every sender, verifier or handler of it" },
-    { "name": "design-system", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25", "C26" ], "absorbs": "a token, primitive or shared look changed once in the design system and taken up by every consumer" },
+    { "name": "design-system", "components": [ "C5", "C7", "C8", "C9", "C11", "C12", "C13", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25", "C26", "C27" ], "absorbs": "a token, primitive or shared look changed once in the design system and taken up by every consumer" },
     { "name": "coach-portal", "components": [ "C1", "C5", "C13", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "C25", "C26" ], "absorbs": "a coach-facing block: the use case and port, the portal primitive, the feature's coach UI and the page that composes it" }
   ]
 }

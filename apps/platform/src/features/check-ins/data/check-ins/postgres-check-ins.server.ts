@@ -7,14 +7,27 @@ import {
   type CheckIns,
   type CheckInsAtCoachingEnd,
   type CheckInSettlement,
+  type CheckInStartWindow,
   OPEN_CHECK_IN_STATUSES,
+  UNANSWERED_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
 import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
 import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
-import { and, asc, eq, gt, gte, inArray, isNull, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import {
   checkInOf,
@@ -109,6 +122,22 @@ export class PostgresCheckIns implements CheckIns {
     return rows.map((row) => checkInOf(row));
   }
 
+  listUnansweredStartedWithin(window: CheckInStartWindow): Promise<CheckIn[]> {
+    return this.listWhere(this.unansweredStartedWithin(window));
+  }
+
+  listUnansweredForClientStartedWithin(
+    clientId: string,
+    window: CheckInStartWindow,
+  ): Promise<CheckIn[]> {
+    return this.listWhere(
+      and(
+        eq(checkInsTable.clientId, clientId),
+        this.unansweredStartedWithin(window),
+      ),
+    );
+  }
+
   settle(settlement: Settlement): Promise<CheckInSettlement> {
     return this.options.database.transaction((transaction) =>
       this.settleWhileExpected(transaction, settlement),
@@ -125,6 +154,27 @@ export class PostgresCheckIns implements CheckIns {
     return this.options.database.transaction((transaction) =>
       this.endCoachingUnderClientLock(transaction, end),
     );
+  }
+
+  private unansweredStartedWithin({
+    since,
+    at,
+  }: CheckInStartWindow): SQL | undefined {
+    return and(
+      inArray(checkInsTable.status, UNANSWERED_CHECK_IN_STATUSES),
+      gte(checkInsTable.startsAt, since),
+      lte(checkInsTable.startsAt, at),
+    );
+  }
+
+  private async listWhere(condition: SQL | undefined): Promise<CheckIn[]> {
+    const rows = await this.options.database
+      .select()
+      .from(checkInsTable)
+      .where(condition)
+      .orderBy(asc(checkInsTable.startsAt));
+
+    return rows.map((row) => checkInOf(row));
   }
 
   private async requestUnderClientLock(

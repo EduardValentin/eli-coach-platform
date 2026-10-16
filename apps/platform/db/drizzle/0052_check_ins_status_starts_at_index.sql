@@ -1,0 +1,1 @@
+CREATE INDEX "check_ins_status_starts_at_idx" ON "app"."check_ins" USING btree ("status","starts_at");

@@ -9,6 +9,7 @@ import {
   ExtendCheckInSeriesUseCase,
   FindNextClientCheckInUseCase,
   ListClientCheckInsUseCase,
+  ListLapsedCheckInsUseCase,
   ListCoachCheckInsAwaitingUseCase,
   ListCoachCheckInsUseCase,
   ListOpenCheckInTimesUseCase,
@@ -37,6 +38,10 @@ import type {
   CoachingEndHandler,
   CoachingPeriodHandler,
 } from "@eli-coach-platform/domain/coaching-subscription";
+import type {
+  NotificationExpirySource,
+  NotificationInbox,
+} from "@eli-coach-platform/domain/notification";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
@@ -50,6 +55,8 @@ import {
   type CheckInCoachTime,
 } from "~/features/check-ins/data/check-ins/postgres-check-ins.server";
 import { RandomCheckInIds } from "~/features/check-ins/data/check-ins/random-check-in-ids.server";
+import { CheckInExpiryNotifications } from "~/features/check-ins/data/inbox/check-in-expiry-notifications.server";
+import { InboxCheckInNotices } from "~/features/check-ins/data/inbox/inbox-check-in-notices.server";
 import { PostgresCheckInSeries } from "~/features/check-ins/data/series/postgres-check-in-series.server";
 import { EmailCheckInNotifications } from "~/features/check-ins/email/email-check-in-notifications.server";
 
@@ -72,6 +79,7 @@ type CheckInsFeatureHandles = {
   coachTime: CheckInCoachTime;
   contactEmail: string;
   database: DatabaseClient;
+  inbox: Pick<NotificationInbox, "record">;
   incidents: CheckInIncidents;
   meetingRoom: CoachMeetingRoomSource;
   productEmail: ProductEmail;
@@ -83,6 +91,7 @@ type CheckInsComposition = {
   handles: {
     coachingEndHandler: CoachingEndHandler;
     coachingPeriodHandler: CoachingPeriodHandler;
+    expirySource: NotificationExpirySource;
   };
 };
 
@@ -104,6 +113,7 @@ export function composeCheckInsFeature(
   };
   const answerPorts = {
     ...readPorts,
+    inbox: new InboxCheckInNotices({ clock, inbox: handles.inbox }),
     incidents: handles.incidents,
     notifications: new EmailCheckInNotifications(handles.productEmail, {
       appBasePath: handles.appBasePath,
@@ -199,6 +209,12 @@ export function composeCheckInsFeature(
           await extendCheckInSeries.execute({ clientId });
         },
       },
+      expirySource: new CheckInExpiryNotifications({
+        listLapsedCheckIns: new ListLapsedCheckInsUseCase({
+          checkIns,
+          identities: handles.clientIdentities,
+        }),
+      }),
     },
   };
 }

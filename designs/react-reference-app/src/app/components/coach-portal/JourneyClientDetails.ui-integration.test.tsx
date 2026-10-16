@@ -7,6 +7,7 @@ import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { MessagingProvider } from '../../context/MessagingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
@@ -70,6 +71,7 @@ function renderDetails(
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <NotificationProvider>
               <CheckinProvider>
                 <MessagingProvider>
                   <UnitPreferencesProvider>
@@ -78,6 +80,7 @@ function renderDetails(
                   </UnitPreferencesProvider>
                 </MessagingProvider>
               </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

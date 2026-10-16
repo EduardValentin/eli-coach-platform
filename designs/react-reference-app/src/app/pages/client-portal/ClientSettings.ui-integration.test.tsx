@@ -11,6 +11,7 @@ import { DevToggle } from '../../components/DevToggle';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
@@ -53,6 +54,7 @@ function renderSettings(devParams: string) {
             <UnitPreferencesProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
+                  <NotificationProvider>
                   <CheckinProvider>
                     <Routes>
                       <Route element={<ClientJourneyGate />}>
@@ -71,6 +73,7 @@ function renderSettings(devParams: string) {
                     <DevToggle />
                     <Toaster />
                   </CheckinProvider>
+                  </NotificationProvider>
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </UnitPreferencesProvider>

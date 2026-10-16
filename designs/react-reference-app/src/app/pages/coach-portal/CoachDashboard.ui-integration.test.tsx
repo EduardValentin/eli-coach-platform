@@ -10,6 +10,7 @@ import {
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
@@ -70,10 +71,12 @@ function renderDashboard(bookings: PrototypeBooking[]) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <NotificationProvider>
               <CheckinProvider>
                 <SeedBookings bookings={bookings} />
                 <CoachDashboard />
               </CheckinProvider>
+              </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>

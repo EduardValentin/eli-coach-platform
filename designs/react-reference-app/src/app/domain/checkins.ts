@@ -115,6 +115,26 @@ export function checkinStatus(
     : 'approved';
 }
 
+export type CheckinLapseKind = 'request-expired' | 'new-time-expired' | 'clash-missed';
+
+export type CheckinLapse = { lapse: CheckinLapseKind; lapsedAt: Date };
+
+function unansweredLapseOf(checkin: CheckIn): CheckinLapseKind | null {
+  if (checkin.status === 'clash') return 'clash-missed';
+  if (checkin.status !== 'pending') return null;
+
+  return previousSlot(checkin) ? 'new-time-expired' : 'request-expired';
+}
+
+export function checkinLapse(checkin: CheckIn, { now, coachingEndsAt }: CheckinClock): CheckinLapse | null {
+  const lapse = unansweredLapseOf(checkin);
+  const startsAt = checkinStartsAt(checkin);
+  if (!lapse || startsAt.getTime() > now.getTime()) return null;
+  if (startsAfterCoachingEnds(checkin, coachingEndsAt)) return null;
+
+  return { lapse, lapsedAt: startsAt };
+}
+
 export function isJoinable(checkin: CheckIn, now: Date): boolean {
   if (checkin.status !== 'approved') return false;
 

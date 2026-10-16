@@ -1897,3 +1897,165 @@ describe("CheckIn clash rights", () => {
     ]);
   });
 });
+
+describe("CheckIn#lapseAt", () => {
+  const AFTER_NEW_START = new Date("2026-06-04T13:30:00.000Z");
+
+  it.each([
+    {
+      situation: "a request whose start has passed unanswered",
+      subject: checkIn(),
+      at: ENDS_AT,
+      expected: { kind: "request_expired", lapsedAt: STARTS_AT },
+    },
+    {
+      situation: "a request reaching its start unanswered",
+      subject: checkIn(),
+      at: STARTS_AT,
+      expected: { kind: "request_expired", lapsedAt: STARTS_AT },
+    },
+    {
+      situation: "a new time whose start has passed unanswered",
+      subject: newTimeFromCoach(),
+      at: AFTER_NEW_START,
+      expected: { kind: "new_time_expired", lapsedAt: NEW_START },
+    },
+    {
+      situation: "a clash whose start has passed unfixed",
+      subject: weeklyCheckIn({ recordedStatus: "clash" }),
+      at: ENDS_AT,
+      expected: { kind: "clash_missed", lapsedAt: STARTS_AT },
+    },
+  ] as const)(
+    "names $situation with the moment its time passed",
+    ({ subject, at, expected }) => {
+      // arrange
+      const now = at;
+
+      // act
+      const lapse = subject.lapseAt(now);
+
+      // assert
+      expect(lapse?.toSnapshot()).toEqual(expected);
+    },
+  );
+
+  it("names a re-proposed clash whose new time passed unanswered an expired new time", () => {
+    // arrange
+    const proposed = weeklyCheckIn({ recordedStatus: "clash" }).proposeNewTime({
+      party: "coach",
+      startsAt: NEW_START,
+      note: null,
+      at: BEFORE_START,
+    });
+
+    if (proposed.status !== "proposed") {
+      throw new Error(`expected a proposed new time, got ${proposed.status}`);
+    }
+
+    // act
+    const lapse = proposed.checkIn.lapseAt(AFTER_NEW_START);
+
+    // assert
+    expect(lapse?.toSnapshot()).toEqual({
+      kind: "new_time_expired",
+      lapsedAt: NEW_START,
+    });
+  });
+
+  it.each([
+    {
+      situation: "a request before its start",
+      subject: checkIn(),
+      at: BEFORE_START,
+    },
+    {
+      situation: "a new time before its start",
+      subject: newTimeFromCoach(),
+      at: STARTS_AT,
+    },
+    {
+      situation: "a clash before its start",
+      subject: weeklyCheckIn({ recordedStatus: "clash" }),
+      at: BEFORE_START,
+    },
+    {
+      situation: "an approved check-in that took place",
+      subject: approvedCheckIn(),
+      at: ENDS_AT,
+    },
+    {
+      situation: "a check-in cancelled when her coaching ended",
+      subject: weeklyCheckIn({ recordedStatus: "cancelled" }),
+      at: ENDS_AT,
+    },
+    {
+      situation: "a declined request",
+      subject: checkIn({
+        recordedStatus: "cancelled",
+        answeredAt: BEFORE_START,
+      }),
+      at: ENDS_AT,
+    },
+  ] as const)("names no lapse for $situation", ({ subject, at }) => {
+    // arrange
+    const now = at;
+
+    // act
+    const lapse = subject.lapseAt(now);
+
+    // assert
+    expect(lapse).toBeNull();
+  });
+});
+
+describe("CheckIn#isClash", () => {
+  it.each([
+    {
+      situation: "a weekly check-in that clashed",
+      subject: weeklyCheckIn({ recordedStatus: "clash" }),
+      expected: true,
+    },
+    { situation: "a pending request", subject: checkIn(), expected: false },
+    {
+      situation: "an approved check-in",
+      subject: approvedCheckIn(),
+      expected: false,
+    },
+  ])("answers $expected for $situation", ({ subject, expected }) => {
+    // arrange
+    const candidate = subject;
+
+    // act
+    const clashes = candidate.isClash();
+
+    // assert
+    expect(clashes).toBe(expected);
+  });
+});
+
+describe("CheckIn.earliestOf", () => {
+  it("picks the check-in starting soonest", () => {
+    // arrange
+    const latest = checkIn({ id: "check-in-3", startsAt: NEW_START });
+    const soonest = checkIn({ id: "check-in-1", startsAt: BEFORE_START });
+    const between = checkIn({ id: "check-in-2", startsAt: STARTS_AT });
+
+    // act
+    const earliest = CheckIn.earliestOf([latest, soonest, between]);
+
+    // assert
+    expect(earliest?.id).toBe("check-in-1");
+  });
+
+  it("has no earliest among no check-ins", () => {
+    // arrange
+    const none: CheckIn[] = [];
+
+    // act
+    const earliest = CheckIn.earliestOf(none);
+
+    // assert
+    expect(earliest).toBeNull();
+  });
+});

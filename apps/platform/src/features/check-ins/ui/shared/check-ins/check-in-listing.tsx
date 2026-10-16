@@ -9,7 +9,7 @@ import {
 } from "@eli-coach-platform/ui/tabs";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import {
   formatClockTime,
@@ -69,12 +69,14 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   renderCheckIn,
 }: CheckInListingProps<CheckIn>) {
   const [searchParams] = useSearchParams();
+  const { key: locationKey } = useLocation();
   const focusedId = searchParams.get(CHECK_IN_FOCUS_PARAM);
-  const [defaultTab] = useState(
-    () => tabHolding(focusedId, checkIns) ?? openingTabOf(checkIns),
-  );
-  const { chooseTab, tab } = useCheckInTabParam(defaultTab);
-  useBringCheckInIntoFocus(focusedId);
+  const [openedOn] = useState(() => openingTabOf(checkIns));
+  const { chooseTab, tab } = useCheckInTabParam({
+    defaultTab: tabHolding(focusedId, checkIns) ?? openedOn,
+    openedOn,
+  });
+  useBringCheckInIntoFocus(focusedId, locationKey);
   const shown = ordered(
     checkIns.filter((checkIn) => checkIn.tab === tab),
     tab,
@@ -145,14 +147,20 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   );
 }
 
-function useCheckInTabParam(defaultTab: CheckInTab) {
+function useCheckInTabParam(tabs: {
+  defaultTab: CheckInTab;
+  openedOn: CheckInTab;
+}) {
+  const { defaultTab, openedOn } = tabs;
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
 
   const chooseTab = (value: string) => {
-    const chosen = tabNamed(value, defaultTab);
+    const chosen = tabNamed(value, openedOn);
 
     replaceSearchParams((params) => {
-      if (chosen === defaultTab) {
+      params.delete(CHECK_IN_FOCUS_PARAM);
+
+      if (chosen === openedOn) {
         params.delete(TAB_PARAM);
         return;
       }
@@ -164,7 +172,10 @@ function useCheckInTabParam(defaultTab: CheckInTab) {
   return { chooseTab, tab: tabNamed(searchParams.get(TAB_PARAM), defaultTab) };
 }
 
-function useBringCheckInIntoFocus(focusedId: string | null) {
+function useBringCheckInIntoFocus(
+  focusedId: string | null,
+  locationKey: string,
+) {
   useEffect(() => {
     if (focusedId === null) {
       return;
@@ -173,7 +184,7 @@ function useBringCheckInIntoFocus(focusedId: string | null) {
     const anchor = document.getElementById(anchorIdOf(focusedId));
     anchor?.scrollIntoView({ block: "center" });
     anchor?.focus({ preventScroll: true });
-  }, [focusedId]);
+  }, [focusedId, locationKey]);
 }
 
 function anchorIdOf(checkInId: string): string {
