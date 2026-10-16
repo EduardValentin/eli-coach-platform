@@ -1263,6 +1263,52 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a recipe that could not be created by the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.recipeCreationFailed({ error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith("Recipe could not be created.", {
+      errorCategory: "recipe_creation_failure",
+      errorClass: "Error",
+      errorCode: "ECONNREFUSED",
+    });
+  });
+
+  it("logs a recipe edit that could not be written by its id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.recipeEditFailed({ recipeId: "recipe-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Recipe edit could not be written.",
+      {
+        errorCategory: "recipe_edit_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        recipeId: "recipe-1",
+      },
+    );
+  });
+
   it("logs a client resource change that could not be written by its ids and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

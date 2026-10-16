@@ -27,4 +27,9 @@ export const nutritionLibraryCoachRoutes = [
 export const nutritionLibraryApiRoutes = [
   route(NUTRITION_LIBRARY_API_PATHS.foods.slice(1), "./api/foods/foods.ts"),
   route(NUTRITION_LIBRARY_API_PATHS.food.slice(1), "./api/foods/food.ts"),
+  route(
+    NUTRITION_LIBRARY_API_PATHS.recipes.slice(1),
+    "./api/recipes/recipes.ts",
+  ),
+  route(NUTRITION_LIBRARY_API_PATHS.recipe.slice(1), "./api/recipes/recipe.ts"),
 ];

@@ -9,9 +9,15 @@ export type FoodReference = {
   foodId: string;
 };
 
+export type FoodsReference = {
+  ownerAccountId: string;
+  foodIds: readonly string[];
+};
+
 export interface FoodLibrary {
   list(ownerAccountId: string): Promise<Food[]>;
   find(reference: FoodReference): Promise<Food | null>;
+  referenced(reference: FoodsReference): Promise<Food[]>;
   add(food: Food): Promise<FoodAddition>;
   replace(food: Food): Promise<FoodReplacement>;
 }

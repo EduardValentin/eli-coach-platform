@@ -19,6 +19,7 @@ const COACH: AccountSnapshot = {
 };
 
 const FOOD_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const RECIPE_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 
 const OATS_REQUEST = {
   name: "Oats",
@@ -29,6 +30,16 @@ const OATS_REQUEST = {
   carb: 66.3,
   fat: 6.9,
   defaultPortionGrams: 40,
+  tagIds: [],
+};
+
+const PORRIDGE_REQUEST = {
+  name: "Porridge",
+  ingredients: [{ foodId: FOOD_ID, grams: 40, method: "boiled" }],
+  prepMinutes: 5,
+  cookMinutes: 10,
+  instructions: "",
+  icon: null,
   tagIds: [],
 };
 
@@ -79,6 +90,53 @@ describe("composeNutritionLibraryFeature", () => {
       error: new Error("database down"),
     });
   });
+
+  it("lists the recipes from the recipes table", async () => {
+    // arrange
+    const feature = composeNutritionLibraryFeature(createHandles());
+
+    // act
+    const listing = feature.recipeLibrary.list(coachArgs());
+
+    // assert
+    await expect(listing).rejects.toThrow("database down");
+  });
+
+  it("reports a recipe creation that could not reach the recipes table to the incidents it is handed", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeNutritionLibraryFeature(handles);
+
+    // act
+    const response = await feature.recipeLibrary.create(
+      coachArgs(jsonRequest("POST", PORRIDGE_REQUEST)),
+    );
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(handles.incidents.recipeCreationFailed).toHaveBeenCalledWith({
+      error: new Error("database down"),
+    });
+  });
+
+  it("reports a recipe edit that could not reach the recipes table to the incidents it is handed", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeNutritionLibraryFeature(handles);
+
+    // act
+    const response = await feature.recipeLibrary.edit(
+      coachArgs(jsonRequest("PUT", PORRIDGE_REQUEST)),
+      RECIPE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(handles.incidents.recipeEditFailed).toHaveBeenCalledWith({
+      recipeId: RECIPE_ID,
+      error: new Error("database down"),
+    });
+  });
 });
 
 function createHandles() {
@@ -88,6 +146,8 @@ function createHandles() {
     incidents: {
       foodCreationFailed: vi.fn(),
       foodEditFailed: vi.fn(),
+      recipeCreationFailed: vi.fn(),
+      recipeEditFailed: vi.fn(),
     },
   };
 }
@@ -100,9 +160,12 @@ function createUnreachableDatabase(): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function jsonRequest(method: "POST" | "PUT"): Request {
+function jsonRequest(
+  method: "POST" | "PUT",
+  body: unknown = OATS_REQUEST,
+): Request {
   return new Request("https://evoa.fit/api/coach/foods", {
-    body: JSON.stringify(OATS_REQUEST),
+    body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
     method,
   });
