@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit cc6dd969, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-16 at commit f5f8d24f, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
@@ -13,11 +13,11 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 25, units: 1162, edges: 4031, component cycles: 1, uncovered modules: 0.
+Components: 25, units: 1165, edges: 4039, component cycles: 1, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
-| C1 packages/domain | 316 | 245 | 0 | 0 | 0.58 | 0.42 | none |
+| C1 packages/domain | 319 | 245 | 0 | 0 | 0.58 | 0.42 | none |
 | C2 packages/db | 6 | 71 | 0 | 0 | 0.15 | 0.85 | pain |
 | C3 packages/config | 16 | 50 | 0 | 0 | 0.23 | 0.77 | none |
 | C4 packages/content | 9 | 22 | 0 | 0 | 0.17 | 0.83 | pain |
@@ -35,7 +35,7 @@ Components: 25, units: 1162, edges: 4031, component cycles: 1, uncovered modules
 | C17 apps/platform/src/features/assessment-calls | 47 | 31 | 38 | 0.55 | 0.21 | 0.24 | none |
 | C18 apps/platform/src/features/coaching-sales | 76 | 10 | 65 | 0.87 | 0.14 | 0.01 | none |
 | C19 apps/platform/src/features/client-onboarding | 52 | 6 | 46 | 0.88 | 0.21 | 0.1 | none |
-| C20 apps/platform/src/features/client-profile | 41 | 16 | 37 | 0.7 | 0.15 | 0.15 | none |
+| C20 apps/platform/src/features/client-profile | 41 | 16 | 37 | 0.7 | 0.14 | 0.16 | none |
 | C21 apps/platform/src/features/client-resources | 41 | 9 | 36 | 0.8 | 0.15 | 0.05 | none |
 | C22 apps/platform/src/features/check-ins | 67 | 12 | 52 | 0.81 | 0.18 | 0.01 | none |
 | C23 apps/platform/src/features/coach-schedule | 16 | 9 | 12 | 0.57 | 0.12 | 0.31 | none |
