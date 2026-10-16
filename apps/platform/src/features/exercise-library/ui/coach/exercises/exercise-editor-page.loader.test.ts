@@ -1,7 +1,9 @@
+import { redirect } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ExerciseLibraryFeature } from "~/features/exercise-library/server/exercise-library-composition.server";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
+import { COACH_TRAINING_PATH } from "~/features/exercise-library/public/paths";
 import {
   contextEntry,
   createRequestArgs,
@@ -52,5 +54,21 @@ describe("exercise editor page loader", () => {
     expect(editor).toBe(SAVED_EDITOR);
     expect(load).toHaveBeenCalledWith(args, EXERCISE_ID);
     expect(loadNew).not.toHaveBeenCalled();
+  });
+
+  it("returns to the library when the named exercise is archived", async () => {
+    // arrange
+    const { args, load } = editorArgs({ exerciseId: EXERCISE_ID });
+    load.mockRejectedValueOnce(redirect(COACH_TRAINING_PATH));
+
+    // act
+    const thrown = await loader(args).catch((error: unknown) => error);
+
+    // assert
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      COACH_TRAINING_PATH,
+    );
+    expect(load).toHaveBeenCalledWith(args, EXERCISE_ID);
   });
 });

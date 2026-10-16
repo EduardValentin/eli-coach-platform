@@ -2,6 +2,7 @@ import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import {
   Link,
   useLoaderData,
@@ -41,6 +42,7 @@ export function shouldRevalidate({
 export default function ExerciseLibraryRoute() {
   const { exercises } = useLoaderData<typeof loader>();
   const { search } = useLocation();
+  const heading = useRef<HTMLHeadingElement>(null);
 
   return (
     <div className="w-full" data-parity-root="TrainingHub">
@@ -55,11 +57,12 @@ export default function ExerciseLibraryRoute() {
             New exercise
           </Link>
         }
+        headingRef={heading}
         subtitle="Build the exercise library your plans draw from."
         title="Exercises"
       />
 
-      <ExerciseListing exercises={exercises} />
+      <ExerciseListing exercises={exercises} heading={heading} />
     </div>
   );
 }
