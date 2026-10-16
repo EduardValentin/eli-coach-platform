@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -201,7 +203,9 @@ async function saveCoachScheduleSettings(options: {
 }
 
 async function seedAssessmentCall(): Promise<string> {
-  const [row] = await suite.postgres.queryRows<{ id: string }>({
+  const callId = randomUUID();
+
+  await suite.postgres.executeSql({
     sql: `
       insert into app.assessment_calls (
         id,
@@ -219,10 +223,10 @@ async function seedAssessmentCall(): Promise<string> {
         coach_time_zone,
         booked_at
       )
-      values (gen_random_uuid(), $1, $2, $3, null, $4, $5, $6, $7, null, $8, $9, $10, $11)
-      returning id
+      values ($1, $2, $3, $4, null, $5, $6, $7, $8, null, $9, $10, $11, $12)
     `,
     values: [
+      callId,
       "Ana",
       "Popescu",
       "ana@example.com",
@@ -237,11 +241,7 @@ async function seedAssessmentCall(): Promise<string> {
     ],
   });
 
-  if (!row) {
-    throw new Error("Expected the seeded assessment call to exist.");
-  }
-
-  return row.id;
+  return callId;
 }
 
 async function switchWaitlistModeOff(): Promise<void> {

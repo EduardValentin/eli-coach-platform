@@ -103,13 +103,11 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       upcomingCallForEmail,
     });
 
-    if (decision.status === "reserved") {
-      return decision;
+    if (decision.status !== "reserved") {
+      await transaction.execute(
+        sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
+      );
     }
-
-    await transaction.execute(
-      sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
-    );
 
     return decision;
   }

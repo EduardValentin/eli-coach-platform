@@ -127,8 +127,8 @@ const INSERT_SUBSCRIPTION = `
     created_at
   )
   values (
-    gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-    $14, $15, $16, $17, $12
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+    $18, $13
   )
 `;
 const INSERT_INVITATION = `
@@ -272,6 +272,7 @@ async function insertPaidClient(
     period.paidThrough,
   ]);
   await connection.query(INSERT_SUBSCRIPTION, [
+    period.id,
     clientId,
     payment.assessmentCallId,
     SEEDED_BUNDLE.id,
@@ -306,18 +307,21 @@ function paidPeriodOf(identity: ClientIdentity, payment: PaymentSeed) {
   const { references } = payment;
 
   return PurchasedSubscription.fromCompletedCheckout({
-    checkoutSessionId: references.checkoutSessionId,
-    paymentCustomerId: references.customerId,
-    paymentSubscriptionId: references.subscriptionId,
-    paymentIntentId: references.paymentIntentId,
-    amountCents: SEEDED_BUNDLE.totalCents(SEEDED_TIER),
-    currency: SEEDED_BUNDLE.currency,
-    customerEmail: identity.email,
-    paidAt: payment.paidAt,
-    assessmentCallId: payment.assessmentCallId,
-    bundleId: SEEDED_BUNDLE.id,
-    tier: SEEDED_TIER,
-    startChoice: payment.start,
+    id: randomUUID(),
+    completion: {
+      checkoutSessionId: references.checkoutSessionId,
+      paymentCustomerId: references.customerId,
+      paymentSubscriptionId: references.subscriptionId,
+      paymentIntentId: references.paymentIntentId,
+      amountCents: SEEDED_BUNDLE.totalCents(SEEDED_TIER),
+      currency: SEEDED_BUNDLE.currency,
+      customerEmail: identity.email,
+      paidAt: payment.paidAt,
+      assessmentCallId: payment.assessmentCallId,
+      bundleId: SEEDED_BUNDLE.id,
+      tier: SEEDED_TIER,
+      startChoice: payment.start,
+    },
   }).toSnapshot();
 }
 

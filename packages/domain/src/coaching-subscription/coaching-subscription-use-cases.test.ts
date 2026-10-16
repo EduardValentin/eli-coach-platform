@@ -610,8 +610,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
         },
         at: NOW,
       }),
-      subscriptionId: "subscription-1",
-      subscription: PurchasedSubscription.fromCompletedCheckout(completion),
+      subscription: PurchasedSubscription.fromCompletedCheckout({
+        id: "subscription-1",
+        completion: completion,
+      }),
     });
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,

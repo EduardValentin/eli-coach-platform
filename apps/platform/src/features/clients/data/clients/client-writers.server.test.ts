@@ -37,7 +37,7 @@ const ADMITTED_CLIENT = Client.admitted({
 });
 
 describe("writeClient", () => {
-  it("inserts the admitted client's row under the id the domain gave her, through the caller's transaction, and answers that id", async () => {
+  it("inserts the admitted client's row under the id the domain gave her, through the caller's transaction", async () => {
     // arrange
     const transaction = createTransactionRecordingInserts([{ id: CLIENT_ID }]);
 
@@ -45,7 +45,7 @@ describe("writeClient", () => {
     const written = await writeClient(transaction.handle, ADMITTED_CLIENT);
 
     // assert
-    expect(written).toEqual({ clientId: CLIENT_ID });
+    expect(written).toBe("written");
     expect(transaction.inserts).toEqual([
       {
         table: clientsTable,

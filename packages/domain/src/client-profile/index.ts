@@ -5,7 +5,10 @@ export {
   type OnboardingProfileFacts,
 } from "./client-profile";
 export { type ClientProfiles } from "./client-profiles";
-export { type ClientMeasurementRecords } from "./client-measurement-records";
+export {
+  type ClientMeasurementEntry,
+  type ClientMeasurementRecords,
+} from "./client-measurement-records";
 export {
   MeasurementHistory,
   type MeasurementDueLine,
@@ -33,7 +36,8 @@ export {
   type ProgressPhotoOwner,
   type ProgressPhotoStore,
 } from "./progress-photo-store";
-export { type ProgressPhotoIds, type ProgressPhotos } from "./progress-photos";
+export { type ProgressPhotos } from "./progress-photos";
+export { type ProgressPhotoIds } from "./progress-photo-ids";
 export { ReadClientMeasurementHistoryUseCase } from "./read-client-measurement-history-use-case";
 export {
   ReadClientProfileUseCase,

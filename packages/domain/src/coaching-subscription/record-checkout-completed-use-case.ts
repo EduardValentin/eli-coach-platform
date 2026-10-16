@@ -86,8 +86,10 @@ export class RecordCheckoutCompletedUseCase {
     }
 
     const receivedAt = this.options.clock.now();
-    const subscription =
-      PurchasedSubscription.fromCompletedCheckout(completion);
+    const subscription = PurchasedSubscription.fromCompletedCheckout({
+      id: this.options.subscriptionIds.generate(),
+      completion,
+    });
     const purchase = await this.options.purchases.recordCompletion({
       eventId,
       receivedAt,
@@ -96,7 +98,6 @@ export class RecordCheckoutCompletedUseCase {
         intake: this.intakeOf(call),
         at: receivedAt,
       }),
-      subscriptionId: this.options.subscriptionIds.generate(),
       subscription,
     });
 

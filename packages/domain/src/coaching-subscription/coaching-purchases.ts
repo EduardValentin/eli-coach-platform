@@ -6,7 +6,6 @@ export type CoachingPurchase = {
   eventId: string;
   receivedAt: Date;
   client: Client;
-  subscriptionId: string;
   subscription: PurchasedSubscription;
 };
 

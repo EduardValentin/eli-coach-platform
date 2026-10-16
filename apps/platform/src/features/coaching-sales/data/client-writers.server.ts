@@ -7,7 +7,7 @@ import type {
 export type ClientWriter = (
   transaction: DatabaseTransaction,
   client: Client,
-) => Promise<{ clientId: string } | "call_already_has_client">;
+) => Promise<"written" | "call_already_has_client">;
 
 export type CoachingStandingWriter = (
   transaction: DatabaseTransaction,

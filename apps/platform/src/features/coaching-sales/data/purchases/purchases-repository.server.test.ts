@@ -205,11 +205,9 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
 function createPurchases(
   database: DatabaseClient,
-  options: { admitted?: { clientId: string } | "call_already_has_client" } = {},
+  options: { admitted?: "written" | "call_already_has_client" } = {},
 ) {
-  const writeClient = vi
-    .fn()
-    .mockResolvedValue(options.admitted ?? { clientId: ADMITTED_CLIENT_ID });
+  const writeClient = vi.fn().mockResolvedValue(options.admitted ?? "written");
   const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
   const purchases = new PostgresCoachingPurchases({
     clock: { now: () => NOW },
@@ -241,20 +239,22 @@ function purchase(): CoachingPurchase {
       },
       at: NOW,
     }),
-    subscriptionId: SUBSCRIPTION_ID,
     subscription: PurchasedSubscription.fromCompletedCheckout({
-      checkoutSessionId: "cs_1",
-      paymentCustomerId: "cus_1",
-      paymentSubscriptionId: "sub_1",
-      paymentIntentId: "pi_1",
-      amountCents: 44700,
-      currency: "eur",
-      customerEmail: "ana@example.com",
-      paidAt: NOW,
-      assessmentCallId: PAID_CALL_ID,
-      bundleId: "3-months",
-      tier: "regular",
-      startChoice: "waiting",
+      id: SUBSCRIPTION_ID,
+      completion: {
+        checkoutSessionId: "cs_1",
+        paymentCustomerId: "cus_1",
+        paymentSubscriptionId: "sub_1",
+        paymentIntentId: "pi_1",
+        amountCents: 44700,
+        currency: "eur",
+        customerEmail: "ana@example.com",
+        paidAt: NOW,
+        assessmentCallId: PAID_CALL_ID,
+        bundleId: "3-months",
+        tier: "regular",
+        startChoice: "waiting",
+      },
     }),
   };
 }

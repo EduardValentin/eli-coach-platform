@@ -21,7 +21,3 @@ export interface ClientInvitations {
     now: Date;
   }): Promise<"accepted" | "raced">;
 }
-
-export interface ClientInvitationIds {
-  generate(): string;
-}

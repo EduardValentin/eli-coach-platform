@@ -117,17 +117,18 @@ export class PostgresCoachingPurchases
       };
     }
 
-    const admitted = await this.options.writeClient(transaction, client);
-
-    if (admitted === "call_already_has_client") {
+    if (
+      (await this.options.writeClient(transaction, client)) ===
+      "call_already_has_client"
+    ) {
       throw new CallAlreadyPaid();
     }
 
     const purchased = subscription.toSnapshot();
 
     await transaction.insert(coachingSubscriptionsTable).values({
-      id: purchase.subscriptionId,
-      clientId: admitted.clientId,
+      id: purchased.id,
+      clientId: client.id,
       assessmentCallId: client.assessmentCallId,
       bundleId: purchased.bundleId,
       months: purchased.months,
@@ -146,7 +147,7 @@ export class PostgresCoachingPurchases
       createdAt: receivedAt,
     });
     await this.options.writeCoachingStanding(transaction, {
-      clientId: admitted.clientId,
+      clientId: client.id,
       standing: subscription.standing(),
     });
 
@@ -165,7 +166,7 @@ export class PostgresCoachingPurchases
         ),
       );
 
-    return { outcome: "recorded", clientId: admitted.clientId };
+    return { outcome: "recorded", clientId: client.id };
   }
 
   private async findClientIdForCall(

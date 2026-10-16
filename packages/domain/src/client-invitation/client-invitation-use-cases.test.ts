@@ -5,10 +5,8 @@ import { AdmitPaidClientUseCase } from "./admit-paid-client-use-case";
 import { ClientInvitation } from "./client-invitation";
 import type { ClientInvitationIncidents } from "./client-invitation-incidents";
 import type { ClientInvitationNotifications } from "./client-invitation-notifications";
-import type {
-  ClientInvitationIds,
-  ClientInvitations,
-} from "./client-invitations";
+import type { ClientInvitations } from "./client-invitations";
+import type { ClientInvitationIds } from "./client-invitation-ids";
 import type { IdentityInvitations } from "./identity-invitations";
 import type {
   InvitationTokenGenerator,
@@ -132,7 +130,7 @@ function admitDependencies(overrides: {
     clock: clockAt(NOW),
     identity: createIdentity(),
     incidents: createIncidents(),
-    invitationIds: createIds(),
+    ids: createIds(),
     invitations: createInvitations(overrides.existing ?? null),
     notifications: createNotifications(overrides.delivery ?? "sent"),
     tokenGenerator: createTokenGenerator(

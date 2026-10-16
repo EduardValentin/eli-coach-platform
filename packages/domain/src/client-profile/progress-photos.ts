@@ -5,7 +5,3 @@ export interface ProgressPhotos {
   findById(photoId: string): Promise<ProgressPhoto | null>;
   delete(photoId: string): Promise<void>;
 }
-
-export interface ProgressPhotoIds {
-  generate(): string;
-}

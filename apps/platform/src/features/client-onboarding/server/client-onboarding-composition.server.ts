@@ -147,7 +147,7 @@ export function composeClientOnboardingFeature(
             publicAppUrl: handles.publicAppUrl,
           },
         ),
-        requestIds: new RandomDetailRequestIds(),
+        ids: new RandomDetailRequestIds(),
       }),
     }),
   };

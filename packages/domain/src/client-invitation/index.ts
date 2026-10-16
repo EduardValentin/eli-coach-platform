@@ -10,10 +10,8 @@ export {
   type ClientInvitationMessage,
   type ClientInvitationNotifications,
 } from "./client-invitation-notifications";
-export {
-  type ClientInvitationIds,
-  type ClientInvitations,
-} from "./client-invitations";
+export { type ClientInvitations } from "./client-invitations";
+export { type ClientInvitationIds } from "./client-invitation-ids";
 export { type IdentityInvitations } from "./identity-invitations";
 export {
   type InvitationTokenGenerator,

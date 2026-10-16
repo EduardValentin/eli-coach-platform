@@ -2,6 +2,7 @@ import type {
   DatabaseClient,
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
+import type { ClientMeasurementEntry } from "@eli-coach-platform/domain/client-profile";
 import {
   measurementEntryOf,
   type ClientMeasurementsSource,
@@ -47,15 +48,9 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
   }
 }
 
-export type MeasurementEntryRecord = {
-  clientId: string;
-  entryId: string;
-  entry: MeasurementEntry;
-};
-
 export async function recordMeasurementEntry(
   transaction: DatabaseTransaction,
-  record: MeasurementEntryRecord,
+  record: ClientMeasurementEntry,
 ): Promise<void> {
   await transaction
     .insert(clientMeasurementsTable)
@@ -81,7 +76,7 @@ export function measurementInsertOf({
   clientId,
   entryId,
   entry,
-}: MeasurementEntryRecord): typeof clientMeasurementsTable.$inferInsert {
+}: ClientMeasurementEntry): typeof clientMeasurementsTable.$inferInsert {
   return {
     id: entryId,
     clientId,

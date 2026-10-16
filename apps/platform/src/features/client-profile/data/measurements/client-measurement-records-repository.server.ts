@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type {
+  ClientMeasurementEntry,
   ClientMeasurementRecords,
   MeasurementRecord,
 } from "@eli-coach-platform/domain/client-profile";
@@ -9,7 +10,6 @@ import {
   MEASUREMENT_SELECTION,
   measurementEntryOfStored,
   measurementInsertOf,
-  type MeasurementEntryRecord,
   type StoredMeasurement,
 } from "~/features/client-profile/data/measurements/client-measurements-repository.server";
 import {
@@ -46,7 +46,7 @@ export class PostgresClientMeasurementRecords implements ClientMeasurementRecord
     return recordsWithTheirPhotos(rows);
   }
 
-  async record(record: MeasurementEntryRecord): Promise<void> {
+  async record(record: ClientMeasurementEntry): Promise<void> {
     await this.database
       .insert(clientMeasurementsTable)
       .values(measurementInsertOf(record));

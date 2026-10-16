@@ -9,7 +9,8 @@ import {
 } from "./progress-photo-intake";
 import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
 import type { ProgressPhotoStore } from "./progress-photo-store";
-import type { ProgressPhotoIds, ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoIds } from "./progress-photo-ids";
 
 type AttachProgressPhotosCommand = {
   clientId: string;

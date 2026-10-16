@@ -131,7 +131,7 @@ export function composeClientsFeature(
   });
   const admitPaidClient = new AdmitPaidClientUseCase({
     ...invitationPorts,
-    invitationIds: new RandomClientInvitationIds(),
+    ids: new RandomClientInvitationIds(),
   });
   const readClientPortalStanding = new ReadClientPortalStandingUseCase({
     clock,

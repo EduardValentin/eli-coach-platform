@@ -19,12 +19,16 @@ const completion: CheckoutCompletion = {
 };
 
 describe("PurchasedSubscription.fromCompletedCheckout", () => {
-  it("records the paid bundle as a subscription that has not started, with the payment intent of its first payment", () => {
+  it("records the paid bundle under the given id as a subscription that has not started, with the payment intent of its first payment", () => {
     // act
-    const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      id: "subscription-1",
+      completion,
+    });
 
     // assert
     expect(purchased.toSnapshot()).toEqual({
+      id: "subscription-1",
       bundleId: "3-months",
       months: 3,
       tier: "reduced",
@@ -45,8 +49,11 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
   it("starts an immediate program at payment", () => {
     // act
     const purchased = PurchasedSubscription.fromCompletedCheckout({
-      ...completion,
-      startChoice: "immediate",
+      id: "subscription-1",
+      completion: {
+        ...completion,
+        startChoice: "immediate",
+      },
     });
 
     // assert
@@ -56,9 +63,12 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
   it("pays through the last day of a shorter month", () => {
     // act
     const purchased = PurchasedSubscription.fromCompletedCheckout({
-      ...completion,
-      bundleId: "1-month",
-      paidAt: new Date("2027-01-31T10:00:00.000Z"),
+      id: "subscription-1",
+      completion: {
+        ...completion,
+        bundleId: "1-month",
+        paidAt: new Date("2027-01-31T10:00:00.000Z"),
+      },
     });
 
     // assert
@@ -70,8 +80,11 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
   it("records a paid bundle whose payment intent is unknown without one", () => {
     // act
     const purchased = PurchasedSubscription.fromCompletedCheckout({
-      ...completion,
-      paymentIntentId: null,
+      id: "subscription-1",
+      completion: {
+        ...completion,
+        paymentIntentId: null,
+      },
     });
 
     // assert
@@ -86,8 +99,11 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
     (bundleId, months) => {
       // act
       const purchased = PurchasedSubscription.fromCompletedCheckout({
-        ...completion,
-        bundleId,
+        id: "subscription-1",
+        completion: {
+          ...completion,
+          bundleId,
+        },
       });
 
       // assert
@@ -99,7 +115,10 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
 describe("PurchasedSubscription.standing", () => {
   it("starts the client's standing as not started with the bought bundle's months", () => {
     // arrange
-    const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      id: "subscription-1",
+      completion,
+    });
 
     // act
     const standing = purchased.standing();
@@ -119,7 +138,10 @@ describe("PurchasedSubscription.standing", () => {
 describe("PurchasedSubscription.renewalHoldUntil", () => {
   it("holds a waiting start's renewal until her program start", () => {
     // arrange
-    const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      id: "subscription-1",
+      completion,
+    });
 
     // act
     const holdUntil = purchased.renewalHoldUntil();
@@ -131,8 +153,11 @@ describe("PurchasedSubscription.renewalHoldUntil", () => {
   it("holds no renewal for an immediate start", () => {
     // arrange
     const purchased = PurchasedSubscription.fromCompletedCheckout({
-      ...completion,
-      startChoice: "immediate",
+      id: "subscription-1",
+      completion: {
+        ...completion,
+        startChoice: "immediate",
+      },
     });
 
     // act

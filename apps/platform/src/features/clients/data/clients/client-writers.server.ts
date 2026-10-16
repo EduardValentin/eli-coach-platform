@@ -10,14 +10,14 @@ import { clientsTable } from "~/features/clients/data/schema.server";
 export async function writeClient(
   transaction: DatabaseTransaction,
   client: Client,
-): Promise<{ clientId: string } | "call_already_has_client"> {
+): Promise<"written" | "call_already_has_client"> {
   const [written] = await transaction
     .insert(clientsTable)
     .values(client.toSnapshot())
     .onConflictDoNothing({ target: clientsTable.assessmentCallId })
     .returning({ id: clientsTable.id });
 
-  return written ? { clientId: written.id } : "call_already_has_client";
+  return written ? "written" : "call_already_has_client";
 }
 
 export async function writeCoachingStanding(

@@ -15,7 +15,8 @@ import type {
   ProgressPhotoOwner,
   ProgressPhotoStore,
 } from "./progress-photo-store";
-import type { ProgressPhotoIds, ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoIds } from "./progress-photo-ids";
 
 const RECEIVED_AT = new Date("2026-10-01T08:00:00.000Z");
 const RENDERED_BYTES = new Uint8Array([9, 9, 9]);
