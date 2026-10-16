@@ -79,7 +79,7 @@ import { libraryReturnState, type LibraryReturnState } from "./library-address";
 import {
   useExerciseLifecycle,
   useExerciseLifecycleAnswer,
-  type ExerciseLifecycleAnswers,
+  type ExerciseWriteOutcomes,
   type PendingExerciseWrite,
 } from "./use-exercise-lifecycle";
 
@@ -263,7 +263,7 @@ export function ExerciseListing({
 
       {lifecycle.pending.map((pendingWrite) => (
         <ExerciseLifecycleAnswer
-          answers={lifecycle.answers}
+          outcomes={lifecycle.outcomes}
           key={pendingWrite.key}
           pendingWrite={pendingWrite}
         />
@@ -595,13 +595,13 @@ function rowActionsFor({
 }
 
 function ExerciseLifecycleAnswer({
-  answers,
+  outcomes,
   pendingWrite,
 }: {
-  answers: ExerciseLifecycleAnswers;
+  outcomes: ExerciseWriteOutcomes;
   pendingWrite: PendingExerciseWrite;
 }) {
-  useExerciseLifecycleAnswer(pendingWrite, answers);
+  useExerciseLifecycleAnswer(pendingWrite, outcomes);
 
   return null;
 }

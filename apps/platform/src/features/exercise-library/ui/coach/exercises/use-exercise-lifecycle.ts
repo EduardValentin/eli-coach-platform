@@ -14,7 +14,7 @@ import {
 
 type ExerciseLifecycleAction = "archive" | "restore" | "delete";
 
-export type ExerciseLifecycleAnswers = {
+export type ExerciseWriteOutcomes = {
   succeeded: (key: string) => void;
   failed: (key: string) => void;
 };
@@ -69,7 +69,7 @@ export function useExerciseLifecycle(
       current.filter((pendingWrite) => pendingWrite.key !== key),
     );
 
-  const answers: ExerciseLifecycleAnswers = {
+  const outcomes: ExerciseWriteOutcomes = {
     succeeded: (key) => {
       drop(key);
       heading.current?.focus();
@@ -79,7 +79,7 @@ export function useExerciseLifecycle(
 
   return {
     pending,
-    answers,
+    outcomes,
     archive: (exercise: ExerciseView) => write("archive", exercise),
     restore: (exercise: ExerciseView) => write("restore", exercise),
     remove: (exercise: ExerciseView) => write("delete", exercise),
@@ -88,7 +88,7 @@ export function useExerciseLifecycle(
 
 export function useExerciseLifecycleAnswer(
   pendingWrite: PendingExerciseWrite,
-  answers: ExerciseLifecycleAnswers,
+  outcomes: ExerciseWriteOutcomes,
 ) {
   const { data, state } = useFetcher<unknown>({ key: pendingWrite.key });
 
@@ -97,12 +97,12 @@ export function useExerciseLifecycleAnswer(
 
     if (answer.success) {
       toast.success(successCopyOf(pendingWrite, answer.data.name));
-      answers.succeeded(pendingWrite.key);
+      outcomes.succeeded(pendingWrite.key);
     } else {
       toast.error(
         `"${pendingWrite.name}" wasn’t ${PAST_TENSE[pendingWrite.action]}. Try again.`,
       );
-      answers.failed(pendingWrite.key);
+      outcomes.failed(pendingWrite.key);
     }
   });
 
