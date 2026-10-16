@@ -1257,7 +1257,7 @@ test(
     await coachDashboard.open();
 
     // act
-    await nutritionLibrary.openTab("unknown");
+    await nutritionLibrary.openWithTabParam("unknown");
 
     // assert
     await nutritionLibrary.expectTab("Foods");
@@ -1286,7 +1286,7 @@ test(
     await signInAsCoach();
     await coachDashboard.open();
     await recipeRequests.createAccepted(saladNamed(saved));
-    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.openWithTabParam("recipes");
     await nutritionLibrary.editRecipe(saved);
     await recipeBuilder.expectEditing({
       name: saved,
@@ -1353,7 +1353,7 @@ test(
     await page.goto("/store");
     await signIn();
     await recipeRequests.createAccepted(othersRecipe);
-    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.openWithTabParam("recipes");
     await nutritionLibrary.editRecipe(othersRecipe.name);
     const othersRecipeId = await recipeBuilder.recipeId();
     await page.goto("/");
@@ -1412,7 +1412,7 @@ test(
     await signInAsCoach();
     await coachDashboard.open();
     await recipeRequests.createAccepted(kept);
-    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.openWithTabParam("recipes");
     await nutritionLibrary.editRecipe(kept.name);
     const recipeId = await recipeBuilder.recipeId();
     await page.goto("/");
@@ -1430,7 +1430,7 @@ test(
     expect(visitorStatuses).toEqual([401, 401]);
 
     for (const open of [
-      () => nutritionLibrary.openTab("recipes"),
+      () => nutritionLibrary.openWithTabParam("recipes"),
       () => recipeBuilder.openNew(),
       () => recipeBuilder.open(recipeId),
     ]) {
@@ -1446,7 +1446,7 @@ test(
     await signIn();
 
     for (const open of [
-      () => nutritionLibrary.openTab("recipes"),
+      () => nutritionLibrary.openWithTabParam("recipes"),
       () => recipeBuilder.openNew(),
       () => recipeBuilder.open(recipeId),
     ]) {

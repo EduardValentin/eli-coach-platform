@@ -858,7 +858,8 @@ function ingredientRows(): [string, number | null, string][] {
   return screen
     .queryAllByRole("spinbutton", { name: /^Grams of / })
     .map((grams) => {
-      const food = grams.getAttribute("aria-label")?.slice(9) ?? "";
+      const food =
+        grams.getAttribute("aria-label")?.replace(/^Grams of /, "") ?? "";
       const method = screen.getAllByRole("combobox", {
         name: `Cooking method for ${food}`,
       });

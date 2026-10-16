@@ -5,7 +5,7 @@ import { MACRO_TILE_TONE } from "~/features/nutrition-library/ui/shared/nutritio
 
 type MacroTilesProps = {
   macros: RecipeMacrosSnapshot;
-  kcalTone: "quiet" | "card";
+  kcalTone: "quiet" | "base";
   parity?: string;
 };
 

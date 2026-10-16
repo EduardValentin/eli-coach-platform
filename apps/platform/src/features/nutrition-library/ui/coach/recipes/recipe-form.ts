@@ -5,13 +5,18 @@ import {
   MAX_RECIPE_NAME_LENGTH,
   MIN_INGREDIENT_GRAMS,
   RecipeDraft,
+  RecipeMacros,
   type CookingMethod,
   type RecipeDraftProblems,
   type RecipeIcon,
+  type RecipeMacrosSnapshot,
 } from "@eli-coach-platform/domain/nutrition";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
-import type { NutritionTagView } from "~/features/nutrition-library/public/foods";
+import type {
+  FoodView,
+  NutritionTagView,
+} from "~/features/nutrition-library/public/foods";
 import type {
   RecipeBuilderView,
   RecipeRequest,
@@ -50,6 +55,11 @@ export type RecipeFieldProblems = Partial<Record<RecipeScalarField, string>> & {
 
 export type RecipeProblemField =
   RecipeScalarField | `ingredients.${number}.grams`;
+
+type FoodValuesPer100g = Pick<
+  FoodView,
+  "id" | "kcal" | "protein" | "carb" | "fat"
+>;
 
 type RecipeResolverContext = {
   otherNames: () => readonly string[];
@@ -125,6 +135,19 @@ export function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
   };
 }
 
+export function recipeMacrosOf(
+  ingredients: readonly RecipeIngredientValues[],
+  foods: readonly FoodValuesPer100g[],
+): RecipeMacrosSnapshot {
+  return RecipeMacros.of(
+    ingredients.map(({ foodId, grams }) => ({
+      foodId,
+      grams: Number(grams) || 0,
+    })),
+    foods,
+  ).toSnapshot();
+}
+
 export function recipeFieldProblemsOf(
   problems: RecipeDraftProblems,
 ): RecipeFieldProblems {
@@ -141,7 +164,7 @@ export function recipeFieldProblemsOf(
   };
 }
 
-export function recipeProblemFieldsOf(
+export function refusedFieldsInFocusOrder(
   problems: RecipeFieldProblems,
 ): [RecipeProblemField, string][] {
   const scalar = (field: RecipeScalarField): [RecipeProblemField, string][] => {

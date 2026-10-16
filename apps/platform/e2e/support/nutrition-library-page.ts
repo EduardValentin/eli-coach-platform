@@ -116,8 +116,8 @@ export class NutritionLibraryPage {
     await this.page.goto(LIBRARY_PATH);
   }
 
-  async openTab(tab: string): Promise<void> {
-    await this.page.goto(`${LIBRARY_PATH}?tab=${tab}`);
+  async openWithTabParam(value: string): Promise<void> {
+    await this.page.goto(`${LIBRARY_PATH}?tab=${value}`);
   }
 
   async openRecipes(): Promise<void> {

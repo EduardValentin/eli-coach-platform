@@ -4,8 +4,14 @@ import {
   TAG_FAMILIES,
   type CookingMethod,
   type RecipeMacrosSnapshot,
+  type TagFamily,
 } from "@eli-coach-platform/domain/nutrition";
-import { cn, describedByOf, toggled } from "@eli-coach-platform/ui/lib";
+import {
+  cn,
+  describedByOf,
+  LABEL_CLASS,
+  toggled,
+} from "@eli-coach-platform/ui/lib";
 import {
   Button,
   buttonVariants,
@@ -64,6 +70,8 @@ type RecipeForm = UseFormReturn<RecipeFormValues>;
 
 type FoodDragItem = { foodId: string; name: string };
 
+type SaveState = "blocked" | "ready" | "saving";
+
 const FOOD_DRAG_TYPE = "NUTRITION_FOOD";
 
 const RECIPE_ICON_CHOICES = RECIPE_ICONS.map((key) => ({
@@ -71,8 +79,6 @@ const RECIPE_ICON_CHOICES = RECIPE_ICONS.map((key) => ({
   label: RECIPE_ICON_APPEARANCE[key].label,
   icon: RECIPE_ICON_APPEARANCE[key].glyph,
 }));
-
-const LABEL_CLASS = "text-label text-text-secondary uppercase";
 
 function shownProblem(
   id: string,
@@ -91,16 +97,14 @@ function shownProblem(
 export function BuilderTopBar({
   form,
   problem,
-  canSave,
-  saving,
+  saveState,
   onSave,
   onOpenLibrary,
   openLibraryRef,
 }: {
   form: RecipeForm;
   problem: string | undefined;
-  canSave: boolean;
-  saving: boolean;
+  saveState: SaveState;
   onSave: () => void;
   onOpenLibrary: () => void;
   openLibraryRef: Ref<HTMLButtonElement>;
@@ -155,9 +159,9 @@ export function BuilderTopBar({
           <span className="hidden lg:inline">Cancel</span>
         </Link>
         <Button
-          aria-busy={saving || undefined}
+          aria-busy={saveState === "saving" || undefined}
           aria-label="Save recipe"
-          disabled={!canSave}
+          disabled={saveState !== "ready"}
           onClick={onSave}
           size="sm"
           variant="primary"
@@ -527,7 +531,7 @@ export function BuilderMacros({ macros }: { macros: RecipeMacrosSnapshot }) {
           Macros (whole recipe)
         </p>
       </div>
-      <MacroTiles kcalTone="card" macros={macros} />
+      <MacroTiles kcalTone="base" macros={macros} />
     </section>
   );
 }
@@ -586,52 +590,69 @@ export function BuilderDetails({
       <fieldset className="grid gap-3">
         <Legend>Meal role &amp; tags</Legend>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {TAG_FAMILIES.map((family) => {
-            const { icon: FamilyIcon } = TAG_FAMILY_APPEARANCE[family];
-
-            return (
-              <div
-                aria-label={TAG_FAMILY_LABELS[family]}
-                className="rounded-control border bg-surface-base p-3"
-                key={family}
-                role="group"
-              >
-                <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
-                  <FamilyIcon
-                    aria-hidden="true"
-                    className="text-text-secondary"
-                    size={14}
-                  />
-                  {TAG_FAMILY_LABELS[family]}
-                </p>
-                <ul className="flex flex-wrap gap-1.5">
-                  {tags
-                    .filter((tag) => tag.family === family)
-                    .map((tag) => (
-                      <li key={tag.id}>
-                        <CheckboxChip
-                          aria-label={tag.label}
-                          isChecked={values.tagIds.includes(tag.id)}
-                          onChange={() =>
-                            form.setValue(
-                              "tagIds",
-                              toggled(values.tagIds, tag.id),
-                              { shouldDirty: true },
-                            )
-                          }
-                          size="compact"
-                        >
-                          {tag.label}
-                        </CheckboxChip>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            );
-          })}
+          {TAG_FAMILIES.map((family) => (
+            <TagFamilyGroup
+              chosenTagIds={values.tagIds}
+              family={family}
+              key={family}
+              onToggle={(tagId) =>
+                form.setValue("tagIds", toggled(values.tagIds, tagId), {
+                  shouldDirty: true,
+                })
+              }
+              tags={tags}
+            />
+          ))}
         </div>
       </fieldset>
     </section>
+  );
+}
+
+function TagFamilyGroup({
+  family,
+  tags,
+  chosenTagIds,
+  onToggle,
+}: {
+  family: TagFamily;
+  tags: readonly NutritionTagView[];
+  chosenTagIds: readonly string[];
+  onToggle: (tagId: string) => void;
+}) {
+  const { icon: FamilyIcon } = TAG_FAMILY_APPEARANCE[family];
+
+  return (
+    <div
+      aria-label={TAG_FAMILY_LABELS[family]}
+      className="rounded-control border bg-surface-base p-3"
+      role="group"
+    >
+      <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+        <FamilyIcon
+          aria-hidden="true"
+          className="text-text-secondary"
+          size={14}
+        />
+        {TAG_FAMILY_LABELS[family]}
+      </p>
+      <ul className="flex flex-wrap gap-1.5">
+        {tags
+          .filter((tag) => tag.family === family)
+          .map((tag) => (
+            <li key={tag.id}>
+              <CheckboxChip
+                aria-label={tag.label}
+                isChecked={chosenTagIds.includes(tag.id)}
+                onChange={() => onToggle(tag.id)}
+                size="compact"
+              >
+                {tag.label}
+              </CheckboxChip>
+            </li>
+          ))}
+      </ul>
+    </div>
   );
 }
 

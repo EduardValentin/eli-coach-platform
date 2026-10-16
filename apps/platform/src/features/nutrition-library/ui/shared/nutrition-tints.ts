@@ -5,9 +5,9 @@ import type { ComponentProps } from "react";
 type MacroTone = ComponentProps<typeof ValueTile>["tone"];
 
 export const MACRO_TILE_TONE = {
-  protein: "tint-red-soft",
-  carb: "tint-blue-soft",
-  fat: "tint-amber-soft",
+  protein: "tint-red",
+  carb: "tint-blue",
+  fat: "tint-amber",
 } as const satisfies Record<string, MacroTone>;
 
 export const CATEGORY_DOT: Readonly<Record<FoodCategory, string>> = {

@@ -5,11 +5,11 @@ import type { DataAttributes } from "../lib/data-attributes";
 import { VALUE_CLASS } from "../lib/typography";
 
 const TONE_FILLS = {
-  card: "bg-surface-base",
+  base: "bg-surface-base",
   quiet: "bg-surface-quiet",
-  "tint-red-soft": "bg-tint-red-soft",
-  "tint-blue-soft": "bg-tint-blue-soft",
-  "tint-amber-soft": "bg-tint-amber-soft",
+  "tint-red": "bg-tint-red-soft",
+  "tint-blue": "bg-tint-blue-soft",
+  "tint-amber": "bg-tint-amber-soft",
 } as const;
 
 type ValueTileProps = DataAttributes & {

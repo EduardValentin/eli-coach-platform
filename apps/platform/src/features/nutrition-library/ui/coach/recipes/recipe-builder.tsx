@@ -1,15 +1,14 @@
-import { RecipeMacros } from "@eli-coach-platform/domain/nutrition";
 import {
   cn,
   useSaveFetcher,
   type SaveOutcome,
 } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { DndProvider, useDragLayer } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { flushSync } from "react-dom";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, type UseFormReturn } from "react-hook-form";
 import { useNavigate } from "react-router";
 
 import {
@@ -37,15 +36,23 @@ import {
   recipeFieldProblemsOf,
   recipeFormResolver,
   recipeFormValuesOf,
-  recipeProblemFieldsOf,
+  recipeMacrosOf,
   recipeRequestOf,
+  refusedFieldsInFocusOrder,
   shownRecipeProblemsOf,
   type RecipeFormValues,
+  type RecipeProblemField,
 } from "./recipe-form";
 
 const SAVE_FAILED = "We couldn't save the recipe. Try again in a moment.";
 
 type RecipeBuilderProps = { view: RecipeBuilderView };
+
+type RecipeSaveOptions = {
+  form: UseFormReturn<RecipeFormValues>;
+  recipe: RecipeBuilderView["recipe"];
+  takenNames: RefObject<readonly string[]>;
+};
 
 export function RecipeBuilder({ view }: RecipeBuilderProps) {
   return (
@@ -56,16 +63,93 @@ export function RecipeBuilder({ view }: RecipeBuilderProps) {
   );
 }
 
+function useLibraryDrawer() {
+  const openButton = useRef<HTMLButtonElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+
+  const openLibrary = () => {
+    flushSync(() => setOpen(true));
+    closeButton.current?.focus();
+  };
+
+  const closeLibrary = () => {
+    flushSync(() => setOpen(false));
+    openButton.current?.focus();
+  };
+
+  return { open, openLibrary, closeLibrary, openButton, closeButton };
+}
+
+function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
+  const navigate = useNavigate();
+  const sentName = useRef("");
+
+  const rememberTakenName = (refused: RecipeProblems) => {
+    if (refused.name === "taken") {
+      takenNames.current = [...takenNames.current, sentName.current];
+    }
+  };
+
+  const markRefused = (refusedFields: [RecipeProblemField, string][]) => {
+    refusedFields.forEach(([field, message], index) =>
+      form.setError(
+        field,
+        { message, type: "server" },
+        { shouldFocus: index === 0 },
+      ),
+    );
+  };
+
+  const settleSave = (outcome: SaveOutcome<RecipeProblems>) => {
+    if (outcome.status === "saved") {
+      toast.success(recipe ? "Recipe updated" : "Recipe created");
+      void navigate(outcome.redirectTo);
+      return;
+    }
+
+    if (outcome.status === "failed") {
+      toast.error(SAVE_FAILED);
+      return;
+    }
+
+    rememberTakenName(outcome.problems);
+
+    const refusedFields = refusedFieldsInFocusOrder(
+      recipeFieldProblemsOf(outcome.problems),
+    );
+
+    if (refusedFields.length === 0) {
+      toast.error(SAVE_FAILED);
+      return;
+    }
+
+    markRefused(refusedFields);
+  };
+
+  const { save, saving } = useSaveFetcher({
+    target: recipe
+      ? { action: recipePath(recipe.id), method: "put" }
+      : { action: NUTRITION_LIBRARY_API_PATHS.recipes, method: "post" },
+    savedAnswer: recipeSavedAnswerSchema,
+    refusedAnswer: recipeProblemsAnswerSchema,
+    onSettled: settleSave,
+  });
+
+  const submit = form.handleSubmit((submitted) => {
+    sentName.current = submitted.name;
+    save(recipeRequestOf(submitted));
+  });
+
+  return { submit, saving };
+}
+
 function RecipeWorkspace({ view }: RecipeBuilderProps) {
   const { recipe, offeredFoods, placedFoods, tags } = view;
   const foods = [...offeredFoods, ...placedFoods];
-  const navigate = useNavigate();
   const headingId = useId();
   const takenNames = useRef<readonly string[]>(view.otherNames);
-  const sentName = useRef("");
-  const openLibraryButton = useRef<HTMLButtonElement>(null);
-  const closeLibraryButton = useRef<HTMLButtonElement>(null);
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const library = useLibraryDrawer();
   const [resolver] = useState(() =>
     recipeFormResolver({
       otherNames: () => takenNames.current,
@@ -82,16 +166,11 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
     control: form.control,
     name: "ingredients",
   });
+  const { submit, saving } = useRecipeSave({ form, recipe, takenNames });
   const values = form.watch();
   const problems = shownRecipeProblemsOf(form.formState.errors);
   const isDragging = useDragLayer((monitor) => monitor.isDragging());
-  const macros = RecipeMacros.of(
-    values.ingredients.map(({ foodId, grams }) => ({
-      foodId,
-      grams: Number(grams) || 0,
-    })),
-    foods,
-  ).toSnapshot();
+  const macros = recipeMacrosOf(values.ingredients, foods);
 
   useEffect(
     () =>
@@ -113,68 +192,6 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
     }
   };
 
-  const openLibrary = () => {
-    flushSync(() => setLibraryOpen(true));
-    closeLibraryButton.current?.focus();
-  };
-
-  const closeLibrary = () => {
-    flushSync(() => setLibraryOpen(false));
-    openLibraryButton.current?.focus();
-  };
-
-  const rememberTakenName = (refused: RecipeProblems) => {
-    if (refused.name === "taken") {
-      takenNames.current = [...takenNames.current, sentName.current];
-    }
-  };
-
-  const showRefusedFields = (refused: RecipeProblems) => {
-    const refusedFields = recipeProblemFieldsOf(recipeFieldProblemsOf(refused));
-
-    refusedFields.forEach(([field, message], index) =>
-      form.setError(
-        field,
-        { message, type: "server" },
-        { shouldFocus: index === 0 },
-      ),
-    );
-    return refusedFields;
-  };
-
-  const settle = (outcome: SaveOutcome<RecipeProblems>) => {
-    if (outcome.status === "saved") {
-      toast.success(recipe ? "Recipe updated" : "Recipe created");
-      void navigate(outcome.redirectTo);
-      return;
-    }
-
-    if (outcome.status === "failed") {
-      toast.error(SAVE_FAILED);
-      return;
-    }
-
-    rememberTakenName(outcome.problems);
-
-    if (showRefusedFields(outcome.problems).length === 0) {
-      toast.error(SAVE_FAILED);
-    }
-  };
-
-  const { save, saving } = useSaveFetcher({
-    target: recipe
-      ? { action: recipePath(recipe.id), method: "put" }
-      : { action: NUTRITION_LIBRARY_API_PATHS.recipes, method: "post" },
-    savedAnswer: recipeSavedAnswerSchema,
-    refusedAnswer: recipeProblemsAnswerSchema,
-    onSettled: settle,
-  });
-
-  const submit = form.handleSubmit((submitted) => {
-    sentName.current = submitted.name;
-    save(recipeRequestOf(submitted));
-  });
-
   return (
     <div
       className={cn("fixed inset-0 z-50 flex flex-col bg-surface-subtle", {
@@ -183,22 +200,23 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
       data-parity-root="RecipeBuilderPage"
     >
       <BuilderTopBar
-        canSave={form.formState.isValid && !saving}
         form={form}
-        onOpenLibrary={openLibrary}
+        onOpenLibrary={library.openLibrary}
         onSave={() => void submit()}
-        openLibraryRef={openLibraryButton}
+        openLibraryRef={library.openButton}
         problem={problems.name}
-        saving={saving}
+        saveState={
+          saving ? "saving" : form.formState.isValid ? "ready" : "blocked"
+        }
       />
 
       <div className="flex min-h-0 flex-1">
         <FoodLibraryAside
-          closeRef={closeLibraryButton}
+          closeRef={library.closeButton}
           foods={offeredFoods}
           onAdd={addFood}
-          onClose={closeLibrary}
-          open={libraryOpen}
+          onClose={library.closeLibrary}
+          open={library.open}
         />
 
         <main

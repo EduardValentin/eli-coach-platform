@@ -1,4 +1,4 @@
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn, LABEL_CLASS } from "@eli-coach-platform/ui/lib";
 import {
   cardVariants,
   ItemVisual,
@@ -69,9 +69,7 @@ export function RecipeCard({ recipe, tags }: RecipeCardProps) {
         </div>
 
         <div>
-          <p className="mb-1.5 text-label text-text-secondary uppercase">
-            Per recipe
-          </p>
+          <p className={cn("mb-1.5", LABEL_CLASS)}>Per recipe</p>
           <MacroTiles
             kcalTone="quiet"
             macros={recipe.macros}

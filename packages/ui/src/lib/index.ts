@@ -27,7 +27,11 @@ export {
 } from "./use-confirmed-fetcher-dialog";
 export { useSaveFetcher, type SaveOutcome } from "./use-save-fetcher";
 export { PhoneLink } from "./phone-link";
-export { PORTAL_PAGE_TITLE_CLASS, VALUE_CLASS } from "./typography";
+export {
+  LABEL_CLASS,
+  PORTAL_PAGE_TITLE_CLASS,
+  VALUE_CLASS,
+} from "./typography";
 export { toggled } from "./toggled";
 export { useDisplayTimeZone } from "./use-display-time-zone";
 export { useFragmentToken } from "./use-fragment-token";

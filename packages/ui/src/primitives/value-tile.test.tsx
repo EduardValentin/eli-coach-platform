@@ -24,7 +24,7 @@ function renderTile(tone: Parameters<typeof ValueTile>[0]["tone"]) {
 describe("ValueTile", () => {
   it("pairs the label with its value as a term and a definition", () => {
     // arrange, act
-    const tile = renderTile("card");
+    const tile = renderTile("base");
 
     // assert
     expect(within(tile).getByText("P").tagName).toBe("DT");
@@ -33,7 +33,7 @@ describe("ValueTile", () => {
 
   it("is a parity root", () => {
     // arrange, act
-    const tile = renderTile("card");
+    const tile = renderTile("base");
 
     // assert
     expect(tile).toHaveAttribute("data-parity-root", "ValueTile");
@@ -53,7 +53,7 @@ describe("ValueTile", () => {
 
   it("centres its content on the compact corner", () => {
     // arrange, act
-    const tile = renderTile("card");
+    const tile = renderTile("base");
 
     // assert
     expect(tile).toHaveClass(
@@ -66,7 +66,7 @@ describe("ValueTile", () => {
 
   it("sets the label in uppercase primary ink and the value in tabular figures", () => {
     // arrange, act
-    const tile = renderTile("card");
+    const tile = renderTile("base");
 
     // assert
     expect(within(tile).getByText("P")).toHaveClass(
@@ -84,11 +84,11 @@ describe("ValueTile", () => {
   });
 
   it.each([
-    ["card", "bg-surface-base"],
+    ["base", "bg-surface-base"],
     ["quiet", "bg-surface-quiet"],
-    ["tint-red-soft", "bg-tint-red-soft"],
-    ["tint-blue-soft", "bg-tint-blue-soft"],
-    ["tint-amber-soft", "bg-tint-amber-soft"],
+    ["tint-red", "bg-tint-red-soft"],
+    ["tint-blue", "bg-tint-blue-soft"],
+    ["tint-amber", "bg-tint-amber-soft"],
   ] as const)("fills a %s tile with %s", (tone, fill) => {
     // arrange, act
     const tile = renderTile(tone);

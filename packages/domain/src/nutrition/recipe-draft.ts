@@ -70,34 +70,21 @@ type RecipeDraftResult =
   | { status: "valid"; draft: RecipeDraft }
   | { status: "invalid"; problems: RecipeDraftProblems };
 
+type ParsedRecipeInput =
+  | { status: "parsed"; snapshot: RecipeDraftSnapshot }
+  | { status: "invalid"; problems: RecipeDraftProblems };
+
 const ROLE_FAMILY: TagFamily = "meal-time";
 
-export class RecipeDraft {
-  private constructor(private readonly snapshot: RecipeDraftSnapshot) {}
+class RecipeInputParser {
+  constructor(private readonly context: RecipeDraftContext) {}
 
-  static from(
-    input: RecipeDraftInput,
-    context: RecipeDraftContext,
-  ): RecipeDraftResult {
-    const icon =
-      input.icon === null
-        ? null
-        : RECIPE_ICONS.find((known) => known === input.icon);
-    const ingredients = input.ingredients.flatMap(
-      ({ foodId, grams, method }) => {
-        const known = COOKING_METHODS.find((candidate) => candidate === method);
-
-        return known === undefined ? [] : [{ foodId, grams, method: known }];
-      },
+  parse(input: RecipeDraftInput): ParsedRecipeInput {
+    const icon = this.iconOf(input.icon);
+    const { ingredients, unknownMethods } = this.ingredientsOf(
+      input.ingredients,
     );
-    const unknownMethods = input.ingredients.flatMap(({ method }, position) =>
-      COOKING_METHODS.some((known) => known === method)
-        ? []
-        : [{ position, problem: "unknown-method" as const }],
-    );
-    const unknownTag = input.tagIds.some(
-      (tagId) => !context.tags.some(({ id }) => id === tagId),
-    );
+    const unknownTag = this.hasUnknownTag(input.tagIds);
 
     if (icon === undefined || unknownMethods.length > 0 || unknownTag) {
       return {
@@ -110,23 +97,74 @@ export class RecipeDraft {
       };
     }
 
-    const chosenTags = context.tags.filter(({ id }) =>
+    const chosenTags = this.context.tags.filter(({ id }) =>
       input.tagIds.includes(id),
     );
-    const draft = new RecipeDraft({
-      name: input.name.trim(),
-      ingredients,
-      prepMinutes: input.prepMinutes,
-      cookMinutes: input.cookMinutes,
-      instructions: input.instructions.trim(),
-      icon,
-      mealRoleIds: chosenTags
-        .filter(({ family }) => family === ROLE_FAMILY)
-        .map(({ id }) => id),
-      tagIds: chosenTags
-        .filter(({ family }) => family !== ROLE_FAMILY)
-        .map(({ id }) => id),
+
+    return {
+      status: "parsed",
+      snapshot: {
+        name: input.name.trim(),
+        ingredients,
+        prepMinutes: input.prepMinutes,
+        cookMinutes: input.cookMinutes,
+        instructions: input.instructions.trim(),
+        icon,
+        mealRoleIds: chosenTags
+          .filter(({ family }) => family === ROLE_FAMILY)
+          .map(({ id }) => id),
+        tagIds: chosenTags
+          .filter(({ family }) => family !== ROLE_FAMILY)
+          .map(({ id }) => id),
+      },
+    };
+  }
+
+  private iconOf(entered: string | null): RecipeIcon | null | undefined {
+    return entered === null
+      ? null
+      : RECIPE_ICONS.find((known) => known === entered);
+  }
+
+  private ingredientsOf(entered: readonly RecipeIngredientInput[]): {
+    ingredients: RecipeIngredientSnapshot[];
+    unknownMethods: RecipeIngredientProblem[];
+  } {
+    const ingredients: RecipeIngredientSnapshot[] = [];
+    const unknownMethods: RecipeIngredientProblem[] = [];
+
+    entered.forEach(({ foodId, grams, method }, position) => {
+      const known = COOKING_METHODS.find((candidate) => candidate === method);
+
+      if (known === undefined) {
+        unknownMethods.push({ position, problem: "unknown-method" });
+      } else {
+        ingredients.push({ foodId, grams, method: known });
+      }
     });
+
+    return { ingredients, unknownMethods };
+  }
+
+  private hasUnknownTag(tagIds: readonly string[]): boolean {
+    return tagIds.some(
+      (tagId) => !this.context.tags.some(({ id }) => id === tagId),
+    );
+  }
+}
+
+export class RecipeDraft {
+  private constructor(private readonly snapshot: RecipeDraftSnapshot) {}
+
+  static from(
+    input: RecipeDraftInput,
+    context: RecipeDraftContext,
+  ): RecipeDraftResult {
+    const parsed = new RecipeInputParser(context).parse(input);
+
+    if (parsed.status === "invalid") return parsed;
+
+    const draft = new RecipeDraft(parsed.snapshot);
     const problems = draft.problemsAmong(context);
 
     if (Object.keys(problems).length > 0) {
