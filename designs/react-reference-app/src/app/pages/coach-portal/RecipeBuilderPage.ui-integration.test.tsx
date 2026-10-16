@@ -265,3 +265,46 @@ describe("an archived food already in a recipe", () => {
     expect(screen.queryByRole('button', { name: 'Add Rice cakes to recipe' })).not.toBeInTheDocument();
   });
 });
+
+describe('a recipe save the server refuses', () => {
+  it('says it could not save, stays on the builder and keeps her entries', async () => {
+    // arrange
+    window.history.replaceState(null, '', '/?rsave=fail');
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.click(screen.getByRole('button', { name: 'Add Oats to recipe' }));
+    await retype(user, gramsField('Oats'), '60');
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    expect(
+      await screen.findByText("We couldn't save the recipe. Try again in a moment."),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('library-search')).not.toBeInTheDocument();
+    expect(screen.getByTestId('saved')).toHaveTextContent('none');
+    expect(nameField()).toHaveValue('Morning oats');
+    expect(gramsField('Oats')).toHaveValue(60);
+  });
+});
+
+describe('leaving the builder', () => {
+  it('links back to the recipes from the back arrow and Cancel', () => {
+    // arrange
+    // act
+    renderBuilder();
+
+    // assert
+    expect(screen.getByRole('link', { name: 'Back to Nutrition' })).toHaveAttribute(
+      'href',
+      '/coach/nutrition?tab=recipes',
+    );
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+      'href',
+      '/coach/nutrition?tab=recipes',
+    );
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('main', { name: 'Recipe builder' })).toBeInTheDocument();
+  });
+});

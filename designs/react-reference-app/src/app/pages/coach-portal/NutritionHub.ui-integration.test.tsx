@@ -125,3 +125,17 @@ describe('moving between the Nutrition tabs', () => {
     expect(await screen.findByRole('tab', { name: 'Recipes', selected: true })).toHaveFocus();
   });
 });
+
+describe('the Recipes tab header', () => {
+  it('links to a new recipe', () => {
+    // arrange
+    // act
+    renderHub('/coach/nutrition?tab=recipes');
+
+    // assert
+    expect(screen.getByRole('link', { name: 'New recipe' })).toHaveAttribute(
+      'href',
+      '/coach/nutrition/recipe-builder',
+    );
+  });
+});

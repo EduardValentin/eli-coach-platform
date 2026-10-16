@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { Button } from '../../components/ui/button';
@@ -19,7 +19,6 @@ const POST_MVP_TABS = new Set(['foods', 'recipes', 'plans']);
 
 export function NutritionHub() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const location = useLocation();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
@@ -76,14 +75,11 @@ export function NutritionHub() {
       </Button>
     ),
     recipes: (
-      <Button
-        type="button"
-        variant="primary"
-        size="md"
-        onClick={() => navigate('/coach/nutrition/recipe-builder')}
-      >
-        <Plus aria-hidden="true" />
-        New recipe
+      <Button asChild variant="primary" size="md">
+        <Link to="/coach/nutrition/recipe-builder">
+          <Plus aria-hidden="true" />
+          New recipe
+        </Link>
       </Button>
     ),
   };

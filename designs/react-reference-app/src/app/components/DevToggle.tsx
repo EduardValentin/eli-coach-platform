@@ -62,6 +62,7 @@ import {
 import { EXERCISE_SEEDS } from '../services/exerciseSamples';
 import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService';
 import { FOOD_SEEDS } from '../services/foodSamples';
+import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1168,6 +1169,28 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Populated</SelectItem>
                       <SelectItem value="empty">Empty</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-recipe-save" className={DEV_LABEL_CLASS}>
+                    Recipe save
+                  </Label>
+                  <Select
+                    value={appState.recipeSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        recipeSave: optionOrDefault(RECIPE_SAVE_OUTCOMES, value, 'ok'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-recipe-save" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="ok">Saves</SelectItem>
+                      <SelectItem value="fail">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

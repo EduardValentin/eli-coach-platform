@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { toast } from 'sonner';
@@ -73,6 +73,7 @@ import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { InlineProblem } from '../../components/InlineProblem';
+import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 const RECIPES = '/coach/nutrition?tab=recipes';
@@ -120,6 +121,7 @@ function DraggableFood({
       />
       <span
         className={`size-2.5 rounded-full ${CATEGORY_SWATCH[food.category]}`}
+        data-parity="food-category-dot"
         aria-hidden="true"
       />
       <span className="flex-1 text-sm font-medium text-text-primary">
@@ -250,6 +252,7 @@ function RecipeBuilderInner() {
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const problemIds = useId();
+  const headingId = useId();
   const markTouched = () => setTouched(true);
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
@@ -382,13 +385,15 @@ function RecipeBuilderInner() {
       macroOverride: override ?? undefined,
       imageUrl,
     };
-    if (existing) {
-      updateRecipe(existing.id, payload);
-      toast.success('Recipe updated');
-    } else {
-      addRecipe(payload);
-      toast.success('Recipe created');
+    try {
+      saveRecipeThroughServer(appState.recipeSave, () =>
+        existing ? updateRecipe(existing.id, payload) : addRecipe(payload),
+      );
+    } catch {
+      toast.error(RECIPE_NOT_SAVED);
+      return;
     }
+    toast.success(existing ? 'Recipe updated' : 'Recipe created');
     navigate(RECIPES);
   };
 
@@ -419,19 +424,16 @@ function RecipeBuilderInner() {
       })}
       data-parity-root="RecipeBuilderPage"
     >
-      <div
+      <header
         className="min-h-14 py-1 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-start justify-between shrink-0"
         data-parity="recipe-builder-top-bar"
       >
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className="flex h-(--size-control-md) shrink-0 items-center gap-3">
-            <Button
-              onClick={() => navigate(RECIPES)}
-              aria-label="Back to Nutrition"
-              variant="ghost"
-              size="icon-sm"
-            >
-              <ArrowLeft size={20} />
+            <Button asChild variant="ghost" size="icon-sm">
+              <Link to={RECIPES} aria-label="Back to Nutrition">
+                <ArrowLeft size={20} />
+              </Link>
             </Button>
             <Button
               ref={openLibraryButton}
@@ -465,13 +467,11 @@ function RecipeBuilderInner() {
           </div>
         </div>
         <div className="flex h-(--size-control-md) items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            aria-label="Cancel"
-            onClick={() => navigate(RECIPES)}
-          >
-            <X aria-hidden="true" />
-            <span className="hidden lg:inline">Cancel</span>
+          <Button asChild variant="outline">
+            <Link to={RECIPES} aria-label="Cancel">
+              <X aria-hidden="true" />
+              <span className="hidden lg:inline">Cancel</span>
+            </Link>
           </Button>
           <Button
             aria-label="Save recipe"
@@ -482,7 +482,7 @@ function RecipeBuilderInner() {
             <span className="hidden sm:inline">Save recipe</span>
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Body */}
       <div className="flex-1 flex min-h-0">
@@ -491,6 +491,7 @@ function RecipeBuilderInner() {
           <div
             aria-hidden="true"
             className="lg:hidden fixed inset-0 bg-overlay-medium z-40"
+            data-parity="drawer-backdrop"
             onClick={closeLibrary}
           />
         )}
@@ -535,8 +536,13 @@ function RecipeBuilderInner() {
         </aside>
 
         {/* Recipe canvas */}
-        <main className="flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6">
-          <h1 className="sr-only">Recipe builder</h1>
+        <main
+          aria-labelledby={headingId}
+          className="flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6"
+        >
+          <h1 id={headingId} className="sr-only">
+            Recipe builder
+          </h1>
 
           {/* Recipe visual: photo → icon → default */}
           <div className="mb-4">
