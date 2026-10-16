@@ -24,6 +24,7 @@ import {
   type AddressParams,
   type CheckInFilter,
   type OptionCounts,
+  type SortReading,
 } from "./check-in-toolbar";
 import { DisabledAction } from "./disabled-action";
 import { tabTo } from "./keyboard";
@@ -131,6 +132,18 @@ export class ClientCheckInsPage {
     await this.toolbar.chooseFilter("Waiting on", label);
   }
 
+  async toggleSort(): Promise<void> {
+    await this.toolbar.toggleSort();
+  }
+
+  async expectSort(reading: SortReading): Promise<void> {
+    await this.toolbar.expectSort(reading);
+  }
+
+  async expectNoPager(): Promise<void> {
+    await this.toolbar.expectNoPager();
+  }
+
   async expectNoMatch(): Promise<void> {
     await this.toolbar.expectNoMatch();
   }
@@ -156,6 +169,7 @@ export class ClientCheckInsPage {
 
   async expectEmpty(tab: CheckInTab, title: string): Promise<void> {
     await expectEmptyCheckInTab(this.page, tab, title);
+    await this.toolbar.expectNoClearFilters();
   }
 
   async expectJoin(note: string, emphasis: JoinEmphasis): Promise<void> {

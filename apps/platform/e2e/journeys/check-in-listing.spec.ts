@@ -24,6 +24,15 @@ const SOONEST_FIRST = {
   toggle: "released",
 } as const;
 const LATEST_FIRST = { direction: "Latest first", toggle: "pressed" } as const;
+const PAST_NEWEST_FIRST = {
+  direction: "Latest first",
+  toggle: "released",
+} as const;
+const PAST_OLDEST_FIRST = {
+  direction: "Soonest first",
+  toggle: "pressed",
+} as const;
+const FIRST_PAGE_OF_ELEVEN = "Showing 1–10 of 11";
 
 test.use({ timezoneId: CLIENT_TIME_ZONE });
 
@@ -37,6 +46,10 @@ test.afterEach(async ({ checkInRecords }) => {
 
 function repeated(text: string, times: number): string[] {
   return Array.from({ length: times }, () => text);
+}
+
+function shownAt(instant: Date): RegExp {
+  return shownTimePatternOf(instant, CLIENT_TIME_ZONE);
 }
 
 function seriesWeeksOf(client: PaidClient): Date[] {
@@ -231,8 +244,8 @@ test(
     // assert
     await clientCheckIns.expectAddress({ waiting: "you" });
     await clientCheckIns.expectInOrder("Requests", [
-      shownTimePatternOf(firstProposed!, CLIENT_TIME_ZONE),
-      shownTimePatternOf(secondProposed!, CLIENT_TIME_ZONE),
+      shownAt(firstProposed!),
+      shownAt(secondProposed!),
     ]);
 
     // act
@@ -240,9 +253,7 @@ test(
 
     // assert
     await clientCheckIns.expectAddress({ waiting: "them" });
-    await clientCheckIns.expectInOrder("Requests", [
-      shownTimePatternOf(ownRequest!, CLIENT_TIME_ZONE),
-    ]);
+    await clientCheckIns.expectInOrder("Requests", [shownAt(ownRequest!)]);
     await clientCheckIns.expectOptionCounts("Kind", {
       "All kinds": 1,
       Weekly: 0,
@@ -263,9 +274,9 @@ test(
     await clientCheckIns.expectAddress({});
     await clientCheckIns.expectTabShown("Requests");
     await clientCheckIns.expectInOrder("Requests", [
-      shownTimePatternOf(firstProposed!, CLIENT_TIME_ZONE),
-      shownTimePatternOf(secondProposed!, CLIENT_TIME_ZONE),
-      shownTimePatternOf(ownRequest!, CLIENT_TIME_ZONE),
+      shownAt(firstProposed!),
+      shownAt(secondProposed!),
+      shownAt(ownRequest!),
     ]);
   },
 );
@@ -312,7 +323,7 @@ test(
     await coachCheckIns.expectTabShown("Upcoming");
     await coachCheckIns.expectKind("All kinds");
     await coachCheckIns.expectSort(SOONEST_FIRST);
-    await coachCheckIns.expectShowing("Showing 1–10 of 11");
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
 
     // act
     await coachCheckIns.visitAddress({ page: "9" });
@@ -488,5 +499,368 @@ test(
     });
     await coachCheckIns.expectSort(LATEST_FIRST);
     await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "the coach counts a clashing weekly check-in as needing her answer and keeps what waits on her above her own requests in either direction",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    provisionSubmittedClient,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const weeklyClient = await provisionSubmittedClient("waiting");
+    const askingClient = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    await approveCheckIns(checkInRecords, askingClient, [
+      seriesWeeksOf(weeklyClient)[0]!,
+    ]);
+    const [earliest, middle, latest] = await checkInRequests.openTimesFor(
+      askingClient.clientId,
+    );
+    await holdRequests(checkInRecords, askingClient, [earliest!, latest!]);
+    await checkInRecords.proposeHourFor(
+      askingClient.clientId,
+      middle!,
+      COACH_TIME_ZONE,
+    );
+    const seriesAnswer = await checkInRequests.setUpSeries(
+      weeklyClient.clientId,
+      WEEKLY_CHOICE,
+    );
+    expect(seriesAnswer.status).toBe(CREATED);
+
+    // act
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectTabShown("Requests");
+    await coachCheckIns.expectWaitingCount(3);
+    await coachCheckIns.expectOptionCounts("Waiting on", {
+      "All requests": 4,
+      "Needs your answer": 3,
+      "Waiting for clients": 1,
+    });
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(earliest!),
+      shownAt(latest!),
+      shownAt(middle!),
+    ]);
+
+    // act
+    await coachCheckIns.toggleSort();
+
+    // assert
+    await coachCheckIns.expectSort(LATEST_FIRST);
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(latest!),
+      shownAt(earliest!),
+      shownAt(middle!),
+    ]);
+
+    // act
+    await coachCheckIns.chooseWaiting("Needs your answer");
+
+    // assert
+    await coachCheckIns.expectAddress({ dir: "desc", waiting: "you" });
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(latest!),
+      shownAt(earliest!),
+    ]);
+    await coachCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 3,
+      Weekly: 1,
+      "Ad-hoc": 2,
+    });
+    await coachCheckIns.expectWaitingCount(3);
+  },
+);
+
+test(
+  "the coach finds a client by first name in any letter case and keeps the search through a reload and the back button",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    coachDashboard,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    provisionSubmittedClient,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const otherClient = await provisionSubmittedClient("waiting");
+    const soughtClient = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const [soughtAt, otherAt] = await checkInRequests.openTimesFor(
+      soughtClient.clientId,
+    );
+    await holdRequests(checkInRecords, soughtClient, [soughtAt!]);
+    await holdRequests(checkInRecords, otherClient, [otherAt!]);
+    const term = soughtClient.firstName.toUpperCase();
+    await coachCheckIns.open();
+
+    // act
+    await coachCheckIns.search(term);
+
+    // assert
+    await coachCheckIns.expectAddress({ q: term });
+    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
+    await coachCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 1,
+      Weekly: 0,
+      "Ad-hoc": 1,
+    });
+
+    // act
+    await page.reload();
+
+    // assert
+    await coachCheckIns.expectAddress({ q: term });
+    await coachCheckIns.expectSearchReads(term);
+    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
+
+    // act
+    await coachDashboard.openFromNavigation();
+    await page.goBack();
+
+    // assert
+    await coachCheckIns.expectAddress({ q: term });
+    await coachCheckIns.expectSearchReads(term);
+    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
+  },
+);
+
+test(
+  "changing a filter, the search, the sort or the tab returns the coach to the first page",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+    await coachCheckIns.visitAddress({ page: "2" });
+
+    // act
+    await coachCheckIns.chooseKind("Ad-hoc");
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc" });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.search(client.lastName);
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc", q: client.lastName });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.toggleSort();
+
+    // assert
+    await coachCheckIns.expectAddress({
+      kind: "ad-hoc",
+      q: client.lastName,
+      dir: "desc",
+    });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.showTab("Requests");
+
+    // assert
+    await coachCheckIns.expectAddress({
+      view: "requests",
+      kind: "ad-hoc",
+      q: client.lastName,
+    });
+    await coachCheckIns.expectEmpty("Requests", "No open requests");
+
+    // act
+    await coachCheckIns.showTab("Upcoming");
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc", q: client.lastName });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+  },
+);
+
+test(
+  "a filter narrows the client's tab without moving a check-in to another tab or changing the Requests count",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    page,
+    provisionSubmittedClient,
+    signIn,
+  }) => {
+    // arrange
+    await coachAvailability.openEveryDay();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await page.goto("/client");
+    const [proposedAt, requestedAt, approvedAt] =
+      await checkInRequests.openTimes();
+    await checkInRecords.proposeHourFor(
+      client.clientId,
+      proposedAt!,
+      CLIENT_TIME_ZONE,
+    );
+    await holdRequests(checkInRecords, client, [requestedAt!]);
+    await approveCheckIns(checkInRecords, client, [approvedAt!]);
+
+    // act
+    await clientCheckIns.open();
+
+    // assert
+    await clientCheckIns.expectTabShown("Requests");
+    await clientCheckIns.expectWaitingCount(1);
+    await clientCheckIns.expectNoPager();
+
+    // act
+    await clientCheckIns.chooseKind("Weekly");
+
+    // assert
+    await clientCheckIns.expectNoMatch();
+    await clientCheckIns.expectWaitingCount(1);
+
+    // act
+    await clientCheckIns.showTab("Upcoming");
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "upcoming", kind: "recurring" });
+    await clientCheckIns.expectNoMatch();
+    await clientCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 1,
+      Weekly: 0,
+      "Ad-hoc": 1,
+    });
+
+    // act
+    await clientCheckIns.showTab("Past");
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "past", kind: "recurring" });
+    await clientCheckIns.expectEmpty("Past", "No past check-ins yet");
+
+    // act
+    await clientCheckIns.showTab("Upcoming");
+    await clientCheckIns.chooseKind("All kinds");
+
+    // assert
+    await clientCheckIns.expectInOrder("Upcoming", [shownAt(approvedAt!)]);
+    await clientCheckIns.expectInOrder("Requests", [
+      shownAt(proposedAt!),
+      shownAt(requestedAt!),
+    ]);
+    await clientCheckIns.expectWaitingCount(1);
+  },
+);
+
+test(
+  "the client's past check-ins start newest first and the toggle turns them oldest first",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    page,
+    provisionSubmittedClient,
+    signIn,
+  }) => {
+    // arrange
+    await coachAvailability.openEveryDay();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await page.goto("/client");
+    const [first, second, third] = await checkInRequests.openTimes();
+    const ids = await holdRequests(checkInRecords, client, [
+      first!,
+      second!,
+      third!,
+    ]);
+    for (const checkInId of ids) {
+      await checkInRecords.markCancelled(checkInId);
+    }
+    await clientCheckIns.open();
+
+    // act
+    await clientCheckIns.showTab("Past");
+
+    // assert
+    await clientCheckIns.expectSort(PAST_NEWEST_FIRST);
+    await clientCheckIns.expectInOrder("Past", [
+      shownAt(third!),
+      shownAt(second!),
+      shownAt(first!),
+    ]);
+
+    // act
+    await clientCheckIns.toggleSort();
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "past", dir: "asc" });
+    await clientCheckIns.expectSort(PAST_OLDEST_FIRST);
+    await clientCheckIns.expectInOrder("Past", [
+      shownAt(first!),
+      shownAt(second!),
+      shownAt(third!),
+    ]);
   },
 );

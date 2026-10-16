@@ -231,6 +231,17 @@ export class CheckInToolbar {
     await expect(this.page.getByText(text, { exact: true })).toBeVisible();
   }
 
+  async expectNoPager(): Promise<void> {
+    await expect(
+      this.page.getByRole("navigation", { name: "pagination" }),
+    ).toHaveCount(0);
+    await expect(this.page.getByText(/^Showing \d/)).toHaveCount(0);
+  }
+
+  async expectNoClearFilters(): Promise<void> {
+    await expect(this.clearFiltersButton).toHaveCount(0);
+  }
+
   async expectNoMatch(): Promise<void> {
     await expect(this.noMatchTitle).toBeVisible();
     await expect(

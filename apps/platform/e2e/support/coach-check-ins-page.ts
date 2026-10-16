@@ -4,6 +4,7 @@ import {
   checkInsListed,
   checkInTab,
   expectCheckInsInOrder,
+  expectEmptyCheckInTab,
   expectJoinEmphasis,
   expectWaitingOnViewer,
   showCheckInTab,
@@ -176,6 +177,10 @@ export class CoachCheckInsPage {
     await this.toolbar.chooseFilter("Kind", label);
   }
 
+  async chooseWaiting(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Waiting on", label);
+  }
+
   async chooseKindByKeyboard(option: CountedOption): Promise<void> {
     await this.toolbar.chooseFilterByKeyboard("Kind", option);
   }
@@ -196,6 +201,10 @@ export class CoachCheckInsPage {
         { timeout: HYDRATION_RETRY_TIMEOUT_MS },
       );
     }).toPass();
+  }
+
+  async expectSearchReads(term: string): Promise<void> {
+    await expect(this.searchField).toHaveValue(term);
   }
 
   async toggleSort(): Promise<void> {
@@ -224,6 +233,11 @@ export class CoachCheckInsPage {
 
   async expectShowing(text: string): Promise<void> {
     await this.toolbar.expectShowing(text);
+  }
+
+  async expectEmpty(tab: CheckInTab, title: string): Promise<void> {
+    await expectEmptyCheckInTab(this.page, tab, title);
+    await this.toolbar.expectNoClearFilters();
   }
 
   async expectAddress(params: AddressParams): Promise<void> {
