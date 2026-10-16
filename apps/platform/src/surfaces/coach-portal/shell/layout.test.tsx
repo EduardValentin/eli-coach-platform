@@ -24,6 +24,7 @@ function renderCoachLayout(
         { Component: () => <p>Dashboard page</p>, index: true },
         { Component: () => <h1>Clients</h1>, path: "clients/*" },
         { Component: () => <h1>Exercises</h1>, path: "training/*" },
+        { Component: () => <h1>Nutrition</h1>, path: "nutrition/*" },
         { Component: () => <h1>Check-ins</h1>, path: "checkins" },
         {
           Component: () => <h1>Assessment calls</h1>,
@@ -86,7 +87,7 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the coach pages that exist, Dashboard first and Training right after it", async () => {
+  it("shows the coach pages that exist, Dashboard first, Training right after it and Nutrition right after Training", async () => {
     // arrange, act
     renderCoachLayout();
 
@@ -99,6 +100,7 @@ describe("CoachLayoutRoute", () => {
     ).toEqual([
       ["Dashboard", "/coach"],
       ["Training", "/coach/training"],
+      ["Nutrition", "/coach/nutrition"],
       ["Clients", "/coach/clients"],
       ["Check-ins", "/coach/checkins"],
       ["Assessment calls", "/coach/assessment-calls"],
@@ -192,6 +194,38 @@ describe("CoachLayoutRoute", () => {
 
     expect(
       within(navigation).getByRole("link", { name: "Training" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("opens the food library from the Nutrition entry in the mobile navigation", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCoachLayout();
+    await user.click(await screen.findByRole("button", { name: "Open menu" }));
+    const menu = await screen.findByRole("dialog", {
+      name: "Coach portal mobile navigation",
+    });
+
+    // act
+    await user.click(within(menu).getByRole("link", { name: "Nutrition" }));
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Nutrition" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the Nutrition entry marked while she edits a food", async () => {
+    // arrange, act
+    renderCoachLayout(
+      "/coach/nutrition/foods/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    );
+
+    // assert
+    const navigation = await findNavigation();
+
+    expect(
+      within(navigation).getByRole("link", { name: "Nutrition" }),
     ).toHaveAttribute("aria-current", "page");
   });
 

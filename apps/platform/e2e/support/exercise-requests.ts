@@ -1,4 +1,6 @@
-import type { APIRequestContext, APIResponse } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
+
+import { answerOf, type ApiAnswer } from "./api-answers";
 
 export type ExerciseFields = {
   name: string;
@@ -13,8 +15,6 @@ export type ExerciseFields = {
   cues: string;
 };
 
-export type ExerciseAnswer = { status: number; body: unknown };
-
 const EXERCISES_PATH = "/api/coach/exercises";
 
 const SAVED = 200;
@@ -22,20 +22,8 @@ const SAVED = 200;
 export class ExerciseRequests {
   constructor(private readonly request: APIRequestContext) {}
 
-  private async answerOf(response: APIResponse): Promise<ExerciseAnswer> {
-    const text = await response.text();
-
-    try {
-      return { status: response.status(), body: JSON.parse(text) };
-    } catch {
-      return { status: response.status(), body: text };
-    }
-  }
-
-  async create(fields: ExerciseFields): Promise<ExerciseAnswer> {
-    return this.answerOf(
-      await this.request.post(EXERCISES_PATH, { data: fields }),
-    );
+  async create(fields: ExerciseFields): Promise<ApiAnswer> {
+    return answerOf(await this.request.post(EXERCISES_PATH, { data: fields }));
   }
 
   async createAccepted(fields: ExerciseFields): Promise<void> {
@@ -48,11 +36,8 @@ export class ExerciseRequests {
     }
   }
 
-  async edit(
-    exerciseId: string,
-    fields: ExerciseFields,
-  ): Promise<ExerciseAnswer> {
-    return this.answerOf(
+  async edit(exerciseId: string, fields: ExerciseFields): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.put(`${EXERCISES_PATH}/${exerciseId}`, {
         data: fields,
       }),

@@ -1,21 +1,27 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { RecipePicker } from './RecipePicker';
+import { AppProvider } from '../../../context/AppContext';
 import { NutritionProvider } from '../../../context/NutritionContext';
 
 function renderPicker(currentRecipeId: string | undefined) {
   render(
-    <NutritionProvider>
-      <RecipePicker
-        open
-        onOpenChange={() => {}}
-        mealRoleId="mt-snack"
-        currentRecipeId={currentRecipeId}
-        alternativeRecipeIds={[]}
-        onPick={() => {}}
-        onToggleAlt={() => {}}
-      />
-    </NutritionProvider>,
+    <MemoryRouter>
+      <AppProvider>
+        <NutritionProvider>
+          <RecipePicker
+            open
+            onOpenChange={() => {}}
+            mealRoleId="mt-snack"
+            currentRecipeId={currentRecipeId}
+            alternativeRecipeIds={[]}
+            onPick={() => {}}
+            onToggleAlt={() => {}}
+          />
+        </NutritionProvider>
+      </AppProvider>
+    </MemoryRouter>,
   );
 }
 

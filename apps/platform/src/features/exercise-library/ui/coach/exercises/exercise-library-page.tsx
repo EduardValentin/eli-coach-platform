@@ -3,7 +3,7 @@ import {
   Badge,
   buttonVariants,
   Card,
-  ItemGlyph,
+  ItemIdentity,
   RowActionsMenu,
   Table,
   TableBody,
@@ -101,20 +101,13 @@ function ExerciseRow({ exercise }: { exercise: ExerciseView }) {
   return (
     <TableRow data-parity="exercise-row">
       <TableCell>
-        <div className="flex items-center gap-3">
-          <ItemGlyph data-parity="exercise-glyph" icon={Activity} />
-          <div>
-            <p className="text-sm font-semibold text-text-primary">
-              {exercise.name}
-            </p>
-            <p
-              className="mt-0.5 text-xs text-text-secondary"
-              data-parity="exercise-summary"
-            >
-              {`${EXERCISE_TYPE_LABELS[exercise.type]} · ${equipment}`}
-            </p>
-          </div>
-        </div>
+        <ItemIdentity
+          glyphAttributes={{ "data-parity": "exercise-glyph" }}
+          icon={Activity}
+          summary={`${EXERCISE_TYPE_LABELS[exercise.type]} · ${equipment}`}
+          summaryAttributes={{ "data-parity": "exercise-summary" }}
+          title={exercise.name}
+        />
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1" data-parity="exercise-tags">

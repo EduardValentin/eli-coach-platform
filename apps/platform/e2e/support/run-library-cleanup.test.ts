@@ -2,7 +2,7 @@ import { existsSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { cleanUpRunExercises, recordCoachAccount } from "./coach-exercises";
+import { cleanUpRunLibraries, recordCoachAccount } from "./coach-libraries";
 import { e2eDirectory } from "./repo-paths";
 
 const issued = vi.hoisted(() => ({
@@ -28,14 +28,14 @@ vi.mock("./database", () => ({
 const runtimeDirectory = resolve(e2eDirectory, ".runtime");
 
 function uniqueRunId(): string {
-  return `test-exercises-${Date.now().toString(36)}-${Math.floor(Math.random() * 46_656).toString(36)}`;
+  return `test-libraries-${Date.now().toString(36)}-${Math.floor(Math.random() * 46_656).toString(36)}`;
 }
 
 function registryPathFor(runId: string): string {
   return resolve(runtimeDirectory, `coach-accounts-${runId}.log`);
 }
 
-describe("cleanUpRunExercises", () => {
+describe("cleanUpRunLibraries", () => {
   let runId: string;
 
   beforeEach(() => {
@@ -50,17 +50,21 @@ describe("cleanUpRunExercises", () => {
     }
   });
 
-  it("deletes the exercises of every coach account the run recorded and forgets them", async () => {
+  it("deletes the foods and the exercises of every coach account the run recorded and forgets them", async () => {
     // arrange
     recordCoachAccount("user_coach_one", runId);
     recordCoachAccount("user_coach_two", runId);
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
     expect(issued.queries).toEqual([
+      {
+        statement: expect.stringMatching(/delete from app\.foods/),
+        values: [["user_coach_one", "user_coach_two"]],
+      },
       {
         statement: expect.stringMatching(/delete from app\.exercises/),
         values: [["user_coach_one", "user_coach_two"]],
@@ -74,7 +78,7 @@ describe("cleanUpRunExercises", () => {
     const unrecorded = runId;
 
     // act
-    const result = await cleanUpRunExercises(unrecorded, "[test]");
+    const result = await cleanUpRunLibraries(unrecorded, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
@@ -87,7 +91,7 @@ describe("cleanUpRunExercises", () => {
     issued.failure = new Error("connection terminated");
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: false });

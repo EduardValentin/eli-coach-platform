@@ -31,7 +31,7 @@ import {
 } from '../../utils/libraryListing';
 import { pageOf } from '../../utils/listPaging';
 import { EmptyState } from '../EmptyState';
-import { ItemGlyph } from '../ItemGlyph';
+import { ItemIdentity } from '../ItemIdentity';
 import { ListingToolbar } from '../ListingToolbar';
 import { ListPager } from '../ListPager';
 import { SearchField } from '../SearchField';
@@ -77,18 +77,16 @@ function ExerciseRow({
   return (
     <TableRow data-parity="exercise-row">
       <TableCell>
-        <div className="flex items-center gap-3">
-          <ItemGlyph icon={Activity} parity="exercise-glyph" />
-          <div>
-            <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-            <p className="text-xs text-text-secondary mt-0.5" data-parity="exercise-summary">
-              {[
-                EXERCISE_TYPE_LABELS[exercise.type],
-                exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
-              ].join(' · ')}
-            </p>
-          </div>
-        </div>
+        <ItemIdentity
+          icon={Activity}
+          title={exercise.name}
+          summary={[
+            EXERCISE_TYPE_LABELS[exercise.type],
+            exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
+          ].join(' · ')}
+          glyphParity="exercise-glyph"
+          summaryParity="exercise-summary"
+        />
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1" data-parity="exercise-tags">

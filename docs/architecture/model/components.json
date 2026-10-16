@@ -2,7 +2,7 @@
   "version": 1,
   "tooling": { "language": "typescript", "dependencyCruiserConfig": "tools/dependency-cruiser.config.cjs", "roots": [ "apps/platform/src", "packages/config/src", "packages/content/src", "packages/db/src", "packages/domain/src", "packages/infrastructure/src", "packages/test-support/src", "packages/ui/src" ] },
   "components": [
-    { "id": "C1", "name": "packages/domain", "paths": [ "packages/domain/src/**" ], "enforcement": "export map (twenty-six subpaths, no .)", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C1", "name": "packages/domain", "paths": [ "packages/domain/src/**" ], "enforcement": "export map (twenty-seven subpaths, no .)", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C2", "name": "packages/db", "paths": [ "packages/db/src/**" ], "enforcement": "exports (.)", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C3", "name": "packages/config", "paths": [ "packages/config/src/**" ], "enforcement": "exports (., ./runtime)", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C4", "name": "packages/content", "paths": [ "packages/content/src/**" ], "enforcement": "exports (.)", "releaseUnit": "no", "entryPoints": [] },
@@ -25,6 +25,7 @@
     { "id": "C22", "name": "apps/platform/src/features/check-ins", "paths": [ "apps/platform/src/features/check-ins/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C23", "name": "apps/platform/src/features/coach-schedule", "paths": [ "apps/platform/src/features/coach-schedule/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
     { "id": "C24", "name": "apps/platform/src/features/clients", "paths": [ "apps/platform/src/features/clients/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
-    { "id": "C25", "name": "apps/platform/src/features/exercise-library", "paths": [ "apps/platform/src/features/exercise-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] }
+    { "id": "C25", "name": "apps/platform/src/features/exercise-library", "paths": [ "apps/platform/src/features/exercise-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] },
+    { "id": "C26", "name": "apps/platform/src/features/nutrition-library", "paths": [ "apps/platform/src/features/nutrition-library/**" ], "enforcement": "same rule set as C7", "releaseUnit": "no", "entryPoints": [] }
   ]
 }

@@ -8,6 +8,7 @@ import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
 import type { ExerciseLibraryIncidents } from "@eli-coach-platform/domain/exercise";
+import type { NutritionLibraryIncidents } from "@eli-coach-platform/domain/nutrition";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -23,6 +24,7 @@ type ConsoleLogger = AcquisitionIncidents &
   CoachingSubscriptionIncidents &
   ExerciseLibraryIncidents &
   MeasurementIncidents &
+  NutritionLibraryIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
 
@@ -156,6 +158,21 @@ export function createConsoleLogger(): ConsoleLogger {
         errorClass: errorClassOf(error),
         ...errorCodeOf(error),
         exerciseId,
+      });
+    },
+    foodCreationFailed: ({ error }) => {
+      console.error("Food could not be created.", {
+        errorCategory: "food_creation_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
+    foodEditFailed: ({ error, foodId }) => {
+      console.error("Food edit could not be written.", {
+        errorCategory: "food_edit_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        foodId,
       });
     },
     invitationEmailFailed: ({ invitationId }) => {

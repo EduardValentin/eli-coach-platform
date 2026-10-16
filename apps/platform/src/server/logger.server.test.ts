@@ -1068,6 +1068,52 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a food that could not be created by the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.foodCreationFailed({ error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith("Food could not be created.", {
+      errorCategory: "food_creation_failure",
+      errorClass: "Error",
+      errorCode: "ECONNREFUSED",
+    });
+  });
+
+  it("logs a food edit that could not be written by its id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.foodEditFailed({ foodId: "food-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Food edit could not be written.",
+      {
+        errorCategory: "food_edit_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        foodId: "food-1",
+      },
+    );
+  });
+
   it("logs a client resource change that could not be written by its ids and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

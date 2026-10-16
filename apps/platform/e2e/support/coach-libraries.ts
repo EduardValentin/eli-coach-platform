@@ -3,18 +3,26 @@ import { runRegistry } from "./run-registry";
 
 const coachAccounts = runRegistry("coach-accounts-");
 
-const DELETE_EXERCISES_OWNED_BY = `
-  delete from app.exercises
-  where owner_account_id in (
+const OWNED_BY_RUN_COACHES = `owner_account_id in (
     select id from app.accounts where auth_subject_id = any($1::text[])
-  )
-`;
+  )`;
+
+const LIBRARIES = [
+  {
+    label: "Foods",
+    statement: `delete from app.foods where ${OWNED_BY_RUN_COACHES}`,
+  },
+  {
+    label: "Exercises",
+    statement: `delete from app.exercises where ${OWNED_BY_RUN_COACHES}`,
+  },
+];
 
 export function recordCoachAccount(authSubjectId: string, runId: string): void {
   coachAccounts.record(authSubjectId, runId);
 }
 
-export async function cleanUpRunExercises(
+export async function cleanUpRunLibraries(
   runId: string,
   logPrefix: string,
 ): Promise<{ allCleaned: boolean }> {
@@ -27,16 +35,16 @@ export async function cleanUpRunExercises(
   const pool = createE2eDatabasePool();
 
   try {
-    const { rowCount } = await pool.query(DELETE_EXERCISES_OWNED_BY, [
-      authSubjectIds,
-    ]);
-    console.log(`${logPrefix} Exercises: removed ${rowCount ?? 0}`);
+    for (const { label, statement } of LIBRARIES) {
+      const { rowCount } = await pool.query(statement, [authSubjectIds]);
+      console.log(`${logPrefix} ${label}: removed ${rowCount ?? 0}`);
+    }
     coachAccounts.remove(runId);
 
     return { allCleaned: true };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    console.log(`${logPrefix} Exercises: failed: ${reason}`);
+    console.log(`${logPrefix} Libraries: failed: ${reason}`);
 
     return { allCleaned: false };
   } finally {
