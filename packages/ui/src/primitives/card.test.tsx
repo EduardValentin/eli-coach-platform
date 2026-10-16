@@ -29,6 +29,23 @@ describe("Card", () => {
     );
   });
 
+  it("frames an item in a soft-shadowed card with a subtle border", () => {
+    // arrange
+    const content = "Lentil soup";
+
+    // act
+    render(<Card variant="item">{content}</Card>);
+
+    // assert
+    expect(screen.getByText(content)).toHaveClass(
+      "rounded-card",
+      "border",
+      "border-border-subtle",
+      "bg-surface-base",
+      "shadow-soft",
+    );
+  });
+
   it("frames a table in the portal panel, clipping it to the corner and rising in", () => {
     // arrange
     const content = "Exercises";

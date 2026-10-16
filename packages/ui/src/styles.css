@@ -171,6 +171,18 @@
   --color-cycle-ovulatory: #c9871b;
   --color-cycle-luteal: #b10ed3;
 
+  --color-tint-red: #dc2626;
+  --color-tint-red-soft: rgba(220, 38, 38, 0.1);
+  --color-tint-blue: #2563eb;
+  --color-tint-blue-soft: rgba(37, 99, 235, 0.1);
+  --color-tint-amber: #d97706;
+  --color-tint-amber-soft: rgba(217, 119, 6, 0.1);
+  --color-tint-green: #15803d;
+  --color-tint-green-soft: rgba(21, 128, 61, 0.1);
+  --color-tint-purple: #7e22ce;
+  --color-tint-purple-soft: rgba(126, 34, 206, 0.1);
+  --color-tint-teal: #0f766e;
+  --color-tint-teal-soft: rgba(15, 118, 110, 0.1);
   --color-tint-slate-soft: rgba(71, 85, 105, 0.12);
   --color-tint-violet-soft: rgba(147, 51, 234, 0.12);
   --color-tint-lime-soft: rgba(101, 163, 13, 0.12);
@@ -406,6 +418,18 @@
   --color-cycle-ovulatory: var(--color-cycle-ovulatory);
   --color-cycle-luteal: var(--color-cycle-luteal);
 
+  --color-tint-red: var(--color-tint-red);
+  --color-tint-red-soft: var(--color-tint-red-soft);
+  --color-tint-blue: var(--color-tint-blue);
+  --color-tint-blue-soft: var(--color-tint-blue-soft);
+  --color-tint-amber: var(--color-tint-amber);
+  --color-tint-amber-soft: var(--color-tint-amber-soft);
+  --color-tint-green: var(--color-tint-green);
+  --color-tint-green-soft: var(--color-tint-green-soft);
+  --color-tint-purple: var(--color-tint-purple);
+  --color-tint-purple-soft: var(--color-tint-purple-soft);
+  --color-tint-teal: var(--color-tint-teal);
+  --color-tint-teal-soft: var(--color-tint-teal-soft);
   --color-tint-slate-soft: var(--color-tint-slate-soft);
   --color-tint-violet-soft: var(--color-tint-violet-soft);
   --color-tint-lime-soft: var(--color-tint-lime-soft);
