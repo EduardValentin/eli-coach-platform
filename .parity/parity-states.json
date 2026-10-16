@@ -5221,5 +5221,16 @@
     {
       "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
     }
+  ],
+  "exercise-archived-toast": [
+    {
+      "use": "open-exercise-actions-bike"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Archive\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
+    }
   ]
 }
