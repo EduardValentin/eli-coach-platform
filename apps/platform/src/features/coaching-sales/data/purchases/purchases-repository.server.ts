@@ -117,10 +117,9 @@ export class PostgresCoachingPurchases
       };
     }
 
-    if (
-      (await this.options.writeClient(transaction, client)) ===
-      "call_already_has_client"
-    ) {
+    const written = await this.options.writeClient(transaction, client);
+
+    if (written === "call_already_has_client") {
       throw new CallAlreadyPaid();
     }
 
