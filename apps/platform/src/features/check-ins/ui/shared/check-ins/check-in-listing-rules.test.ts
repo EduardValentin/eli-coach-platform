@@ -547,11 +547,22 @@ describe("telling whether a filter narrows the tab", () => {
 
     // act
     const narrowing = selections.map((selection) =>
-      hasActiveFilters(selection),
+      hasActiveFilters(selection, clientNameOf),
     );
 
     // assert
     expect(narrowing).toEqual([false, false, true, true, true]);
+  });
+
+  it("ignores a search left in the address of a page that offers none", () => {
+    // arrange
+    const selection = selecting({ query: "ana" });
+
+    // act
+    const narrowing = hasActiveFilters(selection);
+
+    // assert
+    expect(narrowing).toBe(false);
   });
 });
 

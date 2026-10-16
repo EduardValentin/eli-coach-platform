@@ -14,7 +14,6 @@ import {
   setParamUnlessDefault,
   sortParams,
   useSearchParamsWriter,
-  type ListPage,
   type SortChoice,
   type SortDirection,
 } from "@eli-coach-platform/ui/lib";
@@ -96,9 +95,7 @@ type CheckInListingControls = {
   chooseWaiting: (waiting: CheckInWaitingFilter) => void;
   clearFilters: () => void;
   focusedId: string | null;
-  pageOfShown: <CheckIn extends ListedCheckIn>(
-    shown: readonly CheckIn[],
-  ) => ListPage<CheckIn>;
+  pageParam: string | null;
   pathForPage: (page: number) => string;
   selection: CheckInSelection;
   sort: DateSortChoice;
@@ -154,7 +151,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
   waitingForLabel,
 }: CheckInListingProps<CheckIn>) {
   const { key: locationKey } = useLocation();
-  const listing = useCheckInListingParams(checkIns, search);
+  const listing = useCheckInListingParams(checkIns);
   const { selection, tab } = listing;
   useBringCheckInIntoFocus(listing.focusedId, locationKey);
   const inTab = checkIns.filter((checkIn) => checkIn.tab === tab);
@@ -164,12 +161,20 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
     ),
     { direction: listing.sort.direction, tab },
   );
-  const view = listing.pageOfShown(shown);
+  const pageHoldingFocused =
+    listing.focusedId !== null && listing.pageParam === null
+      ? pageHolding(shown, listing.focusedId, CHECK_INS_PER_PAGE)
+      : null;
+  const listPage = pageOf(shown, {
+    page: pageHoldingFocused ?? parsePage(listing.pageParam),
+    perPage: CHECK_INS_PER_PAGE,
+  });
   const awaitingViewerCount = checkIns.filter(
     (checkIn) => checkIn.awaitsViewer,
   ).length;
-  const empty = inTab.length === 0 ? emptyCopy[tab] : NO_MATCH_COPY;
-  const offersClearFilters = inTab.length > 0 && hasActiveFilters(selection);
+  const emptyStateCopy = inTab.length === 0 ? emptyCopy[tab] : NO_MATCH_COPY;
+  const offersClearFilters =
+    inTab.length > 0 && hasActiveFilters(selection, search?.nameOf);
 
   return (
     <Tabs
@@ -231,7 +236,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
       />
 
       <TabsContent data-parity="checkins-tab-panel" value={tab}>
-        {view.items.length === 0 ? (
+        {listPage.items.length === 0 ? (
           <EmptyState
             action={
               offersClearFilters && (
@@ -240,10 +245,10 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
                 </Button>
               )
             }
-            description={empty.description}
+            description={emptyStateCopy.description}
             descriptionParity="checkins-empty-description"
-            icon={empty.icon}
-            title={empty.title}
+            icon={emptyStateCopy.icon}
+            title={emptyStateCopy.title}
           />
         ) : (
           <>
@@ -251,7 +256,7 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
               aria-label={`${TAB_LABELS[tab]} check-ins`}
               className="space-y-3"
             >
-              {view.items.map((checkIn) => (
+              {listPage.items.map((checkIn) => (
                 <li data-parity="checkin-row" key={checkIn.id}>
                   <div
                     className="rounded-card"
@@ -263,8 +268,8 @@ export function CheckInListing<CheckIn extends ListedCheckIn>({
                 </li>
               ))}
             </ul>
-            {view.pageCount > 1 && (
-              <ListPager pathForPage={listing.pathForPage} view={view} />
+            {listPage.pageCount > 1 && (
+              <ListPager pathForPage={listing.pathForPage} view={listPage} />
             )}
           </>
         )}
@@ -303,9 +308,8 @@ function CheckInTabsList({
   );
 }
 
-function useCheckInListingParams<CheckIn extends ListedCheckIn>(
-  checkIns: readonly CheckIn[],
-  search?: CheckInSearch<CheckIn>,
+function useCheckInListingParams(
+  checkIns: readonly ListedCheckIn[],
 ): CheckInListingControls {
   const { pathname } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
@@ -321,19 +325,17 @@ function useCheckInListingParams<CheckIn extends ListedCheckIn>(
     null,
     searchParams.get(CHECK_IN_LISTING_PARAMS.direction),
   );
-  const rawPage = searchParams.get(CHECK_IN_LISTING_PARAMS.page);
   const selection: CheckInSelection = {
     kind: parseKindFilter(searchParams.get(CHECK_IN_LISTING_PARAMS.kind)),
-    query: search
-      ? (searchParams.get(CHECK_IN_LISTING_PARAMS.query) ?? "")
-      : NO_SELECTION.query,
+    query:
+      searchParams.get(CHECK_IN_LISTING_PARAMS.query) ?? NO_SELECTION.query,
     waiting:
       tab === "requests"
         ? parseWaitingFilter(searchParams.get(CHECK_IN_LISTING_PARAMS.waiting))
         : NO_SELECTION.waiting,
   };
 
-  const releaseTarget = (params: URLSearchParams) => {
+  const releaseFocusedCheckIn = (params: URLSearchParams) => {
     if (focusedId === null) {
       return;
     }
@@ -347,7 +349,7 @@ function useCheckInListingParams<CheckIn extends ListedCheckIn>(
 
   const reviseFromFirstPage = (revise: (params: URLSearchParams) => void) =>
     replaceSearchParams((params) => {
-      releaseTarget(params);
+      releaseFocusedCheckIn(params);
       revise(params);
       params.delete(CHECK_IN_LISTING_PARAMS.page);
     });
@@ -392,20 +394,10 @@ function useCheckInListingParams<CheckIn extends ListedCheckIn>(
         }
       }),
     focusedId,
-    pageOfShown: (shown) => {
-      const holding =
-        focusedId !== null && rawPage === null
-          ? pageHolding(shown, focusedId, CHECK_INS_PER_PAGE)
-          : null;
-
-      return pageOf(shown, {
-        page: holding ?? parsePage(rawPage),
-        perPage: CHECK_INS_PER_PAGE,
-      });
-    },
+    pageParam: searchParams.get(CHECK_IN_LISTING_PARAMS.page),
     pathForPage: (page) => {
       const params = new URLSearchParams(searchParams);
-      releaseTarget(params);
+      releaseFocusedCheckIn(params);
 
       return pathForPageOf(
         {

@@ -1948,6 +1948,28 @@ describe("narrowing the client's check-ins", () => {
   });
 });
 
+describe("a search left in the client's address", () => {
+  it("hides nothing, changes no count and offers nothing to clear", async () => {
+    // arrange
+    listing = {
+      checkIns: [APPROVED_SOON, APPROVED_LATER, NEXT_WEEKLY, LATER_WEEKLY],
+    };
+    const { user } = await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?q=zzz`,
+    );
+
+    // act
+    const offered = await optionsOffered(user, "Kind");
+
+    // assert
+    expect(listedRows()).toHaveLength(4);
+    expect(offered).toEqual(["All kinds 4", "Weekly 2", "Ad-hoc 2"]);
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("sorting the client's check-ins", () => {
   it("lists Upcoming soonest first and flips it with the direction toggle", async () => {
     // arrange
@@ -2093,16 +2115,12 @@ describe("a check-in the client is sent to on a later page", () => {
   });
 });
 
+type CheckInsRouter = ReturnType<typeof createMemoryRouter>;
+
 function listedRows(): HTMLElement[] {
   const list = screen.queryByRole("list", { name: /check-ins$/ });
 
   return list ? within(list).getAllByRole("listitem") : [];
-}
-
-function listedDays(): string[] {
-  return listedRows().map(
-    (row) => row.textContent?.match(SHOWN_DAY)?.[0] ?? "",
-  );
 }
 
 function addressOf(router: CheckInsRouter): Record<string, string> {
@@ -2137,7 +2155,11 @@ async function toggleSortDirection(user: UserEvent): Promise<void> {
   );
 }
 
-type CheckInsRouter = ReturnType<typeof createMemoryRouter>;
+function listedDays(): string[] {
+  return listedRows().map(
+    (row) => row.textContent?.match(SHOWN_DAY)?.[0] ?? "",
+  );
+}
 
 function answerOpenTimes(times: readonly string[] = OPEN_TIMES) {
   server.use(http.get(OPEN_TIMES_URL, () => HttpResponse.json({ times })));

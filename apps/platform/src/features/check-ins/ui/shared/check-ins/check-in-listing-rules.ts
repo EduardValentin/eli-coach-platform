@@ -5,7 +5,12 @@ import {
 } from "@eli-coach-platform/ui/lib";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 
-import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
+import {
+  CHECK_IN_TABS,
+  type ClientCheckIns,
+} from "~/features/check-ins/public/check-ins";
+
+export { CHECK_IN_TABS };
 
 export type ListedCheckIn = ClientCheckIns["checkIns"][number];
 
@@ -31,12 +36,6 @@ type CheckInsAddressChange = Pick<
 >;
 
 type NameOf<CheckIn> = (checkIn: CheckIn) => string;
-
-export const CHECK_IN_TABS: readonly CheckInTab[] = [
-  "upcoming",
-  "requests",
-  "past",
-];
 
 export const CHECK_IN_KIND_FILTERS: readonly CheckInKindFilter[] = [
   "any",
@@ -106,11 +105,14 @@ export function dateSortRuleFor(tab: CheckInTab): SortRule<"date"> {
   };
 }
 
-export function hasActiveFilters(selection: CheckInSelection): boolean {
+export function hasActiveFilters<CheckIn extends ListedCheckIn>(
+  selection: CheckInSelection,
+  nameOf?: NameOf<CheckIn>,
+): boolean {
   return (
     selection.kind !== "any" ||
     selection.waiting !== "any" ||
-    selection.query.trim().length > 0
+    nameMatcherFor(selection.query, nameOf) !== null
   );
 }
 
@@ -122,7 +124,7 @@ export function matchesSelection<CheckIn extends ListedCheckIn>(
   return (
     matchesKind(checkIn, selection.kind) &&
     matchesWaiting(checkIn, selection.waiting) &&
-    matchesQuery(checkIn, selection.query, nameOf)
+    (nameMatcherFor(selection.query, nameOf)?.(checkIn) ?? true)
   );
 }
 
@@ -214,18 +216,17 @@ function matchesWaiting(
   return checkIn.awaitsViewer === (waiting === "you");
 }
 
-function matchesQuery<CheckIn extends ListedCheckIn>(
-  checkIn: CheckIn,
+function nameMatcherFor<CheckIn extends ListedCheckIn>(
   query: string,
   nameOf?: NameOf<CheckIn>,
-): boolean {
+): ((checkIn: CheckIn) => boolean) | null {
   const needle = query.trim().toLowerCase();
 
   if (nameOf === undefined || needle.length === 0) {
-    return true;
+    return null;
   }
 
-  return nameOf(checkIn).toLowerCase().includes(needle);
+  return (checkIn) => nameOf(checkIn).toLowerCase().includes(needle);
 }
 
 function requestRankOf(checkIn: ListedCheckIn): number {
