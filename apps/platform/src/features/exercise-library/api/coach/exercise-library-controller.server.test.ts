@@ -35,7 +35,7 @@ const AT = new Date("2026-10-14T09:00:00.000Z");
 
 const COACH: AccountSnapshot = {
   authSubjectId: "user_eli",
-  id: "acct_eli",
+  id: "c0000000-0000-4000-8000-000000000001",
   role: "COACH",
 };
 

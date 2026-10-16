@@ -1,6 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   Exercise,
+  InvalidStoredExerciseError,
   type ExerciseSnapshot,
 } from "@eli-coach-platform/domain/exercise";
 import { describe, expect, it } from "vitest";
@@ -189,6 +190,20 @@ describe("PostgresExerciseLibrary#list", () => {
       null,
       { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
     ]);
+  });
+
+  it("refuses a stored row that breaks an exercise rule instead of answering it", async () => {
+    // arrange
+    const database = createDatabase(undefined, [
+      { ...SQUAT_ROW, unit: "breaths" },
+    ]);
+    const library = new PostgresExerciseLibrary(database.client);
+
+    // act
+    const listing = library.list(COACH_ACCOUNT_ID);
+
+    // assert
+    await expect(listing).rejects.toThrow(InvalidStoredExerciseError);
   });
 });
 

@@ -54,6 +54,13 @@ export type ExerciseDraftProblems = {
   cues?: "too-long";
 };
 
+const DRAFT_LISTS = [
+  "primaryMuscles",
+  "secondaryMuscles",
+  "equipment",
+  "tags",
+] as const;
+
 export type ExerciseDraftResult =
   | { status: "valid"; draft: ExerciseDraft }
   | { status: "invalid"; problems: ExerciseDraftProblems };
@@ -121,6 +128,15 @@ export class ExerciseDraft {
     }
 
     return { status: "valid", draft };
+  }
+
+  fieldsChangedFrom(input: ExerciseDraftInput): string[] {
+    return [
+      ...(input.name === this.snapshot.name ? [] : ["name"]),
+      ...DRAFT_LISTS.filter(
+        (list) => input[list].length !== this.snapshot[list].length,
+      ),
+    ];
   }
 
   toSnapshot(): ExerciseDraftSnapshot {

@@ -1,15 +1,30 @@
-import type {
+import {
   ExerciseDraft,
-  ExerciseDraftProblems,
-  ExerciseDraftSnapshot,
+  type ExerciseDraftInput,
+  type ExerciseDraftProblems,
+  type ExerciseDraftSnapshot,
 } from "./exercise-draft";
-import { ExerciseVideo, type ExerciseVideoSnapshot } from "./exercise-video";
+import { isUuid } from "./exercise-ids";
+import {
+  ExerciseVideo,
+  type ExerciseVideoSnapshot,
+  type StoredExerciseVideo,
+} from "./exercise-video";
 import type { ExerciseVideoRefusal } from "./exercise-video-upload";
+import { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
 
 export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   id: string;
   ownerAccountId: string;
   video: ExerciseVideoSnapshot | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type StoredExercise = ExerciseDraftInput & {
+  id: string;
+  ownerAccountId: string;
+  video: StoredExerciseVideo | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -57,8 +72,30 @@ export class Exercise {
     });
   }
 
-  static reconstitute(snapshot: ExerciseSnapshot): Exercise {
-    return new Exercise(new Exercise(snapshot).toSnapshot());
+  static reconstitute(stored: StoredExercise): Exercise {
+    const { id, ownerAccountId, video, createdAt, updatedAt, ...fields } =
+      stored;
+    const draft = ExerciseDraft.from(fields);
+    const broken = [
+      ...(isUuid(id) ? [] : ["id"]),
+      ...(isUuid(ownerAccountId) ? [] : ["ownerAccountId"]),
+      ...(draft.status === "invalid"
+        ? Object.keys(draft.problems)
+        : draft.draft.fieldsChangedFrom(fields)),
+    ];
+
+    if (draft.status === "invalid" || broken.length > 0) {
+      throw new InvalidStoredExerciseError(broken);
+    }
+
+    return new Exercise({
+      id,
+      ownerAccountId,
+      ...draft.draft.toSnapshot(),
+      video: video && ExerciseVideo.fromStored(video).toSnapshot(),
+      createdAt,
+      updatedAt,
+    });
   }
 
   get id(): string {

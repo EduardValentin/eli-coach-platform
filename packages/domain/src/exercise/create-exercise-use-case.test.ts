@@ -14,11 +14,11 @@ import type {
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
-const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
+const OTHER_COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000002";
 
 const HIP_THRUST = Exercise.reconstitute({
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Hip thrust",
   type: "resistance",
@@ -37,7 +37,7 @@ const HIP_THRUST = Exercise.reconstitute({
 
 const OTHER_COACHS_PLANK = Exercise.reconstitute({
   ...HIP_THRUST.toSnapshot(),
-  id: "exercise-3",
+  id: "e0000000-0000-4000-8000-000000000003",
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
   name: "Plank",
 });
@@ -57,7 +57,7 @@ const SQUAT: ExerciseDraftInput = {
 
 const CREATED_SQUAT: ExerciseSnapshot = {
   ...SQUAT,
-  id: "exercise-2",
+  id: "e0000000-0000-4000-8000-000000000002",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
@@ -107,7 +107,7 @@ function createUseCase() {
   } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
   const useCase = new CreateExerciseUseCase({
     library,
-    ids: { generate: () => "exercise-2" },
+    ids: { generate: () => "e0000000-0000-4000-8000-000000000002" },
     clock: { now: () => NOW },
     incidents,
     formats,

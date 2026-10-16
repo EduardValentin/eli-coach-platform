@@ -68,6 +68,36 @@ describe("ExerciseDraft", () => {
     });
   });
 
+  it("names the entries its rules changed: a trimmed name and repeated choices", () => {
+    // arrange
+    const input = {
+      ...SQUAT,
+      name: ` ${SQUAT.name} `,
+      primaryMuscles: ["Glutes", "Glutes"],
+      tags: ["Strength", "Strength"],
+    };
+    const result = ExerciseDraft.from(input);
+
+    // act
+    const changed =
+      result.status === "valid" && result.draft.fieldsChangedFrom(input);
+
+    // assert
+    expect(changed).toEqual(["name", "primaryMuscles", "tags"]);
+  });
+
+  it("names no entry when it keeps every one as entered", () => {
+    // arrange
+    const result = ExerciseDraft.from(SQUAT);
+
+    // act
+    const changed =
+      result.status === "valid" && result.draft.fieldsChangedFrom(SQUAT);
+
+    // assert
+    expect(changed).toEqual([]);
+  });
+
   it("accepts a name of 80 characters and form cues of 1,000", () => {
     // arrange
     const input = {

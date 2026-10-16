@@ -5,10 +5,10 @@ import type { ExerciseLibrary } from "./exercise-library";
 import { ListExercisesUseCase } from "./list-exercises-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
 
 const HIP_THRUST = Exercise.reconstitute({
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Hip thrust",
   type: "resistance",

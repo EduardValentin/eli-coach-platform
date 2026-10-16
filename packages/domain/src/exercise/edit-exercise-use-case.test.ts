@@ -17,11 +17,11 @@ import type {
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
-const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
+const OTHER_COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000002";
 
 const STORED_SQUAT: ExerciseSnapshot = {
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
@@ -44,14 +44,14 @@ const STORED_SQUAT: ExerciseSnapshot = {
 
 const HIP_THRUST = Exercise.reconstitute({
   ...STORED_SQUAT,
-  id: "exercise-2",
+  id: "e0000000-0000-4000-8000-000000000002",
   name: "Hip thrust",
   primaryMuscles: ["Glutes"],
 });
 
 const OTHER_COACHS_PLANK = Exercise.reconstitute({
   ...STORED_SQUAT,
-  id: "exercise-3",
+  id: "e0000000-0000-4000-8000-000000000003",
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
   name: "Plank",
 });
@@ -70,7 +70,7 @@ const SQUAT_REVISED: ExerciseDraftInput = {
 };
 
 const EDITED_SQUAT: ExerciseSnapshot = {
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Front squat",
   type: "mobility",
@@ -156,7 +156,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -174,7 +174,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: " back SQUAT " },
       video: KEEP,
     });
@@ -191,7 +191,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "hip THRUST" },
       video: KEEP,
     });
@@ -208,7 +208,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "plank" },
       video: KEEP,
     });
@@ -225,7 +225,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, type: "stretching", unit: "reps" },
       video: KEEP,
     });
@@ -246,7 +246,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -262,7 +262,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-404",
+      exerciseId: "e0000000-0000-4000-8000-000000000404",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -279,7 +279,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -298,7 +298,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -307,7 +307,7 @@ describe("EditExerciseUseCase", () => {
     expect(result).toEqual({ status: "failed" });
     expect(library.replace).not.toHaveBeenCalled();
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
@@ -321,7 +321,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: KEEP,
     });
@@ -329,7 +329,7 @@ describe("EditExerciseUseCase", () => {
     // assert
     expect(result).toEqual({ status: "failed" });
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
@@ -341,7 +341,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });
@@ -374,7 +374,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: { kind: "remove" },
     });
@@ -397,7 +397,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: { kind: "remove" },
     });
@@ -418,7 +418,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });
@@ -441,7 +441,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });
@@ -462,7 +462,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });
@@ -473,7 +473,7 @@ describe("EditExerciseUseCase", () => {
       "9c1b0000-0000-4000-8000-000000000002",
     );
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
@@ -485,7 +485,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-404",
+      exerciseId: "e0000000-0000-4000-8000-000000000404",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });
@@ -505,7 +505,7 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
       video: ATTACH,
     });

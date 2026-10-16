@@ -10,14 +10,14 @@ import type { ExerciseVideoViewer } from "./exercise-video-viewer";
 import { OpenExerciseVideoUseCase } from "./open-exercise-video-use-case";
 
 const STORED_AT = new Date("2026-10-15T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
 const COACH: ExerciseVideoViewer = {
   kind: "coach",
   accountId: COACH_ACCOUNT_ID,
 };
 
 const SQUAT: ExerciseSnapshot = {
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
@@ -77,7 +77,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested,
     });
@@ -103,7 +103,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: null,
     });
@@ -111,7 +111,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // assert
     expect(library.find).toHaveBeenCalledExactlyOnceWith({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
     });
   });
 
@@ -121,8 +121,11 @@ describe("OpenExerciseVideoUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      viewer: { kind: "coach", accountId: "coach-account-2" },
-      exerciseId: "exercise-1",
+      viewer: {
+        kind: "coach",
+        accountId: "c0000000-0000-4000-8000-000000000002",
+      },
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: null,
     });
@@ -143,7 +146,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: { kind: "from", start: 9_000, end: null },
     });
@@ -164,7 +167,7 @@ describe("OpenExerciseVideoUseCase", () => {
       // act
       const result = await useCase.execute({
         viewer,
-        exerciseId: "exercise-1",
+        exerciseId: "e0000000-0000-4000-8000-000000000001",
         videoId: "9c1b0000-0000-4000-8000-000000000001",
         requested: null,
       });
@@ -183,7 +186,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000000",
       requested: null,
     });
@@ -200,7 +203,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: null,
     });
@@ -216,7 +219,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-9",
+      exerciseId: "e0000000-0000-4000-8000-000000000009",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: null,
     });
@@ -233,7 +236,7 @@ describe("OpenExerciseVideoUseCase", () => {
     // act
     const result = await useCase.execute({
       viewer: COACH,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       videoId: "9c1b0000-0000-4000-8000-000000000001",
       requested: null,
     });

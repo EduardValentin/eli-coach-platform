@@ -46,6 +46,7 @@ export {
   FindExerciseUseCase,
   type FindExerciseResult,
 } from "./find-exercise-use-case";
+export { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
 export { ListExercisesUseCase } from "./list-exercises-use-case";
 export {
   OpenExerciseVideoUseCase,
