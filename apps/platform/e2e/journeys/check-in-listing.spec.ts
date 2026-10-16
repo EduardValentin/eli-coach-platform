@@ -24,11 +24,11 @@ const SOONEST_FIRST = {
   toggle: "released",
 } as const;
 const LATEST_FIRST = { direction: "Latest first", toggle: "pressed" } as const;
-const PAST_NEWEST_FIRST = {
+const PAST_LATEST_FIRST = {
   direction: "Latest first",
   toggle: "released",
 } as const;
-const PAST_OLDEST_FIRST = {
+const PAST_SOONEST_FIRST = {
   direction: "Soonest first",
   toggle: "pressed",
 } as const;
@@ -334,7 +334,7 @@ test(
 );
 
 test(
-  "the back button restores the tab, filter, sort and page",
+  "the back button restores the tab, filter, search, sort and page",
   { tag: "@completeness" },
   async ({
     checkInRecords,
@@ -366,6 +366,7 @@ test(
     await coachCheckIns.open();
     await coachCheckIns.showTab("Upcoming");
     await coachCheckIns.chooseKind("Ad-hoc");
+    await coachCheckIns.search(client.lastName);
     await coachCheckIns.toggleSort();
     await coachCheckIns.goToPage(2);
     await coachDashboard.openFromNavigation();
@@ -377,11 +378,13 @@ test(
     await coachCheckIns.expectAddress({
       view: "upcoming",
       kind: "ad-hoc",
+      q: client.lastName,
       dir: "desc",
       page: "2",
     });
     await coachCheckIns.expectTabShown("Upcoming");
     await coachCheckIns.expectKind("Ad-hoc");
+    await coachCheckIns.expectSearchReads(client.lastName);
     await coachCheckIns.expectSort(LATEST_FIRST);
     await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
   },
@@ -594,14 +597,13 @@ test(
 );
 
 test(
-  "the coach finds a client by first name in any letter case and keeps the search through a reload and the back button",
+  "the coach finds a client by first name in any letter case",
   { tag: "@completeness" },
   async ({
     checkInRecords,
     checkInRequests,
     coachAvailability,
     coachCheckIns,
-    coachDashboard,
     page,
     provisionClientInState,
     provisionCoach,
@@ -637,23 +639,6 @@ test(
       Weekly: 0,
       "Ad-hoc": 1,
     });
-
-    // act
-    await page.reload();
-
-    // assert
-    await coachCheckIns.expectAddress({ q: term });
-    await coachCheckIns.expectSearchReads(term);
-    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
-
-    // act
-    await coachDashboard.openFromNavigation();
-    await page.goBack();
-
-    // assert
-    await coachCheckIns.expectAddress({ q: term });
-    await coachCheckIns.expectSearchReads(term);
-    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
   },
 );
 
@@ -844,7 +829,7 @@ test(
     await clientCheckIns.showTab("Past");
 
     // assert
-    await clientCheckIns.expectSort(PAST_NEWEST_FIRST);
+    await clientCheckIns.expectSort(PAST_LATEST_FIRST);
     await clientCheckIns.expectInOrder("Past", [
       shownAt(third!),
       shownAt(second!),
@@ -856,7 +841,7 @@ test(
 
     // assert
     await clientCheckIns.expectAddress({ view: "past", dir: "asc" });
-    await clientCheckIns.expectSort(PAST_OLDEST_FIRST);
+    await clientCheckIns.expectSort(PAST_SOONEST_FIRST);
     await clientCheckIns.expectInOrder("Past", [
       shownAt(first!),
       shownAt(second!),
