@@ -29,6 +29,10 @@ export type RecipeRow = RecipeFields & {
 
 const RECIPES_API = "/api/coach/recipes";
 
+export const RECIPES_PAGE = "/coach/nutrition?tab=recipes";
+
+export const RECIPE_BUILDER_PAGE = "/coach/nutrition/recipe-builder";
+
 const RECIPE_ROW_SELECTION = `select recipes.id, recipes.name,
   coalesce((select json_agg(json_build_object(
       'foodId', recipe_ingredients.food_id,
@@ -87,6 +91,18 @@ export class RecipeLibraryJourney {
       `${RECIPES_API}/${recipeId}`,
       this.writeOf("PUT", fields),
     );
+  }
+
+  openRecipes(requester: Requester): Promise<Response> {
+    return this.send(requester, RECIPES_PAGE);
+  }
+
+  openNewRecipe(requester: Requester): Promise<Response> {
+    return this.send(requester, RECIPE_BUILDER_PAGE);
+  }
+
+  openRecipe(requester: Requester, recipeId: string): Promise<Response> {
+    return this.send(requester, `${RECIPE_BUILDER_PAGE}/${recipeId}`);
   }
 
   recipeRows(): Promise<RecipeRow[]> {

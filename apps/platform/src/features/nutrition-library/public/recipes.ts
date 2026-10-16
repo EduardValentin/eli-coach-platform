@@ -64,6 +64,8 @@ export const recipeRequestSchema = z.object({
   tagIds: z.array(z.string()),
 }) satisfies z.ZodType<RecipeDraftInput>;
 
+export type RecipeRequest = z.infer<typeof recipeRequestSchema>;
+
 export const recipeSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });
@@ -90,6 +92,8 @@ const recipeProblemsSchema = z.object({
   icon: z.enum(["unknown"]).optional(),
   tagIds: z.enum(["unknown"]).optional(),
 }) satisfies z.ZodType<RecipeDraftProblems>;
+
+export type RecipeProblems = z.infer<typeof recipeProblemsSchema>;
 
 export const recipeProblemsAnswerSchema = z.object({
   problems: recipeProblemsSchema,

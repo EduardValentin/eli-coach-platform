@@ -11,7 +11,10 @@ import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/clients/public/paths
 import { clientsCoachRoutes } from "../../features/clients/routes";
 import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
 import { exerciseLibraryCoachRoutes } from "../../features/exercise-library/routes";
-import { nutritionLibraryCoachRoutes } from "../../features/nutrition-library/routes";
+import {
+  nutritionLibraryCoachBuilderRoutes,
+  nutritionLibraryCoachRoutes,
+} from "../../features/nutrition-library/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
@@ -35,6 +38,7 @@ export const coachPortalRoutes = [
       ),
     ]),
     ...checkInsCoachJoinRoutes,
+    ...nutritionLibraryCoachBuilderRoutes,
   ]),
   route(`${COACH_PORTAL_ROUTE_SEGMENT}/readyz`, "./api/readyz.ts"),
 ];

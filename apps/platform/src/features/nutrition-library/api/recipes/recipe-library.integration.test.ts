@@ -21,9 +21,15 @@ import {
   PlatformRig,
 } from "~integration-test-config/platform-rig";
 import {
+  RECIPE_BUILDER_PAGE,
+  RECIPES_PAGE,
   RecipeLibraryJourney,
   type RecipeFields,
 } from "~integration-test-config/recipe-library-journey";
+import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
@@ -767,4 +773,193 @@ describe.sequential("recipe library integration", () => {
       },
     );
   });
+  describe("the coach's pages", () => {
+    it("shows every recipe A to Z as a card with its name, total minutes, the macros its foods give and its meal roles before its tags", async () => {
+      // arrange
+      await library.createAccepted(COACH_SESSION, porridgeOf(stored));
+      await library.createAccepted(COACH_SESSION, {
+        name: "Honey milk",
+        ingredients: [
+          { foodId: stored.milk, grams: 300, method: "steamed" },
+          { foodId: stored.honey, grams: 15, method: "raw" },
+        ],
+        prepMinutes: 2,
+        cookMinutes: 0,
+        instructions: "",
+        icon: null,
+        tagIds: [],
+      });
+
+      // act
+      const response = await library.openRecipes(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain(
+        "Nutrition Build your food library and recipes. New recipe Foods Recipes",
+      );
+      expect(page).toContain(
+        [
+          "Honey milk 2 min Per recipe kcal 172 P 10g C 27g F 3g",
+          "Porridge 15 min Per recipe kcal 261 P 15g C 39g F 5g Breakfast Vegetarian",
+        ].join(" "),
+      );
+    });
+
+    it("tells her she has no recipes before she builds one", async () => {
+      // arrange, act
+      const response = await library.openRecipes(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await pageTextOf(response)).toContain(
+        "No recipes yet Recipes you build appear here.",
+      );
+    });
+
+    it("opens a blank recipe on the builder with the foods she may use", async () => {
+      // arrange
+      await foods.archive(stored.honey);
+
+      // act
+      const response = await library.openNewRecipe(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const document = await visibleDocument(response);
+      expect(document).toContain("<title>New recipe | Evoa</title>");
+      expect(document).toContain('<html class="relative" data-portal="coach"');
+      const page = textOf(document);
+      expect(page).toContain("Food library Milk Oats Recipe builder");
+      expect(page).not.toContain("Honey");
+      expect(page).toContain(
+        "Drag foods here (or use the + on a food) to add ingredients.",
+      );
+      expect(page).toContain(
+        "Macros (whole recipe) kcal 0 P 0g C 0g F 0g Prep (min) Cook (min) Instructions",
+      );
+    });
+
+    it("opens a saved recipe on the builder with its entries", async () => {
+      // arrange
+      const porridge = await library.createAccepted(
+        COACH_SESSION,
+        porridgeOf(stored),
+      );
+
+      // act
+      const response = await library.openRecipe(COACH_SESSION, porridge.id);
+
+      // assert
+      expect(response.status).toBe(200);
+      const document = await visibleDocument(response);
+      expect(document).toContain("<title>Edit recipe | Evoa</title>");
+      expect(document).toContain('value="Porridge"');
+      expect(document).toContain('value="40"');
+      expect(document).toContain('value="250"');
+      const page = textOf(document);
+      expect(page).toContain("Icon: Stew");
+      expect(page).toContain("Oats Grams for Oats g Boiled");
+      expect(page).toContain("Milk Grams for Milk g Raw");
+      expect(page).toContain("kcal 261 P 15g C 39g F 5g");
+      expect(page).toContain("Simmer the oats in the milk.");
+    });
+
+    it.each([
+      ["an unknown recipe", () => UNKNOWN_ID],
+      ["an id that is not a uuid", () => NOT_A_UUID],
+    ])("returns her to the Recipes tab for %s", async (_case, recipeIdOf) => {
+      // arrange, act
+      const response = await library.openRecipe(COACH_SESSION, recipeIdOf());
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe(suite.path(RECIPES_PAGE));
+    });
+
+    it("returns her to the Recipes tab when she opens another coach's recipe", async () => {
+      // arrange
+      await rig.provisionOtherCoach();
+      const othersOats = await foods.createAccepted(OTHER_COACH_SESSION, OATS);
+      const othersPorridge = await library.createAccepted(OTHER_COACH_SESSION, {
+        ...porridgeOf(stored),
+        ingredients: [{ foodId: othersOats.id, grams: 40, method: "raw" }],
+      });
+
+      // act
+      const response = await library.openRecipe(
+        COACH_SESSION,
+        othersPorridge.id,
+      );
+
+      // assert
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe(suite.path(RECIPES_PAGE));
+    });
+
+    it("refuses a signed-in client on the Recipes tab and both builder pages", async () => {
+      // arrange
+      await rig.provisionClient();
+      const porridge = await library.createAccepted(
+        COACH_SESSION,
+        porridgeOf(stored),
+      );
+
+      // act
+      const answers = await Promise.all([
+        library.openRecipes(CLIENT_SESSION),
+        library.openNewRecipe(CLIENT_SESSION),
+        library.openRecipe(CLIENT_SESSION, porridge.id),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([403, 403, 403]);
+    });
+
+    it("sends a signed-out visitor to sign in from the Recipes tab and both builder pages", async () => {
+      // arrange
+      const porridge = await library.createAccepted(
+        COACH_SESSION,
+        porridgeOf(stored),
+      );
+      const pages = [
+        RECIPES_PAGE,
+        RECIPE_BUILDER_PAGE,
+        `${RECIPE_BUILDER_PAGE}/${porridge.id}`,
+      ];
+
+      // act
+      const answers = await Promise.all([
+        library.openRecipes(VISITOR),
+        library.openNewRecipe(VISITOR),
+        library.openRecipe(VISITOR, porridge.id),
+      ]);
+
+      // assert
+      expect(
+        answers.map((answer) => [
+          answer.status,
+          answer.headers.get("location"),
+        ]),
+      ).toEqual(
+        pages.map((page) => [
+          302,
+          `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+            `https://localhost:3000${suite.path(page)}`,
+          )}`,
+        ]),
+      );
+    });
+  });
 });
+
+async function pageTextOf(response: Response): Promise<string> {
+  return textOf(await visibleDocument(response));
+}
+
+function textOf(document: string): string {
+  return textNodesOf(document)
+    .filter((text) => text.length > 0)
+    .join(" ");
+}

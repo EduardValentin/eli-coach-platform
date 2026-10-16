@@ -342,6 +342,18 @@ module.exports = {
       to: { path: "(^|/)sharp(/|$)" },
     },
     {
+      name: "react-dnd-confined",
+      comment:
+        "Drag and drop stays in the recipe builder: nothing else names react-dnd or react-dnd-touch-backend.",
+      severity: "error",
+      from: {
+        pathNot: [
+          `${FEATURES}nutrition-library/ui/coach/recipes/recipe-builder(-sections)?\\.tsx$`,
+        ],
+      },
+      to: { path: "(^|/)react-dnd(-touch-backend)?(/|$)" },
+    },
+    {
       name: "pdf-rendering-confined",
       comment:
         "PDF rendering stays behind the infrastructure documents concern: nothing else names pdfjs-dist or @napi-rs/canvas.",

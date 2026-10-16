@@ -23,14 +23,16 @@ import type { PathValue, UseFormReturn } from "react-hook-form";
 
 import type { NutritionTagView } from "~/features/nutrition-library/public/foods";
 import { FOOD_ICON_APPEARANCE } from "~/features/nutrition-library/ui/shared/food-icons";
-import { TAG_FAMILY_APPEARANCE } from "~/features/nutrition-library/ui/shared/tag-pill";
+import {
+  TAG_FAMILY_APPEARANCE,
+  TAG_FAMILY_LABELS,
+} from "~/features/nutrition-library/ui/shared/tag-pill";
 
 import {
   CATEGORY_LABELS,
   FOOD_CATEGORIES,
   FOOD_ICONS,
   TAG_FAMILIES,
-  TAG_FAMILY_LABELS,
   type FoodFieldProblems,
   type FoodFormValues,
   type FoodProblemField,

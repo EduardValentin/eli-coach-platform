@@ -1,4 +1,8 @@
-import { COACH_PORTAL_PATH } from "../../accounts/public/paths";
+import {
+  COACH_PORTAL_PATH,
+  COACH_PORTAL_ROUTE_SEGMENT,
+  type PortalRouteHandle,
+} from "../../accounts/public/paths";
 
 const FOODS_API = "/api/coach/foods";
 
@@ -24,6 +28,10 @@ export const FOOD_EDITOR_ROUTE_SEGMENT = `${COACH_NUTRITION_ROUTE_SEGMENT}/${FOO
 export const RECIPE_BUILDER_ROUTE_SEGMENT = `${COACH_NUTRITION_ROUTE_SEGMENT}/${RECIPE_BUILDER_SEGMENT}`;
 
 export const RECIPE_EDITOR_ROUTE_SEGMENT = `${RECIPE_BUILDER_ROUTE_SEGMENT}/:recipeId`;
+
+export const RECIPE_BUILDER_ROUTE_HANDLE = {
+  portal: COACH_PORTAL_ROUTE_SEGMENT,
+} satisfies PortalRouteHandle;
 
 export const COACH_NUTRITION_PATH = `${COACH_PORTAL_PATH}/${COACH_NUTRITION_ROUTE_SEGMENT}`;
 

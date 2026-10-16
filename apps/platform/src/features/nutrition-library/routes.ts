@@ -5,22 +5,35 @@ import {
   FOOD_EDITOR_ROUTE_SEGMENT,
   NEW_FOOD_ROUTE_SEGMENT,
   NUTRITION_LIBRARY_API_PATHS,
+  RECIPE_BUILDER_ROUTE_SEGMENT,
+  RECIPE_EDITOR_ROUTE_SEGMENT,
 } from "./public/paths";
 
 const { route } = relative(import.meta.dirname);
 
 const FOOD_EDITOR_PAGE = "./ui/coach/foods/food-editor-page.tsx";
 
+const RECIPE_BUILDER_PAGE = "./ui/coach/recipes/recipe-builder-page.tsx";
+
 export const nutritionLibraryCoachRoutes = [
   route(
     COACH_NUTRITION_ROUTE_SEGMENT,
-    "./ui/coach/foods/food-library-page.tsx",
+    "./ui/coach/nutrition/nutrition-page.tsx",
   ),
   route(NEW_FOOD_ROUTE_SEGMENT, FOOD_EDITOR_PAGE, {
     id: "features/nutrition-library/new-food",
   }),
   route(FOOD_EDITOR_ROUTE_SEGMENT, FOOD_EDITOR_PAGE, {
     id: "features/nutrition-library/edit-food",
+  }),
+];
+
+export const nutritionLibraryCoachBuilderRoutes = [
+  route(RECIPE_BUILDER_ROUTE_SEGMENT, RECIPE_BUILDER_PAGE, {
+    id: "features/nutrition-library/new-recipe",
+  }),
+  route(RECIPE_EDITOR_ROUTE_SEGMENT, RECIPE_BUILDER_PAGE, {
+    id: "features/nutrition-library/edit-recipe",
   }),
 ];
 

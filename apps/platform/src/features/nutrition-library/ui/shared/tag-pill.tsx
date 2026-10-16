@@ -18,6 +18,15 @@ export const TAG_FAMILY_APPEARANCE: Readonly<
   dietary: { tone: "tint-cyan", icon: Leaf },
 };
 
+export const TAG_FAMILY_LABELS: Readonly<
+  Record<NutritionTagView["family"], string>
+> = {
+  "meal-time": "Meal-time",
+  "cycle-phase": "Cycle phase",
+  nutrient: "Nutrient / benefit",
+  dietary: "Dietary",
+};
+
 export function TagPill({ tag }: { tag: NutritionTagView }) {
   const { tone, icon: Icon } = TAG_FAMILY_APPEARANCE[tag.family];
 

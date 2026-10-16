@@ -41,7 +41,7 @@ import {
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import FoodEditorRoute from "./food-editor-page";
-import FoodLibraryRoute from "./food-library-page";
+import NutritionRoute from "~/features/nutrition-library/ui/coach/nutrition/nutrition-page";
 
 const TAGS: NutritionTagView[] = [
   { id: "mt-breakfast", family: "meal-time", label: "Breakfast" },
@@ -582,8 +582,8 @@ async function renderEditor(entry: string, heading?: string) {
   const router = createMemoryRouter(
     [
       {
-        Component: FoodLibraryRoute,
-        loader: () => ({ foods: LIBRARY, tags: TAGS }),
+        Component: NutritionRoute,
+        loader: () => ({ foods: LIBRARY, tags: TAGS, recipes: [] }),
         path: COACH_NUTRITION_PATH,
       },
       {
