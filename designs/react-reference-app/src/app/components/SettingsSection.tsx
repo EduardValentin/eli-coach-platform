@@ -70,6 +70,24 @@ export function SettingsRows({ children }: { children: ReactNode }) {
   return <div className="divide-y divide-border-subtle">{children}</div>;
 }
 
+const ROW_PADDING_CLASS = "px-5 py-5 sm:px-6";
+
+export function SettingsBody({
+  className,
+  parity,
+  children,
+}: {
+  className?: string;
+  parity?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn(ROW_PADDING_CLASS, className)} data-parity={parity}>
+      {children}
+    </div>
+  );
+}
+
 type SettingsRowLayout = "inline" | "stacked";
 
 export function SettingsRow({
@@ -139,7 +157,7 @@ export function SettingsRow({
     <Container
       aria-labelledby={as === "fieldset" ? labelId : undefined}
       className={cn(
-        "px-5 py-5 sm:px-6",
+        ROW_PADDING_CLASS,
         layout === "inline" &&
           "flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6",
       )}

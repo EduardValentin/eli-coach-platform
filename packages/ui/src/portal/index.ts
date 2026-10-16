@@ -4,5 +4,10 @@ export { PortalBackLink } from "./portal-back-link";
 export { PortalPageHeader } from "./portal-page-header";
 export { PortalWidget } from "./portal-widget";
 export { Reading } from "./reading";
-export { SettingsRow, SettingsRows, SettingsSection } from "./settings-section";
+export {
+  SettingsBody,
+  SettingsRow,
+  SettingsRows,
+  SettingsSection,
+} from "./settings-section";
 export { WidgetAction, WidgetLink } from "./widget-link";

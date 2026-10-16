@@ -3,12 +3,12 @@ import type { ClerkClient } from "@clerk/backend";
 import { cleanUpRunAssessmentCalls } from "./assessment-calls";
 import { releaseClerkAccounts } from "./clerk-accounts";
 import { summarizeRevocations } from "./clerk-invitations";
-import { cleanUpRunExercises } from "./coach-exercises";
 import {
   deleteRegistryFile,
   readUnreleasedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
+import { cleanUpRunLibraries } from "./coach-libraries";
 import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
 
 export async function cleanUpRun(
@@ -29,13 +29,13 @@ export async function cleanUpRun(
   );
   const stripe = await cleanUpRecordedStripeObjects(runId, logPrefix);
   const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
-  const exercises = await cleanUpRunExercises(runId, logPrefix);
+  const libraries = await cleanUpRunLibraries(runId, logPrefix);
 
   if (
     release.released &&
     stripe.allCleaned &&
     database.allCleaned &&
-    exercises.allCleaned
+    libraries.allCleaned
   ) {
     deleteRegistryFile(runId);
   }

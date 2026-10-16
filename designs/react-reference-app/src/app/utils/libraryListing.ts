@@ -51,6 +51,11 @@ export function orderBy<Item, Key extends string>(
   return [...items].sort((one, other) => compare[sort.key](one, other) * factor);
 }
 
+export function libraryReturnPath(library: string, locationState: unknown): string {
+  const search = (locationState as { library?: unknown } | null)?.library;
+  return typeof search === 'string' ? `${library}${search}` : library;
+}
+
 export function toggled<Value>(values: readonly Value[], value: Value): Value[] {
   return values.includes(value)
     ? values.filter((candidate) => candidate !== value)

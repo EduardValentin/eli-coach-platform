@@ -80,25 +80,29 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
 Label.displayName = "Label";
 
 type LegendProps = React.ComponentPropsWithoutRef<"legend"> & {
+  layout?: LabelLayout;
   required?: boolean;
   trailing?: React.ReactNode;
 };
 
 export const Legend = React.forwardRef<HTMLLegendElement, LegendProps>(
-  ({ children, className, required, trailing, ...props }, ref) => (
+  (
+    { children, className, layout = "wrap", required, trailing, ...props },
+    ref,
+  ) => (
     <legend
       ref={ref}
       className={cn(
         CAPTION_CLASS,
         CAPTION_INK_CLASS,
-        LABEL_LAYOUT_CLASSES.wrap,
+        LABEL_LAYOUT_CLASSES[layout],
         "mb-1",
         className,
       )}
       {...props}
     >
       {children}
-      {required && <RequiredMark placement="wrap" />}
+      {required && <RequiredMark placement={layout} />}
       {trailing}
     </legend>
   ),

@@ -17,7 +17,7 @@ import {
   type MockInstance,
 } from "vitest";
 
-import { cleanUpRunExercises, recordCoachAccount } from "./coach-exercises";
+import { cleanUpRunLibraries, recordCoachAccount } from "./coach-libraries";
 import { e2eDirectory } from "./repo-paths";
 
 const issued = vi.hoisted(() => ({
@@ -61,7 +61,7 @@ vi.mock("./database", async () => {
 const runtimeDirectory = resolve(e2eDirectory, ".runtime");
 
 function uniqueRunId(): string {
-  return `test-exercises-${Date.now().toString(36)}-${Math.floor(Math.random() * 46_656).toString(36)}`;
+  return `test-libraries-${Date.now().toString(36)}-${Math.floor(Math.random() * 46_656).toString(36)}`;
 }
 
 function registryPathFor(runId: string): string {
@@ -72,7 +72,7 @@ function loggedLines(log: MockInstance): string[] {
   return log.mock.calls.map(([line]) => String(line));
 }
 
-describe("cleanUpRunExercises", () => {
+describe("cleanUpRunLibraries", () => {
   let runId: string;
   let videoRoot: string;
   let videos: string;
@@ -101,19 +101,23 @@ describe("cleanUpRunExercises", () => {
     }
   });
 
-  it("deletes the exercises of every coach account the run recorded and forgets them", async () => {
+  it("deletes the foods and the exercises of every coach account the run recorded and forgets them", async () => {
     // arrange
     recordCoachAccount("user_coach_one", runId);
     recordCoachAccount("user_coach_two", runId);
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
     expect(issued.queries).toEqual([
       {
         statement: expect.stringMatching(/select video_file_id/),
+        values: [["user_coach_one", "user_coach_two"]],
+      },
+      {
+        statement: expect.stringMatching(/delete from app\.foods/),
         values: [["user_coach_one", "user_coach_two"]],
       },
       {
@@ -132,7 +136,7 @@ describe("cleanUpRunExercises", () => {
     issued.videoIds = ["video-of-the-run"];
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
@@ -147,20 +151,20 @@ describe("cleanUpRunExercises", () => {
     issued.videoIds = ["video-stored", "video-already-gone"];
 
     // act
-    await cleanUpRunExercises(runId, "[test]");
+    await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(loggedLines(log)).toContain("[test] Exercise videos: removed 1");
   });
 
-  it("says it skipped the video files when no video root is set, and still deletes the exercises", async () => {
+  it("says it skipped the video files when no video root is set, and still deletes the foods and the exercises", async () => {
     // arrange
     vi.stubEnv("EXERCISE_VIDEO_ROOT", "");
     recordCoachAccount("user_coach_one", runId);
     issued.videoIds = ["video-of-the-run"];
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
@@ -169,11 +173,12 @@ describe("cleanUpRunExercises", () => {
     );
     expect(issued.queries.map(({ statement }) => statement)).toEqual([
       expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/delete from app\.foods/),
       expect.stringMatching(/delete from app\.exercises/),
     ]);
   });
 
-  it("keeps the exercises and the record for a rerun when a video file cannot be removed", async () => {
+  it("keeps the foods, the exercises and the record for a rerun when a video file cannot be removed", async () => {
     // arrange
     mkdirSync(join(videos, "video-unremovable"));
     writeFileSync(join(videos, "video-unremovable", "part"), "part");
@@ -181,7 +186,7 @@ describe("cleanUpRunExercises", () => {
     issued.videoIds = ["video-unremovable"];
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: false });
@@ -196,7 +201,7 @@ describe("cleanUpRunExercises", () => {
     const unrecorded = runId;
 
     // act
-    const result = await cleanUpRunExercises(unrecorded, "[test]");
+    const result = await cleanUpRunLibraries(unrecorded, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: true });
@@ -209,7 +214,7 @@ describe("cleanUpRunExercises", () => {
     issued.failure = new Error("connection terminated");
 
     // act
-    const result = await cleanUpRunExercises(runId, "[test]");
+    const result = await cleanUpRunLibraries(runId, "[test]");
 
     // assert
     expect(result).toEqual({ allCleaned: false });

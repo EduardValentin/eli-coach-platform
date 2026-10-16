@@ -35,7 +35,7 @@ import {
   videoRejectionMessage,
   videoTooLargeMessage,
 } from '../../utils/exerciseVideo';
-import { toggled } from '../../utils/libraryListing';
+import { libraryReturnPath, toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import { FileDropzone } from '../../components/FileDropzone';
@@ -51,14 +51,6 @@ import { Input } from '../../components/ui/input';
 import { Progress } from '../../components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
-
-const LIBRARY = '/coach/training';
-type LibraryReturn = { library?: unknown } | null;
-
-function libraryPath(state: LibraryReturn): string {
-  const search = state?.library;
-  return typeof search === 'string' ? `${LIBRARY}${search}` : LIBRARY;
-}
 
 const MUSCLE_LABELS = labelsOf(MUSCLES);
 const EQUIPMENT_LABELS = labelsOf(EQUIPMENT);
@@ -600,7 +592,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
 export function ExerciseEditorPage() {
   const { exerciseId } = useParams<{ exerciseId?: string }>();
   const { exercises } = useTraining();
-  const library = libraryPath(useLocation().state as LibraryReturn);
+  const library = libraryReturnPath('/coach/training', useLocation().state);
   const editing = exerciseId ? exercises.find((exercise) => exercise.id === exerciseId) : undefined;
   if (exerciseId && !editing) return <Navigate to={library} replace />;
   return <ExerciseEditor key={editing?.id ?? 'new'} editing={editing} library={library} />;

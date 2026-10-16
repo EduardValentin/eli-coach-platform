@@ -67,6 +67,7 @@ function Label({
 }
 
 type LegendProps = React.ComponentProps<"legend"> & {
+  layout?: LabelLayout;
   required?: boolean;
   trailing?: React.ReactNode;
 };
@@ -74,6 +75,7 @@ type LegendProps = React.ComponentProps<"legend"> & {
 function Legend({
   className,
   children,
+  layout = "wrap",
   required,
   trailing,
   ...props
@@ -82,14 +84,14 @@ function Legend({
     <legend
       className={cn(
         "text-sm font-medium text-text-label",
-        LABEL_LAYOUT_CLASSES.wrap,
+        LABEL_LAYOUT_CLASSES[layout],
         "mb-1",
         className,
       )}
       {...props}
     >
       {children}
-      {required && <RequiredMark placement="wrap" />}
+      {required && <RequiredMark placement={layout} />}
       {trailing}
     </legend>
   );

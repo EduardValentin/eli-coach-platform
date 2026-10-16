@@ -21,12 +21,14 @@ import {
   type ExerciseUnit,
   type Muscle,
 } from "@eli-coach-platform/domain/exercise";
+import { toggled } from "@eli-coach-platform/ui/lib";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
-import type {
-  ExerciseProblems,
-  ExerciseRequest,
-  ExerciseView,
+import {
+  EXERCISE_FORM_FIELDS,
+  type ExerciseProblems,
+  type ExerciseRequest,
+  type ExerciseView,
 } from "~/features/exercise-library/public/exercises";
 
 export {
@@ -60,7 +62,7 @@ export const EXERCISE_PROBLEM_FIELDS = [
   "cues",
 ] as const;
 
-type ExerciseProblemField = (typeof EXERCISE_PROBLEM_FIELDS)[number];
+export type ExerciseProblemField = (typeof EXERCISE_PROBLEM_FIELDS)[number];
 
 export type ExerciseFieldProblems = Partial<
   Record<ExerciseProblemField, string>
@@ -158,15 +160,6 @@ export function withTypeChosen(
   return { type, unit: defaultUnitFor(type), unitPicked: false };
 }
 
-export function toggled<Value>(
-  values: readonly Value[],
-  value: Value,
-): Value[] {
-  return values.includes(value)
-    ? values.filter((other) => other !== value)
-    : [...values, value];
-}
-
 export function withPrimaryMuscleToggled(
   values: Pick<ExerciseFormValues, "primaryMuscles" | "secondaryMuscles">,
   muscle: Muscle,
@@ -253,11 +246,22 @@ function exerciseDraftInputOf(
   return draft;
 }
 
-export function exerciseRequestOf(
+export function exerciseSaveBodyOf(
   values: ExerciseFormValues,
   video: ChosenExerciseVideo,
-): ExerciseRequest {
-  return { ...exerciseDraftInputOf(values), video: video.kind };
+): ExerciseRequest | FormData {
+  const request: ExerciseRequest = {
+    ...exerciseDraftInputOf(values),
+    video: video.kind,
+  };
+
+  if (video.kind !== "attach") return request;
+
+  const formData = new FormData();
+  formData.append(EXERCISE_FORM_FIELDS.exercise, JSON.stringify(request));
+  formData.append(EXERCISE_FORM_FIELDS.video, video.file);
+
+  return formData;
 }
 
 export function exerciseFieldProblemsOf(

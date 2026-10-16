@@ -1,4 +1,11 @@
-import type { UploadState } from "@eli-coach-platform/infrastructure/http";
+import {
+  useUploadState,
+  type UploadState,
+} from "@eli-coach-platform/infrastructure/http";
+import {
+  useJsonSaveFetcher,
+  type JsonSaveOutcome,
+} from "@eli-coach-platform/ui/lib";
 import {
   PortalBackLink,
   PortalPageHeader,
@@ -16,11 +23,18 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type {
-  ExerciseEditorView,
-  ExerciseProblems,
+import { exerciseVideoUploadProgress } from "~/features/exercise-library/public/exercise-video-upload-progress";
+import {
+  exerciseProblemsAnswerSchema,
+  exerciseSavedAnswerSchema,
+  type ExerciseEditorView,
+  type ExerciseProblems,
 } from "~/features/exercise-library/public/exercises";
-import { COACH_TRAINING_PATH } from "~/features/exercise-library/public/paths";
+import {
+  COACH_TRAINING_PATH,
+  EXERCISE_LIBRARY_API_PATHS,
+  exercisePath,
+} from "~/features/exercise-library/public/paths";
 import { exerciseLibraryContext } from "~/features/exercise-library/server/guards/exercise-library-context.server";
 
 import {
@@ -33,13 +47,14 @@ import {
   exerciseFieldProblemsOf,
   exerciseFormResolver,
   exerciseFormValuesOf,
-  exerciseRequestOf,
+  exerciseSaveBodyOf,
   serverVideoRefusalMessage,
   newExerciseFormValues,
   shownExerciseProblemsOf,
   UNTOUCHED_VIDEO,
   type ExerciseFormValues,
   type ChosenExerciseVideo,
+  type ExerciseProblemField,
   type ExerciseVideoEntry,
 } from "./exercise-form";
 import {
@@ -48,7 +63,6 @@ import {
   type ExerciseVideoFieldHandle,
   type VideoUploadState,
 } from "./exercise-video-field";
-import { useExerciseSave, type ExerciseSaveOutcome } from "./use-exercise-save";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
 
@@ -65,10 +79,6 @@ function videoUploadStateOf(
   if (chosen.file === failedUpload) return UPLOAD_FAILED;
 
   return uploadState;
-}
-
-function attachedFileOf(chosen: ChosenExerciseVideo): File | null {
-  return chosen.kind === "attach" ? chosen.file : null;
 }
 
 export async function loader(args: LoaderFunctionArgs) {
@@ -120,19 +130,19 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     [form],
   );
 
-  const showRefusedFields = (problems: ExerciseProblems): boolean => {
+  const rememberTakenName = (problems: ExerciseProblems) => {
+    if (problems.name === "taken") {
+      takenNames.current = [...takenNames.current, sentName.current];
+    }
+  };
+
+  const showRefusedFields = (
+    problems: ExerciseProblems,
+  ): ExerciseProblemField[] => {
     const refused = exerciseFieldProblemsOf(problems);
     const refusedFields = EXERCISE_PROBLEM_FIELDS.filter(
       (field) => refused[field],
     );
-
-    if (refusedFields.length === 0) {
-      return false;
-    }
-
-    if (problems.name === "taken") {
-      takenNames.current = [...takenNames.current, sentName.current];
-    }
 
     refusedFields.forEach((field, index) =>
       form.setError(
@@ -141,7 +151,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
         { shouldFocus: index === 0 },
       ),
     );
-    return true;
+    return refusedFields;
   };
 
   const showRefusedVideo = (problems: ExerciseProblems): boolean => {
@@ -158,7 +168,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   };
 
   const showRefusal = (problems: ExerciseProblems): boolean => {
-    const fieldsShown = showRefusedFields(problems);
+    const fieldsShown = showRefusedFields(problems).length > 0;
     const videoShown = showRefusedVideo(problems);
 
     if (videoShown && !fieldsShown) videoField.current?.queueReplaceFocus();
@@ -166,15 +176,17 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     return fieldsShown || videoShown;
   };
 
-  const settle = (outcome: ExerciseSaveOutcome) => {
+  const settle = (outcome: JsonSaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
       void navigate(outcome.redirectTo);
       return;
     }
 
-    if (outcome.status === "refused" && showRefusal(outcome.problems)) {
-      return;
+    if (outcome.status === "refused") {
+      rememberTakenName(outcome.problems);
+
+      if (showRefusal(outcome.problems)) return;
     }
 
     if (video.chosen.kind === "attach") {
@@ -185,10 +197,15 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     toast.error(SAVE_FAILED);
   };
 
-  const { save, saving, uploadState } = useExerciseSave(
-    exercise?.id ?? null,
-    settle,
-  );
+  const { save, saving, fetcherState } = useJsonSaveFetcher({
+    target: exercise
+      ? { action: exercisePath(exercise.id), method: "put" }
+      : { action: EXERCISE_LIBRARY_API_PATHS.exercises, method: "post" },
+    savedAnswer: exerciseSavedAnswerSchema,
+    refusedAnswer: exerciseProblemsAnswerSchema,
+    onSettled: settle,
+  });
+  const uploadState = useUploadState(exerciseVideoUploadProgress, fetcherState);
   const videoUpload = videoUploadStateOf(
     video.chosen,
     failedUpload,
@@ -198,10 +215,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
     setFailedUpload(null);
-    save(
-      exerciseRequestOf(submitted, video.chosen),
-      attachedFileOf(video.chosen),
-    );
+    save(exerciseSaveBodyOf(submitted, video.chosen));
   });
 
   return (

@@ -20,11 +20,12 @@ export { FieldError } from "./field-error";
 export { FileDropzone, FilePickerButton } from "./file-dropzone";
 export { FieldHint } from "./field-hint";
 export { FieldLayout, type FieldControlAttributes } from "./field-layout";
+export { IconChoiceGrid } from "./icon-choice-grid";
 export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { InlineProblem } from "./inline-problem";
 export { Input } from "./input";
-export { ItemGlyph } from "./item-glyph";
+export { ItemIdentity } from "./item-identity";
 export {
   FieldCaption,
   Label,

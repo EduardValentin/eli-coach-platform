@@ -40,6 +40,7 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
+import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import {
   EXERCISE_VIDEO_UPLOAD_OUTCOMES,
   type ExerciseVideoUpload,
@@ -158,6 +159,7 @@ type AppState = {
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
   exerciseVideoUpload: ExerciseVideoUpload;
+  foodSeed: FoodSeed;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
@@ -216,6 +218,7 @@ const defaultState: AppState = {
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
   exerciseVideoUpload: 'works',
+  foodSeed: 'seeded',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
@@ -528,6 +531,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('exupload'),
     defaultState.exerciseVideoUpload,
   );
+  state.foodSeed = optionOrDefault(
+    FOOD_SEEDS,
+    params.get('nutseed'),
+    defaultState.foodSeed,
+  );
   state.resourceSeed = optionOrDefault(
     RESOURCE_SEEDS,
     params.get('rseed'),
@@ -623,6 +631,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
     url.searchParams.delete('exupload');
+    url.searchParams.delete('nutseed');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
@@ -760,6 +769,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.exerciseVideoUpload !== defaultState.exerciseVideoUpload) {
       url.searchParams.set('exupload', appState.exerciseVideoUpload);
+    }
+    if (appState.foodSeed !== defaultState.foodSeed) {
+      url.searchParams.set('nutseed', appState.foodSeed);
     }
     if (appState.resourceSeed !== defaultState.resourceSeed) {
       url.searchParams.set('rseed', appState.resourceSeed);

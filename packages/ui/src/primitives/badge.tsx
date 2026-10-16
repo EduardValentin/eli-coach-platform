@@ -16,6 +16,14 @@ const badgeClasses = cva(
           "border-status-pending/20 bg-status-pending-soft text-status-pending",
         success:
           "border-feedback-success/20 bg-feedback-success-soft text-feedback-success",
+        "tint-slate":
+          "border-transparent bg-tint-slate-soft text-text-primary [&>svg]:text-text-secondary",
+        "tint-violet":
+          "border-transparent bg-tint-violet-soft text-text-primary [&>svg]:text-text-secondary",
+        "tint-lime":
+          "border-transparent bg-tint-lime-soft text-text-primary [&>svg]:text-text-secondary",
+        "tint-cyan":
+          "border-transparent bg-tint-cyan-soft text-text-primary [&>svg]:text-text-secondary",
         count:
           "min-w-5 rounded-full border-transparent bg-current/12 px-1.5 text-caption font-medium tabular-nums opacity-80",
       },

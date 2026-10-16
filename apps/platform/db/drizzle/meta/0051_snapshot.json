@@ -1,6 +1,6 @@
 {
-  "id": "97786879-651c-443f-ab2c-837f2b789241",
-  "prevId": "13b95dc5-afd6-4bda-bcc1-286540759879",
+  "id": "11d2d6dd-69f5-4062-adb6-7db4dccf833d",
+  "prevId": "b781c7f0-3b9d-43d3-889c-bb49f8f0b031",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2851,49 +2851,251 @@
           "name": "exercises_video_complete_check",
           "value": "(\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_format\" is null) and (\"app\".\"exercises\".\"video_file_id\" is null) = (\"app\".\"exercises\".\"video_size_bytes\" is null)"
         },
-        "exercises_unit_for_type_check": {
-          "name": "exercises_unit_for_type_check",
-          "value": "(\"app\".\"exercises\".\"type\", \"app\".\"exercises\".\"unit\") in (('resistance', 'reps'), ('resistance', 'time'), ('resistance', 'distance'), ('cardio', 'time'), ('cardio', 'distance'), ('mobility', 'time'), ('mobility', 'reps'), ('stretching', 'time'), ('breathing', 'breaths'), ('breathing', 'time'))"
-        },
-        "exercises_name_check": {
-          "name": "exercises_name_check",
-          "value": "\"app\".\"exercises\".\"name\" = btrim(\"app\".\"exercises\".\"name\") and char_length(\"app\".\"exercises\".\"name\") between 1 and 80"
-        },
-        "exercises_form_cues_check": {
-          "name": "exercises_form_cues_check",
-          "value": "char_length(\"app\".\"exercises\".\"form_cues\") <= 1000"
-        },
-        "exercises_primary_muscle_check": {
-          "name": "exercises_primary_muscle_check",
-          "value": "\"app\".\"exercises\".\"type\" = 'cardio' or cardinality(\"app\".\"exercises\".\"primary_muscles\") > 0"
-        },
-        "exercises_primary_muscles_vocabulary_check": {
-          "name": "exercises_primary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"primary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
-        },
-        "exercises_secondary_muscles_vocabulary_check": {
-          "name": "exercises_secondary_muscles_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"secondary_muscles\" <@ array['Chest', 'Upper back', 'Lats', 'Lower back', 'Traps', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Core', 'Obliques', 'Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Abductors', 'Hip flexors', 'Calves', 'Full body']::text[]"
-        },
-        "exercises_muscles_overlap_check": {
-          "name": "exercises_muscles_overlap_check",
-          "value": "not (\"app\".\"exercises\".\"primary_muscles\" && \"app\".\"exercises\".\"secondary_muscles\")"
-        },
-        "exercises_equipment_vocabulary_check": {
-          "name": "exercises_equipment_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"equipment\" <@ array['Barbell', 'Dumbbells', 'Kettlebell', 'EZ bar', 'Trap bar', 'Cable', 'Machine', 'Smith machine', 'Bands', 'Suspension trainer', 'Pull-up bar', 'Squat rack', 'Bench', 'Box or step', 'Medicine ball', 'Stability ball', 'Mat', 'Foam roller', 'Treadmill', 'Bike', 'Rower', 'Stair climber', 'Jump rope']::text[]"
-        },
-        "exercises_tags_vocabulary_check": {
-          "name": "exercises_tags_vocabulary_check",
-          "value": "\"app\".\"exercises\".\"tags\" <@ array['Strength', 'Hypertrophy', 'Recovery']::text[]"
-        },
         "exercises_video_format_check": {
           "name": "exercises_video_format_check",
           "value": "\"app\".\"exercises\".\"video_format\" in ('mp4', 'mov')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "app.food_tags": {
+      "name": "food_tags",
+      "schema": "app",
+      "columns": {
+        "food_id": {
+          "name": "food_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         },
-        "exercises_video_size_check": {
-          "name": "exercises_video_size_check",
-          "value": "\"app\".\"exercises\".\"video_size_bytes\" between 1 and 52428800"
+        "tag_id": {
+          "name": "tag_id",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "food_tags_food_id_foods_id_fk": {
+          "name": "food_tags_food_id_foods_id_fk",
+          "tableFrom": "food_tags",
+          "tableTo": "foods",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "food_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "food_tags_tag_id_nutrition_tags_id_fk": {
+          "name": "food_tags_tag_id_nutrition_tags_id_fk",
+          "tableFrom": "food_tags",
+          "tableTo": "nutrition_tags",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "food_tags_pkey": {
+          "name": "food_tags_pkey",
+          "columns": [
+            "food_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "app.foods": {
+      "name": "foods",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_account_id": {
+          "name": "owner_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon": {
+          "name": "icon",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kcal": {
+          "name": "kcal",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "protein": {
+          "name": "protein",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "carb": {
+          "name": "carb",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fat": {
+          "name": "fat",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "default_portion_grams": {
+          "name": "default_portion_grams",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "foods_owner_name_unique": {
+          "name": "foods_owner_name_unique",
+          "columns": [
+            {
+              "expression": "owner_account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(btrim(\"name\"))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"app\".\"foods\".\"archived_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "foods_owner_account_id_accounts_id_fk": {
+          "name": "foods_owner_account_id_accounts_id_fk",
+          "tableFrom": "foods",
+          "tableTo": "accounts",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "owner_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "foods_category_check": {
+          "name": "foods_category_check",
+          "value": "\"app\".\"foods\".\"category\" in ('protein', 'carb', 'fat', 'legume', 'extra', 'seasoning')"
+        },
+        "foods_icon_check": {
+          "name": "foods_icon_check",
+          "value": "\"app\".\"foods\".\"icon\" in ('egg', 'poultry', 'meat', 'fish', 'ham', 'dairy', 'grain', 'bread', 'sandwich', 'root-veg', 'leafy', 'veg', 'herb', 'apple', 'banana', 'citrus', 'cherry', 'grape', 'legume', 'nut', 'oil', 'chocolate', 'candy', 'ice-cream', 'cake', 'soup', 'drink', 'other')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "app.nutrition_tags": {
+      "name": "nutrition_tags",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(40)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "family": {
+          "name": "family",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "nutrition_tags_family_check": {
+          "name": "nutrition_tags_family_check",
+          "value": "\"app\".\"nutrition_tags\".\"family\" in ('meal-time', 'cycle-phase', 'nutrient', 'dietary')"
         }
       },
       "isRLSEnabled": false

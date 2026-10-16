@@ -62,6 +62,10 @@ import {
   type ExerciseLibraryFeature,
 } from "~/features/exercise-library/server/exercise-library-composition.server";
 import {
+  composeNutritionLibraryFeature,
+  type NutritionLibraryFeature,
+} from "~/features/nutrition-library/server/nutrition-library-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -93,6 +97,7 @@ export type PlatformContainer = {
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   exerciseLibrary: ExerciseLibraryFeature;
   featureFlagOverrides: FeatureFlagOverrides;
+  nutritionLibrary: NutritionLibraryFeature;
   platform: PlatformFeature;
   store: StoreFeature;
   waitlist: ReturnType<typeof composeWaitlistFeature>;
@@ -135,6 +140,11 @@ export function createPlatformContainer(options: {
     incidents,
     videoFormats: createExerciseVideoFormatDetector(),
     videoStore: createExerciseVideoStore(environment.EXERCISE_VIDEO_ROOT),
+  });
+  const nutritionLibrary = composeNutritionLibraryFeature({
+    clock,
+    database: database.client,
+    incidents,
   });
   const waitlist = composeWaitlistFeature({
     botVerifier,
@@ -306,6 +316,7 @@ export function createPlatformContainer(options: {
     coachingSales,
     exerciseLibrary,
     featureFlagOverrides,
+    nutritionLibrary,
     platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,

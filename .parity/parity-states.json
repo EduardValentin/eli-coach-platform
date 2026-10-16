@@ -2171,6 +2171,14 @@
       "waitFor": "[role=\"dialog\"] [data-parity=\"drawer-backdrop\"][style*=\"opacity: 1\"] + [style*=\"transform: none\"]"
     }
   ],
+  "open-coach-drawer-without-pending-checkins": [
+    {
+      "use": "pending-checkins-empty"
+    },
+    {
+      "use": "open-coach-drawer"
+    }
+  ],
   "open-cycle-mode-tooltip": [
     {
       "hover": "[data-parity=\"fact-cycle-mode-info\"]"
@@ -4457,6 +4465,321 @@
       "waitFor": "[data-parity-root=\"CartDrawer\"] h2:text-is(\"Check your inbox\")"
     }
   ],
+  "coach-nutrition-active": [
+    {
+      "use": "pending-checkins-empty"
+    },
+    {
+      "click": "[data-parity=\"link-nutrition\"]"
+    },
+    {
+      "waitFor": "[data-parity=\"link-nutrition\"][aria-current=\"page\"]"
+    }
+  ],
+  "open-new-food": [
+    {
+      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New food"
+    }
+  ],
+  "food-editor-name-missing": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "C"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        ""
+      ]
+    }
+  ],
+  "food-editor-too-long": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Chicken breast fillet, skinless and boneless, grilled without oil and lightly salted"
+      ]
+    }
+  ],
+  "food-editor-name-taken": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Chicken breast"
+      ]
+    }
+  ],
+  "food-editor-macro-out-of-range": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+        "10000"
+      ]
+    }
+  ],
+  "food-editor-portion-out-of-range": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+        "0.5"
+      ]
+    }
+  ],
+  "food-icon-chosen": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
+    }
+  ],
+  "open-food-category": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "click": "role=combobox[name=\"Category\" s]"
+    }
+  ],
+  "open-food-actions": [
+    {
+      "click": "role=button[name=\"Actions for Chicken breast\" s]"
+    }
+  ],
+  "open-food-editor-chicken": [
+    {
+      "use": "open-food-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "food-updated-toast": [
+    {
+      "use": "open-food-editor-chicken"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    },
+    {
+      "waitFor": "[data-sonner-toast][data-type=\"success\"]"
+    }
+  ],
+  "seed-food-chicken-breast": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Chicken breast"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Poultry\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "165"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "31"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "3.6"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Post-workout\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-lentils": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Lentils"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Legumes\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Legume / bean\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "116"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "9"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.4"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Iron-rich\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Vegetarian\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lactose-free\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-salmon": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Salmon"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Fish\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "208"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "13"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Omega-3\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
   "exercise-video-chosen": [
     {
       "use": "open-new-exercise"

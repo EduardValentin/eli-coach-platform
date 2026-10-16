@@ -61,6 +61,7 @@ import {
 } from '../services/subscriptionService';
 import { EXERCISE_SEEDS } from '../services/exerciseSamples';
 import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService';
+import { FOOD_SEEDS } from '../services/foodSamples';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1093,6 +1094,28 @@ export function DevToggle() {
                       <SelectItem value="holds-finishing">Holds while finishing</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
                       <SelectItem value="refused">Refused as not a video</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-food-seed" className={DEV_LABEL_CLASS}>
+                    Food library
+                  </Label>
+                  <Select
+                    value={appState.foodSeed}
+                    onValueChange={(value) =>
+                      setAppState({
+                        foodSeed: optionOrDefault(FOOD_SEEDS, value, 'seeded'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-food-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Populated</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

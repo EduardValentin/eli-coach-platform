@@ -7,7 +7,12 @@ import { CalendarClock } from "lucide-react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SettingsRow, SettingsRows, SettingsSection } from "./settings-section";
+import {
+  SettingsBody,
+  SettingsRow,
+  SettingsRows,
+  SettingsSection,
+} from "./settings-section";
 
 afterEach(() => {
   cleanup();
@@ -350,5 +355,39 @@ describe("SettingsRow", () => {
       "aria-describedby",
       "weekdays-error",
     );
+  });
+});
+
+describe("SettingsBody", () => {
+  it("pads a section's untitled content the way a row is padded", () => {
+    // arrange
+    // act
+    render(
+      <SettingsBody>
+        <p>Tag groups</p>
+      </SettingsBody>,
+    );
+
+    // assert
+    expect(screen.getByText("Tag groups").parentElement).toHaveClass(
+      "px-5",
+      "py-5",
+      "sm:px-6",
+    );
+  });
+
+  it("lays its content out with the classes and data attributes it is given", () => {
+    // arrange
+    // act
+    render(
+      <SettingsBody className="grid gap-6" data-parity="food-tag-chips">
+        <p>Tag groups</p>
+      </SettingsBody>,
+    );
+
+    // assert
+    const body = screen.getByText("Tag groups").parentElement;
+    expect(body).toHaveClass("grid", "gap-6", "px-5", "py-5", "sm:px-6");
+    expect(body).toHaveAttribute("data-parity", "food-tag-chips");
   });
 });

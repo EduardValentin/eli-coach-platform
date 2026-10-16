@@ -1,7 +1,8 @@
 import { createReadStream, readFileSync } from "node:fs";
 
-import type { APIRequestContext, APIResponse } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 
+import { answerOf, type ApiAnswer } from "./api-answers";
 import type { SampleVideo } from "./exercise-video-files";
 
 export type ExerciseFields = {
@@ -17,8 +18,6 @@ export type ExerciseFields = {
   cues: string;
 };
 
-export type ExerciseAnswer = { status: number; body: unknown };
-
 export type ServedVideo = {
   status: number;
   headers: Record<string, string>;
@@ -33,16 +32,6 @@ const SAVED = 200;
 
 export class ExerciseRequests {
   constructor(private readonly request: APIRequestContext) {}
-
-  private async answerOf(response: APIResponse): Promise<ExerciseAnswer> {
-    const text = await response.text();
-
-    try {
-      return { status: response.status(), body: JSON.parse(text) };
-    } catch {
-      return { status: response.status(), body: text };
-    }
-  }
 
   private videoPartsOf(fields: ExerciseFields, video: SampleVideo) {
     return {
@@ -64,10 +53,8 @@ export class ExerciseRequests {
     ]);
   }
 
-  async create(fields: ExerciseFields): Promise<ExerciseAnswer> {
-    return this.answerOf(
-      await this.request.post(EXERCISES_PATH, { data: fields }),
-    );
+  async create(fields: ExerciseFields): Promise<ApiAnswer> {
+    return answerOf(await this.request.post(EXERCISES_PATH, { data: fields }));
   }
 
   async createAccepted(fields: ExerciseFields): Promise<void> {
@@ -83,8 +70,8 @@ export class ExerciseRequests {
   async createWithVideo(
     fields: ExerciseFields,
     video: SampleVideo,
-  ): Promise<ExerciseAnswer> {
-    return this.answerOf(
+  ): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.post(EXERCISES_PATH, {
         multipart: this.videoPartsOf(fields, video),
       }),
@@ -94,8 +81,8 @@ export class ExerciseRequests {
   async createWithVideoUnder(
     mediaType: string,
     { fields, video }: { fields: ExerciseFields; video: SampleVideo },
-  ): Promise<ExerciseAnswer> {
-    return this.answerOf(
+  ): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.post(EXERCISES_PATH, {
         data: this.handBuiltBodyOf(fields, video),
         headers: {
@@ -105,11 +92,8 @@ export class ExerciseRequests {
     );
   }
 
-  async edit(
-    exerciseId: string,
-    fields: ExerciseFields,
-  ): Promise<ExerciseAnswer> {
-    return this.answerOf(
+  async edit(exerciseId: string, fields: ExerciseFields): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.put(`${EXERCISES_PATH}/${exerciseId}`, {
         data: fields,
       }),
@@ -119,8 +103,8 @@ export class ExerciseRequests {
   async editWithVideo(
     exerciseId: string,
     { fields, video }: { fields: ExerciseFields; video: SampleVideo },
-  ): Promise<ExerciseAnswer> {
-    return this.answerOf(
+  ): Promise<ApiAnswer> {
+    return answerOf(
       await this.request.put(`${EXERCISES_PATH}/${exerciseId}`, {
         multipart: this.videoPartsOf(fields, video),
       }),

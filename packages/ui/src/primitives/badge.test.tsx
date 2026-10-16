@@ -115,4 +115,32 @@ describe("badge", () => {
     // assert
     expect(screen.getByText("Today")).toHaveClass("ml-2");
   });
+
+  it.each(["tint-slate", "tint-violet", "tint-lime", "tint-cyan"] as const)(
+    "fills a %s badge with its soft tint and keeps the ink primary",
+    (tone) => {
+      // arrange, act
+      render(<Badge tone={tone}>Breakfast</Badge>);
+
+      // assert
+      expect(screen.getByText("Breakfast")).toHaveClass(
+        "border-transparent",
+        `bg-${tone}-soft`,
+        "text-text-primary",
+      );
+    },
+  );
+
+  it.each(["tint-slate", "tint-violet", "tint-lime", "tint-cyan"] as const)(
+    "draws the leading icon of a %s badge in secondary ink",
+    (tone) => {
+      // arrange, act
+      render(<Badge tone={tone}>Breakfast</Badge>);
+
+      // assert
+      expect(screen.getByText("Breakfast")).toHaveClass(
+        "[&>svg]:text-text-secondary",
+      );
+    },
+  );
 });
