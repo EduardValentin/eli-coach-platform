@@ -554,15 +554,7 @@ function RecipeBuilderInner() {
               {/* Icon picker popover */}
               <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    aria-label={
-                      icon
-                        ? `Change meal icon (current: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon})`
-                        : 'Choose meal icon'
-                    }
-                    variant="outline"
-                  >
+                  <Button type="button" variant="outline">
                     <Smile size={16} aria-hidden="true" />
                     {icon
                       ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}`
@@ -573,7 +565,7 @@ function RecipeBuilderInner() {
                   <p className={`mb-2 ${LABEL_CLASS}`}>Meal icon</p>
                   <div
                     role="listbox"
-                    aria-label="Meal icons"
+                    aria-label="Meal icon"
                     data-parity="recipe-icon-popover"
                     className="grid grid-cols-5 gap-1"
                   >
@@ -582,7 +574,6 @@ function RecipeBuilderInner() {
                       type="button"
                       role="option"
                       aria-selected={icon === undefined}
-                      aria-label="No icon"
                       onClick={() => changeIcon(undefined)}
                       className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                         icon === undefined
@@ -750,7 +741,7 @@ function RecipeBuilderInner() {
                   key={key}
                   data-parity-root="ValueTile"
                   className={cn(
-                    'rounded-compact py-2 text-center',
+                    'rounded-compact px-1.5 py-2 text-center',
                     key === 'kcal' ? 'bg-card' : MACRO_TILE[key],
                   )}
                 >
@@ -763,7 +754,7 @@ function RecipeBuilderInner() {
                           ? 'C'
                           : 'F'}
                   </dt>
-                  <dd className={`${VALUE_CLASS} tabular-nums`}>
+                  <dd className={`${VALUE_CLASS} tabular-nums leading-tight`}>
                     {isPostMvp && override ? (
                       <Input
                         type="number"
