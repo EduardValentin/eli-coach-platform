@@ -118,7 +118,7 @@ export function ExerciseListing({
     });
 
   return (
-    <>
+    <div className="flex flex-col gap-2">
       <ListingToolbar
         filters={
           <ExerciseFilters
@@ -194,7 +194,7 @@ export function ExerciseListing({
       {listPage.pageCount > 1 && (
         <ListPager pathForPage={listing.pathForPage} view={listPage} />
       )}
-    </>
+    </div>
   );
 }
 

@@ -3,7 +3,13 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+  useSearchParams,
+} from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { pageOf } from "../lib/list-paging";
@@ -21,6 +27,25 @@ function itemsCounting(total: number): string[] {
 
 function pathForPage(page: number): string {
   return page === 1 ? "/library" : `/library?page=${page}`;
+}
+
+function PagedLibrary({ total }: { total: number }) {
+  const [searchParams] = useSearchParams();
+  const view = pageOf(itemsCounting(total), {
+    page: Number(searchParams.get("page") ?? 1),
+    perPage: PER_PAGE,
+  });
+
+  return <ListPager pathForPage={pathForPage} view={view} />;
+}
+
+function renderPagedLibrary(total: number) {
+  const router = createMemoryRouter(
+    [{ Component: () => <PagedLibrary total={total} />, path: "/library" }],
+    { initialEntries: ["/library"] },
+  );
+
+  render(<RouterProvider router={router} />);
 }
 
 function renderPager(paging: { page: number; total: number }) {
@@ -103,6 +128,20 @@ describe("ListPager", () => {
         .map((link) => link.textContent),
     ).toEqual(["1", "5", "6", "7", "12"]);
     expect(within(pages).getAllByText("More pages")).toHaveLength(2);
+  });
+
+  it("keeps focus on the page link she followed once that page is read", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPagedLibrary(25);
+    const pageTwo = screen.getByRole("link", { name: "Go to page 2" });
+
+    // act
+    await user.click(pageTwo);
+
+    // assert
+    expect(pageTwo).toHaveAttribute("aria-current", "page");
+    expect(pageTwo).toHaveFocus();
   });
 
   it("marks its root for the parity check", () => {

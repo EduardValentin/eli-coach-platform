@@ -5,10 +5,9 @@ import {
 } from "../lib/list-paging";
 import {
   Pagination,
-  PaginationCurrentPage,
   PaginationEllipsis,
-  PaginationLink,
   PaginationList,
+  PaginationPage,
   PaginationNext,
   PaginationPrevious,
 } from "../primitives/pagination";
@@ -66,9 +65,11 @@ function PageStep(props: {
     return <PaginationEllipsis />;
   }
 
-  if (step === currentPage) {
-    return <PaginationCurrentPage page={step} to={pathForPage(step)} />;
-  }
-
-  return <PaginationLink page={step} to={pathForPage(step)} />;
+  return (
+    <PaginationPage
+      page={step}
+      status={step === currentPage ? "current" : "other"}
+      to={pathForPage(step)}
+    />
+  );
 }

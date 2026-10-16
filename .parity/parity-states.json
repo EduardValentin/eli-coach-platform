@@ -5052,7 +5052,7 @@
       "click": "[role=\"dialog\"] >> role=checkbox[name=/^Strength/]"
     },
     {
-      "press": "Escape"
+      "click": "main h1"
     },
     {
       "waitFor": "role=button[name=\"Tags, 1 selected\" s]"
@@ -5140,6 +5140,25 @@
     },
     {
       "press": "Shift+Tab"
+    }
+  ],
+  "calls-page-2": [
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    }
+  ],
+  "calls-no-match": [
+    {
+      "fill": [
+        "[aria-label=\"Search calls\"]",
+        "zzzz"
+      ]
+    },
+    {
+      "waitFor": "role=button[name=\"Clear filters\" s]"
     }
   ]
 }

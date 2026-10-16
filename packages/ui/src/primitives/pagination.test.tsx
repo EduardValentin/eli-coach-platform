@@ -8,10 +8,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   Pagination,
-  PaginationCurrentPage,
   PaginationEllipsis,
-  PaginationLink,
   PaginationList,
+  PaginationPage,
   PaginationNext,
   PaginationPrevious,
 } from "./pagination";
@@ -29,10 +28,10 @@ function renderPagination(steps: {
       <Pagination>
         <PaginationList>
           <PaginationPrevious to={steps.previousPath} />
-          <PaginationLink page={1} to="/calls" />
-          <PaginationCurrentPage page={2} to="/calls?page=2" />
+          <PaginationPage page={1} status="other" to="/calls" />
+          <PaginationPage page={2} status="current" to="/calls?page=2" />
           <PaginationEllipsis />
-          <PaginationLink page={9} to="/calls?page=9" />
+          <PaginationPage page={9} status="other" to="/calls?page=9" />
           <PaginationNext to={steps.nextPath} />
         </PaginationList>
       </Pagination>
