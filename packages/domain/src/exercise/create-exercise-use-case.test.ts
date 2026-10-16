@@ -412,4 +412,23 @@ describe("CreateExerciseUseCase", () => {
       error: failure,
     });
   });
+
+  it("names a taken name beside the draft's other problems", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: " hip thrust", primaryMuscles: [] },
+      video: { kind: "keep" },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { name: "taken", primaryMuscles: "missing" },
+    });
+    expect(library.add).not.toHaveBeenCalled();
+  });
 });

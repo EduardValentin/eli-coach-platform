@@ -4,6 +4,7 @@ import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseIds } from "./exercise-ids";
 import type { ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import { ExerciseNames } from "./exercise-names";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 import {
   ExerciseVideoSaving,
@@ -55,18 +56,20 @@ export class CreateExerciseUseCase {
     video: choice,
   }: CreateExerciseCommand): Promise<CreateExerciseResult> {
     const { library, ids, clock } = this.options;
-    const otherNames = (await library.list(ownerAccountId)).map(
-      ({ name }) => name,
+    const otherNames = ExerciseNames.of(
+      (await library.list(ownerAccountId)).map(({ name }) => name),
     );
-    const draft = ExerciseDraft.from(input, otherNames);
+    const draft = ExerciseDraft.from(input);
+    const nameTaken = otherNames.includes(input.name);
     const video = await this.videos.judged(choice);
 
-    if (draft.status === "invalid" || video.kind === "refused") {
+    if (draft.status === "invalid" || nameTaken || video.kind === "refused") {
       await this.videos.discard(choice);
 
       return {
         status: "invalid",
         problems: {
+          ...(nameTaken && { name: "taken" as const }),
           ...(draft.status === "invalid" && draft.problems),
           ...(video.kind === "refused" && { video: video.refusal }),
         },

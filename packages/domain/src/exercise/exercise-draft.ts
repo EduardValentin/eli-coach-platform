@@ -43,7 +43,7 @@ export type ExerciseDraftSnapshot = {
 };
 
 export type ExerciseDraftProblems = {
-  name?: "missing" | "too-long" | "taken";
+  name?: "missing" | "too-long";
   type?: "unknown";
   unit?: "unknown" | "not-allowed";
   primaryMuscles?: "missing" | "unknown";
@@ -68,10 +68,7 @@ export type ExerciseDraftResult =
 export class ExerciseDraft {
   private constructor(private readonly snapshot: ExerciseDraftSnapshot) {}
 
-  static from(
-    input: ExerciseDraftInput,
-    otherNames: readonly string[] = [],
-  ): ExerciseDraftResult {
+  static from(input: ExerciseDraftInput): ExerciseDraftResult {
     const chosen = <Value extends string>(
       vocabulary: readonly Value[],
       entered: readonly string[],
@@ -121,7 +118,7 @@ export class ExerciseDraft {
       tags: [...new Set(tags)],
       cues: input.cues,
     });
-    const problems = draft.problemsAmong(otherNames);
+    const problems = draft.problems();
 
     if (Object.keys(problems).length > 0) {
       return { status: "invalid", problems };
@@ -149,8 +146,8 @@ export class ExerciseDraft {
     };
   }
 
-  private problemsAmong(otherNames: readonly string[]): ExerciseDraftProblems {
-    const name = this.nameProblemAmong(otherNames);
+  private problems(): ExerciseDraftProblems {
+    const name = this.nameProblem();
     const { type, unit, primaryMuscles, secondaryMuscles, cues } =
       this.snapshot;
 
@@ -168,21 +165,10 @@ export class ExerciseDraft {
     };
   }
 
-  private nameProblemAmong(
-    otherNames: readonly string[],
-  ): ExerciseDraftProblems["name"] {
+  private nameProblem(): ExerciseDraftProblems["name"] {
     if (this.snapshot.name.length === 0) return "missing";
     if (this.snapshot.name.length > MAX_EXERCISE_NAME_LENGTH) return "too-long";
-    if (this.isNameAmong(otherNames)) return "taken";
 
     return undefined;
-  }
-
-  private isNameAmong(otherNames: readonly string[]): boolean {
-    const comparable = this.snapshot.name.toLowerCase();
-
-    return otherNames.some(
-      (otherName) => otherName.trim().toLowerCase() === comparable,
-    );
   }
 }

@@ -3,6 +3,7 @@ import type { Exercise, ExerciseSaveProblems } from "./exercise";
 import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import { ExerciseNames } from "./exercise-names";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 import {
   ExerciseVideoSaving,
@@ -68,18 +69,20 @@ export class EditExerciseUseCase {
       return { status: "not-found" };
     }
 
-    const otherNames = exercises
-      .filter(({ id }) => id !== exerciseId)
-      .map(({ name }) => name);
-    const draft = ExerciseDraft.from(input, otherNames);
+    const otherNames = ExerciseNames.of(
+      exercises.filter(({ id }) => id !== exerciseId).map(({ name }) => name),
+    );
+    const draft = ExerciseDraft.from(input);
+    const nameTaken = otherNames.includes(input.name);
     const video = await this.videos.judged(choice);
 
-    if (draft.status === "invalid" || video.kind === "refused") {
+    if (draft.status === "invalid" || nameTaken || video.kind === "refused") {
       await this.videos.discard(choice);
 
       return {
         status: "invalid",
         problems: {
+          ...(nameTaken && { name: "taken" as const }),
           ...(draft.status === "invalid" && draft.problems),
           ...(video.kind === "refused" && { video: video.refusal }),
         },

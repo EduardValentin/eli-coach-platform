@@ -514,4 +514,24 @@ describe("EditExerciseUseCase", () => {
     expect(result).toEqual({ status: "failed" });
     expect(store.discard).toHaveBeenCalledWith("staging-2");
   });
+
+  it("names a taken name beside the draft's other problems", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: { ...SQUAT_REVISED, name: " hip thrust", primaryMuscles: [] },
+      video: KEEP,
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { name: "taken", primaryMuscles: "missing" },
+    });
+    expect(library.replace).not.toHaveBeenCalled();
+  });
 });

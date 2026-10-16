@@ -247,47 +247,12 @@ describe("ExerciseDraft", () => {
     },
   );
 
-  it.each([
-    ["the same name", "Back squat"],
-    ["a differently cased name", "BACK SQUAT"],
-    ["a name with surrounding spaces", "  back Squat "],
-  ])(
-    "refuses a name another exercise already has, matching %s",
-    (_case, otherName) => {
-      // arrange
-      const otherNames = ["Hip thrust", otherName];
-
-      // act
-      const result = ExerciseDraft.from(SQUAT, otherNames);
-
-      // assert
-      expect(result).toEqual({
-        status: "invalid",
-        problems: { name: "taken" },
-      });
-    },
-  );
-
-  it("names a taken name beside the other problems", () => {
+  it("leaves the name's availability to the library: it accepts a name another exercise may have", () => {
     // arrange
-    const input = { ...SQUAT, name: " hip thrust", primaryMuscles: [] };
+    const input = { ...SQUAT, name: "Hip thrust" };
 
     // act
-    const result = ExerciseDraft.from(input, ["Hip thrust"]);
-
-    // assert
-    expect(result).toEqual({
-      status: "invalid",
-      problems: { name: "taken", primaryMuscles: "missing" },
-    });
-  });
-
-  it("accepts a name no other exercise has", () => {
-    // arrange
-    const otherNames = ["Hip thrust", "Back squats"];
-
-    // act
-    const result = ExerciseDraft.from(SQUAT, otherNames);
+    const result = ExerciseDraft.from(input);
 
     // assert
     expect(result.status).toBe("valid");

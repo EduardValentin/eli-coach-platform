@@ -29,7 +29,8 @@ export type StoredExercise = ExerciseDraftInput & {
   updatedAt: Date;
 };
 
-export type ExerciseSaveProblems = ExerciseDraftProblems & {
+export type ExerciseSaveProblems = Omit<ExerciseDraftProblems, "name"> & {
+  name?: ExerciseDraftProblems["name"] | "taken";
   video?: ExerciseVideoRefusal;
 };
 

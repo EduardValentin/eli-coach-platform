@@ -11,11 +11,7 @@ export {
   type ExerciseSaveProblems,
   type ExerciseSnapshot,
 } from "./exercise";
-export {
-  ExerciseDraft,
-  type ExerciseDraftInput,
-  type ExerciseDraftProblems,
-} from "./exercise-draft";
+export { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 export { type ExerciseIds } from "./exercise-ids";
 export {
   type ExerciseAddition,
@@ -24,6 +20,7 @@ export {
   type ExerciseReplacement,
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
+export { ExerciseNames } from "./exercise-names";
 export {
   ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
   EXERCISE_VIDEO_EXTENSIONS,

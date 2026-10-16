@@ -6,6 +6,7 @@ import {
   EXERCISE_TYPES,
   EXERCISE_VIDEO_EXTENSIONS,
   ExerciseDraft,
+  ExerciseNames,
   MAX_EXERCISE_NAME_LENGTH,
   MAX_EXERCISE_VIDEO_BYTES,
   MAX_FORM_CUES_LENGTH,
@@ -14,7 +15,7 @@ import {
   unitsFor,
   type Difficulty,
   type Equipment,
-  type ExerciseDraftProblems,
+  type ExerciseSaveProblems,
   type ExerciseTag,
   type ExerciseType,
   type ExerciseUnit,
@@ -260,7 +261,7 @@ export function exerciseRequestOf(
 }
 
 export function exerciseFieldProblemsOf(
-  problems: ExerciseDraftProblems,
+  problems: ExerciseSaveProblems,
 ): ExerciseFieldProblems {
   const primaryMuscles =
     problems.primaryMuscles === "missing"
@@ -288,17 +289,20 @@ export function exerciseFormResolver(
   otherNames: () => readonly string[],
 ): Resolver<ExerciseFormValues> {
   return (values) => {
-    const draft = ExerciseDraft.from(
-      exerciseDraftInputOf(values),
-      otherNames(),
-    );
+    const input = exerciseDraftInputOf(values);
+    const draft = ExerciseDraft.from(input);
+    const nameTaken = ExerciseNames.of(otherNames()).includes(input.name);
 
-    if (draft.status === "valid") {
+    if (draft.status === "valid" && !nameTaken) {
       return { values, errors: {} };
     }
 
+    const problems: ExerciseSaveProblems = {
+      ...(nameTaken && { name: "taken" }),
+      ...(draft.status === "invalid" && draft.problems),
+    };
     const errors: FieldErrors<ExerciseFormValues> = Object.fromEntries(
-      Object.entries(exerciseFieldProblemsOf(draft.problems)).map(
+      Object.entries(exerciseFieldProblemsOf(problems)).map(
         ([field, message]) => [field, { type: "problem", message }],
       ),
     );
