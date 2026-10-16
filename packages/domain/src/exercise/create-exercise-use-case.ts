@@ -5,8 +5,10 @@ import type { ExerciseIds } from "./exercise-ids";
 import type { ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import type { ExerciseVideoChoice } from "./exercise-video-intake";
-import { ExerciseVideoSaving } from "./exercise-video-saving";
+import {
+  ExerciseVideoSaving,
+  type ExerciseVideoChoice,
+} from "./exercise-video-saving";
 import type { ExerciseVideoStore } from "./exercise-video-store";
 
 type CreateExerciseCommand = {

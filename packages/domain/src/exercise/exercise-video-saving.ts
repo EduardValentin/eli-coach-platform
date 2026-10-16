@@ -3,20 +3,21 @@ import type {
   ExerciseLibraryIncidents,
   UncleanedExerciseVideoFile,
 } from "./exercise-library-incidents";
-import {
-  ExerciseVideo,
-  type ExerciseVideoFormat,
-  type ExerciseVideoRefusal,
-} from "./exercise-video";
+import type { ExerciseVideo } from "./exercise-video";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import {
-  ExerciseVideoIntake,
-  type ExerciseVideoChoice,
-} from "./exercise-video-intake";
 import type {
   ExerciseVideoStore,
   StagedExerciseVideo,
 } from "./exercise-video-store";
+import {
+  ExerciseVideoUpload,
+  type ExerciseVideoRefusal,
+} from "./exercise-video-upload";
+
+export type ExerciseVideoChoice =
+  | { kind: "keep" }
+  | { kind: "remove" }
+  | { kind: "attach"; staged: StagedExerciseVideo };
 
 type JudgedVideoChoice =
   | { kind: "keep" }
@@ -24,7 +25,7 @@ type JudgedVideoChoice =
   | {
       kind: "attach";
       staged: StagedExerciseVideo;
-      format: ExerciseVideoFormat;
+      upload: ExerciseVideoUpload;
     }
   | {
       kind: "refused";
@@ -47,14 +48,14 @@ export class ExerciseVideoSaving {
     if (choice.kind !== "attach") return choice;
 
     const { staged } = choice;
-    const judgement = ExerciseVideoIntake.judge({
+    const inspection = ExerciseVideoUpload.inspect({
       detectedType: await this.options.formats.detect(staged.leadingBytes),
       sizeBytes: staged.sizeBytes,
     });
 
-    return judgement.status === "accepted"
-      ? { kind: "attach", staged, format: judgement.format }
-      : { kind: "refused", staged, refusal: judgement.refusal };
+    return inspection.status === "accepted"
+      ? { kind: "attach", staged, upload: inspection.upload }
+      : { kind: "refused", staged, refusal: inspection.refusal };
   }
 
   async keepAccepted(
@@ -64,14 +65,7 @@ export class ExerciseVideoSaving {
 
     const videoId = await this.options.store.keep(choice.staged.stagingId);
 
-    return {
-      kind: "attach",
-      video: ExerciseVideo.of({
-        videoId,
-        format: choice.format,
-        sizeBytes: choice.staged.sizeBytes,
-      }),
-    };
+    return { kind: "attach", video: choice.upload.storedAs(videoId) };
   }
 
   async writeOrRemoveKept<Outcome extends string>(

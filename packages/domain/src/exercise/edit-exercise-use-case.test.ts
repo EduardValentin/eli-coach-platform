@@ -33,7 +33,11 @@ const STORED_SQUAT: ExerciseSnapshot = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
-  video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
+  video: {
+    videoId: "9c1b0000-0000-4000-8000-000000000001",
+    format: "mp4",
+    sizeBytes: 2_048,
+  },
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
 };
@@ -78,7 +82,11 @@ const EDITED_SQUAT: ExerciseSnapshot = {
   difficulty: "Advanced",
   tags: ["Strength", "Recovery"],
   cues: "Elbows high.",
-  video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
+  video: {
+    videoId: "9c1b0000-0000-4000-8000-000000000001",
+    format: "mp4",
+    sizeBytes: 2_048,
+  },
   createdAt: CREATED_AT,
   updatedAt: NOW,
 };
@@ -125,7 +133,7 @@ function createUseCase() {
     detect: vi.fn(async (): Promise<string | null> => "mov"),
   } satisfies ExerciseVideoFormatDetector;
   const store = {
-    keep: vi.fn(async () => "video-2"),
+    keep: vi.fn(async () => "9c1b0000-0000-4000-8000-000000000002"),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
@@ -341,13 +349,19 @@ describe("EditExerciseUseCase", () => {
     // assert
     const edited = Exercise.reconstitute({
       ...EDITED_SQUAT,
-      video: { videoId: "video-2", format: "mov", sizeBytes: 4_096 },
+      video: {
+        videoId: "9c1b0000-0000-4000-8000-000000000002",
+        format: "mov",
+        sizeBytes: 4_096,
+      },
     });
     expect(result).toEqual({ status: "edited", exercise: edited });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
     expect(store.keep).toHaveBeenCalledWith("staging-2");
     expect(library.replace).toHaveBeenCalledWith(edited);
-    expect(store.remove).toHaveBeenCalledExactlyOnceWith("video-1");
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
     expect(library.replace.mock.invocationCallOrder[0]).toBeLessThan(
       store.remove.mock.invocationCallOrder[0] ?? 0,
     );
@@ -369,7 +383,9 @@ describe("EditExerciseUseCase", () => {
     const edited = Exercise.reconstitute({ ...EDITED_SQUAT, video: null });
     expect(result).toEqual({ status: "edited", exercise: edited });
     expect(library.replace).toHaveBeenCalledWith(edited);
-    expect(store.remove).toHaveBeenCalledExactlyOnceWith("video-1");
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
   });
 
   it("reports a replaced file it could not delete and still answers the exercise edited", async () => {
@@ -389,7 +405,7 @@ describe("EditExerciseUseCase", () => {
     // assert
     expect(result.status).toBe("edited");
     expect(incidents.videoCleanupFailed).toHaveBeenCalledWith({
-      videoId: "video-1",
+      videoId: "9c1b0000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
@@ -432,7 +448,9 @@ describe("EditExerciseUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
-    expect(store.remove).toHaveBeenCalledExactlyOnceWith("video-2");
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
   });
 
   it("removes the new file, keeps the current one and answers failed when the write throws", async () => {
@@ -451,7 +469,9 @@ describe("EditExerciseUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.remove).toHaveBeenCalledExactlyOnceWith("video-2");
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
       exerciseId: "exercise-1",
       error: failure,

@@ -3,11 +3,8 @@ import type {
   ExerciseDraftProblems,
   ExerciseDraftSnapshot,
 } from "./exercise-draft";
-import {
-  ExerciseVideo,
-  type ExerciseVideoRefusal,
-  type ExerciseVideoSnapshot,
-} from "./exercise-video";
+import { ExerciseVideo, type ExerciseVideoSnapshot } from "./exercise-video";
+import type { ExerciseVideoRefusal } from "./exercise-video-upload";
 
 export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   id: string;
@@ -73,7 +70,7 @@ export class Exercise {
   }
 
   get video(): ExerciseVideo | null {
-    return this.snapshot.video && ExerciseVideo.of(this.snapshot.video);
+    return this.snapshot.video && ExerciseVideo.fromStored(this.snapshot.video);
   }
 
   revised(input: ExerciseRevisionInput): ExerciseRevision {

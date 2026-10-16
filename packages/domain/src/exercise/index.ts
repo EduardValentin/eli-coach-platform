@@ -25,17 +25,15 @@ export {
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
 export {
+  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
+  EXERCISE_VIDEO_EXTENSIONS,
   EXERCISE_VIDEO_FORMATS,
+  MAX_EXERCISE_VIDEO_BYTES,
   type ExerciseVideoFormat,
   type ExerciseVideoSnapshot,
 } from "./exercise-video";
 export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-export {
-  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
-  EXERCISE_VIDEO_EXTENSIONS,
-  MAX_EXERCISE_VIDEO_BYTES,
-  type ExerciseVideoChoice,
-} from "./exercise-video-intake";
+export { type ExerciseVideoChoice } from "./exercise-video-saving";
 export {
   type ExerciseVideoOpening,
   type ExerciseVideoStore,

@@ -21,13 +21,13 @@ const SQUAT: ExerciseDraftInput = {
   cues: "",
 };
 
-const FIRST_VIDEO = ExerciseVideo.of({
-  videoId: "video-1",
+const FIRST_VIDEO = ExerciseVideo.fromStored({
+  videoId: "9c1b0000-0000-4000-8000-000000000001",
   format: "mp4",
   sizeBytes: 2_048,
 });
-const SECOND_VIDEO = ExerciseVideo.of({
-  videoId: "video-2",
+const SECOND_VIDEO = ExerciseVideo.fromStored({
+  videoId: "9c1b0000-0000-4000-8000-000000000002",
   format: "mov",
   sizeBytes: 4_096,
 });
@@ -87,7 +87,9 @@ describe("Exercise", () => {
 
     // assert
     expect(exercise.toSnapshot().video).toEqual(video.toSnapshot());
-    expect(exercise.video?.isStoredAs("video-1")).toBe(true);
+    expect(
+      exercise.video?.isStoredAs("9c1b0000-0000-4000-8000-000000000001"),
+    ).toBe(true);
   });
 
   it("is revised as a whole, keeping its id, its owner, its video and the moment it was created", () => {

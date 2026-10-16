@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video-intake";
+import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video";
 import type {
   ExerciseVideoStore,
   StagedExerciseVideo,

@@ -20,7 +20,11 @@ const SQUAT = Exercise.reconstitute({
   difficulty: "Beginner",
   tags: [],
   cues: "",
-  video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
+  video: {
+    videoId: "9c1b0000-0000-4000-8000-000000000001",
+    format: "mp4",
+    sizeBytes: 2_048,
+  },
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
 });

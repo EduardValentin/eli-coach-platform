@@ -6,7 +6,7 @@ import type { ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseAddition, ExerciseLibrary } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
-import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video-intake";
+import { MAX_EXERCISE_VIDEO_BYTES } from "./exercise-video";
 import type {
   ExerciseVideoStore,
   StagedExerciseVideo,
@@ -101,7 +101,7 @@ function createUseCase() {
     detect: vi.fn(async (): Promise<string | null> => "mp4"),
   } satisfies ExerciseVideoFormatDetector;
   const store = {
-    keep: vi.fn(async () => "video-1"),
+    keep: vi.fn(async () => "9c1b0000-0000-4000-8000-000000000001"),
     discard: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
@@ -150,7 +150,11 @@ describe("CreateExerciseUseCase", () => {
     // assert
     const created = Exercise.reconstitute({
       ...CREATED_SQUAT,
-      video: { videoId: "video-1", format: "mp4", sizeBytes: 2_048 },
+      video: {
+        videoId: "9c1b0000-0000-4000-8000-000000000001",
+        format: "mp4",
+        sizeBytes: 2_048,
+      },
     });
     expect(result).toEqual({ status: "created", exercise: created });
     expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
@@ -284,7 +288,9 @@ describe("CreateExerciseUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
-    expect(store.remove).toHaveBeenCalledWith("video-1");
+    expect(store.remove).toHaveBeenCalledWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
   });
 
   it("removes the kept video, reports the failed write and answers that the creation failed", async () => {
@@ -302,7 +308,9 @@ describe("CreateExerciseUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "failed" });
-    expect(store.remove).toHaveBeenCalledWith("video-1");
+    expect(store.remove).toHaveBeenCalledWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
     expect(incidents.exerciseCreationFailed).toHaveBeenCalledWith({
       error: failure,
     });
@@ -347,7 +355,7 @@ describe("CreateExerciseUseCase", () => {
     // assert
     expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
     expect(incidents.videoCleanupFailed).toHaveBeenCalledWith({
-      videoId: "video-1",
+      videoId: "9c1b0000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
