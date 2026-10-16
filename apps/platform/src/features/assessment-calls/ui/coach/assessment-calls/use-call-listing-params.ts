@@ -2,6 +2,7 @@ import {
   parsePage,
   parseSort,
   pathForPageOf,
+  setParamOrDelete,
   setParamUnlessDefault,
   sortParams,
   useSearchParamsWriter,
@@ -110,17 +111,4 @@ export function useCallListingParams(): CallListingParams {
     toggleSortDirection,
     when: toCallWhen(searchParams.get(WHEN_PARAM)),
   };
-}
-
-function setParamOrDelete(
-  params: URLSearchParams,
-  name: string,
-  value: string | null,
-): void {
-  if (value === null) {
-    params.delete(name);
-    return;
-  }
-
-  params.set(name, value);
 }

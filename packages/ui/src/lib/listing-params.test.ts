@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   haveOnlyListingParamsChanged,
   pathForPageOf,
+  setParamOrDelete,
   setParamUnlessDefault,
 } from "./listing-params";
 
@@ -94,6 +95,30 @@ describe("writing a parameter unless it holds its default", () => {
       defaultValue: "all",
       value: "all",
     });
+
+    // assert
+    expect(params.toString()).toBe("q=ana");
+  });
+});
+
+describe("writing a parameter or removing it when it has no value", () => {
+  it("sets the value it is given", () => {
+    // arrange
+    const params = new URLSearchParams("q=ana");
+
+    // act
+    setParamOrDelete(params, "sort", "name");
+
+    // assert
+    expect(params.toString()).toBe("q=ana&sort=name");
+  });
+
+  it("removes the parameter when there is no value", () => {
+    // arrange
+    const params = new URLSearchParams("q=ana&sort=name");
+
+    // act
+    setParamOrDelete(params, "sort", null);
 
     // assert
     expect(params.toString()).toBe("q=ana");

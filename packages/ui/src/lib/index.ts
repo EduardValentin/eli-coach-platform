@@ -10,6 +10,7 @@ export { pageOf, parsePage, type ListPage } from "./list-paging";
 export {
   haveOnlyListingParamsChanged,
   pathForPageOf,
+  setParamOrDelete,
   setParamUnlessDefault,
 } from "./listing-params";
 export {

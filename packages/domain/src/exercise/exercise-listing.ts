@@ -95,7 +95,8 @@ export class ExerciseSelection {
   countsByType(
     items: readonly ExerciseListingItem[],
   ): Record<ExerciseTypeFilter, number> {
-    const others = items.filter((item) => this.withoutType().matches(item));
+    const withoutType = this.withoutType();
+    const others = items.filter((item) => withoutType.matches(item));
 
     return this.countingEach(
       EXERCISE_TYPE_FILTERS,
@@ -107,7 +108,8 @@ export class ExerciseSelection {
   countsByTag(
     items: readonly ExerciseListingItem[],
   ): Record<ExerciseTag, number> {
-    const others = items.filter((item) => this.withoutTags().matches(item));
+    const withoutTags = this.withoutTags();
+    const others = items.filter((item) => withoutTags.matches(item));
 
     return this.countingEach(EXERCISE_TAGS, others, (item, tag) =>
       item.tags.includes(tag),
@@ -117,9 +119,8 @@ export class ExerciseSelection {
   countsByEquipment(
     items: readonly ExerciseListingItem[],
   ): Record<ExerciseEquipmentFilter, number> {
-    const others = items.filter((item) =>
-      this.withoutEquipment().matches(item),
-    );
+    const withoutEquipment = this.withoutEquipment();
+    const others = items.filter((item) => withoutEquipment.matches(item));
 
     return this.countingEach(
       EXERCISE_EQUIPMENT_FILTERS,

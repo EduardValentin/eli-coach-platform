@@ -9,7 +9,7 @@ export type ListPage<Item> = {
 
 export type PaginationStep = number | "gap";
 
-const FIRST_PAGE = 1;
+export const FIRST_PAGE = 1;
 const PAGES_AROUND_CURRENT = 1;
 const PAGES_SHOWN_WITHOUT_GAPS = 7;
 

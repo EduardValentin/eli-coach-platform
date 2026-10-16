@@ -18,6 +18,7 @@ import {
   parsePage,
   parseSort,
   pathForPageOf,
+  setParamOrDelete,
   setParamUnlessDefault,
   sortParams,
   useSearchParamsWriter,
@@ -58,7 +59,7 @@ import {
   EXERCISE_SORT_RULE,
   EXERCISES_PER_PAGE,
 } from "./exercise-listing-params";
-import { libraryReturnState } from "./library-address";
+import { libraryReturnState, type LibraryReturnState } from "./library-address";
 
 const COLUMN_COUNT = 6;
 
@@ -83,13 +84,13 @@ const HEAD_SORTS: Readonly<Record<SortDirection, TableSort>> = {
 
 type ExerciseSortChoice = SortChoice<ExerciseSortKey>;
 
-type ExerciseListingParams = {
+type ExerciseListingControls = {
   chooseSelection: (next: ExerciseSelection) => void;
   chooseSortKey: (key: ExerciseSortKey) => void;
   clearFilters: () => void;
   page: number;
   pathForPage: (page: number) => string;
-  returnState: ReturnType<typeof libraryReturnState>;
+  returnState: LibraryReturnState;
   selection: ExerciseSelection;
   sort: ExerciseSortChoice;
 };
@@ -106,7 +107,7 @@ export function ExerciseListing({
     exercises.filter((exercise) => selection.matches(exercise)),
     sort,
   );
-  const view = pageOf(matching, {
+  const listPage = pageOf(matching, {
     page: listing.page,
     perPage: EXERCISES_PER_PAGE,
   });
@@ -164,19 +165,22 @@ export function ExerciseListing({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {view.items.length === 0 ? (
+            {listPage.items.length === 0 ? (
               <TableRow>
                 <TableCell className="p-0" colSpan={COLUMN_COUNT}>
-                  <NoExercisesShown
-                    libraryIsEmpty={exercises.length === 0}
-                    onClearFilters={
-                      selection.isActive() ? listing.clearFilters : undefined
-                    }
-                  />
+                  {exercises.length === 0 ? (
+                    <EmptyLibrary />
+                  ) : (
+                    <NoMatchingExercises
+                      onClearFilters={
+                        selection.isActive() ? listing.clearFilters : undefined
+                      }
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
-              view.items.map((exercise) => (
+              listPage.items.map((exercise) => (
                 <ExerciseRow
                   exercise={exercise}
                   key={exercise.id}
@@ -187,14 +191,14 @@ export function ExerciseListing({
           </TableBody>
         </Table>
       </Card>
-      {view.pageCount > 1 && (
-        <ListPager pathForPage={listing.pathForPage} view={view} />
+      {listPage.pageCount > 1 && (
+        <ListPager pathForPage={listing.pathForPage} view={listPage} />
       )}
     </>
   );
 }
 
-function useExerciseListingParams(): ExerciseListingParams {
+function useExerciseListingParams(): ExerciseListingControls {
   const { pathname, search } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
   const selection = ExerciseSelection.parse({
@@ -242,8 +246,8 @@ function useExerciseListingParams(): ExerciseListingParams {
     );
 
     reviseFromFirstPage((params) => {
-      writeParam(params, EXERCISE_LISTING_PARAMS.sort, chosen.sort);
-      writeParam(params, EXERCISE_LISTING_PARAMS.direction, chosen.dir);
+      setParamOrDelete(params, EXERCISE_LISTING_PARAMS.sort, chosen.sort);
+      setParamOrDelete(params, EXERCISE_LISTING_PARAMS.direction, chosen.dir);
     });
   };
 
@@ -268,19 +272,6 @@ function useExerciseListingParams(): ExerciseListingParams {
     selection,
     sort,
   };
-}
-
-function writeParam(
-  params: URLSearchParams,
-  name: string,
-  value: string | null,
-): void {
-  if (value === null) {
-    params.delete(name);
-    return;
-  }
-
-  params.set(name, value);
 }
 
 function headSortOf(sort: ExerciseSortChoice, key: ExerciseSortKey): TableSort {
@@ -328,23 +319,21 @@ function ExerciseFilters({
   );
 }
 
-function NoExercisesShown({
-  libraryIsEmpty,
+function EmptyLibrary() {
+  return (
+    <EmptyState
+      description="Exercises you add appear here."
+      icon={Dumbbell}
+      title="No exercises yet"
+    />
+  );
+}
+
+function NoMatchingExercises({
   onClearFilters,
 }: {
-  libraryIsEmpty: boolean;
   onClearFilters?: () => void;
 }) {
-  if (libraryIsEmpty) {
-    return (
-      <EmptyState
-        description="Exercises you add appear here."
-        icon={Dumbbell}
-        title="No exercises yet"
-      />
-    );
-  }
-
   return (
     <EmptyState
       action={

@@ -102,7 +102,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const { exercise } = editor;
   const navigate = useNavigate();
   const { state } = useLocation();
-  const library = libraryReturnPath(state);
+  const libraryPath = libraryReturnPath(state);
   const takenNames = useRef<readonly string[]>(editor.otherNames);
   const sentName = useRef("");
   const videoField = useRef<ExerciseVideoFieldHandle>(null);
@@ -220,7 +220,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
 
   return (
     <div className="w-full max-w-3xl" data-parity-root="ExerciseEditorPage">
-      <PortalBackLink to={library}>Back to exercises</PortalBackLink>
+      <PortalBackLink to={libraryPath}>Back to exercises</PortalBackLink>
       <PortalPageHeader title={exercise ? "Edit exercise" : "New exercise"} />
 
       <form noValidate onSubmit={submit}>
@@ -257,7 +257,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
         >
           <Link
             className={buttonVariants({ size: "md", variant: "ghost" })}
-            to={library}
+            to={libraryPath}
           >
             Cancel
           </Link>

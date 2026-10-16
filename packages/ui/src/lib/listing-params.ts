@@ -1,3 +1,5 @@
+import { FIRST_PAGE } from "./list-paging";
+
 type ParamChoice = { defaultValue: string; value: string };
 
 type ListingAddress = {
@@ -5,8 +7,6 @@ type ListingAddress = {
   pathname: string;
   searchParams: URLSearchParams;
 };
-
-const FIRST_PAGE = 1;
 
 export function haveOnlyListingParamsChanged(
   currentUrl: URL,
@@ -34,6 +34,19 @@ export function setParamUnlessDefault(
   }
 
   params.set(name, choice.value);
+}
+
+export function setParamOrDelete(
+  params: URLSearchParams,
+  name: string,
+  value: string | null,
+): void {
+  if (value === null) {
+    params.delete(name);
+    return;
+  }
+
+  params.set(name, value);
 }
 
 export function pathForPageOf(address: ListingAddress, page: number): string {

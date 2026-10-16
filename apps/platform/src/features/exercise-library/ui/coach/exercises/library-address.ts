@@ -6,7 +6,7 @@ const libraryReturnStateSchema = z.object({
   library: z.string().startsWith("?"),
 });
 
-type LibraryReturnState = z.infer<typeof libraryReturnStateSchema>;
+export type LibraryReturnState = z.infer<typeof libraryReturnStateSchema>;
 
 export function libraryReturnState(search: string): LibraryReturnState {
   return { library: search };
