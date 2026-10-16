@@ -97,3 +97,17 @@ describe('the empty food library seed', () => {
     expect(screen.queryByText('Chicken breast')).not.toBeInTheDocument();
   });
 });
+
+describe('the empty nutrition library seed', () => {
+  it('starts the recipes with none', () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/nutrition?session=coach&nutseed=empty&tab=recipes');
+
+    // act
+    renderHub('/coach/nutrition?session=coach&nutseed=empty&tab=recipes');
+
+    // assert
+    expect(screen.getByText('No recipes yet')).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Chicken rice bowl' })).not.toBeInTheDocument();
+  });
+});

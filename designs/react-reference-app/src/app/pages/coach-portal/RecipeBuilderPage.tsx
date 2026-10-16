@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useId, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Library,
@@ -15,14 +16,24 @@ import {
 } from 'lucide-react';
 import {
   useNutrition,
-  computeRecipeMacros,
   COOKING_METHODS,
   TAG_FAMILIES,
 } from '../../context/NutritionContext';
+import {
+  computeRecipeMacros,
+  draftProblems,
+  isValidDraft,
+  recipeFrom,
+} from '../../domain/recipes';
+import type {
+  RecipeDraft,
+  RecipeDraftIngredient,
+  RecipeDraftProblems,
+} from '../../domain/recipes';
 import type {
   Food,
-  RecipeIngredient,
   CookingMethod,
+  RecipeIngredient,
   RecipeMacros,
   Tag,
   TagFamily,
@@ -61,8 +72,18 @@ import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-ico
 import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
+import { InlineProblem } from '../../components/InlineProblem';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
+const RECIPES = '/coach/nutrition?tab=recipes';
+
+const draftIngredientOf = (
+  ingredient: RecipeIngredient,
+): RecipeDraftIngredient => ({
+  ...ingredient,
+  grams: String(ingredient.grams),
+});
+
 interface FoodDragItem {
   foodId: string;
   name: string;
@@ -178,7 +199,8 @@ function OrphanedTagChip({
 
 function RecipeBuilderInner() {
   const { recipeId } = useParams<{ recipeId?: string }>();
-  const { foods, tags, getRecipe, addRecipe, updateRecipe } = useNutrition();
+  const { foods, tags, recipes, getRecipe, addRecipe, updateRecipe } =
+    useNutrition();
   const navigate = useNavigate();
 
   const existing = recipeId ? getRecipe(recipeId) : undefined;
@@ -190,12 +212,16 @@ function RecipeBuilderInner() {
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
-    existing?.ingredients ?? [],
+  const [ingredients, setIngredients] = useState<RecipeDraftIngredient[]>(
+    existing?.ingredients.map(draftIngredientOf) ?? [],
   );
   const [query, setQuery] = useState('');
-  const [prepMinutes, setPrepMinutes] = useState(existing?.prepMinutes ?? 0);
-  const [cookMinutes, setCookMinutes] = useState(existing?.cookMinutes ?? 0);
+  const [prepMinutes, setPrepMinutes] = useState(
+    String(existing?.prepMinutes ?? 0),
+  );
+  const [cookMinutes, setCookMinutes] = useState(
+    String(existing?.cookMinutes ?? 0),
+  );
   const [mealRoleIds, setMealRoleIds] = useState<string[]>(
     existing?.mealRoleIds ?? [],
   );
@@ -207,6 +233,9 @@ function RecipeBuilderInner() {
     existing?.instructions ?? '',
   );
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
+  const [touched, setTouched] = useState(false);
+  const problemIds = useId();
+  const markTouched = () => setTouched(true);
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
 
@@ -227,9 +256,10 @@ function RecipeBuilderInner() {
   const addIngredient = (foodId: string) => {
     const food = foods.find((f) => f.id === foodId);
     if (!food) return;
+    markTouched();
     setIngredients((prev) => [
       ...prev,
-      { foodId, grams: food.defaultPortionGrams, method: 'raw' },
+      { foodId, grams: String(food.defaultPortionGrams), method: 'raw' },
     ]);
     if (isPostMvp) suggestTagsFrom(food);
   };
@@ -263,11 +293,13 @@ function RecipeBuilderInner() {
       ]);
   };
   const toggleTag = (family: TagFamily, id: string) => {
+    markTouched();
     if (family === 'meal-time') setMealRoleIds((prev) => toggleIn(prev, id));
     else setTagIds((prev) => toggleIn(prev, id));
     setAutoTagIds((prev) => prev.filter((x) => x !== id)); // manual action → no longer auto
   };
   const removeTag = (family: TagFamily, id: string) => {
+    markTouched();
     if (family === 'meal-time')
       setMealRoleIds((prev) => prev.filter((x) => x !== id));
     else setTagIds((prev) => prev.filter((x) => x !== id));
@@ -276,18 +308,53 @@ function RecipeBuilderInner() {
   const keepTag = (id: string) =>
     setAutoTagIds((prev) => prev.filter((x) => x !== id)); // promote to manual, stays selected
 
-  const setGrams = (index: number, grams: number) =>
+  const changeIngredient = (
+    index: number,
+    change: Partial<RecipeDraftIngredient>,
+  ) => {
+    markTouched();
     setIngredients((prev) =>
-      prev.map((ing, i) => (i === index ? { ...ing, grams } : ing)),
+      prev.map((ing, i) => (i === index ? { ...ing, ...change } : ing)),
     );
-  const setMethod = (index: number, method: CookingMethod) =>
-    setIngredients((prev) =>
-      prev.map((ing, i) => (i === index ? { ...ing, method } : ing)),
-    );
-  const removeIngredient = (index: number) =>
+  };
+  const removeIngredient = (index: number) => {
+    markTouched();
     setIngredients((prev) => prev.filter((_, i) => i !== index));
+  };
+  const changeIcon = (chosen: RecipeIcon | undefined) => {
+    markTouched();
+    setIcon(chosen);
+    setIconPickerOpen(false);
+  };
 
-  const macros = computeRecipeMacros(ingredients, foods);
+  const draft: RecipeDraft = {
+    name,
+    ingredients,
+    prepMinutes,
+    cookMinutes,
+    instructions,
+    mealRoleIds,
+    tagIds,
+    icon,
+  };
+  const problems = draftProblems(
+    draft,
+    recipes.filter((recipe) => recipe.id !== existing?.id),
+  );
+  const shownProblems: RecipeDraftProblems = touched ? problems : {};
+  const nameProblemId = `${problemIds}-name`;
+  const gramsProblemId = (index: number) => `${problemIds}-grams-${index}`;
+  const prepProblemId = `${problemIds}-prep`;
+  const cookProblemId = `${problemIds}-cook`;
+  const instructionsProblemId = `${problemIds}-instructions`;
+
+  const macros = computeRecipeMacros(
+    ingredients.map((ing) => ({
+      foodId: ing.foodId,
+      grams: Number(ing.grams) || 0,
+    })),
+    foods,
+  );
   const supportedTagIds = new Set(
     ingredients.flatMap(
       (ing) => foods.find((f) => f.id === ing.foodId)?.tagIds ?? [],
@@ -296,20 +363,18 @@ function RecipeBuilderInner() {
 
   const save = () => {
     const payload = {
-      name: name.trim(),
-      ingredients,
-      prepMinutes,
-      cookMinutes,
-      mealRoleIds,
-      tagIds,
+      ...recipeFrom(draft),
       macroOverride: override ?? undefined,
-      instructions: instructions.trim(),
       imageUrl,
-      icon,
     };
-    if (existing) updateRecipe(existing.id, payload);
-    else addRecipe(payload);
-    navigate('/coach/nutrition?tab=recipes');
+    if (existing) {
+      updateRecipe(existing.id, payload);
+      toast.success('Recipe updated');
+    } else {
+      addRecipe(payload);
+      toast.success('Recipe created');
+    }
+    navigate(RECIPES);
   };
 
   const filteredFoods = pickableItems(foods).filter(
@@ -334,41 +399,60 @@ function RecipeBuilderInner() {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col bg-surface-subtle ${isDragging ? 'select-none' : ''}`}
+      className={cn('fixed inset-0 z-50 flex flex-col bg-surface-subtle', {
+        'select-none': isDragging,
+      })}
+      data-parity-root="RecipeBuilderPage"
     >
-      <div className="h-14 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <Button
-            onClick={() => navigate('/coach/nutrition?tab=recipes')}
-            aria-label="Back to Nutrition"
-            variant="ghost"
-            size="icon-sm"
-            className="shrink-0"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <Button
-            onClick={() => setLibraryOpen(true)}
-            variant="ghost"
-            size="icon-sm"
-            className="lg:hidden shrink-0"
-            aria-label="Open food library"
-          >
-            <Library size={20} />
-          </Button>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Recipe name…"
-            aria-label="Recipe name"
-            className="max-w-sm font-serif text-lg"
-          />
+      <div
+        className="min-h-14 py-1 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-start justify-between shrink-0"
+        data-parity="recipe-builder-top-bar"
+      >
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="flex h-(--size-control-md) shrink-0 items-center gap-3">
+            <Button
+              onClick={() => navigate(RECIPES)}
+              aria-label="Back to Nutrition"
+              variant="ghost"
+              size="icon-sm"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <Button
+              onClick={() => setLibraryOpen(true)}
+              variant="ghost"
+              size="icon-sm"
+              className="lg:hidden"
+              aria-label="Open food library"
+            >
+              <Library size={20} />
+            </Button>
+          </div>
+          <div className="grid w-full max-w-sm min-w-0 gap-1">
+            <Input
+              value={name}
+              onChange={(e) => {
+                markTouched();
+                setName(e.target.value);
+              }}
+              placeholder="Recipe name…"
+              aria-label="Recipe name"
+              aria-invalid={shownProblems.name ? true : undefined}
+              aria-describedby={shownProblems.name ? nameProblemId : undefined}
+              className="font-serif text-lg"
+            />
+            {shownProblems.name && (
+              <InlineProblem id={nameProblemId}>
+                {shownProblems.name}
+              </InlineProblem>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex h-(--size-control-md) items-center gap-2 shrink-0">
           <Button
             variant="outline"
             aria-label="Cancel"
-            onClick={() => navigate('/coach/nutrition?tab=recipes')}
+            onClick={() => navigate(RECIPES)}
           >
             <X aria-hidden="true" />
             <span className="hidden lg:inline">Cancel</span>
@@ -376,7 +460,7 @@ function RecipeBuilderInner() {
           <Button
             aria-label="Save recipe"
             onClick={save}
-            disabled={name.trim() === ''}
+            disabled={!isValidDraft(problems)}
           >
             <Save aria-hidden="true" />
             <span className="hidden sm:inline">Save recipe</span>
@@ -396,6 +480,7 @@ function RecipeBuilderInner() {
         )}
         <aside
           aria-label="Food library"
+          data-parity="recipe-builder-library"
           className={cn(
             'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0',
             { 'translate-x-0 shadow-2xl': libraryOpen, '-translate-x-full': !libraryOpen },
@@ -489,6 +574,7 @@ function RecipeBuilderInner() {
                   <div
                     role="listbox"
                     aria-label="Meal icons"
+                    data-parity="recipe-icon-popover"
                     className="grid grid-cols-5 gap-1"
                   >
                     {/* Clear option */}
@@ -497,10 +583,7 @@ function RecipeBuilderInner() {
                       role="option"
                       aria-selected={icon === undefined}
                       aria-label="No icon"
-                      onClick={() => {
-                        setIcon(undefined);
-                        setIconPickerOpen(false);
-                      }}
+                      onClick={() => changeIcon(undefined)}
                       className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                         icon === undefined
                           ? 'bg-primary-soft text-primary'
@@ -518,10 +601,7 @@ function RecipeBuilderInner() {
                         role="option"
                         aria-selected={icon === key}
                         aria-label={label}
-                        onClick={() => {
-                          setIcon(key);
-                          setIconPickerOpen(false);
-                        }}
+                        onClick={() => changeIcon(key)}
                         className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                           icon === key
                             ? 'bg-primary-soft text-primary'
@@ -550,6 +630,7 @@ function RecipeBuilderInner() {
 
           <div
             ref={drop}
+            data-parity="recipe-ingredients"
             className={cn(
               'rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200',
               {
@@ -567,6 +648,7 @@ function RecipeBuilderInner() {
               <ul className="flex flex-col gap-2">
                 {ingredients.map((ing, index) => {
                   const food = foods.find((f) => f.id === ing.foodId);
+                  const gramsProblem = shownProblems.ingredients?.[index];
                   return (
                     <li
                       key={`${ing.foodId}-${index}`}
@@ -579,21 +661,27 @@ function RecipeBuilderInner() {
                         <span className="sr-only">Grams for {food?.name}</span>
                         <Input
                           type="number"
-                          min="0"
+                          min="1"
                           inputMode="numeric"
                           value={ing.grams}
                           onChange={(e) =>
-                            setGrams(index, Number(e.target.value) || 0)
+                            changeIngredient(index, { grams: e.target.value })
                           }
                           className="w-20"
                           aria-label={`Grams of ${food?.name}`}
+                          aria-invalid={gramsProblem ? true : undefined}
+                          aria-describedby={
+                            gramsProblem ? gramsProblemId(index) : undefined
+                          }
                         />
                         <span>g</span>
                       </label>
                       <Select
                         value={ing.method}
                         onValueChange={(v) =>
-                          setMethod(index, v as CookingMethod)
+                          changeIngredient(index, {
+                            method: v as CookingMethod,
+                          })
                         }
                       >
                         <SelectTrigger
@@ -619,6 +707,14 @@ function RecipeBuilderInner() {
                       >
                         <Trash2 size={16} />
                       </Button>
+                      {gramsProblem && (
+                        <InlineProblem
+                          id={gramsProblemId(index)}
+                          className="basis-full"
+                        >
+                          {gramsProblem}
+                        </InlineProblem>
+                      )}
                     </li>
                   );
                 })}
@@ -627,7 +723,11 @@ function RecipeBuilderInner() {
           </div>
 
           {/* Macros: auto-computed, with optional manual override */}
-          <section aria-label="Macros" className="mt-4 max-w-md">
+          <section
+            aria-label="Macros"
+            className="mt-4 max-w-md"
+            data-parity="recipe-builder-macros"
+          >
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-text-primary">
                 Macros (whole recipe)
@@ -648,6 +748,7 @@ function RecipeBuilderInner() {
               {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
                 <div
                   key={key}
+                  data-parity-root="ValueTile"
                   className={cn(
                     'rounded-compact py-2 text-center',
                     key === 'kcal' ? 'bg-card' : MACRO_TILE[key],
@@ -693,9 +794,10 @@ function RecipeBuilderInner() {
           <section
             aria-label="Recipe details"
             className="mt-6 max-w-2xl grid gap-5"
+            data-parity="recipe-builder-details"
           >
-            <div className="flex flex-wrap gap-4">
-              <div className="grid gap-1.5">
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="grid w-40 content-start gap-1.5">
                 <Label htmlFor="recipe-prep">Prep (min)</Label>
                 <Input
                   id="recipe-prep"
@@ -703,11 +805,23 @@ function RecipeBuilderInner() {
                   min="0"
                   inputMode="numeric"
                   value={prepMinutes}
-                  onChange={(e) => setPrepMinutes(Number(e.target.value) || 0)}
+                  onChange={(e) => {
+                    markTouched();
+                    setPrepMinutes(e.target.value);
+                  }}
                   className="w-24"
+                  aria-invalid={shownProblems.prepMinutes ? true : undefined}
+                  aria-describedby={
+                    shownProblems.prepMinutes ? prepProblemId : undefined
+                  }
                 />
+                {shownProblems.prepMinutes && (
+                  <InlineProblem id={prepProblemId}>
+                    {shownProblems.prepMinutes}
+                  </InlineProblem>
+                )}
               </div>
-              <div className="grid gap-1.5">
+              <div className="grid w-40 content-start gap-1.5">
                 <Label htmlFor="recipe-cook">Cook (min)</Label>
                 <Input
                   id="recipe-cook"
@@ -715,9 +829,21 @@ function RecipeBuilderInner() {
                   min="0"
                   inputMode="numeric"
                   value={cookMinutes}
-                  onChange={(e) => setCookMinutes(Number(e.target.value) || 0)}
+                  onChange={(e) => {
+                    markTouched();
+                    setCookMinutes(e.target.value);
+                  }}
                   className="w-24"
+                  aria-invalid={shownProblems.cookMinutes ? true : undefined}
+                  aria-describedby={
+                    shownProblems.cookMinutes ? cookProblemId : undefined
+                  }
                 />
+                {shownProblems.cookMinutes && (
+                  <InlineProblem id={cookProblemId}>
+                    {shownProblems.cookMinutes}
+                  </InlineProblem>
+                )}
               </div>
             </div>
 
@@ -727,9 +853,21 @@ function RecipeBuilderInner() {
                 id="recipe-instructions"
                 rows={4}
                 value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
+                onChange={(e) => {
+                  markTouched();
+                  setInstructions(e.target.value);
+                }}
                 placeholder="Step-by-step cooking instructions…"
+                aria-invalid={shownProblems.instructions ? true : undefined}
+                aria-describedby={
+                  shownProblems.instructions ? instructionsProblemId : undefined
+                }
               />
+              {shownProblems.instructions && (
+                <InlineProblem id={instructionsProblemId}>
+                  {shownProblems.instructions}
+                </InlineProblem>
+              )}
             </div>
 
             <fieldset className="grid gap-3">

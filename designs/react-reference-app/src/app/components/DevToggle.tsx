@@ -1152,7 +1152,7 @@ export function DevToggle() {
 
                 <div className="space-y-2">
                   <Label htmlFor="dev-food-seed" className={DEV_LABEL_CLASS}>
-                    Food library
+                    Foods and recipes
                   </Label>
                   <Select
                     value={appState.foodSeed}

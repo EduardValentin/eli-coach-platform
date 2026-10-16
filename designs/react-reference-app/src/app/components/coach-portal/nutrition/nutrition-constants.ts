@@ -17,28 +17,28 @@ export const CATEGORY_LABELS: Record<FoodCategory, string> = {
 
 // Decorative only — solid swatch/dot fills.
 export const CATEGORY_SWATCH: Record<FoodCategory, string> = {
-  protein: 'bg-nutrition-protein',
-  carb: 'bg-nutrition-carb',
-  fat: 'bg-nutrition-fat',
-  legume: 'bg-nutrition-legume',
-  extra: 'bg-nutrition-extra',
-  seasoning: 'bg-nutrition-seasoning',
+  protein: 'bg-tint-red',
+  carb: 'bg-tint-blue',
+  fat: 'bg-tint-amber',
+  legume: 'bg-tint-green',
+  extra: 'bg-tint-purple',
+  seasoning: 'bg-tint-teal',
 };
 
 export const CATEGORY_BORDER: Record<FoodCategory, string> = {
-  protein: 'border-nutrition-protein',
-  carb: 'border-nutrition-carb',
-  fat: 'border-nutrition-fat',
-  legume: 'border-nutrition-legume',
-  extra: 'border-nutrition-extra',
-  seasoning: 'border-nutrition-seasoning',
+  protein: 'border-tint-red',
+  carb: 'border-tint-blue',
+  fat: 'border-tint-amber',
+  legume: 'border-tint-green',
+  extra: 'border-tint-purple',
+  seasoning: 'border-tint-teal',
 };
 
 // Macro tile: soft color fill only (each macro reads as its own color; no border accent).
 export const MACRO_TILE = {
-  protein: 'bg-macro-protein-soft',
-  carb: 'bg-macro-carb-soft',
-  fat: 'bg-macro-fat-soft',
+  protein: 'bg-tint-red-soft',
+  carb: 'bg-tint-blue-soft',
+  fat: 'bg-tint-amber-soft',
 } as const;
 
 export const TAG_FAMILY_TONE: Record<TagFamily, NonNullable<ComponentProps<typeof Badge>['tone']>> = {
@@ -50,17 +50,17 @@ export const TAG_FAMILY_TONE: Record<TagFamily, NonNullable<ComponentProps<typeo
 
 // Solid macro identity-color dots (used in the food table's macro column headers).
 export const MACRO_DOT = {
-  protein: 'bg-macro-protein',
-  carb: 'bg-macro-carb',
-  fat: 'bg-macro-fat',
+  protein: 'bg-tint-red',
+  carb: 'bg-tint-blue',
+  fat: 'bg-tint-amber',
 } as const;
 
 // Macro progress-bar fills (protein / carb / fat use solid macro color; kcal uses brand).
 export const MACRO_BAR = {
-  protein: 'bg-macro-protein',
-  carb: 'bg-macro-carb',
-  fat: 'bg-macro-fat',
-  kcal: 'bg-macro-kcal',
+  protein: 'bg-tint-red',
+  carb: 'bg-tint-blue',
+  fat: 'bg-tint-amber',
+  kcal: 'bg-brand',
 } as const;
 
 export const COOKING_METHOD_LABELS: Record<CookingMethod, string> = {

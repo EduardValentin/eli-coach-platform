@@ -31,6 +31,7 @@ export function RecipeCard({ recipe, actions }: RecipeCardProps) {
   return (
     <article
       aria-label={recipe.name}
+      data-parity-root="RecipeCard"
       className={cn(cardVariants({ variant: 'item' }), 'flex flex-col overflow-hidden')}
     >
       <RecipeVisual recipe={recipe} className="h-32 w-full" />
@@ -47,9 +48,13 @@ export function RecipeCard({ recipe, actions }: RecipeCardProps) {
 
         <div>
           <p className="text-label uppercase text-text-secondary mb-1.5">Per recipe</p>
-          <dl className="grid grid-cols-4 gap-2">
+          <dl className="grid grid-cols-4 gap-2" data-parity="recipe-macro-tiles">
             {macroTiles.map((m) => (
-              <div key={m.key} className={cn('rounded-compact px-1.5 py-2 text-center', m.tile)}>
+              <div
+                key={m.key}
+                data-parity-root="ValueTile"
+                className={cn('rounded-compact px-1.5 py-2 text-center', m.tile)}
+              >
                 <dt className="text-label uppercase text-text-primary">{m.label}</dt>
                 <dd className={cn(VALUE_CLASS, 'tabular-nums leading-tight')}>{m.value}</dd>
               </div>

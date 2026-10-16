@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import type { CyclePhase } from './CycleContext';
 import { phaseForDate } from './CycleContext';
 import { useAppState } from './AppContext';
-import { foodsForSeed } from '../services/foodSamples';
+import { foodsForSeed, recipesForSeed } from '../services/foodSamples';
+import { computeRecipeMacros } from '../domain/recipes';
 import type { RecipeIcon } from '../components/coach-portal/nutrition/recipe-icons';
 import {
   archivedItem,
@@ -225,28 +226,6 @@ export function dayTargetFor(plan: ClientNutritionPlan, phase?: CyclePhase): Dai
   return plan.dailyTarget;
 }
 
-export function computeRecipeMacros(ingredients: RecipeIngredient[], foods: Food[]): RecipeMacros {
-  const total = ingredients.reduce(
-    (acc, ing) => {
-      const food = foods.find((f) => f.id === ing.foodId);
-      if (!food) return acc;
-      const factor = ing.grams / 100;
-      acc.kcal += food.kcal * factor;
-      acc.protein += food.protein * factor;
-      acc.carb += food.carb * factor;
-      acc.fat += food.fat * factor;
-      return acc;
-    },
-    { kcal: 0, protein: 0, carb: 0, fat: 0 },
-  );
-  return {
-    kcal: Math.round(total.kcal),
-    protein: Math.round(total.protein),
-    carb: Math.round(total.carb),
-    fat: Math.round(total.fat),
-  };
-}
-
 export function recipeMacros(recipe: Recipe, foods: Food[]): RecipeMacros {
   return recipe.macroOverride ?? computeRecipeMacros(recipe.ingredients, foods);
 }
@@ -331,70 +310,6 @@ const MOCK_TAGS: Tag[] = [
 const MOCK_EQUIVALENCE_GROUPS: EquivalenceGroup[] = [
   { id: 'eg-lean-proteins', name: 'Lean proteins' },
   { id: 'eg-complex-carbs', name: 'Complex carbs' },
-];
-
-const MOCK_RECIPES: Recipe[] = [
-  {
-    id: 'recipe-chicken-rice-bowl',
-    name: 'Chicken rice bowl',
-    icon: 'poultry',
-    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=70&auto=format&fit=crop',
-    ingredients: [
-      { foodId: 'food-chicken', grams: 150, method: 'grilled' },
-      { foodId: 'food-white-rice', grams: 150, method: 'boiled' },
-      { foodId: 'food-olive-oil', grams: 10, method: 'pan-fried' },
-    ],
-    prepMinutes: 10,
-    cookMinutes: 20,
-    instructions: 'Season the chicken and grill 6–7 minutes per side until cooked through. Boil the rice per package instructions. Slice the chicken, plate over rice, and finish with a drizzle of olive oil.',
-    mealRoleIds: ['mt-lunch', 'mt-dinner'],
-    tagIds: ['nu-iron'],
-  },
-  {
-    id: 'recipe-yogurt-oats',
-    name: 'Greek yogurt & oats',
-    icon: 'pastry',
-    ingredients: [
-      { foodId: 'food-greek-yogurt', grams: 170, method: 'raw' },
-      { foodId: 'food-oats', grams: 50, method: 'raw' },
-    ],
-    prepMinutes: 5,
-    cookMinutes: 0,
-    instructions: 'Stir the oats into the Greek yogurt and let sit 5 minutes to soften (or overnight in the fridge). Top with fruit or seeds if desired.',
-    mealRoleIds: ['mt-breakfast'],
-    tagIds: ['nu-magnesium', 'di-vegetarian'],
-  },
-  {
-    id: 'recipe-salmon-sweet-potato',
-    name: 'Salmon & sweet potato',
-    icon: 'fish',
-    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=70&auto=format&fit=crop',
-    ingredients: [
-      { foodId: 'food-salmon', grams: 150, method: 'baked' },
-      { foodId: 'food-sweet-potato', grams: 200, method: 'baked' },
-      { foodId: 'food-olive-oil', grams: 10, method: 'pan-fried' },
-    ],
-    prepMinutes: 10,
-    cookMinutes: 25,
-    instructions: 'Preheat the oven to 200°C. Brush the salmon and sweet potato with olive oil and season to taste. Bake the sweet potato for 25 minutes and the salmon for the final 15 minutes until flaky and tender.',
-    mealRoleIds: ['mt-dinner'],
-    tagIds: ['nu-omega3', 'nu-anti-inflammatory', 'cp-luteal'],
-  },
-  {
-    id: 'recipe-rice-cake-stack',
-    name: 'Rice cake & yogurt stack',
-    icon: 'pastry',
-    ingredients: [
-      { foodId: 'food-rice-cakes', grams: 20, method: 'raw' },
-      { foodId: 'food-greek-yogurt', grams: 100, method: 'raw' },
-    ],
-    prepMinutes: 5,
-    cookMinutes: 0,
-    instructions: 'Spread the Greek yogurt over the rice cakes and top with fruit.',
-    mealRoleIds: ['mt-snack'],
-    tagIds: [],
-    archivedAt: '2026-09-28T10:00:00.000Z',
-  },
 ];
 
 export function isoLocal(d: Date): string {
@@ -545,13 +460,14 @@ const NutritionContext = createContext<NutritionContextType | null>(null);
 export function NutritionProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
   const [foods, setFoods] = useState<Food[]>(() => foodsForSeed(appState.foodSeed));
+  const [recipes, setRecipes] = useState<Recipe[]>(() => recipesForSeed(appState.foodSeed));
 
   useEffect(() => {
     setFoods(foodsForSeed(appState.foodSeed));
+    setRecipes(recipesForSeed(appState.foodSeed));
   }, [appState.foodSeed]);
   const [tags] = useState<Tag[]>(MOCK_TAGS);
   const [equivalenceGroups, setEquivalenceGroups] = useState<EquivalenceGroup[]>(MOCK_EQUIVALENCE_GROUPS);
-  const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
   const [plans, setPlans] = useState<ClientNutritionPlan[]>(MOCK_PLANS);
   const [preferences, setPreferencesState] = useState<ClientFoodPreferences[]>(MOCK_PREFERENCES);
 
