@@ -725,8 +725,11 @@ describe("the way back to the library", () => {
         `${COACH_TRAINING_PATH}${LIBRARY_VIEW}`,
       );
       expect(
-        await screen.findByRole("combobox", { name: "Type" }),
-      ).toHaveTextContent(/^Breathing$/);
+        await screen.findByRole("heading", { level: 1, name: "Exercises" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
+        /^Breathing$/,
+      );
     },
   );
 
@@ -758,8 +761,11 @@ describe("the way back to the library", () => {
 
     // assert
     expect(
-      await screen.findByRole("combobox", { name: "Type" }),
-    ).toHaveTextContent(/^Resistance$/);
+      await screen.findByRole("heading", { level: 1, name: "Exercises" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
+      /^Resistance$/,
+    );
     expect(
       screen.getByRole("button", { name: "Actions for Hip thrust" }),
     ).toBeInTheDocument();
