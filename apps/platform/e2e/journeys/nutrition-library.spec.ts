@@ -1,10 +1,16 @@
 import { expect, test } from "../support/fixtures";
 import type { SavedFood } from "../support/food-editor-page";
 import type { FoodFields } from "../support/food-requests";
+import { NO_MACROS } from "../support/macro-tiles";
+import type { RecipeCard } from "../support/nutrition-library-page";
+import type { SavedRecipe } from "../support/recipe-builder-page";
+import type { RecipeFields } from "../support/recipe-requests";
 import { setPhoneViewport } from "../support/viewport";
 
 const UNKNOWN_FOOD_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_FOOD_ID = "not-a-food";
+const UNKNOWN_RECIPE_ID = "1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d";
+const NOT_A_RECIPE_ID = "not-a-recipe";
 
 function oatsNamed(name: string): FoodFields {
   return {
@@ -17,6 +23,41 @@ function oatsNamed(name: string): FoodFields {
     fat: 6.9,
     defaultPortionGrams: 40,
     tagIds: ["mt-breakfast"],
+  };
+}
+
+function yoghurtNamed(name: string): FoodFields {
+  return {
+    name,
+    category: "protein",
+    icon: "dairy",
+    kcal: 97,
+    protein: 9,
+    carb: 3.98,
+    fat: 5,
+    defaultPortionGrams: 150,
+    tagIds: [],
+  };
+}
+
+function saladNamed(name: string): RecipeFields {
+  return {
+    name,
+    ingredients: [],
+    prepMinutes: 5,
+    cookMinutes: 10,
+    instructions: "",
+    icon: "salad",
+    tagIds: ["mt-lunch", "di-vegetarian"],
+  };
+}
+
+function saladCardOf(name: string): RecipeCard {
+  return {
+    name,
+    minutes: "15",
+    macros: NO_MACROS,
+    tags: ["Lunch", "Vegetarian"],
   };
 }
 
@@ -734,6 +775,692 @@ test(
     const clientStatuses = [
       (await foodRequests.create(oatsNamed(`Client ${scenarioTag}`))).status,
       (await foodRequests.edit(foodId, oatsNamed("Client"))).status,
+    ];
+
+    // assert
+    expect(clientStatuses).toEqual([403, 403]);
+  },
+);
+
+test(
+  "the coach opens her recipes, composes a recipe from two foods, finds its card with the calculated macros and edits it",
+  { tag: "@critical" },
+  async ({
+    coachDashboard,
+    foodRequests,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const oats = `Rolled oats ${scenarioTag}`;
+    const yoghurt = `Greek yoghurt ${scenarioTag}`;
+    const created: SavedRecipe = {
+      name: `Oat and yoghurt bowl ${scenarioTag}`,
+      ingredients: [
+        { food: oats, grams: "60", method: "Boiled" },
+        { food: yoghurt, grams: "150", method: "Raw" },
+      ],
+      prepMinutes: "10",
+      cookMinutes: "5",
+      instructions: "Simmer the oats, then top them with the yoghurt.",
+      icon: "Smoothie",
+      tags: ["Breakfast", "Anti-inflammatory"],
+      macros: { kcal: "379", protein: "24", carb: "46", fat: "12" },
+    };
+    const edited: RecipeCard = {
+      name: created.name,
+      minutes: "15",
+      macros: { kcal: "194", protein: "18", carb: "8", fat: "10" },
+      tags: ["Breakfast", "Anti-inflammatory"],
+    };
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await foodRequests.createAccepted(oatsNamed(oats));
+    await foodRequests.createAccepted(yoghurtNamed(yoghurt));
+    await nutritionLibrary.open();
+
+    // act
+    await nutritionLibrary.openRecipes();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectRecipesEmpty();
+
+    // act
+    await nutritionLibrary.startNewRecipe();
+
+    // assert
+    await recipeBuilder.expectNew();
+
+    // act
+    await recipeBuilder.addFood(oats);
+    await recipeBuilder.addFood(yoghurt);
+
+    // assert
+    await recipeBuilder.expectIngredients([
+      { food: oats, grams: "40", method: "Raw" },
+      { food: yoghurt, grams: "150", method: "Raw" },
+    ]);
+    await recipeBuilder.expectMacros({
+      kcal: "301",
+      protein: "20",
+      carb: "32",
+      fat: "10",
+    });
+
+    // act
+    await recipeBuilder.setGrams(oats, "60");
+    await recipeBuilder.chooseMethod(oats, "Boiled");
+    await recipeBuilder.enterDetails({
+      name: created.name,
+      prepMinutes: created.prepMinutes,
+      cookMinutes: created.cookMinutes,
+      instructions: created.instructions,
+    });
+    await recipeBuilder.toggleTag("Anti-inflammatory");
+    await recipeBuilder.toggleTag("Breakfast");
+    await recipeBuilder.chooseIcon("Smoothie");
+
+    // assert
+    await recipeBuilder.expectEntries(created);
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe created");
+    await nutritionLibrary.expectRecipeCard({
+      name: created.name,
+      minutes: "15",
+      macros: created.macros,
+      tags: created.tags,
+    });
+
+    // act
+    await nutritionLibrary.editRecipe(created.name);
+
+    // assert
+    await recipeBuilder.expectEditing(created);
+
+    // act
+    await recipeBuilder.setGrams(yoghurt, "200");
+    await recipeBuilder.removeIngredient(oats);
+
+    // assert
+    await recipeBuilder.expectIngredients([
+      { food: yoghurt, grams: "200", method: "Raw" },
+    ]);
+    await recipeBuilder.expectMacros(edited.macros);
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe updated");
+    await nutritionLibrary.expectRecipeCard(edited);
+
+    // act
+    await page.reload();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectRecipeCard(edited);
+  },
+);
+
+test(
+  "a food dragged onto the ingredient zone joins the recipe with its default portion and Raw, as often as she drops it",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    foodRequests,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const oats = `Rolled oats ${scenarioTag}`;
+    const yoghurt = `Greek yoghurt ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await foodRequests.createAccepted(oatsNamed(oats));
+    await foodRequests.createAccepted(yoghurtNamed(yoghurt));
+    await recipeBuilder.openNew();
+    await recipeBuilder.expectNew();
+
+    // act
+    await recipeBuilder.dragFood(oats);
+
+    // assert
+    await recipeBuilder.expectIngredients([
+      { food: oats, grams: "40", method: "Raw" },
+    ]);
+    await recipeBuilder.expectMacros({
+      kcal: "156",
+      protein: "7",
+      carb: "27",
+      fat: "3",
+    });
+
+    // act
+    await recipeBuilder.dragFood(yoghurt);
+    await recipeBuilder.dragFood(oats);
+
+    // assert
+    await recipeBuilder.expectIngredients([
+      { food: oats, grams: "40", method: "Raw" },
+      { food: yoghurt, grams: "150", method: "Raw" },
+      { food: oats, grams: "40", method: "Raw" },
+    ]);
+    await recipeBuilder.expectMacros({
+      kcal: "457",
+      protein: "27",
+      carb: "59",
+      fat: "13",
+    });
+  },
+);
+
+test(
+  "the builder shows each problem under its field, announced with the field, and saves nothing until they clear",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    foodRequests,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const oats = `Rolled oats ${scenarioTag}`;
+    const takenName = `Porridge ${scenarioTag}`;
+    const grams = `Grams of ${oats}` as const;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await foodRequests.createAccepted(oatsNamed(oats));
+    await recipeRequests.createAccepted(saladNamed(takenName));
+    await recipeBuilder.openNew();
+    await recipeBuilder.expectNew();
+
+    // act
+    await recipeBuilder.enterDetails({ name: `Overnight oats ${scenarioTag}` });
+
+    // assert
+    await recipeBuilder.expectNoProblems();
+    await recipeBuilder.expectSaveAvailable();
+
+    // act
+    await recipeBuilder.enterDetails({ name: "   " });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Recipe name",
+      "Give the recipe a name",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ name: "n".repeat(81) });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Recipe name",
+      "Keep the name to 80 characters",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ name: `  ${"n".repeat(80)}  ` });
+
+    // assert
+    await recipeBuilder.expectNoProblems();
+
+    // act
+    await recipeBuilder.enterDetails({
+      name: `  ${takenName.toUpperCase()} `,
+    });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Recipe name",
+      "A recipe with this name already exists",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ name: `Overnight oats ${scenarioTag}` });
+    await recipeBuilder.addFood(oats);
+    await recipeBuilder.setGrams(oats, "0");
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      grams,
+      "Enter whole grams from 1 to 99,999",
+    );
+
+    // act
+    await recipeBuilder.setGrams(oats, "1.5");
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      grams,
+      "Enter whole grams from 1 to 99,999",
+    );
+
+    // act
+    await recipeBuilder.setGrams(oats, "100000");
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      grams,
+      "Enter whole grams from 1 to 99,999",
+    );
+
+    // act
+    await recipeBuilder.setGrams(oats, "99999");
+
+    // assert
+    await recipeBuilder.expectNoProblems();
+
+    // act
+    await recipeBuilder.enterDetails({ prepMinutes: "10000" });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Prep (min)",
+      "Enter whole minutes up to 9,999",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ prepMinutes: "", cookMinutes: "2.5" });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Cook (min)",
+      "Enter whole minutes up to 9,999",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ cookMinutes: "-1" });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Cook (min)",
+      "Enter whole minutes up to 9,999",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({
+      cookMinutes: "9999",
+      instructions: "i".repeat(2001),
+    });
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Instructions",
+      "Keep the instructions to 2,000 characters",
+    );
+
+    // act
+    await recipeBuilder.enterDetails({ instructions: "i".repeat(2000) });
+
+    // assert
+    await recipeBuilder.expectNoProblems();
+    await recipeBuilder.expectSaveAvailable();
+  },
+);
+
+test(
+  "a name taken while the builder is open is shown on the name field and her entries stay",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    foodRequests,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const oats = `Rolled oats ${scenarioTag}`;
+    const entered: SavedRecipe = {
+      name: `Baked oats ${scenarioTag}`,
+      ingredients: [{ food: oats, grams: "60", method: "Baked" }],
+      prepMinutes: "5",
+      cookMinutes: "20",
+      instructions: "Bake until golden.",
+      icon: "Cake",
+      tags: ["Breakfast"],
+      macros: { kcal: "233", protein: "10", carb: "40", fat: "4" },
+    };
+    const renamed = `${entered.name} with berries`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await foodRequests.createAccepted(oatsNamed(oats));
+    await recipeBuilder.openNew();
+    await recipeBuilder.expectNew();
+    await recipeBuilder.addFood(oats);
+    await recipeBuilder.setGrams(oats, "60");
+    await recipeBuilder.chooseMethod(oats, "Baked");
+    await recipeBuilder.enterDetails({
+      name: entered.name,
+      prepMinutes: entered.prepMinutes,
+      cookMinutes: entered.cookMinutes,
+      instructions: entered.instructions,
+    });
+    await recipeBuilder.toggleTag("Breakfast");
+    await recipeBuilder.chooseIcon("Cake");
+    await recipeRequests.createAccepted(
+      saladNamed(` ${entered.name.toLowerCase()}`),
+    );
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await recipeBuilder.expectOnlyProblem(
+      "Recipe name",
+      "A recipe with this name already exists",
+    );
+    await recipeBuilder.expectFocusOn("Recipe name");
+    await recipeBuilder.expectStillNew();
+    await recipeBuilder.expectEntries(entered);
+
+    // act
+    await recipeBuilder.enterDetails({ name: renamed });
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe created");
+    await nutritionLibrary.expectRecipeNames([
+      entered.name.toLowerCase(),
+      renamed,
+    ]);
+    await nutritionLibrary.expectRecipeCard({
+      name: renamed,
+      minutes: "25",
+      macros: entered.macros,
+      tags: entered.tags,
+    });
+  },
+);
+
+test(
+  "on a phone the food library opens as a drawer from the top bar, adds a food and closes again",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    foodRequests,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const oats = `Rolled oats ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await foodRequests.createAccepted(oatsNamed(oats));
+    await setPhoneViewport(page);
+    await recipeBuilder.openNew();
+    await recipeBuilder.expectNew();
+
+    // act
+    await recipeBuilder.openLibraryDrawer();
+    await recipeBuilder.addFood(oats);
+    await recipeBuilder.closeLibraryDrawer();
+
+    // assert
+    await recipeBuilder.expectIngredients([
+      { food: oats, grams: "40", method: "Raw" },
+    ]);
+  },
+);
+
+test(
+  "an unknown tab in the address opens the Foods tab",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+
+    // act
+    await nutritionLibrary.openTab("unknown");
+
+    // assert
+    await nutritionLibrary.expectTab("Foods");
+    await nutritionLibrary.expectEmpty();
+  },
+);
+
+test(
+  "Cancel and the back link return to the Recipes tab without saving",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const saved = `Garden salad ${scenarioTag}`;
+    const discarded = `Winter salad ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeRequests.createAccepted(saladNamed(saved));
+    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.editRecipe(saved);
+    await recipeBuilder.expectEditing({
+      name: saved,
+      ingredients: [],
+      prepMinutes: "5",
+      cookMinutes: "10",
+      instructions: "",
+      icon: "Salad",
+      tags: ["Lunch", "Vegetarian"],
+      macros: NO_MACROS,
+    });
+    await recipeBuilder.enterDetails({ name: discarded, prepMinutes: "40" });
+
+    // act
+    await recipeBuilder.cancel();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectRecipeNames([saved]);
+    await nutritionLibrary.expectRecipeCard(saladCardOf(saved));
+
+    // act
+    await nutritionLibrary.editRecipe(saved);
+    await recipeBuilder.enterDetails({ name: discarded, prepMinutes: "40" });
+    await recipeBuilder.goBack();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectRecipeNames([saved]);
+    await nutritionLibrary.expectRecipeCard(saladCardOf(saved));
+
+    // act
+    await nutritionLibrary.startNewRecipe();
+    await recipeBuilder.expectNew();
+    await recipeBuilder.enterDetails({ name: discarded });
+    await recipeBuilder.cancel();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectRecipeNames([saved]);
+  },
+);
+
+test(
+  "an unknown recipe or another coach's recipe returns the coach to the Recipes tab",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionAccount,
+    provisionCoach,
+    publicNav,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signIn,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const othersRecipe = saladNamed(`Caesar salad ${scenarioTag}`);
+    await provisionAccount("COACH");
+    await provisionCoach();
+    await page.goto("/store");
+    await signIn();
+    await recipeRequests.createAccepted(othersRecipe);
+    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.editRecipe(othersRecipe.name);
+    const othersRecipeId = await recipeBuilder.recipeId();
+    await page.goto("/");
+    await publicNav.signOut();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+
+    for (const recipeId of [
+      UNKNOWN_RECIPE_ID,
+      NOT_A_RECIPE_ID,
+      othersRecipeId,
+    ]) {
+      // act
+      await recipeBuilder.open(recipeId);
+
+      // assert
+      await nutritionLibrary.expectTab("Recipes");
+      await nutritionLibrary.expectRecipesEmpty();
+    }
+
+    // act
+    const answer = await recipeRequests.edit(
+      othersRecipeId,
+      saladNamed(`Taken over ${scenarioTag}`),
+    );
+
+    // assert
+    expect(answer.status).toBe(404);
+  },
+);
+
+test(
+  "a signed-out visitor and a signed-in client are refused the Recipes tab, the builder and every recipe endpoint",
+  { tag: "@completeness" },
+  async ({
+    accountPortal,
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionAccount,
+    provisionCoach,
+    publicNav,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signIn,
+    signInAsCoach,
+    visitorRecipeRequests,
+  }) => {
+    // arrange
+    const kept = saladNamed(`Nicoise salad ${scenarioTag}`);
+    await provisionCoach();
+    await provisionAccount("CLIENT");
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeRequests.createAccepted(kept);
+    await nutritionLibrary.openTab("recipes");
+    await nutritionLibrary.editRecipe(kept.name);
+    const recipeId = await recipeBuilder.recipeId();
+    await page.goto("/");
+    await publicNav.signOut();
+
+    // act
+    const visitorStatuses = [
+      (await visitorRecipeRequests.create(saladNamed(`Visitor ${scenarioTag}`)))
+        .status,
+      (await visitorRecipeRequests.edit(recipeId, saladNamed("Visitor")))
+        .status,
+    ];
+
+    // assert
+    expect(visitorStatuses).toEqual([401, 401]);
+
+    for (const open of [
+      () => nutritionLibrary.openTab("recipes"),
+      () => recipeBuilder.openNew(),
+      () => recipeBuilder.open(recipeId),
+    ]) {
+      // act
+      await open();
+
+      // assert
+      await accountPortal.expectEmailStepVisible();
+    }
+
+    // arrange
+    await page.goto("/store");
+    await signIn();
+
+    for (const open of [
+      () => nutritionLibrary.openTab("recipes"),
+      () => recipeBuilder.openNew(),
+      () => recipeBuilder.open(recipeId),
+    ]) {
+      // act
+      await open();
+
+      // assert
+      await nutritionLibrary.expectRefused();
+    }
+
+    // act
+    const clientStatuses = [
+      (await recipeRequests.create(saladNamed(`Client ${scenarioTag}`))).status,
+      (await recipeRequests.edit(recipeId, saladNamed("Client"))).status,
     ];
 
     // assert

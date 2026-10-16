@@ -101,7 +101,7 @@ describe("cleanUpRunLibraries", () => {
     }
   });
 
-  it("deletes the foods and the exercises of every coach account the run recorded and forgets them", async () => {
+  it("deletes the recipes, then the foods, then the exercises of every coach account the run recorded and forgets them", async () => {
     // arrange
     recordCoachAccount("user_coach_one", runId);
     recordCoachAccount("user_coach_two", runId);
@@ -114,6 +114,10 @@ describe("cleanUpRunLibraries", () => {
     expect(issued.queries).toEqual([
       {
         statement: expect.stringMatching(/select video_file_id/),
+        values: [["user_coach_one", "user_coach_two"]],
+      },
+      {
+        statement: expect.stringMatching(/delete from app\.recipes/),
         values: [["user_coach_one", "user_coach_two"]],
       },
       {
@@ -157,7 +161,7 @@ describe("cleanUpRunLibraries", () => {
     expect(loggedLines(log)).toContain("[test] Exercise videos: removed 1");
   });
 
-  it("says it skipped the video files when no video root is set, and still deletes the foods and the exercises", async () => {
+  it("says it skipped the video files when no video root is set, and still deletes the recipes, the foods and the exercises", async () => {
     // arrange
     vi.stubEnv("EXERCISE_VIDEO_ROOT", "");
     recordCoachAccount("user_coach_one", runId);
@@ -173,12 +177,13 @@ describe("cleanUpRunLibraries", () => {
     );
     expect(issued.queries.map(({ statement }) => statement)).toEqual([
       expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/delete from app\.recipes/),
       expect.stringMatching(/delete from app\.foods/),
       expect.stringMatching(/delete from app\.exercises/),
     ]);
   });
 
-  it("keeps the foods, the exercises and the record for a rerun when a video file cannot be removed", async () => {
+  it("keeps the recipes, the foods, the exercises and the record for a rerun when a video file cannot be removed", async () => {
     // arrange
     mkdirSync(join(videos, "video-unremovable"));
     writeFileSync(join(videos, "video-unremovable", "part"), "part");

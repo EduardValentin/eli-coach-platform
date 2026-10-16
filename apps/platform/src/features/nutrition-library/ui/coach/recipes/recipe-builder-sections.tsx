@@ -201,10 +201,11 @@ export function FoodLibraryAside({
       <aside
         aria-label="Food library"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-80 shrink-0 flex-col border-r bg-surface-base transition-[translate,visibility] duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-80 shrink-0 flex-col border-r bg-surface-base duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0",
           {
-            "translate-x-0 shadow-2xl": open,
-            "invisible -translate-x-full": !open,
+            "translate-x-0 shadow-2xl transition-[translate]": open,
+            "invisible -translate-x-full transition-[translate,visibility]":
+              !open,
           },
         )}
         data-parity="recipe-builder-library"
