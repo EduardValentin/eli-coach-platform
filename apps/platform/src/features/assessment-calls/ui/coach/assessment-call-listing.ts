@@ -1,3 +1,5 @@
+import type { SortChoice, SortRule } from "@eli-coach-platform/ui/lib";
+
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
@@ -10,11 +12,7 @@ export const PAGE_SIZE = 10;
 
 export const FILTER_PARAMS = [WHEN_PARAM, QUERY_PARAM, COACH_CALLS_PAGE_PARAM];
 
-const LISTING_PARAMS = [...FILTER_PARAMS, SORT_PARAM, DIRECTION_PARAM];
-
-export const FIRST_PAGE = 1;
-const PAGES_AROUND_CURRENT = 1;
-const PAGES_SHOWN_WITHOUT_GAPS = 7;
+export const LISTING_PARAMS = [...FILTER_PARAMS, SORT_PARAM, DIRECTION_PARAM];
 
 export type CoachCallWhen = "upcoming" | "today" | "past" | "all";
 
@@ -24,10 +22,6 @@ type CoachCallTiming = "upcoming" | "past";
 
 export type SortKey = "scheduled" | "booked" | "name" | "email";
 
-export type SortDirection = "asc" | "desc";
-
-export type CallSort = { direction: SortDirection; key: SortKey };
-
 export const SORT_KEYS: readonly SortKey[] = [
   "scheduled",
   "booked",
@@ -35,7 +29,15 @@ export const SORT_KEYS: readonly SortKey[] = [
   "email",
 ];
 
-export const DEFAULT_SORT_KEY: SortKey = "scheduled";
+export const CALL_SORT_RULE: SortRule<SortKey> = {
+  defaultDirection: {
+    booked: "desc",
+    email: "asc",
+    name: "asc",
+    scheduled: "desc",
+  },
+  fallback: "scheduled",
+};
 
 export type ClassifiedCall = CoachAssessmentCall & {
   isToday: boolean;
@@ -53,17 +55,6 @@ export type ListingSelection = {
 };
 
 type ToolbarFilterState = { isActive: boolean; label: string };
-
-export type CallPageView = {
-  calls: ClassifiedCall[];
-  firstShown: number;
-  lastShown: number;
-  page: number;
-  pageCount: number;
-  total: number;
-};
-
-export type PaginationStep = number | "gap";
 
 export function classifyCalls(
   calls: readonly CoachAssessmentCall[],
@@ -113,17 +104,13 @@ export function orderCalls(calls: readonly ClassifiedCall[]): ClassifiedCall[] {
 
 export function orderCallsBy(
   calls: readonly ClassifiedCall[],
-  sort: CallSort,
+  sort: SortChoice<SortKey>,
 ): ClassifiedCall[] {
   const ordered = orderCallsInDefaultDirection(calls, sort.key);
 
-  return sort.direction === defaultDirectionFor(sort.key)
+  return sort.direction === CALL_SORT_RULE.defaultDirection[sort.key]
     ? ordered
     : ordered.reverse();
-}
-
-export function defaultDirectionFor(key: SortKey): SortDirection {
-  return key === "scheduled" || key === "booked" ? "desc" : "asc";
 }
 
 export function upcomingCalls(
@@ -146,94 +133,6 @@ export function toCallWhen(raw: string | null): CoachCallWhen {
   }
 
   return DEFAULT_CALL_WHEN;
-}
-
-export function toSortKey(raw: string | null): SortKey {
-  return SORT_KEYS.find((key) => key === raw) ?? DEFAULT_SORT_KEY;
-}
-
-export function parseSortDirectionParam(
-  raw: string | null,
-  key: SortKey,
-): SortDirection {
-  if (raw === "asc" || raw === "desc") {
-    return raw;
-  }
-
-  return defaultDirectionFor(key);
-}
-
-export function parsePageParam(raw: string | null): number {
-  const parsed = Number(raw);
-
-  if (!Number.isInteger(parsed) || parsed < FIRST_PAGE) {
-    return FIRST_PAGE;
-  }
-
-  return parsed;
-}
-
-export function pageOfCalls(
-  calls: readonly ClassifiedCall[],
-  paging: { page: number; size: number },
-): CallPageView {
-  const total = calls.length;
-  const pageCount = Math.max(FIRST_PAGE, Math.ceil(total / paging.size));
-  const page = Math.min(paging.page, pageCount);
-  const start = (page - 1) * paging.size;
-  const shown = calls.slice(start, start + paging.size);
-
-  return {
-    calls: shown,
-    firstShown: total === 0 ? 0 : start + 1,
-    lastShown: start + shown.length,
-    page,
-    pageCount,
-    total,
-  };
-}
-
-export function paginationSteps(
-  page: number,
-  pageCount: number,
-): PaginationStep[] {
-  if (pageCount <= PAGES_SHOWN_WITHOUT_GAPS) {
-    return Array.from({ length: pageCount }, (_, index) => index + 1);
-  }
-
-  const shown = new Set([FIRST_PAGE, pageCount]);
-
-  for (
-    let around = page - PAGES_AROUND_CURRENT;
-    around <= page + PAGES_AROUND_CURRENT;
-    around += 1
-  ) {
-    if (around < FIRST_PAGE || around > pageCount) {
-      continue;
-    }
-
-    shown.add(around);
-  }
-
-  return withGaps([...shown].sort((one, other) => one - other));
-}
-
-export function haveOnlyListingParamsChanged(
-  currentUrl: URL,
-  nextUrl: URL,
-  extraParams: readonly string[],
-): boolean {
-  if (currentUrl.href === nextUrl.href) {
-    return false;
-  }
-
-  const listingParams = [...LISTING_PARAMS, ...extraParams];
-
-  return (
-    currentUrl.pathname === nextUrl.pathname &&
-    withoutParams(currentUrl, listingParams) ===
-      withoutParams(nextUrl, listingParams)
-  );
 }
 
 export type EmptyListingCopy = { description: string; title: string };
@@ -362,30 +261,4 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   return [call.fullName, call.visitorEmail].some((value) =>
     value.toLowerCase().includes(needle),
   );
-}
-
-function withGaps(pages: number[]): PaginationStep[] {
-  const steps: PaginationStep[] = [];
-  let previous = 0;
-
-  for (const page of pages) {
-    if (previous && page - previous > 1) {
-      steps.push("gap");
-    }
-
-    steps.push(page);
-    previous = page;
-  }
-
-  return steps;
-}
-
-function withoutParams(url: URL, params: readonly string[]): string {
-  const searchParams = new URLSearchParams(url.search);
-
-  for (const param of params) {
-    searchParams.delete(param);
-  }
-
-  return searchParams.toString();
 }

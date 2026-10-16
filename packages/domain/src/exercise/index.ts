@@ -20,6 +20,17 @@ export {
   type ExerciseReplacement,
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
+export {
+  DEFAULT_EXERCISE_SORT_KEY,
+  EXERCISE_EQUIPMENT_FILTERS,
+  EXERCISE_SORT_DEFAULT_DIRECTIONS,
+  EXERCISE_TYPE_FILTERS,
+  ExerciseSelection,
+  sortExercises,
+  type ExerciseEquipmentFilter,
+  type ExerciseSortKey,
+  type ExerciseTypeFilter,
+} from "./exercise-listing";
 export { ExerciseNames } from "./exercise-names";
 export {
   ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,

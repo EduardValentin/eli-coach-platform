@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "../lib/cn";
+import type { SortChoice, SortDirection } from "../lib/listing-sort";
 import { Button } from "../primitives/button";
 import {
   Select,
@@ -16,8 +17,6 @@ import {
   SelectValue,
 } from "../primitives/select";
 
-type SortDirection = "asc" | "desc";
-
 type SortOrder = "chronological" | "alphabetical";
 
 export type SortOption<Key extends string> = {
@@ -26,11 +25,6 @@ export type SortOption<Key extends string> = {
   key: Key;
   label: string;
   order: SortOrder;
-};
-
-export type SortChoice<Key extends string> = {
-  direction: SortDirection;
-  key: Key;
 };
 
 type SortControlProps<Key extends string> = {

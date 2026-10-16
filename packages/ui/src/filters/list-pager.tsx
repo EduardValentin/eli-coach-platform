@@ -1,30 +1,31 @@
 import {
+  paginationSteps,
+  type ListPage,
+  type PaginationStep,
+} from "../lib/list-paging";
+import {
   Pagination,
-  PaginationCurrentPage,
   PaginationEllipsis,
-  PaginationLink,
   PaginationList,
   PaginationNext,
+  PaginationPage,
   PaginationPrevious,
-} from "@eli-coach-platform/ui/primitives";
-
-import {
-  paginationSteps,
-  type CallPageView,
-  type PaginationStep,
-} from "~/features/assessment-calls/ui/coach/assessment-call-listing";
+} from "../primitives/pagination";
 
 type PathForPage = (page: number) => string;
 
-export function CallListPager({
+export function ListPager<Item>({
   pathForPage,
   view,
 }: {
   pathForPage: PathForPage;
-  view: CallPageView;
+  view: ListPage<Item>;
 }) {
   return (
-    <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      data-parity-root="ListPager"
+    >
       <p className="text-xs text-text-muted">
         Showing {view.firstShown}–{view.lastShown} of {view.total}
       </p>
@@ -36,7 +37,7 @@ export function CallListPager({
           />
 
           {paginationSteps(view.page, view.pageCount).map((step, index) => (
-            <CallPageStep
+            <PageStep
               currentPage={view.page}
               key={step === "gap" ? `gap-${index}` : step}
               pathForPage={pathForPage}
@@ -53,7 +54,7 @@ export function CallListPager({
   );
 }
 
-function CallPageStep(props: {
+function PageStep(props: {
   currentPage: number;
   pathForPage: PathForPage;
   step: PaginationStep;
@@ -64,9 +65,11 @@ function CallPageStep(props: {
     return <PaginationEllipsis />;
   }
 
-  if (step === currentPage) {
-    return <PaginationCurrentPage page={step} to={pathForPage(step)} />;
-  }
-
-  return <PaginationLink page={step} to={pathForPage(step)} />;
+  return (
+    <PaginationPage
+      page={step}
+      status={step === currentPage ? "current" : "other"}
+      to={pathForPage(step)}
+    />
+  );
 }

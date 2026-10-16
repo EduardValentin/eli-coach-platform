@@ -18,7 +18,10 @@ export function ListPager<Item>({
   pathForPage: (page: number) => string;
 }) {
   return (
-    <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      data-parity-root="ListPager"
+    >
       <p className="text-xs text-muted-foreground">
         Showing {view.firstShown}–{view.lastShown} of {view.total}
       </p>

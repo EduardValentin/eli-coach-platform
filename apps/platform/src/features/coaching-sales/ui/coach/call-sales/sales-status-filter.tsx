@@ -1,11 +1,5 @@
+import { CountedSelect } from "@eli-coach-platform/ui/filters";
 import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@eli-coach-platform/ui/primitives";
 
 import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 import {
@@ -108,22 +102,15 @@ export function SalesStatusFilter<Call>({
   const counts = countsBySalesFilter(scopedCalls, salesStateOf);
 
   return (
-    <Select onValueChange={onChange} value={value}>
-      <SelectTrigger aria-label="Status" data-parity="status-filter" size="sm">
-        <SelectValue>{salesFilterLabel(value)}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {SALES_FILTERS.map((filter) => (
-          <SelectItem
-            count={counts[filter]}
-            countParity={`status-count-${filter}`}
-            key={filter}
-            value={filter}
-          >
-            {salesFilterLabel(filter)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <CountedSelect
+      countParity={(filter) => `status-count-${filter}`}
+      counts={counts}
+      label="Status"
+      labels={SALES_FILTER_LABELS}
+      onChoose={onChange}
+      options={SALES_FILTERS}
+      triggerParity="status-filter"
+      value={value}
+    />
   );
 }

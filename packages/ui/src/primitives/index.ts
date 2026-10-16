@@ -36,15 +36,6 @@ export {
 export { Link, linkVariants } from "./link";
 export { MediaRemoveButton } from "./media-remove-button";
 export { MultiSelect } from "./multi-select";
-export {
-  Pagination,
-  PaginationCurrentPage,
-  PaginationEllipsis,
-  PaginationLink,
-  PaginationList,
-  PaginationNext,
-  PaginationPrevious,
-} from "./pagination";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { Progress } from "./progress";
 export { RadioGroup, RadioGroupItem } from "./radio-group";

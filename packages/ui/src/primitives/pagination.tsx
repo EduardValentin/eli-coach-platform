@@ -42,29 +42,22 @@ export function PaginationList(props: React.ComponentPropsWithoutRef<"ul">) {
   return <ul className="flex flex-row items-center gap-1" {...props} />;
 }
 
-export function PaginationLink({ page, to }: PageProps) {
-  return (
-    <li>
-      <Link
-        aria-label={`Go to page ${page}`}
-        className={PAGE_CLASS_NAME}
-        prefetch="intent"
-        replace
-        to={to}
-      >
-        {page}
-      </Link>
-    </li>
-  );
-}
+type PaginationPageStatus = "current" | "other";
 
-export function PaginationCurrentPage({ page, to }: PageProps) {
+type PaginationPageProps = PageProps & { status: PaginationPageStatus };
+
+const PAGE_CLASS_NAMES: Record<PaginationPageStatus, string> = {
+  current: CURRENT_PAGE_CLASS_NAME,
+  other: PAGE_CLASS_NAME,
+};
+
+export function PaginationPage({ page, status, to }: PaginationPageProps) {
   return (
     <li>
       <Link
-        aria-current="page"
+        aria-current={status === "current" ? "page" : undefined}
         aria-label={`Go to page ${page}`}
-        className={CURRENT_PAGE_CLASS_NAME}
+        className={PAGE_CLASS_NAMES[status]}
         prefetch="intent"
         replace
         to={to}

@@ -2,8 +2,19 @@ import {
   AppointmentCard,
   type AppointmentDetail,
 } from "@eli-coach-platform/ui/appointments";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { SortControl, type SortOption } from "@eli-coach-platform/ui/filters";
+import {
+  ListPager,
+  ListingToolbar,
+  SortControl,
+  type SortOption,
+} from "@eli-coach-platform/ui/filters";
+import {
+  cn,
+  pageOf,
+  type ListPage,
+  type SortChoice,
+  type SortDirection,
+} from "@eli-coach-platform/ui/lib";
 import { EmptyState } from "@eli-coach-platform/ui/portal";
 import {
   Badge,
@@ -31,29 +42,24 @@ import {
   labelForPrimaryGoal,
 } from "~/features/assessment-calls/public/visitor-profile";
 import {
+  CALL_SORT_RULE,
   classifyCalls,
-  defaultDirectionFor,
   emptyListingCopy,
   filterCalls,
   hasActiveFilters,
   isEndedCall,
   orderCallsBy,
-  pageOfCalls,
   PAGE_SIZE,
   SORT_KEYS,
-  type CallPageView,
-  type CallSort,
   type ClassifiedCall,
   type CoachCallWhen,
   type EmptyListingCopy,
   type ListingMoment,
   type ListingSelection,
-  type SortDirection,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { JoinCallLink } from "~/features/assessment-calls/ui/coach/join-call-link";
 
-import { CallListPager } from "./call-list-pager";
 import { useCallListingParams } from "./use-call-listing-params";
 
 const WHEN_TABS: readonly { label: string; when: CoachCallWhen }[] = [
@@ -93,7 +99,7 @@ const SORT_PRESENTATION: Record<
 
 const SORT_OPTIONS: readonly SortOption<SortKey>[] = SORT_KEYS.map((key) => ({
   ...SORT_PRESENTATION[key],
-  defaultDirection: defaultDirectionFor(key),
+  defaultDirection: CALL_SORT_RULE.defaultDirection[key],
   key,
   label: SORT_KEY_LABELS[key],
 }));
@@ -147,12 +153,12 @@ export function AssessmentCallsSection({
   const filtered = toolbarFilter
     ? scoped.filter(toolbarFilter.matches)
     : scoped;
-  const view = pageOfCalls(orderCallsBy(filtered, sort), {
+  const view = pageOf(orderCallsBy(filtered, sort), {
     page,
-    size: PAGE_SIZE,
+    perPage: PAGE_SIZE,
   });
   const emptyCopy = emptyListingCopy(selection, toolbarFilter);
-  const changeSort = (next: CallSort) => {
+  const changeSort = (next: SortChoice<SortKey>) => {
     if (next.key !== sort.key) {
       chooseSortKey(next.key);
       return;
@@ -172,8 +178,26 @@ export function AssessmentCallsSection({
         value={when}
         variant="segmented"
       >
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+        <ListingToolbar
+          filters={toolbarFilter?.control(scoped)}
+          search={
+            <>
+              <SearchField
+                aria-label="Search calls"
+                className="w-full sm:w-72"
+                onChange={(event) => changeQuery(event.target.value)}
+                placeholder="Search by name or email"
+                size="sm"
+                value={query}
+              />
+              <SortControl
+                onChange={changeSort}
+                options={SORT_OPTIONS}
+                sort={sort}
+              />
+            </>
+          }
+          view={
             <TabsList aria-label="When">
               {WHEN_TABS.map((tab) => (
                 <TabsTrigger key={tab.when} value={tab.when}>
@@ -181,25 +205,8 @@ export function AssessmentCallsSection({
                 </TabsTrigger>
               ))}
             </TabsList>
-            {toolbarFilter?.control(scoped)}
-          </div>
-
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <SearchField
-              aria-label="Search calls"
-              className="w-full sm:w-72"
-              onChange={(event) => changeQuery(event.target.value)}
-              placeholder="Search by name or email"
-              size="sm"
-              value={query}
-            />
-            <SortControl
-              onChange={changeSort}
-              options={SORT_OPTIONS}
-              sort={sort}
-            />
-          </div>
-        </div>
+          }
+        />
 
         <TabsContent value={when}>
           <CallResults
@@ -225,7 +232,7 @@ type CallResultsProps = CallRowProps & {
   emptyCopy: EmptyListingCopy;
   onClearFilters?: () => void;
   pathForPage: (page: number) => string;
-  view: CallPageView;
+  view: ListPage<ClassifiedCall>;
 };
 
 function CallResults({
@@ -235,7 +242,7 @@ function CallResults({
   view,
   ...row
 }: CallResultsProps) {
-  if (view.calls.length === 0) {
+  if (view.items.length === 0) {
     return (
       <EmptyState
         action={
@@ -254,10 +261,10 @@ function CallResults({
 
   return (
     <>
-      <CallList calls={view.calls} {...row} />
+      <CallList calls={view.items} {...row} />
 
       {view.pageCount > 1 && (
-        <CallListPager pathForPage={pathForPage} view={view} />
+        <ListPager pathForPage={pathForPage} view={view} />
       )}
     </>
   );

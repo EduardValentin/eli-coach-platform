@@ -703,6 +703,78 @@ describe("editing an exercise", () => {
   );
 });
 
+describe("the way back to the library", () => {
+  const LIBRARY_VIEW = "?type=breathing&sort=difficulty";
+
+  it.each(["Cancel", "Back to exercises"])(
+    "points %s at the library view she opened the editor from",
+    async (leave) => {
+      // arrange
+      const user = await renderEditor({
+        pathname: exerciseEditorPath(BREATH_HOLD.id),
+        state: { library: LIBRARY_VIEW },
+      });
+      const link = screen.getByRole("link", { name: leave });
+
+      // act
+      await user.click(link);
+
+      // assert
+      expect(link).toHaveAttribute(
+        "href",
+        `${COACH_TRAINING_PATH}${LIBRARY_VIEW}`,
+      );
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Exercises" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
+        /^Breathing$/,
+      );
+    },
+  );
+
+  it("points Cancel and Back to exercises at the plain library when the editor was opened by its address", async () => {
+    // arrange, act
+    await renderEditor(exerciseEditorPath(BREATH_HOLD.id));
+
+    // assert
+    expect(screen.getByRole("link", { name: "Cancel" })).toHaveAttribute(
+      "href",
+      COACH_TRAINING_PATH,
+    );
+    expect(
+      screen.getByRole("link", { name: "Back to exercises" }),
+    ).toHaveAttribute("href", COACH_TRAINING_PATH);
+  });
+
+  it("lands a save on the library view she opened the editor from", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderEditor({
+      pathname: exerciseEditorPath(HIP_THRUST.id),
+      state: { library: "?type=resistance" },
+    });
+    await enter(user, "Name (required)", "Barbell hip thrust");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Exercises" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent(
+      /^Resistance$/,
+    );
+    expect(
+      screen.getByRole("button", { name: "Actions for Hip thrust" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Actions for Breath hold" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("the demo video", () => {
   it("offers a drop zone named by its prompt that takes an .mp4 or a .mov and says what to upload", async () => {
     // arrange, act
@@ -1331,7 +1403,9 @@ async function heldUpload(): Promise<HeldUploadRequest> {
   return HeldUploadRequest.sent[0];
 }
 
-async function renderEditorReadyToSave(entry: string) {
+type EditorEntry = string | { pathname: string; state: unknown };
+
+async function renderEditorReadyToSave(entry: EditorEntry) {
   const user = await renderEditor(entry);
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled(),
@@ -1372,7 +1446,7 @@ async function pickMuscles(
   await user.keyboard("{Escape}");
 }
 
-async function renderEditor(entry: string, heading?: string) {
+async function renderEditor(entry: EditorEntry, heading?: string) {
   const user = userEvent.setup();
   const router = createMemoryRouter(
     [
