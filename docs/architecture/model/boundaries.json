@@ -160,7 +160,9 @@
     { "id": "B166", "path": "packages/domain/src/coaching-subscription/coaching-subscription-ids.ts", "symbol": "CoachingSubscriptionIds", "owner": "C1" },
     { "id": "B167", "path": "packages/domain/src/exercise/exercise-video-store.ts", "symbol": "ExerciseVideoStore", "owner": "C1" },
     { "id": "B168", "path": "packages/domain/src/exercise/exercise-video-format-detector.ts", "symbol": "ExerciseVideoFormatDetector", "owner": "C1" },
-    { "id": "B169", "path": "packages/domain/src/exercise/exercise-video-ids.ts", "symbol": "ExerciseVideoIds", "owner": "C1" }
+    { "id": "B169", "path": "packages/domain/src/exercise/exercise-video-ids.ts", "symbol": "ExerciseVideoIds", "owner": "C1" },
+    { "id": "B170", "path": "packages/domain/src/nutrition/recipe-library.ts", "symbol": "RecipeLibrary", "owner": "C1" },
+    { "id": "B171", "path": "packages/domain/src/nutrition/recipe-ids.ts", "symbol": "RecipeIds", "owner": "C1" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C6", "C7", "C8", "C9", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ] },
