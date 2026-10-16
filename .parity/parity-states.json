@@ -461,7 +461,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-past"
+      }
+    ]
   },
   "checkins-empty-requests": {
     "prototype": [
@@ -493,7 +497,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-requests"
+      }
+    ]
   },
   "checkins-empty-upcoming": {
     "prototype": [
@@ -525,7 +533,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-upcoming"
+      }
+    ]
   },
   "checkins-open-request": {
     "prototype": [
