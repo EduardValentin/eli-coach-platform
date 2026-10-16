@@ -7,7 +7,8 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { SortControl, type SortChoice, type SortOption } from "./sort-control";
+import type { SortChoice } from "../lib/listing-sort";
+import { SortControl, type SortOption } from "./sort-control";
 
 type ResourceSortKey = "added" | "title";
 

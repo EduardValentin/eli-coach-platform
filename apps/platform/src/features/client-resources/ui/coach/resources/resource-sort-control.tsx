@@ -3,11 +3,8 @@ import {
   RESOURCE_SORT_KEYS,
   type ResourceSortKey,
 } from "@eli-coach-platform/domain/client-resources";
-import {
-  SortControl,
-  type SortChoice,
-  type SortOption,
-} from "@eli-coach-platform/ui/filters";
+import { SortControl, type SortOption } from "@eli-coach-platform/ui/filters";
+import type { SortChoice } from "@eli-coach-platform/ui/lib";
 
 import type { ResourceToolbarControlSize } from "~/features/client-resources/ui/shared/resources/resource-toolbar";
 

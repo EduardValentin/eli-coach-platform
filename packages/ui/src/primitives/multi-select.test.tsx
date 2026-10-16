@@ -176,6 +176,50 @@ describe("MultiSelect", () => {
   });
 });
 
+describe("a MultiSelect with counts", () => {
+  it("ends every option with its count, read with the option", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <MultiSelect<Tag>
+        counts={{ recovery: 0, strength: 4 }}
+        label="Tags"
+        labels={TAG_LABELS}
+        onToggle={vi.fn()}
+        options={["strength", "recovery"]}
+        selected={[]}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+
+    // assert
+    const list = screen.getByRole("list", { name: "Tags" });
+    const strength = within(list).getByRole("checkbox", {
+      name: /^Strength\s*4$/,
+    });
+    expect(strength.closest("label")).toHaveTextContent(/^Strength4$/);
+    expect(within(list).getByText("4")).toHaveAttribute("data-slot", "badge");
+    expect(
+      within(list).getByRole("checkbox", { name: /^Recovery\s*0$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no count without counts", async () => {
+    // arrange
+    const { user } = renderTagFilter([]);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Tags" }));
+
+    // assert
+    expect(
+      screen.getByRole("checkbox", { name: "Strength" }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("a MultiSelect in a form", () => {
   it("shows each chosen name as a pill in the trigger when its summary is names", () => {
     // arrange, act

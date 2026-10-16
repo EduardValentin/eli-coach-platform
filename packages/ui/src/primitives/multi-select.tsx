@@ -66,9 +66,11 @@ function TriggerSummary<Value extends string>({
 type OptionListProps<Value extends string> = MultiSelectSelection<Value> & {
   options: readonly Value[];
   onToggle: (value: Value) => void;
+  counts?: Readonly<Record<Value, number>>;
 };
 
 function OptionList<Value extends string>({
+  counts,
   label,
   labels,
   onToggle,
@@ -112,6 +114,7 @@ function OptionList<Value extends string>({
                   onCheckedChange={() => onToggle(option)}
                 />
                 {labels[option]}
+                {counts && <Badge tone="count">{counts[option]}</Badge>}
               </label>
             </li>
           ))}
@@ -134,6 +137,7 @@ function accessibleTriggerName(label: string, chosenCount: number): string {
 }
 
 export function MultiSelect<Value extends string>({
+  counts,
   label,
   labels,
   onToggle,
@@ -185,6 +189,7 @@ export function MultiSelect<Value extends string>({
         className="flex w-(--radix-popover-trigger-width) max-w-md min-w-56 flex-col gap-1 p-1"
       >
         <OptionList
+          counts={counts}
           label={label}
           labels={labels}
           onToggle={onToggle}
