@@ -258,7 +258,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: created.name,
       summary: "Resistance · Mat",
@@ -291,7 +291,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise updated");
+    await exerciseLibrary.expectToast("Exercise updated");
     await exerciseLibrary.expectListed({
       name: edited.name,
       summary: "Resistance · Mat, Barbell",
@@ -482,7 +482,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: `${entered.name} (heavy)`,
       summary: "Resistance · Dumbbells, Bench",
@@ -678,7 +678,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: created.name,
       summary: "Mobility · Mat",
@@ -852,10 +852,13 @@ test(
           hipThrustNamed("Visitor"),
         )
       ).status,
+      (await visitorExerciseRequests.archive(exerciseId)).status,
+      (await visitorExerciseRequests.restore(exerciseId)).status,
+      (await visitorExerciseRequests.remove(exerciseId)).status,
     ];
 
     // assert
-    expect(visitorStatuses).toEqual([401, 401]);
+    expect(visitorStatuses).toEqual([401, 401, 401, 401, 401]);
 
     for (const open of [
       () => exerciseLibrary.open(),
@@ -891,10 +894,13 @@ test(
         .status,
       (await exerciseRequests.edit(exerciseId, hipThrustNamed("Client")))
         .status,
+      (await exerciseRequests.archive(exerciseId)).status,
+      (await exerciseRequests.restore(exerciseId)).status,
+      (await exerciseRequests.remove(exerciseId)).status,
     ];
 
     // assert
-    expect(clientStatuses).toEqual([403, 403]);
+    expect(clientStatuses).toEqual([403, 403, 403, 403, 403]);
   },
 );
 
@@ -1117,7 +1123,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: entered.name,
       summary: "Resistance · Dumbbells",
@@ -1225,7 +1231,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     expect(saves()).toBe(1);
     await exerciseEditor.expectUploadAnnouncedThenFinishedUp();
     await restoreUploads();
@@ -1288,7 +1294,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: entered.name,
       summary: "Resistance · Dumbbells",
@@ -1677,7 +1683,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen();
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListed({
       name: created.name,
       summary: "Mobility · Mat",
@@ -1841,7 +1847,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen("?sort=difficulty&dir=desc&page=2");
-    await exerciseLibrary.expectConfirmation("Exercise updated");
+    await exerciseLibrary.expectToast("Exercise updated");
     await exerciseLibrary.expectSortedBy("Difficulty", "descending");
     await exerciseLibrary.expectListedNamesExactly(
       tagged(BY_HARDEST_FIRST.slice(10)),
@@ -2276,7 +2282,7 @@ test(
 
     // assert
     await exerciseLibrary.expectOpen(view);
-    await exerciseLibrary.expectConfirmation("Exercise created");
+    await exerciseLibrary.expectToast("Exercise created");
     await exerciseLibrary.expectListedNamesExactly(
       namesTagged(scenarioTag, ["Cat cow", "Box breathing", "Air squat"]),
     );
@@ -2386,5 +2392,187 @@ test(
     await exerciseLibrary.expectListedNamesExactly(
       namesTagged(scenarioTag, ["Single-leg glute bridge"]),
     );
+  },
+);
+
+test(
+  "the coach archives an exercise, finds it under Archived, restores it and deletes one after confirming",
+  { tag: "@critical" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const squat = hipThrustNamed(`Back squat ${scenarioTag}`);
+    const lunge = hipThrustNamed(`Walking lunge ${scenarioTag}`);
+    const plank = hipThrustNamed(`Side plank ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted([squat, lunge, plank]);
+    await exerciseLibrary.open();
+
+    // assert
+    await exerciseLibrary.expectStatusCounts({ Active: 3, Archived: 0 });
+    await exerciseLibrary.expectRowActions(lunge.name, [
+      "Edit",
+      "Archive",
+      "Delete",
+    ]);
+
+    // act
+    await exerciseLibrary.archive(lunge.name);
+
+    // assert
+    await exerciseLibrary.expectToast(`"${lunge.name}" archived`);
+    await exerciseLibrary.expectListedNamesExactly([squat.name, plank.name]);
+    await exerciseLibrary.expectHeadingFocused();
+
+    // act
+    await exerciseLibrary.chooseStatus("Archived");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ status: "archived" });
+    await exerciseLibrary.expectListedNamesExactly([lunge.name]);
+    await exerciseLibrary.expectStatusCounts({ Active: 2, Archived: 1 });
+    await exerciseLibrary.expectRowActions(lunge.name, ["Restore", "Delete"]);
+
+    // act
+    await exerciseLibrary.restore(lunge.name);
+
+    // assert
+    await exerciseLibrary.expectToast(`"${lunge.name}" restored`);
+    await exerciseLibrary.expectArchivedEmpty();
+    await exerciseLibrary.expectHeadingFocused();
+
+    // act
+    await exerciseLibrary.chooseStatus("Active");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({});
+    await exerciseLibrary.expectListedNamesExactly([
+      squat.name,
+      plank.name,
+      lunge.name,
+    ]);
+
+    // act
+    await exerciseLibrary.requestDelete(plank.name);
+    await exerciseLibrary.confirmDelete();
+
+    // assert
+    await exerciseLibrary.expectToast(`"${plank.name}" deleted`);
+    await exerciseLibrary.expectListedNamesExactly([squat.name, lunge.name]);
+    await exerciseLibrary.expectHeadingFocused();
+
+    // act
+    await page.reload();
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly([squat.name, lunge.name]);
+    await exerciseLibrary.expectStatusCounts({ Active: 2, Archived: 0 });
+  },
+);
+
+test(
+  "a restore under a taken name comes back numbered and says so",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const hipThrust = hipThrustNamed(`Hip thrust ${scenarioTag}`);
+    const numbered = `${hipThrust.name} (2)`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createAccepted(hipThrust);
+    await exerciseLibrary.open();
+    await exerciseLibrary.archive(hipThrust.name);
+    await exerciseLibrary.expectToast(`"${hipThrust.name}" archived`);
+    await exerciseRequests.createAccepted(hipThrust);
+    await exerciseLibrary.open();
+    await exerciseLibrary.chooseStatus("Archived");
+
+    // act
+    await exerciseLibrary.restore(hipThrust.name);
+
+    // assert
+    await exerciseLibrary.expectToast(
+      `"${hipThrust.name}" restored as "${numbered}"`,
+    );
+    await exerciseLibrary.expectArchivedEmpty();
+
+    // act
+    await exerciseLibrary.chooseStatus("Active");
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly([hipThrust.name, numbered]);
+  },
+);
+
+test(
+  "archive, restore and delete work by keyboard and the confirmation returns focus to the row's menu",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const squat = hipThrustNamed(`Back squat ${scenarioTag}`);
+    const lunge = hipThrustNamed(`Walking lunge ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted([squat, lunge]);
+    await exerciseLibrary.open();
+
+    // act
+    await exerciseLibrary.archiveWithKeyboard(lunge.name);
+
+    // assert
+    await exerciseLibrary.expectToast(`"${lunge.name}" archived`);
+    await exerciseLibrary.expectListedNamesExactly([squat.name]);
+    await exerciseLibrary.expectHeadingFocused();
+
+    // act
+    await exerciseLibrary.chooseStatusWithKeyboard("Archived");
+    await exerciseLibrary.restoreWithKeyboard(lunge.name);
+
+    // assert
+    await exerciseLibrary.expectToast(`"${lunge.name}" restored`);
+    await exerciseLibrary.expectArchivedEmpty();
+    await exerciseLibrary.expectHeadingFocused();
+
+    // act
+    await exerciseLibrary.chooseStatusWithKeyboard("Active");
+    await exerciseLibrary.requestDeleteWithKeyboard(squat.name);
+    await exerciseLibrary.cancelDeleteWithKeyboard();
+
+    // assert
+    await exerciseLibrary.expectRowMenuButtonFocused(squat.name);
+    await exerciseLibrary.expectListedNamesExactly([squat.name, lunge.name]);
+
+    // act
+    await exerciseLibrary.requestDeleteWithKeyboard(squat.name);
+    await exerciseLibrary.confirmDeleteWithKeyboard();
+
+    // assert
+    await exerciseLibrary.expectToast(`"${squat.name}" deleted`);
+    await exerciseLibrary.expectListedNamesExactly([lunge.name]);
+    await exerciseLibrary.expectHeadingFocused();
   },
 );

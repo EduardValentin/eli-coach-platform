@@ -15,7 +15,15 @@ export type ListedExercise = {
 
 export type ListingFilter = "Type" | "Tags" | "Equipment";
 
+export type ExerciseStatusLabel = "Active" | "Archived";
+
+export type ToolbarControl = ListingFilter | "Status";
+
+type SingleChoiceControl = Exclude<ToolbarControl, "Tags">;
+
 type SingleChoiceFilter = Exclude<ListingFilter, "Tags">;
+
+type RowAction = "Edit" | "Archive" | "Restore" | "Delete";
 
 export type SortableColumn = "Exercise" | "Difficulty";
 
@@ -33,9 +41,13 @@ const PAGE_PARAM = "page";
 
 const SEARCH_PARAM = "q";
 
-const MAX_OPTION_STOPS = 10;
+const ARROW_SETTLE_MS = 250;
 
 const HUMAN_KEYSTROKE_DELAY_MS = 60;
+
+const DELETE_DIALOG_NAME = /^Delete “.+”\?$/;
+
+const DELETE_DESCRIPTION = "It’s removed for good. This can’t be undone.";
 
 export class ExerciseLibraryPage {
   constructor(private readonly page: Page) {}
@@ -64,8 +76,20 @@ export class ExerciseLibraryPage {
     return this.page.getByRole("link", { name: "New exercise" });
   }
 
-  private get editItem(): Locator {
-    return this.page.getByRole("menuitem", { name: "Edit" });
+  private get rowMenu(): Locator {
+    return this.page.getByRole("menu");
+  }
+
+  private rowMenuItem(action: RowAction): Locator {
+    return this.rowMenu.getByRole("menuitem", { name: action, exact: true });
+  }
+
+  private get deleteDialog(): Locator {
+    return this.page.getByRole("dialog", { name: DELETE_DIALOG_NAME });
+  }
+
+  private deleteDialogButton(label: "Delete" | "Cancel"): Locator {
+    return this.deleteDialog.getByRole("button", { name: label, exact: true });
   }
 
   private get editorHeading(): Locator {
@@ -127,7 +151,7 @@ export class ExerciseLibraryPage {
     return this.page.getByRole("listbox");
   }
 
-  private filterTrigger(filter: ListingFilter): Locator {
+  private filterTrigger(filter: ToolbarControl): Locator {
     if (filter === "Tags") {
       return this.page.getByRole("button", { name: TAGS_TRIGGER_NAME });
     }
@@ -135,17 +159,17 @@ export class ExerciseLibraryPage {
     return this.page.getByRole("combobox", { name: filter, exact: true });
   }
 
-  private filterPanel(filter: ListingFilter): Locator {
+  private filterPanel(filter: ToolbarControl): Locator {
     return filter === "Tags" ? this.tagsPanel : this.choicePanel;
   }
 
-  private filterOptions(filter: ListingFilter): Locator {
+  private filterOptions(filter: ToolbarControl): Locator {
     return filter === "Tags"
       ? this.tagsPanel.getByRole("checkbox")
       : this.choicePanel.getByRole("option");
   }
 
-  private filterOption(filter: ListingFilter, label: string): Locator {
+  private filterOption(filter: ToolbarControl, label: string): Locator {
     const name = new RegExp(`^${escapedPattern(label)}\\s*\\d+$`);
 
     return filter === "Tags"
@@ -171,7 +195,7 @@ export class ExerciseLibraryPage {
     });
   }
 
-  private async openFilter(filter: ListingFilter): Promise<void> {
+  private async openFilter(filter: ToolbarControl): Promise<void> {
     await expect(async () => {
       await this.filterTrigger(filter).click();
       await expect(this.filterPanel(filter)).toBeVisible({
@@ -180,7 +204,7 @@ export class ExerciseLibraryPage {
     }).toPass();
   }
 
-  private async openFilterWithKeyboard(filter: ListingFilter): Promise<void> {
+  private async openFilterWithKeyboard(filter: ToolbarControl): Promise<void> {
     await expect(async () => {
       await this.tabFromHeadingTo(this.filterTrigger(filter));
       await this.page.keyboard.press("Enter");
@@ -190,23 +214,25 @@ export class ExerciseLibraryPage {
     }).toPass();
   }
 
-  private async closeFilter(filter: ListingFilter): Promise<void> {
+  private async closeFilter(filter: ToolbarControl): Promise<void> {
     await this.page.keyboard.press("Escape");
     await expect(this.filterPanel(filter)).toBeHidden();
   }
 
-  private async choose(filter: SingleChoiceFilter, label: string) {
+  private async choose(filter: SingleChoiceControl, label: string) {
     await this.openFilter(filter);
     await this.filterOption(filter, label).click();
     await expect(this.filterPanel(filter)).toBeHidden();
     await expect(this.filterTrigger(filter)).toHaveText(label);
   }
 
-  private async chooseWithKeyboard(filter: SingleChoiceFilter, label: string) {
+  private async chooseWithKeyboard(filter: SingleChoiceControl, label: string) {
     await this.openFilterWithKeyboard(filter);
     await expect(
       this.choicePanel.getByRole("option", { selected: true }),
     ).toBeFocused();
+    await this.page.keyboard.press("Home");
+    await expect(this.filterOptions(filter).first()).toBeFocused();
     await this.arrowDownTo(this.filterOption(filter, label));
     await this.page.keyboard.press("Enter");
     await expect(this.filterPanel(filter)).toBeHidden();
@@ -214,13 +240,48 @@ export class ExerciseLibraryPage {
     await expect(this.filterTrigger(filter)).toBeFocused();
   }
 
-  private async arrowDownTo(option: Locator): Promise<void> {
-    for (let stop = 0; stop < MAX_OPTION_STOPS; stop += 1) {
-      if (await isFocused(option)) return;
-      await this.page.keyboard.press("ArrowDown");
-    }
+  private async arrowDownTo(target: Locator): Promise<void> {
+    await expect(async () => {
+      if (!(await isFocused(target))) {
+        await this.page.keyboard.press("ArrowDown");
+      }
+      expect(await isFocused(target)).toBe(true);
+    }).toPass({ intervals: [ARROW_SETTLE_MS] });
+  }
 
-    throw new Error("The arrow keys never reached the expected option.");
+  private async chooseRowAction(name: string, action: RowAction) {
+    await expect(async () => {
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await this.rowMenuItem(action).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  private async chooseRowActionWithKeyboard(name: string, action: RowAction) {
+    await expect(async () => {
+      if (!(await this.rowMenu.isVisible())) {
+        await this.tabFromHeadingTo(this.actionsTriggerOf(name));
+        await this.page.keyboard.press("Enter");
+      }
+      await expect(this.rowMenu).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await expect(this.rowMenu.getByRole("menuitem").first()).toBeFocused();
+    await this.arrowDownTo(this.rowMenuItem(action));
+    await this.page.keyboard.press("Enter");
+  }
+
+  private async expectDeleteAsked(name: string): Promise<void> {
+    await expect(this.deleteDialog).toHaveAccessibleName(`Delete “${name}”?`);
+    await expect(this.deleteDialog).toHaveAccessibleDescription(
+      DELETE_DESCRIPTION,
+    );
+    await expect(this.deleteDialogButton("Delete")).toBeEnabled();
+    await expect(this.deleteDialogButton("Cancel")).toBeEnabled();
   }
 
   private async tabFromHeadingTo(control: Locator): Promise<void> {
@@ -348,7 +409,7 @@ export class ExerciseLibraryPage {
   }
 
   async expectOptionCounts(
-    filter: ListingFilter,
+    filter: ToolbarControl,
     counts: OptionCounts,
   ): Promise<void> {
     const entries = Object.entries(counts);
@@ -361,6 +422,20 @@ export class ExerciseLibraryPage {
       );
     }
     await this.closeFilter(filter);
+  }
+
+  async chooseStatus(label: ExerciseStatusLabel): Promise<void> {
+    await this.choose("Status", label);
+  }
+
+  async chooseStatusWithKeyboard(label: ExerciseStatusLabel): Promise<void> {
+    await this.chooseWithKeyboard("Status", label);
+  }
+
+  async expectStatusCounts(
+    counts: Readonly<Record<ExerciseStatusLabel, number>>,
+  ): Promise<void> {
+    await this.expectOptionCounts("Status", counts);
   }
 
   async expectChosen(filter: SingleChoiceFilter, label: string) {
@@ -506,8 +581,30 @@ export class ExerciseLibraryPage {
     expect(listed.filter((name) => names.includes(name))).toEqual(names);
   }
 
-  async expectConfirmation(message: string): Promise<void> {
+  async expectToast(message: string): Promise<void> {
     await expect(this.page.getByText(message, { exact: true })).toBeVisible();
+  }
+
+  async expectArchivedEmpty(): Promise<void> {
+    await expect(
+      this.page.getByText("No archived exercises", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByText(
+        "Exercises you archive appear here, ready to restore.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(this.noMatchTitle).toHaveCount(0);
+    await expect(this.clearFiltersButton).toHaveCount(0);
+  }
+
+  async expectHeadingFocused(): Promise<void> {
+    await expect(this.heading).toBeFocused();
+  }
+
+  async expectRowMenuButtonFocused(name: string): Promise<void> {
+    await expect(this.actionsTriggerOf(name)).toBeFocused();
   }
 
   async expectListed(exercise: ListedExercise): Promise<void> {
@@ -527,11 +624,67 @@ export class ExerciseLibraryPage {
 
   async edit(name: string): Promise<void> {
     await expect(async () => {
+      await this.chooseRowAction(name, "Edit");
+      await expect(this.editorHeading).toBeVisible();
+    }).toPass();
+  }
+
+  async expectRowActions(
+    name: string,
+    actions: readonly RowAction[],
+  ): Promise<void> {
+    await expect(async () => {
       await this.actionsTriggerOf(name).click({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
-      await this.editItem.click({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
-      await expect(this.editorHeading).toBeVisible();
+      await expect(this.rowMenu.getByRole("menuitem")).toHaveText(actions, {
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
     }).toPass();
+    await this.page.keyboard.press("Escape");
+    await expect(this.rowMenu).toBeHidden();
+  }
+
+  async archive(name: string): Promise<void> {
+    await this.chooseRowAction(name, "Archive");
+  }
+
+  async archiveWithKeyboard(name: string): Promise<void> {
+    await this.chooseRowActionWithKeyboard(name, "Archive");
+  }
+
+  async restore(name: string): Promise<void> {
+    await this.chooseRowAction(name, "Restore");
+  }
+
+  async restoreWithKeyboard(name: string): Promise<void> {
+    await this.chooseRowActionWithKeyboard(name, "Restore");
+  }
+
+  async requestDelete(name: string): Promise<void> {
+    await this.chooseRowAction(name, "Delete");
+    await this.expectDeleteAsked(name);
+  }
+
+  async requestDeleteWithKeyboard(name: string): Promise<void> {
+    await this.chooseRowActionWithKeyboard(name, "Delete");
+    await this.expectDeleteAsked(name);
+  }
+
+  async confirmDelete(): Promise<void> {
+    await this.deleteDialogButton("Delete").click();
+    await expect(this.deleteDialog).toBeHidden();
+  }
+
+  async confirmDeleteWithKeyboard(): Promise<void> {
+    await tabTo(this.page, this.deleteDialogButton("Delete"));
+    await this.page.keyboard.press("Enter");
+    await expect(this.deleteDialog).toBeHidden();
+  }
+
+  async cancelDeleteWithKeyboard(): Promise<void> {
+    await tabTo(this.page, this.deleteDialogButton("Cancel"));
+    await this.page.keyboard.press("Enter");
+    await expect(this.deleteDialog).toBeHidden();
   }
 }
