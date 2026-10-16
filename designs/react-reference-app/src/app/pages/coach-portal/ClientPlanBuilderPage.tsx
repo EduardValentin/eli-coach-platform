@@ -11,7 +11,6 @@ import {
 import { useProgramDelivery } from '../../hooks/useProgramDelivery';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 import { useMessaging } from '../../context/MessagingContext';
-import { useNotifications } from '../../context/NotificationContext';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
 import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
@@ -105,7 +104,6 @@ export function ClientPlanBuilderPage() {
   const programDelivery = useProgramDelivery(clientId ?? '');
   const journeyClient = useJourneyClient(clientId ?? '');
   const { addSystemMessage } = useMessaging();
-  const { addNotification } = useNotifications();
 
   // ── Local state ────────────────────────────────────────────────────
   const [initialWeeks, setInitialWeeks] = useState<PlanWeek[]>([]);
@@ -211,12 +209,6 @@ export function ClientPlanBuilderPage() {
         'plan-update',
       );
 
-      addNotification({
-        title: 'New Plan Created',
-        message: `${clientName}'s plan "${planName}" was created successfully.`,
-        link: `/coach/clients/${clientId}`,
-      });
-
       toast.success('Plan created & client notified');
     } else {
       if (!planInstance) return;
@@ -234,12 +226,6 @@ export function ClientPlanBuilderPage() {
         `Your training plan "${planInstance.name}" has been updated by your coach.`,
         'plan-update',
       );
-
-      addNotification({
-        title: 'Plan Updated',
-        message: `${clientName}'s plan "${planInstance.name}" was updated successfully.`,
-        link: `/coach/clients/${clientId}`,
-      });
 
       toast.success('Plan changes saved & client notified');
     }

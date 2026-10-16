@@ -339,6 +339,105 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a check-in event missing from the other party's bell with the check-in and the event only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInInboxFailed({
+      checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      event: "approved",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Check-in notification could not be recorded in the bell.",
+      {
+        checkInId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+        errorCategory: "check_in_inbox_failure",
+        event: "approved",
+      },
+    );
+  });
+
+  it("logs a weekly check-in event missing from the bell with the series and the event only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.checkInSeriesInboxFailed({
+      seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      event: "clashesAdded",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Weekly check-in notification could not be recorded in the bell.",
+      {
+        errorCategory: "check_in_series_inbox_failure",
+        event: "clashesAdded",
+        seriesId: "6f2b9c1e-4d3a-4e8b-9a7c-1d2e3f4a5b6c",
+      },
+    );
+  });
+
+  it("logs a bell that could not be read by party and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.notificationBellReadFailed({
+      party: "client",
+      error: Object.assign(new Error("secret row contents"), {
+        code: "57P01",
+      }),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "The notification bell could not be read; it shows no notifications.",
+      {
+        errorCategory: "notification_bell_read_failure",
+        errorClass: "Error",
+        errorCode: "57P01",
+        party: "client",
+      },
+    );
+  });
+
+  it("logs expiries that could not be recorded in the bell by party and the class of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.notificationExpiriesFailed({
+      party: "coach",
+      error: new TypeError("secret row contents"),
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Expired notifications could not be recorded in the bell; it shows what it already holds.",
+      {
+        errorCategory: "notification_expiries_failure",
+        errorClass: "TypeError",
+        party: "coach",
+      },
+    );
+  });
+
   it("logs a weekly check-in that could not be extended by client and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

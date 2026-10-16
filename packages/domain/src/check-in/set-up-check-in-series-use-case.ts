@@ -2,9 +2,10 @@ import type { ClientIdentities, ClientReach } from "../client";
 import type { CoachAvailabilitySource, Weekday } from "../coach-availability";
 import type { Clock } from "../shared";
 
-import type { CheckInSnapshot } from "./check-in";
+import { CheckIn, type CheckInSnapshot } from "./check-in";
 import { CheckInAnnouncer } from "./check-in-announcer";
 import type { CheckInIds } from "./check-in-ids";
+import type { CheckInInbox } from "./check-in-inbox";
 import type { CheckInIncidents } from "./check-in-incidents";
 import type { CheckInNotifications } from "./check-in-notifications";
 import { CHECK_IN_RULES } from "./check-in-rules";
@@ -40,6 +41,7 @@ type SetUpCheckInSeriesUseCaseOptions = {
   clock: Clock;
   identities: Pick<ClientIdentities, "findByClientIds">;
   ids: CheckInIds;
+  inbox: CheckInInbox;
   incidents: CheckInIncidents;
   notifications: CheckInNotifications;
   series: Pick<CheckInSeriesRecords, "setUp">;
@@ -118,6 +120,7 @@ export class SetUpCheckInSeriesUseCase {
       series,
       weekStartsAt: starts[0],
       clientTimeZone: client.timeZone,
+      firstWeekId: CheckIn.earliestOf(recorded.occurrences)?.id ?? null,
     });
 
     return {

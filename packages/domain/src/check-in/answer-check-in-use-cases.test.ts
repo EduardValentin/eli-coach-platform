@@ -88,6 +88,8 @@ function createPorts(options?: {
       ),
     listForClient: vi.fn().mockResolvedValue([]),
     listAll: vi.fn().mockResolvedValue([]),
+    listUnansweredStartedWithin: vi.fn(),
+    listUnansweredForClientStartedWithin: vi.fn(),
     settle: vi.fn().mockResolvedValue(options?.settlement ?? "settled"),
     move: vi.fn().mockResolvedValue("moved"),
     endCoaching: vi
@@ -139,6 +141,13 @@ function createPorts(options?: {
       checkInSeriesNotificationFailed: vi.fn(),
       checkInSeriesExtensionFailed: vi.fn(),
       checkInSeriesReadFailed: vi.fn(),
+      checkInInboxFailed: vi.fn(),
+      checkInSeriesInboxFailed: vi.fn(),
+    },
+    inbox: {
+      checkInEvent: vi.fn().mockResolvedValue(undefined),
+      seriesEvent: vi.fn().mockResolvedValue(undefined),
+      clashesAdded: vi.fn().mockResolvedValue(undefined),
     },
     notifications,
   };

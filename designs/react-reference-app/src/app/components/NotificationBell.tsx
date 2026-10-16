@@ -1,204 +1,158 @@
-import { useState, useRef, useEffect } from 'react';
+import { forwardRef, useRef, useState, type ComponentPropsWithoutRef, type RefObject } from 'react';
 import { Bell, Check } from 'lucide-react';
-import { useNotifications, type Notification } from '../context/NotificationContext';
 import { Link } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react';
+import { useNotifications, type BellItem } from '../context/NotificationContext';
 import { AttentionDot } from './AttentionDot';
 import { BottomSheet } from './ui/bottom-sheet';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useIsMobile } from './ui/use-mobile';
+import { cn } from './ui/utils';
 
 interface NotificationBellProps {
-  align?: 'left' | 'right';
+  align?: 'start' | 'end';
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
 }
 
-export function NotificationBell({ align = 'right', onOpenChange, open }: NotificationBellProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+type BellLayout = 'popover' | 'sheet';
+
+const HEADER_LAYOUT: Record<BellLayout, { frame: string; title: string; markAll: string; check: number }> = {
+  popover: {
+    frame: 'p-4 px-3 border-neutral-50',
+    title: 'text-sm',
+    markAll: '',
+    check: 12,
+  },
+  sheet: {
+    frame: 'px-5 pt-2 pb-3 border-neutral-100',
+    title: 'text-base',
+    markAll: 'px-2 min-h-10',
+    check: 14,
+  },
+};
+
+type BellListProps = {
+  items: BellItem[];
+  unreadCount: number;
+  onOpenItem: (id: string) => void;
+  onMarkAllRead: () => void;
+};
+
+export function NotificationBell({ align = 'end', onOpenChange, open }: NotificationBellProps) {
+  const { items, unreadCount, markRead, markAllRead } = useNotifications();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isOpen = open ?? uncontrolledOpen;
   const setIsOpen = onOpenChange ?? setUncontrolledOpen;
   const isMobile = useIsMobile();
+  const followingItem = useRef(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  const openItem = (id: string) => {
+    followingItem.current = true;
+    markRead(id);
+    setIsOpen(false);
+  };
+  const markEveryItemRead = () => {
+    markAllRead();
+    heading.current?.focus();
+  };
+  const list = { items, unreadCount, onOpenItem: openItem, onMarkAllRead: markEveryItemRead };
+
+  if (isMobile) {
+    return (
+      <>
+        <BellTrigger unreadCount={unreadCount} aria-expanded={isOpen} onClick={() => setIsOpen(!isOpen)} />
+        <BottomSheet open={isOpen} onOpenChange={setIsOpen} title="Notifications" className="h-[80vh]">
+          <BellHeader
+            heading={heading}
+            unreadCount={unreadCount}
+            onMarkAllRead={markEveryItemRead}
+            layout="sheet"
+          />
+          <BellList {...list} className="flex-1" />
+        </BottomSheet>
+      </>
+    );
+  }
 
   return (
-    <>
-      <TriggerButton
-        unreadCount={unreadCount}
-        onClick={() => setIsOpen(!isOpen)}
-        ariaExpanded={isOpen}
-      />
-      {isMobile ? (
-        <MobileNotificationSheet
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          notifications={notifications}
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <BellTrigger unreadCount={unreadCount} />
+      </PopoverTrigger>
+      <PopoverContent
+        align={align}
+        sideOffset={8}
+        aria-label="Notifications"
+        className="w-80 p-0 overflow-hidden rounded-card border-neutral-100/50 bg-white shadow-xl"
+        onCloseAutoFocus={(event) => {
+          if (!followingItem.current) return;
+          followingItem.current = false;
+          event.preventDefault();
+        }}
+      >
+        <BellHeader
+          heading={heading}
           unreadCount={unreadCount}
-          onMarkAsRead={markAsRead}
-          onMarkAllAsRead={markAllAsRead}
+          onMarkAllRead={markEveryItemRead}
+          layout="popover"
         />
-      ) : (
-        <DesktopNotificationPopover
-          open={isOpen}
-          onClose={() => setIsOpen(false)}
-          align={align}
-          notifications={notifications}
-          unreadCount={unreadCount}
-          onMarkAsRead={markAsRead}
-          onMarkAllAsRead={markAllAsRead}
-        />
-      )}
-    </>
+        <BellList {...list} className="max-h-80" />
+      </PopoverContent>
+    </Popover>
   );
 }
 
-function TriggerButton({
-  unreadCount,
-  onClick,
-  ariaExpanded,
-}: {
-  unreadCount: number;
-  onClick: () => void;
-  ariaExpanded: boolean;
-}) {
+const BellTrigger = forwardRef<
+  HTMLButtonElement,
+  ComponentPropsWithoutRef<'button'> & { unreadCount: number }
+>(function BellTrigger({ unreadCount, className, ...props }, ref) {
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onClick}
       aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-      aria-expanded={ariaExpanded}
-      className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 transition-colors text-text-secondary relative"
+      className={cn(
+        'w-10 h-10 rounded-full flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 transition-colors text-text-secondary relative',
+        className,
+      )}
+      {...props}
     >
       <Bell size={18} aria-hidden="true" />
-      {unreadCount > 0 && (
-        <AttentionDot className="absolute top-2 right-2 ring-2 ring-white" />
-      )}
+      {unreadCount > 0 && <AttentionDot className="absolute top-2 right-2 ring-2 ring-white" />}
     </button>
   );
-}
+});
 
-function DesktopNotificationPopover({
-  open,
-  onClose,
-  align,
-  notifications,
+function BellHeader({
+  heading,
   unreadCount,
-  onMarkAsRead,
-  onMarkAllAsRead,
+  onMarkAllRead,
+  layout,
 }: {
-  open: boolean;
-  onClose: () => void;
-  align: 'left' | 'right';
-  notifications: Notification[];
+  heading: RefObject<HTMLHeadingElement>;
   unreadCount: number;
-  onMarkAsRead: (id: string) => void;
-  onMarkAllAsRead: () => void;
+  onMarkAllRead: () => void;
+  layout: BellLayout;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open, onClose]);
+  const styles = HEADER_LAYOUT[layout];
 
   return (
-    <div className="relative" ref={containerRef}>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            role="dialog"
-            aria-label="Notifications"
-            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-80 bg-white rounded-card shadow-xl border border-neutral-100/50 z-50 overflow-hidden`}
-          >
-            <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
-            <NotificationList
-              notifications={notifications}
-              onItemClick={id => {
-                onMarkAsRead(id);
-                onClose();
-              }}
-              maxHeightClass="max-h-80"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function MobileNotificationSheet({
-  open,
-  onOpenChange,
-  notifications,
-  unreadCount,
-  onMarkAsRead,
-  onMarkAllAsRead,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  notifications: Notification[];
-  unreadCount: number;
-  onMarkAsRead: (id: string) => void;
-  onMarkAllAsRead: () => void;
-}) {
-  return (
-    <BottomSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Notifications"
-      className="h-[80vh] flex flex-col"
-    >
-      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-field">
-        <h2 className="text-base font-semibold text-text-primary">Notifications</h2>
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            onClick={onMarkAllAsRead}
-            className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 px-2 min-h-10"
-          >
-            <Check size={14} strokeWidth={3} aria-hidden="true" />
-            Mark all read
-          </button>
-        )}
-      </div>
-      <NotificationList
-        notifications={notifications}
-        onItemClick={id => {
-          onMarkAsRead(id);
-          onOpenChange(false);
-        }}
-        maxHeightClass="flex-1"
-      />
-    </BottomSheet>
-  );
-}
-
-function NotificationHeader({
-  unreadCount,
-  onMarkAllAsRead,
-}: {
-  unreadCount: number;
-  onMarkAllAsRead: () => void;
-}) {
-  return (
-    <div className="p-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between bg-white">
-      <h3 className="font-semibold text-text-primary text-sm">Notifications</h3>
+    <div className={cn('flex items-center justify-between gap-2 border-b rounded-field bg-white', styles.frame)}>
+      <h2 ref={heading} tabIndex={-1} className={cn('font-semibold text-text-primary', styles.title)}>
+        Notifications
+      </h2>
       {unreadCount > 0 && (
         <button
           type="button"
-          onClick={onMarkAllAsRead}
-          className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
+          onClick={onMarkAllRead}
+          data-parity="notification-mark-all"
+          className={cn(
+            'text-xs font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1',
+            styles.markAll,
+          )}
         >
-          <Check size={12} strokeWidth={3} aria-hidden="true" />
+          <Check size={styles.check} strokeWidth={3} aria-hidden="true" />
           Mark all read
         </button>
       )}
@@ -206,56 +160,63 @@ function NotificationHeader({
   );
 }
 
-function NotificationList({
-  notifications,
-  onItemClick,
-  maxHeightClass,
-}: {
-  notifications: Notification[];
-  onItemClick: (id: string) => void;
-  maxHeightClass: string;
-}) {
-  if (notifications.length === 0) {
+function BellList({ items, onOpenItem, className }: BellListProps & { className: string }) {
+  if (items.length === 0) {
     return (
-      <div className={`${maxHeightClass} overflow-y-auto bg-white`}>
-        <div className="p-8 text-center text-sm text-text-secondary">No notifications yet.</div>
+      <div className={cn('overflow-y-auto bg-white', className)} data-parity="notification-scroll">
+        <p className="p-8 text-center text-sm text-text-secondary" data-parity="notification-empty">
+          No notifications yet.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className={`${maxHeightClass} overflow-y-auto bg-white`}>
-      <div className="flex flex-col">
-        {notifications.map(notif => (
-          <Link
-            key={notif.id}
-            to={notif.link}
-            onClick={() => onItemClick(notif.id)}
-            className={`p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors ${
-              !notif.read ? 'bg-neutral-50/50' : ''
-            }`}
-          >
-            <div className="flex gap-3">
-              <div className="mt-1">
-                {!notif.read ? (
-                  <AttentionDot />
+    <div className={cn('overflow-y-auto bg-white', className)} data-parity="notification-scroll">
+      <ul className="flex flex-col" data-parity="notification-list">
+        {items.map((item) => (
+          <li key={item.id} data-parity="notification-row">
+            <Link
+              to={item.href}
+              onClick={() => onOpenItem(item.id)}
+              data-focus-inset
+              data-parity="notification-link"
+              className={cn(
+                'flex gap-3 p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors',
+                { 'bg-neutral-50/50': item.unread },
+              )}
+            >
+              <span className="mt-1.5 shrink-0">
+                {item.unread ? (
+                  <>
+                    <AttentionDot />
+                    <span className="sr-only">Unread: </span>
+                  </>
                 ) : (
-                  <div className="w-2 h-2 rounded-full bg-transparent" />
+                  <span aria-hidden="true" className="block size-2" />
                 )}
-              </div>
-              <div className="min-w-0">
-                <p className={`text-sm ${!notif.read ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary'}`}>
-                  {notif.title}
-                </p>
-                <p className="text-xs text-text-secondary mt-1 line-clamp-2">{notif.message}</p>
-                <p className="text-[10px] font-semibold text-text-secondary mt-2 uppercase tracking-widest">
-                  {notif.time}
-                </p>
-              </div>
-            </div>
-          </Link>
+              </span>
+              <span className="min-w-0">
+                <span
+                  className={cn('block text-sm', {
+                    'font-semibold text-text-primary': item.unread,
+                    'font-medium text-text-secondary': !item.unread,
+                  })}
+                >
+                  {item.title}
+                </span>
+                <span className="block text-xs text-text-secondary mt-1 line-clamp-2">{item.line}</span>
+                <span
+                  className="block text-[10px] font-semibold text-text-secondary mt-2 uppercase tracking-widest"
+                  data-parity="notification-age"
+                >
+                  {item.ago}
+                </span>
+              </span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

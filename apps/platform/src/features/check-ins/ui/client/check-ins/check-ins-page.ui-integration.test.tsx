@@ -43,6 +43,7 @@ import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 import {
   CHECK_INS_API_PATHS,
   CLIENT_CHECK_INS_PATH,
+  clientCheckInPath,
 } from "~/features/check-ins/public/paths";
 import {
   frameworkModeAction,
@@ -586,6 +587,61 @@ describe("the client's check-ins tab in the address", () => {
       "aria-selected",
       "true",
     );
+    expect(
+      screen.getByRole("list", { name: "Upcoming check-ins" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("the client's check-in named in the address", () => {
+  it("opens on the tab holding the check-in her notification names, focused", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(clientCheckInPath(PASSED.id));
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Past" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() =>
+      expect(document.getElementById(`checkin-${PASSED.id}`)).toHaveFocus(),
+    );
+  });
+
+  it("switches to the tab holding the check-in and focuses it when she follows its link from the page, every time she follows it", async () => {
+    // arrange
+    const { router } = await renderCheckInsPageWithView();
+    const anchor = () => document.getElementById(`checkin-${CANCELLED.id}`);
+
+    // act
+    await act(() => router.navigate(clientCheckInPath(CANCELLED.id)));
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Past" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() => expect(anchor()).toHaveFocus());
+
+    // act
+    anchor()?.blur();
+    await act(() => router.navigate(clientCheckInPath(CANCELLED.id)));
+
+    // assert
+    await waitFor(() => expect(anchor()).toHaveFocus());
+  });
+
+  it("drops the check-in from the address once she chooses another tab", async () => {
+    // arrange
+    const { router, user } = await renderCheckInsPageWithView(
+      clientCheckInPath(PASSED.id),
+    );
+
+    // act
+    await showTab(user, "Upcoming");
+
+    // assert
+    expect(router.state.location.search).toBe("");
     expect(
       screen.getByRole("list", { name: "Upcoming check-ins" }),
     ).toBeInTheDocument();

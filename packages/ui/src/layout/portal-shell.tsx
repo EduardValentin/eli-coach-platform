@@ -15,6 +15,7 @@ import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
 import type { DataAttributes } from "../lib/data-attributes";
 import { focusMainContent } from "../lib/focus-main-content";
+import { AttentionDot } from "../primitives/attention-dot";
 import { buttonVariants } from "../primitives/button";
 import { BottomSheet } from "./bottom-sheet";
 import { NavigationDialog } from "./navigation-dialog";
@@ -51,11 +52,9 @@ type PortalShellProps = PropsWithChildren<{
   links: readonly PortalNavigationLink[];
   mobileNavigation: PortalMobileNavigation;
   navigationLabel: string;
-  /** Slot beside the sidebar brand for the notification bell story. */
   sidebarActions?: ReactNode;
   sidebarWidget?: ReactNode;
   topBarBrand: ReactNode;
-  /** Top bar slot for the notification bell story. */
   topBarActions?: ReactNode;
   topBarLabel: string;
 }>;
@@ -202,7 +201,7 @@ function PortalTopBar(props: PortalTopBarProps) {
       className="fixed inset-x-0 top-0 z-50 flex h-[calc(env(safe-area-inset-top)+4rem)] items-center justify-between rounded-field border-b border-border-subtle bg-surface-base px-6 pt-[env(safe-area-inset-top)] text-text-primary shadow-card lg:hidden"
     >
       <div className="flex min-w-0 items-center gap-3">{brand}</div>
-      {children && <div className="flex items-center gap-2">{children}</div>}
+      {children && <div className="flex items-center gap-4">{children}</div>}
     </header>
   );
 }
@@ -599,25 +598,6 @@ function WaitingCountLabel(props: WaitingCountLabelProps) {
   const { count } = props;
 
   return <span className="sr-only"> ({count} waiting on you)</span>;
-}
-
-type AttentionDotProps = {
-  className?: string;
-};
-
-function AttentionDot(props: AttentionDotProps) {
-  const { className } = props;
-
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "block size-2 shrink-0 rounded-full bg-status-pending",
-        className,
-      )}
-      data-parity="attention-dot"
-    />
-  );
 }
 
 function NewMarkLabel() {

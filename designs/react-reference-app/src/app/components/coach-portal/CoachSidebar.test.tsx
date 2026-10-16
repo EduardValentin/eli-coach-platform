@@ -41,11 +41,11 @@ function renderSidebar(path = '/coach') {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <CheckinProvider>
-                  <NotificationProvider>
+                <NotificationProvider>
+                  <CheckinProvider>
                     <CoachSidebar />
-                  </NotificationProvider>
-                </CheckinProvider>
+                  </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>

@@ -82,7 +82,7 @@ export function CoachMessages() {
   const [isPinned, setIsPinned] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { addNotification } = useNotifications();
+  const { deliver } = useNotifications();
   const {
     getUpcomingCheckins,
     getCheckinsAwaiting,
@@ -140,11 +140,17 @@ export function CoachMessages() {
         'Got it, thanks for letting me know!',
         'client',
       );
-      addNotification({
-        title: activeConversation?.name || 'Client',
-        message: 'Got it, thanks for letting me know!',
-        link: `/coach/messages?client=${activeClient}`,
-      });
+      deliver(
+        { party: 'coach' },
+        {
+          kind: 'message.received',
+          facts: {
+            senderName: activeConversation?.name || 'Client',
+            text: 'Got it, thanks for letting me know!',
+            clientId: activeClient,
+          },
+        },
+      );
     }, 3000);
   };
 

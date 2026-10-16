@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkinAnchorId,
   checkinIdFromSearch,
+  clientCheckinPath,
   coachCheckinPath,
   coachCheckinsPath,
 } from './checkinLinks';
@@ -16,6 +17,14 @@ describe('checkinLinks', () => {
     const search = new URLSearchParams(path.slice(path.indexOf('?')));
 
     expect(path.startsWith('/coach/checkins?')).toBe(true);
+    expect(checkinIdFromSearch(search)).toBe('ci 3');
+  });
+
+  it('round-trips a check-in id through the client deep link', () => {
+    const path = clientCheckinPath('ci 3');
+    const search = new URLSearchParams(path.slice(path.indexOf('?')));
+
+    expect(path.startsWith('/portal/checkins?')).toBe(true);
     expect(checkinIdFromSearch(search)).toBe('ci 3');
   });
 

@@ -6,6 +6,7 @@ import { ClientsList } from './ClientsList';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
@@ -54,11 +55,13 @@ function renderAt(url: string) {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
+                <NotificationProvider>
                 <CheckinProvider>
                   <ClientsList />
                   <DevToggle />
                   <LocationProbe />
                 </CheckinProvider>
+                </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>

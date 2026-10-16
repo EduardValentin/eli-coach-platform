@@ -1,5 +1,5 @@
 {
-  "id": "866a34a5-52f9-4fcb-b3e1-7a1a5d4cb2aa",
+  "id": "b6e14cd8-26cb-4163-9814-e38c230fb16c",
   "prevId": "b781c7f0-3b9d-43d3-889c-bb49f8f0b031",
   "version": "7",
   "dialect": "postgresql",
@@ -97,7 +97,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "auth_subject_id": {
           "name": "auth_subject_id",
@@ -150,7 +151,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "first_name": {
           "name": "first_name",
@@ -908,7 +910,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "client_id": {
           "name": "client_id",
@@ -1088,7 +1091,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "entry_id": {
           "name": "entry_id",
@@ -1478,7 +1482,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "client_id": {
           "name": "client_id",
@@ -1632,7 +1637,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2189,7 +2195,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "client_id": {
           "name": "client_id",
@@ -2570,7 +2577,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "assessment_call_id": {
           "name": "assessment_call_id",
@@ -2820,6 +2828,160 @@
         "exercises_difficulty_check": {
           "name": "exercises_difficulty_check",
           "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "app.notifications": {
+      "name": "notifications",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "recipient_party": {
+          "name": "recipient_party",
+          "type": "varchar(6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient_client_id": {
+          "name": "recipient_client_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "facts": {
+          "name": "facts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arrived_at": {
+          "name": "arrived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "once_key": {
+          "name": "once_key",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "notifications_recipient_arrived_idx": {
+          "name": "notifications_recipient_arrived_idx",
+          "columns": [
+            {
+              "expression": "recipient_party",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recipient_client_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "arrived_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notifications_unread_idx": {
+          "name": "notifications_unread_idx",
+          "columns": [
+            {
+              "expression": "recipient_party",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recipient_client_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"app\".\"notifications\".\"read_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notifications_once_key_unique": {
+          "name": "notifications_once_key_unique",
+          "columns": [
+            {
+              "expression": "once_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"app\".\"notifications\".\"once_key\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notifications_recipient_client_id_clients_id_fk": {
+          "name": "notifications_recipient_client_id_clients_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "clients",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "recipient_client_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "notifications_recipient_check": {
+          "name": "notifications_recipient_check",
+          "value": "(\"app\".\"notifications\".\"recipient_party\" = 'coach' and \"app\".\"notifications\".\"recipient_client_id\" is null) or (\"app\".\"notifications\".\"recipient_party\" = 'client' and \"app\".\"notifications\".\"recipient_client_id\" is not null)"
         }
       },
       "isRLSEnabled": false

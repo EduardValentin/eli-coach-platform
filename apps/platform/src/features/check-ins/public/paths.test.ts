@@ -7,6 +7,7 @@ import {
   CHECK_INS_API_PATHS,
   CLIENT_CHECK_INS_PATH,
   clientCheckInJoinPath,
+  clientCheckInPath,
   COACH_CHECK_INS_PATH,
   coachCheckInJoinPath,
   coachCheckInPath,
@@ -48,6 +49,29 @@ describe("check-ins paths", () => {
     // assert
     expect(link.pathname).toBe(COACH_CHECK_INS_PATH);
     expect(focused).toBe(CHECK_IN_ID);
+  });
+
+  it("links the client to one check-in on her Check-ins page through the focus parameter", () => {
+    // arrange
+    const link = new URL(clientCheckInPath(CHECK_IN_ID), "https://evoa.fit");
+
+    // act
+    const focused = link.searchParams.get(CHECK_IN_FOCUS_PARAM);
+
+    // assert
+    expect(link.pathname).toBe(CLIENT_CHECK_INS_PATH);
+    expect(focused).toBe(CHECK_IN_ID);
+  });
+
+  it("keeps an id with reserved characters whole in the client's check-in link", () => {
+    // arrange
+    const id = "a&b=c d";
+
+    // act
+    const link = clientCheckInPath(id);
+
+    // assert
+    expect(link).toBe("/client/checkins?checkin=a%26b%3Dc%20d");
   });
 
   it("keeps an id with reserved characters whole in the coach's check-in link", () => {

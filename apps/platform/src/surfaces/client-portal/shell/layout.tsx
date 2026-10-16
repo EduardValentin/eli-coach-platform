@@ -2,7 +2,7 @@ import {
   createPwaRegistration,
   pwaSurfaceDefinitions,
 } from "@eli-coach-platform/infrastructure/pwa";
-import { PortalShell } from "@eli-coach-platform/ui/layout";
+import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { LogOut } from "lucide-react";
@@ -23,8 +23,12 @@ import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { NextCheckInWidget } from "~/features/check-ins/ui/client/shell/next-check-in-widget";
+import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import type { NotificationBellReply } from "~/features/notifications/public/notifications";
+import { notificationsContext } from "~/features/notifications/server/guards/notifications-context.server";
+import { useNotificationBell } from "~/features/notifications/ui/shared/notification-bell";
 
 import {
   presentClientIdentity,
@@ -42,7 +46,10 @@ const pwaRegistration = createPwaRegistration({
   surface: "client",
 });
 
+const NOTIFICATION_DESCRIBERS = [describeCheckInNotification];
+
 type ClientShell = ClientNavigationCounts & {
+  bell: NotificationBellReply;
   nextCheckIn: ClientCheckIn | null;
   presentation: ClientShellPresentation;
 };
@@ -53,13 +60,21 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
   );
 
   const { clientCheckIns } = args.context.get(checkInsContext);
-  const [nextCheckIn, unopenedResources, checkInsAwaiting] = await Promise.all([
-    clientCheckIns.loadNextCheckIn(args),
-    args.context.get(clientResourcesContext).ownResources.countUnopened(args),
-    clientCheckIns.loadAwaitingCount(args),
-  ]);
+  const [nextCheckIn, unopenedResources, checkInsAwaiting, bell] =
+    await Promise.all([
+      clientCheckIns.loadNextCheckIn(args),
+      args.context.get(clientResourcesContext).ownResources.countUnopened(args),
+      clientCheckIns.loadAwaitingCount(args),
+      args.context.get(notificationsContext).notificationBell.loadBell(args),
+    ]);
 
-  return { presentation, nextCheckIn, unopenedResources, checkInsAwaiting };
+  return {
+    presentation,
+    nextCheckIn,
+    unopenedResources,
+    checkInsAwaiting,
+    bell,
+  };
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({
@@ -80,8 +95,13 @@ export const links: LinksFunction = () => [
 ];
 
 export default function ClientLayoutRoute() {
-  const { presentation, nextCheckIn, ...counts } =
+  const { bell, presentation, nextCheckIn, ...counts } =
     useLoaderData<typeof loader>();
+  const notificationBell = useNotificationBell({
+    bell,
+    describers: NOTIFICATION_DESCRIBERS,
+    party: "client",
+  });
   const { displayName } = presentation;
   const navigation = clientNavigationOf(counts);
   const timeZone = useCalendarDayTimeZone();
@@ -126,7 +146,17 @@ export default function ClientLayoutRoute() {
           tabsLabel: "Client portal tabs",
         }}
         navigationLabel="Client portal navigation"
+        sidebarActions={
+          <div className="contents" data-parity="notification-bell">
+            <NotificationBell {...notificationBell} align="start" />
+          </div>
+        }
         sidebarWidget={nextCheckInWidget}
+        topBarActions={
+          <div className="contents" data-parity="notification-bell">
+            <NotificationBell {...notificationBell} />
+          </div>
+        }
         topBarBrand={<ClientNameBlock displayName={displayName} size="sm" />}
         topBarLabel="Client portal top bar"
       >

@@ -99,6 +99,7 @@ export const checkInsTable = appSchema.table(
       table.seriesId,
       table.startsAt,
     ),
+    index("check_ins_status_starts_at_idx").on(table.status, table.startsAt),
     check(
       "check_ins_kind_check",
       sql`${table.kind} in (${quotedList(CHECK_IN_KINDS)})`,

@@ -30,6 +30,7 @@
     "./exercise": "./src/exercise/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
     "./measurement": "./src/measurement/index.ts",
+    "./notification": "./src/notification/index.ts",
     "./nutrition": "./src/nutrition/index.ts",
     "./payment-link": "./src/payment-link/index.ts",
     "./product": "./src/product/index.ts",

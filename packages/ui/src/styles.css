@@ -518,11 +518,31 @@
   }
 }
 
-/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline.
-   [data-field-frame] is a field that draws its own frame around a bare text entry marked [data-field-entry], such as the tag input's chips and typing area. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
-  ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]),
+  ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]) {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--color-focus-ring);
+  outline-offset: var(--focus-ring-offset, 2px);
+  box-shadow: var(
+    --focus-ring-halo,
+    0 0 0 6px color-mix(in srgb, var(--color-focus-ring) 16%, transparent)
+  );
+}
+
+[data-surface="inverted"] :focus-visible {
+  --color-focus-ring: var(--color-brand-primary-on-inverted);
+}
+
+[data-focus-inset] {
+  --focus-ring-offset: -2px;
+  --focus-ring-halo: inset 0 0 0 6px
+    color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
+}
+
+/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline.
+   [data-field-frame] is a field that draws its own frame around a bare text entry marked [data-field-entry], such as the tag input's chips and typing area. */
 [data-chip-control]:has(:focus-visible),
 [data-field-frame]:has([data-field-entry]:focus-visible) {
   outline-style: solid;
@@ -531,10 +551,6 @@
   outline-offset: 2px;
   box-shadow: 0 0 0 6px
     color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
-}
-
-[data-surface="inverted"] :focus-visible {
-  --color-focus-ring: var(--color-brand-primary-on-inverted);
 }
 
 [data-portal="coach"] {
