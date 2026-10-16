@@ -42,6 +42,10 @@ import {
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import {
+  EXERCISE_VIDEO_UPLOAD_OUTCOMES,
+  type ExerciseVideoUpload,
+} from '../services/exerciseVideoService';
+import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
   RESOURCE_SEEDS,
@@ -154,6 +158,7 @@ type AppState = {
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
+  exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
@@ -212,6 +217,7 @@ const defaultState: AppState = {
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
+  exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
@@ -520,6 +526,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('exseed'),
     defaultState.exerciseSeed,
   );
+  state.exerciseVideoUpload = optionOrDefault(
+    EXERCISE_VIDEO_UPLOAD_OUTCOMES,
+    params.get('exupload'),
+    defaultState.exerciseVideoUpload,
+  );
   state.foodSeed = optionOrDefault(
     FOOD_SEEDS,
     params.get('nutseed'),
@@ -619,6 +630,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
+    url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
@@ -754,6 +766,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.exerciseSeed !== defaultState.exerciseSeed) {
       url.searchParams.set('exseed', appState.exerciseSeed);
+    }
+    if (appState.exerciseVideoUpload !== defaultState.exerciseVideoUpload) {
+      url.searchParams.set('exupload', appState.exerciseVideoUpload);
     }
     if (appState.foodSeed !== defaultState.foodSeed) {
       url.searchParams.set('nutseed', appState.foodSeed);

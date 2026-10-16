@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const buttonClasses = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-invalid:border-feedback-danger [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -19,11 +19,11 @@ const buttonClasses = cva(
         "outline-brand":
           "border border-brand-primary text-brand-primary not-aria-disabled:hover:bg-brand-primary/5",
         ghost:
-          "text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+          "text-text-label aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "ghost-ink":
-          "text-text-label not-aria-disabled:hover:bg-text-primary not-aria-disabled:hover:text-surface-base",
+          "text-text-label aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-text-primary not-aria-disabled:hover:text-surface-base",
         "ghost-muted":
-          "text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+          "text-text-secondary aria-invalid:text-feedback-danger not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         destructive:
           "bg-feedback-danger text-text-inverted not-aria-disabled:hover:bg-feedback-danger/90",
         "destructive-outline":

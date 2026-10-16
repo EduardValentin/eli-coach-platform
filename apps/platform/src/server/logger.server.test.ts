@@ -1167,6 +1167,56 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs an exercise video file it could not remove by its video id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("/srv/exercise-videos/videos/x"), {
+      code: "EACCES",
+    });
+
+    // act
+    logger.videoCleanupFailed({ videoId: "video-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise video file could not be removed.",
+      {
+        errorCategory: "exercise_video_cleanup_failure",
+        errorClass: "Error",
+        errorCode: "EACCES",
+        videoId: "video-1",
+      },
+    );
+  });
+
+  it("logs a staged exercise video upload it could not discard by its staging id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("/srv/exercise-videos/.incoming/x"), {
+      code: "EACCES",
+    });
+
+    // act
+    logger.videoCleanupFailed({ stagingId: "staging-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise video file could not be removed.",
+      {
+        errorCategory: "exercise_video_cleanup_failure",
+        errorClass: "Error",
+        errorCode: "EACCES",
+        stagingId: "staging-1",
+      },
+    );
+  });
+
   it("logs a food that could not be created by the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

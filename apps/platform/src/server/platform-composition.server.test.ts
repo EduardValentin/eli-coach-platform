@@ -39,6 +39,7 @@ function createRuntimeEnvironment() {
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
+    EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
   });
 }
 

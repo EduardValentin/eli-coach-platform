@@ -6,13 +6,13 @@ import {
 } from "@eli-coach-platform/domain/client-profile";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  Button,
   Card,
   CheckboxField,
   FieldCaption,
   FieldError,
+  MediaRemoveButton,
 } from "@eli-coach-platform/ui/primitives";
-import { Image as ImageIcon, X } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { useEffect, useId, useState, type ChangeEvent } from "react";
 
 import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements";
@@ -92,16 +92,11 @@ function PhotoPreview({
         className={progressPhotoImageClass("square")}
         src={previewUrl}
       />
-      <Button
+      <MediaRemoveButton
         aria-label={PHOTOS_COPY.removeView(view)}
-        className="absolute top-1 right-1 shadow-card hover:bg-surface-muted"
+        className="absolute top-1 right-1"
         onClick={onRemove}
-        size="icon-xs"
-        type="button"
-        variant="outline"
-      >
-        <X aria-hidden="true" />
-      </Button>
+      />
     </div>
   );
 }

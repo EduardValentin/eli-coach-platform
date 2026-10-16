@@ -2,11 +2,14 @@ import { COACH_PORTAL_PATH } from "../../accounts/public/paths";
 
 const EXERCISES_API = "/api/coach/exercises";
 
+const EXERCISE_VIDEOS_API = "/api/exercises";
+
 const EXERCISES_SEGMENT = "exercises";
 
 export const EXERCISE_LIBRARY_API_PATHS = {
   exercises: EXERCISES_API,
   exercise: `${EXERCISES_API}/:exerciseId`,
+  exerciseVideo: `${EXERCISE_VIDEOS_API}/:exerciseId/video/:videoId`,
 } as const;
 
 export const COACH_TRAINING_ROUTE_SEGMENT = "training";
@@ -25,4 +28,8 @@ export function exerciseEditorPath(exerciseId: string): string {
 
 export function exercisePath(exerciseId: string): string {
   return `${EXERCISES_API}/${encodeURIComponent(exerciseId)}`;
+}
+
+export function exerciseVideoPath(exerciseId: string, videoId: string): string {
+  return `${EXERCISE_VIDEOS_API}/${encodeURIComponent(exerciseId)}/video/${encodeURIComponent(videoId)}`;
 }

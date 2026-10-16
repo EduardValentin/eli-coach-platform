@@ -154,7 +154,10 @@ export async function readJsonRequestBody(
   }
 }
 
-function declaresLengthOver(request: Request, maxBytes: number): boolean {
+export function declaresLengthOver(
+  request: Request,
+  maxBytes: number,
+): boolean {
   const declaredLength = request.headers.get("Content-Length");
 
   return Boolean(

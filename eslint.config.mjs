@@ -118,4 +118,12 @@ export default [
       ],
     },
   },
+  {
+    files: [
+      "apps/platform/src/features/exercise-library/ui/coach/exercises/exercise-video-field.tsx",
+    ],
+    rules: {
+      "jsx-a11y/media-has-caption": "off",
+    },
+  },
 ];

@@ -5,8 +5,8 @@ import type { ExerciseLibrary } from "./exercise-library";
 import { FindExerciseUseCase } from "./find-exercise-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
-const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
+const OTHER_COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000002";
 
 function exerciseCalled(id: string, name: string): Exercise {
   return Exercise.reconstitute({
@@ -22,16 +22,26 @@ function exerciseCalled(id: string, name: string): Exercise {
     difficulty: "Beginner",
     tags: [],
     cues: "",
+    video: null,
     createdAt: AT,
     updatedAt: AT,
   });
 }
 
-const HIP_THRUST = exerciseCalled("exercise-1", "Hip thrust");
-const BACK_SQUAT = exerciseCalled("exercise-2", "Back squat");
-const LUNGE = exerciseCalled("exercise-3", "Lunge");
+const HIP_THRUST = exerciseCalled(
+  "e0000000-0000-4000-8000-000000000001",
+  "Hip thrust",
+);
+const BACK_SQUAT = exerciseCalled(
+  "e0000000-0000-4000-8000-000000000002",
+  "Back squat",
+);
+const LUNGE = exerciseCalled("e0000000-0000-4000-8000-000000000003", "Lunge");
 const OTHER_COACHS_PLANK = Exercise.reconstitute({
-  ...exerciseCalled("exercise-4", "Plank").toSnapshot(),
+  ...exerciseCalled(
+    "e0000000-0000-4000-8000-000000000004",
+    "Plank",
+  ).toSnapshot(),
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
 });
 
@@ -56,7 +66,7 @@ describe("FindExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
     });
 
     // assert
@@ -75,7 +85,7 @@ describe("FindExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-404",
+      exerciseId: "e0000000-0000-4000-8000-000000000404",
     });
 
     // assert
@@ -89,7 +99,7 @@ describe("FindExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-4",
+      exerciseId: "e0000000-0000-4000-8000-000000000004",
     });
 
     // assert

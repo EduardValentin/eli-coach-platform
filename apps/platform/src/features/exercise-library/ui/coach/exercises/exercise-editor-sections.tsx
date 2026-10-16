@@ -19,7 +19,7 @@ import {
   Textarea,
 } from "@eli-coach-platform/ui/primitives";
 import { Dumbbell, Film, Target } from "lucide-react";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
@@ -313,12 +313,18 @@ export function ExerciseWorkSection({
   );
 }
 
+type ExerciseCoachingSectionProps = Omit<ExerciseSectionProps, "values"> & {
+  videoField: ReactNode;
+};
+
 export function ExerciseCoachingSection({
   form,
   problems,
-}: Omit<ExerciseSectionProps, "values">) {
+  videoField,
+}: ExerciseCoachingSectionProps) {
   const cuesId = useId();
   const cuesProblemId = useId();
+  const videoLabelId = useId();
 
   return (
     <SettingsSection
@@ -342,6 +348,15 @@ export function ExerciseCoachingSection({
             {...fieldProblemAttributes(cuesProblemId, problems.cues)}
             {...form.register("cues")}
           />
+        </SettingsRow>
+        <SettingsRow
+          as="fieldset"
+          data-parity="exercise-video-field"
+          labelId={videoLabelId}
+          layout="stacked"
+          title="Demo video"
+        >
+          {videoField}
         </SettingsRow>
       </SettingsRows>
     </SettingsSection>

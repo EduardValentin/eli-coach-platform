@@ -6,12 +6,12 @@ export {
   EditExerciseUseCase,
   type EditExerciseResult,
 } from "./edit-exercise-use-case";
-export { Exercise, type ExerciseSnapshot } from "./exercise";
 export {
-  ExerciseDraft,
-  type ExerciseDraftInput,
-  type ExerciseDraftProblems,
-} from "./exercise-draft";
+  Exercise,
+  type ExerciseSaveProblems,
+  type ExerciseSnapshot,
+} from "./exercise";
+export { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 export { type ExerciseIds } from "./exercise-ids";
 export {
   type ExerciseAddition,
@@ -20,11 +20,37 @@ export {
   type ExerciseReplacement,
 } from "./exercise-library";
 export { type ExerciseLibraryIncidents } from "./exercise-library-incidents";
+export { ExerciseNames } from "./exercise-names";
+export {
+  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
+  EXERCISE_VIDEO_EXTENSIONS,
+  EXERCISE_VIDEO_FORMATS,
+  MAX_EXERCISE_VIDEO_BYTES,
+  type ExerciseVideoFormat,
+  type ExerciseVideoSnapshot,
+} from "./exercise-video";
+export { type ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+export { type ExerciseVideoIds } from "./exercise-video-ids";
+export { type ExerciseVideoChoice } from "./exercise-video-saving";
+export {
+  type ExerciseVideoOpening,
+  type ExerciseVideoStore,
+  type RequestedByteRange,
+  type ServedByteRange,
+  type StagedExerciseVideo,
+} from "./exercise-video-store";
+export { type ExerciseVideoViewer } from "./exercise-video-viewer";
 export {
   FindExerciseUseCase,
   type FindExerciseResult,
 } from "./find-exercise-use-case";
+export { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
 export { ListExercisesUseCase } from "./list-exercises-use-case";
+export {
+  OpenExerciseVideoUseCase,
+  type OpenExerciseVideoResult,
+} from "./open-exercise-video-use-case";
+export { StageExerciseVideoUseCase } from "./stage-exercise-video-use-case";
 export {
   DIFFICULTIES,
   EQUIPMENT,

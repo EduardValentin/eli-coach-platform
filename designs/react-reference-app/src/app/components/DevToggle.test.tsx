@@ -147,6 +147,73 @@ describe('DevToggle resource upload', () => {
   });
 });
 
+describe('DevToggle exercise video upload', () => {
+  it('drives the exercise video save through, holds it, fails it or has the server refuse it', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Video upload' }));
+
+    // assert
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Works',
+      'Holds while uploading',
+      'Holds while finishing',
+      'Fails',
+      'Refused as not a video',
+    ]);
+  });
+
+  it('keeps the chosen outcome in the address so the state can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+    await user.click(screen.getByRole('combobox', { name: 'Video upload' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'Holds while uploading' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Video upload' })).toHaveTextContent(
+      'Holds while uploading',
+    );
+    expect(new URLSearchParams(window.location.search).get('exupload')).toBe('holds-uploading');
+  });
+
+  it('reads the outcome from a shared address', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?exupload=fails');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Video upload' })).toHaveTextContent('Fails');
+    expect(new URLSearchParams(window.location.search).get('exupload')).toBe('fails');
+  });
+
+  it('keeps the exercise library seed beside the video upload', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Exercise library' })).toHaveTextContent('Populated');
+  });
+});
+
 describe('DevToggle resource opening', () => {
   it('keeps a failing opening in the address so the state can be shared', async () => {
     // arrange

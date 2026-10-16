@@ -12,10 +12,10 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-  type JsonSaveTarget,
-} from "./use-json-save-fetcher";
+  useSaveFetcher,
+  type SaveOutcome,
+  type SaveTarget,
+} from "./use-save-fetcher";
 
 type Problems = { name?: string };
 
@@ -45,14 +45,22 @@ const refusedAnswer = {
       : { success: false as const },
 };
 
+function formWithFile(): FormData {
+  const form = new FormData();
+  form.append("food", JSON.stringify({ name: "Oats" }));
+  form.append("photo", new File(["oats"], "oats.txt", { type: "text/plain" }));
+
+  return form;
+}
+
 function SaveProbe({
   target,
   onSettled,
 }: {
-  target: JsonSaveTarget;
-  onSettled: (outcome: JsonSaveOutcome<Problems>) => void;
+  target: SaveTarget;
+  onSettled: (outcome: SaveOutcome<Problems>) => void;
 }) {
-  const { save, saving } = useJsonSaveFetcher({
+  const { save, saving, fetcherState } = useSaveFetcher({
     onSettled,
     refusedAnswer,
     savedAnswer,
@@ -64,7 +72,11 @@ function SaveProbe({
       <button onClick={() => save({ name: "Oats" })} type="button">
         Save
       </button>
+      <button onClick={() => save(formWithFile())} type="button">
+        Save with a file
+      </button>
       <p>{saving ? "Saving" : "Idle"}</p>
+      <p>{`Fetcher ${fetcherState}`}</p>
     </>
   );
 }
@@ -73,10 +85,10 @@ function renderProbe({
   target = { action: "/foods", method: "post" },
   answer,
 }: {
-  target?: JsonSaveTarget;
+  target?: SaveTarget;
   answer: (args: ActionFunctionArgs) => Promise<unknown>;
 }) {
-  const onSettled = vi.fn<(outcome: JsonSaveOutcome<Problems>) => void>();
+  const onSettled = vi.fn<(outcome: SaveOutcome<Problems>) => void>();
   const router = createMemoryRouter([
     { element: <SaveProbe onSettled={onSettled} target={target} />, path: "/" },
     { action: answer, path: "/foods" },
@@ -88,7 +100,7 @@ function renderProbe({
   return { onSettled };
 }
 
-describe("useJsonSaveFetcher", () => {
+describe("useSaveFetcher", () => {
   it("settles as saved with the page the answer sends the coach to", async () => {
     // arrange
     const user = userEvent.setup();
@@ -176,5 +188,56 @@ describe("useJsonSaveFetcher", () => {
 
     // assert
     expect(await screen.findByText("Saving")).toBeInTheDocument();
+  });
+
+  it("sends a form holding a file as multipart form data", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const received = vi.fn<(contentType: string | null) => void>();
+    renderProbe({
+      answer: async ({ request }) => {
+        received(request.headers.get("Content-Type"));
+        return { redirectTo: "/foods" };
+      },
+    });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save with a file" }));
+
+    // assert
+    await waitFor(() =>
+      expect(received).toHaveBeenCalledWith(
+        expect.stringMatching(/^multipart\/form-data/),
+      ),
+    );
+  });
+
+  it("sends nothing more while a save awaits its answer", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const unanswered = new Promise<SavedAnswer>(() => {});
+    const answer = vi.fn(() => unanswered);
+    renderProbe({ answer });
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saving");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // assert
+    expect(answer).toHaveBeenCalledOnce();
+  });
+
+  it("names the fetcher's state while the save is sent", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const unanswered = new Promise<SavedAnswer>(() => {});
+    renderProbe({ answer: () => unanswered });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // assert
+    expect(await screen.findByText("Fetcher submitting")).toBeInTheDocument();
   });
 });

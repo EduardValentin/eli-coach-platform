@@ -182,6 +182,14 @@ export function createConsoleLogger(): ConsoleLogger {
         exerciseId,
       });
     },
+    videoCleanupFailed: ({ error, ...file }) => {
+      console.error("Exercise video file could not be removed.", {
+        errorCategory: "exercise_video_cleanup_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        ...file,
+      });
+    },
     foodCreationFailed: ({ error }) => {
       console.error("Food could not be created.", {
         errorCategory: "food_creation_failure",

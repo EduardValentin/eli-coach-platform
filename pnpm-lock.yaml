@@ -22,6 +22,9 @@ catalogs:
     '@eslint/js':
       specifier: 9.39.1
       version: 9.39.1
+    '@fastify/busboy':
+      specifier: 3.2.3
+      version: 3.2.3
     '@file-type/cfbf':
       specifier: 0.2.2
       version: 0.2.2
@@ -317,6 +320,9 @@ importers:
       '@eli-coach-platform/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@fastify/busboy':
+        specifier: 'catalog:'
+        version: 3.2.3
       '@fontsource-variable/dm-sans':
         specifier: 'catalog:'
         version: 5.3.0
@@ -478,6 +484,9 @@ importers:
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../domain
+      '@fastify/busboy':
+        specifier: 'catalog:'
+        version: 3.2.3
       '@file-type/cfbf':
         specifier: 'catalog:'
         version: 0.2.2
@@ -1509,6 +1518,9 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fastify/busboy@3.2.3':
+    resolution: {integrity: sha512-fmo/IKgkenPzz3qTKG+sIUXdF/Kv83AkvvOXJHPTHJeKJbat8SsL1ihUaFaDotqoEl4UZ1Lf8Eb/3vK6eaWX2A==}
 
   '@file-type/cfbf@0.2.2':
     resolution: {integrity: sha512-+Vk6LMdsOFTUUYIjHY6T7ft7DfU4tKzJ8EO3eQbezCPD208rNmL396iJN6tR4mM55SeNco/nseEIbHIoKVf7IQ==}
@@ -7735,6 +7747,8 @@ snapshots:
   '@exodus/bytes@1.15.1(@noble/hashes@1.8.0)':
     optionalDependencies:
       '@noble/hashes': 1.8.0
+
+  '@fastify/busboy@3.2.3': {}
 
   '@file-type/cfbf@0.2.2':
     dependencies:

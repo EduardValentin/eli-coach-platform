@@ -1,4 +1,4 @@
-type UploadPhase = "idle" | "sending" | "sent";
+type UploadPhase = "idle" | "sending" | "sent" | "ended";
 
 export type UploadProgressSnapshot = {
   readonly fraction: number;
@@ -16,6 +16,10 @@ export const IDLE_UPLOAD_PROGRESS: UploadProgressSnapshot = Object.freeze({
   fraction: 0,
   phase: "idle",
 });
+function freshEndedProgress(): UploadProgressSnapshot {
+  return Object.freeze({ fraction: 0, phase: "ended" });
+}
+
 const ALL_BYTES_SENT: UploadProgressSnapshot = Object.freeze({
   fraction: 1,
   phase: "sent",
@@ -67,5 +71,5 @@ export function reportAllBytesSent(progress: UploadProgress) {
 }
 
 export function endUpload(progress: UploadProgress) {
-  write(progress, IDLE_UPLOAD_PROGRESS);
+  write(progress, freshEndedProgress());
 }

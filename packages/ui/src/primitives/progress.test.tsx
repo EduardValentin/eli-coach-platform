@@ -32,7 +32,7 @@ describe("Progress", () => {
     expect(bar).toHaveAttribute("aria-valuemax", "100");
     expect(bar).toHaveClass(
       "relative",
-      "h-2",
+      "h-1.5",
       "w-full",
       "overflow-hidden",
       "rounded-full",
@@ -79,19 +79,5 @@ describe("Progress", () => {
       "motion-reduce:animate-none",
       "motion-reduce:opacity-50",
     );
-  });
-
-  it("takes a thinner bar from its caller", () => {
-    // arrange
-    // act
-    render(
-      <Progress aria-label="Upload progress" className="h-1.5" value={0} />,
-    );
-
-    // assert
-    const bar = screen.getByRole("progressbar", { name: "Upload progress" });
-    expect(bar).toHaveClass("h-1.5");
-    expect(bar).not.toHaveClass("h-2");
-    expect(indicatorOf(bar).style.transform).toBe("translateX(-100%)");
   });
 });

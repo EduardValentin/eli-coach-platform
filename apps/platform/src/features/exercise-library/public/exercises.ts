@@ -1,15 +1,20 @@
 import type {
   Exercise,
   ExerciseDraftInput,
-  ExerciseDraftProblems,
+  ExerciseSaveProblems,
   ExerciseSnapshot,
+  ExerciseVideoFormat,
 } from "@eli-coach-platform/domain/exercise";
 import { z } from "zod";
 
+import { exerciseVideoPath } from "./paths";
+
+type ExerciseVideoView = { path: string; format: ExerciseVideoFormat };
+
 export type ExerciseView = Omit<
   ExerciseSnapshot,
-  "ownerAccountId" | "createdAt" | "updatedAt"
->;
+  "ownerAccountId" | "createdAt" | "updatedAt" | "video"
+> & { video: ExerciseVideoView | null };
 
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
 
@@ -29,7 +34,13 @@ export const exerciseRequestSchema = z.object({
   difficulty: z.string(),
   tags: z.array(z.string()),
   cues: z.string(),
+  video: z.enum(["keep", "remove", "attach"]).default("keep"),
 }) satisfies z.ZodType<ExerciseDraftInput>;
+
+export const EXERCISE_FORM_FIELDS = {
+  exercise: "exercise",
+  video: "video",
+} as const;
 
 export type ExerciseRequest = z.infer<typeof exerciseRequestSchema>;
 
@@ -47,7 +58,8 @@ const exerciseProblemsSchema = z.object({
   difficulty: z.enum(["unknown"]).optional(),
   tags: z.enum(["unknown"]).optional(),
   cues: z.enum(["too-long"]).optional(),
-}) satisfies z.ZodType<ExerciseDraftProblems>;
+  video: z.enum(["unsupported", "too-large"]).optional(),
+}) satisfies z.ZodType<ExerciseSaveProblems>;
 
 export type ExerciseProblems = z.infer<typeof exerciseProblemsSchema>;
 
@@ -60,8 +72,15 @@ export function presentExercise(exercise: Exercise): ExerciseView {
     ownerAccountId: _ownerAccountId,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
+    video,
     ...view
   } = exercise.toSnapshot();
 
-  return view;
+  return {
+    ...view,
+    video: video && {
+      path: exerciseVideoPath(view.id, video.videoId),
+      format: video.format,
+    },
+  };
 }

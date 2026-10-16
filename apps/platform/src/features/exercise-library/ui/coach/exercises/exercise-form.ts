@@ -1,17 +1,21 @@
 import {
+  ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
   DIFFICULTIES,
   EQUIPMENT,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
+  EXERCISE_VIDEO_EXTENSIONS,
   ExerciseDraft,
+  ExerciseNames,
   MAX_EXERCISE_NAME_LENGTH,
+  MAX_EXERCISE_VIDEO_BYTES,
   MAX_FORM_CUES_LENGTH,
   MUSCLES,
   defaultUnitFor,
   unitsFor,
   type Difficulty,
   type Equipment,
-  type ExerciseDraftProblems,
+  type ExerciseSaveProblems,
   type ExerciseTag,
   type ExerciseType,
   type ExerciseUnit,
@@ -20,9 +24,11 @@ import {
 import { toggled } from "@eli-coach-platform/ui/lib";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
-import type {
-  ExerciseRequest,
-  ExerciseView,
+import {
+  EXERCISE_FORM_FIELDS,
+  type ExerciseProblems,
+  type ExerciseRequest,
+  type ExerciseView,
 } from "~/features/exercise-library/public/exercises";
 
 export {
@@ -166,14 +172,100 @@ export function withPrimaryMuscleToggled(
   };
 }
 
-export function exerciseRequestOf(values: ExerciseFormValues): ExerciseRequest {
-  const { unitPicked: _unitPicked, ...request } = values;
+export type ChosenExerciseVideo =
+  | { kind: "keep" }
+  | { kind: "remove" }
+  | { kind: "attach"; file: File; previewUrl: string };
 
-  return request;
+export type ExerciseVideoEntry = {
+  chosen: ChosenExerciseVideo;
+  problem: string | null;
+};
+
+type ExerciseVideoProblem = NonNullable<ExerciseProblems["video"]>;
+
+const MEGABYTE = 1024 * 1024;
+
+export const MAX_EXERCISE_VIDEO_MEGABYTES = MAX_EXERCISE_VIDEO_BYTES / MEGABYTE;
+
+export const EXERCISE_VIDEO_ACCEPT = [
+  ...EXERCISE_VIDEO_EXTENSIONS.map((extension) => `.${extension}`),
+  ...ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES,
+].join(",");
+
+export const KEEP_VIDEO: ChosenExerciseVideo = { kind: "keep" };
+
+export const REMOVE_VIDEO: ChosenExerciseVideo = { kind: "remove" };
+
+export const UNTOUCHED_VIDEO: ExerciseVideoEntry = {
+  chosen: KEEP_VIDEO,
+  problem: null,
+};
+
+function isVideoFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+
+  return (
+    ACCEPTED_EXERCISE_VIDEO_MEDIA_TYPES.includes(file.type) ||
+    EXERCISE_VIDEO_EXTENSIONS.some((extension) =>
+      name.endsWith(`.${extension}`),
+    )
+  );
+}
+
+function videoTooLargeMessage(file: File): string {
+  return `${file.name} is larger than ${MAX_EXERCISE_VIDEO_MEGABYTES} MB`;
+}
+
+export function browserVideoRefusalMessage(file: File): string | null {
+  if (!isVideoFile(file)) {
+    return `${file.name} is not an .mp4 or .mov — only .mp4 and .mov videos are supported`;
+  }
+
+  if (file.size > MAX_EXERCISE_VIDEO_BYTES) {
+    return videoTooLargeMessage(file);
+  }
+
+  return null;
+}
+
+export function serverVideoRefusalMessage(
+  problem: ExerciseVideoProblem,
+  file: File,
+): string {
+  return problem === "too-large"
+    ? videoTooLargeMessage(file)
+    : `${file.name} doesn’t contain an MP4 or MOV video.`;
+}
+
+function exerciseDraftInputOf(
+  values: ExerciseFormValues,
+): Omit<ExerciseFormValues, "unitPicked"> {
+  const { unitPicked: _unitPicked, ...draft } = values;
+
+  return draft;
+}
+
+export function exerciseSaveBodyOf(
+  values: ExerciseFormValues,
+  video: ChosenExerciseVideo,
+): ExerciseRequest | FormData {
+  const request: ExerciseRequest = {
+    ...exerciseDraftInputOf(values),
+    video: video.kind,
+  };
+
+  if (video.kind !== "attach") return request;
+
+  const formData = new FormData();
+  formData.append(EXERCISE_FORM_FIELDS.exercise, JSON.stringify(request));
+  formData.append(EXERCISE_FORM_FIELDS.video, video.file);
+
+  return formData;
 }
 
 export function exerciseFieldProblemsOf(
-  problems: ExerciseDraftProblems,
+  problems: ExerciseSaveProblems,
 ): ExerciseFieldProblems {
   const primaryMuscles =
     problems.primaryMuscles === "missing"
@@ -201,14 +293,20 @@ export function exerciseFormResolver(
   otherNames: () => readonly string[],
 ): Resolver<ExerciseFormValues> {
   return (values) => {
-    const draft = ExerciseDraft.from(exerciseRequestOf(values), otherNames());
+    const input = exerciseDraftInputOf(values);
+    const draft = ExerciseDraft.from(input);
+    const nameTaken = ExerciseNames.of(otherNames()).includes(input.name);
 
-    if (draft.status === "valid") {
+    if (draft.status === "valid" && !nameTaken) {
       return { values, errors: {} };
     }
 
+    const problems: ExerciseSaveProblems = {
+      ...(nameTaken && { name: "taken" }),
+      ...(draft.status === "invalid" && draft.problems),
+    };
     const errors: FieldErrors<ExerciseFormValues> = Object.fromEntries(
-      Object.entries(exerciseFieldProblemsOf(draft.problems)).map(
+      Object.entries(exerciseFieldProblemsOf(problems)).map(
         ([field, message]) => [field, { type: "problem", message }],
       ),
     );

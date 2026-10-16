@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FileDropzone, FilePickerButton } from "./file-dropzone";
@@ -54,15 +55,25 @@ function renderDropzone(
 }
 
 describe("FileDropzone", () => {
+  it("hands its file input to a ref, so a caller can focus the picker", () => {
+    // arrange
+    const picker = createRef<HTMLInputElement>();
+
+    // act
+    const { input } = renderDropzone({ ref: picker });
+
+    // assert
+    expect(picker.current).toBe(input);
+  });
+
   it("names its file input by the prompt and describes it by the hint", () => {
     // arrange
     // act
-    const { input } = renderDropzone({ id: "resource-file" });
+    const { input } = renderDropzone();
 
     // assert
     expect(input).toHaveAttribute("type", "file");
     expect(input).toHaveAttribute("accept", ACCEPT);
-    expect(input).toHaveAttribute("id", "resource-file");
     expect(input).toHaveAccessibleDescription(HINT);
     expect(input).toHaveClass("sr-only");
   });

@@ -1,3 +1,6 @@
+import { readdir, rm } from "node:fs/promises";
+import { join } from "node:path";
+
 import type { AccountSession, PlatformRig } from "./platform-rig";
 
 export const VISITOR = "visitor";
@@ -24,6 +27,16 @@ export type ExerciseRow = Omit<ExerciseFields, "cues"> & {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type UploadedVideo = { name: string; type: string; bytes: Uint8Array };
+
+export type ExerciseVideoColumns = {
+  videoId: string | null;
+  videoFormat: string | null;
+  videoSizeBytes: number | null;
+};
+
+export type ExerciseVideoFiles = { kept: string[]; incoming: string[] };
 
 const EXERCISES_API = "/api/coach/exercises";
 
@@ -81,6 +94,77 @@ export class ExerciseLibraryJourney {
     );
   }
 
+  createWithVideo(
+    requester: Requester,
+    fields: unknown,
+    video: UploadedVideo,
+  ): Promise<Response> {
+    return this.send(
+      requester,
+      EXERCISES_API,
+      this.uploadOf("POST", { fields, video }),
+    );
+  }
+
+  editWithVideo(
+    requester: Requester,
+    exerciseId: string,
+    upload: { fields: unknown; video: UploadedVideo },
+  ): Promise<Response> {
+    return this.send(
+      requester,
+      `${EXERCISES_API}/${exerciseId}`,
+      this.uploadOf("PUT", upload),
+    );
+  }
+
+  playVideo(
+    requester: Requester,
+    exerciseId: string,
+    play: { videoId: string; range?: string },
+  ): Promise<Response> {
+    return this.send(
+      requester,
+      `/api/exercises/${exerciseId}/video/${play.videoId}`,
+      { headers: play.range ? { Range: play.range } : {} },
+    );
+  }
+
+  async videoColumnsOf(exerciseId: string): Promise<ExerciseVideoColumns> {
+    const [columns] =
+      await this.rig.suite.postgres.queryRows<ExerciseVideoColumns>({
+        sql: `select video_file_id as "videoId", video_format as "videoFormat", video_size_bytes as "videoSizeBytes"
+        from app.exercises where id = $1`,
+        values: [exerciseId],
+      });
+
+    if (!columns) {
+      throw new Error(`Exercise ${exerciseId} is not stored.`);
+    }
+
+    return columns;
+  }
+
+  async videoFiles(): Promise<ExerciseVideoFiles> {
+    const root = this.rig.suite.videoRoot();
+
+    return {
+      kept: await this.filesIn(join(root, "videos")),
+      incoming: await this.filesIn(join(root, ".incoming")),
+    };
+  }
+
+  async clearVideoFiles(): Promise<void> {
+    const root = this.rig.suite.videoRoot();
+
+    await rm(join(root, "videos"), { force: true, recursive: true });
+    await rm(join(root, ".incoming"), { force: true, recursive: true });
+  }
+
+  keptVideoPath(videoId: string): string {
+    return join(this.rig.suite.videoRoot(), "videos", videoId);
+  }
+
   openLibrary(requester: Requester): Promise<Response> {
     return this.send(requester, LIBRARY_PAGE);
   }
@@ -116,6 +200,30 @@ export class ExerciseLibraryJourney {
       headers: { "Content-Type": "application/json" },
       method,
     };
+  }
+
+  private uploadOf(
+    method: "POST" | "PUT",
+    upload: { fields: unknown; video: UploadedVideo },
+  ): RequestInit {
+    const form = new FormData();
+    form.set("exercise", JSON.stringify(upload.fields));
+    form.set(
+      "video",
+      new File([new Uint8Array(upload.video.bytes)], upload.video.name, {
+        type: upload.video.type,
+      }),
+    );
+
+    return { body: form, method };
+  }
+
+  private async filesIn(folder: string): Promise<string[]> {
+    try {
+      return (await readdir(folder)).sort();
+    } catch {
+      return [];
+    }
   }
 
   private send(

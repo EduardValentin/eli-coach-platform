@@ -10,9 +10,11 @@ import {
   NEW_EXERCISE_ROUTE_SEGMENT,
   exerciseEditorPath,
   exercisePath,
+  exerciseVideoPath,
 } from "./paths";
 
 const EXERCISE_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 describe("exercise library paths", () => {
   it("links the coach to the library the coach portal registers", () => {
@@ -62,5 +64,20 @@ describe("exercise library paths", () => {
     expect(EXERCISE_LIBRARY_API_PATHS.exercises).toBe("/api/coach/exercises");
     expect(endpoint).toBe(`/api/coach/exercises/${EXERCISE_ID}`);
     expect(match?.params).toEqual({ exerciseId: EXERCISE_ID });
+  });
+
+  it("plays an exercise's video at an address naming its stored file, outside the coach API", () => {
+    // arrange
+    const address = exerciseVideoPath(EXERCISE_ID, VIDEO_ID);
+
+    // act
+    const match = matchPath(EXERCISE_LIBRARY_API_PATHS.exerciseVideo, address);
+
+    // assert
+    expect(address).toBe(`/api/exercises/${EXERCISE_ID}/video/${VIDEO_ID}`);
+    expect(match?.params).toEqual({
+      exerciseId: EXERCISE_ID,
+      videoId: VIDEO_ID,
+    });
   });
 });

@@ -1,12 +1,17 @@
 import { Upload } from "lucide-react";
-import { useId, useState, type ChangeEvent, type DragEvent } from "react";
+import {
+  useId,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type Ref,
+} from "react";
 
 import { cn } from "../lib/cn";
 import { describedByOf } from "../lib/described-by";
 import { buttonVariants } from "./button";
 
 type FilePickerProps = {
-  id?: string;
   accept: string;
   onFileChosen: (file: File) => void;
   "aria-describedby"?: string;
@@ -14,6 +19,7 @@ type FilePickerProps = {
 };
 
 type HiddenFileInputProps = FilePickerProps & {
+  ref?: Ref<HTMLInputElement>;
   hintId?: string;
   label?: string;
   labelledBy?: string;
@@ -37,11 +43,11 @@ function HiddenFileInput(props: HiddenFileInputProps) {
       aria-label={props.label}
       aria-labelledby={props.labelledBy}
       className="sr-only"
-      id={props.id}
       onChange={(event) => {
         const file = takeChosenFile(event);
         if (file) props.onFileChosen(file);
       }}
+      ref={props.ref}
       type="file"
     />
   );
@@ -50,6 +56,7 @@ function HiddenFileInput(props: HiddenFileInputProps) {
 type FileDropzoneProps = FilePickerProps & {
   prompt: string;
   hint: string;
+  ref?: Ref<HTMLInputElement>;
 };
 
 export function FileDropzone({ prompt, hint, ...picker }: FileDropzoneProps) {

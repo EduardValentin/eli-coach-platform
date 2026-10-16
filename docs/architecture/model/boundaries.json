@@ -157,7 +157,10 @@
     { "id": "B163", "path": "packages/domain/src/payment-link/payment-link-ids.ts", "symbol": "PaymentLinkIds", "owner": "C1" },
     { "id": "B164", "path": "packages/domain/src/measurement/measurement-ids.ts", "symbol": "MeasurementIds", "owner": "C1" },
     { "id": "B165", "path": "packages/domain/src/client/client-ids.ts", "symbol": "ClientIds", "owner": "C1" },
-    { "id": "B166", "path": "packages/domain/src/coaching-subscription/coaching-subscription-ids.ts", "symbol": "CoachingSubscriptionIds", "owner": "C1" }
+    { "id": "B166", "path": "packages/domain/src/coaching-subscription/coaching-subscription-ids.ts", "symbol": "CoachingSubscriptionIds", "owner": "C1" },
+    { "id": "B167", "path": "packages/domain/src/exercise/exercise-video-store.ts", "symbol": "ExerciseVideoStore", "owner": "C1" },
+    { "id": "B168", "path": "packages/domain/src/exercise/exercise-video-format-detector.ts", "symbol": "ExerciseVideoFormatDetector", "owner": "C1" },
+    { "id": "B169", "path": "packages/domain/src/exercise/exercise-video-ids.ts", "symbol": "ExerciseVideoIds", "owner": "C1" }
   ],
   "shapes": [
     { "id": "S1", "name": "Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle", "owner": "C2", "components": [ "C2", "C6", "C7", "C8", "C9", "C15", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24" ] },

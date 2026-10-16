@@ -5,6 +5,7 @@ import {
   type ResourceDetailsProblems,
   type ResourceFileKind,
 } from "@eli-coach-platform/domain/client-resources";
+import type { UploadState } from "@eli-coach-platform/infrastructure/http";
 import {
   ResponsiveSheetDialog,
   SheetDialogActions,
@@ -59,7 +60,6 @@ import {
 import {
   useResourceUpload,
   type ResourceUploadOutcome,
-  type ResourceUploadState,
 } from "./use-resource-upload";
 
 export type ResourceFormMode =
@@ -311,39 +311,25 @@ function ResourceFormActions({
   );
 }
 
-function uploadSubmitLabelOf(upload: ResourceUploadState): string {
+function uploadSubmitLabelOf(upload: UploadState): string {
   if (upload.state === "sending") return COPY.add.sending;
   if (upload.state === "preparing") return UPLOAD_COPY.preparing;
 
   return COPY.add.submit;
 }
 
-function UploadStatus({
-  file,
-  upload,
-}: {
-  file: File;
-  upload: ResourceUploadState;
-}) {
+function UploadStatus({ file, upload }: { file: File; upload: UploadState }) {
   const hintId = useId();
 
   if (upload.state === "sending") {
     return (
-      <Progress
-        aria-label="Upload progress"
-        className="h-1.5"
-        value={upload.fraction * 100}
-      />
+      <Progress aria-label="Upload progress" value={upload.fraction * 100} />
     );
   }
   if (upload.state === "preparing") {
     return (
       <>
-        <Progress
-          aria-describedby={hintId}
-          aria-label="Preparing pages"
-          className="h-1.5"
-        />
+        <Progress aria-describedby={hintId} aria-label="Preparing pages" />
         <p className="text-sm text-text-secondary" id={hintId}>
           {UPLOAD_COPY.preparingHint}
         </p>

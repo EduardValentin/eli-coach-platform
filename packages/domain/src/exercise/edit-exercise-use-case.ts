@@ -1,20 +1,25 @@
 import type { Clock } from "../shared";
-import type { Exercise } from "./exercise";
-import {
-  ExerciseDraft,
-  type ExerciseDraftInput,
-  type ExerciseDraftProblems,
-} from "./exercise-draft";
+import type { Exercise, ExerciseSaveProblems } from "./exercise";
+import { ExerciseDraft, type ExerciseDraftInput } from "./exercise-draft";
 import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import { ExerciseNames } from "./exercise-names";
+import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+import type { ExerciseVideoIds } from "./exercise-video-ids";
+import {
+  ExerciseVideoSaving,
+  type ExerciseVideoChoice,
+} from "./exercise-video-saving";
+import type { ExerciseVideoStore } from "./exercise-video-store";
 
 type EditExerciseCommand = ExerciseReference & {
   draft: ExerciseDraftInput;
+  video: ExerciseVideoChoice;
 };
 
 export type EditExerciseResult =
   | { status: "edited"; exercise: Exercise }
-  | { status: "invalid"; problems: ExerciseDraftProblems }
+  | { status: "invalid"; problems: ExerciseSaveProblems }
   | { status: "not-found" }
   | { status: "failed" };
 
@@ -22,10 +27,17 @@ type EditExerciseUseCaseOptions = {
   library: ExerciseLibrary;
   clock: Clock;
   incidents: ExerciseLibraryIncidents;
+  formats: ExerciseVideoFormatDetector;
+  videoIds: ExerciseVideoIds;
+  store: Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
 };
 
 export class EditExerciseUseCase {
-  constructor(private readonly options: EditExerciseUseCaseOptions) {}
+  private readonly videos: ExerciseVideoSaving;
+
+  constructor(private readonly options: EditExerciseUseCaseOptions) {
+    this.videos = new ExerciseVideoSaving(options);
+  }
 
   async execute(command: EditExerciseCommand): Promise<EditExerciseResult> {
     try {
@@ -35,6 +47,7 @@ export class EditExerciseUseCase {
         exerciseId: command.exerciseId,
         error,
       });
+      await this.videos.discard(command.video);
 
       return { status: "failed" };
     }
@@ -44,6 +57,7 @@ export class EditExerciseUseCase {
     ownerAccountId,
     exerciseId,
     draft: input,
+    video: choice,
   }: EditExerciseCommand): Promise<EditExerciseResult> {
     const { library, clock } = this.options;
     const [exercise, exercises] = await Promise.all([
@@ -51,21 +65,49 @@ export class EditExerciseUseCase {
       library.list(ownerAccountId),
     ]);
 
-    if (!exercise) return { status: "not-found" };
+    if (!exercise) {
+      await this.videos.discard(choice);
 
-    const otherNames = exercises
-      .filter(({ id }) => id !== exerciseId)
-      .map(({ name }) => name);
-    const draft = ExerciseDraft.from(input, otherNames);
+      return { status: "not-found" };
+    }
 
-    if (draft.status === "invalid") return draft;
+    const otherNames = ExerciseNames.of(
+      exercises.filter(({ id }) => id !== exerciseId).map(({ name }) => name),
+    );
+    const draft = ExerciseDraft.from(input);
+    const nameTaken = otherNames.includes(input.name);
+    const video = await this.videos.judged(choice);
 
-    const edited = exercise.revised(draft.draft, clock.now());
+    if (draft.status === "invalid" || nameTaken || video.kind === "refused") {
+      await this.videos.discard(choice);
 
-    if ((await library.replace(edited)) === "name-taken") {
+      return {
+        status: "invalid",
+        problems: {
+          ...(nameTaken && { name: "taken" as const }),
+          ...(draft.status === "invalid" && draft.problems),
+          ...(video.kind === "refused" && { video: video.refusal }),
+        },
+      };
+    }
+
+    const change = await this.videos.keepAccepted(video);
+    const revision = exercise.revised({
+      draft: draft.draft,
+      at: clock.now(),
+      video: change,
+    });
+
+    if (
+      (await this.videos.writeOrRemoveKept(change, () =>
+        library.replace(revision.exercise),
+      )) === "name-taken"
+    ) {
       return { status: "invalid", problems: { name: "taken" } };
     }
 
-    return { status: "edited", exercise: edited };
+    await this.videos.removeStored(revision.replacedVideo);
+
+    return { status: "edited", exercise: revision.exercise };
   }
 }

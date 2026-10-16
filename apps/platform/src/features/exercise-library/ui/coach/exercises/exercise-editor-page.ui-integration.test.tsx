@@ -1,10 +1,11 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import "@testing-library/jest-dom/vitest";
 
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -33,6 +34,7 @@ import {
   EXERCISE_EDITOR_ROUTE_SEGMENT,
   EXERCISE_LIBRARY_API_PATHS,
   exerciseEditorPath,
+  exerciseVideoPath,
   NEW_EXERCISE_PATH,
 } from "~/features/exercise-library/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
@@ -40,8 +42,14 @@ import { frameworkModeAction } from "~/server/test-support/framework-mode-action
 import ExerciseEditorRoute from "./exercise-editor-page";
 import ExerciseLibraryRoute from "./exercise-library-page";
 
+const HIP_THRUST_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const HIP_THRUST_VIDEO_PATH = exerciseVideoPath(
+  HIP_THRUST_ID,
+  "7c6b5a49-3827-4161-a5b4-c3d2e1f0a9b8",
+);
+
 const HIP_THRUST: ExerciseView = {
-  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+  id: HIP_THRUST_ID,
   name: "Hip thrust",
   type: "resistance",
   unit: "reps",
@@ -52,6 +60,7 @@ const HIP_THRUST: ExerciseView = {
   difficulty: "Beginner",
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
+  video: { path: HIP_THRUST_VIDEO_PATH, format: "mp4" },
 };
 
 const BREATH_HOLD: ExerciseView = {
@@ -66,18 +75,72 @@ const BREATH_HOLD: ExerciseView = {
   difficulty: "Advanced",
   tags: ["Recovery"],
   cues: "Exhale slowly.",
+  video: null,
 };
 
 const LIBRARY = [BREATH_HOLD, HIP_THRUST];
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
+const VIDEO_PROMPT = "Drop a video here or choose one";
+const VIDEO_GUIDANCE =
+  "MP4 or MOV up to 50 MB, in a format that plays well on a phone.";
+const UPLOAD_FAILED =
+  "The upload didn’t go through. Your entries are still here.";
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const VIDEO_BYTES = "squat-demo-bytes";
+
+class HeldUploadRequest extends EventTarget {
+  static sent: HeldUploadRequest[] = [];
+  static whenSent: () => void = () => {};
+
+  readonly upload = new EventTarget();
+  status = 0;
+  responseText = "";
+  aborted = false;
+
+  open() {}
+
+  setRequestHeader() {}
+
+  getResponseHeader(name: string): string | null {
+    return name.toLowerCase() === "content-type" ? "application/json" : null;
+  }
+
+  send() {
+    HeldUploadRequest.sent.push(this);
+    HeldUploadRequest.whenSent();
+  }
+
+  abort() {
+    this.aborted = true;
+  }
+
+  reportBytesSent(fraction: number) {
+    this.upload.dispatchEvent(
+      Object.assign(new Event("progress"), {
+        lengthComputable: true,
+        loaded: fraction * 100,
+        total: 100,
+      }),
+    );
+  }
+
+  finishSending() {
+    this.upload.dispatchEvent(new Event("load"));
+  }
+}
 
 const server = setupServer();
 
 let sentBodies: { method: string; path: string; body: unknown }[] = [];
 
+let interceptedXhr = globalThis.XMLHttpRequest;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
+  interceptedXhr = globalThis.XMLHttpRequest;
+  URL.createObjectURL = vi.fn((file: Blob) => `blob:${(file as File).name}`);
+  URL.revokeObjectURL = vi.fn();
   Element.prototype.scrollIntoView = () => {};
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.releasePointerCapture = () => {};
@@ -93,11 +156,15 @@ beforeAll(() => {
 
 beforeEach(() => {
   sentBodies = [];
+  HeldUploadRequest.sent = [];
+  HeldUploadRequest.whenSent = () => {};
+  vi.mocked(URL.revokeObjectURL).mockClear();
 });
 
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  vi.stubGlobal("XMLHttpRequest", interceptedXhr);
 });
 
 afterAll(() => {
@@ -330,6 +397,7 @@ describe("a new exercise", () => {
           difficulty: "Intermediate",
           tags: ["Strength"],
           cues: "Squeeze at the top.",
+          video: "keep",
         },
       },
     ]);
@@ -602,6 +670,7 @@ describe("editing an exercise", () => {
           difficulty: "Advanced",
           tags: ["Recovery"],
           cues: "Exhale slowly.",
+          video: "keep",
         },
       },
     ]);
@@ -634,12 +703,556 @@ describe("editing an exercise", () => {
   );
 });
 
+describe("the demo video", () => {
+  it("offers a drop zone named by its prompt that takes an .mp4 or a .mov and says what to upload", async () => {
+    // arrange, act
+    await renderEditor(NEW_EXERCISE_PATH);
+
+    // assert
+    const picker = within(videoField()).getByLabelText(VIDEO_PROMPT);
+    expect(picker).toHaveAttribute("type", "file");
+    expect(picker).toHaveAttribute(
+      "accept",
+      ".mp4,.mov,video/mp4,video/quicktime",
+    );
+    expect(picker).toHaveAccessibleDescription(VIDEO_GUIDANCE);
+  });
+
+  it("previews a chosen video at once with play controls, Remove inside its frame and Replace beside it", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("squat.mp4"),
+    );
+
+    // assert
+    const shown = preview();
+    expect(shown).toHaveAttribute("src", "blob:squat.mp4");
+    expect(shown).toHaveAttribute("controls");
+    expect(shown).toHaveAttribute("preload", "metadata");
+    const frame = shown.parentElement as HTMLElement;
+    expect(frame).toContainElement(removeButton());
+    expect(frame).not.toContainElement(replaceButton());
+    expect(removeButton()).toBeEnabled();
+    expect(replaceButton()).toBeEnabled();
+    expect(screen.queryByLabelText(VIDEO_PROMPT)).not.toBeInTheDocument();
+  });
+
+  it("refuses a dropped file that is not an .mp4 or a .mov on the spot, naming it on the drop zone", async () => {
+    // arrange
+    await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    dropVideo(new File(["avi"], "squat.avi", { type: "video/x-msvideo" }));
+
+    // assert
+    const message =
+      "squat.avi is not an .mp4 or .mov — only .mp4 and .mov videos are supported";
+    const refusal = within(videoField()).getByRole("alert");
+    expect(refusal).toHaveTextContent(message);
+    expect(within(refusal).getByText(message)).toContainElement(
+      refusal.querySelector("svg[aria-hidden='true']"),
+    );
+    const picker = screen.getByLabelText(VIDEO_PROMPT);
+    expect(picker).toHaveAttribute("aria-invalid", "true");
+    expect(picker).toHaveAccessibleDescription(`${VIDEO_GUIDANCE} ${message}`);
+  });
+
+  it("takes a dropped .mov whose media type the browser left empty", async () => {
+    // arrange
+    await renderEditor(NEW_EXERCISE_PATH);
+
+    // act
+    dropVideo(new File(["mov"], "squat.MOV"));
+
+    // assert
+    expect(preview()).toHaveAttribute("src", "blob:squat.MOV");
+    expect(within(videoField()).getByRole("alert")).toBeEmptyDOMElement();
+  });
+
+  it("refuses an .mp4 over 50 MB that would replace the chosen video and keeps the chosen one", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("squat.mp4"),
+    );
+
+    // act
+    replaceWith(videoNamed("squat-long.mp4", MAX_VIDEO_BYTES + 1));
+
+    // assert
+    expect(within(videoField()).getByRole("alert")).toHaveTextContent(
+      "squat-long.mp4 is larger than 50 MB",
+    );
+    expect(preview()).toHaveAttribute("src", "blob:squat.mp4");
+    expect(replaceButton()).toHaveAttribute("aria-invalid", "true");
+    expect(replaceButton()).toHaveAccessibleDescription(
+      "squat-long.mp4 is larger than 50 MB",
+    );
+  });
+
+  it("keeps the stored video when a replacement is not an .mp4 or a .mov", async () => {
+    // arrange
+    await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // act
+    replaceWith(new File(["avi"], "thrust.avi", { type: "video/x-msvideo" }));
+
+    // assert
+    expect(within(videoField()).getByRole("alert")).toHaveTextContent(
+      "thrust.avi is not an .mp4 or .mov — only .mp4 and .mov videos are supported",
+    );
+    expect(preview()).toHaveAttribute("src", HIP_THRUST_VIDEO_PATH);
+  });
+
+  it("clears the refusal once she chooses a video it takes", async () => {
+    // arrange
+    await renderEditor(NEW_EXERCISE_PATH);
+    dropVideo(new File(["avi"], "squat.avi", { type: "video/x-msvideo" }));
+
+    // act
+    dropVideo(videoNamed("squat.mp4"));
+
+    // assert
+    expect(within(videoField()).getByRole("alert")).toBeEmptyDOMElement();
+    expect(replaceButton()).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("plays an exercise's stored video from the server with the player controls", async () => {
+    // arrange, act
+    await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // assert
+    expect(preview()).toHaveAttribute("src", HIP_THRUST_VIDEO_PATH);
+    expect(preview()).toHaveAttribute("controls");
+    expect(preview()).toHaveAttribute("preload", "metadata");
+  });
+
+  it("lets go of each preview it made once she replaces or removes the video", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("first.mp4"),
+    );
+
+    // act
+    replaceWith(videoNamed("second.mp4"));
+
+    // assert
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first.mp4");
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second.mp4");
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toBeInTheDocument();
+  });
+});
+
+describe("focus in the demo video field", () => {
+  it("moves to Replace once a video chosen from the drop zone takes its place", async () => {
+    // arrange
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("squat.mp4"),
+    );
+
+    // assert
+    expect(replaceButton()).toHaveFocus();
+  });
+
+  it("moves to the drop zone once the video is removed", async () => {
+    // arrange
+    const user = await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+
+  it("stays where it was when the editor opens on a saved video", async () => {
+    // arrange
+    // act
+    await renderEditor(exerciseEditorPath(HIP_THRUST.id));
+
+    // assert
+    expect(replaceButton()).not.toHaveFocus();
+    expect(removeButton()).not.toHaveFocus();
+  });
+
+  it("moves to Replace when the server refuses the chosen video on save", async () => {
+    // arrange
+    server.use(
+      http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () =>
+        HttpResponse.json(
+          { problems: { video: "unsupported" } },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await within(videoField()).findByText(
+      "thrust.mp4 doesn’t contain an MP4 or MOV video.",
+    );
+    expect(replaceButton()).toHaveFocus();
+  });
+
+  it("leaves focus on Name when the server refuses the name and the video together", async () => {
+    // arrange
+    server.use(
+      http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () =>
+        HttpResponse.json(
+          { problems: { name: "taken", video: "unsupported" } },
+          { status: 422 },
+        ),
+      ),
+    );
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    await within(videoField()).findByText(
+      "thrust.mp4 doesn’t contain an MP4 or MOV video.",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Name (required)" }),
+    ).toHaveFocus();
+  });
+
+  it("stays on the drop zone when a dropped file is refused", async () => {
+    // arrange
+    await renderEditor(NEW_EXERCISE_PATH);
+    screen.getByLabelText(VIDEO_PROMPT).focus();
+
+    // act
+    dropVideo(new File(["avi"], "squat.avi", { type: "video/x-msvideo" }));
+
+    // assert
+    expect(screen.getByLabelText(VIDEO_PROMPT)).toHaveFocus();
+  });
+});
+
+describe("saving with a demo video", () => {
+  it("sends the exercise and the chosen file in one request and returns to the library", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderEditor(NEW_EXERCISE_PATH);
+    await enter(user, "Name (required)", "Glute bridge");
+    await pickMuscles(user, "Primary muscles (required)", ["Glutes"]);
+    await user.upload(
+      screen.getByLabelText(VIDEO_PROMPT),
+      videoNamed("bridge.mp4"),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Create exercise" }));
+
+    // assert
+    expect(await screen.findByText("Exercise created")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "POST",
+        path: EXERCISE_LIBRARY_API_PATHS.exercises,
+        body: {
+          exercise: {
+            name: "Glute bridge",
+            type: "resistance",
+            unit: "reps",
+            perSide: false,
+            primaryMuscles: ["Glutes"],
+            secondaryMuscles: [],
+            equipment: [],
+            difficulty: "Beginner",
+            tags: [],
+            cues: "",
+            video: "attach",
+          },
+          video: VIDEO_BYTES,
+        },
+      },
+    ]);
+  });
+
+  it("shows how much of the video has been sent and locks Save, Replace and Remove", async () => {
+    // arrange
+    vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    const upload = await heldUpload();
+
+    // act
+    upload.reportBytesSent(0.4);
+
+    // assert
+    expect(
+      await within(videoField()).findByText("Uploading video… 40%"),
+    ).toBeInTheDocument();
+    expect(within(videoField()).getByRole("status")).toHaveTextContent(
+      "Uploading video… 40%",
+    );
+    expect(
+      screen.getByRole("progressbar", { name: "Video upload" }),
+    ).toHaveAttribute("aria-valuenow", "40");
+    const saving = screen.getByRole("button", { name: "Saving…" });
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute("aria-busy", "true");
+    expect(saving.querySelector("svg")).toBeNull();
+    expect(replaceButton()).toBeDisabled();
+    expect(removeButton()).toBeDisabled();
+  });
+
+  it("says it is finishing up once every byte is sent and the server is storing it", async () => {
+    // arrange
+    vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    const upload = await heldUpload();
+
+    // act
+    upload.finishSending();
+
+    // assert
+    expect(
+      await within(videoField()).findByText("Finishing up…"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "Video upload" }),
+    ).not.toHaveAttribute("aria-valuenow");
+    expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled();
+    expect(replaceButton()).toBeDisabled();
+  });
+
+  it("keeps the one upload going when she submits again before Save shows it is busy", async () => {
+    // arrange
+    vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    replaceWith(videoNamed("thrust.mp4"));
+    const form = screen
+      .getByRole("textbox", { name: "Name (required)" })
+      .closest("form") as HTMLFormElement;
+    HeldUploadRequest.whenSent = () => {
+      HeldUploadRequest.whenSent = () => {};
+      fireEvent.submit(form);
+    };
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    const upload = await heldUpload();
+    upload.reportBytesSent(0.4);
+
+    // assert
+    expect(
+      await within(videoField()).findByText("Uploading video… 40%"),
+    ).toBeInTheDocument();
+    expect(upload.aborted).toBe(false);
+    expect(HeldUploadRequest.sent).toHaveLength(1);
+  });
+
+  it("keeps every entry and the file when the upload does not go through, and Try again sends it again", async () => {
+    // arrange
+    let attempts = 0;
+    server.use(
+      http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () => {
+        attempts += 1;
+
+        return attempts === 1
+          ? new HttpResponse("Internal Server Error", { status: 500 })
+          : HttpResponse.json({ redirectTo: COACH_TRAINING_PATH });
+      }),
+    );
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+    await enter(user, "Name (required)", "Banded hip thrust");
+    replaceWith(videoNamed("thrust.mp4"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    const failure = await within(videoField()).findByText(UPLOAD_FAILED);
+    expect(failure.closest("[role=alert]")).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Name (required)" }),
+    ).toHaveValue("Banded hip thrust");
+    expect(preview()).toHaveAttribute("src", "blob:thrust.mp4");
+    expect(within(videoField()).getByRole("status")).toBeEmptyDOMElement();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+    expect(screen.queryByText(SAVE_FAILED)).not.toBeInTheDocument();
+
+    // act
+    await user.click(
+      within(videoField()).getByRole("button", { name: "Try again" }),
+    );
+
+    // assert
+    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
+    expect(attempts).toBe(2);
+  });
+
+  it.each([
+    {
+      httpStatus: 422,
+      problem: "unsupported",
+      message: "thrust.mp4 doesn’t contain an MP4 or MOV video.",
+    },
+    {
+      httpStatus: 413,
+      problem: "too-large",
+      message: "thrust.mp4 is larger than 50 MB",
+    },
+  ])(
+    "shows the server refusing the file as $problem on the field, naming it, and keeps the file and every entry",
+    async ({ httpStatus, problem, message }) => {
+      // arrange
+      server.use(
+        http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, () =>
+          HttpResponse.json(
+            { problems: { video: problem } },
+            { status: httpStatus },
+          ),
+        ),
+      );
+      const user = await renderEditorReadyToSave(
+        exerciseEditorPath(HIP_THRUST.id),
+      );
+      await enter(user, "Name (required)", "Banded hip thrust");
+      replaceWith(videoNamed("thrust.mp4"));
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+      // assert
+      expect(
+        (await within(videoField()).findByText(message)).closest(
+          "[role=alert]",
+        ),
+      ).toBeInTheDocument();
+      expect(replaceButton()).toHaveAttribute("aria-invalid", "true");
+      expect(replaceButton()).toHaveAccessibleDescription(message);
+      expect(preview()).toHaveAttribute("src", "blob:thrust.mp4");
+      expect(
+        screen.getByRole("textbox", { name: "Name (required)" }),
+      ).toHaveValue("Banded hip thrust");
+      expect(
+        within(videoField()).queryByRole("button", { name: "Try again" }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(SAVE_FAILED)).not.toBeInTheDocument();
+    },
+  );
+
+  it("leaves the exercise without a video when she removes the stored one and saves", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+
+    // act
+    await user.click(removeButton());
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "PUT",
+        path: `${EXERCISE_LIBRARY_API_PATHS.exercises}/${HIP_THRUST.id}`,
+        body: expect.objectContaining({ name: "Hip thrust", video: "remove" }),
+      },
+    ]);
+  });
+
+  it("sends the new file in place of the stored one when she replaces it and saves", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+
+    // act
+    replaceWith(
+      videoNamed("thrust.mov", VIDEO_BYTES.length, "video/quicktime"),
+    );
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Exercise updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "PUT",
+        path: `${EXERCISE_LIBRARY_API_PATHS.exercises}/${HIP_THRUST.id}`,
+        body: {
+          exercise: expect.objectContaining({
+            name: "Hip thrust",
+            video: "attach",
+          }),
+          video: VIDEO_BYTES,
+        },
+      },
+    ]);
+  });
+
+  it("stays a plain save with no upload progress when no new file was chosen", async () => {
+    // arrange
+    vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
+    const user = await renderEditorReadyToSave(
+      exerciseEditorPath(HIP_THRUST.id),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    const upload = await heldUpload();
+    upload.reportBytesSent(0.4);
+
+    // assert
+    const save = screen.getByRole("button", { name: "Save changes" });
+    await waitFor(() => expect(save).toHaveAttribute("aria-busy", "true"));
+    expect(save).toBeDisabled();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(within(videoField()).getByRole("status")).toBeEmptyDOMElement();
+  });
+});
+
 function acceptSaves() {
   const record = async ({ request }: { request: Request }) => {
     sentBodies.push({
       method: request.method,
       path: new URL(request.url).pathname,
-      body: await request.json(),
+      body: await sentBodyOf(request),
     });
 
     return HttpResponse.json({ redirectTo: COACH_TRAINING_PATH });
@@ -649,6 +1262,82 @@ function acceptSaves() {
     http.post(`*${EXERCISE_LIBRARY_API_PATHS.exercises}`, record),
     http.put(`*${EXERCISE_LIBRARY_API_PATHS.exercises}/:exerciseId`, record),
   );
+}
+
+async function sentBodyOf(request: Request): Promise<unknown> {
+  const contentType = request.headers.get("Content-Type") ?? "";
+  if (!contentType.startsWith("multipart/form-data")) {
+    return request.json();
+  }
+
+  const body = await request.text();
+
+  return {
+    exercise: JSON.parse(partOf(body, "exercise")),
+    video: partOf(body, "video"),
+  };
+}
+
+function partOf(body: string, name: string): string {
+  const match = new RegExp(
+    `name="${name}"(?:; filename="[^"]*")?\\r\\n(?:Content-Type: [^\\r]*\\r\\n)?\\r\\n([^\\r]*)`,
+  ).exec(body);
+
+  return match?.[1] ?? "";
+}
+
+function videoNamed(
+  name: string,
+  size = VIDEO_BYTES.length,
+  type = "video/mp4",
+): File {
+  const file = new File([VIDEO_BYTES], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+}
+
+function videoField(): HTMLElement {
+  return screen.getByRole("group", { name: "Demo video" });
+}
+
+function preview(): HTMLElement {
+  return within(videoField()).getByLabelText("Demo video preview");
+}
+
+function removeButton(): HTMLElement {
+  return within(videoField()).getByRole("button", { name: "Remove video" });
+}
+
+function replaceButton(): HTMLElement {
+  return within(videoField()).getByRole("button", { name: "Replace video" });
+}
+
+function dropVideo(file: File) {
+  const zone = screen.getByText(VIDEO_PROMPT).closest("label");
+  fireEvent.drop(zone as HTMLElement, { dataTransfer: { files: [file] } });
+}
+
+function replaceWith(file: File) {
+  const input = videoField().querySelector('input[type="file"]');
+  fireEvent.change(input as HTMLInputElement, { target: { files: [file] } });
+}
+
+async function heldUpload(): Promise<HeldUploadRequest> {
+  await waitFor(() => {
+    expect(HeldUploadRequest.sent).toHaveLength(1);
+  });
+
+  return HeldUploadRequest.sent[0];
+}
+
+async function renderEditorReadyToSave(entry: string) {
+  const user = await renderEditor(entry);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled(),
+  );
+
+  return user;
 }
 
 async function enter(user: UserEvent, field: string, text: string) {

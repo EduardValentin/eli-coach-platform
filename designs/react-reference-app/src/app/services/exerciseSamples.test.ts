@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIFFICULTIES, EQUIPMENT, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MUSCLES, measureAllowedFor } from '../domain/exercises';
-import { SAMPLE_EXERCISES } from './exerciseSamples';
+import { LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP, SAMPLE_EXERCISES } from './exerciseSamples';
 
 describe('the sample exercises', () => {
   it('use only vocabulary values, so the form can show every stored value', () => {
@@ -38,6 +38,14 @@ describe('the sample exercises', () => {
     for (const exercise of SAMPLE_EXERCISES) {
       expect(measureAllowedFor(exercise.type, exercise.measuredIn)).toBe(true);
     }
+  });
+
+  it('play a bundled landscape clip and a bundled portrait clip as their demo videos', () => {
+    // act
+    const clips = SAMPLE_EXERCISES.flatMap((exercise) => (exercise.videoUrl ? [exercise.videoUrl] : []));
+
+    // assert
+    expect(new Set(clips)).toEqual(new Set([LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP]));
   });
 
   it('has no two exercises with the same name, ignoring case', () => {

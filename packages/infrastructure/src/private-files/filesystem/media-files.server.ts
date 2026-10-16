@@ -2,6 +2,8 @@ import { open as openFile, type FileHandle } from "node:fs/promises";
 
 import { hasErrorCode } from "./media-root-confinement.server";
 
+type FileSlice = { start: number; end: number };
+
 export async function writeNewFile(
   path: string,
   bytes: Uint8Array,
@@ -37,8 +39,11 @@ export async function readThenClose(file: FileHandle): Promise<Buffer> {
 }
 
 // Not an async generator: an unstarted one ignores return() and would leak the file.
-function streamThenClose(file: FileHandle): AsyncIterable<Uint8Array> {
-  const stream = file.createReadStream();
+function streamThenClose(
+  file: FileHandle,
+  slice?: FileSlice,
+): AsyncIterable<Uint8Array> {
+  const stream = file.createReadStream(slice);
   const closed = new Promise<void>((resolve) => stream.once("close", resolve));
 
   return {
@@ -68,6 +73,7 @@ function streamThenClose(file: FileHandle): AsyncIterable<Uint8Array> {
 
 export function streamWhenPulled(
   open: () => Promise<FileHandle>,
+  slice?: FileSlice,
 ): AsyncIterable<Uint8Array> {
   return {
     [Symbol.asyncIterator]() {
@@ -76,7 +82,7 @@ export function streamWhenPulled(
       return {
         next: async () => {
           chunks ??= open().then((file) =>
-            streamThenClose(file)[Symbol.asyncIterator](),
+            streamThenClose(file, slice)[Symbol.asyncIterator](),
           );
 
           return (await chunks).next();

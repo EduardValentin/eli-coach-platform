@@ -41,7 +41,12 @@
         "integration-test-config/**/*.ts",
         "tooling/**/*.ts"
       ],
-      "ignoreDependencies": ["sharp", "@napi-rs/canvas", "pdfjs-dist"]
+      "ignoreDependencies": [
+        "sharp",
+        "@napi-rs/canvas",
+        "pdfjs-dist",
+        "@fastify/busboy"
+      ]
     },
     "packages/*": {
       "entry": [

@@ -4911,5 +4911,113 @@
         "click": "role=button[name=\"Create food\" s]"
       }
     ]
-  }
+  },
+  "exercise-video-chosen": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-file-refused": [
+    {
+      "use": "open-new-exercise"
+    }
+  ],
+  "exercise-video-save-held": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=button[name=\"Save changes\" s]"
+    }
+  ],
+  "exercise-video-remove-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Remove video\" s]"
+    }
+  ],
+  "exercise-video-replace-hover": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> role=button[name=\"Replace video\" s]"
+    }
+  ],
+  "exercise-video-remove-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-replace-focus-visible": [
+    {
+      "use": "open-exercise-editor-back-squat"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-picker-focus-visible": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "click": "role=textbox[name=\"Form cues\" s]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "exercise-video-dropzone-hover": [
+    {
+      "use": "open-new-exercise"
+    },
+    {
+      "hover": "[data-parity=\"exercise-video-field\"] >> text=Drop a video here or choose one"
+    }
+  ]
 }

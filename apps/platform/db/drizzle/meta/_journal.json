@@ -351,6 +351,20 @@
       "when": 1792151309054,
       "tag": "0053_domain_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1792152936405,
+      "tag": "0054_exercise_videos",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1792152937491,
+      "tag": "0055_exercise_integrity_checks",
+      "breakpoints": true
     }
   ]
 }

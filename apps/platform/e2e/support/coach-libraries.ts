@@ -1,4 +1,5 @@
 import { createE2eDatabasePool } from "./database";
+import { removeExerciseVideoFiles } from "./exercise-video-files";
 import { runRegistry } from "./run-registry";
 
 const coachAccounts = runRegistry("coach-accounts-");
@@ -6,6 +7,11 @@ const coachAccounts = runRegistry("coach-accounts-");
 const OWNED_BY_RUN_COACHES = `owner_account_id in (
     select id from app.accounts where auth_subject_id = any($1::text[])
   )`;
+
+const RUN_EXERCISE_VIDEOS = `
+  select video_file_id as "videoId" from app.exercises
+  where ${OWNED_BY_RUN_COACHES} and video_file_id is not null
+`;
 
 const LIBRARIES = [
   {
@@ -35,6 +41,14 @@ export async function cleanUpRunLibraries(
   const pool = createE2eDatabasePool();
 
   try {
+    const { rows } = await pool.query<{ videoId: string }>(
+      RUN_EXERCISE_VIDEOS,
+      [authSubjectIds],
+    );
+    removeExerciseVideoFiles(
+      rows.map(({ videoId }) => videoId),
+      logPrefix,
+    );
     for (const { label, statement } of LIBRARIES) {
       const { rowCount } = await pool.query(statement, [authSubjectIds]);
       console.log(`${logPrefix} ${label}: removed ${rowCount ?? 0}`);

@@ -1,6 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   Exercise,
+  InvalidStoredExerciseError,
   type ExerciseSnapshot,
 } from "@eli-coach-platform/domain/exercise";
 import { describe, expect, it } from "vitest";
@@ -26,9 +27,12 @@ const SQUAT: ExerciseSnapshot = {
   difficulty: "Intermediate",
   tags: ["Strength"],
   cues: "Brace.",
+  video: null,
   createdAt: AT,
   updatedAt: AT,
 };
+
+const VIDEO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 const SQUAT_ROW = {
   id: SQUAT.id,
@@ -43,6 +47,9 @@ const SQUAT_ROW = {
   secondaryMuscles: ["Core"],
   equipment: ["Barbell"],
   tags: ["Strength"],
+  videoId: null,
+  videoFormat: null,
+  videoSizeBytes: null,
   createdAt: AT,
   updatedAt: AT,
 };
@@ -64,10 +71,17 @@ const OTHER_UNIQUE_VIOLATION = Object.assign(new Error("Failed query"), {
 type Write =
   { insert: unknown; row: unknown } | { update: unknown; row: unknown };
 
-function createDatabase(failure?: Error) {
+function createDatabase(failure?: Error, rows: unknown[] = []) {
   const writes: Write[] = [];
   const settle = () => (failure ? Promise.reject(failure) : Promise.resolve());
   const client = {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          orderBy: () => Promise.resolve(rows),
+        }),
+      }),
+    }),
     insert: (table: unknown) => ({
       values: (row: unknown) => {
         writes.push({ insert: table, row });
@@ -103,6 +117,32 @@ describe("PostgresExerciseLibrary#add", () => {
     ]);
   });
 
+  it("writes the exercise's video in its video id, format and size columns", async () => {
+    // arrange
+    const database = createDatabase();
+    const library = new PostgresExerciseLibrary(database.client);
+    const withVideo = Exercise.reconstitute({
+      ...SQUAT,
+      video: { videoId: VIDEO_ID, format: "mov", sizeBytes: 4_096 },
+    });
+
+    // act
+    await library.add(withVideo);
+
+    // assert
+    expect(database.writes).toEqual([
+      {
+        insert: exercisesTable,
+        row: {
+          ...SQUAT_ROW,
+          videoId: VIDEO_ID,
+          videoFormat: "mov",
+          videoSizeBytes: 4_096,
+        },
+      },
+    ]);
+  });
+
   it("answers that the name is taken when the unique name index refuses the row", async () => {
     // arrange
     const database = createDatabase(NAME_TAKEN);
@@ -125,6 +165,45 @@ describe("PostgresExerciseLibrary#add", () => {
 
     // assert
     await expect(adding).rejects.toBe(OTHER_UNIQUE_VIOLATION);
+  });
+});
+
+describe("PostgresExerciseLibrary#list", () => {
+  it("reads a row's video columns back as its video, and empty columns as none", async () => {
+    // arrange
+    const database = createDatabase(undefined, [
+      SQUAT_ROW,
+      {
+        ...SQUAT_ROW,
+        videoId: VIDEO_ID,
+        videoFormat: "mp4",
+        videoSizeBytes: 2_048,
+      },
+    ]);
+    const library = new PostgresExerciseLibrary(database.client);
+
+    // act
+    const exercises = await library.list(COACH_ACCOUNT_ID);
+
+    // assert
+    expect(exercises.map((exercise) => exercise.toSnapshot().video)).toEqual([
+      null,
+      { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
+    ]);
+  });
+
+  it("refuses a stored row that breaks an exercise rule instead of answering it", async () => {
+    // arrange
+    const database = createDatabase(undefined, [
+      { ...SQUAT_ROW, unit: "breaths" },
+    ]);
+    const library = new PostgresExerciseLibrary(database.client);
+
+    // act
+    const listing = library.list(COACH_ACCOUNT_ID);
+
+    // assert
+    await expect(listing).rejects.toThrow(InvalidStoredExerciseError);
   });
 });
 

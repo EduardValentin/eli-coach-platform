@@ -9,14 +9,19 @@ import type {
   ExerciseReplacement,
 } from "./exercise-library";
 import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
+import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
+import type {
+  ExerciseVideoStore,
+  StagedExerciseVideo,
+} from "./exercise-video-store";
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
-const COACH_ACCOUNT_ID = "coach-account-1";
-const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000001";
+const OTHER_COACH_ACCOUNT_ID = "c0000000-0000-4000-8000-000000000002";
 
 const STORED_SQUAT: ExerciseSnapshot = {
-  id: "exercise-1",
+  id: "e0000000-0000-4000-8000-000000000001",
   ownerAccountId: COACH_ACCOUNT_ID,
   name: "Back squat",
   type: "resistance",
@@ -28,20 +33,25 @@ const STORED_SQUAT: ExerciseSnapshot = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
+  video: {
+    videoId: "9c1b0000-0000-4000-8000-000000000001",
+    format: "mp4",
+    sizeBytes: 2_048,
+  },
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
 };
 
 const HIP_THRUST = Exercise.reconstitute({
   ...STORED_SQUAT,
-  id: "exercise-2",
+  id: "e0000000-0000-4000-8000-000000000002",
   name: "Hip thrust",
   primaryMuscles: ["Glutes"],
 });
 
 const OTHER_COACHS_PLANK = Exercise.reconstitute({
   ...STORED_SQUAT,
-  id: "exercise-3",
+  id: "e0000000-0000-4000-8000-000000000003",
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
   name: "Plank",
 });
@@ -58,6 +68,37 @@ const SQUAT_REVISED: ExerciseDraftInput = {
   tags: ["Strength", "Recovery"],
   cues: "Elbows high.",
 };
+
+const EDITED_SQUAT: ExerciseSnapshot = {
+  id: "e0000000-0000-4000-8000-000000000001",
+  ownerAccountId: COACH_ACCOUNT_ID,
+  name: "Front squat",
+  type: "mobility",
+  unit: "time",
+  perSide: true,
+  primaryMuscles: ["Quadriceps", "Core"],
+  secondaryMuscles: ["Glutes"],
+  equipment: [],
+  difficulty: "Advanced",
+  tags: ["Strength", "Recovery"],
+  cues: "Elbows high.",
+  video: {
+    videoId: "9c1b0000-0000-4000-8000-000000000001",
+    format: "mp4",
+    sizeBytes: 2_048,
+  },
+  createdAt: CREATED_AT,
+  updatedAt: NOW,
+};
+
+const STAGED: StagedExerciseVideo = {
+  stagingId: "staging-2",
+  sizeBytes: 4_096,
+  leadingBytes: new Uint8Array([0, 0, 0, 20, 102, 116, 121, 112]),
+};
+
+const KEEP = { kind: "keep" } as const;
+const ATTACH = { kind: "attach", staged: STAGED } as const;
 
 function createUseCase() {
   const stored = [
@@ -86,14 +127,26 @@ function createUseCase() {
   const incidents = {
     exerciseCreationFailed: vi.fn(),
     exerciseEditFailed: vi.fn(),
+    videoCleanupFailed: vi.fn(),
   } satisfies ExerciseLibraryIncidents;
+  const formats = {
+    detect: vi.fn(async (): Promise<string | null> => "mov"),
+  } satisfies ExerciseVideoFormatDetector;
+  const store = {
+    keep: vi.fn(async () => undefined),
+    discard: vi.fn(async () => undefined),
+    remove: vi.fn(async () => undefined),
+  } satisfies Pick<ExerciseVideoStore, "keep" | "discard" | "remove">;
   const useCase = new EditExerciseUseCase({
     library,
+    videoIds: { generate: () => "9c1b0000-0000-4000-8000-000000000002" },
     clock: { now: () => NOW },
     incidents,
+    formats,
+    store,
   });
 
-  return { useCase, library, incidents };
+  return { useCase, library, incidents, formats, store };
 }
 
 describe("EditExerciseUseCase", () => {
@@ -104,27 +157,13 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
-    const edited = Exercise.reconstitute({
-      id: "exercise-1",
-      ownerAccountId: COACH_ACCOUNT_ID,
-      name: "Front squat",
-      type: "mobility",
-      unit: "time",
-      perSide: true,
-      primaryMuscles: ["Quadriceps", "Core"],
-      secondaryMuscles: ["Glutes"],
-      equipment: [],
-      difficulty: "Advanced",
-      tags: ["Strength", "Recovery"],
-      cues: "Elbows high.",
-      createdAt: CREATED_AT,
-      updatedAt: NOW,
-    });
+    const edited = Exercise.reconstitute(EDITED_SQUAT);
     expect(result).toEqual({ status: "edited", exercise: edited });
     expect(library.replace).toHaveBeenCalledWith(edited);
   });
@@ -136,8 +175,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: " back SQUAT " },
+      video: KEEP,
     });
 
     // assert
@@ -152,8 +192,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "hip THRUST" },
+      video: KEEP,
     });
 
     // assert
@@ -168,8 +209,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, name: "plank" },
+      video: KEEP,
     });
 
     // assert
@@ -184,8 +226,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: { ...SQUAT_REVISED, type: "stretching", unit: "reps" },
+      video: KEEP,
     });
 
     // assert
@@ -204,8 +247,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
@@ -219,8 +263,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-404",
+      exerciseId: "e0000000-0000-4000-8000-000000000404",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
@@ -235,8 +280,9 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: OTHER_COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
@@ -253,15 +299,16 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
     expect(result).toEqual({ status: "failed" });
     expect(library.replace).not.toHaveBeenCalled();
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       error: failure,
     });
   });
@@ -275,15 +322,220 @@ describe("EditExerciseUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       draft: SQUAT_REVISED,
+      video: KEEP,
     });
 
     // assert
     expect(result).toEqual({ status: "failed" });
     expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: "exercise-1",
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
       error: failure,
     });
+  });
+
+  it("replaces the video with an accepted new one and removes the replaced file once the edit is written", async () => {
+    // arrange
+    const { useCase, library, formats, store } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    const edited = Exercise.reconstitute({
+      ...EDITED_SQUAT,
+      video: {
+        videoId: "9c1b0000-0000-4000-8000-000000000002",
+        format: "mov",
+        sizeBytes: 4_096,
+      },
+    });
+    expect(result).toEqual({ status: "edited", exercise: edited });
+    expect(formats.detect).toHaveBeenCalledWith(STAGED.leadingBytes);
+    expect(store.keep).toHaveBeenCalledWith(
+      "staging-2",
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
+    expect(library.replace).toHaveBeenCalledWith(edited);
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
+    expect(library.replace.mock.invocationCallOrder[0]).toBeLessThan(
+      store.remove.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it("removes the video and deletes its file once the edit is written", async () => {
+    // arrange
+    const { useCase, library, store } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: { kind: "remove" },
+    });
+
+    // assert
+    const edited = Exercise.reconstitute({ ...EDITED_SQUAT, video: null });
+    expect(result).toEqual({ status: "edited", exercise: edited });
+    expect(library.replace).toHaveBeenCalledWith(edited);
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000001",
+    );
+  });
+
+  it("reports a replaced file it could not delete and still answers the exercise edited", async () => {
+    // arrange
+    const failure = new Error("disk unavailable");
+    const { useCase, incidents, store } = createUseCase();
+    store.remove.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: { kind: "remove" },
+    });
+
+    // assert
+    expect(result.status).toBe("edited");
+    expect(incidents.videoCleanupFailed).toHaveBeenCalledWith({
+      videoId: "9c1b0000-0000-4000-8000-000000000001",
+      error: failure,
+    });
+  });
+
+  it("refuses content that is not an .mp4 or .mov video, discards it and keeps the current video", async () => {
+    // arrange
+    const { useCase, library, formats, store } = createUseCase();
+    formats.detect.mockResolvedValueOnce(null);
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { video: "unsupported" },
+    });
+    expect(store.discard).toHaveBeenCalledWith("staging-2");
+    expect(store.remove).not.toHaveBeenCalled();
+    expect(library.replace).not.toHaveBeenCalled();
+  });
+
+  it("removes the new file and keeps the current one when the library finds the name taken", async () => {
+    // arrange
+    const { useCase, library, store } = createUseCase();
+    library.replace.mockResolvedValueOnce("name-taken");
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
+  });
+
+  it("removes the new file, keeps the current one and answers failed when the write throws", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const { useCase, library, incidents, store } = createUseCase();
+    library.replace.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(store.remove).toHaveBeenCalledExactlyOnceWith(
+      "9c1b0000-0000-4000-8000-000000000002",
+    );
+    expect(incidents.exerciseEditFailed).toHaveBeenCalledWith({
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      error: failure,
+    });
+  });
+
+  it("discards the staged video when there is no exercise to edit", async () => {
+    // arrange
+    const { useCase, store } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000404",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(store.discard).toHaveBeenCalledWith("staging-2");
+    expect(store.keep).not.toHaveBeenCalled();
+  });
+
+  it("discards the staged video when the read fails", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const { useCase, library, store } = createUseCase();
+    library.list.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(store.discard).toHaveBeenCalledWith("staging-2");
+  });
+
+  it("names a taken name beside the draft's other problems", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: { ...SQUAT_REVISED, name: " hip thrust", primaryMuscles: [] },
+      video: KEEP,
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { name: "taken", primaryMuscles: "missing" },
+    });
+    expect(library.replace).not.toHaveBeenCalled();
   });
 });

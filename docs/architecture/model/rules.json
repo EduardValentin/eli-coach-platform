@@ -12,6 +12,7 @@
     { "match": "packages/db/src/**", "ring": "adapters", "kind": "adapter", "actors": [] },
     { "match": "packages/config/src/**", "ring": "adapters", "kind": "config", "actors": [] },
     { "match": "packages/content/src/**", "ring": "adapters", "kind": "boundary-data", "actors": [] },
+    { "match": "packages/infrastructure/src/**/create-*.server.ts", "ring": "adapters", "kind": "composition-root", "actors": [] },
     { "match": "packages/infrastructure/src/**", "ring": "adapters", "kind": "adapter", "actors": [] },
     { "match": "packages/ui/src/**", "ring": "adapters", "kind": "ui", "actors": [] },
     { "match": "packages/test-support/src/**", "ring": "adapters", "kind": "test", "actors": [] },

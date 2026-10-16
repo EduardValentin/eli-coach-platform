@@ -29,6 +29,7 @@
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/infrastructure": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
+    "@fastify/busboy": "catalog:",
     "@fontsource-variable/dm-sans": "catalog:",
     "@fontsource-variable/playfair-display": "catalog:",
     "@hookform/resolvers": "catalog:",

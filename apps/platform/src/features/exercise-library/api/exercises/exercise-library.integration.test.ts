@@ -1,3 +1,9 @@
+import { readFile } from "node:fs/promises";
+
+import {
+  LANDSCAPE_SAMPLE_VIDEO_PATH,
+  PORTRAIT_SAMPLE_VIDEO_PATH,
+} from "@eli-coach-platform/test-support/sample-videos";
 import {
   afterAll,
   afterEach,
@@ -14,6 +20,7 @@ import {
   LIBRARY_PAGE,
   VISITOR,
   type ExerciseFields,
+  type UploadedVideo,
 } from "~integration-test-config/exercise-library-journey";
 import {
   CLIENT_SESSION,
@@ -121,6 +128,22 @@ const MALFORMED_BODIES: [string, unknown][] = [
   ["a body missing a field", { ...BACK_SQUAT, cues: undefined }],
   ["a field of the wrong shape", { ...BACK_SQUAT, perSide: "no" }],
 ];
+
+const FIFTY_MEGABYTES = 50 * 1024 * 1024;
+
+async function sampleVideo(
+  path: string,
+  file: Omit<UploadedVideo, "bytes">,
+): Promise<UploadedVideo> {
+  return { ...file, bytes: new Uint8Array(await readFile(path)) };
+}
+
+function paddedTo(video: UploadedVideo, sizeBytes: number): UploadedVideo {
+  const bytes = new Uint8Array(sizeBytes);
+  bytes.set(video.bytes);
+
+  return { ...video, bytes };
+}
 
 describe.sequential("exercise library integration", () => {
   beforeAll(async () => {
@@ -449,6 +472,384 @@ describe.sequential("exercise library integration", () => {
     });
   });
 
+  describe("an exercise's demo video", () => {
+    let landscape: UploadedVideo;
+    let portrait: UploadedVideo;
+
+    beforeAll(async () => {
+      landscape = await sampleVideo(LANDSCAPE_SAMPLE_VIDEO_PATH, {
+        name: "squat.mp4",
+        type: "video/mp4",
+      });
+      portrait = await sampleVideo(PORTRAIT_SAMPLE_VIDEO_PATH, {
+        name: "squat.mov",
+        type: "video/quicktime",
+      });
+    });
+
+    beforeEach(async () => {
+      await library.clearVideoFiles();
+    });
+
+    async function squatWithVideo(video: UploadedVideo) {
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        video,
+      );
+
+      if (response.status !== 200) {
+        throw new Error(`Uploading answered ${response.status}.`);
+      }
+
+      const [squat] = await library.exerciseRows();
+
+      if (!squat) {
+        throw new Error("The exercise was not stored.");
+      }
+
+      return { squat, video: await library.videoColumnsOf(squat.id) };
+    }
+
+    it("stores the uploaded video with the exercise as a private file of its exact bytes", async () => {
+      // arrange
+      const video = landscape;
+
+      // act
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        video,
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(LIBRARY);
+      const [squat] = await library.exerciseRows();
+      const columns = await library.videoColumnsOf(squat?.id ?? "");
+      expect(columns).toEqual({
+        videoId: expect.any(String),
+        videoFormat: "mp4",
+        videoSizeBytes: video.bytes.byteLength,
+      });
+      expect(await library.videoFiles()).toEqual({
+        kept: [columns.videoId],
+        incoming: [],
+      });
+      expect(
+        new Uint8Array(
+          await readFile(library.keptVideoPath(columns.videoId ?? "")),
+        ),
+      ).toEqual(video.bytes);
+    });
+
+    it("replaces the video with a QuickTime one and deletes the replaced file", async () => {
+      // arrange
+      const { squat, video: first } = await squatWithVideo(landscape);
+
+      // act
+      const response = await library.editWithVideo(COACH_SESSION, squat.id, {
+        fields: { ...BACK_SQUAT, video: "attach" },
+        video: portrait,
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      const second = await library.videoColumnsOf(squat.id);
+      expect(second).toEqual({
+        videoId: expect.any(String),
+        videoFormat: "mov",
+        videoSizeBytes: portrait.bytes.byteLength,
+      });
+      expect(second.videoId).not.toBe(first.videoId);
+      expect(await library.videoFiles()).toEqual({
+        kept: [second.videoId],
+        incoming: [],
+      });
+    });
+
+    it("keeps the video through a plain save of the exercise", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(landscape);
+
+      // act
+      const response = await library.edit(COACH_SESSION, squat.id, {
+        ...BACK_SQUAT,
+        cues: "Brace.",
+        video: "keep",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.videoColumnsOf(squat.id)).toEqual(video);
+      expect((await library.videoFiles()).kept).toEqual([video.videoId]);
+    });
+
+    it("removes the video and deletes its file", async () => {
+      // arrange
+      const { squat } = await squatWithVideo(landscape);
+
+      // act
+      const response = await library.edit(COACH_SESSION, squat.id, {
+        ...BACK_SQUAT,
+        video: "remove",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.videoColumnsOf(squat.id)).toEqual({
+        videoId: null,
+        videoFormat: null,
+        videoSizeBytes: null,
+      });
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it("refuses a file renamed to .mp4 that holds no video, naming the video field, and stores nothing", async () => {
+      // arrange
+      const renamed = {
+        name: "notes.mp4",
+        type: "video/mp4",
+        bytes: new TextEncoder().encode(
+          "Squat notes, not a video.\n".repeat(200),
+        ),
+      };
+
+      // act
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        renamed,
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({
+        problems: { video: "unsupported" },
+      });
+      expect(await library.exerciseRows()).toEqual([]);
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it("refuses a video one byte over 50 MB as too large, naming the video field, and stores nothing", async () => {
+      // arrange
+      const oversized = paddedTo(landscape, FIFTY_MEGABYTES + 1);
+
+      // act
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        oversized,
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({
+        problems: { video: "too-large" },
+      });
+      expect(await library.exerciseRows()).toEqual([]);
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it("answers 413 to an upload beyond 50 MB and its form allowance, and stores nothing", async () => {
+      // arrange
+      const beyondTheRequestCap = paddedTo(
+        landscape,
+        FIFTY_MEGABYTES + 2 * 1024 * 1024,
+      );
+
+      // act
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, video: "attach" },
+        beyondTheRequestCap,
+      );
+
+      // assert
+      expect(response.status).toBe(413);
+      expect(await response.json()).toEqual({
+        problems: { video: "too-large" },
+      });
+      expect(await library.exerciseRows()).toEqual([]);
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it("leaves no file behind when the save refuses the name as taken", async () => {
+      // arrange
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+
+      // act
+      const response = await library.createWithVideo(
+        COACH_SESSION,
+        { ...BACK_SQUAT, name: " hip THRUST", video: "attach" },
+        landscape,
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({ problems: { name: "taken" } });
+      expect(await library.videoFiles()).toEqual({ kept: [], incoming: [] });
+    });
+
+    it("plays the whole video to the coach, privately cacheable under its stored id", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(landscape);
+
+      // act
+      const response = await library.playVideo(COACH_SESSION, squat.id, {
+        videoId: video.videoId ?? "",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(Object.fromEntries(response.headers)).toMatchObject({
+        "accept-ranges": "bytes",
+        "cache-control": "private, max-age=31536000, immutable",
+        "content-length": String(landscape.bytes.byteLength),
+        "content-type": "video/mp4",
+        "cross-origin-resource-policy": "same-origin",
+        "x-content-type-options": "nosniff",
+      });
+      expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+        landscape.bytes,
+      );
+    });
+
+    it("answers a range request with 206 and exactly the bytes asked for", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(landscape);
+      const size = landscape.bytes.byteLength;
+
+      // act
+      const response = await library.playVideo(COACH_SESSION, squat.id, {
+        videoId: video.videoId ?? "",
+        range: "bytes=100-199",
+      });
+
+      // assert
+      expect(response.status).toBe(206);
+      expect(response.headers.get("Content-Range")).toBe(
+        `bytes 100-199/${size}`,
+      );
+      expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+        landscape.bytes.slice(100, 200),
+      );
+    });
+
+    it("answers a suffix range with the video's last bytes", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(portrait);
+      const size = portrait.bytes.byteLength;
+
+      // act
+      const response = await library.playVideo(COACH_SESSION, squat.id, {
+        videoId: video.videoId ?? "",
+        range: "bytes=-64",
+      });
+
+      // assert
+      expect(response.status).toBe(206);
+      expect(response.headers.get("Content-Range")).toBe(
+        `bytes ${size - 64}-${size - 1}/${size}`,
+      );
+      expect(response.headers.get("Content-Type")).toBe("video/quicktime");
+      expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+        portrait.bytes.slice(size - 64),
+      );
+    });
+
+    it("answers 416 with the video's size to a range starting past its end", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(landscape);
+      const size = landscape.bytes.byteLength;
+
+      // act
+      const response = await library.playVideo(COACH_SESSION, squat.id, {
+        videoId: video.videoId ?? "",
+        range: `bytes=${size}-`,
+      });
+
+      // assert
+      expect(response.status).toBe(416);
+      expect(response.headers.get("Content-Range")).toBe(`bytes */${size}`);
+    });
+
+    it("answers 404 for a replaced video's address", async () => {
+      // arrange
+      const { squat, video: replaced } = await squatWithVideo(landscape);
+      await library.editWithVideo(COACH_SESSION, squat.id, {
+        fields: { ...BACK_SQUAT, video: "attach" },
+        video: portrait,
+      });
+
+      // act
+      const response = await library.playVideo(COACH_SESSION, squat.id, {
+        videoId: replaced.videoId ?? "",
+      });
+
+      // assert
+      expect(response.status).toBe(404);
+    });
+
+    it.each([
+      { who: "another coach", requester: OTHER_COACH_SESSION },
+      { who: "a signed-in client", requester: CLIENT_SESSION },
+      { who: "a signed-out visitor", requester: VISITOR },
+    ] as const)(
+      "refuses $who the video as not found",
+      async ({ requester }) => {
+        // arrange
+        await rig.provisionOtherCoach();
+        await rig.provisionClient();
+        const { squat, video } = await squatWithVideo(landscape);
+
+        // act
+        const response = await library.playVideo(requester, squat.id, {
+          videoId: video.videoId ?? "",
+        });
+
+        // assert
+        expect(response.status).toBe(404);
+      },
+    );
+
+    it("shows the exercise as having a video attached in the library", async () => {
+      // arrange
+      await squatWithVideo(landscape);
+      await library.createAccepted(COACH_SESSION, HIP_THRUST);
+
+      // act
+      const response = await library.openLibrary(COACH_SESSION);
+
+      // assert
+      expect(response.status).toBe(200);
+      const page = await pageTextOf(response);
+      expect(page).toContain("Difficulty Video Actions");
+      expect(page).toContain(
+        [
+          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate Attached",
+          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
+        ].join(" "),
+      );
+    });
+
+    it("refuses a write to the video address", async () => {
+      // arrange
+      const { squat, video } = await squatWithVideo(landscape);
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `/api/exercises/${squat.id}/video/${video.videoId}`,
+        { method: "DELETE" },
+      );
+
+      // assert
+      expect(response.status).toBe(405);
+      expect((await library.videoFiles()).kept).toEqual([video.videoId]);
+    });
+  });
+
   describe("whose library it is", () => {
     beforeEach(async () => {
       await rig.provisionOtherCoach();
@@ -582,7 +983,7 @@ describe.sequential("exercise library integration", () => {
   });
 
   describe("the coach's pages", () => {
-    it("lists every exercise A to Z with its type, equipment, tags, primary muscles and difficulty", async () => {
+    it("lists every exercise A to Z with its type, equipment, tags, primary muscles, difficulty and whether it has a video", async () => {
       // arrange
       await library.createAccepted(COACH_SESSION, HIP_THRUST);
       await library.createAccepted(COACH_SESSION, PLANK);
@@ -600,10 +1001,10 @@ describe.sequential("exercise library integration", () => {
       );
       expect(page).toContain(
         [
-          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate",
-          "Box breathing Breathing · Mat Recovery Core Beginner",
-          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner",
-          "plank Resistance · No equipment Core Beginner",
+          "Back squat Resistance · Barbell, Squat rack Strength Quadriceps Glutes Intermediate —",
+          "Box breathing Breathing · Mat Recovery Core Beginner —",
+          "Hip thrust Resistance · Barbell, Bench Hypertrophy Glutes Beginner —",
+          "plank Resistance · No equipment Core Beginner —",
         ].join(" "),
       );
     });

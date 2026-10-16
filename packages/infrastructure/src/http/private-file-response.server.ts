@@ -1,7 +1,6 @@
 import { basename } from "node:path";
-import { ReadableStream as NodeReadableStream } from "node:stream/web";
 
-type FileBytes = AsyncIterable<Uint8Array> | Iterable<Uint8Array>;
+import { type FileBytes, streamOf } from "./file-byte-stream.server";
 
 type AttachmentOptions = {
   sizeBytes?: number;
@@ -16,10 +15,6 @@ const PRIVATE_FILE_HEADERS = {
   "Cross-Origin-Resource-Policy": "same-origin",
   "X-Content-Type-Options": "nosniff",
 } as const;
-
-function streamOf(bytes: FileBytes): ReadableStream<Uint8Array> {
-  return NodeReadableStream.from(bytes) as ReadableStream<Uint8Array>;
-}
 
 function quotedFilenameOf(filename: string): string {
   return filename.replace(/[\r\n"\\/]/g, "").replace(/[^\x20-\x7e]/g, "_");

@@ -31,6 +31,10 @@ const BACK_SQUAT: ExerciseView = {
   difficulty: "Intermediate",
   tags: ["Strength", "Hypertrophy"],
   cues: "Brace, then sit between the hips.",
+  video: {
+    path: "/api/exercises/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/video/7c6b5a49-3827-4161-a5b4-c3d2e1f0a9b8",
+    format: "mp4",
+  },
 };
 
 const BOX_BREATHING: ExerciseView = {
@@ -45,6 +49,7 @@ const BOX_BREATHING: ExerciseView = {
   difficulty: "Beginner",
   tags: [],
   cues: "",
+  video: null,
 };
 
 afterEach(() => {
@@ -66,23 +71,38 @@ describe("the coach's exercise library", () => {
     );
   });
 
-  it("lists every exercise in the library's order with its type, equipment, tags, primary muscles and difficulty", async () => {
+  it("lists every exercise in the library's order with its type, equipment, tags, primary muscles, difficulty and whether a video is attached", async () => {
     // arrange, act
     await renderLibrary({ exercises: [BACK_SQUAT, BOX_BREATHING] });
 
     // assert
     expect(
       screen.getAllByRole("columnheader").map((header) => header.textContent),
-    ).toEqual(["Exercise", "Tags", "Target muscles", "Difficulty", "Actions"]);
+    ).toEqual([
+      "Exercise",
+      "Tags",
+      "Target muscles",
+      "Difficulty",
+      "Video",
+      "Actions",
+    ]);
     expect(rowTexts()).toEqual([
       [
         "Back squatResistance · Barbell, Squat rack",
         "StrengthHypertrophy",
         "QuadricepsGlutes",
         "Intermediate",
+        "Attached",
         "",
       ],
-      ["Box breathingBreathing · No equipment", "", "Core", "Beginner", ""],
+      [
+        "Box breathingBreathing · No equipment",
+        "",
+        "Core",
+        "Beginner",
+        "—",
+        "",
+      ],
     ]);
   });
 
@@ -131,6 +151,7 @@ describe("the coach's exercise library", () => {
       screen.getByText("Exercises you add appear here."),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(2);
+    expect(screen.getAllByRole("cell")[0]).toHaveAttribute("colspan", "6");
   });
 });
 

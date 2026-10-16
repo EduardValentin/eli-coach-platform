@@ -1,7 +1,8 @@
 import {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-} from "@eli-coach-platform/ui/lib";
+  useUploadState,
+  type UploadState,
+} from "@eli-coach-platform/infrastructure/http";
+import { useSaveFetcher, type SaveOutcome } from "@eli-coach-platform/ui/lib";
 import {
   PortalBackLink,
   PortalPageHeader,
@@ -19,6 +20,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { exerciseVideoUploadProgress } from "~/features/exercise-library/public/exercise-video-upload-progress";
 import {
   exerciseProblemsAnswerSchema,
   exerciseSavedAnswerSchema,
@@ -42,14 +44,39 @@ import {
   exerciseFieldProblemsOf,
   exerciseFormResolver,
   exerciseFormValuesOf,
-  exerciseRequestOf,
+  exerciseSaveBodyOf,
+  serverVideoRefusalMessage,
   newExerciseFormValues,
   shownExerciseProblemsOf,
+  UNTOUCHED_VIDEO,
   type ExerciseFormValues,
+  type ChosenExerciseVideo,
   type ExerciseProblemField,
+  type ExerciseVideoEntry,
 } from "./exercise-form";
+import {
+  ExerciseVideoField,
+  isVideoUploading,
+  type ExerciseVideoFieldHandle,
+  type VideoUploadState,
+} from "./exercise-video-field";
 
 const SAVE_FAILED = "We couldn't save the exercise. Try again in a moment.";
+
+const NOT_UPLOADING: VideoUploadState = { state: "idle" };
+
+const UPLOAD_FAILED: VideoUploadState = { state: "failed" };
+
+function videoUploadStateOf(
+  chosen: ChosenExerciseVideo,
+  failedUpload: File | null,
+  uploadState: UploadState,
+): VideoUploadState {
+  if (chosen.kind !== "attach") return NOT_UPLOADING;
+  if (chosen.file === failedUpload) return UPLOAD_FAILED;
+
+  return uploadState;
+}
 
 export async function loader(args: LoaderFunctionArgs) {
   const { exerciseLibrary } = args.context.get(exerciseLibraryContext);
@@ -75,6 +102,7 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   const navigate = useNavigate();
   const takenNames = useRef<readonly string[]>(editor.otherNames);
   const sentName = useRef("");
+  const videoField = useRef<ExerciseVideoFieldHandle>(null);
   const [resolver] = useState(() =>
     exerciseFormResolver(() => takenNames.current),
   );
@@ -87,6 +115,8 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
   });
   const values = form.watch();
   const problems = shownExerciseProblemsOf(form.formState.errors);
+  const [video, setVideo] = useState<ExerciseVideoEntry>(UNTOUCHED_VIDEO);
+  const [failedUpload, setFailedUpload] = useState<File | null>(null);
 
   useEffect(
     () =>
@@ -121,26 +151,50 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     return refusedFields;
   };
 
-  const settle = (outcome: JsonSaveOutcome<ExerciseProblems>) => {
+  const showRefusedVideo = (problems: ExerciseProblems): boolean => {
+    if (problems.video === undefined || video.chosen.kind !== "attach") {
+      return false;
+    }
+
+    const problem = serverVideoRefusalMessage(
+      problems.video,
+      video.chosen.file,
+    );
+    setVideo((current) => ({ ...current, problem }));
+    return true;
+  };
+
+  const showRefusal = (problems: ExerciseProblems): boolean => {
+    const fieldsShown = showRefusedFields(problems).length > 0;
+    const videoShown = showRefusedVideo(problems);
+
+    if (videoShown && !fieldsShown) videoField.current?.queueReplaceFocus();
+
+    return fieldsShown || videoShown;
+  };
+
+  const settle = (outcome: SaveOutcome<ExerciseProblems>) => {
     if (outcome.status === "saved") {
       toast.success(exercise ? "Exercise updated" : "Exercise created");
       void navigate(outcome.redirectTo);
       return;
     }
 
-    if (outcome.status === "failed") {
-      toast.error(SAVE_FAILED);
+    if (outcome.status === "refused") {
+      rememberTakenName(outcome.problems);
+
+      if (showRefusal(outcome.problems)) return;
+    }
+
+    if (video.chosen.kind === "attach") {
+      setFailedUpload(video.chosen.file);
       return;
     }
 
-    rememberTakenName(outcome.problems);
-
-    if (showRefusedFields(outcome.problems).length === 0) {
-      toast.error(SAVE_FAILED);
-    }
+    toast.error(SAVE_FAILED);
   };
 
-  const { save, saving } = useJsonSaveFetcher({
+  const { save, saving, fetcherState } = useSaveFetcher({
     target: exercise
       ? { action: exercisePath(exercise.id), method: "put" }
       : { action: EXERCISE_LIBRARY_API_PATHS.exercises, method: "post" },
@@ -148,10 +202,17 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
     refusedAnswer: exerciseProblemsAnswerSchema,
     onSettled: settle,
   });
+  const uploadState = useUploadState(exerciseVideoUploadProgress, fetcherState);
+  const videoUpload = videoUploadStateOf(
+    video.chosen,
+    failedUpload,
+    uploadState,
+  );
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
-    save(exerciseRequestOf(submitted));
+    setFailedUpload(null);
+    save(exerciseSaveBodyOf(submitted, video.chosen));
   });
 
   return (
@@ -173,7 +234,20 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
             problems={problems}
             values={values}
           />
-          <ExerciseCoachingSection form={form} problems={problems} />
+          <ExerciseCoachingSection
+            form={form}
+            problems={problems}
+            videoField={
+              <ExerciseVideoField
+                onChange={setVideo}
+                onRetry={() => void submit()}
+                ref={videoField}
+                upload={videoUpload}
+                stored={exercise?.video ?? null}
+                video={video}
+              />
+            }
+          />
         </div>
 
         <div
@@ -193,8 +267,14 @@ function ExerciseEditor({ editor }: { editor: ExerciseEditorView }) {
             type="submit"
             variant="primary"
           >
-            <Check aria-hidden="true" size={16} />
-            {exercise ? "Save changes" : "Create exercise"}
+            {isVideoUploading(videoUpload) ? (
+              "Saving…"
+            ) : (
+              <>
+                <Check aria-hidden="true" size={16} />
+                {exercise ? "Save changes" : "Create exercise"}
+              </>
+            )}
           </Button>
         </div>
       </form>

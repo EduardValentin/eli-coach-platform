@@ -1,6 +1,6 @@
-import { useId, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { Check, Dumbbell, Film, Target, UploadCloud } from 'lucide-react';
+import { Check, Dumbbell, Film, RefreshCw, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
@@ -31,23 +31,26 @@ import {
   VIDEO_ACCEPT,
   isVideoFile,
   isWithinVideoLimit,
+  videoContentRejectionMessage,
   videoRejectionMessage,
   videoTooLargeMessage,
 } from '../../utils/exerciseVideo';
 import { libraryReturnPath, toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
-import { MediaOverlayActions } from '../../components/MediaOverlayActions';
+import { FileDropzone } from '../../components/FileDropzone';
+import { MediaRemoveButton } from '../../components/MediaRemoveButton';
 import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../components/SettingsSection';
 import { CheckboxChip } from '../../components/CheckboxChip';
+import { Alert, AlertAction } from '../../components/ui/alert';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { Progress } from '../../components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
-import { cn } from '../../components/ui/utils';
 
 const MUSCLE_LABELS = labelsOf(MUSCLES);
 const EQUIPMENT_LABELS = labelsOf(EQUIPMENT);
@@ -55,6 +58,8 @@ const DIFFICULTY_LABELS = labelsOf(DIFFICULTIES);
 const BOTH_SIDES = 'both';
 const ONE_SIDE = 'one';
 const VIDEO_GUIDANCE = 'MP4 or MOV up to 50 MB, in a format that plays well on a phone.';
+const VIDEO_PROMPT = 'Drop a video here or choose one';
+const UPLOAD_FAILED = 'The upload didn’t go through. Your entries are still here.';
 
 type Draft = ExerciseDraft & { measureTouched: boolean };
 
@@ -92,21 +97,73 @@ type VideoState = { file: File | null; preview: string | null; error: string | n
 const NO_VIDEO: VideoState = { file: null, preview: null, error: null };
 
 function videoFrom(exercise: Exercise | undefined): VideoState {
-  return exercise?.videoUrl ? { file: null, preview: `mock-url-${exercise.videoUrl}`, error: null } : NO_VIDEO;
+  return exercise?.videoUrl ? { file: null, preview: exercise.videoUrl, error: null } : NO_VIDEO;
 }
 
-function VideoField({ video, onChange }: { video: VideoState; onChange: (video: VideoState) => void }) {
+type VideoSaving =
+  | { state: 'idle' }
+  | { state: 'uploading'; progress: number }
+  | { state: 'finishing' }
+  | { state: 'failed' };
+
+const NOT_SAVING: VideoSaving = { state: 'idle' };
+const UPLOAD_FAILED_STATE: VideoSaving = { state: 'failed' };
+
+function videoSavingAt(progress: number): VideoSaving {
+  return progress < 1 ? { state: 'uploading', progress } : { state: 'finishing' };
+}
+
+function isSaving(saving: VideoSaving): boolean {
+  return saving.state === 'uploading' || saving.state === 'finishing';
+}
+
+function videoSavingMessage(saving: VideoSaving): string {
+  return saving.state === 'uploading' ? `Uploading video… ${Math.round(saving.progress * 100)}%` : 'Finishing up…';
+}
+
+function VideoSaveProgress({ saving }: { saving: VideoSaving }) {
+  return (
+    <div role="status" className="grid max-w-md gap-2 empty:hidden" data-parity="exercise-video-progress">
+      {isSaving(saving) && (
+        <>
+          <p className="text-sm text-text-secondary tabular-nums">{videoSavingMessage(saving)}</p>
+          <Progress
+            aria-label="Video upload"
+            value={saving.state === 'uploading' ? saving.progress * 100 : undefined}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+type VideoFieldFocus = 'replace' | 'picker' | null;
+
+type VideoFieldHandle = { queueReplaceFocus: () => void };
+
+type VideoFieldProps = {
+  video: VideoState;
+  saving: VideoSaving;
+  onChange: (video: VideoState) => void;
+  onRetry: () => void;
+};
+
+const VideoField = forwardRef<VideoFieldHandle, VideoFieldProps>(function VideoField(
+  { video, saving, onChange, onRetry },
+  ref,
+) {
   const errorId = useId();
   const input = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
-  const browse = () => input.current?.click();
-  const pickerTrigger = {
+  const picker = useRef<HTMLInputElement>(null);
+  const replaceButton = useRef<HTMLButtonElement>(null);
+  const pendingFocus = useRef<VideoFieldFocus>(null);
+  const busy = isSaving(saving);
+  const refusal = {
     'aria-invalid': video.error ? true : undefined,
-    'aria-describedby': errorId,
+    'aria-describedby': video.error ? errorId : undefined,
   };
 
-  const take = (file: File | undefined) => {
-    if (!file) return;
+  const take = (file: File) => {
     if (!isVideoFile(file)) {
       onChange({ ...video, error: videoRejectionMessage(file) });
       return;
@@ -115,69 +172,120 @@ function VideoField({ video, onChange }: { video: VideoState; onChange: (video: 
       onChange({ ...video, error: videoTooLargeMessage(file) });
       return;
     }
+    if (!video.preview) pendingFocus.current = 'replace';
     onChange({ file, preview: URL.createObjectURL(file), error: null });
   };
 
+  const remove = () => {
+    pendingFocus.current = 'picker';
+    onChange(NO_VIDEO);
+  };
+
+  useImperativeHandle(ref, () => ({
+    queueReplaceFocus: () => {
+      pendingFocus.current = 'replace';
+    },
+  }));
+
+  useEffect(() => {
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
+    if (target === 'replace') replaceButton.current?.focus();
+    if (target === 'picker') picker.current?.focus();
+  });
+
   return (
-    <div className="grid max-w-md gap-2">
-      <input
-        ref={input}
-        type="file"
-        accept={VIDEO_ACCEPT}
-        className="hidden"
-        onChange={(event) => {
-          take(event.target.files?.[0]);
-          event.target.value = '';
-        }}
-      />
+    <div className="grid gap-3">
       {video.preview ? (
-        <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-card bg-surface-inverted">
-          <video src={video.preview} className="h-full w-full object-cover opacity-80" />
-          <MediaOverlayActions
-            subject="video"
-            onReplace={browse}
-            onRemove={() => onChange(NO_VIDEO)}
-            replaceProps={pickerTrigger}
+        <>
+          <input
+            ref={input}
+            type="file"
+            accept={VIDEO_ACCEPT}
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              if (file) take(file);
+            }}
+          />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3" data-parity="exercise-video-row">
+            <div
+              className="relative flex aspect-video w-full max-w-md items-center justify-center overflow-hidden rounded-card bg-surface-inverted"
+              data-parity="exercise-video-frame"
+            >
+              <video
+                src={video.preview}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label="Demo video preview"
+                className="h-full w-full object-contain"
+              />
+              <MediaRemoveButton
+                aria-label="Remove video"
+                disabled={busy}
+                onClick={remove}
+                className="absolute top-2 right-2"
+              />
+            </div>
+            <Button
+              ref={replaceButton}
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Replace video"
+              disabled={busy}
+              onClick={() => input.current?.click()}
+              {...refusal}
+            >
+              <RefreshCw aria-hidden="true" />
+              Replace
+            </Button>
+          </div>
+          <VideoSaveProgress saving={saving} />
+          {saving.state === 'failed' && (
+            <Alert className="max-w-md" action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>
+              {UPLOAD_FAILED}
+            </Alert>
+          )}
+        </>
+      ) : (
+        <div className="max-w-md">
+          <FileDropzone
+            ref={picker}
+            accept={VIDEO_ACCEPT}
+            prompt={VIDEO_PROMPT}
+            hint={VIDEO_GUIDANCE}
+            onFileChosen={take}
+            {...refusal}
           />
         </div>
-      ) : (
-        <div
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            take(event.dataTransfer.files[0]);
-          }}
-          className={cn('rounded-card border-2 border-dashed p-6 text-center transition-colors', {
-            'border-primary bg-primary-soft': dragging,
-            'border-border bg-surface-quiet': !dragging,
-          })}
-        >
-          <UploadCloud className="mx-auto mb-3 text-primary" size={24} aria-hidden="true" />
-          <p className="text-sm font-medium text-text-primary">Drag and drop video</p>
-          <p className="mb-4 mt-1 text-xs text-text-secondary">{VIDEO_GUIDANCE}</p>
-          <Button type="button" variant="outline" onClick={browse} {...pickerTrigger}>
-            Browse files
-          </Button>
-        </div>
       )}
-      <p id={errorId} role="alert" className="text-xs font-medium text-destructive empty:hidden">
-        {video.error}
-      </p>
+      <div id={errorId} role="alert" className="max-w-md empty:hidden">
+        {video.error && <InlineProblem>{video.error}</InlineProblem>}
+      </div>
     </div>
   );
-}
+});
 
 function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; library: string }) {
   const navigate = useNavigate();
-  const { exercises, addExercise, updateExercise } = useTraining();
+  const { exercises, addExercise, updateExercise, uploadExerciseVideo } = useTraining();
   const [draft, setDraft] = useState<Draft>(editing ? draftFrom(editing) : EMPTY);
   const [video, setVideo] = useState<VideoState>(videoFrom(editing));
+  const [saving, setSaving] = useState<VideoSaving>(NOT_SAVING);
   const [touched, setTouched] = useState(false);
+  const onPage = useRef(false);
+  const videoField = useRef<VideoFieldHandle>(null);
+
+  useEffect(() => {
+    onPage.current = true;
+    return () => {
+      onPage.current = false;
+    };
+  }, []);
+
   const ids = {
     name: useId(), nameProblem: useId(), type: useId(), measure: useId(),
     sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
@@ -194,6 +302,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const changeVideo = (next: VideoState) => {
     setTouched(true);
     setVideo(next);
+    setSaving(NOT_SAVING);
   };
   const set = <Key extends keyof Draft>(key: Key, value: Draft[Key]) =>
     change((previous) => ({ ...previous, [key]: value }));
@@ -209,23 +318,24 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const togglePrimary = (muscle: Muscle) =>
     change((previous) => ({ ...previous, ...withPrimaryMuscleToggled(previous, muscle) }));
 
-  const save = () => {
-    const record: Exercise = {
-      id: editing?.id ?? `e-${Date.now()}`,
-      name: draft.name.trim(),
-      cues: draft.cues.trim(),
-      type: draft.type,
-      measuredIn: draft.measuredIn,
-      perSide: draft.perSide,
-      primaryMuscles: [...draft.primaryMuscles],
-      secondaryMuscles: [...draft.secondaryMuscles],
-      equipment: [...draft.equipment],
-      difficulty: draft.difficulty,
-      tags: [...draft.tags],
-      videoUrl: video.file ? video.file.name : video.preview ? editing?.videoUrl : undefined,
-      thumbnailUrl: editing?.thumbnailUrl,
-      archivedAt: editing?.archivedAt,
-    };
+  const recordWith = (videoUrl: string | undefined): Exercise => ({
+    id: editing?.id ?? `e-${Date.now()}`,
+    name: draft.name.trim(),
+    cues: draft.cues.trim(),
+    type: draft.type,
+    measuredIn: draft.measuredIn,
+    perSide: draft.perSide,
+    primaryMuscles: [...draft.primaryMuscles],
+    secondaryMuscles: [...draft.secondaryMuscles],
+    equipment: [...draft.equipment],
+    difficulty: draft.difficulty,
+    tags: [...draft.tags],
+    videoUrl,
+    thumbnailUrl: editing?.thumbnailUrl,
+    archivedAt: editing?.archivedAt,
+  });
+
+  const commit = (record: Exercise) => {
     if (editing) {
       updateExercise(record);
       toast.success('Exercise updated');
@@ -234,6 +344,35 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
       toast.success('Exercise created');
     }
     navigate(library);
+  };
+
+  const uploadThenCommit = async (file: File) => {
+    setSaving(videoSavingAt(0));
+    const answer = await uploadExerciseVideo(file, (progress) => setSaving(videoSavingAt(progress))).catch(() => {
+      setSaving(UPLOAD_FAILED_STATE);
+      return null;
+    });
+    if (answer === null || !onPage.current) return;
+    if (answer.status === 'stored') {
+      commit(recordWith(answer.url));
+      return;
+    }
+
+    setSaving(NOT_SAVING);
+    setVideo((current) => ({ ...current, error: videoContentRejectionMessage(file) }));
+    videoField.current?.queueReplaceFocus();
+  };
+
+  const busy = isSaving(saving);
+  const submitLabel = editing ? 'Save changes' : 'Create exercise';
+
+  const save = () => {
+    if (busy) return;
+    if (video.file) {
+      void uploadThenCommit(video.file);
+      return;
+    }
+    commit(recordWith(video.preview ? editing?.videoUrl : undefined));
   };
 
   return (
@@ -419,7 +558,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
               />
             </SettingsRow>
             <SettingsRow as="fieldset" labelId={ids.videoLabel} title="Demo video" layout="stacked" data-parity="exercise-video-field">
-              <VideoField video={video} onChange={changeVideo} />
+              <VideoField ref={videoField} video={video} saving={saving} onChange={changeVideo} onRetry={save} />
             </SettingsRow>
           </SettingsRows>
         </SettingsSection>
@@ -429,9 +568,21 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
         <Link to={library} className={buttonVariants({ variant: 'ghost', size: 'md' })}>
           Cancel
         </Link>
-        <Button onClick={save} variant="primary" size="md" disabled={!isValidDraft(problems)}>
-          <Check size={16} />
-          {editing ? 'Save changes' : 'Create exercise'}
+        <Button
+          onClick={save}
+          variant="primary"
+          size="md"
+          disabled={!isValidDraft(problems) || busy}
+          aria-busy={busy || undefined}
+        >
+          {busy ? (
+            'Saving…'
+          ) : (
+            <>
+              <Check size={16} />
+              {submitLabel}
+            </>
+          )}
         </Button>
       </div>
     </div>

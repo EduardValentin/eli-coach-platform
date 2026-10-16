@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -20,6 +21,19 @@ function renderZone() {
 }
 
 describe('FileDropzone', () => {
+  it('hands its file input to a ref, so a caller can focus the picker', () => {
+    // arrange
+    const picker = createRef<HTMLInputElement>();
+
+    // act
+    render(
+      <FileDropzone accept=".pdf" hint={HINT} onFileChosen={vi.fn()} prompt={PROMPT} ref={picker} />,
+    );
+
+    // assert
+    expect(picker.current).toBe(screen.getByLabelText(PROMPT));
+  });
+
   it('names its file input by the prompt and describes it with the hint', () => {
     // arrange
     renderZone();

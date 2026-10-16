@@ -10,6 +10,10 @@ import { clerkShape, refineClerk } from "./concerns/clerk";
 import { clientFilesShape, refineClientFiles } from "./concerns/client-files";
 import { databaseShape } from "./concerns/database";
 import {
+  exerciseVideosShape,
+  refineExerciseVideos,
+} from "./concerns/exercise-videos";
+import {
   featureFlagsShape,
   refineFeatureFlagOverrides,
 } from "./concerns/feature-flags";
@@ -36,6 +40,7 @@ export const runtimeEnvironmentSchema = z
     ...paymentsShape,
     ...storeAssetsShape,
     ...clientFilesShape,
+    ...exerciseVideosShape,
     ...managementApiShape,
     ...assessmentCallsShape,
     ...featureFlagsShape,
@@ -47,6 +52,7 @@ export const runtimeEnvironmentSchema = z
   .superRefine(refineProductEmail)
   .superRefine(refinePayments)
   .superRefine(refineStoreAssets)
-  .superRefine(refineClientFiles);
+  .superRefine(refineClientFiles)
+  .superRefine(refineExerciseVideos);
 
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;

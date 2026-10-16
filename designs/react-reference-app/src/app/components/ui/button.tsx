@@ -12,10 +12,11 @@ const buttonClasses = cva(
         primary: "bg-primary text-primary-foreground not-aria-disabled:hover:bg-primary-hover",
         outline:
           "border border-control-border-soft bg-surface-base text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
-        ghost: "text-text-label not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+        ghost:
+          "text-text-label aria-invalid:text-destructive not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
         "ghost-muted":
-          "text-text-secondary not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
-        link: "text-primary underline-offset-4 not-aria-disabled:hover:underline",
+          "text-text-secondary aria-invalid:text-destructive not-aria-disabled:hover:bg-surface-quiet not-aria-disabled:hover:text-text-primary",
+        link: "text-primary underline-offset-4 aria-invalid:text-destructive not-aria-disabled:hover:underline",
         destructive:
           "bg-destructive text-destructive-foreground not-aria-disabled:hover:bg-destructive/90",
         "destructive-outline":
@@ -30,10 +31,15 @@ const buttonClasses = cva(
         "icon-md":
           "size-(--size-control-md) rounded-full [&_svg:not([class*='size-'])]:size-5",
       },
+      elevation: {
+        flat: "",
+        card: "shadow-card",
+      },
     },
     defaultVariants: {
       variant: "primary",
       size: "sm",
+      elevation: "flat",
     },
   },
 );
@@ -53,14 +59,14 @@ const Button = React.forwardRef<
     ButtonVariantProps & {
       asChild?: boolean;
     }
->(({ className, variant, size, asChild = false, ...props }, ref) => {
+>(({ className, variant, size, elevation, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
       ref={ref}
-      className={buttonVariants({ variant, size, className })}
+      className={buttonVariants({ variant, size, elevation, className })}
       {...props}
     />
   );

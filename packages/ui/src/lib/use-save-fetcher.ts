@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useFetcher, type SubmitTarget } from "react-router";
 
 type AnswerReading<Answer> =
@@ -8,29 +8,30 @@ type AnswerSchema<Answer> = {
   safeParse: (answer: unknown) => AnswerReading<Answer>;
 };
 
-export type JsonSaveTarget = { action: string; method: "post" | "put" };
+export type SaveTarget = { action: string; method: "post" | "put" };
 
-export type JsonSaveOutcome<Problems> =
+export type SaveOutcome<Problems> =
   | { status: "saved"; redirectTo: string }
   | { status: "refused"; problems: Problems }
   | { status: "failed" };
 
-type JsonSaveOptions<Problems> = {
-  target: JsonSaveTarget;
+type SaveOptions<Problems> = {
+  target: SaveTarget;
   savedAnswer: AnswerSchema<{ redirectTo: string }>;
   refusedAnswer: AnswerSchema<{ problems: Problems }>;
-  onSettled: (outcome: JsonSaveOutcome<Problems>) => void;
+  onSettled: (outcome: SaveOutcome<Problems>) => void;
 };
 
-export function useJsonSaveFetcher<Problems>({
+export function useSaveFetcher<Problems>({
   target,
   savedAnswer,
   refusedAnswer,
   onSettled,
-}: JsonSaveOptions<Problems>) {
+}: SaveOptions<Problems>) {
   const { data, state, submit } = useFetcher<unknown>();
+  const awaitingAnswer = useRef(false);
 
-  const outcomeOf = (answer: unknown): JsonSaveOutcome<Problems> => {
+  const outcomeOf = (answer: unknown): SaveOutcome<Problems> => {
     const saved = savedAnswer.safeParse(answer);
     if (saved.success) {
       return { status: "saved", redirectTo: saved.data.redirectTo };
@@ -45,6 +46,7 @@ export function useJsonSaveFetcher<Problems>({
   };
 
   const settle = useEffectEvent((answer: unknown) => {
+    awaitingAnswer.current = false;
     onSettled(outcomeOf(answer));
   });
 
@@ -55,12 +57,18 @@ export function useJsonSaveFetcher<Problems>({
   }, [data]);
 
   const save = (request: SubmitTarget) => {
+    if (awaitingAnswer.current) return;
+
+    awaitingAnswer.current = true;
     void submit(request, {
       ...target,
       defaultShouldRevalidate: false,
-      encType: "application/json",
+      encType:
+        request instanceof FormData
+          ? "multipart/form-data"
+          : "application/json",
     });
   };
 
-  return { save, saving: state !== "idle" };
+  return { save, saving: state !== "idle", fetcherState: state };
 }

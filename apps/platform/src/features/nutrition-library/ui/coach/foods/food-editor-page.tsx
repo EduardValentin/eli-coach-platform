@@ -1,7 +1,4 @@
-import {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-} from "@eli-coach-platform/ui/lib";
+import { useSaveFetcher, type SaveOutcome } from "@eli-coach-platform/ui/lib";
 import {
   PortalBackLink,
   PortalPageHeader,
@@ -118,7 +115,7 @@ function FoodEditor({ editor }: { editor: FoodEditorView }) {
     return refusedFields;
   };
 
-  const settle = (outcome: JsonSaveOutcome<FoodProblems>) => {
+  const settle = (outcome: SaveOutcome<FoodProblems>) => {
     if (outcome.status === "saved") {
       toast.success(food ? "Food updated" : "Food created");
       void navigate(outcome.redirectTo);
@@ -137,7 +134,7 @@ function FoodEditor({ editor }: { editor: FoodEditorView }) {
     }
   };
 
-  const { save, saving } = useJsonSaveFetcher({
+  const { save, saving } = useSaveFetcher({
     target: food
       ? { action: foodPath(food.id), method: "put" }
       : { action: NUTRITION_LIBRARY_API_PATHS.foods, method: "post" },

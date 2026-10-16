@@ -10,10 +10,7 @@ export {
   useConfirmedFetcherDialog,
   type DialogAfterAnswer,
 } from "./use-confirmed-fetcher-dialog";
-export {
-  useJsonSaveFetcher,
-  type JsonSaveOutcome,
-} from "./use-json-save-fetcher";
+export { useSaveFetcher, type SaveOutcome } from "./use-save-fetcher";
 export { PhoneLink } from "./phone-link";
 export { PORTAL_PAGE_TITLE_CLASS, VALUE_CLASS } from "./typography";
 export { toggled } from "./toggled";

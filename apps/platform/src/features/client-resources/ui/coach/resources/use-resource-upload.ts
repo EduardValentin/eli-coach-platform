@@ -2,12 +2,9 @@ import type {
   ResourceDetailsProblems,
   ResourceRefusal,
 } from "@eli-coach-platform/domain/client-resources";
-import {
-  IDLE_UPLOAD_PROGRESS,
-  type UploadProgressSnapshot,
-} from "@eli-coach-platform/infrastructure/http";
-import { useEffect, useEffectEvent, useRef, useSyncExternalStore } from "react";
-import { useFetcher, type Fetcher } from "react-router";
+import { useUploadState } from "@eli-coach-platform/infrastructure/http";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { useFetcher } from "react-router";
 
 import {
   addedResourceAnswerSchema,
@@ -17,11 +14,6 @@ import {
 import { clientResourcesPath } from "~/features/client-resources/public/paths";
 import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/public/resource-upload-parts";
 import { resourceUploadProgress } from "~/features/client-resources/public/resource-upload-progress";
-
-export type ResourceUploadState =
-  | { state: "idle" }
-  | { state: "sending"; fraction: number }
-  | { state: "preparing" };
 
 export type ResourceUploadOutcome =
   | { status: "added" }
@@ -35,27 +27,6 @@ export type ResourceUploadRequest = {
   description: string;
   tags: readonly string[];
 };
-
-const IDLE_UPLOAD: ResourceUploadState = { state: "idle" };
-
-const PREPARING_UPLOAD: ResourceUploadState = { state: "preparing" };
-
-function idleUploadProgress(): UploadProgressSnapshot {
-  return IDLE_UPLOAD_PROGRESS;
-}
-
-function uploadStateOf(
-  fetcherState: Fetcher["state"],
-  progress: UploadProgressSnapshot,
-): ResourceUploadState {
-  if (fetcherState !== "submitting") return IDLE_UPLOAD;
-  if (progress.phase === "sent") return PREPARING_UPLOAD;
-
-  return {
-    state: "sending",
-    fraction: progress.phase === "sending" ? progress.fraction : 0,
-  };
-}
 
 function outcomeOf(answer: unknown): ResourceUploadOutcome {
   if (addedResourceAnswerSchema.safeParse(answer).success) {
@@ -96,11 +67,7 @@ export function useResourceUpload(
 ) {
   const { data, state, submit } = useFetcher<unknown>();
   const awaitingAnswer = useRef(false);
-  const progress = useSyncExternalStore(
-    resourceUploadProgress.subscribe,
-    resourceUploadProgress.getSnapshot,
-    idleUploadProgress,
-  );
+  const uploadState = useUploadState(resourceUploadProgress, state);
 
   const settle = useEffectEvent((answer: unknown) => {
     awaitingAnswer.current = false;
@@ -125,5 +92,5 @@ export function useResourceUpload(
     });
   };
 
-  return { upload, uploadState: uploadStateOf(state, progress) };
+  return { upload, uploadState };
 }

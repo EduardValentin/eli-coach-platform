@@ -44,6 +44,7 @@ import { CoachSettingsPage } from "./coach-settings-page";
 import { ExerciseEditorPage } from "./exercise-editor-page";
 import { ExerciseLibraryPage } from "./exercise-library-page";
 import { ExerciseRequests } from "./exercise-requests";
+import { ExerciseVideoSamples } from "./exercise-video-files";
 import { FoodEditorPage } from "./food-editor-page";
 import { FoodRequests } from "./food-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -157,6 +158,7 @@ type PlatformFixtures = {
   exerciseEditor: ExerciseEditorPage;
   exerciseRequests: ExerciseRequests;
   visitorExerciseRequests: ExerciseRequests;
+  exerciseVideoSamples: ExerciseVideoSamples;
   nutritionLibrary: NutritionLibraryPage;
   foodEditor: FoodEditorPage;
   foodRequests: FoodRequests;
@@ -581,6 +583,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
     await use(new ExerciseRequests(visitor));
     await visitor.dispose();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  exerciseVideoSamples: async ({}, use) => {
+    const samples = new ExerciseVideoSamples();
+
+    await use(samples);
+    samples.dispose();
   },
 
   nutritionLibrary: async ({ page }, use) => {

@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./stripe-webhook-signature": "./src/stripe-webhook-signature.ts",
-    "./sample-documents": "./src/sample-documents.ts"
+    "./sample-documents": "./src/sample-documents.ts",
+    "./sample-videos": "./src/sample-videos/index.ts"
   },
   "dependencies": {
     "archiver": "catalog:",
