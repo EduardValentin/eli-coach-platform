@@ -1,6 +1,6 @@
 # Decisions
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-16 at commit 413f5b71, change review, merged with the GEN-222 notifications change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; audit 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts; last update 2026-10-16 at commit 59e18407, change review.
 
 ## Deferred decisions
 
