@@ -53,24 +53,30 @@ type ExerciseRevisionInput = {
   video: ExerciseVideoChange;
 };
 
+type ExerciseFields = Omit<ExerciseSnapshot, "video">;
+
 export type ExerciseRevision = {
   exercise: Exercise;
   replacedVideo: ExerciseVideo | null;
 };
 
 export class Exercise {
-  private constructor(private readonly snapshot: ExerciseSnapshot) {}
+  private constructor(
+    private readonly fields: ExerciseFields,
+    private readonly attachedVideo: ExerciseVideo | null,
+  ) {}
 
   static added(input: AddedExerciseInput): Exercise {
-    return new Exercise({
-      id: input.id,
-      ownerAccountId: input.ownerAccountId,
-      ...input.draft.toSnapshot(),
-      video:
-        input.video.kind === "attach" ? input.video.video.toSnapshot() : null,
-      createdAt: input.at,
-      updatedAt: input.at,
-    });
+    return new Exercise(
+      {
+        id: input.id,
+        ownerAccountId: input.ownerAccountId,
+        ...input.draft.toSnapshot(),
+        createdAt: input.at,
+        updatedAt: input.at,
+      },
+      input.video.kind === "attach" ? input.video.video : null,
+    );
   }
 
   static reconstitute(stored: StoredExercise): Exercise {
@@ -89,61 +95,53 @@ export class Exercise {
       throw new InvalidStoredExerciseError(broken);
     }
 
-    return new Exercise({
-      id,
-      ownerAccountId,
-      ...draft.draft.toSnapshot(),
-      video: video && ExerciseVideo.fromStored(video).toSnapshot(),
-      createdAt,
-      updatedAt,
-    });
+    return new Exercise(
+      { id, ownerAccountId, ...draft.draft.toSnapshot(), createdAt, updatedAt },
+      video && ExerciseVideo.fromStored(video),
+    );
   }
 
   get id(): string {
-    return this.snapshot.id;
+    return this.fields.id;
   }
 
   get name(): string {
-    return this.snapshot.name;
+    return this.fields.name;
   }
 
   get video(): ExerciseVideo | null {
-    return this.snapshot.video && ExerciseVideo.fromStored(this.snapshot.video);
+    return this.attachedVideo;
   }
 
   revised(input: ExerciseRevisionInput): ExerciseRevision {
     return {
-      exercise: new Exercise({
-        ...this.snapshot,
-        ...input.draft.toSnapshot(),
-        video: this.videoAfter(input.video),
-        updatedAt: input.at,
-      }),
-      replacedVideo: input.video.kind === "keep" ? null : this.video,
+      exercise: new Exercise(
+        { ...this.fields, ...input.draft.toSnapshot(), updatedAt: input.at },
+        this.videoAfter(input.video),
+      ),
+      replacedVideo: input.video.kind === "keep" ? null : this.attachedVideo,
     };
   }
 
   toSnapshot(): ExerciseSnapshot {
     return {
-      ...this.snapshot,
-      primaryMuscles: [...this.snapshot.primaryMuscles],
-      secondaryMuscles: [...this.snapshot.secondaryMuscles],
-      equipment: [...this.snapshot.equipment],
-      tags: [...this.snapshot.tags],
-      video: this.snapshot.video && { ...this.snapshot.video },
+      ...this.fields,
+      primaryMuscles: [...this.fields.primaryMuscles],
+      secondaryMuscles: [...this.fields.secondaryMuscles],
+      equipment: [...this.fields.equipment],
+      tags: [...this.fields.tags],
+      video: this.attachedVideo && this.attachedVideo.toSnapshot(),
     };
   }
 
-  private videoAfter(
-    change: ExerciseVideoChange,
-  ): ExerciseVideoSnapshot | null {
+  private videoAfter(change: ExerciseVideoChange): ExerciseVideo | null {
     switch (change.kind) {
       case "keep":
-        return this.snapshot.video;
+        return this.attachedVideo;
       case "remove":
         return null;
       case "attach":
-        return change.video.toSnapshot();
+        return change.video;
     }
   }
 }
