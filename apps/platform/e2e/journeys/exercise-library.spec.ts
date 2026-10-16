@@ -2576,3 +2576,255 @@ test(
     await exerciseLibrary.expectHeadingFocused();
   },
 );
+
+test(
+  "the delete confirmation keeps the exercise on Cancel, Escape and a click outside, and returns focus to the row's menu",
+  { tag: "@completeness" },
+  async ({
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const squat = hipThrustNamed(`Back squat ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createAccepted(squat);
+    await exerciseLibrary.open();
+
+    for (const keep of [
+      () => exerciseLibrary.cancelDelete(),
+      () => exerciseLibrary.dismissDeleteWithEscape(),
+      () => exerciseLibrary.dismissDeleteFromOutside(),
+    ]) {
+      // act
+      await exerciseLibrary.requestDelete(squat.name);
+      await keep();
+
+      // assert
+      await exerciseLibrary.expectRowMenuButtonFocused(squat.name);
+      await exerciseLibrary.expectListedNamesExactly([squat.name]);
+    }
+
+    // act
+    await page.reload();
+
+    // assert
+    await exerciseLibrary.expectListedNamesExactly([squat.name]);
+  },
+);
+
+test(
+  "an archive, restore or delete of an exercise that is already gone says it failed and leaves the list as it was",
+  { tag: "@completeness" },
+  async ({
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const squat = hipThrustNamed(`Back squat ${scenarioTag}`);
+    const lunge = hipThrustNamed(`Walking lunge ${scenarioTag}`);
+    const plank = hipThrustNamed(`Side plank ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted([squat, lunge, plank]);
+    const idOf = async (name: string) => {
+      await exerciseLibrary.open();
+      await exerciseLibrary.edit(name);
+      return exerciseEditor.exerciseId();
+    };
+    const squatId = await idOf(squat.name);
+    const lungeId = await idOf(lunge.name);
+    const plankId = await idOf(plank.name);
+    await exerciseRequests.archive(lungeId);
+    await exerciseLibrary.open();
+    await exerciseRequests.remove(squatId);
+
+    // act
+    await exerciseLibrary.archive(squat.name);
+
+    // assert
+    await exerciseLibrary.expectToast(
+      `"${squat.name}" wasn’t archived. Try again.`,
+    );
+    await exerciseLibrary.expectListedNamesExactly([squat.name, plank.name]);
+
+    // act
+    await exerciseRequests.remove(plankId);
+    await exerciseLibrary.requestDelete(plank.name);
+    await exerciseLibrary.confirmDelete();
+
+    // assert
+    await exerciseLibrary.expectToast(
+      `"${plank.name}" wasn’t deleted. Try again.`,
+    );
+    await exerciseLibrary.expectListedNamesExactly([squat.name, plank.name]);
+
+    // act
+    await exerciseLibrary.open();
+    await exerciseLibrary.chooseStatus("Archived");
+    await exerciseRequests.remove(lungeId);
+    await exerciseLibrary.restore(lunge.name);
+
+    // assert
+    await exerciseLibrary.expectToast(
+      `"${lunge.name}" wasn’t restored. Try again.`,
+    );
+    await exerciseLibrary.expectListedNamesExactly([lunge.name]);
+  },
+);
+
+test(
+  "the Status filter sits after Equipment, counts under the other filters and the search, lives in the address through a reload and the back button, and outlasts Clear filters",
+  { tag: "@completeness" },
+  async ({
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const [jumpRope] = namesTagged(scenarioTag, ["Jump rope"]);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await exerciseRequests.createManyAccepted(grownLibraryTagged(scenarioTag));
+    await exerciseLibrary.open();
+    await exerciseLibrary.archive(jumpRope);
+    await exerciseLibrary.expectToast(`"${jumpRope}" archived`);
+
+    // assert
+    await exerciseLibrary.expectStatusAfterEquipmentBeforeSearch();
+    await exerciseLibrary.expectStatusCounts({ Active: 11, Archived: 1 });
+
+    // act
+    await exerciseLibrary.chooseType("Cardio");
+
+    // assert
+    await exerciseLibrary.expectStatusCounts({ Active: 1, Archived: 1 });
+
+    // act
+    await exerciseLibrary.search("rope");
+
+    // assert
+    await exerciseLibrary.expectStatusCounts({ Active: 0, Archived: 1 });
+
+    // act
+    await exerciseLibrary.open();
+    await exerciseLibrary.goToPage(2);
+    await exerciseLibrary.chooseStatus("Archived");
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ status: "archived" });
+    await exerciseLibrary.expectListedNamesExactly([jumpRope]);
+
+    // act
+    await page.reload();
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ status: "archived" });
+    await exerciseLibrary.expectListedNamesExactly([jumpRope]);
+
+    // act
+    await exerciseLibrary.startNewExercise();
+    await exerciseEditor.expectStillNew();
+    await page.goBack();
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ status: "archived" });
+    await exerciseLibrary.expectListedNamesExactly([jumpRope]);
+
+    // act
+    await exerciseLibrary.search("squat");
+
+    // assert
+    await exerciseLibrary.expectNoMatch();
+
+    // act
+    await exerciseLibrary.clearFilters();
+
+    // assert
+    await exerciseLibrary.expectAddressParams({ status: "archived" });
+    await exerciseLibrary.expectListedNamesExactly([jumpRope]);
+  },
+);
+
+test(
+  "an archived exercise frees its name for the editor and its own editor address returns to the library",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    exerciseEditor,
+    exerciseLibrary,
+    exerciseRequests,
+    page,
+    provisionCoach,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const hipThrust = hipThrustNamed(`Hip thrust ${scenarioTag}`);
+    const bridge = hipThrustNamed(`Glute bridge ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await exerciseRequests.createManyAccepted([hipThrust, bridge]);
+    await exerciseLibrary.open();
+    await exerciseLibrary.edit(hipThrust.name);
+    const archivedId = await exerciseEditor.exerciseId();
+    await exerciseLibrary.open();
+    await exerciseLibrary.archive(hipThrust.name);
+    await exerciseLibrary.expectToast(`"${hipThrust.name}" archived`);
+
+    // act
+    await exerciseEditor.open(archivedId);
+
+    // assert
+    await exerciseLibrary.expectOpen();
+
+    // act
+    await exerciseEditor.openNew();
+    await exerciseEditor.enter({
+      name: ` ${bridge.name.toUpperCase()} `,
+      primaryMuscles: ["Glutes"],
+    });
+
+    // assert
+    await exerciseEditor.expectOnlyProblem(
+      "Name",
+      "An exercise with this name already exists",
+    );
+
+    // act
+    await exerciseEditor.enter({ name: hipThrust.name });
+
+    // assert
+    await exerciseEditor.expectNoProblems();
+
+    // act
+    await exerciseEditor.create();
+
+    // assert
+    await exerciseLibrary.expectOpen();
+    await exerciseLibrary.expectToast("Exercise created");
+    await exerciseLibrary.expectListedNamesExactly([
+      bridge.name,
+      hipThrust.name,
+    ]);
+    await exerciseLibrary.expectStatusCounts({ Active: 2, Archived: 1 });
+  },
+);

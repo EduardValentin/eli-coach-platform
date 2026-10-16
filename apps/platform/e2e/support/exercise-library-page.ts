@@ -438,6 +438,14 @@ export class ExerciseLibraryPage {
     await this.expectOptionCounts("Status", counts);
   }
 
+  async expectStatusAfterEquipmentBeforeSearch(): Promise<void> {
+    await this.tabFromHeadingTo(this.filterTrigger("Equipment"));
+    await this.page.keyboard.press("Tab");
+    await expect(this.filterTrigger("Status")).toBeFocused();
+    await this.page.keyboard.press("Tab");
+    await expect(this.searchField).toBeFocused();
+  }
+
   async expectChosen(filter: SingleChoiceFilter, label: string) {
     await expect(this.filterTrigger(filter)).toHaveText(label);
   }
@@ -679,6 +687,21 @@ export class ExerciseLibraryPage {
   async confirmDeleteWithKeyboard(): Promise<void> {
     await tabTo(this.page, this.deleteDialogButton("Delete"));
     await this.page.keyboard.press("Enter");
+    await expect(this.deleteDialog).toBeHidden();
+  }
+
+  async cancelDelete(): Promise<void> {
+    await this.deleteDialogButton("Cancel").click();
+    await expect(this.deleteDialog).toBeHidden();
+  }
+
+  async dismissDeleteWithEscape(): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.deleteDialog).toBeHidden();
+  }
+
+  async dismissDeleteFromOutside(): Promise<void> {
+    await this.page.mouse.click(1, 1);
     await expect(this.deleteDialog).toBeHidden();
   }
 
