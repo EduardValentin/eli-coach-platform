@@ -3,21 +3,44 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import {
   checkInsListed,
   checkInTab,
+  expectCheckInsInOrder,
   expectJoinEmphasis,
   expectWaitingOnViewer,
   showCheckInTab,
+  type CheckInShowing,
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
+import {
+  chooseFilter,
+  chooseFilterByKeyboard,
+  expectAddressParams,
+  expectFilterReads,
+  expectOptionCounts,
+  expectShowing,
+  expectSortReads,
+  goToPage,
+  goToPageByKeyboard,
+  showTabByKeyboard,
+  toggleSortDirection,
+  toggleSortDirectionByKeyboard,
+  type AddressParams,
+  type CheckInFilter,
+  type CountedOption,
+  type OptionCounts,
+  type SortReading,
+} from "./check-in-toolbar";
 import { tabTo } from "./keyboard";
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { countedNavigationName } from "./navigation-counts";
 
 const CHECK_INS_PATH = "/coach/checkins";
 const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
 const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
 const REVIEW_URL = /[?&]checkin=/;
+const SEARCH_PARAM = "q";
 const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
@@ -52,9 +75,93 @@ export class CoachCheckInsPage {
     return this.page.getByRole("heading", { level: 1, name: "Check-ins" });
   }
 
+  private get searchField() {
+    return this.page.getByRole("searchbox", {
+      name: "Search check-ins",
+      exact: true,
+    });
+  }
+
   async open(): Promise<void> {
     await this.page.goto(CHECK_INS_PATH);
     await this.expectOpen();
+  }
+
+  async visitAddress(params: AddressParams): Promise<void> {
+    await this.page.goto(`${CHECK_INS_PATH}?${new URLSearchParams(params)}`);
+    await expect(this.heading).toBeVisible();
+  }
+
+  async expectInOrder(
+    tab: CheckInTab,
+    showing: readonly CheckInShowing[],
+  ): Promise<void> {
+    await expectCheckInsInOrder(this.page, tab, showing);
+  }
+
+  async expectOptionCounts(
+    filter: CheckInFilter,
+    counts: OptionCounts,
+  ): Promise<void> {
+    await expectOptionCounts(this.page, filter, counts);
+  }
+
+  async chooseKind(label: string): Promise<void> {
+    await chooseFilter(this.page, "Kind", label);
+  }
+
+  async chooseKindByKeyboard(option: CountedOption): Promise<void> {
+    await chooseFilterByKeyboard(this.page, "Kind", option);
+  }
+
+  async chooseWaitingByKeyboard(option: CountedOption): Promise<void> {
+    await chooseFilterByKeyboard(this.page, "Waiting on", option);
+  }
+
+  async expectKind(label: string): Promise<void> {
+    await expectFilterReads(this.page, "Kind", label);
+  }
+
+  async search(term: string): Promise<void> {
+    await expect(async () => {
+      await this.searchField.fill(term);
+      await expect(this.page).toHaveURL(
+        (url) => (url.searchParams.get(SEARCH_PARAM) ?? "") === term,
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+    }).toPass();
+  }
+
+  async toggleSort(): Promise<void> {
+    await toggleSortDirection(this.page);
+  }
+
+  async toggleSortByKeyboard(): Promise<void> {
+    await toggleSortDirectionByKeyboard(this.page);
+  }
+
+  async expectSort(reading: SortReading): Promise<void> {
+    await expectSortReads(this.page, reading);
+  }
+
+  async showTabByKeyboard(tab: CheckInTab): Promise<void> {
+    await showTabByKeyboard(this.page, tab);
+  }
+
+  async goToPage(pageNumber: number): Promise<void> {
+    await goToPage(this.page, pageNumber);
+  }
+
+  async goToPageByKeyboard(pageNumber: number): Promise<void> {
+    await goToPageByKeyboard(this.page, pageNumber);
+  }
+
+  async expectShowing(text: string): Promise<void> {
+    await expectShowing(this.page, text);
+  }
+
+  async expectAddress(params: AddressParams): Promise<void> {
+    await expectAddressParams(this.page, CHECK_INS_PATH, params);
   }
 
   async visitReview(checkInId: string): Promise<void> {

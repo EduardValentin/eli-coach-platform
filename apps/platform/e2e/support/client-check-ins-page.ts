@@ -13,11 +13,22 @@ import {
   expectJoinEmphasis,
   expectWaitingOnViewer,
   showCheckInTab,
+  type CheckInShowing,
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
+import {
+  chooseFilter,
+  clearFilters,
+  expectAddressParams,
+  expectNoMatch,
+  expectOptionCounts,
+  type AddressParams,
+  type CheckInFilter,
+  type OptionCounts,
+} from "./check-in-toolbar";
 import { DisabledAction } from "./disabled-action";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -100,15 +111,49 @@ export class ClientCheckInsPage {
     await showCheckInTab(this.page, tab);
   }
 
+  async expectTabShown(tab: CheckInTab): Promise<void> {
+    await expect(checkInTab(this.page, tab)).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  }
+
+  async expectOptionCounts(
+    filter: CheckInFilter,
+    counts: OptionCounts,
+  ): Promise<void> {
+    await expectOptionCounts(this.page, filter, counts);
+  }
+
+  async chooseKind(label: string): Promise<void> {
+    await chooseFilter(this.page, "Kind", label);
+  }
+
+  async chooseWaiting(label: string): Promise<void> {
+    await chooseFilter(this.page, "Waiting on", label);
+  }
+
+  async expectNoMatch(): Promise<void> {
+    await expectNoMatch(this.page);
+  }
+
+  async clearFilters(): Promise<void> {
+    await clearFilters(this.page);
+  }
+
+  async expectAddress(params: AddressParams): Promise<void> {
+    await expectAddressParams(this.page, CHECK_INS_PATH, params);
+  }
+
   checkIn(tab: CheckInTab, note: string): Locator {
     return checkInsListed(this.page, tab).filter({ hasText: note });
   }
 
   async expectInOrder(
     tab: CheckInTab,
-    notes: readonly string[],
+    showing: readonly CheckInShowing[],
   ): Promise<void> {
-    await expectCheckInsInOrder(this.page, tab, notes);
+    await expectCheckInsInOrder(this.page, tab, showing);
   }
 
   async expectEmpty(tab: CheckInTab, title: string): Promise<void> {

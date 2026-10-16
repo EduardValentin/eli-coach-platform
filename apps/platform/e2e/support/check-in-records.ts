@@ -105,6 +105,17 @@ const CANCEL_WAITING_REQUESTS = `
   where check_in_id in (select id from cancelled)
 `;
 
+const CANCEL_EVERY_UPCOMING = `
+  with cancelled as (
+    update app.check_ins set status = 'cancelled'
+    where status in ('pending', 'approved', 'clash')
+      and starts_at > now() - interval '1 hour'
+    returning id
+  )
+  delete from app.coach_time_reservations
+  where check_in_id in (select id from cancelled)
+`;
+
 const CANCEL_UPCOMING_CLASHES = `
   update app.check_ins set status = 'cancelled'
   where status = 'clash' and starts_at > now()
@@ -214,6 +225,10 @@ export class CheckInRecords {
 
   async cancelWaitingRequests(): Promise<void> {
     await this.pool.query(CANCEL_WAITING_REQUESTS);
+  }
+
+  async cancelEveryUpcoming(): Promise<void> {
+    await this.pool.query(CANCEL_EVERY_UPCOMING);
   }
 
   async cancelUpcomingClashes(): Promise<void> {
