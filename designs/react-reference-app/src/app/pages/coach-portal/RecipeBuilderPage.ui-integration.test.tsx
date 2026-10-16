@@ -308,3 +308,14 @@ describe('leaving the builder', () => {
     expect(screen.getByRole('main', { name: 'Recipe builder' })).toBeInTheDocument();
   });
 });
+
+describe('the builder outside the portal shell', () => {
+  it('takes the coach portal styling while it is open', () => {
+    // arrange
+    // act
+    renderBuilder();
+
+    // assert
+    expect(document.documentElement.dataset.portal).toBe('coach');
+  });
+});

@@ -73,6 +73,7 @@ import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { InlineProblem } from '../../components/InlineProblem';
+import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
@@ -959,6 +960,8 @@ function RecipeBuilderInner() {
 }
 
 export function RecipeBuilderPage() {
+  useCoachPortalScope();
+
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <DragLayerPreview />
