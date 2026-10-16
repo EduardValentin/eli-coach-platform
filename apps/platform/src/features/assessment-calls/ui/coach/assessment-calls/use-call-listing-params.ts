@@ -1,23 +1,25 @@
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import {
+  parsePage,
+  parseSort,
+  pathForPageOf,
+  setParamUnlessDefault,
+  sortParams,
+  useSearchParamsWriter,
+  type SortChoice,
+} from "@eli-coach-platform/ui/lib";
 import { useLocation } from "react-router";
 
 import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 
 import {
-  defaultDirectionFor,
-  parsePageParam,
-  parseSortDirectionParam,
   toCallWhen,
-  toSortKey,
+  CALL_SORT_RULE,
   DEFAULT_CALL_WHEN,
-  DEFAULT_SORT_KEY,
   DIRECTION_PARAM,
   FILTER_PARAMS,
-  FIRST_PAGE,
   QUERY_PARAM,
   SORT_PARAM,
   WHEN_PARAM,
-  type CallSort,
   type CoachCallWhen,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
@@ -30,7 +32,7 @@ export type CallListingParams = {
   page: number;
   pathForPage: (page: number) => string;
   query: string;
-  sort: CallSort;
+  sort: SortChoice<SortKey>;
   toggleSortDirection: () => void;
   when: CoachCallWhen;
 };
@@ -38,14 +40,11 @@ export type CallListingParams = {
 export function useCallListingParams(): CallListingParams {
   const { pathname } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
-  const sortKey = toSortKey(searchParams.get(SORT_PARAM));
-  const sort: CallSort = {
-    direction: parseSortDirectionParam(
-      searchParams.get(DIRECTION_PARAM),
-      sortKey,
-    ),
-    key: sortKey,
-  };
+  const sort = parseSort(
+    CALL_SORT_RULE,
+    searchParams.get(SORT_PARAM),
+    searchParams.get(DIRECTION_PARAM),
+  );
 
   const chooseWhen = (value: string) => {
     const chosen = toCallWhen(value);
@@ -74,49 +73,37 @@ export function useCallListingParams(): CallListingParams {
     });
   };
 
-  const chooseSortKey = (key: SortKey) => {
-    replaceSearchParams((params) => {
-      params.delete(COACH_CALLS_PAGE_PARAM);
-      params.delete(DIRECTION_PARAM);
-      setParamUnlessDefault(params, SORT_PARAM, {
-        defaultValue: DEFAULT_SORT_KEY,
-        value: key,
-      });
-    });
-  };
-
-  const toggleSortDirection = () => {
-    const reversed = sort.direction === "asc" ? "desc" : "asc";
+  const replaceSort = (next: SortChoice<SortKey>) => {
+    const written = sortParams(CALL_SORT_RULE, next);
 
     replaceSearchParams((params) => {
       params.delete(COACH_CALLS_PAGE_PARAM);
-      setParamUnlessDefault(params, DIRECTION_PARAM, {
-        defaultValue: defaultDirectionFor(sort.key),
-        value: reversed,
-      });
+      setParamOrDelete(params, SORT_PARAM, written.sort);
+      setParamOrDelete(params, DIRECTION_PARAM, written.dir);
     });
   };
 
-  const pathForPage = (chosen: number) => {
-    const params = new URLSearchParams(searchParams);
+  const chooseSortKey = (key: SortKey) =>
+    replaceSort({ direction: CALL_SORT_RULE.defaultDirection[key], key });
 
-    if (chosen === FIRST_PAGE) {
-      params.delete(COACH_CALLS_PAGE_PARAM);
-    } else {
-      params.set(COACH_CALLS_PAGE_PARAM, String(chosen));
-    }
+  const toggleSortDirection = () =>
+    replaceSort({
+      direction: sort.direction === "asc" ? "desc" : "asc",
+      key: sort.key,
+    });
 
-    const search = params.toString();
-
-    return search.length > 0 ? `${pathname}?${search}` : pathname;
-  };
+  const pathForPage = (chosen: number) =>
+    pathForPageOf(
+      { pageParam: COACH_CALLS_PAGE_PARAM, pathname, searchParams },
+      chosen,
+    );
 
   return {
     changeQuery,
     chooseSortKey,
     chooseWhen,
     clearFilters,
-    page: parsePageParam(searchParams.get(COACH_CALLS_PAGE_PARAM)),
+    page: parsePage(searchParams.get(COACH_CALLS_PAGE_PARAM)),
     pathForPage,
     query: searchParams.get(QUERY_PARAM) ?? "",
     sort,
@@ -125,17 +112,15 @@ export function useCallListingParams(): CallListingParams {
   };
 }
 
-type ParamChoice = { defaultValue: string; value: string };
-
-function setParamUnlessDefault(
+function setParamOrDelete(
   params: URLSearchParams,
   name: string,
-  choice: ParamChoice,
+  value: string | null,
 ): void {
-  if (choice.value === choice.defaultValue) {
+  if (value === null) {
     params.delete(name);
     return;
   }
 
-  params.set(name, choice.value);
+  params.set(name, value);
 }

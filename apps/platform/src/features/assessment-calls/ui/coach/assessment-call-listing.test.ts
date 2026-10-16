@@ -1,27 +1,21 @@
+import { parseSort, type SortChoice } from "@eli-coach-platform/ui/lib";
 import { describe, expect, it } from "vitest";
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 
 import {
-  PAGE_SIZE,
+  CALL_SORT_RULE,
   classifyCalls,
   countCallsLeftToday,
-  defaultDirectionFor,
   emptyListingCopy,
   filterCalls,
   hasActiveFilters,
-  haveOnlyListingParamsChanged,
   orderCalls,
   orderCallsBy,
-  pageOfCalls,
-  paginationSteps,
-  parsePageParam,
-  parseSortDirectionParam,
-  toSortKey,
   toCallWhen,
   upcomingCalls,
-  type CallSort,
   type ListingSelection,
+  type SortKey,
 } from "./assessment-call-listing";
 
 const BUCHAREST = "Europe/Bucharest";
@@ -328,13 +322,13 @@ describe("sorting the calls by a chosen key", () => {
     { now, timeZone: BUCHAREST },
   );
 
-  function sorted(sort: CallSort): string[] {
+  function sorted(sort: SortChoice<SortKey>): string[] {
     return orderCallsBy(calls, sort).map((call) => call.fullName);
   }
 
   it("keeps the listing order for the scheduled date by default", () => {
     // arrange
-    const sort: CallSort = { direction: "desc", key: "scheduled" };
+    const sort: SortChoice<SortKey> = { direction: "desc", key: "scheduled" };
 
     // act
     const ordered = sorted(sort);
@@ -350,7 +344,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("reverses the whole listing order for the scheduled date", () => {
     // arrange
-    const sort: CallSort = { direction: "asc", key: "scheduled" };
+    const sort: SortChoice<SortKey> = { direction: "asc", key: "scheduled" };
 
     // act
     const ordered = sorted(sort);
@@ -366,7 +360,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("puts the newest booking first by the booking date", () => {
     // arrange
-    const sort: CallSort = { direction: "desc", key: "booked" };
+    const sort: SortChoice<SortKey> = { direction: "desc", key: "booked" };
 
     // act
     const ordered = sorted(sort);
@@ -382,7 +376,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("puts the oldest booking first when the booking date is reversed", () => {
     // arrange
-    const sort: CallSort = { direction: "asc", key: "booked" };
+    const sort: SortChoice<SortKey> = { direction: "asc", key: "booked" };
 
     // act
     const ordered = sorted(sort);
@@ -398,7 +392,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("orders names A to Z regardless of case", () => {
     // arrange
-    const sort: CallSort = { direction: "asc", key: "name" };
+    const sort: SortChoice<SortKey> = { direction: "asc", key: "name" };
 
     // act
     const ordered = sorted(sort);
@@ -414,7 +408,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("orders names Z to A when reversed", () => {
     // arrange
-    const sort: CallSort = { direction: "desc", key: "name" };
+    const sort: SortChoice<SortKey> = { direction: "desc", key: "name" };
 
     // act
     const ordered = sorted(sort);
@@ -430,7 +424,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("orders email addresses A to Z regardless of case", () => {
     // arrange
-    const sort: CallSort = { direction: "asc", key: "email" };
+    const sort: SortChoice<SortKey> = { direction: "asc", key: "email" };
 
     // act
     const ordered = sorted(sort);
@@ -446,7 +440,7 @@ describe("sorting the calls by a chosen key", () => {
 
   it("orders email addresses Z to A when reversed", () => {
     // arrange
-    const sort: CallSort = { direction: "desc", key: "email" };
+    const sort: SortChoice<SortKey> = { direction: "desc", key: "email" };
 
     // act
     const ordered = sorted(sort);
@@ -467,10 +461,10 @@ describe("reading the sort from the URL", () => {
     const raw = ["scheduled", "booked", "name", "email", "phone", null];
 
     // act
-    const parsed = raw.map(toSortKey);
+    const keys = raw.map((key) => parseSort(CALL_SORT_RULE, key, null).key);
 
     // assert
-    expect(parsed).toEqual([
+    expect(keys).toEqual([
       "scheduled",
       "booked",
       "name",
@@ -482,10 +476,12 @@ describe("reading the sort from the URL", () => {
 
   it("starts dates newest first and text A to Z", () => {
     // arrange
-    const keys = ["scheduled", "booked", "name", "email"] as const;
+    const keys = ["scheduled", "booked", "name", "email"];
 
     // act
-    const directions = keys.map(defaultDirectionFor);
+    const directions = keys.map(
+      (key) => parseSort(CALL_SORT_RULE, key, null).direction,
+    );
 
     // assert
     expect(directions).toEqual(["desc", "desc", "asc", "asc"]);
@@ -493,14 +489,14 @@ describe("reading the sort from the URL", () => {
 
   it("accepts an explicit direction and falls back to the key's own", () => {
     // arrange, act
-    const explicit = parseSortDirectionParam("asc", "booked");
-    const missingForDate = parseSortDirectionParam(null, "booked");
-    const unknownForText = parseSortDirectionParam("sideways", "name");
+    const explicit = parseSort(CALL_SORT_RULE, "booked", "asc");
+    const missingForDate = parseSort(CALL_SORT_RULE, "booked", null);
+    const unknownForText = parseSort(CALL_SORT_RULE, "name", "sideways");
 
     // assert
-    expect(explicit).toBe("asc");
-    expect(missingForDate).toBe("desc");
-    expect(unknownForText).toBe("asc");
+    expect(explicit.direction).toBe("asc");
+    expect(missingForDate.direction).toBe("desc");
+    expect(unknownForText.direction).toBe("asc");
   });
 });
 
@@ -510,50 +506,6 @@ describe("reading the listing's URL", () => {
     expect(toCallWhen(null)).toBe("all");
     expect(toCallWhen("nonsense")).toBe("all");
     expect(toCallWhen("past")).toBe("past");
-  });
-
-  it("falls back to the first page for anything that is not a page number", () => {
-    // arrange, act, assert
-    expect(parsePageParam(null)).toBe(1);
-    expect(parsePageParam("0")).toBe(1);
-    expect(parsePageParam("-3")).toBe(1);
-    expect(parsePageParam("2.5")).toBe(1);
-    expect(parsePageParam("nonsense")).toBe(1);
-    expect(parsePageParam("3")).toBe(3);
-  });
-
-  it("recognises a change that only the browser has to answer", () => {
-    // arrange
-    const listing = new URL(
-      "https://evoa.test/coach/assessment-calls?when=past",
-    );
-    const paged = new URL(
-      "https://evoa.test/coach/assessment-calls?when=past&page=2",
-    );
-    const sorted = new URL(
-      "https://evoa.test/coach/assessment-calls?when=past&sort=name&dir=desc",
-    );
-    const elsewhere = new URL("https://evoa.test/coach/");
-
-    // act, assert
-    expect(haveOnlyListingParamsChanged(listing, paged, [])).toBe(true);
-    expect(haveOnlyListingParamsChanged(listing, sorted, [])).toBe(true);
-    expect(haveOnlyListingParamsChanged(listing, listing, [])).toBe(false);
-    expect(haveOnlyListingParamsChanged(listing, elsewhere, [])).toBe(false);
-  });
-
-  it("answers a change of a parameter the page adds to the listing in the browser too", () => {
-    // arrange
-    const listing = new URL("https://evoa.test/coach/assessment-calls");
-    const filtered = new URL(
-      "https://evoa.test/coach/assessment-calls?status=paid",
-    );
-
-    // act, assert
-    expect(haveOnlyListingParamsChanged(listing, filtered, ["status"])).toBe(
-      true,
-    );
-    expect(haveOnlyListingParamsChanged(listing, filtered, [])).toBe(false);
   });
 });
 
@@ -682,83 +634,5 @@ describe("telling what narrows the listing", () => {
     // assert
     expect(withActive).toBe(true);
     expect(withInactive).toBe(false);
-  });
-});
-
-describe("paging through the calls", () => {
-  const manyCalls = classifyCalls(
-    Array.from({ length: 25 }, (_, index) =>
-      callAt(new Date(NOON.getTime() + (index + 1) * 3_600_000).toISOString(), {
-        id: `call-${index + 1}`,
-      }),
-    ),
-    { now: NOON, timeZone: BUCHAREST },
-  );
-
-  it("shows a page of ten and says where in the run it sits", () => {
-    // arrange, act
-    const view = pageOfCalls(manyCalls, { page: 2, size: PAGE_SIZE });
-
-    // assert
-    expect(view.calls.map((call) => call.id)).toEqual([
-      "call-11",
-      "call-12",
-      "call-13",
-      "call-14",
-      "call-15",
-      "call-16",
-      "call-17",
-      "call-18",
-      "call-19",
-      "call-20",
-    ]);
-    expect(view).toMatchObject({
-      firstShown: 11,
-      lastShown: 20,
-      page: 2,
-      pageCount: 3,
-      total: 25,
-    });
-  });
-
-  it("clamps a page past the end of the run to the last one", () => {
-    // arrange, act
-    const view = pageOfCalls(manyCalls, { page: 99, size: PAGE_SIZE });
-
-    // assert
-    expect(view.page).toBe(3);
-    expect(view.calls).toHaveLength(5);
-    expect(view.firstShown).toBe(21);
-    expect(view.lastShown).toBe(25);
-  });
-
-  it("counts one empty page when there is nothing to show", () => {
-    // arrange, act
-    const view = pageOfCalls([], { page: 1, size: PAGE_SIZE });
-
-    // assert
-    expect(view).toMatchObject({
-      firstShown: 0,
-      lastShown: 0,
-      page: 1,
-      pageCount: 1,
-      total: 0,
-    });
-  });
-
-  it("lists every page while they still fit on one row", () => {
-    // arrange, act
-    const steps = paginationSteps(3, 7);
-
-    // assert
-    expect(steps).toEqual([1, 2, 3, 4, 5, 6, 7]);
-  });
-
-  it("gaps the pages far from the one being read", () => {
-    // arrange, act
-    const steps = paginationSteps(5, 12);
-
-    // assert
-    expect(steps).toEqual([1, "gap", 4, 5, 6, "gap", 12]);
   });
 });

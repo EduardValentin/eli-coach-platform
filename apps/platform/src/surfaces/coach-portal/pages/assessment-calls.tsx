@@ -1,4 +1,5 @@
 import type { AppointmentDetail } from "@eli-coach-platform/ui/appointments";
+import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
   useLoaderData,
@@ -9,8 +10,8 @@ import {
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import {
-  haveOnlyListingParamsChanged,
   isEndedCall,
+  LISTING_PARAMS,
   type ClassifiedCall,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section";
@@ -53,7 +54,10 @@ export function shouldRevalidate({
   defaultShouldRevalidate,
   nextUrl,
 }: ShouldRevalidateFunctionArgs) {
-  return haveOnlyListingParamsChanged(currentUrl, nextUrl, [SALES_STATUS_PARAM])
+  return haveOnlyListingParamsChanged(currentUrl, nextUrl, [
+    ...LISTING_PARAMS,
+    SALES_STATUS_PARAM,
+  ])
     ? false
     : defaultShouldRevalidate;
 }
