@@ -1,10 +1,6 @@
 import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
 
-import {
-  clockTimeOf,
-  emailMomentOf,
-  spacedPattern,
-} from "../support/check-in-moments";
+import { emailMomentOf, shownTimePatternOf } from "../support/check-in-moments";
 import { COACH_TIME_ZONE } from "../support/coach-availability";
 import { E2E_APP_URL } from "../support/e2e-app";
 import {
@@ -90,10 +86,6 @@ function coachDayNumberOf(instant: Date): number {
   }).format(instant);
 
   return Date.parse(`${coachDate}T00:00:00Z`) / DAY_MS;
-}
-
-function shownTimeOf(instant: Date): RegExp {
-  return new RegExp(spacedPattern(clockTimeOf(instant, CLIENT_TIME_ZONE)));
 }
 
 test(
@@ -675,7 +667,7 @@ test(
     // assert
     await clientCheckIns.expectInOrder("Upcoming", [FIRST_NOTE, SECOND_NOTE]);
     await expect(clientCheckIns.checkIn("Upcoming", FIRST_NOTE)).toContainText(
-      shownTimeOf(first.startsAt),
+      shownTimePatternOf(first.startsAt, CLIENT_TIME_ZONE),
     );
     await clientCheckIns.expectJoin(FIRST_NOTE, "quiet");
     await clientCheckIns.expectInOrder("Requests", [UNANSWERED_NOTE]);

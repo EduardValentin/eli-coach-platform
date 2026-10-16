@@ -124,7 +124,7 @@ export function matchesSelection<CheckIn extends ListedCheckIn>(
   return (
     matchesKind(checkIn, selection.kind) &&
     matchesWaiting(checkIn, selection.waiting) &&
-    (nameMatcherFor(selection.query, nameOf)?.(checkIn) ?? true)
+    matchesName(checkIn, selection.query, nameOf)
   );
 }
 
@@ -214,6 +214,14 @@ function matchesWaiting(
   }
 
   return checkIn.awaitsViewer === (waiting === "you");
+}
+
+function matchesName<CheckIn extends ListedCheckIn>(
+  checkIn: CheckIn,
+  query: string,
+  nameOf?: NameOf<CheckIn>,
+): boolean {
+  return nameMatcherFor(query, nameOf)?.(checkIn) ?? true;
 }
 
 function nameMatcherFor<CheckIn extends ListedCheckIn>(

@@ -20,11 +20,7 @@ import {
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
 import {
-  chooseFilter,
-  clearFilters,
-  expectAddressParams,
-  expectNoMatch,
-  expectOptionCounts,
+  CheckInToolbar,
   type AddressParams,
   type CheckInFilter,
   type OptionCounts,
@@ -48,6 +44,7 @@ const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 export class ClientCheckInsPage {
   private readonly requestAction: DisabledAction;
   private readonly rows: CheckInRows;
+  private readonly toolbar: CheckInToolbar;
 
   constructor(private readonly page: Page) {
     this.requestAction = new DisabledAction(page, {
@@ -56,6 +53,7 @@ export class ClientCheckInsPage {
       reason: WAITING_REASON,
     });
     this.rows = new CheckInRows(page);
+    this.toolbar = new CheckInToolbar(page);
   }
 
   private get requestButton() {
@@ -122,27 +120,27 @@ export class ClientCheckInsPage {
     filter: CheckInFilter,
     counts: OptionCounts,
   ): Promise<void> {
-    await expectOptionCounts(this.page, filter, counts);
+    await this.toolbar.expectOptionCounts(filter, counts);
   }
 
   async chooseKind(label: string): Promise<void> {
-    await chooseFilter(this.page, "Kind", label);
+    await this.toolbar.chooseFilter("Kind", label);
   }
 
   async chooseWaiting(label: string): Promise<void> {
-    await chooseFilter(this.page, "Waiting on", label);
+    await this.toolbar.chooseFilter("Waiting on", label);
   }
 
   async expectNoMatch(): Promise<void> {
-    await expectNoMatch(this.page);
+    await this.toolbar.expectNoMatch();
   }
 
   async clearFilters(): Promise<void> {
-    await clearFilters(this.page);
+    await this.toolbar.clearFilters();
   }
 
   async expectAddress(params: AddressParams): Promise<void> {
-    await expectAddressParams(this.page, CHECK_INS_PATH, params);
+    await this.toolbar.expectAddress(CHECK_INS_PATH, params);
   }
 
   checkIn(tab: CheckInTab, note: string): Locator {

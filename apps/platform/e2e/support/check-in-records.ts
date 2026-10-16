@@ -105,7 +105,7 @@ const CANCEL_WAITING_REQUESTS = `
   where check_in_id in (select id from cancelled)
 `;
 
-const CANCEL_EVERY_UPCOMING = `
+const CANCEL_EVERY_UNFINISHED_CHECK_IN = `
   with cancelled as (
     update app.check_ins set status = 'cancelled'
     where status in ('pending', 'approved', 'clash')
@@ -227,8 +227,8 @@ export class CheckInRecords {
     await this.pool.query(CANCEL_WAITING_REQUESTS);
   }
 
-  async cancelEveryUpcoming(): Promise<void> {
-    await this.pool.query(CANCEL_EVERY_UPCOMING);
+  async cancelEveryUnfinishedCheckIn(): Promise<void> {
+    await this.pool.query(CANCEL_EVERY_UNFINISHED_CHECK_IN);
   }
 
   async cancelUpcomingClashes(): Promise<void> {

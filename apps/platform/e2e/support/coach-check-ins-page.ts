@@ -14,18 +14,7 @@ import {
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
 import {
-  chooseFilter,
-  chooseFilterByKeyboard,
-  expectAddressParams,
-  expectFilterReads,
-  expectOptionCounts,
-  expectShowing,
-  expectSortReads,
-  goToPage,
-  goToPageByKeyboard,
-  showTabByKeyboard,
-  toggleSortDirection,
-  toggleSortDirectionByKeyboard,
+  CheckInToolbar,
   type AddressParams,
   type CheckInFilter,
   type CountedOption,
@@ -49,9 +38,11 @@ const AD_HOC = "Ad-hoc";
 
 export class CoachCheckInsPage {
   private readonly rows: CheckInRows;
+  private readonly toolbar: CheckInToolbar;
 
   constructor(private readonly page: Page) {
     this.rows = new CheckInRows(page);
+    this.toolbar = new CheckInToolbar(page);
   }
 
   private joinPathOf(checkInId: string): string {
@@ -90,78 +81,6 @@ export class CoachCheckInsPage {
   async visitAddress(params: AddressParams): Promise<void> {
     await this.page.goto(`${CHECK_INS_PATH}?${new URLSearchParams(params)}`);
     await expect(this.heading).toBeVisible();
-  }
-
-  async expectInOrder(
-    tab: CheckInTab,
-    showing: readonly CheckInShowing[],
-  ): Promise<void> {
-    await expectCheckInsInOrder(this.page, tab, showing);
-  }
-
-  async expectOptionCounts(
-    filter: CheckInFilter,
-    counts: OptionCounts,
-  ): Promise<void> {
-    await expectOptionCounts(this.page, filter, counts);
-  }
-
-  async chooseKind(label: string): Promise<void> {
-    await chooseFilter(this.page, "Kind", label);
-  }
-
-  async chooseKindByKeyboard(option: CountedOption): Promise<void> {
-    await chooseFilterByKeyboard(this.page, "Kind", option);
-  }
-
-  async chooseWaitingByKeyboard(option: CountedOption): Promise<void> {
-    await chooseFilterByKeyboard(this.page, "Waiting on", option);
-  }
-
-  async expectKind(label: string): Promise<void> {
-    await expectFilterReads(this.page, "Kind", label);
-  }
-
-  async search(term: string): Promise<void> {
-    await expect(async () => {
-      await this.searchField.fill(term);
-      await expect(this.page).toHaveURL(
-        (url) => (url.searchParams.get(SEARCH_PARAM) ?? "") === term,
-        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
-      );
-    }).toPass();
-  }
-
-  async toggleSort(): Promise<void> {
-    await toggleSortDirection(this.page);
-  }
-
-  async toggleSortByKeyboard(): Promise<void> {
-    await toggleSortDirectionByKeyboard(this.page);
-  }
-
-  async expectSort(reading: SortReading): Promise<void> {
-    await expectSortReads(this.page, reading);
-  }
-
-  async showTabByKeyboard(tab: CheckInTab): Promise<void> {
-    await showTabByKeyboard(this.page, tab);
-  }
-
-  async goToPage(pageNumber: number): Promise<void> {
-    await goToPage(this.page, pageNumber);
-  }
-
-  async goToPageByKeyboard(pageNumber: number): Promise<void> {
-    await goToPageByKeyboard(this.page, pageNumber);
-  }
-
-  async expectShowing(text: string): Promise<void> {
-    await expectShowing(this.page, text);
-  }
-
-  async expectAddress(params: AddressParams): Promise<void> {
-    await expectAddressParams(this.page, CHECK_INS_PATH, params);
   }
 
   async visitReview(checkInId: string): Promise<void> {
@@ -246,12 +165,84 @@ export class CoachCheckInsPage {
     );
   }
 
+  async expectOptionCounts(
+    filter: CheckInFilter,
+    counts: OptionCounts,
+  ): Promise<void> {
+    await this.toolbar.expectOptionCounts(filter, counts);
+  }
+
+  async chooseKind(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Kind", label);
+  }
+
+  async chooseKindByKeyboard(option: CountedOption): Promise<void> {
+    await this.toolbar.chooseFilterByKeyboard("Kind", option);
+  }
+
+  async chooseWaitingByKeyboard(option: CountedOption): Promise<void> {
+    await this.toolbar.chooseFilterByKeyboard("Waiting on", option);
+  }
+
+  async expectKind(label: string): Promise<void> {
+    await this.toolbar.expectFilterReads("Kind", label);
+  }
+
+  async search(term: string): Promise<void> {
+    await expect(async () => {
+      await this.searchField.fill(term);
+      await expect(this.page).toHaveURL(
+        (url) => (url.searchParams.get(SEARCH_PARAM) ?? "") === term,
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+    }).toPass();
+  }
+
+  async toggleSort(): Promise<void> {
+    await this.toolbar.toggleSort();
+  }
+
+  async toggleSortByKeyboard(): Promise<void> {
+    await this.toolbar.toggleSortByKeyboard();
+  }
+
+  async expectSort(reading: SortReading): Promise<void> {
+    await this.toolbar.expectSort(reading);
+  }
+
+  async showTabByKeyboard(tab: CheckInTab): Promise<void> {
+    await this.toolbar.showTabByKeyboard(tab);
+  }
+
+  async goToPage(pageNumber: number): Promise<void> {
+    await this.toolbar.goToPage(pageNumber);
+  }
+
+  async goToPageByKeyboard(pageNumber: number): Promise<void> {
+    await this.toolbar.goToPageByKeyboard(pageNumber);
+  }
+
+  async expectShowing(text: string): Promise<void> {
+    await this.toolbar.expectShowing(text);
+  }
+
+  async expectAddress(params: AddressParams): Promise<void> {
+    await this.toolbar.expectAddress(CHECK_INS_PATH, params);
+  }
+
   async expectWaitingCount(count: number): Promise<void> {
     await expectWaitingOnViewer(this.page, count);
   }
 
   checkIn(tab: CheckInTab, showing: string): Locator {
     return checkInsListed(this.page, tab).filter({ hasText: showing });
+  }
+
+  async expectInOrder(
+    tab: CheckInTab,
+    showing: readonly CheckInShowing[],
+  ): Promise<void> {
+    await expectCheckInsInOrder(this.page, tab, showing);
   }
 
   async approve(clientName: string): Promise<void> {

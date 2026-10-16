@@ -1,6 +1,5 @@
 import {
-  clockTimeOf,
-  spacedPattern,
+  shownTimePatternOf,
   weeklyStartsBetween,
 } from "../support/check-in-moments";
 import type { CheckInRecords } from "../support/check-in-records";
@@ -29,20 +28,12 @@ const LATEST_FIRST = { direction: "Latest first", toggle: "pressed" } as const;
 test.use({ timezoneId: CLIENT_TIME_ZONE });
 
 test.beforeEach(async ({ checkInRecords }) => {
-  await checkInRecords.cancelEveryUpcoming();
+  await checkInRecords.cancelEveryUnfinishedCheckIn();
 });
 
 test.afterEach(async ({ checkInRecords }) => {
-  await checkInRecords.cancelEveryUpcoming();
+  await checkInRecords.cancelEveryUnfinishedCheckIn();
 });
-
-function shownTimeOf(instant: Date): RegExp {
-  return new RegExp(spacedPattern(clockTimeOf(instant, CLIENT_TIME_ZONE)));
-}
-
-function lastNameOf(client: PaidClient): string {
-  return client.fullName.slice(client.firstName.length + 1);
-}
 
 function repeated(text: string, times: number): string[] {
   return Array.from({ length: times }, () => text);
@@ -147,10 +138,10 @@ test(
 
     // act
     await coachCheckIns.chooseKind("All kinds");
-    await coachCheckIns.search(lastNameOf(askingClient));
+    await coachCheckIns.search(askingClient.lastName);
 
     // assert
-    await coachCheckIns.expectAddress({ q: lastNameOf(askingClient) });
+    await coachCheckIns.expectAddress({ q: askingClient.lastName });
     await coachCheckIns.expectInOrder("Requests", [askingClient.fullName]);
 
     // act
@@ -240,8 +231,8 @@ test(
     // assert
     await clientCheckIns.expectAddress({ waiting: "you" });
     await clientCheckIns.expectInOrder("Requests", [
-      shownTimeOf(firstProposed!),
-      shownTimeOf(secondProposed!),
+      shownTimePatternOf(firstProposed!, CLIENT_TIME_ZONE),
+      shownTimePatternOf(secondProposed!, CLIENT_TIME_ZONE),
     ]);
 
     // act
@@ -249,7 +240,9 @@ test(
 
     // assert
     await clientCheckIns.expectAddress({ waiting: "them" });
-    await clientCheckIns.expectInOrder("Requests", [shownTimeOf(ownRequest!)]);
+    await clientCheckIns.expectInOrder("Requests", [
+      shownTimePatternOf(ownRequest!, CLIENT_TIME_ZONE),
+    ]);
     await clientCheckIns.expectOptionCounts("Kind", {
       "All kinds": 1,
       Weekly: 0,
@@ -270,22 +263,21 @@ test(
     await clientCheckIns.expectAddress({});
     await clientCheckIns.expectTabShown("Requests");
     await clientCheckIns.expectInOrder("Requests", [
-      shownTimeOf(firstProposed!),
-      shownTimeOf(secondProposed!),
-      shownTimeOf(ownRequest!),
+      shownTimePatternOf(firstProposed!, CLIENT_TIME_ZONE),
+      shownTimePatternOf(secondProposed!, CLIENT_TIME_ZONE),
+      shownTimePatternOf(ownRequest!, CLIENT_TIME_ZONE),
     ]);
   },
 );
 
 test(
-  "unknown address values fall back and the back button restores the view",
+  "unknown address values fall back to the defaults",
   { tag: "@completeness" },
   async ({
     checkInRecords,
     checkInRequests,
     coachAvailability,
     coachCheckIns,
-    coachDashboard,
     page,
     provisionClientInState,
     provisionCoach,
@@ -327,9 +319,41 @@ test(
 
     // assert
     await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "the back button restores the tab, filter, sort and page",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    coachDashboard,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
 
     // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+    await holdRequests(checkInRecords, client, [times[FULL_PAGE_AND_ONE]!]);
     await coachCheckIns.open();
+    await coachCheckIns.showTab("Upcoming");
     await coachCheckIns.chooseKind("Ad-hoc");
     await coachCheckIns.toggleSort();
     await coachCheckIns.goToPage(2);
@@ -340,6 +364,7 @@ test(
 
     // assert
     await coachCheckIns.expectAddress({
+      view: "upcoming",
       kind: "ad-hoc",
       dir: "desc",
       page: "2",
@@ -401,9 +426,7 @@ test(
     await notificationBell.openRow(REQUESTED, client.fullName);
 
     // assert
-    await expect(page).toHaveURL(
-      new RegExp(`/coach/checkins\\?checkin=${arrivedId}$`),
-    );
+    await coachCheckIns.expectAddress({ checkin: arrivedId! });
     await coachCheckIns.expectCheckInFocused("Requests", arrivedId!);
     await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
   },

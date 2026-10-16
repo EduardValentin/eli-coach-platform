@@ -1,5 +1,5 @@
 import { countCallsLeftToday } from "../support/assessment-calls";
-import { clockTimeOf, spacedPattern } from "../support/check-in-moments";
+import { shownTimePatternOf } from "../support/check-in-moments";
 import { expect, test } from "../support/fixtures";
 import { collectPageProblems } from "../support/page-problems";
 import { setPhoneViewport } from "../support/viewport";
@@ -16,10 +16,6 @@ const CHECK_INS_ON_THE_DASHBOARD = 3;
 const WAITING_REQUESTS = 4;
 
 test.use({ timezoneId: CLIENT_TIME_ZONE });
-
-function shownTimeOf(instant: Date): RegExp {
-  return new RegExp(spacedPattern(clockTimeOf(instant, CLIENT_TIME_ZONE)));
-}
 
 test(
   "a client asks for a check-in, her coach sees it waiting at a glance and reviews it, and the client sees her next check-in",
@@ -99,7 +95,7 @@ test(
 
     // assert
     await expect(clientPortalShell.nextCheckIn()).toContainText(
-      shownTimeOf(requested.startsAt),
+      shownTimePatternOf(requested.startsAt, CLIENT_TIME_ZONE),
     );
     await clientPortalShell.expectNextCheckInJoin("quiet");
 
@@ -166,7 +162,9 @@ test(
     // assert
     await clientPortalShell.expectSheetOpen();
     const nextCheckInInSheet = clientPortalShell.nextCheckInInSheet();
-    await expect(nextCheckInInSheet).toContainText(shownTimeOf(scheduledAt!));
+    await expect(nextCheckInInSheet).toContainText(
+      shownTimePatternOf(scheduledAt!, CLIENT_TIME_ZONE),
+    );
     await expect(
       nextCheckInInSheet.getByRole("link", { name: "Join Meet" }),
     ).toBeVisible();
@@ -498,7 +496,9 @@ test.describe("while requests wait for the coach", () => {
         checkIns: WAITING_REQUESTS,
       });
       await coachDashboard.expectPendingCheckInsAt(
-        requested.slice(0, CHECK_INS_ON_THE_DASHBOARD).map(shownTimeOf),
+        requested
+          .slice(0, CHECK_INS_ON_THE_DASHBOARD)
+          .map((instant) => shownTimePatternOf(instant, CLIENT_TIME_ZONE)),
       );
       await coachCheckIns.expectNavigationCount(WAITING_REQUESTS);
     },
