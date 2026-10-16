@@ -5160,5 +5160,66 @@
     {
       "waitFor": "role=button[name=\"Clear filters\" s]"
     }
+  ],
+  "open-exercise-actions-bike": [
+    {
+      "click": "role=button[name=\"Actions for Bike Intervals\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    }
+  ],
+  "open-archived-exercise-actions": [
+    {
+      "click": "role=button[name=\"Actions for Smith Machine Squat\" s]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    }
+  ],
+  "exercise-status-open": [
+    {
+      "click": "role=combobox[name=\"Status\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "archived-empty": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Exercises\" s]"
+      },
+      {
+        "click": "#dev-exercise-seed"
+      },
+      {
+        "click": "role=option[name=\"Empty\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "waitFor": "text=No archived exercises"
+      }
+    ],
+    "real": []
+  },
+  "open-delete-exercise-confirm": [
+    {
+      "use": "open-exercise-actions-bike"
+    },
+    {
+      "click": "role=menu >> role=menuitem[name=\"Delete\" s]"
+    },
+    {
+      "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"
+    },
+    {
+      "hover": "[data-parity-root=\"ConfirmDialog\"] h2"
+    }
   ]
 }
