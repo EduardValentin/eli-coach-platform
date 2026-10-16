@@ -14,6 +14,7 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunction,
 } from "react-router";
 
 import { formatShortDay } from "~/features/assessment-calls/public/call-moment";
@@ -24,9 +25,10 @@ import {
   CheckInListing,
   type CheckInEmptyCopy,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
-import type {
-  CheckInTab,
-  ListedCheckIn,
+import {
+  shouldReloadCheckIns,
+  type CheckInTab,
+  type ListedCheckIn,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-listing-rules";
 import {
   CheckInRow,
@@ -57,6 +59,8 @@ export const meta: MetaFunction = () => [
   { name: "description", content: pwaSurfaceDefinitions.client.description },
   { name: "theme-color", content: pwaSurfaceDefinitions.client.themeColor },
 ];
+
+export const shouldRevalidate: ShouldRevalidateFunction = shouldReloadCheckIns;
 
 const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   upcoming: {
@@ -144,6 +148,7 @@ export default function ClientCheckInsRoute() {
             viewer={VIEWER}
           />
         )}
+        waitingForLabel="Waiting for your coach"
       />
 
       <CheckInRequestDialog

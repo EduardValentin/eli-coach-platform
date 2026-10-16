@@ -1,4 +1,9 @@
-import type { SortDirection, SortRule } from "@eli-coach-platform/ui/lib";
+import {
+  haveOnlyListingParamsChanged,
+  type SortDirection,
+  type SortRule,
+} from "@eli-coach-platform/ui/lib";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 
 import type { ClientCheckIns } from "~/features/check-ins/public/check-ins";
 
@@ -19,6 +24,11 @@ export type CheckInSelection = {
 };
 
 type CheckInOrder = { direction: SortDirection; tab: CheckInTab };
+
+type CheckInsAddressChange = Pick<
+  ShouldRevalidateFunctionArgs,
+  "currentUrl" | "defaultShouldRevalidate" | "nextUrl"
+>;
 
 type NameOf<CheckIn> = (checkIn: CheckIn) => string;
 
@@ -62,6 +72,20 @@ const LISTED_KIND_OF: Record<
   "ad-hoc": "ad_hoc",
   recurring: "recurring",
 };
+
+export function shouldReloadCheckIns({
+  currentUrl,
+  defaultShouldRevalidate,
+  nextUrl,
+}: CheckInsAddressChange): boolean {
+  return haveOnlyListingParamsChanged(
+    currentUrl,
+    nextUrl,
+    Object.values(CHECK_IN_LISTING_PARAMS),
+  )
+    ? false
+    : defaultShouldRevalidate;
+}
 
 export function parseTab(raw: string | null, fallback: CheckInTab): CheckInTab {
   return CHECK_IN_TABS.find((tab) => tab === raw) ?? fallback;

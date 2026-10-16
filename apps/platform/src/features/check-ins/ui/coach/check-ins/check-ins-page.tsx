@@ -6,6 +6,7 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunction,
 } from "react-router";
 
 import type {
@@ -18,7 +19,10 @@ import {
   CheckInListing,
   type CheckInEmptyCopy,
 } from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
-import type { CheckInTab } from "~/features/check-ins/ui/shared/check-ins/check-in-listing-rules";
+import {
+  shouldReloadCheckIns,
+  type CheckInTab,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-listing-rules";
 import { CheckInRow } from "~/features/check-ins/ui/shared/check-ins/check-in-row";
 import { JoinMeetLink } from "~/features/check-ins/ui/shared/check-ins/join-meet-link";
 import {
@@ -41,6 +45,8 @@ export function loader(args: LoaderFunctionArgs): Promise<CoachCheckIns> {
 
 export const meta: MetaFunction = () => [{ title: "Check-ins | Evoa" }];
 
+export const shouldRevalidate: ShouldRevalidateFunction = shouldReloadCheckIns;
+
 const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   upcoming: {
     icon: CalendarDays,
@@ -58,6 +64,11 @@ const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
     title: "No past check-ins yet",
     description: "Passed and cancelled check-ins show up here.",
   },
+};
+
+const CLIENT_NAME_SEARCH = {
+  nameOf: (checkIn: CoachCheckIn) => clientFullName(checkIn.client),
+  placeholder: "Search by client name",
 };
 
 const MENU_WORDING: CheckInMenuWording<CoachCheckIn> = {
@@ -101,6 +112,8 @@ export default function CoachCheckInsRoute() {
             }}
           />
         )}
+        search={CLIENT_NAME_SEARCH}
+        waitingForLabel="Waiting for clients"
       />
 
       <CheckInMenuDialogs

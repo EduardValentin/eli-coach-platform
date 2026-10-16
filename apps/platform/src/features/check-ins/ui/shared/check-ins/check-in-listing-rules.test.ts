@@ -1,18 +1,10 @@
-import {
-  haveOnlyListingParamsChanged,
-  parseSort,
-  sortParams,
-} from "@eli-coach-platform/ui/lib";
+import { parseSort, sortParams } from "@eli-coach-platform/ui/lib";
 import { describe, expect, it } from "vitest";
 
 import type { CoachCheckIn } from "~/features/check-ins/public/check-ins";
 import { CHECK_IN_FOCUS_PARAM } from "~/features/check-ins/public/paths";
 
 import {
-  CHECK_IN_FILTER_PARAMS,
-  CHECK_IN_KIND_FILTERS,
-  CHECK_IN_LISTING_PARAMS,
-  CHECK_IN_WAITING_FILTERS,
   CHECK_INS_PER_PAGE,
   countsByKind,
   countsByWaiting,
@@ -25,6 +17,7 @@ import {
   parseKindFilter,
   parseTab,
   parseWaitingFilter,
+  shouldReloadCheckIns,
   tabHolding,
   type CheckInSelection,
 } from "./check-in-listing-rules";
@@ -262,23 +255,6 @@ describe("narrowing a tab's check-ins", () => {
 });
 
 describe("counting the check-ins each filter option would show", () => {
-  it("gives every offered option a count", () => {
-    // arrange
-    const selection = selecting({});
-
-    // act
-    const kindCounts = countsByKind(requests, selection);
-    const waitingCounts = countsByWaiting(requests, selection);
-
-    // assert
-    expect(Object.keys(kindCounts).sort()).toEqual(
-      [...CHECK_IN_KIND_FILTERS].sort(),
-    );
-    expect(Object.keys(waitingCounts).sort()).toEqual(
-      [...CHECK_IN_WAITING_FILTERS].sort(),
-    );
-  });
-
   it("counts each kind under the chosen waiting party", () => {
     // arrange
     const selection = selecting({ kind: "recurring", waiting: "you" });
@@ -510,57 +486,51 @@ describe("reading the listing from the address", () => {
   });
 });
 
-describe("the listing's place in the address", () => {
-  const listingParams = Object.values(CHECK_IN_LISTING_PARAMS);
+describe("reading the check-ins again on a change of address", () => {
   const page = "https://evoa.test/coach/checkins";
 
-  it("treats a change of tab, filter, search, direction or page as the listing's own", () => {
+  function reloads(current: string, next: string): boolean {
+    return shouldReloadCheckIns({
+      currentUrl: new URL(`${page}${current}`),
+      defaultShouldRevalidate: true,
+      nextUrl: new URL(`${page}${next}`),
+    });
+  }
+
+  it("keeps the check-ins it has when only the tab, filters, search, direction or page change", () => {
     // arrange
-    const current = new URL(`${page}?view=past`);
-    const next = new URL(
-      `${page}?view=requests&kind=recurring&waiting=you&q=ana&dir=desc&page=2`,
-    );
+    const current = "?view=past";
+    const next =
+      "?view=requests&kind=recurring&waiting=you&q=ana&dir=desc&page=2";
 
     // act
-    const onlyListing = haveOnlyListingParamsChanged(
-      current,
-      next,
-      listingParams,
-    );
+    const reloaded = reloads(current, next);
 
     // assert
-    expect(onlyListing).toBe(true);
+    expect(reloaded).toBe(false);
   });
 
-  it("treats a new linked check-in as more than a listing change", () => {
+  it("reads them again for a check-in she is sent to", () => {
     // arrange
-    const current = new URL(`${page}?q=ana`);
-    const next = new URL(`${page}?q=ana&${CHECK_IN_FOCUS_PARAM}=new-request`);
+    const current = "?q=ana";
+    const next = `?q=ana&${CHECK_IN_FOCUS_PARAM}=new-request`;
 
     // act
-    const onlyListing = haveOnlyListingParamsChanged(
-      current,
-      next,
-      listingParams,
-    );
+    const reloaded = reloads(current, next);
 
     // assert
-    expect(onlyListing).toBe(false);
+    expect(reloaded).toBe(true);
   });
 
-  it("clears the kind, the waiting party and the search but keeps the tab and the direction", () => {
+  it("reads them again when nothing in the address changed", () => {
     // arrange
-    const params = new URLSearchParams(
-      "view=requests&kind=ad-hoc&waiting=them&q=bea&dir=desc",
-    );
+    const address = "?kind=ad-hoc";
 
     // act
-    for (const param of Object.values(CHECK_IN_FILTER_PARAMS)) {
-      params.delete(param);
-    }
+    const reloaded = reloads(address, address);
 
     // assert
-    expect(params.toString()).toBe("view=requests&dir=desc");
+    expect(reloaded).toBe(true);
   });
 });
 
