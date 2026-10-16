@@ -35,7 +35,7 @@ const PAYMENT_LINK_STATES = [
 export const paymentLinksTable = appSchema.table(
   "payment_links",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     assessmentCallId: uuid("assessment_call_id")
       .notNull()
       .references(() => assessmentCallsTable.id),
@@ -98,7 +98,7 @@ export const checkoutSessionsTable = appSchema.table(
 export const coachingSubscriptionsTable = appSchema.table(
   "coaching_subscriptions",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     clientId: uuid("client_id")
       .notNull()
       .references(() => clientsTable.id),

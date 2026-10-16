@@ -23,6 +23,7 @@ import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/serv
 
 import { AssessmentCallsController } from "~/features/assessment-calls/api/booking/assessment-calls-controller.server";
 import { CoachAssessmentCallsController } from "~/features/assessment-calls/api/coach/coach-assessment-calls-controller.server";
+import { RandomAssessmentCallIds } from "~/features/assessment-calls/data/random-assessment-call-ids.server";
 import {
   PostgresAssessmentCallRepository,
   type AssessmentCallCoachTime,
@@ -81,6 +82,7 @@ export function composeAssessmentCallsFeature(
           bookingWindow,
           clock: handles.clock,
           emailSubaddresses: handles.emailSubaddresses,
+          ids: new RandomAssessmentCallIds(),
           incidents: handles.incidents,
           notifications: createAssessmentCallNotifications(
             handles.productEmail,

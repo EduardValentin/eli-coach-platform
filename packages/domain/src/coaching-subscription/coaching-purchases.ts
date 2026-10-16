@@ -1,10 +1,11 @@
-import type { ClientIntake } from "../client";
+import type { Client } from "../client";
 
 import type { PurchasedSubscription } from "./purchased-subscription";
 
 export type CoachingPurchase = {
   eventId: string;
-  intake: ClientIntake;
+  receivedAt: Date;
+  client: Client;
   subscription: PurchasedSubscription;
 };
 

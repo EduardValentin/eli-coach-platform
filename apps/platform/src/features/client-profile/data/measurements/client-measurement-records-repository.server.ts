@@ -1,9 +1,9 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type {
+  ClientMeasurementEntry,
   ClientMeasurementRecords,
   MeasurementRecord,
 } from "@eli-coach-platform/domain/client-profile";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { asc, eq } from "drizzle-orm";
 
 import {
@@ -46,17 +46,10 @@ export class PostgresClientMeasurementRecords implements ClientMeasurementRecord
     return recordsWithTheirPhotos(rows);
   }
 
-  async record(clientId: string, entry: MeasurementEntry): Promise<string> {
-    const [inserted] = await this.database
+  async record(record: ClientMeasurementEntry): Promise<void> {
+    await this.database
       .insert(clientMeasurementsTable)
-      .values(measurementInsertOf(clientId, entry))
-      .returning({ id: clientMeasurementsTable.id });
-
-    if (!inserted) {
-      throw new Error("The measurement entry was not recorded.");
-    }
-
-    return inserted.id;
+      .values(measurementInsertOf(record));
   }
 }
 

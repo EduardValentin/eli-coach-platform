@@ -30,9 +30,9 @@ const insertEntrySql = `
 
 const insertPhotoSql = `
   insert into app.client_progress_photos
-    (entry_id, client_id, view, storage_key, key_id, mime_type, size_bytes, created_at)
+    (id, entry_id, client_id, view, storage_key, key_id, mime_type, size_bytes, created_at)
   values
-    ($1, $2, $3, $4, 'local-1', 'image/jpeg', 182431, '2026-09-29T09:00:00Z')
+    (gen_random_uuid(), $1, $2, $3, $4, 'local-1', 'image/jpeg', 182431, '2026-09-29T09:00:00Z')
 `;
 
 describe.sequential("client progress photos schema", () => {

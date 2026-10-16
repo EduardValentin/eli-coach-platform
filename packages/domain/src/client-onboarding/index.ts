@@ -28,10 +28,8 @@ export {
   type OnboardingReviewStamps,
   type ReviewStamps,
 } from "./onboarding-review-stamps";
-export {
-  type DetailRequestIdGenerator,
-  type OnboardingReviews,
-} from "./onboarding-reviews";
+export { type OnboardingReviews } from "./onboarding-reviews";
+export { type DetailRequestIds } from "./detail-request-ids";
 export {
   formsForGender,
   ONBOARDING_FORM_IDS,

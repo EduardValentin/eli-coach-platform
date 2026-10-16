@@ -2,7 +2,7 @@ import {
   ASSESSMENT_CALL_RULES,
   AssessmentCall,
   type AssessmentCallReservations,
-  type ReservationResult,
+  type ReservationDecision,
   type ReserveAssessmentCallCommand,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
@@ -42,7 +42,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
     private readonly options: PostgresAssessmentCallRepositoryOptions,
   ) {}
 
-  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult> {
+  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationDecision> {
     return this.options.database.transaction((transaction) =>
       this.reserveUnderEmailLock(transaction, command),
     );
@@ -78,9 +78,11 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
   private async reserveUnderEmailLock(
     transaction: DatabaseTransaction,
     command: ReserveAssessmentCallCommand,
-  ): Promise<ReservationResult> {
+  ): Promise<ReservationDecision> {
+    const { call } = command;
+
     await transaction.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${command.normalizedEmail}))`,
+      sql`select pg_advisory_xact_lock(hashtext(${call.visitorEmail}))`,
     );
 
     const upcomingCallForEmail = await this.findUpcomingCallForEmail(
@@ -90,9 +92,9 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
 
     await transaction.execute(sql`savepoint ${RESERVATION_SAVEPOINT}`);
 
-    const call = await this.insertCall(transaction, command);
+    await this.insertCall(transaction, call);
     const coachTime = await this.options.coachTime.reserve(transaction, {
-      ...ASSESSMENT_CALL_RULES.coachTimeFrom(command.startsAt),
+      ...ASSESSMENT_CALL_RULES.coachTimeFrom(call.startsAt),
       appointmentKind: "assessment_call",
       appointmentId: call.id,
     });
@@ -101,13 +103,11 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       upcomingCallForEmail,
     });
 
-    if (decision.status === "reserved") {
-      return { status: "reserved", call };
+    if (decision.status !== "reserved") {
+      await transaction.execute(
+        sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
+      );
     }
-
-    await transaction.execute(
-      sql`rollback to savepoint ${RESERVATION_SAVEPOINT}`,
-    );
 
     return decision;
   }
@@ -121,7 +121,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       .from(assessmentCallsTable)
       .where(
         and(
-          eq(assessmentCallsTable.visitorEmail, command.normalizedEmail),
+          eq(assessmentCallsTable.visitorEmail, command.call.visitorEmail),
           gt(assessmentCallsTable.startsAt, command.now),
         ),
       )
@@ -133,32 +133,24 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
 
   private async insertCall(
     transaction: DatabaseTransaction,
-    command: ReserveAssessmentCallCommand,
-  ): Promise<AssessmentCall> {
-    const [row] = await transaction
-      .insert(assessmentCallsTable)
-      .values({
-        firstName: command.firstName,
-        lastName: command.lastName,
-        visitorEmail: command.normalizedEmail,
-        visitorNotes: command.notes,
-        dateOfBirth: command.dateOfBirth,
-        gender: command.gender,
-        primaryGoal: command.primaryGoal,
-        country: command.country,
-        phone: command.phone,
-        startsAt: command.startsAt,
-        visitorTimeZone: command.visitorTimeZone,
-        coachTimeZone: command.coachTimeZone,
-        bookedAt: command.bookedAt,
-      })
-      .returning();
-
-    if (!row) {
-      throw new Error("Assessment call reservation returned no row.");
-    }
-
-    return this.toAssessmentCall(row);
+    call: AssessmentCall,
+  ): Promise<void> {
+    await transaction.insert(assessmentCallsTable).values({
+      id: call.id,
+      firstName: call.firstName,
+      lastName: call.lastName,
+      visitorEmail: call.visitorEmail,
+      visitorNotes: call.visitorNotes,
+      dateOfBirth: call.dateOfBirth,
+      gender: call.gender,
+      primaryGoal: call.primaryGoal,
+      country: call.country,
+      phone: call.phone,
+      startsAt: call.startsAt,
+      visitorTimeZone: call.visitorTimeZone,
+      coachTimeZone: call.coachTimeZone,
+      bookedAt: call.bookedAt,
+    });
   }
 
   private toAssessmentCall(row: AssessmentCallRow): AssessmentCall {

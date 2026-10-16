@@ -67,6 +67,14 @@ export class AssessmentCall {
     this.bookedAt = props.bookedAt;
   }
 
+  static booked(
+    input: Omit<AssessmentCallProps, "bookedAt"> & { at: Date },
+  ): AssessmentCall {
+    const { at, ...call } = input;
+
+    return new AssessmentCall({ ...call, bookedAt: at });
+  }
+
   static reconstitute(props: AssessmentCallProps): AssessmentCall {
     return new AssessmentCall(props);
   }

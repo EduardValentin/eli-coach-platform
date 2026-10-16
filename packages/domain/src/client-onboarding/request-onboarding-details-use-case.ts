@@ -11,10 +11,8 @@ import {
   OnboardingReview,
   type DetailRequestRefusal,
 } from "./onboarding-review";
-import type {
-  DetailRequestIdGenerator,
-  OnboardingReviews,
-} from "./onboarding-reviews";
+import type { OnboardingReviews } from "./onboarding-reviews";
+import type { DetailRequestIds } from "./detail-request-ids";
 
 type RequestOnboardingDetailsCommand = {
   clientId: string;
@@ -33,7 +31,7 @@ type RequestOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byClientId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
-  requestIds: DetailRequestIdGenerator;
+  ids: DetailRequestIds;
   notifications: OnboardingDetailsNotifications;
   clock: Clock;
   incidents: ClientOnboardingIncidents;
@@ -70,7 +68,7 @@ export class RequestOnboardingDetailsUseCase {
       ...reviewed,
     });
     const outcome = review.requestDetails({
-      id: this.options.requestIds.generate(),
+      id: this.options.ids.generate(),
       questionIds: command.questionIds,
       note: command.note,
       now: this.options.clock.now(),

@@ -1,8 +1,4 @@
-import {
-  Account,
-  type Accounts,
-  type AccountRole,
-} from "@eli-coach-platform/domain/account";
+import { Account, type Accounts } from "@eli-coach-platform/domain/account";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { accountsTable } from "./schema.server";
@@ -24,28 +20,8 @@ export class PostgresAccountRepository implements Accounts {
     return row ? Account.reconstitute(row) : null;
   }
 
-  async insert(input: {
-    authSubjectId: string;
-    role: AccountRole;
-  }): Promise<Account> {
-    const [row] = await this.database
-      .insert(accountsTable)
-      .values({
-        authSubjectId: input.authSubjectId,
-        role: input.role,
-      })
-      .returning({
-        id: accountsTable.id,
-        authSubjectId: accountsTable.authSubjectId,
-        role: accountsTable.role,
-        deletedAt: accountsTable.deletedAt,
-      });
-
-    if (!row) {
-      throw new Error("Account insert returned no row.");
-    }
-
-    return Account.reconstitute(row);
+  async insert(account: Account): Promise<void> {
+    await this.database.insert(accountsTable).values(account.toSnapshot());
   }
 
   async softDeleteByAuthSubjectId(authSubjectId: string): Promise<void> {

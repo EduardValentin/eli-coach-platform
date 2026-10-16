@@ -5,7 +5,6 @@ import type {
 } from "@eli-coach-platform/domain/coaching-subscription";
 import {
   PaymentLink,
-  type NewPaymentLink,
   type PaymentLinks,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -36,22 +35,16 @@ export class PostgresPaymentLinks implements PaymentLinks, CheckoutSessions {
     return row ? toPaymentLink(row) : null;
   }
 
-  async issue(link: NewPaymentLink): Promise<PaymentLink> {
-    const [row] = await this.options.database
-      .insert(paymentLinksTable)
-      .values({
-        assessmentCallId: link.assessmentCallId,
-        tokenSha256: link.tokenSha256,
-        createdAt: link.createdAt,
-        expiresAt: link.expiresAt,
-      })
-      .returning();
-
-    if (!row) {
-      throw new Error("Payment link issue returned no row.");
-    }
-
-    return toPaymentLink(row);
+  async issue(link: PaymentLink): Promise<void> {
+    await this.options.database.insert(paymentLinksTable).values({
+      id: link.id,
+      assessmentCallId: link.assessmentCallId,
+      tokenSha256: link.tokenSha256,
+      createdAt: link.createdAt,
+      expiresAt: link.expiresAt,
+      state: link.state,
+      stripeCustomerId: link.paymentCustomerId,
+    });
   }
 
   async voidOtherLinksOf(

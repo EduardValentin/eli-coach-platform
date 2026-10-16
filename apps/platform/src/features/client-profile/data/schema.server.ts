@@ -22,7 +22,7 @@ import { clientsTable } from "~/features/clients/data/schema.server";
 export const clientMeasurementsTable = appSchema.table(
   "client_measurements",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     clientId: uuid("client_id")
       .notNull()
       .references(() => clientsTable.id),
@@ -68,7 +68,7 @@ export const clientProfilesTable = appSchema.table("client_profiles", {
 export const clientProgressPhotosTable = appSchema.table(
   "client_progress_photos",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey(),
     entryId: uuid("entry_id")
       .notNull()
       .references(() => clientMeasurementsTable.id),

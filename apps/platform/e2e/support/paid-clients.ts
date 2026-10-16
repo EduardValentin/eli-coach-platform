@@ -107,27 +107,28 @@ const INSERT_ENDED_CALL = `
 `;
 const INSERT_CLIENT = `
   insert into app.clients (
-    assessment_call_id, first_name, last_name, email, date_of_birth, gender,
-    primary_goal, country, created_at, auth_subject_id, booking_time_zone,
-    coaching_status, coaching_access_ends_at, coaching_refund_due,
-    coaching_bundle_months, coaching_program_starts_at, coaching_paid_through
+    id, assessment_call_id, first_name, last_name, email, date_of_birth,
+    gender, primary_goal, country, created_at, auth_subject_id,
+    booking_time_zone, coaching_status, coaching_access_ends_at,
+    coaching_refund_due, coaching_bundle_months, coaching_program_starts_at,
+    coaching_paid_through
   )
   values (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+    $18
   )
-  returning id
 `;
 const INSERT_SUBSCRIPTION = `
   insert into app.coaching_subscriptions (
-    client_id, assessment_call_id, bundle_id, months, tier, amount_cents,
+    id, client_id, assessment_call_id, bundle_id, months, tier, amount_cents,
     currency, stripe_customer_id, stripe_subscription_id,
     stripe_payment_intent_id, stripe_checkout_session_id, paid_at,
     start_choice, status, access_ends_at, paid_through, program_starts_at,
     created_at
   )
   values (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-    $17, $12
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+    $18, $13
   )
 `;
 const INSERT_INVITATION = `
@@ -249,7 +250,9 @@ async function insertPaidClient(
     callStartsAt,
     TIME_ZONE,
   ]);
-  const clientId = await insertedId(connection, INSERT_CLIENT, [
+  const clientId = randomUUID();
+  await connection.query(INSERT_CLIENT, [
+    clientId,
     payment.assessmentCallId,
     identity.firstName,
     identity.lastName,
@@ -269,6 +272,7 @@ async function insertPaidClient(
     period.paidThrough,
   ]);
   await connection.query(INSERT_SUBSCRIPTION, [
+    period.id,
     clientId,
     payment.assessmentCallId,
     SEEDED_BUNDLE.id,
@@ -303,18 +307,21 @@ function paidPeriodOf(identity: ClientIdentity, payment: PaymentSeed) {
   const { references } = payment;
 
   return PurchasedSubscription.fromCompletedCheckout({
-    checkoutSessionId: references.checkoutSessionId,
-    paymentCustomerId: references.customerId,
-    paymentSubscriptionId: references.subscriptionId,
-    paymentIntentId: references.paymentIntentId,
-    amountCents: SEEDED_BUNDLE.totalCents(SEEDED_TIER),
-    currency: SEEDED_BUNDLE.currency,
-    customerEmail: identity.email,
-    paidAt: payment.paidAt,
-    assessmentCallId: payment.assessmentCallId,
-    bundleId: SEEDED_BUNDLE.id,
-    tier: SEEDED_TIER,
-    startChoice: payment.start,
+    id: randomUUID(),
+    completion: {
+      checkoutSessionId: references.checkoutSessionId,
+      paymentCustomerId: references.customerId,
+      paymentSubscriptionId: references.subscriptionId,
+      paymentIntentId: references.paymentIntentId,
+      amountCents: SEEDED_BUNDLE.totalCents(SEEDED_TIER),
+      currency: SEEDED_BUNDLE.currency,
+      customerEmail: identity.email,
+      paidAt: payment.paidAt,
+      assessmentCallId: payment.assessmentCallId,
+      bundleId: SEEDED_BUNDLE.id,
+      tier: SEEDED_TIER,
+      startChoice: payment.start,
+    },
   }).toSnapshot();
 }
 
@@ -371,21 +378,4 @@ function invitationTimesFor(
 
 function sha256Hex(token: string): string {
   return createHash("sha256").update(token).digest("hex");
-}
-
-async function insertedId(
-  connection: pg.PoolClient,
-  statement: string,
-  values: readonly unknown[],
-): Promise<string> {
-  const { rows } = await connection.query<{ id: string }>(statement, [
-    ...values,
-  ]);
-  const [row] = rows;
-
-  if (!row) {
-    throw new Error("The insert returned no row.");
-  }
-
-  return row.id;
 }

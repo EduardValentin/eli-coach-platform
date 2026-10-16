@@ -3,7 +3,13 @@
 import "@testing-library/jest-dom/vitest";
 
 import { Toaster } from "@eli-coach-platform/ui/toast";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -444,7 +450,11 @@ describe("editing a food", () => {
     expect(screen.getByRole("checkbox", { name: "Breakfast" })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: "Vegetarian" })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: "Lunch" })).not.toBeChecked();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Save changes" }),
+      ).toBeEnabled(),
+    );
   });
 
   it("keeps its own name free while flagging another food's", async () => {

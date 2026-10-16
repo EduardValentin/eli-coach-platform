@@ -66,3 +66,25 @@ describe("Account portal access", () => {
     expect(coachAccess).toBe(coach);
   });
 });
+
+describe("Account.provisioned", () => {
+  it("opens an active account under the given id", () => {
+    // arrange
+    const input = {
+      id: "account-new",
+      authSubjectId: "auth-subject-1",
+      role: "COACH",
+    } as const;
+
+    // act
+    const account = Account.provisioned(input);
+
+    // assert
+    expect(account.isActive()).toBe(true);
+    expect(account.toSnapshot()).toEqual({
+      id: "account-new",
+      authSubjectId: "auth-subject-1",
+      role: "COACH",
+    });
+  });
+});

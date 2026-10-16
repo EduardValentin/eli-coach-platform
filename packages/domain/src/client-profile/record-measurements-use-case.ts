@@ -2,6 +2,7 @@ import type { ClientReach } from "../client";
 import {
   hasMeasurementProblem,
   measurementEntryOf,
+  type MeasurementIds,
   type MeasurementValues,
 } from "../measurement";
 import type { Clock } from "../shared";
@@ -16,10 +17,8 @@ import {
 } from "./progress-photo-intake";
 import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
 import type { ProgressPhotoStore } from "./progress-photo-store";
-import type {
-  ProgressPhotoIdGenerator,
-  ProgressPhotos,
-} from "./progress-photos";
+import type { ProgressPhotos } from "./progress-photos";
+import type { ProgressPhotoIds } from "./progress-photo-ids";
 
 type RecordMeasurementsCommand = {
   authSubjectId: string;
@@ -42,8 +41,9 @@ type RecordMeasurementsUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   profiles: ClientProfiles;
   records: ClientMeasurementRecords;
+  measurementIds: MeasurementIds;
   photos: ProgressPhotos;
-  photoIds: ProgressPhotoIdGenerator;
+  photoIds: ProgressPhotoIds;
   store: ProgressPhotoStore;
   renditions: ProgressPhotoRenditions;
   clock: Clock;
@@ -87,7 +87,12 @@ export class RecordMeasurementsUseCase {
       await this.options.profiles.recordPhotoConsent(client.clientId, now);
     }
 
-    const entryId = await this.options.records.record(client.clientId, entry);
+    const entryId = this.options.measurementIds.generate();
+    await this.options.records.record({
+      clientId: client.clientId,
+      entryId,
+      entry,
+    });
     this.options.incidents.measurementEntrySaved({
       clientId: client.clientId,
       entryId,

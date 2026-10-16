@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { Exercise } from "./exercise";
-import type { ExerciseLibrary, ExerciseReference } from "./exercise-library";
+import type { ExerciseLibrary } from "./exercise-library";
 import { FindExerciseUseCase } from "./find-exercise-use-case";
 
 const AT = new Date("2026-10-14T09:00:00.000Z");
@@ -43,21 +43,15 @@ function createUseCase() {
     );
   const library = {
     list: vi.fn(async (ownerAccountId: string) => ownedBy(ownerAccountId)),
-    find: vi.fn(
-      async ({ ownerAccountId, exerciseId }: ExerciseReference) =>
-        ownedBy(ownerAccountId).find(({ id }) => id === exerciseId) ?? null,
-    ),
-    add: vi.fn(),
-    replace: vi.fn(),
-  } satisfies ExerciseLibrary;
+  } satisfies Pick<ExerciseLibrary, "list">;
 
   return { useCase: new FindExerciseUseCase({ library }), library };
 }
 
 describe("FindExerciseUseCase", () => {
-  it("finds her exercise with the names of every other exercise of hers, its own left out", async () => {
+  it("finds her exercise in one read of her library, with the names of every other exercise of hers, its own left out", async () => {
     // arrange
-    const { useCase } = createUseCase();
+    const { useCase, library } = createUseCase();
 
     // act
     const result = await useCase.execute({
@@ -71,6 +65,7 @@ describe("FindExerciseUseCase", () => {
       exercise: HIP_THRUST,
       otherNames: ["Back squat", "Lunge"],
     });
+    expect(library.list).toHaveBeenCalledOnce();
   });
 
   it("finds nothing for an unknown exercise", async () => {

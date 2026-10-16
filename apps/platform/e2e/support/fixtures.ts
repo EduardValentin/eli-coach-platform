@@ -228,7 +228,7 @@ type WorkerFixtures = {
 // global-teardown.ts later reads back agree on the same run.
 const RUN_ID = resolveRunId();
 const INSERT_ACCOUNT =
-  "INSERT INTO app.accounts (auth_subject_id, role) VALUES ($1, $2)";
+  "INSERT INTO app.accounts (id, auth_subject_id, role) VALUES (gen_random_uuid(), $1, $2)";
 const PAID_CLIENT_FIRST_NAME = "Ana";
 const PAID_CLIENT_LAST_NAME = `Onboarding ${RUN_ID}`;
 const ADULT_DATE_OF_BIRTH = "1994-03-14";

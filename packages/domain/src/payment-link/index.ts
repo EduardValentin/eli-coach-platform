@@ -10,11 +10,8 @@ export {
 } from "./coaching-sales-notifications";
 export { CoachingSalesWindow } from "./coaching-sales-window";
 export { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
-export {
-  PaymentLink,
-  type NewPaymentLink,
-  type PaymentLinkState,
-} from "./payment-link";
+export { PaymentLink, type PaymentLinkState } from "./payment-link";
+export { type PaymentLinkIds } from "./payment-link-ids";
 export {
   type PaymentLinks,
   type PaymentLinkTokenGenerator,

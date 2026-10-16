@@ -1,12 +1,5 @@
 export type PaymentLinkState = "valid" | "voided" | "spent";
 
-export type NewPaymentLink = {
-  assessmentCallId: string;
-  tokenSha256: string;
-  createdAt: Date;
-  expiresAt: Date;
-};
-
 type PaymentLinkProps = {
   id: string;
   assessmentCallId: string;
@@ -44,19 +37,23 @@ export class PaymentLink {
     return new PaymentLink(props);
   }
 
-  static issue(input: {
+  static issued(input: {
+    id: string;
     assessmentCallId: string;
     tokenSha256: string;
-    now: Date;
-  }): NewPaymentLink {
-    return {
+    at: Date;
+  }): PaymentLink {
+    return new PaymentLink({
+      id: input.id,
       assessmentCallId: input.assessmentCallId,
       tokenSha256: input.tokenSha256,
-      createdAt: input.now,
+      createdAt: input.at,
       expiresAt: new Date(
-        input.now.getTime() + PAYMENT_LINK_VALIDITY_DAYS * MILLISECONDS_PER_DAY,
+        input.at.getTime() + PAYMENT_LINK_VALIDITY_DAYS * MILLISECONDS_PER_DAY,
       ),
-    };
+      state: "valid",
+      paymentCustomerId: null,
+    });
   }
 
   static isPlausibleToken(rawToken: string): boolean {
