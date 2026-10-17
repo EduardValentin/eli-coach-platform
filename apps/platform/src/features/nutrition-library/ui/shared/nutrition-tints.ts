@@ -15,6 +15,6 @@ export const CATEGORY_DOT: Readonly<Record<FoodCategory, string>> = {
   carb: "bg-tint-blue",
   fat: "bg-tint-amber",
   legume: "bg-tint-green",
-  extra: "bg-tint-purple",
+  extra: "bg-tint-violet",
   seasoning: "bg-tint-teal",
 };
