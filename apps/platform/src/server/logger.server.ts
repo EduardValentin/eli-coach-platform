@@ -228,6 +228,14 @@ export function createConsoleLogger(): ConsoleLogger {
         recipeId,
       });
     },
+    recipePhotoCleanupFailed: ({ error, photoId }) => {
+      console.error("Recipe photo file could not be removed.", {
+        errorCategory: "recipe_photo_cleanup_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        photoId,
+      });
+    },
     invitationEmailFailed: ({ invitationId }) => {
       console.error("Client invitation email failed.", {
         errorCategory: "client_invitation_email_failure",

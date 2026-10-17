@@ -10,6 +10,7 @@ import {
   type RecipeLibrary,
   type RecipeReference,
   type RecipeReplacement,
+  type RecipeSnapshot,
   type TagFamily,
 } from "@eli-coach-platform/domain/nutrition";
 import {
@@ -35,6 +36,8 @@ const UNIQUE_VIOLATION_CODE = "23505";
 
 const ROLE_FAMILY: TagFamily = "meal-time";
 
+type RecipeRow = Omit<RecipeSnapshot, "photo"> & { photoId: string | null };
+
 export class PostgresRecipeLibrary implements RecipeLibrary {
   constructor(private readonly database: DatabaseClient) {}
 
@@ -48,7 +51,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
       )
       .orderBy(asc(sql`lower(${recipesTable.name})`), asc(recipesTable.id));
 
-    return rows.map((row) => Recipe.reconstitute(row));
+    return rows.map((row) => this.recipeOf(row));
   }
 
   async find({
@@ -64,15 +67,18 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
       )
       .limit(1);
 
-    return row ? Recipe.reconstitute(row) : null;
+    return row ? this.recipeOf(row) : null;
   }
 
   async add(recipe: Recipe): Promise<RecipeAddition> {
-    const { ingredients, mealRoleIds, tagIds, ...row } = recipe.toSnapshot();
+    const { ingredients, mealRoleIds, tagIds, photo, ...row } =
+      recipe.toSnapshot();
 
     try {
       await this.database.transaction(async (transaction) => {
-        await transaction.insert(recipesTable).values(row);
+        await transaction
+          .insert(recipesTable)
+          .values({ ...row, photoId: photo?.photoId ?? null });
         await this.place(transaction, row.id, ingredients);
         await this.tag(transaction, row.id, [...mealRoleIds, ...tagIds]);
       });
@@ -91,6 +97,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
       ingredients,
       mealRoleIds,
       tagIds,
+      photo,
       ...columns
     } = recipe.toSnapshot();
 
@@ -98,7 +105,7 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
       await this.database.transaction(async (transaction) => {
         await transaction
           .update(recipesTable)
-          .set(columns)
+          .set({ ...columns, photoId: photo?.photoId ?? null })
           .where(
             and(
               eq(recipesTable.id, id),
@@ -119,6 +126,13 @@ export class PostgresRecipeLibrary implements RecipeLibrary {
     } catch (error) {
       return this.nameTakenOrRethrow(error);
     }
+  }
+
+  private recipeOf({ photoId, ...fields }: RecipeRow): Recipe {
+    return Recipe.reconstitute({
+      ...fields,
+      photo: photoId === null ? null : { photoId },
+    });
   }
 
   private selectRecipes() {

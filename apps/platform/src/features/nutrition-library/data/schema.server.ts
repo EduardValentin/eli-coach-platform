@@ -122,6 +122,7 @@ export const recipesTable = appSchema.table(
       length: MAX_INSTRUCTIONS_LENGTH,
     }).notNull(),
     icon: varchar("icon", { length: 16 }).$type<RecipeIcon>(),
+    photoId: uuid("photo_id"),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),

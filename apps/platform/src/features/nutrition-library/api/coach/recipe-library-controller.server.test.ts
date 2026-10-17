@@ -1,6 +1,7 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
   Food,
+  MAX_RECIPE_PHOTO_BYTES,
   Recipe,
   type CreateRecipeResult,
   type CreateRecipeUseCase,
@@ -12,6 +13,8 @@ import {
   type ListRecipesResult,
   type ListRecipesUseCase,
   type NutritionTag,
+  type OpenRecipePhotoResult,
+  type OpenRecipePhotoUseCase,
   type RecipeSnapshot,
   type StartRecipeResult,
   type StartRecipeUseCase,
@@ -32,6 +35,8 @@ import {
 import { RecipeLibraryController } from "./recipe-library-controller.server";
 
 const RECIPE_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+const PHOTO_ID = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
+const PHOTO_BYTES = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
 const OATS_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const MILK_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 const HONEY_ID = "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a";
@@ -128,6 +133,7 @@ const PORRIDGE: RecipeSnapshot = {
   icon: "pot",
   mealRoleIds: ["mt-breakfast"],
   tagIds: ["di-vegetarian"],
+  photo: null,
   archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
@@ -146,6 +152,7 @@ const PORRIDGE_VIEW = {
   icon: "pot",
   mealRoleIds: ["mt-breakfast"],
   tagIds: ["di-vegetarian"],
+  photo: null,
 };
 
 const PORRIDGE_REQUEST = {
@@ -156,6 +163,19 @@ const PORRIDGE_REQUEST = {
   instructions: "Simmer the oats in the milk.",
   icon: "pot",
   tagIds: ["mt-breakfast", "di-vegetarian"],
+};
+
+const KEEP = { kind: "keep" } as const;
+
+const OPENED: OpenRecipePhotoResult = {
+  status: "opened",
+  mediaType: "image/webp",
+  bytes: {
+    async *[Symbol.asyncIterator]() {
+      yield new Uint8Array([1, 2, 3]);
+    },
+  },
+  sizeBytes: 3,
 };
 
 function createController() {
@@ -206,12 +226,16 @@ function createController() {
       recipe: porridge,
     })),
   };
+  const openRecipePhoto = {
+    execute: vi.fn(async (): Promise<OpenRecipePhotoResult> => OPENED),
+  };
   const controller = new RecipeLibraryController({
     listRecipes: listRecipes as unknown as ListRecipesUseCase,
     startRecipe: startRecipe as unknown as StartRecipeUseCase,
     findRecipe: findRecipe as unknown as FindRecipeUseCase,
     createRecipe: createRecipe as unknown as CreateRecipeUseCase,
     editRecipe: editRecipe as unknown as EditRecipeUseCase,
+    openRecipePhoto: openRecipePhoto as unknown as OpenRecipePhotoUseCase,
   });
 
   return {
@@ -221,6 +245,7 @@ function createController() {
     findRecipe,
     createRecipe,
     editRecipe,
+    openRecipePhoto,
   };
 }
 
@@ -255,6 +280,42 @@ function jsonRequest(method: "POST" | "PUT", body: unknown): Request {
   });
 }
 
+function multipartRequest(
+  method: "POST" | "PUT",
+  parts: { recipe?: unknown; photo?: Uint8Array<ArrayBuffer> | string },
+): Request {
+  const form = new FormData();
+
+  if (parts.recipe !== undefined) {
+    form.set(
+      "recipe",
+      typeof parts.recipe === "string"
+        ? parts.recipe
+        : JSON.stringify(parts.recipe),
+    );
+  }
+
+  if (typeof parts.photo === "string") {
+    form.set("photo", parts.photo);
+  } else if (parts.photo) {
+    form.set(
+      "photo",
+      new File([parts.photo], "porridge.jpg", { type: "image/jpeg" }),
+    );
+  }
+
+  return new Request("https://evoa.fit/api/coach/recipes", {
+    body: form,
+    method,
+  });
+}
+
+function photoRequest(): Request {
+  return new Request(
+    `https://evoa.fit/api/recipes/${RECIPE_ID}/photo/${PHOTO_ID}`,
+  );
+}
+
 async function captureThrown(thunk: () => unknown): Promise<unknown> {
   try {
     await thunk();
@@ -279,6 +340,7 @@ describe("RecipeLibraryController#list", () => {
           id: RECIPE_ID,
           name: "Porridge",
           icon: "pot",
+          photo: null,
           totalMinutes: 15,
           macros: { kcal: 261, protein: 15, carb: 39, fat: 5 },
           tagIds: ["mt-breakfast", "di-vegetarian"],
@@ -286,6 +348,27 @@ describe("RecipeLibraryController#list", () => {
       ],
     });
     expect(listRecipes.execute).toHaveBeenCalledWith(COACH.id);
+  });
+
+  it("names the address of a recipe's stored photo on its card, never the stored file itself", async () => {
+    // arrange
+    const { controller, listRecipes } = createController();
+    listRecipes.execute.mockResolvedValueOnce({
+      status: "listed",
+      recipes: [
+        Recipe.reconstitute({ ...PORRIDGE, photo: { photoId: PHOTO_ID } }),
+      ],
+      foods: [MILK, OATS],
+      tags: TAGS,
+    });
+
+    // act
+    const library = await controller.list(argsFor());
+
+    // assert
+    expect(library.recipes[0]?.photo).toEqual({
+      path: `/api/recipes/${RECIPE_ID}/photo/${PHOTO_ID}`,
+    });
   });
 
   it("refuses a signed-in client", async () => {
@@ -406,6 +489,7 @@ describe("RecipeLibraryController#create", () => {
     expect(createRecipe.execute).toHaveBeenCalledWith({
       ownerAccountId: COACH.id,
       draft: PORRIDGE_REQUEST,
+      photo: KEEP,
     });
   });
 
@@ -424,6 +508,7 @@ describe("RecipeLibraryController#create", () => {
     expect(createRecipe.execute).toHaveBeenCalledWith({
       ownerAccountId: COACH.id,
       draft: bare,
+      photo: KEEP,
     });
   });
 
@@ -548,6 +633,7 @@ describe("RecipeLibraryController#edit", () => {
       ownerAccountId: COACH.id,
       recipeId: RECIPE_ID,
       draft: PORRIDGE_REQUEST,
+      photo: KEEP,
     });
   });
 
@@ -651,4 +737,290 @@ describe("RecipeLibraryController#edit", () => {
     expect((thrown as Response).status).toBe(status);
     expect(editRecipe.execute).not.toHaveBeenCalled();
   });
+});
+
+describe("RecipeLibraryController saving a photo", () => {
+  it.each([
+    ["keep", { kind: "keep" }],
+    ["remove", { kind: "remove" }],
+  ] as const)(
+    "hands the use case a %s choice read from a JSON body",
+    async (photo, choice) => {
+      // arrange
+      const { controller, createRecipe } = createController();
+
+      // act
+      const response = await controller.create(
+        argsFor({
+          request: jsonRequest("POST", { ...PORRIDGE_REQUEST, photo }),
+        }),
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(createRecipe.execute).toHaveBeenCalledWith({
+        ownerAccountId: COACH.id,
+        draft: PORRIDGE_REQUEST,
+        photo: choice,
+      });
+    },
+  );
+
+  it("answers 400 to a JSON body attaching a photo it does not carry", async () => {
+    // arrange
+    const { controller, createRecipe } = createController();
+
+    // act
+    const response = await controller.create(
+      argsFor({
+        request: jsonRequest("POST", { ...PORRIDGE_REQUEST, photo: "attach" }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(createRecipe.execute).not.toHaveBeenCalled();
+  });
+
+  it("reads the recipe part and the photo's bytes from a multipart body and creates the recipe with them", async () => {
+    // arrange
+    const { controller, createRecipe } = createController();
+
+    // act
+    const response = await controller.create(
+      argsFor({
+        request: multipartRequest("POST", {
+          recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
+          photo: PHOTO_BYTES,
+        }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(RECIPES);
+    expect(createRecipe.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      draft: PORRIDGE_REQUEST,
+      photo: { kind: "attach", bytes: PHOTO_BYTES },
+    });
+  });
+
+  it("edits the recipe with the photo read from a multipart body", async () => {
+    // arrange
+    const { controller, editRecipe } = createController();
+
+    // act
+    const response = await controller.edit(
+      argsFor({
+        request: multipartRequest("PUT", {
+          recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
+          photo: PHOTO_BYTES,
+        }),
+      }),
+      RECIPE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(editRecipe.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      recipeId: RECIPE_ID,
+      draft: PORRIDGE_REQUEST,
+      photo: { kind: "attach", bytes: PHOTO_BYTES },
+    });
+  });
+
+  it.each<
+    [string, { recipe?: unknown; photo?: Uint8Array<ArrayBuffer> | string }]
+  >([
+    [
+      "attaching a photo without a photo file",
+      { recipe: { ...PORRIDGE_REQUEST, photo: "attach" } },
+    ],
+    [
+      "attaching a photo given as text",
+      { recipe: { ...PORRIDGE_REQUEST, photo: "attach" }, photo: "porridge" },
+    ],
+    [
+      "a photo file while keeping the photo",
+      { recipe: { ...PORRIDGE_REQUEST, photo: "keep" }, photo: PHOTO_BYTES },
+    ],
+    ["no recipe part", { photo: PHOTO_BYTES }],
+    ["a recipe part that is not JSON", { recipe: "{", photo: PHOTO_BYTES }],
+    [
+      "a recipe part missing a field",
+      {
+        recipe: { ...PORRIDGE_REQUEST, name: undefined, photo: "attach" },
+        photo: PHOTO_BYTES,
+      },
+    ],
+    [
+      "a recipe part larger than 64 KiB",
+      {
+        recipe: {
+          ...PORRIDGE_REQUEST,
+          instructions: "i".repeat(65 * 1024),
+          photo: "attach",
+        },
+        photo: PHOTO_BYTES,
+      },
+    ],
+  ])(
+    "answers 400 to a multipart body with %s without saving",
+    async (_case, parts) => {
+      // arrange
+      const { controller, createRecipe } = createController();
+
+      // act
+      const response = await controller.create(
+        argsFor({ request: multipartRequest("POST", parts) }),
+      );
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(createRecipe.execute).not.toHaveBeenCalled();
+    },
+  );
+
+  it("answers 400 to a multipart body it cannot parse", async () => {
+    // arrange
+    const { controller, createRecipe } = createController();
+    const broken = new Request("https://evoa.fit/api/coach/recipes", {
+      body: "not multipart at all",
+      headers: { "Content-Type": "multipart/form-data; boundary=missing" },
+      method: "POST",
+    });
+
+    // act
+    const response = await controller.create(argsFor({ request: broken }));
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(createRecipe.execute).not.toHaveBeenCalled();
+  });
+
+  it("answers 413 naming the photo too large to a body beyond 10 MB and its 1 MB allowance, without saving", async () => {
+    // arrange
+    const { controller, createRecipe } = createController();
+    const oversized = multipartRequest("POST", {
+      recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
+      photo: new Uint8Array(MAX_RECIPE_PHOTO_BYTES + 1024 * 1024 + 1),
+    });
+    const request = new Request(oversized.url, {
+      body: await oversized.arrayBuffer(),
+      headers: { "Content-Type": oversized.headers.get("Content-Type") ?? "" },
+      method: "POST",
+    });
+
+    // act
+    const response = await controller.create(argsFor({ request }));
+
+    // assert
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({
+      problems: { photo: "too-large" },
+    });
+    expect(createRecipe.execute).not.toHaveBeenCalled();
+  });
+
+  it("answers 422 with the photo's refusal beside the draft's problems", async () => {
+    // arrange
+    const { controller, createRecipe } = createController();
+    const problems = { name: "taken" as const, photo: "unsupported" as const };
+    createRecipe.execute.mockResolvedValueOnce({ status: "invalid", problems });
+
+    // act
+    const response = await controller.create(
+      argsFor({
+        request: multipartRequest("POST", {
+          recipe: { ...PORRIDGE_REQUEST, photo: "attach" },
+          photo: PHOTO_BYTES,
+        }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ problems });
+  });
+});
+
+describe("RecipeLibraryController#openPhoto", () => {
+  it("serves the coach the whole stored photo, privately cached for good", async () => {
+    // arrange
+    const { controller, openRecipePhoto } = createController();
+
+    // act
+    const response = await controller.openPhoto(
+      argsFor({ request: photoRequest() }),
+      { recipeId: RECIPE_ID, photoId: PHOTO_ID },
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/webp");
+    expect(response.headers.get("Content-Length")).toBe("3");
+    expect(response.headers.get("Cache-Control")).toBe(
+      "private, max-age=31536000, immutable",
+    );
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(openRecipePhoto.execute).toHaveBeenCalledWith({
+      viewer: { kind: "coach", accountId: COACH.id },
+      recipeId: RECIPE_ID,
+      photoId: PHOTO_ID,
+    });
+  });
+
+  it.each<[string, ResolvedSession, unknown]>([
+    [
+      "a signed-in client",
+      CLIENT_SESSION,
+      { kind: "client", authSubjectId: "user_ana" },
+    ],
+    ["a signed-out visitor", ANONYMOUS_SESSION, { kind: "visitor" }],
+  ])(
+    "asks the access rule on behalf of %s and answers 404 when it refuses",
+    async (_case, session, viewer) => {
+      // arrange
+      const { controller, openRecipePhoto } = createController();
+      openRecipePhoto.execute.mockResolvedValueOnce({ status: "not-found" });
+
+      // act
+      const response = await controller.openPhoto(
+        argsFor({ session, request: photoRequest() }),
+        { recipeId: RECIPE_ID, photoId: PHOTO_ID },
+      );
+
+      // assert
+      expect(response.status).toBe(404);
+      expect(openRecipePhoto.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ viewer }),
+      );
+    },
+  );
+
+  it.each([
+    ["a recipe id", { recipeId: "not-an-id", photoId: PHOTO_ID }],
+    ["a photo id", { recipeId: RECIPE_ID, photoId: "not-an-id" }],
+  ])(
+    "answers 404 to %s that is not a uuid without opening anything",
+    async (_case, address) => {
+      // arrange
+      const { controller, openRecipePhoto } = createController();
+
+      // act
+      const response = await controller.openPhoto(
+        argsFor({ request: photoRequest() }),
+        address,
+      );
+
+      // assert
+      expect(response.status).toBe(404);
+      expect(openRecipePhoto.execute).not.toHaveBeenCalled();
+    },
+  );
 });

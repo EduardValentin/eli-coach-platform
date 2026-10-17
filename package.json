@@ -35,6 +35,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint apps packages --ext .ts,.tsx && pnpm format:check",
+    "recipe:photos:local:prepare": "./scripts/dev/prepare_local_recipe_photos.sh",
     "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform",
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local",
     "store:assets:local:prepare": "./scripts/dev/prepare_local_store_assets.sh",
@@ -47,7 +48,7 @@
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
     "validate": "pnpm validate:unit && pnpm test:integration",
-    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build CLIENT_RESOURCE_ROOT=/tmp/eli-coach-client-resources-build EXERCISE_VIDEO_ROOT=/tmp/eli-coach-exercise-videos-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
+    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build CLIENT_RESOURCE_ROOT=/tmp/eli-coach-client-resources-build EXERCISE_VIDEO_ROOT=/tmp/eli-coach-exercise-videos-build RECIPE_PHOTO_ROOT=/tmp/eli-coach-recipe-photos-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {

@@ -58,6 +58,10 @@ export {
 } from "./nutrition";
 export { type NutritionLibraryIncidents } from "./nutrition-library-incidents";
 export { type NutritionTag, type NutritionTags } from "./nutrition-tags";
+export {
+  OpenRecipePhotoUseCase,
+  type OpenRecipePhotoResult,
+} from "./open-recipe-photo-use-case";
 export { type PickableFoods } from "./pickable-foods";
 export { Recipe, type RecipeSnapshot } from "./recipe";
 export {
@@ -65,6 +69,7 @@ export {
   type RecipeDraftInput,
   type RecipeDraftProblems,
   type RecipeIngredientSnapshot,
+  type RecipeSaveProblems,
 } from "./recipe-draft";
 export { type RecipeIds } from "./recipe-ids";
 export {
@@ -74,6 +79,23 @@ export {
   type RecipeReplacement,
 } from "./recipe-library";
 export { RecipeMacros, type RecipeMacrosSnapshot } from "./recipe-macros";
+export {
+  MAX_RECIPE_PHOTO_BYTES,
+  RECIPE_PHOTO_RENDITION,
+  type RecipePhotoChoice,
+  type RecipePhotoRenditionSpec,
+} from "./recipe-photo";
+export { type RecipePhotoIds } from "./recipe-photo-ids";
+export {
+  type RecipePhotoRendition,
+  type RecipePhotoRenditions,
+} from "./recipe-photo-renditions";
+export { RecipePhotoSaving } from "./recipe-photo-saving";
+export {
+  type RecipePhotoOpening,
+  type RecipePhotoStore,
+} from "./recipe-photo-store";
+export { type RecipePhotoViewer } from "./recipe-photo-viewer";
 export {
   StartRecipeUseCase,
   type StartRecipeResult,

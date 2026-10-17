@@ -8,12 +8,21 @@ import type { NutritionTag } from "./nutrition-tags";
 import { Recipe, type RecipeSnapshot } from "./recipe";
 import type { RecipeDraftInput } from "./recipe-draft";
 import type { RecipeReference, RecipeReplacement } from "./recipe-library";
+import type { RecipePhotoChoice } from "./recipe-photo";
+import type { RecipePhotoRendition } from "./recipe-photo-renditions";
+import { RecipePhotoSaving } from "./recipe-photo-saving";
 
 const CREATED_AT = new Date("2026-10-13T09:00:00.000Z");
 const ARCHIVED_AT = new Date("2026-10-13T12:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "coach-account-1";
 const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const STORED_PHOTO_ID = "7a1b0000-0000-4000-8000-000000000001";
+const NEW_PHOTO_ID = "7a1b0000-0000-4000-8000-000000000002";
+const RECEIVED_PHOTO = new Uint8Array([0xff, 0xd8, 0xff]);
+const RENDERED_PHOTO = new Uint8Array([0x52, 0x49, 0x46, 0x46]);
+const KEEP: RecipePhotoChoice = { kind: "keep" };
+const ATTACH: RecipePhotoChoice = { kind: "attach", bytes: RECEIVED_PHOTO };
 
 const TAGS: NutritionTag[] = [
   { id: "mt-breakfast", family: "meal-time", label: "Breakfast", order: 1 },
@@ -64,6 +73,7 @@ const PORRIDGE: RecipeSnapshot = {
   icon: "pot",
   mealRoleIds: ["mt-breakfast"],
   tagIds: [],
+  photo: null,
   archivedAt: null,
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
@@ -94,9 +104,9 @@ const MILKY_OATS: RecipeDraftInput = {
   tagIds: ["cp-luteal", "mt-snack"],
 };
 
-function createUseCase() {
+function createUseCase(porridge: RecipeSnapshot = PORRIDGE) {
   const storedRecipes = [
-    Recipe.reconstitute(PORRIDGE),
+    Recipe.reconstitute(porridge),
     OMELETTE,
     OTHER_COACHS_PANCAKES,
   ];
@@ -115,7 +125,9 @@ function createUseCase() {
       async ({ ownerAccountId, recipeId }: RecipeReference) =>
         recipesOf(ownerAccountId).find(({ id }) => id === recipeId) ?? null,
     ),
-    replace: vi.fn(async (): Promise<RecipeReplacement> => "replaced"),
+    replace: vi.fn(
+      async (_recipe: Recipe): Promise<RecipeReplacement> => "replaced",
+    ),
   };
   const foods = {
     list: vi.fn(async (ownerAccountId: string) =>
@@ -133,16 +145,33 @@ function createUseCase() {
     foodEditFailed: vi.fn(),
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
+    recipePhotoCleanupFailed: vi.fn(),
   } satisfies NutritionLibraryIncidents;
+  const renditions = {
+    render: vi.fn(async (): Promise<RecipePhotoRendition> => ({
+      status: "rendered",
+      bytes: RENDERED_PHOTO,
+    })),
+  };
+  const photoStore = {
+    store: vi.fn(async (_photoId: string, _bytes: Uint8Array) => undefined),
+    remove: vi.fn(async (_photoId: string) => undefined),
+  };
   const useCase = new EditRecipeUseCase({
     recipes,
     foods,
     tags,
     clock: { now: () => NOW },
     incidents,
+    photos: new RecipePhotoSaving({
+      renditions,
+      ids: { generate: () => NEW_PHOTO_ID },
+      store: photoStore,
+      incidents,
+    }),
   });
 
-  return { useCase, recipes, foods, incidents };
+  return { useCase, recipes, foods, incidents, renditions, photoStore };
 }
 
 describe("EditRecipeUseCase", () => {
@@ -154,6 +183,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: MILKY_OATS,
     });
 
@@ -186,6 +216,7 @@ describe("EditRecipeUseCase", () => {
     await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: MILKY_OATS,
     });
 
@@ -204,6 +235,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: { ...MILKY_OATS, name: "  PORRIDGE " },
     });
 
@@ -219,6 +251,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: { ...MILKY_OATS, name: "omelette" },
     });
 
@@ -235,6 +268,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: { ...MILKY_OATS, name: "Pancakes" },
     });
 
@@ -256,6 +290,7 @@ describe("EditRecipeUseCase", () => {
       const result = await useCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
         recipeId: "recipe-1",
+        photo: KEEP,
         draft: {
           ...MILKY_OATS,
           ingredients: [
@@ -282,6 +317,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: { ...MILKY_OATS, instructions: "i".repeat(2_001) },
     });
 
@@ -302,6 +338,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: MILKY_OATS,
     });
 
@@ -320,6 +357,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId,
+      photo: KEEP,
       draft: MILKY_OATS,
     });
 
@@ -338,6 +376,7 @@ describe("EditRecipeUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       recipeId: "recipe-1",
+      photo: KEEP,
       draft: MILKY_OATS,
     });
 
@@ -347,5 +386,195 @@ describe("EditRecipeUseCase", () => {
       recipeId: "recipe-1",
       error: failure,
     });
+  });
+
+  describe("with a stored photo", () => {
+    const PHOTOGRAPHED: RecipeSnapshot = {
+      ...PORRIDGE,
+      photo: { photoId: STORED_PHOTO_ID },
+    };
+
+    function writtenPhotoOf(
+      recipes: ReturnType<typeof createUseCase>["recipes"],
+    ) {
+      return recipes.replace.mock.calls[0]?.[0].toSnapshot().photo;
+    }
+
+    it("keeps the stored photo, rendering, storing and removing nothing", async () => {
+      // arrange
+      const { useCase, recipes, renditions, photoStore } =
+        createUseCase(PHOTOGRAPHED);
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: KEEP,
+      });
+
+      // assert
+      expect(result.status).toBe("edited");
+      expect(writtenPhotoOf(recipes)).toEqual({ photoId: STORED_PHOTO_ID });
+      expect(renditions.render).not.toHaveBeenCalled();
+      expect(photoStore.store).not.toHaveBeenCalled();
+      expect(photoStore.remove).not.toHaveBeenCalled();
+    });
+
+    it("removes the stored photo's file once the recipe without it is written", async () => {
+      // arrange
+      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: { kind: "remove" },
+      });
+
+      // assert
+      expect(result.status).toBe("edited");
+      expect(writtenPhotoOf(recipes)).toBeNull();
+      expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(
+        STORED_PHOTO_ID,
+      );
+      expect(recipes.replace.mock.invocationCallOrder[0]!).toBeLessThan(
+        photoStore.remove.mock.invocationCallOrder[0]!,
+      );
+    });
+
+    it("replaces the stored photo with the new rendition and removes the old file after the write", async () => {
+      // arrange
+      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: ATTACH,
+      });
+
+      // assert
+      expect(result.status).toBe("edited");
+      expect(photoStore.store).toHaveBeenCalledExactlyOnceWith(
+        NEW_PHOTO_ID,
+        RENDERED_PHOTO,
+      );
+      expect(writtenPhotoOf(recipes)).toEqual({ photoId: NEW_PHOTO_ID });
+      expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(
+        STORED_PHOTO_ID,
+      );
+    });
+
+    it("refuses a photo the renderer cannot read, leaving the recipe and its photo as they were", async () => {
+      // arrange
+      const { useCase, recipes, renditions, photoStore } =
+        createUseCase(PHOTOGRAPHED);
+      renditions.render.mockResolvedValueOnce({ status: "refused" });
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: ATTACH,
+      });
+
+      // assert
+      expect(result).toEqual({
+        status: "invalid",
+        problems: { photo: "unsupported" },
+      });
+      expect(photoStore.store).not.toHaveBeenCalled();
+      expect(photoStore.remove).not.toHaveBeenCalled();
+      expect(recipes.replace).not.toHaveBeenCalled();
+    });
+
+    it("removes the new photo but keeps the stored one when the library finds the name taken meanwhile", async () => {
+      // arrange
+      const { useCase, recipes, photoStore } = createUseCase(PHOTOGRAPHED);
+      recipes.replace.mockResolvedValueOnce("name-taken");
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: ATTACH,
+      });
+
+      // assert
+      expect(result).toEqual({
+        status: "invalid",
+        problems: { name: "taken" },
+      });
+      expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(NEW_PHOTO_ID);
+    });
+
+    it("removes the new photo but keeps the stored one when the write fails, answering that the edit failed", async () => {
+      // arrange
+      const failure = new Error("connection terminated");
+      const { useCase, recipes, photoStore, incidents } =
+        createUseCase(PHOTOGRAPHED);
+      recipes.replace.mockRejectedValueOnce(failure);
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: ATTACH,
+      });
+
+      // assert
+      expect(result).toEqual({ status: "failed" });
+      expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(NEW_PHOTO_ID);
+      expect(incidents.recipeEditFailed).toHaveBeenCalledWith({
+        recipeId: "recipe-1",
+        error: failure,
+      });
+    });
+
+    it("answers that a stored photo it could not remove is an incident, never a refusal", async () => {
+      // arrange
+      const failure = new Error("disk unavailable");
+      const { useCase, photoStore, incidents } = createUseCase(PHOTOGRAPHED);
+      photoStore.remove.mockRejectedValueOnce(failure);
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        recipeId: "recipe-1",
+        draft: MILKY_OATS,
+        photo: { kind: "remove" },
+      });
+
+      // assert
+      expect(result.status).toBe("edited");
+      expect(incidents.recipePhotoCleanupFailed).toHaveBeenCalledWith({
+        photoId: STORED_PHOTO_ID,
+        error: failure,
+      });
+    });
+  });
+
+  it("renders nothing for a recipe it cannot find", async () => {
+    // arrange
+    const { useCase, renditions, photoStore } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      recipeId: "recipe-9",
+      draft: MILKY_OATS,
+      photo: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(renditions.render).not.toHaveBeenCalled();
+    expect(photoStore.store).not.toHaveBeenCalled();
   });
 });

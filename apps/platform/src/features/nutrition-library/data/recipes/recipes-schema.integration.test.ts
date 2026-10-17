@@ -36,6 +36,13 @@ const insertRecipeSql = `
     ($1, $2, $3, 5, 10, '', $4, $5, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
 `;
 
+const insertPhotographedRecipeSql = `
+  insert into app.recipes
+    (id, owner_account_id, name, prep_minutes, cook_minutes, instructions, photo_id, created_at, updated_at)
+  values
+    ($1, $2, 'Porridge', 5, 10, '', $3, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+`;
+
 const insertIngredientSql = `
   insert into app.recipe_ingredients (recipe_id, position, food_id, grams, method)
   values ($1, $2, $3, 40, $4)
@@ -128,6 +135,58 @@ describe.sequential("recipes schema", () => {
 
     // assert
     expect(await countRows("app.recipes")).toBe(1);
+  });
+
+  it("keeps a recipe's photo by the id of its stored file", async () => {
+    // arrange
+    const photoId = "7a1b0000-0000-4000-8000-000000000001";
+
+    // act
+    await suite.postgres.executeSql({
+      sql: insertPhotographedRecipeSql,
+      values: [FIRST_ID, COACH_ACCOUNT_ID, photoId],
+    });
+
+    // assert
+    expect(
+      await suite.postgres.countRows({
+        tableName: "app.recipes",
+        values: [photoId],
+        whereClause: "photo_id = $1",
+      }),
+    ).toBe(1);
+  });
+
+  it("keeps a recipe without a photo", async () => {
+    // arrange
+    const withoutIcon = { icon: null };
+
+    // act
+    await insertRecipe(withoutIcon);
+
+    // assert
+    expect(
+      await suite.postgres.countRows({
+        tableName: "app.recipes",
+        values: [],
+        whereClause: "photo_id is null",
+      }),
+    ).toBe(1);
+  });
+
+  it("refuses a photo id that is no uuid", async () => {
+    // arrange
+    const photoId = "photo-1";
+
+    // act
+    const inserting = suite.postgres.executeSql({
+      sql: insertPhotographedRecipeSql,
+      values: [FIRST_ID, COACH_ACCOUNT_ID, photoId],
+    });
+
+    // assert
+    await expect(inserting).rejects.toThrow(/uuid/);
+    expect(await countRows("app.recipes")).toBe(0);
   });
 
   it("refuses an icon outside the meal icons", async () => {

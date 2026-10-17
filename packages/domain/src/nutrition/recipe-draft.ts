@@ -11,6 +11,7 @@ import {
   type TagFamily,
 } from "./nutrition";
 import type { NutritionTag } from "./nutrition-tags";
+import type { RecipePhotoRefusal } from "./recipe-photo";
 
 type RecipeIngredientInput = {
   foodId: string;
@@ -58,6 +59,10 @@ export type RecipeDraftProblems = {
   instructions?: "too-long";
   icon?: "unknown";
   tagIds?: "unknown";
+};
+
+export type RecipeSaveProblems = RecipeDraftProblems & {
+  photo?: RecipePhotoRefusal;
 };
 
 type RecipeDraftContext = {

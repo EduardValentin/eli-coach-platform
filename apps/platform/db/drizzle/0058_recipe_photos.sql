@@ -1,0 +1,1 @@
+ALTER TABLE "app"."recipes" ADD COLUMN "photo_id" uuid;

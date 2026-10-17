@@ -26,6 +26,10 @@ import {
   productEmailShape,
   refineProductEmail,
 } from "./concerns/product-email";
+import {
+  recipePhotosShape,
+  refineRecipePhotos,
+} from "./concerns/recipe-photos";
 import { storeAssetsShape, refineStoreAssets } from "./concerns/store-assets";
 import { waitlistShape } from "./concerns/waitlist";
 
@@ -41,6 +45,7 @@ export const runtimeEnvironmentSchema = z
     ...storeAssetsShape,
     ...clientFilesShape,
     ...exerciseVideosShape,
+    ...recipePhotosShape,
     ...managementApiShape,
     ...assessmentCallsShape,
     ...featureFlagsShape,
@@ -53,6 +58,7 @@ export const runtimeEnvironmentSchema = z
   .superRefine(refinePayments)
   .superRefine(refineStoreAssets)
   .superRefine(refineClientFiles)
-  .superRefine(refineExerciseVideos);
+  .superRefine(refineExerciseVideos)
+  .superRefine(refineRecipePhotos);
 
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;

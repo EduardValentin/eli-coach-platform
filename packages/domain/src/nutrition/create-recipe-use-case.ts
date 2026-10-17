@@ -6,19 +6,22 @@ import { Recipe } from "./recipe";
 import {
   RecipeDraft,
   type RecipeDraftInput,
-  type RecipeDraftProblems,
+  type RecipeSaveProblems,
 } from "./recipe-draft";
 import type { RecipeIds } from "./recipe-ids";
 import type { RecipeLibrary } from "./recipe-library";
+import type { RecipePhotoChoice } from "./recipe-photo";
+import type { RecipePhotoSaving } from "./recipe-photo-saving";
 
 type CreateRecipeCommand = {
   ownerAccountId: string;
   draft: RecipeDraftInput;
+  photo: RecipePhotoChoice;
 };
 
 export type CreateRecipeResult =
   | { status: "created"; recipe: Recipe }
-  | { status: "invalid"; problems: RecipeDraftProblems }
+  | { status: "invalid"; problems: RecipeSaveProblems }
   | { status: "failed" };
 
 type CreateRecipeUseCaseOptions = {
@@ -28,6 +31,10 @@ type CreateRecipeUseCaseOptions = {
   ids: RecipeIds;
   clock: Clock;
   incidents: Pick<NutritionLibraryIncidents, "recipeCreationFailed">;
+  photos: Pick<
+    RecipePhotoSaving,
+    "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
+  >;
 };
 
 export class CreateRecipeUseCase {
@@ -46,8 +53,9 @@ export class CreateRecipeUseCase {
   private async create({
     ownerAccountId,
     draft: input,
+    photo: choice,
   }: CreateRecipeCommand): Promise<CreateRecipeResult> {
-    const { recipes, foods, tags, ids, clock } = this.options;
+    const { recipes, foods, tags, ids, clock, photos } = this.options;
     const [storedRecipes, activeFoods, vocabulary] = await Promise.all([
       recipes.list(ownerAccountId),
       foods.list(ownerAccountId),
@@ -58,17 +66,31 @@ export class CreateRecipeUseCase {
       tags: vocabulary,
       pickableFoodIds: Recipe.pickableFoodsForNew(activeFoods).ids,
     });
+    const photo = await photos.judged(choice);
 
-    if (draft.status === "invalid") return draft;
+    if (draft.status === "invalid" || photo.kind === "refused") {
+      return {
+        status: "invalid",
+        problems: {
+          ...(draft.status === "invalid" && draft.problems),
+          ...(photo.kind === "refused" && { photo: photo.refusal }),
+        },
+      };
+    }
 
+    const change = await photos.storeAccepted(photo);
     const recipe = Recipe.added({
       id: ids.generate(),
       ownerAccountId,
       draft: draft.draft,
+      photo: change,
       at: clock.now(),
     });
 
-    if ((await recipes.add(recipe)) === "name-taken") {
+    if (
+      (await photos.writeOrRemoveStored(change, () => recipes.add(recipe))) ===
+      "name-taken"
+    ) {
       return { status: "invalid", problems: { name: "taken" } };
     }
 

@@ -19,10 +19,12 @@ import {
   nutritionTabOf,
   recipeBuilderPath,
   recipePath,
+  recipePhotoPath,
 } from "./paths";
 
 const FOOD_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const RECIPE_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+const PHOTO_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
 
 describe("nutrition library paths", () => {
   it("links the coach to the library the coach portal registers", () => {
@@ -140,5 +142,17 @@ describe("nutrition library paths", () => {
     expect(tab).toBe(expected);
     expect(NUTRITION_TAB_PARAM).toBe("tab");
     expect(NUTRITION_TABS).toEqual(["foods", "recipes"]);
+  });
+
+  it("addresses a recipe's stored photo outside the coach API, by recipe and photo id", () => {
+    // arrange
+    const address = recipePhotoPath(RECIPE_ID, PHOTO_ID);
+
+    // act
+    const match = matchPath(NUTRITION_LIBRARY_API_PATHS.recipePhoto, address);
+
+    // assert
+    expect(address).toBe(`/api/recipes/${RECIPE_ID}/photo/${PHOTO_ID}`);
+    expect(match?.params).toEqual({ recipeId: RECIPE_ID, photoId: PHOTO_ID });
   });
 });

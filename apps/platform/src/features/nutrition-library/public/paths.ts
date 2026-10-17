@@ -8,6 +8,8 @@ const FOODS_API = "/api/coach/foods";
 
 const RECIPES_API = "/api/coach/recipes";
 
+const RECIPE_PHOTOS_API = "/api/recipes";
+
 const FOODS_SEGMENT = "foods";
 
 const RECIPE_BUILDER_SEGMENT = "recipe-builder";
@@ -17,6 +19,7 @@ export const NUTRITION_LIBRARY_API_PATHS = {
   food: `${FOODS_API}/:foodId`,
   recipes: RECIPES_API,
   recipe: `${RECIPES_API}/:recipeId`,
+  recipePhoto: `${RECIPE_PHOTOS_API}/:recipeId/photo/:photoId`,
 } as const;
 
 export const COACH_NUTRITION_ROUTE_SEGMENT = "nutrition";
@@ -67,4 +70,8 @@ export function recipeBuilderPath(recipeId: string): string {
 
 export function recipePath(recipeId: string): string {
   return `${RECIPES_API}/${encodeURIComponent(recipeId)}`;
+}
+
+export function recipePhotoPath(recipeId: string, photoId: string): string {
+  return `${RECIPE_PHOTOS_API}/${encodeURIComponent(recipeId)}/photo/${encodeURIComponent(photoId)}`;
 }

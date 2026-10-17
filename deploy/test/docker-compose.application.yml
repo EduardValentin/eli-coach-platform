@@ -27,11 +27,13 @@ services:
       CLIENT_MEDIA_ROOT: /srv/client-media
       CLIENT_RESOURCE_ROOT: /srv/client-resources
       EXERCISE_VIDEO_ROOT: /srv/exercise-videos
+      RECIPE_PHOTO_ROOT: /srv/recipe-photos
     volumes:
       - ${STORE_ASSET_ROOT_HOST}:/srv/store-assets
       - ${CLIENT_MEDIA_ROOT_HOST}:/srv/client-media
       - ${CLIENT_RESOURCE_ROOT_HOST}:/srv/client-resources
       - ${EXERCISE_VIDEO_ROOT_HOST}:/srv/exercise-videos
+      - ${RECIPE_PHOTO_ROOT_HOST}:/srv/recipe-photos
     labels:
       logging: promtail
       env: test

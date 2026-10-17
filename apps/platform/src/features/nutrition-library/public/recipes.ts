@@ -5,9 +5,9 @@ import {
   type PickableFoods,
   type Recipe,
   type RecipeDraftInput,
-  type RecipeDraftProblems,
   type RecipeIcon,
   type RecipeMacrosSnapshot,
+  type RecipeSaveProblems,
   type RecipeSnapshot,
 } from "@eli-coach-platform/domain/nutrition";
 import { z } from "zod";
@@ -18,16 +18,20 @@ import {
   type FoodView,
   type NutritionTagView,
 } from "~/features/nutrition-library/public/foods";
+import { recipePhotoPath } from "~/features/nutrition-library/public/paths";
+
+type RecipePhotoView = { path: string };
 
 type RecipeView = Omit<
   RecipeSnapshot,
-  "ownerAccountId" | "archivedAt" | "createdAt" | "updatedAt"
->;
+  "ownerAccountId" | "photo" | "archivedAt" | "createdAt" | "updatedAt"
+> & { photo: RecipePhotoView | null };
 
 export type RecipeCardView = {
   id: string;
   name: string;
   icon: RecipeIcon | null;
+  photo: RecipePhotoView | null;
   totalMinutes: number;
   macros: RecipeMacrosSnapshot;
   tagIds: string[];
@@ -62,9 +66,15 @@ export const recipeRequestSchema = z.object({
   instructions: z.string(),
   icon: z.string().nullable(),
   tagIds: z.array(z.string()),
+  photo: z.enum(["keep", "remove", "attach"]).default("keep"),
 }) satisfies z.ZodType<RecipeDraftInput>;
 
-export type RecipeRequest = z.infer<typeof recipeRequestSchema>;
+export const RECIPE_FORM_FIELDS = {
+  recipe: "recipe",
+  photo: "photo",
+} as const;
+
+export type RecipeRequest = z.input<typeof recipeRequestSchema>;
 
 export const recipeSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
@@ -91,7 +101,8 @@ const recipeProblemsSchema = z.object({
   instructions: z.enum(["too-long"]).optional(),
   icon: z.enum(["unknown"]).optional(),
   tagIds: z.enum(["unknown"]).optional(),
-}) satisfies z.ZodType<RecipeDraftProblems>;
+  photo: z.enum(["unsupported", "too-large"]).optional(),
+}) satisfies z.ZodType<RecipeSaveProblems>;
 
 export type RecipeProblems = z.infer<typeof recipeProblemsSchema>;
 
@@ -102,13 +113,20 @@ export const recipeProblemsAnswerSchema = z.object({
 function presentRecipe(recipe: Recipe): RecipeView {
   const {
     ownerAccountId: _ownerAccountId,
+    photo: _photo,
     archivedAt: _archivedAt,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
     ...view
   } = recipe.toSnapshot();
 
-  return view;
+  return { ...view, photo: presentRecipePhoto(recipe) };
+}
+
+function presentRecipePhoto(recipe: Recipe): RecipePhotoView | null {
+  const { photo } = recipe;
+
+  return photo && { path: recipePhotoPath(recipe.id, photo.photoId) };
 }
 
 export function presentRecipeCard(
@@ -130,6 +148,7 @@ export function presentRecipeCard(
     id,
     name,
     icon,
+    photo: presentRecipePhoto(recipe),
     totalMinutes: prepMinutes + cookMinutes,
     macros: RecipeMacros.of(
       ingredients,

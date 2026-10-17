@@ -6,17 +6,20 @@ import type { Recipe } from "./recipe";
 import {
   RecipeDraft,
   type RecipeDraftInput,
-  type RecipeDraftProblems,
+  type RecipeSaveProblems,
 } from "./recipe-draft";
 import type { RecipeLibrary, RecipeReference } from "./recipe-library";
+import type { RecipePhotoChoice } from "./recipe-photo";
+import type { RecipePhotoSaving } from "./recipe-photo-saving";
 
 type EditRecipeCommand = RecipeReference & {
   draft: RecipeDraftInput;
+  photo: RecipePhotoChoice;
 };
 
 export type EditRecipeResult =
   | { status: "edited"; recipe: Recipe }
-  | { status: "invalid"; problems: RecipeDraftProblems }
+  | { status: "invalid"; problems: RecipeSaveProblems }
   | { status: "not-found" }
   | { status: "failed" };
 
@@ -26,6 +29,10 @@ type EditRecipeUseCaseOptions = {
   tags: Pick<NutritionTags, "list">;
   clock: Clock;
   incidents: Pick<NutritionLibraryIncidents, "recipeEditFailed">;
+  photos: Pick<
+    RecipePhotoSaving,
+    "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
+  >;
 };
 
 export class EditRecipeUseCase {
@@ -48,8 +55,9 @@ export class EditRecipeUseCase {
     ownerAccountId,
     recipeId,
     draft: input,
+    photo: choice,
   }: EditRecipeCommand): Promise<EditRecipeResult> {
-    const { recipes, foods, tags, clock } = this.options;
+    const { recipes, foods, tags, clock, photos } = this.options;
     const [recipe, storedRecipes, activeFoods, vocabulary] = await Promise.all([
       recipes.find({ ownerAccountId, recipeId }),
       recipes.list(ownerAccountId),
@@ -71,15 +79,35 @@ export class EditRecipeUseCase {
       pickableFoodIds: recipe.pickableFoods({ activeFoods, referencedFoods })
         .ids,
     });
+    const photo = await photos.judged(choice);
 
-    if (draft.status === "invalid") return draft;
+    if (draft.status === "invalid" || photo.kind === "refused") {
+      return {
+        status: "invalid",
+        problems: {
+          ...(draft.status === "invalid" && draft.problems),
+          ...(photo.kind === "refused" && { photo: photo.refusal }),
+        },
+      };
+    }
 
-    const edited = recipe.revised(draft.draft, clock.now());
+    const change = await photos.storeAccepted(photo);
+    const revision = recipe.revised({
+      draft: draft.draft,
+      photo: change,
+      at: clock.now(),
+    });
 
-    if ((await recipes.replace(edited)) === "name-taken") {
+    if (
+      (await photos.writeOrRemoveStored(change, () =>
+        recipes.replace(revision.recipe),
+      )) === "name-taken"
+    ) {
       return { status: "invalid", problems: { name: "taken" } };
     }
 
-    return { status: "edited", recipe: edited };
+    await photos.removeStored(revision.replacedPhoto);
+
+    return { status: "edited", recipe: revision.recipe };
   }
 }

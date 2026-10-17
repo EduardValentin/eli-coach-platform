@@ -16,9 +16,15 @@ type RecipeEditFailedIncident = {
   error: unknown;
 };
 
+type RecipePhotoCleanupFailedIncident = {
+  photoId: string;
+  error: unknown;
+};
+
 export interface NutritionLibraryIncidents {
   foodCreationFailed(incident: FoodCreationFailedIncident): void;
   foodEditFailed(incident: FoodEditFailedIncident): void;
   recipeCreationFailed(incident: RecipeCreationFailedIncident): void;
   recipeEditFailed(incident: RecipeEditFailedIncident): void;
+  recipePhotoCleanupFailed(incident: RecipePhotoCleanupFailedIncident): void;
 }

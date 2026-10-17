@@ -40,6 +40,7 @@ const OMELETTE = Recipe.reconstitute({
   icon: null,
   mealRoleIds: [],
   tagIds: [],
+  photo: null,
   archivedAt: null,
   createdAt: AT,
   updatedAt: AT,

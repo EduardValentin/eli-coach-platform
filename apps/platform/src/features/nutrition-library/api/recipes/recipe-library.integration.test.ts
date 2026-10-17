@@ -25,11 +25,17 @@ import {
   RECIPES_PAGE,
   RecipeLibraryJourney,
   type RecipeFields,
+  type UploadedPhoto,
 } from "~integration-test-config/recipe-library-journey";
 import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
+import {
+  cameraJpegWithOrientationAndLocation,
+  imageFactsOf,
+  landscapePng,
+} from "~integration-test-config/sample-images";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
@@ -41,6 +47,8 @@ const EDITED_AT = new Date("2026-10-15T10:30:00.000Z");
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_UUID = "not-a-recipe";
 const RECIPES = { redirectTo: "/coach/nutrition?tab=recipes" };
+const TEN_MEBIBYTES = 10 * 1024 * 1024;
+const ONE_MEBIBYTE = 1024 * 1024;
 
 const OATS: FoodFields = {
   name: "Oats",
@@ -201,6 +209,21 @@ const MALFORMED_BODIES: [string, (stored: StoredFoods) => unknown][] = [
     }),
   ],
 ];
+
+async function cameraPhoto(): Promise<UploadedPhoto> {
+  return {
+    name: "porridge.jpg",
+    type: "image/jpeg",
+    bytes: new Uint8Array(await cameraJpegWithOrientationAndLocation()),
+  };
+}
+
+function paddedTo(photo: UploadedPhoto, sizeBytes: number): UploadedPhoto {
+  const bytes = new Uint8Array(sizeBytes);
+  bytes.set(photo.bytes);
+
+  return { ...photo, bytes };
+}
 
 async function storeFoods(): Promise<StoredFoods> {
   const [oats, milk, honey] = await Promise.all(
@@ -735,6 +758,309 @@ describe.sequential("recipe library integration", () => {
       // assert
       expect(response.status).toBe(404);
       expect(await library.recipeRows()).toEqual([othersPorridge]);
+    });
+  });
+
+  describe("a recipe's photo", () => {
+    beforeEach(async () => {
+      await library.clearPhotoFiles();
+    });
+
+    async function porridgeWithPhoto(
+      photo?: UploadedPhoto,
+    ): Promise<{ recipeId: string; photoId: string }> {
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        photo ?? (await cameraPhoto()),
+      );
+
+      if (response.status !== 200) {
+        throw new Error(
+          `Creating Porridge answered ${response.status}: ${await response.text()}`,
+        );
+      }
+
+      const [porridge] = await library.recipeRows();
+      const photoId = porridge && (await library.photoIdOf(porridge.id));
+
+      if (!porridge || !photoId) {
+        throw new Error("Porridge was not stored with a photo.");
+      }
+
+      return { recipeId: porridge.id, photoId };
+    }
+
+    it("stores the recipe with a new photo id and keeps one file of that id under the photo root", async () => {
+      // arrange
+      const photo = await cameraPhoto();
+
+      // act
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        photo,
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(RECIPES);
+      const [porridge] = await library.recipeRows();
+      const photoId = await library.photoIdOf(porridge!.id);
+      expect(photoId).toEqual(expect.any(String));
+      expect(await library.photoFiles()).toEqual([photoId]);
+    });
+
+    it("serves the coach the photo as one upright WebP within 1,200 px, without its metadata, privately cached for good", async () => {
+      // arrange
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const response = await library.openPhoto(COACH_SESSION, porridge);
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Content-Type")).toBe("image/webp");
+      expect(response.headers.get("Cache-Control")).toBe(
+        "private, max-age=31536000, immutable",
+      );
+      expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+      expect(
+        await imageFactsOf(new Uint8Array(await response.arrayBuffer())),
+      ).toEqual({ format: "webp", width: 900, height: 1200, hasExif: false });
+    });
+
+    it("stores a PNG as the same one WebP rendition", async () => {
+      // arrange
+      const png = {
+        name: "porridge.png",
+        type: "image/png",
+        bytes: new Uint8Array(await landscapePng()),
+      };
+
+      // act
+      const porridge = await porridgeWithPhoto(png);
+
+      // assert
+      const response = await library.openPhoto(COACH_SESSION, porridge);
+      expect(
+        await imageFactsOf(new Uint8Array(await response.arrayBuffer())),
+      ).toEqual({ format: "webp", width: 1200, height: 900, hasExif: false });
+    });
+
+    it("keeps only the new file when she replaces the photo, and answers 404 for the replaced photo's address", async () => {
+      // arrange
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const response = await library.editWithPhoto(
+        COACH_SESSION,
+        porridge.recipeId,
+        {
+          fields: { ...porridgeOf(stored), photo: "attach" },
+          photo: await cameraPhoto(),
+        },
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      const replacedBy = await library.photoIdOf(porridge.recipeId);
+      expect(replacedBy).not.toBe(porridge.photoId);
+      expect(await library.photoFiles()).toEqual([replacedBy]);
+      expect((await library.openPhoto(COACH_SESSION, porridge)).status).toBe(
+        404,
+      );
+      expect(
+        (
+          await library.openPhoto(COACH_SESSION, {
+            recipeId: porridge.recipeId,
+            photoId: replacedBy!,
+          })
+        ).status,
+      ).toBe(200);
+    });
+
+    it("keeps the photo when she saves the recipe without touching it", async () => {
+      // arrange
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const response = await library.edit(COACH_SESSION, porridge.recipeId, {
+        ...porridgeOf(stored),
+        name: "Oat porridge",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.photoIdOf(porridge.recipeId)).toBe(porridge.photoId);
+      expect(await library.photoFiles()).toEqual([porridge.photoId]);
+    });
+
+    it("leaves no photo and no file when she removes the photo", async () => {
+      // arrange
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const response = await library.edit(COACH_SESSION, porridge.recipeId, {
+        ...porridgeOf(stored),
+        photo: "remove",
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await library.photoIdOf(porridge.recipeId)).toBeNull();
+      expect(await library.photoFiles()).toEqual([]);
+      expect((await library.openPhoto(COACH_SESSION, porridge)).status).toBe(
+        404,
+      );
+    });
+
+    it("refuses a text file renamed as a photo with 422, storing nothing", async () => {
+      // arrange
+      const renamed = {
+        name: "porridge.jpg",
+        type: "image/jpeg",
+        bytes: new TextEncoder().encode("not a photo at all"),
+      };
+
+      // act
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        renamed,
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({
+        problems: { photo: "unsupported" },
+      });
+      expect(await library.recipeRows()).toEqual([]);
+      expect(await library.photoFiles()).toEqual([]);
+    });
+
+    it("refuses a photo over 10 MB with 422, storing nothing", async () => {
+      // arrange
+      const oversized = paddedTo(await cameraPhoto(), TEN_MEBIBYTES + 1);
+
+      // act
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        oversized,
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({
+        problems: { photo: "too-large" },
+      });
+      expect(await library.recipeRows()).toEqual([]);
+      expect(await library.photoFiles()).toEqual([]);
+    });
+
+    it("answers 413 to a save beyond 10 MB and its 1 MB allowance, storing nothing", async () => {
+      // arrange
+      const oversized = paddedTo(
+        await cameraPhoto(),
+        TEN_MEBIBYTES + ONE_MEBIBYTE + 1,
+      );
+
+      // act
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        oversized,
+      );
+
+      // assert
+      expect(response.status).toBe(413);
+      expect(await response.json()).toEqual({
+        problems: { photo: "too-large" },
+      });
+      expect(await library.recipeRows()).toEqual([]);
+      expect(await library.photoFiles()).toEqual([]);
+    });
+
+    it("refuses a name another recipe has with 422 and keeps no file of the photo sent with it", async () => {
+      // arrange
+      await library.createAccepted(COACH_SESSION, {
+        ...porridgeOf(stored),
+        name: "Omelette",
+      });
+
+      // act
+      const response = await library.createWithPhoto(
+        COACH_SESSION,
+        { ...porridgeOf(stored), name: " omelette", photo: "attach" },
+        await cameraPhoto(),
+      );
+
+      // assert
+      expect(response.status).toBe(422);
+      expect(await response.json()).toEqual({ problems: { name: "taken" } });
+      expect(await library.recipeRows()).toHaveLength(1);
+      expect(await library.photoFiles()).toEqual([]);
+    });
+
+    it("answers 400 to a photo attached without a file, storing nothing", async () => {
+      // arrange
+      const attachingNothing = { ...porridgeOf(stored), photo: "attach" };
+
+      // act
+      const response = await library.create(COACH_SESSION, attachingNothing);
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await library.recipeRows()).toEqual([]);
+    });
+
+    it("answers 404 for a photo id that is not the recipe's", async () => {
+      // arrange
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const response = await library.openPhoto(COACH_SESSION, {
+        recipeId: porridge.recipeId,
+        photoId: UNKNOWN_ID,
+      });
+
+      // assert
+      expect(response.status).toBe(404);
+    });
+
+    it("answers 404 to a signed-in client, a signed-out visitor and another coach", async () => {
+      // arrange
+      await rig.provisionClient();
+      await rig.provisionOtherCoach();
+      const porridge = await porridgeWithPhoto();
+
+      // act
+      const answers = await Promise.all([
+        library.openPhoto(CLIENT_SESSION, porridge),
+        library.openPhoto(VISITOR, porridge),
+        library.openPhoto(OTHER_COACH_SESSION, porridge),
+      ]);
+
+      // assert
+      expect(answers.map(({ status }) => status)).toEqual([404, 404, 404]);
+    });
+
+    it("refuses a signed-in client's save with a photo, storing nothing", async () => {
+      // arrange
+      await rig.provisionClient();
+
+      // act
+      const response = await library.createWithPhoto(
+        CLIENT_SESSION,
+        { ...porridgeOf(stored), photo: "attach" },
+        await cameraPhoto(),
+      );
+
+      // assert
+      expect(response.status).toBe(403);
+      expect(await library.recipeRows()).toEqual([]);
+      expect(await library.photoFiles()).toEqual([]);
     });
   });
 
