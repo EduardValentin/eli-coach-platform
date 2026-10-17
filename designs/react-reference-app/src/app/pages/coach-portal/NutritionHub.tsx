@@ -42,14 +42,12 @@ export function NutritionHub() {
       <TabsTrigger
         ref={content === 'foods' ? focusWhenChosen('foods') : undefined}
         value="foods"
-        className="px-4 sm:px-5"
       >
         Foods
       </TabsTrigger>
       <TabsTrigger
         ref={content === 'recipes' ? focusWhenChosen('recipes') : undefined}
         value="recipes"
-        className="px-4 sm:px-5"
       >
         Recipes
       </TabsTrigger>
@@ -57,7 +55,6 @@ export function NutritionHub() {
         <TabsTrigger
           ref={content === 'plans' ? focusWhenChosen('plans') : undefined}
           value="plans"
-          className="px-4 sm:px-5"
         >
           Meal Plans
         </TabsTrigger>

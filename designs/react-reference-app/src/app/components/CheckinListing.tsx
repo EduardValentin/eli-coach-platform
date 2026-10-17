@@ -246,7 +246,7 @@ export function CheckinListing({
         view={
           <TabsList>
             {(["upcoming", "requests", "past"] as const).map((value) => (
-              <TabsTrigger key={value} value={value} className="px-4 sm:px-5">
+              <TabsTrigger key={value} value={value}>
                 {TAB_LABELS[value]}
                 {value === "requests" && awaitingViewer > 0 && (
                   <>
