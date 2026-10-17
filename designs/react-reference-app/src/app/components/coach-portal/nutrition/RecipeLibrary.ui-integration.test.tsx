@@ -163,3 +163,17 @@ describe('deleting a recipe', () => {
     expect(await screen.findByText('"Rice cake & yogurt stack" deleted')).toBeInTheDocument();
   });
 });
+
+describe('a recipe card', () => {
+  it('shows the sample recipe photo bundled with the app', () => {
+    // arrange
+    // act
+    renderLibrary();
+
+    // assert
+    expect(screen.getByRole('img', { name: 'Chicken rice bowl' })).toHaveAttribute(
+      'src',
+      expect.stringMatching(/\/media\/recipes\/chicken-rice-bowl\.jpg$/),
+    );
+  });
+});

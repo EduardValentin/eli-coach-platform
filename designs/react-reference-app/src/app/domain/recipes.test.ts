@@ -5,10 +5,13 @@ import {
   MAX_RECIPE_MINUTES,
   MAX_RECIPE_NAME_LENGTH,
   MIN_INGREDIENT_GRAMS,
+  RECIPE_PHOTO_MAX_BYTES,
   computeRecipeMacros,
   draftProblems,
   isValidDraft,
   recipeFrom,
+  recipePhotoContentRefusal,
+  recipePhotoRefusal,
   type RecipeDraft,
 } from './recipes';
 
@@ -247,5 +250,57 @@ describe('computeRecipeMacros', () => {
 
     // assert
     expect(macros).toEqual({ kcal: 0, protein: 0, carb: 0, fat: 0 });
+  });
+});
+
+describe('a recipe photo chosen in the browser', () => {
+  it.each([
+    ['a JPEG', 'bowl.jpg', 'image/jpeg'],
+    ['a PNG', 'bowl.png', 'image/png'],
+    ['a WebP', 'bowl.webp', 'image/webp'],
+    ['a .jpeg the file manager gave no type', 'bowl.JPEG', ''],
+  ])('accepts %s', (_kind, name, type) => {
+    // arrange
+    const file = { name, type, size: 1_024 };
+
+    // act
+    const refusal = recipePhotoRefusal(file);
+
+    // assert
+    expect(refusal).toBeUndefined();
+  });
+
+  it('refuses another kind of file, naming it', () => {
+    // arrange
+    const file = { name: 'bowl.heic', type: 'image/heic', size: 1_024 };
+
+    // act
+    const refusal = recipePhotoRefusal(file);
+
+    // assert
+    expect(refusal).toBe('bowl.heic is not a .jpg, .png or .webp — only JPEG, PNG and WebP photos are supported');
+  });
+
+  it('accepts a photo of exactly 10 MB and refuses one a byte over', () => {
+    // arrange
+    const atCap = { name: 'bowl.jpg', type: 'image/jpeg', size: RECIPE_PHOTO_MAX_BYTES };
+    const overCap = { ...atCap, size: RECIPE_PHOTO_MAX_BYTES + 1 };
+
+    // act
+    const refusals = [recipePhotoRefusal(atCap), recipePhotoRefusal(overCap)];
+
+    // assert
+    expect(refusals).toEqual([undefined, 'bowl.jpg is larger than 10 MB']);
+  });
+
+  it('names the file the server found no photo in', () => {
+    // arrange
+    const file = { name: 'renamed.jpg' };
+
+    // act
+    const refusal = recipePhotoContentRefusal(file);
+
+    // assert
+    expect(refusal).toBe('renamed.jpg doesn’t contain a JPEG, PNG or WebP photo.');
   });
 });

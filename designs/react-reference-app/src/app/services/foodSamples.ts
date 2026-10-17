@@ -20,12 +20,14 @@ const SAMPLE_FOODS: readonly Food[] = [
   { id: 'food-rice-cakes', name: 'Rice cakes', category: 'carb', icon: 'grain', kcal: 387, protein: 8, carb: 81, fat: 2.8, defaultPortionGrams: 20, tagIds: ['mt-snack'], archivedAt: '2026-09-28T10:00:00.000Z' },
 ];
 
+const RECIPE_PHOTO_ROOT = `${import.meta.env.BASE_URL}media/recipes/`;
+
 const SAMPLE_RECIPES: readonly Recipe[] = [
   {
     id: 'recipe-chicken-rice-bowl',
     name: 'Chicken rice bowl',
     icon: 'poultry',
-    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=70&auto=format&fit=crop',
+    imageUrl: `${RECIPE_PHOTO_ROOT}chicken-rice-bowl.jpg`,
     ingredients: [
       { foodId: 'food-chicken', grams: 150, method: 'grilled' },
       { foodId: 'food-white-rice', grams: 150, method: 'boiled' },
@@ -55,7 +57,7 @@ const SAMPLE_RECIPES: readonly Recipe[] = [
     id: 'recipe-salmon-sweet-potato',
     name: 'Salmon & sweet potato',
     icon: 'fish',
-    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=70&auto=format&fit=crop',
+    imageUrl: `${RECIPE_PHOTO_ROOT}salmon-sweet-potato.jpg`,
     ingredients: [
       { foodId: 'food-salmon', grams: 150, method: 'baked' },
       { foodId: 'food-sweet-potato', grams: 200, method: 'baked' },
