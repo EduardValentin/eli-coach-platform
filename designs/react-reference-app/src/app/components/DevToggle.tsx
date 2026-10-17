@@ -1119,6 +1119,7 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Populated</SelectItem>
                       <SelectItem value="empty">Empty</SelectItem>
+                      <SelectItem value="clash">Archived name clash</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

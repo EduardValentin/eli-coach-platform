@@ -34,6 +34,14 @@ export const exerciseLibraryApiRoutes = [
     "./api/exercises/exercise.ts",
   ),
   route(
+    EXERCISE_LIBRARY_API_PATHS.exerciseArchive.slice(1),
+    "./api/exercises/exercise-archive.ts",
+  ),
+  route(
+    EXERCISE_LIBRARY_API_PATHS.exerciseRestore.slice(1),
+    "./api/exercises/exercise-restore.ts",
+  ),
+  route(
     EXERCISE_LIBRARY_API_PATHS.exerciseVideo.slice(1),
     "./api/exercises/exercise-video.ts",
   ),

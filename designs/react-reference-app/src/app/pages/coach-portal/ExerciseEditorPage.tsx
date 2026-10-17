@@ -292,7 +292,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
     difficulty: useId(), tagsLabel: useId(), cues: useId(), cuesProblem: useId(), videoLabel: useId(),
   };
 
-  const others = exercises.filter((exercise) => exercise.id !== editing?.id);
+  const others = exercises.filter((exercise) => exercise.id !== editing?.id && exercise.archivedAt === undefined);
   const problems = draftProblems(draft, others);
   const shownProblems: typeof problems = touched ? problems : {};
   const change = (update: (previous: Draft) => Draft) => {
@@ -594,6 +594,6 @@ export function ExerciseEditorPage() {
   const { exercises } = useTraining();
   const library = libraryReturnPath('/coach/training', useLocation().state);
   const editing = exerciseId ? exercises.find((exercise) => exercise.id === exerciseId) : undefined;
-  if (exerciseId && !editing) return <Navigate to={library} replace />;
+  if (exerciseId && (!editing || editing.archivedAt !== undefined)) return <Navigate to={library} replace />;
   return <ExerciseEditor key={editing?.id ?? 'new'} editing={editing} library={library} />;
 }

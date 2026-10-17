@@ -214,7 +214,7 @@ describe('deleting a food', () => {
 
     // act
     await user.click(
-      within(screen.getByRole('alertdialog', { name: 'Delete this food?' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Delete “Dark chocolate”?' })).getByRole('button', {
         name: 'Delete',
       }),
     );

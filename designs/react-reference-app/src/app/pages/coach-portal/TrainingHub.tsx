@@ -603,9 +603,7 @@ export function TrainingHub() {
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
-        subject={
-          deleteTarget && { noun: deleteTarget.type, name: deleteTarget.name }
-        }
+        subject={deleteTarget}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
       />

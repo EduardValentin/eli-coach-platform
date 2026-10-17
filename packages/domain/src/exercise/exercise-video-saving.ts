@@ -1,9 +1,7 @@
 import type { ExerciseVideoChange } from "./exercise";
-import type {
-  ExerciseLibraryIncidents,
-  UncleanedExerciseVideoFile,
-} from "./exercise-library-incidents";
+import type { ExerciseLibraryIncidents } from "./exercise-library-incidents";
 import type { ExerciseVideo } from "./exercise-video";
+import { ExerciseVideoCleanup } from "./exercise-video-cleanup";
 import type { ExerciseVideoFormatDetector } from "./exercise-video-format-detector";
 import type { ExerciseVideoIds } from "./exercise-video-ids";
 import type {
@@ -44,7 +42,11 @@ type ExerciseVideoSavingOptions = {
 };
 
 export class ExerciseVideoSaving {
-  constructor(private readonly options: ExerciseVideoSavingOptions) {}
+  private readonly cleanup: ExerciseVideoCleanup;
+
+  constructor(private readonly options: ExerciseVideoSavingOptions) {
+    this.cleanup = new ExerciseVideoCleanup(options);
+  }
 
   async judged(choice: ExerciseVideoChoice): Promise<JudgedVideoChoice> {
     if (choice.kind !== "attach") return choice;
@@ -89,35 +91,16 @@ export class ExerciseVideoSaving {
   async discard(choice: ExerciseVideoChoice): Promise<void> {
     if (choice.kind !== "attach") return;
 
-    const { stagingId } = choice.staged;
-
-    await this.cleanUp({ stagingId }, () =>
-      this.options.store.discard(stagingId),
-    );
+    await this.cleanup.discardStaged(choice.staged);
   }
 
   async removeStored(video: ExerciseVideo | null): Promise<void> {
-    if (!video) return;
-
-    const { videoId } = video;
-
-    await this.cleanUp({ videoId }, () => this.options.store.remove(videoId));
+    await this.cleanup.removeStored(video);
   }
 
   private async removeUnwritten(change: ExerciseVideoChange): Promise<void> {
     if (change.kind !== "attach") return;
 
-    await this.removeStored(change.video);
-  }
-
-  private async cleanUp(
-    file: UncleanedExerciseVideoFile,
-    removal: () => Promise<void>,
-  ): Promise<void> {
-    try {
-      await removal();
-    } catch (error) {
-      this.options.incidents.videoCleanupFailed({ ...file, error });
-    }
+    await this.cleanup.removeStored(change.video);
   }
 }

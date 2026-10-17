@@ -25,6 +25,7 @@ const SQUAT = Exercise.reconstitute({
     format: "mp4",
     sizeBytes: 2_048,
   },
+  archivedAt: null,
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
 });

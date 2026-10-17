@@ -119,6 +119,24 @@ export class ExerciseRequests {
     );
   }
 
+  async archive(exerciseId: string): Promise<ApiAnswer> {
+    return answerOf(
+      await this.request.post(`${EXERCISES_PATH}/${exerciseId}/archive`),
+    );
+  }
+
+  async restore(exerciseId: string): Promise<ApiAnswer> {
+    return answerOf(
+      await this.request.post(`${EXERCISES_PATH}/${exerciseId}/restore`),
+    );
+  }
+
+  async remove(exerciseId: string): Promise<ApiAnswer> {
+    return answerOf(
+      await this.request.delete(`${EXERCISES_PATH}/${exerciseId}`),
+    );
+  }
+
   async openVideo(videoPath: string, range?: string): Promise<ServedVideo> {
     const response = await this.request.get(videoPath, {
       headers: range === undefined ? {} : { Range: range },

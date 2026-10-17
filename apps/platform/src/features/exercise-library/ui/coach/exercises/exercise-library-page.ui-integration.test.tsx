@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
   render,
@@ -10,14 +11,27 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 import {
   createMemoryRouter,
   RouterProvider,
   useLocation,
   useParams,
 } from "react-router";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
+import { clientAction as removeExercise } from "~/features/exercise-library/api/exercises/exercise";
+import { clientAction as archiveExercise } from "~/features/exercise-library/api/exercises/exercise-archive";
+import { clientAction as restoreExercise } from "~/features/exercise-library/api/exercises/exercise-restore";
 import type {
   ExerciseLibraryView,
   ExerciseView,
@@ -25,8 +39,10 @@ import type {
 import {
   COACH_TRAINING_PATH,
   EXERCISE_EDITOR_ROUTE_SEGMENT,
+  EXERCISE_LIBRARY_API_PATHS,
   NEW_EXERCISE_PATH,
 } from "~/features/exercise-library/public/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import ExerciseLibraryRoute, {
   shouldRevalidate,
@@ -48,6 +64,7 @@ const BACK_SQUAT: ExerciseView = {
     path: "/api/exercises/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/video/7c6b5a49-3827-4161-a5b4-c3d2e1f0a9b8",
     format: "mp4",
   },
+  status: "active",
 };
 
 const BOX_BREATHING: ExerciseView = {
@@ -63,6 +80,7 @@ const BOX_BREATHING: ExerciseView = {
   tags: [],
   cues: "",
   video: null,
+  status: "active",
 };
 
 const CAT_COW: ExerciseView = {
@@ -117,6 +135,32 @@ const LIBRARY = [
   BOX_BREATHING,
 ];
 
+const WALKING_LUNGE: ExerciseView = {
+  ...DEADLIFT,
+  id: "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d",
+  name: "Walking lunge",
+  primaryMuscles: ["Quadriceps", "Glutes"],
+  equipment: ["Dumbbells"],
+  difficulty: "Beginner",
+  tags: ["Strength"],
+  status: "archived",
+};
+
+const SIDE_PLANK: ExerciseView = {
+  ...CAT_COW,
+  id: "8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e",
+  name: "Side plank",
+  primaryMuscles: ["Obliques"],
+  tags: [],
+  status: "archived",
+};
+
+const LIBRARY_WITH_ARCHIVE = [...LIBRARY, WALKING_LUNGE, SIDE_PLANK];
+
+const HEADING = "Exercises";
+
+const server = setupServer();
+
 const ELEVEN_EXERCISES: ExerciseView[] = Array.from(
   { length: 11 },
   (_, index) => ({
@@ -127,11 +171,17 @@ const ELEVEN_EXERCISES: ExerciseView[] = Array.from(
 );
 
 beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
   Element.prototype.scrollIntoView = () => {};
 });
 
 afterEach(() => {
   cleanup();
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
 });
 
 describe("the coach's exercise library", () => {
@@ -204,7 +254,7 @@ describe("the coach's exercise library", () => {
     ).toBeInTheDocument();
   });
 
-  it("holds nothing but Edit in a row menu", async () => {
+  it("offers Edit, Archive and Delete for an active exercise", async () => {
     // arrange
     const { user } = await renderLibrary({ exercises: [BACK_SQUAT] });
 
@@ -216,7 +266,25 @@ describe("the coach's exercise library", () => {
     // assert
     expect(
       (await screen.findAllByRole("menuitem")).map((item) => item.textContent),
-    ).toEqual(["Edit"]);
+    ).toEqual(["Edit", "Archive", "Delete"]);
+  });
+
+  it("offers Restore and Delete for an archived exercise", async () => {
+    // arrange
+    const { user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Walking lunge" }),
+    );
+
+    // assert
+    expect(
+      (await screen.findAllByRole("menuitem")).map((item) => item.textContent),
+    ).toEqual(["Restore", "Delete"]);
   });
 
   it("tells her the library is empty until she adds an exercise, with nothing to clear", async () => {
@@ -646,6 +714,339 @@ describe("the way back from the editor", () => {
   });
 });
 
+describe("choosing a status", () => {
+  it("lists the active exercises until she picks Archived", async () => {
+    // arrange, act
+    await renderLibrary({ exercises: LIBRARY_WITH_ARCHIVE });
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /^Active$/,
+    );
+    expect(shownExerciseNames()).toEqual([
+      "Back squat",
+      "Box breathing",
+      "Cat-cow",
+      "Deadlift",
+      "Hip thrust",
+      "Jump rope",
+    ]);
+  });
+
+  it("counts both statuses under the other filters and lists the archived ones she picks", async () => {
+    // arrange
+    const { router, user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?tags=Strength`,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    const offered = screen
+      .getAllByRole("option")
+      .map((option) => option.textContent);
+    await user.click(screen.getByRole("option", { name: "Archived 1" }));
+
+    // assert
+    expect(offered).toEqual(["Active 2", "Archived 1"]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({
+        status: "archived",
+        tags: "Strength",
+      });
+    });
+    expect(shownExerciseNames()).toEqual(["Walking lunge"]);
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /^Archived$/,
+    );
+  });
+
+  it("counts the other filters within the chosen status", async () => {
+    // arrange
+    const { user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Type" }));
+
+    // assert
+    expect(
+      screen.getAllByRole("option").map((option) => option.textContent),
+    ).toEqual([
+      "Any type 2",
+      "Resistance 1",
+      "Cardio 0",
+      "Mobility 1",
+      "Stretching 0",
+      "Breathing 0",
+    ]);
+  });
+
+  it("keeps Active out of the address", async () => {
+    // arrange
+    const { router, user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    await user.click(screen.getByRole("option", { name: /^Active \d+$/ }));
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({});
+    });
+    expect(shownExerciseNames()).toHaveLength(LIBRARY.length);
+  });
+
+  it("returns to the first page when she changes the status", async () => {
+    // arrange
+    const { router, user } = await renderLibrary(
+      { exercises: [...ELEVEN_EXERCISES, WALKING_LUNGE] },
+      `${COACH_TRAINING_PATH}?page=2`,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    await user.click(screen.getByRole("option", { name: "Archived 1" }));
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ status: "archived" });
+    });
+    expect(shownExerciseNames()).toEqual(["Walking lunge"]);
+  });
+
+  it("keeps the status when she clears the filters", async () => {
+    // arrange
+    const { router, user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived&type=cardio`,
+    );
+    expect(screen.getByText("No exercises match")).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ status: "archived" });
+    });
+    expect(shownExerciseNames()).toEqual(["Side plank", "Walking lunge"]);
+  });
+
+  it("says nothing is archived yet, with nothing to clear", async () => {
+    // arrange, act
+    await renderLibrary(
+      { exercises: LIBRARY },
+      `${COACH_TRAINING_PATH}?status=archived&q=squat`,
+    );
+
+    // assert
+    expect(screen.getByText("No archived exercises")).toBeInTheDocument();
+    expect(
+      screen.getByText("Exercises you archive appear here, ready to restore."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("archiving and restoring", () => {
+  it("archives an exercise at once, says so and moves focus to the page heading", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary({ exercises: LIBRARY });
+
+    // act
+    await chooseRowAction(user, "Back squat", "Archive");
+
+    // assert
+    expect(
+      await screen.findByText('"Back squat" archived'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(shownExerciseNames()).not.toContain("Back squat");
+    });
+    await waitFor(() => {
+      expect(pageHeading()).toHaveFocus();
+    });
+    expect(sent).toEqual([
+      `POST /api/coach/exercises/${BACK_SQUAT.id}/archive`,
+    ]);
+  });
+
+  it("restores an archived exercise at once and says so", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    await chooseRowAction(user, "Walking lunge", "Restore");
+
+    // assert
+    expect(
+      await screen.findByText('"Walking lunge" restored'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(shownExerciseNames()).toEqual(["Side plank"]);
+    });
+    await waitFor(() => {
+      expect(pageHeading()).toHaveFocus();
+    });
+    expect(sent).toEqual([
+      `POST /api/coach/exercises/${WALKING_LUNGE.id}/restore`,
+    ]);
+  });
+
+  it("names the new name when a restore had to rename the exercise", async () => {
+    // arrange
+    const { user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+    server.use(
+      http.post(`*${EXERCISE_LIBRARY_API_PATHS.exerciseRestore}`, () =>
+        HttpResponse.json({ name: "Walking lunge (2)" }),
+      ),
+    );
+
+    // act
+    await chooseRowAction(user, "Walking lunge", "Restore");
+
+    // assert
+    expect(
+      await screen.findByText(
+        '"Walking lunge" restored as "Walking lunge (2)"',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("tells her and keeps the list as it was when an archive fails", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: LIBRARY });
+    server.use(
+      http.post(
+        `*${EXERCISE_LIBRARY_API_PATHS.exerciseArchive}`,
+        () => new HttpResponse("Internal Server Error", { status: 500 }),
+      ),
+    );
+
+    // act
+    await chooseRowAction(user, "Back squat", "Archive");
+
+    // assert
+    expect(
+      await screen.findByText('"Back squat" wasn’t archived. Try again.'),
+    ).toBeInTheDocument();
+    expect(shownExerciseNames()).toContain("Back squat");
+    expect(screen.queryByText('"Back squat" archived')).not.toBeInTheDocument();
+  });
+});
+
+describe("deleting an exercise", () => {
+  it("asks first, naming the exercise and saying it is for good", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: LIBRARY });
+
+    // act
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // assert
+    expect(confirm).toHaveAccessibleDescription(
+      "It’s removed for good. This can’t be undone.",
+    );
+    expect(
+      within(confirm).getByRole("button", { name: "Delete" }),
+    ).toBeVisible();
+    expect(
+      within(confirm).getByRole("button", { name: "Cancel" }),
+    ).toBeVisible();
+  });
+
+  it("keeps the exercise and returns focus to its menu button when she cancels", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary({ exercises: LIBRARY });
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Cancel" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("button", { name: "Actions for Back squat" }),
+    ).toHaveFocus();
+    expect(shownExerciseNames()).toContain("Back squat");
+    expect(sent).toEqual([]);
+  });
+
+  it("deletes the exercise, says so and moves focus to the page heading when she confirms", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary({ exercises: LIBRARY });
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(await screen.findByText('"Back squat" deleted')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(shownExerciseNames()).not.toContain("Back squat");
+    });
+    await waitFor(() => {
+      expect(pageHeading()).toHaveFocus();
+    });
+    expect(sent).toEqual([`DELETE /api/coach/exercises/${BACK_SQUAT.id}`]);
+  });
+
+  it("deletes an archived exercise from the archived list", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary(
+      { exercises: LIBRARY_WITH_ARCHIVE },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+    const confirm = await openDeleteConfirm(user, "Side plank");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(await screen.findByText('"Side plank" deleted')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(shownExerciseNames()).toEqual(["Walking lunge"]);
+    });
+    expect(sent).toEqual([`DELETE /api/coach/exercises/${SIDE_PLANK.id}`]);
+  });
+
+  it("tells her and keeps the exercise when the delete never reaches the server", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: LIBRARY });
+    server.use(
+      http.delete(`*${EXERCISE_LIBRARY_API_PATHS.exercise}`, () =>
+        HttpResponse.error(),
+      ),
+    );
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(
+      await screen.findByText('"Back squat" wasn’t deleted. Try again.'),
+    ).toBeInTheDocument();
+    expect(shownExerciseNames()).toContain("Back squat");
+  });
+});
+
 function EditorStandIn() {
   const { exerciseId } = useParams();
 
@@ -702,16 +1103,109 @@ function addressOf(router: LibraryRouter): Record<string, string> {
 
 type LibraryRouter = ReturnType<typeof createMemoryRouter>;
 
+type LibraryStore = {
+  load: () => ExerciseLibraryView;
+  replace: (exercise: ExerciseView) => void;
+  remove: (exerciseId: string) => void;
+};
+
+function libraryStore(library: ExerciseLibraryView): LibraryStore {
+  let exercises = [...library.exercises];
+
+  return {
+    load: () => ({ exercises }),
+    replace: (exercise) => {
+      exercises = exercises.map((listed) =>
+        listed.id === exercise.id ? exercise : listed,
+      );
+    },
+    remove: (exerciseId) => {
+      exercises = exercises.filter(({ id }) => id !== exerciseId);
+    },
+  };
+}
+
+function exerciseIn(store: LibraryStore, exerciseId: unknown): ExerciseView {
+  const found = store
+    .load()
+    .exercises.find(({ id }) => id === String(exerciseId));
+
+  if (!found) {
+    throw new Error(`No exercise ${String(exerciseId)} in the library.`);
+  }
+
+  return found;
+}
+
+function acceptLifecycleWrites(store: LibraryStore): string[] {
+  const sent: string[] = [];
+  const record = (request: Request) =>
+    sent.push(`${request.method} ${new URL(request.url).pathname}`);
+
+  server.use(
+    http.post(
+      `*${EXERCISE_LIBRARY_API_PATHS.exerciseArchive}`,
+      ({ params, request }) => {
+        record(request);
+        const exercise = exerciseIn(store, params.exerciseId);
+        store.replace({ ...exercise, status: "archived" });
+
+        return HttpResponse.json({ name: exercise.name });
+      },
+    ),
+    http.post(
+      `*${EXERCISE_LIBRARY_API_PATHS.exerciseRestore}`,
+      ({ params, request }) => {
+        record(request);
+        const exercise = exerciseIn(store, params.exerciseId);
+        store.replace({ ...exercise, status: "active" });
+
+        return HttpResponse.json({ name: exercise.name });
+      },
+    ),
+    http.delete(
+      `*${EXERCISE_LIBRARY_API_PATHS.exercise}`,
+      ({ params, request }) => {
+        record(request);
+        const exercise = exerciseIn(store, params.exerciseId);
+        store.remove(exercise.id);
+
+        return HttpResponse.json({ name: exercise.name });
+      },
+    ),
+  );
+
+  return sent;
+}
+
+async function chooseRowAction(user: UserEvent, name: string, action: string) {
+  await user.click(screen.getByRole("button", { name: `Actions for ${name}` }));
+  await user.click(await screen.findByRole("menuitem", { name: action }));
+}
+
+async function openDeleteConfirm(user: UserEvent, name: string) {
+  await chooseRowAction(user, name, "Delete");
+
+  return screen.findByRole("dialog", { name: `Delete “${name}”?` });
+}
+
+function pageHeading(): HTMLElement {
+  return screen.getByRole("heading", { level: 1, name: HEADING });
+}
+
 async function renderLibrary(
   library: ExerciseLibraryView,
   entry: string = COACH_TRAINING_PATH,
 ): Promise<{
   libraryReads: () => number;
   router: LibraryRouter;
+  sent: string[];
   user: UserEvent;
 }> {
   const user = userEvent.setup();
-  const loader = vi.fn(() => library);
+  const store = libraryStore(library);
+  const sent = acceptLifecycleWrites(store);
+  const loader = vi.fn(() => store.load());
   const router = createMemoryRouter(
     [
       {
@@ -728,12 +1222,34 @@ async function renderLibrary(
         Component: EditorStandIn,
         path: `/coach/${EXERCISE_EDITOR_ROUTE_SEGMENT}`,
       },
+      {
+        action: frameworkModeAction(removeExercise),
+        path: EXERCISE_LIBRARY_API_PATHS.exercise,
+      },
+      {
+        action: frameworkModeAction(archiveExercise),
+        path: EXERCISE_LIBRARY_API_PATHS.exerciseArchive,
+      },
+      {
+        action: frameworkModeAction(restoreExercise),
+        path: EXERCISE_LIBRARY_API_PATHS.exerciseRestore,
+      },
     ],
     { initialEntries: [entry] },
   );
 
-  render(<RouterProvider router={router} />);
-  await screen.findByRole("heading", { level: 1, name: "Exercises" });
+  render(
+    <>
+      <RouterProvider router={router} />
+      <Toaster />
+    </>,
+  );
+  await screen.findByRole("heading", { level: 1, name: HEADING });
 
-  return { libraryReads: () => loader.mock.calls.length, router, user };
+  return {
+    libraryReads: () => loader.mock.calls.length,
+    router,
+    sent,
+    user,
+  };
 }

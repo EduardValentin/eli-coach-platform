@@ -31,6 +31,7 @@ const HIP_THRUST = Exercise.reconstitute({
   tags: [],
   cues: "",
   video: null,
+  archivedAt: null,
   createdAt: STORED_AT,
   updatedAt: STORED_AT,
 });
@@ -40,6 +41,13 @@ const OTHER_COACHS_PLANK = Exercise.reconstitute({
   id: "e0000000-0000-4000-8000-000000000003",
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
   name: "Plank",
+});
+
+const ARCHIVED_LUNGE = Exercise.reconstitute({
+  ...HIP_THRUST.toSnapshot(),
+  id: "e0000000-0000-4000-8000-000000000004",
+  name: "Lunge",
+  archivedAt: NOW,
 });
 
 const SQUAT: ExerciseDraftInput = {
@@ -68,6 +76,7 @@ const CREATED_SQUAT: ExerciseSnapshot = {
   difficulty: "Intermediate",
   tags: ["Strength"],
   video: null,
+  archivedAt: null,
   createdAt: NOW,
   updatedAt: NOW,
 };
@@ -81,7 +90,7 @@ const STAGED: StagedExerciseVideo = {
 const ATTACH = { kind: "attach", staged: STAGED } as const;
 
 function createUseCase() {
-  const stored = [HIP_THRUST, OTHER_COACHS_PLANK];
+  const stored = [HIP_THRUST, ARCHIVED_LUNGE, OTHER_COACHS_PLANK];
   const library = {
     list: vi.fn(async (ownerAccountId: string): Promise<Exercise[]> =>
       stored.filter(
@@ -91,10 +100,12 @@ function createUseCase() {
     find: vi.fn(),
     add: vi.fn(async (): Promise<ExerciseAddition> => "added"),
     replace: vi.fn(),
+    remove: vi.fn(),
   } satisfies ExerciseLibrary;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
     exerciseEditFailed: vi.fn(),
+    exerciseRestoreFailed: vi.fn(),
     videoCleanupFailed: vi.fn(),
   } satisfies ExerciseLibraryIncidents;
   const formats = {
@@ -388,6 +399,22 @@ describe("CreateExerciseUseCase", () => {
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
       draft: { ...SQUAT, name: "plank" },
+      video: { kind: "keep" },
+    });
+
+    // assert
+    expect(result.status).toBe("created");
+    expect(library.add).toHaveBeenCalledOnce();
+  });
+
+  it("adds a name only an archived exercise of hers has", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...SQUAT, name: " lunge" },
       video: { kind: "keep" },
     });
 

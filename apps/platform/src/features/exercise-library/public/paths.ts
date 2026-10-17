@@ -9,6 +9,8 @@ const EXERCISES_SEGMENT = "exercises";
 export const EXERCISE_LIBRARY_API_PATHS = {
   exercises: EXERCISES_API,
   exercise: `${EXERCISES_API}/:exerciseId`,
+  exerciseArchive: `${EXERCISES_API}/:exerciseId/archive`,
+  exerciseRestore: `${EXERCISES_API}/:exerciseId/restore`,
   exerciseVideo: `${EXERCISE_VIDEOS_API}/:exerciseId/video/:videoId`,
 } as const;
 
@@ -28,6 +30,14 @@ export function exerciseEditorPath(exerciseId: string): string {
 
 export function exercisePath(exerciseId: string): string {
   return `${EXERCISES_API}/${encodeURIComponent(exerciseId)}`;
+}
+
+export function exerciseArchivePath(exerciseId: string): string {
+  return `${exercisePath(exerciseId)}/archive`;
+}
+
+export function exerciseRestorePath(exerciseId: string): string {
+  return `${exercisePath(exerciseId)}/restore`;
 }
 
 export function exerciseVideoPath(exerciseId: string, videoId: string): string {

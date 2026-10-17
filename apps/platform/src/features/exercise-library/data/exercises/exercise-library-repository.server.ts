@@ -7,6 +7,7 @@ import {
   type ExerciseAddition,
   type ExerciseLibrary,
   type ExerciseReference,
+  type ExerciseRemoval,
   type ExerciseReplacement,
   type ExerciseVideoSnapshot,
 } from "@eli-coach-platform/domain/exercise";
@@ -85,6 +86,23 @@ export class PostgresExerciseLibrary implements ExerciseLibrary {
     } catch (error) {
       return this.nameTakenOrRethrow(error);
     }
+  }
+
+  async remove({
+    ownerAccountId,
+    exerciseId,
+  }: ExerciseReference): Promise<ExerciseRemoval> {
+    const removed = await this.database
+      .delete(exercisesTable)
+      .where(
+        and(
+          eq(exercisesTable.id, exerciseId),
+          eq(exercisesTable.ownerAccountId, ownerAccountId),
+        ),
+      )
+      .returning({ id: exercisesTable.id });
+
+    return removed.length > 0 ? "removed" : "missing";
   }
 
   private nameTakenOrRethrow(error: unknown): "name-taken" {

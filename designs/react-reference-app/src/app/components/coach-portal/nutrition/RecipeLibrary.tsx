@@ -86,7 +86,6 @@ export function RecipeLibrary({ tabs }: { tabs: ReactNode }) {
   const navigate = useNavigate();
   const listing = useListingSearchParams();
   const lifecycle = useLibraryLifecycle({
-    noun: 'recipe',
     archive: archiveRecipe,
     restore: restoreRecipe,
     remove: deleteRecipe,

@@ -1,8 +1,12 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
   Exercise,
+  type ArchiveExerciseResult,
+  type ArchiveExerciseUseCase,
   type CreateExerciseResult,
   type CreateExerciseUseCase,
+  type DeleteExerciseResult,
+  type DeleteExerciseUseCase,
   type EditExerciseResult,
   type EditExerciseUseCase,
   type ExerciseSnapshot,
@@ -11,6 +15,8 @@ import {
   type ListExercisesUseCase,
   type OpenExerciseVideoResult,
   type OpenExerciseVideoUseCase,
+  type RestoreExerciseResult,
+  type RestoreExerciseUseCase,
   type StageExerciseVideoUseCase,
   type StagedExerciseVideo,
 } from "@eli-coach-platform/domain/exercise";
@@ -60,6 +66,7 @@ const HIP_THRUST: ExerciseSnapshot = {
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: { videoId: VIDEO_ID, format: "mp4", sizeBytes: 2_048 },
+  archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
 };
@@ -80,9 +87,23 @@ const HIP_THRUST_VIEW = {
     path: `/api/exercises/${EXERCISE_ID}/video/${VIDEO_ID}`,
     format: "mp4",
   },
+  status: "active",
 };
 
-const { id: _id, video: _video, ...HIP_THRUST_DRAFT } = HIP_THRUST_VIEW;
+const ARCHIVED_LUNGE: ExerciseSnapshot = {
+  ...HIP_THRUST,
+  id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+  name: "Lunge",
+  video: null,
+  archivedAt: AT,
+};
+
+const {
+  id: _id,
+  video: _video,
+  status: _status,
+  ...HIP_THRUST_DRAFT
+} = HIP_THRUST_VIEW;
 
 const HIP_THRUST_REQUEST = { ...HIP_THRUST_DRAFT, video: "keep" };
 
@@ -108,7 +129,10 @@ function createController() {
   const listExercises = {
     execute: vi.fn(async () => ({
       status: "listed" as const,
-      exercises: [Exercise.reconstitute(HIP_THRUST)],
+      exercises: [
+        Exercise.reconstitute(HIP_THRUST),
+        Exercise.reconstitute(ARCHIVED_LUNGE),
+      ],
     })),
   };
   const findExercise = {
@@ -144,6 +168,28 @@ function createController() {
   const openExerciseVideo = {
     execute: vi.fn(async (): Promise<OpenExerciseVideoResult> => OPENED),
   };
+  const archiveExercise = {
+    execute: vi.fn(async (): Promise<ArchiveExerciseResult> => ({
+      status: "archived",
+      exercise: Exercise.reconstitute({ ...HIP_THRUST, archivedAt: AT }),
+    })),
+  };
+  const restoreExercise = {
+    execute: vi.fn(async (): Promise<RestoreExerciseResult> => ({
+      status: "restored",
+      exercise: Exercise.reconstitute({
+        ...ARCHIVED_LUNGE,
+        name: "Lunge (2)",
+        archivedAt: null,
+      }),
+    })),
+  };
+  const deleteExercise = {
+    execute: vi.fn(async (): Promise<DeleteExerciseResult> => ({
+      status: "deleted",
+      exercise: Exercise.reconstitute(HIP_THRUST),
+    })),
+  };
   const controller = new ExerciseLibraryController({
     listExercises: listExercises as unknown as ListExercisesUseCase,
     findExercise: findExercise as unknown as FindExerciseUseCase,
@@ -152,6 +198,9 @@ function createController() {
     stageExerciseVideo:
       stageExerciseVideo as unknown as StageExerciseVideoUseCase,
     openExerciseVideo: openExerciseVideo as unknown as OpenExerciseVideoUseCase,
+    archiveExercise: archiveExercise as unknown as ArchiveExerciseUseCase,
+    restoreExercise: restoreExercise as unknown as RestoreExerciseUseCase,
+    deleteExercise: deleteExercise as unknown as DeleteExerciseUseCase,
   });
 
   return {
@@ -162,6 +211,9 @@ function createController() {
     editExercise,
     stageExerciseVideo,
     openExerciseVideo,
+    archiveExercise,
+    restoreExercise,
+    deleteExercise,
     received: () => Buffer.concat(received),
   };
 }
@@ -247,6 +299,12 @@ function jsonRequest(method: "POST" | "PUT", body: unknown): Request {
   });
 }
 
+function lifecycleRequest(method: "POST" | "DELETE"): Request {
+  return new Request(`https://evoa.fit/api/coach/exercises/${EXERCISE_ID}`, {
+    method,
+  });
+}
+
 async function captureThrown(thunk: () => unknown): Promise<unknown> {
   try {
     await thunk();
@@ -265,7 +323,18 @@ describe("ExerciseLibraryController#list", () => {
     const library = await controller.list(argsFor());
 
     // assert
-    expect(library).toEqual({ exercises: [HIP_THRUST_VIEW] });
+    expect(library).toEqual({
+      exercises: [
+        HIP_THRUST_VIEW,
+        {
+          ...HIP_THRUST_VIEW,
+          id: ARCHIVED_LUNGE.id,
+          name: "Lunge",
+          video: null,
+          status: "archived",
+        },
+      ],
+    });
     expect(listExercises.execute).toHaveBeenCalledWith(COACH.id);
   });
 
@@ -284,7 +353,7 @@ describe("ExerciseLibraryController#list", () => {
 });
 
 describe("ExerciseLibraryController#loadNew", () => {
-  it("opens a blank exercise with the names of every exercise in the signed-in coach's library", async () => {
+  it("opens a blank exercise with the names of the active exercises in the signed-in coach's library", async () => {
     // arrange
     const { controller, listExercises } = createController();
 
@@ -339,6 +408,23 @@ describe("ExerciseLibraryController#load", () => {
 
     // act
     const thrown = await captureThrown(() => controller.load(argsFor(), id));
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/coach/training",
+    );
+  });
+
+  it("sends the coach back to the library for an archived exercise", async () => {
+    // arrange
+    const { controller, findExercise } = createController();
+    findExercise.execute.mockResolvedValueOnce({ status: "archived" });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.load(argsFor(), EXERCISE_ID),
+    );
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -716,6 +802,21 @@ describe("ExerciseLibraryController#edit", () => {
     expect(response.status).toBe(404);
   });
 
+  it("answers 409 for an archived exercise", async () => {
+    // arrange
+    const { controller, editExercise } = createController();
+    editExercise.execute.mockResolvedValueOnce({ status: "archived" });
+
+    // act
+    const response = await controller.edit(
+      argsFor({ request: jsonRequest("PUT", HIP_THRUST_REQUEST) }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(409);
+  });
+
   it("answers 404 for an id that is not a uuid without editing", async () => {
     // arrange
     const { controller, editExercise } = createController();
@@ -890,5 +991,233 @@ describe("ExerciseLibraryController#openVideo", () => {
     // assert
     expect(response.status).toBe(416);
     expect(response.headers.get("Content-Range")).toBe("bytes */2048");
+  });
+});
+
+describe("ExerciseLibraryController#archive", () => {
+  it("archives the signed-in coach's exercise and answers its name", async () => {
+    // arrange
+    const { controller, archiveExercise } = createController();
+
+    // act
+    const response = await controller.archive(
+      argsFor({ request: lifecycleRequest("POST") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ name: "Hip thrust" });
+    expect(archiveExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      exerciseId: EXERCISE_ID,
+    });
+  });
+
+  it("answers 404 for an unknown exercise", async () => {
+    // arrange
+    const { controller, archiveExercise } = createController();
+    archiveExercise.execute.mockResolvedValueOnce({ status: "not-found" });
+
+    // act
+    const response = await controller.archive(
+      argsFor({ request: lifecycleRequest("POST") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("answers 404 for an id that is not a uuid without archiving", async () => {
+    // arrange
+    const { controller, archiveExercise } = createController();
+
+    // act
+    const response = await controller.archive(
+      argsFor({ request: lifecycleRequest("POST") }),
+      "not-an-exercise",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(archiveExercise.execute).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a signed-in client", CLIENT_SESSION, 403],
+    ["a signed-out visitor", ANONYMOUS_SESSION, 401],
+  ])("refuses %s", async (_case, session, status) => {
+    // arrange
+    const { controller, archiveExercise } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.archive(
+        argsFor({ session, request: lifecycleRequest("POST") }),
+        EXERCISE_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(status);
+    expect(archiveExercise.execute).not.toHaveBeenCalled();
+  });
+});
+
+describe("ExerciseLibraryController#restore", () => {
+  it("restores the signed-in coach's exercise and answers the name it came back under", async () => {
+    // arrange
+    const { controller, restoreExercise } = createController();
+
+    // act
+    const response = await controller.restore(
+      argsFor({ request: lifecycleRequest("POST") }),
+      ARCHIVED_LUNGE.id,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ name: "Lunge (2)" });
+    expect(restoreExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      exerciseId: ARCHIVED_LUNGE.id,
+    });
+  });
+
+  it("answers 404 for an unknown exercise", async () => {
+    // arrange
+    const { controller, restoreExercise } = createController();
+    restoreExercise.execute.mockResolvedValueOnce({ status: "not-found" });
+
+    // act
+    const response = await controller.restore(
+      argsFor({ request: lifecycleRequest("POST") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("answers 404 for an id that is not a uuid without restoring", async () => {
+    // arrange
+    const { controller, restoreExercise } = createController();
+
+    // act
+    const response = await controller.restore(
+      argsFor({ request: lifecycleRequest("POST") }),
+      "not-an-exercise",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(restoreExercise.execute).not.toHaveBeenCalled();
+  });
+
+  it("answers 500 when the restore failed", async () => {
+    // arrange
+    const { controller, restoreExercise } = createController();
+    restoreExercise.execute.mockResolvedValueOnce({ status: "failed" });
+
+    // act
+    const response = await controller.restore(
+      argsFor({ request: lifecycleRequest("POST") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(500);
+  });
+
+  it.each([
+    ["a signed-in client", CLIENT_SESSION, 403],
+    ["a signed-out visitor", ANONYMOUS_SESSION, 401],
+  ])("refuses %s", async (_case, session, status) => {
+    // arrange
+    const { controller, restoreExercise } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.restore(
+        argsFor({ session, request: lifecycleRequest("POST") }),
+        EXERCISE_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(status);
+    expect(restoreExercise.execute).not.toHaveBeenCalled();
+  });
+});
+
+describe("ExerciseLibraryController#delete", () => {
+  it("deletes the signed-in coach's exercise and answers its name", async () => {
+    // arrange
+    const { controller, deleteExercise } = createController();
+
+    // act
+    const response = await controller.delete(
+      argsFor({ request: lifecycleRequest("DELETE") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ name: "Hip thrust" });
+    expect(deleteExercise.execute).toHaveBeenCalledWith({
+      ownerAccountId: COACH.id,
+      exerciseId: EXERCISE_ID,
+    });
+  });
+
+  it("answers 404 for an unknown exercise", async () => {
+    // arrange
+    const { controller, deleteExercise } = createController();
+    deleteExercise.execute.mockResolvedValueOnce({ status: "not-found" });
+
+    // act
+    const response = await controller.delete(
+      argsFor({ request: lifecycleRequest("DELETE") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("answers 404 for an id that is not a uuid without deleting", async () => {
+    // arrange
+    const { controller, deleteExercise } = createController();
+
+    // act
+    const response = await controller.delete(
+      argsFor({ request: lifecycleRequest("DELETE") }),
+      "not-an-exercise",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(deleteExercise.execute).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a signed-in client", CLIENT_SESSION, 403],
+    ["a signed-out visitor", ANONYMOUS_SESSION, 401],
+  ])("refuses %s", async (_case, session, status) => {
+    // arrange
+    const { controller, deleteExercise } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.delete(
+        argsFor({ session, request: lifecycleRequest("DELETE") }),
+        EXERCISE_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(status);
+    expect(deleteExercise.execute).not.toHaveBeenCalled();
   });
 });
