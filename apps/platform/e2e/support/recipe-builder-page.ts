@@ -431,6 +431,21 @@ export class RecipeBuilderPage {
     await expect(this.openLibraryButton).toBeFocused();
   }
 
+  async expectTabWrapsInsideLibraryDrawer(): Promise<void> {
+    await expect(this.closeLibraryButton).toBeFocused();
+    await expect(this.offeredFoods.last()).toBeVisible();
+    await this.page.keyboard.press("Shift+Tab");
+    await expect(this.offeredFoods.last()).toBeFocused();
+    await this.page.keyboard.press("Tab");
+    await expect(this.closeLibraryButton).toBeFocused();
+  }
+
+  async closeLibraryDrawerWithEscape(): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.library).toBeHidden();
+    await expect(this.openLibraryButton).toBeFocused();
+  }
+
   async closeLibraryDrawer(): Promise<void> {
     await this.closeLibraryButton.click();
     await expect(this.library).toBeHidden();

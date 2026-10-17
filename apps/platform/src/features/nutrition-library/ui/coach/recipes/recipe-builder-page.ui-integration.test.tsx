@@ -160,8 +160,18 @@ beforeAll(() => {
   );
 });
 
+function viewportIsDesktop(matches: boolean) {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    addEventListener: () => {},
+    matches,
+    media: query,
+    removeEventListener: () => {},
+  }));
+}
+
 beforeEach(() => {
   sentBodies = [];
+  viewportIsDesktop(false);
 });
 
 afterEach(() => {
@@ -671,6 +681,75 @@ describe("a new recipe", () => {
     expect(
       screen.getByRole("button", { name: "Open food library" }),
     ).toHaveFocus();
+  });
+});
+
+describe("the food library drawer on a phone", () => {
+  const library = () =>
+    screen.getByRole("complementary", { name: "Food library" });
+  const libraryControls = () => within(library()).getAllByRole("button");
+
+  async function openLibrary(user: UserEvent) {
+    await user.click(screen.getByRole("button", { name: "Open food library" }));
+  }
+
+  it("closes on Escape and returns focus to Open food library", async () => {
+    // arrange
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await openLibrary(user);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Open food library" }),
+    ).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("textbox", { name: "Recipe name" })).toHaveFocus();
+  });
+
+  it("wraps Tab from its last control to its first", async () => {
+    // arrange
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await openLibrary(user);
+    libraryControls().at(-1)?.focus();
+
+    // act
+    await user.tab();
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Close food library" }),
+    ).toHaveFocus();
+  });
+
+  it("wraps Shift+Tab from its first control to its last", async () => {
+    // arrange
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await openLibrary(user);
+
+    // act
+    await user.tab({ shift: true });
+
+    // assert
+    expect(libraryControls().at(-1)).toHaveFocus();
+  });
+
+  it("leaves Tab and Escape alone on a wide screen, where the library sits beside the recipe", async () => {
+    // arrange
+    viewportIsDesktop(true);
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await openLibrary(user);
+
+    // act
+    await user.keyboard("{Escape}");
+    await user.tab({ shift: true });
+
+    // assert
+    expect(library()).not.toContainElement(
+      document.activeElement as HTMLElement,
+    );
   });
 });
 

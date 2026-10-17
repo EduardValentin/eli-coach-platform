@@ -1,10 +1,18 @@
 import {
   cn,
+  useIsDesktopViewport,
   useSaveFetcher,
   type SaveOutcome,
 } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { DndProvider, useDragLayer } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { flushSync } from "react-dom";
@@ -46,6 +54,9 @@ import {
 
 const SAVE_FAILED = "We couldn't save the recipe. Try again in a moment.";
 
+const TABBABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 type RecipeBuilderProps = { view: RecipeBuilderView };
 
 type RecipeSaveOptions = {
@@ -63,10 +74,32 @@ export function RecipeBuilder({ view }: RecipeBuilderProps) {
   );
 }
 
+function wrapTabWithin(container: HTMLElement, event: KeyboardEvent) {
+  const controls = [...container.querySelectorAll<HTMLElement>(TABBABLE)];
+  const first = controls[0];
+  const last = controls.at(-1);
+
+  if (!first || !last) return;
+
+  const focused = document.activeElement;
+  const outside = !container.contains(focused);
+
+  if (event.shiftKey && (outside || focused === first)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (outside || focused === last)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function useLibraryDrawer() {
   const openButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
+  const isDesktop = useIsDesktopViewport();
+  const isDrawer = open && !isDesktop;
 
   const openLibrary = () => {
     flushSync(() => setOpen(true));
@@ -78,7 +111,23 @@ function useLibraryDrawer() {
     openButton.current?.focus();
   };
 
-  return { open, openLibrary, closeLibrary, openButton, closeButton };
+  const keepKeyboardInDrawer = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key === "Escape") closeLibrary();
+    if (event.key === "Tab" && drawer.current) {
+      wrapTabWithin(drawer.current, event);
+    }
+  });
+
+  useEffect(() => {
+    if (!isDrawer) return;
+
+    const onKeyDown = (event: KeyboardEvent) => keepKeyboardInDrawer(event);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isDrawer]);
+
+  return { open, openLibrary, closeLibrary, openButton, closeButton, drawer };
 }
 
 function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
@@ -218,6 +267,7 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
       <div className="flex min-h-0 flex-1">
         <FoodLibraryAside
           closeRef={library.closeButton}
+          drawerRef={library.drawer}
           foods={offeredFoods}
           onAdd={addFood}
           onClose={library.closeLibrary}

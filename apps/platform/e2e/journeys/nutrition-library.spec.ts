@@ -1456,7 +1456,7 @@ test(
 );
 
 test(
-  "on a phone the food library opens as a drawer from the top bar, adds a food and closes again",
+  "on a phone the food library opens as a drawer from the top bar, keeps Tab inside, adds a food, closes on Escape and closes from its button",
   { tag: "@completeness" },
   async ({
     coachDashboard,
@@ -1480,7 +1480,10 @@ test(
 
     // act
     await recipeBuilder.openLibraryDrawer();
+    await recipeBuilder.expectTabWrapsInsideLibraryDrawer();
     await recipeBuilder.addFood(oats);
+    await recipeBuilder.closeLibraryDrawerWithEscape();
+    await recipeBuilder.openLibraryDrawer();
     await recipeBuilder.closeLibraryDrawer();
 
     // assert

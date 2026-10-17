@@ -180,12 +180,14 @@ export function FoodLibraryAside({
   onAdd,
   onClose,
   closeRef,
+  drawerRef,
 }: {
   foods: readonly FoodView[];
   open: boolean;
   onAdd: (foodId: string) => void;
   onClose: () => void;
   closeRef: Ref<HTMLButtonElement>;
+  drawerRef: Ref<HTMLElement>;
 }) {
   const [query, setQuery] = useState("");
   const wanted = query.trim().toLowerCase();
@@ -214,6 +216,7 @@ export function FoodLibraryAside({
           },
         )}
         data-parity="recipe-builder-library"
+        ref={drawerRef}
       >
         <div className="rounded-field border-b bg-surface-base p-4 px-3">
           <div className="mb-3 flex items-center justify-between">
