@@ -21,10 +21,11 @@ function IconOption({ icon: Icon, label, state, onChoose }: IconOptionProps) {
     <button
       aria-selected={state === "chosen"}
       className={cn(
-        "flex flex-col items-center gap-0.5 p-1.5 text-xs focus-visible:ring-2 focus-visible:ring-focus-ring/50 focus-visible:outline-none",
+        "flex flex-col items-center gap-0.5 p-1.5 text-xs",
         iconChoiceClasses({ state }),
         { "hover:text-text-primary": state === "resting" },
       )}
+      data-focus-ring
       onClick={onChoose}
       role="option"
       type="button"

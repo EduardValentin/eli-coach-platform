@@ -218,4 +218,19 @@ describe("IconChoicePopover", () => {
       "hover:text-text-primary",
     );
   });
+
+  it("opts every option into the one focus ring instead of a ring of its own", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<ChosenIcon initial={null} />);
+
+    // act
+    await openPopover(user);
+
+    // assert
+    for (const option of screen.getAllByRole("option")) {
+      expect(option).toHaveAttribute("data-focus-ring");
+      expect(option).not.toHaveClass("focus-visible:ring-2");
+    }
+  });
 });
