@@ -78,7 +78,6 @@ export function NutritionHub({ foods, tags, recipes }: NutritionHubProps) {
     <TabsList>
       {NUTRITION_TABS.map((value) => (
         <TabsTrigger
-          className="px-4 sm:px-5"
           key={value}
           ref={content === value ? focusWhenChosen(value) : undefined}
           value={value}
