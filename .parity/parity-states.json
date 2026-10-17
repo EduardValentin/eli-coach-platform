@@ -5723,5 +5723,25 @@
     {
       "click": "role=button[name=\"Save recipe\" s]"
     }
+  ],
+  "food-save-failed-toast": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+        "120"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"FoodEditorPage\"] >> role=button[name=\"Create food\" s]"
+    }
   ]
 }
