@@ -338,6 +338,30 @@ describe('editing a food', () => {
   });
 });
 
+describe('a food save the server refuses', () => {
+  it('says it could not save, stays on the editor and keeps her entries', async () => {
+    // arrange
+    window.history.replaceState(null, '', '/?fsave=fail');
+    const user = renderEditor(NEW, 'Quinoa');
+    await user.type(nameField(), 'Quinoa');
+    await user.type(numberField('Calories'), '120');
+    await user.type(numberField('Protein (g)'), '4.4');
+
+    // act
+    await user.click(primary());
+
+    // assert
+    expect(
+      await screen.findByText("We couldn't save the food. Try again in a moment."),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('library-search')).not.toBeInTheDocument();
+    expect(screen.getByTestId('saved')).toHaveTextContent('none');
+    expect(nameField()).toHaveValue('Quinoa');
+    expect(numberField('Calories')).toHaveValue(120);
+    expect(numberField('Protein (g)')).toHaveValue(4.4);
+  });
+});
+
 describe('leaving the editor', () => {
   it('discards the changes through Cancel', async () => {
     // arrange
