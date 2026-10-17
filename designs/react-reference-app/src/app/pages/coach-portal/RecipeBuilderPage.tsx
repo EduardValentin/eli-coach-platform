@@ -600,9 +600,10 @@ function RecipeBuilderInner() {
                     <button
                       type="button"
                       role="option"
+                      data-focus-ring
                       aria-selected={icon === undefined}
                       onClick={() => changeIcon(undefined)}
-                      className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                      className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors ${
                         icon === undefined
                           ? 'bg-primary-soft text-primary'
                           : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
@@ -617,10 +618,11 @@ function RecipeBuilderInner() {
                         key={key}
                         type="button"
                         role="option"
+                        data-focus-ring
                         aria-selected={icon === key}
                         aria-label={label}
                         onClick={() => changeIcon(key)}
-                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors ${
                           icon === key
                             ? 'bg-primary-soft text-primary'
                             : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'

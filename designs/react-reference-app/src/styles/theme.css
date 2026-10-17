@@ -644,9 +644,12 @@
 *
 * Menu and option items, and the `tabindex="-1"` containers that exist only to
 * receive skip-link focus, suppress their outline on purpose and show focus by
-* other means; drawing a second indicator over those is noise.
+* other means; drawing a second indicator over those is noise. An option that is
+* its own tab stop with no other focus look, such as an icon choice, opts back
+* in with `data-focus-ring`.
 */
-:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]) {
+:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]),
+[data-focus-ring]:focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);
