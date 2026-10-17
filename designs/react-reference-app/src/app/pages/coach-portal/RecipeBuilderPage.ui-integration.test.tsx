@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { Toaster } from 'sonner';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecipeBuilderPage } from './RecipeBuilderPage';
 import { AppProvider } from '../../context/AppContext';
 import { NutritionProvider, useNutrition } from '../../context/NutritionContext';
@@ -13,8 +13,25 @@ const NEW = '/coach/nutrition/recipe-builder';
 const CHICKEN_BOWL = '/coach/nutrition/recipe-builder/recipe-chicken-rice-bowl';
 const RICE_CAKE_STACK = '/coach/nutrition/recipe-builder/recipe-rice-cake-stack';
 
+function viewportIsDesktop(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
+beforeEach(() => {
+  viewportIsDesktop(false);
+});
+
 afterEach(() => {
   window.history.replaceState(null, '', '/');
+  vi.unstubAllGlobals();
 });
 
 function SavedRecipeProbe({ name }: { name: string }) {
@@ -317,5 +334,67 @@ describe('the builder outside the portal shell', () => {
 
     // assert
     expect(document.documentElement.dataset.portal).toBe('coach');
+  });
+});
+
+describe('the food library drawer on a phone', () => {
+  const library = () => screen.getByRole('complementary', { name: 'Food library' });
+  const libraryControls = () => within(library()).getAllByRole('button');
+
+  async function openLibrary(user: User) {
+    await user.click(screen.getByRole('button', { name: 'Open food library' }));
+  }
+
+  it('closes on Escape and returns focus to Open food library', async () => {
+    // arrange
+    const user = renderBuilder();
+    await openLibrary(user);
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Open food library' })).toHaveFocus();
+    await user.tab();
+    expect(nameField()).toHaveFocus();
+  });
+
+  it('wraps Tab from its last control to its first', async () => {
+    // arrange
+    const user = renderBuilder();
+    await openLibrary(user);
+    libraryControls().at(-1)?.focus();
+
+    // act
+    await user.tab();
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Close food library' })).toHaveFocus();
+  });
+
+  it('wraps Shift+Tab from its first control to its last', async () => {
+    // arrange
+    const user = renderBuilder();
+    await openLibrary(user);
+
+    // act
+    await user.tab({ shift: true });
+
+    // assert
+    expect(libraryControls().at(-1)).toHaveFocus();
+  });
+
+  it('leaves Tab and Escape alone on a wide screen, where the library sits beside the recipe', async () => {
+    // arrange
+    viewportIsDesktop(true);
+    const user = renderBuilder();
+    await openLibrary(user);
+
+    // act
+    await user.keyboard('{Escape}');
+    await user.tab({ shift: true });
+
+    // assert
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveFocus();
   });
 });

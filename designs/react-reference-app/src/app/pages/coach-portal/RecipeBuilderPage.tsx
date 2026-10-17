@@ -74,9 +74,29 @@ import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisu
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { InlineProblem } from '../../components/InlineProblem';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
+import { useIsDesktop } from '../../components/ui/use-desktop';
 import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
+const TABBABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function wrapTabWithin(container: HTMLElement | null, event: KeyboardEvent) {
+  const controls = [...(container?.querySelectorAll<HTMLElement>(TABBABLE) ?? [])];
+  const first = controls[0];
+  const last = controls.at(-1);
+  if (!container || !first || !last) return;
+
+  const focused = document.activeElement;
+  const outside = !container.contains(focused);
+  if (event.shiftKey && (outside || focused === first)) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (outside || focused === last)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 const RECIPES = '/coach/nutrition?tab=recipes';
 
 const draftIngredientOf = (
@@ -229,6 +249,18 @@ function RecipeBuilderInner() {
     if (!libraryToggled.current) return;
     (libraryOpen ? closeLibraryButton : openLibraryButton).current?.focus();
   }, [libraryOpen]);
+  const libraryAside = useRef<HTMLElement>(null);
+  const isDesktop = useIsDesktop();
+  const libraryIsDrawer = libraryOpen && !isDesktop;
+  useEffect(() => {
+    if (!libraryIsDrawer) return;
+    const keepKeyboardInLibrary = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeLibrary();
+      if (event.key === 'Tab') wrapTabWithin(libraryAside.current, event);
+    };
+    document.addEventListener('keydown', keepKeyboardInLibrary);
+    return () => document.removeEventListener('keydown', keepKeyboardInLibrary);
+  }, [libraryIsDrawer]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeDraftIngredient[]>(
     existing?.ingredients.map(draftIngredientOf) ?? [],
@@ -497,6 +529,7 @@ function RecipeBuilderInner() {
           />
         )}
         <aside
+          ref={libraryAside}
           aria-label="Food library"
           data-parity="recipe-builder-library"
           className={cn(
