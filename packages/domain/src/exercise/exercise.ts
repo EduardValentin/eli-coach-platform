@@ -17,6 +17,7 @@ export type ExerciseSnapshot = ExerciseDraftSnapshot & {
   id: string;
   ownerAccountId: string;
   video: ExerciseVideoSnapshot | null;
+  archivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,6 +26,7 @@ export type StoredExercise = ExerciseDraftInput & {
   id: string;
   ownerAccountId: string;
   video: StoredExerciseVideo | null;
+  archivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -53,6 +55,11 @@ type ExerciseRevisionInput = {
   video: ExerciseVideoChange;
 };
 
+type RestoredExerciseInput = {
+  name: string;
+  at: Date;
+};
+
 type ExerciseFields = Omit<ExerciseSnapshot, "video">;
 
 export type ExerciseRevision = {
@@ -72,6 +79,7 @@ export class Exercise {
         id: input.id,
         ownerAccountId: input.ownerAccountId,
         ...input.draft.toSnapshot(),
+        archivedAt: null,
         createdAt: input.at,
         updatedAt: input.at,
       },
@@ -80,8 +88,15 @@ export class Exercise {
   }
 
   static reconstitute(stored: StoredExercise): Exercise {
-    const { id, ownerAccountId, video, createdAt, updatedAt, ...fields } =
-      stored;
+    const {
+      id,
+      ownerAccountId,
+      video,
+      archivedAt,
+      createdAt,
+      updatedAt,
+      ...fields
+    } = stored;
     const draft = ExerciseDraft.from(fields);
     const broken = [
       ...(isUuid(id) ? [] : ["id"]),
@@ -96,7 +111,14 @@ export class Exercise {
     }
 
     return new Exercise(
-      { id, ownerAccountId, ...draft.draft.toSnapshot(), createdAt, updatedAt },
+      {
+        id,
+        ownerAccountId,
+        ...draft.draft.toSnapshot(),
+        archivedAt,
+        createdAt,
+        updatedAt,
+      },
       video && ExerciseVideo.fromStored(video),
     );
   }
@@ -113,6 +135,10 @@ export class Exercise {
     return this.attachedVideo;
   }
 
+  get status(): "active" | "archived" {
+    return this.fields.archivedAt === null ? "active" : "archived";
+  }
+
   revised(input: ExerciseRevisionInput): ExerciseRevision {
     return {
       exercise: new Exercise(
@@ -121,6 +147,27 @@ export class Exercise {
       ),
       replacedVideo: input.video.kind === "keep" ? null : this.attachedVideo,
     };
+  }
+
+  archived(at: Date): Exercise {
+    if (this.status === "archived") return this;
+
+    return new Exercise(
+      { ...this.fields, archivedAt: at, updatedAt: at },
+      this.attachedVideo,
+    );
+  }
+
+  restored(input: RestoredExerciseInput): Exercise {
+    return new Exercise(
+      {
+        ...this.fields,
+        name: input.name,
+        archivedAt: null,
+        updatedAt: input.at,
+      },
+      this.attachedVideo,
+    );
   }
 
   toSnapshot(): ExerciseSnapshot {

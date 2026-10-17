@@ -3,6 +3,7 @@ import type {
   ExerciseDraftInput,
   ExerciseSaveProblems,
   ExerciseSnapshot,
+  ExerciseStatus,
   ExerciseVideoFormat,
 } from "@eli-coach-platform/domain/exercise";
 import { z } from "zod";
@@ -13,8 +14,8 @@ type ExerciseVideoView = { path: string; format: ExerciseVideoFormat };
 
 export type ExerciseView = Omit<
   ExerciseSnapshot,
-  "ownerAccountId" | "createdAt" | "updatedAt" | "video"
-> & { video: ExerciseVideoView | null };
+  "ownerAccountId" | "archivedAt" | "createdAt" | "updatedAt" | "video"
+> & { video: ExerciseVideoView | null; status: ExerciseStatus };
 
 export type ExerciseLibraryView = { exercises: ExerciseView[] };
 
@@ -44,6 +45,8 @@ export const EXERCISE_FORM_FIELDS = {
 
 export type ExerciseRequest = z.infer<typeof exerciseRequestSchema>;
 
+export const exerciseLifecycleAnswerSchema = z.object({ name: z.string() });
+
 export const exerciseSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });
@@ -70,6 +73,7 @@ export const exerciseProblemsAnswerSchema = z.object({
 export function presentExercise(exercise: Exercise): ExerciseView {
   const {
     ownerAccountId: _ownerAccountId,
+    archivedAt: _archivedAt,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
     video,
@@ -82,5 +86,6 @@ export function presentExercise(exercise: Exercise): ExerciseView {
       path: exerciseVideoPath(view.id, video.videoId),
       format: video.format,
     },
+    status: exercise.status,
   };
 }

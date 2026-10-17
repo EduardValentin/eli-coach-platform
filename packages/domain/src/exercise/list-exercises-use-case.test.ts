@@ -21,6 +21,7 @@ const HIP_THRUST = Exercise.reconstitute({
   tags: ["Hypertrophy"],
   cues: "",
   video: null,
+  archivedAt: null,
   createdAt: AT,
   updatedAt: AT,
 });
@@ -33,6 +34,7 @@ describe("ListExercisesUseCase", () => {
       find: vi.fn(),
       add: vi.fn(),
       replace: vi.fn(),
+      remove: vi.fn(),
     } satisfies ExerciseLibrary;
     const useCase = new ListExercisesUseCase({ library });
 

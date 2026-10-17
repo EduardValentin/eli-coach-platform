@@ -64,14 +64,14 @@ export const exercisesTable = appSchema.table(
       length: 8,
     }).$type<ExerciseVideoFormat>(),
     videoSizeBytes: integer("video_size_bytes"),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
-    uniqueIndex(exercisesConstraints.nameUnique).on(
-      table.ownerAccountId,
-      sql`lower(btrim(${table.name}))`,
-    ),
+    uniqueIndex(exercisesConstraints.nameUnique)
+      .on(table.ownerAccountId, sql`lower(btrim(${table.name}))`)
+      .where(sql`${table.archivedAt} is null`),
     check(
       "exercises_type_check",
       sql`${table.type} in (${quotedList(EXERCISE_TYPES)})`,

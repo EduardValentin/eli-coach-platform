@@ -67,7 +67,6 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const listing = useListingSearchParams();
   const lifecycle = useLibraryLifecycle({
-    noun: 'food',
     archive: archiveFood,
     restore: restoreFood,
     remove: deleteFood,

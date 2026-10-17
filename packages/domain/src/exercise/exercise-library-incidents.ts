@@ -7,6 +7,11 @@ type ExerciseEditFailedIncident = {
   error: unknown;
 };
 
+type ExerciseRestoreFailedIncident = {
+  exerciseId: string;
+  error: unknown;
+};
+
 export type UncleanedExerciseVideoFile =
   { stagingId: string } | { videoId: string };
 
@@ -17,5 +22,6 @@ type ExerciseVideoCleanupFailedIncident = UncleanedExerciseVideoFile & {
 export interface ExerciseLibraryIncidents {
   exerciseCreationFailed(incident: ExerciseCreationFailedIncident): void;
   exerciseEditFailed(incident: ExerciseEditFailedIncident): void;
+  exerciseRestoreFailed(incident: ExerciseRestoreFailedIncident): void;
   videoCleanupFailed(incident: ExerciseVideoCleanupFailedIncident): void;
 }

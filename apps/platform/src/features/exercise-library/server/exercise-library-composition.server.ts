@@ -1,10 +1,14 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
+  ArchiveExerciseUseCase,
   CreateExerciseUseCase,
+  DeleteExerciseUseCase,
   EditExerciseUseCase,
+  ExerciseVideoCleanup,
   FindExerciseUseCase,
   ListExercisesUseCase,
   OpenExerciseVideoUseCase,
+  RestoreExerciseUseCase,
   StageExerciseVideoUseCase,
   type ExerciseLibraryIncidents,
   type ExerciseVideoFormatDetector,
@@ -56,6 +60,22 @@ export function composeExerciseLibraryFeature(
       openExerciseVideo: new OpenExerciseVideoUseCase({
         library,
         store: videoStore,
+      }),
+      archiveExercise: new ArchiveExerciseUseCase({
+        library,
+        clock: handles.clock,
+      }),
+      restoreExercise: new RestoreExerciseUseCase({
+        library,
+        clock: handles.clock,
+        incidents: handles.incidents,
+      }),
+      deleteExercise: new DeleteExerciseUseCase({
+        library,
+        videos: new ExerciseVideoCleanup({
+          store: videoStore,
+          incidents: handles.incidents,
+        }),
       }),
     }),
   };

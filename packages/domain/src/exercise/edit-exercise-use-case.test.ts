@@ -38,6 +38,7 @@ const STORED_SQUAT: ExerciseSnapshot = {
     format: "mp4",
     sizeBytes: 2_048,
   },
+  archivedAt: null,
   createdAt: CREATED_AT,
   updatedAt: CREATED_AT,
 };
@@ -54,6 +55,14 @@ const OTHER_COACHS_PLANK = Exercise.reconstitute({
   id: "e0000000-0000-4000-8000-000000000003",
   ownerAccountId: OTHER_COACH_ACCOUNT_ID,
   name: "Plank",
+});
+
+const ARCHIVED_LUNGE = Exercise.reconstitute({
+  ...STORED_SQUAT,
+  id: "e0000000-0000-4000-8000-000000000004",
+  name: "Lunge",
+  video: null,
+  archivedAt: CREATED_AT,
 });
 
 const SQUAT_REVISED: ExerciseDraftInput = {
@@ -87,6 +96,7 @@ const EDITED_SQUAT: ExerciseSnapshot = {
     format: "mp4",
     sizeBytes: 2_048,
   },
+  archivedAt: null,
   createdAt: CREATED_AT,
   updatedAt: NOW,
 };
@@ -104,6 +114,7 @@ function createUseCase() {
   const stored = [
     Exercise.reconstitute(STORED_SQUAT),
     HIP_THRUST,
+    ARCHIVED_LUNGE,
     OTHER_COACHS_PLANK,
   ];
   const ownedBy = (ownerAccountId: string) =>
@@ -123,10 +134,12 @@ function createUseCase() {
     ),
     add: vi.fn(),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
+    remove: vi.fn(),
   } satisfies ExerciseLibrary;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
     exerciseEditFailed: vi.fn(),
+    exerciseRestoreFailed: vi.fn(),
     videoCleanupFailed: vi.fn(),
   } satisfies ExerciseLibraryIncidents;
   const formats = {
@@ -217,6 +230,42 @@ describe("EditExerciseUseCase", () => {
     // assert
     expect(result.status).toBe("edited");
     expect(library.replace).toHaveBeenCalledOnce();
+  });
+
+  it("renames onto a name only an archived exercise of hers has", async () => {
+    // arrange
+    const { useCase, library } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000001",
+      draft: { ...SQUAT_REVISED, name: "LUNGE " },
+      video: KEEP,
+    });
+
+    // assert
+    expect(result.status).toBe("edited");
+    expect(library.replace).toHaveBeenCalledOnce();
+  });
+
+  it("refuses to edit an archived exercise, discarding the staged video without replacing it", async () => {
+    // arrange
+    const { useCase, library, store } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      exerciseId: "e0000000-0000-4000-8000-000000000004",
+      draft: SQUAT_REVISED,
+      video: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "archived" });
+    expect(store.discard).toHaveBeenCalledWith("staging-2");
+    expect(store.keep).not.toHaveBeenCalled();
+    expect(library.replace).not.toHaveBeenCalled();
   });
 
   it("refuses a draft that breaks a rule without replacing it", async () => {

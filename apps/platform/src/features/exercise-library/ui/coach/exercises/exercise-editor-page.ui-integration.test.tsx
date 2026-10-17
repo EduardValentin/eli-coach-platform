@@ -61,6 +61,7 @@ const HIP_THRUST: ExerciseView = {
   tags: ["Hypertrophy"],
   cues: "Chin tucked.",
   video: { path: HIP_THRUST_VIDEO_PATH, format: "mp4" },
+  status: "active",
 };
 
 const BREATH_HOLD: ExerciseView = {
@@ -76,6 +77,7 @@ const BREATH_HOLD: ExerciseView = {
   tags: ["Recovery"],
   cues: "Exhale slowly.",
   video: null,
+  status: "active",
 };
 
 const LIBRARY = [BREATH_HOLD, HIP_THRUST];

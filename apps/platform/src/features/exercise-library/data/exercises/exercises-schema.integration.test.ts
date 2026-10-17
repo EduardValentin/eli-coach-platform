@@ -25,9 +25,9 @@ const insertCoachSql = `
 
 const insertExerciseSql = `
   insert into app.exercises
-    (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, created_at, updated_at)
+    (id, owner_account_id, name, form_cues, type, unit, per_side, difficulty, primary_muscles, secondary_muscles, equipment, tags, video_file_id, video_format, video_size_bytes, archived_at, created_at, updated_at)
   values
-    ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
+    ($1, $2, $3, $10, $4, $5, false, $6, $11, $12, $13, $14, $7, $8, $9, $15, '2026-10-14T09:00:00Z', '2026-10-14T09:00:00Z')
 `;
 
 type ExerciseRow = {
@@ -43,6 +43,7 @@ type ExerciseRow = {
   equipment?: (string | null)[];
   tags?: (string | null)[];
   video?: { videoId?: string; format?: string; sizeBytes?: number };
+  archivedAt?: string | null;
 };
 
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -104,6 +105,38 @@ describe.sequential("exercises schema", () => {
       expect(await countExercises()).toBe(1);
     },
   );
+
+  it("keeps the name of an archived exercise free for a new one", async () => {
+    // arrange
+    await insertExercise({
+      name: "Hip thrust",
+      archivedAt: "2026-10-15T09:00:00Z",
+    });
+
+    // act
+    await insertExercise({ id: SECOND_ID, name: "hip thrust" });
+
+    // assert
+    expect(await countExercises()).toBe(2);
+  });
+
+  it("keeps two archived exercises of the same coach under the same name", async () => {
+    // arrange
+    await insertExercise({
+      name: "Hip thrust",
+      archivedAt: "2026-10-15T09:00:00Z",
+    });
+
+    // act
+    await insertExercise({
+      id: SECOND_ID,
+      name: "Hip thrust",
+      archivedAt: "2026-10-16T09:00:00Z",
+    });
+
+    // assert
+    expect(await countExercises()).toBe(2);
+  });
 
   it("keeps the same name for exercises of two coaches", async () => {
     // arrange
@@ -419,6 +452,7 @@ function insertExercise(row: ExerciseRow): Promise<unknown> {
       row.secondaryMuscles ?? [],
       row.equipment ?? [],
       row.tags ?? [],
+      row.archivedAt ?? null,
     ],
   });
 }

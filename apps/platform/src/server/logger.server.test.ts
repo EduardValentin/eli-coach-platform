@@ -1167,6 +1167,31 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs an exercise restore that could not be written by its id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("secret row contents"), {
+      code: "ECONNREFUSED",
+    });
+
+    // act
+    logger.exerciseRestoreFailed({ exerciseId: "exercise-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Exercise restore could not be written.",
+      {
+        errorCategory: "exercise_restore_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+        exerciseId: "exercise-1",
+      },
+    );
+  });
+
   it("logs an exercise video file it could not remove by its video id and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi
