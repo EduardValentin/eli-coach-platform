@@ -89,6 +89,7 @@
     0 0 0 2px rgba(200, 29, 107, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-public-platform-cloud: 0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-phone-frame: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-drawer: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   --color-surface-page: #fafafa;
   --color-surface-base: #ffffff;
@@ -297,6 +298,7 @@
   --shadow-tab-bar: var(--shadow-tab-bar);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
+  --shadow-drawer: var(--shadow-drawer);
   --shadow-public-platform-cloud: var(--shadow-public-platform-cloud);
   --shadow-public-platform-cloud-active: var(
     --shadow-public-platform-cloud-active

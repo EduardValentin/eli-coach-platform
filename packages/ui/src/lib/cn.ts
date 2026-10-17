@@ -55,6 +55,7 @@ const twMerge = extendTailwindMerge({
         "phone-frame",
         "public-platform-cloud",
         "public-platform-cloud-active",
+        "drawer",
       ],
       tracking: ["label", "section-eyebrow"],
       leading: ["display-snug"],
