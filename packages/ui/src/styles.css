@@ -542,7 +542,6 @@
   }
 }
 
-/* [data-focus-ring] opts an option that is its own tab stop with no other focus look, such as an icon choice, back into the one focus ring. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
   ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]),
