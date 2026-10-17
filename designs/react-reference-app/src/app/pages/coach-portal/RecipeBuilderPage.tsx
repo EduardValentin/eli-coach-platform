@@ -502,7 +502,7 @@ function RecipeBuilderInner() {
           className={cn(
             'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0',
             {
-              'translate-x-0 shadow-2xl transition-[translate]': libraryOpen,
+              'translate-x-0 shadow-drawer transition-[translate]': libraryOpen,
               'invisible -translate-x-full transition-[translate,visibility]': !libraryOpen,
             },
           )}
