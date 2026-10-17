@@ -99,7 +99,7 @@ function useLibraryDrawer() {
   const drawer = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const isDesktop = useIsDesktopViewport();
-  const isDrawer = open && !isDesktop;
+  const isOpenAsDrawer = open && !isDesktop;
 
   const openLibrary = () => {
     flushSync(() => setOpen(true));
@@ -111,7 +111,7 @@ function useLibraryDrawer() {
     openButton.current?.focus();
   };
 
-  const keepKeyboardInDrawer = useEffectEvent((event: KeyboardEvent) => {
+  const answerDrawerKey = useEffectEvent((event: KeyboardEvent) => {
     if (event.key === "Escape") closeLibrary();
     if (event.key === "Tab" && drawer.current) {
       wrapTabWithin(drawer.current, event);
@@ -119,13 +119,13 @@ function useLibraryDrawer() {
   });
 
   useEffect(() => {
-    if (!isDrawer) return;
+    if (!isOpenAsDrawer) return;
 
-    const onKeyDown = (event: KeyboardEvent) => keepKeyboardInDrawer(event);
+    const onKeyDown = (event: KeyboardEvent) => answerDrawerKey(event);
     document.addEventListener("keydown", onKeyDown);
 
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isDrawer]);
+  }, [isOpenAsDrawer]);
 
   return { open, openLibrary, closeLibrary, openButton, closeButton, drawer };
 }

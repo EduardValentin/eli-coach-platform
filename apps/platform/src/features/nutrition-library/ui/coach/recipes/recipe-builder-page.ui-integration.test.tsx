@@ -160,10 +160,19 @@ beforeAll(() => {
   );
 });
 
-function viewportIsDesktop(matches: boolean) {
+function arrangePhoneViewport() {
   vi.stubGlobal("matchMedia", (query: string) => ({
     addEventListener: () => {},
-    matches,
+    matches: false,
+    media: query,
+    removeEventListener: () => {},
+  }));
+}
+
+function arrangeDesktopViewport() {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    addEventListener: () => {},
+    matches: true,
     media: query,
     removeEventListener: () => {},
   }));
@@ -171,7 +180,7 @@ function viewportIsDesktop(matches: boolean) {
 
 beforeEach(() => {
   sentBodies = [];
-  viewportIsDesktop(false);
+  arrangePhoneViewport();
 });
 
 afterEach(() => {
@@ -738,7 +747,7 @@ describe("the food library drawer on a phone", () => {
 
   it("leaves Tab and Escape alone on a wide screen, where the library sits beside the recipe", async () => {
     // arrange
-    viewportIsDesktop(true);
+    arrangeDesktopViewport();
     const user = await renderBuilder(NEW_RECIPE_PATH);
     await openLibrary(user);
 
@@ -747,9 +756,7 @@ describe("the food library drawer on a phone", () => {
     await user.tab({ shift: true });
 
     // assert
-    expect(library()).not.toContainElement(
-      document.activeElement as HTMLElement,
-    );
+    expect(screen.getByRole("link", { name: "Cancel" })).toHaveFocus();
   });
 });
 
