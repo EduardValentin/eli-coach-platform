@@ -36,12 +36,14 @@ export function checkInsListed(page: Page, tab: CheckInTab): Locator {
 
 export type JoinEmphasis = "emphasised" | "quiet";
 
+export type CheckInShowing = string | RegExp;
+
 const EMPHASISED_JOIN = /\bbg-primary\b/;
 
 export async function expectCheckInsInOrder(
   page: Page,
   tab: CheckInTab,
-  showing: readonly string[],
+  showing: readonly CheckInShowing[],
 ): Promise<void> {
   const listed = checkInsListed(page, tab);
 

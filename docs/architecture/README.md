@@ -13,7 +13,7 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 26, units: 1239, edges: 4340, component cycles: 1, uncovered modules: 0.
+Components: 26, units: 1240, edges: 4348, component cycles: 1, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
@@ -21,7 +21,7 @@ Components: 26, units: 1239, edges: 4340, component cycles: 1, uncovered modules
 | C2 packages/db | 6 | 74 | 0 | 0 | 0.15 | 0.85 | pain |
 | C3 packages/config | 17 | 51 | 0 | 0 | 0.23 | 0.77 | none |
 | C4 packages/content | 9 | 23 | 0 | 0 | 0.17 | 0.83 | pain |
-| C5 packages/ui | 125 | 168 | 0 | 0 | 0.09 | 0.91 | pain |
+| C5 packages/ui | 125 | 169 | 0 | 0 | 0.09 | 0.91 | pain |
 | C6 packages/infrastructure | 105 | 148 | 35 | 0.19 | 0.17 | 0.64 | pain |
 | C7 apps/platform/src/features/store | 50 | 10 | 38 | 0.79 | 0.15 | 0.06 | none |
 | C8 apps/platform/src/features/waitlist | 22 | 10 | 15 | 0.6 | 0.2 | 0.2 | none |
@@ -37,7 +37,7 @@ Components: 26, units: 1239, edges: 4340, component cycles: 1, uncovered modules
 | C19 apps/platform/src/features/client-onboarding | 52 | 6 | 46 | 0.88 | 0.21 | 0.1 | none |
 | C20 apps/platform/src/features/client-profile | 41 | 16 | 37 | 0.7 | 0.14 | 0.16 | none |
 | C21 apps/platform/src/features/client-resources | 41 | 9 | 36 | 0.8 | 0.14 | 0.06 | none |
-| C22 apps/platform/src/features/check-ins | 72 | 12 | 56 | 0.82 | 0.17 | 0 | none |
+| C22 apps/platform/src/features/check-ins | 73 | 12 | 57 | 0.83 | 0.17 | 0.01 | none |
 | C23 apps/platform/src/features/coach-schedule | 16 | 9 | 12 | 0.57 | 0.12 | 0.31 | none |
 | C24 apps/platform/src/features/clients | 47 | 32 | 39 | 0.55 | 0.18 | 0.27 | none |
 | C25 apps/platform/src/features/exercise-library | 25 | 5 | 22 | 0.81 | 0.14 | 0.04 | none |
@@ -187,7 +187,7 @@ Components: 26, units: 1239, edges: 4340, component cycles: 1, uncovered modules
 | C22 | C2 | 5 |
 | C22 | C3 | 2 |
 | C22 | C4 | 7 |
-| C22 | C5 | 18 |
+| C22 | C5 | 19 |
 | C22 | C6 | 18 |
 | C22 | C9 | 6 |
 | C22 | C17 | 9 |

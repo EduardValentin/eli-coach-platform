@@ -23,6 +23,7 @@ export type StartChoice = "immediate" | "waiting";
 export type PaidClient = {
   clientId: string;
   firstName: string;
+  lastName: string;
   fullName: string;
   email: string;
   gender: VisitorGender;
@@ -295,6 +296,7 @@ async function insertPaidClient(
   return {
     clientId,
     firstName: identity.firstName,
+    lastName: identity.lastName,
     fullName: `${identity.firstName} ${identity.lastName}`,
     email: identity.email,
     gender: identity.gender,

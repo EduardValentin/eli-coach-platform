@@ -11,7 +11,7 @@ import { z } from "zod";
 
 const CHECK_IN_STATUSES = [...RECORDED_CHECK_IN_STATUSES, "passed"] as const;
 
-const CHECK_IN_TABS = [
+export const CHECK_IN_TABS = [
   "upcoming",
   "requests",
   "past",

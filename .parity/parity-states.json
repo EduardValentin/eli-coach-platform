@@ -461,7 +461,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-past"
+      }
+    ]
   },
   "checkins-empty-requests": {
     "prototype": [
@@ -493,7 +497,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-requests"
+      }
+    ]
   },
   "checkins-empty-upcoming": {
     "prototype": [
@@ -525,7 +533,11 @@
         "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
       }
     ],
-    "real": []
+    "real": [
+      {
+        "use": "checkins-tab-upcoming"
+      }
+    ]
   },
   "checkins-open-request": {
     "prototype": [
@@ -5159,6 +5171,212 @@
     },
     {
       "waitFor": "role=button[name=\"Clear filters\" s]"
+    }
+  ],
+  "checkins-many": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Check-ins\"]"
+      },
+      {
+        "click": "#dev-pending-checkins"
+      },
+      {
+        "click": "role=option[name=\"Many check-ins\" s]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      },
+      {
+        "wait": 400
+      },
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 600
+      }
+    ],
+    "real": [
+      {
+        "waitFor": "[data-parity-root$=\"Checkins\"] [data-parity-root=\"CheckinCard\"]"
+      },
+      {
+        "hover": "h1"
+      },
+      {
+        "wait": 600
+      }
+    ]
+  },
+  "checkins-many-upcoming": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-many-requests": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Requests/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-many-past": [
+    {
+      "use": "checkins-many"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Past/]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 900
+    }
+  ],
+  "checkins-kind-weekly": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "click": "role=option[name=/^Weekly/]"
+    },
+    {
+      "waitFor": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s] >> text=Weekly"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-kind-open": [
+    {
+      "use": "checkins-many-requests"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "checkins-waiting-open": [
+    {
+      "use": "checkins-many-requests"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Waiting on\" s]"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    },
+    {
+      "wait": 400
+    }
+  ],
+  "checkins-search-typed": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search check-ins\" s]",
+        "jane"
+      ]
+    },
+    {
+      "waitFor": "text=Showing 1–10 of 11"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-sort-latest": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-search-sort\"] >> role=button[name=\"Soonest first\" s]"
+    },
+    {
+      "waitFor": "[data-parity=\"checkin-search-sort\"] [aria-pressed=\"true\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-page-2": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "role=link[name=\"Go to page 2\" s]"
+    },
+    {
+      "waitFor": "[aria-current=\"page\"][aria-label=\"Go to page 2\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
+    }
+  ],
+  "checkins-no-match": [
+    {
+      "use": "checkins-many-upcoming"
+    },
+    {
+      "click": "[data-parity=\"checkin-filters\"] >> role=combobox[name=\"Kind\" s]"
+    },
+    {
+      "click": "role=option[name=/^Ad-hoc/]"
+    },
+    {
+      "waitFor": "text=No check-ins match"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "wait": 600
     }
   ],
   "open-exercise-actions-bike": [

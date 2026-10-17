@@ -14,6 +14,7 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
   type MetaFunction,
+  type ShouldRevalidateFunction,
 } from "react-router";
 
 import { formatShortDay } from "~/features/assessment-calls/public/call-moment";
@@ -23,9 +24,12 @@ import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-co
 import {
   CheckInListing,
   type CheckInEmptyCopy,
+} from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
+import {
+  shouldReloadCheckIns,
   type CheckInTab,
   type ListedCheckIn,
-} from "~/features/check-ins/ui/shared/check-ins/check-in-listing";
+} from "~/features/check-ins/ui/shared/check-ins/check-in-listing-rules";
 import {
   CheckInRow,
   type CheckInViewer,
@@ -55,6 +59,8 @@ export const meta: MetaFunction = () => [
   { name: "description", content: pwaSurfaceDefinitions.client.description },
   { name: "theme-color", content: pwaSurfaceDefinitions.client.themeColor },
 ];
+
+export const shouldRevalidate: ShouldRevalidateFunction = shouldReloadCheckIns;
 
 const EMPTY_COPY: Record<CheckInTab, CheckInEmptyCopy> = {
   upcoming: {
@@ -122,7 +128,7 @@ export default function ClientCheckInsRoute() {
   };
 
   return (
-    <div className="w-full" data-parity-root="ClientCheckins">
+    <div className="w-full pb-16 sm:pb-0" data-parity-root="ClientCheckins">
       <PortalPageHeader
         actions={renderRequestButton("hidden sm:inline-flex")}
         subtitle="Request a check-in, answer proposals, and look back at past sessions."
@@ -142,6 +148,7 @@ export default function ClientCheckInsRoute() {
             viewer={VIEWER}
           />
         )}
+        waitingForLabel="Waiting for your coach"
       />
 
       <CheckInRequestDialog

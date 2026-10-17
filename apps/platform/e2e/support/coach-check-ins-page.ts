@@ -3,21 +3,34 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import {
   checkInsListed,
   checkInTab,
+  expectCheckInsInOrder,
+  expectEmptyCheckInTab,
   expectJoinEmphasis,
   expectWaitingOnViewer,
   showCheckInTab,
+  type CheckInShowing,
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
+import {
+  CheckInToolbar,
+  type AddressParams,
+  type CheckInFilter,
+  type CountedOption,
+  type OptionCounts,
+  type SortReading,
+} from "./check-in-toolbar";
 import { tabTo } from "./keyboard";
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { countedNavigationName } from "./navigation-counts";
 
 const CHECK_INS_PATH = "/coach/checkins";
 const CHECK_INS_DATA_PATH = new RegExp(`^${CHECK_INS_PATH}\\.data$`);
 const APPROVAL_DATA_PATH = /^\/api\/check-ins\/[^/]+\/approval\.data$/;
 const REVIEW_URL = /[?&]checkin=/;
+const SEARCH_PARAM = "q";
 const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 const REQUESTED_BY_YOU = "Requested by you";
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
@@ -26,9 +39,11 @@ const AD_HOC = "Ad-hoc";
 
 export class CoachCheckInsPage {
   private readonly rows: CheckInRows;
+  private readonly toolbar: CheckInToolbar;
 
   constructor(private readonly page: Page) {
     this.rows = new CheckInRows(page);
+    this.toolbar = new CheckInToolbar(page);
   }
 
   private joinPathOf(checkInId: string): string {
@@ -52,9 +67,21 @@ export class CoachCheckInsPage {
     return this.page.getByRole("heading", { level: 1, name: "Check-ins" });
   }
 
+  private get searchField() {
+    return this.page.getByRole("searchbox", {
+      name: "Search check-ins",
+      exact: true,
+    });
+  }
+
   async open(): Promise<void> {
     await this.page.goto(CHECK_INS_PATH);
     await this.expectOpen();
+  }
+
+  async visitAddress(params: AddressParams): Promise<void> {
+    await this.page.goto(`${CHECK_INS_PATH}?${new URLSearchParams(params)}`);
+    await expect(this.heading).toBeVisible();
   }
 
   async visitReview(checkInId: string): Promise<void> {
@@ -139,12 +166,97 @@ export class CoachCheckInsPage {
     );
   }
 
+  async expectOptionCounts(
+    filter: CheckInFilter,
+    counts: OptionCounts,
+  ): Promise<void> {
+    await this.toolbar.expectOptionCounts(filter, counts);
+  }
+
+  async chooseKind(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Kind", label);
+  }
+
+  async chooseWaiting(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Waiting on", label);
+  }
+
+  async chooseKindByKeyboard(option: CountedOption): Promise<void> {
+    await this.toolbar.chooseFilterByKeyboard("Kind", option);
+  }
+
+  async chooseWaitingByKeyboard(option: CountedOption): Promise<void> {
+    await this.toolbar.chooseFilterByKeyboard("Waiting on", option);
+  }
+
+  async expectKind(label: string): Promise<void> {
+    await this.toolbar.expectFilterReads("Kind", label);
+  }
+
+  async search(term: string): Promise<void> {
+    await expect(async () => {
+      await this.searchField.fill(term);
+      await expect(this.page).toHaveURL(
+        (url) => (url.searchParams.get(SEARCH_PARAM) ?? "") === term,
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+    }).toPass();
+  }
+
+  async expectSearchReads(term: string): Promise<void> {
+    await expect(this.searchField).toHaveValue(term);
+  }
+
+  async toggleSort(): Promise<void> {
+    await this.toolbar.toggleSort();
+  }
+
+  async toggleSortByKeyboard(): Promise<void> {
+    await this.toolbar.toggleSortByKeyboard();
+  }
+
+  async expectSort(reading: SortReading): Promise<void> {
+    await this.toolbar.expectSort(reading);
+  }
+
+  async showTabByKeyboard(tab: CheckInTab): Promise<void> {
+    await this.toolbar.showTabByKeyboard(tab);
+  }
+
+  async goToPage(pageNumber: number): Promise<void> {
+    await this.toolbar.goToPage(pageNumber);
+  }
+
+  async goToPageByKeyboard(pageNumber: number): Promise<void> {
+    await this.toolbar.goToPageByKeyboard(pageNumber);
+  }
+
+  async expectShowing(text: string): Promise<void> {
+    await this.toolbar.expectShowing(text);
+  }
+
+  async expectEmpty(tab: CheckInTab, title: string): Promise<void> {
+    await expectEmptyCheckInTab(this.page, tab, title);
+    await this.toolbar.expectNoClearFilters();
+  }
+
+  async expectAddress(params: AddressParams): Promise<void> {
+    await this.toolbar.expectAddress(CHECK_INS_PATH, params);
+  }
+
   async expectWaitingCount(count: number): Promise<void> {
     await expectWaitingOnViewer(this.page, count);
   }
 
   checkIn(tab: CheckInTab, showing: string): Locator {
     return checkInsListed(this.page, tab).filter({ hasText: showing });
+  }
+
+  async expectInOrder(
+    tab: CheckInTab,
+    showing: readonly CheckInShowing[],
+  ): Promise<void> {
+    await expectCheckInsInOrder(this.page, tab, showing);
   }
 
   async approve(clientName: string): Promise<void> {
