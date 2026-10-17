@@ -190,8 +190,6 @@ export const router = createBrowserRouter(
             { path: "nutrition", Component: NutritionHub },
             { path: "nutrition/foods/new", Component: FoodEditorPage },
             { path: "nutrition/foods/:foodId", Component: FoodEditorPage },
-            { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },
-            { path: "nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
             { path: "nutrition/client/:clientId/plan", Component: NutritionPlanBuilderPage },
             { path: "nutrition/client/:clientId/plan/day/:date", Component: NutritionDayEditorPage },
             { path: "training/template-builder", Component: PlanBuilderPage },
@@ -208,6 +206,8 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
+        { path: "coach/nutrition/recipe-builder", Component: RecipeBuilderPage },
+        { path: "coach/nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
           ]
         },
         { path: "403", Component: AccessDenied },

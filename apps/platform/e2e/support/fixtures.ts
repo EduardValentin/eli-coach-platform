@@ -46,6 +46,7 @@ import { ExerciseLibraryPage } from "./exercise-library-page";
 import { ExerciseRequests } from "./exercise-requests";
 import { ExerciseVideoSamples } from "./exercise-video-files";
 import { FoodEditorPage } from "./food-editor-page";
+import { FoodRecords } from "./food-records";
 import { FoodRequests } from "./food-requests";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
@@ -64,6 +65,8 @@ import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import { PrivacyPolicyPage } from "./privacy-policy-page";
+import { RecipeBuilderPage } from "./recipe-builder-page";
+import { RecipeRequests } from "./recipe-requests";
 import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
 import { ResourceToolbar } from "./resource-toolbar";
@@ -162,7 +165,11 @@ type PlatformFixtures = {
   nutritionLibrary: NutritionLibraryPage;
   foodEditor: FoodEditorPage;
   foodRequests: FoodRequests;
+  foodRecords: FoodRecords;
   visitorFoodRequests: FoodRequests;
+  recipeBuilder: RecipeBuilderPage;
+  recipeRequests: RecipeRequests;
+  visitorRecipeRequests: RecipeRequests;
   addResourceDialog: AddResourceDialog;
   resourceDetailsDialog: ResourceDetailsDialog;
   resourceViewer: ResourceViewer;
@@ -605,10 +612,29 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new FoodRequests(page.request));
   },
 
+  foodRecords: async ({ databasePool }, use) => {
+    await use(new FoodRecords(databasePool));
+  },
+
   visitorFoodRequests: async ({ baseURL, playwright }, use) => {
     const visitor = await playwright.request.newContext({ baseURL });
 
     await use(new FoodRequests(visitor));
+    await visitor.dispose();
+  },
+
+  recipeBuilder: async ({ page }, use) => {
+    await use(new RecipeBuilderPage(page));
+  },
+
+  recipeRequests: async ({ page }, use) => {
+    await use(new RecipeRequests(page.request));
+  },
+
+  visitorRecipeRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new RecipeRequests(visitor));
     await visitor.dispose();
   },
 

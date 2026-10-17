@@ -62,6 +62,8 @@ import {
 import { EXERCISE_SEEDS } from '../services/exerciseSamples';
 import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService';
 import { FOOD_SEEDS } from '../services/foodSamples';
+import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
+import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1153,7 +1155,7 @@ export function DevToggle() {
 
                 <div className="space-y-2">
                   <Label htmlFor="dev-food-seed" className={DEV_LABEL_CLASS}>
-                    Food library
+                    Foods and recipes
                   </Label>
                   <Select
                     value={appState.foodSeed}
@@ -1169,6 +1171,50 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Populated</SelectItem>
                       <SelectItem value="empty">Empty</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-food-save" className={DEV_LABEL_CLASS}>
+                    Food save
+                  </Label>
+                  <Select
+                    value={appState.foodSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        foodSave: optionOrDefault(FOOD_SAVE_OUTCOMES, value, 'ok'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-food-save" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="ok">Saves</SelectItem>
+                      <SelectItem value="fail">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-recipe-save" className={DEV_LABEL_CLASS}>
+                    Recipe save
+                  </Label>
+                  <Select
+                    value={appState.recipeSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        recipeSave: optionOrDefault(RECIPE_SAVE_OUTCOMES, value, 'ok'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-recipe-save" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="ok">Saves</SelectItem>
+                      <SelectItem value="fail">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

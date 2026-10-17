@@ -64,6 +64,8 @@ import {
 import {
   CATEGORY_LABELS,
   CATEGORY_SWATCH,
+  MACRO_BAR,
+  MACRO_DOT,
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
@@ -931,24 +933,24 @@ function DayOverviewCell({
       label: 'Protein',
       value: totals.protein,
       target: target.protein,
-      bar: 'bg-macro-protein',
-      dot: 'bg-macro-protein',
+      bar: MACRO_BAR.protein,
+      dot: MACRO_DOT.protein,
     },
     {
       key: 'C',
       label: 'Carbs',
       value: totals.carb,
       target: target.carb,
-      bar: 'bg-macro-carb',
-      dot: 'bg-macro-carb',
+      bar: MACRO_BAR.carb,
+      dot: MACRO_DOT.carb,
     },
     {
       key: 'F',
       label: 'Fat',
       value: totals.fat,
       target: target.fat,
-      bar: 'bg-macro-fat',
-      dot: 'bg-macro-fat',
+      bar: MACRO_BAR.fat,
+      dot: MACRO_DOT.fat,
     },
   ].map((m) => ({
     ...m,
@@ -1011,7 +1013,7 @@ function DayOverviewCell({
           className="h-1.5 w-full overflow-hidden rounded-full bg-surface-quiet"
         >
           <div
-            className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : 'bg-macro-kcal'}`}
+            className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : MACRO_BAR.kcal}`}
             style={{ width: `${Math.round(kcalPct * 100)}%` }}
             aria-hidden="true"
           />

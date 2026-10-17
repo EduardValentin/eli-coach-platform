@@ -24,6 +24,8 @@ import { Button, buttonVariants } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Legend } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { useAppState } from '../../context/AppContext';
+import { FOOD_NOT_SAVED, saveFoodThroughServer } from '../../services/foodService';
 
 const LIBRARY = '/coach/nutrition';
 
@@ -105,6 +107,7 @@ function NumberRow({
 
 function FoodEditor({ editing, library }: { editing: Food | undefined; library: string }) {
   const navigate = useNavigate();
+  const { appState } = useAppState();
   const { foods, tags, addFood, updateFood } = useNutrition();
   const [draft, setDraft] = useState<FoodDraft>(editing ? draftOf(editing) : NEW_FOOD);
   const [touched, setTouched] = useState(false);
@@ -120,13 +123,15 @@ function FoodEditor({ editing, library }: { editing: Food | undefined; library: 
 
   const save = () => {
     const fields = foodFrom(draft);
-    if (editing) {
-      updateFood(editing.id, fields);
-      toast.success('Food updated');
-    } else {
-      addFood(fields);
-      toast.success('Food created');
+    try {
+      saveFoodThroughServer(appState.foodSave, () =>
+        editing ? updateFood(editing.id, fields) : addFood(fields),
+      );
+    } catch {
+      toast.error(FOOD_NOT_SAVED);
+      return;
     }
+    toast.success(editing ? 'Food updated' : 'Food created');
     navigate(library);
   };
 

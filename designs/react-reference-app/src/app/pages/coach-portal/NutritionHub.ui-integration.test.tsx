@@ -97,3 +97,45 @@ describe('the empty food library seed', () => {
     expect(screen.queryByText('Chicken breast')).not.toBeInTheDocument();
   });
 });
+
+describe('the empty nutrition library seed', () => {
+  it('starts the recipes with none', () => {
+    // arrange
+    window.history.replaceState(null, '', '/coach/nutrition?session=coach&nutseed=empty&tab=recipes');
+
+    // act
+    renderHub('/coach/nutrition?session=coach&nutseed=empty&tab=recipes');
+
+    // assert
+    expect(screen.getByText('No recipes yet')).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Chicken rice bowl' })).not.toBeInTheDocument();
+  });
+});
+
+describe('moving between the Nutrition tabs', () => {
+  it('keeps her keyboard on the tab she moves to with the arrow keys', async () => {
+    // arrange
+    const user = renderHub('/coach/nutrition?tab=foods');
+    screen.getByRole('tab', { name: 'Foods' }).focus();
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(await screen.findByRole('tab', { name: 'Recipes', selected: true })).toHaveFocus();
+  });
+});
+
+describe('the Recipes tab header', () => {
+  it('links to a new recipe', () => {
+    // arrange
+    // act
+    renderHub('/coach/nutrition?tab=recipes');
+
+    // assert
+    expect(screen.getByRole('link', { name: 'New recipe' })).toHaveAttribute(
+      'href',
+      '/coach/nutrition/recipe-builder',
+    );
+  });
+});

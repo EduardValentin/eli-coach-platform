@@ -89,6 +89,7 @@
     0 0 0 2px rgba(200, 29, 107, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-public-platform-cloud: 0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-phone-frame: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-drawer: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   --color-surface-page: #fafafa;
   --color-surface-base: #ffffff;
@@ -171,7 +172,18 @@
   --color-cycle-ovulatory: #c9871b;
   --color-cycle-luteal: #b10ed3;
 
+  --color-tint-red: #dc2626;
+  --color-tint-red-soft: rgba(220, 38, 38, 0.12);
+  --color-tint-blue: #2563eb;
+  --color-tint-blue-soft: rgba(37, 99, 235, 0.12);
+  --color-tint-amber: #d97706;
+  --color-tint-amber-soft: rgba(217, 119, 6, 0.12);
+  --color-tint-green: #15803d;
+  --color-tint-green-soft: rgba(21, 128, 61, 0.12);
+  --color-tint-teal: #0f766e;
+  --color-tint-teal-soft: rgba(15, 118, 110, 0.12);
   --color-tint-slate-soft: rgba(71, 85, 105, 0.12);
+  --color-tint-violet: #9333ea;
   --color-tint-violet-soft: rgba(147, 51, 234, 0.12);
   --color-tint-lime-soft: rgba(101, 163, 13, 0.12);
   --color-tint-cyan-soft: rgba(8, 145, 178, 0.12);
@@ -286,6 +298,7 @@
   --shadow-tab-bar: var(--shadow-tab-bar);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
+  --shadow-drawer: var(--shadow-drawer);
   --shadow-public-platform-cloud: var(--shadow-public-platform-cloud);
   --shadow-public-platform-cloud-active: var(
     --shadow-public-platform-cloud-active
@@ -406,7 +419,18 @@
   --color-cycle-ovulatory: var(--color-cycle-ovulatory);
   --color-cycle-luteal: var(--color-cycle-luteal);
 
+  --color-tint-red: var(--color-tint-red);
+  --color-tint-red-soft: var(--color-tint-red-soft);
+  --color-tint-blue: var(--color-tint-blue);
+  --color-tint-blue-soft: var(--color-tint-blue-soft);
+  --color-tint-amber: var(--color-tint-amber);
+  --color-tint-amber-soft: var(--color-tint-amber-soft);
+  --color-tint-green: var(--color-tint-green);
+  --color-tint-green-soft: var(--color-tint-green-soft);
+  --color-tint-teal: var(--color-tint-teal);
+  --color-tint-teal-soft: var(--color-tint-teal-soft);
   --color-tint-slate-soft: var(--color-tint-slate-soft);
+  --color-tint-violet: var(--color-tint-violet);
   --color-tint-violet-soft: var(--color-tint-violet-soft);
   --color-tint-lime-soft: var(--color-tint-lime-soft);
   --color-tint-cyan-soft: var(--color-tint-cyan-soft);
@@ -520,7 +544,8 @@
 
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
-  ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]) {
+  ):not([role="menuitemradio"]):not([tabindex="-1"]):not([data-field-entry]),
+[data-focus-ring]:focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--color-focus-ring);

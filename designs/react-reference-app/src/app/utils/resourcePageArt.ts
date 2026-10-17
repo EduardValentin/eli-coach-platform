@@ -187,9 +187,9 @@ function documentPage(options: {
 }
 
 const PLATE_SEGMENTS: { token: string; label: string; share: number }[] = [
-  { token: '--nutrition-legume', label: 'Vegetables', share: 0.5 },
-  { token: '--nutrition-protein', label: 'Protein', share: 0.25 },
-  { token: '--nutrition-carb', label: 'Carbs', share: 0.25 },
+  { token: '--tint-green', label: 'Vegetables', share: 0.5 },
+  { token: '--tint-red', label: 'Protein', share: 0.25 },
+  { token: '--tint-blue', label: 'Carbs', share: 0.25 },
 ];
 
 function plateSegmentPath(start: number, share: number): string {

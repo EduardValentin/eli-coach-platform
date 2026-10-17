@@ -15,6 +15,10 @@ const RUN_EXERCISE_VIDEOS = `
 
 const LIBRARIES = [
   {
+    label: "Recipes",
+    statement: `delete from app.recipes where ${OWNED_BY_RUN_COACHES}`,
+  },
+  {
     label: "Foods",
     statement: `delete from app.foods where ${OWNED_BY_RUN_COACHES}`,
   },

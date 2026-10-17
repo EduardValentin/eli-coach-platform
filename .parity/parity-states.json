@@ -5450,5 +5450,588 @@
     {
       "waitFor": "[data-sonner-toast][data-type=\"success\"]"
     }
+  ],
+  "nutrition-recipes-tab": [
+    {
+      "click": "[data-parity=\"nutrition-toolbar\"] >> role=tab[name=\"Recipes\" s]"
+    }
+  ],
+  "open-new-recipe": [
+    {
+      "click": "[data-parity-root=\"NutritionHub\"] header >> text=New recipe"
+    }
+  ],
+  "open-recipe-actions": [
+    {
+      "click": "role=button[name=\"Actions for Greek yogurt & oats\" s]"
+    }
+  ],
+  "open-recipe-builder-yogurt-oats": [
+    {
+      "use": "open-recipe-actions"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
+  "recipe-builder-name-missing": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "C"
+      ]
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        ""
+      ]
+    }
+  ],
+  "recipe-builder-name-taken": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Greek yogurt & oats"
+      ]
+    }
+  ],
+  "recipe-builder-name-too-long": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Overnight Greek yogurt with rolled oats, chia seeds, fresh berries and some honey"
+      ]
+    }
+  ],
+  "recipe-builder-grams-out-of-range": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "role=spinbutton[name=\"Grams of Greek yogurt\" s]",
+        "0"
+      ]
+    }
+  ],
+  "recipe-builder-minutes-out-of-range": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+        "10000"
+      ]
+    }
+  ],
+  "recipe-builder-instructions-too-long": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  ],
+  "open-recipe-icon-popover": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+    }
+  ],
+  "open-recipe-icon-popover-pastry": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Pastry\" s]"
+    }
+  ],
+  "recipe-icon-chosen": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
+    }
+  ],
+  "recipe-icon-option-hover": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "hover": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Soup\" s]"
+    }
+  ],
+  "recipe-icon-option-focus-visible": [
+    {
+      "use": "open-recipe-icon-popover"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "recipe-builder-library-narrowed": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
+        "en"
+      ]
+    }
+  ],
+  "recipe-library-food-hover": [
+    {
+      "use": "recipe-builder-library-narrowed"
+    },
+    {
+      "hover": "[data-parity=\"recipe-builder-library\"] >> text=Chicken breast"
+    }
+  ],
+  "recipe-builder-drawer-open": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "click": "role=button[name=\"Open food library\" s]"
+    },
+    {
+      "fill": [
+        "[data-parity=\"recipe-builder-library\"] >> role=searchbox[name=\"Search foods\" s]",
+        "en"
+      ]
+    }
+  ],
+  "recipe-created-toast": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Quinoa bowl"
+      ]
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
+  "recipe-updated-toast": [
+    {
+      "use": "open-recipe-builder-yogurt-oats"
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
+  "seed-food-white-rice": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "White rice"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Carb\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "130"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "2.7"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "28"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.3"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "150"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-olive-oil": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Olive oil"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Fat\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Oil / fat\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "884"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "0"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "100"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "10"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Anti-inflammatory\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-greek-yogurt": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Greek yogurt"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Protein\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Dairy\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "59"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "10"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "3.6"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "0.4"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "170"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Snack\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-food-oats": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+          "Oats"
+        ]
+      },
+      {
+        "click": "role=combobox[name=\"Category\" s]"
+      },
+      {
+        "click": "role=option[name=\"Carb\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-icon-grid\"] >> role=button[name=\"Grain\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+          "389"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Protein (g)\" s]",
+          "17"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Carbs (g)\" s]",
+          "66"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Fat (g)\" s]",
+          "7"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Default portion (g)\" s]",
+          "50"
+        ]
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"food-tag-chips\"] >> role=checkbox[name=\"Magnesium\" s]"
+      },
+      {
+        "click": "role=button[name=\"Create food\" s]"
+      }
+    ]
+  },
+  "seed-recipe-chicken-rice-bowl": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "role=textbox[name=\"Recipe name\" s]",
+          "Chicken rice bowl"
+        ]
+      },
+      {
+        "click": "role=button[name=\"Add Chicken breast to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add White rice to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add Olive oil to recipe\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for Chicken breast\" s]"
+      },
+      {
+        "click": "role=option[name=\"Grilled\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for White rice\" s]"
+      },
+      {
+        "click": "role=option[name=\"Boiled\" s]"
+      },
+      {
+        "click": "role=combobox[name=\"Cooking method for Olive oil\" s]"
+      },
+      {
+        "click": "role=option[name=\"Pan-fried\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+          "10"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Cook (min)\" s]",
+          "20"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+          "Season the chicken and grill 6–7 minutes per side until cooked through. Boil the rice per package instructions. Slice the chicken, plate over rice, and finish with a drizzle of olive oil."
+        ]
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Lunch\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Dinner\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Iron-rich\" s]"
+      },
+      {
+        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Poultry\" s]"
+      },
+      {
+        "click": "role=button[name=\"Save recipe\" s]"
+      }
+    ]
+  },
+  "seed-recipe-greek-yogurt-oats": {
+    "prototype": [],
+    "real": [
+      {
+        "fill": [
+          "role=textbox[name=\"Recipe name\" s]",
+          "Greek yogurt & oats"
+        ]
+      },
+      {
+        "click": "role=button[name=\"Add Greek yogurt to recipe\" s]"
+      },
+      {
+        "click": "role=button[name=\"Add Oats to recipe\" s]"
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=spinbutton[name=\"Prep (min)\" s]",
+          "5"
+        ]
+      },
+      {
+        "fill": [
+          "[data-parity=\"recipe-builder-details\"] >> role=textbox[name=\"Instructions\" s]",
+          "Stir the oats into the Greek yogurt and let sit 5 minutes to soften (or overnight in the fridge). Top with fruit or seeds if desired."
+        ]
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Breakfast\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Magnesium\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-builder-details\"] >> role=checkbox[name=\"Vegetarian\" s]"
+      },
+      {
+        "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Choose icon\" s]"
+      },
+      {
+        "click": "[data-parity=\"recipe-icon-popover\"] >> role=option[name=\"Pastry\" s]"
+      },
+      {
+        "click": "role=button[name=\"Save recipe\" s]"
+      }
+    ]
+  },
+  "recipe-builder-dragging": [
+    {
+      "use": "recipe-builder-library-narrowed"
+    }
+  ],
+  "recipe-save-failed-toast": [
+    {
+      "use": "open-new-recipe"
+    },
+    {
+      "fill": [
+        "role=textbox[name=\"Recipe name\" s]",
+        "Quinoa bowl"
+      ]
+    },
+    {
+      "click": "role=button[name=\"Save recipe\" s]"
+    }
+  ],
+  "food-save-failed-toast": [
+    {
+      "use": "open-new-food"
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=textbox[name=\"Name (required)\" s]",
+        "Quinoa"
+      ]
+    },
+    {
+      "fill": [
+        "[data-parity-root=\"FoodEditorPage\"] >> role=spinbutton[name=\"Calories\" s]",
+        "120"
+      ]
+    },
+    {
+      "click": "[data-parity-root=\"FoodEditorPage\"] >> role=button[name=\"Create food\" s]"
+    }
   ]
 }

@@ -87,6 +87,17 @@ describe("segmented tabs", () => {
     );
   });
 
+  it("pads each tab narrower below the small breakpoint", () => {
+    // arrange, act
+    renderTabs();
+
+    // assert
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveClass(
+      "px-4",
+      "sm:px-5",
+    );
+  });
+
   it("fills the selected tab with the portal's interaction colour", () => {
     // arrange, act
     renderTabs();

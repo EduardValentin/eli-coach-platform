@@ -84,6 +84,13 @@ export class FoodLibraryJourney {
     );
   }
 
+  async archive(foodId: string): Promise<void> {
+    await this.rig.suite.postgres.executeSql({
+      sql: "update app.foods set archived_at = now() where id = $1",
+      values: [foodId],
+    });
+  }
+
   openLibrary(requester: Requester): Promise<Response> {
     return this.send(requester, LIBRARY_PAGE);
   }

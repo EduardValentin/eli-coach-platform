@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { FOOD_CATEGORIES, FOOD_ICONS, TAG_FAMILIES } from "./nutrition";
+import {
+  COOKING_METHODS,
+  FOOD_CATEGORIES,
+  FOOD_ICONS,
+  RECIPE_ICONS,
+  TAG_FAMILIES,
+} from "./nutrition";
 
 describe("nutrition vocabulary", () => {
   it("holds the six categories and the four tag families in the library's order", () => {
@@ -26,6 +32,39 @@ describe("nutrition vocabulary", () => {
       count: new Set(FOOD_ICONS).size,
       first: FOOD_ICONS[0],
       last: FOOD_ICONS.at(-1),
+    };
+
+    // assert
+    expect(icons).toEqual(expected);
+  });
+
+  it("holds the six cooking methods with raw first, the default", () => {
+    // arrange
+    const expected = [
+      "raw",
+      "boiled",
+      "grilled",
+      "baked",
+      "pan-fried",
+      "steamed",
+    ];
+
+    // act
+    const methods = COOKING_METHODS;
+
+    // assert
+    expect(methods).toEqual(expected);
+  });
+
+  it("holds the 17 meal icons, the first a soup and the last the neutral meal", () => {
+    // arrange
+    const expected = { count: 17, first: "soup", last: "meal" };
+
+    // act
+    const icons = {
+      count: new Set(RECIPE_ICONS).size,
+      first: RECIPE_ICONS[0],
+      last: RECIPE_ICONS.at(-1),
     };
 
     // assert

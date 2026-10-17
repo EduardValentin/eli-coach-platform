@@ -137,6 +137,7 @@ export function RecipeLibrary({ tabs }: { tabs: ReactNode }) {
   return (
     <>
       <ListingToolbar
+        parity="nutrition-toolbar"
         view={tabs}
         filters={
           <>
@@ -206,7 +207,7 @@ export function RecipeLibrary({ tabs }: { tabs: ReactNode }) {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-parity="recipe-grid">
             {page.items.map(({ recipe }) => (
               <RecipeCard
                 key={recipe.id}

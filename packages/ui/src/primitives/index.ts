@@ -21,11 +21,13 @@ export { FileDropzone, FilePickerButton } from "./file-dropzone";
 export { FieldHint } from "./field-hint";
 export { FieldLayout, type FieldControlAttributes } from "./field-layout";
 export { IconChoiceGrid } from "./icon-choice-grid";
+export { IconChoicePopover } from "./icon-choice-popover";
 export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { InlineProblem } from "./inline-problem";
 export { Input } from "./input";
 export { ItemIdentity } from "./item-identity";
+export { ItemVisual } from "./item-visual";
 export {
   FieldCaption,
   Label,
@@ -64,3 +66,4 @@ export {
 } from "./table";
 export { TagInput } from "./tag-input";
 export { Textarea } from "./textarea";
+export { ValueTile } from "./value-tile";

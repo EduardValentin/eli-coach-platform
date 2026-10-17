@@ -33,6 +33,7 @@ export function RecipeVisual({
         loading="lazy"
         onError={() => setImgFailed(true)}
         className={`object-cover ${className}`}
+        data-parity="recipe-visual"
       />
     );
   }
@@ -44,6 +45,7 @@ export function RecipeVisual({
       className={`flex items-center justify-center bg-surface-quiet ${className}`}
       role="img"
       aria-label={recipe.name}
+      data-parity="recipe-visual"
     >
       <Icon size={iconSize} aria-hidden="true" />
     </div>

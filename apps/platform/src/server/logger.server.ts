@@ -213,6 +213,21 @@ export function createConsoleLogger(): ConsoleLogger {
         foodId,
       });
     },
+    recipeCreationFailed: ({ error }) => {
+      console.error("Recipe could not be created.", {
+        errorCategory: "recipe_creation_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
+    recipeEditFailed: ({ error, recipeId }) => {
+      console.error("Recipe edit could not be written.", {
+        errorCategory: "recipe_edit_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+        recipeId,
+      });
+    },
     invitationEmailFailed: ({ invitationId }) => {
       console.error("Client invitation email failed.", {
         errorCategory: "client_invitation_email_failure",

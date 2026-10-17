@@ -9,12 +9,14 @@ import {
   type FoodLibrary,
   type FoodReference,
   type FoodReplacement,
+  type FoodsReference,
 } from "@eli-coach-platform/domain/nutrition";
 import {
   and,
   asc,
   eq,
   getTableColumns,
+  inArray,
   isNull,
   sql,
   type SQL,
@@ -56,6 +58,24 @@ export class PostgresFoodLibrary implements FoodLibrary {
       .limit(1);
 
     return row ? Food.reconstitute(row) : null;
+  }
+
+  async referenced({
+    ownerAccountId,
+    foodIds,
+  }: FoodsReference): Promise<Food[]> {
+    if (foodIds.length === 0) return [];
+
+    const rows = await this.selectFoods()
+      .where(
+        and(
+          inArray(foodsTable.id, [...foodIds]),
+          eq(foodsTable.ownerAccountId, ownerAccountId),
+        ),
+      )
+      .orderBy(asc(sql`lower(${foodsTable.name})`), asc(foodsTable.id));
+
+    return rows.map((row) => Food.reconstitute(row));
   }
 
   async add(food: Food): Promise<FoodAddition> {

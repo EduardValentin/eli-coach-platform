@@ -1,9 +1,14 @@
 import { devices, expect, type Page } from "@playwright/test";
 
 const PHONE_VIEWPORT = { height: 844, width: 390 };
+const TABLET_VIEWPORT = { height: 1180, width: 820 };
 
 export async function setPhoneViewport(page: Page): Promise<void> {
   await page.setViewportSize(PHONE_VIEWPORT);
+}
+
+export async function setTabletViewport(page: Page): Promise<void> {
+  await page.setViewportSize(TABLET_VIEWPORT);
 }
 
 export async function setDesktopViewport(page: Page): Promise<void> {

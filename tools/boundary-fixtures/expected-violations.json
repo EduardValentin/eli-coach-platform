@@ -12,6 +12,13 @@
     "clerk-confined",
     "not-to-unresolvable"
   ],
+  "apps/platform/src/features/nutrition-library/ui/coach/foods/react-dnd-confined.tsx": [
+    "not-to-unresolvable",
+    "react-dnd-confined"
+  ],
+  "apps/platform/src/features/nutrition-library/ui/coach/recipes/recipe-builder.tsx": [
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
     "feature-api-to-data"
   ],

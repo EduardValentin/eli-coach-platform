@@ -290,7 +290,7 @@ function CheckInTabsList({
   return (
     <TabsList>
       {CHECK_IN_TABS.map((value) => (
-        <TabsTrigger className="px-4 sm:px-5" key={value} value={value}>
+        <TabsTrigger key={value} value={value}>
           {TAB_LABELS[value]}
           {value === "requests" && awaitingViewerCount > 0 && (
             <>

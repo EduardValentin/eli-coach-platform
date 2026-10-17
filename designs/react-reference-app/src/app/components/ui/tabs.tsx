@@ -31,7 +31,7 @@ const tabsTriggerVariants = cva(
       variant: {
         default: "",
         segmented:
-          "h-auto flex-auto px-5 py-2.5 font-semibold data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+          "h-auto flex-auto px-4 py-2.5 font-semibold sm:px-5 data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
       },
     },
     defaultVariants: {
@@ -89,20 +89,22 @@ function TabsList({
   );
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => {
   const variant = React.useContext(TabsVariantContext);
 
   return (
     <TabsPrimitive.Trigger
+      ref={ref}
       data-slot="tabs-trigger"
       className={cn(tabsTriggerVariants({ variant }), className)}
       {...props}
     />
   );
-}
+});
+TabsTrigger.displayName = 'TabsTrigger';
 
 function TabsContent({
   className,

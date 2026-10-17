@@ -120,7 +120,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
   if (view !== 'catalog') {
     return (
       <>
-        <ListingToolbar view={<>{tabs}{viewSwitch}</>} />
+        <ListingToolbar parity="nutrition-toolbar" view={<>{tabs}{viewSwitch}</>} />
         {view === 'board' ? <FoodTagBoard /> : <EquivalenceGroups />}
       </>
     );
@@ -129,7 +129,7 @@ export function FoodLibrary({ tabs }: { tabs: ReactNode }) {
   return (
     <>
       <ListingToolbar
-        parity="food-toolbar"
+        parity="nutrition-toolbar"
         view={<>{tabs}{viewSwitch}</>}
         filters={
           <>

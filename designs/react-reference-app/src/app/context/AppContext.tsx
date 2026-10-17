@@ -41,6 +41,8 @@ import {
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
+import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
+import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
 import {
   EXERCISE_VIDEO_UPLOAD_OUTCOMES,
   type ExerciseVideoUpload,
@@ -160,6 +162,8 @@ type AppState = {
   exerciseSeed: ExerciseSeed;
   exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
+  foodSave: FoodSaveOutcome;
+  recipeSave: RecipeSaveOutcome;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
@@ -219,6 +223,8 @@ const defaultState: AppState = {
   exerciseSeed: 'seeded',
   exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
+  foodSave: 'ok',
+  recipeSave: 'ok',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
@@ -536,6 +542,16 @@ function parseDevParamsFromURL(): AppState {
     params.get('nutseed'),
     defaultState.foodSeed,
   );
+  state.foodSave = optionOrDefault(
+    FOOD_SAVE_OUTCOMES,
+    params.get('fsave'),
+    defaultState.foodSave,
+  );
+  state.recipeSave = optionOrDefault(
+    RECIPE_SAVE_OUTCOMES,
+    params.get('rsave'),
+    defaultState.recipeSave,
+  );
   state.resourceSeed = optionOrDefault(
     RESOURCE_SEEDS,
     params.get('rseed'),
@@ -632,6 +648,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('exseed');
     url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
+    url.searchParams.delete('fsave');
+    url.searchParams.delete('rsave');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
@@ -772,6 +790,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.foodSeed !== defaultState.foodSeed) {
       url.searchParams.set('nutseed', appState.foodSeed);
+    }
+    if (appState.foodSave !== defaultState.foodSave) {
+      url.searchParams.set('fsave', appState.foodSave);
+    }
+    if (appState.recipeSave !== defaultState.recipeSave) {
+      url.searchParams.set('rsave', appState.recipeSave);
     }
     if (appState.resourceSeed !== defaultState.resourceSeed) {
       url.searchParams.set('rseed', appState.resourceSeed);

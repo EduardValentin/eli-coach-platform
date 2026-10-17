@@ -55,15 +55,6 @@ export const CATEGORY_LABELS: Readonly<Record<FoodCategory, string>> = {
   seasoning: "Seasoning",
 };
 
-export const TAG_FAMILY_LABELS: Readonly<
-  Record<NutritionTagView["family"], string>
-> = {
-  "meal-time": "Meal-time",
-  "cycle-phase": "Cycle phase",
-  nutrient: "Nutrient / benefit",
-  dietary: "Dietary",
-};
-
 const NAME_PROBLEM_COPY = {
   missing: "Give the food a name",
   "too-long": `Keep the name to ${MAX_FOOD_NAME_LENGTH} characters`,

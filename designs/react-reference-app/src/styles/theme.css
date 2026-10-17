@@ -74,35 +74,19 @@
   --effort-critical: #DC2626;
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
-  /* Macro display colors (Nutrition module). Dedicated semantic tokens for macro
-     progress bars, dots, and tiles — distinct from the food-category identity colors
-     below. --macro-kcal reuses the brand color. Defined once in :root; not overridden
-     in .dark (same treatment as nutrition-* and cycle-* tokens). */
-  --macro-protein: #dc2626;
-  --macro-protein-soft: rgba(220, 38, 38, 0.1);
-  --macro-carb: #2563eb;
-  --macro-carb-soft: rgba(37, 99, 235, 0.1);
-  --macro-fat: #d97706;
-  --macro-fat-soft: rgba(217, 119, 6, 0.1);
-  --macro-kcal: var(--brand);
-  --macro-kcal-soft: var(--brand-soft);
-  /* Food-category identity colors (Nutrition module). Decorative: swatches,
-     soft fills, borders. Labels use text-foreground for AAA contrast.
-     Defined once in :root — light/dark-safe, like the cycle-* tokens. */
-  --nutrition-protein: #dc2626;
-  --nutrition-protein-soft: rgba(220, 38, 38, 0.1);
-  --nutrition-carb: #2563eb;
-  --nutrition-carb-soft: rgba(37, 99, 235, 0.1);
-  --nutrition-fat: #d97706;
-  --nutrition-fat-soft: rgba(217, 119, 6, 0.1);
-  --nutrition-legume: #15803d;
-  --nutrition-legume-soft: rgba(21, 128, 61, 0.1);
-  --nutrition-extra: #7e22ce;
-  --nutrition-extra-soft: rgba(126, 34, 206, 0.1);
-  --nutrition-seasoning: #0f766e;
-  --nutrition-seasoning-soft: rgba(15, 118, 110, 0.1);
   /* Categorical tints named by hue */
+  --tint-red: #dc2626;
+  --tint-red-soft: rgba(220, 38, 38, 0.12);
+  --tint-blue: #2563eb;
+  --tint-blue-soft: rgba(37, 99, 235, 0.12);
+  --tint-amber: #d97706;
+  --tint-amber-soft: rgba(217, 119, 6, 0.12);
+  --tint-green: #15803d;
+  --tint-green-soft: rgba(21, 128, 61, 0.12);
+  --tint-teal: #0f766e;
+  --tint-teal-soft: rgba(15, 118, 110, 0.12);
   --tint-slate-soft: rgba(71, 85, 105, 0.12);
+  --tint-violet: #9333ea;
   --tint-violet-soft: rgba(147, 51, 234, 0.12);
   --tint-lime-soft: rgba(101, 163, 13, 0.12);
   --tint-cyan-soft: rgba(8, 145, 178, 0.12);
@@ -245,6 +229,7 @@
   --shadow-action: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-action-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-drawer: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --overlay-strong: rgba(0, 0, 0, 0.56);
   --overlay-medium: rgba(0, 0, 0, 0.32);
   --overlay-soft: rgba(0, 0, 0, 0.14);
@@ -379,27 +364,18 @@
   --color-flow-heavy: var(--flow-heavy);
   --color-flow-heavy-soft: var(--flow-heavy-soft);
   --color-celebration-accent: var(--celebration-accent);
-  --color-macro-protein: var(--macro-protein);
-  --color-macro-protein-soft: var(--macro-protein-soft);
-  --color-macro-carb: var(--macro-carb);
-  --color-macro-carb-soft: var(--macro-carb-soft);
-  --color-macro-fat: var(--macro-fat);
-  --color-macro-fat-soft: var(--macro-fat-soft);
-  --color-macro-kcal: var(--macro-kcal);
-  --color-macro-kcal-soft: var(--macro-kcal-soft);
-  --color-nutrition-protein: var(--nutrition-protein);
-  --color-nutrition-protein-soft: var(--nutrition-protein-soft);
-  --color-nutrition-carb: var(--nutrition-carb);
-  --color-nutrition-carb-soft: var(--nutrition-carb-soft);
-  --color-nutrition-fat: var(--nutrition-fat);
-  --color-nutrition-fat-soft: var(--nutrition-fat-soft);
-  --color-nutrition-legume: var(--nutrition-legume);
-  --color-nutrition-legume-soft: var(--nutrition-legume-soft);
-  --color-nutrition-extra: var(--nutrition-extra);
-  --color-nutrition-extra-soft: var(--nutrition-extra-soft);
-  --color-nutrition-seasoning: var(--nutrition-seasoning);
-  --color-nutrition-seasoning-soft: var(--nutrition-seasoning-soft);
+  --color-tint-red: var(--tint-red);
+  --color-tint-red-soft: var(--tint-red-soft);
+  --color-tint-blue: var(--tint-blue);
+  --color-tint-blue-soft: var(--tint-blue-soft);
+  --color-tint-amber: var(--tint-amber);
+  --color-tint-amber-soft: var(--tint-amber-soft);
+  --color-tint-green: var(--tint-green);
+  --color-tint-green-soft: var(--tint-green-soft);
+  --color-tint-teal: var(--tint-teal);
+  --color-tint-teal-soft: var(--tint-teal-soft);
   --color-tint-slate-soft: var(--tint-slate-soft);
+  --color-tint-violet: var(--tint-violet);
   --color-tint-violet-soft: var(--tint-violet-soft);
   --color-tint-lime-soft: var(--tint-lime-soft);
   --color-tint-cyan-soft: var(--tint-cyan-soft);
@@ -488,6 +464,7 @@
   --shadow-tab-bar: var(--shadow-tab-bar);
   --shadow-action: var(--shadow-action);
   --shadow-action-hover: var(--shadow-action-hover);
+  --shadow-drawer: var(--shadow-drawer);
   --color-border-subtle: var(--border-subtle);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -667,9 +644,12 @@
 *
 * Menu and option items, and the `tabindex="-1"` containers that exist only to
 * receive skip-link focus, suppress their outline on purpose and show focus by
-* other means; drawing a second indicator over those is noise.
+* other means; drawing a second indicator over those is noise. An option that is
+* its own tab stop with no other focus look, such as an icon choice, opts back
+* in with `data-focus-ring`.
 */
-:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]) {
+:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]),
+[data-focus-ring]:focus-visible {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);

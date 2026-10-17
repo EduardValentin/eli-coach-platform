@@ -45,6 +45,8 @@
     "pdfjs-dist": "catalog:",
     "pg": "catalog:",
     "react": "catalog:",
+    "react-dnd": "catalog:",
+    "react-dnd-touch-backend": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
     "react-router": "catalog:",
