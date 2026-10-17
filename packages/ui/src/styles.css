@@ -172,15 +172,15 @@
   --color-cycle-luteal: #b10ed3;
 
   --color-tint-red: #dc2626;
-  --color-tint-red-soft: rgba(220, 38, 38, 0.1);
+  --color-tint-red-soft: rgba(220, 38, 38, 0.12);
   --color-tint-blue: #2563eb;
-  --color-tint-blue-soft: rgba(37, 99, 235, 0.1);
+  --color-tint-blue-soft: rgba(37, 99, 235, 0.12);
   --color-tint-amber: #d97706;
-  --color-tint-amber-soft: rgba(217, 119, 6, 0.1);
+  --color-tint-amber-soft: rgba(217, 119, 6, 0.12);
   --color-tint-green: #15803d;
-  --color-tint-green-soft: rgba(21, 128, 61, 0.1);
+  --color-tint-green-soft: rgba(21, 128, 61, 0.12);
   --color-tint-teal: #0f766e;
-  --color-tint-teal-soft: rgba(15, 118, 110, 0.1);
+  --color-tint-teal-soft: rgba(15, 118, 110, 0.12);
   --color-tint-slate-soft: rgba(71, 85, 105, 0.12);
   --color-tint-violet: #9333ea;
   --color-tint-violet-soft: rgba(147, 51, 234, 0.12);
