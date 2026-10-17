@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useParams } from 'react-router';
 import { Toaster } from 'sonner';
@@ -67,6 +67,7 @@ async function chooseOption(user: User, filter: string, option: string) {
 async function chooseAction(user: User, exerciseName: string, action: string) {
   await user.click(screen.getByRole('button', { name: `Actions for ${exerciseName}` }));
   await user.click(screen.getByRole('menuitem', { name: action }));
+  await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
 }
 
 describe('the exercise library filters', () => {
