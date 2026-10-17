@@ -53,7 +53,7 @@ const TAB_LABELS: Record<CheckinTab, string> = {
 
 const KIND_LABELS: Record<KindFilter, string> = {
   any: "All kinds",
-  recurring: "Recurring",
+  recurring: "Weekly",
   "ad-hoc": "Ad-hoc",
   "program-review": "Program review",
 };

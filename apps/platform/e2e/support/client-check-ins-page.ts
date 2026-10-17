@@ -13,11 +13,19 @@ import {
   expectJoinEmphasis,
   expectWaitingOnViewer,
   showCheckInTab,
+  type CheckInShowing,
   type CheckInTab,
   type JoinEmphasis,
 } from "./check-in-tabs";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
 import { CheckInRows } from "./check-in-rows";
+import {
+  CheckInToolbar,
+  type AddressParams,
+  type CheckInFilter,
+  type OptionCounts,
+  type SortReading,
+} from "./check-in-toolbar";
 import { DisabledAction } from "./disabled-action";
 import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -37,6 +45,7 @@ const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 export class ClientCheckInsPage {
   private readonly requestAction: DisabledAction;
   private readonly rows: CheckInRows;
+  private readonly toolbar: CheckInToolbar;
 
   constructor(private readonly page: Page) {
     this.requestAction = new DisabledAction(page, {
@@ -45,6 +54,7 @@ export class ClientCheckInsPage {
       reason: WAITING_REASON,
     });
     this.rows = new CheckInRows(page);
+    this.toolbar = new CheckInToolbar(page);
   }
 
   private get requestButton() {
@@ -100,19 +110,66 @@ export class ClientCheckInsPage {
     await showCheckInTab(this.page, tab);
   }
 
+  async expectTabShown(tab: CheckInTab): Promise<void> {
+    await expect(checkInTab(this.page, tab)).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  }
+
+  async expectOptionCounts(
+    filter: CheckInFilter,
+    counts: OptionCounts,
+  ): Promise<void> {
+    await this.toolbar.expectOptionCounts(filter, counts);
+  }
+
+  async chooseKind(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Kind", label);
+  }
+
+  async chooseWaiting(label: string): Promise<void> {
+    await this.toolbar.chooseFilter("Waiting on", label);
+  }
+
+  async toggleSort(): Promise<void> {
+    await this.toolbar.toggleSort();
+  }
+
+  async expectSort(reading: SortReading): Promise<void> {
+    await this.toolbar.expectSort(reading);
+  }
+
+  async expectNoPager(): Promise<void> {
+    await this.toolbar.expectNoPager();
+  }
+
+  async expectNoMatch(): Promise<void> {
+    await this.toolbar.expectNoMatch();
+  }
+
+  async clearFilters(): Promise<void> {
+    await this.toolbar.clearFilters();
+  }
+
+  async expectAddress(params: AddressParams): Promise<void> {
+    await this.toolbar.expectAddress(CHECK_INS_PATH, params);
+  }
+
   checkIn(tab: CheckInTab, note: string): Locator {
     return checkInsListed(this.page, tab).filter({ hasText: note });
   }
 
   async expectInOrder(
     tab: CheckInTab,
-    notes: readonly string[],
+    showing: readonly CheckInShowing[],
   ): Promise<void> {
-    await expectCheckInsInOrder(this.page, tab, notes);
+    await expectCheckInsInOrder(this.page, tab, showing);
   }
 
   async expectEmpty(tab: CheckInTab, title: string): Promise<void> {
     await expectEmptyCheckInTab(this.page, tab, title);
+    await this.toolbar.expectNoClearFilters();
   }
 
   async expectJoin(note: string, emphasis: JoinEmphasis): Promise<void> {

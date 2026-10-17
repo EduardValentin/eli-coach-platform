@@ -21,7 +21,7 @@ import {
 } from "~/features/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
-import type { ListedCheckIn } from "./check-in-listing";
+import type { ListedCheckIn } from "./check-in-listing-rules";
 
 type CheckInDecisionKind = "approve" | "cancel" | "decline" | "withdraw";
 

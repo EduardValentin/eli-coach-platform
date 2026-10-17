@@ -50,7 +50,7 @@ import {
   frameworkModeLoader,
 } from "~/server/test-support/framework-mode-action";
 
-import ClientCheckInsRoute from "./check-ins-page";
+import ClientCheckInsRoute, { shouldRevalidate } from "./check-ins-page";
 
 type ClientCheckIn = ClientCheckIns["checkIns"][number];
 
@@ -256,6 +256,25 @@ const LAST_WEEKLY: ClientCheckIn = {
   joinEmphasisFrom: "2026-11-04T15:50:00.000Z",
 };
 
+const ELEVEN_UPCOMING: ClientCheckIn[] = Array.from(
+  { length: 11 },
+  (_, index) => {
+    const day = String(14 + index).padStart(2, "0");
+
+    return {
+      ...APPROVED_SOON,
+      id: `c1c1c1c1-0000-4000-8000-0000000000${String(index).padStart(2, "0")}`,
+      startsAt: `2026-10-${day}T07:00:00.000Z`,
+      endsAt: `2026-10-${day}T08:00:00.000Z`,
+      joinEmphasisFrom: `2026-10-${day}T06:50:00.000Z`,
+    };
+  },
+);
+
+const ELEVENTH_UPCOMING = ELEVEN_UPCOMING[10];
+
+const SHOWN_DAY = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [A-Z][a-z]{2} \d{1,2}/;
+
 const NEXT_WEEKLY_MENU =
   "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 const LATER_WEEKLY_MENU =
@@ -302,6 +321,8 @@ let listingReads = 0;
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
   Element.prototype.scrollIntoView = () => {};
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => {};
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -1847,6 +1868,299 @@ describe("a weekly check-in on the client's check-ins page", () => {
   });
 });
 
+describe("narrowing the client's check-ins", () => {
+  it("counts each kind on Upcoming and narrows to her weekly check-ins, with no search to offer", async () => {
+    // arrange
+    listing = {
+      checkIns: [APPROVED_SOON, APPROVED_LATER, NEXT_WEEKLY, LATER_WEEKLY],
+    };
+    const { router, user } = await renderCheckInsPageWithView();
+
+    // act
+    const offered = await optionsOffered(user, "Kind");
+    await choose(user, "Kind", /^Weekly \d+$/);
+
+    // assert
+    expect(offered).toEqual(["All kinds 4", "Weekly 2", "Ad-hoc 2"]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ kind: "recurring" });
+    });
+    expect(listedDays()).toEqual(["Wed, Oct 21", "Wed, Oct 28"]);
+    expect(
+      screen.queryByRole("searchbox", { name: "Search check-ins" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("counts who must answer under Requests, worded for her coach, and narrows to the request waiting for her coach", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST, COACH_REQUEST, APPROVED_SOON] };
+    const { router, user } = await renderCheckInsPageWithView();
+
+    // act
+    const offered = await optionsOffered(user, "Waiting on");
+    await choose(user, "Waiting on", /^Waiting for your coach \d+$/);
+
+    // assert
+    expect(offered).toEqual([
+      "All requests 2",
+      "Needs your answer 1",
+      "Waiting for your coach 1",
+    ]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ waiting: "them" });
+    });
+    expect(listedDays()).toEqual(["Fri, Oct 16"]);
+  });
+
+  it("offers Waiting on only under Requests and leaves it behind with the tab", async () => {
+    // arrange
+    listing = { checkIns: [WAITING_REQUEST, COACH_REQUEST, APPROVED_SOON] };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?waiting=you`,
+    );
+
+    // act
+    await showTab(user, "Upcoming");
+
+    // assert
+    expect(
+      screen.queryByRole("combobox", { name: "Waiting on" }),
+    ).not.toBeInTheDocument();
+    expect(addressOf(router)).toEqual({ view: "upcoming" });
+  });
+
+  it("narrows without reading her check-ins again, and reads them again for a check-in she is sent to", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_SOON, NEXT_WEEKLY, PASSED] };
+    const { router, user } = await renderCheckInsPageWithView();
+
+    // act
+    await choose(user, "Kind", /^Ad-hoc \d+$/);
+    await toggleSortDirection(user);
+    const readsWhileNarrowing = listingReads;
+    await act(() => router.navigate(clientCheckInPath(PASSED.id)));
+
+    // assert
+    expect(readsWhileNarrowing).toBe(1);
+    await waitFor(() => {
+      expect(listingReads).toBe(2);
+    });
+  });
+});
+
+describe("a search left in the client's address", () => {
+  it("hides nothing, changes no count and offers nothing to clear", async () => {
+    // arrange
+    listing = {
+      checkIns: [APPROVED_SOON, APPROVED_LATER, NEXT_WEEKLY, LATER_WEEKLY],
+    };
+    const { user } = await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?q=zzz`,
+    );
+
+    // act
+    const offered = await optionsOffered(user, "Kind");
+
+    // assert
+    expect(listedRows()).toHaveLength(4);
+    expect(offered).toEqual(["All kinds 4", "Weekly 2", "Ad-hoc 2"]);
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("sorting the client's check-ins", () => {
+  it("lists Upcoming soonest first and flips it with the direction toggle", async () => {
+    // arrange
+    listing = { checkIns: [APPROVED_LATER, APPROVED_SOON, NEXT_WEEKLY] };
+    const { router, user } = await renderCheckInsPageWithView();
+    const defaultSort = [
+      screen.getByRole("combobox", { name: "Sort by" }).textContent,
+      screen
+        .getByRole("button", { name: "Soonest first" })
+        .getAttribute("aria-pressed"),
+      ...listedDays(),
+    ];
+
+    // act
+    await toggleSortDirection(user);
+
+    // assert
+    expect(defaultSort).toEqual([
+      "Check-in date: soonest first",
+      "false",
+      "Wed, Oct 14",
+      "Tue, Oct 20",
+      "Wed, Oct 21",
+    ]);
+    expect(listedDays()).toEqual(["Wed, Oct 21", "Tue, Oct 20", "Wed, Oct 14"]);
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      "Check-in date: latest first",
+    );
+    expect(
+      screen.getByRole("button", { name: "Latest first" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(addressOf(router)).toEqual({ dir: "desc" });
+  });
+});
+
+describe("paging through the client's check-ins", () => {
+  it("shows ten check-ins at a time, says which ones and walks to the next page", async () => {
+    // arrange
+    listing = { checkIns: ELEVEN_UPCOMING };
+    const { router, user } = await renderCheckInsPageWithView();
+    const firstPage = [
+      screen.getByText("Showing 1–10 of 11").textContent,
+      listedRows().length,
+    ];
+
+    // act
+    await user.click(screen.getByRole("link", { name: "Go to page 2" }));
+
+    // assert
+    expect(firstPage).toEqual(["Showing 1–10 of 11", 10]);
+    expect(await screen.findByText("Showing 11–11 of 11")).toBeInTheDocument();
+    expect(listedDays()).toEqual(["Sat, Oct 24"]);
+    expect(addressOf(router)).toEqual({ page: "2" });
+  });
+
+  it("returns to the first page when she flips the direction", async () => {
+    // arrange
+    listing = { checkIns: ELEVEN_UPCOMING };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?page=2`,
+    );
+
+    // act
+    await toggleSortDirection(user);
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ dir: "desc" });
+    });
+    expect(screen.getByText("Showing 1–10 of 11")).toBeInTheDocument();
+    expect(listedDays()[0]).toBe("Sat, Oct 24");
+  });
+
+  it("clamps a page past the last to the last page", async () => {
+    // arrange, act
+    listing = { checkIns: ELEVEN_UPCOMING };
+    await renderCheckInsPageWithView(`${CLIENT_CHECK_INS_PATH}?page=9`);
+
+    // assert
+    expect(screen.getByText("Showing 11–11 of 11")).toBeInTheDocument();
+  });
+});
+
+describe("a view that hides every client check-in", () => {
+  it("says nothing matches and Clear filters clears the kind but keeps the tab", async () => {
+    // arrange
+    const { router, user } = await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?view=past&kind=recurring`,
+    );
+    const noMatch = [
+      screen.getByText("No check-ins match").textContent,
+      screen.getByText("Try another filter or search.").textContent,
+    ];
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    // assert
+    expect(noMatch).toEqual([
+      "No check-ins match",
+      "Try another filter or search.",
+    ]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ view: "past" });
+    });
+    expect(listedRows()).toHaveLength(2);
+  });
+
+  it("keeps a tab's own empty copy, with nothing to clear, when the tab holds nothing", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(
+      `${CLIENT_CHECK_INS_PATH}?view=requests&kind=recurring`,
+    );
+
+    // assert
+    expect(screen.getByText("No open requests")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("a check-in the client is sent to on a later page", () => {
+  it("opens the page holding it, focused, and her first move drops the check-in", async () => {
+    // arrange
+    listing = { checkIns: ELEVEN_UPCOMING };
+    const { router, user } = await renderCheckInsPageWithView(
+      clientCheckInPath(ELEVENTH_UPCOMING.id),
+    );
+    const anchor = document.getElementById(`checkin-${ELEVENTH_UPCOMING.id}`);
+    await waitFor(() => expect(anchor).toHaveFocus());
+    const landedOn = screen.getByText("Showing 11–11 of 11").textContent;
+
+    // act
+    await toggleSortDirection(user);
+
+    // assert
+    expect(landedOn).toBe("Showing 11–11 of 11");
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ dir: "desc" });
+    });
+    expect(await screen.findByText("Showing 1–10 of 11")).toBeInTheDocument();
+  });
+});
+
+type CheckInsRouter = ReturnType<typeof createMemoryRouter>;
+
+function listedRows(): HTMLElement[] {
+  const list = screen.queryByRole("list", { name: /check-ins$/ });
+
+  return list ? within(list).getAllByRole("listitem") : [];
+}
+
+function addressOf(router: CheckInsRouter): Record<string, string> {
+  return Object.fromEntries(new URLSearchParams(router.state.location.search));
+}
+
+async function optionsOffered(
+  user: UserEvent,
+  control: string,
+): Promise<string[]> {
+  await user.click(screen.getByRole("combobox", { name: control }));
+  const offered = screen
+    .getAllByRole("option")
+    .map((option) => option.textContent ?? "");
+  await user.keyboard("{Escape}");
+
+  return offered;
+}
+
+async function choose(
+  user: UserEvent,
+  control: string,
+  option: RegExp,
+): Promise<void> {
+  await user.click(screen.getByRole("combobox", { name: control }));
+  await user.click(screen.getByRole("option", { name: option }));
+}
+
+async function toggleSortDirection(user: UserEvent): Promise<void> {
+  await user.click(
+    screen.getByRole("button", { name: /^(Soonest first|Latest first)$/ }),
+  );
+}
+
+function listedDays(): string[] {
+  return listedRows().map(
+    (row) => row.textContent?.match(SHOWN_DAY)?.[0] ?? "",
+  );
+}
+
 function answerOpenTimes(times: readonly string[] = OPEN_TIMES) {
   server.use(http.get(OPEN_TIMES_URL, () => HttpResponse.json({ times })));
 }
@@ -1921,6 +2235,7 @@ async function renderCheckInsPageWithView(entry = CLIENT_CHECK_INS_PATH) {
           return listing;
         },
         path: CLIENT_CHECK_INS_PATH,
+        shouldRevalidate,
       },
       {
         loader: frameworkModeLoader(openTimesLoader),

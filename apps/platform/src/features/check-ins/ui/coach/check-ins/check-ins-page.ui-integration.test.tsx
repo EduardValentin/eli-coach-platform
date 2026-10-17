@@ -52,7 +52,7 @@ import {
   frameworkModeLoader,
 } from "~/server/test-support/framework-mode-action";
 
-import CoachCheckInsRoute from "./check-ins-page";
+import CoachCheckInsRoute, { shouldRevalidate } from "./check-ins-page";
 
 const NOW = new Date("2026-10-12T08:00:00.000Z");
 const TIME_ZONE = "Europe/Bucharest";
@@ -214,6 +214,48 @@ const ELENA_FOLLOWING_WEEKLY: CoachCheckIn = {
   joinEmphasisFrom: "2026-10-28T14:50:00.000Z",
 };
 
+const ANDREEA_PASSED: CoachCheckIn = {
+  ...ANDREEA_REQUEST,
+  id: "2a3b4c5d-6e7f-4a8b-9c0d-1e2f3a4b5c6d",
+  status: "passed",
+  tab: "past",
+  awaitsViewer: false,
+  isWaitingRequest: false,
+  viewerProposal: "none",
+  startsAt: "2026-10-05T09:00:00.000Z",
+  endsAt: "2026-10-05T10:00:00.000Z",
+  joinEmphasisFrom: "2026-10-05T08:50:00.000Z",
+};
+
+const ELEVEN_UPCOMING: CoachCheckIn[] = Array.from(
+  { length: 11 },
+  (_, index) => {
+    const day = String(13 + index).padStart(2, "0");
+
+    return {
+      ...ELENA_UPCOMING,
+      id: `e1e1e1e1-0000-4000-8000-0000000000${String(index).padStart(2, "0")}`,
+      startsAt: `2026-10-${day}T07:00:00.000Z`,
+      endsAt: `2026-10-${day}T08:00:00.000Z`,
+      joinEmphasisFrom: `2026-10-${day}T06:50:00.000Z`,
+    };
+  },
+);
+
+const ELEVENTH_UPCOMING = ELEVEN_UPCOMING[10];
+
+const MANY_REQUESTS: CoachCheckIn[] = [
+  ANDREEA_REQUEST,
+  MARIA_REQUEST,
+  IOANA_OWN_REQUEST,
+  ELENA_CLASH,
+  ELENA_NEXT_WEEKLY,
+  ELENA_UPCOMING,
+];
+
+const CLIENT_NAMES =
+  /^(Andreea Ionescu|Maria Popescu|Elena Dumitru|Ioana Stan)$/;
+
 const ELENA_CLASH_MENU =
   "More actions for the check-in on Wed, Oct 21 at 6:00 PM";
 
@@ -242,6 +284,8 @@ let listingReads = 0;
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
   Element.prototype.scrollIntoView = () => {};
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => {};
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -1169,6 +1213,347 @@ describe("a weekly check-in on the coach's check-ins page", () => {
   });
 });
 
+describe("narrowing the coach's check-ins", () => {
+  it("counts each kind under the waiting party she chose and narrows to her weekly check-ins", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?waiting=you`,
+    );
+
+    // act
+    const offered = await optionsOffered(user, "Kind");
+    await choose(user, "Kind", /^Weekly \d+$/);
+
+    // assert
+    expect(offered).toEqual(["All kinds 3", "Weekly 1", "Ad-hoc 2"]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ kind: "recurring", waiting: "you" });
+    });
+    expect(listedClients()).toEqual(["Elena Dumitru"]);
+    expect(screen.getByRole("combobox", { name: "Kind" })).toHaveTextContent(
+      /^Weekly$/,
+    );
+  });
+
+  it("counts who must answer under the kind she chose and narrows to the requests waiting for clients", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?kind=ad-hoc`,
+    );
+
+    // act
+    const offered = await optionsOffered(user, "Waiting on");
+    await choose(user, "Waiting on", /^Waiting for clients \d+$/);
+
+    // assert
+    expect(offered).toEqual([
+      "All requests 3",
+      "Needs your answer 2",
+      "Waiting for clients 1",
+    ]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ kind: "ad-hoc", waiting: "them" });
+    });
+    expect(listedClients()).toEqual(["Ioana Stan"]);
+  });
+
+  it("offers Waiting on only under Requests and leaves it behind with the tab", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?waiting=them&kind=recurring`,
+    );
+
+    // act
+    await showTab(user, "Upcoming");
+
+    // assert
+    expect(
+      screen.queryByRole("combobox", { name: "Waiting on" }),
+    ).not.toBeInTheDocument();
+    expect(addressOf(router)).toEqual({ kind: "recurring", view: "upcoming" });
+    expect(listedClients()).toEqual(["Elena Dumitru"]);
+  });
+
+  it("finds a client by first or last name whatever the case, and counts the kinds under the search", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView();
+    const search = screen.getByRole("searchbox", { name: "Search check-ins" });
+
+    // act
+    await user.type(search, "MARIA");
+    const byFirstName = listedClients();
+    await user.clear(search);
+    await user.type(search, "dumitru");
+    const byLastName = listedClients();
+    const offered = await optionsOffered(user, "Kind");
+
+    // assert
+    expect(search).toHaveAttribute("placeholder", "Search by client name");
+    expect(byFirstName).toEqual(["Maria Popescu"]);
+    expect(byLastName).toEqual(["Elena Dumitru"]);
+    expect(offered).toEqual(["All kinds 1", "Weekly 1", "Ad-hoc 0"]);
+    expect(addressOf(router)).toEqual({ q: "dumitru" });
+  });
+
+  it("narrows without reading her check-ins again, and reads them again for a check-in she is sent to", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView();
+
+    // act
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search check-ins" }),
+      "ma",
+    );
+    await choose(user, "Kind", /^Ad-hoc \d+$/);
+    await toggleSortDirection(user);
+    const readsWhileNarrowing = listingReads;
+    await act(() => router.navigate(coachCheckInPath(IOANA_OWN_REQUEST.id)));
+
+    // assert
+    expect(readsWhileNarrowing).toBe(1);
+    await waitFor(() => {
+      expect(listingReads).toBe(2);
+    });
+  });
+});
+
+describe("sorting the coach's check-ins", () => {
+  it("lists Requests soonest first in each group and flips each group with the direction toggle", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView();
+    const soonestFirst = listedClients();
+
+    // act
+    await toggleSortDirection(user);
+
+    // assert
+    expect(soonestFirst).toEqual([
+      "Elena Dumitru",
+      "Maria Popescu",
+      "Andreea Ionescu",
+      "Ioana Stan",
+    ]);
+    expect(listedClients()).toEqual([
+      "Elena Dumitru",
+      "Andreea Ionescu",
+      "Maria Popescu",
+      "Ioana Stan",
+    ]);
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      "Check-in date: latest first",
+    );
+    expect(
+      screen.getByRole("button", { name: "Latest first" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(addressOf(router)).toEqual({ dir: "desc" });
+  });
+
+  it("lists Past latest first by default, flips it, and starts the next tab on its own default", async () => {
+    // arrange
+    listing = { checkIns: [ANDREEA_PASSED, MARIA_CANCELLED, ELENA_UPCOMING] };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=past`,
+    );
+    const defaultSort = [
+      screen.getByRole("combobox", { name: "Sort by" }).textContent,
+      screen
+        .getByRole("button", { name: "Latest first" })
+        .getAttribute("aria-pressed"),
+    ];
+    const latestFirst = listedClients();
+
+    // act
+    await toggleSortDirection(user);
+    const soonestFirst = listedClients();
+    const flippedAddress = addressOf(router);
+    await showTab(user, "Upcoming");
+
+    // assert
+    expect(defaultSort).toEqual(["Check-in date: latest first", "false"]);
+    expect(latestFirst).toEqual(["Maria Popescu", "Andreea Ionescu"]);
+    expect(soonestFirst).toEqual(["Andreea Ionescu", "Maria Popescu"]);
+    expect(flippedAddress).toEqual({ dir: "asc", view: "past" });
+    expect(addressOf(router)).toEqual({});
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      "Check-in date: soonest first",
+    );
+    expect(
+      screen.getByRole("button", { name: "Soonest first" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+describe("paging through the coach's check-ins", () => {
+  it("shows ten check-ins at a time, says which ones and walks to the next page", async () => {
+    // arrange
+    listing = { checkIns: ELEVEN_UPCOMING };
+    const { router, user } = await renderCheckInsPageWithView();
+    const firstPage = [
+      screen.getByText("Showing 1–10 of 11").textContent,
+      listedRows().length,
+    ];
+
+    // act
+    await user.click(screen.getByRole("link", { name: "Go to page 2" }));
+
+    // assert
+    expect(firstPage).toEqual(["Showing 1–10 of 11", 10]);
+    expect(await screen.findByText("Showing 11–11 of 11")).toBeInTheDocument();
+    expect(listedRows()).toHaveLength(1);
+    expect(listedRows()[0]).toHaveTextContent("Fri, Oct 23");
+    expect(addressOf(router)).toEqual({ page: "2" });
+  });
+
+  it("returns to the first page when she changes a filter", async () => {
+    // arrange
+    listing = { checkIns: ELEVEN_UPCOMING };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?page=2`,
+    );
+
+    // act
+    await choose(user, "Kind", /^Ad-hoc \d+$/);
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ kind: "ad-hoc" });
+    });
+    expect(screen.getByText("Showing 1–10 of 11")).toBeInTheDocument();
+  });
+
+  it("leaves the pager out when the tab fits on one page", async () => {
+    // arrange, act
+    await renderCheckInsPage();
+
+    // assert
+    expect(
+      screen.queryByRole("navigation", { name: "pagination" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Showing/)).not.toBeInTheDocument();
+  });
+});
+
+describe("the coach's listing in the address", () => {
+  it("falls back for every value it does not know", async () => {
+    // arrange, act
+    listing = { checkIns: MANY_REQUESTS };
+    await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?kind=monthly&waiting=nobody&dir=sideways&page=zero`,
+    );
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Kind" })).toHaveTextContent(
+      /^All kinds$/,
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Waiting on" }),
+    ).toHaveTextContent(/^All requests$/);
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      "Check-in date: soonest first",
+    );
+    expect(listedClients()).toHaveLength(4);
+  });
+
+  it("keeps the defaults out of the address", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?kind=recurring&waiting=you&dir=desc&q=elena`,
+    );
+
+    // act
+    await choose(user, "Kind", /^All kinds \d+$/);
+    await choose(user, "Waiting on", /^All requests \d+$/);
+    await toggleSortDirection(user);
+    await user.clear(
+      screen.getByRole("searchbox", { name: "Search check-ins" }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({});
+    });
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+});
+
+describe("a view that hides every coach check-in", () => {
+  it("says nothing matches and Clear filters clears the search but keeps the tab and the direction", async () => {
+    // arrange
+    listing = { checkIns: MANY_REQUESTS };
+    const { router, user } = await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=upcoming&q=zzz&kind=ad-hoc&dir=desc`,
+    );
+    const noMatch = [
+      screen.getByText("No check-ins match").textContent,
+      screen.getByText("Try another filter or search.").textContent,
+    ];
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    // assert
+    expect(noMatch).toEqual([
+      "No check-ins match",
+      "Try another filter or search.",
+    ]);
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ dir: "desc", view: "upcoming" });
+    });
+    expect(listedClients()).toEqual(["Elena Dumitru", "Elena Dumitru"]);
+    expect(
+      screen.getByRole("searchbox", { name: "Search check-ins" }),
+    ).toHaveValue("");
+  });
+
+  it("keeps a tab's own empty copy, with nothing to clear, when the tab holds nothing", async () => {
+    // arrange, act
+    await renderCheckInsPageWithView(
+      `${COACH_CHECK_INS_PATH}?view=past&kind=recurring`,
+    );
+
+    // assert
+    expect(screen.getByText("No past check-ins yet")).toBeInTheDocument();
+    expect(screen.queryByText("No check-ins match")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("a check-in the coach is sent to on a later page", () => {
+  it("opens the page holding it, focused, and her first move keeps the tab and drops the check-in", async () => {
+    // arrange
+    listing = { checkIns: [ANDREEA_REQUEST, ...ELEVEN_UPCOMING] };
+    const { router, user } = await renderCheckInsPageWithView(
+      coachCheckInPath(ELEVENTH_UPCOMING.id),
+    );
+    const anchor = document.getElementById(`checkin-${ELEVENTH_UPCOMING.id}`);
+    await waitFor(() => expect(anchor).toHaveFocus());
+    const landedOn = screen.getByText("Showing 11–11 of 11").textContent;
+
+    // act
+    await user.click(screen.getByRole("link", { name: "Go to page 1" }));
+
+    // assert
+    expect(landedOn).toBe("Showing 11–11 of 11");
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await waitFor(() => {
+      expect(addressOf(router)).toEqual({ view: "upcoming" });
+    });
+    expect(await screen.findByText("Showing 1–10 of 11")).toBeInTheDocument();
+  });
+});
+
 function rowNaming(name: string): HTMLElement {
   const row = screen.getByText(name).closest("li");
 
@@ -1181,6 +1566,52 @@ async function showTab(user: UserEvent, name: string | RegExp): Promise<void> {
   await user.click(screen.getByRole("tab", { name }));
   await screen.findByRole("tab", { name, selected: true });
 }
+
+function listedRows(): HTMLElement[] {
+  const list = screen.queryByRole("list", { name: /check-ins$/ });
+
+  return list ? within(list).getAllByRole("listitem") : [];
+}
+
+function listedClients(): string[] {
+  return listedRows().map(
+    (row) => within(row).getByText(CLIENT_NAMES).textContent ?? "",
+  );
+}
+
+function addressOf(router: CheckInsRouter): Record<string, string> {
+  return Object.fromEntries(new URLSearchParams(router.state.location.search));
+}
+
+async function optionsOffered(
+  user: UserEvent,
+  control: string,
+): Promise<string[]> {
+  await user.click(screen.getByRole("combobox", { name: control }));
+  const offered = screen
+    .getAllByRole("option")
+    .map((option) => option.textContent ?? "");
+  await user.keyboard("{Escape}");
+
+  return offered;
+}
+
+async function choose(
+  user: UserEvent,
+  control: string,
+  option: RegExp,
+): Promise<void> {
+  await user.click(screen.getByRole("combobox", { name: control }));
+  await user.click(screen.getByRole("option", { name: option }));
+}
+
+async function toggleSortDirection(user: UserEvent): Promise<void> {
+  await user.click(
+    screen.getByRole("button", { name: /^(Soonest first|Latest first)$/ }),
+  );
+}
+
+type CheckInsRouter = ReturnType<typeof createMemoryRouter>;
 
 async function renderCheckInsPage() {
   const { user } = await renderCheckInsPageWithView();
@@ -1203,6 +1634,7 @@ async function renderCheckInsPageWithView(entry = COACH_CHECK_INS_PATH) {
           return listing;
         },
         path: COACH_CHECK_INS_PATH,
+        shouldRevalidate,
       },
       {
         action: frameworkModeAction(approveCheckIn),

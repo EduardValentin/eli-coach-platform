@@ -4,6 +4,7 @@ import {
   clockTimeOf,
   shortDayOf,
   shortMomentOf,
+  shownTimePatternOf,
   spacedPattern,
 } from "./check-in-moments";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
@@ -182,9 +183,7 @@ export class CheckInRows {
     await expect(row).toContainText(
       new RegExp(spacedPattern(shortDayOf(startsAt, timeZone))),
     );
-    await expect(row).toContainText(
-      new RegExp(spacedPattern(clockTimeOf(startsAt, timeZone))),
-    );
+    await expect(row).toContainText(shownTimePatternOf(startsAt, timeZone));
   }
 
   async expectEarlierTimeStruck(
