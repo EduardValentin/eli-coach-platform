@@ -4,7 +4,8 @@ import { useState } from "react";
 
 import { CancelCheckInDialog } from "./cancel-check-in-dialog";
 import type { CheckInDecisions } from "./check-in-decisions";
-import { checkInMomentOf, type ListedCheckIn } from "./check-in-listing";
+import { checkInMomentOf } from "./check-in-listing";
+import type { ListedCheckIn } from "./check-in-listing-rules";
 import {
   ProposeCheckInTimeDialog,
   type CheckInProposer,

@@ -42,6 +42,10 @@ export function emailMomentOf(instant: Date, timeZone: string): string {
   return `${dayNameOf(instant, timeZone)} at ${clockTimeOf(instant, timeZone)}`;
 }
 
+export function shownTimePatternOf(instant: Date, timeZone: string): RegExp {
+  return new RegExp(spacedPattern(clockTimeOf(instant, timeZone)));
+}
+
 export function spacedPattern(text: string): string {
   return text.split(ANY_SPACE).map(escapedPattern).join("\\s");
 }

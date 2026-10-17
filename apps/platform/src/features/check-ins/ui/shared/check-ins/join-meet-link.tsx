@@ -1,7 +1,7 @@
 import { JoinLink } from "@eli-coach-platform/ui/appointments";
 import { useEffect, useState } from "react";
 
-import type { ListedCheckIn } from "./check-in-listing";
+import type { ListedCheckIn } from "./check-in-listing-rules";
 
 type JoinMeetLinkProps = {
   checkIn: Pick<ListedCheckIn, "endsAt" | "joinEmphasisFrom">;

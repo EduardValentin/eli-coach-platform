@@ -245,7 +245,7 @@ export function ClientCheckins() {
   };
 
   return (
-    <div className="w-full" data-parity-root="ClientCheckins">
+    <div className="w-full pb-16 sm:pb-0" data-parity-root="ClientCheckins">
       <PortalPageHeader
         title="Check-ins"
         subtitle="Request a check-in, answer proposals, and look back at past sessions."

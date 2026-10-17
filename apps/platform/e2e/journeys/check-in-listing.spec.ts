@@ -1,0 +1,851 @@
+import {
+  shownTimePatternOf,
+  weeklyStartsBetween,
+} from "../support/check-in-moments";
+import type { CheckInRecords } from "../support/check-in-records";
+import { COACH_TIME_ZONE } from "../support/coach-availability";
+import { expect, test } from "../support/fixtures";
+import { daysAfter, type PaidClient } from "../support/paid-clients";
+import { paidThrough } from "../support/subscribed-clients";
+
+const CLIENT_TIME_ZONE = "Europe/London";
+const JOURNEY_TIMEOUT_MS = 240_000;
+const WITHDRAWAL_DAYS = 14;
+const CHECK_INS_PER_PAGE = 10;
+const FULL_PAGE_AND_ONE = CHECK_INS_PER_PAGE + 1;
+const WEEKLY_HOUR = 18;
+const WEEKLY = { day: "Monday", hour: WEEKLY_HOUR, timeZone: COACH_TIME_ZONE };
+const WEEKLY_CHOICE = { weekday: "monday", hour: WEEKLY_HOUR };
+const REQUESTED = "Check-in requested";
+const CREATED = 201;
+const LAST_PAGE_ALONE = "Showing 11–11 of 11";
+const SOONEST_FIRST = {
+  direction: "Soonest first",
+  toggle: "released",
+} as const;
+const LATEST_FIRST = { direction: "Latest first", toggle: "pressed" } as const;
+const PAST_LATEST_FIRST = {
+  direction: "Latest first",
+  toggle: "released",
+} as const;
+const PAST_SOONEST_FIRST = {
+  direction: "Soonest first",
+  toggle: "pressed",
+} as const;
+const FIRST_PAGE_OF_ELEVEN = "Showing 1–10 of 11";
+
+test.use({ timezoneId: CLIENT_TIME_ZONE });
+
+test.beforeEach(async ({ checkInRecords }) => {
+  await checkInRecords.cancelEveryUnfinishedCheckIn();
+});
+
+test.afterEach(async ({ checkInRecords }) => {
+  await checkInRecords.cancelEveryUnfinishedCheckIn();
+});
+
+function repeated(text: string, times: number): string[] {
+  return Array.from({ length: times }, () => text);
+}
+
+function shownAt(instant: Date): RegExp {
+  return shownTimePatternOf(instant, CLIENT_TIME_ZONE);
+}
+
+function seriesWeeksOf(client: PaidClient): Date[] {
+  return weeklyStartsBetween(WEEKLY, {
+    from: daysAfter(client.paidAt, WITHDRAWAL_DAYS),
+    until: paidThrough(client.paidAt),
+  });
+}
+
+async function holdRequests(
+  checkInRecords: CheckInRecords,
+  client: PaidClient,
+  times: readonly Date[],
+): Promise<string[]> {
+  const ids: string[] = [];
+
+  for (const startsAt of times) {
+    await checkInRecords.holdHourFor(
+      client.clientId,
+      startsAt,
+      COACH_TIME_ZONE,
+    );
+    ids.push(await checkInRecords.idOf(client.clientId, startsAt));
+  }
+
+  return ids;
+}
+
+async function approveCheckIns(
+  checkInRecords: CheckInRecords,
+  client: PaidClient,
+  times: readonly Date[],
+): Promise<void> {
+  for (const checkInId of await holdRequests(checkInRecords, client, times)) {
+    await checkInRecords.markApproved(checkInId);
+  }
+}
+
+test(
+  "the coach narrows, searches, sorts and pages through her check-ins, keeps her place on a reload, and a Review link lands on the page holding its check-in",
+  { tag: "@critical" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    coachDashboard,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    provisionSubmittedClient,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const weeklyClient = await provisionSubmittedClient("waiting");
+    const askingClient = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const clashingWeeks = seriesWeeksOf(weeklyClient).slice(
+      0,
+      CHECK_INS_PER_PAGE,
+    );
+    await approveCheckIns(checkInRecords, askingClient, clashingWeeks);
+    const [soonest] = await checkInRequests.openTimesFor(askingClient.clientId);
+    const [requestId] = await holdRequests(checkInRecords, askingClient, [
+      soonest!,
+    ]);
+    const seriesAnswer = await checkInRequests.setUpSeries(
+      weeklyClient.clientId,
+      WEEKLY_CHOICE,
+    );
+    expect(seriesAnswer.status).toBe(CREATED);
+
+    // act
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectTabShown("Requests");
+    await coachCheckIns.expectOptionCounts("Kind", {
+      "All kinds": FULL_PAGE_AND_ONE,
+      Weekly: CHECK_INS_PER_PAGE,
+      "Ad-hoc": 1,
+    });
+
+    // act
+    await coachCheckIns.chooseKind("Weekly");
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "recurring" });
+    await coachCheckIns.expectInOrder(
+      "Requests",
+      repeated(weeklyClient.fullName, CHECK_INS_PER_PAGE),
+    );
+
+    // act
+    await coachCheckIns.chooseKind("All kinds");
+    await coachCheckIns.search(askingClient.lastName);
+
+    // assert
+    await coachCheckIns.expectAddress({ q: askingClient.lastName });
+    await coachCheckIns.expectInOrder("Requests", [askingClient.fullName]);
+
+    // act
+    await coachCheckIns.search("");
+    await coachCheckIns.toggleSort();
+
+    // assert
+    await coachCheckIns.expectAddress({ dir: "desc" });
+    await coachCheckIns.expectSort(LATEST_FIRST);
+
+    // act
+    await coachCheckIns.goToPage(2);
+
+    // assert
+    await coachCheckIns.expectAddress({ dir: "desc", page: "2" });
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+    await coachCheckIns.expectInOrder("Requests", [askingClient.fullName]);
+
+    // act
+    await page.reload();
+
+    // assert
+    await coachCheckIns.expectAddress({ dir: "desc", page: "2" });
+    await coachCheckIns.expectSort(LATEST_FIRST);
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+    await coachCheckIns.expectInOrder("Requests", [askingClient.fullName]);
+
+    // act
+    await coachDashboard.openFromNavigation();
+    await coachDashboard.review(askingClient.fullName);
+
+    // assert
+    await coachCheckIns.expectReviewLandedOn("Requests", askingClient.fullName);
+    await coachCheckIns.expectCheckInFocused("Requests", requestId!);
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+    await coachCheckIns.expectSort(SOONEST_FIRST);
+  },
+);
+
+test(
+  "the client narrows her requests by who must answer and sees the no-match state with Clear filters",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    page,
+    provisionSubmittedClient,
+    signIn,
+  }) => {
+    // arrange
+    await coachAvailability.openEveryDay();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await page.goto("/client");
+    const [firstProposed, secondProposed, ownRequest] =
+      await checkInRequests.openTimes();
+    for (const proposedAt of [firstProposed!, secondProposed!]) {
+      await checkInRecords.proposeHourFor(
+        client.clientId,
+        proposedAt,
+        CLIENT_TIME_ZONE,
+      );
+    }
+    await checkInRecords.holdHourFor(
+      client.clientId,
+      ownRequest!,
+      CLIENT_TIME_ZONE,
+    );
+
+    // act
+    await clientCheckIns.open();
+
+    // assert
+    await clientCheckIns.expectTabShown("Requests");
+    await clientCheckIns.expectOptionCounts("Waiting on", {
+      "All requests": 3,
+      "Needs your answer": 2,
+      "Waiting for your coach": 1,
+    });
+
+    // act
+    await clientCheckIns.chooseWaiting("Needs your answer");
+
+    // assert
+    await clientCheckIns.expectAddress({ waiting: "you" });
+    await clientCheckIns.expectInOrder("Requests", [
+      shownAt(firstProposed!),
+      shownAt(secondProposed!),
+    ]);
+
+    // act
+    await clientCheckIns.chooseWaiting("Waiting for your coach");
+
+    // assert
+    await clientCheckIns.expectAddress({ waiting: "them" });
+    await clientCheckIns.expectInOrder("Requests", [shownAt(ownRequest!)]);
+    await clientCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 1,
+      Weekly: 0,
+      "Ad-hoc": 1,
+    });
+
+    // act
+    await clientCheckIns.chooseKind("Weekly");
+
+    // assert
+    await clientCheckIns.expectAddress({ waiting: "them", kind: "recurring" });
+    await clientCheckIns.expectNoMatch();
+
+    // act
+    await clientCheckIns.clearFilters();
+
+    // assert
+    await clientCheckIns.expectAddress({});
+    await clientCheckIns.expectTabShown("Requests");
+    await clientCheckIns.expectInOrder("Requests", [
+      shownAt(firstProposed!),
+      shownAt(secondProposed!),
+      shownAt(ownRequest!),
+    ]);
+  },
+);
+
+test(
+  "unknown address values fall back to the defaults",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+
+    // act
+    await coachCheckIns.visitAddress({
+      view: "elsewhere",
+      kind: "monthly",
+      waiting: "nobody",
+      dir: "sideways",
+      page: "first",
+    });
+
+    // assert
+    await coachCheckIns.expectTabShown("Upcoming");
+    await coachCheckIns.expectKind("All kinds");
+    await coachCheckIns.expectSort(SOONEST_FIRST);
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.visitAddress({ page: "9" });
+
+    // assert
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "the back button restores the tab, filter, search, sort and page",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    coachDashboard,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+    await holdRequests(checkInRecords, client, [times[FULL_PAGE_AND_ONE]!]);
+    await coachCheckIns.open();
+    await coachCheckIns.showTab("Upcoming");
+    await coachCheckIns.chooseKind("Ad-hoc");
+    await coachCheckIns.search(client.lastName);
+    await coachCheckIns.toggleSort();
+    await coachCheckIns.goToPage(2);
+    await coachDashboard.openFromNavigation();
+
+    // act
+    await page.goBack();
+
+    // assert
+    await coachCheckIns.expectAddress({
+      view: "upcoming",
+      kind: "ad-hoc",
+      q: client.lastName,
+      dir: "desc",
+      page: "2",
+    });
+    await coachCheckIns.expectTabShown("Upcoming");
+    await coachCheckIns.expectKind("Ad-hoc");
+    await coachCheckIns.expectSearchReads(client.lastName);
+    await coachCheckIns.expectSort(LATEST_FIRST);
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "a bell link opened while the coach is on her check-ins lands on a request that arrived after the page loaded",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    notificationBell,
+    notificationRecords,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    const arrivingAt = times[CHECK_INS_PER_PAGE]!;
+    await holdRequests(
+      checkInRecords,
+      client,
+      times.slice(0, CHECK_INS_PER_PAGE),
+    );
+    await notificationRecords.markCoachNotificationsRead();
+    await notificationBell.installClock();
+    await coachCheckIns.open();
+    await coachCheckIns.expectTabShown("Requests");
+    const [arrivedId] = await holdRequests(checkInRecords, client, [
+      arrivingAt,
+    ]);
+    await notificationRecords.arriveForCoach("check-in.requested", {
+      checkInId: arrivedId!,
+      clientName: client.fullName,
+      startsAt: arrivingAt.toISOString(),
+    });
+    await notificationBell.waitForArrivalToast(REQUESTED);
+
+    // act
+    await notificationBell.open();
+    await notificationBell.openRow(REQUESTED, client.fullName);
+
+    // assert
+    await coachCheckIns.expectAddress({ checkin: arrivedId! });
+    await coachCheckIns.expectCheckInFocused("Requests", arrivedId!);
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "the toolbar and the pager work by keyboard",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+    await holdRequests(checkInRecords, client, [times[FULL_PAGE_AND_ONE]!]);
+    await coachCheckIns.open();
+
+    // act
+    await coachCheckIns.chooseKindByKeyboard({ label: "Ad-hoc", count: 1 });
+    await coachCheckIns.chooseWaitingByKeyboard({
+      label: "Needs your answer",
+      count: 1,
+    });
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc", waiting: "you" });
+    await coachCheckIns.expectInOrder("Requests", [client.fullName]);
+
+    // act
+    await coachCheckIns.showTabByKeyboard("Upcoming");
+    await coachCheckIns.toggleSortByKeyboard();
+    await coachCheckIns.goToPageByKeyboard(2);
+
+    // assert
+    await coachCheckIns.expectAddress({
+      view: "upcoming",
+      kind: "ad-hoc",
+      dir: "desc",
+      page: "2",
+    });
+    await coachCheckIns.expectSort(LATEST_FIRST);
+    await coachCheckIns.expectShowing(LAST_PAGE_ALONE);
+  },
+);
+
+test(
+  "the coach counts a clashing weekly check-in as needing her answer and keeps what waits on her above her own requests in either direction",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    provisionSubmittedClient,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const weeklyClient = await provisionSubmittedClient("waiting");
+    const askingClient = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    await approveCheckIns(checkInRecords, askingClient, [
+      seriesWeeksOf(weeklyClient)[0]!,
+    ]);
+    const [earliest, middle, latest] = await checkInRequests.openTimesFor(
+      askingClient.clientId,
+    );
+    await holdRequests(checkInRecords, askingClient, [earliest!, latest!]);
+    await checkInRecords.proposeHourFor(
+      askingClient.clientId,
+      middle!,
+      COACH_TIME_ZONE,
+    );
+    const seriesAnswer = await checkInRequests.setUpSeries(
+      weeklyClient.clientId,
+      WEEKLY_CHOICE,
+    );
+    expect(seriesAnswer.status).toBe(CREATED);
+
+    // act
+    await coachCheckIns.open();
+
+    // assert
+    await coachCheckIns.expectTabShown("Requests");
+    await coachCheckIns.expectWaitingCount(3);
+    await coachCheckIns.expectOptionCounts("Waiting on", {
+      "All requests": 4,
+      "Needs your answer": 3,
+      "Waiting for clients": 1,
+    });
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(earliest!),
+      shownAt(latest!),
+      shownAt(middle!),
+    ]);
+
+    // act
+    await coachCheckIns.toggleSort();
+
+    // assert
+    await coachCheckIns.expectSort(LATEST_FIRST);
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(latest!),
+      shownAt(earliest!),
+      shownAt(middle!),
+    ]);
+
+    // act
+    await coachCheckIns.chooseWaiting("Needs your answer");
+
+    // assert
+    await coachCheckIns.expectAddress({ dir: "desc", waiting: "you" });
+    await coachCheckIns.expectInOrder("Requests", [
+      weeklyClient.fullName,
+      shownAt(latest!),
+      shownAt(earliest!),
+    ]);
+    await coachCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 3,
+      Weekly: 1,
+      "Ad-hoc": 2,
+    });
+    await coachCheckIns.expectWaitingCount(3);
+  },
+);
+
+test(
+  "the coach finds a client by first name in any letter case",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    provisionSubmittedClient,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const otherClient = await provisionSubmittedClient("waiting");
+    const soughtClient = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const [soughtAt, otherAt] = await checkInRequests.openTimesFor(
+      soughtClient.clientId,
+    );
+    await holdRequests(checkInRecords, soughtClient, [soughtAt!]);
+    await holdRequests(checkInRecords, otherClient, [otherAt!]);
+    const term = soughtClient.firstName.toUpperCase();
+    await coachCheckIns.open();
+
+    // act
+    await coachCheckIns.search(term);
+
+    // assert
+    await coachCheckIns.expectAddress({ q: term });
+    await coachCheckIns.expectInOrder("Requests", [soughtClient.fullName]);
+    await coachCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 1,
+      Weekly: 0,
+      "Ad-hoc": 1,
+    });
+  },
+);
+
+test(
+  "changing a filter, the search, the sort or the tab returns the coach to the first page",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    coachAvailability,
+    coachCheckIns,
+    page,
+    provisionClientInState,
+    provisionCoach,
+    signInAsCoach,
+  }) => {
+    test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+    // arrange
+    await coachAvailability.openEveryDay();
+    await provisionCoach();
+    const client = await provisionClientInState("approved");
+    await page.goto("/store");
+    await signInAsCoach();
+    await page.goto("/coach");
+    const times = await checkInRequests.openTimesFor(client.clientId);
+    await approveCheckIns(
+      checkInRecords,
+      client,
+      times.slice(0, FULL_PAGE_AND_ONE),
+    );
+    await coachCheckIns.visitAddress({ page: "2" });
+
+    // act
+    await coachCheckIns.chooseKind("Ad-hoc");
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc" });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.search(client.lastName);
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc", q: client.lastName });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.toggleSort();
+
+    // assert
+    await coachCheckIns.expectAddress({
+      kind: "ad-hoc",
+      q: client.lastName,
+      dir: "desc",
+    });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+
+    // act
+    await coachCheckIns.goToPage(2);
+    await coachCheckIns.showTab("Requests");
+
+    // assert
+    await coachCheckIns.expectAddress({
+      view: "requests",
+      kind: "ad-hoc",
+      q: client.lastName,
+    });
+    await coachCheckIns.expectEmpty("Requests", "No open requests");
+
+    // act
+    await coachCheckIns.showTab("Upcoming");
+
+    // assert
+    await coachCheckIns.expectAddress({ kind: "ad-hoc", q: client.lastName });
+    await coachCheckIns.expectShowing(FIRST_PAGE_OF_ELEVEN);
+  },
+);
+
+test(
+  "a filter narrows the client's tab without moving a check-in to another tab or changing the Requests count",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    page,
+    provisionSubmittedClient,
+    signIn,
+  }) => {
+    // arrange
+    await coachAvailability.openEveryDay();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await page.goto("/client");
+    const [proposedAt, requestedAt, approvedAt] =
+      await checkInRequests.openTimes();
+    await checkInRecords.proposeHourFor(
+      client.clientId,
+      proposedAt!,
+      CLIENT_TIME_ZONE,
+    );
+    await holdRequests(checkInRecords, client, [requestedAt!]);
+    await approveCheckIns(checkInRecords, client, [approvedAt!]);
+
+    // act
+    await clientCheckIns.open();
+
+    // assert
+    await clientCheckIns.expectTabShown("Requests");
+    await clientCheckIns.expectWaitingCount(1);
+    await clientCheckIns.expectNoPager();
+
+    // act
+    await clientCheckIns.chooseKind("Weekly");
+
+    // assert
+    await clientCheckIns.expectNoMatch();
+    await clientCheckIns.expectWaitingCount(1);
+
+    // act
+    await clientCheckIns.showTab("Upcoming");
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "upcoming", kind: "recurring" });
+    await clientCheckIns.expectNoMatch();
+    await clientCheckIns.expectOptionCounts("Kind", {
+      "All kinds": 1,
+      Weekly: 0,
+      "Ad-hoc": 1,
+    });
+
+    // act
+    await clientCheckIns.showTab("Past");
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "past", kind: "recurring" });
+    await clientCheckIns.expectEmpty("Past", "No past check-ins yet");
+
+    // act
+    await clientCheckIns.showTab("Upcoming");
+    await clientCheckIns.chooseKind("All kinds");
+
+    // assert
+    await clientCheckIns.expectInOrder("Upcoming", [shownAt(approvedAt!)]);
+    await clientCheckIns.expectInOrder("Requests", [
+      shownAt(proposedAt!),
+      shownAt(requestedAt!),
+    ]);
+    await clientCheckIns.expectWaitingCount(1);
+  },
+);
+
+test(
+  "the client's past check-ins start newest first and the toggle turns them oldest first",
+  { tag: "@completeness" },
+  async ({
+    checkInRecords,
+    checkInRequests,
+    clientCheckIns,
+    coachAvailability,
+    page,
+    provisionSubmittedClient,
+    signIn,
+  }) => {
+    // arrange
+    await coachAvailability.openEveryDay();
+    const client = await provisionSubmittedClient("waiting");
+    await page.goto("/store");
+    await signIn();
+    await page.goto("/client");
+    const [first, second, third] = await checkInRequests.openTimes();
+    const ids = await holdRequests(checkInRecords, client, [
+      first!,
+      second!,
+      third!,
+    ]);
+    for (const checkInId of ids) {
+      await checkInRecords.markCancelled(checkInId);
+    }
+    await clientCheckIns.open();
+
+    // act
+    await clientCheckIns.showTab("Past");
+
+    // assert
+    await clientCheckIns.expectSort(PAST_LATEST_FIRST);
+    await clientCheckIns.expectInOrder("Past", [
+      shownAt(third!),
+      shownAt(second!),
+      shownAt(first!),
+    ]);
+
+    // act
+    await clientCheckIns.toggleSort();
+
+    // assert
+    await clientCheckIns.expectAddress({ view: "past", dir: "asc" });
+    await clientCheckIns.expectSort(PAST_SOONEST_FIRST);
+    await clientCheckIns.expectInOrder("Past", [
+      shownAt(first!),
+      shownAt(second!),
+      shownAt(third!),
+    ]);
+  },
+);

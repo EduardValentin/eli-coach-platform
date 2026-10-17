@@ -4,7 +4,8 @@ import { generatePath, useRevalidator } from "react-router";
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";
 
 import { NO_LONGER_WAITING } from "./check-in-decisions";
-import { checkInMomentOf, type ListedCheckIn } from "./check-in-listing";
+import { checkInMomentOf } from "./check-in-listing";
+import type { ListedCheckIn } from "./check-in-listing-rules";
 import {
   CheckInPicker,
   type CheckInPickerWording,

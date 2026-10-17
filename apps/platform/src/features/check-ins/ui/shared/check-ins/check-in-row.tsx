@@ -9,11 +9,8 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import type { ReactNode } from "react";
 
-import {
-  checkInMomentOf,
-  type CheckInParty,
-  type ListedCheckIn,
-} from "./check-in-listing";
+import { checkInMomentOf } from "./check-in-listing";
+import type { CheckInParty, ListedCheckIn } from "./check-in-listing-rules";
 
 export type CheckInViewer = {
   counterpartName: string;
