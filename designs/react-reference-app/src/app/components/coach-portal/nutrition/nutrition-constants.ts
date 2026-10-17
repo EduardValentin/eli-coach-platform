@@ -21,7 +21,7 @@ export const CATEGORY_SWATCH: Record<FoodCategory, string> = {
   carb: 'bg-tint-blue',
   fat: 'bg-tint-amber',
   legume: 'bg-tint-green',
-  extra: 'bg-tint-purple',
+  extra: 'bg-tint-violet',
   seasoning: 'bg-tint-teal',
 };
 
@@ -30,7 +30,7 @@ export const CATEGORY_BORDER: Record<FoodCategory, string> = {
   carb: 'border-tint-blue',
   fat: 'border-tint-amber',
   legume: 'border-tint-green',
-  extra: 'border-tint-purple',
+  extra: 'border-tint-violet',
   seasoning: 'border-tint-teal',
 };
 

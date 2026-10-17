@@ -83,11 +83,10 @@
   --tint-amber-soft: rgba(217, 119, 6, 0.1);
   --tint-green: #15803d;
   --tint-green-soft: rgba(21, 128, 61, 0.1);
-  --tint-purple: #7e22ce;
-  --tint-purple-soft: rgba(126, 34, 206, 0.1);
   --tint-teal: #0f766e;
   --tint-teal-soft: rgba(15, 118, 110, 0.1);
   --tint-slate-soft: rgba(71, 85, 105, 0.12);
+  --tint-violet: #9333ea;
   --tint-violet-soft: rgba(147, 51, 234, 0.12);
   --tint-lime-soft: rgba(101, 163, 13, 0.12);
   --tint-cyan-soft: rgba(8, 145, 178, 0.12);
@@ -372,11 +371,10 @@
   --color-tint-amber-soft: var(--tint-amber-soft);
   --color-tint-green: var(--tint-green);
   --color-tint-green-soft: var(--tint-green-soft);
-  --color-tint-purple: var(--tint-purple);
-  --color-tint-purple-soft: var(--tint-purple-soft);
   --color-tint-teal: var(--tint-teal);
   --color-tint-teal-soft: var(--tint-teal-soft);
   --color-tint-slate-soft: var(--tint-slate-soft);
+  --color-tint-violet: var(--tint-violet);
   --color-tint-violet-soft: var(--tint-violet-soft);
   --color-tint-lime-soft: var(--tint-lime-soft);
   --color-tint-cyan-soft: var(--tint-cyan-soft);
