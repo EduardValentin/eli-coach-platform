@@ -13,11 +13,23 @@ const NEW = '/coach/nutrition/recipe-builder';
 const CHICKEN_BOWL = '/coach/nutrition/recipe-builder/recipe-chicken-rice-bowl';
 const RICE_CAKE_STACK = '/coach/nutrition/recipe-builder/recipe-rice-cake-stack';
 
-function viewportIsDesktop(matches: boolean) {
+function arrangePhoneViewport() {
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({
-      matches,
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
+function arrangeDesktopViewport() {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: true,
       media: query,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -26,7 +38,7 @@ function viewportIsDesktop(matches: boolean) {
 }
 
 beforeEach(() => {
-  viewportIsDesktop(false);
+  arrangePhoneViewport();
 });
 
 afterEach(() => {
@@ -386,7 +398,7 @@ describe('the food library drawer on a phone', () => {
 
   it('leaves Tab and Escape alone on a wide screen, where the library sits beside the recipe', async () => {
     // arrange
-    viewportIsDesktop(true);
+    arrangeDesktopViewport();
     const user = renderBuilder();
     await openLibrary(user);
 
