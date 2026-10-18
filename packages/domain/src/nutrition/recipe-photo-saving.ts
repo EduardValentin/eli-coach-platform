@@ -1,5 +1,5 @@
 import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
-import type { RecipeDraft, RecipeSaveProblems } from "./recipe-draft";
+import type { RecipeDraftResult, RecipeSaveProblems } from "./recipe-draft";
 import {
   MAX_RECIPE_PHOTO_BYTES,
   RecipePhoto,
@@ -29,7 +29,7 @@ export type RecipePhotoSavingPort = Pick<
 >;
 
 export function saveProblemsOf(
-  draft: ReturnType<typeof RecipeDraft.from>,
+  draft: RecipeDraftResult,
   photo: JudgedRecipePhoto,
 ): RecipeSaveProblems {
   return {

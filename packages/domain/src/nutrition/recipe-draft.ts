@@ -71,7 +71,7 @@ type RecipeDraftContext = {
   pickableFoodIds: readonly string[];
 };
 
-type RecipeDraftResult =
+export type RecipeDraftResult =
   | { status: "valid"; draft: RecipeDraft }
   | { status: "invalid"; problems: RecipeDraftProblems };
 

@@ -30,7 +30,9 @@ import {
   type RecipePhotoUpload,
 } from "./recipe-photo-entry";
 
-type StoredRecipePhoto = NonNullable<RecipeBuilderView["recipe"]>["photo"];
+export type StoredRecipePhoto = NonNullable<
+  RecipeBuilderView["recipe"]
+>["photo"];
 
 type PhotoFieldFocus = "replace" | "upload" | null;
 

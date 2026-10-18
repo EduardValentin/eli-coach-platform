@@ -48,7 +48,6 @@ import type {
   NutritionTagView,
 } from "~/features/nutrition-library/public/foods";
 import { COACH_RECIPES_PATH } from "~/features/nutrition-library/public/paths";
-import type { RecipeBuilderView } from "~/features/nutrition-library/public/recipes";
 import { MacroTiles } from "~/features/nutrition-library/ui/shared/macro-tiles";
 import { CATEGORY_DOT } from "~/features/nutrition-library/ui/shared/nutrition-tints";
 import { RECIPE_ICON_APPEARANCE } from "~/features/nutrition-library/ui/shared/recipe-icons";
@@ -66,6 +65,7 @@ import type { RecipePhotoEntry, RecipePhotoUpload } from "./recipe-photo-entry";
 import {
   RecipePhotoField,
   type RecipePhotoFieldHandle,
+  type StoredRecipePhoto,
 } from "./recipe-photo-field";
 
 type RecipeForm = UseFormReturn<RecipeFormValues>;
@@ -73,8 +73,6 @@ type RecipeForm = UseFormReturn<RecipeFormValues>;
 type FoodDragItem = { foodId: string; name: string };
 
 type SaveState = "blocked" | "ready" | "saving";
-
-type StoredRecipePhoto = NonNullable<RecipeBuilderView["recipe"]>["photo"];
 
 const FOOD_DRAG_TYPE = "NUTRITION_FOOD";
 
