@@ -192,6 +192,40 @@ export class NutritionLibraryPage {
     await expect(listed.getByRole("listitem")).toHaveText([...card.tags]);
   }
 
+  async expectRecipePhoto(name: string): Promise<void> {
+    const photo = this.recipeCardOf(name).getByRole("img", { name });
+
+    await expect(photo).toBeVisible();
+    await expect
+      .poll(() =>
+        photo.evaluate(
+          (element) =>
+            element instanceof HTMLImageElement &&
+            element.complete &&
+            element.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+  }
+
+  async expectRecipeIcon(name: string): Promise<void> {
+    const visual = this.recipeCardOf(name).getByRole("img", { name });
+
+    await expect(visual).toBeVisible();
+    await expect(visual).not.toHaveJSProperty("tagName", "IMG");
+  }
+
+  async recipePhotoPath(name: string): Promise<string> {
+    await this.expectRecipePhoto(name);
+    const source = await this.recipeCardOf(name)
+      .getByRole("img", { name })
+      .getAttribute("src");
+
+    if (!source) throw new Error(`${name}'s card shows no photo.`);
+
+    return new URL(source, this.page.url()).pathname;
+  }
+
   async expectRecipesPerRow(count: number): Promise<void> {
     await expect
       .poll(() =>

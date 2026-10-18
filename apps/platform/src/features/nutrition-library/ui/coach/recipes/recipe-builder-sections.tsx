@@ -6,6 +6,7 @@ import {
   type RecipeMacrosSnapshot,
   type TagFamily,
 } from "@eli-coach-platform/domain/nutrition";
+import { joinBasePath } from "@eli-coach-platform/config";
 import {
   cn,
   describedByOf,
@@ -13,6 +14,8 @@ import {
   toggled,
 } from "@eli-coach-platform/ui/lib";
 import {
+  Alert,
+  AlertAction,
   Button,
   buttonVariants,
   CheckboxChip,
@@ -22,6 +25,7 @@ import {
   ItemVisual,
   Label,
   Legend,
+  MediaOverlayActions,
   SearchField,
   Select,
   SelectContent,
@@ -33,13 +37,21 @@ import {
 import {
   ArrowLeft,
   GripVertical,
+  ImagePlus,
   Library,
   Plus,
   Save,
   Trash2,
   X,
 } from "lucide-react";
-import { useId, useState, type Ref } from "react";
+import {
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import { useDrag, useDragLayer, useDrop } from "react-dnd";
 import type { UseFormReturn } from "react-hook-form";
 import { Link } from "react-router";
@@ -49,6 +61,7 @@ import type {
   NutritionTagView,
 } from "~/features/nutrition-library/public/foods";
 import { COACH_RECIPES_PATH } from "~/features/nutrition-library/public/paths";
+import type { RecipeBuilderView } from "~/features/nutrition-library/public/recipes";
 import { MacroTiles } from "~/features/nutrition-library/ui/shared/macro-tiles";
 import { CATEGORY_DOT } from "~/features/nutrition-library/ui/shared/nutrition-tints";
 import {
@@ -61,16 +74,30 @@ import {
 } from "~/features/nutrition-library/ui/shared/tag-pill";
 
 import {
+  browserPhotoRefusalMessage,
   COOKING_METHOD_LABELS,
+  KEEP_PHOTO,
+  RECIPE_PHOTO_ACCEPT,
+  REMOVE_PHOTO,
   type RecipeFieldProblems,
   type RecipeFormValues,
+  type RecipePhotoEntry,
 } from "./recipe-form";
 
 type RecipeForm = UseFormReturn<RecipeFormValues>;
 
 type FoodDragItem = { foodId: string; name: string };
 
-type SaveState = "blocked" | "ready" | "saving";
+type SaveState = "blocked" | "ready" | "saving" | "uploading";
+
+type StoredRecipePhoto = NonNullable<RecipeBuilderView["recipe"]>["photo"];
+
+type PhotoFieldFocus = "replace" | "upload" | null;
+
+export type RecipePhotoFieldHandle = { queueReplaceFocus: () => void };
+
+const UPLOAD_FAILED =
+  "The upload didn’t go through. Your entries are still here.";
 
 const FOOD_DRAG_TYPE = "NUTRITION_FOOD";
 
@@ -79,6 +106,20 @@ const RECIPE_ICON_CHOICES = RECIPE_ICONS.map((key) => ({
   label: RECIPE_ICON_APPEARANCE[key].label,
   icon: RECIPE_ICON_APPEARANCE[key].glyph,
 }));
+
+function isSaving(saveState: SaveState): boolean {
+  return saveState === "saving" || saveState === "uploading";
+}
+
+function shownPhotoSrcOf(
+  photo: RecipePhotoEntry,
+  stored: StoredRecipePhoto,
+): string | null {
+  if (photo.chosen.kind === "attach") return photo.chosen.previewUrl;
+  if (photo.chosen.kind === "remove" || stored === null) return null;
+
+  return joinBasePath(import.meta.env.BASE_URL, stored.path);
+}
 
 function shownProblem(
   id: string,
@@ -159,15 +200,21 @@ export function BuilderTopBar({
           <span className="hidden lg:inline">Cancel</span>
         </Link>
         <Button
-          aria-busy={saveState === "saving" || undefined}
-          aria-label="Save recipe"
+          aria-busy={isSaving(saveState) || undefined}
+          aria-label={saveState === "uploading" ? "Saving…" : "Save recipe"}
           disabled={saveState !== "ready"}
           onClick={onSave}
           size="sm"
           variant="primary"
         >
-          <Save aria-hidden="true" size={16} />
-          <span className="hidden sm:inline">Save recipe</span>
+          {saveState === "uploading" ? (
+            "Saving…"
+          ) : (
+            <>
+              <Save aria-hidden="true" size={16} />
+              <span className="hidden sm:inline">Save recipe</span>
+            </>
+          )}
         </Button>
       </div>
     </header>
@@ -332,24 +379,117 @@ export function FoodDragPreview() {
 export function RecipeVisualChoice({
   form,
   values,
+  photo,
+  stored,
+  upload,
+  saveState,
+  onPhotoChange,
+  onRetry,
+  ref,
 }: {
   form: RecipeForm;
   values: RecipeFormValues;
+  photo: RecipePhotoEntry;
+  stored: StoredRecipePhoto;
+  upload: "idle" | "failed";
+  saveState: SaveState;
+  onPhotoChange: (photo: RecipePhotoEntry) => void;
+  onRetry: () => void;
+  ref?: Ref<RecipePhotoFieldHandle>;
 }) {
   const chosen = values.icon;
+  const name = values.name.trim() || "Recipe";
+  const problemId = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const uploadButton = useRef<HTMLButtonElement>(null);
+  const replaceButton = useRef<HTMLButtonElement>(null);
+  const pendingFocus = useRef<PhotoFieldFocus>(null);
+  const shownSrc = shownPhotoSrcOf(photo, stored);
+  const previewUrl =
+    photo.chosen.kind === "attach" ? photo.chosen.previewUrl : null;
+  const refusal = {
+    "aria-describedby": photo.problem ? problemId : undefined,
+    "aria-invalid": photo.problem ? true : undefined,
+  };
+  const chooseFile = () => input.current?.click();
+
+  useEffect(() => {
+    if (previewUrl === null) return;
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  useImperativeHandle(ref, () => ({
+    queueReplaceFocus: () => {
+      pendingFocus.current = "replace";
+    },
+  }));
+
+  useEffect(() => {
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
+    if (target === "replace") replaceButton.current?.focus();
+    if (target === "upload") uploadButton.current?.focus();
+  });
+
+  const take = (file: File) => {
+    const problem = browserPhotoRefusalMessage(file);
+    if (problem) {
+      onPhotoChange({ ...photo, problem });
+      return;
+    }
+
+    if (shownSrc === null) pendingFocus.current = "replace";
+    onPhotoChange({
+      chosen: { kind: "attach", file, previewUrl: URL.createObjectURL(file) },
+      problem: null,
+    });
+  };
+
+  const remove = () => {
+    pendingFocus.current = "upload";
+    onPhotoChange({
+      chosen: stored ? REMOVE_PHOTO : KEEP_PHOTO,
+      problem: null,
+    });
+  };
 
   return (
-    <div className="mb-4">
-      <div className="relative mb-3 overflow-hidden rounded-card">
+    <div className="mb-4 grid gap-3">
+      <div className="relative overflow-hidden rounded-card">
         <ItemVisual
           className="h-40 w-full rounded-card"
           data-parity="recipe-visual"
           icon={recipeGlyphOf(chosen)}
           iconSize={48}
-          name={values.name.trim() || "Recipe"}
+          name={name}
+          photo={shownSrc === null ? undefined : { src: shownSrc, alt: name }}
         />
+        {shownSrc !== null && (
+          <MediaOverlayActions
+            disabled={isSaving(saveState)}
+            onRemove={remove}
+            onReplace={chooseFile}
+            replaceProps={refusal}
+            replaceRef={replaceButton}
+            subject="recipe photo"
+          />
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {shownSrc === null && (
+          <Button
+            aria-label="Upload recipe photo"
+            onClick={chooseFile}
+            ref={uploadButton}
+            size="sm"
+            variant="outline"
+            {...refusal}
+          >
+            <ImagePlus aria-hidden="true" size={16} />
+            Upload photo
+          </Button>
+        )}
         <IconChoicePopover
           data-parity="recipe-icon-popover"
           label="Meal icon"
@@ -366,6 +506,27 @@ export function RecipeVisualChoice({
           value={chosen}
         />
       </div>
+      <div className="empty:hidden" id={problemId} role="alert">
+        {photo.problem && <InlineProblem>{photo.problem}</InlineProblem>}
+      </div>
+      {upload === "failed" && (
+        <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>
+          {UPLOAD_FAILED}
+        </Alert>
+      )}
+      <input
+        accept={RECIPE_PHOTO_ACCEPT}
+        aria-label="Recipe photo file input"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) take(file);
+        }}
+        ref={input}
+        tabIndex={-1}
+        type="file"
+      />
     </div>
   );
 }

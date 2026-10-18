@@ -3,6 +3,7 @@ import {
   MAX_INSTRUCTIONS_LENGTH,
   MAX_RECIPE_MINUTES,
   MAX_RECIPE_NAME_LENGTH,
+  MAX_RECIPE_PHOTO_BYTES,
   MIN_INGREDIENT_GRAMS,
   RecipeDraft,
   RecipeMacros,
@@ -17,9 +18,11 @@ import type {
   FoodView,
   NutritionTagView,
 } from "~/features/nutrition-library/public/foods";
-import type {
-  RecipeBuilderView,
-  RecipeRequest,
+import {
+  RECIPE_FORM_FIELDS,
+  type RecipeBuilderView,
+  type RecipeProblems,
+  type RecipeRequest,
 } from "~/features/nutrition-library/public/recipes";
 
 type SavedRecipe = NonNullable<RecipeBuilderView["recipe"]>;
@@ -116,7 +119,7 @@ export function recipeFormValuesOf(recipe: SavedRecipe): RecipeFormValues {
   };
 }
 
-export function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
+function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
   const amountOf = (entered: string) =>
     entered.trim() === "" ? 0 : Number(entered);
 
@@ -133,6 +136,101 @@ export function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
     icon: values.icon,
     tagIds: [...values.tagIds],
   };
+}
+
+export type ChosenRecipePhoto =
+  | { kind: "keep" }
+  | { kind: "remove" }
+  | { kind: "attach"; file: File; previewUrl: string };
+
+export type RecipePhotoEntry = {
+  chosen: ChosenRecipePhoto;
+  problem: string | null;
+};
+
+type RecipePhotoProblem = NonNullable<RecipeProblems["photo"]>;
+
+const MEGABYTE = 1024 * 1024;
+
+const MAX_RECIPE_PHOTO_MEGABYTES = MAX_RECIPE_PHOTO_BYTES / MEGABYTE;
+
+const RECIPE_PHOTO_EXTENSIONS: readonly string[] = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+];
+
+const RECIPE_PHOTO_MEDIA_TYPES: readonly string[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+export const RECIPE_PHOTO_ACCEPT = [
+  ...RECIPE_PHOTO_EXTENSIONS.map((extension) => `.${extension}`),
+  ...RECIPE_PHOTO_MEDIA_TYPES,
+].join(",");
+
+export const KEEP_PHOTO: ChosenRecipePhoto = { kind: "keep" };
+
+export const REMOVE_PHOTO: ChosenRecipePhoto = { kind: "remove" };
+
+export const UNTOUCHED_PHOTO: RecipePhotoEntry = {
+  chosen: KEEP_PHOTO,
+  problem: null,
+};
+
+function isPhotoFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+
+  return (
+    RECIPE_PHOTO_MEDIA_TYPES.includes(file.type) ||
+    RECIPE_PHOTO_EXTENSIONS.some((extension) => name.endsWith(`.${extension}`))
+  );
+}
+
+function photoTooLargeMessage(file: File): string {
+  return `${file.name} is larger than ${MAX_RECIPE_PHOTO_MEGABYTES} MB`;
+}
+
+export function browserPhotoRefusalMessage(file: File): string | null {
+  if (!isPhotoFile(file)) {
+    return `${file.name} is not a .jpg, .png or .webp — only JPEG, PNG and WebP photos are supported`;
+  }
+
+  if (file.size > MAX_RECIPE_PHOTO_BYTES) {
+    return photoTooLargeMessage(file);
+  }
+
+  return null;
+}
+
+export function serverPhotoRefusalMessage(
+  problem: RecipePhotoProblem,
+  file: File,
+): string {
+  return problem === "too-large"
+    ? photoTooLargeMessage(file)
+    : `${file.name} doesn’t contain a JPEG, PNG or WebP photo.`;
+}
+
+export function recipeSaveBodyOf(
+  values: RecipeFormValues,
+  photo: ChosenRecipePhoto,
+): RecipeRequest | FormData {
+  const request: RecipeRequest = {
+    ...recipeRequestOf(values),
+    photo: photo.kind,
+  };
+
+  if (photo.kind !== "attach") return request;
+
+  const formData = new FormData();
+  formData.append(RECIPE_FORM_FIELDS.recipe, JSON.stringify(request));
+  formData.append(RECIPE_FORM_FIELDS.photo, photo.file);
+
+  return formData;
 }
 
 export function recipeMacrosOf(

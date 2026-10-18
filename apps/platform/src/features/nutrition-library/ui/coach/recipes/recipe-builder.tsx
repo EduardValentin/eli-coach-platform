@@ -38,6 +38,7 @@ import {
   FoodLibraryAside,
   IngredientZone,
   RecipeVisualChoice,
+  type RecipePhotoFieldHandle,
 } from "./recipe-builder-sections";
 import {
   newRecipeFormValues,
@@ -45,10 +46,13 @@ import {
   recipeFormResolver,
   recipeFormValuesOf,
   recipeMacrosOf,
-  recipeRequestOf,
+  recipeSaveBodyOf,
   refusedFieldsInFocusOrder,
+  serverPhotoRefusalMessage,
   shownRecipeProblemsOf,
+  UNTOUCHED_PHOTO,
   type RecipeFormValues,
+  type RecipePhotoEntry,
   type RecipeProblemField,
 } from "./recipe-form";
 
@@ -63,6 +67,9 @@ type RecipeSaveOptions = {
   form: UseFormReturn<RecipeFormValues>;
   recipe: RecipeBuilderView["recipe"];
   takenNames: RefObject<readonly string[]>;
+  photo: RecipePhotoEntry;
+  onPhotoChange: (photo: RecipePhotoEntry) => void;
+  photoField: RefObject<RecipePhotoFieldHandle | null>;
 };
 
 export function RecipeBuilder({ view }: RecipeBuilderProps) {
@@ -130,9 +137,17 @@ function useLibraryDrawer() {
   return { open, openLibrary, closeLibrary, openButton, closeButton, drawer };
 }
 
-function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
+function useRecipeSave({
+  form,
+  recipe,
+  takenNames,
+  photo,
+  onPhotoChange,
+  photoField,
+}: RecipeSaveOptions) {
   const navigate = useNavigate();
   const sentName = useRef("");
+  const [failedUpload, setFailedUpload] = useState<File | null>(null);
 
   const rememberTakenName = (refused: RecipeProblems) => {
     if (refused.name === "taken") {
@@ -150,6 +165,32 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
     );
   };
 
+  const showRefusedPhoto = (refused: RecipeProblems): boolean => {
+    if (refused.photo === undefined || photo.chosen.kind !== "attach") {
+      return false;
+    }
+
+    onPhotoChange({
+      ...photo,
+      problem: serverPhotoRefusalMessage(refused.photo, photo.chosen.file),
+    });
+    return true;
+  };
+
+  const showRefusal = (refused: RecipeProblems): boolean => {
+    const refusedFields = refusedFieldsInFocusOrder(
+      recipeFieldProblemsOf(refused),
+    );
+    markRefused(refusedFields);
+    const photoShown = showRefusedPhoto(refused);
+
+    if (photoShown && refusedFields.length === 0) {
+      photoField.current?.queueReplaceFocus();
+    }
+
+    return refusedFields.length > 0 || photoShown;
+  };
+
   const settleSave = (outcome: SaveOutcome<RecipeProblems>) => {
     if (outcome.status === "saved") {
       toast.success(recipe ? "Recipe updated" : "Recipe created");
@@ -157,23 +198,18 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
       return;
     }
 
-    if (outcome.status === "failed") {
-      toast.error(SAVE_FAILED);
+    if (outcome.status === "refused") {
+      rememberTakenName(outcome.problems);
+
+      if (showRefusal(outcome.problems)) return;
+    }
+
+    if (photo.chosen.kind === "attach") {
+      setFailedUpload(photo.chosen.file);
       return;
     }
 
-    rememberTakenName(outcome.problems);
-
-    const refusedFields = refusedFieldsInFocusOrder(
-      recipeFieldProblemsOf(outcome.problems),
-    );
-
-    if (refusedFields.length === 0) {
-      toast.error(SAVE_FAILED);
-      return;
-    }
-
-    markRefused(refusedFields);
+    toast.error(SAVE_FAILED);
   };
 
   const { save, saving } = useSaveFetcher({
@@ -187,13 +223,27 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
-    save(recipeRequestOf(submitted));
+    setFailedUpload(null);
+    save(recipeSaveBodyOf(submitted, photo.chosen));
   });
 
-  if (saving) return { submit, saveState: "saving" as const };
+  const chosenFile = photo.chosen.kind === "attach" ? photo.chosen.file : null;
+  const upload =
+    chosenFile !== null && chosenFile === failedUpload
+      ? ("failed" as const)
+      : ("idle" as const);
+
+  if (saving) {
+    return {
+      submit,
+      upload,
+      saveState: chosenFile ? ("uploading" as const) : ("saving" as const),
+    };
+  }
 
   return {
     submit,
+    upload,
     saveState: form.formState.isValid
       ? ("ready" as const)
       : ("blocked" as const),
@@ -222,7 +272,16 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
     control: form.control,
     name: "ingredients",
   });
-  const { submit, saveState } = useRecipeSave({ form, recipe, takenNames });
+  const photoField = useRef<RecipePhotoFieldHandle>(null);
+  const [photo, setPhoto] = useState<RecipePhotoEntry>(UNTOUCHED_PHOTO);
+  const { submit, saveState, upload } = useRecipeSave({
+    form,
+    recipe,
+    takenNames,
+    photo,
+    onPhotoChange: setPhoto,
+    photoField,
+  });
   const values = form.watch();
   const problems = shownRecipeProblemsOf(form.formState.errors);
   const isDragging = useDragLayer((monitor) => monitor.isDragging());
@@ -282,7 +341,17 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
             Recipe builder
           </h1>
 
-          <RecipeVisualChoice form={form} values={values} />
+          <RecipeVisualChoice
+            form={form}
+            onPhotoChange={setPhoto}
+            onRetry={() => void submit()}
+            photo={photo}
+            ref={photoField}
+            saveState={saveState}
+            stored={recipe?.photo ?? null}
+            upload={upload}
+            values={values}
+          />
           <IngredientZone
             fields={ingredients.fields}
             foods={foods}
