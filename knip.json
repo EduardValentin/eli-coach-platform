@@ -4,6 +4,7 @@
       "entry": [
         "vitest.config.mts",
         "vitest.global-setup.mts",
+        "vitest.setup.mts",
         "lighthouserc.cjs",
         "tools/dependency-cruiser.config.cjs",
         "tools/*.test.mjs"

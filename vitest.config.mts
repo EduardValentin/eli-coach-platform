@@ -41,6 +41,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: testGlobs,
+          setupFiles: ["./vitest.setup.mts"],
           testTimeout: 15_000,
           exclude: [
             ...defaultExclude,
