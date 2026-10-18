@@ -5620,10 +5620,16 @@
       "use": "open-recipe-builder-chicken-rice-bowl"
     },
     {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> [data-parity=\"recipe-visual\"]"
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
     },
     {
-      "press": "Tab"
+      "press": "Escape"
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Shift+Tab"
     }
   ],
   "recipe-photo-remove-focus-visible": [
@@ -5631,13 +5637,13 @@
       "use": "open-recipe-builder-chicken-rice-bowl"
     },
     {
-      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> [data-parity=\"recipe-visual\"]"
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Icon: Poultry\" s]"
     },
     {
-      "press": "Tab"
+      "press": "Escape"
     },
     {
-      "press": "Tab"
+      "press": "Shift+Tab"
     }
   ],
   "recipe-photo-browser-refused": [
@@ -5658,6 +5664,19 @@
   "recipe-photo-server-refused": [
     {
       "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-photo-removed": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-failed-to-load": [
+    {
+      "use": "nutrition-recipes-tab"
     }
   ],
   "recipe-builder-library-narrowed": [
