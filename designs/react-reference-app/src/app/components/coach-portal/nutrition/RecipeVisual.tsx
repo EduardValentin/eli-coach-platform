@@ -27,12 +27,17 @@ export function RecipeVisual({
 
   if (recipe.imageUrl && recipe.imageUrl !== failedImageUrl) {
     const imageUrl = recipe.imageUrl;
+    const markFailed = () => setFailedImageUrl(imageUrl);
+    const markFailedWhenAlreadyBroken = (image: HTMLImageElement | null) => {
+      if (image?.complete && image.naturalWidth === 0) markFailed();
+    };
     return (
       <img
+        ref={markFailedWhenAlreadyBroken}
         src={imageUrl}
         alt={recipe.name}
         loading="lazy"
-        onError={() => setFailedImageUrl(imageUrl)}
+        onError={markFailed}
         className={`object-cover ${className}`}
         data-parity="recipe-visual"
       />

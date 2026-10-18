@@ -438,11 +438,16 @@ export class ExerciseEditorPage {
       throw new Error("The demo video, Remove or Replace is not rendered.");
     }
 
-    expect(remove.y + remove.height).toBeLessThan(player.y + player.height / 2);
-    expect(
-      replace.x >= player.x + player.width ||
-        replace.y >= player.y + player.height,
-    ).toBe(true);
+    for (const button of [replace, remove]) {
+      expect(button.x).toBeGreaterThanOrEqual(player.x);
+      expect(button.x + button.width).toBeLessThanOrEqual(
+        player.x + player.width,
+      );
+      expect(button.y).toBeGreaterThanOrEqual(player.y);
+      expect(button.y + button.height).toBeLessThan(
+        player.y + player.height / 3,
+      );
+    }
   }
 
   async playVideoFromControls(): Promise<void> {

@@ -25,13 +25,19 @@ export function ItemVisual({
   const [failedPhotoSrc, setFailedPhotoSrc] = useState<string>();
 
   if (photo && photo.src !== failedPhotoSrc) {
+    const markFailed = () => setFailedPhotoSrc(photo.src);
+    const markFailedWhenAlreadyBroken = (image: HTMLImageElement | null) => {
+      if (image?.complete && image.naturalWidth === 0) markFailed();
+    };
+
     return (
       <img
         {...data}
         alt={photo.alt}
         className={cn("object-cover", className)}
         loading="lazy"
-        onError={() => setFailedPhotoSrc(photo.src)}
+        onError={markFailed}
+        ref={markFailedWhenAlreadyBroken}
         src={photo.src}
       />
     );

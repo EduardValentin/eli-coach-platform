@@ -4,12 +4,49 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Soup } from "lucide-react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { ItemVisual } from "./item-visual";
 
+type ImageLoadingFacts = { complete: boolean; naturalWidth: number };
+
+const imageDescriptors = {
+  complete: Object.getOwnPropertyDescriptor(
+    HTMLImageElement.prototype,
+    "complete",
+  ),
+  naturalWidth: Object.getOwnPropertyDescriptor(
+    HTMLImageElement.prototype,
+    "naturalWidth",
+  ),
+};
+
+function pretendImagesHave(facts: ImageLoadingFacts) {
+  Object.defineProperty(HTMLImageElement.prototype, "complete", {
+    configurable: true,
+    get: () => facts.complete,
+  });
+  Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", {
+    configurable: true,
+    get: () => facts.naturalWidth,
+  });
+}
+
+function restoreImageFacts() {
+  for (const [name, descriptor] of Object.entries(imageDescriptors)) {
+    if (descriptor) {
+      Object.defineProperty(HTMLImageElement.prototype, name, descriptor);
+    }
+  }
+}
+
+beforeEach(() => {
+  pretendImagesHave({ complete: false, naturalWidth: 0 });
+});
+
 afterEach(() => {
   cleanup();
+  restoreImageFacts();
 });
 
 describe("ItemVisual", () => {
@@ -96,6 +133,25 @@ describe("ItemVisual", () => {
     expect(photo).toHaveAttribute("src", "/media/lentil-soup.webp");
     expect(photo).toHaveAttribute("loading", "lazy");
     expect(photo).toHaveClass("object-cover", "h-32", "w-full");
+  });
+
+  it("falls back to the icon when the photo had already failed before React attached", () => {
+    // arrange
+    pretendImagesHave({ complete: true, naturalWidth: 0 });
+
+    // act
+    render(
+      <ItemVisual
+        icon={Soup}
+        name="Lentil soup"
+        photo={{ alt: "Lentil soup", src: "/media/missing.webp" }}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("img", { name: "Lentil soup" }).tagName).toBe(
+      "DIV",
+    );
   });
 
   it("falls back to the icon when the photo does not load", () => {

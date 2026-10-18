@@ -509,6 +509,68 @@ export class RecipeBuilderPage {
     return path;
   }
 
+  async choosePhotoWithKeyboard(photo: SamplePhoto): Promise<void> {
+    await this.waitUntilInteractiveByKeyboard();
+    await tabTo(this.page, this.uploadPhotoButton);
+    const chooser = this.page.waitForEvent("filechooser");
+    await this.page.keyboard.press("Enter");
+    await (await chooser).setFiles(photo);
+  }
+
+  async removePhotoWithKeyboard(): Promise<void> {
+    await tabTo(this.page, this.removePhotoButton);
+    await this.page.keyboard.press("Enter");
+  }
+
+  async expectOverlayBarAlongTopEdgeOf(name: string): Promise<void> {
+    const [preview, replace, remove] = await Promise.all([
+      this.visualOf(name).boundingBox(),
+      this.replacePhotoButton.boundingBox(),
+      this.removePhotoButton.boundingBox(),
+    ]);
+
+    if (!preview || !replace || !remove) {
+      throw new Error("The photo preview, Replace or Remove is not rendered.");
+    }
+
+    for (const button of [replace, remove]) {
+      expect(button.x).toBeGreaterThanOrEqual(preview.x);
+      expect(button.x + button.width).toBeLessThanOrEqual(
+        preview.x + preview.width,
+      );
+      expect(button.y).toBeGreaterThanOrEqual(preview.y);
+      expect(button.y + button.height).toBeLessThan(
+        preview.y + preview.height / 3,
+      );
+    }
+  }
+
+  async delayNextSave(milliseconds: number): Promise<() => number> {
+    let saves = 0;
+
+    await this.page.route(
+      (url) => SAVE_ROUTE.test(url.pathname),
+      async (route) => {
+        saves += 1;
+        await new Promise((resolve) => setTimeout(resolve, milliseconds));
+        await route.continue();
+      },
+    );
+
+    return () => saves;
+  }
+
+  async expectSaving(): Promise<void> {
+    await expect(this.savingButton).toBeVisible();
+    await expect(this.savingButton).toBeDisabled();
+  }
+
+  async submitWhileSaving(): Promise<void> {
+    await this.nameField.focus();
+    await this.page.keyboard.press("Enter");
+    await this.savingButton.click({ force: true });
+  }
+
   async expectPhotoProblem(message: string): Promise<void> {
     await expect(this.photoProblem).toHaveText(message);
     await expect(this.photoControl).toHaveAttribute("aria-invalid", "true");

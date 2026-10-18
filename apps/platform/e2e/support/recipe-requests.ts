@@ -22,6 +22,7 @@ export type RecipeFields = {
 export type ServedRecipePhoto = {
   status: number;
   contentType: string | undefined;
+  headers: Readonly<Record<string, string>>;
   bytes: Buffer;
 };
 
@@ -79,6 +80,7 @@ export class RecipeRequests {
     return {
       status: response.status(),
       contentType: response.headers()["content-type"],
+      headers: response.headers(),
       bytes: await response.body(),
     };
   }

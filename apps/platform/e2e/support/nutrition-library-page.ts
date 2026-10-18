@@ -215,6 +215,12 @@ export class NutritionLibraryPage {
     await expect(visual).not.toHaveJSProperty("tagName", "IMG");
   }
 
+  async blockRecipePhotos(): Promise<void> {
+    await this.page.route(/\/api\/recipes\/[^/]+\/photo\/[^/]+$/, (route) =>
+      route.abort("failed"),
+    );
+  }
+
   async recipePhotoPath(name: string): Promise<string> {
     await this.expectRecipePhoto(name);
     const source = await this.recipeCardOf(name)

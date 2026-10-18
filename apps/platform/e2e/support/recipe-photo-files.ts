@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -89,6 +90,31 @@ export class RecipePhotoSamples {
       .toBuffer();
 
     return { name: "salmon-sweet-potato.png", mimeType: "image/png", buffer };
+  }
+
+  async webp(): Promise<SamplePhoto> {
+    const buffer = await sharp({
+      create: {
+        ...SCREENSHOT_PHOTO,
+        channels: 3,
+        background: { r: 180, g: 90, b: 120 },
+      },
+    })
+      .webp()
+      .toBuffer();
+
+    return { name: "pink-bowl.webp", mimeType: "image/webp", buffer };
+  }
+
+  async justUnderTheCap(): Promise<SamplePhoto> {
+    const side = 1800;
+    const buffer = await sharp(randomBytes(side * side * 3), {
+      raw: { width: side, height: side, channels: 3 },
+    })
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+
+    return { name: "bowl-heavy.png", mimeType: "image/png", buffer };
   }
 
   textNamedAsPhoto(): SamplePhoto {
