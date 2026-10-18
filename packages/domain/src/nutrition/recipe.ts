@@ -130,7 +130,7 @@ export class Recipe {
       })),
       mealRoleIds: [...this.fields.mealRoleIds],
       tagIds: [...this.fields.tagIds],
-      photo: this.attachedPhoto && this.attachedPhoto.toSnapshot(),
+      photo: this.attachedPhoto?.toSnapshot() ?? null,
     };
   }
 

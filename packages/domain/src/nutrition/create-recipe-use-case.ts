@@ -11,7 +11,10 @@ import {
 import type { RecipeIds } from "./recipe-ids";
 import type { RecipeLibrary } from "./recipe-library";
 import type { RecipePhotoChoice } from "./recipe-photo";
-import type { RecipePhotoSaving } from "./recipe-photo-saving";
+import {
+  type RecipePhotoSavingPort,
+  saveProblemsOf,
+} from "./recipe-photo-saving";
 
 type CreateRecipeCommand = {
   ownerAccountId: string;
@@ -31,10 +34,7 @@ type CreateRecipeUseCaseOptions = {
   ids: RecipeIds;
   clock: Clock;
   incidents: Pick<NutritionLibraryIncidents, "recipeCreationFailed">;
-  photos: Pick<
-    RecipePhotoSaving,
-    "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
-  >;
+  photos: RecipePhotoSavingPort;
 };
 
 export class CreateRecipeUseCase {
@@ -71,10 +71,7 @@ export class CreateRecipeUseCase {
     if (draft.status === "invalid" || photo.kind === "refused") {
       return {
         status: "invalid",
-        problems: {
-          ...(draft.status === "invalid" && draft.problems),
-          ...(photo.kind === "refused" && { photo: photo.refusal }),
-        },
+        problems: saveProblemsOf(draft, photo),
       };
     }
 

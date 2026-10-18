@@ -55,7 +55,7 @@ type RecipePhotoAddress = {
   photoId: string | undefined;
 };
 
-type RecipeSave =
+type ReadRecipeSave =
   | { status: "read"; draft: RecipeDraftInput; photo: RecipePhotoChoice }
   | { status: "malformed" }
   | { status: "too-large" };
@@ -64,9 +64,9 @@ const RECIPE_REQUEST_MAX_BYTES = 64 * 1024;
 
 const MULTIPART_ALLOWANCE_BYTES = 1024 * 1024;
 
-const MALFORMED_SAVE: RecipeSave = { status: "malformed" };
+const MALFORMED_SAVE: ReadRecipeSave = { status: "malformed" };
 
-const TOO_LARGE_SAVE: RecipeSave = { status: "too-large" };
+const TOO_LARGE_SAVE: ReadRecipeSave = { status: "too-large" };
 
 const idSchema = z.uuid();
 
@@ -215,7 +215,7 @@ export class RecipeLibraryController {
     }
   }
 
-  private async readSave(request: Request): Promise<RecipeSave> {
+  private async readSave(request: Request): Promise<ReadRecipeSave> {
     if (isFormDataRequest(request)) {
       return this.readMultipartSave(request);
     }
@@ -227,7 +227,7 @@ export class RecipeLibraryController {
     return this.saveOf(body, null);
   }
 
-  private async readMultipartSave(request: Request): Promise<RecipeSave> {
+  private async readMultipartSave(request: Request): Promise<ReadRecipeSave> {
     const body = await readFormDataRequestBody(request, {
       maxBytes: MAX_RECIPE_PHOTO_BYTES + MULTIPART_ALLOWANCE_BYTES,
     });
@@ -245,7 +245,7 @@ export class RecipeLibraryController {
     return this.saveOf(this.jsonOf(recipePart), photoBytes);
   }
 
-  private saveOf(body: unknown, photoBytes: Uint8Array | null): RecipeSave {
+  private saveOf(body: unknown, photoBytes: Uint8Array | null): ReadRecipeSave {
     const request = recipeRequestSchema.safeParse(body);
 
     if (!request.success) {
@@ -254,19 +254,19 @@ export class RecipeLibraryController {
 
     const { photo, ...draft } = request.data;
 
-    if (photoBytes) {
-      return photo === "attach"
-        ? {
-            status: "read",
-            draft,
-            photo: { kind: "attach", bytes: photoBytes },
-          }
-        : MALFORMED_SAVE;
+    if (photo === "attach") {
+      if (!photoBytes) return MALFORMED_SAVE;
+
+      return {
+        status: "read",
+        draft,
+        photo: { kind: "attach", bytes: photoBytes },
+      };
     }
 
-    return photo === "attach"
-      ? MALFORMED_SAVE
-      : { status: "read", draft, photo: { kind: photo } };
+    if (photoBytes) return MALFORMED_SAVE;
+
+    return { status: "read", draft, photo: { kind: photo } };
   }
 
   private jsonOf(part: FormDataEntryValue | null): unknown {
@@ -282,7 +282,7 @@ export class RecipeLibraryController {
   }
 
   private unreadSaveResponse(
-    save: Exclude<RecipeSave, { status: "read" }>,
+    save: Exclude<ReadRecipeSave, { status: "read" }>,
   ): Response {
     if (save.status === "too-large") {
       return Response.json(

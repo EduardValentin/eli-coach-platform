@@ -970,6 +970,26 @@ describe("the recipe photo", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
+  it("shows the generic failure, not the upload alert, when the server refuses a field the page cannot show while a photo is chosen", async () => {
+    // arrange
+    server.use(
+      http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, () =>
+        HttpResponse.json({ problems: { icon: "unknown" } }, { status: 422 }),
+      ),
+    );
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText(SAVE_FAILED)).toBeInTheDocument();
+    expect(screen.queryByText(UPLOAD_FAILED)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
   it("returns her to Upload photo when she removes a photo she just chose, and saves the recipe without one", async () => {
     // arrange
     acceptSaves();

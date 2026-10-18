@@ -1,5 +1,4 @@
 import type { RecipeLibrary } from "./recipe-library";
-import { RecipePhotoAccess } from "./recipe-photo-access";
 import type { RecipePhotoStore } from "./recipe-photo-store";
 import type { RecipePhotoViewer } from "./recipe-photo-viewer";
 
@@ -26,16 +25,12 @@ type OpenRecipePhotoUseCaseOptions = {
 const NOT_FOUND: OpenRecipePhotoResult = { status: "not-found" };
 
 export class OpenRecipePhotoUseCase {
-  private readonly access = new RecipePhotoAccess();
-
   constructor(private readonly options: OpenRecipePhotoUseCaseOptions) {}
 
   async execute(
     command: OpenRecipePhotoCommand,
   ): Promise<OpenRecipePhotoResult> {
-    const ownerAccountId = await this.access.libraryOwnerAccountIdFor(
-      command.viewer,
-    );
+    const ownerAccountId = this.ownerAccountIdOf(command.viewer);
 
     if (!ownerAccountId) return NOT_FOUND;
 
@@ -45,7 +40,6 @@ export class OpenRecipePhotoUseCase {
     });
 
     if (!recipe) return NOT_FOUND;
-    if (!(await this.access.admits(command.viewer, recipe))) return NOT_FOUND;
 
     const photo = recipe.photo;
 
@@ -56,5 +50,15 @@ export class OpenRecipePhotoUseCase {
     if (opening.status === "missing") return NOT_FOUND;
 
     return { ...opening, mediaType: photo.mediaType };
+  }
+
+  private ownerAccountIdOf(viewer: RecipePhotoViewer): string | null {
+    switch (viewer.kind) {
+      case "coach":
+        return viewer.accountId;
+      case "client":
+      case "visitor":
+        return null;
+    }
   }
 }

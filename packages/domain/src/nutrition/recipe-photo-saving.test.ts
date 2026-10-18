@@ -204,17 +204,42 @@ describe("RecipePhotoSaving.writeOrRemoveStored", () => {
 });
 
 describe("RecipePhotoSaving.removeStored", () => {
-  it("removes the replaced photo file and reports one it could not remove", async () => {
+  it("removes the stored photo file", async () => {
     // arrange
-    const failure = new Error("disk unavailable");
     const { saving, store, incidents } = createSaving();
-    store.remove.mockRejectedValueOnce(failure);
 
     // act
     await saving.removeStored(RecipePhoto.fromStored({ photoId: PHOTO_ID }));
 
     // assert
     expect(store.remove).toHaveBeenCalledExactlyOnceWith(PHOTO_ID);
+    expect(incidents.recipePhotoCleanupFailed).not.toHaveBeenCalled();
+  });
+
+  it("removes nothing when there is no photo", async () => {
+    // arrange
+    const { saving, store } = createSaving();
+
+    // act
+    await saving.removeStored(null);
+
+    // assert
+    expect(store.remove).not.toHaveBeenCalled();
+  });
+
+  it("reports a stored photo file it could not remove instead of failing", async () => {
+    // arrange
+    const failure = new Error("disk unavailable");
+    const { saving, store, incidents } = createSaving();
+    store.remove.mockRejectedValueOnce(failure);
+
+    // act
+    const removing = saving.removeStored(
+      RecipePhoto.fromStored({ photoId: PHOTO_ID }),
+    );
+
+    // assert
+    await expect(removing).resolves.toBeUndefined();
     expect(incidents.recipePhotoCleanupFailed).toHaveBeenCalledExactlyOnceWith({
       photoId: PHOTO_ID,
       error: failure,

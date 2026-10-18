@@ -10,7 +10,10 @@ import {
 } from "./recipe-draft";
 import type { RecipeLibrary, RecipeReference } from "./recipe-library";
 import type { RecipePhotoChoice } from "./recipe-photo";
-import type { RecipePhotoSaving } from "./recipe-photo-saving";
+import {
+  type RecipePhotoSavingPort,
+  saveProblemsOf,
+} from "./recipe-photo-saving";
 
 type EditRecipeCommand = RecipeReference & {
   draft: RecipeDraftInput;
@@ -29,10 +32,7 @@ type EditRecipeUseCaseOptions = {
   tags: Pick<NutritionTags, "list">;
   clock: Clock;
   incidents: Pick<NutritionLibraryIncidents, "recipeEditFailed">;
-  photos: Pick<
-    RecipePhotoSaving,
-    "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
-  >;
+  photos: RecipePhotoSavingPort;
 };
 
 export class EditRecipeUseCase {
@@ -84,10 +84,7 @@ export class EditRecipeUseCase {
     if (draft.status === "invalid" || photo.kind === "refused") {
       return {
         status: "invalid",
-        problems: {
-          ...(draft.status === "invalid" && draft.problems),
-          ...(photo.kind === "refused" && { photo: photo.refusal }),
-        },
+        problems: saveProblemsOf(draft, photo),
       };
     }
 

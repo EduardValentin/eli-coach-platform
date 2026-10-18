@@ -1,4 +1,5 @@
 import type { NutritionLibraryIncidents } from "./nutrition-library-incidents";
+import type { RecipeDraft, RecipeSaveProblems } from "./recipe-draft";
 import {
   MAX_RECIPE_PHOTO_BYTES,
   RecipePhoto,
@@ -6,12 +7,11 @@ import {
   type RecipePhotoChoice,
   type RecipePhotoRefusal,
 } from "./recipe-photo";
-import { RecipePhotoCleanup } from "./recipe-photo-cleanup";
 import type { RecipePhotoIds } from "./recipe-photo-ids";
 import type { RecipePhotoRenditions } from "./recipe-photo-renditions";
 import type { RecipePhotoStore } from "./recipe-photo-store";
 
-type JudgedRecipePhoto =
+export type JudgedRecipePhoto =
   RecipePhotoChoice | { kind: "refused"; refusal: RecipePhotoRefusal };
 
 type AcceptedRecipePhoto = Exclude<JudgedRecipePhoto, { kind: "refused" }>;
@@ -23,12 +23,23 @@ type RecipePhotoSavingOptions = {
   incidents: Pick<NutritionLibraryIncidents, "recipePhotoCleanupFailed">;
 };
 
-export class RecipePhotoSaving {
-  private readonly cleanup: RecipePhotoCleanup;
+export type RecipePhotoSavingPort = Pick<
+  RecipePhotoSaving,
+  "judged" | "storeAccepted" | "writeOrRemoveStored" | "removeStored"
+>;
 
-  constructor(private readonly options: RecipePhotoSavingOptions) {
-    this.cleanup = new RecipePhotoCleanup(options);
-  }
+export function saveProblemsOf(
+  draft: ReturnType<typeof RecipeDraft.from>,
+  photo: JudgedRecipePhoto,
+): RecipeSaveProblems {
+  return {
+    ...(draft.status === "invalid" && draft.problems),
+    ...(photo.kind === "refused" && { photo: photo.refusal }),
+  };
+}
+
+export class RecipePhotoSaving {
+  constructor(private readonly options: RecipePhotoSavingOptions) {}
 
   async judged(choice: RecipePhotoChoice): Promise<JudgedRecipePhoto> {
     if (choice.kind !== "attach") return choice;
@@ -69,12 +80,24 @@ export class RecipePhotoSaving {
   }
 
   async removeStored(photo: RecipePhoto | null): Promise<void> {
-    await this.cleanup.removeStored(photo);
+    if (!photo) return;
+
+    await this.removeStoredQuietly(photo);
   }
 
   private async removeUnwritten(change: RecipePhotoChange): Promise<void> {
     if (change.kind !== "attach") return;
 
-    await this.cleanup.removeStored(change.photo);
+    await this.removeStoredQuietly(change.photo);
+  }
+
+  private async removeStoredQuietly(photo: RecipePhoto): Promise<void> {
+    const { photoId } = photo;
+
+    try {
+      await this.options.store.remove(photoId);
+    } catch (error) {
+      this.options.incidents.recipePhotoCleanupFailed({ photoId, error });
+    }
   }
 }
