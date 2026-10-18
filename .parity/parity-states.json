@@ -5626,6 +5626,9 @@
       "press": "Escape"
     },
     {
+      "wait": 400
+    },
+    {
       "press": "Shift+Tab"
     },
     {
@@ -5641,6 +5644,9 @@
     },
     {
       "press": "Escape"
+    },
+    {
+      "wait": 400
     },
     {
       "press": "Shift+Tab"
