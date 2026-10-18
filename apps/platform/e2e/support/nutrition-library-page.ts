@@ -5,6 +5,8 @@ import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { expectMacroTiles, type MacroValues } from "./macro-tiles";
 
+const FEATURE_FLAG_COOKIE = "__eli_feature_flags";
+
 export type ListedFood = {
   name: string;
   category: string;
@@ -219,6 +221,10 @@ export class NutritionLibraryPage {
     await this.page.route(/\/api\/recipes\/[^/]+\/photo\/[^/]+$/, (route) =>
       route.abort("failed"),
     );
+  }
+
+  async forgetFeatureFlagOverrides(): Promise<void> {
+    await this.page.context().clearCookies({ name: FEATURE_FLAG_COOKIE });
   }
 
   async recipePhotoPath(name: string): Promise<string> {

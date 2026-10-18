@@ -14,6 +14,10 @@ const CAMERA_PHOTO = { width: 4000, height: 3000 };
 
 const SCREENSHOT_PHOTO = { width: 1600, height: 900 };
 
+const RAW_RGB_CHANNELS = 3;
+
+const HEAVY_PHOTO_SIDE = 1800;
+
 function recipePhotoRoot(): string | undefined {
   const photoRoot = process.env.RECIPE_PHOTO_ROOT;
 
@@ -107,12 +111,24 @@ export class RecipePhotoSamples {
   }
 
   async justUnderTheCap(): Promise<SamplePhoto> {
-    const side = 1800;
-    const buffer = await sharp(randomBytes(side * side * 3), {
-      raw: { width: side, height: side, channels: 3 },
-    })
+    const buffer = await sharp(
+      randomBytes(HEAVY_PHOTO_SIDE * HEAVY_PHOTO_SIDE * RAW_RGB_CHANNELS),
+      {
+        raw: {
+          width: HEAVY_PHOTO_SIDE,
+          height: HEAVY_PHOTO_SIDE,
+          channels: RAW_RGB_CHANNELS,
+        },
+      },
+    )
       .png({ compressionLevel: 0 })
       .toBuffer();
+
+    if (buffer.length >= MAX_RECIPE_PHOTO_BYTES) {
+      throw new Error(
+        `The heavy photo is ${buffer.length} bytes, not under the ${MAX_RECIPE_PHOTO_BYTES} byte cap.`,
+      );
+    }
 
     return { name: "bowl-heavy.png", mimeType: "image/png", buffer };
   }

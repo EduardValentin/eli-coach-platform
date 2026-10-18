@@ -21,10 +21,23 @@ export type RecipeFields = {
 
 export type ServedRecipePhoto = {
   status: number;
-  contentType: string | undefined;
   headers: Readonly<Record<string, string>>;
   bytes: Buffer;
 };
+
+const LUNCH_AND_VEGETARIAN_TAG_IDS = ["mt-lunch", "di-vegetarian"];
+
+export function saladNamed(name: string): RecipeFields {
+  return {
+    name,
+    ingredients: [],
+    prepMinutes: 5,
+    cookMinutes: 10,
+    instructions: "",
+    icon: "salad",
+    tagIds: LUNCH_AND_VEGETARIAN_TAG_IDS,
+  };
+}
 
 const RECIPES_PATH = "/api/coach/recipes";
 
@@ -79,7 +92,6 @@ export class RecipeRequests {
 
     return {
       status: response.status(),
-      contentType: response.headers()["content-type"],
       headers: response.headers(),
       bytes: await response.body(),
     };

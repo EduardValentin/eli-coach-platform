@@ -3,26 +3,14 @@ import {
   RecipePhotoSamples,
   storedRecipePhotoIds,
 } from "../support/recipe-photo-files";
-import type { RecipeFields } from "../support/recipe-requests";
+import { saladNamed } from "../support/recipe-requests";
 
 const NOT_FOUND = 404;
 const ONE_YEAR_IMMUTABLE = "private, max-age=31536000, immutable";
 const SAVE_DELAY_MS = 1500;
-const FEATURE_FLAG_COOKIE = "__eli_feature_flags";
+const REFUSED_UPLOAD_STATUSES = [401, 403, 404];
 
 const recipePhotos = new RecipePhotoSamples();
-
-function saladNamed(name: string): RecipeFields {
-  return {
-    name,
-    ingredients: [],
-    prepMinutes: 5,
-    cookMinutes: 10,
-    instructions: "",
-    icon: "salad",
-    tagIds: [],
-  };
-}
 
 test(
   "the recipe photo is chosen, replaced and removed by keyboard, sits under an overlay bar on the preview and is discarded by Cancel and the back arrow",
@@ -160,7 +148,7 @@ test(
 );
 
 test(
-  "a recipe photo that fails to load falls back to the icon, and the served file is a private, immutable, sniff-proof WebP",
+  "a recipe photo that fails to load falls back to the icon after in-app navigation",
   { tag: "@completeness" },
   async ({
     coachDashboard,
@@ -181,9 +169,42 @@ test(
       salad,
       await recipePhotos.cameraJpeg(),
     );
+    await nutritionLibrary.blockRecipePhotos();
+
+    // act
+    await nutritionLibrary.openFromNavigation();
+    await nutritionLibrary.openRecipes();
+
+    // assert
+    await nutritionLibrary.expectRecipeIcon(salad.name);
+  },
+);
+
+test(
+  "the served recipe photo is a private, immutable, sniff-proof file",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const salad = saladNamed(`Served photo ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeRequests.createWithPhotoAccepted(
+      salad,
+      await recipePhotos.cameraJpeg(),
+    );
     await nutritionLibrary.openWithTabParam("recipes");
     const photoPath = await nutritionLibrary.recipePhotoPath(salad.name);
-    await page.context().clearCookies({ name: FEATURE_FLAG_COOKIE });
+    await nutritionLibrary.forgetFeatureFlagOverrides();
 
     // act
     const served = await recipeRequests.openPhoto(photoPath);
@@ -192,15 +213,6 @@ test(
     expect(served.status).toBe(200);
     expect(served.headers["cache-control"]).toBe(ONE_YEAR_IMMUTABLE);
     expect(served.headers["x-content-type-options"]).toBe("nosniff");
-
-    // act
-    await nutritionLibrary.blockRecipePhotos();
-    await coachDashboard.open();
-    await nutritionLibrary.openFromNavigation();
-    await nutritionLibrary.openRecipes();
-
-    // assert
-    await nutritionLibrary.expectRecipeIcon(salad.name);
   },
 );
 
@@ -277,7 +289,7 @@ test(
 
     // assert
     expect(visitorRead.status).toBe(NOT_FOUND);
-    expect([401, 403, 404]).toContain(visitorUpload.status);
+    expect(REFUSED_UPLOAD_STATUSES).toContain(visitorUpload.status);
 
     // arrange
     await page.goto("/store");
@@ -292,7 +304,7 @@ test(
 );
 
 test(
-  "the recipe photo takes a WebP and a PNG just under 10 MB",
+  "the recipe photo takes a WebP and a PNG just under the size cap",
   { tag: "@completeness" },
   async ({
     coachDashboard,
@@ -307,8 +319,6 @@ test(
     const webpName = `Pink bowl ${scenarioTag}`;
     const heavyName = `Heavy bowl ${scenarioTag}`;
     const heavy = await recipePhotos.justUnderTheCap();
-    expect(heavy.buffer.length).toBeGreaterThan(9 * 1024 * 1024);
-    expect(heavy.buffer.length).toBeLessThan(10 * 1024 * 1024);
     await provisionCoach();
     await page.goto("/store");
     await signInAsCoach();

@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
+import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 import { HYDRATION_RETRY_TIMEOUT_MS, escapedPattern } from "./locator-text";
 import { expectMacroTiles, NO_MACROS, type MacroValues } from "./macro-tiles";
 import {
@@ -533,16 +534,7 @@ export class RecipeBuilderPage {
       throw new Error("The photo preview, Replace or Remove is not rendered.");
     }
 
-    for (const button of [replace, remove]) {
-      expect(button.x).toBeGreaterThanOrEqual(preview.x);
-      expect(button.x + button.width).toBeLessThanOrEqual(
-        preview.x + preview.width,
-      );
-      expect(button.y).toBeGreaterThanOrEqual(preview.y);
-      expect(button.y + button.height).toBeLessThan(
-        preview.y + preview.height / 3,
-      );
-    }
+    expectButtonsAlongTopEdgeOf([replace, remove], preview);
   }
 
   async delayNextSave(milliseconds: number): Promise<() => number> {

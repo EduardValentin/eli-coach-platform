@@ -8,7 +8,7 @@ import {
   RecipePhotoSamples,
   storedRecipePhotoIds,
 } from "../support/recipe-photo-files";
-import type { RecipeFields } from "../support/recipe-requests";
+import { type RecipeFields, saladNamed } from "../support/recipe-requests";
 import { readServedPhoto } from "../support/served-photos";
 import {
   setDesktopViewport,
@@ -62,18 +62,6 @@ function yoghurtNamed(name: string): FoodFields {
     fat: 5,
     defaultPortionGrams: 150,
     tagIds: [],
-  };
-}
-
-function saladNamed(name: string): RecipeFields {
-  return {
-    name,
-    ingredients: [],
-    prepMinutes: 5,
-    cookMinutes: 10,
-    instructions: "",
-    icon: "salad",
-    tagIds: ["mt-lunch", "di-vegetarian"],
   };
 }
 
@@ -1930,7 +1918,7 @@ test(
     const firstPhoto = await nutritionLibrary.recipePhotoPath(name);
     const served = await recipeRequests.openPhoto(firstPhoto);
     expect(served.status).toBe(200);
-    expect(served.contentType).toBe("image/webp");
+    expect(served.headers["content-type"]).toBe("image/webp");
     expect(await readServedPhoto(served.bytes)).toEqual({
       format: "webp",
       width: 1200,

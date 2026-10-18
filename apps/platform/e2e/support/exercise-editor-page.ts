@@ -10,6 +10,7 @@ import {
 import type { SampleVideo } from "./exercise-video-files";
 import { tabTo } from "./keyboard";
 import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 
 export type SavedExercise = {
   name: string;
@@ -438,16 +439,7 @@ export class ExerciseEditorPage {
       throw new Error("The demo video, Remove or Replace is not rendered.");
     }
 
-    for (const button of [replace, remove]) {
-      expect(button.x).toBeGreaterThanOrEqual(player.x);
-      expect(button.x + button.width).toBeLessThanOrEqual(
-        player.x + player.width,
-      );
-      expect(button.y).toBeGreaterThanOrEqual(player.y);
-      expect(button.y + button.height).toBeLessThan(
-        player.y + player.height / 3,
-      );
-    }
+    expectButtonsAlongTopEdgeOf([replace, remove], player);
   }
 
   async playVideoFromControls(): Promise<void> {
