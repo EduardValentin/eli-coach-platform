@@ -1,8 +1,16 @@
-import { forwardRef, useEffect, useId, useImperativeHandle, useState, useRef, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
-import { TouchBackend } from 'react-dnd-touch-backend';
-import { toast } from 'sonner';
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useState,
+  useRef,
+  type ReactNode,
+} from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { DndProvider, useDrag, useDrop, useDragLayer } from "react-dnd";
+import { TouchBackend } from "react-dnd-touch-backend";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Library,
@@ -13,12 +21,12 @@ import {
   ImagePlus,
   Save,
   Smile,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   useNutrition,
   COOKING_METHODS,
   TAG_FAMILIES,
-} from '../../context/NutritionContext';
+} from "../../context/NutritionContext";
 import {
   RECIPE_PHOTO_ACCEPT,
   computeRecipeMacros,
@@ -27,12 +35,12 @@ import {
   recipeFrom,
   recipePhotoContentRefusal,
   recipePhotoRefusal,
-} from '../../domain/recipes';
+} from "../../domain/recipes";
 import type {
   RecipeDraft,
   RecipeDraftIngredient,
   RecipeDraftProblems,
-} from '../../domain/recipes';
+} from "../../domain/recipes";
 import type {
   Food,
   CookingMethod,
@@ -41,53 +49,58 @@ import type {
   RecipeMacros,
   Tag,
   TagFamily,
-} from '../../context/NutritionContext';
-import { useAppState } from '../../context/AppContext';
-import { pickableItems } from '../../domain/libraryLifecycle';
-import { Label, Legend } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
-import { Checkbox } from '../../components/ui/checkbox';
-import { CheckboxChip } from '../../components/CheckboxChip';
-import { Button, buttonVariants } from '../../components/ui/button';
-import { cn } from '../../components/ui/utils';
-import { Input } from '../../components/ui/input';
-import { SearchField } from '../../components/SearchField';
+} from "../../context/NutritionContext";
+import { useAppState } from "../../context/AppContext";
+import { pickableItems } from "../../domain/libraryLifecycle";
+import { Label, Legend } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
+import { Checkbox } from "../../components/ui/checkbox";
+import { CheckboxChip } from "../../components/CheckboxChip";
+import { Button, buttonVariants } from "../../components/ui/button";
+import { cn } from "../../components/ui/utils";
+import { Input } from "../../components/ui/input";
+import { SearchField } from "../../components/SearchField";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '../../components/ui/select';
+} from "../../components/ui/select";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '../../components/ui/popover';
-import { LABEL_CLASS, VALUE_CLASS } from '../../components/typography';
+} from "../../components/ui/popover";
+import { LABEL_CLASS, VALUE_CLASS } from "../../components/typography";
 import {
   CATEGORY_SWATCH,
   MACRO_TILE,
   TAG_FAMILY_LABELS,
   COOKING_METHOD_LABELS,
-} from '../../components/coach-portal/nutrition/nutrition-constants';
-import { TAG_FAMILY_ICON } from '../../components/coach-portal/nutrition/food-icons';
-import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-icons';
-import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
-import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
-import { MediaOverlayActions } from '../../components/MediaOverlayActions';
-import { InlineProblem } from '../../components/InlineProblem';
-import { Alert, AlertAction } from '../../components/ui/alert';
-import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
-import { useIsDesktop } from '../../components/ui/use-desktop';
-import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
+} from "../../components/coach-portal/nutrition/nutrition-constants";
+import { TAG_FAMILY_ICON } from "../../components/coach-portal/nutrition/food-icons";
+import { RECIPE_ICONS } from "../../components/coach-portal/nutrition/recipe-icons";
+import type { RecipeIcon } from "../../components/coach-portal/nutrition/recipe-icons";
+import { RecipeVisual } from "../../components/coach-portal/nutrition/RecipeVisual";
+import { MediaOverlayActions } from "../../components/MediaOverlayActions";
+import { InlineProblem } from "../../components/InlineProblem";
+import { Alert, AlertAction } from "../../components/ui/alert";
+import { useCoachPortalScope } from "../../components/coach-portal/useCoachPortalScope";
+import { useIsDesktop } from "../../components/ui/use-desktop";
+import {
+  RECIPE_NOT_SAVED,
+  saveRecipeThroughServer,
+} from "../../services/recipeService";
 
-const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
+const FOOD_DRAG_TYPE = "NUTRITION_FOOD";
 const TABBABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function wrapTabWithin(container: HTMLElement | null, event: KeyboardEvent) {
-  const controls = [...(container?.querySelectorAll<HTMLElement>(TABBABLE) ?? [])];
+  const controls = [
+    ...(container?.querySelectorAll<HTMLElement>(TABBABLE) ?? []),
+  ];
   const first = controls[0];
   const last = controls.at(-1);
   if (!container || !first || !last) return;
@@ -102,13 +115,14 @@ function wrapTabWithin(container: HTMLElement | null, event: KeyboardEvent) {
     first.focus();
   }
 }
-const RECIPES = '/coach/nutrition?tab=recipes';
-const UPLOAD_FAILED = 'The upload didn’t go through. Your entries are still here.';
+const RECIPES = "/coach/nutrition?tab=recipes";
+const UPLOAD_FAILED =
+  "The upload didn’t go through. Your entries are still here.";
 const ICON_OPTION_CLASS =
-  'flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors';
-const ICON_OPTION_SELECTED_CLASS = 'bg-primary-soft text-primary';
+  "flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors";
+const ICON_OPTION_SELECTED_CLASS = "bg-primary-soft text-primary";
 const ICON_OPTION_IDLE_CLASS =
-  'text-text-secondary hover:bg-surface-muted hover:text-text-primary';
+  "text-text-secondary hover:bg-surface-muted hover:text-text-primary";
 
 const draftIngredientOf = (
   ingredient: RecipeIngredient,
@@ -142,8 +156,8 @@ function DraggableFood({
     <div
       ref={drag}
       className={cn(
-        'group flex cursor-grab select-none items-center gap-2 rounded-control border bg-card p-3 transition-all hover:shadow-card active:cursor-grabbing',
-        { 'opacity-50 ring-2 ring-primary': isDragging },
+        "group flex cursor-grab select-none items-center gap-2 rounded-control border bg-card p-3 transition-all hover:shadow-card active:cursor-grabbing",
+        { "opacity-50 ring-2 ring-primary": isDragging },
       )}
     >
       <GripVertical
@@ -231,21 +245,25 @@ function OrphanedTagChip({
   );
 }
 
-type PhotoState = { file: File | null; preview: string | undefined; error: string | null };
+type PhotoState = {
+  file: File | null;
+  preview: string | undefined;
+  error: string | null;
+};
 const NO_PHOTO: PhotoState = { file: null, preview: undefined, error: null };
 
 function photoFrom(recipe: Recipe | undefined): PhotoState {
   return { file: null, preview: recipe?.imageUrl, error: null };
 }
 
-type PhotoSaving = 'idle' | 'saving' | 'failed';
+type PhotoSaving = "idle" | "saving" | "failed";
 
-type PhotoFieldFocus = 'replace' | 'upload' | null;
+type PhotoFieldFocus = "replace" | "upload" | null;
 
 type PhotoFieldHandle = { queueReplaceFocus: () => void };
 
 type RecipePhotoFieldProps = {
-  recipe: Pick<Recipe, 'icon' | 'name'>;
+  recipe: Pick<Recipe, "icon" | "name">;
   photo: PhotoState;
   saving: PhotoSaving;
   onChange: (photo: PhotoState) => void;
@@ -253,126 +271,150 @@ type RecipePhotoFieldProps = {
   children: ReactNode;
 };
 
-const RecipePhotoField = forwardRef<PhotoFieldHandle, RecipePhotoFieldProps>(function RecipePhotoField(
-  { recipe, photo, saving, onChange, onRetry, children },
-  ref,
-) {
-  const errorId = useId();
-  const input = useRef<HTMLInputElement>(null);
-  const uploadButton = useRef<HTMLButtonElement>(null);
-  const replaceButton = useRef<HTMLButtonElement>(null);
-  const pendingFocus = useRef<PhotoFieldFocus>(null);
-  const refusal = {
-    'aria-invalid': photo.error ? true : undefined,
-    'aria-describedby': photo.error ? errorId : undefined,
-  };
-  const chooseFile = () => input.current?.click();
+const RecipePhotoField = forwardRef<PhotoFieldHandle, RecipePhotoFieldProps>(
+  function RecipePhotoField(
+    { recipe, photo, saving, onChange, onRetry, children },
+    ref,
+  ) {
+    const errorId = useId();
+    const input = useRef<HTMLInputElement>(null);
+    const uploadButton = useRef<HTMLButtonElement>(null);
+    const replaceButton = useRef<HTMLButtonElement>(null);
+    const pendingFocus = useRef<PhotoFieldFocus>(null);
+    const refusal = {
+      "aria-invalid": photo.error ? true : undefined,
+      "aria-describedby": photo.error ? errorId : undefined,
+    };
+    const chooseFile = () => input.current?.click();
 
-  const take = (file: File) => {
-    const refused = recipePhotoRefusal(file);
-    if (refused) {
-      onChange({ ...photo, error: refused });
-      return;
-    }
-    if (!photo.preview) pendingFocus.current = 'replace';
-    onChange({ file, preview: URL.createObjectURL(file), error: null });
-  };
+    const take = (file: File) => {
+      const refused = recipePhotoRefusal(file);
+      if (refused) {
+        onChange({ ...photo, error: refused });
+        return;
+      }
+      if (!photo.preview) pendingFocus.current = "replace";
+      onChange({ file, preview: URL.createObjectURL(file), error: null });
+    };
 
-  const remove = () => {
-    pendingFocus.current = 'upload';
-    onChange(NO_PHOTO);
-  };
+    const remove = () => {
+      pendingFocus.current = "upload";
+      onChange(NO_PHOTO);
+    };
 
-  useImperativeHandle(ref, () => ({
-    queueReplaceFocus: () => {
-      pendingFocus.current = 'replace';
-    },
-  }));
+    useImperativeHandle(ref, () => ({
+      queueReplaceFocus: () => {
+        pendingFocus.current = "replace";
+      },
+    }));
 
-  useEffect(() => {
-    const target = pendingFocus.current;
-    pendingFocus.current = null;
-    if (target === 'replace') replaceButton.current?.focus();
-    if (target === 'upload') uploadButton.current?.focus();
-  });
+    useEffect(() => {
+      const target = pendingFocus.current;
+      pendingFocus.current = null;
+      if (target === "replace") replaceButton.current?.focus();
+      if (target === "upload") uploadButton.current?.focus();
+    });
 
-  useEffect(() => {
-    const chosenPreview = photo.file ? photo.preview : undefined;
-    if (!chosenPreview) return;
-    return () => URL.revokeObjectURL(chosenPreview);
-  }, [photo.file, photo.preview]);
+    useEffect(() => {
+      const chosenPreview = photo.file ? photo.preview : undefined;
+      if (!chosenPreview) return;
+      return () => URL.revokeObjectURL(chosenPreview);
+    }, [photo.file, photo.preview]);
 
-  return (
-    <div className="mb-4 grid gap-3">
-      <div className="relative rounded-card overflow-hidden">
-        <RecipeVisual
-          recipe={{ imageUrl: photo.preview, icon: recipe.icon, name: recipe.name }}
-          className="h-40 w-full rounded-card"
-          iconSize={48}
-        />
-        {photo.preview && (
-          <MediaOverlayActions
-            subject="recipe photo"
-            disabled={saving === 'saving'}
-            replaceRef={replaceButton}
-            replaceProps={refusal}
-            onReplace={chooseFile}
-            onRemove={remove}
+    return (
+      <div className="mb-4 grid gap-3">
+        <div className="relative rounded-card overflow-hidden">
+          <RecipeVisual
+            recipe={{
+              imageUrl: photo.preview,
+              icon: recipe.icon,
+              name: recipe.name,
+            }}
+            className="h-40 w-full rounded-card"
+            iconSize={48}
           />
-        )}
-      </div>
+          {photo.preview && (
+            <MediaOverlayActions
+              subject="recipe photo"
+              disabled={saving === "saving"}
+              replaceRef={replaceButton}
+              replaceProps={refusal}
+              onReplace={chooseFile}
+              onRemove={remove}
+            />
+          )}
+        </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {!photo.preview && (
-          <Button
-            ref={uploadButton}
-            type="button"
-            aria-label="Upload recipe photo"
-            onClick={chooseFile}
-            variant="outline"
-            {...refusal}
+        <div className="flex flex-wrap items-center gap-2">
+          {!photo.preview && (
+            <Button
+              ref={uploadButton}
+              type="button"
+              aria-label="Upload recipe photo"
+              data-parity="recipe-photo-upload"
+              onClick={chooseFile}
+              variant="outline"
+              {...refusal}
+            >
+              <ImagePlus size={16} aria-hidden="true" />
+              Upload photo
+            </Button>
+          )}
+          {children}
+        </div>
+
+        <div
+          id={errorId}
+          role="alert"
+          className="empty:hidden"
+          data-parity="recipe-photo-problem"
+        >
+          {photo.error && <InlineProblem>{photo.error}</InlineProblem>}
+        </div>
+        {saving === "failed" && (
+          <Alert
+            action={<AlertAction onClick={onRetry}>Try again</AlertAction>}
+            data-parity="recipe-photo-upload-failed"
           >
-            <ImagePlus size={16} aria-hidden="true" />
-            Upload photo
-          </Button>
+            {UPLOAD_FAILED}
+          </Alert>
         )}
-        {children}
-      </div>
 
-      <div id={errorId} role="alert" className="empty:hidden">
-        {photo.error && <InlineProblem>{photo.error}</InlineProblem>}
+        <input
+          ref={input}
+          type="file"
+          accept={RECIPE_PHOTO_ACCEPT}
+          aria-label="Recipe photo file input"
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) take(file);
+          }}
+          tabIndex={-1}
+        />
       </div>
-      {saving === 'failed' && (
-        <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>{UPLOAD_FAILED}</Alert>
-      )}
-
-      <input
-        ref={input}
-        type="file"
-        accept={RECIPE_PHOTO_ACCEPT}
-        aria-label="Recipe photo file input"
-        className="sr-only"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = '';
-          if (file) take(file);
-        }}
-        tabIndex={-1}
-      />
-    </div>
-  );
-});
+    );
+  },
+);
 
 function RecipeBuilderInner() {
   const { recipeId } = useParams<{ recipeId?: string }>();
-  const { foods, tags, recipes, getRecipe, addRecipe, updateRecipe, uploadRecipePhoto } =
-    useNutrition();
+  const {
+    foods,
+    tags,
+    recipes,
+    getRecipe,
+    addRecipe,
+    updateRecipe,
+    uploadRecipePhoto,
+  } = useNutrition();
   const navigate = useNavigate();
 
   const existing = recipeId ? getRecipe(recipeId) : undefined;
-  const [name, setName] = useState(existing?.name ?? '');
+  const [name, setName] = useState(existing?.name ?? "");
   const [photo, setPhoto] = useState<PhotoState>(() => photoFrom(existing));
-  const [photoSaving, setPhotoSaving] = useState<PhotoSaving>('idle');
+  const [photoSaving, setPhotoSaving] = useState<PhotoSaving>("idle");
   const photoField = useRef<PhotoFieldHandle>(null);
   const onPage = useRef(false);
   useEffect(() => {
@@ -405,16 +447,16 @@ function RecipeBuilderInner() {
   useEffect(() => {
     if (!libraryIsDrawer) return;
     const keepKeyboardInLibrary = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeLibrary();
-      if (event.key === 'Tab') wrapTabWithin(libraryAside.current, event);
+      if (event.key === "Escape") closeLibrary();
+      if (event.key === "Tab") wrapTabWithin(libraryAside.current, event);
     };
-    document.addEventListener('keydown', keepKeyboardInLibrary);
-    return () => document.removeEventListener('keydown', keepKeyboardInLibrary);
+    document.addEventListener("keydown", keepKeyboardInLibrary);
+    return () => document.removeEventListener("keydown", keepKeyboardInLibrary);
   }, [libraryIsDrawer]);
   const [ingredients, setIngredients] = useState<RecipeDraftIngredient[]>(
     existing?.ingredients.map(draftIngredientOf) ?? [],
   );
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [prepMinutes, setPrepMinutes] = useState(
     String(existing?.prepMinutes ?? 0),
   );
@@ -429,7 +471,7 @@ function RecipeBuilderInner() {
     existing?.macroOverride ?? null,
   );
   const [instructions, setInstructions] = useState(
-    existing?.instructions ?? '',
+    existing?.instructions ?? "",
   );
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
@@ -437,12 +479,12 @@ function RecipeBuilderInner() {
   const headingId = useId();
   const markTouched = () => setTouched(true);
   const { appState } = useAppState();
-  const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const isPostMvp = appState.prototypeMode === "post-mvp";
 
   const changePhoto = (next: PhotoState) => {
     markTouched();
     setPhoto(next);
-    setPhotoSaving('idle');
+    setPhotoSaving("idle");
   };
 
   const toggleIn = (list: string[], id: string) =>
@@ -454,7 +496,7 @@ function RecipeBuilderInner() {
     markTouched();
     setIngredients((prev) => [
       ...prev,
-      { foodId, grams: String(food.defaultPortionGrams), method: 'raw' },
+      { foodId, grams: String(food.defaultPortionGrams), method: "raw" },
     ]);
     if (isPostMvp) suggestTagsFrom(food);
   };
@@ -463,11 +505,11 @@ function RecipeBuilderInner() {
       .map((id) => tags.find((t) => t.id === id))
       .filter((t): t is Tag => Boolean(t));
     const mealRoleAdds = foodTags
-      .filter((t) => t.family === 'meal-time')
+      .filter((t) => t.family === "meal-time")
       .map((t) => t.id)
       .filter((id) => !mealRoleIds.includes(id));
     const tagAdds = foodTags
-      .filter((t) => t.family !== 'meal-time')
+      .filter((t) => t.family !== "meal-time")
       .map((t) => t.id)
       .filter((id) => !tagIds.includes(id));
     if (mealRoleAdds.length)
@@ -489,13 +531,13 @@ function RecipeBuilderInner() {
   };
   const toggleTag = (family: TagFamily, id: string) => {
     markTouched();
-    if (family === 'meal-time') setMealRoleIds((prev) => toggleIn(prev, id));
+    if (family === "meal-time") setMealRoleIds((prev) => toggleIn(prev, id));
     else setTagIds((prev) => toggleIn(prev, id));
     setAutoTagIds((prev) => prev.filter((x) => x !== id)); // manual action → no longer auto
   };
   const removeTag = (family: TagFamily, id: string) => {
     markTouched();
-    if (family === 'meal-time')
+    if (family === "meal-time")
       setMealRoleIds((prev) => prev.filter((x) => x !== id));
     else setTagIds((prev) => prev.filter((x) => x !== id));
     setAutoTagIds((prev) => prev.filter((x) => x !== id));
@@ -570,29 +612,32 @@ function RecipeBuilderInner() {
       toast.error(RECIPE_NOT_SAVED);
       return;
     }
-    toast.success(existing ? 'Recipe updated' : 'Recipe created');
+    toast.success(existing ? "Recipe updated" : "Recipe created");
     navigate(RECIPES);
   };
 
   const uploadThenWrite = async (file: File) => {
-    setPhotoSaving('saving');
+    setPhotoSaving("saving");
     const answer = await uploadRecipePhoto(file).catch(() => null);
     if (!onPage.current) return;
     if (answer === null) {
-      setPhotoSaving('failed');
+      setPhotoSaving("failed");
       return;
     }
 
-    setPhotoSaving('idle');
-    if (answer.status === 'stored') {
+    setPhotoSaving("idle");
+    if (answer.status === "stored") {
       writeRecipe(answer.url);
       return;
     }
-    setPhoto((current) => ({ ...current, error: recipePhotoContentRefusal(file) }));
+    setPhoto((current) => ({
+      ...current,
+      error: recipePhotoContentRefusal(file),
+    }));
     photoField.current?.queueReplaceFocus();
   };
 
-  const photoUploading = photoSaving === 'saving';
+  const photoUploading = photoSaving === "saving";
 
   const save = () => {
     if (photoUploading) return;
@@ -625,8 +670,8 @@ function RecipeBuilderInner() {
 
   return (
     <div
-      className={cn('fixed inset-0 z-50 flex flex-col bg-surface-subtle', {
-        'select-none': isDragging,
+      className={cn("fixed inset-0 z-50 flex flex-col bg-surface-subtle", {
+        "select-none": isDragging,
       })}
       data-parity-root="RecipeBuilderPage"
     >
@@ -680,13 +725,13 @@ function RecipeBuilderInner() {
             </Link>
           </Button>
           <Button
-            aria-label={photoUploading ? 'Saving…' : 'Save recipe'}
+            aria-label={photoUploading ? "Saving…" : "Save recipe"}
             onClick={save}
             disabled={!isValidDraft(problems) || photoUploading}
             aria-busy={photoUploading || undefined}
           >
             {photoUploading ? (
-              'Saving…'
+              "Saving…"
             ) : (
               <>
                 <Save aria-hidden="true" />
@@ -713,10 +758,11 @@ function RecipeBuilderInner() {
           aria-label="Food library"
           data-parity="recipe-builder-library"
           className={cn(
-            'fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0',
+            "fixed inset-y-0 left-0 z-50 w-80 shrink-0 border-r border-border bg-card flex flex-col duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:translate-x-0",
             {
-              'translate-x-0 shadow-drawer transition-[translate]': libraryOpen,
-              'invisible -translate-x-full transition-[translate,visibility]': !libraryOpen,
+              "translate-x-0 shadow-drawer transition-[translate]": libraryOpen,
+              "invisible -translate-x-full transition-[translate,visibility]":
+                !libraryOpen,
             },
           )}
         >
@@ -760,7 +806,7 @@ function RecipeBuilderInner() {
 
           <RecipePhotoField
             ref={photoField}
-            recipe={{ icon, name: name.trim() || 'Recipe' }}
+            recipe={{ icon, name: name.trim() || "Recipe" }}
             photo={photo}
             saving={photoSaving}
             onChange={changePhoto}
@@ -772,7 +818,7 @@ function RecipeBuilderInner() {
                   <Smile size={16} aria-hidden="true" />
                   {icon
                     ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}`
-                    : 'Choose icon'}
+                    : "Choose icon"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-72 p-3">
@@ -825,11 +871,11 @@ function RecipeBuilderInner() {
             ref={drop}
             data-parity="recipe-ingredients"
             className={cn(
-              'rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200 motion-reduce:transition-none',
+              "rounded-card border-2 border-dashed p-4 min-h-40 transition-all duration-200 motion-reduce:transition-none",
               {
-                'border-primary bg-primary-soft': isOver && canDrop,
-                'border-primary/30 bg-primary-soft': canDrop && !isOver,
-                'border-border bg-surface-quiet': !canDrop,
+                "border-primary bg-primary-soft": isOver && canDrop,
+                "border-primary/30 bg-primary-soft": canDrop && !isOver,
+                "border-border bg-surface-quiet": !canDrop,
               },
             )}
           >
@@ -848,7 +894,7 @@ function RecipeBuilderInner() {
                       className="flex flex-wrap items-center gap-2 rounded-control border border-border bg-card px-3 py-2"
                     >
                       <span className="flex-1 min-w-32 text-sm font-medium text-text-primary">
-                        {food?.name ?? 'Unknown food'}
+                        {food?.name ?? "Unknown food"}
                       </span>
                       <label className="flex items-center gap-1 text-xs text-text-secondary">
                         <span className="sr-only">Grams for {food?.name}</span>
@@ -938,23 +984,23 @@ function RecipeBuilderInner() {
               )}
             </div>
             <dl className="grid grid-cols-4 gap-2">
-              {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
+              {(["kcal", "protein", "carb", "fat"] as const).map((key) => (
                 <div
                   key={key}
                   data-parity-root="ValueTile"
                   className={cn(
-                    'rounded-compact px-1.5 py-2 text-center',
-                    key === 'kcal' ? 'bg-card' : MACRO_TILE[key],
+                    "rounded-compact px-1.5 py-2 text-center",
+                    key === "kcal" ? "bg-card" : MACRO_TILE[key],
                   )}
                 >
                   <dt className="text-label uppercase text-text-primary">
-                    {key === 'kcal'
-                      ? 'kcal'
-                      : key === 'protein'
-                        ? 'P'
-                        : key === 'carb'
-                          ? 'C'
-                          : 'F'}
+                    {key === "kcal"
+                      ? "kcal"
+                      : key === "protein"
+                        ? "P"
+                        : key === "carb"
+                          ? "C"
+                          : "F"}
                   </dt>
                   <dd className={`${VALUE_CLASS} tabular-nums leading-tight`}>
                     {isPostMvp && override ? (
@@ -972,7 +1018,7 @@ function RecipeBuilderInner() {
                         className="h-7 w-16 mx-auto text-center"
                         aria-label={`Override ${key}`}
                       />
-                    ) : key === 'kcal' ? (
+                    ) : key === "kcal" ? (
                       macros.kcal
                     ) : (
                       `${macros[key]}g`
@@ -1067,7 +1113,7 @@ function RecipeBuilderInner() {
               <Legend>Meal role & tags</Legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {TAG_FAMILIES.map((family) => {
-                  const isMealTime = family === 'meal-time';
+                  const isMealTime = family === "meal-time";
                   const selected = isMealTime ? mealRoleIds : tagIds;
                   return (
                     <div

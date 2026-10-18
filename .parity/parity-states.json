@@ -5474,6 +5474,14 @@
       "click": "role=menuitem[name=\"Edit\" s]"
     }
   ],
+  "open-recipe-builder-chicken-rice-bowl": [
+    {
+      "click": "role=button[name=\"Actions for Chicken rice bowl\" s]"
+    },
+    {
+      "click": "role=menuitem[name=\"Edit\" s]"
+    }
+  ],
   "recipe-builder-name-missing": [
     {
       "use": "open-new-recipe"
@@ -5584,6 +5592,72 @@
     },
     {
       "press": "Tab"
+    }
+  ],
+  "recipe-photo-chosen": [
+    {
+      "use": "open-new-recipe"
+    }
+  ],
+  "recipe-photo-replace-hover": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Replace recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-remove-hover": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "hover": "[data-parity-root=\"RecipeBuilderPage\"] main >> role=button[name=\"Remove recipe photo\" s]"
+    }
+  ],
+  "recipe-photo-replace-focus-visible": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> [data-parity=\"recipe-visual\"]"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "recipe-photo-remove-focus-visible": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    },
+    {
+      "click": "[data-parity-root=\"RecipeBuilderPage\"] main >> [data-parity=\"recipe-visual\"]"
+    },
+    {
+      "press": "Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "recipe-photo-browser-refused": [
+    {
+      "use": "open-new-recipe"
+    }
+  ],
+  "recipe-photo-save-held": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-photo-upload-failed": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
+    }
+  ],
+  "recipe-photo-server-refused": [
+    {
+      "use": "open-recipe-builder-chicken-rice-bowl"
     }
   ],
   "recipe-builder-library-narrowed": [

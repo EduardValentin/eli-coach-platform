@@ -1,6 +1,6 @@
-import type { ComponentProps, Ref } from 'react';
-import { RefreshCw, X } from 'lucide-react';
-import { Button as ThemeButton } from './ThemeButton';
+import type { ComponentProps, Ref } from "react";
+import { RefreshCw, X } from "lucide-react";
+import { Button as ThemeButton } from "./ThemeButton";
 
 type MediaOverlayActionsProps = {
   subject: string;
@@ -8,7 +8,10 @@ type MediaOverlayActionsProps = {
   onRemove: () => void;
   disabled?: boolean;
   replaceRef?: Ref<HTMLButtonElement>;
-  replaceProps?: Pick<ComponentProps<'button'>, 'aria-invalid' | 'aria-describedby'>;
+  replaceProps?: Pick<
+    ComponentProps<"button">,
+    "aria-invalid" | "aria-describedby"
+  >;
 };
 
 export function MediaOverlayActions({
@@ -23,6 +26,7 @@ export function MediaOverlayActions({
     <div
       className="absolute inset-x-0 top-0 flex justify-end gap-2 bg-gradient-to-b from-surface-inverted/80 via-surface-inverted/40 to-transparent px-2 pt-2 pb-12"
       data-surface="inverted"
+      data-parity="media-overlay-actions"
     >
       <ThemeButton
         ref={replaceRef}

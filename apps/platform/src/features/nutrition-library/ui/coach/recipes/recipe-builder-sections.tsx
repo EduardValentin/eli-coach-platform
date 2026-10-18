@@ -480,6 +480,7 @@ export function RecipeVisualChoice({
         {shownSrc === null && (
           <Button
             aria-label="Upload recipe photo"
+            data-parity="recipe-photo-upload"
             onClick={chooseFile}
             ref={uploadButton}
             size="sm"
@@ -506,11 +507,19 @@ export function RecipeVisualChoice({
           value={chosen}
         />
       </div>
-      <div className="empty:hidden" id={problemId} role="alert">
+      <div
+        className="empty:hidden"
+        data-parity="recipe-photo-problem"
+        id={problemId}
+        role="alert"
+      >
         {photo.problem && <InlineProblem>{photo.problem}</InlineProblem>}
       </div>
       {upload === "failed" && (
-        <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>}>
+        <Alert
+          action={<AlertAction onClick={onRetry}>Try again</AlertAction>}
+          data-parity="recipe-photo-upload-failed"
+        >
           {UPLOAD_FAILED}
         </Alert>
       )}
