@@ -94,10 +94,9 @@ describe("public shell revalidation", () => {
       screen.getByRole("heading", { level: 3, name: "Hormone Harmony" }),
     ).toBeInTheDocument();
     await user.click(
-      within(screen.getByRole("group", { name: "Filter by Goal" })).getByRole(
-        "radio",
-        { name: "All" },
-      ),
+      within(
+        screen.getByRole("radiogroup", { name: "Filter by Goal" }),
+      ).getByRole("radio", { name: "All" }),
     );
     expect(
       screen.getByRole("heading", { level: 3, name: "Lean Kitchen" }),
