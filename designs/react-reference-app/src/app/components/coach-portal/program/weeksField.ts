@@ -45,7 +45,7 @@ export function useWeeksField({ blocks, index, status, dayOne, today, onCommit }
       return;
     }
     const withWeeks = blocks.map((other, at) => (at === index ? { ...block, weeks } : other));
-    const refusal = elapsedRefusal(status, weeks) ?? blockShorterThanElapsed(withWeeks, dayOne, today)[0];
+    const refusal = elapsedRefusal(status, weeks) ?? blockShorterThanElapsed(withWeeks, blocks, dayOne, today)[0];
     if (refusal) {
       setText(String(block.weeks));
       setProblem(blockingMessage(refusal));

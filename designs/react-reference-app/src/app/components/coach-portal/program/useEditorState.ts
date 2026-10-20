@@ -4,7 +4,14 @@ import { useTraining, type Exercise } from '../../../context/TrainingContext';
 import { canStartWork, workStartDate } from '../../../domain/coachingSubscription';
 import type { ClientJourney } from '../../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../../domain/onboardingAnswers';
-import type { Block, BlockType, Program, ProgramContent, ProgramVersion } from '../../../domain/program';
+import {
+  currentVersion,
+  type Block,
+  type BlockType,
+  type Program,
+  type ProgramContent,
+  type ProgramVersion,
+} from '../../../domain/program';
 import { currentPosition, weekdayFromOnboarding } from '../../../domain/programCalendar';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { blockingProblems, warnings, type RuleContext } from '../../../domain/programRules';
@@ -29,6 +36,7 @@ function ruleContextFor(
     level: program.level,
     startDate: subscription && !canStartWork(subscription, today) ? workStartDate(subscription) : null,
     detailsPending: journey.stage === 'needs-details',
+    publishedBlocks: currentVersion(program)?.content.plan.blocks ?? null,
     exercisesById: new Map(exercises.map(exercise => [exercise.id, exercise])),
   };
 }

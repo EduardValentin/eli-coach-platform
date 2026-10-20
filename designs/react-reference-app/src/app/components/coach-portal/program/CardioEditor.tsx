@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { WEEKDAYS, newId, type Block, type CardioSession, type CardioType } from '../../../domain/program';
+import { WEEKDAYS, newId, type Block, type CardioSession, type CardioType, type Weekday } from '../../../domain/program';
 import { CARDIO_INTENSITY_TEXT, STEPS_STEP } from '../../../domain/programDefaults';
 import { SettingsRow } from '../../SettingsSection';
 import { Button } from '../../ui/button';
@@ -43,6 +43,20 @@ function withoutCardio(block: Block, cardioId: string): Block {
     }),
   ) as Block['calendar'];
   return { ...block, calendar, cardioSessions: block.cardioSessions.filter(cardio => cardio.id !== cardioId) };
+}
+
+function withWeekday(block: Block, cardio: CardioSession, weekday: Weekday): Block {
+  const calendar = { ...block.calendar };
+  for (const day of WEEKDAYS) {
+    const entry = calendar[day];
+    if (entry.kind === 'cardio' && entry.cardioId === cardio.id) calendar[day] = { kind: 'rest' };
+  }
+  calendar[weekday] = { kind: 'cardio', cardioId: cardio.id };
+  return {
+    ...block,
+    calendar,
+    cardioSessions: block.cardioSessions.map(other => (other.id === cardio.id ? { ...cardio, weekday } : other)),
+  };
 }
 
 function newCardio(block: Block): CardioSession {
@@ -133,7 +147,7 @@ export function CardioEditor({ block, onChange }: CardioEditorProps) {
                       />
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
-                      <OptionSelect size="sm" label={`Weekday of cardio ${n}`} options={WEEKDAY_OPTIONS} value={cardio.weekday} onChange={weekday => replace({ ...cardio, weekday })} />
+                      <OptionSelect size="sm" label={`Weekday of cardio ${n}`} options={WEEKDAY_OPTIONS} value={cardio.weekday} onChange={weekday => onChange(withWeekday(block, cardio, weekday))} />
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
                       <OptionSelect size="sm" label={`Placement of cardio ${n}`} options={PLACEMENT_OPTIONS} value={cardio.placement} onChange={placement => replace({ ...cardio, placement })} />

@@ -44,7 +44,7 @@ function ProgramEditor(props: EditorProps) {
   const [addingBlock, setAddingBlock] = useState(false);
   const { content } = draft;
   const { today, ctx } = editor;
-  const cycleMode = journey.identity.gender === 'male' ? 'general' : program.cycleMode;
+  const { cycleMode } = program;
   const selected = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' as const } : editor.selected;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
 

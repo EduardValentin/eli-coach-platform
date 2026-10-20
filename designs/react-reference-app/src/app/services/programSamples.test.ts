@@ -11,11 +11,11 @@ describe('programForSeed', () => {
   });
 
   it('has no program for the none seed', () => {
-    expect(programForSeed('none', 'call-1', DAY_ONE, SAMPLE_EXERCISES)).toBeNull();
+    expect(programForSeed('none', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted')).toBeNull();
   });
 
   it('seeds a version 1 draft with an exercise in every row', () => {
-    const program = programForSeed('draft', 'call-1', DAY_ONE, SAMPLE_EXERCISES);
+    const program = programForSeed('draft', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
 
     expect(program?.callId).toBe('call-1');
     expect(program?.versions).toHaveLength(1);
@@ -27,14 +27,14 @@ describe('programForSeed', () => {
   });
 
   it('seeds a published version 1 dated at day one', () => {
-    const program = programForSeed('published', 'call-1', DAY_ONE, SAMPLE_EXERCISES);
+    const program = programForSeed('published', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
 
     expect(program?.versions).toHaveLength(1);
     expect(currentVersion(program!)).toMatchObject({ number: 1, publishedAt: DAY_ONE });
   });
 
   it('seeds a superseded version 1, a published version 2 and a version 3 draft', () => {
-    const program = programForSeed('two-versions', 'call-1', DAY_ONE, SAMPLE_EXERCISES);
+    const program = programForSeed('two-versions', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
 
     expect(program?.versions.map(version => [version.number, version.state])).toEqual([
       [1, 'superseded'],
@@ -48,5 +48,9 @@ describe('programForSeed', () => {
     expect(draftOf(program!)?.content.plan.blocks[0].id).not.toBe(
       currentVersion(program!)?.content.plan.blocks[0].id,
     );
+  });
+
+  it('gives the program the cycle mode it is seeded with', () => {
+    expect(programForSeed('draft', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'general')?.cycleMode).toBe('general');
   });
 });

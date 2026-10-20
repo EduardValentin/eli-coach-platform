@@ -127,6 +127,14 @@ export function copiedSessions(sessions: Session[]): Session[] {
   }));
 }
 
+function weekdayOfCardio(calendar: Record<Weekday, CalendarEntry>, cardio: CardioSession): Weekday {
+  const placed = WEEKDAYS.find(day => {
+    const entry = calendar[day];
+    return entry.kind === 'cardio' && entry.cardioId === cardio.id;
+  });
+  return placed ?? cardio.weekday;
+}
+
 export function newBlock(
   type: BlockType,
   weeks: number,
@@ -136,7 +144,12 @@ export function newBlock(
 ): Block {
   const shape = splitShapeFor(setup.trainingDays);
   const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays, type);
-  const cardioSessions = cardioDefaults(type);
+  const defaultCardio = cardioDefaults(type);
+  const calendar = spreadCalendar(
+    sessions.map(session => session.id),
+    defaultCardio,
+  );
+  const cardioSessions = defaultCardio.map(cardio => ({ ...cardio, weekday: weekdayOfCardio(calendar, cardio) }));
   const block: Block = {
     id: newId(),
     originId: newId(),
@@ -153,10 +166,7 @@ export function newBlock(
           text: fillTemplate(templateText(`split.${shape}`, language).text, { days: setup.trainingDays }),
         },
     targetMinutes: setup.sessionMinutes,
-    calendar: spreadCalendar(
-      sessions.map(session => session.id),
-      cardioSessions,
-    ),
+    calendar,
     sessions,
     cardioSessions,
     dailySteps: setup.dailySteps,

@@ -1,4 +1,5 @@
 import type { Exercise } from '../context/TrainingContext';
+import type { CycleMode } from '../domain/cycleMode';
 import { EQUIPMENT } from '../domain/exercises';
 import { contentWithFreshIds, type Program, type ProgramContent, type Row, type Session } from '../domain/program';
 import type { ProgramSetup } from '../domain/programOnboarding';
@@ -50,8 +51,8 @@ function filledSession(session: Session, sessionIndex: number, library: readonly
   return { ...session, rows };
 }
 
-function filledContent(library: readonly Exercise[]): ProgramContent {
-  const content = initialContent(SEED_SETUP);
+function filledContent(library: readonly Exercise[], cycleMode: CycleMode): ProgramContent {
+  const content = initialContent({ ...SEED_SETUP, cycleMode });
   return {
     ...content,
     plan: {
@@ -63,24 +64,24 @@ function filledContent(library: readonly Exercise[]): ProgramContent {
   };
 }
 
-function programOf(callId: string, versions: Program['versions']): Program {
+function programOf(callId: string, cycleMode: CycleMode, versions: Program['versions']): Program {
   return {
     callId,
     goal: SEED_SETUP.goal,
     language: SEED_SETUP.language,
-    cycleMode: SEED_SETUP.cycleMode,
+    cycleMode,
     level: SEED_SETUP.level,
     versions,
   };
 }
 
-function twoVersions(callId: string, publishedAt: Date, content: ProgramContent): Program {
+function twoVersions(callId: string, cycleMode: CycleMode, publishedAt: Date, content: ProgramContent): Program {
   const [first, ...rest] = content.plan.blocks;
   const raised: ProgramContent = {
     ...content,
     plan: { blocks: [{ ...first, dailySteps: 8000 }, ...rest] },
   };
-  return programOf(callId, [
+  return programOf(callId, cycleMode, [
     { number: 1, state: 'superseded', publishedAt, whatChanged: '', content },
     { number: 2, state: 'published', publishedAt, whatChanged: TWO_VERSIONS_WHAT_CHANGED, content: raised },
     { number: 3, state: 'draft', publishedAt: null, whatChanged: '', content: contentWithFreshIds(raised) },
@@ -92,15 +93,16 @@ export function programForSeed(
   callId: string,
   dayOne: Date | null,
   library: readonly Exercise[],
+  cycleMode: CycleMode,
 ): Program | null {
   if (seed === 'none') return null;
-  const content = filledContent(library);
+  const content = filledContent(library, cycleMode);
   const publishedAt = dayOne ?? new Date();
   if (seed === 'draft') {
-    return programOf(callId, [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content }]);
+    return programOf(callId, cycleMode, [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content }]);
   }
   if (seed === 'published') {
-    return programOf(callId, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content }]);
+    return programOf(callId, cycleMode, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content }]);
   }
-  return twoVersions(callId, publishedAt, content);
+  return twoVersions(callId, cycleMode, publishedAt, content);
 }

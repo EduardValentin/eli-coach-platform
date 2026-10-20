@@ -65,6 +65,7 @@ function sequenceProblems(content: ProgramContent, props: PlanOverviewProps) {
     level: props.level,
     startDate: null,
     detailsPending: false,
+    publishedBlocks: null,
     exercisesById: new Map(),
   };
   return blockingProblems(content, '', ctx).filter(finding => SEQUENCE_CODES.includes(finding.code));

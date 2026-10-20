@@ -46,6 +46,7 @@ export type RuleContext = {
   level: LevelHint;
   startDate: Date | null;
   detailsPending: boolean;
+  publishedBlocks: readonly Block[] | null;
   exercisesById: ReadonlyMap<string, Exercise>;
 };
 
@@ -164,20 +165,20 @@ function missingSessionProblems(
 }
 
 export function blockShorterThanElapsed(
-  blocks: readonly Block[],
+  draftBlocks: readonly Block[],
+  publishedBlocks: readonly Block[] | null,
   dayOne: Date | null,
   today: Date,
 ): RuleFinding<BlockingCode>[] {
-  if (!dayOne || blocks.length === 0) return [];
-  const position = currentPosition(blocks, dayOne, today);
-  if (position.status === 'before') return [];
-  const lastIndex = blocks.length - 1;
-  const blockIndex = position.status === 'in-plan' ? position.blockIndex : lastIndex;
+  if (!publishedBlocks || !dayOne) return [];
+  const position = currentPosition(publishedBlocks, dayOne, today);
+  if (position.status !== 'in-plan') return [];
   const weekOfPlan = Math.floor(differenceInCalendarDays(today, dayOne) / DAYS_PER_WEEK) + 1;
-  const weekOfBlock = weekOfPlan - blockSpan(blocks, blockIndex).startWeek + 1;
-  const block = blocks[blockIndex];
-  if (block.weeks >= weekOfBlock) return [];
-  return [{ code: 'block-shorter-than-elapsed', blockId: block.id, detail: String(weekOfBlock - 1) }];
+  const weekOfBlock = weekOfPlan - blockSpan(publishedBlocks, position.blockIndex).startWeek + 1;
+  const { originId } = publishedBlocks[position.blockIndex];
+  const block = draftBlocks.find(other => other.originId === originId);
+  if (block && block.weeks >= weekOfBlock) return [];
+  return [{ code: 'block-shorter-than-elapsed', blockId: block?.id, detail: String(weekOfBlock - 1) }];
 }
 
 export function blockingProblems(
@@ -189,7 +190,7 @@ export function blockingProblems(
   const findings = [
     ...sequenceProblems(blocks),
     ...missingSessionProblems(blocks, ctx),
-    ...blockShorterThanElapsed(blocks, ctx.dayOne, ctx.publishDay),
+    ...blockShorterThanElapsed(blocks, ctx.publishedBlocks, ctx.dayOne, ctx.publishDay),
   ];
   if (ctx.versionNumber >= 2 && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
   if (ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(ctx.publishDay))) {

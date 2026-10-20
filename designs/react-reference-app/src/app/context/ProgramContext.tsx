@@ -3,6 +3,7 @@ import { useAppState } from './AppContext';
 import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
 import { useTraining } from './TrainingContext';
 import { canStartWork, workStartDate } from '../domain/coachingSubscription';
+import { cycleModeOf, type CycleMode } from '../domain/cycleMode';
 import type { ClientJourney } from '../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../domain/onboardingAnswers';
 import {
@@ -17,7 +18,6 @@ import { weekdayFromOnboarding } from '../domain/programCalendar';
 import type { ProgramSetup } from '../domain/programOnboarding';
 import {
   blockingProblems,
-  blockShorterThanElapsed,
   type BlockingCode,
   type RuleContext,
   type RuleFinding,
@@ -43,6 +43,10 @@ export type ProgramContextType = {
 };
 
 const ProgramContext = createContext<ProgramContextType | null>(null);
+
+function seededCycleMode(journey: ClientJourney | null): CycleMode {
+  return (journey && cycleModeOf(journey.onboarding, journey.identity.gender)) ?? 'general';
+}
 
 export function dayOneOf(journey: ClientJourney | null): Date | null {
   return journey?.programReadyAt ?? null;
@@ -107,12 +111,12 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     const next = { ...programsRef.current };
     delete next[DEMO_JOURNEY_CALL_ID];
     delete next[AWAITING_REVIEW_CALL_ID];
-    const seeded = programForSeed(seed, DEMO_JOURNEY_CALL_ID, readyAt, library);
+    const seeded = programForSeed(seed, DEMO_JOURNEY_CALL_ID, readyAt, library, seededCycleMode(demoJourney));
     if (seeded) next[DEMO_JOURNEY_CALL_ID] = seeded;
-    const reference = seed === 'two-versions' ? programForSeed('published', AWAITING_REVIEW_CALL_ID, readyAt, library) : null;
+    const reference = seed === 'two-versions' ? programForSeed('published', AWAITING_REVIEW_CALL_ID, readyAt, library, seededCycleMode(journeyForCall(AWAITING_REVIEW_CALL_ID))) : null;
     if (reference) next[AWAITING_REVIEW_CALL_ID] = reference;
     commit(next);
-  }, [appState.programSeed, readyAt, commit]);
+  }, [appState.programSeed, readyAt, demoJourney, journeyForCall, commit]);
 
   const programFor = useCallback((callId: string) => programsByCall[callId], [programsByCall]);
   const programs = useCallback(() => Object.values(programsByCall), [programsByCall]);
@@ -203,12 +207,10 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
         level: program.level,
         startDate: subscription && !canStartWork(subscription, now) ? workStartDate(subscription) : null,
         detailsPending: journey?.stage === 'needs-details',
+        publishedBlocks: currentVersion(program)?.content.plan.blocks ?? null,
         exercisesById: new Map(exercisesRef.current.map(exercise => [exercise.id, exercise])),
       };
-      const problems = [
-        ...blockingProblems(draft.content, draft.whatChanged, context),
-        ...blockShorterThanElapsed(draft.content.plan.blocks, dayOne, now),
-      ];
+      const problems = blockingProblems(draft.content, draft.whatChanged, context);
       if (problems.length > 0) return { status: 'blocked', problems };
       commit({ ...programsRef.current, [callId]: publishedAfter(program, draft, now) });
       if (draft.number === 1) markProgramReady(callId, now);

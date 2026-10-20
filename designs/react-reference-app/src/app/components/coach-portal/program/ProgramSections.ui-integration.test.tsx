@@ -124,6 +124,25 @@ describe('program-wide sections', () => {
     expect(restDays()).toBe(before.restDays + 1);
   });
 
+  it('moving a cardio session to another weekday updates the calendar', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft');
+    await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
+    const week = within(main()).getByRole('group', { name: 'Week' });
+    const table = within(main()).getByRole('table', { name: 'Cardio sessions' });
+    const cardioDay = within(table).getByRole('combobox', { name: 'Weekday of cardio 1' });
+    expect(cardioDay).toHaveTextContent('Tuesday');
+    expect(within(week).getByRole('combobox', { name: 'Tuesday' })).toHaveTextContent('LISS 30 min');
+
+    // act
+    await user.click(cardioDay);
+    await user.click(screen.getByRole('option', { name: 'Saturday' }));
+
+    // assert
+    expect(within(week).getByRole('combobox', { name: 'Tuesday' })).toHaveTextContent('Rest');
+    expect(within(week).getByRole('combobox', { name: 'Saturday' })).toHaveTextContent('LISS 30 min');
+  });
+
   it('prefills one cycle rule per declared symptom', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jgender=female');
