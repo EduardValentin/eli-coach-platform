@@ -15,11 +15,8 @@ import { ExerciseVideoServer, type ExerciseVideoAnswer } from '../services/exerc
 import { useAppState } from './AppContext';
 import {
   archivedItem,
-  exerciseUsage,
-  isDeletable,
   restoredItemIn,
   type LibraryDeletion,
-  type LibraryUsage,
 } from '../domain/libraryLifecycle';
 
 export interface Exercise {
@@ -82,7 +79,6 @@ interface TrainingState {
   archiveExercise: (id: string) => void;
   restoreExercise: (id: string) => Exercise;
   deleteExercise: (id: string) => LibraryDeletion;
-  getExerciseUsage: (id: string) => LibraryUsage;
 
   // Goals
   goals: Goal[];
@@ -166,14 +162,10 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     setExercises(prev => prev.map(e => e.id === id ? restored : e));
     return restored;
   }, [exercises]);
-  const getExerciseUsage = useCallback((id: string): LibraryUsage =>
-    exerciseUsage(id, []),
-    []);
   const deleteExercise = useCallback((id: string): LibraryDeletion => {
-    if (!isDeletable(getExerciseUsage(id))) return 'in-use';
     setExercises(prev => prev.filter(e => e.id !== id));
     return 'deleted';
-  }, [getExerciseUsage]);
+  }, []);
 
   // ── Goal methods ────────────────────────────────────────────
   const createGoal = useCallback((clientId: string, type: GoalType): Goal => {
@@ -214,7 +206,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   return (
     <TrainingContext.Provider value={{
       exercises,
-      addExercise, updateExercise, uploadExerciseVideo, archiveExercise, restoreExercise, deleteExercise, getExerciseUsage,
+      addExercise, updateExercise, uploadExerciseVideo, archiveExercise, restoreExercise, deleteExercise,
       goals,
       createGoal, completeGoal,
       subscriptions, getClientSubscriptions, getClientActiveSubscription,

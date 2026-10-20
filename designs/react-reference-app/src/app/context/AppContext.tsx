@@ -40,6 +40,7 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
+import { PROGRAM_SEEDS, type ProgramSeed } from '../services/programSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
@@ -83,6 +84,7 @@ import {
 } from '../services/subscriptionService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import {
+  isBeforeStage,
   JOURNEY_GENDERS,
   type JourneyGender,
   type JourneyStage,
@@ -160,6 +162,7 @@ type AppState = {
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
   exerciseSeed: ExerciseSeed;
+  programSeed: ProgramSeed;
   exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
   foodSave: FoodSaveOutcome;
@@ -221,6 +224,7 @@ const defaultState: AppState = {
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
   exerciseSeed: 'seeded',
+  programSeed: 'none',
   exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
   foodSave: 'ok',
@@ -532,6 +536,18 @@ function parseDevParamsFromURL(): AppState {
     params.get('exseed'),
     defaultState.exerciseSeed,
   );
+  state.programSeed = optionOrDefault(
+    PROGRAM_SEEDS,
+    params.get('pseed'),
+    defaultState.programSeed,
+  );
+  if (
+    state.programSeed !== 'none' &&
+    state.programSeed !== 'draft' &&
+    isBeforeStage(state.journeyStage, 'program-ready')
+  ) {
+    state.journeyStage = 'program-ready';
+  }
   state.exerciseVideoUpload = optionOrDefault(
     EXERCISE_VIDEO_UPLOAD_OUTCOMES,
     params.get('exupload'),
@@ -646,6 +662,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
     url.searchParams.delete('exseed');
+    url.searchParams.delete('pseed');
     url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
     url.searchParams.delete('fsave');
@@ -784,6 +801,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.exerciseSeed !== defaultState.exerciseSeed) {
       url.searchParams.set('exseed', appState.exerciseSeed);
+    }
+    if (appState.programSeed !== defaultState.programSeed) {
+      url.searchParams.set('pseed', appState.programSeed);
     }
     if (appState.exerciseVideoUpload !== defaultState.exerciseVideoUpload) {
       url.searchParams.set('exupload', appState.exerciseVideoUpload);

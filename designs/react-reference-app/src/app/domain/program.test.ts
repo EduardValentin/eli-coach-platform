@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { initialContent } from './programSuggestions';
 import {
+  contentWithFreshIds,
   currentVersion,
   draftOf,
   newId,
@@ -115,5 +117,42 @@ describe('versions', () => {
 describe('newId', () => {
   it('returns a distinct id on every call', () => {
     expect(newId()).not.toBe(newId());
+  });
+});
+
+describe('contentWithFreshIds', () => {
+  const setup = {
+    goal: 'Lose fat',
+    level: 'beginner',
+    trainingDays: 3,
+    sessionMinutes: 60,
+    cycleMode: 'adapted',
+    language: 'en',
+    dailySteps: 6000,
+  } as const;
+
+  it('gives every block, session and row a new id and keeps the origin ids', () => {
+    const content = initialContent(setup);
+
+    const copy = contentWithFreshIds(content);
+
+    const [block] = content.plan.blocks;
+    const [copied] = copy.plan.blocks;
+    expect(copied.id).not.toBe(block.id);
+    expect(copied.originId).toBe(block.originId);
+    expect(copied.sessions[0].id).not.toBe(block.sessions[0].id);
+    expect(copied.sessions[0].originId).toBe(block.sessions[0].originId);
+    expect(copied.sessions[0].rows[0].id).not.toBe(block.sessions[0].rows[0].id);
+  });
+
+  it('points the calendar at the new session ids', () => {
+    const copy = contentWithFreshIds(initialContent(setup));
+
+    const [block] = copy.plan.blocks;
+    const sessionIds = block.sessions.map(session => session.id);
+    const calendarSessionIds = Object.values(block.calendar).flatMap(entry =>
+      entry.kind === 'session' ? [entry.sessionId] : [],
+    );
+    expect(calendarSessionIds.sort()).toEqual(sessionIds.sort());
   });
 });

@@ -26,6 +26,7 @@ import type {
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
 import {
+  isBeforeStage,
   JOURNEY_GENDERS,
   JOURNEY_STAGES,
   type JourneyGender,
@@ -71,6 +72,7 @@ import {
   RESOURCE_UPLOAD_OUTCOMES,
   RESOURCE_WRITE_OUTCOMES,
 } from '../services/resourceService';
+import { PROGRAM_SEEDS } from '../services/programSamples';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
@@ -1242,6 +1244,36 @@ export function DevToggle() {
                           {stage}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-program-seed" className={DEV_LABEL_CLASS}>
+                    Program
+                  </Label>
+                  <Select
+                    value={appState.programSeed}
+                    onValueChange={(value) => {
+                      const programSeed = optionOrDefault(PROGRAM_SEEDS, value, 'none');
+                      const needsPublished =
+                        programSeed !== 'none' &&
+                        programSeed !== 'draft' &&
+                        isBeforeStage(appState.journeyStage, 'program-ready');
+                      setAppState({
+                        programSeed,
+                        ...(needsPublished ? { journeyStage: 'program-ready' } : {}),
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="dev-program-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">No program</SelectItem>
+                      <SelectItem value="draft">Draft version 1</SelectItem>
+                      <SelectItem value="published">Version 1 published</SelectItem>
+                      <SelectItem value="two-versions">Two versions and a draft</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

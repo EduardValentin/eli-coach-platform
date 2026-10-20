@@ -145,3 +145,41 @@ export function positionLabel(session: Session, row: Row): string {
 export function newId(): string {
   return crypto.randomUUID();
 }
+
+function calendarWithIds(
+  calendar: Record<Weekday, CalendarEntry>,
+  sessionIds: ReadonlyMap<string, string>,
+  cardioIds: ReadonlyMap<string, string>,
+): Record<Weekday, CalendarEntry> {
+  const entries = WEEKDAYS.map((day): [Weekday, CalendarEntry] => {
+    const entry = calendar[day];
+    if (entry.kind === 'session') return [day, { kind: 'session', sessionId: sessionIds.get(entry.sessionId) ?? entry.sessionId }];
+    if (entry.kind === 'cardio') return [day, { kind: 'cardio', cardioId: cardioIds.get(entry.cardioId) ?? entry.cardioId }];
+    return [day, entry];
+  });
+  return Object.fromEntries(entries) as Record<Weekday, CalendarEntry>;
+}
+
+function blockWithFreshIds(block: Block): Block {
+  const sessionIds = new Map(block.sessions.map(session => [session.id, newId()]));
+  const cardioIds = new Map(block.cardioSessions.map(cardio => [cardio.id, newId()]));
+  return {
+    ...block,
+    id: newId(),
+    calendar: calendarWithIds(block.calendar, sessionIds, cardioIds),
+    sessions: block.sessions.map(session => ({
+      ...session,
+      id: sessionIds.get(session.id) as string,
+      rows: session.rows.map(row => ({ ...row, id: newId() })),
+    })),
+    cardioSessions: block.cardioSessions.map(cardio => ({ ...cardio, id: cardioIds.get(cardio.id) as string })),
+  };
+}
+
+export function contentWithFreshIds(content: ProgramContent): ProgramContent {
+  return {
+    ...structuredClone(content),
+    plan: { blocks: content.plan.blocks.map(block => blockWithFreshIds(structuredClone(block))) },
+    cycleRules: content.cycleRules.map(rule => ({ ...rule, id: newId() })),
+  };
+}

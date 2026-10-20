@@ -12,6 +12,7 @@ import { TrainingProvider } from "./context/TrainingContext";
 import { CheckinProvider } from "./context/CheckinContext";
 import { AssessmentCallProvider } from "./context/AssessmentCallContext";
 import { ClientJourneyProvider } from "./context/ClientJourneyContext";
+import { ProgramProvider } from "./context/ProgramContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { ResourceProvider } from "./context/ResourceContext";
 import { Store } from "./pages/Store";
@@ -81,6 +82,7 @@ function Root() {
           <CycleProvider>
             <AssessmentCallProvider>
             <ClientJourneyProvider>
+            <ProgramProvider>
             <NotificationProvider>
             <CheckinProvider>
             <MessagingProvider>
@@ -95,6 +97,7 @@ function Root() {
             </MessagingProvider>
             </CheckinProvider>
             </NotificationProvider>
+            </ProgramProvider>
             </ClientJourneyProvider>
             </AssessmentCallProvider>
           </CycleProvider>

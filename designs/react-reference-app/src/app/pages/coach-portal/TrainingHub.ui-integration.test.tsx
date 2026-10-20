@@ -5,7 +5,10 @@ import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
 import { AppProvider } from '../../context/AppContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -31,12 +34,18 @@ function renderHub(path = '/coach/training') {
       <AppProvider>
         <ClientProfileProvider>
           <TrainingProvider>
-            <Routes>
-              <Route path="/coach/training" element={<TrainingHub />} />
-              <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
-              <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
-            </Routes>
-            <Toaster />
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <ProgramProvider>
+                  <Routes>
+                    <Route path="/coach/training" element={<TrainingHub />} />
+                    <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
+                    <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
+                  </Routes>
+                  <Toaster />
+                </ProgramProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
           </TrainingProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -409,6 +418,33 @@ describe('archiving an exercise', () => {
 });
 
 describe('deleting an exercise', () => {
+  it('marks an exercise in use and says how often it is used', async () => {
+    // arrange
+    window.history.replaceState(null, '', '/?pseed=published');
+    const user = renderLibrary();
+    await user.click(
+      within(exerciseRow('Barbell Back Squat')).getByRole('button', { name: 'Actions for Barbell Back Squat' }),
+    );
+
+    // act
+    await user.hover(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    // assert
+    expect(await screen.findByText(/^Used in 1 program$/)).toBeInTheDocument();
+  });
+
+  it('is unavailable while a program uses it', async () => {
+    // arrange
+    window.history.replaceState(null, '', '/?pseed=published');
+    const user = renderLibrary();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Barbell Back Squat' }));
+
+    // assert
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('asks to confirm, naming the exercise and saying it is removed for good', async () => {
     // arrange
     const user = renderLibrary();
