@@ -21,15 +21,18 @@ describe('program-wide sections', () => {
   it('requires what changed from version 2', async () => {
     // arrange
     const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
-    const checklist = screen.getByRole('region', { name: 'Before you can publish' });
-    expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    const checklist = screen.getByRole('dialog', { name: 'Publish checklist' });
+    expect(within(checklist).getByRole('button', { name: 'Publish' })).toBeDisabled();
     expect(within(checklist).getByText('Say what changed and why')).toBeInTheDocument();
+    await user.click(within(checklist).getByRole('button', { name: 'Keep editing' }));
     await user.click(within(rail()).getByRole('button', { name: 'Header & focus' }));
 
     // act
     await user.type(within(main()).getByRole('textbox', { name: /What changed and why/ }), 'Raised the squat volume');
 
     // assert
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(screen.queryByText('Say what changed and why')).not.toBeInTheDocument();
   });
 

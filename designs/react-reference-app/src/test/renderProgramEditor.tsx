@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { vi } from 'vitest';
+import { Toaster } from '../app/components/ui/sonner';
 import { AppProvider } from '../app/context/AppContext';
 import { AssessmentCallProvider } from '../app/context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../app/context/ClientJourneyContext';
@@ -46,6 +47,7 @@ export function renderProgramEditor(search: string, path = '/coach/clients/c1/pr
                       <Route path="/coach/clients/:id/program" element={<p>Program page</p>} />
                       <Route path="/coach/clients/:id" element={<p>Client page</p>} />
                     </Routes>
+                    <Toaster />
                   </ProgramProvider>
                 </ClientJourneyProvider>
               </AssessmentCallProvider>

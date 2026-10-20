@@ -13,6 +13,7 @@ import type { EditorSection } from '../../components/coach-portal/program/editor
 import { HeaderSection } from '../../components/coach-portal/program/HeaderSection';
 import { LifestyleSection } from '../../components/coach-portal/program/LifestyleSection';
 import { NutritionSection } from '../../components/coach-portal/program/NutritionSection';
+import { PublishChecklist } from '../../components/coach-portal/program/PublishChecklist';
 import { PlanOverview } from '../../components/coach-portal/program/PlanOverview';
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
@@ -42,6 +43,7 @@ function ProgramEditor(props: EditorProps) {
   const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const { content } = draft;
   const { today, ctx } = editor;
   const { cycleMode } = program;
@@ -57,6 +59,11 @@ function ProgramEditor(props: EditorProps) {
       editor.replaceBlock(blockWithPick(pickedBlock, picker.target, exercise, exercises, clientEquipment(journey)));
     }
     picker.close();
+  }
+
+  function requestPublish() {
+    if (editor.problems.length > 0 || editor.warnings.length > 0) setChecklistOpen(true);
+    else editor.publish();
   }
 
   function selectFromRail(section: EditorSection) {
@@ -136,10 +143,10 @@ function ProgramEditor(props: EditorProps) {
           </Button>
         }
         onPreview={() => {}}
-        onPublish={editor.publish}
+        onPublish={requestPublish}
         onDiscard={editor.discard}
-        problems={editor.problems}
-        warningsCount={editor.warningsCount}
+        opensOn={editor.opensOn}
+        warningsCount={editor.warnings.length}
       />
       <div className="flex min-h-0 flex-1">
         {rail.open && (
@@ -189,6 +196,14 @@ function ProgramEditor(props: EditorProps) {
           />
         )}
       </div>
+      <PublishChecklist
+        open={checklistOpen}
+        onOpenChange={setChecklistOpen}
+        problems={editor.problems}
+        warnings={editor.warnings}
+        onPublish={editor.publish}
+        onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+      />
       <AddBlockDialog
         open={addingBlock}
         onOpenChange={setAddingBlock}

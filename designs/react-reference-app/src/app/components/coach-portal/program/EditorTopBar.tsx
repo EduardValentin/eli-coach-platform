@@ -1,11 +1,9 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, Eye, Send, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import type { ProgramVersion } from '../../../domain/program';
-import { blockingMessage, type BlockingCode, type RuleFinding } from '../../../domain/programRules';
 import { clientDetailPathForJourney, formatJourneyDate } from '../../../utils/journeyLabels';
-import { InlineProblem } from '../../InlineProblem';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
@@ -18,7 +16,7 @@ type EditorTopBarProps = {
   onPreview: () => void;
   onPublish: () => void;
   onDiscard: () => void;
-  problems: RuleFinding<BlockingCode>[];
+  opensOn: Date | null;
   warningsCount: number;
 };
 
@@ -36,13 +34,11 @@ export function EditorTopBar({
   onPreview,
   onPublish,
   onDiscard,
-  problems,
+  opensOn,
   warningsCount,
 }: EditorTopBarProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  const checklistId = useId();
   const name = `${journey.identity.firstName} ${journey.identity.lastName}`;
-  const blocked = problems.length > 0;
 
   return (
     <>
@@ -77,23 +73,13 @@ export function EditorTopBar({
             <Eye aria-hidden="true" />
             <span className="hidden lg:inline">Preview as client</span>
           </Button>
-          <Button aria-describedby={blocked ? checklistId : undefined} disabled={blocked} onClick={onPublish}>
+          {opensOn && <p className="hidden text-sm text-text-secondary sm:block">{`Publishing opens on ${formatJourneyDate(opensOn)}`}</p>}
+          <Button disabled={opensOn !== null} onClick={onPublish}>
             <Send aria-hidden="true" />
             Publish
           </Button>
         </div>
       </header>
-      {blocked && (
-        <section aria-label="Before you can publish" className="shrink-0 border-b border-border bg-card px-4 py-2 lg:px-6">
-          <ul id={checklistId} className="grid gap-1">
-            {problems.map(problem => (
-              <li key={`${problem.code}:${problem.blockId ?? ''}`}>
-                <InlineProblem>{blockingMessage(problem)}</InlineProblem>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
       <ConfirmDialog
         open={confirmingDiscard}
         onOpenChange={setConfirmingDiscard}

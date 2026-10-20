@@ -1,4 +1,6 @@
+import { isAfter, startOfDay } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { dayOneOf, usePrograms } from '../../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../../context/TrainingContext';
 import { canStartWork, workStartDate } from '../../../domain/coachingSubscription';
@@ -86,7 +88,10 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   }
 
   function publish() {
-    if (publishDraft(program.callId, new Date()).status === 'published') navigate(programPath);
+    const outcome = publishDraft(program.callId, new Date());
+    if (outcome.status === 'blocked') return;
+    toast.success(`Version ${outcome.version.number} published`);
+    navigate(programPath);
   }
 
   function discard() {
@@ -99,7 +104,8 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     ctx,
     selected,
     problems: blockingProblems(content, draft.whatChanged, ctx),
-    warningsCount: warnings(content, ctx).length,
+    warnings: warnings(content, ctx),
+    opensOn: ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(today)) ? ctx.startDate : null,
     select,
     updateBlocks,
     replaceBlock,
