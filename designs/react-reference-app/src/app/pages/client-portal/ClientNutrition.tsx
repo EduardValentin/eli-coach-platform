@@ -42,7 +42,7 @@ import {
   MACRO_DOT,
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
-import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+import { ResponsiveSheetDialog } from '../../components/ResponsiveSheetDialog';
 import { Reading } from '../../components/Reading';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';

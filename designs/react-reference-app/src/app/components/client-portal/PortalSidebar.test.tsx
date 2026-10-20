@@ -101,9 +101,7 @@ describe('PortalSidebar prototype mode', () => {
 
     // act
     const postMvpLinks = [
-      'My Plan',
       'Messages',
-      'History',
       'Nutrition',
       'Cycle',
     ].flatMap((name) => screen.queryAllByRole('link', { name }));
@@ -118,9 +116,7 @@ describe('PortalSidebar prototype mode', () => {
 
     // act
     const postMvpLinks = [
-      'My Plan',
       'Messages',
-      'History',
       'Nutrition',
     ].flatMap((name) => screen.queryAllByRole('link', { name }));
 
@@ -219,7 +215,7 @@ describe('PortalSidebar mobile tabs', () => {
     expect(within(bar).queryByRole('link', { name: 'Resources' })).toBeNull();
   });
 
-  it('caps the bar at four tabs in Post-MVP and moves Profile under More', () => {
+  it('caps the bar at four tabs in Post-MVP', () => {
     // arrange
     renderSidebar({ search: '?scope=post-mvp' });
 
@@ -230,8 +226,7 @@ describe('PortalSidebar mobile tabs', () => {
       .map((link) => link.textContent);
 
     // assert
-    expect(tabNames).toEqual(['Dashboard', 'My Plan', 'Messages', 'Check-ins']);
-    expect(within(bar).queryByRole('link', { name: 'Profile' })).toBeNull();
+    expect(tabNames).toEqual(['Dashboard', 'Messages', 'Check-ins', 'Profile']);
   });
 });
 

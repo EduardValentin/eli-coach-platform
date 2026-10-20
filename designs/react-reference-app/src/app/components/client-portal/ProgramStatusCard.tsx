@@ -164,9 +164,9 @@ export function ProgramStatusCard() {
                 buttonVariants({ variant: 'primary', size: 'sm' }),
                 'w-full sm:w-auto',
               )}
-              to="/portal/plan"
+              to="/portal/program"
             >
-              See my plan
+              See my program
             </Link>
           )}
 

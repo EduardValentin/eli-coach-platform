@@ -75,6 +75,53 @@ describe('prototype scope', () => {
   });
 });
 
+function JourneyStageProbe() {
+  const { appState } = useAppState();
+
+  return <p>stage {appState.journeyStage}</p>;
+}
+
+function renderJourneyStage(search: string) {
+  window.history.replaceState(null, '', `/${search}`);
+
+  return render(
+    <MemoryRouter>
+      <AppProvider>
+        <JourneyStageProbe />
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('journey stage dev param', () => {
+  it('keeps program-ready in MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?jstage=program-ready');
+
+    // assert
+    expect(screen.getByText('stage program-ready')).toBeInTheDocument();
+  });
+
+  it('ignores review-call-scheduled in MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?jstage=review-call-scheduled');
+
+    // assert
+    expect(screen.getByText('stage approved')).toBeInTheDocument();
+  });
+
+  it('reads review-call-scheduled in Post-MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?scope=post-mvp&jstage=review-call-scheduled');
+
+    // assert
+    expect(screen.getByText('stage review-call-scheduled')).toBeInTheDocument();
+  });
+});
+
 function SubscriptionParamsProbe() {
   const { appState, setAppState } = useAppState();
 

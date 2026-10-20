@@ -5,10 +5,10 @@ import {
   DialogDescription,
   DialogTitle,
   type DialogDismissal,
-} from '../ui/dialog';
-import { BottomSheet } from '../ui/bottom-sheet';
-import { useIsMobile } from '../ui/use-mobile';
-import { cn } from '../ui/utils';
+} from './ui/dialog';
+import { BottomSheet } from './ui/bottom-sheet';
+import { useIsMobile } from './ui/use-mobile';
+import { cn } from './ui/utils';
 
 type SheetDialogWidth = 'full' | 'fit';
 

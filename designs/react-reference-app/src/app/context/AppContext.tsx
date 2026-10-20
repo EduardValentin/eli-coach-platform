@@ -371,7 +371,7 @@ function parseDevParamsFromURL(): AppState {
   const journeyStage =
     journeyStageParam === 'paid' ? 'invited' : journeyStageParam;
   const isPostMvpJourneyStage =
-    journeyStage === 'program-ready' || journeyStage === 'review-call-scheduled';
+    journeyStage === 'review-call-scheduled';
   if (
     journeyStage &&
     (validJourneyStages as readonly string[]).includes(journeyStage) &&

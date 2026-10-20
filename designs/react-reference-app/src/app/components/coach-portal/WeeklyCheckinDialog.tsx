@@ -23,7 +23,7 @@ import {
   SheetDialogBody,
   SheetDialogFooter,
   SheetDialogHeader,
-} from '../workout/ResponsiveSheetDialog';
+} from '../ResponsiveSheetDialog';
 
 export type WeeklyCheckinMode = 'set-up' | 'change';
 

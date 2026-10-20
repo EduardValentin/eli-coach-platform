@@ -302,7 +302,7 @@ describe('the empty exercise library seed', () => {
 });
 
 describe('the Training page in MVP mode', () => {
-  it('is the exercise library, without the plan tabs', () => {
+  it('is the exercise library', () => {
     // arrange
     // act
     renderHub();
@@ -325,7 +325,7 @@ describe('the Training page in MVP mode', () => {
     expect(screen.getByText('Exercise editor new')).toBeInTheDocument();
   });
 
-  it('keeps the plan tabs in Post-MVP mode', () => {
+  it('is the same library in Post-MVP mode', () => {
     // arrange
     window.history.replaceState(null, '', '/?scope=post-mvp');
 
@@ -333,35 +333,9 @@ describe('the Training page in MVP mode', () => {
     renderHub();
 
     // assert
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Training & Programs' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Client Plans' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toBeInTheDocument();
-  });
-
-  it('opens the tab the link names in Post-MVP mode', () => {
-    // arrange
-    window.history.replaceState(null, '', '/?scope=post-mvp');
-
-    // act
-    renderHub('/coach/training?tab=exercises&type=cardio');
-
-    // assert
-    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
-  });
-
-  it('falls back to Client Plans for a tab it does not know', () => {
-    // arrange
-    window.history.replaceState(null, '', '/?scope=post-mvp');
-
-    // act
-    renderHub('/coach/training?tab=nope');
-
-    // assert
-    expect(screen.getByRole('tab', { name: 'Client Plans' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: 'Exercises' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 });
 
@@ -435,34 +409,6 @@ describe('archiving an exercise', () => {
 });
 
 describe('deleting an exercise', () => {
-  it('marks an exercise in use and says how often it is used', async () => {
-    // arrange
-    const user = renderLibrary();
-    await user.click(
-      within(exerciseRow('Barbell Back Squat')).getByRole('button', { name: 'Actions for Barbell Back Squat' }),
-    );
-
-    // act
-    await user.hover(screen.getByRole('menuitem', { name: 'Delete' }));
-
-    // assert
-    expect(await screen.findByText(/^Used in 2 templates and \d+ plans?$/)).toBeInTheDocument();
-  });
-
-  it('is unavailable while a plan uses it', async () => {
-    // arrange
-    const user = renderLibrary();
-
-    // act
-    await user.click(screen.getByRole('button', { name: 'Actions for Barbell Back Squat' }));
-
-    // assert
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
-  });
-
   it('asks to confirm, naming the exercise and saying it is removed for good', async () => {
     // arrange
     const user = renderLibrary();

@@ -133,9 +133,9 @@ describe('the program status card', () => {
     expect(
       screen.getByText("Head to your plan whenever you're ready."),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: 'See my plan' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'See my program' })).toHaveAttribute(
       'href',
-      '/portal/plan',
+      '/portal/program',
     );
   });
 

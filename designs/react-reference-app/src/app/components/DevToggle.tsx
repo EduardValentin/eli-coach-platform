@@ -379,9 +379,7 @@ export function DevToggle() {
   const { appState, setAppState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const journeyStages = JOURNEY_STAGES.filter(
-    (stage) =>
-      isPostMvp ||
-      (stage !== 'program-ready' && stage !== 'review-call-scheduled'),
+    (stage) => isPostMvp || stage !== 'review-call-scheduled',
   );
   const { replaceBookings, settings: callSettings, replaceMeetingLink } =
     useAssessmentCalls();
@@ -488,8 +486,7 @@ export function DevToggle() {
     const prototypeMode = parsePrototypeModeControl(value);
     const journeyStage =
       prototypeMode === 'mvp' &&
-      (appState.journeyStage === 'program-ready' ||
-        appState.journeyStage === 'review-call-scheduled')
+      appState.journeyStage === 'review-call-scheduled'
         ? 'approved'
         : appState.journeyStage;
 

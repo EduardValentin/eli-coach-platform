@@ -1,19 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
   MessageSquare,
   Calendar,
-  Activity,
-  Archive,
   Flame,
-  History,
   Pencil,
   Percent,
-  Plus,
-  ChevronDown,
-  ChevronUp,
   Droplet,
   FolderOpen,
   UserCog,
@@ -27,7 +20,6 @@ import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
-import { formatVolume } from '../../utils/units';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import {
   PORTAL_PAGE_TITLE_CLASS,
@@ -63,16 +55,6 @@ import {
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { Button, buttonVariants } from '../../components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '../../components/ui/alert-dialog';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -99,16 +81,11 @@ function RosterClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
-    getClientActivePlan,
-    getClientPastPlans,
     getClientActiveGoal,
     getClientGoals,
     getClientActiveSubscription,
     createGoal,
     completeGoal,
-    completePlanInstance,
-    getClientWorkoutHistory,
-    exercises,
   } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { getCurrentPhase, getClientProfile } = useCycle();
@@ -136,8 +113,6 @@ function RosterClientDetails() {
   const phase = getCurrentPhase(clientId);
   const menstrualProfile = getClientProfile(clientId);
 
-  const activePlan = getClientActivePlan(clientId);
-  const pastPlans = getClientPastPlans(clientId);
   const activeGoal = getClientActiveGoal(dataClientId);
   const allGoals = getClientGoals(dataClientId);
   const suggestedGoalType = useMemo<GoalType | undefined>(() => {
@@ -156,12 +131,6 @@ function RosterClientDetails() {
   const showsJourney =
     journey !== null && !isBeforeStage(journey.stage, 'account-created');
   const heightCm = profile?.heightCm ?? 0;
-
-  // Confirm dialogs
-  const [showEndPlan, setShowEndPlan] = useState(false);
-
-  // Past plans expand
-  const [pastPlansExpanded, setPastPlansExpanded] = useState(false);
 
   // Schedule check-in dialog
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -183,13 +152,6 @@ function RosterClientDetails() {
   const handleStartGoal = (type: GoalType) => {
     createGoal(dataClientId, type);
     toast.success(`${type} goal created`);
-  };
-
-  const handleEndPlan = () => {
-    if (!activePlan) return;
-    completePlanInstance(activePlan.id);
-    toast.success('Plan completed');
-    setShowEndPlan(false);
   };
 
   const handleScheduleCheckin = () => {
@@ -245,9 +207,7 @@ function RosterClientDetails() {
           <div className="min-w-0">
             <h1 className={`${PORTAL_PAGE_TITLE_CLASS} mb-2`}>{clientName}</h1>
             <p className="text-text-secondary">
-              {isPostMvp && activePlan
-                ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}`
-                : 'Active Client'}
+              Active Client
             </p>
             {activeSubscription && (
               <div className="mt-2">
@@ -396,67 +356,6 @@ function RosterClientDetails() {
           />
         )}
 
-        {isPostMvp && (
-          <PortalWidget
-            presentation="coach"
-            title="Active Plan"
-            icon={Activity}
-            headingId="active-plan-heading"
-            className="h-full"
-          >
-            {activePlan ? (
-              <div>
-                <h3 className="text-base font-medium text-text-primary mb-2">
-                  {activePlan.name}
-                </h3>
-
-                <div className="flex gap-1 mb-3">
-                  {activePlan.weeks.map((week, i) => (
-                    <div
-                      key={week.id}
-                      className={`h-2 flex-1 rounded-full ${
-                        i < activePlan.currentWeekNumber - 1
-                          ? 'bg-primary'
-                          : i === activePlan.currentWeekNumber - 1
-                            ? 'bg-primary/50'
-                            : 'bg-surface-muted'
-                      } ${week.isDeload ? 'ring-1 ring-training-recovery' : ''}`}
-                    />
-                  ))}
-                </div>
-
-                <p className="text-xs text-text-secondary mb-4">
-                  Week {activePlan.currentWeekNumber} of{' '}
-                  {activePlan.weeks.length} · Started {activePlan.startDate}
-                </p>
-
-                <Button
-                  onClick={() => setShowEndPlan(true)}
-                  variant="outline"
-                  className="w-full"
-                >
-                  End Plan
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Activity size={22} className="text-primary" />
-                </div>
-                <p className="text-sm text-text-secondary">No active plan</p>
-                <Button
-                  onClick={() =>
-                    navigate(`/coach/training/builder/${clientId}`)
-                  }
-                  variant="primary"
-                >
-                  <Plus size={16} /> Create Plan
-                </Button>
-              </div>
-            )}
-          </PortalWidget>
-        )}
-
         {isPostMvp &&
           (() => {
             const nutritionPlan = getNutritionPlan(clientId);
@@ -581,223 +480,37 @@ function RosterClientDetails() {
       </div>
 
       {/* Secondary detail section */}
-      <div
-        className={cn('grid grid-cols-1 gap-6', {
-          'lg:grid-cols-3': isPostMvp,
-        })}
-      >
-        {/* Workout History */}
-        {isPostMvp && (
-          <PortalWidget
-            presentation="coach"
-            title="Workout History"
-            icon={History}
-            headingId="workout-history-heading"
-            className="lg:col-span-2 self-start"
-            action={
-              <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/history`}>
-                View All ({getClientWorkoutHistory(dataClientId).length})
-              </WidgetLink>
-            }
-          >
-            <div className="space-y-4">
-              {getClientWorkoutHistory(dataClientId).length === 0 ? (
-                <div className="text-center py-8">
-                  <Activity
-                    size={28}
-                    className="text-text-secondary mx-auto mb-2"
-                  />
-                  <p className="text-sm text-text-secondary">
-                    No completed workouts yet
-                  </p>
-                </div>
-              ) : (
-                getClientWorkoutHistory(dataClientId).map((wl) => {
-                  const durationMin = wl.duration
-                    ? Math.round(wl.duration / 60)
-                    : 0;
-                  const dateStr = new Date(wl.startedAt).toLocaleDateString(
-                    'en-US',
-                    { month: 'short', day: 'numeric' },
-                  );
-                  const exerciseNames = wl.exercises
-                    .map(
-                      (el) =>
-                        exercises.find((e) => e.id === el.exerciseId)?.name,
-                    )
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .join(', ');
-                  const hasSwaps = wl.exercises.some((e) => e.wasSwapped);
-
-                  return (
-                    <Link
-                      key={wl.id}
-                      to={`/coach/clients/${clientId}/workout/${wl.id}`}
-                      className="flex items-center justify-between p-4 rounded-card border border-border-subtle bg-surface-quiet hover:border-border hover:bg-surface-quiet transition-colors group"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-sm font-medium text-text-primary truncate">
-                            {exerciseNames}
-                            {wl.exercises.length > 2
-                              ? ` +${wl.exercises.length - 2}`
-                              : ''}
-                          </p>
-                          {hasSwaps && (
-                            <Badge
-                              tone="brand-secondary"
-                              className="shrink-0"
-                            >
-                              Swap
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-text-secondary">
-                          {dateStr} · {durationMin} min ·{' '}
-                          {formatVolume(wl.totalVolume || 0, weightUnit)}
-                        </p>
-                      </div>
-                      <Badge tone="success" className="shrink-0 ml-3">
-                        Completed
-                      </Badge>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </PortalWidget>
-        )}
-
-        {/* Right column: Profile Details + Past Plans */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Profile Details */}
-          <ProfileDetailsWidget
-            presentation="coach"
-            profile={profile}
-            units={{ weightUnit, heightUnit }}
-            headingId="profile-details-heading"
-            action={
-              <Button asChild variant="ghost" size="icon-sm">
-                <Link
-                  to={`/coach/clients/${clientId}/edit`}
-                  aria-label="Edit profile details"
-                >
-                  <Pencil aria-hidden="true" />
-                </Link>
-              </Button>
-            }
-          >
-            {menstrualProfile && (
-              <Reading
-                label="Cycle"
-                value={`${menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} · ${menstrualProfile.averageCycleLength}-day cycle`}
-              />
-            )}
-            {menstrualProfile && menstrualProfile.conditions.length > 0 && (
-              <Reading
-                label="Conditions"
-                value={menstrualProfile.conditions.join(', ')}
-              />
-            )}
-          </ProfileDetailsWidget>
-
-          {/* Past Plans */}
-          {isPostMvp && pastPlans.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border-subtle"
-            >
-              <button
-                onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
-                className="w-full flex items-center justify-between"
+      <div className="grid grid-cols-1 gap-6">
+        <ProfileDetailsWidget
+          presentation="coach"
+          profile={profile}
+          units={{ weightUnit, heightUnit }}
+          headingId="profile-details-heading"
+          action={
+            <Button asChild variant="ghost" size="icon-sm">
+              <Link
+                to={`/coach/clients/${clientId}/edit`}
+                aria-label="Edit profile details"
               >
-                <h2
-                  className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}
-                >
-                  <Archive
-                    size={18}
-                    className="text-brand-secondary"
-                    aria-hidden="true"
-                  />
-                  Past Plans
-                  <Badge tone="muted">{pastPlans.length}</Badge>
-                </h2>
-                {pastPlansExpanded ? (
-                  <ChevronUp size={18} className="text-text-secondary" />
-                ) : (
-                  <ChevronDown size={18} className="text-text-secondary" />
-                )}
-              </button>
-
-              <AnimatePresence>
-                {pastPlansExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden mt-4 space-y-3"
-                  >
-                    {pastPlans.map((plan) => {
-                      const goal = allGoals.find((g) => g.id === plan.goalId);
-                      return (
-                        <div
-                          key={plan.id}
-                          className="p-4 rounded-control border border-border-subtle bg-surface-quiet"
-                        >
-                          <p className="text-sm font-medium text-text-primary mb-1">
-                            {plan.name}
-                          </p>
-                          {goal && (
-                            <Badge tone="muted" className="mb-1">
-                              {goal.type}
-                            </Badge>
-                          )}
-                          <p className="text-xs text-text-secondary">
-                            {plan.startDate} — {plan.endDate} ·{' '}
-                            {plan.weeks.length} weeks
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                <Pencil aria-hidden="true" />
+              </Link>
+            </Button>
+          }
+        >
+          {menstrualProfile && (
+            <Reading
+              label="Cycle"
+              value={`${menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} · ${menstrualProfile.averageCycleLength}-day cycle`}
+            />
           )}
-        </div>
+          {menstrualProfile && menstrualProfile.conditions.length > 0 && (
+            <Reading
+              label="Conditions"
+              value={menstrualProfile.conditions.join(', ')}
+            />
+          )}
+        </ProfileDetailsWidget>
       </div>
-
-      {/* End Plan Dialog */}
-      <AlertDialog open={showEndPlan} onOpenChange={setShowEndPlan}>
-        <AlertDialogContent className="sm:max-w-md rounded-card">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-text-primary">
-              End this plan?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
-              <span className="font-medium text-text-primary">
-                "{activePlan?.name}"
-              </span>{' '}
-              will be marked as completed and moved to past plans.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleEndPlan}
-              className="flex-1 rounded-control"
-            >
-              End Plan
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <CheckinSchedulerSheet
         open={showScheduleDialog}

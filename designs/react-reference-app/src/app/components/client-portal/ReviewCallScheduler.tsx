@@ -17,7 +17,7 @@ import {
   SheetDialogBody,
   SheetDialogFooter,
   SheetDialogHeader,
-} from '../workout/ResponsiveSheetDialog';
+} from '../ResponsiveSheetDialog';
 
 const BOOKING_COPY = {
   title: 'Book your review call',

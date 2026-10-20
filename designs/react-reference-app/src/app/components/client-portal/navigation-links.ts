@@ -1,10 +1,8 @@
 import {
   Activity,
-  Calendar,
   CalendarCheck,
   Droplet,
   FolderOpen,
-  History,
   MessageSquare,
   Settings,
   UserCircle,
@@ -27,13 +25,6 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     tab: true,
   },
   {
-    name: 'My Plan',
-    href: '/portal/plan',
-    icon: Calendar,
-    postMvp: true,
-    tab: true,
-  },
-  {
     name: 'Messages',
     href: '/portal/messages',
     icon: MessageSquare,
@@ -53,12 +44,6 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     tab: true,
   },
   { name: 'Cycle', href: '/portal/cycle', icon: Droplet, postMvp: true },
-  {
-    name: 'History',
-    href: '/portal/history',
-    icon: History,
-    postMvp: true,
-  },
   {
     name: 'Nutrition',
     href: '/portal/nutrition',

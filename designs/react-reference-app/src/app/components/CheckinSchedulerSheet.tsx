@@ -4,7 +4,7 @@ import {
   SheetDialogBody,
   SheetDialogFooter,
   SheetDialogHeader,
-} from './workout/ResponsiveSheetDialog';
+} from './ResponsiveSheetDialog';
 import { DateTimePicker } from './DateTimePicker';
 import { AssessmentSlotPicker } from './AssessmentSlotPicker';
 import { Button } from './ThemeButton';
