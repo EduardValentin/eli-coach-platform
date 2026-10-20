@@ -223,6 +223,19 @@ describe('drafts', () => {
     expect(currentVersion(program)?.number).toBe(2);
   });
 
+  it('discards the whole program when the draft is version 1', () => {
+    // arrange
+    renderPrograms('?pseed=draft');
+
+    // act
+    act(() => {
+      hooks.programs.discardDraft(DEMO_JOURNEY_CALL_ID);
+    });
+
+    // assert
+    expect(hooks.programs.programFor(DEMO_JOURNEY_CALL_ID)).toBeUndefined();
+  });
+
   it('edits the draft content, the what-changed text and the setup', () => {
     // arrange
     renderPrograms('?pseed=draft');

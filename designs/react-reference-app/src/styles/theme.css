@@ -69,6 +69,10 @@
   --training-lighter-soft: rgba(37, 99, 235, 0.1);
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
+  --training-foundation: #2563eb;
+  --training-foundation-soft: rgba(37, 99, 235, 0.1);
+  --training-deload: #616161;
+  --training-deload-soft: rgba(97, 97, 97, 0.1);
   /* At or near muscular failure on the reps-in-reserve scale. The scale's other two
      stops are --metric-energy (moderate reserve) and --training-recovery (ample). */
   --effort-critical: #DC2626;
@@ -321,6 +325,10 @@
   --color-training-lighter-soft: var(--training-lighter-soft);
   --color-training-rest: var(--training-rest);
   --color-training-rest-soft: var(--training-rest-soft);
+  --color-training-foundation: var(--training-foundation);
+  --color-training-foundation-soft: var(--training-foundation-soft);
+  --color-training-deload: var(--training-deload);
+  --color-training-deload-soft: var(--training-deload-soft);
   --color-surface-inverted: var(--surface-inverted);
   --color-surface-inverted-foreground: var(--surface-inverted-foreground);
   /* === Marketing / public landing utilities === */

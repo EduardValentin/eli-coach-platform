@@ -172,8 +172,15 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const discardDraft = useCallback<ProgramContextType['discardDraft']>(
-    callId => change(callId, program => ({ ...program, versions: program.versions.filter(version => version.state !== 'draft') })),
-    [change],
+    callId => {
+      const program = programsRef.current[callId];
+      if (!program) return;
+      const versions = program.versions.filter(version => version.state !== 'draft');
+      const next = { ...programsRef.current, [callId]: { ...program, versions } };
+      if (versions.length === 0) delete next[callId];
+      commit(next);
+    },
+    [commit],
   );
 
   const publishDraft = useCallback<ProgramContextType['publishDraft']>(

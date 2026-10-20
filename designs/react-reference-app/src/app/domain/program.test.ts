@@ -4,6 +4,7 @@ import {
   contentWithFreshIds,
   currentVersion,
   draftOf,
+  filledSessionCount,
   newId,
   positionLabel,
   roleForSlot,
@@ -154,5 +155,23 @@ describe('contentWithFreshIds', () => {
       entry.kind === 'session' ? [entry.sessionId] : [],
     );
     expect(calendarSessionIds.sort()).toEqual(sessionIds.sort());
+  });
+});
+
+describe('filledSessionCount', () => {
+  it('counts sessions with at least one chosen exercise', () => {
+    const [block] = initialContent({
+      goal: '',
+      level: 'beginner',
+      trainingDays: 3,
+      sessionMinutes: 60,
+      cycleMode: 'general',
+      language: 'en',
+      dailySteps: 6000,
+    }).plan.blocks;
+    const [first, ...rest] = block.sessions;
+    const filled = { ...first, rows: first.rows.map((row, index) => (index === 0 ? { ...row, exerciseId: 'e1' } : row)) };
+    expect(filledSessionCount(block)).toBe(0);
+    expect(filledSessionCount({ ...block, sessions: [filled, ...rest] })).toBe(1);
   });
 });

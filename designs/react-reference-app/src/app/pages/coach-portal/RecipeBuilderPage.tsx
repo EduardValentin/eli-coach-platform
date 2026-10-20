@@ -75,28 +75,10 @@ import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { InlineProblem } from '../../components/InlineProblem';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { useIsDesktop } from '../../components/ui/use-desktop';
+import { wrapTabWithin } from '../../utils/focusTrap';
 import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
-const TABBABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-function wrapTabWithin(container: HTMLElement | null, event: KeyboardEvent) {
-  const controls = [...(container?.querySelectorAll<HTMLElement>(TABBABLE) ?? [])];
-  const first = controls[0];
-  const last = controls.at(-1);
-  if (!container || !first || !last) return;
-
-  const focused = document.activeElement;
-  const outside = !container.contains(focused);
-  if (event.shiftKey && (outside || focused === first)) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && (outside || focused === last)) {
-    event.preventDefault();
-    first.focus();
-  }
-}
 const RECIPES = '/coach/nutrition?tab=recipes';
 
 const draftIngredientOf = (

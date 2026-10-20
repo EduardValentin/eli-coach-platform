@@ -96,3 +96,19 @@ export function daysUntil(from: Date, to: Date): number {
 export function weekdayFromOnboarding(label: string | null): Weekday {
   return (label && ONBOARDING_WEEKDAYS[label]) || 'mon';
 }
+
+export type BlockStatus =
+  | { kind: 'ended'; end: Date }
+  | { kind: 'current'; weekOfBlock: number; calibration: boolean }
+  | { kind: 'upcoming'; start: Date | null };
+
+export function blockStatus(blocks: readonly Block[], index: number, dayOne: Date | null, today: Date): BlockStatus {
+  if (!dayOne) return { kind: 'upcoming', start: null };
+  const { start, end } = blockDates(blocks, index, dayOne);
+  if (end < startOfDay(today)) return { kind: 'ended', end };
+  const position = currentPosition(blocks, dayOne, today);
+  if (position.status === 'in-plan' && position.blockIndex === index) {
+    return { kind: 'current', weekOfBlock: position.weekOfBlock, calibration: position.calibration };
+  }
+  return { kind: 'upcoming', start };
+}

@@ -183,3 +183,7 @@ export function contentWithFreshIds(content: ProgramContent): ProgramContent {
     cycleRules: content.cycleRules.map(rule => ({ ...rule, id: newId() })),
   };
 }
+
+export function filledSessionCount(block: Block): number {
+  return block.sessions.filter(session => session.rows.some(row => row.exerciseId !== '')).length;
+}
