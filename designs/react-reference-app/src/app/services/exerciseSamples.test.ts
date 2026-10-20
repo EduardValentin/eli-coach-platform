@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES, EQUIPMENT, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MUSCLES, measureAllowedFor } from '../domain/exercises';
+import { DIFFICULTIES, EQUIPMENT, EXERCISE_ROLES, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MOVEMENT_PATTERNS, MUSCLES, measureAllowedFor } from '../domain/exercises';
 import { LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP, SAMPLE_EXERCISES } from './exerciseSamples';
 
 describe('the sample exercises', () => {
@@ -14,6 +14,18 @@ describe('the sample exercises', () => {
       }
       for (const item of exercise.equipment) expect(EQUIPMENT).toContain(item);
       for (const tag of exercise.tags) expect(EXERCISE_TAGS).toContain(tag);
+    }
+  });
+
+  it('gives every resistance sample a pattern and a role', () => {
+    // act
+    const resistance = SAMPLE_EXERCISES.filter((exercise) => exercise.type === 'resistance');
+
+    // assert
+    expect(resistance.length).toBeGreaterThan(0);
+    for (const exercise of resistance) {
+      expect(MOVEMENT_PATTERNS).toContain(exercise.pattern);
+      expect(EXERCISE_ROLES).toContain(exercise.role);
     }
   });
 

@@ -61,6 +61,32 @@ export type Equipment = (typeof EQUIPMENT)[number];
 export const DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
+export const MOVEMENT_PATTERNS = [
+  'squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull',
+  'vertical-pull', 'core', 'carry', 'isolation',
+] as const;
+export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
+export const MOVEMENT_PATTERN_LABELS: Record<MovementPattern, string> = {
+  squat: 'Squat',
+  lunge: 'Lunge',
+  hinge: 'Hinge',
+  'horizontal-push': 'Horizontal push',
+  'vertical-push': 'Vertical push',
+  'horizontal-pull': 'Horizontal pull',
+  'vertical-pull': 'Vertical pull',
+  core: 'Core',
+  carry: 'Carry',
+  isolation: 'Isolation',
+};
+
+export const EXERCISE_ROLES = ['main-compound', 'secondary-compound', 'isolation'] as const;
+export type ExerciseRole = (typeof EXERCISE_ROLES)[number];
+export const EXERCISE_ROLE_LABELS: Record<ExerciseRole, string> = {
+  'main-compound': 'Main compound',
+  'secondary-compound': 'Secondary compound',
+  isolation: 'Isolation',
+};
+
 export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export const EXERCISE_TAG_LABELS: Record<ExerciseTag, string> = {
@@ -86,6 +112,8 @@ export type ExerciseDraft = {
   secondaryMuscles: readonly Muscle[];
   equipment: readonly Equipment[];
   difficulty: Difficulty;
+  pattern: MovementPattern | null;
+  role: ExerciseRole | null;
   tags: readonly ExerciseTag[];
   cues: string;
 };
@@ -104,7 +132,13 @@ export function withPrimaryMuscleToggled(draft: ExerciseDraft, muscle: Muscle): 
 export const MAX_EXERCISE_NAME_LENGTH = 80;
 export const MAX_FORM_CUES_LENGTH = 1000;
 
-export type ExerciseDraftProblems = { name?: string; primaryMuscles?: string; cues?: string };
+export type ExerciseDraftProblems = {
+  name?: string;
+  primaryMuscles?: string;
+  pattern?: string;
+  role?: string;
+  cues?: string;
+};
 
 const normalisedName = (name: string) => name.trim().toLowerCase();
 
@@ -133,6 +167,10 @@ export function draftProblems(
   if (name) problems.name = name;
   const primaryMuscles = primaryMusclesProblem(draft);
   if (primaryMuscles) problems.primaryMuscles = primaryMuscles;
+  if (draft.type === 'resistance') {
+    if (draft.pattern === null) problems.pattern = 'Choose a movement pattern';
+    if (draft.role === null) problems.role = 'Choose a role';
+  }
   const cues = cuesProblem(draft.cues);
   if (cues) problems.cues = cues;
   return problems;

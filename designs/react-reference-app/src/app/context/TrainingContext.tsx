@@ -3,9 +3,11 @@ import { bundleLengthLabel } from '../domain/bundles';
 import type {
   Difficulty,
   Equipment,
+  ExerciseRole,
   ExerciseTag,
   ExerciseType,
   Measure,
+  MovementPattern,
   Muscle,
 } from '../domain/exercises';
 import { exercisesForSeed } from '../services/exerciseSamples';
@@ -46,6 +48,8 @@ export interface Exercise {
   difficulty: Difficulty;
   primaryMuscles: Muscle[];
   secondaryMuscles: Muscle[];
+  pattern?: MovementPattern;
+  role?: ExerciseRole;
   tags: ExerciseTag[];
   videoUrl?: string;
   thumbnailUrl?: string;

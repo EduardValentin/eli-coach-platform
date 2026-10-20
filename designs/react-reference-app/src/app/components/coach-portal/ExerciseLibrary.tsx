@@ -8,7 +8,7 @@ import {
   usageHint,
   type LibraryItemStatus,
 } from '../../domain/libraryLifecycle';
-import { EXERCISE_TYPE_LABELS } from '../../domain/exercises';
+import { EXERCISE_TYPE_LABELS, MOVEMENT_PATTERN_LABELS } from '../../domain/exercises';
 import { useLibraryLifecycle } from '../../hooks/useLibraryLifecycle';
 import { useListingSearchParams } from '../../hooks/useListingSearchParams';
 import {
@@ -82,6 +82,7 @@ function ExerciseRow({
           title={exercise.name}
           summary={[
             EXERCISE_TYPE_LABELS[exercise.type],
+            ...(exercise.pattern ? [MOVEMENT_PATTERN_LABELS[exercise.pattern]] : []),
             exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
           ].join(' · ')}
           glyphParity="exercise-glyph"
