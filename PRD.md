@@ -35,7 +35,7 @@ The MVP includes every requirement in this document except the capabilities expl
 
 Post-MVP adds three capability groups:
 
-- Training programs: plan creation, assignment, client plan delivery, workout logging, and workout history or review.
+- Training programs: program building, versions, client delivery and PDF; workout logging and review are Post-MVP
 - Nutritional programs: coach nutritional-program creation and assignment, and client nutritional-program views.
 - In-app messaging: coach-client conversations and chat-specific system events. Check-in notifications and check-in notes remain available in the MVP without chat.
 
@@ -101,20 +101,20 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 26. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
 27. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
 
-## Plans and Training — Post-MVP
+## Programs
 
-28. **A client has at most one active plan.** The coach must end the current plan before starting a new one. Past plans are preserved for history.
-29. **Plans follow a template-instance model.** Plan Templates are reusable structures the coach creates, edits, copies, and deletes. Plan Instances are personalized plans assigned to one client and tied to one Goal. Templates are optional; a client plan can start from one or from scratch.
-30. **Each plan instance is tied to a client Goal.** A Goal names the training objective (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, or Custom), has a start date, and moves from active to completed.
-31. **Templates default to 4 weeks with 1 deload week.** The deload week is visually distinguished and prompts the coach to manually adjust volume and intensity. The system never auto-modifies plan variables.
-32. **Plan building is iterative.** The coach may schedule 1–2 weeks at a time and add weeks incrementally to an active plan; the client's plan updates with each addition. The coach can insert a deload week at any position at any time.
-33. **Existing weeks of an active plan are immutable.** Once a client has started, weeks already part of the plan cannot be deleted; only newly added weeks can be removed.
-34. **Clients see only current and past weeks.** Weeks the coach has built ahead are hidden until the client reaches them.
-35. **The coach sets a default schedule for each plan.** Clients may adjust it in ways that fit their needs, with limited flexibility rather than unrestricted restructuring.
-36. **Workout logging records actual against prescribed.** Each set is tracked individually with actual weight and reps and compared with the prescription.
-37. **Exercise swaps are coach-controlled.** Only the coach defines swap variants for an exercise assignment; during a workout a client may swap only to those variants. Swap history is recorded per workout.
-38. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
-39. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
+28. **A client has one program**, tied to her current goal (taken from onboarding, editable by the coach) and written in one language, English or Romanian, chosen by the coach when the program is created; platform chrome stays English. The program is built only for a client whose onboarding is sent and whose coaching has not ended.
+29. **The plan is the coach's sequence of blocks.** Each block has a type (Foundation, Hypertrophy, Strength, Deload), a whole number of weeks, a split (Full Body or Upper/Lower, renamable), a weekly calendar naming a session, cardio or rest per weekday, sessions that repeat every week of the block, cardio sessions and a daily steps target. The plan's length is the sum of its blocks. Any block for any client: the client's level (suggested from her experience answer, editable) only drives suggestions.
+30. **Progress is calendar driven.** Day 1 of the program and of the subscription is the moment version 1 is published. Plan weeks are seven-day spans from day 1; the current block and "week X of Y" follow the calendar, never the versions. Check-in form days fall every 14 days from day 1, on the first preferred weekday on or after each date.
+31. **A version is a frozen snapshot.** A program has at most one draft and exactly one published version at a time; earlier versions are superseded and kept read-only with their PDF. A published version is never edited; any change, including a correction, is a new version prefilled from the current one. From version 2, "What changed and why" is mandatory and shown to the client until she dismisses it. Publishing a new version emails the client.
+32. **Publishing needs the sessions that come next.** Every session on the calendar of every block that overlaps the span from the publish day to the next check-in form day, and at least 14 days, holds at least one exercise. Blocks further ahead may stay empty and must be filled and published before they start; the coach is told when an empty block starts within sight. A client who chose to start after the withdrawal period cannot have a version published before her start date.
+33. **Sequence rules.** Publishing is refused while Foundation is not the first block, the plan starts with Deload, two Deloads follow each other, or a Deload is not exactly one week. The coach is warned, and may publish anyway, on more than eight weeks without a Deload, Strength for a client whose level is beginner, a large muscle group trained on fewer than two days a week, two hard days in a row without a rest or easy-cardio day, HIIT the day before a heavy leg session, more than two HIIT sessions a week, a superset of two exercises on the same primary muscle, or an exercise whose role does not match its slot.
+34. **Blocks set the defaults; the coach keeps the last word.** Every block type carries default sets, reps, RIR and rest per exercise role, and every client-facing text (block intro, calibration, split, warm-up, cool-down, legend, progression, steps, cycle, missed-day note) is a template in both languages, copied into the program and editable per client. A default fills only values the coach has not typed. A block other than Deload may mark its first week as a calibration week, which changes the texts and the tracking table's first column, not the values.
+35. **A session is an ordered list of exercise rows** from the exercise library: slot A (main compound), B (secondary), C (accessories, in supersets), D (core or finisher); each row carries sets, reps (a range, or seconds for timed exercises), RIR, rest, and optionally warm-up sets, a suggested weight, tempo in words, a last-set technique, up to two substitutions suggested from the library by movement pattern, primary muscle and the client's equipment, a progression rule (double progression by default) and the library's cues. A session has a warm-up with mobility exercises from the library and an optional cool-down, and shows its estimated length against the client's target.
+36. **Cardio and the cycle.** Each block carries a daily steps target and cardio sessions of type LISS, moderate, HIIT or metabolic finisher, placed on weekdays. The program's cycle mode is adapted to symptoms, or general for a client without a period, on the combined pill, in perimenopause or menopause, or for a male account; in adapted mode the coach sets adjustment rules for the client's symptom periods (keep, RIR +1, one set less, HIIT to LISS, low-energy session) and the client sees her estimated cycle day from her onboarding answers. The low-energy session is part of every program.
+37. **The client sees her program from publication.** A Program page shows her current block and week, the next check-in form day, what changed, this week's calendar and the selected day's session, the explanatory texts, cardio and steps, nutrition, lifestyle, the plan and her previous versions. A PDF with the same content, including the paper tracking table she fills and photographs for the check-in form, is generated once at publication, stored with the version, and downloadable only from her account and the coach's.
+38. **Nutrition travels with the version.** A version carries a nutrition section built from the food and recipe libraries at the same cadence; its structure is specified separately. When screening declared a chronic condition or chronic medication, the section carries no individualised recommendations and the coach decides.
+39. **Post-MVP on this model:** logging sets per row and week in the app, program templates (program content without a client), per-week values inside a block, in-app substitutions during a workout, workout history and review, and system messages for program events.
 40. **Exercise videos are raw `.mp4` or `.mov` uploads of up to 50 MB**, supplied through drag-and-drop or an upload button. A video is private: only the coach plays it today, from any point in it, and the clients will see an exercise's video only through the plans that use it. A replaced or removed video is deleted. This rule is in the MVP with the exercise library.
 41. **System messages record plan and scheduling events Post-MVP.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party. In the MVP, check-in events still notify the relevant party and remain visible in the check-in flow without creating a chat entry.
 
@@ -122,7 +122,7 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 
 A **Check-in** has a client, a coach, a date and time, a kind (`recurring`, `ad-hoc`, or, Post-MVP, `program review`), a status (`pending`, `approved`, `clash`, `passed`, or `cancelled`), who initiated it, who proposed its current time, an optional linked plan, an optional note of up to 500 characters from either party, and a reschedule count. A check-in lasts one hour and starts on the hour. A check-in is pending until the other party agrees to its time, approved once agreed, and passed once its approved time is over; whether the meeting actually took place is not tracked. A check-in that was moved keeps its earlier time and is shown as rescheduled. A weekly check-in whose hour cannot be held is a clash until the coach gives it a new time (Business Rule 42).
 
-42. **Recurring check-ins are auto-approved.** In the MVP, the coach sets a weekly check-in series for a client from the client's record, only for a client who can answer (Business Rule 43). A client has at most one series. Its weeks run from the first matching weekday that starts at least 24 hours away and not before her program start, to the end of her paid period, and never at or after her coaching end. Each week is approved without an answer and holds its hour (Business Rule 45). A week whose hour is already taken, or that falls outside the coach's availability, is a clash: it holds no hour, it counts as awaiting the coach's answer, and the coach reschedules it. Her new time is proposed to the client as any new time (Business Rule 46) and does not use one of the two new times of Business Rule 48. A clash nobody reschedules is cancelled when its time arrives, without an email; both parties' notification bells say it was missed. A renewal of her coaching adds the weeks of the new paid period, and starting her program early adds the weeks that were missing. Changing the series replaces every future week from the next matching day, those already moved or waiting for an answer included; weeks already past stay. Stopping the series cancels every future week and frees their hours. The client is emailed once when the series is set up, changed, and stopped (Notifications item 3). Only the coach sees the series as a whole. Both the client's and the coach's Upcoming list every week to come; the client moves only her next weekly check-in and cancels none, while the coach moves or cancels any week from her Check-ins page. Other frequencies are deferred. Post-MVP, assigning a plan generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval. Post-MVP, a program review is a mandatory check-in the client books when her program is ready; booking approves it, and she can move it to another open time but neither party can cancel it.
+42. **Recurring check-ins are auto-approved.** In the MVP, the coach sets a weekly check-in series for a client from the client's record, only for a client who can answer (Business Rule 43). A client has at most one series. Its weeks run from the first matching weekday that starts at least 24 hours away and not before her program start, to the end of her paid period, and never at or after her coaching end. Each week is approved without an answer and holds its hour (Business Rule 45). A week whose hour is already taken, or that falls outside the coach's availability, is a clash: it holds no hour, it counts as awaiting the coach's answer, and the coach reschedules it. Her new time is proposed to the client as any new time (Business Rule 46) and does not use one of the two new times of Business Rule 48. A clash nobody reschedules is cancelled when its time arrives, without an email; both parties' notification bells say it was missed. A renewal of her coaching adds the weeks of the new paid period, and starting her program early adds the weeks that were missing. Changing the series replaces every future week from the next matching day, those already moved or waiting for an answer included; weeks already past stay. Stopping the series cancels every future week and frees their hours. The client is emailed once when the series is set up, changed, and stopped (Notifications item 3). Only the coach sees the series as a whole. Both the client's and the coach's Upcoming list every week to come; the client moves only her next weekly check-in and cancels none, while the coach moves or cancels any week from her Check-ins page. Other frequencies are deferred. Post-MVP, a program review is a mandatory check-in the client books when her program is ready; booking approves it, and she can move it to another open time but neither party can cancel it.
 43. **Ad-hoc check-ins require approval from the other party.** The client asks for one from her Check-ins page; the coach schedules one from the client's record, only for a client who can answer: one who has sent her onboarding and whose coaching has not ended. Post-MVP, they can also initiate them from the messaging area or chat. Either party picks a time offered under Business Rule 45 and may add a note, which the other party sees attributed to its author. The party who did not request the check-in approves or declines it, and the party who requested it may withdraw it while it is pending. A client whose coaching has ended cannot ask for a check-in (Business Rule 67).
 44. **A client has at most one pending ad-hoc request at a time.** Only an ad-hoc check-in she requested that is still pending counts; a check-in the coach requested and a check-in either party has moved to a new time do not, and the coach's requests have no such limit. While one is pending, the client cannot submit another, and the action is disabled with an explanation of why. A pending request holds its hour (Business Rule 45).
 45. **Scheduling uses coach availability.** Check-in times are offered inside the coach's saved availability (Business Rule 10): the same weekdays and hours, and the same one schedule, as assessment calls. They start on the hour from the start hour, the last one an hour before the end hour. A time is offered only when it starts at least 24 hours from now and falls within the next 30 days, and a day without an offered time cannot be selected. The weeks of a weekly check-in series are not limited to the 30 days; the 24 hours apply to its first week. A pending request holds its hour: no assessment call can be booked over it and no other request can take it. An approved check-in keeps holding its hour. A declined, withdrawn, or cancelled check-in frees it. Likewise, a booked assessment call takes its hour from the times offered for check-ins. These rules apply to new check-ins and reschedules alike.
@@ -133,8 +133,8 @@ A **Check-in** has a client, a coach, a date and time, a kind (`recurring`, `ad-
 
 ## Menstrual Cycle
 
-50. **Every female client has a menstrual cycle profile**, created during self-onboarding and visible to the coach. It records whether she currently gets a period and how regular it is, her contraception, whether she is pregnant, postpartum, or breastfeeding, and whether she is in perimenopause or menopause. When she gets a period, it records her average cycle length, or her shortest and longest cycle when it is irregular, and the day her last period started; she may say she is not sure of her cycle length or her last period start. It also records any gynecological condition a doctor has diagnosed, the symptoms that come back regularly, and whether she tracks her cycle in an app. The coach's program adapts to her cycle phases only when she gets a period, is not on the combined pill, is not pregnant, postpartum, or breastfeeding, and is not in perimenopause or menopause; otherwise it adapts to the symptoms she reports. When her contraception is one the product does not classify, the coach decides how her program adapts.
-51. **Current cycle phase is derived** from the last recorded period start date and the client's average cycle length, and shown on the client dashboard and the coach's client detail page.
+50. **Every female client has a menstrual cycle profile**, created during self-onboarding and visible to the coach. It records whether she currently gets a period and how regular it is, her contraception, whether she is pregnant, postpartum, or breastfeeding, and whether she is in perimenopause or menopause. When she gets a period, it records her average cycle length, or her shortest and longest cycle when it is irregular, and the day her last period started; she may say she is not sure of her cycle length or her last period start. It also records any gynecological condition a doctor has diagnosed, the symptoms that come back regularly, and whether she tracks her cycle in an app. Her program's cycle mode is adapted to symptoms, or general when she gets no period, is on the combined pill, or is in perimenopause or menopause (Business Rule 36); the coach may change it.
+51. Post-MVP: **Current cycle phase is derived** from the last logged period and the client's average cycle length, and shown on the client dashboard and the coach's client detail page.
 52. **Clients without an active cycle are fully supported.** Cycle tracking and cycle-driven adjustments are gracefully skipped or replaced with non-cycle-based coaching.
 
 ## Legal and Public Submissions
@@ -251,46 +251,45 @@ Per Business Rule 53.
 
 1. The dashboard shows where her onboarding stands. After "Sent to your coach" it reads "Your coach is reviewing your answers" once the coach opens her submission or she answers a detail request; "Your coach needs a few more details" with the coach's note and a way to answer the asked questions while a detail request is open; and "Your answers are approved" with the news that her program is being built once the coach approves. When her start choice is to start after the withdrawal period, the date the coach starts working on her program stays on every state while her answers are with the coach; while a detail request is open, the coach's note takes its place. Until that date she can ask the coach to start now from the dashboard (Business Rule 7). While a payment problem is open, the dashboard says so and offers to update her card (Business Rule 65).
 
-### Training dashboard and plan — Post-MVP
+### Program (`/client/program`)
 
-2. The dashboard shows the client's next workout or day from the assigned plan and her current cycle phase.
-3. Clients are notified when a new plan is assigned or updated.
-4. The plan view offers week navigation limited to current and past weeks, day cards with Past, Current, and Upcoming status, and a way to start each training day.
-5. Clients can adjust the default schedule within the allowed bounds (Business Rule 35).
+2. From the moment version 1 is published, the Program page shows the current block, the week of the plan, the next check-in form day and, in adapted mode, the estimated cycle day; the coach's note on what changed until she dismisses it; the week with today selected and only the selected day's session, cardio or rest rendered; collapsed sections for the block and split texts, the cycle guidance, the legend, cardio and steps, nutrition, lifestyle, the plan and previous versions; and a PDF download.
+3. She is emailed when a version is published.
+4. Post-MVP: set logging on the day's session.
 
 ### Workout Viewer and active tracking — Post-MVP
 
-6. A distraction-free, mobile-optimized Workout Viewer shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
-7. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
-8. Clients can swap the current exercise for any coach-defined variant at any time.
-9. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 39).
+5. Post-MVP, the day's session opens as a workout in a distraction-free, mobile-optimized Workout Viewer that shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
+6. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
+7. Clients can swap the current exercise for any coach-defined variant at any time.
+8. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu.
 
 ### Messaging (`/client/messages`) — Post-MVP
 
-10. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
-11. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
-12. An upcoming check-in banner at the top of the chat shows the next approved check-in's date, time, and kind.
+9. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
+10. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
+11. An upcoming check-in banner at the top of the chat shows the next approved check-in's date, time, and kind.
 
 ### Check-ins (`/client/checkins`)
 
-13. Reached from the portal navigation's "Check-ins" entry, whose badge counts the check-ins awaiting her answer, and opens on Requests when a check-in awaits her answer, otherwise on Upcoming. Organized into Upcoming (approved check-ins with Join Meet, the option to propose a new time, and cancellation where Business Rule 47 allows it; every week to come of a weekly check-in series, of which she moves only her next weekly check-in while the later weeks explain that her coach can move them, and a clashing one reads as her coach finding a new time, with no Join Meet and no actions), Requests (check-ins awaiting her answer first, which she can approve, reschedule, or decline; then those waiting for the coach: her own pending request, which she can withdraw, and new times she proposed), and Past (passed and cancelled). On both portals, a check-in shows its kind unless it is recurring, who requested an ad-hoc check-in or proposed a pending new time, and who wrote its note. Each tab can be narrowed by kind, and Requests also by whose answer is awaited, each option showing how many check-ins it matches; Requests lists the check-ins awaiting the viewer's answer first, and the client's Requests tab shows how many await her answer. Every tab sorts by check-in date with a direction toggle (Upcoming and Requests start soonest first, Past newest first), shows ten check-ins per page and, when there is more than one page, page controls with a "Showing a–b of n" line, keeps its tab, filters, sort, and page across a reload, and offers to clear the filters when they hide every check-in. The portal sidebar, and the More menu on a phone, has a "Next Check-in" widget with the date and time of her next approved check-in that has not ended, a "Join Meet" button, and a link to the Check-ins page; it is absent while she has none.
-14. New ad-hoc requests can be made from this page: she picks an open time (Business Rule 45) and may add a note (Business Rule 43), under the one-pending limit (Business Rule 44). The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
+12. Reached from the portal navigation's "Check-ins" entry, whose badge counts the check-ins awaiting her answer, and opens on Requests when a check-in awaits her answer, otherwise on Upcoming. Organized into Upcoming (approved check-ins with Join Meet, the option to propose a new time, and cancellation where Business Rule 47 allows it; every week to come of a weekly check-in series, of which she moves only her next weekly check-in while the later weeks explain that her coach can move them, and a clashing one reads as her coach finding a new time, with no Join Meet and no actions), Requests (check-ins awaiting her answer first, which she can approve, reschedule, or decline; then those waiting for the coach: her own pending request, which she can withdraw, and new times she proposed), and Past (passed and cancelled). On both portals, a check-in shows its kind unless it is recurring, who requested an ad-hoc check-in or proposed a pending new time, and who wrote its note. Each tab can be narrowed by kind, and Requests also by whose answer is awaited, each option showing how many check-ins it matches; Requests lists the check-ins awaiting the viewer's answer first, and the client's Requests tab shows how many await her answer. Every tab sorts by check-in date with a direction toggle (Upcoming and Requests start soonest first, Past newest first), shows ten check-ins per page and, when there is more than one page, page controls with a "Showing a–b of n" line, keeps its tab, filters, sort, and page across a reload, and offers to clear the filters when they hide every check-in. The portal sidebar, and the More menu on a phone, has a "Next Check-in" widget with the date and time of her next approved check-in that has not ended, a "Join Meet" button, and a link to the Check-ins page; it is absent while she has none.
+13. New ad-hoc requests can be made from this page: she picks an open time (Business Rule 45) and may add a note (Business Rule 43), under the one-pending limit (Business Rule 44). The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
 
-### Menstrual cycle tracking (`/client/cycle`)
+### Menstrual cycle tracking (`/client/cycle`) — Post-MVP
 
-15. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
-16. A cycle calendar shows logged period days and the current phase.
+14. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
+15. A cycle calendar shows logged period days and the current phase.
 
 ### Settings (`/client/settings`)
 
-17. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
-18. Her coaching subscription: her coaching bundle and what she pays, when it renews or, once cancelled, when it ends, the cancellation open to her with its terms (Business Rule 63), and her payment method, which she updates on the payment provider's hosted page (Business Rule 65). Cancelling asks her to confirm and lets her keep her coaching instead. A payment problem is shown here too.
+16. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
+17. Her coaching subscription: her coaching bundle and what she pays, when it renews or, once cancelled, when it ends, the cancellation open to her with its terms (Business Rule 63), and her payment method, which she updates on the payment provider's hosted page (Business Rule 65). Cancelling asks her to confirm and lets her keep her coaching instead. A payment problem is shown here too.
 
 ### Resources (`/client/resources`)
 
-19. Reached from portal navigation, which marks the entry while she has resources she has not opened. Her resources show newest first, each with its first page or a file cover, its file type, title, and tags, and a "New" marker until she opens it (Business Rule 61).
-20. She narrows them by tag and by a search on the title; the tags offered are those on her own resources. The page has its own empty states for no resources yet and for no matches.
-21. Opening a resource shows its pages when it can be read in the portal (Business Rule 58), with its description, tags, file type, size, and the date it was added, and a download action.
+18. Reached from portal navigation, which marks the entry while she has resources she has not opened. Her resources show newest first, each with its first page or a file cover, its file type, title, and tags, and a "New" marker until she opens it (Business Rule 61).
+19. She narrows them by tag and by a search on the title; the tags offered are those on her own resources. The page has its own empty states for no resources yet and for no matches.
+20. Opening a resource shows its pages when it can be read in the portal (Business Rule 58), with its description, tags, file type, size, and the date it was added, and a download action.
 
 ## 5. Coach Portal (`/coach`)
 
@@ -316,7 +315,7 @@ Per Business Rule 53.
 
 ### Workout review and history — Post-MVP
 
-9. Completed workouts are grouped by subscription, then plan, then week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
+9. Completed workouts are grouped by subscription, then program version, then block and week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
 10. Each workout review shows logged against prescribed weight and reps per set, rest taken against prescribed, swaps made, compliance percentage, duration, and volume. Volumes use the coach's unit setting.
 
 ### Check-ins (`/coach/checkins`)
@@ -334,54 +333,45 @@ Per Business Rule 53.
 15. The coach adds a resource by choosing a file, with the title prefilled from the file name. While she types a tag, existing tags are suggested (Business Rule 59). A failed upload keeps her entries for retry.
 16. From a resource she opens the same view the client sees, edits its details, or deletes it (Business Rule 60).
 
-## 6. Exercises and Plans (`/coach/training`)
+## 6. Exercises and Programs (`/coach/training`, `/coach/clients/:id/program`)
 
 ### Data model
 
 The Exercise is in the MVP; every other entity in this section is Post-MVP.
 
-**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4` or `.mov`, up to 50 MB), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. An exercise belongs to the coach who created it, and her library holds only her own exercises. A name is at most 80 characters and unique among her active exercises, ignoring case and surrounding spaces; form cues are at most 1,000 characters. An exercise is active until the coach archives it. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio.
+**Exercise**: name, form cues, type (Resistance, Cardio, Mobility, Stretching, or Breathing), the unit it is measured in (reps, time, distance, or breaths; each type allows a sensible subset and sets the default, adjustable per exercise within that subset), whether it is performed one side at a time, equipment used, difficulty, primary muscles, secondary muscles, demo video (`.mp4` or `.mov`, up to 50 MB), and tags such as Strength, Hypertrophy, Recovery. Tags are multi-valued (a back squat is both Strength and Hypertrophy) and distinct from a client's Goal. An exercise belongs to the coach who created it, and her library holds only her own exercises. A name is at most 80 characters and unique among her active exercises, ignoring case and surrounding spaces; form cues are at most 1,000 characters. An exercise is active until the coach archives it. An exercise needs no equipment when it lists nothing. Primary muscles are required except for Cardio; a movement pattern (squat, lunge, hinge, horizontal push, vertical push, horizontal pull, vertical pull, core, carry, isolation) and a role (main compound, secondary compound, isolation) are both required for Resistance.
 
-**Goal**: client, name (e.g. "Strength & Recomp Block"), type (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, Custom), start date, status (active or completed).
+**Program**: a client's program (Business Rule 28): the client, her goal, its language (English or Romanian), the cycle mode and its adjustment rules (Business Rule 36), the start day (day 1, set when version 1 is published), and its versions.
 
-**Plan Template**: reusable structure of weeks, days, and exercises; default 4 weeks with 1 deload week; not assigned to any client; can be saved as draft.
+**Version**: a frozen snapshot of the program (Business Rule 31): number, status (draft, published or superseded), the blocks, the nutrition section, the "What changed and why" note, its stored PDF and its publish time.
 
-**Plan Instance**: a client's plan, linked to a Goal; weeks (from a template or from scratch); current week number; status (active or completed); start date and optional end date; weeks added incrementally.
+**Block**: type (Foundation, Hypertrophy, Strength or Deload), whole number of weeks, split (Full Body or Upper/Lower, renamable), weekly calendar, daily steps target, optional calibration first week, and its client-facing texts in the program's language (Business Rules 29 and 34).
 
-**Plan Day**: day type Rest, Recovery, Strength, Hypertrophy, or Lighter (yoga, pilates, mobility, flexibility). Rest days contain no exercises.
+**Session**: a named training day of a block with its exercise rows, warm-up, optional cool-down and estimated length (Business Rule 35).
 
-**Exercise Assignment**: sets, reps, RIR, superset grouping, rest time in seconds, optional swap variants, coaching notes.
+**Exercise row**: an exercise from the library in a slot (A, B, C or D) with sets, reps, RIR, rest, optional warm-up sets, suggested weight, tempo, last-set technique, substitutions, progression rule and cues (Business Rule 35).
+
+**Cardio session**: type (LISS, moderate, HIIT or metabolic finisher), duration and the weekday it is placed on (Business Rule 36).
 
 ### Exercise Library
 
-1. Reached from the coach's "Training" menu entry. The coach creates and edits exercises and reuses them across plans. Saving is refused while the name is missing, already held by another of her active exercises, or over 80 characters, while the form cues are over 1,000 characters, or while no primary muscle is chosen for a type other than Cardio; each problem is explained at its field, and her entries stay. A successful save confirms and returns her to the library.
+1. Reached from the coach's "Training" menu entry. The coach creates and edits exercises and reuses them across programs. Saving is refused while the name is missing, already held by another of her active exercises, or over 80 characters, while the form cues are over 1,000 characters, or while no primary muscle is chosen for a type other than Cardio; each problem is explained at its field, and her entries stay. A successful save confirms and returns her to the library.
 2. A demo video is added by drag-and-drop or button, one per exercise. A file that is not an `.mp4` or `.mov`, or is over 50 MB, is refused with a clear message, and the coach keeps what she entered; a file renamed to `.mp4` or `.mov` that holds no such video is refused when she saves. She previews the chosen video and can replace or remove it before saving. The video uploads when she saves, with visible progress; an upload that does not go through keeps everything she entered and lets her try again. The library shows which exercises have a video.
 3. The library supports search and filters for type, for Strength, Hypertrophy, and Recovery tags, and for no-equipment exercises. Tag filters combine as "any of"; the type filter narrows to one type; the no-equipment filter narrows when applied and places no constraint otherwise (no equipment-only view, since its complement is the whole library). Filters combine with search and with each other as "all of".
 4. The library is ordered by name, A to Z, by default; the coach can sort it by name or by difficulty (Beginner, Intermediate, Advanced) in either direction. Long libraries are split into pages.
 5. The coach archives an exercise to take it out of the active library without losing it, and can view archived exercises and restore them. Archiving frees the exercise's name for another active exercise; restoring an exercise whose name an active exercise now holds restores it under a numbered name (for example "Hip thrust (2)") that she can edit later.
-6. Deleting an exercise is permanent and asks for confirmation first. Once plans exist, an exercise used in a template or plan cannot be deleted, and the coach is told where it is used.
+6. Deleting an exercise is permanent and asks for confirmation first. An exercise used in a program cannot be deleted, and the coach is told in how many programs.
 
-### Plan Builder — Post-MVP
+### Program builder
 
-7. A dedicated full-screen page, not a modal, with two contexts: a Template Builder for reusable templates and a Client Plan Builder for a specific client's plan. Save actions and pre-populated names make clear which is being saved.
-8. Defaults to 4 weeks. The coach adds and removes weeks, copies one week's contents to a single week or all weeks through a discoverable control, swaps two weeks, and inserts a deload week at any position. The deload week is visually distinguished and prompts manual volume and intensity adjustment.
-9. The day type selector visually distinguishes day types. The coach can see at a glance how many exercises each day has, which training days are still empty, and the overall structure of weeks and day types without scrolling through every week.
-10. Exercises are added from the library by drag-and-drop into a day, reordered within a day, and grouped into a superset by dragging one onto another with an obvious visual result. A quick-add "+" button and a structured non-drag alternative exist for accessibility. Exercise rows carry numbered order indicators, a comfortable drag area, never overflow, and clearly name the exercise.
-11. Per assignment, the coach sets sets, reps, RIR, rest time, swap variants from the library, and an expandable coaching note.
-12. The coach can save as draft and continue later, name the plan on save, preview the full structure before saving, and share a plan with one or more clients.
-13. The Client Plan Builder can optionally load a template with a preview of each day's exercises, sets, reps, and RIR before committing. When editing an active plan, the coach sees which weeks already existed and which are new in this session.
-14. The builder uses all available space on large displays; on small screens the library and structure are available on demand without cluttering the editing area.
-
-### Training Hub — Post-MVP
-
-15. Active plan cards show client name, week progress, deload indicators, goal, training frequency, and start date, and are clearly distinguished from completed plans. Clicking a card opens the client plan builder; a context menu offers "Go to Client" and "Delete Plan".
-16. Creating a client plan starts by selecting a client; a template may then be loaded inside the builder.
-17. The Templates tab shows template cards with edit, start a plan from template, copy, and delete.
-18. Deleting a plan or template requires explicit confirmation in a styled dialog.
-
-### Assignment — Post-MVP
-
-19. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 42), and posts a system message (Business Rule 41).
+7. A setup sheet creates the program: the client's goal, the program language, the cycle mode and the first blocks (Business Rule 28).
+8. A plan overview shows the sequence of blocks on a timeline with the check-in form days marked on it.
+9. A block workspace holds the block's settings, its weekly calendar and its sessions, with compact exercise rows whose details open on expand.
+10. A library drawer, narrowed to the client's equipment, adds exercises to a session and suggests substitutions.
+11. The coach can copy a block from another client's program.
+12. The coach sets the cycle rules, the nutrition placeholder and the lifestyle section.
+13. The coach previews the program as the client sees it.
+14. A publish checklist shows what Business Rules 32 and 33 refuse and warn about before the coach publishes a version.
 
 ## 7. Foods and Recipes (`/coach/nutrition`)
 
@@ -424,7 +414,6 @@ The Tag, the Food and the Recipe are in the MVP; the client meal plans that will
 - Real payment processing for paid store products
 - Per-call meeting room generation through a video provider. Every assessment call and check-in shares the coach's single meeting room (Business Rules 14 and 49)
 - Rich analytics and reporting; advanced search across clients
-- Plan version history or changelog
 - Check-in frequencies other than weekly, and per-client configurable check-in frequency (the MVP series is weekly)
 - Mandatory end-of-block review check-ins, introduced with training programs
 - Reminders and calendar writes for assessment calls and check-ins. The add-to-calendar action and calendar file in the booking emails (Business Rule 13) and the calendar invite in the check-in approval email (Notifications item 3) are in scope; writing to the coach's calendar is not
@@ -434,9 +423,7 @@ The Tag, the Food and the Recipe are in the MVP; the client meal plans that will
 
 # Open Questions
 
-1. What exact limits apply when clients adjust their plan schedule?
-2. What notification channels exist beyond in-app?
-3. What product metadata does the store need beyond type, goal, and price?
-4. What happens to a plan's recurring check-ins when the plan is ended: are they cancelled automatically or kept?
-5. Should the system track plan version history when the coach adds weeks to an active plan?
-6. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
+1. What notification channels exist beyond in-app?
+2. What product metadata does the store need beyond type, goal, and price?
+3. What happens to a client's weekly check-in series when her program ends?
+4. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
