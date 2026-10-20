@@ -1,22 +1,29 @@
 import { useState, type ReactNode } from 'react';
+import { Copy } from 'lucide-react';
+import type { ClientJourney } from '../../../domain/journey';
 import {
   BLOCK_TYPE_LABELS,
   BLOCK_TYPES,
   type Block,
   type BlockType,
+  type Program,
   type ProgramLanguage,
+  type Session,
   type SplitShape,
 } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { TARGET_MINUTES } from '../../../domain/programDefaults';
+import { blockWithSessionsFrom } from '../../../domain/programEditing';
 import { emptySessionsFor, spreadCalendar } from '../../../domain/programSuggestions';
 import { fillTemplate, templateText } from '../../../domain/programTemplates';
+import { Button } from '../../ui/button';
 import { InlineProblem } from '../../InlineProblem';
 import { LABEL_CLASS } from '../../typography';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Switch } from '../../ui/switch';
+import { CopyBlockDialog } from './CopyBlockDialog';
 import { SPLIT_SHAPE_LABELS } from './program-constants';
 import { blockWithType, useWeeksField } from './weeksField';
 
@@ -27,6 +34,8 @@ type BlockSettingsStripProps = {
   dayOne: Date | null;
   today: Date;
   language: ProgramLanguage;
+  otherPrograms: Program[];
+  journeys: Record<string, ClientJourney>;
   onChange: (block: Block) => void;
 };
 
@@ -61,10 +70,18 @@ function hasExercises(block: Block): boolean {
   return block.sessions.some(session => session.rows.some(row => row.exerciseId !== ''));
 }
 
-export function BlockSettingsStrip({ blocks, index, status, dayOne, today, language, onChange }: BlockSettingsStripProps) {
+export function BlockSettingsStrip({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange }: BlockSettingsStripProps) {
   const block = blocks[index];
   const [pendingShape, setPendingShape] = useState<SplitShape | null>(null);
+  const [copying, setCopying] = useState(false);
+  const [pendingCopy, setPendingCopy] = useState<Session[] | null>(null);
   const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
+
+  function copySessions(sessions: Session[]) {
+    setCopying(false);
+    if (hasExercises(block)) setPendingCopy(sessions);
+    else onChange(blockWithSessionsFrom(block, sessions));
+  }
 
   function changeShape(shape: SplitShape) {
     if (hasExercises(block)) setPendingShape(shape);
@@ -136,6 +153,27 @@ export function BlockSettingsStrip({ blocks, index, status, dayOne, today, langu
           </SelectContent>
         </Select>
       </Setting>
+      <Setting label="Sessions">
+        <Button variant="outline" size="sm" onClick={() => setCopying(true)}>
+          <Copy aria-hidden="true" />
+          Copy from another client
+        </Button>
+      </Setting>
+      <CopyBlockDialog open={copying} onOpenChange={setCopying} programs={otherPrograms} journeys={journeys} onCopy={copySessions} />
+      <ConfirmDialog
+        open={pendingCopy !== null}
+        onOpenChange={open => {
+          if (!open) setPendingCopy(null);
+        }}
+        title="Replace this block's sessions?"
+        description="The sessions of the chosen block replace every session of this block."
+        confirmLabel="Replace sessions"
+        tone="destructive"
+        onConfirm={() => {
+          if (pendingCopy) onChange(blockWithSessionsFrom(block, pendingCopy));
+          setPendingCopy(null);
+        }}
+      />
       <ConfirmDialog
         open={pendingShape !== null}
         onOpenChange={open => {

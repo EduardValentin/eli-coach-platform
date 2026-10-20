@@ -119,7 +119,7 @@ export function emptySessionsFor(shape: SplitShape, days: number, type: BlockTyp
   return sessionNamesFor(shape, days).map(name => emptySession(name, type));
 }
 
-function copiedSessions(sessions: Session[]): Session[] {
+export function copiedSessions(sessions: Session[]): Session[] {
   return sessions.map(session => ({
     ...session,
     id: newId(),

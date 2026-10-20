@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
+import type { ClientJourney } from '../../../domain/journey';
+import type { RowTarget } from '../../../domain/programEditing';
 import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramContent, type Session } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { WIDGET_TITLE_CLASS } from '../../typography';
@@ -10,7 +12,7 @@ import { BLOCK_BADGE_TONE } from './program-constants';
 import { SessionCard } from './SessionCard';
 import { WeekCalendarEditor } from './WeekCalendarEditor';
 
-export type RowTarget = { sessionId: string; rowId: string; field: 'exercise' | 'substitution' | 'mobility'; index?: number };
+export type { RowTarget };
 
 type BlockWorkspaceProps = {
   block: Block;
@@ -21,11 +23,13 @@ type BlockWorkspaceProps = {
   today: Date;
   library: readonly Exercise[];
   equipment: readonly Equipment[];
+  otherPrograms: Program[];
+  journeys: Record<string, ClientJourney>;
   onChange: (block: Block) => void;
   onPickExercise: (target: RowTarget) => void;
 };
 
-export function BlockWorkspace({ block, blockIndex, content, program, dayOne, today, library, equipment, onChange, onPickExercise }: BlockWorkspaceProps) {
+export function BlockWorkspace({ block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, onChange, onPickExercise }: BlockWorkspaceProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { blocks } = content.plan;
   const expandedId = block.sessions.some(session => session.id === expanded) ? expanded : block.sessions[0]?.id;
@@ -46,6 +50,8 @@ export function BlockWorkspace({ block, blockIndex, content, program, dayOne, to
         dayOne={dayOne}
         today={today}
         language={program.language}
+        otherPrograms={otherPrograms}
+        journeys={journeys}
         onChange={onChange}
       />
       <WeekCalendarEditor block={block} onChange={onChange} />

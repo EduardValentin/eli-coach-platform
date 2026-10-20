@@ -38,6 +38,7 @@ export type ProgramContextType = {
   startDraft(callId: string): void;
   discardDraft(callId: string): void;
   publishDraft(callId: string, now: Date): PublishOutcome;
+  programs(): Program[];
   exerciseConsumers(): { exerciseIds: string[] }[];
 };
 
@@ -75,8 +76,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
   const { exercises } = useTraining();
   const { demoJourney, journeyForCall, markProgramReady } = useClientJourneys();
-  const [programs, setPrograms] = useState<Record<string, Program>>({});
-  const programsRef = useRef(programs);
+  const [programsByCall, setPrograms] = useState<Record<string, Program>>({});
+  const programsRef = useRef(programsByCall);
   const exercisesRef = useRef(exercises);
   exercisesRef.current = exercises;
   const seededSeed = useRef<ProgramSeed>('none');
@@ -113,7 +114,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     commit(next);
   }, [appState.programSeed, readyAt, commit]);
 
-  const programFor = useCallback((callId: string) => programs[callId], [programs]);
+  const programFor = useCallback((callId: string) => programsByCall[callId], [programsByCall]);
+  const programs = useCallback(() => Object.values(programsByCall), [programsByCall]);
 
   const createProgram = useCallback(
     (callId: string, setup: ProgramSetup): Program => {
@@ -216,13 +218,13 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const exerciseConsumers = useCallback(
-    () => Object.values(programs).flatMap(program => program.versions.map(version => ({ exerciseIds: exerciseIdsOf(version) }))),
+    () => Object.values(programsByCall).flatMap(program => program.versions.map(version => ({ exerciseIds: exerciseIdsOf(version) }))),
     [programs],
   );
 
   const value = useMemo<ProgramContextType>(
-    () => ({ programFor, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
-    [programFor, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
+    () => ({ programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
+    [programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
   );
 
   return <ProgramContext.Provider value={value}>{children}</ProgramContext.Provider>;

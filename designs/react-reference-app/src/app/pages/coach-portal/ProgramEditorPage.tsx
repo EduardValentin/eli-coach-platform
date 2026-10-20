@@ -13,6 +13,10 @@ import { PlanOverview } from '../../components/coach-portal/program/PlanOverview
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
+import { useLibraryPicker } from '../../components/coach-portal/program/useLibraryPicker';
+import { LibraryDrawer } from '../../components/coach-portal/program/LibraryDrawer';
+import { blockWithPick } from '../../domain/programEditing';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { WIDGET_TITLE_CLASS } from '../../components/typography';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -37,11 +41,25 @@ function ProgramEditor(props: EditorProps) {
   const { journey, program, draft } = props;
   const editor = useEditorState(props);
   const rail = useRailDrawer();
+  const picker = useLibraryPicker();
+  const { programs } = usePrograms();
+  const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const { content } = draft;
   const { selected, today, ctx } = editor;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
+
+  const pickedBlock = content.plan.blocks.find(block => block.sessions.some(session => session.id === picker.target?.sessionId));
+  const pickedSlot = pickedBlock?.sessions.flatMap(session => session.rows).find(row => row.id === picker.target?.rowId)?.slot;
+
+  function pickExercise(exerciseId: string) {
+    const exercise = exercises.find(item => item.id === exerciseId);
+    if (picker.target && pickedBlock && exercise) {
+      editor.replaceBlock(blockWithPick(pickedBlock, picker.target, exercise, exercises, clientEquipment(journey)));
+    }
+    picker.close();
+  }
 
   function selectFromRail(section: EditorSection) {
     editor.select(section);
@@ -75,7 +93,9 @@ function ProgramEditor(props: EditorProps) {
           library={exercises}
           equipment={clientEquipment(journey)}
           onChange={editor.replaceBlock}
-          onPickExercise={() => {}}
+          otherPrograms={programs().filter(other => other.callId !== program.callId)}
+          journeys={journeys}
+          onPickExercise={picker.open}
         />
       );
     }
@@ -135,6 +155,17 @@ function ProgramEditor(props: EditorProps) {
         <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6">
           <div className="mx-auto w-full max-w-5xl">{renderSection()}</div>
         </main>
+        {picker.target && (
+          <LibraryDrawer
+            key={[picker.target.rowId, picker.target.field, picker.target.index].join(':')}
+            target={picker.target}
+            slot={pickedSlot}
+            library={exercises}
+            equipment={clientEquipment(journey)}
+            onPick={pickExercise}
+            onClose={picker.close}
+          />
+        )}
       </div>
       <AddBlockDialog
         open={addingBlock}
