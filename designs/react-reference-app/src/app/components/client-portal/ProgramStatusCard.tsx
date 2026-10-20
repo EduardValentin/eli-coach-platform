@@ -31,7 +31,7 @@ function eyebrowFor(stage: JourneyStage): string {
   return isBeforeStage(stage, 'approved') ? 'Your onboarding' : 'Your program';
 }
 
-const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
+export const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
   reviewing:
     "You'll see the next step here as soon as she has looked through your answers.",

@@ -25,6 +25,7 @@ import { CheckoutComplete } from "./pages/CheckoutComplete";
 import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
+import { ClientProgram } from "./pages/client-portal/ClientProgram";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
 import { CoachLayout } from "./components/coach-portal/CoachLayout";
 import { CoachDashboard } from "./pages/coach-portal/CoachDashboard";
@@ -147,6 +148,7 @@ export const router = createBrowserRouter(
           Component: PortalLayout,
           children: [
             { index: true, Component: ClientDashboard },
+            { path: "program", Component: ClientProgram },
             { path: "messages", Component: ClientMessages },
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },

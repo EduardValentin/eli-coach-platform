@@ -199,7 +199,7 @@ describe('PortalSidebar waiting count', () => {
 });
 
 describe('PortalSidebar mobile tabs', () => {
-  it('puts Dashboard, Check-ins and Profile on the bar and Resources under More in MVP', () => {
+  it('puts Dashboard, Program, Check-ins and Profile on the bar and Resources under More in MVP', () => {
     // arrange
     renderSidebar();
 
@@ -210,7 +210,7 @@ describe('PortalSidebar mobile tabs', () => {
       .map((link) => link.textContent);
 
     // assert
-    expect(tabNames).toEqual(['Dashboard', 'Check-ins', 'Profile']);
+    expect(tabNames).toEqual(['Dashboard', 'Program', 'Check-ins', 'Profile']);
     expect(within(bar).getByRole('button', { name: 'More' })).toBeVisible();
     expect(within(bar).queryByRole('link', { name: 'Resources' })).toBeNull();
   });
@@ -226,7 +226,7 @@ describe('PortalSidebar mobile tabs', () => {
       .map((link) => link.textContent);
 
     // assert
-    expect(tabNames).toEqual(['Dashboard', 'Messages', 'Check-ins', 'Profile']);
+    expect(tabNames).toEqual(['Dashboard', 'Program', 'Messages', 'Check-ins']);
   });
 });
 
@@ -313,7 +313,7 @@ describe('PortalSidebar More sheet', () => {
     // arrange
     const user = userEvent.setup();
     const tabLinks = CLIENT_PORTAL_LINKS.filter((link) =>
-      ['Dashboard', 'Check-ins', 'Profile'].includes(link.name),
+      ['Dashboard', 'Program', 'Check-ins', 'Profile'].includes(link.name),
     );
     renderSidebar({ links: tabLinks });
 

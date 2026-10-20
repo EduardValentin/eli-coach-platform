@@ -1,5 +1,6 @@
 import {
   Activity,
+  Calendar,
   CalendarCheck,
   Droplet,
   FolderOpen,
@@ -22,6 +23,12 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     name: 'Dashboard',
     href: '/portal',
     icon: Activity,
+    tab: true,
+  },
+  {
+    name: 'Program',
+    href: '/portal/program',
+    icon: Calendar,
     tab: true,
   },
   {
