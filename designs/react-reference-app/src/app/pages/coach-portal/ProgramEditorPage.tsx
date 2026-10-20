@@ -8,7 +8,11 @@ import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDi
 import { BlockWorkspace } from '../../components/coach-portal/program/BlockWorkspace';
 import { EditorRail } from '../../components/coach-portal/program/EditorRail';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
+import { CycleRulesEditor } from '../../components/coach-portal/program/CycleRulesEditor';
 import type { EditorSection } from '../../components/coach-portal/program/editorSection';
+import { HeaderSection } from '../../components/coach-portal/program/HeaderSection';
+import { LifestyleSection } from '../../components/coach-portal/program/LifestyleSection';
+import { NutritionSection } from '../../components/coach-portal/program/NutritionSection';
 import { PlanOverview } from '../../components/coach-portal/program/PlanOverview';
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
@@ -17,7 +21,6 @@ import { useLibraryPicker } from '../../components/coach-portal/program/useLibra
 import { LibraryDrawer } from '../../components/coach-portal/program/LibraryDrawer';
 import { blockWithPick } from '../../domain/programEditing';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { WIDGET_TITLE_CLASS } from '../../components/typography';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
@@ -25,15 +28,8 @@ import { usePrograms } from '../../context/ProgramContext';
 import { useTraining } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
 import { currentVersion, draftOf, type Program, type ProgramVersion } from '../../domain/program';
-import { clientEquipment } from '../../domain/programOnboarding';
+import { clientEquipment, recurringSymptoms } from '../../domain/programOnboarding';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
-
-const PLACEHOLDER_TITLES: Record<Exclude<EditorSection['kind'], 'plan' | 'block'>, string> = {
-  header: 'Header & focus',
-  cycle: 'Cycle rules',
-  nutrition: 'Nutrition',
-  lifestyle: 'Lifestyle',
-};
 
 type EditorProps = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
@@ -42,12 +38,14 @@ function ProgramEditor(props: EditorProps) {
   const editor = useEditorState(props);
   const rail = useRailDrawer();
   const picker = useLibraryPicker();
-  const { programs } = usePrograms();
+  const { programs, updateSetup } = usePrograms();
   const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const { content } = draft;
-  const { selected, today, ctx } = editor;
+  const { today, ctx } = editor;
+  const cycleMode = journey.identity.gender === 'male' ? 'general' : program.cycleMode;
+  const selected = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' as const } : editor.selected;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
 
   const pickedBlock = content.plan.blocks.find(block => block.sessions.some(session => session.id === picker.target?.sessionId));
@@ -99,7 +97,31 @@ function ProgramEditor(props: EditorProps) {
         />
       );
     }
-    return <h2 className={WIDGET_TITLE_CLASS}>{PLACEHOLDER_TITLES[selected.kind]}</h2>;
+    if (selected.kind === 'header') {
+      return (
+        <HeaderSection
+          journey={journey}
+          program={program}
+          version={draft}
+          content={content}
+          onContentChange={editor.replaceContent}
+          onSetupChange={patch => updateSetup(program.callId, patch)}
+        />
+      );
+    }
+    if (selected.kind === 'cycle') {
+      return (
+        <CycleRulesEditor
+          rules={content.cycleRules}
+          symptoms={recurringSymptoms(journey)}
+          onChange={cycleRules => editor.replaceContent({ ...content, cycleRules })}
+        />
+      );
+    }
+    if (selected.kind === 'nutrition') {
+      return <NutritionSection notes={content.nutritionNotes} onChange={nutritionNotes => editor.replaceContent({ ...content, nutritionNotes })} />;
+    }
+    return <LifestyleSection notes={content.lifestyleNotes} onChange={lifestyleNotes => editor.replaceContent({ ...content, lifestyleNotes })} />;
   }
 
   return (
@@ -141,7 +163,7 @@ function ProgramEditor(props: EditorProps) {
           </div>
           <EditorRail
             content={content}
-            cycleMode={program.cycleMode}
+            cycleMode={cycleMode}
             dayOne={ctx.dayOne}
             today={today}
             selected={selected}

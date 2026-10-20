@@ -122,6 +122,11 @@ describe('resetRowDefaults', () => {
     expect(result.sets).toBe(4);
     expect(result.touched).toEqual([]);
   });
+
+  it('reset on a deload block keeps sets', () => {
+    const result = resetRowDefaults(row({ sets: 4, reps: { min: 6, max: 8 }, restSeconds: 120, rir: { min: 1, max: 2 }, touched: ['sets', 'rir'] }), 'deload');
+    expect(result).toMatchObject({ sets: 4, reps: { min: 6, max: 8 }, restSeconds: 120, rir: { min: 4, max: 4 }, touched: [] });
+  });
 });
 
 describe('reDefaultedBlock', () => {

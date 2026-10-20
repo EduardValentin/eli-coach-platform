@@ -7,6 +7,8 @@ import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramContent, type 
 import { blockStatus } from '../../../domain/programCalendar';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
+import { BlockTexts } from './BlockTexts';
+import { CardioEditor } from './CardioEditor';
 import { BlockSettingsStrip } from './BlockSettingsStrip';
 import { BLOCK_BADGE_TONE } from './program-constants';
 import { SessionCard } from './SessionCard';
@@ -71,7 +73,8 @@ export function BlockWorkspace({ block, blockIndex, content, program, dayOne, to
           </li>
         ))}
       </ul>
-      <p className="text-sm text-text-secondary">Cardio and texts arrive in the next task</p>
+      <CardioEditor block={block} onChange={onChange} />
+      <BlockTexts block={block} language={program.language} onChange={onChange} />
     </section>
   );
 }

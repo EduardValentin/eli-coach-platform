@@ -4,7 +4,7 @@ import { useTraining, type Exercise } from '../../../context/TrainingContext';
 import { canStartWork, workStartDate } from '../../../domain/coachingSubscription';
 import type { ClientJourney } from '../../../domain/journey';
 import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../../domain/onboardingAnswers';
-import type { Block, BlockType, Program, ProgramVersion } from '../../../domain/program';
+import type { Block, BlockType, Program, ProgramContent, ProgramVersion } from '../../../domain/program';
 import { currentPosition, weekdayFromOnboarding } from '../../../domain/programCalendar';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { blockingProblems, warnings, type RuleContext } from '../../../domain/programRules';
@@ -59,6 +59,10 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     updateDraft(program.callId, current => ({ ...current, plan: { blocks: update(current.plan.blocks) } }));
   }
 
+  function replaceContent(next: ProgramContent) {
+    updateDraft(program.callId, () => next);
+  }
+
   function replaceBlock(block: Block) {
     updateBlocks(blocks => blocks.map(other => (other.id === block.id ? block : other)));
   }
@@ -91,6 +95,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     select,
     updateBlocks,
     replaceBlock,
+    replaceContent,
     addBlock,
     applySuggestion,
     publish,

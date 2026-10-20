@@ -1,0 +1,59 @@
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import { vi } from 'vitest';
+import { AppProvider } from '../app/context/AppContext';
+import { AssessmentCallProvider } from '../app/context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../app/context/ClientJourneyContext';
+import { ClientProfileProvider } from '../app/context/ClientProfileContext';
+import { ProgramProvider } from '../app/context/ProgramContext';
+import { TrainingProvider } from '../app/context/TrainingContext';
+import { UnitPreferencesProvider } from '../app/context/UnitPreferencesContext';
+import { ProgramEditorPage } from '../app/pages/coach-portal/ProgramEditorPage';
+
+export function stubEditorBrowserApis() {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: query.includes('prefers-reduced-motion') || query.includes('min-width'),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.scrollIntoView ??= () => {};
+}
+
+export function renderProgramEditor(search: string, path = '/coach/clients/c1/program/draft') {
+  const url = `${path}?session=coach${search}`;
+  window.history.replaceState(null, '', url);
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <UnitPreferencesProvider>
+          <ClientProfileProvider>
+            <TrainingProvider>
+              <AssessmentCallProvider>
+                <ClientJourneyProvider>
+                  <ProgramProvider>
+                    <Routes>
+                      <Route path="/coach/clients/:id/program/draft" element={<ProgramEditorPage />} />
+                      <Route path="/coach/clients/:id/program" element={<p>Program page</p>} />
+                      <Route path="/coach/clients/:id" element={<p>Client page</p>} />
+                    </Routes>
+                  </ProgramProvider>
+                </ClientJourneyProvider>
+              </AssessmentCallProvider>
+            </TrainingProvider>
+          </ClientProfileProvider>
+        </UnitPreferencesProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+  return userEvent.setup();
+}

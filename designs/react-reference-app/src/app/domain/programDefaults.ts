@@ -81,6 +81,7 @@ export function reDefaultedBlock(block: Block, type: BlockType): Block {
 }
 
 export function resetRowDefaults(row: Row, type: BlockType): Row {
+  if (type === 'deload') return { ...row, rir: { ...DELOAD_RIR }, touched: [] };
   return defaultedRow({ ...row, touched: [] }, type);
 }
 

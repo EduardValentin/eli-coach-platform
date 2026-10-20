@@ -9,9 +9,7 @@ import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { SettingsBody, SettingsRow, SettingsRows, SettingsSection } from '../../SettingsSection';
 import { Button, buttonVariants } from '../../ui/button';
 import { Input } from '../../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-
-type Option<Value extends string | number> = { value: Value; label: string };
+import { OptionSelect, type Option } from './OptionSelect';
 
 const LEVELS: Option<LevelHint>[] = [
   { value: 'beginner', label: 'Beginner' },
@@ -51,36 +49,6 @@ function equipmentAndPlace(journey: ClientJourney): string {
   const equipment = Array.isArray(answers.availableEquipment) ? answers.availableEquipment.join(', ') : '';
   const place = text(answers.trainingPlace) ?? '';
   return [equipment, place].filter(Boolean).join(' · ') || 'Not answered';
-}
-
-function OptionSelect<Value extends string | number>({
-  id,
-  options,
-  value,
-  onChange,
-}: {
-  id: string;
-  options: Option<Value>[];
-  value: Value;
-  onChange: (value: Value) => void;
-}) {
-  return (
-    <Select
-      value={String(value)}
-      onValueChange={next => onChange(options.find(option => String(option.value) === next)!.value)}
-    >
-      <SelectTrigger id={id}>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map(option => (
-          <SelectItem key={option.value} value={String(option.value)}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
