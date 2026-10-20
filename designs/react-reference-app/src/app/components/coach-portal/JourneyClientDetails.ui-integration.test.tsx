@@ -16,6 +16,8 @@ import {
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { ProgramProvider } from '../../context/ProgramContext';
+import { TrainingProvider } from '../../context/TrainingContext';
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -70,7 +72,9 @@ function renderDetails(
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
+            <TrainingProvider>
             <ClientJourneyProvider>
+              <ProgramProvider>
               <NotificationProvider>
               <CheckinProvider>
                 <MessagingProvider>
@@ -81,7 +85,9 @@ function renderDetails(
                 </MessagingProvider>
               </CheckinProvider>
               </NotificationProvider>
+              </ProgramProvider>
             </ClientJourneyProvider>
+            </TrainingProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -344,8 +350,8 @@ describe('the coach view of a client in onboarding', () => {
     // assert
     const widget = onboardingWidget();
     expect(
-      within(widget).getByRole('link', { name: 'Build her program' }),
-    ).toHaveAttribute('href', '/coach/training/builder/ac-demo-client-1');
+      within(widget).queryByRole('link', { name: 'Build her program' }),
+    ).not.toBeInTheDocument();
     expect(
       within(widget).getByRole('button', { name: 'Review answers' }),
     ).toBeInTheDocument();
@@ -462,9 +468,6 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(reviewed).queryByRole('button', { name: /review/i }),
     ).not.toBeInTheDocument();
-    expect(
-      within(reviewed).getByRole('link', { name: 'Build her program' }),
-    ).toBeInTheDocument();
   });
 
   it('approves the answers from the dialog through the same confirmation and turns the widget to building her program', async () => {
@@ -494,9 +497,6 @@ describe('the coach view of a client in onboarding', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const widget = onboardingWidget();
     expect(within(widget).getByText('Approved')).toBeInTheDocument();
-    expect(
-      within(widget).getByRole('link', { name: 'Build her program' }),
-    ).toBeInTheDocument();
   });
 
   it('offers no way to reopen review once approved', () => {
@@ -609,7 +609,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, invitation, onboarding, subscription, weekly check-in, measurements and the assessment call last', () => {
+  it('lays the page out as profile, invitation, onboarding, program, subscription, weekly check-in, measurements and the assessment call last', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -625,6 +625,7 @@ describe('the coach reading who a client is', () => {
       'Profile',
       'Invitation',
       'Onboarding',
+      'Program',
       'Subscription',
       'Weekly check-in',
       'Measurements',
@@ -1087,21 +1088,6 @@ describe('the coach reading about a client by his or their pronouns', () => {
       within(confirm).getByText(
         'A fresh invitation goes to jane@example.com. Their earlier link stops working.',
       ),
-    ).toBeInTheDocument();
-  });
-
-  it('offers to build his program', () => {
-    // arrange
-    const urlQuery = '?jstage=submitted&jgender=male';
-
-    // act
-    renderDetails(urlQuery);
-
-    // assert
-    expect(
-      within(onboardingWidget()).getByRole('link', {
-        name: 'Build his program',
-      }),
     ).toBeInTheDocument();
   });
 

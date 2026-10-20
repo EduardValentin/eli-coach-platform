@@ -32,6 +32,7 @@ import { Badge } from '../../components/ui/badge';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
+import { ProgramBlock } from '../../components/coach-portal/program/ProgramBlock';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
 import { JourneyMeasurements } from '../../components/coach-portal/JourneyMeasurements';
@@ -264,9 +265,9 @@ function RosterClientDetails() {
         <>
           <OnboardingPanel
             journey={journey}
-            clientId={clientId}
             heightCm={heightCm}
           />
+          <ProgramBlock journey={journey} />
           {journey.subscription && (
             <SubscriptionSummary
               subscription={journey.subscription}

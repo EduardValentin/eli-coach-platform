@@ -36,6 +36,8 @@ import { TrainingHub } from "./pages/coach-portal/TrainingHub";
 import { ExerciseEditorPage } from "./pages/coach-portal/ExerciseEditorPage";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
 import { FoodEditorPage } from "./pages/coach-portal/FoodEditorPage";
+import { ClientProgramPage } from "./pages/coach-portal/ClientProgramPage";
+import { ProgramEditorPage } from "./pages/coach-portal/ProgramEditorPage";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
 import { NutritionPlanBuilderPage } from "./pages/coach-portal/NutritionPlanBuilderPage";
 import { NutritionDayEditorPage } from "./pages/coach-portal/NutritionDayEditorPage";
@@ -175,6 +177,7 @@ export const router = createBrowserRouter(
             { path: "messages", Component: CoachMessages },
             { path: "clients", Component: ClientsList },
             { path: "clients/:id", Component: ClientDetails },
+            { path: "clients/:id/program", Component: ClientProgramPage },
             { path: "training", Component: TrainingHub },
             { path: "training/exercises/new", Component: ExerciseEditorPage },
             { path: "training/exercises/:exerciseId", Component: ExerciseEditorPage },
@@ -192,6 +195,8 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
+        { path: "coach/clients/:id/program/new", Component: ProgramEditorPage },
+        { path: "coach/clients/:id/program/draft", Component: ProgramEditorPage },
         { path: "coach/nutrition/recipe-builder", Component: RecipeBuilderPage },
         { path: "coach/nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
           ]
