@@ -52,7 +52,7 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     icon: UserCircle,
     tab: true,
   },
-  { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
+  { name: 'Cycle', href: '/portal/cycle', icon: Droplet, postMvp: true },
   {
     name: 'History',
     href: '/portal/history',

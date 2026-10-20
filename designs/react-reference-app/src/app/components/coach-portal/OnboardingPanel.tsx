@@ -150,7 +150,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  const mode = cycleModeOf(journey.onboarding);
+  const mode = cycleModeOf(journey.onboarding, journey.identity.gender);
   return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
 }
 

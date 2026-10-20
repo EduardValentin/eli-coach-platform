@@ -70,19 +70,14 @@ export type CycleModeDefinition = { term: string; meaning: string };
 
 export const CYCLE_MODE_DEFINITIONS: readonly CycleModeDefinition[] = [
   {
-    term: CYCLE_MODE_LABELS['phase-based'],
+    term: CYCLE_MODE_LABELS.adapted,
     meaning:
-      'her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.',
+      'the program keeps the same sessions all cycle and adds adjustment rules for the days she reports symptoms.',
   },
   {
-    term: CYCLE_MODE_LABELS['symptom-based'],
+    term: CYCLE_MODE_LABELS.general,
     meaning:
-      'one of those does not hold, so her program follows the symptoms she reports.',
-  },
-  {
-    term: CYCLE_MODE_LABELS.manual,
-    meaning:
-      'her contraception is one the product does not classify; you decide how her program adapts.',
+      'no cycle-driven adjustments; the low-energy session stays available.',
   },
   {
     term: CYCLE_MODE_NOT_ANSWERED,

@@ -2,113 +2,104 @@ import { describe, expect, it } from 'vitest';
 import { CYCLE_MODE_LABELS, cycleModeOf } from './cycleMode';
 import { emptyOnboardingDraft } from './journey';
 
-function phaseBasedAnswers() {
-  return {
+function draftWith(answers: Record<string, unknown>) {
+  const draft = emptyOnboardingDraft();
+  draft.answers['cycle-context'] = {
     cycleRegularity: "Yes, and it's regular",
     hormonalContraception: 'None',
     lifeStage: ['None of these'],
     perimenopauseOrMenopause: 'No',
+    ...answers,
   };
+  return draft;
 }
 
 describe('cycleModeOf', () => {
-  it('is null when the cycle form has no answers', () => {
+  it('is null while the cycle form is empty', () => {
     // arrange
     const draft = emptyOnboardingDraft();
 
     // act
-    const mode = cycleModeOf(draft);
+    const mode = cycleModeOf(draft, 'female');
 
     // assert
     expect(mode).toBeNull();
   });
 
-  it('is manual whenever contraception is something else', () => {
+  it('is null when she preferred not to say and the cycle form is empty', () => {
     // arrange
     const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = {
-      ...phaseBasedAnswers(),
-      hormonalContraception: 'Something else',
-    };
 
     // act
-    const mode = cycleModeOf(draft);
+    const mode = cycleModeOf(draft, 'prefer-not-to-say');
 
     // assert
-    expect(mode).toBe('manual');
-    expect(CYCLE_MODE_LABELS[mode!]).toBe('Set by Eli');
+    expect(mode).toBeNull();
   });
 
-  it('is phase-based on a regular cycle, no combined pill, no life stage flag, and no perimenopause', () => {
+  it('is general for a male account whatever the cycle form holds', () => {
     // arrange
     const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = phaseBasedAnswers();
 
     // act
-    const mode = cycleModeOf(draft);
+    const mode = cycleModeOf(draft, 'male');
 
     // assert
-    expect(mode).toBe('phase-based');
-    expect(CYCLE_MODE_LABELS[mode!]).toBe('Phase-based');
+    expect(mode).toBe('general');
   });
 
-  it('is symptom-based once the cycle is irregular or absent', () => {
+  it.each([
+    ['Combined pill', 'general'],
+    ['Mini pill (progestogen-only)', 'adapted'],
+    ['Hormonal IUD', 'adapted'],
+    ['Copper IUD (non-hormonal)', 'adapted'],
+    ['None', 'adapted'],
+    ['Something else', 'adapted'],
+  ])('contraception %s gives %s', (contraception, expected) => {
     // arrange
-    const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = {
-      ...phaseBasedAnswers(),
-      cycleRegularity: 'No, or very rarely',
-    };
+    const draft = draftWith({ hormonalContraception: contraception });
 
     // act
-    const mode = cycleModeOf(draft);
+    const mode = cycleModeOf(draft, 'female');
 
     // assert
-    expect(mode).toBe('symptom-based');
+    expect(mode).toBe(expected);
   });
 
-  it('is symptom-based on the combined pill', () => {
+  it.each([
+    ['without a period', { cycleRegularity: 'No, or very rarely' }],
+    ['in perimenopause', { perimenopauseOrMenopause: 'Yes, perimenopause' }],
+    ['in menopause', { perimenopauseOrMenopause: 'Yes, menopause' }],
+  ])('is general %s', (_situation, answers) => {
     // arrange
-    const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = {
-      ...phaseBasedAnswers(),
-      hormonalContraception: 'Combined pill',
-    };
+    const draft = draftWith(answers);
 
     // act
-    const mode = cycleModeOf(draft);
+    const mode = cycleModeOf(draft, 'female');
 
     // assert
-    expect(mode).toBe('symptom-based');
+    expect(mode).toBe('general');
   });
 
-  it('is symptom-based when a life-stage flag other than none applies', () => {
-    // arrange
-    const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = {
-      ...phaseBasedAnswers(),
-      lifeStage: ['Pregnant'],
-    };
+  it.each(['Pregnant', 'Postpartum', 'Breastfeeding'])(
+    'stays adapted when %s',
+    (lifeStage) => {
+      // arrange
+      const draft = draftWith({ lifeStage: [lifeStage] });
 
-    // act
-    const mode = cycleModeOf(draft);
+      // act
+      const mode = cycleModeOf(draft, 'female');
 
+      // assert
+      expect(mode).toBe('adapted');
+    },
+  );
+
+  it('labels the two modes', () => {
     // assert
-    expect(mode).toBe('symptom-based');
-  });
-
-  it('is symptom-based during perimenopause or menopause', () => {
-    // arrange
-    const draft = emptyOnboardingDraft();
-    draft.answers['cycle-context'] = {
-      ...phaseBasedAnswers(),
-      perimenopauseOrMenopause: 'Yes, perimenopause',
-    };
-
-    // act
-    const mode = cycleModeOf(draft);
-
-    // assert
-    expect(mode).toBe('symptom-based');
+    expect(CYCLE_MODE_LABELS).toEqual({
+      adapted: 'Adapted to symptoms',
+      general: 'General',
+    });
   });
 });

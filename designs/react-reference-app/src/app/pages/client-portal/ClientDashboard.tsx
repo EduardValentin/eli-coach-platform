@@ -153,17 +153,19 @@ export function ClientDashboard() {
           className="h-full"
         />
 
-        <CyclePhaseWidget
-          presentation="client"
-          phase={clientPhase}
-          headingId="phase-heading"
-          className="h-full"
-          footer={
-            <WidgetLink trailing="arrow" to="/portal/cycle">
-              View cycle tracker
-            </WidgetLink>
-          }
-        />
+        {isPostMvp && (
+          <CyclePhaseWidget
+            presentation="client"
+            phase={clientPhase}
+            headingId="phase-heading"
+            className="h-full"
+            footer={
+              <WidgetLink trailing="arrow" to="/portal/cycle">
+                View cycle tracker
+              </WidgetLink>
+            }
+          />
+        )}
 
         {isPostMvp && (
           <ClientWidget

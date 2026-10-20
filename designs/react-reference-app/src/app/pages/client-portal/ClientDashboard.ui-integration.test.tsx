@@ -108,3 +108,29 @@ describe('the measurements nudge on her dashboard', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('the cycle widget on her dashboard', () => {
+  it('shows no cycle widget in MVP', () => {
+    // arrange
+    renderDashboard('');
+
+    // act
+    const widgetLink = screen.queryByRole('link', {
+      name: 'View cycle tracker',
+    });
+
+    // assert
+    expect(widgetLink).not.toBeInTheDocument();
+  });
+
+  it('shows the cycle widget in Post-MVP', () => {
+    // arrange
+    renderDashboard('&scope=post-mvp');
+
+    // act
+    const widgetLink = screen.getByRole('link', { name: 'View cycle tracker' });
+
+    // assert
+    expect(widgetLink).toHaveAttribute('href', '/portal/cycle');
+  });
+});

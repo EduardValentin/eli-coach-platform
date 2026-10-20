@@ -264,13 +264,15 @@ function RosterClientDetails() {
             <UserCog size={16} />
             Edit Profile
           </Link>
-          <Link
-            to={`/coach/clients/${clientId}/cycle`}
-            className={buttonVariants({ variant: 'outline', size: 'md' })}
-          >
-            <Droplet size={16} />
-            Cycle Log
-          </Link>
+          {isPostMvp && (
+            <Link
+              to={`/coach/clients/${clientId}/cycle`}
+              className={buttonVariants({ variant: 'outline', size: 'md' })}
+            >
+              <Droplet size={16} />
+              Cycle Log
+            </Link>
+          )}
           <Link
             to={`/coach/clients/${clientId}/resources`}
             className={buttonVariants({ variant: 'outline', size: 'md' })}
@@ -344,17 +346,22 @@ function RosterClientDetails() {
           className="h-full"
         />
 
-        <CyclePhaseWidget
-          presentation="coach"
-          phase={phase}
-          headingId="phase-tile-heading"
-          className="h-full"
-          footer={
-            <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/cycle`}>
-              View cycle log
-            </WidgetLink>
-          }
-        />
+        {isPostMvp && (
+          <CyclePhaseWidget
+            presentation="coach"
+            phase={phase}
+            headingId="phase-tile-heading"
+            className="h-full"
+            footer={
+              <WidgetLink
+                trailing="arrow"
+                to={`/coach/clients/${clientId}/cycle`}
+              >
+                View cycle log
+              </WidgetLink>
+            }
+          />
+        )}
 
         {isPostMvp && (
           <PortalWidget

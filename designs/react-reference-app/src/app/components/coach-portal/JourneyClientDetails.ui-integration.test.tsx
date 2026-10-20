@@ -1151,8 +1151,8 @@ describe('the coach reading about a client by his or their pronouns', () => {
   });
 });
 
-const PHASE_BASED_FOR_HER =
-  'Phase-based — her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.';
+const ADAPTED_FOR_HER =
+  'Adapted to symptoms — the program keeps the same sessions all cycle and adds adjustment rules for the days she reports symptoms.';
 
 function cycleModeInfoButton(): HTMLElement {
   return within(onboardingWidget()).getByRole('button', {
@@ -1191,12 +1191,9 @@ describe('the coach reading what cycle mode means', () => {
 
     // assert
     const hint = await screen.findByRole('dialog');
-    expect(hint).toHaveTextContent(PHASE_BASED_FOR_HER);
+    expect(hint).toHaveTextContent(ADAPTED_FOR_HER);
     expect(hint).toHaveTextContent(
-      'Symptom-based — one of those does not hold, so her program follows the symptoms she reports.',
-    );
-    expect(hint).toHaveTextContent(
-      'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
+      'General — no cycle-driven adjustments; the low-energy session stays available.',
     );
     expect(hint).toHaveTextContent(
       'Not answered yet — the cycle form is empty.',
@@ -1213,7 +1210,7 @@ describe('the coach reading what cycle mode means', () => {
     // assert
     expect(cycleModeInfoButton()).toHaveFocus();
     expect(await screen.findByRole('dialog')).toHaveTextContent(
-      PHASE_BASED_FOR_HER,
+      ADAPTED_FOR_HER,
     );
   });
 
