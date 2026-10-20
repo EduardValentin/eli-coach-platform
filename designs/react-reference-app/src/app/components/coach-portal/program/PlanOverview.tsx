@@ -1,4 +1,3 @@
-import { useId, useState } from 'react';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import {
   BLOCK_TYPE_LABELS,
@@ -8,19 +7,10 @@ import {
   type BlockType,
   type LevelHint,
   type ProgramContent,
-  type SplitShape,
   type Weekday,
 } from '../../../domain/program';
 import { blockStatus, type BlockStatus } from '../../../domain/programCalendar';
-import { reDefaultedBlock } from '../../../domain/programDefaults';
-import {
-  blockingMessage,
-  blockingProblems,
-  blockShorterThanElapsed,
-  type BlockingCode,
-  type RuleContext,
-  type RuleFinding,
-} from '../../../domain/programRules';
+import { blockingMessage, blockingProblems, type BlockingCode, type RuleContext } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
@@ -31,7 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { cn } from '../../ui/utils';
 import { PlanTimeline } from './PlanTimeline';
-import { BLOCK_SWATCH } from './program-constants';
+import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
+import { blockWithType, useWeeksField } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
 
@@ -52,7 +43,6 @@ const SEQUENCE_CODES: readonly BlockingCode[] = [
   'consecutive-deloads',
   'deload-not-one-week',
 ];
-const SPLIT_SHAPE_LABELS: Record<SplitShape, string> = { 'full-body': 'Full body', 'upper-lower': 'Upper / lower' };
 const LEVEL_LABELS: Record<LevelHint, string> = { beginner: 'beginner', intermediate: 'intermediate', advanced: 'advanced' };
 const CELL_CLASS = 'px-3 py-2';
 
@@ -64,10 +54,6 @@ function swap(blocks: Block[], index: number, other: number): Block[] {
   const next = [...blocks];
   [next[index], next[other]] = [next[other], next[index]];
   return next;
-}
-
-function withType(block: Block, type: BlockType): Block {
-  return { ...reDefaultedBlock(block, type), weeks: type === 'deload' ? 1 : block.weeks };
 }
 
 function sequenceProblems(content: ProgramContent, props: PlanOverviewProps) {
@@ -82,11 +68,6 @@ function sequenceProblems(content: ProgramContent, props: PlanOverviewProps) {
     exercisesById: new Map(),
   };
   return blockingProblems(content, '', ctx).filter(finding => SEQUENCE_CODES.includes(finding.code));
-}
-
-function elapsedRefusal(status: BlockStatus, weeks: number): RuleFinding<BlockingCode> | undefined {
-  if (status.kind !== 'current' || weeks >= status.weekOfBlock) return undefined;
-  return { code: 'block-shorter-than-elapsed', detail: String(status.weekOfBlock - 1) };
 }
 
 function WeeksInput({
@@ -104,49 +85,11 @@ function WeeksInput({
   today: Date;
   onCommit: (weeks: number) => void;
 }) {
-  const block = blocks[index];
-  const [text, setText] = useState(String(block.weeks));
-  const [problem, setProblem] = useState<string | null>(null);
-  const [shownWeeks, setShownWeeks] = useState(block.weeks);
-  const problemId = useId();
-  if (shownWeeks !== block.weeks) {
-    setShownWeeks(block.weeks);
-    setText(String(block.weeks));
-  }
-
-  function change(raw: string) {
-    setProblem(null);
-    const weeks = Number(raw);
-    if (raw === '' || !Number.isInteger(weeks) || weeks < 1) {
-      setText(raw);
-      return;
-    }
-    const refusal = elapsedRefusal(status, weeks) ?? blockShorterThanElapsed(replaceAt(blocks, index, { ...block, weeks }), dayOne, today)[0];
-    if (refusal) {
-      setText(String(block.weeks));
-      setProblem(blockingMessage(refusal));
-      return;
-    }
-    setText(raw);
-    onCommit(weeks);
-  }
-
+  const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit });
   return (
     <div className="grid gap-1">
-      <Input
-        type="number"
-        min={1}
-        size="sm"
-        className="w-20"
-        aria-label={`Weeks of block ${index + 1}`}
-        aria-invalid={problem ? true : undefined}
-        aria-describedby={problem ? problemId : undefined}
-        value={text}
-        disabled={block.type === 'deload' || status.kind === 'ended'}
-        onChange={event => change(event.target.value)}
-        onBlur={() => setText(String(block.weeks))}
-      />
-      {problem && <InlineProblem id={problemId}>{problem}</InlineProblem>}
+      <Input size="sm" className="w-20" aria-label={`Weeks of block ${index + 1}`} {...weeks.inputProps} />
+      {weeks.problem && <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>}
     </div>
   );
 }
@@ -240,7 +183,7 @@ export function PlanOverview(props: PlanOverviewProps) {
                         block={block}
                         index={index}
                         status={statuses[index]}
-                        onType={type => onChange(current => replaceAt(current, index, withType(current[index], type)))}
+                        onType={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type)))}
                       />
                     </TableCell>
                     <TableCell className={CELL_CLASS}>

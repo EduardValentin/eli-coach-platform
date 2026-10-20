@@ -105,7 +105,7 @@ describe('ProgramEditorPage', () => {
     expect(within(rail()).getByRole('button', { name: 'Plan overview' })).not.toHaveAttribute('aria-current');
     const main = screen.getByRole('main');
     expect(within(main).getByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
-    expect(within(main).getByText('Sessions arrive in the next task')).toBeInTheDocument();
+    expect(within(main).getByRole('list', { name: 'Sessions' })).toBeInTheDocument();
   });
 
   it('refuses a block duration below the weeks already run', async () => {

@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import type { BlockType } from '../../../domain/program';
+import type { BlockType, CardioType, SplitShape, Weekday } from '../../../domain/program';
 import type { Badge } from '../../ui/badge';
 
 export const BLOCK_SWATCH: Record<BlockType, string> = {
@@ -21,4 +21,23 @@ export const BLOCK_BADGE_TONE: Record<BlockType, NonNullable<ComponentProps<type
   hypertrophy: 'tint-violet',
   strength: 'brand-secondary',
   deload: 'tint-slate',
+};
+
+export const SPLIT_SHAPE_LABELS: Record<SplitShape, string> = { 'full-body': 'Full body', 'upper-lower': 'Upper / lower' };
+
+export const CARDIO_TYPE_LABELS: Record<CardioType, string> = {
+  liss: 'LISS',
+  moderate: 'Moderate',
+  hiit: 'HIIT',
+  finisher: 'Finisher',
+};
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
 };

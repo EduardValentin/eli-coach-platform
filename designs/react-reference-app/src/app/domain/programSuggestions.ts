@@ -85,7 +85,7 @@ export function spreadCalendar(
   return calendar;
 }
 
-function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): Row {
+export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): Row {
   return {
     id: newId(),
     exerciseId: '',

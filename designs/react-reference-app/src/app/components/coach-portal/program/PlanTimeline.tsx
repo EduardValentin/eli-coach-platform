@@ -3,18 +3,9 @@ import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../../domain/pro
 import { checkpointsWithin, planWeeks } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, BLOCK_SWATCH } from './program-constants';
+import { BLOCK_SOFT, BLOCK_SWATCH, WEEKDAY_LABELS } from './program-constants';
 
 const DAYS_PER_WEEK = 7;
-const WEEKDAY_NAMES: Record<Weekday, string> = {
-  mon: 'Monday',
-  tue: 'Tuesday',
-  wed: 'Wednesday',
-  thu: 'Thursday',
-  fri: 'Friday',
-  sat: 'Saturday',
-  sun: 'Sunday',
-};
 
 type PlanTimelineProps = {
   blocks: readonly Block[];
@@ -65,7 +56,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
         </div>
       </div>
       <figcaption className="text-xs text-text-secondary">
-        {`${weeks} weeks · day 1 is ${dayOneText} · ▲ check-in form every 14 days, on her preferred ${WEEKDAY_NAMES[preferredWeekday]}`}
+        {`${weeks} weeks · day 1 is ${dayOneText} · ▲ check-in form every 14 days, on her preferred ${WEEKDAY_LABELS[preferredWeekday]}`}
       </figcaption>
     </figure>
   );
