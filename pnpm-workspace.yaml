@@ -29,7 +29,7 @@ catalog:
   "@testing-library/user-event": 14.6.8
   "@tokenizer/inflate": 0.5.1
   "@types/archiver": 8.0.0
-  "@types/node": 24.13.3
+  "@types/node": 24.19.2
   "@types/pdfkit": 0.17.6
   "@types/pg": 8.23.1
   "@types/react-dom": 19.3.0
@@ -68,7 +68,7 @@ catalog:
   sharp: 0.35.5
   sonner: 2.0.8
   stripe: 22.6.2
-  strtok3: 10.6.1
+  strtok3: 10.6.2
   tailwind-merge: 3.7.0
   tailwindcss: 4.3.3
   testcontainers: 12.2.1
