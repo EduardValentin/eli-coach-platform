@@ -68,7 +68,7 @@ describe('ProgramEditorPage', () => {
     expect(within(breadcrumb()).getByText('Block 2 · Hypertrophy')).toHaveAttribute('aria-current', 'page');
     const main = screen.getByRole('main');
     expect(within(main).getByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
-    expect(within(main).getByRole('list', { name: 'Sessions' })).toBeInTheDocument();
+    expect(within(main).getByRole('region', { name: 'Week' })).toBeInTheDocument();
     await user.click(within(breadcrumb()).getByRole('button', { name: 'Overview' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();
   });

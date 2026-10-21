@@ -1,59 +1,35 @@
 import type { Exercise } from '../context/TrainingContext';
-import type { Equipment } from './exercises';
-import type { Block, Row, Session, Weekday } from './program';
+import type { Block, Session, Slot, Weekday } from './program';
 import { WEEKDAYS } from './program';
-import { defaultedRow } from './programDefaults';
-import { copiedSessions, spreadCalendar, substitutionsFor } from './programSuggestions';
+import { copiedSessions, spreadCalendar } from './programSuggestions';
+import { quickAddSlot, sessionEdits, type SessionEditContext } from './sessionEditing';
 
-export type RowTarget = {
-  sessionId: string;
-  rowId: string;
-  field: 'exercise' | 'substitution' | 'mobility';
-  index?: number;
-};
+export type LibraryTarget =
+  | { kind: 'slot'; sessionId: string; slot: Slot }
+  | { kind: 'mobility'; sessionId: string }
+  | { kind: 'substitution'; sessionId: string; rowId: string };
 
-const MAX_MOBILITY_EXERCISES = 4;
+export type LibraryPick = { exercise: Exercise; target: LibraryTarget | null; openSessionId: string | undefined };
 
-function filledRow(row: Row, exercise: Exercise, blockType: Block['type'], library: readonly Exercise[], equipment: readonly Equipment[]): Row {
-  const defaulted = defaultedRow({ ...row, exerciseId: exercise.id }, blockType);
+function pickedSession(block: Block, session: Session, pick: LibraryPick, context: SessionEditContext): Session {
+  const edits = sessionEdits(session, context);
+  const { exercise, target } = pick;
+  if (target?.kind === 'substitution') return edits.addSubstitution(target.rowId, exercise.id);
+  if (target?.kind === 'mobility' || exercise.type === 'mobility') return edits.addMobility(exercise.id);
+  const slot = target?.kind === 'slot' ? target.slot : quickAddSlot(block, session, exercise);
+  return edits.add(exercise, { slot });
+}
+
+export function blockWithLibraryPick(block: Block, pick: LibraryPick, context: SessionEditContext): Block {
+  const sessionId = pick.target?.sessionId ?? pick.openSessionId;
   return {
-    ...defaulted,
-    substitutions: row.substitutions.length > 0 ? row.substitutions : substitutionsFor(exercise, library, equipment),
-    cues: row.touched.includes('cues') ? row.cues : exercise.cues,
+    ...block,
+    sessions: block.sessions.map(session => (session.id === sessionId ? pickedSession(block, session, pick, context) : session)),
   };
 }
 
-function withSubstitution(row: Row, exerciseId: string, index: number | undefined): Row {
-  const substitutions = [...row.substitutions];
-  if (index !== undefined && index < substitutions.length) substitutions[index] = exerciseId;
-  else substitutions.push(exerciseId);
-  return { ...row, substitutions };
-}
-
-function withMobility(session: Session, exerciseId: string): Session {
-  const { mobilityExerciseIds } = session.warmUp;
-  if (mobilityExerciseIds.includes(exerciseId) || mobilityExerciseIds.length >= MAX_MOBILITY_EXERCISES) return session;
-  return { ...session, warmUp: { ...session.warmUp, mobilityExerciseIds: [...mobilityExerciseIds, exerciseId] } };
-}
-
-export function blockWithPick(
-  block: Block,
-  target: RowTarget,
-  exercise: Exercise,
-  library: readonly Exercise[],
-  equipment: readonly Equipment[],
-): Block {
-  const sessions = block.sessions.map(session => {
-    if (session.id !== target.sessionId) return session;
-    if (target.field === 'mobility') return withMobility(session, exercise.id);
-    const rows = session.rows.map(row => {
-      if (row.id !== target.rowId) return row;
-      if (target.field === 'substitution') return withSubstitution(row, exercise.id, target.index);
-      return filledRow(row, exercise, block.type, library, equipment);
-    });
-    return { ...session, rows };
-  });
-  return { ...block, sessions };
+export function blockWithSession(block: Block, session: Session): Block {
+  return { ...block, sessions: block.sessions.map(other => (other.id === session.id ? session : other)) };
 }
 
 function calendarByPosition(block: Block, sessions: Session[]): Block['calendar'] {

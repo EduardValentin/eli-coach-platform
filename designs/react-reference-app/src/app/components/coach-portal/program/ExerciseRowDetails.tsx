@@ -1,37 +1,28 @@
 import type { ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
+import { Plus, Sparkles, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import type { Equipment } from '../../../domain/exercises';
 import type { LastSetTechnique, Row } from '../../../domain/program';
-import { substitutionsFor } from '../../../domain/programSuggestions';
+import { MAX_SUBSTITUTIONS } from '../../../domain/sessionEditing';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
+import { cn } from '../../ui/utils';
 import { withField } from './rowFields';
-
-export type RowActions = {
-  moveUp?: () => void;
-  moveDown?: () => void;
-  superset?: () => void;
-  splitSuperset?: () => void;
-  reset: () => void;
-  remove: () => void;
-};
+import { DropZone, LIBRARY_EXERCISE, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
 type ExerciseRowDetailsProps = {
   row: Row;
   exercise: Exercise | undefined;
   library: readonly Exercise[];
-  equipment: readonly Equipment[];
-  actions: RowActions;
+  substitutionDrop: SessionDropRules;
   onChange: (row: Row) => void;
-  onPickSubstitution: (index: number) => void;
+  onAddSubstitution: () => void;
+  onSuggestSubstitutions: () => void;
 };
 
 const TECHNIQUE_LABELS: Record<LastSetTechnique, string> = { none: 'None', 'drop-set': 'Drop set', 'rest-pause': 'Rest-pause' };
-const SUBSTITUTION_SLOTS = [0, 1];
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -42,72 +33,55 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Substitutions({ row, exercise, library, equipment, onChange, onPickSubstitution }: Omit<ExerciseRowDetailsProps, 'actions'>) {
-  const nameOf = (id: string | undefined) => library.find(item => item.id === id)?.name ?? 'None yet';
-  return (
-    <fieldset className="grid gap-2">
-      <legend className={LABEL_CLASS}>Substitutions</legend>
-      <ul className="flex flex-wrap gap-2">
-        {SUBSTITUTION_SLOTS.map(index => (
-          <li key={index} className="flex items-center gap-1 rounded-full border border-border bg-surface-base py-0.5 pr-1 pl-3 text-sm">
-            {nameOf(row.substitutions[index])}
-            <Button variant="ghost" size="xs" aria-label={`Change substitution ${index + 1}`} onClick={() => onPickSubstitution(index)}>
-              Change
-            </Button>
-          </li>
-        ))}
-      </ul>
-      <Button
-        variant="outline"
-        size="xs"
-        className="justify-self-start"
-        disabled={!exercise}
-        onClick={() => exercise && onChange(withField(row, 'substitutions', substitutionsFor(exercise, library, equipment)))}
-      >
-        Suggest again
-      </Button>
-    </fieldset>
-  );
+function acceptsSubstitution(dragged: DraggedItem): boolean {
+  return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'resistance';
 }
 
-function ActionBar({ actions }: { actions: RowActions }) {
+function Substitutions({ row, exercise, library, substitutionDrop, onChange, onAddSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
+  const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
+  const room = row.substitutions.length < MAX_SUBSTITUTIONS;
   return (
-    <div className="flex flex-wrap gap-1 border-t border-border pt-3">
-      <Button variant="ghost" size="xs" disabled={!actions.moveUp} onClick={actions.moveUp}>
-        <ArrowUp aria-hidden="true" />
-        Move up
-      </Button>
-      <Button variant="ghost" size="xs" disabled={!actions.moveDown} onClick={actions.moveDown}>
-        <ArrowDown aria-hidden="true" />
-        Move down
-      </Button>
-      {actions.splitSuperset ? (
-        <Button variant="ghost" size="xs" onClick={actions.splitSuperset}>
-          <Link2Off aria-hidden="true" />
-          Split superset
-        </Button>
-      ) : (
-        actions.superset && (
-          <Button variant="ghost" size="xs" onClick={actions.superset}>
-            <Link2 aria-hidden="true" />
-            Superset with next
-          </Button>
-        )
-      )}
-      <Button variant="ghost" size="xs" onClick={actions.reset}>
-        <RotateCcw aria-hidden="true" />
-        Reset to block defaults
-      </Button>
-      <Button variant="ghost" size="xs" className="text-destructive" onClick={actions.remove}>
-        <Trash2 aria-hidden="true" />
-        Remove
-      </Button>
-    </div>
+    <DropZone rules={substitutionDrop} accepts={acceptsSubstitution} className="rounded-field" activeClassName="ring-2 ring-primary/40">
+      <fieldset className="grid gap-2">
+        <legend className={cn(LABEL_CLASS, 'mb-1.5')}>Substitutions</legend>
+        {row.substitutions.length > 0 && (
+          <ul className="flex flex-wrap gap-2">
+            {row.substitutions.map(id => (
+              <li key={id} className="flex items-center gap-1 rounded-full border border-border bg-surface-base py-0.5 pr-0.5 pl-3 text-sm text-text-primary">
+                {nameOf(id)}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Remove ${nameOf(id)}`}
+                  onClick={() => onChange(withField(row, 'substitutions', row.substitutions.filter(other => other !== id)))}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {room && (
+          <div className="flex flex-wrap gap-1">
+            <Button variant="outline" size="xs" onClick={onAddSubstitution}>
+              <Plus aria-hidden="true" />
+              Add substitution
+            </Button>
+            {exercise && (
+              <Button variant="ghost" size="xs" onClick={onSuggestSubstitutions}>
+                <Sparkles aria-hidden="true" />
+                Suggest
+              </Button>
+            )}
+          </div>
+        )}
+      </fieldset>
+    </DropZone>
   );
 }
 
 export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
-  const { row, exercise, actions, onChange } = props;
+  const { row, exercise, onChange } = props;
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -195,7 +169,6 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
           )}
         </div>
       </div>
-      <ActionBar actions={actions} />
     </>
   );
 }

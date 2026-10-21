@@ -40,20 +40,3 @@ export function withField<Field extends RowField>(row: Row, field: Field, value:
   const touched = row.touched.includes(field) ? row.touched : [...row.touched, field];
   return { ...row, [field]: value, touched };
 }
-
-function substitutionsHint(count: number): string {
-  if (count === 0) return '';
-  return count === 1 ? '1 sub' : `${count} subs`;
-}
-
-export function rowHint(row: Row): string {
-  const parts = [
-    row.warmUpSets ? 'warm-up' : '',
-    row.weightKg === undefined ? '' : 'kg',
-    substitutionsHint(row.substitutions.length),
-    row.tempo ? 'tempo' : '',
-    row.lastSetTechnique === 'none' ? '' : 'last set',
-    row.progression.kind === 'custom' ? 'custom progression' : '',
-  ];
-  return parts.filter(part => part !== '').join(' · ');
-}

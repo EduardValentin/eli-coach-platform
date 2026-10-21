@@ -14,6 +14,7 @@ type EditorTopBarProps = {
   version: ProgramVersion;
   basedOn: ProgramVersion | undefined;
   railToggle: ReactNode;
+  libraryToggle: ReactNode;
   currentTitle: string | null;
   onOverview: () => void;
   onOpenWarnings: () => void;
@@ -87,6 +88,7 @@ export function EditorTopBar({
   version,
   basedOn,
   railToggle,
+  libraryToggle,
   currentTitle,
   onOverview,
   onOpenWarnings,
@@ -116,6 +118,7 @@ export function EditorTopBar({
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {warningsCount > 0 && <WarningsButton count={warningsCount} onClick={onOpenWarnings} />}
+          {libraryToggle}
           {opensOn && <p className="hidden text-sm text-text-secondary xl:block">{`Publishing opens on ${formatJourneyDate(opensOn)}`}</p>}
           <Button variant="outline" aria-label="Preview as client" onClick={onPreview}>
             <Eye aria-hidden="true" />

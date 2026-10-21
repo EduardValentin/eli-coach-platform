@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { stubEditorBrowserApis, stubPhoneViewport } from '../../../../test/renderProgramEditor';
 import { ProgramEditorPage } from '../../../pages/coach-portal/ProgramEditorPage';
 import { AppProvider } from '../../../context/AppContext';
 import { AssessmentCallProvider } from '../../../context/AssessmentCallContext';
@@ -11,30 +12,7 @@ import { ProgramProvider, usePrograms } from '../../../context/ProgramContext';
 import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
 
-function stubViewport(desktop: boolean) {
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn((query: string) => ({
-      matches: query.includes('prefers-reduced-motion') || (desktop && query.includes('min-width')),
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  );
-}
-
-beforeAll(() => {
-  Element.prototype.hasPointerCapture ??= () => false;
-  Element.prototype.scrollIntoView ??= () => {};
-});
-
-beforeEach(() => {
-  stubViewport(true);
-});
+beforeEach(stubEditorBrowserApis);
 
 afterEach(() => {
   window.localStorage.clear();
@@ -96,64 +74,105 @@ async function openFirstBlock(search: string) {
 }
 
 function firstSession(): HTMLElement {
-  return screen.getByRole('table', { name: 'Full Body A exercises' });
+  return screen.getByRole('article', { name: 'Full Body A' });
 }
 
-function drawer(): HTMLElement {
+function library(): HTMLElement {
   return screen.getByRole('complementary', { name: 'Exercise library' });
 }
 
-describe('LibraryDrawer', () => {
-  it('fills a row from the drawer with the block defaults and its substitution', async () => {
+async function clearFirstSession(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(within(firstSession()).getByRole('button', { name: 'Full Body A actions' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Clear session' }));
+  await user.click(within(screen.getByRole('dialog', { name: 'Clear Full Body A?' })).getByRole('button', { name: 'Clear session' }));
+}
+
+describe('LibraryPanel', () => {
+  it('stays beside the editor on wide screens and collapses from the top bar', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
-    await user.click(screen.getAllByRole('button', { name: 'Add exercise' })[0]);
-    await user.click(within(drawer()).getByRole('switch', { name: 'Only her equipment' }));
+    expect(library()).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: 'Exercise library' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
 
     // act
-    const pick = within(drawer()).getByRole('button', { name: 'Leg Press · Squat · Machine' });
-    expect(within(pick.closest('li') as HTMLElement).getByText('Role Secondary compound in slot C')).toBeInTheDocument();
-    await user.click(pick);
+    await user.click(toggle);
 
     // assert
     expect(screen.queryByRole('complementary', { name: 'Exercise library' })).not.toBeInTheDocument();
-    expect(within(firstSession()).queryByRole('button', { name: 'Choose an exercise' })).not.toBeInTheDocument();
-    await user.click(within(firstSession()).getByRole('button', { name: 'Show details for Leg Press' }));
-    const substitutions = screen.getByRole('group', { name: /Leg Press/ });
-    expect(within(substitutions).getByText('Barbell Back Squat')).toBeInTheDocument();
-    const rest = within(firstSession()).getByRole('textbox', { name: 'Rest for C Leg Press' });
-    expect(rest).toHaveValue('1:15');
-    expect(within(rest.closest('tr') as HTMLElement).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('hides archived exercises from the drawer but keeps an archived one on its row', async () => {
-    // arrange
-    const user = await openFirstBlock('pseed=draft&exseed=clash');
-    await user.click(screen.getByRole('button', { name: 'Reference the archived hip thrust' }));
-    expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
-
-    // act
-    await user.click(within(firstSession()).getByRole('button', { name: /^Hip Thrust/ }));
-    await user.click(within(drawer()).getByRole('switch', { name: 'Only her equipment' }));
-
-    // assert
-    expect(within(drawer()).getAllByRole('button', { name: /^Hip Thrust · / })).toHaveLength(1);
-    expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
-  });
-
-  it('narrows the list by search and closes on Escape returning focus to the opener', async () => {
+  it('quick-adds without a target into the matching group of the open session', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
-    const opener = screen.getAllByRole('button', { name: 'Add exercise' })[0];
-    await user.click(opener);
-    await user.click(within(drawer()).getByRole('switch', { name: 'Only her equipment' }));
+    await clearFirstSession(user);
+    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
 
     // act
-    await user.type(within(drawer()).getByRole('searchbox', { name: 'Search exercises' }), 'LUNGE');
+    await user.click(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' }));
+    await user.click(within(library()).getByRole('button', { name: 'Add Lateral Raises' }));
 
     // assert
-    expect(within(drawer()).getByRole('button', { name: 'Walking Lunges · Lunge · Dumbbells' })).toBeInTheDocument();
-    expect(within(drawer()).queryByRole('button', { name: /^Leg Press/ })).not.toBeInTheDocument();
+    expect(within(firstSession()).getByRole('article', { name: 'A Barbell Back Squat' })).toBeInTheDocument();
+    expect(within(firstSession()).getByRole('article', { name: 'C Lateral Raises' })).toBeInTheDocument();
+  });
+
+  it('fills a new card with the block defaults and its substitutions', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await clearFirstSession(user);
+    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add Leg Press' }));
+
+    // assert
+    const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
+    expect(within(card).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(card).getByText('Rest 1:15')).toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
+    expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByText('Barbell Back Squat')).toBeInTheDocument();
+  });
+
+  it('hides archived exercises from the library but keeps an archived one on its card', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft&exseed=clash');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Reference the archived hip thrust' }));
+    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+
+    // assert
+    expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
+    expect(within(library()).getAllByRole('button', { name: 'Add Hip Thrust' })).toHaveLength(1);
+  });
+
+  it('narrows the list by search', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+
+    // act
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'LUNGE');
+
+    // assert
+    expect(within(library()).getByRole('button', { name: 'Add Walking Lunges' })).toBeInTheDocument();
+    expect(within(library()).queryByRole('button', { name: 'Add Leg Press' })).not.toBeInTheDocument();
+  });
+
+  it('opens as a drawer on narrow screens and closes on Escape returning focus to the opener', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    expect(screen.queryByRole('complementary', { name: 'Exercise library' })).not.toBeInTheDocument();
+    const opener = within(firstSession()).getByRole('button', { name: 'Add mobility exercise' });
+
+    // act
+    await user.click(opener);
+
+    // assert
+    expect(within(library()).getByRole('searchbox', { name: 'Search exercises' })).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('complementary', { name: 'Exercise library' })).not.toBeInTheDocument();
     expect(opener).toHaveFocus();

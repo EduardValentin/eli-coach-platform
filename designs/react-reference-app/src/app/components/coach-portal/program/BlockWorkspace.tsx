@@ -1,17 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
 import type { ClientJourney } from '../../../domain/journey';
-import type { RowTarget } from '../../../domain/programEditing';
-import type { Block, Program, ProgramContent, Session } from '../../../domain/program';
+import type { Block, Program, ProgramContent } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
+import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
+import { sessionsInCalendarOrder } from '../../../domain/weekEditing';
 import { BlockHeader } from './BlockHeader';
 import { BlockTexts } from './BlockTexts';
-import { CardioEditor } from './CardioEditor';
 import { SessionCard } from './SessionCard';
-import { WeekCalendarEditor } from './WeekCalendarEditor';
-
-export type { RowTarget };
+import { SessionDragLayer } from './sessionDnd';
+import { WeekDays } from './WeekDays';
 
 type BlockWorkspaceProps = {
   block: Block;
@@ -24,52 +23,89 @@ type BlockWorkspaceProps = {
   equipment: readonly Equipment[];
   otherPrograms: Program[];
   journeys: Record<string, ClientJourney>;
+  openSessionId: string | undefined;
+  onOpenSession: (sessionId: string) => void;
   onChange: (block: Block) => void;
   onRemove: () => void;
-  onPickExercise: (target: RowTarget) => void;
+  onOpenLibrary: (target: LibraryTarget) => void;
 };
 
-export function BlockWorkspace({ block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, onChange, onRemove, onPickExercise }: BlockWorkspaceProps) {
-  const [expanded, setExpanded] = useState<string | null>(null);
+function useStickyHeaderHeight() {
+  const slot = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const header = slot.current?.firstElementChild;
+    if (!header || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => setHeight(header.getBoundingClientRect().height));
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+  return { slot, height };
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export function BlockWorkspace(props: BlockWorkspaceProps) {
+  const { block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
+  const header = useStickyHeaderHeight();
+  const articles = useRef(new Map<string, HTMLElement>());
+  const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const { blocks } = content.plan;
-  const expandedId = block.sessions.some(session => session.id === expanded) ? expanded : block.sessions[0]?.id;
-  const changeSession = (session: Session) =>
-    onChange({ ...block, sessions: block.sessions.map(other => (other.id === session.id ? session : other)) });
+  const sessions = sessionsInCalendarOrder(block);
+  const context = { blockType: block.type, library, equipment };
+
+  useEffect(() => {
+    if (!scrollTarget) return;
+    articles.current.get(scrollTarget)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    setScrollTarget(null);
+  }, [scrollTarget]);
+
+  function openFromWeek(sessionId: string) {
+    onOpenSession(sessionId);
+    setScrollTarget(sessionId);
+  }
 
   return (
-    <section className="grid gap-6">
-      <BlockHeader
-        key={block.id}
-        blocks={blocks}
-        index={blockIndex}
-        status={blockStatus(blocks, blockIndex, dayOne, today)}
-        dayOne={dayOne}
-        today={today}
-        language={program.language}
-        otherPrograms={otherPrograms}
-        journeys={journeys}
-        onChange={onChange}
-        onRemove={onRemove}
-      />
-      <WeekCalendarEditor block={block} onChange={onChange} />
-      <ul aria-label="Sessions" className="grid gap-3">
-        {block.sessions.map(session => (
-          <li key={session.id}>
-            <SessionCard
-              session={session}
-              block={block}
-              expanded={session.id === expandedId}
-              onToggle={() => setExpanded(session.id)}
-              library={library}
-              equipment={equipment}
-              onChange={changeSession}
-              onPickExercise={onPickExercise}
-            />
-          </li>
+    <section className="grid gap-6" style={{ '--block-header-height': `${header.height}px` } as CSSProperties}>
+      <div ref={header.slot} className="contents">
+        <BlockHeader
+          key={block.id}
+          blocks={blocks}
+          index={blockIndex}
+          status={blockStatus(blocks, blockIndex, dayOne, today)}
+          dayOne={dayOne}
+          today={today}
+          language={program.language}
+          otherPrograms={otherPrograms}
+          journeys={journeys}
+          onChange={onChange}
+          onRemove={onRemove}
+        />
+      </div>
+      <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
+      <div className="grid gap-4">
+        {sessions.map(session => (
+          <SessionCard
+            key={session.id}
+            session={session}
+            block={block}
+            expanded={session.id === openSessionId}
+            articleRef={element => {
+              if (element) articles.current.set(session.id, element);
+              else articles.current.delete(session.id);
+            }}
+            library={library}
+            context={context}
+            onExpand={() => onOpenSession(session.id)}
+            onChange={next => onChange(blockWithSession(block, next))}
+            onOpenLibrary={onOpenLibrary}
+          />
         ))}
-      </ul>
-      <CardioEditor block={block} onChange={onChange} />
+      </div>
       <BlockTexts block={block} language={program.language} onChange={onChange} />
+      <SessionDragLayer />
     </section>
   );
 }

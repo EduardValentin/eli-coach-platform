@@ -1,152 +1,201 @@
-import { Plus } from 'lucide-react';
+import { useId, useRef, useState, type Ref } from 'react';
+import { Eraser, PencilLine, Plus, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import type { Equipment } from '../../../domain/exercises';
-import { newId, SLOTS, type Block, type Row, type Session, type Slot } from '../../../domain/program';
-import { resetRowDefaults } from '../../../domain/programDefaults';
-import { emptyRow, estimatedMinutes } from '../../../domain/programSuggestions';
+import { SLOTS, type Block, type Session, type Slot } from '../../../domain/program';
+import type { LibraryTarget } from '../../../domain/programEditing';
+import { estimatedMinutes } from '../../../domain/programSuggestions';
+import { sessionEdits, type SessionEditContext } from '../../../domain/sessionEditing';
+import { slotPlanFor, type SlotPlan } from '../../../domain/splitTemplates';
+import { RowActionsMenu } from '../../RowActionsMenu';
+import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
+import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
+import { Textarea } from '../../ui/textarea';
 import { cn } from '../../ui/utils';
-import type { RowTarget } from './BlockWorkspace';
-import type { RowActions } from './ExerciseRowDetails';
-import { SessionRows } from './SessionRows';
+import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
+import { SlotGroup } from './SlotGroup';
 
 type SessionCardProps = {
   session: Session;
   block: Block;
   expanded: boolean;
-  onToggle: () => void;
+  articleRef: Ref<HTMLElement>;
   library: readonly Exercise[];
-  equipment: readonly Equipment[];
+  context: SessionEditContext;
+  onExpand: () => void;
   onChange: (session: Session) => void;
-  onPickExercise: (target: RowTarget) => void;
+  onOpenLibrary: (target: LibraryTarget) => void;
 };
 
 const OVER_TARGET_MINUTES = 10;
-const SUPERSET_SLOTS: readonly Slot[] = ['C', 'D'];
+const FALLBACK_PLANS: Record<Slot, SlotPlan> = {
+  A: { slot: 'A', patterns: [], label: 'Main lift' },
+  B: { slot: 'B', patterns: [], label: 'Secondary' },
+  C: { slot: 'C', patterns: ['isolation'], label: 'Accessories' },
+  D: { slot: 'D', patterns: ['core'], label: 'Core / finisher' },
+};
 
-function slotForNewExercise(rows: Row[]): Slot {
-  if (!rows.some(row => row.slot === 'A')) return 'A';
-  return rows.some(row => row.slot === 'B') ? 'C' : 'B';
+function acceptsMobility(dragged: DraggedItem): boolean {
+  return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'mobility';
 }
 
-function withRowAdded(rows: Row[], row: Row): Row[] {
-  const rank = SLOTS.indexOf(row.slot);
-  const after = rows.reduce((last, other, at) => (SLOTS.indexOf(other.slot) <= rank ? at : last), -1);
-  return [...rows.slice(0, after + 1), row, ...rows.slice(after + 1)];
+type WarmUpCardProps = {
+  session: Session;
+  library: readonly Exercise[];
+  onChange: (session: Session) => void;
+  onPickMobility: () => void;
+  onAddMobility: (exerciseId: string) => void;
+  onRemoveMobility: (exerciseId: string) => void;
+};
+
+function WarmUpCard({ session, library, onChange, onPickMobility, onAddMobility, onRemoveMobility }: WarmUpCardProps) {
+  const noteId = useId();
+  const mobility = session.warmUp.mobilityExerciseIds.map(id => ({ id, name: library.find(item => item.id === id)?.name ?? 'Unknown exercise' }));
+  return (
+    <DropZone
+      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onAddMobility(dragged.item.exercise.id) }}
+      accepts={acceptsMobility}
+      className="rounded-control border border-border-subtle bg-surface-subtle p-3"
+      activeClassName="ring-2 ring-primary/40"
+    >
+      <fieldset className="grid gap-2">
+        <legend className={cn(LABEL_CLASS, 'mb-2')}>Warm-up</legend>
+        <label htmlFor={noteId} className="sr-only">
+          Warm-up note
+        </label>
+        <Textarea
+          id={noteId}
+          rows={2}
+          placeholder="3–5 min easy cardio, then…"
+          value={session.warmUp.warmUpSetsNote}
+          onChange={event => onChange({ ...session, warmUp: { ...session.warmUp, warmUpSetsNote: event.target.value } })}
+          className="min-h-0 bg-surface-base"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          {mobility.length > 0 && (
+            <ul aria-label="Mobility exercises" className="flex flex-wrap gap-2">
+              {mobility.map(item => (
+                <li key={item.id} className="flex items-center gap-1 rounded-full border border-border bg-surface-base py-0.5 pr-0.5 pl-3 text-sm text-text-primary">
+                  {item.name}
+                  <Button variant="ghost" size="icon-xs" aria-label={`Remove ${item.name}`} onClick={() => onRemoveMobility(item.id)}>
+                    <X aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button variant="ghost" size="xs" onClick={onPickMobility}>
+            <Plus aria-hidden="true" />
+            Add mobility exercise
+          </Button>
+        </div>
+      </fieldset>
+    </DropZone>
+  );
 }
 
-function swapped(rows: Row[], index: number, other: number): Row[] {
-  const next = [...rows];
-  [next[index], next[other]] = [next[other], next[index]];
-  return next;
+function CollapsedSession({ session, headingId, onExpand }: { session: Session; headingId: string; onExpand: () => void }) {
+  const count = session.rows.length;
+  return (
+    <h3>
+      <button
+        type="button"
+        aria-expanded={false}
+        onClick={onExpand}
+        className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        <span id={headingId} className="font-serif text-lg text-text-primary">
+          {session.name}
+        </span>
+        <span className="text-sm text-text-secondary tabular-nums">{`${count} ${count === 1 ? 'exercise' : 'exercises'} · ~${estimatedMinutes(session)} min`}</span>
+      </button>
+    </h3>
+  );
 }
 
-function rowActions(session: Session, index: number, blockType: Block['type'], change: (rows: Row[]) => void): RowActions {
-  const { rows } = session;
-  const row = rows[index];
-  const next = rows[index + 1];
-  const canSuperset = SUPERSET_SLOTS.includes(row.slot) && next?.slot === row.slot;
-  const groupOf = (group: string | undefined) => rows.filter(other => group !== undefined && other.supersetGroup === group);
-  return {
-    moveUp: index > 0 ? () => change(swapped(rows, index, index - 1)) : undefined,
-    moveDown: next ? () => change(swapped(rows, index, index + 1)) : undefined,
-    superset: canSuperset
-      ? () => {
-          const group = newId();
-          change(rows.map((other, at) => (at === index || at === index + 1 ? { ...other, supersetGroup: group } : other)));
-        }
-      : undefined,
-    splitSuperset:
-      groupOf(row.supersetGroup).length > 1
-        ? () => change(rows.map(other => (other.supersetGroup === row.supersetGroup ? { ...other, supersetGroup: undefined } : other)))
-        : undefined,
-    reset: () => change(rows.map((other, at) => (at === index ? resetRowDefaults(other, blockType) : other))),
-    remove: () => change(rows.filter((_, at) => at !== index)),
-  };
-}
-
-export function SessionCard({ session, block, expanded, onToggle, library, equipment, onChange, onPickExercise }: SessionCardProps) {
+export function SessionCard({ session, block, expanded, articleRef, library, context, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
+  const headingId = useId();
+  const nameField = useRef<HTMLInputElement>(null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const edits = sessionEdits(session, context);
   const minutes = estimatedMinutes(session);
   const overTarget = minutes > block.targetMinutes + OVER_TARGET_MINUTES;
-  const mobilityNames = session.warmUp.mobilityExerciseIds.map(id => library.find(item => item.id === id)?.name).filter(Boolean);
-  const changeRows = (rows: Row[]) => onChange({ ...session, rows });
-
-  function addRow(slot: Slot) {
-    const row = emptyRow(block.type, slot);
-    changeRows(withRowAdded(session.rows, row));
-    onPickExercise({ sessionId: session.id, rowId: row.id, field: 'exercise' });
-  }
+  const articleClass = 'rounded-card border border-border bg-card shadow-card';
 
   if (!expanded) {
     return (
-      <h3>
-        <button
-          type="button"
-          aria-expanded={false}
-          onClick={onToggle}
-          className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-field border border-border bg-surface-base px-4 py-3 text-left outline-none hover:bg-surface-quiet focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        >
-          <span className="font-serif text-lg text-text-primary">{session.name}</span>
-          <span className="text-sm tabular-nums text-text-secondary">{`${session.rows.length} exercises · ~${minutes} min`}</span>
-        </button>
-      </h3>
+      <article ref={articleRef} aria-labelledby={headingId} className={articleClass}>
+        <CollapsedSession session={session} headingId={headingId} onExpand={onExpand} />
+      </article>
     );
   }
 
   return (
-    <section className="grid gap-4 rounded-field border border-border bg-surface-base p-4">
-      <h3 className="sr-only">{session.name}</h3>
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <article ref={articleRef} aria-labelledby={headingId} className={cn(articleClass, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
+      <header className="sticky top-0 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card/95 px-3 py-2 backdrop-blur-sm lg:top-(--block-header-height)">
+        <h3 id={headingId} className="sr-only">
+          {session.name}
+        </h3>
         <Input
+          ref={nameField}
           aria-label="Session name"
           value={session.name}
           onChange={event => onChange({ ...session, name: event.target.value })}
-          className="h-auto max-w-sm border-transparent px-1 font-serif text-xl text-text-primary hover:border-control-border-soft md:text-xl"
+          className="h-auto w-auto min-w-0 flex-1 basis-40 border-transparent bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-control-border-soft md:text-xl"
         />
         <p className={cn('flex gap-2 text-sm tabular-nums', { 'text-warning': overTarget, 'text-text-secondary': !overTarget })}>
-          <span>{`~${minutes} min / ${block.targetMinutes}`}</span>
+          <span>{`~${minutes} min · target ${block.targetMinutes}`}</span>
           {overTarget && <span>Over target</span>}
         </p>
-      </header>
-      <div className="grid gap-3 rounded-field bg-surface-subtle p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-        <p className="flex flex-wrap items-center gap-2 text-sm text-text-primary">
-          <span>{`Warm-up: ${mobilityNames.length > 0 ? mobilityNames.join(', ') : 'pick mobility exercises'}`}</span>
-          <Button variant="ghost" size="xs" onClick={() => onPickExercise({ sessionId: session.id, rowId: '', field: 'mobility' })}>
-            Choose mobility
-          </Button>
-        </p>
-        <Input
-          size="sm"
-          aria-label="Warm-up sets note"
-          value={session.warmUp.warmUpSetsNote}
-          onChange={event => onChange({ ...session, warmUp: { ...session.warmUp, warmUpSetsNote: event.target.value } })}
-          className="sm:w-56"
-        />
         <label className="flex items-center gap-2 text-sm text-text-primary">
           <Switch checked={session.coolDown} onCheckedChange={coolDown => onChange({ ...session, coolDown })} />
           Cool-down
         </label>
+        <RowActionsMenu
+          label={`${session.name} actions`}
+          actions={[
+            { name: 'rename', label: 'Rename', icon: PencilLine, onSelect: () => nameField.current?.select() },
+            { name: 'clear', label: 'Clear session', icon: Eraser, tone: 'destructive', disabled: session.rows.length === 0, onSelect: () => setConfirmingClear(true) },
+          ]}
+        />
+      </header>
+      <div className="grid gap-5 p-3 sm:p-4">
+        <WarmUpCard
+          session={session}
+          library={library}
+          onChange={onChange}
+          onPickMobility={() => onOpenLibrary({ kind: 'mobility', sessionId: session.id })}
+          onAddMobility={exerciseId => onChange(edits.addMobility(exerciseId))}
+          onRemoveMobility={exerciseId => onChange(edits.removeMobility(exerciseId))}
+        />
+        {SLOTS.map(slot => (
+          <SlotGroup
+            key={slot}
+            session={session}
+            plan={slotPlanFor(block, session, slot) ?? FALLBACK_PLANS[slot]}
+            library={library}
+            edits={edits}
+            onChange={onChange}
+            onAdd={target => onOpenLibrary({ kind: 'slot', sessionId: session.id, slot: target })}
+            onAddSubstitution={rowId => onOpenLibrary({ kind: 'substitution', sessionId: session.id, rowId })}
+          />
+        ))}
       </div>
-      <SessionRows
-        session={session}
-        library={library}
-        equipment={equipment}
-        actionsFor={index => rowActions(session, index, block.type, changeRows)}
-        onChangeRow={row => changeRows(session.rows.map(other => (other.id === row.id ? row : other)))}
-        onPickExercise={onPickExercise}
+      <ConfirmDialog
+        open={confirmingClear}
+        onOpenChange={setConfirmingClear}
+        title={`Clear ${session.name}?`}
+        description="Every exercise of this session is removed. The warm-up stays."
+        confirmLabel="Clear session"
+        cancelLabel="Keep exercises"
+        tone="destructive"
+        onConfirm={() => {
+          setConfirmingClear(false);
+          onChange(edits.clear());
+        }}
       />
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={() => addRow(slotForNewExercise(session.rows))}>
-          <Plus aria-hidden="true" />
-          Add exercise
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => addRow('D')}>
-          <Plus aria-hidden="true" />
-          Add core / finisher
-        </Button>
-      </div>
-    </section>
+    </article>
   );
 }

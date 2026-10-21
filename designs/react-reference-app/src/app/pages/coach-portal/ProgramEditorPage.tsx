@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { ListTree, X } from 'lucide-react';
+import { Library, ListTree, X } from 'lucide-react';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
 import { BlockWorkspace } from '../../components/coach-portal/program/BlockWorkspace';
@@ -20,9 +20,11 @@ import { journeyProgramView } from '../../components/program-view/journeyProgram
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
-import { useLibraryPicker } from '../../components/coach-portal/program/useLibraryPicker';
-import { LibraryDrawer } from '../../components/coach-portal/program/LibraryDrawer';
-import { blockWithPick } from '../../domain/programEditing';
+import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
+import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
+import { blockWithLibraryPick } from '../../domain/programEditing';
+import { sessionsInCalendarOrder } from '../../domain/weekEditing';
+import type { Exercise } from '../../context/TrainingContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -40,28 +42,30 @@ function ProgramEditor(props: EditorProps) {
   const { journey, program, draft } = props;
   const editor = useEditorState(props);
   const rail = useRailDrawer();
-  const picker = useLibraryPicker();
+  const panel = useLibraryPanel();
   const { programs, updateSetup } = usePrograms();
   const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistStart | null>(null);
   const [previewing, setPreviewing] = useState(false);
+  const [openSessions, setOpenSessions] = useState<Record<string, string>>({});
   const { content } = draft;
   const { today, ctx } = editor;
   const { cycleMode } = program;
   const selected = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' as const } : editor.selected;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
 
-  const pickedBlock = content.plan.blocks.find(block => block.sessions.some(session => session.id === picker.target?.sessionId));
-  const pickedSlot = pickedBlock?.sessions.flatMap(session => session.rows).find(row => row.id === picker.target?.rowId)?.slot;
+  const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
+  const chosenSession = block ? openSessions[block.id] : undefined;
+  const openSessionId =
+    block && block.sessions.some(session => session.id === chosenSession) ? chosenSession : block && sessionsInCalendarOrder(block)[0]?.id;
 
-  function pickExercise(exerciseId: string) {
-    const exercise = exercises.find(item => item.id === exerciseId);
-    if (picker.target && pickedBlock && exercise) {
-      editor.replaceBlock(blockWithPick(pickedBlock, picker.target, exercise, exercises, program.equipment));
-    }
-    picker.close();
+  function addFromLibrary(exercise: Exercise) {
+    if (!block) return;
+    const pick = { exercise, target: panel.panelTarget?.target ?? null, openSessionId };
+    editor.replaceBlock(blockWithLibraryPick(block, pick, { blockType: block.type, library: exercises, equipment: program.equipment }));
+    panel.finishTarget();
   }
 
   function requestPublish() {
@@ -93,6 +97,8 @@ function ProgramEditor(props: EditorProps) {
       return (
         <BlockWorkspace
           block={content.plan.blocks[blockIndex]}
+          openSessionId={openSessionId}
+          onOpenSession={sessionId => setOpenSessions(current => ({ ...current, [content.plan.blocks[blockIndex].id]: sessionId }))}
           blockIndex={blockIndex}
           content={content}
           program={program}
@@ -104,7 +110,7 @@ function ProgramEditor(props: EditorProps) {
           onRemove={() => editor.removeBlock(content.plan.blocks[blockIndex].id)}
           otherPrograms={programs().filter(other => other.callId !== program.callId)}
           journeys={journeys}
-          onPickExercise={picker.open}
+          onOpenLibrary={panel.openFor}
         />
       );
     }
@@ -144,6 +150,13 @@ function ProgramEditor(props: EditorProps) {
         currentTitle={selected.kind === 'plan' ? null : sectionTitle(selected, content.plan.blocks)}
         onOverview={() => editor.select({ kind: 'plan' })}
         onOpenWarnings={() => setChecklist('warnings')}
+        libraryToggle={
+          block && (
+            <Button onClick={panel.toggle} variant="ghost" size="icon-sm" aria-label="Exercise library" aria-pressed={panel.visible}>
+              <Library size={20} />
+            </Button>
+          )
+        }
         railToggle={
           <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
             <ListTree size={20} />
@@ -191,15 +204,17 @@ function ProgramEditor(props: EditorProps) {
         <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6">
           <div className="mx-auto w-full max-w-5xl">{renderSection()}</div>
         </main>
-        {picker.target && (
-          <LibraryDrawer
-            key={[picker.target.rowId, picker.target.field, picker.target.index].join(':')}
-            target={picker.target}
-            slot={pickedSlot}
+        {block && panel.visible && (
+          <LibraryPanel
+            presentation={panel.isWide ? 'pane' : 'drawer'}
+            purpose={libraryPurpose(block, panel.panelTarget, exercises)}
             library={exercises}
             equipment={program.equipment}
-            onPick={pickExercise}
-            onClose={picker.close}
+            asideRef={panel.aside}
+            searchRef={panel.search}
+            onAdd={addFromLibrary}
+            onDismissPurpose={panel.dismissTarget}
+            onClose={panel.close}
           />
         )}
       </div>

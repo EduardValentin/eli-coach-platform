@@ -12,11 +12,11 @@ import { TrainingProvider } from '../app/context/TrainingContext';
 import { UnitPreferencesProvider } from '../app/context/UnitPreferencesContext';
 import { ProgramEditorPage } from '../app/pages/coach-portal/ProgramEditorPage';
 
-export function stubEditorBrowserApis() {
+function stubViewport(matchesWidth: (query: string) => boolean) {
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({
-      matches: query.includes('prefers-reduced-motion') || query.includes('min-width'),
+      matches: query.includes('prefers-reduced-motion') || matchesWidth(query),
       media: query,
       onchange: null,
       addEventListener: vi.fn(),
@@ -26,6 +26,14 @@ export function stubEditorBrowserApis() {
       dispatchEvent: vi.fn(),
     })),
   );
+}
+
+export function stubPhoneViewport() {
+  stubViewport(() => false);
+}
+
+export function stubEditorBrowserApis() {
+  stubViewport(query => query.includes('min-width'));
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.scrollIntoView ??= () => {};
 }

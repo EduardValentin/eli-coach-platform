@@ -8,7 +8,8 @@ export function useRailDrawer() {
   const openButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const aside = useRef<HTMLElement>(null);
-  const isDrawer = open && !useIsDesktop();
+  const isDesktop = useIsDesktop();
+  const isDrawer = open && !isDesktop;
 
   function show() {
     toggled.current = true;
