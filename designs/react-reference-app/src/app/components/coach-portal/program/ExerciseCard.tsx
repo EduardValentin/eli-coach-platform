@@ -80,11 +80,14 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
-      className={cn('relative rounded-control border bg-card transition-[border-color,box-shadow,opacity] motion-reduce:transition-none', {
-        'border-brand-secondary ring-2 ring-brand-secondary/20': targeted,
-        'border-border': !targeted,
-        'opacity-40': isDragging,
-      })}
+      className={cn(
+        'relative scroll-mt-4 rounded-control border bg-card transition-[border-color,box-shadow,opacity] motion-reduce:transition-none lg:scroll-mt-[calc(var(--block-header-height)+4rem)]',
+        {
+          'border-brand-secondary ring-2 ring-brand-secondary/20': targeted,
+          'border-border': !targeted,
+          'opacity-40': isDragging,
+        },
+      )}
     >
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2 p-3">
         <span
@@ -120,15 +123,17 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="xs" aria-expanded={setsOpen} aria-controls={setsId} onClick={() => setSetsOpen(open => !open)}>
             Sets
+            <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': setsOpen })} />
           </Button>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="xs"
             aria-label={`Details for ${name}`}
             aria-expanded={detailsOpen}
             aria-controls={detailsId}
             onClick={() => setDetailsOpen(open => !open)}
           >
+            Details
             <ChevronDown aria-hidden="true" className={cn('transition-transform motion-reduce:transition-none', { 'rotate-180': detailsOpen })} />
           </Button>
           <RowActionsMenu label={`${name} actions`} actions={menuActions({ row, edits, onChange })} />

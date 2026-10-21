@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { ChevronDown } from 'lucide-react';
 import {
   positionLabel,
@@ -14,6 +15,7 @@ import type { Exercise } from '../../context/TrainingContext';
 import { repsSuffix } from '../coach-portal/program/rowFields';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { cn } from '../ui/utils';
 import { plainText, restLabel } from './programView';
 
 type SessionTableProps = {
@@ -24,6 +26,7 @@ type SessionTableProps = {
   mode: 'client' | 'document';
 };
 
+const CELL_CLASS = 'px-2 align-top first:pl-0 last:pr-0';
 const DETAILS_LABEL = 'Cues · video · substitutions · how to progress';
 
 function namesOf(ids: readonly string[], exercisesById: ReadonlyMap<string, Exercise>): string[] {
@@ -49,13 +52,26 @@ function RowDetails({ row, exercise, language, exercisesById }: RowDetailsProps)
   );
 }
 
+const PART_SEPARATOR = ' · ';
+
+function Unbroken({ text }: { text: string }) {
+  return text.split(PART_SEPARATOR).map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && PART_SEPARATOR}
+      <span className="whitespace-nowrap">{part}</span>
+    </Fragment>
+  ));
+}
+
 function SetsCell({ row, exercise }: { row: Row; exercise: Exercise | undefined }) {
   const suffix = repsSuffix(exercise);
-  if (uniformSets(row.sets)) return <>{setsSummary(row.sets, suffix)}</>;
+  if (uniformSets(row.sets)) return <Unbroken text={setsSummary(row.sets, suffix)} />;
   return (
     <ol className="grid gap-0.5">
       {row.sets.map((set, index) => (
-        <li key={index}>{`Set ${index + 1}: ${setText(set, suffix)}`}</li>
+        <li key={index}>
+          <Unbroken text={`Set ${index + 1} · ${setText(set, suffix)}`} />
+        </li>
       ))}
     </ol>
   );
@@ -66,7 +82,7 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
   const warmUp = plainText(templateText('warmUp', language).text);
 
   return (
-    <section aria-label={session.name} className="grid gap-3">
+    <section aria-label={session.name} className="grid grid-cols-1 gap-3">
       <h3 className="text-sm font-semibold text-text-primary">{session.name}</h3>
       <p className="whitespace-pre-line text-sm text-text-secondary">
         {warmUp}
@@ -75,10 +91,9 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
       <Table aria-label={`${session.name} in ${block.split.name}`}>
         <TableHeader>
           <TableRow>
-            <TableHead>Position</TableHead>
-            <TableHead>Exercise</TableHead>
-            <TableHead>Sets</TableHead>
-            <TableHead>Rest</TableHead>
+            <TableHead className={CELL_CLASS}>Exercise</TableHead>
+            <TableHead className={CELL_CLASS}>Sets</TableHead>
+            <TableHead className={CELL_CLASS}>Rest</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -87,18 +102,24 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
             const details = <RowDetails row={row} exercise={exercise} language={language} exercisesById={exercisesById} />;
             return [
               <TableRow key={row.id} className={mode === 'client' ? 'border-b-0' : undefined}>
-                <TableCell>{positionLabel(session, row)}</TableCell>
-                <TableCell>{exercise ? exercise.name : 'Exercise removed'}</TableCell>
-                <TableCell>
+                <th scope="row" className={cn(CELL_CLASS, 'py-3 text-left font-medium text-text-primary')}>
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-surface-inverted px-1 text-xs font-semibold text-surface-inverted-foreground tabular-nums">
+                      {positionLabel(session, row)}
+                    </span>{' '}
+                    <span className="min-w-0">{exercise ? exercise.name : 'Exercise removed'}</span>
+                  </span>
+                </th>
+                <TableCell className={cn(CELL_CLASS, 'py-3 tabular-nums')}>
                   <SetsCell row={row} exercise={exercise} />
                 </TableCell>
-                <TableCell>{restLabel(row.restSeconds)}</TableCell>
+                <TableCell className={cn(CELL_CLASS, 'py-3 whitespace-nowrap tabular-nums')}>{restLabel(row.restSeconds)}</TableCell>
               </TableRow>,
               <TableRow key={`${row.id}-details`}>
-                <TableCell colSpan={4} className="pt-0">
+                <TableCell colSpan={3} className={cn(CELL_CLASS, 'pt-0 pb-1')}>
                   {mode === 'client' ? (
                     <Collapsible>
-                      <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-text-secondary">
+                      <CollapsibleTrigger className="group flex min-h-11 items-center gap-1 text-xs text-text-secondary hover:text-text-primary">
                         {DETAILS_LABEL}
                         <ChevronDown aria-hidden className="size-3 transition-transform group-data-[state=open]:rotate-180" />
                       </CollapsibleTrigger>

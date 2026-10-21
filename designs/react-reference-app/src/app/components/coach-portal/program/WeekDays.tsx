@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { WEEKDAYS, type Block, type CardioSession, type CardioType, type Weekday } from '../../../domain/program';
 import { blockWithCardio, blockWithDay, type DayChoice } from '../../../domain/weekEditing';
-import { LABEL_CLASS } from '../../typography';
+import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import {
   DropdownMenu,
@@ -124,7 +124,7 @@ export function WeekDays(props: WeekDaysProps) {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className="grid gap-2">
-      <h3 id={headingId} className="text-base font-semibold text-text-primary">
+      <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
         Week
       </h3>
       <ol className="grid grid-cols-2 gap-2 sm:grid-cols-7">

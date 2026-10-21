@@ -36,7 +36,7 @@ function weekLine(block: Block): string {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className="grid gap-2">
+    <section aria-label={title} className="grid grid-cols-1 gap-2">
       <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
       {children}
     </section>
@@ -51,7 +51,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
   const published = version.publishedAt ? ` · ${formatJourneyDate(version.publishedAt)}` : '';
 
   return (
-    <article data-parity-root="ProgramDocument" className="mx-auto grid max-w-3xl gap-6 bg-white p-6 text-black">
+    <article data-parity-root="ProgramDocument" className="mx-auto grid max-w-3xl grid-cols-1 gap-6 bg-white p-4 text-black sm:p-6">
       <header className="grid gap-1">
         <h1 className="text-2xl font-semibold text-text-primary">{view.clientName}</h1>
         <p className="text-sm text-text-secondary">
@@ -86,7 +86,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
             <p className="text-sm text-text-primary">{weekLine(block)}</p>
           </Section>
           {block.sessions.map(session => (
-            <div key={session.id} data-print-session className="grid gap-4">
+            <div key={session.id} data-print-session className="grid grid-cols-1 gap-4">
               <SessionTable session={session} block={block} language={language} exercisesById={exercisesById} mode="document" />
               <TrackingTable session={session} block={block} exercisesById={exercisesById} />
             </div>

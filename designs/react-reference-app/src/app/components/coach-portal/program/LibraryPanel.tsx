@@ -7,6 +7,7 @@ import { pickableItems } from '../../../domain/libraryLifecycle';
 import { MultiSelect } from '../../MultiSelect';
 import { SearchField } from '../../SearchField';
 import { Badge } from '../../ui/badge';
+import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
@@ -124,7 +125,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
       >
         <div className="grid gap-3 border-b border-border-subtle p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-text-primary">Exercise library</h2>
+            <h2 className={WIDGET_TITLE_CLASS}>Exercise library</h2>
             {isDrawer && (
               <Button onClick={onClose} variant="ghost" size="icon-sm" aria-label="Close exercise library">
                 <X aria-hidden="true" size={18} />

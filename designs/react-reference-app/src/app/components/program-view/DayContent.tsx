@@ -15,7 +15,7 @@ export function DayContent({ view, block, weekday }: DayContentProps) {
   const lowEnergy = templateText('lowEnergy', language).text;
 
   return (
-    <div role="tabpanel" id={dayPanelId(weekday)} aria-labelledby={dayTabId(weekday)} className="grid gap-4">
+    <div role="tabpanel" id={dayPanelId(weekday)} aria-labelledby={dayTabId(weekday)} className="grid grid-cols-1 gap-4">
       {session && (
         <SessionTable session={session} block={block} language={language} exercisesById={view.exercisesById} mode="client" />
       )}

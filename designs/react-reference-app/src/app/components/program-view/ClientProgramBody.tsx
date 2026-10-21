@@ -1,7 +1,8 @@
-import { CalendarDays, Dumbbell, Footprints, HeartPulse, History, Info, Leaf, ListChecks, Salad } from 'lucide-react';
+import { CalendarDays, CalendarRange, Dumbbell, Footprints, HeartPulse, History, Info, Leaf, ListChecks, Salad } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
+import { ClientWidget } from '../client-portal/ClientWidget';
 import { CARDIO_TYPE_LABELS, WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { Button } from '../ui/button';
 import { BLOCK_TYPE_LABELS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
@@ -101,10 +102,12 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
       />
       <WhatChangedBanner version={version} dismissedVersion={dismissedVersion} onDismiss={() => setDismissedVersion(version.number)} />
       {block && (
-        <section aria-label="Your week" className="grid gap-4">
-          <WeekStrip block={block} weekStart={weekStart(view)} today={today} selected={weekday} onSelect={setSelected} />
-          <DayContent view={view} block={block} weekday={weekday} />
-        </section>
+        <ClientWidget eyebrow="This week" icon={CalendarRange} headingId="program-week">
+          <div className="grid gap-6">
+            <WeekStrip block={block} weekStart={weekStart(view)} today={today} selected={weekday} onSelect={setSelected} />
+            <DayContent view={view} block={block} weekday={weekday} />
+          </div>
+        </ClientWidget>
       )}
       {block && (
         <div className="grid gap-4">

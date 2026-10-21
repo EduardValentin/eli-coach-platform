@@ -76,11 +76,13 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
             <ol className="flex h-14 overflow-hidden rounded-tile">
               {blocks.map((block, index) => {
                 const status = blockStatus(blocks, index, dayOne, today).kind;
+                const label = `${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`;
                 return (
                   <li
                     key={block.id}
                     aria-current={status === 'current' ? 'step' : undefined}
-                    className={cn('relative flex min-w-0 items-center gap-2 border-l-2 border-surface-base px-3 first:border-l-0', BLOCK_SOFT[block.type], {
+                    title={label}
+                    className={cn('@container relative flex min-w-0 items-center gap-2 border-l-2 border-surface-base px-3 first:border-l-0', BLOCK_SOFT[block.type], {
                       'opacity-60': status === 'ended',
                     })}
                     style={{ flexGrow: block.weeks, flexBasis: 0 }}
@@ -90,14 +92,16 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
                       {index + 1}
                     </Badge>
                     <span
-                      className={cn('truncate text-sm text-text-primary', {
+                      aria-hidden="true"
+                      className={cn('min-w-0 truncate text-sm text-text-primary', {
                         'font-semibold': status === 'current',
                         'font-medium': status !== 'current',
                       })}
                     >
-                      {`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}
+                      <span className="@max-[9.5rem]:hidden">{label}</span>
+                      <span className="hidden @max-[9.5rem]:inline @max-[4.5rem]:hidden">{BLOCK_TYPE_LABELS[block.type]}</span>
                     </span>
-                    <span className="sr-only">{`, from ${formatJourneyDate(dates[index].date)}`}</span>
+                    <span className="sr-only">{`${label}, from ${formatJourneyDate(dates[index].date)}`}</span>
                   </li>
                 );
               })}

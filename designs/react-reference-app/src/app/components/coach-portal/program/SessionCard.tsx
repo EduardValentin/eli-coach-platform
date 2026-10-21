@@ -134,7 +134,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
 
   return (
     <article ref={articleRef} aria-labelledby={headingId} className={cn(articleClass, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
-      <header className="sticky top-0 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card/95 px-3 py-2 backdrop-blur-sm lg:top-(--block-header-height)">
+      <header className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card/95 px-3 py-2 backdrop-blur-sm lg:top-[calc(var(--block-header-height)-1.5rem)]">
         <h3 id={headingId} className="sr-only">
           {session.name}
         </h3>

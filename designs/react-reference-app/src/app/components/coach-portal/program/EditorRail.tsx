@@ -23,6 +23,10 @@ type Detail = { text: string; tone: 'muted' | 'warning' | 'default' };
 
 const ENTRY_CLASS = 'w-full rounded-field text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
+function weekSpan(startWeek: number, endWeek: number): string {
+  return startWeek === endWeek ? `week ${startWeek}` : `weeks ${startWeek}–${endWeek}`;
+}
+
 function blockDetail(blocks: readonly Block[], index: number, dayOne: Date | null, today: Date): Detail {
   const block = blocks[index];
   const status = blockStatus(blocks, index, dayOne, today);
@@ -36,7 +40,7 @@ function blockDetail(blocks: readonly Block[], index: number, dayOne: Date | nul
   }
   const { startWeek, endWeek } = blockSpan(blocks, index);
   const empty = filledSessionCount(block) === 0;
-  const when = status.start ? `starts in ${daysUntil(today, status.start)} days` : `weeks ${startWeek}–${endWeek}`;
+  const when = status.start ? `starts in ${daysUntil(today, status.start)} days` : weekSpan(startWeek, endWeek);
   if (empty) return { text: `${when} · empty`, tone: 'warning' };
   return {
     text: status.start ? `starts ${formatJourneyDate(status.start)}` : when,

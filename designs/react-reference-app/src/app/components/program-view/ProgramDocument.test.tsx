@@ -55,6 +55,8 @@ describe('TrackingTable', () => {
     expect(within(table).getAllByRole('row')).toHaveLength(2 + 4);
     expect(within(table).getAllByRole('rowheader')).toHaveLength(1);
     expect(within(table).getByRole('rowheader')).toHaveTextContent('4 × 8–10 · RIR 1–2');
+    expect(within(table).getByRole('cell', { name: '1 · 8–10' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: '4 · 8–10' })).toBeInTheDocument();
   });
 
   it('prescribes each set on its own line when the sets differ', () => {

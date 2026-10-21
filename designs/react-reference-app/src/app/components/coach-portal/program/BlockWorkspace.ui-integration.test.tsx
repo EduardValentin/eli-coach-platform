@@ -310,4 +310,37 @@ describe('BlockWorkspace', () => {
     expect(within(day('Monday')).getByRole('button', { name: 'Lower A' })).toBeInTheDocument();
     expect(within(session('Lower A')).getAllByText('Drop an exercise here')).toHaveLength(4);
   });
+
+  it('collapses the block header to one line once the editor scrolls past it and expands it on demand', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const editor = screen.getByRole('main', { name: 'Program editor' });
+    expect(screen.queryByRole('button', { name: 'Block settings' })).not.toBeInTheDocument();
+
+    // act
+    editor.scrollTop = 120;
+    fireEvent.scroll(editor);
+
+    // assert
+    const toggle = screen.getByRole('button', { name: 'Block settings' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('Foundation · 4 wk')).toBeInTheDocument();
+    expect(screen.queryByRole('spinbutton', { name: 'Weeks' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(toggle);
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Block settings' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Block settings' })).toHaveFocus();
+    expect(screen.getByRole('spinbutton', { name: 'Weeks' })).toBeInTheDocument();
+
+    // act
+    editor.scrollTop = 0;
+    fireEvent.scroll(editor);
+
+    // assert
+    expect(screen.queryByRole('button', { name: 'Block settings' })).not.toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'Weeks' })).toBeInTheDocument();
+  });
 });

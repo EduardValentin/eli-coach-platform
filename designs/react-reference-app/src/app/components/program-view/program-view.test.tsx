@@ -145,6 +145,49 @@ describe('WeekStrip', () => {
     expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('Rest');
     expect(onSelect).toHaveBeenCalledWith('sat');
   });
+
+  it('moves between days with the arrow, Home and End keys', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const view = viewAt(TODAY);
+    const onSelect = vi.fn();
+    render(<WeekStrip block={blockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
+    screen.getByRole('tab', { name: /Mon 21/ }).focus();
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(onSelect).toHaveBeenLastCalledWith('tue');
+    expect(screen.getByRole('tab', { name: /Tue 22/ })).toHaveFocus();
+
+    // act
+    await user.keyboard('{End}');
+
+    // assert
+    expect(onSelect).toHaveBeenLastCalledWith('sun');
+    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveFocus();
+  });
+
+  it('labels cardio days with their type and minutes', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const block = blockOf(view);
+    const liss = { id: 'c1', type: 'liss' as const, minutes: 30, intensityText: '', weekday: 'sat' as const, placement: 'separate' as const };
+    const hiit = { id: 'c2', type: 'hiit' as const, minutes: 20, intensityText: '', weekday: 'sun' as const, placement: 'separate' as const };
+    const withCardio = {
+      ...block,
+      cardioSessions: [liss, hiit],
+      calendar: { ...block.calendar, sat: { kind: 'cardio' as const, cardioId: 'c1' }, sun: { kind: 'cardio' as const, cardioId: 'c2' } },
+    };
+
+    // act
+    render(<WeekStrip block={withCardio} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={vi.fn()} />);
+
+    // assert
+    expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('LISS 30');
+    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveTextContent('HIIT 20');
+  });
 });
 
 describe('DayContent', () => {
@@ -225,8 +268,9 @@ describe('SessionTable', () => {
     renderSession(superset(view), view);
 
     // assert
-    expect(screen.getByRole('cell', { name: 'C1' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: 'C2' })).toBeInTheDocument();
+    const exercises = screen.getAllByRole('rowheader');
+    expect(exercises[0]).toHaveTextContent(/^C1 /);
+    expect(exercises[1]).toHaveTextContent(/^C2 /);
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
     expect(screen.getByText('2 min')).toBeInTheDocument();
     expect(screen.getByText('90 s')).toBeInTheDocument();
@@ -250,8 +294,7 @@ describe('SessionTable', () => {
 
     // assert
     expect(screen.getByRole('cell', { name: '3 × 8–10 · RIR 1–2' })).toBeInTheDocument();
-    expect(screen.getByText('Set 1: 5 · RIR 2')).toBeInTheDocument();
-    expect(screen.getByText('Set 2: 8–10 · RIR 1–2')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual(['Set 1 · 5 · RIR 2', 'Set 2 · 8–10 · RIR 1–2']);
   });
 
   it('keeps row details collapsed for the client and opens them on demand', async () => {
@@ -297,7 +340,7 @@ describe('SessionTable', () => {
     );
 
     // assert
-    expect(screen.getByRole('cell', { name: archived.name })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: `A ${archived.name}` })).toBeInTheDocument();
     expect(screen.getByText('Exercise removed')).toBeInTheDocument();
   });
 });

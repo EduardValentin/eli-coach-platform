@@ -201,7 +201,7 @@ function ProgramEditor(props: EditorProps) {
             }}
           />
         </aside>
-        <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 lg:p-6">
+        <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
           <div className="mx-auto w-full max-w-5xl">{renderSection()}</div>
         </main>
         {block && panel.visible && (

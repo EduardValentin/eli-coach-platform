@@ -34,7 +34,7 @@ export function PlanBlocks({ view }: { view: ProgramView }) {
         const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
         return (
           <li key={block.id} aria-current={isCurrent ? 'true' : undefined} className={isCurrent ? 'font-semibold' : undefined}>
-            {index + 1}. {BLOCK_TYPE_LABELS[block.type]} · {block.weeks} weeks
+            {index + 1}. {BLOCK_TYPE_LABELS[block.type]} · {block.weeks} {block.weeks === 1 ? 'week' : 'weeks'}
             {dates && ` · ${formatJourneyDate(dates.start)} – ${formatJourneyDate(dates.end)}`}
           </li>
         );
