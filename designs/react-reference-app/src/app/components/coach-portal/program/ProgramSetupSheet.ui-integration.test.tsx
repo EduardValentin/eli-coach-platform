@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -67,6 +67,7 @@ describe('ProgramSetupSheet', () => {
 
     // assert
     expect(screen.getByRole('heading', { name: 'Set up the program' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Goal' })).toHaveTextContent('Lose fat');
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Beginner');
     expect(screen.getByRole('combobox', { name: 'Training days' })).toHaveTextContent('3 days');
     expect(screen.getByRole('combobox', { name: 'Session length' })).toHaveTextContent('60 min');
@@ -89,6 +90,57 @@ describe('ProgramSetupSheet', () => {
 
     // assert
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Advanced');
+  });
+
+  it('offers the two splits and preselects the one her training days suggest', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved');
+
+    // assert
+    const split = screen.getByRole('radiogroup', { name: 'Split' });
+    expect(within(split).getByRole('radio', { name: /Full Body/ })).toBeChecked();
+    expect(within(split).getByRole('radio', { name: /Upper \/ Lower/ })).not.toBeChecked();
+  });
+
+  it('prefills the equipment chips from her onboarding', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved');
+
+    // assert
+    const equipment = screen.getByRole('group', { name: 'Equipment' });
+    expect(within(equipment).getByRole('checkbox', { name: 'Full gym' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).not.toBeChecked();
+  });
+
+  it('keeps bodyweight only exclusive of every other chip', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    const equipment = screen.getByRole('group', { name: 'Equipment' });
+
+    // act
+    await user.click(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // assert
+    expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).not.toBeChecked();
+
+    // act
+    await user.click(within(equipment).getByRole('checkbox', { name: 'Kettlebells' }));
+
+    // assert
+    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).not.toBeChecked();
+  });
+
+  it('explains nothing under the fields', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved');
+
+    // assert
+    expect(screen.queryByText(/Suggested from/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Taken from her onboarding/)).not.toBeInTheDocument();
   });
 
   it('returns to the client page on cancel', async () => {

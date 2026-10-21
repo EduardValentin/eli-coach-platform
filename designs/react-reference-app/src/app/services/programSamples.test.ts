@@ -60,7 +60,7 @@ describe('programForSeed', () => {
     // assert
     const [block] = program!.versions[0].content.plan.blocks;
     for (const session of block.sessions) {
-      expect(session.rows.map(row => row.slot)).toEqual(['A', 'B', 'C', 'D']);
+      expect(session.rows.map(row => row.slot)).toEqual(['A', 'B', 'C', 'C', 'D']);
       expect(new Set(session.rows.map(row => row.exerciseId)).size).toBe(session.rows.length);
       for (const row of session.rows) {
         const pattern = exercisesById.get(row.exerciseId)?.pattern;
@@ -69,10 +69,24 @@ describe('programForSeed', () => {
     }
   });
 
-  it('pairs two accessories in one superset group when the library has them', () => {
+  it('pairs two accessories in one superset group in every seeded session', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    for (const session of program!.versions[0].content.plan.blocks[0].sessions) {
+      const accessories = session.rows.filter(row => row.slot === 'C');
+      expect(accessories).toHaveLength(2);
+      expect(accessories[0].supersetGroup).toBeDefined();
+      expect(accessories[1].supersetGroup).toBe(accessories[0].supersetGroup);
+      expect(session.rows.filter(row => row.slot !== 'C').every(row => row.supersetGroup === undefined)).toBe(true);
+    }
+  });
+
+  it('seeds a single accessory without a superset when the library has only one', () => {
     // arrange
-    const [lateralRaise] = SAMPLE_EXERCISES.filter(exercise => exercise.pattern === 'isolation');
-    const library = [...SAMPLE_EXERCISES, { ...lateralRaise, id: 'curl', name: 'Biceps Curl' }];
+    const [firstIsolation] = SAMPLE_EXERCISES.filter(exercise => exercise.pattern === 'isolation');
+    const library = SAMPLE_EXERCISES.filter(exercise => exercise.pattern !== 'isolation' || exercise === firstIsolation);
 
     // act
     const program = programForSeed('draft', CLIENT, library);
@@ -80,10 +94,8 @@ describe('programForSeed', () => {
     // assert
     const [session] = program!.versions[0].content.plan.blocks[0].sessions;
     const accessories = session.rows.filter(row => row.slot === 'C');
-    expect(accessories.map(row => row.exerciseId)).toEqual([lateralRaise.id, 'curl']);
-    expect(accessories[0].supersetGroup).toBeDefined();
-    expect(accessories[1].supersetGroup).toBe(accessories[0].supersetGroup);
-    expect(session.rows.filter(row => row.slot !== 'C').every(row => row.supersetGroup === undefined)).toBe(true);
+    expect(accessories.map(row => row.exerciseId)).toEqual([firstIsolation.id]);
+    expect(accessories[0].supersetGroup).toBeUndefined();
   });
 
   it('prefers the exercise whose role matches the slot', () => {

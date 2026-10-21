@@ -135,6 +135,7 @@ describe('contentWithFreshIds', () => {
     language: 'en',
     dailySteps: 6000,
     equipment: [],
+    splitShape: 'full-body',
   };
 
   function contentWithRows() {
@@ -181,6 +182,7 @@ describe('filledSessionCount', () => {
       language: 'en',
       dailySteps: 6000,
       equipment: [],
+      splitShape: 'full-body',
     }).plan.blocks;
     const [first, ...rest] = block.sessions;
     const filled = { ...first, rows: [row('A')] };

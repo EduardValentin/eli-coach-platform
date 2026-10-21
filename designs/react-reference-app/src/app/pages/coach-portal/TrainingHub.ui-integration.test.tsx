@@ -87,11 +87,11 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Lateral Raises')).toBeInTheDocument();
-    expect(screen.queryByText('Leg Press')).not.toBeInTheDocument();
+    expect(screen.getByText('Dumbbell Rows')).toBeInTheDocument();
+    expect(screen.queryByText('Hip Thrust')).not.toBeInTheDocument();
     expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 16')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 20')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -385,6 +385,7 @@ describe('archiving an exercise', () => {
     // act
     await chooseAction(user, 'Hip Thrust', 'Restore');
     await chooseOption(user, 'Status', 'Active');
+    await user.type(screen.getByRole('searchbox', { name: 'Search exercises' }), 'hip thrust');
 
     // assert
     expect(await screen.findByText('"Hip Thrust" restored as "Hip Thrust (2)"')).toBeInTheDocument();
@@ -400,7 +401,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 16' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 20' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 

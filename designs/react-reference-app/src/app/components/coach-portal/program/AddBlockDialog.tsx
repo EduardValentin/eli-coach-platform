@@ -80,10 +80,7 @@ function AddBlockForm({ lastBlock, onAdd, onCancel }: { lastBlock: Block | undef
 export function AddBlockDialog({ open, onOpenChange, lastBlock, onAdd }: AddBlockDialogProps) {
   return (
     <ResponsiveSheetDialog open={open} onOpenChange={onOpenChange} title="Add a block" width="fit">
-      <SheetDialogHeader
-        title="Add a block"
-        description={lastBlock ? 'It starts when the last block ends and copies its sessions.' : 'It starts on day 1 with sessions for the split.'}
-      />
+      <SheetDialogHeader title="Add a block" />
       <SheetDialogBody>
         {open && <AddBlockForm lastBlock={lastBlock} onAdd={onAdd} onCancel={() => onOpenChange(false)} />}
       </SheetDialogBody>

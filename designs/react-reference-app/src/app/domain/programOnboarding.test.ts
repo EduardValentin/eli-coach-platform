@@ -3,6 +3,8 @@ import { seedJourney } from '../services/clientJourneySamples';
 import type { ClientJourney, OnboardingFormId } from './journey';
 import {
   clientEquipment,
+  equipmentChipsOf,
+  equipmentForChips,
   estimatedCycleDay,
   levelHintOf,
   recurringSymptoms,
@@ -52,7 +54,7 @@ function demoJourney(cycleOverrides: Record<string, unknown> = {}): ClientJourne
   } as ClientJourney;
 }
 
-function withEquipment(chips: string[]): ClientJourney {
+function withGoalAnswers(answers: Record<string, string | string[]>): ClientJourney {
   const journey = demoJourney();
   return {
     ...journey,
@@ -60,10 +62,18 @@ function withEquipment(chips: string[]): ClientJourney {
       ...journey.onboarding,
       answers: {
         ...journey.onboarding.answers,
-        'goal-availability': { ...journey.onboarding.answers['goal-availability'], availableEquipment: chips },
+        'goal-availability': { ...journey.onboarding.answers['goal-availability'], ...answers },
       },
     },
   };
+}
+
+function withEquipment(chips: string[]): ClientJourney {
+  return withGoalAnswers({ availableEquipment: chips });
+}
+
+function withTrainingDays(days: string): ClientJourney {
+  return withGoalAnswers({ trainingDaysPerWeek: days });
 }
 
 describe('answer mappers', () => {
@@ -105,7 +115,16 @@ describe('setupFromJourney', () => {
       cycleMode: 'adapted',
       language: 'en',
       dailySteps: 6000,
+      splitShape: 'full-body',
     });
+  });
+
+  it('suggests the upper and lower split for four training days', () => {
+    // act
+    const setup = setupFromJourney(withTrainingDays('4 days'));
+
+    // assert
+    expect(setup.splitShape).toBe('upper-lower');
   });
 
   it('starts the equipment from the onboarding chips', () => {
@@ -140,6 +159,24 @@ describe('clientEquipment', () => {
 
     // assert
     expect(equipment).toEqual([]);
+  });
+});
+
+describe('equipment chips', () => {
+  it('reads the chips she picked in onboarding', () => {
+    // act
+    const chips = equipmentChipsOf(withEquipment(['Dumbbells', 'Resistance bands']));
+
+    // assert
+    expect(chips).toEqual(['Dumbbells', 'Resistance bands']);
+  });
+
+  it('maps chips to library equipment', () => {
+    // act
+    const equipment = equipmentForChips(['Kettlebells', 'Resistance bands']);
+
+    // assert
+    expect(equipment).toEqual(['Kettlebell', 'Bands']);
   });
 });
 

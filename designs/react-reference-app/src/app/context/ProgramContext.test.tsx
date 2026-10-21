@@ -20,6 +20,7 @@ const SETUP: ProgramSetup = {
   language: 'en',
   dailySteps: 6000,
   equipment: ['Dumbbells', 'Bench'],
+  splitShape: 'full-body',
 };
 
 type Hooks = { programs: ProgramContextType; journeys: ReturnType<typeof useClientJourneys> };

@@ -131,7 +131,7 @@ export function newBlock(
   language: ProgramLanguage,
   previous?: Block,
 ): Block {
-  const shape = splitShapeFor(setup.trainingDays);
+  const shape = setup.splitShape;
   const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays);
   const defaultCardio = cardioDefaults(type);
   const calendar = spreadCalendar(

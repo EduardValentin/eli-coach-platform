@@ -23,6 +23,7 @@ const SETUP: ProgramSetup = {
   language: 'en',
   dailySteps: 6000,
   equipment: [],
+  splitShape: 'full-body',
 };
 
 function setsOf(count: number): SetSpec[] {
@@ -209,6 +210,15 @@ describe('newBlock and initialContent', () => {
     expect(content.plan.blocks.map(b => b.type)).toEqual(['foundation', 'hypertrophy', 'deload']);
     expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
     expect(content.plan.blocks.every(b => b.sessions.every(s => s.rows.length === 0))).toBe(true);
+  });
+
+  it('builds the sessions of the chosen split rather than the one the days suggest', () => {
+    // act
+    const content = initialContent({ ...SETUP, trainingDays: 4, splitShape: 'full-body' });
+
+    // assert
+    expect(content.plan.blocks[0].split.shape).toBe('full-body');
+    expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
   });
 
   it('sets the calibration week from the suggestion', () => {

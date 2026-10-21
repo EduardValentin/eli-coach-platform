@@ -8,13 +8,14 @@ type NutritionSectionProps = { notes: string; onChange: (notes: string) => void 
 export function NutritionSection({ notes, onChange }: NutritionSectionProps) {
   return (
     <SettingsSection headingId="nutrition-heading" title="Nutrition">
-      <EmptyState
-        icon={Utensils}
-        title="Meal plan — designed in the next round"
-        description="Until then, write her nutrition guidance here."
-      />
+      <EmptyState icon={Utensils} title="Meal plan — designed in the next round" />
       <SettingsBody>
-        <Textarea aria-label="Nutrition guidance" value={notes} onChange={event => onChange(event.target.value)} />
+        <Textarea
+          aria-label="Nutrition guidance"
+          placeholder="e.g. protein at every meal, two litres of water a day"
+          value={notes}
+          onChange={event => onChange(event.target.value)}
+        />
       </SettingsBody>
     </SettingsSection>
   );

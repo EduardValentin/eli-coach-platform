@@ -65,7 +65,9 @@ describe('ClientProgramPage', () => {
     // assert
     expect(screen.getByRole('heading', { level: 1, name: 'Program' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^Back to / })).toHaveAttribute('href', '/coach/clients/c1');
-    expect(screen.getByText(/^Version 2 · published/)).toBeInTheDocument();
+    expect(screen.getAllByRole('definition').map(definition => definition.textContent)).toContainEqual(
+      expect.stringMatching(/^Version 2 · \d+ \w+$/),
+    );
     const versions = screen.getByRole('region', { name: 'Versions' });
     expect(within(versions).getByText(/^Version 2 · Published/)).toBeInTheDocument();
     expect(within(versions).getByText(/^Version 1 · Superseded/)).toBeInTheDocument();

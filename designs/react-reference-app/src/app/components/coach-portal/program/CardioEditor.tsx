@@ -93,11 +93,7 @@ export function CardioEditor({ block, onChange }: CardioEditorProps) {
           Cardio and steps
         </h3>
       </div>
-      <SettingsRow
-        htmlFor={stepsId}
-        title="Daily steps"
-        hint="+1,000–2,000 per version towards 8,000–10,000"
-      >
+      <SettingsRow htmlFor={stepsId} title="Daily steps">
         <OptionSelect
           id={stepsId}
           options={stepOptions(block.dailySteps)}
@@ -169,7 +165,7 @@ export function CardioEditor({ block, onChange }: CardioEditorProps) {
             Add cardio session
           </Button>
           <p className="text-sm tabular-nums text-text-secondary">
-            {`${placedMinutes(block)} min of cardio this week · WHO suggests 150–300 min moderate`}
+            {`${placedMinutes(block)} min of cardio this week`}
           </p>
         </div>
       </div>

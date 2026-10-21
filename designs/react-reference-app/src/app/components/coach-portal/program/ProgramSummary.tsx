@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react';
 import { dayOneOf } from '../../../context/ProgramContext';
 import { deriveStatus } from '../../../domain/coachingSubscription';
 import type { ClientJourney } from '../../../domain/journey';
@@ -9,8 +10,11 @@ import {
   daysUntil,
   nextCheckpoint,
   weekdayFromOnboarding,
+  type PlanPosition,
 } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
+import { Reading } from '../../Reading';
+import { CompactPlanTimeline } from './PlanTimeline';
 
 const UPCOMING_WINDOW_DAYS = 14;
 
@@ -35,6 +39,14 @@ function unfilledUpcoming(blocks: Block[], currentIndex: number, dayOne: Date, t
   });
 }
 
+function positionText(blocks: Block[], position: PlanPosition, dayOne: Date): string {
+  if (position.status === 'in-plan') {
+    return `${BLOCK_TYPE_LABELS[blocks[position.blockIndex].type]} · week ${position.weekOfPlan} of ${position.totalWeeks}`;
+  }
+  if (position.status === 'ended') return `Plan ended · ${formatJourneyDate(blockDates(blocks, blocks.length - 1, dayOne).end)}`;
+  return `Starts ${formatJourneyDate(dayOne)}`;
+}
+
 export function ProgramSummary({ journey, program }: { journey: ClientJourney; program: Program }) {
   const version = currentVersion(program);
   const dayOne = dayOneOf(journey);
@@ -43,35 +55,37 @@ export function ProgramSummary({ journey, program }: { journey: ClientJourney; p
   const today = new Date();
   const blocks = version.content.plan.blocks;
   const position = currentPosition(blocks, dayOne, today);
-  const lastIndex = blocks.length - 1;
   const checkInDay = weekdayFromOnboarding(collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY));
   const upcoming = position.status === 'in-plan' ? unfilledUpcoming(blocks, position.blockIndex, dayOne, today) : [];
 
   return (
-    <div className="flex flex-col gap-1 text-sm">
-      <p className="font-medium text-text-primary">
-        Version {version.number} · published {version.publishedAt ? formatJourneyDate(version.publishedAt) : ''}
-      </p>
-      {position.status === 'in-plan' && (
-        <p className="text-text-secondary">
-          {BLOCK_TYPE_LABELS[blocks[position.blockIndex].type]} · week {position.weekOfPlan} of {position.totalWeeks}
-        </p>
+    <div className="grid grid-cols-1 gap-5">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        <Reading as="dl-item" className="col-span-2 sm:col-span-1" label="Now" value={positionText(blocks, position, dayOne)} />
+        {position.status === 'in-plan' && (
+          <Reading
+            as="dl-item"
+            label="Next check-in form"
+            value={formatJourneyDate(nextCheckpoint(dayOne, checkInDay, today))}
+          />
+        )}
+        <Reading
+          as="dl-item"
+          label="Published"
+          value={`Version ${version.number}${version.publishedAt ? ` · ${formatJourneyDate(version.publishedAt)}` : ''}`}
+        />
+      </dl>
+      <CompactPlanTimeline blocks={blocks} dayOne={dayOne} today={today} />
+      {upcoming.length > 0 && (
+        <ul className="grid gap-1.5">
+          {upcoming.map(signal => (
+            <li key={signal.number} className="flex items-start gap-2 text-sm text-warning">
+              <TriangleAlert aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
+              {`Block ${signal.number} starts in ${signal.days} days, not filled`}
+            </li>
+          ))}
+        </ul>
       )}
-      {position.status === 'ended' && (
-        <p className="text-text-secondary">
-          Plan ended · {formatJourneyDate(blockDates(blocks, lastIndex, dayOne).end)}
-        </p>
-      )}
-      {position.status === 'in-plan' && (
-        <p className="text-text-secondary">
-          Next check-in form {formatJourneyDate(nextCheckpoint(dayOne, checkInDay, today))}
-        </p>
-      )}
-      {upcoming.map(signal => (
-        <p key={signal.number} className="text-warning">
-          Block {signal.number} starts in {signal.days} days, not filled
-        </p>
-      ))}
     </div>
   );
 }

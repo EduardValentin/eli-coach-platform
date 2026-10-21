@@ -40,11 +40,7 @@ export function CycleRulesEditor({ rules, symptoms, onChange }: CycleRulesEditor
       }
     >
       {rules.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title="No periods yet"
-          description="No recurring symptoms declared; add a period when her check-in forms show one."
-        />
+        <EmptyState icon={CalendarDays} title="No periods yet" description="No recurring symptoms declared." />
       ) : (
         <SettingsBody>
           <Table aria-label="Cycle rules">

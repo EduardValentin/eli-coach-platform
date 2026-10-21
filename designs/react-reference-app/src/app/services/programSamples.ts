@@ -28,6 +28,7 @@ const SEED_SETUP: ProgramSetup = {
   language: 'en',
   dailySteps: 6000,
   equipment: [],
+  splitShape: 'full-body',
 };
 
 export type SeedClient = { callId: string; dayOne: Date | null; cycleMode: CycleMode; equipment: Equipment[] };

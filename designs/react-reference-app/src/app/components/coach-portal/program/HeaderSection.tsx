@@ -107,12 +107,7 @@ export function HeaderSection({ journey, program, version, content, onContentCha
             <OptionSelect id={ids.cycle} options={CYCLE_MODES} value={program.cycleMode} onChange={cycleMode => onSetupChange({ cycleMode })} />
           </SettingsRow>
         )}
-        <SettingsRow
-          htmlFor={ids.language}
-          title="Language"
-          layout="stacked"
-          hint={languageFixed ? 'Fixed after the first publication' : undefined}
-        >
+        <SettingsRow htmlFor={ids.language} title="Language" layout="stacked">
           <OptionSelect
             id={ids.language}
             options={LANGUAGES}

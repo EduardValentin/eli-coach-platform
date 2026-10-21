@@ -73,7 +73,7 @@ describe('program-wide sections', () => {
 
     // assert
     expect(within(table).getAllByRole('row')).toHaveLength(before + 1);
-    expect(within(main()).getByText(/min of cardio this week · WHO suggests 150–300 min moderate/)).toBeInTheDocument();
+    expect(within(main()).getByText(/^\d+ min of cardio this week$/)).toBeInTheDocument();
     await user.click(within(main()).getByRole('combobox', { name: 'Monday' }));
     expect(screen.getAllByRole('option', { name: 'LISS 30 min' })).toHaveLength(3);
   });
@@ -168,5 +168,35 @@ describe('program-wide sections', () => {
     // assert
     expect(within(main()).getByRole('textbox', { name: 'Nutrition guidance' })).toHaveValue('Protein at every meal');
     expect(within(main()).getByText('Meal plan — designed in the next round')).toBeInTheDocument();
+    expect(within(main()).queryByText(/Until then/)).not.toBeInTheDocument();
+  });
+
+  it('shows no notes explaining the editor', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
+
+    // act
+    await user.click(within(rail()).getByRole('button', { name: /^1 Foundation/ }));
+
+    // assert
+    expect(within(main()).queryByText(/1,000–2,000 per version/)).not.toBeInTheDocument();
+
+    // act
+    await user.click(within(rail()).getByRole('button', { name: 'Lifestyle' }));
+
+    // assert
+    expect(within(main()).queryByText(/Sleep, stress/)).not.toBeInTheDocument();
+  });
+
+  it('locks the language after the first publication without a note', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=two-versions&jstage=program-ready');
+
+    // act
+    await user.click(within(rail()).getByRole('button', { name: 'Header & focus' }));
+
+    // assert
+    expect(within(main()).getByRole('combobox', { name: 'Language' })).toBeDisabled();
+    expect(within(main()).queryByText('Fixed after the first publication')).not.toBeInTheDocument();
   });
 });

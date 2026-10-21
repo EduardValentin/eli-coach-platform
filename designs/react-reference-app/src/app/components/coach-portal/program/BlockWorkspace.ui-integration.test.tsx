@@ -167,8 +167,8 @@ describe('BlockWorkspace', () => {
   it('shows the estimated minutes against the target', async () => {
     // arrange
     const user = await openFirstBlock();
-    expect(screen.getByText('~32 min / 60')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Full Body B.*4 exercises · ~32 min/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('~34 min / 60')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Full Body B.*5 exercises · ~34 min/ })).toHaveAttribute('aria-expanded', 'false');
 
     // act
     await choose(user, screen.getByRole('combobox', { name: 'Target minutes' }), '30 min');
@@ -176,26 +176,24 @@ describe('BlockWorkspace', () => {
     await user.tab();
 
     // assert
-    expect(screen.getByText('~43 min / 30')).toBeInTheDocument();
+    expect(screen.getByText('~46 min / 30')).toBeInTheDocument();
     expect(screen.getByText('Over target')).toBeInTheDocument();
   });
 
-  it('groups two accessory rows into a superset labelled C1 and C2', async () => {
+  it('seeds the accessories as a superset that can be split and grouped again', async () => {
     // arrange
     const user = await openFirstBlock();
-    await user.click(screen.getByRole('button', { name: 'Add exercise' }));
-    await user.click(screen.getByRole('button', { name: 'Close exercise library' }));
-    expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
+    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'D']);
     await user.click(within(firstSession()).getAllByRole('button', { name: /^Show details for / })[2]);
+    expect(screen.getByRole('group', { name: /^C1 / })).toBeInTheDocument();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Superset with next' }));
+    await user.click(screen.getByRole('button', { name: 'Split superset' }));
 
     // assert
-    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'D']);
-    expect(screen.getByRole('group', { name: /^C1 / })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Split superset' }));
     expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
+    await user.click(screen.getByRole('button', { name: 'Superset with next' }));
+    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'D']);
   });
 
   it('reset to block defaults clears a typed value', async () => {
@@ -235,7 +233,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('button', { name: 'Add exercise' }));
 
     // assert
-    expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
+    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'C', 'D']);
     expect(within(firstSession()).getByRole('button', { name: 'Choose an exercise' })).toBeInTheDocument();
   });
 
@@ -262,7 +260,7 @@ describe('BlockWorkspace', () => {
     // assert
     expect(screen.queryByRole('table', { name: 'Full Body A exercises' })).not.toBeInTheDocument();
     const cards = within(screen.getByRole('list', { name: 'Full Body A exercises' })).getAllByRole('article');
-    expect(cards).toHaveLength(4);
+    expect(cards).toHaveLength(5);
     expect(within(cards[0]).getByRole('heading', { level: 4, name: /^A / })).toBeInTheDocument();
     expect(within(cards[0]).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
   });

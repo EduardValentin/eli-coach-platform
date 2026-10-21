@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays } from 'date-fns';
 import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../../domain/program';
-import { checkpointsWithin, planWeeks } from '../../../domain/programCalendar';
+import { blockDates, blockStatus, checkpointsWithin, planWeeks } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH, WEEKDAY_LABELS } from './program-constants';
@@ -19,7 +19,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
   const start = dayOne ?? today;
   const planDays = weeks * DAYS_PER_WEEK;
   const checkpoints = weeks > 0 ? checkpointsWithin(start, preferredWeekday, addDays(start, planDays - 1)) : [];
-  const dayOneText = dayOne ? formatJourneyDate(dayOne) : 'the day you publish';
+  const startText = dayOne ? ` from ${formatJourneyDate(dayOne)}` : '';
 
   return (
     <figure className="grid grid-cols-1 gap-2">
@@ -56,8 +56,73 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
         </div>
       </div>
       <figcaption className="text-xs text-text-secondary">
-        {`${weeks} weeks · day 1 is ${dayOneText} · ▲ check-in form every 14 days, on her preferred ${WEEKDAY_LABELS[preferredWeekday]}`}
+        {`${weeks} weeks${startText} · ▲ check-in form every 14 days, on ${WEEKDAY_LABELS[preferredWeekday]}`}
       </figcaption>
     </figure>
+  );
+}
+
+type CompactPlanTimelineProps = {
+  blocks: readonly Block[];
+  dayOne: Date | null;
+  today: Date;
+};
+
+function todayOffset(blocks: readonly Block[], dayOne: Date | null, today: Date): number | null {
+  if (!dayOne) return null;
+  const elapsed = differenceInCalendarDays(today, dayOne);
+  const planDays = planWeeks(blocks) * DAYS_PER_WEEK;
+  return elapsed >= 0 && elapsed < planDays ? (elapsed / planDays) * 100 : null;
+}
+
+export function CompactPlanTimeline({ blocks, dayOne, today }: CompactPlanTimelineProps) {
+  const offset = todayOffset(blocks, dayOne, today);
+  const lastIndex = blocks.length - 1;
+
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      <div className="relative">
+        <ol aria-label="Plan" className="flex h-9 gap-1">
+          {blocks.map((block, index) => {
+            const status = blockStatus(blocks, index, dayOne, today).kind;
+            return (
+              <li
+                key={block.id}
+                aria-current={status === 'current' ? 'step' : undefined}
+                className={cn(
+                  'relative flex min-w-10 items-center overflow-hidden rounded-tile px-2 text-xs',
+                  BLOCK_SOFT[block.type],
+                  {
+                    'font-semibold text-text-primary': status === 'current',
+                    'text-text-secondary': status === 'upcoming',
+                    'text-text-secondary opacity-60': status === 'ended',
+                  },
+                )}
+                style={{ flexGrow: block.weeks, flexBasis: 0 }}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn('absolute inset-x-0 top-0', BLOCK_SWATCH[block.type], status === 'current' ? 'h-1' : 'h-0.5')}
+                />
+                <span className="truncate">{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</span>
+              </li>
+            );
+          })}
+        </ol>
+        {offset !== null && (
+          <span
+            aria-hidden="true"
+            className="absolute top-full mt-1 size-1.5 -translate-x-1/2 rounded-full bg-text-primary"
+            style={{ left: `${offset}%` }}
+          />
+        )}
+      </div>
+      {dayOne && lastIndex >= 0 && (
+        <p className="flex justify-between text-xs tabular-nums text-text-secondary">
+          <span>{formatJourneyDate(dayOne)}</span>
+          <span>{formatJourneyDate(blockDates(blocks, lastIndex, dayOne).end)}</span>
+        </p>
+      )}
+    </div>
   );
 }

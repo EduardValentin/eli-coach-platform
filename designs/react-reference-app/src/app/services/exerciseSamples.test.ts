@@ -60,6 +60,23 @@ describe('the sample exercises', () => {
     expect(new Set(clips)).toEqual(new Set([LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP]));
   });
 
+  it('carries enough isolation exercises to pair the accessories of a session', () => {
+    // act
+    const isolation = SAMPLE_EXERCISES.filter((exercise) => exercise.pattern === 'isolation' && !exercise.archivedAt);
+
+    // assert
+    expect(isolation.map((exercise) => exercise.name)).toEqual([
+      'Lateral Raises',
+      'Lying Leg Curl',
+      'Cable Hip Abduction',
+      'Triceps Pushdown',
+      'Biceps Curl',
+    ]);
+    for (const exercise of isolation) {
+      expect(exercise).toMatchObject({ role: 'isolation', difficulty: 'Beginner', tags: ['Hypertrophy'] });
+    }
+  });
+
   it('has no two exercises with the same name, ignoring case', () => {
     // act
     const names = SAMPLE_EXERCISES.map((exercise) => exercise.name.trim().toLowerCase());

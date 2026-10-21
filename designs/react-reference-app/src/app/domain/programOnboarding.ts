@@ -2,7 +2,8 @@ import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import { cycleModeOf, type CycleMode } from './cycleMode';
 import { EQUIPMENT, type Equipment } from './exercises';
 import type { ClientJourney, OnboardingAnswer } from './journey';
-import type { LevelHint, ProgramLanguage } from './program';
+import type { LevelHint, ProgramLanguage, SplitShape } from './program';
+import { splitShapeFor } from './programSuggestions';
 import { STEPS_DEFAULT } from './programDefaults';
 
 export type ProgramSetup = {
@@ -14,6 +15,7 @@ export type ProgramSetup = {
   language: ProgramLanguage;
   dailySteps: number;
   equipment: Equipment[];
+  splitShape: SplitShape;
 };
 
 const STRUCTURED_LEVEL = 'I train consistently and follow a structured program';
@@ -64,21 +66,30 @@ export function sessionMinutesOf(answer: string | null): ProgramSetup['sessionMi
 
 export function setupFromJourney(journey: ClientJourney): ProgramSetup {
   const goalAnswers = journey.onboarding.answers['goal-availability'];
+  const trainingDays = trainingDaysOf(textAnswer(goalAnswers.trainingDaysPerWeek));
   return {
     goal: textAnswer(goalAnswers.primaryGoal) ?? '',
     level: levelHintOf(textAnswer(goalAnswers.experienceLevel)),
-    trainingDays: trainingDaysOf(textAnswer(goalAnswers.trainingDaysPerWeek)),
+    trainingDays,
     sessionMinutes: sessionMinutesOf(textAnswer(goalAnswers.minutesPerSession)),
     cycleMode: cycleModeOf(journey.onboarding, journey.identity.gender) ?? 'general',
     language: 'en',
     dailySteps: STEPS_DEFAULT,
     equipment: clientEquipment(journey),
+    splitShape: splitShapeFor(trainingDays),
   };
 }
 
-export function clientEquipment(journey: ClientJourney): Equipment[] {
-  const chips = listAnswer(journey.onboarding.answers['goal-availability'].availableEquipment);
+export function equipmentChipsOf(journey: ClientJourney): string[] {
+  return listAnswer(journey.onboarding.answers['goal-availability'].availableEquipment);
+}
+
+export function equipmentForChips(chips: readonly string[]): Equipment[] {
   return [...new Set(chips.flatMap(chip => EQUIPMENT_BY_CHIP[chip] ?? []))];
+}
+
+export function clientEquipment(journey: ClientJourney): Equipment[] {
+  return equipmentForChips(equipmentChipsOf(journey));
 }
 
 export function estimatedCycleDay(journey: ClientJourney, today: Date): number | null {
