@@ -185,8 +185,8 @@ catalogs:
       specifier: 2.0.8
       version: 2.0.8
     stripe:
-      specifier: 22.6.2
-      version: 22.6.2
+      specifier: 23.0.0
+      version: 23.0.0
     strtok3:
       specifier: 10.6.1
       version: 10.6.1
@@ -397,7 +397,7 @@ importers:
         version: 0.35.5(@types/node@24.13.3)
       stripe:
         specifier: 'catalog:'
-        version: 22.6.2(@types/node@24.13.3)
+        version: 23.0.0(@types/node@24.13.3)
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -528,7 +528,7 @@ importers:
         version: 0.35.5(@types/node@24.13.3)
       stripe:
         specifier: 'catalog:'
-        version: 22.6.2(@types/node@24.13.3)
+        version: 23.0.0(@types/node@24.13.3)
       strtok3:
         specifier: 'catalog:'
         version: 10.6.1
@@ -6419,9 +6419,9 @@ packages:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
 
-  stripe@22.6.2:
-    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
-    engines: {node: '>=18'}
+  stripe@23.0.0:
+    resolution: {integrity: sha512-MDE2A5ZVVluYURORaZEVghSmnLJc3w6aHAlZSxDQMsOjOb3V0O6ro/CiaeFlJS4N7uIVmsg98ocRsPmUK6YfyA==}
+    engines: {node: '>=20'}
     peerDependencies:
       '@types/node': 24.13.3
     peerDependenciesMeta:
@@ -12809,7 +12809,7 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  stripe@22.6.2(@types/node@24.13.3):
+  stripe@23.0.0(@types/node@24.13.3):
     optionalDependencies:
       '@types/node': 24.13.3
 
