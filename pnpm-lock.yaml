@@ -119,8 +119,8 @@ catalogs:
       specifier: 17.13.0
       version: 17.13.0
     happy-dom:
-      specifier: 20.11.2
-      version: 20.11.2
+      specifier: 21.0.3
+      version: 21.0.3
     isbot:
       specifier: 5.2.2
       version: 5.2.2
@@ -274,7 +274,7 @@ importers:
         version: 17.13.0
       happy-dom:
         specifier: 'catalog:'
-        version: 20.11.2
+        version: 21.0.3
       jsdom:
         specifier: 'catalog:'
         version: 30.0.1(@noble/hashes@1.8.0)
@@ -295,10 +295,10 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 4.1.12(@types/node@24.13.3)(happy-dom@20.11.2)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 4.1.12(@types/node@24.13.3)(happy-dom@21.0.3)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       vitest-axe:
         specifier: 'catalog:'
-        version: 0.1.0(vitest@4.1.12(@types/node@24.13.3)(happy-dom@20.11.2)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))
+        version: 0.1.0(vitest@4.1.12(@types/node@24.13.3)(happy-dom@21.0.3)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))
 
   apps/platform:
     dependencies:
@@ -4806,8 +4806,8 @@ packages:
     resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  happy-dom@20.11.2:
-    resolution: {integrity: sha512-7MB+bJLkxu3SowAfBJbjW+c55kNz5tkR45gu2qzrxznezhLeN5YIlJbwUgSzlGc+qWoZ8Ykg71H5ezz69xixrw==}
+  happy-dom@21.0.3:
+    resolution: {integrity: sha512-PesNgu5BnIEmAwzKGewB3K1ORFeznFZJ4JrRz89ea1wkHnxskdpzX9sN/+zb4KO6k8oSMhyJSj/cwXAFrYBBNA==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -7008,18 +7008,6 @@ packages:
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  ws@8.20.0:
-    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
     peerDependenciesMeta:
       bufferutil:
         optional: true
@@ -11054,7 +11042,7 @@ snapshots:
 
   graphql@16.13.2: {}
 
-  happy-dom@20.11.2:
+  happy-dom@21.0.3:
     dependencies:
       '@types/node': 24.13.3
       '@types/whatwg-mimetype': 3.0.2
@@ -12196,7 +12184,7 @@ snapshots:
       devtools-protocol: 0.0.1595872
       typed-query-selector: 2.12.1
       webdriver-bidi-protocol: 0.4.1
-      ws: 8.20.0
+      ws: 8.21.3
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -13275,7 +13263,7 @@ snapshots:
       tsx: 4.23.15
       yaml: 2.9.1
 
-  vitest-axe@0.1.0(vitest@4.1.12(@types/node@24.13.3)(happy-dom@20.11.2)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))):
+  vitest-axe@0.1.0(vitest@4.1.12(@types/node@24.13.3)(happy-dom@21.0.3)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))):
     dependencies:
       aria-query: 5.3.2
       axe-core: 4.11.3
@@ -13283,9 +13271,9 @@ snapshots:
       dom-accessibility-api: 0.5.16
       lodash-es: 4.18.1
       redent: 3.0.0
-      vitest: 4.1.12(@types/node@24.13.3)(happy-dom@20.11.2)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      vitest: 4.1.12(@types/node@24.13.3)(happy-dom@21.0.3)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  vitest@4.1.12(@types/node@24.13.3)(happy-dom@20.11.2)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
+  vitest@4.1.12(@types/node@24.13.3)(happy-dom@21.0.3)(jsdom@30.0.1(@noble/hashes@1.8.0))(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(msw@2.14.2(@types/node@24.13.3)(typescript@6.0.3))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -13309,7 +13297,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.13.3
-      happy-dom: 20.11.2
+      happy-dom: 21.0.3
       jsdom: 30.0.1(@noble/hashes@1.8.0)
     transitivePeerDependencies:
       - msw
@@ -13439,8 +13427,6 @@ snapshots:
       typedarray-to-buffer: 3.1.5
 
   ws@7.5.10: {}
-
-  ws@8.20.0: {}
 
   ws@8.21.3: {}
 
