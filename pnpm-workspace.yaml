@@ -24,7 +24,7 @@ catalog:
   "@react-router/serve": 7.18.4
   "@tailwindcss/vite": 4.3.3
   "@testcontainers/postgresql": 12.2.1
-  "@testing-library/jest-dom": 6.9.1
+  "@testing-library/jest-dom": 7.0.1
   "@testing-library/react": 16.3.3
   "@testing-library/user-event": 14.6.8
   "@tokenizer/inflate": 0.5.1
