@@ -245,7 +245,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload image refs artifact
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: image-refs-${{ github.sha }}
           path: image-refs.json
