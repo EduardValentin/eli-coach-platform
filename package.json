@@ -52,6 +52,7 @@
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {
+    "@eli-coach-platform/ui": "workspace:*",
     "@eslint/js": "catalog:",
     "@lhci/cli": "catalog:",
     "@testcontainers/postgresql": "catalog:",

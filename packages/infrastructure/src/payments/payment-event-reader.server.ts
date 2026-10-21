@@ -55,7 +55,7 @@ const paidCheckoutSessionSchema = z.object({
   customer: optionalReferencedIdSchema,
   subscription: optionalReferencedIdSchema,
   payment_intent: optionalReferencedIdSchema,
-  invoice: z.unknown(),
+  invoice: z.unknown().optional(),
   amount_total: z.number().int().nonnegative(),
   currency: z.string().min(1),
   customer_details: z.object({ email: z.string().min(1) }),

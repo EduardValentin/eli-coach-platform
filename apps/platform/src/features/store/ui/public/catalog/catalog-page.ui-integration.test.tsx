@@ -90,7 +90,7 @@ describe("store catalog", () => {
       screen.queryByRole("group", { name: /currency/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: /filter by/i }),
+      screen.queryByRole("radiogroup", { name: /filter by/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Plans" }),
@@ -217,10 +217,12 @@ describe("store catalog", () => {
     renderStore({ products });
 
     // assert
-    const typeFilter = await screen.findByRole("group", {
+    const typeFilter = await screen.findByRole("radiogroup", {
       name: "Filter by Type",
     });
-    const goalFilter = screen.getByRole("group", { name: "Filter by Goal" });
+    const goalFilter = screen.getByRole("radiogroup", {
+      name: "Filter by Goal",
+    });
 
     expect(
       within(typeFilter)
@@ -254,10 +256,10 @@ describe("store catalog", () => {
 
     // assert
     expect(
-      await screen.findByRole("group", { name: "Filter by Goal" }),
+      await screen.findByRole("radiogroup", { name: "Filter by Goal" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: "Filter by Type" }),
+      screen.queryByRole("radiogroup", { name: "Filter by Type" }),
     ).not.toBeInTheDocument();
   });
 
@@ -310,7 +312,7 @@ describe("store catalog", () => {
       products: createCatalog(),
       url: "/store?type=workouts",
     });
-    const typeFilter = await screen.findByRole("group", {
+    const typeFilter = await screen.findByRole("radiogroup", {
       name: "Filter by Type",
     });
 
@@ -422,7 +424,7 @@ describe("store catalog", () => {
     // arrange
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
-    const typeFilter = await screen.findByRole("group", {
+    const typeFilter = await screen.findByRole("radiogroup", {
       name: "Filter by Type",
     });
 
@@ -551,7 +553,7 @@ describe("store catalog", () => {
 
     // act
     const { router } = renderStore({ products });
-    const typeFilter = await screen.findByRole("group", {
+    const typeFilter = await screen.findByRole("radiogroup", {
       name: "Filter by Type",
     });
 
