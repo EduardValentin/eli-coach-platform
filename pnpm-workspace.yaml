@@ -27,7 +27,7 @@ catalog:
   "@testing-library/jest-dom": 6.9.1
   "@testing-library/react": 16.3.3
   "@testing-library/user-event": 14.6.8
-  "@tokenizer/inflate": 0.4.1
+  "@tokenizer/inflate": 0.5.1
   "@types/archiver": 8.0.0
   "@types/node": 24.13.3
   "@types/pdfkit": 0.17.6
