@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Exercise } from '../../context/TrainingContext';
 import { currentVersion, type Session } from '../../domain/program';
+import { cardioPreset } from '../../domain/programCardio';
 import { programForSeed } from '../../services/programSamples';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { DayContent } from './DayContent';
@@ -169,12 +170,12 @@ describe('WeekStrip', () => {
     expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveFocus();
   });
 
-  it('labels cardio days with their type and minutes', () => {
+  it('labels cardio days with their session name', () => {
     // arrange
     const view = viewAt(TODAY);
     const block = blockOf(view);
-    const liss = { id: 'c1', type: 'liss' as const, minutes: 30, intensityText: '', weekday: 'sat' as const, placement: 'separate' as const };
-    const hiit = { id: 'c2', type: 'hiit' as const, minutes: 20, intensityText: '', weekday: 'sun' as const, placement: 'separate' as const };
+    const liss = { ...cardioPreset('liss', SAMPLE_EXERCISES), id: 'c1' };
+    const hiit = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: 'c2' };
     const withCardio = {
       ...block,
       cardioSessions: [liss, hiit],
@@ -185,8 +186,8 @@ describe('WeekStrip', () => {
     render(<WeekStrip block={withCardio} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={vi.fn()} />);
 
     // assert
-    expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('LISS 30');
-    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveTextContent('HIIT 20');
+    expect(screen.getByRole('tab', { name: /Sat 26/ })).toHaveTextContent('Easy cardio');
+    expect(screen.getByRole('tab', { name: /Sun 27/ })).toHaveTextContent('Intervals');
   });
 });
 
@@ -215,11 +216,11 @@ describe('DayContent', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('renders a cardio day with its intensity', () => {
+  it('renders a cardio day with its segments', () => {
     // arrange
     const view = viewAt(TODAY);
     const block = blockOf(view);
-    const cardio = { id: 'c1', type: 'hiit' as const, minutes: 20, intensityText: '', weekday: 'sat' as const, placement: 'separate' as const };
+    const cardio = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: 'c1' };
     const withCardio = {
       ...block,
       cardioSessions: [cardio],
@@ -230,8 +231,12 @@ describe('DayContent', () => {
     render(<DayContent view={view} block={withCardio} weekday="sat" />);
 
     // assert
-    expect(screen.getByRole('heading', { name: 'HIIT · 20 min' })).toBeInTheDocument();
-    expect(screen.getByText('Hard: only a few words at a time')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Intervals · 26 min' })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual([
+      'Stationary bike · 5 min · You can hold a conversation',
+      'Stationary bike · 8 × 30 s on, 90 s easy · Hard: only a few words at a time',
+      'Stationary bike · 5 min · You can hold a conversation',
+    ]);
     expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
   });
 });
@@ -279,8 +284,8 @@ describe('SessionTable', () => {
   it('summarises identical sets and lists differing sets one per line', () => {
     // arrange
     const view = viewAt(TODAY);
-    const steady = { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    const top = { reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
+    const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
     const session = sessionWith(view, original => ({
       ...original,
       rows: [

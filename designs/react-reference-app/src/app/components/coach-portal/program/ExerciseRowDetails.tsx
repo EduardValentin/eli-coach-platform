@@ -85,19 +85,6 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Detail label="Warm-up sets">
-          <Input size="sm" value={row.warmUpSets ?? ''} onChange={event => onChange(withField(row, 'warmUpSets', event.target.value || undefined))} />
-        </Detail>
-        <Detail label="Suggested weight (kg)">
-          <Input
-            size="sm"
-            type="number"
-            min={0}
-            placeholder="Choose a weight that matches the RIR"
-            value={row.weightKg ?? ''}
-            onChange={event => onChange(withField(row, 'weightKg', event.target.value === '' ? undefined : Number(event.target.value)))}
-          />
-        </Detail>
         <Detail label="Tempo">
           <Input
             size="sm"

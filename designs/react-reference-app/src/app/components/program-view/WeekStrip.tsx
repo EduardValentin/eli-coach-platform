@@ -3,8 +3,7 @@ import { addDays, format, isSameDay } from 'date-fns';
 import { Dumbbell, Footprints, Moon, type LucideIcon } from 'lucide-react';
 import { WEEKDAYS, type Block, type CalendarEntry, type Weekday } from '../../domain/program';
 import { cn } from '../ui/utils';
-import { CARDIO_TYPE_LABELS } from '../coach-portal/program/program-constants';
-import { cardioFor, dayEntries, sessionFor } from './programView';
+import { cardioDayLabel, dayEntries, sessionFor } from './programView';
 
 export function dayTabId(weekday: Weekday): string {
   return `program-day-tab-${weekday}`;
@@ -18,8 +17,7 @@ function entryLabel(block: Block, weekday: Weekday): string {
   const entry = dayEntries(block, weekday);
   if (entry.kind === 'rest') return 'Rest';
   if (entry.kind === 'session') return sessionFor(block, weekday)?.name ?? 'Session';
-  const cardio = cardioFor(block, weekday);
-  return cardio ? `${CARDIO_TYPE_LABELS[cardio.type]} ${cardio.minutes}` : 'Cardio';
+  return cardioDayLabel(block, weekday);
 }
 
 const ENTRY_ICONS: Record<CalendarEntry['kind'], LucideIcon> = { session: Dumbbell, cardio: Footprints, rest: Moon };

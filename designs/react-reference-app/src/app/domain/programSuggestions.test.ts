@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
 import type { Equipment, Muscle, MovementPattern } from './exercises';
-import type { CardioSession, Row, Session, SetSpec } from './program';
+import type { Block, CardioSession, Row, Session, SetSpec } from './program';
 import type { ProgramSetup } from './programOnboarding';
 import {
+  emptyRow,
   emptySessionsFor,
   estimatedMinutes,
   initialContent,
@@ -27,11 +28,11 @@ const SETUP: ProgramSetup = {
 };
 
 function setsOf(count: number): SetSpec[] {
-  return Array.from({ length: count }, () => ({ reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
+  return Array.from({ length: count }, () => ({ kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
 }
 
 function cardio(id: string): CardioSession {
-  return { id, type: 'liss', minutes: 30, intensityText: '', weekday: 'wed', placement: 'separate' };
+  return { id, originId: id, name: 'Easy cardio', segments: [] };
 }
 
 function row(overrides: Partial<Row>): Row {
@@ -168,20 +169,53 @@ describe('emptySessionsFor', () => {
   });
 });
 
+describe('emptyRow', () => {
+  it('puts two warm-up sets before the working sets of a main compound row', () => {
+    // act
+    const { sets } = emptyRow('hypertrophy', 'A');
+
+    // assert
+    expect(sets.slice(0, 2)).toEqual([
+      { kind: 'warm-up', reps: { min: 8, max: 8 } },
+      { kind: 'warm-up', reps: { min: 5, max: 5 } },
+    ]);
+    expect(sets.slice(2)).toEqual(Array.from({ length: 4 }, () => ({ kind: 'working', reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 } })));
+  });
+
+  it('gives other rows working sets only', () => {
+    // act
+    const { sets } = emptyRow('hypertrophy', 'B');
+
+    // assert
+    expect(sets.every(set => set.kind === 'working')).toBe(true);
+  });
+});
+
 describe('newBlock and initialContent', () => {
-  it('halves the sets of a deload built from a previous block', () => {
-    // arrange
-    const built = newBlock('hypertrophy', 6, SETUP, 'en');
+  const library = [exercise('bike', ['Bike'], { name: 'Stationary bike', type: 'cardio', measuredIn: 'time' })];
+
+  function previousBlock() {
+    const built = newBlock('hypertrophy', 6, { setup: SETUP, library });
     const [first, ...others] = built.sessions;
-    const previous = { ...built, sessions: [{ ...first, rows: [row({ sets: setsOf(4) })] }, ...others] };
+    const sets: SetSpec[] = [
+      { kind: 'warm-up', reps: { min: 8, max: 8 } },
+      ...setsOf(4).map((set, index) => ({ ...set, ...(index === 0 ? { weightKg: 50 } : {}) })),
+    ];
+    return { ...built, sessions: [{ ...first, rows: [row({ sets })] }, ...others] };
+  }
+
+  it('prefills a deload from the previous block with half the working sets at RIR 4 and lighter weights', () => {
+    // arrange
+    const previous = previousBlock();
 
     // act
-    const deload = newBlock('deload', 1, SETUP, 'en', previous);
+    const deload = newBlock('deload', 1, { setup: SETUP, library, previous });
 
     // assert
     expect(deload.sessions[0].rows[0].sets).toEqual([
-      { reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
-      { reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
+      { kind: 'warm-up', reps: { min: 8, max: 8 } },
+      { kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 42.5 },
+      { kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
     ]);
     expect(deload.sessions[0].id).not.toBe(previous.sessions[0].id);
     expect(deload.sessions[0].originId).toBe(previous.sessions[0].originId);
@@ -189,9 +223,34 @@ describe('newBlock and initialContent', () => {
     expect(deload.split).toEqual(previous.split);
   });
 
+  it('keeps the calendar and cardio of the previous block in a deload, under new ids', () => {
+    // arrange
+    const previous = previousBlock();
+
+    // act
+    const deload = newBlock('deload', 1, { setup: SETUP, library, previous });
+
+    // assert
+    expect(deload.cardioSessions.map(cardio => cardio.name)).toEqual(previous.cardioSessions.map(cardio => cardio.name));
+    expect(deload.cardioSessions[0].id).not.toBe(previous.cardioSessions[0].id);
+    const kinds = (block: Block) => Object.values(block.calendar).map(entry => entry.kind);
+    expect(kinds(deload)).toEqual(kinds(previous));
+    const deloadIds = Object.values(deload.calendar).flatMap(entry => (entry.kind === 'cardio' ? [entry.cardioId] : []));
+    expect(deloadIds.sort()).toEqual(deload.cardioSessions.map(cardio => cardio.id).sort());
+  });
+
+  it('places default cardio from the library in a fresh block', () => {
+    // act
+    const block = newBlock('hypertrophy', 6, { setup: SETUP, library });
+
+    // assert
+    expect(block.cardioSessions.map(cardio => cardio.name)).toEqual(['Easy cardio', 'Easy cardio', 'Moderate cardio']);
+    expect(block.cardioSessions[0].segments[0].exerciseId).toBe('bike');
+  });
+
   it('fills texts and settings from the setup', () => {
     // act
-    const block = newBlock('foundation', 4, { ...SETUP, sessionMinutes: 45, dailySteps: 7000 }, 'en');
+    const block = newBlock('foundation', 4, { setup: { ...SETUP, sessionMinutes: 45, dailySteps: 7000 }, library: [] });
 
     // assert
     expect(block).toMatchObject({ weeks: 4, targetMinutes: 45, dailySteps: 7000, calibrationWeek: false });
@@ -203,7 +262,7 @@ describe('newBlock and initialContent', () => {
 
   it('builds a beginner plan of three blocks with empty Full Body sessions', () => {
     // act
-    const content = initialContent(SETUP);
+    const content = initialContent(SETUP, []);
 
     // assert
     expect(content.header.title).toBe('Program — weeks 1–2');
@@ -214,7 +273,7 @@ describe('newBlock and initialContent', () => {
 
   it('builds the sessions of the chosen split rather than the one the days suggest', () => {
     // act
-    const content = initialContent({ ...SETUP, trainingDays: 4, splitShape: 'full-body' });
+    const content = initialContent({ ...SETUP, trainingDays: 4, splitShape: 'full-body' }, []);
 
     // assert
     expect(content.plan.blocks[0].split.shape).toBe('full-body');
@@ -223,7 +282,7 @@ describe('newBlock and initialContent', () => {
 
   it('sets the calibration week from the suggestion', () => {
     // act
-    const content = initialContent({ ...SETUP, level: 'intermediate' });
+    const content = initialContent({ ...SETUP, level: 'intermediate' }, []);
 
     // assert
     expect(content.plan.blocks.map(b => b.calibrationWeek)).toEqual([true, false, false]);

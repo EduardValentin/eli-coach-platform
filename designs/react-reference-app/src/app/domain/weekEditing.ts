@@ -1,21 +1,13 @@
-import { newId, WEEKDAYS, type Block, type CalendarEntry, type CardioSession, type Session, type Weekday } from './program';
-import { CARDIO_INTENSITY_TEXT } from './programDefaults';
+import { WEEKDAYS, type Block, type CalendarEntry, type CardioSession, type Session, type Weekday } from './program';
 
-export type DayChoice = { kind: 'session'; sessionId: string } | { kind: 'cardio' } | { kind: 'rest' };
-
-const NEW_CARDIO_MINUTES = 30;
-
-function cardioOn(weekday: Weekday): CardioSession {
-  return { id: newId(), type: 'liss', minutes: NEW_CARDIO_MINUTES, intensityText: CARDIO_INTENSITY_TEXT.liss, weekday, placement: 'separate' };
-}
+export type DayChoice = { kind: 'session'; sessionId: string } | { kind: 'cardio'; session: CardioSession } | { kind: 'rest' };
 
 function entryFor(block: Block, day: Weekday, choice: DayChoice): { entry: CalendarEntry; added?: CardioSession } {
   if (choice.kind === 'session') return { entry: choice };
   if (choice.kind === 'rest') return { entry: { kind: 'rest' } };
   const current = block.calendar[day];
   if (current.kind === 'cardio') return { entry: current };
-  const added = cardioOn(day);
-  return { entry: { kind: 'cardio', cardioId: added.id }, added };
+  return { entry: { kind: 'cardio', cardioId: choice.session.id }, added: choice.session };
 }
 
 export function blockWithDay(block: Block, day: Weekday, choice: DayChoice): Block {
@@ -35,11 +27,7 @@ export function blockWithDay(block: Block, day: Weekday, choice: DayChoice): Blo
 }
 
 export function blockWithCardio(block: Block, cardio: CardioSession): Block {
-  const cardioSessions = block.cardioSessions.map(other => {
-    if (other.id !== cardio.id) return other;
-    return other.type === cardio.type ? cardio : { ...cardio, intensityText: CARDIO_INTENSITY_TEXT[cardio.type] };
-  });
-  return { ...block, cardioSessions };
+  return { ...block, cardioSessions: block.cardioSessions.map(other => (other.id === cardio.id ? cardio : other)) };
 }
 
 export function sessionsInCalendarOrder(block: Block): Session[] {

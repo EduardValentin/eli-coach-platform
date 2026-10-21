@@ -1,10 +1,13 @@
 import { Fragment } from 'react';
 import { ChevronDown } from 'lucide-react';
 import {
+  formatRange,
+  isWorkingSet,
   positionLabel,
   setsSummary,
   setText,
   uniformSets,
+  workingSets,
   type Block,
   type ProgramLanguage,
   type Row,
@@ -68,7 +71,10 @@ function SetsCell({ row, exercise }: { row: Row; exercise: Exercise | undefined 
   if (uniformSets(row.sets)) return <Unbroken text={setsSummary(row.sets, suffix)} />;
   return (
     <ol className="grid gap-0.5">
-      {row.sets.map((set, index) => (
+      {row.sets.flatMap((set, index) =>
+        isWorkingSet(set) ? [] : [<li key={`warm-up-${index}`}>{`Warm-up · ${formatRange(set.reps)}${suffix}`}</li>],
+      )}
+      {workingSets(row.sets).map((set, index) => (
         <li key={index}>
           <Unbroken text={`Set ${index + 1} · ${setText(set, suffix)}`} />
         </li>

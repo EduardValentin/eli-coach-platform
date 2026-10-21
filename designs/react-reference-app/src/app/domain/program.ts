@@ -21,12 +21,12 @@ export const SLOTS: readonly Slot[] = ['A', 'B', 'C', 'D'];
 export type Range = { min: number; max: number };
 export type LastSetTechnique = 'none' | 'drop-set' | 'rest-pause';
 export type Progression = { kind: 'double' } | { kind: 'custom'; text: string };
-export type SetSpec = { reps: Range; rir: Range };
+export type WarmUpSet = { kind: 'warm-up'; reps: Range; weightKg?: number };
+export type WorkingSet = { kind: 'working'; reps: Range; rir: Range; weightKg?: number };
+export type SetSpec = WarmUpSet | WorkingSet;
 export type RowField =
   | 'sets'
   | 'restSeconds'
-  | 'warmUpSets'
-  | 'weightKg'
   | 'tempo'
   | 'lastSetTechnique'
   | 'substitutions'
@@ -37,9 +37,7 @@ export type Row = {
   exerciseId: string;
   slot: Slot;
   supersetGroup?: string;
-  warmUpSets?: string;
   sets: SetSpec[];
-  weightKg?: number;
   restSeconds: number;
   tempo?: string;
   lastSetTechnique: LastSetTechnique;
@@ -56,15 +54,14 @@ export type Session = {
   coolDown: boolean;
   rows: Row[];
 };
-export type CardioType = 'liss' | 'moderate' | 'hiit' | 'finisher';
-export type CardioSession = {
-  id: string;
-  type: CardioType;
-  minutes: number;
-  intensityText: string;
-  weekday: Weekday;
-  placement: 'after-session' | 'separate';
-};
+export type CardioIntensity = 'easy' | 'moderate' | 'hard';
+export type CircuitItem = { exerciseId: string; reps?: number; seconds?: number };
+export type CardioPlan =
+  | { kind: 'steady'; minutes: number; intensity: CardioIntensity }
+  | { kind: 'intervals'; workSeconds: number; easySeconds: number; rounds: number; intensity: CardioIntensity }
+  | { kind: 'circuit'; items: CircuitItem[]; rounds: number; restSeconds: number };
+export type CardioSegment = { id: string; exerciseId: string; plan: CardioPlan };
+export type CardioSession = { id: string; originId: string; name: string; segments: CardioSegment[] };
 export type CalendarEntry =
   | { kind: 'session'; sessionId: string }
   | { kind: 'cardio'; cardioId: string }
@@ -139,20 +136,39 @@ function sameRange(left: Range, right: Range): boolean {
   return left.min === right.min && left.max === right.max;
 }
 
-export function setText(set: SetSpec, repsSuffix = ''): string {
+export function isWorkingSet(set: SetSpec): set is WorkingSet {
+  return set.kind === 'working';
+}
+
+export function workingSets(sets: readonly SetSpec[]): WorkingSet[] {
+  return sets.filter(isWorkingSet);
+}
+
+export function setText(set: WorkingSet, repsSuffix = ''): string {
   return `${formatRange(set.reps)}${repsSuffix} · RIR ${formatRange(set.rir)}`;
 }
 
-export function uniformSets(sets: SetSpec[]): boolean {
-  const [first] = sets;
-  return sets.every(set => sameRange(set.reps, first.reps) && sameRange(set.rir, first.rir));
+export function uniformSets(sets: readonly SetSpec[]): boolean {
+  const working = workingSets(sets);
+  const [first] = working;
+  return working.every(set => sameRange(set.reps, first.reps) && sameRange(set.rir, first.rir));
 }
 
-export function setsSummary(sets: SetSpec[], repsSuffix = ''): string {
+function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   const [first] = sets;
-  if (!first) return 'No sets';
   if (!uniformSets(sets)) return `${sets.length} sets`;
   return `${sets.length} × ${setText(first, repsSuffix)}`;
+}
+
+export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
+  if (sets.length === 0) return 'No sets';
+  const working = workingSets(sets);
+  const warmUpCount = sets.length - working.length;
+  const parts = [
+    ...(warmUpCount > 0 ? [`${warmUpCount} warm-up`] : []),
+    ...(working.length > 0 ? [workingSummary(working, repsSuffix)] : []),
+  ];
+  return parts.join(' · ');
 }
 
 export function positionLabel(session: Session, row: Row): string {
@@ -182,7 +198,7 @@ function calendarWithIds(
   return Object.fromEntries(entries) as Record<Weekday, CalendarEntry>;
 }
 
-function blockWithFreshIds(block: Block): Block {
+export function blockWithFreshIds(block: Block): Block {
   const sessionIds = new Map(block.sessions.map(session => [session.id, newId()]));
   const cardioIds = new Map(block.cardioSessions.map(cardio => [cardio.id, newId()]));
   return {
@@ -194,7 +210,11 @@ function blockWithFreshIds(block: Block): Block {
       id: sessionIds.get(session.id) as string,
       rows: session.rows.map(row => ({ ...row, id: newId() })),
     })),
-    cardioSessions: block.cardioSessions.map(cardio => ({ ...cardio, id: cardioIds.get(cardio.id) as string })),
+    cardioSessions: block.cardioSessions.map(cardio => ({
+      ...cardio,
+      id: cardioIds.get(cardio.id) as string,
+      segments: cardio.segments.map(segment => ({ ...segment, id: newId() })),
+    })),
   };
 }
 

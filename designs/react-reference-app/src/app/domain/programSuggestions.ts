@@ -1,5 +1,6 @@
 import type { Equipment } from './exercises';
 import {
+  blockWithFreshIds,
   newId,
   roleForSlot,
   WEEKDAYS,
@@ -9,9 +10,9 @@ import {
   type CardioSession,
   type LevelHint,
   type ProgramContent,
-  type ProgramLanguage,
   type Row,
   type Session,
+  type SetSpec,
   type Slot,
   type SplitShape,
   type Weekday,
@@ -23,6 +24,7 @@ import { SPLIT_TEMPLATES } from './splitTemplates';
 import type { Exercise } from '../context/TrainingContext';
 
 type SuggestedBlock = { type: BlockType; weeks: number; calibrationWeek: boolean };
+export type BlockContext = { setup: ProgramSetup; library: readonly Exercise[]; previous?: Block };
 
 const SUGGESTED_BLOCKS: Record<LevelHint, SuggestedBlock[]> = {
   beginner: [
@@ -48,6 +50,10 @@ const SESSION_OVERHEAD_MINUTES = 8;
 const COOL_DOWN_MINUTES = 5;
 const LIGHT_EQUIPMENT: readonly Equipment[] = ['Bands', 'Dumbbells'];
 const MAX_SUBSTITUTIONS = 2;
+const MAIN_COMPOUND_WARM_UPS: readonly SetSpec[] = [
+  { kind: 'warm-up', reps: { min: 8, max: 8 } },
+  { kind: 'warm-up', reps: { min: 5, max: 5 } },
+];
 
 export function suggestedBlocks(level: LevelHint): SuggestedBlock[] {
   return SUGGESTED_BLOCKS[level].map(block => ({ ...block }));
@@ -77,13 +83,19 @@ export function spreadCalendar(
   return calendar;
 }
 
+function warmUpsFor(slot: Slot): SetSpec[] {
+  return roleForSlot(slot) === 'main-compound' ? MAIN_COMPOUND_WARM_UPS.map(set => structuredClone(set)) : [];
+}
+
 export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): Row {
+  const defaults = rowDefaults(type, roleForSlot(slot));
   return {
     id: newId(),
     exerciseId: '',
     slot,
     ...(supersetGroup === undefined ? {} : { supersetGroup }),
-    ...rowDefaults(type, roleForSlot(slot)),
+    sets: [...warmUpsFor(slot), ...defaults.sets],
+    restSeconds: defaults.restSeconds,
     lastSetTechnique: 'none',
     substitutions: [],
     progression: { kind: 'double' },
@@ -116,59 +128,67 @@ export function copiedSessions(sessions: Session[]): Session[] {
   }));
 }
 
-function weekdayOfCardio(calendar: Record<Weekday, CalendarEntry>, cardio: CardioSession): Weekday {
-  const placed = WEEKDAYS.find(day => {
-    const entry = calendar[day];
-    return entry.kind === 'cardio' && entry.cardioId === cardio.id;
-  });
-  return placed ?? cardio.weekday;
+function blockTexts(type: BlockType, setup: ProgramSetup): Pick<Block, 'introText' | 'missedDayNote'> {
+  return {
+    introText: templateText(`block.${type}`, setup.language).text,
+    missedDayNote: templateText('missedDay', setup.language).text,
+  };
 }
 
-export function newBlock(
-  type: BlockType,
-  weeks: number,
-  setup: ProgramSetup,
-  language: ProgramLanguage,
-  previous?: Block,
-): Block {
+function deloadAfter(previous: Block, weeks: number, setup: ProgramSetup): Block {
+  const copy = blockWithFreshIds(previous);
+  return reDefaultedBlock(
+    {
+      ...copy,
+      ...blockTexts('deload', setup),
+      originId: newId(),
+      weeks,
+      calibrationWeek: false,
+      clientNote: '',
+      targetMinutes: setup.sessionMinutes,
+      dailySteps: setup.dailySteps,
+    },
+    'deload',
+  );
+}
+
+export function newBlock(type: BlockType, weeks: number, { setup, library, previous }: BlockContext): Block {
+  if (type === 'deload' && previous) return deloadAfter(previous, weeks, setup);
   const shape = setup.splitShape;
   const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays);
-  const defaultCardio = cardioDefaults(type);
-  const calendar = spreadCalendar(
-    previous?.split.shape ?? shape,
-    sessions.map(session => session.id),
-    defaultCardio,
-  );
-  const cardioSessions = defaultCardio.map(cardio => ({ ...cardio, weekday: weekdayOfCardio(calendar, cardio) }));
+  const cardioSessions = cardioDefaults(type, library);
   const block: Block = {
     id: newId(),
     originId: newId(),
     type,
     weeks,
     calibrationWeek: false,
-    introText: templateText(`block.${type}`, language).text,
+    ...blockTexts(type, setup),
     clientNote: '',
     split: previous
       ? { ...previous.split }
       : {
           shape,
           name: '',
-          text: fillTemplate(templateText(`split.${shape}`, language).text, { days: setup.trainingDays }),
+          text: fillTemplate(templateText(`split.${shape}`, setup.language).text, { days: setup.trainingDays }),
         },
     targetMinutes: setup.sessionMinutes,
-    calendar,
+    calendar: spreadCalendar(
+      previous?.split.shape ?? shape,
+      sessions.map(session => session.id),
+      cardioSessions,
+    ),
     sessions,
     cardioSessions,
     dailySteps: setup.dailySteps,
-    missedDayNote: templateText('missedDay', language).text,
   };
   return previous ? reDefaultedBlock(block, type) : block;
 }
 
-export function initialContent(setup: ProgramSetup): ProgramContent {
+export function initialContent(setup: ProgramSetup, library: readonly Exercise[]): ProgramContent {
   const blocks: Block[] = [];
   for (const suggestion of suggestedBlocks(setup.level)) {
-    const block = newBlock(suggestion.type, suggestion.weeks, setup, setup.language, blocks.at(-1));
+    const block = newBlock(suggestion.type, suggestion.weeks, { setup, library, previous: blocks.at(-1) });
     blocks.push({ ...block, calibrationWeek: suggestion.calibrationWeek });
   }
   return {
@@ -179,7 +199,6 @@ export function initialContent(setup: ProgramSetup): ProgramContent {
     lifestyleNotes: '',
   };
 }
-
 export function estimatedMinutes(session: Session): number {
   const supersetsSeen = new Set<string>();
   let seconds = 0;

@@ -1,4 +1,4 @@
-import type { BlockType, CardioType, SplitShape, Weekday } from '../../../domain/program';
+import type { BlockType, SplitShape, Weekday } from '../../../domain/program';
 
 export const BLOCK_SWATCH: Record<BlockType, string> = {
   foundation: 'bg-training-foundation',
@@ -15,13 +15,6 @@ export const BLOCK_SOFT: Record<BlockType, string> = {
 };
 
 export const SPLIT_SHAPE_LABELS: Record<SplitShape, string> = { 'full-body': 'Full body', 'upper-lower': 'Upper / lower' };
-
-export const CARDIO_TYPE_LABELS: Record<CardioType, string> = {
-  liss: 'LISS',
-  moderate: 'Moderate',
-  hiit: 'HIIT',
-  finisher: 'Finisher',
-};
 
 export const WEEKDAY_LABELS: Record<Weekday, string> = {
   mon: 'Monday',

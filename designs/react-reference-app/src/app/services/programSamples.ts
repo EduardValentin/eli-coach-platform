@@ -13,6 +13,7 @@ import {
   type Session,
 } from '../domain/program';
 import type { ProgramSetup } from '../domain/programOnboarding';
+import { cardioPreset } from '../domain/programCardio';
 import { emptyRow, initialContent, substitutionsFor } from '../domain/programSuggestions';
 import { slotPlanFor, type SlotPlan } from '../domain/splitTemplates';
 
@@ -78,7 +79,7 @@ function filledSession(session: Session, seed: SeedContext): Session {
 }
 
 function filledContent(library: readonly Exercise[], client: SeedClient): ProgramContent {
-  const content = initialContent({ ...SEED_SETUP, cycleMode: client.cycleMode, equipment: client.equipment });
+  const content = initialContent({ ...SEED_SETUP, cycleMode: client.cycleMode, equipment: client.equipment }, library);
   return {
     ...content,
     plan: {
@@ -100,6 +101,15 @@ function programOf(client: SeedClient, versions: Program['versions']): Program {
     level: SEED_SETUP.level,
     versions,
   };
+}
+
+function withIntervalsDay(content: ProgramContent, library: readonly Exercise[]): ProgramContent {
+  const [first, ...rest] = content.plan.blocks;
+  const replaced = first.cardioSessions.at(-1);
+  if (!replaced) return content;
+  const intervals = { ...cardioPreset('hiit', library), id: replaced.id, originId: replaced.originId };
+  const cardioSessions = first.cardioSessions.map(cardio => (cardio.id === replaced.id ? intervals : cardio));
+  return { ...content, plan: { blocks: [{ ...first, cardioSessions }, ...rest] } };
 }
 
 function twoVersions(client: SeedClient, publishedAt: Date, content: ProgramContent): Program {
@@ -125,5 +135,5 @@ export function programForSeed(seed: ProgramSeed, client: SeedClient, library: r
   if (seed === 'published') {
     return programOf(client, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content }]);
   }
-  return twoVersions(client, publishedAt, content);
+  return twoVersions(client, publishedAt, withIntervalsDay(content, library));
 }

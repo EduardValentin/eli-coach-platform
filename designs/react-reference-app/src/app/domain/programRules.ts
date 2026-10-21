@@ -6,12 +6,14 @@ import {
   WEEKDAYS,
   roleForSlot,
   type Block,
+  type CardioSession,
   type LevelHint,
   type ProgramContent,
   type Session,
   type Weekday,
 } from './program';
 import { blockDates, blockSpan, currentPosition, nextCheckpoint } from './programCalendar';
+import { hasIntervals, isLightCardio } from './programCardio';
 import { estimatedMinutes } from './programSuggestions';
 
 export type BlockingCode =
@@ -251,24 +253,36 @@ function muscleFrequencyWarnings(block: Block, exercises: Exercises): RuleFindin
   });
 }
 
+function cardioOn(block: Block, day: Weekday): CardioSession | undefined {
+  const entry = block.calendar[day];
+  return entry.kind === 'cardio' ? block.cardioSessions.find(cardio => cardio.id === entry.cardioId) : undefined;
+}
+
+function isHardDay(block: Block, day: Weekday): boolean {
+  const cardio = cardioOn(block, day);
+  return sessionOn(block, day) !== undefined || (cardio !== undefined && !isLightCardio(cardio));
+}
+
 function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
   const findings: RuleFinding<WarningCode>[] = [];
-  const hiitDays = block.cardioSessions.filter(cardio => cardio.type === 'hiit').map(cardio => cardio.weekday);
   for (const day of WEEKDAYS) {
     const following = nextDay(day);
-    if (sessionOn(block, day) && sessionOn(block, following)) {
+    if (isHardDay(block, day) && isHardDay(block, following)) {
       findings.push({
         code: 'hard-days-in-a-row',
         blockId: block.id,
         detail: `${WEEKDAY_LABELS[day]} and ${WEEKDAY_LABELS[following]}`,
       });
     }
+    const cardio = cardioOn(block, day);
     const legs = sessionOn(block, following);
-    if (hiitDays.includes(day) && legs && isHeavyLegSession(legs, exercises)) {
+    if (cardio && hasIntervals(cardio) && legs && isHeavyLegSession(legs, exercises)) {
       findings.push({ code: 'hiit-before-heavy-legs', blockId: block.id, detail: legs.name });
     }
   }
-  if (hiitDays.length > MAX_HIIT_SESSIONS) findings.push({ code: 'hiit-over-two', blockId: block.id });
+  if (block.cardioSessions.filter(hasIntervals).length > MAX_HIIT_SESSIONS) {
+    findings.push({ code: 'hiit-over-two', blockId: block.id });
+  }
   return findings;
 }
 

@@ -2,11 +2,11 @@ import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS, WEEKDAYS, type Block, type Weekday } from '../../domain/program';
 import { fillTemplate } from '../../domain/programTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
-import { CARDIO_TYPE_LABELS } from '../coach-portal/program/program-constants';
+import { cardioMinutes } from '../../domain/programCardio';
 import { LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, Paragraphs, PlanBlocks, template } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
-import { currentBlock, dayEntries, type ProgramView } from './programView';
+import { cardioDayLabel, currentBlock, dayEntries, type ProgramView } from './programView';
 
 const DISCLAIMER_PLACEHOLDER = 'Disclaimer (page 8) — placeholder';
 
@@ -23,10 +23,7 @@ const WEEKDAY_ABBREVIATIONS: Record<Weekday, string> = {
 function entryLabel(block: Block, weekday: Weekday): string {
   const entry = dayEntries(block, weekday);
   if (entry.kind === 'session') return block.sessions.find(session => session.id === entry.sessionId)?.name ?? 'Session';
-  if (entry.kind === 'cardio') {
-    const cardio = block.cardioSessions.find(candidate => candidate.id === entry.cardioId);
-    return cardio ? `${CARDIO_TYPE_LABELS[cardio.type]} ${cardio.minutes}` : 'Cardio';
-  }
+  if (entry.kind === 'cardio') return cardioDayLabel(block, weekday);
   return 'Rest';
 }
 
@@ -95,9 +92,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
             <Paragraphs text={fillTemplate(template(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') })} />
             <ul className="grid gap-1 text-sm text-text-primary">
               {block.cardioSessions.map(cardio => (
-                <li key={cardio.id}>
-                  {CARDIO_TYPE_LABELS[cardio.type]} · {cardio.minutes} min · {cardio.intensityText}
-                </li>
+                <li key={cardio.id}>{`${cardio.name} · ${cardioMinutes(cardio)} min`}</li>
               ))}
             </ul>
           </Section>

@@ -198,10 +198,8 @@ describe('sessionEdits', () => {
 });
 
 describe('quickAddSlot', () => {
-  const block = newBlock(
-    'foundation',
-    4,
-    {
+  const block = newBlock('foundation', 4, {
+    setup: {
       goal: 'Lose fat',
       level: 'beginner',
       trainingDays: 3,
@@ -212,8 +210,8 @@ describe('quickAddSlot', () => {
       equipment: [],
       splitShape: 'full-body',
     },
-    'en',
-  );
+    library: [],
+  });
 
   it('picks the first open group whose plan matches the pattern', () => {
     // arrange

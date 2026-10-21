@@ -1,7 +1,9 @@
 import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
-import { WEEKDAYS, type Block, type CardioSession, type CardioType, type Weekday } from '../../../domain/program';
-import { blockWithCardio, blockWithDay, type DayChoice } from '../../../domain/weekEditing';
+import { useTraining } from '../../../context/TrainingContext';
+import { WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
+import { cardioMinutes, cardioPreset } from '../../../domain/programCardio';
+import { blockWithDay, type DayChoice } from '../../../domain/weekEditing';
 import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import {
@@ -13,17 +15,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
-import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, CARDIO_TYPE_LABELS, WEEKDAY_LABELS } from './program-constants';
-import { SegmentedChoice } from './SegmentedChoice';
+import { BLOCK_SOFT, WEEKDAY_LABELS } from './program-constants';
 
 type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
 
-const CARDIO_OPTIONS = (Object.keys(CARDIO_TYPE_LABELS) as CardioType[]).map(value => ({ value, label: CARDIO_TYPE_LABELS[value] }));
 const KIND_BADGE_CLASS = 'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-xs font-medium';
 
 function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoose: (choice: DayChoice) => void }) {
+  const { exercises } = useTraining();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
@@ -45,7 +45,7 @@ function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoos
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem onSelect={() => onChoose({ kind: 'cardio' })}>
+        <DropdownMenuItem onSelect={() => onChoose({ kind: 'cardio', session: cardioPreset('liss', exercises) })}>
           <HeartPulse aria-hidden="true" />
           Cardio
         </DropdownMenuItem>
@@ -58,25 +58,12 @@ function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoos
   );
 }
 
-function CardioFields({ day, cardio, onChange }: { day: Weekday; cardio: CardioSession; onChange: (cardio: CardioSession) => void }) {
-  const weekday = WEEKDAY_LABELS[day];
+function CardioSummary({ cardio }: { cardio: CardioSession }) {
   return (
-    <div className="grid gap-2">
-      <SegmentedChoice legend={`${weekday} cardio type`} options={CARDIO_OPTIONS} value={cardio.type} orientation="column" onChange={type => onChange({ ...cardio, type })} />
-      <label className="flex items-center gap-1.5 text-xs text-text-secondary">
-        <Input
-          size="sm"
-          type="number"
-          min={1}
-          inputMode="numeric"
-          aria-label={`${weekday} cardio minutes`}
-          value={cardio.minutes}
-          onChange={event => onChange({ ...cardio, minutes: Number(event.target.value) })}
-          className="w-full min-w-0 px-2 tabular-nums"
-        />
-        min
-      </label>
-    </div>
+    <p className="grid text-xs text-text-secondary">
+      <span className="font-medium text-text-primary">{cardio.name}</span>
+      <span className="tabular-nums">{`${cardioMinutes(cardio)} min`}</span>
+    </p>
   );
 }
 
@@ -112,7 +99,7 @@ function DayCard({ block, day, onChange, onOpenSession }: WeekDaysProps & { day:
       {cardio && (
         <>
           <span className={cn(KIND_BADGE_CLASS, 'bg-training-recovery-soft text-training-recovery')}>Cardio</span>
-          <CardioFields day={day} cardio={cardio} onChange={next => onChange(blockWithCardio(block, next))} />
+          <CardioSummary cardio={cardio} />
         </>
       )}
       {!session && !cardio && <span className={cn(KIND_BADGE_CLASS, 'text-text-secondary')}>Rest</span>}

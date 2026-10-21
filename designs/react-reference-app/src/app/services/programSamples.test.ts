@@ -119,4 +119,37 @@ describe('programForSeed', () => {
   it('gives the program the cycle mode it is seeded with', () => {
     expect(programForSeed('draft', { ...CLIENT, cycleMode: 'general' }, SAMPLE_EXERCISES)?.cycleMode).toBe('general');
   });
+
+  it('opens every main compound row with two warm-up sets', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const [session] = program!.versions[0].content.plan.blocks[0].sessions;
+    const main = session.rows.find(row => row.slot === 'A');
+    expect(main!.sets.slice(0, 2).map(set => [set.kind, set.reps.min])).toEqual([
+      ['warm-up', 8],
+      ['warm-up', 5],
+    ]);
+    expect(main!.sets.slice(2).every(set => set.kind === 'working')).toBe(true);
+  });
+
+  it('seeds easy cardio on a library cardio exercise', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const [cardio] = program!.versions[0].content.plan.blocks[0].cardioSessions;
+    expect(cardio.name).toBe('Easy cardio');
+    expect(exercisesById.get(cardio.segments[0].exerciseId)?.type).toBe('cardio');
+  });
+
+  it('makes one cardio day intervals in the two-versions seed', () => {
+    // act
+    const program = programForSeed('two-versions', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const names = currentVersion(program!)?.content.plan.blocks[0].cardioSessions.map(cardio => cardio.name);
+    expect(names?.filter(name => name === 'Intervals')).toHaveLength(1);
+  });
 });

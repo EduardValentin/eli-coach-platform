@@ -129,7 +129,7 @@ describe('LibraryPanel', () => {
 
     // assert
     const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
-    expect(within(card).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(card).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
     expect(within(card).getByText('Rest 1:15')).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
     expect(within(within(card).getByRole('group', { name: 'Substitutions' })).getByText('Barbell Back Squat')).toBeInTheDocument();

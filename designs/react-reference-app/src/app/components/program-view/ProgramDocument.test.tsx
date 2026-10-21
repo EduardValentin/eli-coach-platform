@@ -34,7 +34,7 @@ function blockOf(view: ProgramView) {
   return block;
 }
 
-const STEADY_SET = { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
 
 describe('TrackingTable', () => {
   it('has a column per week and a row per set', () => {
@@ -64,7 +64,7 @@ describe('TrackingTable', () => {
     const view = viewFor('adapted');
     const block = blockOf(view);
     const session = structuredClone(block.sessions[0]);
-    const topSet = { reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
+    const topSet = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
     session.rows = [{ ...session.rows[0], sets: [topSet, STEADY_SET] }];
 
     // act

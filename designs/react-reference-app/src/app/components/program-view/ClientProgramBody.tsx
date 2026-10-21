@@ -3,9 +3,10 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
 import { ClientWidget } from '../client-portal/ClientWidget';
-import { CARDIO_TYPE_LABELS, WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
+import { WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { Button } from '../ui/button';
-import { BLOCK_TYPE_LABELS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, WEEKDAYS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
+import { cardioMinutes } from '../../domain/programCardio';
 import { weekdayOf } from '../../domain/programCalendar';
 import { fillTemplate } from '../../domain/programTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
@@ -14,7 +15,7 @@ import { FocusCard } from './FocusCard';
 import { LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, Paragraphs, PlanBlocks, template } from './ProgramText';
 import { WeekStrip } from './WeekStrip';
 import { WhatChangedBanner, readDismissedVersion } from './WhatChangedBanner';
-import { currentBlock, weekStart, type ProgramView } from './programView';
+import { cardioFor, currentBlock, weekStart, type ProgramView } from './programView';
 
 function AboutBlock({ view, block }: { view: ProgramView; block: Block }) {
   const intro = block.introText || template(view, `block.${block.type}`);
@@ -33,11 +34,11 @@ function CardioAndSteps({ view, block }: { view: ProgramView; block: Block }) {
     <div className="grid gap-3">
       <Paragraphs text={steps} />
       <ul className="grid gap-1 text-sm text-text-primary">
-        {block.cardioSessions.map(cardio => (
-          <li key={cardio.id}>
-            {CARDIO_TYPE_LABELS[cardio.type]} · {cardio.minutes} min · {WEEKDAY_LABELS[cardio.weekday]}
-          </li>
-        ))}
+        {WEEKDAYS.flatMap(weekday => {
+          const cardio = cardioFor(block, weekday);
+          if (!cardio) return [];
+          return [<li key={cardio.id}>{`${cardio.name} · ${cardioMinutes(cardio)} min · ${WEEKDAY_LABELS[weekday]}`}</li>];
+        })}
       </ul>
     </div>
   );

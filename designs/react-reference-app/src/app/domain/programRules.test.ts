@@ -1,7 +1,8 @@
 import { addDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
-import type { Block, BlockType, CalendarEntry, CardioType, Row, Session, Slot, Weekday } from './program';
+import type { Block, BlockType, CalendarEntry, Row, Session, Slot, Weekday } from './program';
+import { cardioPreset, type CardioPresetKind } from './programCardio';
 import {
   blockShorterThanElapsed,
   blockingMessage,
@@ -42,7 +43,7 @@ const context = (overrides: Partial<RuleContext> = {}): RuleContext => ({
   ...overrides,
 });
 
-const THREE_SETS = Array.from({ length: 3 }, () => ({ reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
+const THREE_SETS = Array.from({ length: 3 }, () => ({ kind: 'working' as const, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
 
 const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string) =>
   ({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 }) as Row;
@@ -54,8 +55,8 @@ type Spec = {
   type?: BlockType;
   weeks?: number;
   sessions?: Session[];
-  days?: Partial<Record<Weekday, string | CardioType>>;
-  cardio?: Partial<Record<Weekday, CardioType>>;
+  days?: Partial<Record<Weekday, string>>;
+  cardio?: Partial<Record<Weekday, CardioPresetKind>>;
   targetMinutes?: number;
 };
 
@@ -80,11 +81,9 @@ const blocks = (...specs: Spec[]): Block[] =>
       targetMinutes: spec.targetMinutes ?? 60,
       calendar,
       sessions,
-      cardioSessions: Object.entries(spec.cardio ?? {}).map(([weekday, type]) => ({
+      cardioSessions: Object.entries(spec.cardio ?? {}).map(([weekday, kind]) => ({
+        ...cardioPreset(kind, []),
         id: `${weekday}-cardio`,
-        type,
-        weekday,
-        minutes: 20,
       })),
     } as Block;
   });
@@ -212,5 +211,57 @@ describe('blockShorterThanElapsed', () => {
       context({ dayOne, publishedBlocks: published }),
     );
     expect(codes(found)).toContain('block-shorter-than-elapsed');
+  });
+});
+
+describe('cardio schedule warnings', () => {
+  const legs = session('legs', [row('squat')], 'Lower A');
+
+  it('warns about more than two cardio sessions with intervals', () => {
+    // arrange
+    const three = blocks({ cardio: { tue: 'hiit', thu: 'hiit', sat: 'hiit' } });
+    const two = blocks({ cardio: { tue: 'hiit', thu: 'hiit', sat: 'moderate' } });
+
+    // act
+    const [found, passed] = [warnings(content(three), context()), warnings(content(two), context())];
+
+    // assert
+    expect(codes(found)).toContain('hiit-over-two');
+    expect(codes(passed)).not.toContain('hiit-over-two');
+  });
+
+  it('warns about intervals the day before a heavy leg session', () => {
+    // arrange
+    const planBlocks = blocks({ sessions: [legs], days: { tue: 'legs' }, cardio: { mon: 'hiit' } });
+
+    // act
+    const found = warnings(content(planBlocks), context());
+
+    // assert
+    expect(found).toContainEqual({ code: 'hiit-before-heavy-legs', blockId: 'b1', detail: 'Lower A' });
+  });
+
+  it('ignores steady cardio the day before a heavy leg session', () => {
+    // arrange
+    const planBlocks = blocks({ sessions: [legs], days: { tue: 'legs' }, cardio: { mon: 'moderate' } });
+
+    // act
+    const found = warnings(content(planBlocks), context());
+
+    // assert
+    expect(codes(found)).not.toContain('hiit-before-heavy-legs');
+  });
+
+  it('counts a cardio day as hard unless every segment is steady and easy', () => {
+    // arrange
+    const moderate = blocks({ days: { mon: 's1' }, cardio: { tue: 'moderate' } });
+    const easy = blocks({ days: { mon: 's1' }, cardio: { tue: 'liss' } });
+
+    // act
+    const [found, passed] = [warnings(content(moderate), context()), warnings(content(easy), context())];
+
+    // assert
+    expect(found).toContainEqual({ code: 'hard-days-in-a-row', blockId: 'b1', detail: 'Mon and Tue' });
+    expect(codes(passed)).not.toContain('hard-days-in-a-row');
   });
 });

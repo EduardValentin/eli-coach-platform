@@ -86,7 +86,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   }
 
   function addBlock(type: BlockType, weeks: number) {
-    const block = newBlock(type, weeks, setup, program.language, content.plan.blocks.at(-1));
+    const block = newBlock(type, weeks, { setup, library: exercises, previous: content.plan.blocks.at(-1) });
     updateBlocks(blocks => [...blocks, block]);
     select({ kind: 'block', blockId: block.id });
   }
@@ -97,7 +97,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   }
 
   function applySuggestion() {
-    updateBlocks(() => initialContent(setup).plan.blocks);
+    updateBlocks(() => initialContent(setup, exercises).plan.blocks);
   }
 
   function publish() {

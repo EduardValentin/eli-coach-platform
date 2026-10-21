@@ -135,7 +135,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
         language: setup.language,
         cycleMode: setup.cycleMode,
         level: setup.level,
-        versions: [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content: initialContent(setup) }],
+        versions: [{ number: 1, state: 'draft', publishedAt: null, whatChanged: '', content: initialContent(setup, exercisesRef.current) }],
       };
       commit({ ...programsRef.current, [callId]: program });
       return program;

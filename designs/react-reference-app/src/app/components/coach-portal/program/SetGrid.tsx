@@ -1,5 +1,5 @@
 import { Copy, Plus, X } from 'lucide-react';
-import { formatRange, type Row, type SetSpec } from '../../../domain/program';
+import { formatRange, isWorkingSet, workingSets, type Row, type SetSpec } from '../../../domain/program';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { RowTextField } from './RowTextField';
@@ -9,14 +9,19 @@ type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChan
 
 const HEAD_CLASS = 'px-1 pb-1 text-left font-normal';
 
-function copyOf(set: SetSpec): SetSpec {
-  return { reps: { ...set.reps }, rir: { ...set.rir } };
+function setLabel(sets: SetSpec[], index: number): string {
+  const set = sets[index];
+  const position = sets.slice(0, index + 1).filter(other => other.kind === set.kind).length;
+  return isWorkingSet(set) ? `Set ${position}` : `Warm-up ${position}`;
 }
 
 export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProps) {
   const { sets } = row;
   const changeSets = (next: SetSpec[]) => onChange(withField(row, 'sets', next));
   const changeSet = (index: number, set: SetSpec) => changeSets(sets.map((other, at) => (at === index ? set : other)));
+  const working = workingSets(sets);
+  const [firstWorking] = working;
+  const lastWorking = working.at(-1);
 
   return (
     <div className="grid gap-3">
@@ -40,16 +45,16 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
         </thead>
         <tbody>
           {sets.map((set, index) => {
-            const n = index + 1;
+            const label = setLabel(sets, index);
             return (
               <tr key={index}>
                 <th scope="row" className="px-1 py-1 text-left font-medium whitespace-nowrap text-text-secondary tabular-nums">
-                  {`Set ${n}`}
+                  {label}
                 </th>
                 <td className="px-1 py-1">
                   <RowTextField
                     className="w-20"
-                    label={`Set ${n} reps`}
+                    label={`${label} reps`}
                     value={set.reps}
                     format={formatRange}
                     parse={parseRange}
@@ -59,22 +64,24 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
                   />
                 </td>
                 <td className="px-1 py-1">
-                  <RowTextField
-                    className="w-16"
-                    label={`Set ${n} RIR`}
-                    value={set.rir}
-                    format={formatRange}
-                    parse={parseRange}
-                    problem={RANGE_PROBLEM}
-                    onCommit={rir => changeSet(index, { ...set, rir })}
-                  />
+                  {isWorkingSet(set) && (
+                    <RowTextField
+                      className="w-16"
+                      label={`${label} RIR`}
+                      value={set.rir}
+                      format={formatRange}
+                      parse={parseRange}
+                      problem={RANGE_PROBLEM}
+                      onCommit={rir => changeSet(index, { ...set, rir })}
+                    />
+                  )}
                 </td>
                 <td className="px-1 py-1 text-right">
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Remove set ${n}`}
-                    disabled={sets.length === 1}
+                    aria-label={`Remove ${label.toLowerCase()}`}
+                    disabled={isWorkingSet(set) && working.length === 1}
                     onClick={() => changeSets(sets.filter((_, at) => at !== index))}
                   >
                     <X aria-hidden="true" />
@@ -99,11 +106,21 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
           />
         </label>
         <div className="flex flex-wrap gap-1">
-          <Button variant="ghost" size="xs" disabled={sets.length < 2} onClick={() => changeSets(sets.map(() => copyOf(sets[0])))}>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={working.length < 2}
+            onClick={() => changeSets(sets.map(set => (isWorkingSet(set) ? structuredClone(firstWorking) : set)))}
+          >
             <Copy aria-hidden="true" />
             Apply set 1 to all
           </Button>
-          <Button variant="ghost" size="xs" onClick={() => changeSets([...sets, copyOf(sets[sets.length - 1])])}>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={!lastWorking}
+            onClick={() => lastWorking && changeSets([...sets, structuredClone(lastWorking)])}
+          >
             <Plus aria-hidden="true" />
             Add set
           </Button>

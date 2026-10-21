@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Block } from './program';
+import { cardioPreset } from './programCardio';
 import { newBlock } from './programSuggestions';
 import { blockWithCardio, blockWithDay, sessionsInCalendarOrder } from './weekEditing';
 
 function block(): Block {
-  return newBlock(
-    'foundation',
-    4,
-    {
+  return newBlock('foundation', 4, {
+    setup: {
       goal: 'Lose fat',
       level: 'beginner',
       trainingDays: 3,
@@ -18,24 +17,36 @@ function block(): Block {
       equipment: [],
       splitShape: 'full-body',
     },
-    'en',
-  );
+    library: [],
+  });
 }
 
 describe('blockWithDay', () => {
-  it('creates a cardio session for a day that becomes cardio', () => {
+  it('adds the chosen cardio session for a day that becomes cardio', () => {
     // arrange
     const start = block();
+    const session = cardioPreset('liss', []);
 
     // act
-    const next = blockWithDay(start, 'sat', { kind: 'cardio' });
+    const next = blockWithDay(start, 'sat', { kind: 'cardio', session });
 
     // assert
-    const entry = next.calendar.sat;
-    expect(entry.kind).toBe('cardio');
-    const cardio = next.cardioSessions.find(other => entry.kind === 'cardio' && other.id === entry.cardioId);
-    expect(cardio).toMatchObject({ type: 'liss', minutes: 30, weekday: 'sat', intensityText: 'You can hold a conversation' });
+    expect(next.calendar.sat).toEqual({ kind: 'cardio', cardioId: session.id });
+    expect(next.cardioSessions).toContainEqual(session);
     expect(next.cardioSessions).toHaveLength(start.cardioSessions.length + 1);
+  });
+
+  it('keeps the cardio session of a day that is already cardio', () => {
+    // arrange
+    const start = block();
+    const current = start.calendar.tue;
+
+    // act
+    const next = blockWithDay(start, 'tue', { kind: 'cardio', session: cardioPreset('hiit', []) });
+
+    // assert
+    expect(next.calendar.tue).toEqual(current);
+    expect(next.cardioSessions).toEqual(start.cardioSessions);
   });
 
   it('removes the cardio session of a day that stops being cardio', () => {
@@ -66,16 +77,18 @@ describe('blockWithDay', () => {
 });
 
 describe('blockWithCardio', () => {
-  it('refreshes the intensity text with the type', () => {
+  it('replaces the cardio session with the same id', () => {
     // arrange
     const start = block();
     const [cardio] = start.cardioSessions;
+    const renamed = { ...cardio, name: 'Long walk' };
 
     // act
-    const next = blockWithCardio(start, { ...cardio, type: 'hiit' });
+    const next = blockWithCardio(start, renamed);
 
     // assert
-    expect(next.cardioSessions[0]).toMatchObject({ type: 'hiit', intensityText: 'Hard: only a few words at a time' });
+    expect(next.cardioSessions[0]).toEqual(renamed);
+    expect(next.cardioSessions.slice(1)).toEqual(start.cardioSessions.slice(1));
   });
 });
 

@@ -77,26 +77,24 @@ async function retype(user: User, field: HTMLElement, text: string) {
 }
 
 describe('BlockWorkspace', () => {
-  it('turns a rest day into cardio, edits it inline and rests it again', async () => {
+  it('turns a rest day into easy cardio and rests it again', async () => {
     // arrange
     const user = await openFirstBlock();
     expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
 
     // act
     await chooseInDayMenu(user, 'Saturday', 'Cardio');
-    await user.click(within(day('Saturday')).getByRole('radio', { name: 'HIIT' }));
-    await retype(user, within(day('Saturday')).getByRole('spinbutton', { name: 'Saturday cardio minutes' }), '20');
 
     // assert
-    expect(within(day('Saturday')).getByRole('radio', { name: 'HIIT' })).toBeChecked();
-    expect(within(day('Saturday')).getByRole('spinbutton', { name: 'Saturday cardio minutes' })).toHaveValue(20);
+    expect(within(day('Saturday')).getByText('Easy cardio')).toBeInTheDocument();
+    expect(within(day('Saturday')).getByText('30 min')).toBeInTheDocument();
 
     // act
     await chooseInDayMenu(user, 'Saturday', 'Rest');
 
     // assert
     expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
-    expect(within(day('Saturday')).queryByRole('radio')).not.toBeInTheDocument();
+    expect(within(day('Saturday')).queryByText('Easy cardio')).not.toBeInTheDocument();
   });
 
   it('places a session on another weekday from the day menu', async () => {
@@ -200,14 +198,15 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('12–15');
-    expect(within(main).getByText('3 sets')).toBeInTheDocument();
+    expect(within(main).getByText('2 warm-up · 3 sets')).toBeInTheDocument();
 
     // act
     await user.click(within(main).getByRole('button', { name: 'Apply set 1 to all' }));
 
     // assert
     expect(within(main).getByRole('textbox', { name: 'Set 2 reps' })).toHaveValue('12–15');
-    expect(within(main).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByRole('textbox', { name: 'Warm-up 1 reps' })).toHaveValue('8');
+    expect(within(main).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('adds and removes a set', async () => {
@@ -222,7 +221,7 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(within(main).getAllByRole('textbox', { name: /^Set \d reps$/ })).toHaveLength(3);
-    expect(within(main).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('adds a mobility exercise to the warm-up and removes its chip', async () => {
@@ -285,7 +284,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('option', { name: 'Hypertrophy' }));
 
     // assert
-    expect(within(card(/^A /)).getByText('4 × 6–10 · RIR 1–2')).toBeInTheDocument();
+    expect(within(card(/^A /)).getByText('2 warm-up · 4 × 6–10 · RIR 1–2')).toBeInTheDocument();
     expect(within(card(/^A /)).getByText('Rest 2:30')).toBeInTheDocument();
   });
 
@@ -294,7 +293,7 @@ describe('BlockWorkspace', () => {
     await openFirstBlock();
 
     // assert
-    expect(within(session('Full Body A')).getByText('~34 min · target 60')).toBeInTheDocument();
+    expect(within(session('Full Body A')).getByText('~38 min · target 60')).toBeInTheDocument();
   });
 
   it('rebuilds the sessions from a new split shape after confirmation', async () => {

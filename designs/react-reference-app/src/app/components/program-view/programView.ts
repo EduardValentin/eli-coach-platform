@@ -4,6 +4,7 @@ import {
   WEEKDAYS,
   type Block,
   type CalendarEntry,
+  type CardioSegment,
   type CardioSession,
   type Program,
   type ProgramVersion,
@@ -11,6 +12,7 @@ import {
   type Weekday,
 } from '../../domain/program';
 import { currentPosition, type PlanPosition } from '../../domain/programCalendar';
+import { CARDIO_INTENSITY_TEXT } from '../../domain/programCardio';
 
 const SECONDS_PER_MINUTE = 60;
 
@@ -78,4 +80,19 @@ export function restLabel(seconds: number): string {
 
 export function plainText(markdown: string): string {
   return markdown.replaceAll('**', '');
+}
+
+export function cardioDayLabel(block: Block, weekday: Weekday): string {
+  return cardioFor(block, weekday)?.name ?? 'Cardio';
+}
+
+export function cardioSegmentText({ exerciseId, plan }: CardioSegment, exercisesById: ReadonlyMap<string, Exercise>): string {
+  const nameOf = (id: string) => exercisesById.get(id)?.name ?? 'Exercise removed';
+  if (plan.kind === 'steady') return `${nameOf(exerciseId)} · ${plan.minutes} min · ${CARDIO_INTENSITY_TEXT[plan.intensity]}`;
+  if (plan.kind === 'intervals') {
+    const rounds = `${plan.rounds} × ${plan.workSeconds} s on, ${plan.easySeconds} s easy`;
+    return `${nameOf(exerciseId)} · ${rounds} · ${CARDIO_INTENSITY_TEXT[plan.intensity]}`;
+  }
+  const items = plan.items.map(item => `${nameOf(item.exerciseId)} ${item.seconds === undefined ? `${item.reps ?? 0} reps` : `${item.seconds} s`}`);
+  return `${plan.rounds} rounds of ${items.join(', ')} · ${plan.restSeconds} s rest between rounds`;
 }

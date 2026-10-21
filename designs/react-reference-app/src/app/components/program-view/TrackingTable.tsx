@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
-import { formatRange, setsSummary, setText, uniformSets, type Block, type Row, type Session } from '../../domain/program';
+import { formatRange, setsSummary, setText, uniformSets, workingSets, type Block, type Session, type WorkingSet } from '../../domain/program';
 import { repsSuffix } from '../coach-portal/program/rowFields';
 import { cn } from '../ui/utils';
 
@@ -12,9 +12,9 @@ function weekLabel(block: Block, week: number): string {
   return block.calibrationWeek && week === 1 ? 'Week 1 (calibration)' : `Week ${week}`;
 }
 
-function setLabel(row: Row, index: number, suffix: string): string {
-  const set = row.sets[index];
-  const target = uniformSets(row.sets) ? `${formatRange(set.reps)}${suffix}` : setText(set, suffix);
+function setLabel(sets: WorkingSet[], index: number, suffix: string): string {
+  const set = sets[index];
+  const target = uniformSets(sets) ? `${formatRange(set.reps)}${suffix}` : setText(set, suffix);
   return `${index + 1} · ${target}`;
 }
 
@@ -54,17 +54,18 @@ export function TrackingTable({ session, block, exercisesById }: TrackingTablePr
           {rows.map(row => {
             const exercise = exercisesById.get(row.exerciseId);
             const suffix = repsSuffix(exercise);
+            const sets = workingSets(row.sets);
             return (
               <Fragment key={row.id}>
-                {row.sets.map((_, setIndex) => (
+                {sets.map((_, setIndex) => (
                   <tr key={setIndex}>
                     {setIndex === 0 && (
-                      <th scope="row" rowSpan={row.sets.length} className={cell}>
+                      <th scope="row" rowSpan={sets.length} className={cell}>
                         <span className="block">{exercise?.name ?? 'Exercise removed'}</span>
                         {uniformSets(row.sets) && <span className="block font-normal text-text-secondary">{setsSummary(row.sets, suffix)}</span>}
                       </th>
                     )}
-                    <td className={cn(cell, 'whitespace-nowrap tabular-nums')}>{setLabel(row, setIndex, suffix)}</td>
+                    <td className={cn(cell, 'whitespace-nowrap tabular-nums')}>{setLabel(sets, setIndex, suffix)}</td>
                     {weeks.map(week => (
                       <td key={week} className={`${cell} h-7`} />
                     ))}

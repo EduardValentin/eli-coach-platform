@@ -9,12 +9,15 @@ import {
   newId,
   positionLabel,
   roleForSlot,
+  isWorkingSet,
   setsSummary,
+  workingSets,
   type Program,
   type ProgramContent,
   type ProgramVersion,
   type Row,
   type Session,
+  type SetSpec,
   type VersionState,
 } from './program';
 
@@ -25,9 +28,9 @@ function row(slot: Row['slot'], supersetGroup?: string): Row {
     slot,
     supersetGroup,
     sets: [
-      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
-      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
-      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
     ],
     restSeconds: 90,
     lastSetTechnique: 'none',
@@ -139,7 +142,7 @@ describe('contentWithFreshIds', () => {
   };
 
   function contentWithRows() {
-    const content = initialContent(setup);
+    const content = initialContent(setup, []);
     const [block, ...blocks] = content.plan.blocks;
     const sessions = block.sessions.map(session => ({ ...session, rows: [row('A')] }));
     return { ...content, plan: { blocks: [{ ...block, sessions }, ...blocks] } };
@@ -160,7 +163,7 @@ describe('contentWithFreshIds', () => {
   });
 
   it('points the calendar at the new session ids', () => {
-    const copy = contentWithFreshIds(initialContent(setup));
+    const copy = contentWithFreshIds(initialContent(setup, []));
 
     const [block] = copy.plan.blocks;
     const sessionIds = block.sessions.map(session => session.id);
@@ -168,6 +171,22 @@ describe('contentWithFreshIds', () => {
       entry.kind === 'session' ? [entry.sessionId] : [],
     );
     expect(calendarSessionIds.sort()).toEqual(sessionIds.sort());
+  });
+
+  it('gives cardio sessions new ids, keeps their origin and points the calendar at them', () => {
+    // arrange
+    const content = initialContent(setup, []);
+
+    // act
+    const copy = contentWithFreshIds(content);
+
+    // assert
+    const [block] = content.plan.blocks;
+    const [copied] = copy.plan.blocks;
+    expect(copied.cardioSessions[0].id).not.toBe(block.cardioSessions[0].id);
+    expect(copied.cardioSessions[0].originId).toBe(block.cardioSessions[0].originId);
+    const calendarCardioIds = Object.values(copied.calendar).flatMap(entry => (entry.kind === 'cardio' ? [entry.cardioId] : []));
+    expect(calendarCardioIds.sort()).toEqual(copied.cardioSessions.map(cardio => cardio.id).sort());
   });
 });
 
@@ -183,7 +202,7 @@ describe('filledSessionCount', () => {
       dailySteps: 6000,
       equipment: [],
       splitShape: 'full-body',
-    }).plan.blocks;
+    }, []).plan.blocks;
     const [first, ...rest] = block.sessions;
     const filled = { ...first, rows: [row('A')] };
     expect(filledSessionCount(block)).toBe(0);
@@ -192,7 +211,8 @@ describe('filledSessionCount', () => {
 });
 
 describe('setsSummary', () => {
-  const set = (reps: [number, number], rir: [number, number]) => ({
+  const set = (reps: [number, number], rir: [number, number]): SetSpec => ({
+    kind: 'working',
     reps: { min: reps[0], max: reps[1] },
     rir: { min: rir[0], max: rir[1] },
   });
@@ -230,11 +250,39 @@ describe('setsSummary', () => {
     expect(summary).toBe('4 sets');
   });
 
+  it('leads with the warm-up count and summarises the working sets', () => {
+    // arrange
+    const warmUp = (reps: number): SetSpec => ({ kind: 'warm-up', reps: { min: reps, max: reps } });
+    const sets = [warmUp(8), warmUp(5), ...Array.from({ length: 4 }, () => set([6, 10], [1, 2]))];
+
+    // act
+    const summary = setsSummary(sets);
+
+    // assert
+    expect(summary).toBe('2 warm-up · 4 × 6–10 · RIR 1–2');
+  });
+
   it('says there are no sets for an empty list', () => {
     // act
     const summary = setsSummary([]);
 
     // assert
     expect(summary).toBe('No sets');
+  });
+});
+
+describe('workingSets', () => {
+  it('keeps only the working sets, in order', () => {
+    // arrange
+    const warmUp: SetSpec = { kind: 'warm-up', reps: { min: 8, max: 8 }, weightKg: 20 };
+    const first: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 2, max: 2 }, weightKg: 40 };
+    const second: SetSpec = { kind: 'working', reps: { min: 6, max: 8 }, rir: { min: 1, max: 1 } };
+
+    // act
+    const working = workingSets([warmUp, first, second]);
+
+    // assert
+    expect(working).toEqual([first, second]);
+    expect([warmUp, first].map(isWorkingSet)).toEqual([false, true]);
   });
 });
