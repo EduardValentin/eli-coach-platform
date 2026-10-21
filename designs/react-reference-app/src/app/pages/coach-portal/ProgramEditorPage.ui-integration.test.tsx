@@ -122,4 +122,16 @@ describe('ProgramEditorPage', () => {
     // assert
     expect(screen.getByText('Client page')).toBeInTheDocument();
   });
+
+  it('previews the draft as the client sees it in a dialog', async () => {
+    // arrange
+    const user = renderProgramEditor('&pseed=draft&jstage=approved');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Preview as client' }));
+
+    // assert
+    const dialog = screen.getByRole('dialog', { name: 'Preview as client' });
+    expect(within(dialog).getByText('Current focus')).toBeInTheDocument();
+  });
 });

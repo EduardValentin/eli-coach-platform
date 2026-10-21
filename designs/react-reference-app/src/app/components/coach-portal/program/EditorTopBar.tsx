@@ -69,7 +69,7 @@ export function EditorTopBar({
             <Trash2 aria-hidden="true" />
             <span className="hidden lg:inline">Discard draft</span>
           </Button>
-          <Button variant="outline" aria-label="Preview as client" disabled onClick={onPreview}>
+          <Button variant="outline" aria-label="Preview as client" onClick={onPreview}>
             <Eye aria-hidden="true" />
             <span className="hidden lg:inline">Preview as client</span>
           </Button>

@@ -26,6 +26,7 @@ import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
 import { ClientProgram } from "./pages/client-portal/ClientProgram";
+import { ClientProgramDocument } from "./pages/client-portal/ClientProgramDocument";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
 import { CoachLayout } from "./components/coach-portal/CoachLayout";
 import { CoachDashboard } from "./pages/coach-portal/CoachDashboard";
@@ -38,6 +39,7 @@ import { ExerciseEditorPage } from "./pages/coach-portal/ExerciseEditorPage";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
 import { FoodEditorPage } from "./pages/coach-portal/FoodEditorPage";
 import { ClientProgramPage } from "./pages/coach-portal/ClientProgramPage";
+import { ClientProgramDocument as CoachProgramDocument } from "./pages/coach-portal/ClientProgramDocument";
 import { ProgramEditorPage } from "./pages/coach-portal/ProgramEditorPage";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
 import { NutritionPlanBuilderPage } from "./pages/coach-portal/NutritionPlanBuilderPage";
@@ -159,6 +161,8 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "portal/checkins/:checkinId/join", element: <CheckinJoin party="client" /> },
+        { path: "portal/program/document", Component: ClientProgramDocument },
+        { path: "portal/program/document/:version", Component: ClientProgramDocument },
         { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
         { path: "portal/ended", Component: PortalEnded },
@@ -199,6 +203,7 @@ export const router = createBrowserRouter(
         { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
         { path: "coach/clients/:id/program/new", Component: ProgramEditorPage },
         { path: "coach/clients/:id/program/draft", Component: ProgramEditorPage },
+        { path: "coach/clients/:id/program/document/:version", Component: CoachProgramDocument },
         { path: "coach/nutrition/recipe-builder", Component: RecipeBuilderPage },
         { path: "coach/nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
           ]

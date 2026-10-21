@@ -70,7 +70,24 @@ describe('ClientProgramPage', () => {
     expect(within(versions).getByText(/^Version 2 · Published/)).toBeInTheDocument();
     expect(within(versions).getByText(/^Version 1 · Superseded/)).toBeInTheDocument();
     expect(within(versions).getByText(/^Version 3 · Draft$/)).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: 'Plan' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+    expect(screen.getByRole('article')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Your plan' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+  });
+
+  it('shows the document of the current version and links each version to its document', () => {
+    // arrange
+    const query = '&pseed=two-versions';
+
+    // act
+    renderPage('c1', query);
+
+    // assert
+    expect(screen.getByRole('heading', { level: 2, name: 'What changed in v2' })).toBeInTheDocument();
+    const versions = screen.getByRole('region', { name: 'Versions' });
+    expect(within(versions).getAllByRole('link', { name: 'Open document' })[0]).toHaveAttribute(
+      'href',
+      '/coach/clients/c1/program/document/3',
+    );
   });
 
   it('says the client was not found when there is no program', () => {

@@ -15,6 +15,8 @@ import { LifestyleSection } from '../../components/coach-portal/program/Lifestyl
 import { NutritionSection } from '../../components/coach-portal/program/NutritionSection';
 import { PublishChecklist } from '../../components/coach-portal/program/PublishChecklist';
 import { PlanOverview } from '../../components/coach-portal/program/PlanOverview';
+import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
+import { journeyProgramView } from '../../components/program-view/journeyProgramView';
 import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
 import { useEditorState } from '../../components/coach-portal/program/useEditorState';
 import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
@@ -44,6 +46,7 @@ function ProgramEditor(props: EditorProps) {
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const [checklistOpen, setChecklistOpen] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const { content } = draft;
   const { today, ctx } = editor;
   const { cycleMode } = program;
@@ -142,7 +145,7 @@ function ProgramEditor(props: EditorProps) {
             <ListTree size={20} />
           </Button>
         }
-        onPreview={() => {}}
+        onPreview={() => setPreviewing(true)}
         onPublish={requestPublish}
         onDiscard={editor.discard}
         opensOn={editor.opensOn}
@@ -203,6 +206,11 @@ function ProgramEditor(props: EditorProps) {
         warnings={editor.warnings}
         onPublish={editor.publish}
         onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
+      />
+      <ClientPreviewDialog
+        open={previewing}
+        onOpenChange={setPreviewing}
+        view={journeyProgramView({ journey, program, version: draft, exercises, today: new Date(), fallbackDayOne: new Date() })}
       />
       <AddBlockDialog
         open={addingBlock}

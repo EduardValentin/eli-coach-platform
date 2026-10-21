@@ -1,0 +1,18 @@
+@media print {
+  [data-print-hidden] {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  table {
+    break-inside: avoid;
+  }
+
+  [data-print-session] {
+    break-before: page;
+  }
+}

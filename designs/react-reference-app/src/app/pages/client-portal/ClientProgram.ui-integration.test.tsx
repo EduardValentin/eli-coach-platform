@@ -41,11 +41,8 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function renderProgram(seed: string) {
-  const url = `/portal/program?session=client&pseed=${seed}&jstage=program-ready`;
-  window.history.replaceState({}, '', url);
-
-  render(
+function programTree(url: string) {
+  return (
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
@@ -65,8 +62,15 @@ function renderProgram(seed: string) {
           </ClientProfileProvider>
         </TrainingProvider>
       </AppProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderProgram(seed: string) {
+  const url = `/portal/program?session=client&pseed=${seed}&jstage=program-ready`;
+  window.history.replaceState({}, '', url);
+  const { rerender } = render(programTree(url));
+  return { rerender: () => rerender(programTree(url)) };
 }
 
 describe('the client Program page', () => {
@@ -141,12 +145,12 @@ describe('the client Program page', () => {
 
   it('shows the ended state after the plan', async () => {
     // arrange
-    renderProgram('two-versions');
+    const { rerender } = renderProgram('two-versions');
     await screen.findByRole('heading', { level: 1, name: 'Program' });
 
     // act
     vi.setSystemTime(AFTER_THE_PLAN);
-    await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    rerender();
 
     // assert
     const tabs = screen.getByRole('tablist', { name: 'This week' });

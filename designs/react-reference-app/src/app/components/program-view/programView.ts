@@ -23,13 +23,18 @@ export type ProgramView = {
   exercisesById: ReadonlyMap<string, Exercise>;
   cycleDay: number | null;
   position: PlanPosition;
+  clientName: string;
 };
 
-type ViewInput = Omit<ProgramView, 'exercisesById' | 'position'> & { exercises: readonly Exercise[] };
+type ViewInput = Omit<ProgramView, 'exercisesById' | 'position' | 'clientName'> & {
+  exercises: readonly Exercise[];
+  clientName?: string;
+};
 
 export function viewOf({ exercises, ...input }: ViewInput): ProgramView {
   return {
     ...input,
+    clientName: input.clientName ?? '',
     exercisesById: new Map(exercises.map(exercise => [exercise.id, exercise])),
     position: currentPosition(input.version.content.plan.blocks, input.dayOne, input.today),
   };
