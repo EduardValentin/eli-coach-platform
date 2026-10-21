@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Block } from './program';
 import { cardioPreset } from './programCardio';
 import { newBlock } from './programSuggestions';
-import { blockWithCardio, blockWithDay, sessionsInCalendarOrder } from './weekEditing';
+import { blockWithCardio, blockWithDay, plannedSessions } from './weekEditing';
 
 function block(): Block {
   return newBlock('foundation', 4, {
@@ -92,18 +92,15 @@ describe('blockWithCardio', () => {
   });
 });
 
-describe('sessionsInCalendarOrder', () => {
-  it('orders sessions by their weekday', () => {
+describe('plannedSessions', () => {
+  it('lists strength and cardio sessions by their weekday and unplaced sessions last', () => {
     // arrange
-    const start = block();
-    const [first, second] = start.sessions;
-    const moved = blockWithDay(start, 'sun', { kind: 'session', sessionId: first.id });
+    const unplaced = blockWithDay(block(), 'mon', { kind: 'rest' });
 
     // act
-    const order = sessionsInCalendarOrder(moved).map(session => session.id);
+    const planned = plannedSessions(unplaced).map(entry => (entry.kind === 'cardio' ? entry.cardio.name : entry.session.name));
 
     // assert
-    expect(order[0]).toBe(second.id);
-    expect(order.at(-1)).toBe(first.id);
+    expect(planned).toEqual(['Easy cardio', 'Full Body B', 'Easy cardio', 'Full Body C', 'Full Body A']);
   });
 });

@@ -12,10 +12,11 @@ type RowTextFieldProps<Value> = {
   onCommit: (value: Value) => void;
   suffix?: string;
   type?: 'number' | 'text';
+  placeholder?: string;
   className?: string;
 };
 
-export function RowTextField<Value>({ label, value, format, parse, problem, onCommit, suffix, type = 'text', className }: RowTextFieldProps<Value>) {
+export function RowTextField<Value>({ label, value, format, parse, problem, onCommit, suffix, type = 'text', placeholder, className }: RowTextFieldProps<Value>) {
   const formatted = format(value);
   const [text, setText] = useState(formatted);
   const [shown, setShown] = useState(formatted);
@@ -47,6 +48,7 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
           min={type === 'number' ? 1 : undefined}
           inputMode={type === 'number' ? 'numeric' : undefined}
           aria-label={label}
+          placeholder={placeholder}
           aria-invalid={invalid ? true : undefined}
           aria-describedby={describedBy || undefined}
           className={cn('tabular-nums', className)}

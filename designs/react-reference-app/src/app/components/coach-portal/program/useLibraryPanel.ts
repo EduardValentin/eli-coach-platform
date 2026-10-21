@@ -12,17 +12,30 @@ type PanelTarget = { target: LibraryTarget; nonce: number };
 export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarget | null, library: readonly Exercise[]): LibraryPurpose | null {
   if (!block || !panelTarget) return null;
   const { target, nonce } = panelTarget;
+  const key = `${nonce}`;
+  if (target.kind === 'cardio-exercise' || target.kind === 'circuit-item') {
+    const cardio = block.cardioSessions.find(other => other.id === target.sessionId);
+    if (!cardio) return null;
+    const label = `Adding to ${cardio.name}`;
+    if (target.kind === 'circuit-item') return { key, label, type: 'resistance', patterns: [], equipment: 'bodyweight' };
+    return { key, label, type: 'cardio', patterns: [], equipment: 'hers' };
+  }
   const session = block.sessions.find(other => other.id === target.sessionId);
   if (!session) return null;
-  const key = `${nonce}`;
-  if (target.kind === 'mobility') return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', patterns: [] };
+  if (target.kind === 'mobility') return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', patterns: [], equipment: 'hers' };
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
-    return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [] };
+    return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [], equipment: 'hers' };
   }
   const row = session.rows.find(other => other.id === target.rowId);
   const exercise = library.find(item => item.id === row?.exerciseId);
-  return { key, label: `Adding a substitution for ${exercise?.name ?? 'this exercise'}`, type: 'resistance', patterns: exercise?.pattern ? [exercise.pattern] : [] };
+  return {
+    key,
+    label: `Adding a substitution for ${exercise?.name ?? 'this exercise'}`,
+    type: 'resistance',
+    patterns: exercise?.pattern ? [exercise.pattern] : [],
+    equipment: 'hers',
+  };
 }
 
 export function useLibraryPanel() {

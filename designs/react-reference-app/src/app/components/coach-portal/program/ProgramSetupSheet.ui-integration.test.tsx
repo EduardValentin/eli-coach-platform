@@ -8,6 +8,7 @@ import { ClientJourneyProvider } from '../../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { ProgramProvider } from '../../../context/ProgramContext';
 import { TrainingProvider } from '../../../context/TrainingContext';
+import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
 import { ProgramEditorPage } from '../../../pages/coach-portal/ProgramEditorPage';
 
 beforeAll(() => {
@@ -39,6 +40,7 @@ function renderSheet(query: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
+        <UnitPreferencesProvider>
         <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
@@ -54,13 +56,32 @@ function renderSheet(query: string) {
             </AssessmentCallProvider>
           </TrainingProvider>
         </ClientProfileProvider>
+        </UnitPreferencesProvider>
       </AppProvider>
     </MemoryRouter>,
   );
   return userEvent.setup();
 }
 
+type User = ReturnType<typeof userEvent.setup>;
+
+async function openPanel(user: User, name: string) {
+  await user.click(screen.getByRole('button', { name }));
+}
+
 describe('ProgramSetupSheet', () => {
+  it('groups the fields into four panels with the program panel open', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved');
+
+    // assert
+    for (const name of ['Program', 'Schedule', 'Equipment', 'Cycle']) {
+      expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'Program' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('prefills from onboarding and creates the draft', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
@@ -69,8 +90,15 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getByRole('heading', { name: 'Set up the program' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Goal' })).toHaveTextContent('Lose fat');
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Beginner');
-    expect(screen.getByRole('combobox', { name: 'Training days' })).toHaveTextContent('3 days');
-    expect(screen.getByRole('combobox', { name: 'Session length' })).toHaveTextContent('60 min');
+    expect(screen.getByRole('combobox', { name: 'Program language' })).toHaveTextContent('English');
+
+    // act
+    await openPanel(user, 'Schedule');
+    await openPanel(user, 'Cycle');
+
+    // assert
+    expect(screen.getByRole('radio', { name: '3 days' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '60 min' })).toBeChecked();
     expect(screen.getByRole('combobox', { name: 'Daily steps' })).toHaveTextContent('6,000');
 
     // act
@@ -92,19 +120,37 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Advanced');
   });
 
-  it('offers the two splits and preselects the one her training days suggest', () => {
-    // arrange / act
-    renderSheet('&pseed=none&jstage=approved');
+  it('offers the two splits as a plain radio without descriptions', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+
+    // act
+    await openPanel(user, 'Schedule');
 
     // assert
     const split = screen.getByRole('radiogroup', { name: 'Split' });
-    expect(within(split).getByRole('radio', { name: /Full Body/ })).toBeChecked();
-    expect(within(split).getByRole('radio', { name: /Upper \/ Lower/ })).not.toBeChecked();
+    expect(within(split).getAllByRole('radio').map(radio => radio.textContent)).toEqual(['Full Body', 'Upper / Lower']);
+    expect(within(split).getByRole('radio', { name: 'Full Body' })).toBeChecked();
   });
 
-  it('prefills the equipment chips from her onboarding', () => {
-    // arrange / act
-    renderSheet('&pseed=none&jstage=approved');
+  it('follows the training days with the suggested split', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+    await openPanel(user, 'Schedule');
+
+    // act
+    await user.click(screen.getByRole('radio', { name: '4 days' }));
+
+    // assert
+    expect(screen.getByRole('radio', { name: 'Upper / Lower' })).toBeChecked();
+  });
+
+  it('prefills the equipment chips from her onboarding', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+
+    // act
+    await openPanel(user, 'Equipment');
 
     // assert
     const equipment = screen.getByRole('group', { name: 'Equipment' });
@@ -116,6 +162,7 @@ describe('ProgramSetupSheet', () => {
   it('keeps bodyweight only exclusive of every other chip', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
+    await openPanel(user, 'Equipment');
     const equipment = screen.getByRole('group', { name: 'Equipment' });
 
     // act
@@ -134,13 +181,17 @@ describe('ProgramSetupSheet', () => {
     expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).not.toBeChecked();
   });
 
-  it('explains nothing under the fields', () => {
-    // arrange / act
-    renderSheet('&pseed=none&jstage=approved');
+  it('explains nothing under the fields', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+
+    // act
+    for (const name of ['Schedule', 'Equipment', 'Cycle']) await openPanel(user, name);
 
     // assert
     expect(screen.queryByText(/Suggested from/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Taken from her onboarding/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pick everything/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Every session trains the whole body/)).not.toBeInTheDocument();
   });
 
   it('returns to the client page on cancel', async () => {

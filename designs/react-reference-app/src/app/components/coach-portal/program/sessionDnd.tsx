@@ -7,9 +7,11 @@ import { cn } from '../../ui/utils';
 
 export const LIBRARY_EXERCISE = 'LIBRARY_EXERCISE';
 export const PLAN_ROW = 'PLAN_ROW';
+export const CARDIO_SEGMENT = 'CARDIO_SEGMENT';
 
 export type LibraryItem = { exercise: Exercise };
 export type PlanRowItem = { sessionId: string; rowId: string; label: string };
+export type CardioSegmentItem = { cardioId: string; segmentId: string; label: string };
 export type DraggedItem = { kind: typeof LIBRARY_EXERCISE; item: LibraryItem } | { kind: typeof PLAN_ROW; item: PlanRowItem };
 
 export type SessionDropRules = {
@@ -91,15 +93,22 @@ export function DropZone({ rules, accepts, className, activeClassName, children 
   );
 }
 
+function dragLabel(type: string | symbol | null, item: LibraryItem | PlanRowItem | CardioSegmentItem): string | null {
+  if (type === CARDIO_SEGMENT) return (item as CardioSegmentItem).label;
+  if (type !== LIBRARY_EXERCISE && type !== PLAN_ROW) return null;
+  const dragged = draggedFrom(type, item);
+  return dragged.kind === PLAN_ROW ? dragged.item.label : dragged.item.exercise.name;
+}
+
 export function SessionDragLayer() {
   const { item, type, offset } = useDragLayer(monitor => ({
-    item: monitor.getItem() as LibraryItem | PlanRowItem | null,
+    item: monitor.getItem() as LibraryItem | PlanRowItem | CardioSegmentItem | null,
     type: monitor.getItemType(),
     offset: monitor.getSourceClientOffset(),
   }));
-  if (!item || !offset || (type !== LIBRARY_EXERCISE && type !== PLAN_ROW)) return null;
-  const dragged = draggedFrom(type, item);
-  const label = dragged.kind === PLAN_ROW ? dragged.item.label : dragged.item.exercise.name;
+  if (!item || !offset) return null;
+  const label = dragLabel(type, item);
+  if (label === null) return null;
   return (
     <div className="pointer-events-none fixed top-0 left-0 z-[100]" style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
       <div className="inline-flex items-center gap-2 rounded-control border border-primary bg-card px-3 py-2 shadow-raised">

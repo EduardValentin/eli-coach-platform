@@ -4,6 +4,7 @@ import type { Exercise } from '../../../context/TrainingContext';
 import type { LastSetTechnique, Row } from '../../../domain/program';
 import { MAX_SUBSTITUTIONS } from '../../../domain/sessionEditing';
 import { LABEL_CLASS } from '../../typography';
+import { WatchVideoButton } from '../../WatchVideoButton';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
@@ -150,9 +151,7 @@ export function ExerciseRowDetails(props: ExerciseRowDetailsProps) {
             Reset from library
           </Button>
           {exercise?.videoUrl && (
-            <a href={exercise.videoUrl} target="_blank" rel="noreferrer" className="text-sm text-primary underline-offset-4 hover:underline">
-              Watch the video
-            </a>
+            <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />
           )}
         </div>
       </div>

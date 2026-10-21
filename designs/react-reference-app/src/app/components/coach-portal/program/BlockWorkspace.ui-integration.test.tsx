@@ -77,7 +77,7 @@ async function retype(user: User, field: HTMLElement, text: string) {
 }
 
 describe('BlockWorkspace', () => {
-  it('turns a rest day into easy cardio and rests it again', async () => {
+  it('turns a rest day into a cardio session and rests it again', async () => {
     // arrange
     const user = await openFirstBlock();
     expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
@@ -86,15 +86,15 @@ describe('BlockWorkspace', () => {
     await chooseInDayMenu(user, 'Saturday', 'Cardio');
 
     // assert
-    expect(within(day('Saturday')).getByText('Easy cardio')).toBeInTheDocument();
-    expect(within(day('Saturday')).getByText('30 min')).toBeInTheDocument();
+    expect(within(day('Saturday')).getByRole('button', { name: 'Cardio' })).toBeInTheDocument();
+    expect(session('Cardio')).toBeInTheDocument();
 
     // act
     await chooseInDayMenu(user, 'Saturday', 'Rest');
 
     // assert
     expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
-    expect(within(day('Saturday')).queryByText('Easy cardio')).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Cardio' })).not.toBeInTheDocument();
   });
 
   it('places a session on another weekday from the day menu', async () => {
@@ -187,41 +187,161 @@ describe('BlockWorkspace', () => {
     expect(positions()).toEqual(['C', 'C']);
   });
 
-  it('edits one set on its own and applies set 1 to all', async () => {
+  it('edits one set on its own and applies the first working set to all working sets', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: 'Sets' }));
 
     // act
-    await retype(user, within(main).getByRole('textbox', { name: 'Set 2 reps' }), '6–8');
+    await retype(user, within(main).getByRole('textbox', { name: 'Set 4 reps' }), '6–8');
 
     // assert
-    expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('12–15');
+    expect(within(main).getByRole('textbox', { name: 'Set 3 reps' })).toHaveValue('12–15');
     expect(within(main).getByText('2 warm-up · 3 sets')).toBeInTheDocument();
 
     // act
-    await user.click(within(main).getByRole('button', { name: 'Apply set 1 to all' }));
+    await user.type(within(main).getByRole('spinbutton', { name: 'Set 3 weight' }), '20');
+    await user.click(within(main).getByRole('button', { name: 'Apply to all working sets' }));
 
     // assert
-    expect(within(main).getByRole('textbox', { name: 'Set 2 reps' })).toHaveValue('12–15');
-    expect(within(main).getByRole('textbox', { name: 'Warm-up 1 reps' })).toHaveValue('8');
+    expect(within(main).getByRole('textbox', { name: 'Set 4 reps' })).toHaveValue('12–15');
+    expect(within(main).getByRole('spinbutton', { name: 'Set 5 weight' })).toHaveValue(20);
+    expect(within(main).getByRole('textbox', { name: 'Set 1 reps' })).toHaveValue('8');
     expect(within(main).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
-  it('adds and removes a set', async () => {
+  it('turns a working set into a warm-up set and blanks its RIR', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: 'Sets' }));
+    const kind = within(main).getByRole('group', { name: 'Set 3 kind' });
+
+    // act
+    await user.click(within(kind).getByRole('radio', { name: 'Warm-up' }));
+
+    // assert
+    expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toBeDisabled();
+    expect(within(main).getByRole('textbox', { name: 'Set 3 RIR' })).toHaveValue('');
+    expect(within(main).getByText('3 warm-up · 2 × 12–15 · RIR 3')).toBeInTheDocument();
+  });
+
+  it('leaves the weight empty to pick it by RIR', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+
+    // act
+    await user.click(within(main).getByRole('button', { name: 'Sets' }));
+
+    // assert
+    const weight = within(main).getByRole('spinbutton', { name: 'Set 3 weight' });
+    expect(weight).toHaveValue(null);
+    expect(weight).toHaveAttribute('placeholder', 'by RIR');
+  });
+
+  it('adds warm-up and working sets and removes one', async () => {
     // arrange
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: 'Sets' }));
 
     // act
-    await user.click(within(main).getByRole('button', { name: 'Add set' }));
-    await user.click(within(main).getByRole('button', { name: 'Remove set 1' }));
+    await user.click(within(main).getByRole('button', { name: 'Add warm-up set' }));
+    await user.click(within(main).getByRole('button', { name: 'Add working set' }));
+    await user.click(within(main).getByRole('button', { name: 'Remove set 4' }));
 
     // assert
-    expect(within(main).getAllByRole('textbox', { name: /^Set \d reps$/ })).toHaveLength(3);
-    expect(within(main).getByText('2 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
+    expect(within(main).getByText('3 warm-up · 3 × 12–15 · RIR 3')).toBeInTheDocument();
+  });
+
+  it('plays the exercise video in a dialog from the details', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    const main = card(/^A /);
+    await user.click(within(main).getByRole('button', { name: /^Details for / }));
+    const trigger = within(main).getByRole('button', { name: 'Watch video' });
+    const exerciseName = within(main).getByRole('heading', { level: 5 }).textContent?.replace(/^A /, '') ?? '';
+
+    // act
+    await user.click(trigger);
+
+    // assert
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAccessibleName(exerciseName);
+    expect(dialog.querySelector('video[controls]')).not.toBeNull();
+
+    // act
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    // assert
+    expect(trigger).toHaveFocus();
+  });
+
+  it('builds a cardio day from the intervals preset', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    const cardio = session('Cardio');
+
+    // act
+    await user.click(within(cardio).getByRole('button', { name: 'Intervals' }));
+
+    // assert
+    const built = session('Intervals');
+    expect(within(built).getByText('26 min')).toBeInTheDocument();
+    expect(within(built).getAllByRole('article').map(segment => within(segment).getByText(/^(Steady|Intervals|Circuit)$/).textContent)).toEqual([
+      'Steady',
+      'Intervals',
+      'Steady',
+    ]);
+    expect(within(day('Saturday')).getByText('26 min')).toBeInTheDocument();
+  });
+
+  it('edits a steady segment and adds a circuit', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    await user.click(within(session('Cardio')).getByRole('button', { name: 'Moderate cardio' }));
+    const cardio = session('Moderate cardio');
+
+    // act
+    await retype(user, within(cardio).getByRole('spinbutton', { name: 'Minutes' }), '40');
+
+    // assert
+    expect(within(cardio).getByText('40 min')).toBeInTheDocument();
+
+    // act
+    await user.click(within(cardio).getByRole('button', { name: 'Add segment' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Circuit' }));
+
+    // assert
+    expect(within(cardio).getAllByRole('article')).toHaveLength(2);
+    expect(within(cardio).getByRole('button', { name: 'Add exercise to the circuit' })).toBeInTheDocument();
+  });
+
+  it('replaces a segment exercise from the library in cardio mode', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    await user.click(within(session('Cardio')).getByRole('button', { name: 'Moderate cardio' }));
+
+    // act
+    await user.click(within(session('Moderate cardio')).getByRole('button', { name: /^Replace / }));
+
+    // assert
+    expect(within(library()).getByText('Adding to Moderate cardio')).toBeInTheDocument();
+    expect(within(library()).getByRole('radio', { name: 'Cardio' })).toBeChecked();
+
+    // act
+    await addFromLibrary(user, 'Rowing machine');
+
+    // assert
+    expect(within(session('Moderate cardio')).getByRole('button', { name: 'Replace Rowing machine' })).toBeInTheDocument();
   });
 
   it('adds a mobility exercise to the warm-up and removes its chip', async () => {

@@ -45,21 +45,13 @@ function blockWith(shape: Block['split']['shape'], sessions: Session[]): Block {
 }
 
 describe('SPLIT_TEMPLATES', () => {
-  it('labels and describes each split', () => {
+  it('labels each split', () => {
     // act
     const { 'full-body': fullBody, 'upper-lower': upperLower } = SPLIT_TEMPLATES;
 
     // assert
-    expect([fullBody.shape, fullBody.label, fullBody.description]).toEqual([
-      'full-body',
-      'Full Body',
-      'Every session trains the whole body. Two or three sessions a week.',
-    ]);
-    expect([upperLower.shape, upperLower.label, upperLower.description]).toEqual([
-      'upper-lower',
-      'Upper / Lower',
-      'Lower and upper days alternate. Four or five sessions a week.',
-    ]);
+    expect([fullBody.shape, fullBody.label]).toEqual(['full-body', 'Full Body']);
+    expect([upperLower.shape, upperLower.label]).toEqual(['upper-lower', 'Upper / Lower']);
   });
 
   it('names Full Body sessions by the day count', () => {

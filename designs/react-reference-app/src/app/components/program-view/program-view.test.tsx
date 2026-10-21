@@ -315,7 +315,7 @@ describe('SessionTable', () => {
 
     // assert
     expect(screen.getByText(/How to progress:/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Watch video' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Watch video' })).toBeInTheDocument();
   });
 
   it('expands everything in document mode without triggers', () => {

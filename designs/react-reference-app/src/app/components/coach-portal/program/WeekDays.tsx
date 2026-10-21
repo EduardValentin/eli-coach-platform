@@ -1,8 +1,7 @@
 import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
-import { useTraining } from '../../../context/TrainingContext';
 import { WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
-import { cardioMinutes, cardioPreset } from '../../../domain/programCardio';
+import { cardioMinutes, emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, type DayChoice } from '../../../domain/weekEditing';
 import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
@@ -23,7 +22,6 @@ type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSes
 const KIND_BADGE_CLASS = 'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-xs font-medium';
 
 function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoose: (choice: DayChoice) => void }) {
-  const { exercises } = useTraining();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
@@ -45,7 +43,7 @@ function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoos
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem onSelect={() => onChoose({ kind: 'cardio', session: cardioPreset('liss', exercises) })}>
+        <DropdownMenuItem onSelect={() => onChoose({ kind: 'cardio', session: emptyCardioSession() })}>
           <HeartPulse aria-hidden="true" />
           Cardio
         </DropdownMenuItem>
@@ -58,12 +56,18 @@ function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoos
   );
 }
 
-function CardioSummary({ cardio }: { cardio: CardioSession }) {
+function CardioSummary({ cardio, onOpen }: { cardio: CardioSession; onOpen: () => void }) {
   return (
-    <p className="grid text-xs text-text-secondary">
-      <span className="font-medium text-text-primary">{cardio.name}</span>
-      <span className="tabular-nums">{`${cardioMinutes(cardio)} min`}</span>
-    </p>
+    <>
+      <button
+        type="button"
+        onClick={onOpen}
+        className={cn(KIND_BADGE_CLASS, 'bg-training-recovery-soft text-left text-training-recovery outline-none hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ring/50')}
+      >
+        <span className="truncate">{cardio.name}</span>
+      </button>
+      {cardio.segments.length > 0 && <span className="px-0.5 text-xs text-text-secondary tabular-nums">{`${cardioMinutes(cardio)} min`}</span>}
+    </>
   );
 }
 
@@ -96,12 +100,7 @@ function DayCard({ block, day, onChange, onOpenSession }: WeekDaysProps & { day:
           <span className="truncate">{session.name}</span>
         </button>
       )}
-      {cardio && (
-        <>
-          <span className={cn(KIND_BADGE_CLASS, 'bg-training-recovery-soft text-training-recovery')}>Cardio</span>
-          <CardioSummary cardio={cardio} />
-        </>
-      )}
+      {cardio && <CardioSummary cardio={cardio} onOpen={() => onOpenSession(cardio.id)} />}
       {!session && !cardio && <span className={cn(KIND_BADGE_CLASS, 'text-text-secondary')}>Rest</span>}
     </li>
   );

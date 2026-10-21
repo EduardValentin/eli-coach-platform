@@ -6,6 +6,7 @@ import { MOVEMENT_PATTERN_LABELS, MOVEMENT_PATTERNS, MUSCLES, labelsOf, type Equ
 import { pickableItems } from '../../../domain/libraryLifecycle';
 import { MultiSelect } from '../../MultiSelect';
 import { SearchField } from '../../SearchField';
+import { WatchVideoButton } from '../../WatchVideoButton';
 import { Badge } from '../../ui/badge';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
@@ -14,8 +15,9 @@ import { cn } from '../../ui/utils';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { SegmentedChoice } from './SegmentedChoice';
 
-export type LibraryType = 'resistance' | 'mobility';
-export type LibraryPurpose = { key: string; label: string; type: LibraryType; patterns: MovementPattern[] };
+export type LibraryType = 'resistance' | 'mobility' | 'cardio';
+export type EquipmentFilter = 'hers' | 'bodyweight';
+export type LibraryPurpose = { key: string; label: string; type: LibraryType; patterns: MovementPattern[]; equipment: EquipmentFilter };
 export type LibraryPresentation = 'pane' | 'drawer';
 
 type LibraryPanelProps = {
@@ -34,6 +36,7 @@ const MUSCLE_LABELS = labelsOf(MUSCLES);
 const TYPE_OPTIONS: { value: LibraryType; label: string }[] = [
   { value: 'resistance', label: 'Resistance' },
   { value: 'mobility', label: 'Mobility' },
+  { value: 'cardio', label: 'Cardio' },
 ];
 
 function toggled<Value extends string>(values: readonly Value[], value: Value): Value[] {
@@ -69,6 +72,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
           </span>
         )}
         {exercise.equipment.length > 0 && <span className="text-xs text-text-secondary">{exercise.equipment.join(', ')}</span>}
+        {exercise.videoUrl && <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />}
       </div>
       <span className="flex items-center gap-0.5">
         <Button variant="ghost" size="icon-xs" aria-label={`Add ${exercise.name}`} onClick={() => onAdd(exercise)}>
@@ -96,6 +100,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
   const [patterns, setPatterns] = useState<MovementPattern[]>([]);
   const [muscles, setMuscles] = useState<Muscle[]>([]);
   const [onlyHers, setOnlyHers] = useState(true);
+  const [bodyweightOnly, setBodyweightOnly] = useState(false);
   const [type, setType] = useState<LibraryType>('resistance');
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
   const isDrawer = presentation === 'drawer';
@@ -103,14 +108,16 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
     setAppliedPurpose(purpose.key);
     setType(purpose.type);
     setPatterns(purpose.patterns);
+    setBodyweightOnly(purpose.equipment === 'bodyweight');
   }
   const needle = query.trim().toLowerCase();
   const shown = pickableItems(library)
     .filter(exercise => exercise.archivedAt === undefined && exercise.type === type)
     .filter(exercise => exercise.name.toLowerCase().includes(needle))
-    .filter(exercise => type === 'mobility' || anyOf(patterns, exercise.pattern ? [exercise.pattern] : []))
+    .filter(exercise => type !== 'resistance' || anyOf(patterns, exercise.pattern ? [exercise.pattern] : []))
     .filter(exercise => anyOf(muscles, exercise.primaryMuscles))
-    .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)));
+    .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)))
+    .filter(exercise => !bodyweightOnly || exercise.equipment.length === 0);
 
   return (
     <>
@@ -141,10 +148,16 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
             )}
             <MultiSelect label="Muscle" selected={muscles} options={MUSCLES} labels={MUSCLE_LABELS} onToggle={value => setMuscles(toggled(muscles, value))} />
           </div>
-          <label className="flex items-center gap-2 text-sm text-text-primary">
-            <Switch checked={onlyHers} onCheckedChange={setOnlyHers} aria-label="Only her equipment" />
-            Only her equipment
-          </label>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <label className="flex items-center gap-2 text-sm text-text-primary">
+              <Switch checked={onlyHers} onCheckedChange={setOnlyHers} aria-label="Only her equipment" />
+              Only her equipment
+            </label>
+            <label className="flex items-center gap-2 text-sm text-text-primary">
+              <Switch checked={bodyweightOnly} onCheckedChange={setBodyweightOnly} aria-label="Bodyweight" />
+              Bodyweight
+            </label>
+          </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
           {shown.length === 0 ? (

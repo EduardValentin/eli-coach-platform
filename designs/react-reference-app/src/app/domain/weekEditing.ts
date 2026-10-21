@@ -1,5 +1,7 @@
 import { WEEKDAYS, type Block, type CalendarEntry, type CardioSession, type Session, type Weekday } from './program';
 
+export type PlannedSession = { kind: 'strength'; session: Session } | { kind: 'cardio'; cardio: CardioSession };
+
 export type DayChoice = { kind: 'session'; sessionId: string } | { kind: 'cardio'; session: CardioSession } | { kind: 'rest' };
 
 function entryFor(block: Block, day: Weekday, choice: DayChoice): { entry: CalendarEntry; added?: CardioSession } {
@@ -30,12 +32,14 @@ export function blockWithCardio(block: Block, cardio: CardioSession): Block {
   return { ...block, cardioSessions: block.cardioSessions.map(other => (other.id === cardio.id ? cardio : other)) };
 }
 
-export function sessionsInCalendarOrder(block: Block): Session[] {
-  const dayOf = (session: Session) =>
-    WEEKDAYS.findIndex(day => {
-      const entry = block.calendar[day];
-      return entry.kind === 'session' && entry.sessionId === session.id;
-    });
-  const rank = (session: Session) => (dayOf(session) < 0 ? WEEKDAYS.length : dayOf(session));
-  return [...block.sessions].sort((left, right) => rank(left) - rank(right));
+export function plannedSessions(block: Block): PlannedSession[] {
+  const onCalendar = WEEKDAYS.flatMap((day): PlannedSession[] => {
+    const entry = block.calendar[day];
+    if (entry.kind === 'session') return block.sessions.filter(session => session.id === entry.sessionId).map(session => ({ kind: 'strength', session }));
+    if (entry.kind === 'cardio') return block.cardioSessions.filter(cardio => cardio.id === entry.cardioId).map(cardio => ({ kind: 'cardio', cardio }));
+    return [];
+  });
+  const placed = new Set(onCalendar.map(entry => (entry.kind === 'cardio' ? entry.cardio.id : entry.session.id)));
+  const unplaced = block.sessions.filter(session => !placed.has(session.id)).map((session): PlannedSession => ({ kind: 'strength', session }));
+  return [...onCalendar, ...unplaced];
 }

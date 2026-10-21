@@ -1,7 +1,7 @@
 import type { Exercise } from '../context/TrainingContext';
 import type { Equipment } from './exercises';
 import { newId, SLOTS, type Block, type BlockType, type Row, type Session, type Slot } from './program';
-import { defaultedRow, resetRowDefaults } from './programDefaults';
+import { resetRowDefaults } from './programDefaults';
 import { emptyRow, substitutionsFor } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
 
@@ -79,7 +79,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
   const { rows } = session;
   const withRows = (next: Row[]): Session => ({ ...session, rows: tidy(next) });
   const rowOf = (rowId: string) => rows.find(row => row.id === rowId);
-  const reslotted = (row: Row, slot: Slot) => (row.slot === slot ? row : defaultedRow({ ...row, slot }, context.blockType));
+  const reslotted = (row: Row, slot: Slot): Row => ({ ...row, slot });
   const mapRow = (rowId: string, change: (row: Row) => Row) => withRows(rows.map(row => (row.id === rowId ? change(row) : row)));
 
   function filledRow(exercise: Exercise, slot: Slot, group?: string): Row {

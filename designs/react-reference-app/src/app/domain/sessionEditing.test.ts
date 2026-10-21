@@ -181,6 +181,28 @@ describe('sessionEdits', () => {
     expect(units.map(unit => unit.rows.map(row => row.exerciseId))).toEqual([['curl', 'raise'], ['kickback']]);
   });
 
+  it('keeps the sets of a row moved to another group in a deload block', () => {
+    // arrange
+    const deload: SessionEditContext = { ...CONTEXT, blockType: 'deload' };
+    const added = sessionEdits(emptySession(), deload).add(byId('curl'), { slot: 'C' });
+    const sets: Row['sets'] = [
+      { kind: 'warm-up', reps: { min: 8, max: 8 } },
+      { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
+      { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
+    ];
+    const session = sessionEdits(added, deload).replaceRow({ ...added.rows[0], sets });
+
+    // act
+    const moved = sessionEdits(session, deload).move(session.rows[0].id, { slot: 'D' });
+    const swapped = sessionEdits(sessionEdits(moved, deload).add(byId('squat'), { slot: 'A' }), deload).moveUp(moved.rows[0].id);
+
+    // assert
+    expect(layout(moved)).toEqual(['D:curl']);
+    expect(rowOf(moved, 'curl').sets).toEqual(sets);
+    expect(rowOf(swapped, 'curl').slot).toBe('A');
+    expect(rowOf(swapped, 'curl').sets).toEqual(sets);
+  });
+
   it('adds and removes substitutions and mobility exercises', () => {
     // arrange
     const session = withExercises(['curl', 'C']);

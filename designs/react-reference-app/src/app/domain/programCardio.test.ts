@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
 import type { CardioSession } from './program';
-import { CARDIO_INTENSITY_TEXT, cardioMinutes, cardioPreset, hasIntervals, isLightCardio } from './programCardio';
+import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasIntervals, isLightCardio } from './programCardio';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
   return {
@@ -160,5 +160,95 @@ describe('cardio character', () => {
 
     // assert
     expect(verdicts).toEqual([false, false, true, false]);
+  });
+});
+
+describe('cardioEdits', () => {
+  it('starts an empty session named Cardio', () => {
+    // act
+    const empty = emptyCardioSession();
+
+    // assert
+    expect(empty).toEqual({ id: empty.id, originId: empty.id, name: 'Cardio', segments: [] });
+  });
+
+  it('applies a preset while keeping the session identity', () => {
+    // arrange
+    const empty = emptyCardioSession();
+
+    // act
+    const next = cardioEdits(empty, LIBRARY).applyPreset('hiit');
+
+    // assert
+    expect(next.id).toBe(empty.id);
+    expect(next.originId).toBe(empty.originId);
+    expect(next.name).toBe('Intervals');
+    expect(cardioMinutes(next)).toBe(26);
+  });
+
+  it('adds each kind of segment with editable defaults', () => {
+    // arrange
+    const edits = cardioEdits(emptyCardioSession(), LIBRARY);
+
+    // act
+    const kinds = (['steady', 'intervals', 'circuit'] as const).map(kind => edits.addSegment(kind).segments[0]);
+
+    // assert
+    expect(kinds.map(segment => segment.plan)).toEqual([
+      { kind: 'steady', minutes: 10, intensity: 'moderate' },
+      { kind: 'intervals', workSeconds: 30, easySeconds: 90, rounds: 6, intensity: 'hard' },
+      { kind: 'circuit', items: [], rounds: 3, restSeconds: 60 },
+    ]);
+    expect(kinds[0].exerciseId).toBe('treadmill');
+  });
+
+  it('replaces the exercise, changes the plan, reorders and removes segments', () => {
+    // arrange
+    const start = session([
+      { id: 's1', exerciseId: 'treadmill', plan: { kind: 'steady', minutes: 5, intensity: 'easy' } },
+      { id: 's2', exerciseId: 'treadmill', plan: { kind: 'steady', minutes: 20, intensity: 'moderate' } },
+    ]);
+
+    // act
+    const replaced = cardioEdits(start, LIBRARY).replaceExercise('s2', 'rower');
+    const planned = cardioEdits(replaced, LIBRARY).changePlan('s2', { kind: 'steady', minutes: 25, intensity: 'hard' });
+    const moved = cardioEdits(planned, LIBRARY).moveUp('s2');
+    const dragged = cardioEdits(moved, LIBRARY).moveBefore('s1', 's2');
+    const removed = cardioEdits(dragged, LIBRARY).remove('s1');
+
+    // assert
+    expect(moved.segments.map(segment => [segment.id, segment.exerciseId])).toEqual([
+      ['s2', 'rower'],
+      ['s1', 'treadmill'],
+    ]);
+    expect(moved.segments[0].plan).toEqual({ kind: 'steady', minutes: 25, intensity: 'hard' });
+    expect(dragged.segments.map(segment => segment.id)).toEqual(['s1', 's2']);
+    expect(removed.segments.map(segment => segment.id)).toEqual(['s2']);
+  });
+
+  it('adds circuit exercises by reps or seconds and keeps the first as the segment exercise', () => {
+    // arrange
+    const start = session([{ id: 'c1', exerciseId: '', plan: { kind: 'circuit', items: [], rounds: 3, restSeconds: 60 } }]);
+
+    // act
+    const withPushUp = cardioEdits(start, LIBRARY).addCircuitItem('c1', 'pushUp');
+    const withPlank = cardioEdits(withPushUp, LIBRARY).addCircuitItem('c1', 'plank');
+    const removed = cardioEdits(withPlank, LIBRARY).removeCircuitItem('c1', 0);
+
+    // assert
+    expect(withPlank.segments[0]).toEqual({
+      id: 'c1',
+      exerciseId: 'pushUp',
+      plan: { kind: 'circuit', items: [{ exerciseId: 'pushUp', reps: 12 }, { exerciseId: 'plank', seconds: 30 }], rounds: 3, restSeconds: 60 },
+    });
+    expect(removed.segments[0].exerciseId).toBe('plank');
+  });
+
+  it('adds a dropped cardio exercise as a steady segment', () => {
+    // act
+    const next = cardioEdits(emptyCardioSession(), LIBRARY).addSteady('rower');
+
+    // assert
+    expect(next.segments.map(segment => [segment.exerciseId, segment.plan])).toEqual([['rower', { kind: 'steady', minutes: 10, intensity: 'moderate' }]]);
   });
 });

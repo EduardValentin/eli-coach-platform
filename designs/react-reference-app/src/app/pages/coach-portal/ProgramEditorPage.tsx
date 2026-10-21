@@ -23,7 +23,7 @@ import { useRailDrawer } from '../../components/coach-portal/program/useRailDraw
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { blockWithLibraryPick } from '../../domain/programEditing';
-import { sessionsInCalendarOrder } from '../../domain/weekEditing';
+import { plannedSessions, type PlannedSession } from '../../domain/weekEditing';
 import type { Exercise } from '../../context/TrainingContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { Button } from '../../components/ui/button';
@@ -32,9 +32,18 @@ import { useCoachPortalScope } from '../../components/coach-portal/useCoachPorta
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
-import { currentVersion, draftOf, type Program, type ProgramVersion } from '../../domain/program';
+import { currentVersion, draftOf, type Block, type Program, type ProgramVersion } from '../../domain/program';
 import { recurringSymptoms } from '../../domain/programOnboarding';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
+
+function plannedId(entry: PlannedSession): string {
+  return entry.kind === 'cardio' ? entry.cardio.id : entry.session.id;
+}
+
+function openSessionOf(block: Block, chosen: string | undefined): string | undefined {
+  const ids = plannedSessions(block).map(plannedId);
+  return chosen && ids.includes(chosen) ? chosen : ids[0];
+}
 
 type EditorProps = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
@@ -58,8 +67,7 @@ function ProgramEditor(props: EditorProps) {
 
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
   const chosenSession = block ? openSessions[block.id] : undefined;
-  const openSessionId =
-    block && block.sessions.some(session => session.id === chosenSession) ? chosenSession : block && sessionsInCalendarOrder(block)[0]?.id;
+  const openSessionId = block && openSessionOf(block, chosenSession);
 
   function addFromLibrary(exercise: Exercise) {
     if (!block) return;

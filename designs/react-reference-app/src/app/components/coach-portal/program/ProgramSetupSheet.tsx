@@ -1,92 +1,115 @@
-import { useId, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { usePrograms } from '../../../context/ProgramContext';
 import { CYCLE_MODE_LABELS, type CycleMode } from '../../../domain/cycleMode';
 import type { ClientJourney } from '../../../domain/journey';
-import { findOnboardingField } from '../../../domain/onboardingSchema';
+import { findOnboardingField, type OnboardingField, type OnboardingOption } from '../../../domain/onboardingSchema';
 import type { LevelHint, ProgramLanguage, SplitShape } from '../../../domain/program';
-import {
-  equipmentChipsOf,
-  equipmentForChips,
-  setupFromJourney,
-  type ProgramSetup,
-} from '../../../domain/programOnboarding';
+import { equipmentChipsOf, equipmentForChips, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
-import { CheckboxChip } from '../../CheckboxChip';
-import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
-import { SettingsRow, SettingsRows, SettingsSection } from '../../SettingsSection';
+import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
+import type { OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
+import { SettingsSection } from '../../SettingsSection';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
 import { Button, buttonVariants } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { OptionSelect, type Option } from './OptionSelect';
+import { Form } from '../../ui/form';
 
-const LEVELS: Option<LevelHint>[] = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-];
-const TRAINING_DAYS: Option<ProgramSetup['trainingDays']>[] = [
-  { value: 2, label: '2 days' },
-  { value: 3, label: '3 days' },
-  { value: 4, label: '4 days' },
-  { value: 5, label: '5+ days' },
-];
-const SESSION_MINUTES: Option<ProgramSetup['sessionMinutes']>[] = [
-  { value: 30, label: '30 min' },
-  { value: 45, label: '45 min' },
-  { value: 60, label: '60 min' },
-];
-const CYCLE_MODES: Option<CycleMode>[] = (['adapted', 'general'] as const).map(value => ({
-  value,
-  label: CYCLE_MODE_LABELS[value],
-}));
-const DAILY_STEPS: Option<number>[] = [4000, 5000, 6000, 8000, 10000].map(value => ({
-  value,
-  label: value.toLocaleString('en-US'),
-}));
-const LANGUAGES: Option<ProgramLanguage>[] = [
-  { value: 'en', label: 'English' },
-  { value: 'ro', label: 'Romanian' },
-];
-const GOALS: Option<string>[] = findOnboardingField('primaryGoal')?.options ?? [];
-const EQUIPMENT_CHIPS: string[] = (findOnboardingField('availableEquipment')?.options ?? []).map(option => option.value);
+type SetupPanel = { name: string; fields: OnboardingField[] };
+
+const LEVEL_LABELS: Record<LevelHint, string> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+const LANGUAGE_LABELS: Record<ProgramLanguage, string> = { en: 'English', ro: 'Romanian' };
+const TRAINING_DAY_LABELS: Record<ProgramSetup['trainingDays'], string> = { 2: '2 days', 3: '3 days', 4: '4 days', 5: '5+ days' };
+const SESSION_MINUTE_LABELS: Record<ProgramSetup['sessionMinutes'], string> = { 30: '30 min', 45: '45 min', 60: '60 min' };
+const DAILY_STEPS = [4000, 5000, 6000, 8000, 10000];
 const BODYWEIGHT_ONLY = 'Bodyweight only';
-const SPLIT_SHAPES = Object.keys(SPLIT_TEMPLATES) as SplitShape[];
+const FIRST_PANEL = 'Program';
 
-function toggledChips(chips: readonly string[], chip: string, checked: boolean): string[] {
-  if (!checked) return chips.filter(other => other !== chip);
-  if (chip === BODYWEIGHT_ONLY) return [chip];
-  const next = new Set([...chips.filter(other => other !== BODYWEIGHT_ONLY), chip]);
-  return EQUIPMENT_CHIPS.filter(option => next.has(option));
+function optionsOf(labels: Record<string, string>): OnboardingOption[] {
+  return Object.entries(labels).map(([value, label]) => ({ value, label }));
+}
+
+function field(id: keyof ProgramSetup | 'equipmentChips', label: string, kind: 'select' | 'radio' | 'chips', options: OnboardingOption[]): OnboardingField {
+  return { id, label, kind, requirement: 'optional', options };
+}
+
+function splitOptions(): OnboardingOption[] {
+  return (Object.keys(SPLIT_TEMPLATES) as SplitShape[]).map(shape => ({ value: shape, label: SPLIT_TEMPLATES[shape].label }));
+}
+
+function panelsFor(journey: ClientJourney): SetupPanel[] {
+  const goal = findOnboardingField('primaryGoal')?.options ?? [];
+  const equipment = findOnboardingField('availableEquipment')?.options ?? [];
+  const steps = DAILY_STEPS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
+  const cycleMode = journey.identity.gender === 'male' ? [] : [field('cycleMode', 'Cycle mode', 'select', optionsOf(CYCLE_MODE_LABELS))];
+  return [
+    {
+      name: FIRST_PANEL,
+      fields: [field('goal', 'Goal', 'select', goal), field('level', 'Level', 'select', optionsOf(LEVEL_LABELS)), field('language', 'Program language', 'select', optionsOf(LANGUAGE_LABELS))],
+    },
+    {
+      name: 'Schedule',
+      fields: [
+        field('splitShape', 'Split', 'radio', splitOptions()),
+        field('trainingDays', 'Training days', 'radio', optionsOf(TRAINING_DAY_LABELS)),
+        field('sessionMinutes', 'Session length', 'radio', optionsOf(SESSION_MINUTE_LABELS)),
+      ],
+    },
+    { name: 'Equipment', fields: [{ ...field('equipmentChips', 'Equipment', 'chips', equipment), exclusiveOptions: [BODYWEIGHT_ONLY] }] },
+    { name: 'Cycle', fields: [...cycleMode, field('dailySteps', 'Daily steps', 'select', steps)] },
+  ];
+}
+
+function valuesFrom(setup: ProgramSetup, chips: string[]): OnboardingValues {
+  return {
+    goal: setup.goal,
+    level: setup.level,
+    language: setup.language,
+    splitShape: setup.splitShape,
+    trainingDays: String(setup.trainingDays),
+    sessionMinutes: String(setup.sessionMinutes),
+    equipmentChips: chips,
+    cycleMode: setup.cycleMode,
+    dailySteps: String(setup.dailySteps),
+  };
+}
+
+function text(values: OnboardingValues, key: string): string {
+  const value = values[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function setupFrom(values: OnboardingValues): ProgramSetup {
+  const chips = Array.isArray(values.equipmentChips) ? values.equipmentChips : [];
+  return {
+    goal: text(values, 'goal'),
+    level: text(values, 'level') as LevelHint,
+    language: text(values, 'language') as ProgramLanguage,
+    splitShape: text(values, 'splitShape') as SplitShape,
+    trainingDays: Number(text(values, 'trainingDays')) as ProgramSetup['trainingDays'],
+    sessionMinutes: Number(text(values, 'sessionMinutes')) as ProgramSetup['sessionMinutes'],
+    cycleMode: text(values, 'cycleMode') as CycleMode,
+    dailySteps: Number(text(values, 'dailySteps')),
+    equipment: equipmentForChips(chips),
+  };
 }
 
 export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
   const { createProgram } = usePrograms();
-  const [setup, setSetup] = useState<ProgramSetup>(() => setupFromJourney(journey));
-  const [chips, setChips] = useState<string[]>(() => equipmentChipsOf(journey));
-  const ids = {
-    goal: useId(),
-    level: useId(),
-    split: useId(),
-    days: useId(),
-    minutes: useId(),
-    equipment: useId(),
-    cycle: useId(),
-    steps: useId(),
-    language: useId(),
-  };
+  const form = useForm<OnboardingValues>({ defaultValues: valuesFrom(setupFromJourney(journey), equipmentChipsOf(journey)) });
 
-  function set<Key extends keyof ProgramSetup>(key: Key, value: ProgramSetup[Key]) {
-    setSetup(current => ({ ...current, [key]: value }));
-  }
-
-  function changeTrainingDays(trainingDays: ProgramSetup['trainingDays']) {
-    setSetup(current => ({ ...current, trainingDays, splitShape: splitShapeFor(trainingDays) }));
-  }
+  useEffect(() => {
+    const subscription = form.watch((values, { name }) => {
+      if (name !== 'trainingDays') return;
+      form.setValue('splitShape', splitShapeFor(Number(values.trainingDays)));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   function create() {
-    createProgram(journey.callId, { ...setup, equipment: equipmentForChips(chips) });
+    createProgram(journey.callId, setupFrom(form.getValues()));
     onCreated();
   }
 
@@ -106,75 +129,22 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
         </>
       }
     >
-      <SettingsRows>
-        <SettingsRow htmlFor={ids.goal} title="Goal" layout="stacked">
-          <OptionSelect id={ids.goal} size="md" options={GOALS} value={setup.goal} onChange={value => set('goal', value)} />
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.level} title="Level" layout="stacked">
-          <OptionSelect id={ids.level} size="md" options={LEVELS} value={setup.level} onChange={value => set('level', value)} />
-        </SettingsRow>
-        <SettingsRow labelId={ids.split} title="Split" layout="stacked">
-          <ChoiceGroup
-            size="md"
-            aria-labelledby={ids.split}
-            value={setup.splitShape}
-            onValueChange={value => set('splitShape', value as SplitShape)}
-          >
-            {SPLIT_SHAPES.map(shape => (
-              <ChoiceOption
-                key={shape}
-                value={shape}
-                className="h-auto min-w-0 basis-0 flex-col items-start justify-start gap-0.5 whitespace-normal px-3 py-2.5 text-left group-data-[size=md]/choice:h-auto"
-              >
-                <span>{SPLIT_TEMPLATES[shape].label}</span>
-                <span className="text-xs font-normal opacity-80">{SPLIT_TEMPLATES[shape].description}</span>
-              </ChoiceOption>
-            ))}
-          </ChoiceGroup>
-        </SettingsRow>
-        <div className="grid grid-cols-2 gap-4 px-5 py-5 sm:px-6">
-          <div className="grid gap-3">
-            <Label htmlFor={ids.days}>Training days</Label>
-            <OptionSelect id={ids.days} size="md" options={TRAINING_DAYS} value={setup.trainingDays} onChange={changeTrainingDays} />
-          </div>
-          <div className="grid gap-3">
-            <Label htmlFor={ids.minutes}>Session length</Label>
-            <OptionSelect
-              id={ids.minutes}
-              size="md"
-              options={SESSION_MINUTES}
-              value={setup.sessionMinutes}
-              onChange={value => set('sessionMinutes', value)}
-            />
-          </div>
-        </div>
-        <SettingsRow as="fieldset" labelId={ids.equipment} title="Equipment" layout="stacked">
-          <div className="flex flex-wrap gap-2">
-            {EQUIPMENT_CHIPS.map(chip => (
-              <CheckboxChip
-                key={chip}
-                size="compact"
-                aria-label={chip}
-                checked={chips.includes(chip)}
-                onCheckedChange={checked => setChips(current => toggledChips(current, chip, checked))}
-              >
-                {chip}
-              </CheckboxChip>
-            ))}
-          </div>
-        </SettingsRow>
-        {journey.identity.gender !== 'male' && (
-          <SettingsRow htmlFor={ids.cycle} title="Cycle mode" layout="stacked">
-            <OptionSelect id={ids.cycle} size="md" options={CYCLE_MODES} value={setup.cycleMode} onChange={value => set('cycleMode', value)} />
-          </SettingsRow>
-        )}
-        <SettingsRow htmlFor={ids.steps} title="Daily steps" layout="stacked">
-          <OptionSelect id={ids.steps} size="md" options={DAILY_STEPS} value={setup.dailySteps} onChange={value => set('dailySteps', value)} />
-        </SettingsRow>
-        <SettingsRow htmlFor={ids.language} title="Program language" layout="stacked">
-          <OptionSelect id={ids.language} size="md" options={LANGUAGES} value={setup.language} onChange={value => set('language', value)} />
-        </SettingsRow>
-      </SettingsRows>
+      <Form {...form}>
+        <Accordion type="multiple" defaultValue={[FIRST_PANEL]}>
+          {panelsFor(journey).map(panel => (
+            <AccordionItem key={panel.name} value={panel.name} className="px-5 sm:px-6">
+              <AccordionTrigger headingTag="h3" className="text-base">
+                {panel.name}
+              </AccordionTrigger>
+              <AccordionContent className="grid gap-6 pt-1 pb-6">
+                {panel.fields.map(definition => (
+                  <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </Form>
     </SettingsSection>
   );
 }

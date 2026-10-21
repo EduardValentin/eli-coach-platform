@@ -5,9 +5,10 @@ import type { ClientJourney } from '../../../domain/journey';
 import type { Block, Program, ProgramContent } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
-import { sessionsInCalendarOrder } from '../../../domain/weekEditing';
+import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
 import { BlockHeader } from './BlockHeader';
 import { BlockTexts } from './BlockTexts';
+import { CardioSessionCard } from './CardioSessionCard';
 import { SessionCard } from './SessionCard';
 import { SessionDragLayer } from './sessionDnd';
 import { WeekDays } from './WeekDays';
@@ -53,7 +54,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const { blocks } = content.plan;
-  const sessions = sessionsInCalendarOrder(block);
+  const planned = plannedSessions(block);
   const context = { blockType: block.type, library, equipment };
 
   useEffect(() => {
@@ -65,6 +66,13 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
   function openFromWeek(sessionId: string) {
     onOpenSession(sessionId);
     setScrollTarget(sessionId);
+  }
+
+  function articleRefFor(sessionId: string) {
+    return (element: HTMLElement | null) => {
+      if (element) articles.current.set(sessionId, element);
+      else articles.current.delete(sessionId);
+    };
   }
 
   return (
@@ -86,23 +94,33 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
       </div>
       <WeekDays block={block} onChange={onChange} onOpenSession={openFromWeek} />
       <div className="grid gap-4">
-        {sessions.map(session => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            block={block}
-            expanded={session.id === openSessionId}
-            articleRef={element => {
-              if (element) articles.current.set(session.id, element);
-              else articles.current.delete(session.id);
-            }}
-            library={library}
-            context={context}
-            onExpand={() => onOpenSession(session.id)}
-            onChange={next => onChange(blockWithSession(block, next))}
-            onOpenLibrary={onOpenLibrary}
-          />
-        ))}
+        {planned.map(entry =>
+          entry.kind === 'cardio' ? (
+            <CardioSessionCard
+              key={entry.cardio.id}
+              cardio={entry.cardio}
+              expanded={entry.cardio.id === openSessionId}
+              articleRef={articleRefFor(entry.cardio.id)}
+              library={library}
+              onExpand={() => onOpenSession(entry.cardio.id)}
+              onChange={next => onChange(blockWithCardio(block, next))}
+              onOpenLibrary={onOpenLibrary}
+            />
+          ) : (
+            <SessionCard
+              key={entry.session.id}
+              session={entry.session}
+              block={block}
+              expanded={entry.session.id === openSessionId}
+              articleRef={articleRefFor(entry.session.id)}
+              library={library}
+              context={context}
+              onExpand={() => onOpenSession(entry.session.id)}
+              onChange={next => onChange(blockWithSession(block, next))}
+              onOpenLibrary={onOpenLibrary}
+            />
+          ),
+        )}
       </div>
       <BlockTexts block={block} language={program.language} onChange={onChange} />
       <SessionDragLayer />

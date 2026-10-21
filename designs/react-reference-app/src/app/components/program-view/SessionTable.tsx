@@ -16,6 +16,7 @@ import {
 import { templateText } from '../../domain/programTemplates';
 import type { Exercise } from '../../context/TrainingContext';
 import { repsSuffix } from '../coach-portal/program/rowFields';
+import { WatchVideoButton } from '../WatchVideoButton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '../ui/utils';
@@ -45,9 +46,7 @@ function RowDetails({ row, exercise, language, exercisesById }: RowDetailsProps)
     <div className="grid gap-2 py-2 text-sm text-text-secondary">
       {row.cues && <p>{row.cues}</p>}
       {exercise?.videoUrl && (
-        <a href={exercise.videoUrl} target="_blank" rel="noreferrer" className="w-fit text-primary underline">
-          Watch video
-        </a>
+        <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />
       )}
       {swaps.length > 0 && <p>Swap for: {swaps.join(', ')}</p>}
       <p>{progression}</p>

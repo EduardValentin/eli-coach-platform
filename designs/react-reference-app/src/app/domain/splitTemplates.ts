@@ -6,7 +6,6 @@ export type SessionTemplate = { name: string; slots: SlotPlan[] };
 export type SplitTemplate = {
   shape: SplitShape;
   label: string;
-  description: string;
   sessions: (days: number) => SessionTemplate[];
   layout: (sessionCount: number) => Weekday[];
 };
@@ -55,14 +54,12 @@ export const SPLIT_TEMPLATES: Record<SplitShape, SplitTemplate> = {
   'full-body': {
     shape: 'full-body',
     label: 'Full Body',
-    description: 'Every session trains the whole body. Two or three sessions a week.',
     sessions: days => FULL_BODY_SESSIONS.slice(0, days),
     layout: layoutFrom(FULL_BODY_LAYOUTS),
   },
   'upper-lower': {
     shape: 'upper-lower',
     label: 'Upper / Lower',
-    description: 'Lower and upper days alternate. Four or five sessions a week.',
     sessions: days => UPPER_LOWER_SESSIONS.slice(0, days),
     layout: layoutFrom(UPPER_LOWER_LAYOUTS),
   },
