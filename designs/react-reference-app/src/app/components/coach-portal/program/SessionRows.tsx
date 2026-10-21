@@ -16,7 +16,7 @@ type SessionRowsProps = {
   onPickExercise: (target: RowTarget) => void;
 };
 
-const COLUMNS = ['Position', 'Exercise', 'Sets', 'Reps', 'RIR', 'Rest', 'Hint'];
+const COLUMNS = ['Position', 'Exercise', 'Sets', 'Rest', 'Hint'];
 
 export function SessionRows({ session, library, equipment, actionsFor, onChangeRow, onPickExercise }: SessionRowsProps) {
   const layout: RowLayout = useIsDesktop() ? 'table' : 'card';

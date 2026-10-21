@@ -73,6 +73,7 @@ export function blockWithSessionsFrom(block: Block, source: Session[]): Block {
     sessions.length === block.sessions.length
       ? calendarByPosition(block, sessions)
       : spreadCalendar(
+          block.split.shape,
           sessions.map(session => session.id),
           block.cardioSessions,
         );

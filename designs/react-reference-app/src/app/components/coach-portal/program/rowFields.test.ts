@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatRange, formatRest, parseRange, parseRest } from './rowFields';
+import { formatRange } from '../../../domain/program';
+import { formatRest, parseRange, parseRest } from './rowFields';
 
 describe('rowFields', () => {
   it('formats a range with an en dash and a single value when both ends match', () => {

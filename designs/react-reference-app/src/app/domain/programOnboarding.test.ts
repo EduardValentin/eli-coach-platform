@@ -107,6 +107,14 @@ describe('setupFromJourney', () => {
       dailySteps: 6000,
     });
   });
+
+  it('starts the equipment from the onboarding chips', () => {
+    // act
+    const setup = setupFromJourney(withEquipment(['Dumbbells', 'Resistance bands']));
+
+    // assert
+    expect(setup.equipment).toEqual(['Dumbbells', 'Bench', 'Bands']);
+  });
 });
 
 describe('clientEquipment', () => {

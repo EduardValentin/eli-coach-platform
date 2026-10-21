@@ -31,7 +31,7 @@ import { usePrograms } from '../../context/ProgramContext';
 import { useTraining } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
 import { currentVersion, draftOf, type Program, type ProgramVersion } from '../../domain/program';
-import { clientEquipment, recurringSymptoms } from '../../domain/programOnboarding';
+import { recurringSymptoms } from '../../domain/programOnboarding';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 
 type EditorProps = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
@@ -59,7 +59,7 @@ function ProgramEditor(props: EditorProps) {
   function pickExercise(exerciseId: string) {
     const exercise = exercises.find(item => item.id === exerciseId);
     if (picker.target && pickedBlock && exercise) {
-      editor.replaceBlock(blockWithPick(pickedBlock, picker.target, exercise, exercises, clientEquipment(journey)));
+      editor.replaceBlock(blockWithPick(pickedBlock, picker.target, exercise, exercises, program.equipment));
     }
     picker.close();
   }
@@ -99,7 +99,7 @@ function ProgramEditor(props: EditorProps) {
           dayOne={ctx.dayOne}
           today={today}
           library={exercises}
-          equipment={clientEquipment(journey)}
+          equipment={program.equipment}
           onChange={editor.replaceBlock}
           otherPrograms={programs().filter(other => other.callId !== program.callId)}
           journeys={journeys}
@@ -193,7 +193,7 @@ function ProgramEditor(props: EditorProps) {
             target={picker.target}
             slot={pickedSlot}
             library={exercises}
-            equipment={clientEquipment(journey)}
+            equipment={program.equipment}
             onPick={pickExercise}
             onClose={picker.close}
           />

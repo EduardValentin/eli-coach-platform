@@ -121,8 +121,9 @@ describe('LibraryDrawer', () => {
     await user.click(within(firstSession()).getByRole('button', { name: 'Show details for Leg Press' }));
     const substitutions = screen.getByRole('group', { name: /Leg Press/ });
     expect(within(substitutions).getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(within(firstSession()).getByRole('spinbutton', { name: 'Sets for C Leg Press' })).toHaveValue(3);
-    expect(within(firstSession()).getByRole('textbox', { name: 'Reps for C Leg Press' })).toHaveValue('12–15');
+    const rest = within(firstSession()).getByRole('textbox', { name: 'Rest for C Leg Press' });
+    expect(rest).toHaveValue('1:15');
+    expect(within(rest.closest('tr') as HTMLElement).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
   });
 
   it('hides archived exercises from the drawer but keeps an archived one on its row', async () => {

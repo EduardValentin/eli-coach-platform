@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 function viewAt(today: Date, cycleDay: number | null = 12, exercises: readonly Exercise[] = SAMPLE_EXERCISES): ProgramView {
-  const program = programForSeed('published', 'ac-demo-client-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
+  const program = programForSeed('published', { callId: 'ac-demo-client-1', dayOne: DAY_ONE, cycleMode: 'adapted', equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
   if (!version) throw new Error('version missing');
@@ -230,6 +230,28 @@ describe('SessionTable', () => {
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
     expect(screen.getByText('2 min')).toBeInTheDocument();
     expect(screen.getByText('90 s')).toBeInTheDocument();
+  });
+
+  it('summarises identical sets and lists differing sets one per line', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const steady = { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+    const top = { reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
+    const session = sessionWith(view, original => ({
+      ...original,
+      rows: [
+        { ...original.rows[0], sets: [steady, steady, steady] },
+        { ...original.rows[1], exerciseId: original.rows[0].exerciseId, sets: [top, steady] },
+      ],
+    }));
+
+    // act
+    renderSession(session, view);
+
+    // assert
+    expect(screen.getByRole('cell', { name: '3 × 8–10 · RIR 1–2' })).toBeInTheDocument();
+    expect(screen.getByText('Set 1: 5 · RIR 2')).toBeInTheDocument();
+    expect(screen.getByText('Set 2: 8–10 · RIR 1–2')).toBeInTheDocument();
   });
 
   it('keeps row details collapsed for the client and opens them on demand', async () => {

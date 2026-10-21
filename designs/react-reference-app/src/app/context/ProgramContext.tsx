@@ -15,7 +15,7 @@ import {
   type ProgramVersion,
 } from '../domain/program';
 import { weekdayFromOnboarding } from '../domain/programCalendar';
-import type { ProgramSetup } from '../domain/programOnboarding';
+import { clientEquipment, type ProgramSetup } from '../domain/programOnboarding';
 import {
   blockingProblems,
   type BlockingCode,
@@ -23,7 +23,7 @@ import {
   type RuleFinding,
 } from '../domain/programRules';
 import { initialContent } from '../domain/programSuggestions';
-import { programForSeed, type ProgramSeed } from '../services/programSamples';
+import { programForSeed, type ProgramSeed, type SeedClient } from '../services/programSamples';
 
 export type PublishOutcome =
   | { status: 'published'; version: ProgramVersion }
@@ -32,7 +32,7 @@ export type PublishOutcome =
 export type ProgramContextType = {
   programFor(callId: string): Program | undefined;
   createProgram(callId: string, setup: ProgramSetup): Program;
-  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'level' | 'cycleMode' | 'language'>>): void;
+  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'equipment' | 'level' | 'cycleMode' | 'language'>>): void;
   updateDraft(callId: string, update: (content: ProgramContent) => ProgramContent): void;
   setWhatChanged(callId: string, text: string): void;
   startDraft(callId: string): void;
@@ -46,6 +46,10 @@ const ProgramContext = createContext<ProgramContextType | null>(null);
 
 function seededCycleMode(journey: ClientJourney | null): CycleMode {
   return (journey && cycleModeOf(journey.onboarding, journey.identity.gender)) ?? 'general';
+}
+
+function seedClient(callId: string, journey: ClientJourney | null, dayOne: Date | null): SeedClient {
+  return { callId, dayOne, cycleMode: seededCycleMode(journey), equipment: journey ? clientEquipment(journey) : [] };
 }
 
 export function dayOneOf(journey: ClientJourney | null): Date | null {
@@ -111,9 +115,10 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     const next = { ...programsRef.current };
     delete next[DEMO_JOURNEY_CALL_ID];
     delete next[AWAITING_REVIEW_CALL_ID];
-    const seeded = programForSeed(seed, DEMO_JOURNEY_CALL_ID, readyAt, library, seededCycleMode(demoJourney));
+    const seeded = programForSeed(seed, seedClient(DEMO_JOURNEY_CALL_ID, demoJourney, readyAt), library);
     if (seeded) next[DEMO_JOURNEY_CALL_ID] = seeded;
-    const reference = seed === 'two-versions' ? programForSeed('published', AWAITING_REVIEW_CALL_ID, readyAt, library, seededCycleMode(journeyForCall(AWAITING_REVIEW_CALL_ID))) : null;
+    const awaitingReview = seedClient(AWAITING_REVIEW_CALL_ID, journeyForCall(AWAITING_REVIEW_CALL_ID), readyAt);
+    const reference = seed === 'two-versions' ? programForSeed('published', awaitingReview, library) : null;
     if (reference) next[AWAITING_REVIEW_CALL_ID] = reference;
     commit(next);
   }, [appState.programSeed, readyAt, demoJourney, journeyForCall, commit]);
@@ -126,6 +131,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       const program: Program = {
         callId,
         goal: setup.goal,
+        equipment: setup.equipment,
         language: setup.language,
         cycleMode: setup.cycleMode,
         level: setup.level,

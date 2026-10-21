@@ -42,8 +42,10 @@ const context = (overrides: Partial<RuleContext> = {}): RuleContext => ({
   ...overrides,
 });
 
+const THREE_SETS = Array.from({ length: 3 }, () => ({ reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
+
 const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string) =>
-  ({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: 3, restSeconds: 90 }) as Row;
+  ({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 }) as Row;
 
 const session = (id: string, rows: Row[] = [row('bench')], name = id): Session =>
   ({ id, name, rows, coolDown: false }) as Session;

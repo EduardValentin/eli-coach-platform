@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
 import type { Equipment, Muscle, MovementPattern } from './exercises';
-import type { CardioSession, Row, Session } from './program';
+import type { CardioSession, Row, Session, SetSpec } from './program';
 import type { ProgramSetup } from './programOnboarding';
 import {
   emptySessionsFor,
   estimatedMinutes,
   initialContent,
   newBlock,
-  sessionNamesFor,
   splitShapeFor,
   spreadCalendar,
   substitutionsFor,
@@ -23,7 +22,12 @@ const SETUP: ProgramSetup = {
   cycleMode: 'general',
   language: 'en',
   dailySteps: 6000,
+  equipment: [],
 };
+
+function setsOf(count: number): SetSpec[] {
+  return Array.from({ length: count }, () => ({ reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
+}
 
 function cardio(id: string): CardioSession {
   return { id, type: 'liss', minutes: 30, intensityText: '', weekday: 'wed', placement: 'separate' };
@@ -34,9 +38,7 @@ function row(overrides: Partial<Row>): Row {
     id: 'r',
     exerciseId: 'e',
     slot: 'A',
-    sets: 3,
-    reps: { min: 8, max: 12 },
-    rir: { min: 1, max: 2 },
+    sets: setsOf(3),
     restSeconds: 60,
     lastSetTechnique: 'none',
     substitutions: [],
@@ -94,23 +96,19 @@ describe('suggested structure', () => {
     ]);
   });
 
-  it('picks the split shape and session names from the days', () => {
+  it('picks the split shape from the days', () => {
     // act
     const shapes = [2, 3, 4, 5].map(splitShapeFor);
 
     // assert
     expect(shapes).toEqual(['full-body', 'full-body', 'upper-lower', 'upper-lower']);
-    expect(sessionNamesFor('full-body', 2)).toEqual(['Full Body A', 'Full Body B']);
-    expect(sessionNamesFor('full-body', 3)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
-    expect(sessionNamesFor('upper-lower', 4)).toEqual(['Lower A', 'Upper A', 'Lower B', 'Upper B']);
-    expect(sessionNamesFor('upper-lower', 5)).toEqual(['Lower A', 'Upper A', 'Lower B', 'Upper B', 'Lower C']);
   });
 });
 
 describe('spreadCalendar', () => {
-  it('spaces sessions with cardio between and rest after', () => {
+  it('places three Full Body sessions on the split layout with cardio between and rest after', () => {
     // act
-    const calendar = spreadCalendar(['s1', 's2', 's3'], [cardio('c1'), cardio('c2')]);
+    const calendar = spreadCalendar('full-body', ['s1', 's2', 's3'], [cardio('c1'), cardio('c2')]);
 
     // assert
     expect(calendar).toEqual({
@@ -124,45 +122,66 @@ describe('spreadCalendar', () => {
     });
   });
 
-  it('runs five sessions on consecutive days', () => {
+  it('places two Full Body sessions on Monday and Thursday', () => {
     // act
-    const calendar = spreadCalendar(['a', 'b', 'c', 'd', 'e'], []);
+    const calendar = spreadCalendar('full-body', ['s1', 's2'], [cardio('c1'), cardio('c2'), cardio('c3')]);
 
     // assert
-    expect(calendar.fri).toEqual({ kind: 'session', sessionId: 'e' });
-    expect(calendar.sat).toEqual({ kind: 'rest' });
+    expect(calendar).toEqual({
+      mon: { kind: 'session', sessionId: 's1' },
+      tue: { kind: 'cardio', cardioId: 'c1' },
+      wed: { kind: 'cardio', cardioId: 'c2' },
+      thu: { kind: 'session', sessionId: 's2' },
+      fri: { kind: 'cardio', cardioId: 'c3' },
+      sat: { kind: 'rest' },
+      sun: { kind: 'rest' },
+    });
+  });
+
+  it('places five Upper / Lower sessions with cardio on the free days in order', () => {
+    // act
+    const calendar = spreadCalendar('upper-lower', ['a', 'b', 'c', 'd', 'e'], [cardio('c1'), cardio('c2')]);
+
+    // assert
+    expect(calendar).toEqual({
+      mon: { kind: 'session', sessionId: 'a' },
+      tue: { kind: 'session', sessionId: 'b' },
+      wed: { kind: 'session', sessionId: 'c' },
+      thu: { kind: 'cardio', cardioId: 'c1' },
+      fri: { kind: 'session', sessionId: 'd' },
+      sat: { kind: 'session', sessionId: 'e' },
+      sun: { kind: 'cardio', cardioId: 'c2' },
+    });
   });
 });
 
 describe('emptySessionsFor', () => {
-  it('builds A, B and a superset C pair, and D only for hypertrophy', () => {
+  it('names the sessions from the split template and starts them without rows', () => {
     // act
-    const [foundation] = emptySessionsFor('full-body', 3, 'foundation');
-    const [hypertrophy] = emptySessionsFor('full-body', 3, 'hypertrophy');
+    const sessions = emptySessionsFor('upper-lower', 4);
 
     // assert
-    expect(foundation.rows.map(r => r.slot)).toEqual(['A', 'B', 'C', 'C']);
-    expect(foundation.rows[2].supersetGroup).toBeDefined();
-    expect(foundation.rows[2].supersetGroup).toBe(foundation.rows[3].supersetGroup);
-    expect(foundation.rows.every(r => r.exerciseId === '' && r.touched.length === 0)).toBe(true);
-    expect(foundation.rows[0]).toMatchObject({ sets: 3, restSeconds: 75 });
-    expect(hypertrophy.rows.map(r => r.slot)).toEqual(['A', 'B', 'C', 'C', 'D']);
-    expect(hypertrophy.rows[0]).toMatchObject({ sets: 4, restSeconds: 150 });
-    expect(hypertrophy.originId).toBe(hypertrophy.id);
+    expect(sessions.map(session => session.name)).toEqual(['Lower A', 'Upper A', 'Lower B', 'Upper B']);
+    expect(sessions.every(session => session.rows.length === 0)).toBe(true);
+    expect(sessions[0].originId).toBe(sessions[0].id);
   });
 });
 
 describe('newBlock and initialContent', () => {
   it('halves the sets of a deload built from a previous block', () => {
     // arrange
-    const previous = newBlock('hypertrophy', 6, SETUP, 'en');
+    const built = newBlock('hypertrophy', 6, SETUP, 'en');
+    const [first, ...others] = built.sessions;
+    const previous = { ...built, sessions: [{ ...first, rows: [row({ sets: setsOf(4) })] }, ...others] };
 
     // act
     const deload = newBlock('deload', 1, SETUP, 'en', previous);
 
     // assert
-    expect(deload.sessions[0].rows[0].sets).toBe(2);
-    expect(deload.sessions[0].rows[0].rir).toEqual({ min: 4, max: 4 });
+    expect(deload.sessions[0].rows[0].sets).toEqual([
+      { reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
+      { reps: { min: 8, max: 12 }, rir: { min: 4, max: 4 } },
+    ]);
     expect(deload.sessions[0].id).not.toBe(previous.sessions[0].id);
     expect(deload.sessions[0].originId).toBe(previous.sessions[0].originId);
     expect(deload.originId).not.toBe(previous.originId);
@@ -189,7 +208,7 @@ describe('newBlock and initialContent', () => {
     expect(content.header.title).toBe('Program — weeks 1–2');
     expect(content.plan.blocks.map(b => b.type)).toEqual(['foundation', 'hypertrophy', 'deload']);
     expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
-    expect(content.plan.blocks[0].sessions.every(s => s.rows.length === 4)).toBe(true);
+    expect(content.plan.blocks.every(b => b.sessions.every(s => s.rows.length === 0))).toBe(true);
   });
 
   it('sets the calibration week from the suggestion', () => {
@@ -209,10 +228,10 @@ describe('estimatedMinutes', () => {
     warmUp: { mobilityExerciseIds: [], warmUpSetsNote: '' },
     coolDown: false,
     rows: [
-      row({ id: '1', sets: 4, restSeconds: 150 }),
-      row({ id: '2', slot: 'B', sets: 3, restSeconds: 105 }),
-      row({ id: '3', slot: 'C', sets: 3, restSeconds: 75, supersetGroup: 'g' }),
-      row({ id: '4', slot: 'C', sets: 3, restSeconds: 75, supersetGroup: 'g' }),
+      row({ id: '1', sets: setsOf(4), restSeconds: 150 }),
+      row({ id: '2', slot: 'B', sets: setsOf(3), restSeconds: 105 }),
+      row({ id: '3', slot: 'C', sets: setsOf(3), restSeconds: 75, supersetGroup: 'g' }),
+      row({ id: '4', slot: 'C', sets: setsOf(3), restSeconds: 75, supersetGroup: 'g' }),
     ],
   };
 

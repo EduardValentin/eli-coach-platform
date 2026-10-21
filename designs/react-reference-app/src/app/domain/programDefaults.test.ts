@@ -9,16 +9,18 @@ import {
   rowDefaults,
   type RowDefaults,
 } from './programDefaults';
-import { newId, type Block, type BlockType, type Row } from './program';
+import { newId, type Block, type BlockType, type Range, type Row, type SetSpec } from './program';
+
+function setsOf(count: number, reps: Range, rir: Range): SetSpec[] {
+  return Array.from({ length: count }, () => ({ reps: { ...reps }, rir: { ...rir } }));
+}
 
 function row(overrides: Partial<Row> = {}): Row {
   return {
     id: newId(),
     exerciseId: 'exercise-1',
     slot: 'A',
-    sets: 3,
-    reps: { min: 8, max: 10 },
-    rir: { min: 1, max: 2 },
+    sets: setsOf(3, { min: 8, max: 10 }, { min: 1, max: 2 }),
     restSeconds: 90,
     lastSetTechnique: 'none',
     substitutions: [],
@@ -66,15 +68,15 @@ function blockOf(rows: Row[]): Block {
 }
 
 const TABLE: [BlockType, ExerciseRole, RowDefaults][] = [
-  ['foundation', 'main-compound', { sets: 3, reps: { min: 12, max: 15 }, rir: { min: 3, max: 3 }, restSeconds: 75 }],
-  ['foundation', 'secondary-compound', { sets: 3, reps: { min: 12, max: 15 }, rir: { min: 3, max: 3 }, restSeconds: 75 }],
-  ['foundation', 'isolation', { sets: 3, reps: { min: 12, max: 15 }, rir: { min: 3, max: 3 }, restSeconds: 75 }],
-  ['hypertrophy', 'main-compound', { sets: 4, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, restSeconds: 150 }],
-  ['hypertrophy', 'secondary-compound', { sets: 3, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 }, restSeconds: 105 }],
-  ['hypertrophy', 'isolation', { sets: 3, reps: { min: 10, max: 20 }, rir: { min: 0, max: 2 }, restSeconds: 75 }],
-  ['strength', 'main-compound', { sets: 4, reps: { min: 3, max: 6 }, rir: { min: 1, max: 3 }, restSeconds: 150 }],
-  ['strength', 'secondary-compound', { sets: 3, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 }, restSeconds: 105 }],
-  ['strength', 'isolation', { sets: 3, reps: { min: 10, max: 20 }, rir: { min: 0, max: 2 }, restSeconds: 75 }],
+  ['foundation', 'main-compound', { sets: setsOf(3, { min: 12, max: 15 }, { min: 3, max: 3 }), restSeconds: 75 }],
+  ['foundation', 'secondary-compound', { sets: setsOf(3, { min: 12, max: 15 }, { min: 3, max: 3 }), restSeconds: 75 }],
+  ['foundation', 'isolation', { sets: setsOf(3, { min: 12, max: 15 }, { min: 3, max: 3 }), restSeconds: 75 }],
+  ['hypertrophy', 'main-compound', { sets: setsOf(4, { min: 6, max: 10 }, { min: 1, max: 2 }), restSeconds: 150 }],
+  ['hypertrophy', 'secondary-compound', { sets: setsOf(3, { min: 8, max: 12 }, { min: 1, max: 2 }), restSeconds: 105 }],
+  ['hypertrophy', 'isolation', { sets: setsOf(3, { min: 10, max: 20 }, { min: 0, max: 2 }), restSeconds: 75 }],
+  ['strength', 'main-compound', { sets: setsOf(4, { min: 3, max: 6 }, { min: 1, max: 3 }), restSeconds: 150 }],
+  ['strength', 'secondary-compound', { sets: setsOf(3, { min: 8, max: 12 }, { min: 1, max: 2 }), restSeconds: 105 }],
+  ['strength', 'isolation', { sets: setsOf(3, { min: 10, max: 20 }, { min: 0, max: 2 }), restSeconds: 75 }],
 ];
 
 describe('rowDefaults', () => {
@@ -83,63 +85,144 @@ describe('rowDefaults', () => {
   });
 
   it('halves deload sets and keeps reps and rest of the previous values', () => {
-    const previous = { sets: 5, reps: { min: 6, max: 10 }, rir: { min: 1, max: 2 }, restSeconds: 150 };
-    expect(rowDefaults('deload', 'main-compound', previous)).toEqual({
-      sets: 3,
-      reps: { min: 6, max: 10 },
-      rir: { min: 4, max: 4 },
-      restSeconds: 150,
-    });
+    // arrange
+    const previous = { sets: setsOf(5, { min: 6, max: 10 }, { min: 1, max: 2 }), restSeconds: 150 };
+
+    // act
+    const result = rowDefaults('deload', 'main-compound', previous);
+
+    // assert
+    expect(result).toEqual({ sets: setsOf(3, { min: 6, max: 10 }, { min: 4, max: 4 }), restSeconds: 150 });
+  });
+
+  it('keeps per-set reps of the previous sets on a deload', () => {
+    // arrange
+    const previous = {
+      sets: [
+        { reps: { min: 5, max: 5 }, rir: { min: 1, max: 1 } },
+        { reps: { min: 8, max: 10 }, rir: { min: 2, max: 2 } },
+      ],
+      restSeconds: 120,
+    };
+
+    // act
+    const result = rowDefaults('deload', 'main-compound', previous);
+
+    // assert
+    expect(result.sets).toEqual([{ reps: { min: 5, max: 5 }, rir: { min: 4, max: 4 } }]);
   });
 });
 
 describe('defaultedRow', () => {
-  it('keeps a touched value', () => {
-    const result = defaultedRow(row({ sets: 5, touched: ['sets'] }), 'strength');
-    expect(result.sets).toBe(5);
-    expect(result.reps).toEqual({ min: 3, max: 6 });
+  it('keeps touched sets and refills rest', () => {
+    // arrange
+    const custom = setsOf(5, { min: 2, max: 2 }, { min: 0, max: 0 });
+
+    // act
+    const result = defaultedRow(row({ sets: custom, touched: ['sets'] }), 'strength');
+
+    // assert
+    expect(result.sets).toEqual(custom);
+    expect(result.restSeconds).toBe(150);
+  });
+
+  it('refills untouched sets from the block type', () => {
+    // act
+    const result = defaultedRow(row(), 'strength');
+
+    // assert
+    expect(result.sets).toEqual(setsOf(4, { min: 3, max: 6 }, { min: 1, max: 3 }));
   });
 
   it('picks the role from the slot', () => {
-    expect(defaultedRow(row({ slot: 'C' }), 'hypertrophy').restSeconds).toBe(75);
+    // act
+    const result = defaultedRow(row({ slot: 'C' }), 'hypertrophy');
+
+    // assert
+    expect(result.restSeconds).toBe(75);
   });
 });
 
 describe('deloadRow', () => {
   it('never drops deload sets below one', () => {
-    expect(deloadRow(row({ sets: 1 })).sets).toBe(1);
+    // act
+    const result = deloadRow(row({ sets: setsOf(1, { min: 8, max: 10 }, { min: 1, max: 2 }) }));
+
+    // assert
+    expect(result.sets).toHaveLength(1);
   });
 
-  it('halves sets, sets RIR to four and clears touched', () => {
-    const result = deloadRow(row({ sets: 5, touched: ['sets', 'rir'] }));
-    expect(result).toMatchObject({ sets: 3, rir: { min: 4, max: 4 }, reps: { min: 8, max: 10 }, restSeconds: 90, touched: [] });
+  it('halves sets, sets every RIR to four and clears touched', () => {
+    // arrange
+    const source = row({ sets: setsOf(5, { min: 8, max: 10 }, { min: 1, max: 2 }), touched: ['sets'] });
+
+    // act
+    const result = deloadRow(source);
+
+    // assert
+    expect(result).toMatchObject({
+      sets: setsOf(3, { min: 8, max: 10 }, { min: 4, max: 4 }),
+      restSeconds: 90,
+      touched: [],
+    });
   });
 });
 
 describe('resetRowDefaults', () => {
   it('resets touched values', () => {
-    const result = resetRowDefaults(row({ sets: 7, touched: ['sets'] }), 'strength');
-    expect(result.sets).toBe(4);
+    // arrange
+    const source = row({ sets: setsOf(7, { min: 1, max: 1 }, { min: 0, max: 0 }), touched: ['sets'] });
+
+    // act
+    const result = resetRowDefaults(source, 'strength');
+
+    // assert
+    expect(result.sets).toEqual(setsOf(4, { min: 3, max: 6 }, { min: 1, max: 3 }));
     expect(result.touched).toEqual([]);
   });
 
-  it('reset on a deload block keeps sets', () => {
-    const result = resetRowDefaults(row({ sets: 4, reps: { min: 6, max: 8 }, restSeconds: 120, rir: { min: 1, max: 2 }, touched: ['sets', 'rir'] }), 'deload');
-    expect(result).toMatchObject({ sets: 4, reps: { min: 6, max: 8 }, restSeconds: 120, rir: { min: 4, max: 4 }, touched: [] });
+  it('reset on a deload block keeps sets and sets RIR to four', () => {
+    // arrange
+    const source = row({ sets: setsOf(4, { min: 6, max: 8 }, { min: 1, max: 2 }), restSeconds: 120, touched: ['sets'] });
+
+    // act
+    const result = resetRowDefaults(source, 'deload');
+
+    // assert
+    expect(result).toMatchObject({
+      sets: setsOf(4, { min: 6, max: 8 }, { min: 4, max: 4 }),
+      restSeconds: 120,
+      touched: [],
+    });
   });
 });
 
 describe('reDefaultedBlock', () => {
   it('re-defaults every row and sets the type', () => {
-    const result = reDefaultedBlock(blockOf([row({ sets: 9, touched: ['sets'] })]), 'strength');
+    // arrange
+    const custom = setsOf(9, { min: 8, max: 10 }, { min: 1, max: 2 });
+
+    // act
+    const result = reDefaultedBlock(blockOf([row({ sets: custom, touched: ['sets'] })]), 'strength');
+
+    // assert
     expect(result.type).toBe('strength');
-    expect(result.sessions[0].rows[0]).toMatchObject({ sets: 9, reps: { min: 3, max: 6 } });
+    expect(result.sessions[0].rows[0]).toMatchObject({ sets: custom, restSeconds: 150 });
   });
 
   it('derives deload sets from the source rows', () => {
-    const result = reDefaultedBlock(blockOf([row({ sets: 4, touched: ['sets'] })]), 'deload');
+    // arrange
+    const source = row({ sets: setsOf(4, { min: 8, max: 10 }, { min: 1, max: 2 }), touched: ['sets'] });
+
+    // act
+    const result = reDefaultedBlock(blockOf([source]), 'deload');
+
+    // assert
     expect(result.type).toBe('deload');
-    expect(result.sessions[0].rows[0]).toMatchObject({ sets: 2, rir: { min: 4, max: 4 }, touched: [] });
+    expect(result.sessions[0].rows[0]).toMatchObject({
+      sets: setsOf(2, { min: 8, max: 10 }, { min: 4, max: 4 }),
+      touched: [],
+    });
   });
 });
 

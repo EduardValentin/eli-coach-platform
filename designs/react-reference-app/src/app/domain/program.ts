@@ -1,5 +1,5 @@
 import type { CycleMode } from './cycleMode';
-import type { ExerciseRole } from './exercises';
+import type { Equipment, ExerciseRole } from './exercises';
 
 export type { CycleMode };
 
@@ -21,10 +21,9 @@ export const SLOTS: readonly Slot[] = ['A', 'B', 'C', 'D'];
 export type Range = { min: number; max: number };
 export type LastSetTechnique = 'none' | 'drop-set' | 'rest-pause';
 export type Progression = { kind: 'double' } | { kind: 'custom'; text: string };
+export type SetSpec = { reps: Range; rir: Range };
 export type RowField =
   | 'sets'
-  | 'reps'
-  | 'rir'
   | 'restSeconds'
   | 'warmUpSets'
   | 'weightKg'
@@ -39,9 +38,7 @@ export type Row = {
   slot: Slot;
   supersetGroup?: string;
   warmUpSets?: string;
-  sets: number;
-  reps: Range;
-  rir: Range;
+  sets: SetSpec[];
   weightKg?: number;
   restSeconds: number;
   tempo?: string;
@@ -108,6 +105,7 @@ export type ProgramVersion = {
 export type Program = {
   callId: string;
   goal: string;
+  equipment: Equipment[];
   language: ProgramLanguage;
   cycleMode: CycleMode;
   level: LevelHint;
@@ -131,6 +129,30 @@ const ROLE_BY_SLOT: Record<Slot, ExerciseRole> = {
 
 export function roleForSlot(slot: Slot): ExerciseRole {
   return ROLE_BY_SLOT[slot];
+}
+
+export function formatRange({ min, max }: Range): string {
+  return min === max ? String(min) : `${min}–${max}`;
+}
+
+function sameRange(left: Range, right: Range): boolean {
+  return left.min === right.min && left.max === right.max;
+}
+
+export function setText(set: SetSpec, repsSuffix = ''): string {
+  return `${formatRange(set.reps)}${repsSuffix} · RIR ${formatRange(set.rir)}`;
+}
+
+export function uniformSets(sets: SetSpec[]): boolean {
+  const [first] = sets;
+  return sets.every(set => sameRange(set.reps, first.reps) && sameRange(set.rir, first.rir));
+}
+
+export function setsSummary(sets: SetSpec[], repsSuffix = ''): string {
+  const [first] = sets;
+  if (!first) return 'No sets';
+  if (!uniformSets(sets)) return `${sets.length} sets`;
+  return `${sets.length} × ${setText(first, repsSuffix)}`;
 }
 
 export function positionLabel(session: Session, row: Row): string {

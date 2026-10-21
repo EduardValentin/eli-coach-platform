@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { PROGRAM_SEEDS, programForSeed } from './programSamples';
+import { PROGRAM_SEEDS, programForSeed, type SeedClient } from './programSamples';
 import { SAMPLE_EXERCISES } from './exerciseSamples';
-import { currentVersion, draftOf } from '../domain/program';
+import { currentVersion, draftOf, roleForSlot } from '../domain/program';
+import { slotPlanFor } from '../domain/splitTemplates';
 
 const DAY_ONE = new Date(2026, 8, 1);
+const CLIENT: SeedClient = { callId: 'call-1', dayOne: DAY_ONE, cycleMode: 'adapted', equipment: ['Dumbbells', 'Bench'] };
+const exercisesById = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
 
 describe('programForSeed', () => {
   it('lists the seeds the Dev Toggle offers', () => {
@@ -11,11 +14,11 @@ describe('programForSeed', () => {
   });
 
   it('has no program for the none seed', () => {
-    expect(programForSeed('none', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted')).toBeNull();
+    expect(programForSeed('none', CLIENT, SAMPLE_EXERCISES)).toBeNull();
   });
 
   it('seeds a version 1 draft with an exercise in every row', () => {
-    const program = programForSeed('draft', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
 
     expect(program?.callId).toBe('call-1');
     expect(program?.versions).toHaveLength(1);
@@ -27,14 +30,14 @@ describe('programForSeed', () => {
   });
 
   it('seeds a published version 1 dated at day one', () => {
-    const program = programForSeed('published', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
+    const program = programForSeed('published', CLIENT, SAMPLE_EXERCISES);
 
     expect(program?.versions).toHaveLength(1);
     expect(currentVersion(program!)).toMatchObject({ number: 1, publishedAt: DAY_ONE });
   });
 
   it('seeds a superseded version 1, a published version 2 and a version 3 draft', () => {
-    const program = programForSeed('two-versions', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'adapted');
+    const program = programForSeed('two-versions', CLIENT, SAMPLE_EXERCISES);
 
     expect(program?.versions.map(version => [version.number, version.state])).toEqual([
       [1, 'superseded'],
@@ -50,7 +53,58 @@ describe('programForSeed', () => {
     );
   });
 
+  it('fills every slot from its plan with distinct exercises and skips a slot without a candidate', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const [block] = program!.versions[0].content.plan.blocks;
+    for (const session of block.sessions) {
+      expect(session.rows.map(row => row.slot)).toEqual(['A', 'B', 'C', 'D']);
+      expect(new Set(session.rows.map(row => row.exerciseId)).size).toBe(session.rows.length);
+      for (const row of session.rows) {
+        const pattern = exercisesById.get(row.exerciseId)?.pattern;
+        expect(slotPlanFor(block, session, row.slot)?.patterns).toContain(pattern);
+      }
+    }
+  });
+
+  it('pairs two accessories in one superset group when the library has them', () => {
+    // arrange
+    const [lateralRaise] = SAMPLE_EXERCISES.filter(exercise => exercise.pattern === 'isolation');
+    const library = [...SAMPLE_EXERCISES, { ...lateralRaise, id: 'curl', name: 'Biceps Curl' }];
+
+    // act
+    const program = programForSeed('draft', CLIENT, library);
+
+    // assert
+    const [session] = program!.versions[0].content.plan.blocks[0].sessions;
+    const accessories = session.rows.filter(row => row.slot === 'C');
+    expect(accessories.map(row => row.exerciseId)).toEqual([lateralRaise.id, 'curl']);
+    expect(accessories[0].supersetGroup).toBeDefined();
+    expect(accessories[1].supersetGroup).toBe(accessories[0].supersetGroup);
+    expect(session.rows.filter(row => row.slot !== 'C').every(row => row.supersetGroup === undefined)).toBe(true);
+  });
+
+  it('prefers the exercise whose role matches the slot', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const [session] = program!.versions[0].content.plan.blocks[0].sessions;
+    const main = session.rows.find(row => row.slot === 'A');
+    expect(exercisesById.get(main!.exerciseId)?.role).toBe(roleForSlot('A'));
+  });
+
+  it('stores the client equipment and the onboarding goal', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    expect(program).toMatchObject({ equipment: ['Dumbbells', 'Bench'], goal: 'Lose fat' });
+  });
+
   it('gives the program the cycle mode it is seeded with', () => {
-    expect(programForSeed('draft', 'call-1', DAY_ONE, SAMPLE_EXERCISES, 'general')?.cycleMode).toBe('general');
+    expect(programForSeed('draft', { ...CLIENT, cycleMode: 'general' }, SAMPLE_EXERCISES)?.cycleMode).toBe('general');
   });
 });

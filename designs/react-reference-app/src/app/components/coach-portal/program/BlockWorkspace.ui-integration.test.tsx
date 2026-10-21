@@ -84,6 +84,10 @@ function positions(): string[] {
     .map(header => header.textContent ?? '');
 }
 
+function rowAt(position: string): HTMLElement {
+  return within(firstSession()).getByRole('rowheader', { name: position }).closest('tr') as HTMLElement;
+}
+
 async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLElement, option: string) {
   await user.click(combobox);
   await user.click(screen.getByRole('option', { name: option }));
@@ -98,16 +102,17 @@ describe('BlockWorkspace', () => {
   it('changing the block type refills untouched values and keeps a typed one', async () => {
     // arrange
     const user = await openFirstBlock();
-    await retype(user, within(firstSession()).getByRole('spinbutton', { name: /^Sets for A / }), '5');
+    await retype(user, within(firstSession()).getByRole('textbox', { name: /^Rest for A / }), '3:00');
 
     // act
     await choose(user, screen.getByRole('combobox', { name: 'Block type' }), 'Hypertrophy');
 
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Hypertrophy' })).toBeInTheDocument();
-    expect(within(firstSession()).getByRole('textbox', { name: /^Reps for A / })).toHaveValue('6–10');
-    expect(within(firstSession()).getByRole('spinbutton', { name: /^Sets for A / })).toHaveValue(5);
-    expect(within(firstSession()).getByRole('textbox', { name: /^Reps for B / })).toHaveValue('8–12');
+    expect(within(rowAt('A')).getByText('4 × 6–10 · RIR 1–2')).toBeInTheDocument();
+    expect(within(firstSession()).getByRole('textbox', { name: /^Rest for A / })).toHaveValue('3:00');
+    expect(within(rowAt('B')).getByText('3 × 8–12 /side · RIR 1–2')).toBeInTheDocument();
+    expect(within(firstSession()).getByRole('textbox', { name: /^Rest for B / })).toHaveValue('1:45');
   });
 
   it('renames the split without touching its text', async () => {
@@ -139,10 +144,10 @@ describe('BlockWorkspace', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Replace sessions' }));
 
     // assert
-    expect(screen.getByRole('table', { name: 'Lower A exercises' })).toBeInTheDocument();
+    const lowerA = screen.getByRole('table', { name: 'Lower A exercises' });
     expect(screen.getByRole('button', { name: /^Upper A/ })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Monday' })).toHaveTextContent('Lower A');
-    expect(within(screen.getByRole('table', { name: 'Lower A exercises' })).getAllByRole('button', { name: 'Choose an exercise' })).toHaveLength(4);
+    expect(within(lowerA).queryAllByRole('rowheader')).toHaveLength(0);
   });
 
   it('places a session on a weekday', async () => {
@@ -162,61 +167,64 @@ describe('BlockWorkspace', () => {
   it('shows the estimated minutes against the target', async () => {
     // arrange
     const user = await openFirstBlock();
-    expect(screen.getByText('~28 min / 60')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Full Body B.*4 exercises · ~28 min/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('~32 min / 60')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Full Body B.*4 exercises · ~32 min/ })).toHaveAttribute('aria-expanded', 'false');
 
     // act
     await choose(user, screen.getByRole('combobox', { name: 'Target minutes' }), '30 min');
-    await retype(user, within(firstSession()).getByRole('spinbutton', { name: /^Sets for A / }), '10');
+    await retype(user, within(firstSession()).getByRole('textbox', { name: /^Rest for A / }), '5:00');
+    await user.tab();
 
     // assert
-    expect(screen.getByText('~42 min / 30')).toBeInTheDocument();
+    expect(screen.getByText('~43 min / 30')).toBeInTheDocument();
     expect(screen.getByText('Over target')).toBeInTheDocument();
   });
 
   it('groups two accessory rows into a superset labelled C1 and C2', async () => {
     // arrange
     const user = await openFirstBlock();
-    expect(positions()).toEqual(['A', 'B', 'C1', 'C2']);
+    await user.click(screen.getByRole('button', { name: 'Add exercise' }));
+    await user.click(screen.getByRole('button', { name: 'Close exercise library' }));
+    expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
     await user.click(within(firstSession()).getAllByRole('button', { name: /^Show details for / })[2]);
-    await user.click(screen.getByRole('button', { name: 'Split superset' }));
-    expect(positions()).toEqual(['A', 'B', 'C', 'C']);
 
     // act
     await user.click(screen.getByRole('button', { name: 'Superset with next' }));
 
     // assert
-    expect(positions()).toEqual(['A', 'B', 'C1', 'C2']);
+    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'D']);
     expect(screen.getByRole('group', { name: /^C1 / })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Split superset' }));
+    expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
   });
 
   it('reset to block defaults clears a typed value', async () => {
     // arrange
     const user = await openFirstBlock();
-    const sets = within(firstSession()).getByRole('spinbutton', { name: /^Sets for A / });
-    await retype(user, sets, '5');
+    await retype(user, within(firstSession()).getByRole('textbox', { name: /^Rest for A / }), '3:00');
+    await user.tab();
     await user.click(within(firstSession()).getAllByRole('button', { name: /^Show details for / })[0]);
 
     // act
     await user.click(screen.getByRole('button', { name: 'Reset to block defaults' }));
 
     // assert
-    expect(within(firstSession()).getByRole('spinbutton', { name: /^Sets for A / })).toHaveValue(3);
+    expect(within(firstSession()).getByRole('textbox', { name: /^Rest for A / })).toHaveValue('1:15');
   });
 
-  it('keeps the previous reps when the typed text is not a range', async () => {
+  it('keeps the previous rest when the typed text is not a duration', async () => {
     // arrange
     const user = await openFirstBlock();
-    const reps = within(firstSession()).getByRole('textbox', { name: /^Reps for A / });
+    const rest = within(firstSession()).getByRole('textbox', { name: /^Rest for A / });
 
     // act
-    await retype(user, reps, 'lots');
+    await retype(user, rest, 'lots');
     await user.tab();
 
     // assert
-    expect(screen.getByText('Use a number or a range like 8–12')).toBeInTheDocument();
+    expect(screen.getByText('Use seconds or m:ss like 1:30')).toBeInTheDocument();
     await choose(user, screen.getByRole('combobox', { name: 'Block type' }), 'Hypertrophy');
-    expect(within(firstSession()).getByRole('textbox', { name: /^Reps for A / })).toHaveValue('6–10');
+    expect(within(firstSession()).getByRole('textbox', { name: /^Rest for A / })).toHaveValue('2:30');
   });
 
   it('adds an exercise row waiting for a choice', async () => {
@@ -227,7 +235,7 @@ describe('BlockWorkspace', () => {
     await user.click(screen.getByRole('button', { name: 'Add exercise' }));
 
     // assert
-    expect(positions()).toEqual(['A', 'B', 'C1', 'C2', 'C']);
+    expect(positions()).toEqual(['A', 'B', 'C', 'C', 'D']);
     expect(within(firstSession()).getByRole('button', { name: 'Choose an exercise' })).toBeInTheDocument();
   });
 
@@ -256,6 +264,6 @@ describe('BlockWorkspace', () => {
     const cards = within(screen.getByRole('list', { name: 'Full Body A exercises' })).getAllByRole('article');
     expect(cards).toHaveLength(4);
     expect(within(cards[0]).getByRole('heading', { level: 4, name: /^A / })).toBeInTheDocument();
-    expect(within(cards[0]).getByRole('spinbutton', { name: /^Sets for A / })).toHaveValue(3);
+    expect(within(cards[0]).getByText('3 × 12–15 · RIR 3')).toBeInTheDocument();
   });
 });

@@ -1,27 +1,14 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { positionLabel, type Row, type Session } from '../../../domain/program';
+import { positionLabel, setsSummary, type Row, type Session } from '../../../domain/program';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { TableCell, TableRow } from '../../ui/table';
 import { cn } from '../../ui/utils';
 import { RowTextField } from './RowTextField';
-import {
-  formatRange,
-  formatRest,
-  parseRange,
-  parseRest,
-  parseSets,
-  RANGE_FIELDS,
-  RANGE_PROBLEM,
-  repsSuffix,
-  REST_PROBLEM,
-  rowHint,
-  SETS_PROBLEM,
-  withField,
-} from './rowFields';
+import { formatRest, parseRest, repsSuffix, REST_PROBLEM, rowHint, withField } from './rowFields';
 
 export type RowLayout = 'table' | 'card';
 
@@ -35,7 +22,7 @@ type ExerciseRowLineProps = {
   children: ReactNode;
 };
 
-export const ROW_COLUMN_COUNT = 8;
+export const ROW_COLUMN_COUNT = 6;
 const CELL_CLASS = 'px-2 py-2 align-top';
 
 function ExerciseName({ id, exercise, onPick }: { id: string; exercise: Exercise | undefined; onPick: () => void }) {
@@ -64,35 +51,8 @@ function rowFields({ row, exercise, onChange }: Pick<ExerciseRowLineProps, 'row'
     {
       key: 'sets',
       heading: 'Sets',
-      node: (
-        <RowTextField
-          type="number"
-          className="w-16"
-          label={`Sets for ${rowLabel}`}
-          value={row.sets}
-          format={String}
-          parse={parseSets}
-          problem={SETS_PROBLEM}
-          onCommit={sets => onChange(withField(row, 'sets', sets))}
-        />
-      ),
+      node: <span className="text-sm tabular-nums text-text-primary">{setsSummary(row.sets, repsSuffix(exercise))}</span>,
     },
-    ...RANGE_FIELDS.map(({ field, label }) => ({
-      key: field,
-      heading: label,
-      node: (
-        <RowTextField
-          className="w-20"
-          label={`${label} for ${rowLabel}`}
-          value={row[field]}
-          format={formatRange}
-          parse={parseRange}
-          problem={RANGE_PROBLEM}
-          suffix={field === 'reps' ? repsSuffix(exercise) : undefined}
-          onCommit={range => onChange(withField(row, field, range))}
-        />
-      ),
-    })),
     {
       key: 'rest',
       heading: 'Rest',

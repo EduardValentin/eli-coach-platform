@@ -9,6 +9,7 @@ import { dayOneOf, ProgramProvider, usePrograms, type ProgramContextType } from 
 import { TrainingProvider } from './TrainingContext';
 import { currentVersion, draftOf, type ProgramContent } from '../domain/program';
 import type { ProgramSetup } from '../domain/programOnboarding';
+import { emptyRow } from '../domain/programSuggestions';
 
 const SETUP: ProgramSetup = {
   goal: 'Lose fat',
@@ -18,6 +19,7 @@ const SETUP: ProgramSetup = {
   cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
+  equipment: ['Dumbbells', 'Bench'],
 };
 
 type Hooks = { programs: ProgramContextType; journeys: ReturnType<typeof useClientJourneys> };
@@ -57,7 +59,7 @@ function withExercises(content: ProgramContent): ProgramContent {
         ...block,
         sessions: block.sessions.map(session => ({
           ...session,
-          rows: session.rows.map(row => ({ ...row, exerciseId: 'e1' })),
+          rows: [{ ...emptyRow(block.type, 'A'), exerciseId: 'e1' }],
         })),
       })),
     },
@@ -96,7 +98,13 @@ describe('creating a program', () => {
 
     // assert
     const program = hooks.programs.programFor(DEMO_JOURNEY_CALL_ID);
-    expect(program).toMatchObject({ goal: 'Lose fat', level: 'beginner', language: 'en', cycleMode: 'adapted' });
+    expect(program).toMatchObject({
+      goal: 'Lose fat',
+      equipment: ['Dumbbells', 'Bench'],
+      level: 'beginner',
+      language: 'en',
+      cycleMode: 'adapted',
+    });
     expect(program?.versions).toHaveLength(1);
     expect(program?.versions[0]).toMatchObject({ number: 1, state: 'draft', publishedAt: null, whatChanged: '' });
     expect(program?.versions[0].content.plan.blocks.length).toBeGreaterThan(0);

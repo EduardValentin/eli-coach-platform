@@ -59,7 +59,13 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   const ctx = ruleContextFor({ journey, program, draft }, today, exercises);
   const { content } = draft;
   const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ctx.dayOne, today);
-  const setup: ProgramSetup = { ...setupFromJourney(journey), level: program.level, cycleMode: program.cycleMode, language: program.language };
+  const setup: ProgramSetup = {
+    ...setupFromJourney(journey),
+    level: program.level,
+    cycleMode: program.cycleMode,
+    language: program.language,
+    equipment: program.equipment,
+  };
 
   function select(section: EditorSection) {
     navigate({ pathname: location.pathname, search: location.search, hash: sectionHash(section) }, { replace: true });

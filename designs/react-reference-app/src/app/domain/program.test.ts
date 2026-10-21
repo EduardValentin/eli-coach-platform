@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ProgramSetup } from './programOnboarding';
 import { initialContent } from './programSuggestions';
 import {
   contentWithFreshIds,
@@ -8,6 +9,7 @@ import {
   newId,
   positionLabel,
   roleForSlot,
+  setsSummary,
   type Program,
   type ProgramContent,
   type ProgramVersion,
@@ -22,9 +24,11 @@ function row(slot: Row['slot'], supersetGroup?: string): Row {
     exerciseId: 'exercise-1',
     slot,
     supersetGroup,
-    sets: 3,
-    reps: { min: 8, max: 10 },
-    rir: { min: 1, max: 2 },
+    sets: [
+      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+      { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
+    ],
     restSeconds: 90,
     lastSetTechnique: 'none',
     substitutions: [],
@@ -58,7 +62,7 @@ function version(number: number, state: VersionState): ProgramVersion {
 }
 
 function programWith(versions: ProgramVersion[]): Program {
-  return { callId: 'call-1', goal: 'strength', language: 'en', cycleMode: 'adapted', level: 'beginner', versions };
+  return { callId: 'call-1', goal: 'Build muscle', equipment: [], language: 'en', cycleMode: 'adapted', level: 'beginner', versions };
 }
 
 describe('roleForSlot', () => {
@@ -122,7 +126,7 @@ describe('newId', () => {
 });
 
 describe('contentWithFreshIds', () => {
-  const setup = {
+  const setup: ProgramSetup = {
     goal: 'Lose fat',
     level: 'beginner',
     trainingDays: 3,
@@ -130,10 +134,18 @@ describe('contentWithFreshIds', () => {
     cycleMode: 'adapted',
     language: 'en',
     dailySteps: 6000,
-  } as const;
+    equipment: [],
+  };
+
+  function contentWithRows() {
+    const content = initialContent(setup);
+    const [block, ...blocks] = content.plan.blocks;
+    const sessions = block.sessions.map(session => ({ ...session, rows: [row('A')] }));
+    return { ...content, plan: { blocks: [{ ...block, sessions }, ...blocks] } };
+  }
 
   it('gives every block, session and row a new id and keeps the origin ids', () => {
-    const content = initialContent(setup);
+    const content = contentWithRows();
 
     const copy = contentWithFreshIds(content);
 
@@ -168,10 +180,59 @@ describe('filledSessionCount', () => {
       cycleMode: 'general',
       language: 'en',
       dailySteps: 6000,
+      equipment: [],
     }).plan.blocks;
     const [first, ...rest] = block.sessions;
-    const filled = { ...first, rows: first.rows.map((row, index) => (index === 0 ? { ...row, exerciseId: 'e1' } : row)) };
+    const filled = { ...first, rows: [row('A')] };
     expect(filledSessionCount(block)).toBe(0);
     expect(filledSessionCount({ ...block, sessions: [filled, ...rest] })).toBe(1);
+  });
+});
+
+describe('setsSummary', () => {
+  const set = (reps: [number, number], rir: [number, number]) => ({
+    reps: { min: reps[0], max: reps[1] },
+    rir: { min: rir[0], max: rir[1] },
+  });
+
+  it('summarises identical sets by count, reps and RIR range', () => {
+    // arrange
+    const sets = Array.from({ length: 4 }, () => set([6, 10], [1, 2]));
+
+    // act
+    const summary = setsSummary(sets);
+
+    // assert
+    expect(summary).toBe('4 × 6–10 · RIR 1–2');
+  });
+
+  it('shows a single RIR when its range is one value', () => {
+    // arrange
+    const sets = [set([8, 8], [2, 2]), set([8, 8], [2, 2]), set([8, 8], [2, 2])];
+
+    // act
+    const summary = setsSummary(sets);
+
+    // assert
+    expect(summary).toBe('3 × 8 · RIR 2');
+  });
+
+  it('counts sets when they differ', () => {
+    // arrange
+    const sets = [set([5, 5], [2, 2]), set([8, 10], [1, 2]), set([8, 10], [1, 2]), set([8, 10], [1, 2])];
+
+    // act
+    const summary = setsSummary(sets);
+
+    // assert
+    expect(summary).toBe('4 sets');
+  });
+
+  it('says there are no sets for an empty list', () => {
+    // act
+    const summary = setsSummary([]);
+
+    // assert
+    expect(summary).toBe('No sets');
   });
 });

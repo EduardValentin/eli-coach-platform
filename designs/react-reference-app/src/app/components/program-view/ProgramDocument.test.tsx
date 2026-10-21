@@ -12,7 +12,7 @@ const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
 
 function viewFor(cycleMode: CycleMode, seed: 'published' | 'two-versions' = 'published'): ProgramView {
-  const program = programForSeed(seed, 'ac-demo-client-1', DAY_ONE, SAMPLE_EXERCISES, cycleMode);
+  const program = programForSeed(seed, { callId: 'ac-demo-client-1', dayOne: DAY_ONE, cycleMode, equipment: [] }, SAMPLE_EXERCISES);
   if (!program) throw new Error('seed missing');
   const version = currentVersion(program);
   if (!version) throw new Error('version missing');
@@ -34,13 +34,15 @@ function blockOf(view: ProgramView) {
   return block;
 }
 
+const STEADY_SET = { reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+
 describe('TrackingTable', () => {
   it('has a column per week and a row per set', () => {
     // arrange
     const view = viewFor('adapted');
     const block = { ...blockOf(view), weeks: 6, calibrationWeek: true };
     const session = structuredClone(block.sessions[0]);
-    session.rows = [{ ...session.rows[0], sets: 4 }];
+    session.rows = [{ ...session.rows[0], sets: [STEADY_SET, STEADY_SET, STEADY_SET, STEADY_SET] }];
 
     // act
     render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
@@ -52,6 +54,24 @@ describe('TrackingTable', () => {
     expect(within(table).getAllByRole('columnheader', { name: 'kg × reps' })).toHaveLength(6);
     expect(within(table).getAllByRole('row')).toHaveLength(2 + 4);
     expect(within(table).getAllByRole('rowheader')).toHaveLength(1);
+    expect(within(table).getByRole('rowheader')).toHaveTextContent('4 × 8–10 · RIR 1–2');
+  });
+
+  it('prescribes each set on its own line when the sets differ', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const block = blockOf(view);
+    const session = structuredClone(block.sessions[0]);
+    const topSet = { reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
+    session.rows = [{ ...session.rows[0], sets: [topSet, STEADY_SET] }];
+
+    // act
+    render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
+
+    // assert
+    expect(screen.getByRole('cell', { name: '1 · 5 · RIR 2' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '2 · 8–10 · RIR 1–2' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader')).not.toHaveTextContent('2 sets');
   });
 
   it('skips rows without an exercise', () => {
@@ -59,7 +79,7 @@ describe('TrackingTable', () => {
     const view = viewFor('adapted');
     const block = blockOf(view);
     const session = structuredClone(block.sessions[0]);
-    session.rows = [{ ...session.rows[0], exerciseId: '', sets: 3 }];
+    session.rows = [{ ...session.rows[0], exerciseId: '' }];
 
     // act
     render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);

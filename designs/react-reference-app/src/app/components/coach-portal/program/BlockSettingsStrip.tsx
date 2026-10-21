@@ -54,12 +54,13 @@ function Setting({ label, children }: { label: string; children: ReactNode }) {
 
 function reshaped(block: Block, shape: SplitShape, language: ProgramLanguage): Block {
   const days = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
-  const sessions = emptySessionsFor(shape, days, block.type);
+  const sessions = emptySessionsFor(shape, days);
   return {
     ...block,
     split: { ...block.split, shape, text: fillTemplate(templateText(`split.${shape}`, language).text, { days }) },
     sessions,
     calendar: spreadCalendar(
+      shape,
       sessions.map(session => session.id),
       block.cardioSessions,
     ),

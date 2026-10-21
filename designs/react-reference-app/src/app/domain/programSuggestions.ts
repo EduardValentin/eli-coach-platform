@@ -19,6 +19,7 @@ import {
 import type { ProgramSetup } from './programOnboarding';
 import { cardioDefaults, reDefaultedBlock, rowDefaults } from './programDefaults';
 import { fillTemplate, templateText } from './programTemplates';
+import { SPLIT_TEMPLATES } from './splitTemplates';
 import type { Exercise } from '../context/TrainingContext';
 
 type SuggestedBlock = { type: BlockType; weeks: number; calibrationWeek: boolean };
@@ -41,11 +42,6 @@ const SUGGESTED_BLOCKS: Record<LevelHint, SuggestedBlock[]> = {
   ],
 };
 
-const SESSION_NAMES: Record<SplitShape, string[]> = {
-  'full-body': ['Full Body A', 'Full Body B', 'Full Body C'],
-  'upper-lower': ['Lower A', 'Upper A', 'Lower B', 'Upper B', 'Lower C'],
-};
-
 const WARM_UP_SETS_NOTE = '2–3 light sets, 10 → 6 → 3';
 const SECONDS_PER_SET = 45;
 const SESSION_OVERHEAD_MINUTES = 8;
@@ -61,11 +57,8 @@ export function splitShapeFor(days: number): SplitShape {
   return days <= 3 ? 'full-body' : 'upper-lower';
 }
 
-export function sessionNamesFor(shape: SplitShape, days: number): string[] {
-  return SESSION_NAMES[shape].slice(0, days);
-}
-
 export function spreadCalendar(
+  shape: SplitShape,
   sessionIds: string[],
   cardio: CardioSession[],
 ): Record<Weekday, CalendarEntry> {
@@ -73,8 +66,7 @@ export function spreadCalendar(
     Weekday,
     CalendarEntry
   >;
-  const spaced = sessionIds.length * 2 - 1 <= WEEKDAYS.length;
-  const sessionDays = sessionIds.map((_, index) => WEEKDAYS[spaced ? index * 2 : index]);
+  const sessionDays = SPLIT_TEMPLATES[shape].layout(sessionIds.length);
   sessionIds.forEach((sessionId, index) => {
     calendar[sessionDays[index]] = { kind: 'session', sessionId };
   });
@@ -100,23 +92,20 @@ export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): R
   };
 }
 
-function emptySession(name: string, type: BlockType): Session {
+function emptySession(name: string): Session {
   const id = newId();
-  const group = newId();
-  const slots: [Slot, string | undefined][] = [['A', undefined], ['B', undefined], ['C', group], ['C', group]];
-  if (type === 'hypertrophy') slots.push(['D', undefined]);
   return {
     id,
     originId: id,
     name,
     warmUp: { mobilityExerciseIds: [], warmUpSetsNote: WARM_UP_SETS_NOTE },
     coolDown: false,
-    rows: slots.map(([slot, supersetGroup]) => emptyRow(type, slot, supersetGroup)),
+    rows: [],
   };
 }
 
-export function emptySessionsFor(shape: SplitShape, days: number, type: BlockType): Session[] {
-  return sessionNamesFor(shape, days).map(name => emptySession(name, type));
+export function emptySessionsFor(shape: SplitShape, days: number): Session[] {
+  return SPLIT_TEMPLATES[shape].sessions(days).map(template => emptySession(template.name));
 }
 
 export function copiedSessions(sessions: Session[]): Session[] {
@@ -143,9 +132,10 @@ export function newBlock(
   previous?: Block,
 ): Block {
   const shape = splitShapeFor(setup.trainingDays);
-  const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays, type);
+  const sessions = previous ? copiedSessions(previous.sessions) : emptySessionsFor(shape, setup.trainingDays);
   const defaultCardio = cardioDefaults(type);
   const calendar = spreadCalendar(
+    previous?.split.shape ?? shape,
     sessions.map(session => session.id),
     defaultCardio,
   );
@@ -195,10 +185,10 @@ export function estimatedMinutes(session: Session): number {
   let seconds = 0;
   for (const row of session.rows) {
     if (row.supersetGroup === undefined) {
-      seconds += row.sets * (SECONDS_PER_SET + row.restSeconds);
+      seconds += row.sets.length * (SECONDS_PER_SET + row.restSeconds);
     } else if (!supersetsSeen.has(row.supersetGroup)) {
       supersetsSeen.add(row.supersetGroup);
-      seconds += row.sets * (2 * SECONDS_PER_SET + row.restSeconds);
+      seconds += row.sets.length * (2 * SECONDS_PER_SET + row.restSeconds);
     }
   }
   const coolDown = session.coolDown ? COOL_DOWN_MINUTES : 0;

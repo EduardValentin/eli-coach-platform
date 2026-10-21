@@ -13,6 +13,7 @@ export type ProgramSetup = {
   cycleMode: CycleMode;
   language: ProgramLanguage;
   dailySteps: number;
+  equipment: Equipment[];
 };
 
 const STRUCTURED_LEVEL = 'I train consistently and follow a structured program';
@@ -71,6 +72,7 @@ export function setupFromJourney(journey: ClientJourney): ProgramSetup {
     cycleMode: cycleModeOf(journey.onboarding, journey.identity.gender) ?? 'general',
     language: 'en',
     dailySteps: STEPS_DEFAULT,
+    equipment: clientEquipment(journey),
   };
 }
 

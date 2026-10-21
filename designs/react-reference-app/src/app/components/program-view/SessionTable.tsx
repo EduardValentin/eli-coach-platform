@@ -1,8 +1,17 @@
 import { ChevronDown } from 'lucide-react';
-import { positionLabel, type Block, type ProgramLanguage, type Row, type Session } from '../../domain/program';
+import {
+  positionLabel,
+  setsSummary,
+  setText,
+  uniformSets,
+  type Block,
+  type ProgramLanguage,
+  type Row,
+  type Session,
+} from '../../domain/program';
 import { templateText } from '../../domain/programTemplates';
 import type { Exercise } from '../../context/TrainingContext';
-import { formatRange, repsSuffix } from '../coach-portal/program/rowFields';
+import { repsSuffix } from '../coach-portal/program/rowFields';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { plainText, restLabel } from './programView';
@@ -40,8 +49,16 @@ function RowDetails({ row, exercise, language, exercisesById }: RowDetailsProps)
   );
 }
 
-function repsOf(row: Row, exercise: Exercise | undefined): string {
-  return `${formatRange(row.reps)}${repsSuffix(exercise)}`;
+function SetsCell({ row, exercise }: { row: Row; exercise: Exercise | undefined }) {
+  const suffix = repsSuffix(exercise);
+  if (uniformSets(row.sets)) return <>{setsSummary(row.sets, suffix)}</>;
+  return (
+    <ol className="grid gap-0.5">
+      {row.sets.map((set, index) => (
+        <li key={index}>{`Set ${index + 1}: ${setText(set, suffix)}`}</li>
+      ))}
+    </ol>
+  );
 }
 
 export function SessionTable({ session, block, language, exercisesById, mode }: SessionTableProps) {
@@ -61,8 +78,6 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
             <TableHead>Position</TableHead>
             <TableHead>Exercise</TableHead>
             <TableHead>Sets</TableHead>
-            <TableHead>Reps</TableHead>
-            <TableHead>RIR</TableHead>
             <TableHead>Rest</TableHead>
           </TableRow>
         </TableHeader>
@@ -74,13 +89,13 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
               <TableRow key={row.id} className={mode === 'client' ? 'border-b-0' : undefined}>
                 <TableCell>{positionLabel(session, row)}</TableCell>
                 <TableCell>{exercise ? exercise.name : 'Exercise removed'}</TableCell>
-                <TableCell>{row.sets}</TableCell>
-                <TableCell>{repsOf(row, exercise)}</TableCell>
-                <TableCell>{formatRange(row.rir)}</TableCell>
+                <TableCell>
+                  <SetsCell row={row} exercise={exercise} />
+                </TableCell>
                 <TableCell>{restLabel(row.restSeconds)}</TableCell>
               </TableRow>,
               <TableRow key={`${row.id}-details`}>
-                <TableCell colSpan={6} className="pt-0">
+                <TableCell colSpan={4} className="pt-0">
                   {mode === 'client' ? (
                     <Collapsible>
                       <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-text-secondary">

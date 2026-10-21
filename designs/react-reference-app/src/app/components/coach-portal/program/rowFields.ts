@@ -1,23 +1,13 @@
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Range, Row, RowField } from '../../../domain/program';
 
-export const RANGE_FIELDS = [
-  { field: 'reps', label: 'Reps' },
-  { field: 'rir', label: 'RIR' },
-] as const satisfies readonly { field: RowField; label: string }[];
-
 export const RANGE_PROBLEM = 'Use a number or a range like 8–12';
 export const REST_PROBLEM = 'Use seconds or m:ss like 1:30';
-export const SETS_PROBLEM = 'Use a whole number from 1';
 
 const RANGE_PATTERN = /^(\d+)(?:\s*[-–]\s*(\d+))?$/;
 const MINUTES_PATTERN = /^(\d+):([0-5]\d)$/;
 const SECONDS_PATTERN = /^(\d+)\s*s?$/;
 const SECONDS_PER_MINUTE = 60;
-
-export function formatRange({ min, max }: Range): string {
-  return min === max ? String(min) : `${min}–${max}`;
-}
 
 export function parseRange(text: string): Range | null {
   const match = RANGE_PATTERN.exec(text.trim());
@@ -39,11 +29,6 @@ export function parseRest(text: string): number | null {
   if (minutes) return Number(minutes[1]) * SECONDS_PER_MINUTE + Number(minutes[2]);
   const seconds = SECONDS_PATTERN.exec(trimmed);
   return seconds ? Number(seconds[1]) : null;
-}
-
-export function parseSets(text: string): number | null {
-  const sets = Number(text);
-  return text.trim() !== '' && Number.isInteger(sets) && sets >= 1 ? sets : null;
 }
 
 export function repsSuffix(exercise: Exercise | undefined): string {
