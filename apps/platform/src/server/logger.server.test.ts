@@ -1309,6 +1309,31 @@ describe("createConsoleLogger", () => {
     });
   });
 
+  it("logs a recipe photo file it could not remove by its photo id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(new Error("/srv/recipe-photos/photos/x"), {
+      code: "EACCES",
+    });
+
+    // act
+    logger.recipePhotoCleanupFailed({ photoId: "photo-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Recipe photo file could not be removed.",
+      {
+        errorCategory: "recipe_photo_cleanup_failure",
+        errorClass: "Error",
+        errorCode: "EACCES",
+        photoId: "photo-1",
+      },
+    );
+  });
+
   it("logs a recipe edit that could not be written by its id and the class and code of its cause only", () => {
     // arrange
     const consoleError = vi

@@ -48,6 +48,7 @@ function recipeUsing(id: string, foodIds: string[]): Recipe {
     icon: null,
     mealRoleIds: [],
     tagIds: [],
+    photo: null,
     archivedAt: null,
     createdAt: AT,
     updatedAt: AT,

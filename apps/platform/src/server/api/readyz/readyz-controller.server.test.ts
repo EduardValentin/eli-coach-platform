@@ -18,6 +18,7 @@ function createRuntimeEnvironment(
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
     EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
+    RECIPE_PHOTO_ROOT: "/tmp/eli-coach-recipe-photos-test",
     ...overrides,
   });
 }

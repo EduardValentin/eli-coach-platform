@@ -792,7 +792,7 @@ describe("the demo video", () => {
     expect(picker).toHaveAccessibleDescription(VIDEO_GUIDANCE);
   });
 
-  it("previews a chosen video at once with play controls, Remove inside its frame and Replace beside it", async () => {
+  it("previews a chosen video at once with play controls, Replace and Remove together in the bar over its frame", async () => {
     // arrange
     const user = await renderEditor(NEW_EXERCISE_PATH);
 
@@ -808,8 +808,10 @@ describe("the demo video", () => {
     expect(shown).toHaveAttribute("controls");
     expect(shown).toHaveAttribute("preload", "metadata");
     const frame = shown.parentElement as HTMLElement;
+    expect(frame).toContainElement(replaceButton());
     expect(frame).toContainElement(removeButton());
-    expect(frame).not.toContainElement(replaceButton());
+    expect(replaceButton()).toHaveTextContent("Replace");
+    expect(removeButton()).toHaveTextContent("Remove");
     expect(removeButton()).toBeEnabled();
     expect(replaceButton()).toBeEnabled();
     expect(screen.queryByLabelText(VIDEO_PROMPT)).not.toBeInTheDocument();

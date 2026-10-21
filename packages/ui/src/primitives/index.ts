@@ -36,6 +36,7 @@ export {
   RequiredMark,
 } from "./label";
 export { Link, linkVariants } from "./link";
+export { MediaOverlayActions } from "./media-overlay-actions";
 export { MediaRemoveButton } from "./media-remove-button";
 export { MultiSelect } from "./multi-select";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";

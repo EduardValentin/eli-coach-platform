@@ -46,6 +46,7 @@ function buildEnvironment(
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
     EXERCISE_VIDEO_ROOT: "/tmp/eli-coach-exercise-videos-test",
+    RECIPE_PHOTO_ROOT: "/tmp/eli-coach-recipe-photos-test",
     ...overrides,
   };
 }
@@ -119,6 +120,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
           STORE_ASSET_ROOT: "/srv/store-assets",
           CLIENT_RESOURCE_ROOT: "/srv/client-resources",
           EXERCISE_VIDEO_ROOT: "/srv/exercise-videos",
+          RECIPE_PHOTO_ROOT: "/srv/recipe-photos",
         }),
       ),
     ).toThrow(
@@ -309,6 +311,46 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.EXERCISE_VIDEO_ROOT).toBe("/srv/exercise-videos");
+  });
+
+  it("requires a recipe photo root", () => {
+    // arrange
+    // act
+    const loadWithoutPhotoRoot = () =>
+      loadTestRuntimeEnvironment({
+        RECIPE_PHOTO_ROOT: undefined,
+      });
+
+    // assert
+    expect(loadWithoutPhotoRoot).toThrow();
+  });
+
+  it("rejects a placeholder recipe photo root in production", () => {
+    // arrange
+    // act
+    const loadPlaceholderPhotoRoot = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "production",
+        RECIPE_PHOTO_ROOT: "replace-me",
+        TURNSTILE_SECRET_KEY: "real-secret",
+        TURNSTILE_SITE_KEY: "real-site-key",
+      });
+
+    // assert
+    expect(loadPlaceholderPhotoRoot).toThrow(
+      "Production recipe photos require a non-placeholder RECIPE_PHOTO_ROOT.",
+    );
+  });
+
+  it("exposes the configured recipe photo root", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      RECIPE_PHOTO_ROOT: "/srv/recipe-photos",
+    });
+
+    // assert
+    expect(environment.RECIPE_PHOTO_ROOT).toBe("/srv/recipe-photos");
   });
 
   it("requires a configured management API secret", () => {

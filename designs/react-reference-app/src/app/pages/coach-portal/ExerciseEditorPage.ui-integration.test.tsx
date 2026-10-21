@@ -607,19 +607,18 @@ describe('the demo video', () => {
     expect(preview()).toHaveAttribute('preload', 'metadata');
   });
 
-  it('seats Remove inside the video frame and Replace beside the frame', () => {
+  it('seats Replace and Remove together in the bar over the video frame', () => {
     // arrange & act
     renderEditor(edit(SQUAT_ID));
 
     // assert
     const frame = preview().parentElement as HTMLElement;
-    const remove = screen.getByRole('button', { name: 'Remove video' });
     const replace = screen.getByRole('button', { name: 'Replace video' });
+    const remove = screen.getByRole('button', { name: 'Remove video' });
+    expect(frame).toContainElement(replace);
     expect(frame).toContainElement(remove);
-    expect(frame).not.toContainElement(replace);
-    expect(frame.parentElement).toContainElement(replace);
-    expect(remove).toHaveAccessibleName('Remove video');
-    expect(remove).not.toHaveTextContent(/\S/);
+    expect(replace).toHaveTextContent('Replace');
+    expect(remove).toHaveTextContent('Remove');
   });
 
   it('previews a chosen file at once, with controls', async () => {

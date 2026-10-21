@@ -52,6 +52,7 @@ function recipeCalled(
     icon: null,
     mealRoleIds: [],
     tagIds: [],
+    photo: null,
     archivedAt: null,
     createdAt: AT,
     updatedAt: AT,

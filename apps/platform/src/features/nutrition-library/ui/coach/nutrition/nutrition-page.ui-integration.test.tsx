@@ -2,7 +2,13 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider, useParams } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,6 +24,7 @@ import {
   NEW_FOOD_PATH,
   NEW_RECIPE_PATH,
   RECIPE_EDITOR_ROUTE_SEGMENT,
+  recipePhotoPath,
 } from "~/features/nutrition-library/public/paths";
 import type { RecipeCardView } from "~/features/nutrition-library/public/recipes";
 
@@ -67,6 +74,7 @@ const PORRIDGE: RecipeCardView = {
   id: "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
   name: "Porridge",
   icon: "pot",
+  photo: null,
   totalMinutes: 15,
   macros: { kcal: 261, protein: 15, carb: 39, fat: 5 },
   tagIds: ["mt-breakfast", "mt-lunch", "di-vegetarian", "nu-omega3"],
@@ -76,9 +84,20 @@ const SALMON_BOWL: RecipeCardView = {
   id: "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a",
   name: "Salmon bowl",
   icon: null,
+  photo: null,
   totalMinutes: 0,
   macros: { kcal: 0, protein: 0, carb: 0, fat: 0 },
   tagIds: [],
+};
+
+const BOWL_PHOTO_PATH = recipePhotoPath(
+  SALMON_BOWL.id,
+  "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c",
+);
+
+const SALMON_BOWL_WITH_PHOTO: RecipeCardView = {
+  ...SALMON_BOWL,
+  photo: { path: BOWL_PHOTO_PATH },
 };
 
 afterEach(() => {
@@ -335,6 +354,44 @@ describe("the Recipes tab", () => {
       ["C", "0g"],
       ["F", "0g"],
     ]);
+  });
+
+  it("shows a recipe's photo as its card visual, named for the recipe", async () => {
+    // arrange, act
+    await renderLibrary(
+      { foods: [], tags: TAGS, recipes: [PORRIDGE, SALMON_BOWL_WITH_PHOTO] },
+      COACH_RECIPES_PATH,
+    );
+
+    // assert
+    const photo = within(
+      screen.getByRole("article", { name: "Salmon bowl" }),
+    ).getByRole("img", { name: "Salmon bowl" });
+    expect(photo.tagName).toBe("IMG");
+    expect(photo).toHaveAttribute("src", BOWL_PHOTO_PATH);
+    expect(
+      within(screen.getByRole("article", { name: "Porridge" })).getByRole(
+        "img",
+        { name: "Porridge" },
+      ).tagName,
+    ).not.toBe("IMG");
+  });
+
+  it("falls back to the recipe's icon when its photo cannot be loaded", async () => {
+    // arrange
+    await renderLibrary(
+      { foods: [], tags: TAGS, recipes: [SALMON_BOWL_WITH_PHOTO] },
+      COACH_RECIPES_PATH,
+    );
+    const card = screen.getByRole("article", { name: "Salmon bowl" });
+
+    // act
+    fireEvent.error(within(card).getByRole("img", { name: "Salmon bowl" }));
+
+    // assert
+    const visual = within(card).getByRole("img", { name: "Salmon bowl" });
+    expect(visual.tagName).not.toBe("IMG");
+    expect(visual).toBeVisible();
   });
 
   it("lists a card's meal roles before its other tags, each as its own pill", async () => {

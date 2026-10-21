@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -38,6 +39,7 @@ import {
   NUTRITION_LIBRARY_API_PATHS,
   RECIPE_EDITOR_ROUTE_SEGMENT,
   recipeBuilderPath,
+  recipePhotoPath,
 } from "~/features/nutrition-library/public/paths";
 import type {
   RecipeBuilderView,
@@ -100,6 +102,10 @@ const PORRIDGE_ID = "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a";
 const UNKNOWN_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const OTHER_NAMES = ["Omelette", "Salmon bowl"];
 const SAVE_FAILED = "We couldn't save the recipe. Try again in a moment.";
+const UPLOAD_FAILED =
+  "The upload didn’t go through. Your entries are still here.";
+const PHOTO_ID = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
+const MEGABYTE = 1024 * 1024;
 const GRAMS_PROBLEM = "Enter whole grams from 1 to 99,999";
 const MINUTES_PROBLEM = "Enter whole minutes up to 9,999";
 
@@ -125,6 +131,7 @@ const PORRIDGE: RecipeBuilderView = {
     icon: "pot",
     mealRoleIds: ["mt-breakfast"],
     tagIds: ["di-vegetarian"],
+    photo: null,
   },
   offeredFoods: [HONEY, MILK],
   placedFoods: [OATS],
@@ -132,10 +139,19 @@ const PORRIDGE: RecipeBuilderView = {
   tags: TAGS,
 };
 
+const PORRIDGE_WITH_PHOTO: RecipeBuilderView = {
+  ...PORRIDGE,
+  recipe: PORRIDGE.recipe && {
+    ...PORRIDGE.recipe,
+    photo: { path: recipePhotoPath(PORRIDGE_ID, PHOTO_ID) },
+  },
+};
+
 const PORRIDGE_CARD: RecipeCardView = {
   id: PORRIDGE_ID,
   name: "Porridge",
   icon: "pot",
+  photo: null,
   totalMinutes: 15,
   macros: { kcal: 261, protein: 15, carb: 39, fat: 5 },
   tagIds: ["mt-breakfast", "di-vegetarian"],
@@ -145,8 +161,12 @@ const server = setupServer();
 
 let sentBodies: { method: string; path: string; body: unknown }[] = [];
 
+let savedRecipe: RecipeBuilderView = PORRIDGE;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
+  URL.createObjectURL = vi.fn((file: Blob) => `blob:${(file as File).name}`);
+  URL.revokeObjectURL = vi.fn();
   Element.prototype.scrollIntoView = () => {};
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.releasePointerCapture = () => {};
@@ -180,6 +200,7 @@ function arrangeDesktopViewport() {
 
 beforeEach(() => {
   sentBodies = [];
+  savedRecipe = PORRIDGE;
   arrangePhoneViewport();
 });
 
@@ -552,6 +573,7 @@ describe("a new recipe", () => {
           instructions: "",
           icon: null,
           tagIds: [],
+          photo: "keep",
         },
       },
     ]);
@@ -601,6 +623,7 @@ describe("a new recipe", () => {
           instructions: "Simmer the oats in the milk.",
           icon: "pot",
           tagIds: ["di-vegetarian", "mt-breakfast"],
+          photo: "keep",
         },
       },
     ]);
@@ -690,6 +713,404 @@ describe("a new recipe", () => {
     expect(
       screen.getByRole("button", { name: "Open food library" }),
     ).toHaveFocus();
+  });
+});
+
+describe("the recipe photo", () => {
+  it("previews a chosen photo named for the recipe with Replace and Remove over it in place of Upload photo, and moves her to Replace", async () => {
+    // arrange
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    expect(uploadButton()).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Replace recipe photo" }),
+    ).toBeNull();
+
+    // act
+    await user.click(uploadButton());
+    choosePhoto(photoNamed("bowl.jpg"));
+
+    // assert
+    expect(preview("Porridge")).toHaveAttribute("src", "blob:bowl.jpg");
+    expect(replaceButton()).toHaveFocus();
+    expect(removeButton()).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Upload recipe photo" }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "Choose icon" })).toBeVisible();
+  });
+
+  it("lets go of the preview of a photo she replaces", async () => {
+    // arrange
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await user.upload(photoInput(), photoNamed("first.jpg"));
+
+    // act
+    await user.upload(photoInput(), photoNamed("second.png", 5, "image/png"));
+
+    // assert
+    expect(preview("Recipe")).toHaveAttribute("src", "blob:second.png");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first.jpg");
+  });
+
+  it.each([
+    {
+      refused: "a file that is not a JPEG, PNG or WebP photo",
+      file: () => photoNamed("bowl.gif", 5, "image/gif"),
+      message:
+        "bowl.gif is not a .jpg, .png or .webp — only JPEG, PNG and WebP photos are supported",
+    },
+    {
+      refused: "a photo over 10 MB",
+      file: () => photoNamed("bowl.png", 10 * MEGABYTE + 1, "image/png"),
+      message: "bowl.png is larger than 10 MB",
+    },
+  ])(
+    "refuses $refused on the spot, naming it, and keeps what was there",
+    async ({ file, message }) => {
+      // arrange
+      await renderBuilder(NEW_RECIPE_PATH);
+
+      // act
+      choosePhoto(file());
+
+      // assert
+      expect(
+        (await screen.findByText(message)).closest("[role=alert]"),
+      ).toBeInTheDocument();
+      expect(uploadButton()).toHaveAttribute("aria-invalid", "true");
+      expect(uploadButton()).toHaveAccessibleDescription(message);
+      expect(
+        screen.queryByRole("button", { name: "Replace recipe photo" }),
+      ).toBeNull();
+
+      // act
+      choosePhoto(photoNamed("bowl.jpg"));
+      choosePhoto(file());
+
+      // assert
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      expect(preview("Recipe")).toHaveAttribute("src", "blob:bowl.jpg");
+      expect(replaceButton()).toHaveAttribute("aria-invalid", "true");
+      expect(replaceButton()).toHaveAccessibleDescription(message);
+
+      // act
+      choosePhoto(photoNamed("bowl.webp", 5, "image/webp"));
+
+      // assert
+      expect(screen.queryByText(message)).toBeNull();
+      expect(replaceButton()).not.toHaveAttribute("aria-invalid");
+    },
+  );
+
+  it("sends the recipe and the chosen photo in one save and returns to the Recipes tab", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText("Recipe created")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "POST",
+        path: NUTRITION_LIBRARY_API_PATHS.recipes,
+        body: {
+          recipe: {
+            name: "Porridge",
+            ingredients: [],
+            prepMinutes: 0,
+            cookMinutes: 0,
+            instructions: "",
+            icon: null,
+            tagIds: [],
+            photo: "attach",
+          },
+          photoFilename: "blob",
+        },
+      },
+    ]);
+  });
+
+  it("reads Saving… and locks Save, Replace and Remove while the photo uploads", async () => {
+    // arrange
+    const release = holdSaves();
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    const saving = await screen.findByRole("button", { name: "Saving…" });
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute("aria-busy", "true");
+    expect(saving).toHaveTextContent("Saving…");
+    expect(replaceButton()).toBeDisabled();
+    expect(removeButton()).toBeDisabled();
+
+    // act
+    release();
+
+    // assert
+    expect(await screen.findByText("Recipe created")).toBeInTheDocument();
+  });
+
+  it.each([
+    {
+      httpStatus: 422,
+      problem: "unsupported",
+      message: "bowl.jpg doesn’t contain a JPEG, PNG or WebP photo.",
+    },
+    {
+      httpStatus: 413,
+      problem: "too-large",
+      message: "bowl.jpg is larger than 10 MB",
+    },
+  ])(
+    "shows the server refusing the photo as $problem under the visual, naming it, moves her to Replace and keeps every entry",
+    async ({ httpStatus, problem, message }) => {
+      // arrange
+      server.use(
+        http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, () =>
+          HttpResponse.json(
+            { problems: { photo: problem } },
+            { status: httpStatus },
+          ),
+        ),
+      );
+      const user = await renderBuilder(NEW_RECIPE_PATH);
+      await enterName(user, "Porridge");
+      await user.click(
+        screen.getByRole("button", { name: "Add Oats to recipe" }),
+      );
+      await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+      // assert
+      expect(
+        (await screen.findByText(message)).closest("[role=alert]"),
+      ).toBeInTheDocument();
+      expect(replaceButton()).toHaveAttribute("aria-invalid", "true");
+      expect(replaceButton()).toHaveAccessibleDescription(message);
+      expect(replaceButton()).toHaveFocus();
+      expect(preview("Porridge")).toHaveAttribute("src", "blob:bowl.jpg");
+      expect(screen.getByRole("textbox", { name: "Recipe name" })).toHaveValue(
+        "Porridge",
+      );
+      expect(ingredientRows()).toEqual([["Oats", 40, "Raw"]]);
+      expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+      expect(screen.queryByText(SAVE_FAILED)).toBeNull();
+      expect(screen.getByRole("button", { name: "Save recipe" })).toBeEnabled();
+    },
+  );
+
+  it("keeps every entry and the photo when the upload does not go through, and Try again sends it again", async () => {
+    // arrange
+    let attempts = 0;
+    server.use(
+      http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, () => {
+        attempts += 1;
+
+        return attempts === 1
+          ? HttpResponse.error()
+          : HttpResponse.json({ redirectTo: COACH_RECIPES_PATH });
+      }),
+    );
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    const failure = await screen.findByText(UPLOAD_FAILED);
+    expect(failure.closest("[role=alert]")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Recipe name" })).toHaveValue(
+      "Porridge",
+    );
+    expect(preview("Porridge")).toHaveAttribute("src", "blob:bowl.jpg");
+    expect(screen.getByRole("button", { name: "Save recipe" })).toBeEnabled();
+    expect(screen.queryByText(SAVE_FAILED)).toBeNull();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+
+    // assert
+    expect(await screen.findByText("Recipe created")).toBeInTheDocument();
+    expect(attempts).toBe(2);
+  });
+
+  it("drops the failure alert once she chooses another photo", async () => {
+    // arrange
+    server.use(
+      http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, () =>
+        HttpResponse.error(),
+      ),
+    );
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+    await screen.findByText(UPLOAD_FAILED);
+
+    // act
+    await user.upload(photoInput(), photoNamed("other.jpg"));
+
+    // assert
+    expect(screen.queryByText(UPLOAD_FAILED)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("shows the generic failure, not the upload alert, when the server refuses a field the page cannot show while a photo is chosen", async () => {
+    // arrange
+    server.use(
+      http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, () =>
+        HttpResponse.json({ problems: { icon: "unknown" } }, { status: 422 }),
+      ),
+    );
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText(SAVE_FAILED)).toBeInTheDocument();
+    expect(screen.queryByText(UPLOAD_FAILED)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("returns her to Upload photo when she removes a photo she just chose, and saves the recipe without one", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderBuilder(NEW_RECIPE_PATH);
+    await enterName(user, "Porridge");
+    await user.upload(photoInput(), photoNamed("bowl.jpg"));
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(uploadButton()).toHaveFocus();
+    expect(preview("Porridge").tagName).not.toBe("IMG");
+    expect(
+      screen.queryByRole("button", { name: "Remove recipe photo" }),
+    ).toBeNull();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText("Recipe created")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      expect.objectContaining({
+        body: expect.objectContaining({ name: "Porridge", photo: "keep" }),
+      }),
+    ]);
+  });
+});
+
+describe("editing a recipe with a photo", () => {
+  beforeEach(() => {
+    savedRecipe = PORRIDGE_WITH_PHOTO;
+  });
+
+  it("shows the stored photo and keeps it when she saves without touching it", async () => {
+    // arrange
+    acceptSaves();
+
+    // act
+    const user = await renderBuilder(recipeBuilderPath(PORRIDGE_ID));
+
+    // assert
+    expect(preview("Porridge")).toHaveAttribute(
+      "src",
+      recipePhotoPath(PORRIDGE_ID, PHOTO_ID),
+    );
+    expect(replaceButton()).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Upload recipe photo" }),
+    ).toBeNull();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText("Recipe updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "PUT",
+        path: `${NUTRITION_LIBRARY_API_PATHS.recipes}/${PORRIDGE_ID}`,
+        body: expect.objectContaining({ name: "Porridge", photo: "keep" }),
+      },
+    ]);
+  });
+
+  it("leaves the recipe with its icon when she removes the stored photo and saves", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderBuilder(recipeBuilderPath(PORRIDGE_ID));
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(uploadButton()).toHaveFocus();
+    expect(preview("Porridge").tagName).not.toBe("IMG");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText("Recipe updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "PUT",
+        path: `${NUTRITION_LIBRARY_API_PATHS.recipes}/${PORRIDGE_ID}`,
+        body: expect.objectContaining({ name: "Porridge", photo: "remove" }),
+      },
+    ]);
+  });
+
+  it("sends the new photo in place of the stored one when she replaces it and saves", async () => {
+    // arrange
+    acceptSaves();
+    const user = await renderBuilder(recipeBuilderPath(PORRIDGE_ID));
+
+    // act
+    await user.upload(photoInput(), photoNamed("bowl.webp", 5, "image/webp"));
+
+    // assert
+    expect(preview("Porridge")).toHaveAttribute("src", "blob:bowl.webp");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    // assert
+    expect(await screen.findByText("Recipe updated")).toBeInTheDocument();
+    expect(sentBodies).toEqual([
+      {
+        method: "PUT",
+        path: `${NUTRITION_LIBRARY_API_PATHS.recipes}/${PORRIDGE_ID}`,
+        body: {
+          recipe: expect.objectContaining({
+            name: "Porridge",
+            photo: "attach",
+          }),
+          photoFilename: "blob",
+        },
+      },
+    ]);
   });
 });
 
@@ -870,6 +1291,7 @@ describe("editing a recipe", () => {
           instructions: "Simmer the oats in the milk.",
           icon: "pot",
           tagIds: ["di-vegetarian", "cp-luteal"],
+          photo: "keep",
         },
       },
     ]);
@@ -909,7 +1331,7 @@ function acceptSaves() {
     sentBodies.push({
       method: request.method,
       path: new URL(request.url).pathname,
-      body: await request.json(),
+      body: await sentBodyOf(request),
     });
 
     return HttpResponse.json({ redirectTo: COACH_RECIPES_PATH });
@@ -919,6 +1341,76 @@ function acceptSaves() {
     http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, record),
     http.put(`*${NUTRITION_LIBRARY_API_PATHS.recipes}/:recipeId`, record),
   );
+}
+
+async function sentBodyOf(request: Request): Promise<unknown> {
+  const contentType = request.headers.get("Content-Type") ?? "";
+  if (!contentType.startsWith("multipart/form-data")) {
+    return request.json();
+  }
+
+  const body = await request.text();
+
+  return {
+    recipe: JSON.parse(partOf(body, "recipe")),
+    photoFilename: /name="photo"; filename="([^"]*)"/.exec(body)?.[1],
+  };
+}
+
+function partOf(body: string, name: string): string {
+  const match = new RegExp(
+    `name="${name}"(?:; filename="[^"]*")?\\r\\n(?:Content-Type: [^\\r]*\\r\\n)?\\r\\n([^\\r]*)`,
+  ).exec(body);
+
+  return match?.[1] ?? "";
+}
+
+function photoNamed(name: string, size = 5, type = "image/jpeg") {
+  const file = new File(["photo"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+}
+
+function photoInput(): HTMLElement {
+  return screen.getByLabelText("Recipe photo file input");
+}
+
+function choosePhoto(file: File) {
+  fireEvent.change(photoInput(), { target: { files: [file] } });
+}
+
+function uploadButton(): HTMLElement {
+  return screen.getByRole("button", { name: "Upload recipe photo" });
+}
+
+function replaceButton(): HTMLElement {
+  return screen.getByRole("button", { name: "Replace recipe photo" });
+}
+
+function removeButton(): HTMLElement {
+  return screen.getByRole("button", { name: "Remove recipe photo" });
+}
+
+function preview(name: string): HTMLElement {
+  return screen.getByRole("img", { name });
+}
+
+function holdSaves(): () => void {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  server.use(
+    http.post(`*${NUTRITION_LIBRARY_API_PATHS.recipes}`, async () => {
+      await held;
+
+      return HttpResponse.json({ redirectTo: COACH_RECIPES_PATH });
+    }),
+  );
+
+  return release;
 }
 
 function macroTiles(): string[][] {
@@ -1001,7 +1493,7 @@ async function renderBuilder(entry: string, heading?: string) {
             throw redirect(COACH_RECIPES_PATH);
           }
 
-          return PORRIDGE;
+          return savedRecipe;
         },
         path: `/coach/${RECIPE_EDITOR_ROUTE_SEGMENT}`,
       },

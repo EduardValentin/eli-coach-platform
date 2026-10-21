@@ -1,17 +1,21 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { Toaster } from 'sonner';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecipeBuilderPage } from './RecipeBuilderPage';
 import { AppProvider } from '../../context/AppContext';
 import { NutritionProvider, useNutrition } from '../../context/NutritionContext';
+import type { RecipePhotoUpload } from '../../services/recipePhotoService';
 
 type User = ReturnType<typeof userEvent.setup>;
 
 const NEW = '/coach/nutrition/recipe-builder';
 const CHICKEN_BOWL = '/coach/nutrition/recipe-builder/recipe-chicken-rice-bowl';
 const RICE_CAKE_STACK = '/coach/nutrition/recipe-builder/recipe-rice-cake-stack';
+const SERVICE_TIMEOUT = { timeout: 4000 };
+const UPLOAD_FAILED = 'The upload didn’t go through. Your entries are still here.';
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 
 function arrangePhoneViewport() {
   vi.stubGlobal(
@@ -36,6 +40,11 @@ function arrangeDesktopViewport() {
     })),
   );
 }
+
+beforeAll(() => {
+  URL.createObjectURL = vi.fn((file: Blob) => `blob:${(file as File).name}`);
+  URL.revokeObjectURL = vi.fn();
+});
 
 beforeEach(() => {
   arrangePhoneViewport();
@@ -63,6 +72,12 @@ function SavedRecipeProbe({ name }: { name: string }) {
   );
 }
 
+function SavedPhotoProbe({ name }: { name: string }) {
+  const { recipes } = useNutrition();
+  const saved = recipes.find((recipe) => recipe.name === name);
+  return <p data-testid="saved-photo">{saved ? (saved.imageUrl ?? 'no photo') : 'none'}</p>;
+}
+
 function LibraryStandIn() {
   const { search } = useLocation();
   return <p data-testid="library-search">{search}</p>;
@@ -74,6 +89,7 @@ function renderBuilder(entry = NEW, probeName = 'Morning oats'): User {
       <AppProvider>
         <NutritionProvider>
           <SavedRecipeProbe name={probeName} />
+          <SavedPhotoProbe name={probeName} />
           <Routes>
             <Route path="/coach/nutrition" element={<LibraryStandIn />} />
             <Route path="/coach/nutrition/recipe-builder" element={<RecipeBuilderPage />} />
@@ -96,6 +112,18 @@ const saveButton = () => screen.getByRole('button', { name: 'Save recipe' });
 async function retype(user: User, field: HTMLElement, value: string) {
   await user.clear(field);
   if (value !== '') await user.type(field, value);
+}
+
+const photoInput = () => screen.getByLabelText('Recipe photo file input');
+const photoNamed = (name: string, type: string) => new File(['photo'], name, { type });
+const uploadButton = () => screen.getByRole('button', { name: 'Upload recipe photo' });
+const replaceButton = () => screen.getByRole('button', { name: 'Replace recipe photo' });
+const removeButton = () => screen.getByRole('button', { name: 'Remove recipe photo' });
+const photoAlert = (text: string) =>
+  screen.getAllByRole('alert').find((candidate) => candidate.textContent?.includes(text));
+
+function answerPhotoUploads(outcome: RecipePhotoUpload) {
+  window.history.replaceState(null, '', `/?rphoto=${outcome}`);
 }
 
 const breakfastChip = () =>
@@ -408,5 +436,257 @@ describe('the food library drawer on a phone', () => {
 
     // assert
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveFocus();
+  });
+});
+
+describe('choosing a recipe photo', () => {
+  it('previews the chosen photo at once with Replace and Remove over it', async () => {
+    // arrange
+    const user = renderBuilder();
+
+    // act
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // assert
+    expect(screen.getByRole('img', { name: 'Recipe' })).toHaveAttribute('src', 'blob:bowl.jpg');
+    expect(replaceButton()).toBeEnabled();
+    expect(removeButton()).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Upload recipe photo' })).not.toBeInTheDocument();
+  });
+
+  it('moves focus from Upload photo to Replace once a first photo is chosen', async () => {
+    // arrange
+    const user = renderBuilder();
+    uploadButton().focus();
+    await user.keyboard('{Enter}');
+
+    // act
+    fireEvent.change(photoInput(), { target: { files: [photoNamed('bowl.jpg', 'image/jpeg')] } });
+
+    // assert
+    expect(replaceButton()).toHaveFocus();
+  });
+
+  it('offers only the photo formats it accepts', () => {
+    // arrange
+    // act
+    renderBuilder();
+
+    // assert
+    expect(photoInput()).toHaveAttribute('accept', '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp');
+  });
+
+  it('returns focus to Upload photo once the photo is removed', async () => {
+    // arrange
+    const user = renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+
+    // act
+    await user.click(removeButton());
+
+    // assert
+    expect(uploadButton()).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'Replace recipe photo' })).not.toBeInTheDocument();
+  });
+
+  it('refuses a file that is not a JPEG, PNG or WebP photo, naming it, and keeps the visual as it was', () => {
+    // arrange
+    renderBuilder();
+
+    // act
+    fireEvent.change(photoInput(), { target: { files: [photoNamed('bowl.gif', 'image/gif')] } });
+
+    // assert
+    const message = 'bowl.gif is not a .jpg, .png or .webp — only JPEG, PNG and WebP photos are supported';
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(uploadButton()).toHaveAttribute('aria-invalid', 'true');
+    expect(uploadButton()).toHaveAccessibleDescription(message);
+    expect(screen.queryByRole('button', { name: 'Replace recipe photo' })).not.toBeInTheDocument();
+  });
+
+  it('refuses a photo over 10 MB and keeps the current photo', () => {
+    // arrange
+    renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+    const oversize = photoNamed('bowl.jpg', 'image/jpeg');
+    Object.defineProperty(oversize, 'size', { value: PHOTO_MAX_BYTES + 1 });
+
+    // act
+    fireEvent.change(photoInput(), { target: { files: [oversize] } });
+
+    // assert
+    expect(screen.getByRole('alert')).toHaveTextContent('bowl.jpg is larger than 10 MB');
+    expect(replaceButton()).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('img', { name: 'Chicken rice bowl' })).toHaveAttribute(
+      'src',
+      expect.stringMatching(/chicken-rice-bowl\.jpg$/),
+    );
+  });
+
+  it('clears the refusal once an accepted photo is chosen', async () => {
+    // arrange
+    const user = renderBuilder();
+    const oversize = photoNamed('large.jpg', 'image/jpeg');
+    Object.defineProperty(oversize, 'size', { value: PHOTO_MAX_BYTES + 1 });
+    await user.upload(photoInput(), oversize);
+    expect(screen.getByRole('alert')).toHaveTextContent('large.jpg is larger than 10 MB');
+
+    // act
+    await user.upload(photoInput(), photoNamed('bowl.png', 'image/png'));
+
+    // assert
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement();
+    expect(replaceButton()).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('falls back to the icon when the photo does not load, and previews a newly chosen one', async () => {
+    // arrange
+    const user = renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+    fireEvent.error(screen.getByRole('img', { name: 'Chicken rice bowl' }));
+    expect(screen.getByRole('img', { name: 'Chicken rice bowl' })).not.toHaveAttribute('src');
+
+    // act
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // assert
+    expect(screen.getByRole('img', { name: 'Chicken rice bowl' })).toHaveAttribute('src', 'blob:bowl.jpg');
+  });
+});
+
+describe('saving with a newly chosen photo', () => {
+  it('saves the recipe with the uploaded photo', async () => {
+    // arrange
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    expect(await screen.findByText('Recipe created', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByTestId('saved-photo')).toHaveTextContent('blob:bowl.jpg');
+  });
+
+  it('turns Save into a busy Saving… and locks Replace and Remove while the photo uploads', async () => {
+    // arrange
+    answerPhotoUploads('holds');
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    const saving = screen.getByRole('button', { name: 'Saving…' });
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute('aria-busy', 'true');
+    expect(replaceButton()).toBeDisabled();
+    expect(removeButton()).toBeDisabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent('none');
+  });
+
+  it('keeps every entry and the chosen photo when the upload fails, and offers Try again', async () => {
+    // arrange
+    answerPhotoUploads('fails');
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT);
+    const alert = photoAlert(UPLOAD_FAILED);
+    expect(alert).toBeDefined();
+    expect(within(alert as HTMLElement).getByRole('button', { name: 'Try again' })).toBeEnabled();
+    expect(nameField()).toHaveValue('Morning oats');
+    expect(screen.getByRole('img', { name: 'Morning oats' })).toHaveAttribute('src', 'blob:bowl.jpg');
+    expect(saveButton()).toBeEnabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent('none');
+  });
+
+  it('saves again from Try again, keeping the entries', async () => {
+    // arrange
+    answerPhotoUploads('fails');
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+    await user.click(saveButton());
+    await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    // assert
+    expect(screen.queryByText(UPLOAD_FAILED)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    expect(await screen.findByText(UPLOAD_FAILED, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(nameField()).toHaveValue('Morning oats');
+  });
+
+  it('shows the server refusing the file at the photo, keeping the photo and every entry', async () => {
+    // arrange
+    answerPhotoUploads('refused');
+    const user = renderBuilder();
+    await user.type(nameField(), 'Morning oats');
+    await user.upload(photoInput(), photoNamed('bowl.jpg', 'image/jpeg'));
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    const message = 'bowl.jpg doesn’t contain a JPEG, PNG or WebP photo.';
+    expect(await screen.findByText(message, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(replaceButton()).toHaveAttribute('aria-invalid', 'true');
+    expect(replaceButton()).toHaveAccessibleDescription(message);
+    expect(replaceButton()).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Morning oats' })).toHaveAttribute('src', 'blob:bowl.jpg');
+    expect(saveButton()).toBeEnabled();
+    expect(screen.getByTestId('saved')).toHaveTextContent('none');
+  });
+
+  it('stays a plain save when no new photo was chosen', async () => {
+    // arrange
+    answerPhotoUploads('holds');
+    const user = renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+    await retype(user, gramsField('Chicken breast'), '200');
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    expect(await screen.findByText('Recipe updated')).toBeInTheDocument();
+    expect(screen.getByTestId('saved-photo')).toHaveTextContent(/chicken-rice-bowl\.jpg$/);
+  });
+});
+
+describe('replacing or removing a recipe photo', () => {
+  it('saves the recipe without a photo once it is removed', async () => {
+    // arrange
+    const user = renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+    await user.click(removeButton());
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    expect(await screen.findByText('Recipe updated')).toBeInTheDocument();
+    expect(screen.getByTestId('saved-photo')).toHaveTextContent('no photo');
+  });
+
+  it('keeps only the new photo once it is replaced', async () => {
+    // arrange
+    const user = renderBuilder(CHICKEN_BOWL, 'Chicken rice bowl');
+    await user.upload(photoInput(), photoNamed('bowl.webp', 'image/webp'));
+
+    // act
+    await user.click(saveButton());
+
+    // assert
+    expect(await screen.findByText('Recipe updated', {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByTestId('saved-photo')).toHaveTextContent('blob:bowl.webp');
   });
 });

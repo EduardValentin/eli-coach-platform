@@ -64,6 +64,7 @@ import { EXERCISE_VIDEO_UPLOAD_OUTCOMES } from '../services/exerciseVideoService
 import { FOOD_SEEDS } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
+import { RECIPE_PHOTO_UPLOAD_OUTCOMES } from '../services/recipePhotoService';
 import {
   RESOURCE_LOAD_OUTCOMES,
   RESOURCE_MARK_OUTCOMES,
@@ -1215,6 +1216,30 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="ok">Saves</SelectItem>
                       <SelectItem value="fail">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-recipe-photo-upload" className={DEV_LABEL_CLASS}>
+                    Recipe photo upload
+                  </Label>
+                  <Select
+                    value={appState.recipePhotoUpload}
+                    onValueChange={(value) =>
+                      setAppState({
+                        recipePhotoUpload: optionOrDefault(RECIPE_PHOTO_UPLOAD_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-recipe-photo-upload" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="holds">Holds</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                      <SelectItem value="refused">Refused</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, useRef } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useState, useRef, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -20,10 +20,13 @@ import {
   TAG_FAMILIES,
 } from '../../context/NutritionContext';
 import {
+  RECIPE_PHOTO_ACCEPT,
   computeRecipeMacros,
   draftProblems,
   isValidDraft,
   recipeFrom,
+  recipePhotoContentRefusal,
+  recipePhotoRefusal,
 } from '../../domain/recipes';
 import type {
   RecipeDraft,
@@ -33,6 +36,7 @@ import type {
 import type {
   Food,
   CookingMethod,
+  Recipe,
   RecipeIngredient,
   RecipeMacros,
   Tag,
@@ -73,6 +77,7 @@ import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { InlineProblem } from '../../components/InlineProblem';
+import { Alert, AlertAction } from '../../components/ui/alert';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
 import { useIsDesktop } from '../../components/ui/use-desktop';
 import { RECIPE_NOT_SAVED, saveRecipeThroughServer } from '../../services/recipeService';
@@ -98,6 +103,12 @@ function wrapTabWithin(container: HTMLElement | null, event: KeyboardEvent) {
   }
 }
 const RECIPES = '/coach/nutrition?tab=recipes';
+const UPLOAD_FAILED = 'The upload didn’t go through. Your entries are still here.';
+const ICON_OPTION_CLASS =
+  'flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors';
+const ICON_OPTION_SELECTED_CLASS = 'bg-primary-soft text-primary';
+const ICON_OPTION_IDLE_CLASS =
+  'text-text-secondary hover:bg-surface-muted hover:text-text-primary';
 
 const draftIngredientOf = (
   ingredient: RecipeIngredient,
@@ -220,17 +231,159 @@ function OrphanedTagChip({
   );
 }
 
+type PhotoState = { file: File | null; preview: string | undefined; error: string | null };
+const NO_PHOTO: PhotoState = { file: null, preview: undefined, error: null };
+
+function photoFrom(recipe: Recipe | undefined): PhotoState {
+  return { file: null, preview: recipe?.imageUrl, error: null };
+}
+
+type PhotoSaving = 'idle' | 'saving' | 'failed';
+
+type PhotoFieldFocus = 'replace' | 'upload' | null;
+
+type PhotoFieldHandle = { queueReplaceFocus: () => void };
+
+type RecipePhotoFieldProps = {
+  recipe: Pick<Recipe, 'icon' | 'name'>;
+  photo: PhotoState;
+  saving: PhotoSaving;
+  onChange: (photo: PhotoState) => void;
+  onRetry: () => void;
+  children: ReactNode;
+};
+
+const RecipePhotoField = forwardRef<PhotoFieldHandle, RecipePhotoFieldProps>(function RecipePhotoField(
+  { recipe, photo, saving, onChange, onRetry, children },
+  ref,
+) {
+  const errorId = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const uploadButton = useRef<HTMLButtonElement>(null);
+  const replaceButton = useRef<HTMLButtonElement>(null);
+  const pendingFocus = useRef<PhotoFieldFocus>(null);
+  const refusal = {
+    'aria-invalid': photo.error ? true : undefined,
+    'aria-describedby': photo.error ? errorId : undefined,
+  };
+  const chooseFile = () => input.current?.click();
+
+  const take = (file: File) => {
+    const refused = recipePhotoRefusal(file);
+    if (refused) {
+      onChange({ ...photo, error: refused });
+      return;
+    }
+    if (!photo.preview) pendingFocus.current = 'replace';
+    onChange({ file, preview: URL.createObjectURL(file), error: null });
+  };
+
+  const remove = () => {
+    pendingFocus.current = 'upload';
+    onChange(NO_PHOTO);
+  };
+
+  useImperativeHandle(ref, () => ({
+    queueReplaceFocus: () => {
+      pendingFocus.current = 'replace';
+    },
+  }));
+
+  useEffect(() => {
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
+    if (target === 'replace') replaceButton.current?.focus();
+    if (target === 'upload') uploadButton.current?.focus();
+  });
+
+  useEffect(() => {
+    const chosenPreview = photo.file ? photo.preview : undefined;
+    if (!chosenPreview) return;
+    return () => URL.revokeObjectURL(chosenPreview);
+  }, [photo.file, photo.preview]);
+
+  return (
+    <div className="mb-4 grid gap-3">
+      <div className="relative rounded-card overflow-hidden">
+        <RecipeVisual
+          recipe={{ imageUrl: photo.preview, icon: recipe.icon, name: recipe.name }}
+          className="h-40 w-full rounded-card"
+          iconSize={48}
+        />
+        {photo.preview && (
+          <MediaOverlayActions
+            subject="recipe photo"
+            disabled={saving === 'saving'}
+            replaceRef={replaceButton}
+            replaceProps={refusal}
+            onReplace={chooseFile}
+            onRemove={remove}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {!photo.preview && (
+          <Button
+            ref={uploadButton}
+            type="button"
+            aria-label="Upload recipe photo"
+            data-parity="recipe-photo-upload"
+            onClick={chooseFile}
+            variant="outline"
+            {...refusal}
+          >
+            <ImagePlus size={16} aria-hidden="true" />
+            Upload photo
+          </Button>
+        )}
+        {children}
+      </div>
+
+      <div id={errorId} role="alert" className="empty:hidden" data-parity="recipe-photo-problem">
+        {photo.error && <InlineProblem>{photo.error}</InlineProblem>}
+      </div>
+      {saving === 'failed' && (
+        <Alert action={<AlertAction onClick={onRetry}>Try again</AlertAction>} data-parity="recipe-photo-upload-failed">
+          {UPLOAD_FAILED}
+        </Alert>
+      )}
+
+      <input
+        ref={input}
+        type="file"
+        accept={RECIPE_PHOTO_ACCEPT}
+        aria-label="Recipe photo file input"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          if (file) take(file);
+        }}
+        tabIndex={-1}
+      />
+    </div>
+  );
+});
+
 function RecipeBuilderInner() {
   const { recipeId } = useParams<{ recipeId?: string }>();
-  const { foods, tags, recipes, getRecipe, addRecipe, updateRecipe } =
+  const { foods, tags, recipes, getRecipe, addRecipe, updateRecipe, uploadRecipePhoto } =
     useNutrition();
   const navigate = useNavigate();
 
   const existing = recipeId ? getRecipe(recipeId) : undefined;
   const [name, setName] = useState(existing?.name ?? '');
-  const [imageUrl, setImageUrl] = useState<string | undefined>(
-    existing?.imageUrl,
-  );
+  const [photo, setPhoto] = useState<PhotoState>(() => photoFrom(existing));
+  const [photoSaving, setPhotoSaving] = useState<PhotoSaving>('idle');
+  const photoField = useRef<PhotoFieldHandle>(null);
+  const onPage = useRef(false);
+  useEffect(() => {
+    onPage.current = true;
+    return () => {
+      onPage.current = false;
+    };
+  }, []);
   const [icon, setIcon] = useState<RecipeIcon | undefined>(existing?.icon);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -261,7 +414,6 @@ function RecipeBuilderInner() {
     document.addEventListener('keydown', keepKeyboardInLibrary);
     return () => document.removeEventListener('keydown', keepKeyboardInLibrary);
   }, [libraryIsDrawer]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeDraftIngredient[]>(
     existing?.ingredients.map(draftIngredientOf) ?? [],
   );
@@ -290,15 +442,10 @@ function RecipeBuilderInner() {
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) {
-      const reader = new FileReader();
-      reader.onload = () => setImageUrl(reader.result as string);
-      reader.readAsDataURL(f);
-    }
-    // Reset so the same file can be re-selected after removal
-    e.target.value = '';
+  const changePhoto = (next: PhotoState) => {
+    markTouched();
+    setPhoto(next);
+    setPhotoSaving('idle');
   };
 
   const toggleIn = (list: string[], id: string) =>
@@ -412,7 +559,7 @@ function RecipeBuilderInner() {
     ),
   );
 
-  const save = () => {
+  const writeRecipe = (imageUrl: string | undefined) => {
     const payload = {
       ...recipeFrom(draft),
       macroOverride: override ?? undefined,
@@ -428,6 +575,35 @@ function RecipeBuilderInner() {
     }
     toast.success(existing ? 'Recipe updated' : 'Recipe created');
     navigate(RECIPES);
+  };
+
+  const uploadThenWrite = async (file: File) => {
+    setPhotoSaving('saving');
+    const answer = await uploadRecipePhoto(file).catch(() => null);
+    if (!onPage.current) return;
+    if (answer === null) {
+      setPhotoSaving('failed');
+      return;
+    }
+
+    setPhotoSaving('idle');
+    if (answer.status === 'stored') {
+      writeRecipe(answer.url);
+      return;
+    }
+    setPhoto((current) => ({ ...current, error: recipePhotoContentRefusal(file) }));
+    photoField.current?.queueReplaceFocus();
+  };
+
+  const photoUploading = photoSaving === 'saving';
+
+  const save = () => {
+    if (photoUploading) return;
+    if (photo.file) {
+      void uploadThenWrite(photo.file);
+      return;
+    }
+    writeRecipe(photo.preview);
   };
 
   const filteredFoods = pickableItems(foods).filter(
@@ -507,12 +683,19 @@ function RecipeBuilderInner() {
             </Link>
           </Button>
           <Button
-            aria-label="Save recipe"
+            aria-label={photoUploading ? 'Saving…' : 'Save recipe'}
             onClick={save}
-            disabled={!isValidDraft(problems)}
+            disabled={!isValidDraft(problems) || photoUploading}
+            aria-busy={photoUploading || undefined}
           >
-            <Save aria-hidden="true" />
-            <span className="hidden sm:inline">Save recipe</span>
+            {photoUploading ? (
+              'Saving…'
+            ) : (
+              <>
+                <Save aria-hidden="true" />
+                <span className="hidden sm:inline">Save recipe</span>
+              </>
+            )}
           </Button>
         </div>
       </header>
@@ -578,108 +761,68 @@ function RecipeBuilderInner() {
             Recipe builder
           </h1>
 
-          {/* Recipe visual: photo → icon → default */}
-          <div className="mb-4">
-            {/* Preview area */}
-            <div className="relative mb-3 rounded-card overflow-hidden">
-              <RecipeVisual
-                recipe={{ imageUrl, icon, name: name.trim() || 'Recipe' }}
-                className="h-40 w-full rounded-card"
-                iconSize={48}
-              />
-              {imageUrl && (
-                <MediaOverlayActions
-                  subject="recipe photo"
-                  onReplace={() => fileInputRef.current?.click()}
-                  onRemove={() => setImageUrl(undefined)}
-                />
-              )}
-            </div>
-
-            {/* Visual controls row: Upload photo + Choose icon */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Upload photo button (only when no photo) */}
-              {!imageUrl && (
-                <Button
-                  type="button"
-                  aria-label="Upload recipe photo"
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                >
-                  <ImagePlus size={16} aria-hidden="true" />
-                  Upload photo
+          <RecipePhotoField
+            ref={photoField}
+            recipe={{ icon, name: name.trim() || 'Recipe' }}
+            photo={photo}
+            saving={photoSaving}
+            onChange={changePhoto}
+            onRetry={save}
+          >
+            <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline">
+                  <Smile size={16} aria-hidden="true" />
+                  {icon
+                    ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}`
+                    : 'Choose icon'}
                 </Button>
-              )}
-
-              {/* Icon picker popover */}
-              <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline">
-                    <Smile size={16} aria-hidden="true" />
-                    {icon
-                      ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}`
-                      : 'Choose icon'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-72 p-3">
-                  <p className={`mb-2 ${LABEL_CLASS}`}>Meal icon</p>
-                  <div
-                    role="listbox"
-                    aria-label="Meal icon"
-                    data-parity="recipe-icon-popover"
-                    className="grid grid-cols-5 gap-1"
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-72 p-3">
+                <p className={`mb-2 ${LABEL_CLASS}`}>Meal icon</p>
+                <div
+                  role="listbox"
+                  aria-label="Meal icon"
+                  data-parity="recipe-icon-popover"
+                  className="grid grid-cols-5 gap-1"
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    data-focus-ring
+                    aria-selected={icon === undefined}
+                    onClick={() => changeIcon(undefined)}
+                    className={cn(ICON_OPTION_CLASS, {
+                      [ICON_OPTION_SELECTED_CLASS]: icon === undefined,
+                      [ICON_OPTION_IDLE_CLASS]: icon !== undefined,
+                    })}
                   >
-                    {/* Clear option */}
+                    <X size={18} aria-hidden="true" />
+                    <span className="leading-none">None</span>
+                  </button>
+
+                  {RECIPE_ICONS.map(({ key, label, Icon }) => (
                     <button
+                      key={key}
                       type="button"
                       role="option"
                       data-focus-ring
-                      aria-selected={icon === undefined}
-                      onClick={() => changeIcon(undefined)}
-                      className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors ${
-                        icon === undefined
-                          ? 'bg-primary-soft text-primary'
-                          : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                      }`}
+                      aria-selected={icon === key}
+                      aria-label={label}
+                      onClick={() => changeIcon(key)}
+                      className={cn(ICON_OPTION_CLASS, {
+                        [ICON_OPTION_SELECTED_CLASS]: icon === key,
+                        [ICON_OPTION_IDLE_CLASS]: icon !== key,
+                      })}
                     >
-                      <X size={18} aria-hidden="true" />
-                      <span className="leading-none">None</span>
+                      <Icon size={18} aria-hidden="true" />
+                      <span className="leading-none">{label}</span>
                     </button>
-
-                    {RECIPE_ICONS.map(({ key, label, Icon }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        role="option"
-                        data-focus-ring
-                        aria-selected={icon === key}
-                        aria-label={label}
-                        onClick={() => changeIcon(key)}
-                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors ${
-                          icon === key
-                            ? 'bg-primary-soft text-primary'
-                            : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                        }`}
-                      >
-                        <Icon size={18} aria-hidden="true" />
-                        <span className="leading-none">{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              aria-label="Recipe photo file input"
-              className="sr-only"
-              onChange={handleFileChange}
-              tabIndex={-1}
-            />
-          </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </RecipePhotoField>
 
           <div
             ref={drop}
