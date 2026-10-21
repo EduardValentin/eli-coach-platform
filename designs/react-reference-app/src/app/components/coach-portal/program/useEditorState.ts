@@ -20,7 +20,7 @@ import { blockingProblems, warnings, type RuleContext } from '../../../domain/pr
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { sectionFromHash, sectionHash, type EditorSection } from './editorSection';
-import type { BlocksUpdate } from './PlanOverview';
+import type { BlocksUpdate } from './PlanBlockList';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
 
@@ -91,6 +91,11 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     select({ kind: 'block', blockId: block.id });
   }
 
+  function removeBlock(blockId: string) {
+    updateBlocks(blocks => blocks.filter(block => block.id !== blockId));
+    select({ kind: 'plan' });
+  }
+
   function applySuggestion() {
     updateBlocks(() => initialContent(setup).plan.blocks);
   }
@@ -119,6 +124,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
     replaceBlock,
     replaceContent,
     addBlock,
+    removeBlock,
     applySuggestion,
     publish,
     discard,

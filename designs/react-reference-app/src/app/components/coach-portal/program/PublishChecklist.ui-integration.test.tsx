@@ -50,7 +50,7 @@ describe('PublishChecklist', () => {
     // arrange
     const user = renderProgramEditor('&pseed=draft&jstage=approved');
     await emptyFirstBlock(user);
-    await user.click(within(rail()).getByRole('button', { name: 'Plan overview' }));
+    await user.click(within(rail()).getByRole('button', { name: /^Overview/ }));
     await user.click(screen.getByRole('button', { name: 'Publish' }));
 
     // act

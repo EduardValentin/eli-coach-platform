@@ -3,14 +3,11 @@ import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
 import type { ClientJourney } from '../../../domain/journey';
 import type { RowTarget } from '../../../domain/programEditing';
-import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramContent, type Session } from '../../../domain/program';
+import type { Block, Program, ProgramContent, Session } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
-import { WIDGET_TITLE_CLASS } from '../../typography';
-import { Badge } from '../../ui/badge';
+import { BlockHeader } from './BlockHeader';
 import { BlockTexts } from './BlockTexts';
 import { CardioEditor } from './CardioEditor';
-import { BlockSettingsStrip } from './BlockSettingsStrip';
-import { BLOCK_BADGE_TONE } from './program-constants';
 import { SessionCard } from './SessionCard';
 import { WeekCalendarEditor } from './WeekCalendarEditor';
 
@@ -28,10 +25,11 @@ type BlockWorkspaceProps = {
   otherPrograms: Program[];
   journeys: Record<string, ClientJourney>;
   onChange: (block: Block) => void;
+  onRemove: () => void;
   onPickExercise: (target: RowTarget) => void;
 };
 
-export function BlockWorkspace({ block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, onChange, onPickExercise }: BlockWorkspaceProps) {
+export function BlockWorkspace({ block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, onChange, onRemove, onPickExercise }: BlockWorkspaceProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { blocks } = content.plan;
   const expandedId = block.sessions.some(session => session.id === expanded) ? expanded : block.sessions[0]?.id;
@@ -40,11 +38,7 @@ export function BlockWorkspace({ block, blockIndex, content, program, dayOne, to
 
   return (
     <section className="grid gap-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <Badge tone={BLOCK_BADGE_TONE[block.type]}>{`Block ${blockIndex + 1}`}</Badge>
-        <h2 className={WIDGET_TITLE_CLASS}>{BLOCK_TYPE_LABELS[block.type]}</h2>
-      </header>
-      <BlockSettingsStrip
+      <BlockHeader
         key={block.id}
         blocks={blocks}
         index={blockIndex}
@@ -55,6 +49,7 @@ export function BlockWorkspace({ block, blockIndex, content, program, dayOne, to
         otherPrograms={otherPrograms}
         journeys={journeys}
         onChange={onChange}
+        onRemove={onRemove}
       />
       <WeekCalendarEditor block={block} onChange={onChange} />
       <ul aria-label="Sessions" className="grid gap-3">

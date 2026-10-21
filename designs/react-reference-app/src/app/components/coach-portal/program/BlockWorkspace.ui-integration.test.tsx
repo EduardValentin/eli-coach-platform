@@ -66,7 +66,7 @@ async function openFirstBlock() {
     </MemoryRouter>,
   );
   const user = userEvent.setup();
-  await user.click(within(rail()).getByRole('button', { name: /^1 Foundation · 4 wk/ }));
+  await user.click(within(rail()).getByRole('button', { name: /^1 Foundation 4 wk/ }));
   return user;
 }
 
@@ -128,9 +128,9 @@ describe('BlockWorkspace', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Split shape' })).toHaveTextContent('Full body');
     expect(firstSession()).toBeInTheDocument();
-    await user.click(within(rail()).getByRole('button', { name: 'Plan overview' }));
-    const rows = within(screen.getByRole('table', { name: 'Blocks' })).getAllByRole('row');
-    expect(within(rows[1]).getByText('Strength split')).toBeInTheDocument();
+    await user.click(within(rail()).getByRole('button', { name: /^Overview/ }));
+    const rows = within(within(screen.getByRole('main')).getByRole('list', { name: 'Blocks' })).getAllByRole('listitem');
+    expect(within(rows[0]).getByText('Strength split')).toBeInTheDocument();
   });
 
   it('rebuilds the sessions from a new split shape after confirmation', async () => {

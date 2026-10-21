@@ -90,7 +90,7 @@ async function openFirstBlock(search: string) {
   );
   const user = userEvent.setup();
   await user.click(
-    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation · 4 wk/ }),
+    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation 4 wk/ }),
   );
   return user;
 }
@@ -166,8 +166,9 @@ describe('CopyBlockDialog', () => {
     const user = await openFirstBlock('pseed=two-versions');
     await user.clear(screen.getByRole('textbox', { name: 'Session name' }));
     await user.type(screen.getByRole('textbox', { name: 'Session name' }), 'Mine');
-    await user.click(screen.getByRole('button', { name: 'Copy from another client' }));
-    const dialog = screen.getByRole('dialog', { name: 'Copy from another client' });
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy from another client…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Copy from another client' });
     expect(within(dialog).getByRole('combobox', { name: 'Client' })).toHaveTextContent('Andreea Popescu');
     expect(within(dialog).getByRole('combobox', { name: 'Version' })).toHaveTextContent('Version 1 · published');
     expect(within(dialog).getByRole('combobox', { name: 'Block' })).toHaveTextContent('1. Foundation · 4 weeks');
@@ -187,9 +188,10 @@ describe('CopyBlockDialog', () => {
     const user = await openFirstBlock('pseed=draft');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Copy from another client' }));
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy from another client…' }));
 
     // assert
-    expect(within(screen.getByRole('dialog', { name: 'Copy from another client' })).getByText('No other client has a program yet.')).toBeInTheDocument();
+    expect(within(await screen.findByRole('dialog', { name: 'Copy from another client' })).getByText('No other client has a program yet.')).toBeInTheDocument();
   });
 });

@@ -9,11 +9,11 @@ import { BlockWorkspace } from '../../components/coach-portal/program/BlockWorks
 import { EditorRail } from '../../components/coach-portal/program/EditorRail';
 import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { CycleRulesEditor } from '../../components/coach-portal/program/CycleRulesEditor';
-import type { EditorSection } from '../../components/coach-portal/program/editorSection';
+import { sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
 import { HeaderSection } from '../../components/coach-portal/program/HeaderSection';
 import { LifestyleSection } from '../../components/coach-portal/program/LifestyleSection';
 import { NutritionSection } from '../../components/coach-portal/program/NutritionSection';
-import { PublishChecklist } from '../../components/coach-portal/program/PublishChecklist';
+import { PublishChecklist, type ChecklistStart } from '../../components/coach-portal/program/PublishChecklist';
 import { PlanOverview } from '../../components/coach-portal/program/PlanOverview';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
@@ -45,7 +45,7 @@ function ProgramEditor(props: EditorProps) {
   const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
-  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [checklist, setChecklist] = useState<ChecklistStart | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const { content } = draft;
   const { today, ctx } = editor;
@@ -65,7 +65,7 @@ function ProgramEditor(props: EditorProps) {
   }
 
   function requestPublish() {
-    if (editor.problems.length > 0 || editor.warnings.length > 0) setChecklistOpen(true);
+    if (editor.problems.length > 0 || editor.warnings.length > 0) setChecklist('top');
     else editor.publish();
   }
 
@@ -101,6 +101,7 @@ function ProgramEditor(props: EditorProps) {
           library={exercises}
           equipment={program.equipment}
           onChange={editor.replaceBlock}
+          onRemove={() => editor.removeBlock(content.plan.blocks[blockIndex].id)}
           otherPrograms={programs().filter(other => other.callId !== program.callId)}
           journeys={journeys}
           onPickExercise={picker.open}
@@ -140,6 +141,9 @@ function ProgramEditor(props: EditorProps) {
         journey={journey}
         version={draft}
         basedOn={currentVersion(program)}
+        currentTitle={selected.kind === 'plan' ? null : sectionTitle(selected, content.plan.blocks)}
+        onOverview={() => editor.select({ kind: 'plan' })}
+        onOpenWarnings={() => setChecklist('warnings')}
         railToggle={
           <Button ref={rail.openButton} onClick={rail.show} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Program sections">
             <ListTree size={20} />
@@ -200,8 +204,11 @@ function ProgramEditor(props: EditorProps) {
         )}
       </div>
       <PublishChecklist
-        open={checklistOpen}
-        onOpenChange={setChecklistOpen}
+        open={checklist !== null}
+        onOpenChange={open => {
+          if (!open) setChecklist(null);
+        }}
+        startAt={checklist ?? 'top'}
         problems={editor.problems}
         warnings={editor.warnings}
         onPublish={editor.publish}

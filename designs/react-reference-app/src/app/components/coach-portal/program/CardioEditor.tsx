@@ -1,8 +1,7 @@
 import { useId, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { WEEKDAYS, newId, type Block, type CardioSession, type CardioType, type Weekday } from '../../../domain/program';
-import { CARDIO_INTENSITY_TEXT, STEPS_STEP } from '../../../domain/programDefaults';
-import { SettingsRow } from '../../SettingsSection';
+import { CARDIO_INTENSITY_TEXT } from '../../../domain/programDefaults';
 import { Button } from '../../ui/button';
 import { cardVariants } from '../../ui/card';
 import { Input } from '../../ui/input';
@@ -14,8 +13,6 @@ import { CARDIO_TYPE_LABELS, WEEKDAY_LABELS } from './program-constants';
 type CardioEditorProps = { block: Block; onChange: (block: Block) => void };
 
 const CELL_CLASS = 'px-3 py-2';
-const MIN_STEPS = 4000;
-const MAX_STEPS = 12000;
 const CARDIO_TYPES = Object.keys(CARDIO_TYPE_LABELS) as CardioType[];
 const TYPE_OPTIONS: Option<CardioType>[] = CARDIO_TYPES.map(value => ({ value, label: CARDIO_TYPE_LABELS[value] }));
 const WEEKDAY_OPTIONS = WEEKDAYS.map(value => ({ value, label: WEEKDAY_LABELS[value] }));
@@ -23,12 +20,6 @@ const PLACEMENT_OPTIONS: Option<CardioSession['placement']>[] = [
   { value: 'separate', label: 'Separate day' },
   { value: 'after-session', label: 'After session' },
 ];
-
-function stepOptions(current: number): Option<number>[] {
-  const values = new Set<number>([current]);
-  for (let steps = MIN_STEPS; steps <= MAX_STEPS; steps += STEPS_STEP) values.add(steps);
-  return [...values].sort((a, b) => a - b).map(value => ({ value, label: value.toLocaleString('en-US') }));
-}
 
 function placedMinutes(block: Block): number {
   const placedIds = new Set(Object.values(block.calendar).flatMap(entry => (entry.kind === 'cardio' ? [entry.cardioId] : [])));
@@ -72,7 +63,6 @@ function newCardio(block: Block): CardioSession {
 
 export function CardioEditor({ block, onChange }: CardioEditorProps) {
   const headingId = useId();
-  const stepsId = useId();
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const replace = (cardio: CardioSession) =>
     onChange({ ...block, cardioSessions: block.cardioSessions.map(other => (other.id === cardio.id ? cardio : other)) });
@@ -90,18 +80,10 @@ export function CardioEditor({ block, onChange }: CardioEditorProps) {
     <section aria-labelledby={headingId} className={cardVariants({ variant: 'panel' })}>
       <div className="border-b border-border-subtle px-5 py-4 sm:px-6">
         <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
-          Cardio and steps
+          Cardio
         </h3>
       </div>
-      <SettingsRow htmlFor={stepsId} title="Daily steps">
-        <OptionSelect
-          id={stepsId}
-          options={stepOptions(block.dailySteps)}
-          value={block.dailySteps}
-          onChange={dailySteps => onChange({ ...block, dailySteps })}
-        />
-      </SettingsRow>
-      <div className="grid gap-3 border-t border-border-subtle px-5 py-5 sm:px-6">
+      <div className="grid gap-3 px-5 py-5 sm:px-6">
         {block.cardioSessions.length > 0 && (
           <Table aria-label="Cardio sessions">
             <TableHeader>

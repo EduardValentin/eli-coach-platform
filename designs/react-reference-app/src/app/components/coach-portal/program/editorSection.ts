@@ -1,4 +1,4 @@
-import type { Block } from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, type Block } from '../../../domain/program';
 
 export type EditorSection =
   | { kind: 'header' }
@@ -29,4 +29,18 @@ export function sectionFromHash(hash: string, blocks: readonly Block[]): EditorS
 
 export function isSameSection(a: EditorSection, b: EditorSection): boolean {
   return sectionHash(a) === sectionHash(b);
+}
+
+const NAMED_TITLES: Record<Exclude<EditorSection['kind'], 'block'>, string> = {
+  header: 'Header & focus',
+  plan: 'Overview',
+  cycle: 'Cycle rules',
+  nutrition: 'Nutrition',
+  lifestyle: 'Lifestyle',
+};
+
+export function sectionTitle(section: EditorSection, blocks: readonly Block[]): string {
+  if (section.kind !== 'block') return NAMED_TITLES[section.kind];
+  const index = blocks.findIndex(block => block.id === section.blockId);
+  return `Block ${index + 1} · ${BLOCK_TYPE_LABELS[blocks[index].type]}`;
 }

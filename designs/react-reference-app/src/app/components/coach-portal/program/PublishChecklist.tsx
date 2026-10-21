@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { blockingMessage, warningMessage, type BlockingCode, type RuleFinding, type WarningCode } from '../../../domain/programRules';
 import { ResponsiveSheetDialog, SheetDialogActions, SheetDialogBody, SheetDialogFooter, SheetDialogHeader } from '../../ResponsiveSheetDialog';
 import { InlineProblem } from '../../InlineProblem';
@@ -10,12 +11,22 @@ type PublishChecklistProps = {
   warnings: RuleFinding<WarningCode>[];
   onPublish: () => void;
   onOpenBlock: (blockId: string) => void;
+  startAt: ChecklistStart;
 };
+
+export type ChecklistStart = 'top' | 'warnings';
 
 const LIST_TITLE_CLASS = 'mb-2 text-sm font-semibold text-text-primary';
 
-export function PublishChecklist({ open, onOpenChange, problems, warnings, onPublish, onOpenBlock }: PublishChecklistProps) {
+export function PublishChecklist({ open, onOpenChange, problems, warnings, onPublish, onOpenBlock, startAt }: PublishChecklistProps) {
   const blocked = problems.length > 0;
+  const warningsSection = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open || startAt !== 'warnings') return;
+    const frame = requestAnimationFrame(() => warningsSection.current?.scrollIntoView({ block: 'start' }));
+    return () => cancelAnimationFrame(frame);
+  }, [open, startAt]);
   const publishLabel = !blocked && warnings.length > 0 ? 'Publish anyway' : 'Publish';
 
   function openBlock(blockId: string) {
@@ -49,7 +60,7 @@ export function PublishChecklist({ open, onOpenChange, problems, warnings, onPub
             </section>
           )}
           {warnings.length > 0 && (
-            <section aria-label="Worth a look">
+            <section ref={warningsSection} aria-label="Worth a look" className="scroll-mt-4">
               <h4 className={LIST_TITLE_CLASS}>
                 Worth a look
               </h4>
