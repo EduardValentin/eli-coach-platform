@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { CircleCheck, CircleDashed, ClipboardList } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { dayOneOf, usePrograms } from '../../../context/ProgramContext';
 import { isBeforeStage, type ClientJourney } from '../../../domain/journey';
 import {
@@ -21,7 +21,8 @@ import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './program-constants';
-import { coachingHasEnded, ProgramSummary } from './ProgramSummary';
+import { NextVersionAction } from './NextVersionAction';
+import { ProgramSummary } from './ProgramSummary';
 
 function missingFrom(version: ProgramVersion): string[] {
   const { content } = version;
@@ -130,24 +131,12 @@ function PublishedSummary({ journey, program }: { journey: ClientJourney; progra
 }
 
 export function ProgramBlock({ journey }: { journey: ClientJourney }) {
-  const { programFor, startDraft } = usePrograms();
-  const navigate = useNavigate();
+  const { programFor } = usePrograms();
   const program = programFor(journey.callId);
   const programPath = `${clientDetailPathForJourney(journey)}/program`;
   const draft = program && draftOf(program);
   const published = program?.versions.some(version => version.state === 'published');
   const possessive = clientPronouns(journey.identity.gender).possessive.lower;
-
-  function startNewVersion() {
-    startDraft(journey.callId);
-    navigate(`${programPath}/draft`);
-  }
-
-  const continueDraft = (
-    <Button variant="primary" asChild>
-      <Link to={`${programPath}/draft`}>Continue draft</Link>
-    </Button>
-  );
 
   let body: ReactNode;
   let footer: ReactNode = null;
@@ -169,7 +158,7 @@ export function ProgramBlock({ journey }: { journey: ClientJourney }) {
     );
   } else if (!published) {
     body = draft && <DraftSummary version={draft} />;
-    footer = continueDraft;
+    footer = <NextVersionAction journey={journey} program={program} />;
   } else {
     body = <PublishedSummary journey={journey} program={program} />;
     footer = (
@@ -177,13 +166,7 @@ export function ProgramBlock({ journey }: { journey: ClientJourney }) {
         <Button variant="outline" asChild>
           <Link to={programPath}>View program</Link>
         </Button>
-        {draft
-          ? continueDraft
-          : !coachingHasEnded(journey, new Date()) && (
-              <Button variant="primary" onClick={startNewVersion}>
-                New version
-              </Button>
-            )}
+        <NextVersionAction journey={journey} program={program} />
       </>
     );
   }

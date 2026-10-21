@@ -1,7 +1,11 @@
-import { BLOCK_TYPE_LABELS, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
-import { blockStatus } from '../../../domain/programCalendar';
+import type { ReactNode } from 'react';
+import { addDays } from 'date-fns';
+import { CalendarRange, ClipboardCheck, Flag, type LucideIcon } from 'lucide-react';
+import { BLOCK_TYPE_LABELS, type Block, type LevelHint, type ProgramContent, type Weekday } from '../../../domain/program';
+import { blockStatus, checkpointDate, nextCheckpoint, planWeeks } from '../../../domain/programCalendar';
 import { blockingMessage, blockingProblems, type BlockingCode, type RuleContext } from '../../../domain/programRules';
 import { suggestedBlocks } from '../../../domain/programSuggestions';
+import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
@@ -41,6 +45,34 @@ function sequenceProblems(content: ProgramContent, props: PlanOverviewProps) {
   return blockingProblems(content, '', ctx).filter(finding => SEQUENCE_CODES.includes(finding.code));
 }
 
+const DAYS_PER_WEEK = 7;
+
+function SummaryChip({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-base px-3 py-1.5 text-sm text-text-primary">
+      <Icon aria-hidden="true" size={16} className="text-text-secondary" />
+      {children}
+    </li>
+  );
+}
+
+function nextCheckInForm(blocks: readonly Block[], { dayOne, preferredWeekday, today }: PlanOverviewProps): Date | null {
+  const planEnd = addDays(dayOne ?? today, planWeeks(blocks) * DAYS_PER_WEEK - 1);
+  const next = dayOne ? nextCheckpoint(dayOne, preferredWeekday, today) : checkpointDate(today, preferredWeekday, 1);
+  return next <= planEnd ? next : null;
+}
+
+function PlanSummary({ blocks, props }: { blocks: readonly Block[]; props: PlanOverviewProps }) {
+  const next = nextCheckInForm(blocks, props);
+  return (
+    <ul aria-label="Plan summary" className="flex flex-wrap gap-2">
+      <SummaryChip icon={CalendarRange}>{`${planWeeks(blocks)} weeks`}</SummaryChip>
+      <SummaryChip icon={Flag}>{props.dayOne ? `Starts ${formatJourneyDate(props.dayOne)}` : 'Starts on publication'}</SummaryChip>
+      {next && <SummaryChip icon={ClipboardCheck}>{`Next check-in form ${formatJourneyDate(next)}`}</SummaryChip>}
+    </ul>
+  );
+}
+
 function SuggestionBanner({ level, onUse }: { level: LevelHint; onUse: () => void }) {
   const plan = suggestedBlocks(level)
     .map(block => `${BLOCK_TYPE_LABELS[block.type]} ${block.weeks} wk`)
@@ -67,7 +99,10 @@ export function PlanOverview(props: PlanOverviewProps) {
         <SuggestionBanner level={level} onUse={onUseSuggestion} />
       ) : (
         <>
-          <PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday={preferredWeekday} today={today} />
+          <div className="grid grid-cols-1 gap-4">
+            <PlanSummary blocks={blocks} props={props} />
+            <PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday={preferredWeekday} today={today} />
+          </div>
           <PlanBlockList
             blocks={blocks}
             statuses={blocks.map((_, index) => blockStatus(blocks, index, dayOne, today))}

@@ -143,6 +143,11 @@ function referencedSessions(block: Block): Session[] {
   return block.sessions.filter(session => ids.has(session.id));
 }
 
+function hasEmptyCardioDay(block: Block): boolean {
+  const ids = new Set(Object.values(block.calendar).flatMap(entry => (entry.kind === 'cardio' ? [entry.cardioId] : [])));
+  return block.cardioSessions.some(cardio => ids.has(cardio.id) && cardio.segments.length === 0);
+}
+
 function missingSessionProblems(
   blocks: readonly Block[],
   ctx: RuleContext,
@@ -152,9 +157,8 @@ function missingSessionProblems(
   return blocks.flatMap((block, index) => {
     const { start, end } = blockDates(blocks, index, dayOne);
     const overlaps = start <= window.to && end >= startOfDay(window.from);
-    const hasEmptySession = referencedSessions(block).some(
-      session => !session.rows.some(row => row.exerciseId !== ''),
-    );
+    const hasEmptySession =
+      referencedSessions(block).some(session => !session.rows.some(row => row.exerciseId !== '')) || hasEmptyCardioDay(block);
     if (!overlaps || !hasEmptySession) return [];
     return [
       {

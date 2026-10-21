@@ -64,6 +64,10 @@ export function cardioFor(block: Block, weekday: Weekday): CardioSession | null 
   return block.cardioSessions.find(cardio => cardio.id === entry.cardioId) ?? null;
 }
 
+export function sessionAnchor(sessionId: string): string {
+  return `program-session-${sessionId}`;
+}
+
 export function weekStart(view: ProgramView): Date {
   return startOfWeek(startOfDay(view.today), { weekStartsOn: 1 });
 }

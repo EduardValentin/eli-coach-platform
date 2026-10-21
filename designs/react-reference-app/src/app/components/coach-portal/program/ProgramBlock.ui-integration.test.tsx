@@ -189,9 +189,11 @@ describe('ProgramBlock', () => {
     expect(definitions[0]).toBe('Foundation · week 1 of 11');
     expect(definitions[1]).toMatch(/^\d+ \w+$/);
     expect(definitions[2]).toMatch(/^Version 1 · \d+ \w+$/);
-    const plan = within(within(section).getByRole('list', { name: 'Plan' })).getAllByRole('listitem');
+    const timeline = within(section).getByRole('group', { name: 'Plan timeline' });
+    const plan = within(within(timeline).getByRole('list', { name: 'Plan blocks' })).getAllByRole('listitem');
     expect(plan).toHaveLength(3);
     expect(plan[0]).toHaveAttribute('aria-current', 'step');
+    expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
     expect(within(section).queryByRole('table')).not.toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'View program' })).toHaveAttribute(
       'href',

@@ -112,11 +112,19 @@ function withIntervalsDay(content: ProgramContent, library: readonly Exercise[])
   return { ...content, plan: { blocks: [{ ...first, cardioSessions }, ...rest] } };
 }
 
+const SUGGESTED_MAIN_LIFT_KG = 40;
+
+function withSuggestedMainLiftWeights(block: Block): Block {
+  const weighted = (row: Row): Row =>
+    row.slot === 'A' ? { ...row, sets: row.sets.map(set => (set.kind === 'working' ? { ...set, weightKg: SUGGESTED_MAIN_LIFT_KG } : set)) } : row;
+  return { ...block, sessions: block.sessions.map(session => ({ ...session, rows: session.rows.map(weighted) })) };
+}
+
 function twoVersions(client: SeedClient, publishedAt: Date, content: ProgramContent): Program {
   const [first, ...rest] = content.plan.blocks;
   const raised: ProgramContent = {
     ...content,
-    plan: { blocks: [{ ...first, dailySteps: 8000 }, ...rest] },
+    plan: { blocks: [withSuggestedMainLiftWeights({ ...first, dailySteps: 8000 }), ...rest] },
   };
   return programOf(client, [
     { number: 1, state: 'superseded', publishedAt, whatChanged: '', content },

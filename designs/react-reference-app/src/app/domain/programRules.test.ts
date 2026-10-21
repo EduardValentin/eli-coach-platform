@@ -159,6 +159,29 @@ describe('missing-sessions', () => {
     expect(codes(blockingProblems(content(planBlocks), 'x', context()))).not.toContain('missing-sessions');
   });
 
+  it('flags a calendar cardio day whose session has no segments', () => {
+    // arrange
+    const [block] = blocks({ type: 'foundation', weeks: 2, days: { mon: 's1' }, cardio: { wed: 'liss' } });
+    const planBlocks = [{ ...block, cardioSessions: block.cardioSessions.map(cardio => ({ ...cardio, segments: [] })) }];
+
+    // act
+    const found = blockingProblems(content(planBlocks), 'x', context());
+
+    // assert
+    expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b1', detail: 'Foundation block 1' });
+  });
+
+  it('passes a cardio day whose session has segments', () => {
+    // arrange
+    const planBlocks = blocks({ type: 'foundation', weeks: 2, days: { mon: 's1' }, cardio: { wed: 'liss' } });
+
+    // act
+    const found = blockingProblems(content(planBlocks), 'x', context());
+
+    // assert
+    expect(codes(found)).not.toContain('missing-sessions');
+  });
+
   it('measures the window from the publish day when day 1 is not set', () => {
     const planBlocks = blocks({ type: 'foundation', weeks: 2, sessions: [emptySession], days: { mon: 's1' } });
     const found = blockingProblems(content(planBlocks), 'x', context({ dayOne: null }));

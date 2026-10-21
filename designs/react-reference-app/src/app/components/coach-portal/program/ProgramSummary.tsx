@@ -14,7 +14,7 @@ import {
 } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { Reading } from '../../Reading';
-import { CompactPlanTimeline } from './PlanTimeline';
+import { PlanTimeline } from './PlanTimeline';
 
 const UPCOMING_WINDOW_DAYS = 14;
 
@@ -75,7 +75,7 @@ export function ProgramSummary({ journey, program }: { journey: ClientJourney; p
           value={`Version ${version.number}${version.publishedAt ? ` · ${formatJourneyDate(version.publishedAt)}` : ''}`}
         />
       </dl>
-      <CompactPlanTimeline blocks={blocks} dayOne={dayOne} today={today} />
+      <PlanTimeline blocks={blocks} dayOne={dayOne} preferredWeekday={checkInDay} today={today} />
       {upcoming.length > 0 && (
         <ul className="grid gap-1.5">
           {upcoming.map(signal => (
