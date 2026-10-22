@@ -84,7 +84,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
           </Section>
           {block.sessions.map(session => (
             <div key={session.id} data-print-session className="grid grid-cols-1 gap-4">
-              <SessionTable session={session} block={block} language={language} exercisesById={exercisesById} mode="document" />
+              <SessionTable session={session} block={block} language={language} exercisesById={exercisesById} />
               <TrackingTable session={session} block={block} exercisesById={exercisesById} />
             </div>
           ))}

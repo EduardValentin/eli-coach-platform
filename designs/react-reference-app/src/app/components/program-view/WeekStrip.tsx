@@ -49,39 +49,41 @@ export function WeekStrip({ block, weekStart, today, selected, onSelect }: WeekS
   }
 
   return (
-    <div className="@container">
-      <div role="tablist" aria-label="This week" onKeyDown={moveWithKey} className="-mx-2 grid grid-cols-7 gap-0.5 @min-[36rem]:mx-0 @min-[36rem]:gap-1">
-        {WEEKDAYS.map((weekday, index) => {
-          const date = addDays(weekStart, index);
-          const isSelected = weekday === selected;
-          const EntryIcon = ENTRY_ICONS[dayEntries(block, weekday).kind];
-          return (
-            <button
-              key={weekday}
-              type="button"
-              role="tab"
-              id={dayTabId(weekday)}
-              aria-controls={dayPanelId(weekday)}
-              aria-selected={isSelected}
-              aria-current={isSameDay(date, today) ? 'date' : undefined}
-              tabIndex={isSelected ? 0 : -1}
-              onClick={() => onSelect(weekday)}
-              className={cn(
-                'flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-card border border-border/50 px-1 py-2 text-center text-xs text-text-secondary',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                { 'bg-primary text-primary-foreground': isSelected, 'border-primary': isSameDay(date, today) },
-              )}
-            >
-              <span className="flex flex-col items-center leading-tight">
-                <span>{format(date, 'EEE')}</span>{' '}
-                <span className="text-sm font-semibold tabular-nums">{format(date, 'd')}</span>
-              </span>
-              <EntryIcon aria-hidden="true" size={16} className="@min-[36rem]:hidden" />
-              <span className="sr-only @min-[36rem]:not-sr-only @min-[36rem]:w-full @min-[36rem]:truncate">{entryLabel(block, weekday)}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div role="tablist" aria-label="This week" onKeyDown={moveWithKey} className="grid grid-cols-7 gap-1">
+      {WEEKDAYS.map((weekday, index) => {
+        const date = addDays(weekStart, index);
+        const isSelected = weekday === selected;
+        const isToday = isSameDay(date, today);
+        const EntryIcon = ENTRY_ICONS[dayEntries(block, weekday).kind];
+        return (
+          <button
+            key={weekday}
+            type="button"
+            role="tab"
+            id={dayTabId(weekday)}
+            aria-controls={dayPanelId(weekday)}
+            aria-selected={isSelected}
+            aria-current={isToday ? 'date' : undefined}
+            tabIndex={isSelected ? 0 : -1}
+            onClick={() => onSelect(weekday)}
+            className={cn(
+              'flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-control py-2 text-center text-text-secondary transition-colors',
+              'hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+              {
+                'bg-surface-inverted text-surface-inverted-foreground hover:bg-surface-inverted': isSelected,
+                'ring-2 ring-brand ring-inset': isToday,
+              },
+            )}
+          >
+            <span className="flex flex-col items-center gap-0.5 leading-none">
+              <span className="text-xs font-medium">{format(date, 'EEE')}</span>{' '}
+              <span className={cn('text-base font-semibold tabular-nums', { 'text-text-primary': !isSelected })}>{format(date, 'd')}</span>
+            </span>
+            <EntryIcon aria-hidden="true" className="size-3.5" />
+            <span className="sr-only">{entryLabel(block, weekday)}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

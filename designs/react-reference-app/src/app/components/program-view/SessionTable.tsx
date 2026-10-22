@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { ChevronDown } from 'lucide-react';
 import {
   formatRange,
   isWorkingSet,
@@ -17,7 +16,6 @@ import { templateText } from '../../domain/programTemplates';
 import type { Exercise } from '../../context/TrainingContext';
 import { repsSuffix } from '../coach-portal/program/rowFields';
 import { WatchVideoButton } from '../WatchVideoButton';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '../ui/utils';
 import { plainText, restLabel } from './programView';
@@ -27,11 +25,9 @@ type SessionTableProps = {
   block: Block;
   language: ProgramLanguage;
   exercisesById: ReadonlyMap<string, Exercise>;
-  mode: 'client' | 'document';
 };
 
 const CELL_CLASS = 'px-2 align-top first:pl-0 last:pr-0';
-const DETAILS_LABEL = 'Cues · video · substitutions · how to progress';
 
 function namesOf(ids: readonly string[], exercisesById: ReadonlyMap<string, Exercise>): string[] {
   return ids.flatMap(id => exercisesById.get(id)?.name ?? []);
@@ -82,7 +78,7 @@ function SetsCell({ row, exercise }: { row: Row; exercise: Exercise | undefined 
   );
 }
 
-export function SessionTable({ session, block, language, exercisesById, mode }: SessionTableProps) {
+export function SessionTable({ session, block, language, exercisesById }: SessionTableProps) {
   const mobility = namesOf(session.warmUp.mobilityExerciseIds, exercisesById);
   const warmUp = plainText(templateText('warmUp', language).text);
 
@@ -104,9 +100,8 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
         <TableBody>
           {session.rows.flatMap(row => {
             const exercise = exercisesById.get(row.exerciseId);
-            const details = <RowDetails row={row} exercise={exercise} language={language} exercisesById={exercisesById} />;
             return [
-              <TableRow key={row.id} className={mode === 'client' ? 'border-b-0' : undefined}>
+              <TableRow key={row.id}>
                 <th scope="row" className={cn(CELL_CLASS, 'py-3 text-left font-medium text-text-primary')}>
                   <span className="flex items-center gap-2">
                     <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-surface-inverted px-1 text-xs font-semibold text-surface-inverted-foreground tabular-nums">
@@ -122,17 +117,7 @@ export function SessionTable({ session, block, language, exercisesById, mode }: 
               </TableRow>,
               <TableRow key={`${row.id}-details`}>
                 <TableCell colSpan={3} className={cn(CELL_CLASS, 'pt-0 pb-1')}>
-                  {mode === 'client' ? (
-                    <Collapsible>
-                      <CollapsibleTrigger className="group flex min-h-11 items-center gap-1 text-xs text-text-secondary hover:text-text-primary">
-                        {DETAILS_LABEL}
-                        <ChevronDown aria-hidden className="size-3 transition-transform group-data-[state=open]:rotate-180" />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>{details}</CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    details
-                  )}
+                  <RowDetails row={row} exercise={exercise} language={language} exercisesById={exercisesById} />
                 </TableCell>
               </TableRow>,
             ];

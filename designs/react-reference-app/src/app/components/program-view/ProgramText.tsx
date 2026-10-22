@@ -9,7 +9,7 @@ export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
 
 export function Paragraphs({ text }: { text: string }) {
   return (
-    <div className="grid gap-2 text-sm text-text-primary">
+    <div className="grid gap-3 text-sm leading-relaxed text-text-primary">
       {plainText(text)
         .split('\n')
         .filter(line => line.trim() !== '')

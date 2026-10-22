@@ -86,11 +86,13 @@ describe('the client Program page', () => {
 
     // assert
     expect(heading).toBeInTheDocument();
-    expect(screen.getByText(/Foundation · week 1 of 11/)).toBeInTheDocument();
+    expect(screen.getByText('Week 1 of 11')).toBeInTheDocument();
     expect(today).toHaveAttribute('aria-current', 'date');
     expect(today).toHaveTextContent('Wed 23');
     expect(within(tabs).getAllByRole('tab')).toHaveLength(7);
-    expect(within(panel).getAllByRole('table')).toHaveLength(1);
+    expect(within(panel).queryByRole('table')).toBeNull();
+    expect(within(panel).getAllByRole('article').length).toBeGreaterThan(0);
+    expect(within(within(panel).getAllByRole('list', { name: 'Sets' })[0]).getAllByRole('listitem')[0]).toHaveTextContent(/^Set 1 · /);
     expect(within(panel).getAllByRole('heading', { level: 3 })).toHaveLength(1);
     expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute('href', '/portal/program/document');
     expect(screen.queryByRole('heading', { name: 'About this block' })).toBeInTheDocument();
@@ -129,7 +131,7 @@ describe('the client Program page', () => {
     expect(screen.getByText(/Foundation block — building your base/)).toBeInTheDocument();
   });
 
-  it('lists the blocks of the plan under Your plan with the current one marked', async () => {
+  it('shows the plan timeline with today under Your plan', async () => {
     // arrange
     renderProgram('published');
     await screen.findByRole('heading', { level: 1, name: 'Program' });
@@ -138,9 +140,9 @@ describe('the client Program page', () => {
     await userEvent.click(screen.getByRole('button', { name: /Your plan/ }));
 
     // assert
-    const current = screen.getByRole('listitem', { current: true });
-    expect(current).toHaveTextContent(/^1\. Foundation · \d+ weeks · /);
-    expect(screen.getAllByRole('listitem', { current: false }).length).toBeGreaterThan(0);
+    const timeline = screen.getByRole('group', { name: 'Plan timeline' });
+    expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
+    expect(within(timeline).getByRole('listitem', { current: 'step' })).toHaveTextContent(/Foundation/);
   });
 
   it('shows the ended state after the plan', async () => {

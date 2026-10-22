@@ -1,5 +1,8 @@
+import { Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import type { ProgramVersion } from '../../domain/program';
+import { WIDGET_SUBHEADING_CLASS } from '../typography';
+import { cn } from '../ui/utils';
 
 const DISMISSED_KEY = 'program-what-changed-dismissed';
 
@@ -36,12 +39,13 @@ export function WhatChangedBanner({ version, dismissedVersion, onDismiss }: What
   }
 
   return (
-    <aside aria-labelledby={headingId} className="flex flex-col gap-2 rounded-card border border-border/50 bg-surface-quiet p-4">
-      <h2 id={headingId} className="text-sm font-semibold text-text-primary">
+    <aside aria-labelledby={headingId} className="grid gap-2 rounded-card border border-brand-secondary/20 bg-brand-secondary-surface p-4">
+      <h2 id={headingId} className={cn('flex items-center gap-2', WIDGET_SUBHEADING_CLASS)}>
+        <Sparkles aria-hidden="true" className="size-4 text-brand-secondary" />
         What changed in v{version.number}
       </h2>
-      <p className="text-sm text-text-secondary">{version.whatChanged}</p>
-      <Button variant="ghost" size="sm" className="self-start" onClick={dismiss}>
+      <p className="text-sm leading-relaxed text-text-primary">{version.whatChanged}</p>
+      <Button variant="ghost" size="sm" className="-ml-3 justify-self-start" onClick={dismiss}>
         Dismiss
       </Button>
     </aside>

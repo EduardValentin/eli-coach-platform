@@ -267,6 +267,6 @@ describe('ProgramEditorPage', () => {
 
     // assert
     const dialog = screen.getByRole('dialog', { name: 'Preview as client' });
-    expect(within(dialog).getByText('Current focus')).toBeInTheDocument();
+    expect(within(dialog).getByRole('tablist', { name: 'This week' })).toBeInTheDocument();
   });
 });
