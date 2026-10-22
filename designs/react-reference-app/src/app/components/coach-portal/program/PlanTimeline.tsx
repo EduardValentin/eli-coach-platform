@@ -3,12 +3,14 @@ import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../../domain/pro
 import { blockDates, blockStatus, checkpointsWithin, currentPosition, planWeeks } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { Badge } from '../../ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './program-constants';
 
 const DAYS_PER_WEEK = 7;
 const REM_PER_WEEK = 3.5;
 const SHORT_DATE = 'd MMM';
+const EXACT_DATE = 'd MMMM yyyy';
 
 type PlanTimelineProps = {
   blocks: readonly Block[];
@@ -42,6 +44,26 @@ function todayMarker(blocks: readonly Block[], dayOne: Date | null, today: Date)
   return { offset: differenceInCalendarDays(today, dayOne) / (planWeeks(blocks) * DAYS_PER_WEEK), weekOfPlan: position.weekOfPlan };
 }
 
+function TodayMarkerLabel({ marker, today }: { marker: TodayMarker; today: Date }) {
+  const exact = `${format(today, EXACT_DATE)} · week ${marker.weekOfPlan}`;
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        type="button"
+        aria-label={`Today · ${exact}`}
+        className={cn('absolute top-0 cursor-default rounded-sm text-xs font-semibold whitespace-nowrap text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring', {
+          '-translate-x-1/2': marker.offset >= MARKER_EDGE && marker.offset <= 1 - MARKER_EDGE,
+          '-translate-x-full': marker.offset > 1 - MARKER_EDGE,
+        })}
+        style={{ left: `${marker.offset * 100}%` }}
+      >
+        {`Today · week ${marker.weekOfPlan}`}
+      </TooltipTrigger>
+      <TooltipContent>{exact}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTimelineProps) {
   const weeks = planWeeks(blocks);
   const start = dayOne ?? today;
@@ -63,15 +85,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
         <div className="relative grid" style={{ minWidth: `${weeks * REM_PER_WEEK}rem` }}>
           {marker && (
             <p className="relative h-6 text-xs font-semibold text-text-primary tabular-nums">
-              <span
-                className={cn('absolute top-0 whitespace-nowrap', {
-                  '-translate-x-1/2': marker.offset >= MARKER_EDGE && marker.offset <= 1 - MARKER_EDGE,
-                  '-translate-x-full': marker.offset > 1 - MARKER_EDGE,
-                })}
-                style={{ left: `${marker.offset * 100}%` }}
-              >
-                {`Today · week ${marker.weekOfPlan}`}
-              </span>
+              <TodayMarkerLabel marker={marker} today={today} />
             </p>
           )}
           <ol aria-label="Plan blocks" className="flex h-14 overflow-hidden rounded-tile">

@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react';
-import { ChevronDown, Timer, Wind } from 'lucide-react';
+import { ChevronDown, Timer } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type ProgramLanguage, type Row, type Session, type SetSpec } from '../../domain/program';
 import { estimatedMinutes } from '../../domain/programSuggestions';
@@ -9,8 +9,8 @@ import { Badge } from '../ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
-import { ColumnBreak, DayHeader, Dot } from './DayParts';
-import { plainText, restLabel, warmUpLines } from './programView';
+import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
+import { coolDownLines, plainText, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
@@ -173,28 +173,14 @@ export function SessionDay({ session, exercisesById, language }: SessionDayProps
   return (
     <section aria-labelledby={headingId} className="@container grid gap-4">
       <DayHeader headingId={headingId} name={session.name} meta={`~${estimatedMinutes(session)} min`} />
-      {warmUp.length > 0 && (
-        <div className="grid gap-2 rounded-card bg-surface-subtle p-4">
-          <p className={LABEL_CLASS}>Warm-up</p>
-          <ul aria-label="Warm-up exercises" className="flex flex-wrap gap-1.5">
-            {warmUp.map(line => (
-              <li key={line}>
-                <Badge tone="tint-slate">{line}</Badge>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
       <ol className="grid items-start gap-3 @3xl:grid-cols-2">
         {groupsOf(session).map(rows =>
           rows.length > 1 ? <Superset key={rows[0].id}>{rows.map(item)}</Superset> : item(rows[0]),
         )}
       </ol>
       {session.coolDown.enabled && (
-        <p className="flex items-center gap-2 text-sm text-text-secondary">
-          <Wind aria-hidden="true" className="size-4" />
-          <span>Cool-down</span>
-        </p>
+        <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
       )}
     </section>
   );

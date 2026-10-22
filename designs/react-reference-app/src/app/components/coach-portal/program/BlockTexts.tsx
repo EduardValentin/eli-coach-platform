@@ -2,6 +2,7 @@ import { useId } from 'react';
 import type { Block, Program } from '../../../domain/program';
 import { fillTemplate, templateText, type TemplateKey } from '../../../domain/programTemplates';
 import { CollapsiblePortalWidget } from '../../CollapsiblePortalWidget';
+import { parseTemplate, TextCardStack, type TextCard } from '../../program-view/ProgramText';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
@@ -47,12 +48,16 @@ const FIELDS: TextField[] = [
   },
 ];
 
+function fieldTemplate(field: TextField, block: Block, language: Program['language']) {
+  const key = field.templateKey(block);
+  const template = key ? templateText(key, language) : { text: '', pending: false };
+  return { ...template, text: fillTemplate(template.text, { days: sessionDays(block) }) };
+}
+
 function TextFieldEditor({ field, block, language, onChange }: BlockTextsProps & { field: TextField }) {
   const id = useId();
   const labelId = useId();
-  const key = field.templateKey(block);
-  const template = key ? templateText(key, language) : { text: '', pending: false };
-  const resetText = fillTemplate(template.text, { days: sessionDays(block) });
+  const template = fieldTemplate(field, block, language);
 
   return (
     <fieldset aria-labelledby={labelId} className="grid gap-2">
@@ -61,7 +66,7 @@ function TextFieldEditor({ field, block, language, onChange }: BlockTextsProps &
           {field.label}
         </Label>
         {template.pending && <Badge tone="pending">Romanian text pending</Badge>}
-        <Button variant="ghost" size="xs" className="ml-auto" onClick={() => onChange(field.write(block, resetText))}>
+        <Button variant="ghost" size="xs" className="ml-auto" onClick={() => onChange(field.write(block, template.text))}>
           Reset to template
         </Button>
       </div>
@@ -70,14 +75,20 @@ function TextFieldEditor({ field, block, language, onChange }: BlockTextsProps &
   );
 }
 
-export function BlockTexts({ block, language, onChange }: BlockTextsProps) {
+function fieldCard(field: TextField, props: BlockTextsProps): TextCard {
+  const templateTitle = parseTemplate(fieldTemplate(field, props.block, props.language).text).title;
+  return {
+    key: field.label,
+    title: templateTitle || field.label,
+    eyebrow: templateTitle ? field.label : undefined,
+    content: <TextFieldEditor field={field} {...props} />,
+  };
+}
+
+export function BlockTexts(props: BlockTextsProps) {
   return (
-    <CollapsiblePortalWidget title="Texts the client reads" headingId={`block-texts-${block.id}`}>
-      <div className="grid gap-5">
-        {FIELDS.map(field => (
-          <TextFieldEditor key={field.label} field={field} block={block} language={language} onChange={onChange} />
-        ))}
-      </div>
+    <CollapsiblePortalWidget title="Texts the client reads" headingId={`block-texts-${props.block.id}`}>
+      <TextCardStack cards={FIELDS.map(field => fieldCard(field, props))} />
     </CollapsiblePortalWidget>
   );
 }

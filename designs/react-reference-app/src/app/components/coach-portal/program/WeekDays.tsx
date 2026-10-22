@@ -82,8 +82,8 @@ function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
 }
 
 function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
-  const keepsCardio = choice.kind === 'cardio' && block.calendar[day].kind === 'cardio';
-  return keepsCardio ? [] : describeReset(block, { kind: 'day', weekday: day });
+  const keepsContent = choice.kind !== 'rest' && choice.kind === block.calendar[day].kind;
+  return keepsContent ? [] : describeReset(block, { kind: 'day', weekday: day });
 }
 
 function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {

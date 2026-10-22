@@ -1,4 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ClientProgramPage } from './ClientProgramPage';
@@ -83,6 +85,42 @@ describe('ClientProgramPage', () => {
     // assert
     const timeline = screen.getByRole('group', { name: 'Plan timeline' });
     expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
+  });
+
+  it('names the exact date on the today marker and shows it in a tooltip on focus', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const exact = `${format(new Date(), 'd MMMM yyyy')} · week 1`;
+    renderPage('c1', '&pseed=two-versions');
+    const timeline = screen.getByRole('group', { name: 'Plan timeline' });
+    const marker = within(timeline).getByRole('button', { name: new RegExp(exact) });
+
+    // act
+    await user.tab();
+    while (document.activeElement !== marker) await user.tab();
+
+    // assert
+    expect(marker).toHaveFocus();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(exact);
+  });
+
+  it('stacks each text the client reads as its own card under its own title, the first one open', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPage('c1', '&pseed=two-versions');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Texts' }));
+
+    // assert
+    const [texts] = screen.getAllByRole('region', { name: 'Texts' });
+    const titles = within(texts).getAllByRole('heading', { level: 3 }).map(heading => heading.textContent);
+    expect(titles[0]).toMatch(/^Foundation block — building your base/);
+    expect(titles).toEqual(expect.arrayContaining([expect.stringMatching(/^Your split: /), 'Low-energy session']));
+    const [first, second] = within(texts).getAllByRole('article');
+    expect(within(first).getByRole('button', { expanded: true })).toBeInTheDocument();
+    expect(within(first).getByText('How it should feel:')).toBeInTheDocument();
+    expect(within(second).getByRole('button', { expanded: false })).toBeInTheDocument();
   });
 
   it('shows the seven days of this week without editing menus', () => {

@@ -13,20 +13,28 @@ function entryFor(block: Block, day: Weekday, choice: DayChoice): { entry: Calen
   return { entry: { kind: 'cardio', cardioId: choice.session.id }, added: choice.session };
 }
 
+function sessionLeaving(previous: CalendarEntry, choice: DayChoice): string | undefined {
+  if (previous.kind !== 'session' || choice.kind === 'session') return undefined;
+  return previous.sessionId;
+}
+
 export function blockWithDay(block: Block, day: Weekday, choice: DayChoice): Block {
   const { entry, added } = entryFor(block, day, choice);
   const previous = block.calendar[day];
+  const removedSession = sessionLeaving(previous, choice);
   const calendar = Object.fromEntries(
     WEEKDAYS.map(other => {
       if (other === day) return [other, entry];
       const current = block.calendar[other];
       const leftBehind = choice.kind === 'session' && current.kind === 'session' && current.sessionId === choice.sessionId;
-      return [other, leftBehind ? { kind: 'rest' } : current];
+      const removed = current.kind === 'session' && current.sessionId === removedSession;
+      return [other, leftBehind || removed ? { kind: 'rest' } : current];
     }),
   ) as Block['calendar'];
   const dropped = previous.kind === 'cardio' && entry.kind !== 'cardio' ? previous.cardioId : undefined;
   const cardioSessions = [...block.cardioSessions.filter(cardio => cardio.id !== dropped), ...(added ? [added] : [])];
-  return { ...block, calendar, cardioSessions };
+  const sessions = block.sessions.filter(session => session.id !== removedSession);
+  return { ...block, calendar, sessions, cardioSessions };
 }
 
 export function blockWithCardio(block: Block, cardio: CardioSession): Block {
@@ -86,8 +94,9 @@ function cardioLoss(cardio: CardioSession): string[] {
 
 function lostOnDay(block: Block, weekday: Weekday): string[] {
   const entry = block.calendar[weekday];
-  if (entry.kind !== 'cardio') return [];
-  return block.cardioSessions.filter(cardio => cardio.id === entry.cardioId).flatMap(cardioLoss);
+  if (entry.kind === 'session') return block.sessions.filter(session => session.id === entry.sessionId).flatMap(sessionLoss);
+  if (entry.kind === 'cardio') return block.cardioSessions.filter(cardio => cardio.id === entry.cardioId).flatMap(cardioLoss);
+  return [];
 }
 
 function lostSessions(block: Block, change: Exclude<ResetChange, { kind: 'day' }>): string[] {

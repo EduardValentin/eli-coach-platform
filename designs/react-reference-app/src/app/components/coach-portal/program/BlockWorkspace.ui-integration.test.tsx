@@ -534,6 +534,25 @@ describe('BlockWorkspace', () => {
     expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
   });
 
+  it('asks before a strength day with exercises becomes a rest day and removes its session', async () => {
+    // arrange
+    const user = await openFirstBlock();
+
+    // act
+    await chooseInDayMenu(user, 'Monday', 'Rest');
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Make Monday a rest day?' });
+    expect(within(confirm).getByText(/^Full Body A · \d+ exercises$/)).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Change day' }));
+
+    // assert
+    expect(within(day('Monday')).getByText('Rest')).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Full Body A' })).not.toBeInTheDocument();
+  });
+
   it('builds rounds from cardio and conditioning exercises and shows their minutes', async () => {
     // arrange
     const user = await openFirstBlock();

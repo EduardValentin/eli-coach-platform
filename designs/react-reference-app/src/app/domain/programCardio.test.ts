@@ -313,14 +313,25 @@ describe('cardioEdits', () => {
 });
 
 describe('roundsText', () => {
-  it('reads the round count and each exercise with its work seconds or reps', () => {
+  it('reads the round count, each exercise with its work seconds or reps, and the easy and rest times', () => {
     // arrange
-    const segment = rounds({ rounds: 4, items: [{ id: 'i1', exerciseId: 'burpee', reps: 10 }, { id: 'i2', exerciseId: 'jacks', workSeconds: 30 }] });
+    const segment = rounds({ rounds: 4, easySeconds: 15, items: [{ id: 'i1', exerciseId: 'burpee', reps: 10 }, { id: 'i2', exerciseId: 'jacks', workSeconds: 30 }] });
 
     // act
     const text = roundsText(segment, id => LIBRARY.find(item => item.id === id)?.name ?? '');
 
     // assert
-    expect(text).toBe('4 rounds · Burpee 10 reps, Jumping Jacks 30 s');
+    expect(text).toBe('4 rounds · Burpee 10 reps, Jumping Jacks 30 s · 15 s easy between · 60 s between rounds');
+  });
+
+  it('leaves out an easy or rest time of zero', () => {
+    // arrange
+    const segment = rounds({ rounds: 2, easySeconds: 0, restBetweenRoundsSeconds: 0, items: [{ id: 'i1', exerciseId: 'burpee', reps: 10 }] });
+
+    // act
+    const text = roundsText(segment, id => LIBRARY.find(item => item.id === id)?.name ?? '');
+
+    // assert
+    expect(text).toBe('2 rounds · Burpee 10 reps');
   });
 });

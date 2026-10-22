@@ -6,13 +6,13 @@ import { ProgramSummary } from '../../components/coach-portal/program/ProgramSum
 import { CollapsiblePortalWidget } from '../../components/CollapsiblePortalWidget';
 import { BlockSessions } from '../../components/program-view/BlockSessions';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
-import { Paragraphs, template } from '../../components/program-view/ProgramText';
+import { template, templateCard, TextCardStack, type TextCard } from '../../components/program-view/ProgramText';
 import { currentBlock, weekDates, type ProgramView } from '../../components/program-view/programView';
 import { WeekDayCards } from '../../components/program-view/WeekDayCards';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsBody, SettingsSection } from '../../components/SettingsSection';
-import { WIDGET_SUBHEADING_CLASS, WIDGET_TITLE_CLASS } from '../../components/typography';
+import { WIDGET_TITLE_CLASS } from '../../components/typography';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { usePrograms } from '../../context/ProgramContext';
@@ -50,23 +50,22 @@ function weekText(block: Block): string {
   return `${splitLabel(block)} · ${sessions} ${sessions === 1 ? 'session' : 'sessions'}${cardioText} a week`;
 }
 
-function TextPassage({ title, text }: { title: string; text: string }) {
-  return (
-    <section className="grid gap-2">
-      <h3 className={WIDGET_SUBHEADING_CLASS}>{title}</h3>
-      <Paragraphs text={text} />
-    </section>
-  );
+function clientTexts(view: ProgramView, block: Block): TextCard[] {
+  const calibration = view.position.status === 'in-plan' && view.position.calibration;
+  return [
+    templateCard('intro', block.introText || template(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
+    ...(block.clientNote ? [templateCard('note', block.clientNote, 'Client note')] : []),
+    ...(calibration ? [templateCard('calibration', template(view, 'calibration'), 'Calibration week')] : []),
+    templateCard('split', block.split.text, `Split · ${splitLabel(block)}`),
+    ...(view.program.cycleMode === 'adapted' ? [templateCard('cycle', template(view, 'cycle'), 'Listening to your cycle')] : []),
+    templateCard('low-energy', template(view, 'lowEnergy'), 'Low-energy session'),
+  ];
 }
 
 function BlockTextsPanel({ view, block }: { view: ProgramView; block: Block }) {
   return (
     <CollapsiblePortalWidget title="Texts" icon={ScrollText} headingId="program-texts" className="mb-8">
-      <div className="grid gap-6 md:grid-cols-2">
-        <TextPassage title={`${BLOCK_TYPE_LABELS[block.type]} block intro`} text={block.introText || template(view, `block.${block.type}`)} />
-        <TextPassage title={`Split · ${splitLabel(block)}`} text={block.split.text} />
-        {view.program.cycleMode === 'adapted' && <TextPassage title="Listening to your cycle" text={template(view, 'cycle')} />}
-      </div>
+      <TextCardStack cards={clientTexts(view, block)} />
     </CollapsiblePortalWidget>
   );
 }

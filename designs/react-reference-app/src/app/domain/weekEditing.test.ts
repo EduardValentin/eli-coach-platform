@@ -84,6 +84,51 @@ describe('blockWithDay', () => {
     expect(next.calendar.sat).toEqual({ kind: 'session', sessionId: first.id });
     expect(next.calendar.mon).toEqual({ kind: 'rest' });
   });
+
+  it('removes the strength session of a day that becomes a rest day, with every day it was on', () => {
+    // arrange
+    const start = block();
+    const [first] = start.sessions;
+    const twice = { ...start, calendar: { ...start.calendar, sat: { kind: 'session' as const, sessionId: first.id } } };
+
+    // act
+    const next = blockWithDay(twice, 'mon', { kind: 'rest' });
+
+    // assert
+    expect(next.sessions.map(session => session.id)).not.toContain(first.id);
+    expect(next.sessions).toHaveLength(start.sessions.length - 1);
+    expect(next.calendar.mon).toEqual({ kind: 'rest' });
+    expect(next.calendar.sat).toEqual({ kind: 'rest' });
+  });
+
+  it('removes the strength session of a day that becomes cardio', () => {
+    // arrange
+    const start = block();
+    const [first] = start.sessions;
+    const cardio = cardioPreset('liss', []);
+
+    // act
+    const next = blockWithDay(start, 'mon', { kind: 'cardio', session: cardio });
+
+    // assert
+    expect(next.sessions.map(session => session.id)).not.toContain(first.id);
+    expect(next.calendar.mon).toEqual({ kind: 'cardio', cardioId: cardio.id });
+    expect(next.cardioSessions).toContainEqual(cardio);
+  });
+
+  it('keeps the strength session a day gives up for another session', () => {
+    // arrange
+    const start = block();
+    const [first, second] = start.sessions;
+
+    // act
+    const next = blockWithDay(start, 'mon', { kind: 'session', sessionId: second.id });
+
+    // assert
+    expect(next.sessions).toEqual(start.sessions);
+    expect(next.calendar.mon).toEqual({ kind: 'session', sessionId: second.id });
+    expect(Object.values(next.calendar)).not.toContainEqual({ kind: 'session', sessionId: first.id });
+  });
 });
 
 describe('blockWithCardio', () => {
@@ -105,13 +150,14 @@ describe('blockWithCardio', () => {
 describe('plannedSessions', () => {
   it('lists strength and cardio sessions by their weekday and unplaced sessions last', () => {
     // arrange
-    const unplaced = blockWithDay(block(), 'mon', { kind: 'rest' });
+    const start = block();
+    const unplaced = blockWithDay(start, 'mon', { kind: 'session', sessionId: start.sessions[1].id });
 
     // act
     const planned = plannedSessions(unplaced).map(entry => (entry.kind === 'cardio' ? entry.cardio.name : entry.session.name));
 
     // assert
-    expect(planned).toEqual(['Easy cardio', 'Full Body B', 'Easy cardio', 'Full Body C', 'Full Body A']);
+    expect(planned).toEqual(['Full Body B', 'Easy cardio', 'Easy cardio', 'Full Body C', 'Full Body A']);
   });
 });
 
@@ -199,7 +245,7 @@ describe('describeReset', () => {
     expect(more).toEqual(['Easy cardio · 1 segment', 'Intervals · 3 segments']);
   });
 
-  it('names the cardio a day loses when its kind changes', () => {
+  it('names the session a day loses when its kind changes', () => {
     // arrange
     const start = filledBlock(5, 4, 3);
 
@@ -210,8 +256,16 @@ describe('describeReset', () => {
 
     // assert
     expect(cardioDay).toEqual(['Easy cardio · 1 segment']);
-    expect(sessionDay).toEqual([]);
+    expect(sessionDay).toEqual(['Full Body A · 5 exercises']);
     expect(restDay).toEqual([]);
+  });
+
+  it('finds nothing to lose on a day whose strength session has no exercises', () => {
+    // act
+    const lost = describeReset(block(), { kind: 'day', weekday: 'mon' });
+
+    // assert
+    expect(lost).toEqual([]);
   });
 
   it('names the removed session', () => {

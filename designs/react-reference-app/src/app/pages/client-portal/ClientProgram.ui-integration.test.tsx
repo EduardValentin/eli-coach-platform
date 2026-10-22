@@ -118,6 +118,22 @@ describe('the client Program page', () => {
     expect(screen.getByRole('tabpanel').textContent).not.toBe(mondayPanel);
   });
 
+  it('lists the warm-up exercises of a strength day and spells out a rounds segment', async () => {
+    // arrange
+    renderProgram('two-versions');
+    const tabs = await screen.findByRole('tablist', { name: 'This week' });
+    await userEvent.click(within(tabs).getByRole('tab', { name: /^Mon 21/ }));
+    const warmUp = within(screen.getByRole('tabpanel')).getByRole('list', { name: 'Warm-up exercises' });
+    expect(within(warmUp).getAllByRole('listitem')[0]).toHaveTextContent(/^.+ · \d+ × \d+( s)?/);
+
+    // act
+    await userEvent.click(within(tabs).getByRole('tab', { name: /Intervals/ }));
+
+    // assert
+    const segments = within(within(screen.getByRole('tabpanel')).getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
+    expect(segments.map(segment => segment.textContent)).toContainEqual(expect.stringMatching(/^Rounds · \d+ rounds · .+ \d+ s · \d+ s easy between/));
+  });
+
   it('loads a collapsed section only once it is opened', async () => {
     // arrange
     renderProgram('published');

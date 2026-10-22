@@ -267,6 +267,23 @@ describe('DayContent', () => {
     expect(screen.getByText(/Low-energy session/)).toBeInTheDocument();
   });
 
+  it('lists the cool-down note and its stretches with their seconds', () => {
+    // arrange
+    const view = viewAt(TODAY);
+    const block = withSession(view, session => ({
+      ...strengthDay(view).sessions[0],
+      coolDown: { enabled: true, note: 'Walk easy for two minutes.', items: [{ id: 'cd1', exerciseId: squat.id, seconds: 40 }] },
+    }));
+
+    // act
+    render(<DayContent view={view} block={block} weekday="mon" />);
+
+    // assert
+    const coolDown = screen.getByRole('region', { name: 'Cool-down' });
+    expect(within(coolDown).getByText('Walk easy for two minutes.')).toBeInTheDocument();
+    expect(within(within(coolDown).getByRole('list', { name: 'Cool-down stretches' })).getByRole('listitem')).toHaveTextContent(`${squat.name} · 40 s`);
+  });
+
   it('groups a superset under one label', () => {
     // arrange
     const view = viewAt(TODAY);
@@ -324,7 +341,7 @@ describe('DayContent', () => {
     const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
     expect(segments.map(segment => segment.textContent)).toEqual([
       'Stationary bike · 5 min · You can hold a conversation',
-      'Rounds · 8 rounds · Stationary bike 30 s · Hard: only a few words at a time',
+      'Rounds · 8 rounds · Stationary bike 30 s · 90 s easy between · Hard: only a few words at a time',
       'Stationary bike · 5 min · You can hold a conversation',
     ]);
     expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
@@ -340,7 +357,7 @@ describe('DayContent', () => {
 
     // assert
     const segment = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem')[0];
-    expect(segment).toHaveTextContent('Rounds · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · Hard: only a few words at a time');
+    expect(segment).toHaveTextContent('Rounds · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · 60 s between rounds · Hard: only a few words at a time');
   });
 });
 

@@ -104,3 +104,7 @@ export function cardioSegmentText(segment: CardioSegment, exercisesById: Readonl
 export function warmUpLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
   return session.warmUp.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${warmUpItemText(item)}`);
 }
+
+export function coolDownLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
+  return session.coolDown.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${item.seconds} s`);
+}

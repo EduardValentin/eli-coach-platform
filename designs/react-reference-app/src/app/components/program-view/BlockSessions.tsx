@@ -19,7 +19,8 @@ import { WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
-import { cardioFor, cardioSegmentText, restLabel, sessionAnchor, sessionFor, warmUpLines } from './programView';
+import { RoutineCard } from './DayParts';
+import { cardioFor, cardioSegmentText, coolDownLines, restLabel, sessionAnchor, sessionFor, warmUpLines } from './programView';
 
 type Scheduled = { kind: 'session'; session: Session; days: Weekday[] } | { kind: 'cardio'; cardio: CardioSession; days: Weekday[] };
 
@@ -127,18 +128,15 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
         meta={`${count} ${count === 1 ? 'exercise' : 'exercises'} · ~${estimatedMinutes(session)} min`}
       />
       <div className="grid gap-4 p-3 sm:p-4">
-        {warmUp.length > 0 && (
-          <div className="grid gap-2 rounded-control bg-surface-subtle p-3">
-            <p className={LABEL_CLASS}>Warm-up</p>
-            <p className="text-sm text-text-secondary">{warmUp.join(', ')}</p>
-          </div>
-        )}
+        {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
         <div className="grid gap-3 lg:grid-cols-2">
           {session.rows.map(row => (
             <ExerciseReadCard key={row.id} session={session} row={row} exercisesById={exercisesById} />
           ))}
         </div>
-        {session.coolDown.enabled && <p className="text-sm text-text-secondary">Ends with a cool-down</p>}
+        {session.coolDown.enabled && (
+          <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
+        )}
       </div>
     </article>
   );

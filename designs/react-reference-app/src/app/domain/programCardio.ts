@@ -115,8 +115,10 @@ function itemAmount(item: RoundsItem): string {
 }
 
 export function roundsText(segment: RoundsSegment, nameOf: (exerciseId: string) => string): string {
-  const items = segment.items.map(item => `${nameOf(item.exerciseId)} ${itemAmount(item)}`);
-  return `${segment.rounds} rounds · ${items.join(', ')}`;
+  const items = segment.items.length > 0 ? [segment.items.map(item => `${nameOf(item.exerciseId)} ${itemAmount(item)}`).join(', ')] : [];
+  const easy = segment.easySeconds > 0 ? [`${segment.easySeconds} s easy between`] : [];
+  const rest = segment.restBetweenRoundsSeconds > 0 ? [`${segment.restBetweenRoundsSeconds} s between rounds`] : [];
+  return [`${segment.rounds} rounds`, ...items, ...easy, ...rest].join(' · ');
 }
 
 export function hasHardRounds(session: CardioSession): boolean {
