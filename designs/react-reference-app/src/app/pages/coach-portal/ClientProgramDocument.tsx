@@ -10,9 +10,10 @@ import '../../../styles/print.css';
 export function ClientProgramDocument() {
   const { id = '', version: requested } = useParams();
   const journey = useJourneyClient(id);
-  const { programFor } = usePrograms();
+  const { seeded, programFor } = usePrograms();
   const { exercises } = useTraining();
   const program = journey ? programFor(journey.callId) : undefined;
+  if (!seeded) return null;
   if (!journey || !program) return <ClientNotFound />;
 
   const programPath = `/coach/clients/${id}/program`;

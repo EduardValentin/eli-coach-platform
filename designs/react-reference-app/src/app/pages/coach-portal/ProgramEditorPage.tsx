@@ -259,12 +259,13 @@ export function ProgramEditorPage() {
   useCoachPortalScope();
   const { id = '' } = useParams();
   const journey = useJourneyClient(id);
-  const { programFor } = usePrograms();
+  const { seeded, programFor } = usePrograms();
   const navigate = useNavigate();
   const isSetup = useLocation().pathname.endsWith('/new');
   const programPath = `/coach/clients/${id}/program`;
   const draftPath = `${programPath}/draft`;
 
+  if (!seeded) return null;
   if (!journey) return <Navigate to="/coach/clients" replace />;
   const program = programFor(journey.callId);
   if (isSetup && program) return <Navigate to={draftPath} replace />;

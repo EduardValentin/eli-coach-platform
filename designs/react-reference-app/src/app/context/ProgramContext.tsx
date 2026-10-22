@@ -30,6 +30,7 @@ export type PublishOutcome =
   | { status: 'blocked'; problems: RuleFinding<BlockingCode>[] };
 
 export type ProgramContextType = {
+  seeded: boolean;
   programFor(callId: string): Program | undefined;
   createProgram(callId: string, setup: ProgramSetup): Program;
   updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'equipment' | 'level' | 'cycleMode' | 'language'>>): void;
@@ -88,6 +89,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const programsRef = useRef(programsByCall);
   const exercisesRef = useRef(exercises);
   exercisesRef.current = exercises;
+  const [seeded, setSeeded] = useState(false);
   const seededSeed = useRef<ProgramSeed>('none');
   const readyAt = demoJourney?.programReadyAt ?? null;
 
@@ -105,6 +107,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    setSeeded(true);
     const seed = appState.programSeed;
     const seedChanged = seed !== seededSeed.current;
     const demo = programsRef.current[DEMO_JOURNEY_CALL_ID];
@@ -231,8 +234,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<ProgramContextType>(
-    () => ({ programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
-    [programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
+    () => ({ seeded, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
+    [seeded, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
   );
 
   return <ProgramContext.Provider value={value}>{children}</ProgramContext.Provider>;
