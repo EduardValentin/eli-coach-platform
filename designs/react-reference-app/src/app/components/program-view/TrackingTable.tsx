@@ -21,12 +21,15 @@ function setLabel(sets: WorkingSet[], index: number, suffix: string): string {
 export function TrackingTable({ session, block, exercisesById }: TrackingTableProps) {
   const weeks = Array.from({ length: block.weeks }, (_, index) => index + 1);
   const rows = session.rows.filter(row => row.exerciseId !== '');
-  const cell = 'border border-border px-1 py-1 text-left align-top sm:px-2';
+  const cell = 'border border-divider px-1.5 py-1 text-left align-top';
 
   return (
-    <div className="overflow-x-auto">
+    <div data-print-keep className="overflow-x-auto">
       <table className="w-full border-collapse text-xs text-text-primary">
-        <caption className="mb-1 text-left text-sm font-semibold">{session.name} · tracking</caption>
+        <caption className="mb-1.5 text-left text-label font-semibold uppercase tracking-wide text-text-secondary">
+          <span className="sr-only">{session.name} · </span>
+          tracking
+        </caption>
         <thead>
           <tr>
             <th scope="col" className={cell}>
@@ -67,7 +70,7 @@ export function TrackingTable({ session, block, exercisesById }: TrackingTablePr
                     )}
                     <td className={cn(cell, 'whitespace-nowrap tabular-nums')}>{setLabel(sets, setIndex, suffix)}</td>
                     {weeks.map(week => (
-                      <td key={week} className={`${cell} h-7`} />
+                      <td key={week} className={`${cell} h-8`} />
                     ))}
                   </tr>
                 ))}

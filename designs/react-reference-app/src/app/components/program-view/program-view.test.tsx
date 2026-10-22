@@ -366,9 +366,9 @@ describe('SessionTable', () => {
     }));
   }
 
-  function renderSession(session: Session, view: ProgramView) {
+  function renderSession(session: Session) {
     const exercises = new Map(SAMPLE_EXERCISES.map(exercise => [exercise.id, exercise]));
-    return render(<SessionTable session={session} block={blockOf(view)} language="en" exercisesById={exercises} />);
+    return render(<SessionTable session={session} exercisesById={exercises} />);
   }
 
   it('labels supersets, shows the unit and formats rest', () => {
@@ -376,48 +376,52 @@ describe('SessionTable', () => {
     const view = viewAt(TODAY);
 
     // act
-    renderSession(superset(view), view);
+    renderSession(superset(view));
 
     // assert
-    const exercises = screen.getAllByRole('rowheader');
-    expect(exercises[0]).toHaveTextContent(/^C1 /);
-    expect(exercises[1]).toHaveTextContent(/^C2 /);
+    expect(screen.getByRole('cell', { name: 'C1 Superset' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'C2 Superset' })).toBeInTheDocument();
     expect(screen.getAllByText(/\/side/).length).toBeGreaterThan(0);
-    expect(screen.getByText('2 min')).toBeInTheDocument();
-    expect(screen.getByText('90 s')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '2 min' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '90 s' })).toBeInTheDocument();
   });
 
-  it('summarises identical sets and lists differing sets one per line', () => {
+  it('prints a row for every set with its kind, reps, RIR and weight', () => {
     // arrange
     const view = viewAt(TODAY);
+    const warmUp = { kind: 'warm-up' as const, reps: { min: 10, max: 10 } };
+    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 }, weightKg: 60 };
     const steady = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
-    const top = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
+    const session = sessionWith(view, original => ({ ...original, rows: [{ ...original.rows[0], sets: [warmUp, top, steady] }] }));
+
+    // act
+    renderSession(session);
+
+    // assert
+    const [, ...rows] = screen.getAllByRole('row');
+    const cellsOf = (index: number) => within(rows[index]).getAllByRole('cell').map(cell => cell.textContent);
+    expect(rows).toHaveLength(3);
+    expect(cellsOf(0)).toEqual(expect.arrayContaining(['Warm-up', '10', '—']));
+    expect(cellsOf(1)).toEqual(['1', '5', '2', '60 kg']);
+    expect(cellsOf(2)).toEqual(['2', '8–10', '1–2', '—']);
+  });
+
+  it('prints cues, swaps and a custom progression under the exercise', () => {
+    // arrange
+    const view = viewAt(TODAY);
     const session = sessionWith(view, original => ({
       ...original,
-      rows: [
-        { ...original.rows[0], sets: [steady, steady, steady] },
-        { ...original.rows[1], exerciseId: original.rows[0].exerciseId, sets: [top, steady] },
-      ],
+      rows: [{ ...original.rows[0], cues: 'Brace first', progression: { kind: 'custom' as const, text: 'Add 2 kg weekly' } }],
     }));
 
     // act
-    renderSession(session, view);
+    renderSession(session);
 
     // assert
-    expect(screen.getByRole('cell', { name: '3 × 8–10 · RIR 1–2' })).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual(['Set 1 · 5 · RIR 2', 'Set 2 · 8–10 · RIR 1–2']);
-  });
-
-  it('prints every row detail without triggers', () => {
-    // arrange
-    const view = viewAt(TODAY);
-
-    // act
-    renderSession(sessionWith(view, session => session), view);
-
-    // assert
-    expect(screen.queryByRole('button', { name: /Cues/ })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/How to progress:/).length).toBeGreaterThan(0);
+    const exercise = screen.getByRole('rowheader');
+    expect(exercise).toHaveTextContent('Brace first');
+    expect(exercise).toHaveTextContent('Add 2 kg weekly');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('still names an archived exercise and flags a removed one', () => {
@@ -430,12 +434,10 @@ describe('SessionTable', () => {
     const rows = [first, { ...second, exerciseId: 'gone' }];
 
     // act
-    render(
-      <SessionTable session={{ ...session, rows }} block={blockOf(view)} language="en" exercisesById={exercises} />,
-    );
+    render(<SessionTable session={{ ...session, rows }} exercisesById={exercises} />);
 
     // assert
-    expect(screen.getByRole('rowheader', { name: `A ${archived.name}` })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: new RegExp(`^${archived.name}`) })).toBeInTheDocument();
     expect(screen.getByText('Exercise removed')).toBeInTheDocument();
   });
 });

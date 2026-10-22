@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { currentVersion } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, formatRange, workingSets } from '../../domain/program';
 import type { CycleMode } from '../../domain/cycleMode';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
@@ -92,7 +92,106 @@ describe('TrackingTable', () => {
 });
 
 describe('ProgramDocument', () => {
-  it('lists the client, version, sessions with tracking tables and the cycle section for an adapted program', () => {
+  it('opens with a cover band naming the client, version, date, coach and current block', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const block = blockOf(view);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const cover = screen.getByRole('banner');
+    expect(within(cover).getByRole('heading', { level: 1, name: 'Ana Pop' })).toBeInTheDocument();
+    expect(within(cover).getByText(/^Program · Version 1 · \d{1,2} \w+ 2026$/)).toBeInTheDocument();
+    expect(within(cover).getByText('Coach: Eli')).toBeInTheDocument();
+    expect(within(cover).getByText(`${BLOCK_TYPE_LABELS[block.type]} block`)).toBeInTheDocument();
+  });
+
+  it('gives the current block and week, next check-in, daily steps and sessions per week at a glance', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const block = blockOf(view);
+    const sessionDays = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const glance = screen.getByRole('region', { name: 'At a glance' });
+    expect(glance).toHaveTextContent(`Now${BLOCK_TYPE_LABELS[block.type]} · week 1 of ${block.weeks}`);
+    expect(glance).toHaveTextContent(/Next check-in form\w+day, \d{1,2} \w+Daily steps/);
+    expect(glance).toHaveTextContent(`Daily steps${block.dailySteps.toLocaleString('en-US')}`);
+    expect(glance).toHaveTextContent(`Sessions per week${sessionDays} strength`);
+  });
+
+  it('lays the week out as a table with a cell for each of the seven days', () => {
+    // arrange
+    const view = viewFor('adapted');
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const week = screen.getByRole('table', { name: 'Your week' });
+    expect(within(week).getAllByRole('columnheader')).toHaveLength(7);
+    expect(within(week).getAllByRole('cell')).toHaveLength(7);
+  });
+
+  it('prints one exercise table row per set with the exercise named once', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const [session] = blockOf(view).sessions;
+    const [row] = session.rows;
+    const name = view.exercisesById.get(row.exerciseId)?.name ?? '';
+    const setCount = session.rows.reduce((total, candidate) => total + candidate.sets.length, 0);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const table = screen.getByRole('table', { name: `${session.name} exercises` });
+    const [, ...body] = within(table).getAllByRole('row');
+    expect(body).toHaveLength(setCount);
+    expect(within(table).getAllByRole('rowheader', { name: new RegExp(`^${name}`) })).toHaveLength(1);
+    for (const header of ['Position', 'Exercise', 'Set', 'Reps', 'RIR', 'Weight', 'Rest']) {
+      expect(within(table).getByRole('columnheader', { name: header })).toBeInTheDocument();
+    }
+  });
+
+  it('tracks each working set of a session with its reps target', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const [session] = blockOf(view).sessions;
+    const workingCount = session.rows.reduce((total, row) => total + workingSets(row.sets).length, 0);
+    const [firstSet] = workingSets(session.rows[0].sets);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const grid = screen.getByRole('table', { name: `${session.name} · tracking` });
+    const [, , ...body] = within(grid).getAllByRole('row');
+    expect(body).toHaveLength(workingCount);
+    expect(within(body[0]).getByRole('cell', { name: new RegExp(`^1 · ${formatRange(firstSet.reps)}`) })).toBeInTheDocument();
+  });
+
+  it('prints no identifiers, no video links and the legend heading once', () => {
+    // arrange
+    const view = viewFor('adapted');
+
+    // act
+    const { container } = render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(container).not.toHaveTextContent('full-body');
+    expect(container).not.toHaveTextContent('**');
+    expect(screen.queryByText(/watch video/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText('How to read your session')).toHaveLength(1);
+    expect(screen.getByRole('complementary', { name: 'How to read your session' })).toBeInTheDocument();
+  });
+
+  it('lists the plan, sessions with tracking tables and the cycle section for an adapted program', () => {
     // arrange
     const view = viewFor('adapted');
     const sessionCount = blockOf(view).sessions.length;
@@ -101,13 +200,11 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    expect(screen.getByRole('heading', { level: 1, name: 'Ana Pop' })).toBeInTheDocument();
-    expect(screen.getByText(/^Version 1 · /)).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Your plan' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Listening to your cycle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
     expect(screen.getAllByRole('table', { name: / · tracking$/ })).toHaveLength(sessionCount);
-    expect(screen.getByText('Disclaimer (page 8) — placeholder')).toBeInTheDocument();
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('Disclaimer (page 8) — placeholder');
   });
 
   it('omits the cycle section for a general program but keeps the low-energy session', () => {

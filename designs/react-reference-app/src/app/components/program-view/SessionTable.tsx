@@ -1,129 +1,99 @@
-import { Fragment } from 'react';
-import {
-  formatRange,
-  isWorkingSet,
-  positionLabel,
-  setsSummary,
-  setText,
-  uniformSets,
-  workingSets,
-  type Block,
-  type ProgramLanguage,
-  type Row,
-  type Session,
-} from '../../domain/program';
-import { templateText } from '../../domain/programTemplates';
 import type { Exercise } from '../../context/TrainingContext';
+import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { repsSuffix } from '../coach-portal/program/rowFields';
-import { WatchVideoButton } from '../WatchVideoButton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '../ui/utils';
-import { plainText, restLabel } from './programView';
+import { restLabel } from './programView';
 
-type SessionTableProps = {
-  session: Session;
-  block: Block;
-  language: ProgramLanguage;
-  exercisesById: ReadonlyMap<string, Exercise>;
-};
+type SessionTableProps = { session: Session; exercisesById: ReadonlyMap<string, Exercise> };
 
-const CELL_CLASS = 'px-2 align-top first:pl-0 last:pr-0';
+const HEAD_CLASS = 'border-b border-text-primary px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-text-secondary first:pl-0 last:pr-0';
+const CELL_CLASS = 'px-2 py-1 align-top tabular-nums first:pl-0 last:pr-0';
+const NO_VALUE = '—';
 
 function namesOf(ids: readonly string[], exercisesById: ReadonlyMap<string, Exercise>): string[] {
   return ids.flatMap(id => exercisesById.get(id)?.name ?? []);
 }
 
-type RowDetailsProps = { row: Row; exercise: Exercise | undefined; language: ProgramLanguage; exercisesById: ReadonlyMap<string, Exercise> };
-
-function RowDetails({ row, exercise, language, exercisesById }: RowDetailsProps) {
-  const swaps = namesOf(row.substitutions, exercisesById);
-  const progression = row.progression.kind === 'custom' ? row.progression.text : plainText(templateText('progression', language).text);
-  return (
-    <div className="grid gap-2 py-2 text-sm text-text-secondary">
-      {row.cues && <p>{row.cues}</p>}
-      {exercise?.videoUrl && (
-        <WatchVideoButton name={exercise.name} videoUrl={exercise.videoUrl} />
-      )}
-      {swaps.length > 0 && <p>Swap for: {swaps.join(', ')}</p>}
-      <p>{progression}</p>
-    </div>
-  );
+function setLabels(sets: readonly SetSpec[]): string[] {
+  let working = 0;
+  return sets.map(set => {
+    if (!isWorkingSet(set)) return 'Warm-up';
+    working += 1;
+    return String(working);
+  });
 }
 
-const PART_SEPARATOR = ' · ';
-
-function Unbroken({ text }: { text: string }) {
-  return text.split(PART_SEPARATOR).map((part, index) => (
-    <Fragment key={index}>
-      {index > 0 && PART_SEPARATOR}
-      <span className="whitespace-nowrap">{part}</span>
-    </Fragment>
-  ));
+function isSuperset(session: Session, row: Row): boolean {
+  return positionLabel(session, row) !== row.slot;
 }
 
-function SetsCell({ row, exercise }: { row: Row; exercise: Exercise | undefined }) {
+type ExerciseRowsProps = { session: Session; row: Row; exercisesById: ReadonlyMap<string, Exercise> };
+
+function ExerciseRows({ session, row, exercisesById }: ExerciseRowsProps) {
+  const exercise = exercisesById.get(row.exerciseId);
   const suffix = repsSuffix(exercise);
-  if (uniformSets(row.sets)) return <Unbroken text={setsSummary(row.sets, suffix)} />;
+  const swaps = namesOf(row.substitutions, exercisesById);
+  const labels = setLabels(row.sets);
+  const span = row.sets.length;
+
   return (
-    <ol className="grid gap-0.5">
-      {row.sets.flatMap((set, index) =>
-        isWorkingSet(set) ? [] : [<li key={`warm-up-${index}`}>{`Warm-up · ${formatRange(set.reps)}${suffix}`}</li>],
-      )}
-      {workingSets(row.sets).map((set, index) => (
-        <li key={index}>
-          <Unbroken text={`Set ${index + 1} · ${setText(set, suffix)}`} />
-        </li>
+    <tbody data-print-keep className="border-b border-border">
+      {row.sets.map((set, index) => (
+        <tr key={index} className={cn({ 'text-text-secondary': !isWorkingSet(set) })}>
+          {index === 0 && (
+            <>
+              <td rowSpan={span} className={cn(CELL_CLASS, 'py-2 font-semibold text-text-primary')}>
+                <span className="block">{positionLabel(session, row)}</span>
+                {isSuperset(session, row) && <span className="block text-xs font-normal text-text-secondary">Superset</span>}
+              </td>
+              <th scope="rowgroup" rowSpan={span} className={cn(CELL_CLASS, 'py-2 text-left font-normal')}>
+                <span className="block font-semibold text-text-primary">{exercise ? exercise.name : 'Exercise removed'}</span>
+                {row.cues && <span className="mt-0.5 block text-xs text-text-secondary">{row.cues}</span>}
+                {swaps.length > 0 && <span className="mt-0.5 block text-xs text-text-secondary">Swap for: {swaps.join(', ')}</span>}
+                {row.progression.kind === 'custom' && <span className="mt-0.5 block text-xs text-text-secondary">{row.progression.text}</span>}
+              </th>
+            </>
+          )}
+          <td className={cn(CELL_CLASS, 'whitespace-nowrap', { 'pt-2': index === 0 })}>{labels[index]}</td>
+          <td className={cn(CELL_CLASS, 'whitespace-nowrap', { 'pt-2': index === 0 })}>{`${formatRange(set.reps)}${suffix}`}</td>
+          <td className={cn(CELL_CLASS, { 'pt-2': index === 0 })}>{isWorkingSet(set) ? formatRange(set.rir) : NO_VALUE}</td>
+          <td className={cn(CELL_CLASS, 'whitespace-nowrap', { 'pt-2': index === 0 })}>{set.weightKg === undefined ? NO_VALUE : `${set.weightKg} kg`}</td>
+          {index === 0 && (
+            <td rowSpan={span} className={cn(CELL_CLASS, 'py-2 whitespace-nowrap')}>
+              {restLabel(row.restSeconds)}
+            </td>
+          )}
+        </tr>
       ))}
-    </ol>
+    </tbody>
   );
 }
 
-export function SessionTable({ session, block, language, exercisesById }: SessionTableProps) {
-  const mobility = namesOf(session.warmUp.mobilityExerciseIds, exercisesById);
-  const warmUp = plainText(templateText('warmUp', language).text);
-
+export function SessionTable({ session, exercisesById }: SessionTableProps) {
+  const rows = session.rows.filter(row => row.exerciseId !== '' && row.sets.length > 0);
   return (
-    <section aria-label={session.name} className="grid grid-cols-1 gap-3">
-      <h3 className="text-sm font-semibold text-text-primary">{session.name}</h3>
-      <p className="whitespace-pre-line text-sm text-text-secondary">
-        {warmUp}
-        {mobility.length > 0 && `\nMobility: ${mobility.join(', ')}`}
-      </p>
-      <Table aria-label={`${session.name} in ${block.split.name}`}>
-        <TableHeader>
-          <TableRow>
-            <TableHead className={CELL_CLASS}>Exercise</TableHead>
-            <TableHead className={CELL_CLASS}>Sets</TableHead>
-            <TableHead className={CELL_CLASS}>Rest</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {session.rows.flatMap(row => {
-            const exercise = exercisesById.get(row.exerciseId);
-            return [
-              <TableRow key={row.id}>
-                <th scope="row" className={cn(CELL_CLASS, 'py-3 text-left font-medium text-text-primary')}>
-                  <span className="flex items-center gap-2">
-                    <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-surface-inverted px-1 text-xs font-semibold text-surface-inverted-foreground tabular-nums">
-                      {positionLabel(session, row)}
-                    </span>{' '}
-                    <span className="min-w-0">{exercise ? exercise.name : 'Exercise removed'}</span>
-                  </span>
-                </th>
-                <TableCell className={cn(CELL_CLASS, 'py-3 tabular-nums')}>
-                  <SetsCell row={row} exercise={exercise} />
-                </TableCell>
-                <TableCell className={cn(CELL_CLASS, 'py-3 whitespace-nowrap tabular-nums')}>{restLabel(row.restSeconds)}</TableCell>
-              </TableRow>,
-              <TableRow key={`${row.id}-details`}>
-                <TableCell colSpan={3} className={cn(CELL_CLASS, 'pt-0 pb-1')}>
-                  <RowDetails row={row} exercise={exercise} language={language} exercisesById={exercisesById} />
-                </TableCell>
-              </TableRow>,
-            ];
-          })}
-        </TableBody>
-      </Table>
-    </section>
+    <table aria-label={`${session.name} exercises`} className="w-full border-collapse text-sm text-text-primary">
+      <colgroup>
+        <col className="w-[9%]" />
+        <col />
+        <col className="w-[12%]" />
+        <col className="w-[12%]" />
+        <col className="w-[7%]" />
+        <col className="w-[10%]" />
+        <col className="w-[9%]" />
+      </colgroup>
+      <thead>
+        <tr>
+          {['Position', 'Exercise', 'Set', 'Reps', 'RIR', 'Weight', 'Rest'].map(header => (
+            <th key={header} scope="col" className={HEAD_CLASS}>
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      {rows.map(row => (
+        <ExerciseRows key={row.id} session={session} row={row} exercisesById={exercisesById} />
+      ))}
+    </table>
   );
 }

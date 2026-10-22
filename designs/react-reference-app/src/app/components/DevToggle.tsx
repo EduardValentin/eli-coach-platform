@@ -496,7 +496,7 @@ export function DevToggle() {
   };
 
   return (
-    <>
+    <div data-print-hidden>
       <button
         onClick={() => setIsOpen(true)}
         className="pointer-events-auto fixed right-4 z-[9999] bg-surface-inverted text-surface-inverted-foreground p-3 rounded-full shadow-lg hover:bg-brand transition-colors bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:bottom-4"
@@ -2135,6 +2135,6 @@ export function DevToggle() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

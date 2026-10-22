@@ -1,7 +1,4 @@
-import { BLOCK_TYPE_LABELS } from '../../domain/program';
-import { blockDates } from '../../domain/programCalendar';
 import { templateText, type TemplateKey } from '../../domain/programTemplates';
-import { formatJourneyDate } from '../../utils/journeyLabels';
 import { plainText, type ProgramView } from './programView';
 
 export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.';
@@ -10,12 +7,9 @@ export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
 export function Paragraphs({ text }: { text: string }) {
   return (
     <div className="grid gap-3 text-sm leading-relaxed text-text-primary">
-      {plainText(text)
-        .split('\n')
-        .filter(line => line.trim() !== '')
-        .map((line, index) => (
-          <p key={index}>{line}</p>
-        ))}
+      {nonEmptyLines(plainText(text)).map((line, index) => (
+        <p key={index}>{line}</p>
+      ))}
     </div>
   );
 }
@@ -24,21 +18,26 @@ export function template(view: ProgramView, key: TemplateKey): string {
   return templateText(key, view.program.language).text;
 }
 
-export function PlanBlocks({ view }: { view: ProgramView }) {
-  const { blocks } = view.version.content.plan;
-  const { dayOne, position } = view;
-  return (
-    <ol className="grid gap-1 text-sm text-text-primary">
-      {blocks.map((block, index) => {
-        const dates = dayOne ? blockDates(blocks, index, dayOne) : null;
-        const isCurrent = position.status === 'in-plan' && position.blockIndex === index;
-        return (
-          <li key={block.id} aria-current={isCurrent ? 'true' : undefined} className={isCurrent ? 'font-semibold' : undefined}>
-            {index + 1}. {BLOCK_TYPE_LABELS[block.type]} · {block.weeks} {block.weeks === 1 ? 'week' : 'weeks'}
-            {dates && ` · ${formatJourneyDate(dates.start)} – ${formatJourneyDate(dates.end)}`}
-          </li>
-        );
-      })}
-    </ol>
-  );
+const HEADING_LINE = /^\*\*([^*]+)\*\*$/;
+const EMPHASIS = /(\*\*[^*]+\*\*|\*[^*]+\*)/;
+
+export type HeadedText = { heading: string | null; body: string };
+
+export function headedText(text: string): HeadedText {
+  const [first = '', ...rest] = text.trim().split('\n');
+  const match = HEADING_LINE.exec(first.trim());
+  if (!match) return { heading: null, body: text };
+  return { heading: match[1], body: rest.join('\n') };
+}
+
+export function Emphasised({ text }: { text: string }) {
+  return text.split(EMPHASIS).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) return <em key={index}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
+export function nonEmptyLines(text: string): string[] {
+  return text.split('\n').filter(line => line.trim() !== '');
 }

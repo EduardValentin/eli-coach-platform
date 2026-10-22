@@ -8,15 +8,17 @@ type ProgramDocumentSheetProps = { view: ProgramView; backTo: string; backLabel:
 
 export function ProgramDocumentSheet({ view, backTo, backLabel }: ProgramDocumentSheetProps) {
   return (
-    <div className="min-h-screen bg-surface-page">
-      <div data-print-hidden className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-6 pt-6">
+    <div data-program-page className="min-h-screen bg-surface-page pb-12">
+      <div data-print-hidden className="mx-auto flex max-w-[210mm] flex-wrap items-center justify-between gap-3 px-4 pt-6">
         <PortalBackLink to={backTo}>{backLabel}</PortalBackLink>
         <Button className="mb-8" onClick={() => window.print()}>
           <Printer aria-hidden="true" />
           Print or save as PDF
         </Button>
       </div>
-      <ProgramDocument view={view} />
+      <main data-program-sheet className="mx-auto max-w-[210mm] overflow-hidden border border-border shadow-sm">
+        <ProgramDocument view={view} />
+      </main>
     </div>
   );
 }
