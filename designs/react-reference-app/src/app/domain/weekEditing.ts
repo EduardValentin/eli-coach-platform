@@ -50,7 +50,8 @@ export type ResetChange =
   | { kind: 'reset' }
   | { kind: 'training-days'; days: TrainingDays }
   | { kind: 'day'; weekday: Weekday }
-  | { kind: 'remove-session'; sessionId: string };
+  | { kind: 'remove-session'; sessionId: string }
+  | { kind: 'remove-block' };
 
 function placedCardio(block: Block, days: TrainingDays): CardioSession[] {
   const freeDays = WEEKDAYS.length - days;
@@ -103,6 +104,7 @@ function lostSessions(block: Block, change: Exclude<ResetChange, { kind: 'day' }
       ...block.cardioSessions.filter(cardio => cardio.id === change.sessionId).flatMap(cardioLoss),
     ];
   }
+  if (change.kind === 'remove-block') return [...block.sessions.flatMap(sessionLoss), ...block.cardioSessions.flatMap(cardioLoss)];
   return block.sessions.flatMap(sessionLoss);
 }
 

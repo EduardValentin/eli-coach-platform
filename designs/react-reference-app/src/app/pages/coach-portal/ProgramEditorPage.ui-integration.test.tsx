@@ -211,6 +211,9 @@ describe('ProgramEditorPage', () => {
     // act
     await user.click(screen.getByRole('button', { name: 'Block actions' }));
     await user.click(screen.getByRole('menuitem', { name: 'Remove block' }));
+    const confirm = screen.getByRole('dialog', { name: 'Remove block 3?' });
+    expect(within(confirm).getAllByText(/ · \d+ exercises?$/).length).toBeGreaterThan(0);
+    await user.click(within(confirm).getByRole('button', { name: 'Remove block' }));
 
     // assert
     expect(screen.getByRole('heading', { level: 2, name: 'Plan overview' })).toBeInTheDocument();

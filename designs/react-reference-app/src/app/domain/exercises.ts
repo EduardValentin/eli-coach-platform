@@ -63,7 +63,7 @@ export type Difficulty = (typeof DIFFICULTIES)[number];
 
 export const MOVEMENT_PATTERNS = [
   'squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull',
-  'vertical-pull', 'core', 'carry', 'isolation',
+  'vertical-pull', 'core', 'carry', 'isolation', 'conditioning',
 ] as const;
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
 export const MOVEMENT_PATTERN_LABELS: Record<MovementPattern, string> = {
@@ -77,6 +77,7 @@ export const MOVEMENT_PATTERN_LABELS: Record<MovementPattern, string> = {
   core: 'Core',
   carry: 'Carry',
   isolation: 'Isolation',
+  conditioning: 'Conditioning',
 };
 
 export const EXERCISE_ROLES = ['main-compound', 'secondary-compound', 'isolation'] as const;

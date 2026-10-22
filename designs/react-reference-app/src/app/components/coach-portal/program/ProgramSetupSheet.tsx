@@ -43,7 +43,7 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
   const goal = findOnboardingField('primaryGoal')?.options ?? [];
   const equipment = findOnboardingField('availableEquipment')?.options ?? [];
   const steps = DAILY_STEPS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
-  const cycleMode = journey.identity.gender === 'male' ? [] : [field('cycleMode', 'Cycle mode', 'select', optionsOf(CYCLE_MODE_LABELS))];
+  const cyclePanels = journey.identity.gender === 'male' ? [] : [{ name: 'Cycle', fields: [field('cycleMode', 'Cycle mode', 'select', optionsOf(CYCLE_MODE_LABELS))] }];
   return [
     {
       name: FIRST_PANEL,
@@ -55,10 +55,11 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
         field('splitShape', 'Split', 'radio', splitOptions()),
         field('trainingDays', 'Training days', 'radio', optionsOf(TRAINING_DAY_LABELS)),
         field('sessionMinutes', 'Session length', 'radio', optionsOf(SESSION_MINUTE_LABELS)),
+        field('dailySteps', 'Daily steps', 'select', steps),
       ],
     },
     { name: 'Equipment', fields: [{ ...field('equipmentChips', 'Equipment', 'chips', equipment), exclusiveOptions: [BODYWEIGHT_ONLY] }] },
-    { name: 'Cycle', fields: [...cycleMode, field('dailySteps', 'Daily steps', 'select', steps)] },
+    ...cyclePanels,
   ];
 }
 

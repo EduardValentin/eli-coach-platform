@@ -4,7 +4,6 @@ import type { Muscle } from './exercises';
 import {
   BLOCK_TYPE_LABELS,
   WEEKDAYS,
-  roleForSlot,
   type Block,
   type CardioSession,
   type LevelHint,
@@ -15,6 +14,7 @@ import {
 import { blockDates, blockSpan, currentPosition, nextCheckpoint } from './programCalendar';
 import { hasHardRounds, isLightCardio } from './programCardio';
 import { estimatedMinutes } from './programSuggestions';
+import { slotPlanFor } from './splitTemplates';
 
 export type BlockingCode =
   | 'foundation-not-first'
@@ -295,7 +295,8 @@ function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<Warnin
     const findings: RuleFinding<WarningCode>[] = [];
     session.rows.forEach((row, index) => {
       const exercise = exercises.get(row.exerciseId);
-      if (exercise?.role && exercise.role !== roleForSlot(row.slot)) {
+      const planned = slotPlanFor(block, session, row.slot)?.patterns;
+      if (exercise?.pattern && planned && !planned.includes(exercise.pattern)) {
         findings.push({ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name });
       }
       const sharesMuscle = session.rows.slice(index + 1).some(

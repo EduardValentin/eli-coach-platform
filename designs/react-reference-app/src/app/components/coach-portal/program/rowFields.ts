@@ -3,11 +3,23 @@ import type { Range, Row, RowField } from '../../../domain/program';
 
 export const RANGE_PROBLEM = 'Use a number or a range like 8–12';
 export const REST_PROBLEM = 'Use seconds or m:ss like 1:30';
+export const COUNT_PROBLEM = 'Use a whole number';
 
 const RANGE_PATTERN = /^(\d+)(?:\s*[-–]\s*(\d+))?$/;
 const MINUTES_PATTERN = /^(\d+):([0-5]\d)$/;
 const SECONDS_PATTERN = /^(\d+)\s*s?$/;
 const SECONDS_PER_MINUTE = 60;
+const WHOLE_NUMBER_PATTERN = /^\d+$/;
+
+export function parseSeconds(text: string): number | null {
+  const trimmed = text.trim();
+  return WHOLE_NUMBER_PATTERN.test(trimmed) ? Number(trimmed) : null;
+}
+
+export function parseCount(text: string): number | null {
+  const count = parseSeconds(text);
+  return count !== null && count > 0 ? count : null;
+}
 
 export function parseRange(text: string): Range | null {
   const match = RANGE_PATTERN.exec(text.trim());

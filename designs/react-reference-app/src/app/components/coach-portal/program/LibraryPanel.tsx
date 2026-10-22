@@ -2,7 +2,16 @@ import { useState, type Ref, type RefObject } from 'react';
 import { useDrag } from 'react-dnd';
 import { GripVertical, Plus, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { MOVEMENT_PATTERN_LABELS, MOVEMENT_PATTERNS, MUSCLES, labelsOf, type Equipment, type Muscle, type MovementPattern } from '../../../domain/exercises';
+import {
+  MOVEMENT_PATTERN_LABELS,
+  MOVEMENT_PATTERNS,
+  MUSCLES,
+  labelsOf,
+  type Equipment,
+  type ExerciseTag,
+  type Muscle,
+  type MovementPattern,
+} from '../../../domain/exercises';
 import { pickableItems } from '../../../domain/libraryLifecycle';
 import { MultiSelect } from '../../MultiSelect';
 import { SearchField } from '../../SearchField';
@@ -15,9 +24,16 @@ import { cn } from '../../ui/utils';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { SegmentedChoice } from './SegmentedChoice';
 
-export type LibraryType = 'resistance' | 'mobility' | 'cardio';
+export type LibraryType = 'resistance' | 'mobility' | 'stretching' | 'cardio';
 export type EquipmentFilter = 'hers' | 'bodyweight';
-export type LibraryPurpose = { key: string; label: string; type: LibraryType; patterns: MovementPattern[]; equipment: EquipmentFilter };
+export type LibraryPurpose = {
+  key: string;
+  label: string;
+  type: LibraryType;
+  alsoTagged?: ExerciseTag;
+  patterns: MovementPattern[];
+  equipment: EquipmentFilter;
+};
 export type LibraryPresentation = 'pane' | 'drawer';
 
 type LibraryPanelProps = {
@@ -36,6 +52,7 @@ const MUSCLE_LABELS = labelsOf(MUSCLES);
 const TYPE_OPTIONS: { value: LibraryType; label: string }[] = [
   { value: 'resistance', label: 'Resistance' },
   { value: 'mobility', label: 'Mobility' },
+  { value: 'stretching', label: 'Stretching' },
   { value: 'cardio', label: 'Cardio' },
 ];
 
@@ -111,8 +128,10 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
     setBodyweightOnly(purpose.equipment === 'bodyweight');
   }
   const needle = query.trim().toLowerCase();
+  const alsoTagged = purpose?.type === type ? purpose.alsoTagged : undefined;
+  const ofType = (exercise: Exercise) => exercise.type === type || (alsoTagged !== undefined && exercise.tags.includes(alsoTagged));
   const shown = pickableItems(library)
-    .filter(exercise => exercise.archivedAt === undefined && exercise.type === type)
+    .filter(exercise => exercise.archivedAt === undefined && ofType(exercise))
     .filter(exercise => exercise.name.toLowerCase().includes(needle))
     .filter(exercise => type !== 'resistance' || anyOf(patterns, exercise.pattern ? [exercise.pattern] : []))
     .filter(exercise => anyOf(muscles, exercise.primaryMuscles))

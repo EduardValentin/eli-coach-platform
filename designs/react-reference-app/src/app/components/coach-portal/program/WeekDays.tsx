@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
 import { cardioMinutes, emptyCardioSession } from '../../../domain/programCardio';
-import { blockWithDay, type DayChoice } from '../../../domain/weekEditing';
+import { blockWithDay, describeReset, type DayChoice } from '../../../domain/weekEditing';
 import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import {
@@ -16,8 +16,10 @@ import {
 } from '../../ui/dropdown-menu';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, WEEKDAY_LABELS } from './program-constants';
+import { useResetConfirm, type ResetRequest } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
+type DayCardProps = WeekDaysProps & { day: Weekday; onRequest: (request: ResetRequest) => void };
 
 const KIND_BADGE_CLASS = 'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-xs font-medium';
 
@@ -71,7 +73,20 @@ function CardioSummary({ cardio, onOpen }: { cardio: CardioSession; onOpen: () =
   );
 }
 
-function DayCard({ block, day, onChange, onOpenSession }: WeekDaysProps & { day: Weekday }) {
+function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
+  const weekday = WEEKDAY_LABELS[day];
+  if (choice.kind === 'rest') return `Make ${weekday} a rest day?`;
+  if (choice.kind === 'cardio') return `Make ${weekday} a cardio day?`;
+  const name = block.sessions.find(session => session.id === choice.sessionId)?.name ?? 'the session';
+  return `Put ${name} on ${weekday}?`;
+}
+
+function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
+  const keepsCardio = choice.kind === 'cardio' && block.calendar[day].kind === 'cardio';
+  return keepsCardio ? [] : describeReset(block, { kind: 'day', weekday: day });
+}
+
+function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {
   const entry = block.calendar[day];
   const session = entry.kind === 'session' ? block.sessions.find(other => other.id === entry.sessionId) : undefined;
   const cardio = entry.kind === 'cardio' ? block.cardioSessions.find(other => other.id === entry.cardioId) : undefined;
@@ -89,7 +104,18 @@ function DayCard({ block, day, onChange, onOpenSession }: WeekDaysProps & { day:
           <span aria-hidden="true">{weekday.slice(0, 3)}</span>
           <span className="sr-only">{weekday}</span>
         </h4>
-        <DayMenu block={block} day={day} onChoose={choice => onChange(blockWithDay(block, day, choice))} />
+        <DayMenu
+          block={block}
+          day={day}
+          onChoose={choice =>
+            onRequest({
+              title: dayTitle(block, day, choice),
+              confirmLabel: 'Change day',
+              lines: lostByChoice(block, day, choice),
+              apply: () => onChange(blockWithDay(block, day, choice)),
+            })
+          }
+        />
       </div>
       {session && (
         <button
@@ -108,6 +134,7 @@ function DayCard({ block, day, onChange, onOpenSession }: WeekDaysProps & { day:
 
 export function WeekDays(props: WeekDaysProps) {
   const headingId = useId();
+  const confirm = useResetConfirm();
   return (
     <section aria-labelledby={headingId} className="grid gap-2">
       <h3 id={headingId} className={WIDGET_TITLE_CLASS}>
@@ -115,9 +142,10 @@ export function WeekDays(props: WeekDaysProps) {
       </h3>
       <ol className="grid grid-cols-2 gap-2 sm:grid-cols-7">
         {WEEKDAYS.map(day => (
-          <DayCard key={day} {...props} day={day} />
+          <DayCard key={day} {...props} day={day} onRequest={confirm.request} />
         ))}
       </ol>
+      {confirm.dialog}
     </section>
   );
 }

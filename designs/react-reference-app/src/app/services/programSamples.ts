@@ -15,6 +15,7 @@ import {
 import type { ProgramSetup } from '../domain/programOnboarding';
 import { cardioPreset } from '../domain/programCardio';
 import { emptyRow, initialContent, substitutionsFor } from '../domain/programSuggestions';
+import { warmUpItem } from '../domain/sessionEditing';
 import { SPLIT_TEMPLATES, type SlotPlan } from '../domain/splitTemplates';
 
 export const PROGRAM_SEEDS = ['none', 'draft', 'published', 'two-versions'] as const;
@@ -78,11 +79,9 @@ function rowsForSlot(plans: SlotPlan[], seed: SeedContext, used: Set<string>): R
   return picks.map(({ plan, exercise }) => seededRow(plan, exercise, seed, supersetGroup));
 }
 
-const WARM_UP_SECONDS = 45;
-
 function seededWarmUp(library: readonly Exercise[]): Session['warmUp'] {
   const mobility = library.find(exercise => exercise.type === 'mobility' && exercise.archivedAt === undefined);
-  return { items: mobility ? [{ id: newId(), exerciseId: mobility.id, sets: 1, seconds: WARM_UP_SECONDS }] : [] };
+  return { items: mobility ? [warmUpItem(mobility, mobility.id)] : [] };
 }
 
 function filledSession(session: Session, seed: SeedContext): Session {

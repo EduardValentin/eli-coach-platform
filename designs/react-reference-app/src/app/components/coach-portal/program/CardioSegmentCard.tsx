@@ -1,15 +1,17 @@
 import { useId, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
-import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, type CardioEdits } from '../../../domain/programCardio';
+import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
+import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
 import { RowTextField } from './RowTextField';
+import { COUNT_PROBLEM, parseCount, parseSeconds } from './rowFields';
 import { SegmentedChoice } from './SegmentedChoice';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
@@ -32,20 +34,13 @@ const MEASURE_OPTIONS: { value: ItemMeasure; label: string }[] = [
   { value: 'reps', label: 'Reps' },
   { value: 'seconds', label: 'Sec' },
 ];
-const COUNT_PROBLEM = 'Use a whole number';
+type NumberFieldProps = { label: string; unit?: string; value: number; parse?: (text: string) => number | null; onCommit: (value: number) => void };
 
-function parseCount(text: string): number | null {
-  const trimmed = text.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  const count = Number(trimmed);
-  return count > 0 ? count : null;
-}
-
-function NumberField({ label, unit, value, onCommit }: { label: string; unit?: string; value: number; onCommit: (value: number) => void }) {
+function NumberField({ label, unit, value, parse = parseCount, onCommit }: NumberFieldProps) {
   return (
     <label className="grid content-start gap-1">
       <span className={LABEL_CLASS}>{label}</span>
-      <RowTextField className="w-20" type="number" label={label} value={value} format={String} parse={parseCount} problem={COUNT_PROBLEM} suffix={unit} onCommit={onCommit} />
+      <RowTextField className="w-20" type="number" label={label} value={value} format={String} parse={parse} problem={COUNT_PROBLEM} suffix={unit} onCommit={onCommit} />
     </label>
   );
 }
@@ -68,30 +63,45 @@ function measuredItem(item: RoundsItem, measure: ItemMeasure, amount: number): R
   return measure === 'seconds' ? { ...base, workSeconds: amount } : { ...base, reps: amount };
 }
 
-function RoundsFields({ segment, library, onSegment, onItem, onRemoveItem, onAddItem }: {
+type RoundsFieldsProps = {
   segment: RoundsSegment;
   library: readonly Exercise[];
-  onSegment: (segment: RoundsSegment) => void;
-  onItem: (item: RoundsItem) => void;
-  onRemoveItem: (itemId: string) => void;
+  edits: CardioEdits;
+  onChange: (cardio: CardioSession) => void;
   onAddItem: () => void;
-}) {
+};
+
+function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFieldsProps) {
   const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
+  const onSegment = (next: RoundsSegment) => onChange(edits.changeSegment(next));
+  const onItem = (item: RoundsItem) => onChange(edits.changeRoundsItem(segment.id, item));
+  const { items } = segment;
   return (
     <div className="grid gap-3">
-      {segment.items.length > 0 && (
-        <ol aria-label="Round exercises" className="grid divide-y divide-border-subtle rounded-field border border-border-subtle bg-surface-base">
-          {segment.items.map(item => {
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+        <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
+        <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
+      </div>
+      {items.length > 0 && (
+        <ol aria-label="Round exercises" className={ITEM_LIST_CLASS}>
+          {items.map((item, index) => {
             const name = nameOf(item.exerciseId);
             const measure: ItemMeasure = item.workSeconds === undefined ? 'reps' : 'seconds';
             const amount = item.workSeconds ?? item.reps ?? 0;
             return (
-              <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
-                <span className="min-w-0 flex-1 basis-32 text-sm font-medium text-text-primary">{name}</span>
+              <ExerciseItemRow
+                key={item.id}
+                name={name}
+                position={index + 1}
+                count={items.length}
+                onMoveUp={() => onChange(edits.moveRoundsItemUp(segment.id, item.id))}
+                onMoveDown={() => onChange(edits.moveRoundsItemDown(segment.id, item.id))}
+                onRemove={() => onChange(edits.removeRoundsItem(segment.id, item.id))}
+              >
                 <RowTextField
                   className="w-16"
                   type="number"
-                  label={`${name} ${measure === 'reps' ? 'reps' : 'seconds'}`}
+                  label={`${name} ${measure}`}
                   value={amount}
                   format={String}
                   parse={parseCount}
@@ -101,23 +111,30 @@ function RoundsFields({ segment, library, onSegment, onItem, onRemoveItem, onAdd
                 <div className="w-28">
                   <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(measuredItem(item, next, amount))} />
                 </div>
-                <Button variant="ghost" size="icon-xs" aria-label={`Remove ${name}`} onClick={() => onRemoveItem(item.id)}>
-                  <X aria-hidden="true" />
-                </Button>
-              </li>
+              </ExerciseItemRow>
             );
           })}
         </ol>
       )}
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-        <Button variant="outline" size="xs" aria-label="Add exercise to the rounds" onClick={onAddItem}>
-          <Plus aria-hidden="true" />
-          Add exercise
-        </Button>
-        <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
-        <NumberField label="Easy" unit="s" value={segment.easySeconds} onCommit={easySeconds => onSegment({ ...segment, easySeconds })} />
-        <NumberField label="Rest" unit="s" value={segment.restBetweenRoundsSeconds} onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })} />
-        <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
+      <Button variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
+        <Plus aria-hidden="true" />
+        Add exercise
+      </Button>
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        <NumberField
+          label="Easy between exercises"
+          unit="s"
+          value={segment.easySeconds}
+          parse={parseSeconds}
+          onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
+        />
+        <NumberField
+          label="Rest between rounds"
+          unit="s"
+          value={segment.restBetweenRoundsSeconds}
+          parse={parseSeconds}
+          onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
+        />
       </div>
     </div>
   );
@@ -133,16 +150,7 @@ function SegmentFields({ segment, library, edits, onChange, onAddRoundsItem }: P
       </div>
     );
   }
-  return (
-    <RoundsFields
-      segment={segment}
-      library={library}
-      onSegment={changeSegment}
-      onItem={item => onChange(edits.changeRoundsItem(segment.id, item))}
-      onRemoveItem={itemId => onChange(edits.removeRoundsItem(segment.id, itemId))}
-      onAddItem={onAddRoundsItem}
-    />
-  );
+  return <RoundsFields segment={segment} library={library} edits={edits} onChange={onChange} onAddItem={onAddRoundsItem} />;
 }
 
 type DropState = { isOver: boolean; canDrop: boolean; itemType: string | symbol | null };
@@ -179,7 +187,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
           return moving.cardioId === cardioId && moving.segmentId !== segment.id;
         }
         const { exercise } = item as LibraryItem;
-        return isRounds ? exercise.type !== 'mobility' : exercise.type === 'cardio';
+        return exercise.type === 'cardio' || (isRounds && exercise.tags.includes('Conditioning'));
       },
       drop: (item, monitor) => {
         if (monitor.didDrop()) return;
@@ -221,6 +229,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
             </Button>
           )}
         </h5>
+        {segment.kind === 'rounds' && <p className="text-sm font-medium text-text-primary tabular-nums">{`${segmentMinutes(segment)} min`}</p>}
         <RowActionsMenu
           label={`${label} actions`}
           actions={[

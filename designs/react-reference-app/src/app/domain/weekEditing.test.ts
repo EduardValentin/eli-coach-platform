@@ -229,6 +229,17 @@ describe('describeReset', () => {
     expect(cardio).toEqual(['Easy cardio · 1 segment']);
   });
 
+  it('names every session and cardio with content when the block is removed', () => {
+    // arrange
+    const start = filledBlock(5, 0, 2);
+
+    // act
+    const lost = describeReset(start, { kind: 'remove-block' });
+
+    // assert
+    expect(lost).toEqual(['Full Body A · 5 exercises', 'Full Body C · 2 exercises', 'Easy cardio · 1 segment', 'Easy cardio · 1 segment']);
+  });
+
   it('finds nothing to lose in empty sessions', () => {
     // act
     const lost = describeReset(block(), { kind: 'split' });

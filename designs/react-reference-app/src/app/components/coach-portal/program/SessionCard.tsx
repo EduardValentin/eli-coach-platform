@@ -1,20 +1,19 @@
-import { useId, useRef, useState, type Ref } from 'react';
-import { Eraser, PencilLine, Plus, X } from 'lucide-react';
+import { useId, useRef, type Ref } from 'react';
+import { Eraser, PencilLine } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { SLOTS, warmUpItemText, type Block, type Session, type Slot } from '../../../domain/program';
+import { SLOTS, type Block, type Session, type Slot } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { estimatedMinutes } from '../../../domain/programSuggestions';
 import { sessionEdits, type SessionEditContext } from '../../../domain/sessionEditing';
 import { slotPlanFor, type SlotPlan } from '../../../domain/splitTemplates';
+import { describeReset } from '../../../domain/weekEditing';
 import { RowActionsMenu } from '../../RowActionsMenu';
-import { LABEL_CLASS } from '../../typography';
-import { Button } from '../../ui/button';
-import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Input } from '../../ui/input';
-import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
-import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
+import { CoolDownCard } from './CoolDownCard';
+import { useResetConfirm } from './ResetConfirm';
 import { SlotGroup } from './SlotGroup';
+import { WarmUpCard } from './WarmUpCard';
 
 type SessionCardProps = {
   session: Session;
@@ -35,56 +34,6 @@ const FALLBACK_PLANS: Record<Slot, SlotPlan> = {
   C: { slot: 'C', patterns: ['isolation'], label: 'Accessories' },
   D: { slot: 'D', patterns: ['core'], label: 'Core / finisher' },
 };
-
-function acceptsMobility(dragged: DraggedItem): boolean {
-  return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'mobility';
-}
-
-type WarmUpCardProps = {
-  session: Session;
-  library: readonly Exercise[];
-  onPickExercise: () => void;
-  onAddExercise: (exerciseId: string) => void;
-  onRemoveItem: (itemId: string) => void;
-};
-
-function WarmUpCard({ session, library, onPickExercise, onAddExercise, onRemoveItem }: WarmUpCardProps) {
-  const items = session.warmUp.items.map(item => ({
-    id: item.id,
-    name: library.find(exercise => exercise.id === item.exerciseId)?.name ?? 'Unknown exercise',
-    amount: warmUpItemText(item),
-  }));
-  return (
-    <DropZone
-      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onAddExercise(dragged.item.exercise.id) }}
-      accepts={acceptsMobility}
-      className="rounded-control border border-border-subtle bg-surface-subtle p-3"
-      activeClassName="ring-2 ring-primary/40"
-    >
-      <fieldset className="grid gap-2">
-        <legend className={cn(LABEL_CLASS, 'mb-2')}>Warm-up</legend>
-        <div className="flex flex-wrap items-center gap-2">
-          {items.length > 0 && (
-            <ul aria-label="Warm-up exercises" className="flex flex-wrap gap-2">
-              {items.map(item => (
-                <li key={item.id} className="flex items-center gap-1 rounded-full border border-border bg-surface-base py-0.5 pr-0.5 pl-3 text-sm text-text-primary">
-                  {`${item.name} · ${item.amount}`}
-                  <Button variant="ghost" size="icon-xs" aria-label={`Remove ${item.name}`} onClick={() => onRemoveItem(item.id)}>
-                    <X aria-hidden="true" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Button variant="ghost" size="xs" onClick={onPickExercise}>
-            <Plus aria-hidden="true" />
-            Add mobility exercise
-          </Button>
-        </div>
-      </fieldset>
-    </DropZone>
-  );
-}
 
 function CollapsedSession({ session, headingId, onExpand }: { session: Session; headingId: string; onExpand: () => void }) {
   const count = session.rows.length;
@@ -108,11 +57,20 @@ function CollapsedSession({ session, headingId, onExpand }: { session: Session; 
 export function SessionCard({ session, block, expanded, articleRef, library, context, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
   const headingId = useId();
   const nameField = useRef<HTMLInputElement>(null);
-  const [confirmingClear, setConfirmingClear] = useState(false);
+  const confirm = useResetConfirm();
   const edits = sessionEdits(session, context);
   const minutes = estimatedMinutes(session);
   const overTarget = minutes > block.targetMinutes + OVER_TARGET_MINUTES;
   const articleClass = 'rounded-card border border-border bg-card shadow-card';
+
+  function clear() {
+    confirm.request({
+      title: `Clear ${session.name}?`,
+      confirmLabel: 'Clear session',
+      lines: describeReset(block, { kind: 'remove-session', sessionId: session.id }),
+      apply: () => onChange(edits.clear()),
+    });
+  }
 
   if (!expanded) {
     return (
@@ -139,15 +97,11 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
           <span>{`~${minutes} min · target ${block.targetMinutes}`}</span>
           {overTarget && <span>Over target</span>}
         </p>
-        <label className="flex items-center gap-2 text-sm text-text-primary">
-          <Switch checked={session.coolDown.enabled} onCheckedChange={enabled => onChange({ ...session, coolDown: { ...session.coolDown, enabled } })} />
-          Cool-down
-        </label>
         <RowActionsMenu
           label={`${session.name} actions`}
           actions={[
             { name: 'rename', label: 'Rename', icon: PencilLine, onSelect: () => nameField.current?.select() },
-            { name: 'clear', label: 'Clear session', icon: Eraser, tone: 'destructive', disabled: session.rows.length === 0, onSelect: () => setConfirmingClear(true) },
+            { name: 'clear', label: 'Clear session', icon: Eraser, tone: 'destructive', disabled: session.rows.length === 0, onSelect: clear },
           ]}
         />
       </header>
@@ -155,9 +109,9 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
         <WarmUpCard
           session={session}
           library={library}
+          edits={edits}
+          onChange={onChange}
           onPickExercise={() => onOpenLibrary({ kind: 'warm-up', sessionId: session.id })}
-          onAddExercise={exerciseId => onChange(edits.addWarmUpItem(exerciseId))}
-          onRemoveItem={itemId => onChange(edits.removeWarmUpItem(itemId))}
         />
         {SLOTS.map(slot => (
           <SlotGroup
@@ -171,20 +125,15 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
             onAddSubstitution={rowId => onOpenLibrary({ kind: 'substitution', sessionId: session.id, rowId })}
           />
         ))}
+        <CoolDownCard
+          session={session}
+          library={library}
+          edits={edits}
+          onChange={onChange}
+          onPickStretch={() => onOpenLibrary({ kind: 'cool-down', sessionId: session.id })}
+        />
       </div>
-      <ConfirmDialog
-        open={confirmingClear}
-        onOpenChange={setConfirmingClear}
-        title={`Clear ${session.name}?`}
-        description="Every exercise of this session is removed. The warm-up stays."
-        confirmLabel="Clear session"
-        cancelLabel="Keep exercises"
-        tone="destructive"
-        onConfirm={() => {
-          setConfirmingClear(false);
-          onChange(edits.clear());
-        }}
-      />
+      {confirm.dialog}
     </article>
   );
 }

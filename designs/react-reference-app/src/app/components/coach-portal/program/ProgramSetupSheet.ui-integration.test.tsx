@@ -82,6 +82,32 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('keeps the daily steps with the schedule and only the cycle mode under Cycle', async () => {
+    // arrange
+    const user = renderSheet('&pseed=none&jstage=approved');
+
+    // act
+    await openPanel(user, 'Schedule');
+    await openPanel(user, 'Cycle');
+
+    // assert
+    const schedule = screen.getByRole('region', { name: 'Schedule' });
+    for (const name of ['Split', 'Training days', 'Session length']) expect(within(schedule).getByRole('radiogroup', { name })).toBeInTheDocument();
+    expect(within(schedule).getByRole('combobox', { name: 'Daily steps' })).toHaveTextContent('6,000');
+    const cycle = screen.getByRole('region', { name: 'Cycle' });
+    expect(within(cycle).getAllByRole('combobox')).toHaveLength(1);
+    expect(within(cycle).getByRole('combobox', { name: 'Cycle mode' })).toBeInTheDocument();
+  });
+
+  it('leaves the cycle panel out for a male client', () => {
+    // arrange / act
+    renderSheet('&pseed=none&jstage=approved&jgender=male');
+
+    // assert
+    for (const name of ['Program', 'Schedule', 'Equipment']) expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Cycle' })).not.toBeInTheDocument();
+  });
+
   it('prefills from onboarding and creates the draft', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
@@ -94,7 +120,6 @@ describe('ProgramSetupSheet', () => {
 
     // act
     await openPanel(user, 'Schedule');
-    await openPanel(user, 'Cycle');
 
     // assert
     expect(screen.getByRole('radio', { name: '3 days' })).toBeChecked();

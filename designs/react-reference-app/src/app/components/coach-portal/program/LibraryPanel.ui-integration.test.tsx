@@ -166,7 +166,7 @@ describe('LibraryPanel', () => {
     stubPhoneViewport();
     const user = await openFirstBlock('pseed=draft');
     expect(screen.queryByRole('complementary', { name: 'Exercise library' })).not.toBeInTheDocument();
-    const opener = within(firstSession()).getByRole('button', { name: 'Add mobility exercise' });
+    const opener = within(firstSession()).getByRole('button', { name: 'Add warm-up exercise' });
 
     // act
     await user.click(opener);

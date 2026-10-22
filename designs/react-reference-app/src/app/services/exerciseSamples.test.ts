@@ -29,6 +29,14 @@ describe('the sample exercises', () => {
     }
   });
 
+  it('files jumping jacks, burpees and mountain climbers under the conditioning pattern', () => {
+    // act
+    const conditioning = SAMPLE_EXERCISES.filter((exercise) => exercise.pattern === 'conditioning').map((exercise) => exercise.name);
+
+    // assert
+    expect(conditioning).toEqual(['Jumping Jacks', 'Burpee', 'Mountain Climber']);
+  });
+
   it('never lists a muscle as both primary and secondary', () => {
     // assert
     for (const exercise of SAMPLE_EXERCISES) {

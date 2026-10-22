@@ -196,6 +196,15 @@ export function positionLabel(session: Session, row: Row): string {
   return `${row.slot}${group.findIndex(other => other.id === row.id) + 1}`;
 }
 
+export function swappedWithNeighbour<Item extends { id: string }>(items: Item[], id: string, step: number): Item[] {
+  const index = items.findIndex(item => item.id === id);
+  const target = index + step;
+  if (index < 0 || target < 0 || target >= items.length) return items;
+  const next = [...items];
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
 export function newId(): string {
   return crypto.randomUUID();
 }

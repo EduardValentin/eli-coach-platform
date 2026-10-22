@@ -101,14 +101,14 @@ describe('programForSeed', () => {
     expect(accessories[0].supersetGroup).toBeUndefined();
   });
 
-  it('opens every seeded session with one mobility exercise for 45 seconds and leaves the cool-down off', () => {
+  it('opens every seeded session with one set of a mobility exercise measured its own way and leaves the cool-down off', () => {
     // act
     const program = programForSeed('two-versions', CLIENT, SAMPLE_EXERCISES);
 
     // assert
     const sessions = program!.versions.flatMap(version => version.content.plan.blocks.flatMap(block => block.sessions));
     for (const session of sessions) {
-      expect(session.warmUp.items).toEqual([{ id: expect.any(String), exerciseId: expect.any(String), sets: 1, seconds: 45 }]);
+      expect(session.warmUp.items).toEqual([{ id: expect.any(String), exerciseId: expect.any(String), sets: 1, reps: { min: 10, max: 10 } }]);
       expect(exercisesById.get(session.warmUp.items[0].exerciseId)?.type).toBe('mobility');
       expect(session.coolDown).toEqual({ enabled: false, note: '', items: [] });
     }

@@ -17,12 +17,15 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
     const cardio = block.cardioSessions.find(other => other.id === target.sessionId);
     if (!cardio) return null;
     const label = `Adding to ${cardio.name}`;
-    if (target.kind === 'rounds-item') return { key, label, type: 'resistance', patterns: [], equipment: 'bodyweight' };
+    if (target.kind === 'rounds-item') return { key, label, type: 'cardio', alsoTagged: 'Conditioning', patterns: [], equipment: 'hers' };
     return { key, label, type: 'cardio', patterns: [], equipment: 'hers' };
   }
   const session = block.sessions.find(other => other.id === target.sessionId);
   if (!session) return null;
-  if (target.kind === 'warm-up') return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', patterns: [], equipment: 'hers' };
+  if (target.kind === 'warm-up') {
+    return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', alsoTagged: 'Conditioning', patterns: [], equipment: 'hers' };
+  }
+  if (target.kind === 'cool-down') return { key, label: `Adding to ${session.name} · Cool-down`, type: 'stretching', patterns: [], equipment: 'hers' };
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
     return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [], equipment: 'hers' };

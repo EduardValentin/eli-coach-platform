@@ -320,7 +320,7 @@ describe('DayContent', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 3, name: 'Intervals' })).toBeInTheDocument();
-    expect(screen.getByText('14 min')).toBeInTheDocument();
+    expect(screen.getByText('26 min')).toBeInTheDocument();
     const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
     expect(segments.map(segment => segment.textContent)).toEqual([
       'Stationary bike · 5 min · You can hold a conversation',

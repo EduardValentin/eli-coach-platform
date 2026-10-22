@@ -16,8 +16,8 @@ import {
 
 const publishDay = new Date(2026, 9, 20);
 
-const exercise = (id: string, primaryMuscles: Exercise['primaryMuscles'], role?: Exercise['role']) =>
-  ({ id, name: `Exercise ${id}`, primaryMuscles, role }) as Exercise;
+const exercise = (id: string, primaryMuscles: Exercise['primaryMuscles'], role?: Exercise['role'], pattern?: Exercise['pattern']) =>
+  ({ id, name: `Exercise ${id}`, primaryMuscles, role, pattern }) as Exercise;
 
 const exercises = new Map(
   [
@@ -27,6 +27,10 @@ const exercises = new Map(
     exercise('row', ['Upper back']),
     exercise('curl', ['Biceps']),
     exercise('fly', ['Chest']),
+    exercise('frontSquat', ['Quadriceps'], 'main-compound', 'squat'),
+    exercise('pushUp', ['Chest'], 'secondary-compound', 'horizontal-push'),
+    exercise('burpee', ['Full body'], 'secondary-compound', 'conditioning'),
+    exercise('jacks', ['Full body'], 'isolation', 'conditioning'),
   ].map(entry => [entry.id, entry]),
 );
 
@@ -79,6 +83,7 @@ const blocks = (...specs: Spec[]): Block[] =>
       type: spec.type ?? 'hypertrophy',
       weeks: spec.weeks ?? 4,
       targetMinutes: spec.targetMinutes ?? 60,
+      split: { shape: 'full-body', name: '', text: '' },
       calendar,
       sessions,
       cardioSessions: Object.entries(spec.cardio ?? {}).map(([weekday, kind]) => ({
@@ -305,5 +310,45 @@ describe('cardio schedule warnings', () => {
     // assert
     expect(found).toContainEqual({ code: 'hard-days-in-a-row', blockId: 'b1', detail: 'Mon and Tue' });
     expect(codes(passed)).not.toContain('hard-days-in-a-row');
+  });
+});
+
+describe('slot pattern warnings', () => {
+  const fullBody = (sessions: Session[]): Block => blocks({ sessions })[0];
+
+  it('warns about an exercise whose pattern is not one its slot plans for', () => {
+    // arrange
+    const planned = session('s1', [row('frontSquat', 'A'), row('pushUp', 'C'), row('burpee', 'D')]);
+
+    // act
+    const found = warnings(content([fullBody([planned])]), context());
+
+    // assert
+    expect(found.filter(finding => finding.code === 'role-slot-mismatch')).toEqual([
+      { code: 'role-slot-mismatch', blockId: 'b1', sessionId: 's1', detail: 'Exercise burpee' },
+    ]);
+    expect(warningMessage(found.find(finding => finding.code === 'role-slot-mismatch')!)).toBe('Exercise burpee does not match its slot');
+  });
+
+  it('accepts any role in a slot whose patterns match', () => {
+    // arrange
+    const planned = session('s1', [row('pushUp', 'C'), row('frontSquat', 'A')]);
+
+    // act
+    const found = warnings(content([fullBody([planned])]), context());
+
+    // assert
+    expect(codes(found)).not.toContain('role-slot-mismatch');
+  });
+
+  it('never warns about rows in a slot without a plan or exercises without a pattern', () => {
+    // arrange
+    const sessions = Array.from({ length: 6 }, (_, index) => session(`s${index + 1}`, index === 5 ? [row('jacks', 'D')] : [row('curl', 'C')]));
+
+    // act
+    const found = warnings(content([fullBody(sessions)]), context());
+
+    // assert
+    expect(codes(found)).not.toContain('role-slot-mismatch');
   });
 });

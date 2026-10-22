@@ -10,19 +10,20 @@ import {
   type ProgramLanguage,
   type Session,
   type SplitShape,
+  type TrainingDays,
 } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { STEPS_STEP, TARGET_MINUTES } from '../../../domain/programDefaults';
 import { blockWithSessionsFrom } from '../../../domain/programEditing';
 import { emptySessionsFor, spreadCalendar } from '../../../domain/programSuggestions';
 import { fillTemplate, templateText } from '../../../domain/programTemplates';
+import { describeReset, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { IconHint } from '../../IconHint';
 import { InlineProblem } from '../../InlineProblem';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
-import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Switch } from '../../ui/switch';
@@ -31,6 +32,7 @@ import { cn } from '../../ui/utils';
 import { CopyBlockDialog } from './CopyBlockDialog';
 import { OptionSelect, type Option } from './OptionSelect';
 import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
+import { useResetConfirm } from './ResetConfirm';
 import { blockWithType, useWeeksField } from './weeksField';
 
 type BlockHeaderProps = {
@@ -46,14 +48,9 @@ type BlockHeaderProps = {
   onRemove: () => void;
 };
 
-type PendingSessions = {
-  title: string;
-  description: string;
-  confirmLabel: string;
-  block: Block;
-};
-
 const SPLIT_SHAPES = Object.keys(SPLIT_SHAPE_LABELS) as SplitShape[];
+const TRAINING_DAY_OPTIONS: Option<TrainingDays>[] = ([2, 3, 4, 5] as const).map(days => ({ value: days, label: `${days} days` }));
+const REBUILD = 'Rebuild sessions';
 const MIN_STEPS = 4000;
 const MAX_STEPS = 12000;
 const STARTED_REASON = 'A block that has started stays in the plan.';
@@ -137,10 +134,6 @@ function reshaped(block: Block, shape: SplitShape, language: ProgramLanguage): B
   };
 }
 
-function hasExercises(block: Block): boolean {
-  return block.sessions.some(session => session.rows.some(row => row.exerciseId !== ''));
-}
-
 function statusLine(block: Block, status: BlockStatus): string | null {
   if (status.kind === 'ended') return `Ended ${formatJourneyDate(status.end)}`;
   if (status.kind === 'current') return `Week ${status.weekOfBlock} of ${block.weeks}`;
@@ -150,10 +143,7 @@ function statusLine(block: Block, status: BlockStatus): string | null {
 export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange, onRemove }: BlockHeaderProps) {
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
-  const [pending, setPending] = useState<PendingSessions | null>(null);
-  const lastPending = useRef<PendingSessions | null>(null);
-  if (pending) lastPending.current = pending;
-  const shownPending = pending ?? lastPending.current;
+  const confirm = useResetConfirm();
   const weeks = useWeeksField({
     blocks,
     index,
@@ -190,35 +180,36 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   function copySessions(sessions: Session[]) {
     setCopying(false);
     const next = blockWithSessionsFrom(block, sessions);
-    if (!hasExercises(block)) onChange(next);
-    else
-      setPending({
-        title: "Replace this block's sessions?",
-        description: 'The sessions of the chosen block replace every session of this block.',
-        confirmLabel: 'Replace sessions',
-        block: next,
-      });
+    confirm.request({
+      title: "Replace this block's sessions?",
+      confirmLabel: 'Replace sessions',
+      lines: describeReset(block, { kind: 'reset' }),
+      apply: () => onChange(next),
+    });
   }
 
   function changeShape(shape: SplitShape) {
     const next = reshaped(block, shape, language);
-    if (!hasExercises(block)) onChange(next);
-    else
-      setPending({
-        title: 'Replace the sessions?',
-        description: `Every session of this block is rebuilt from the ${SPLIT_SHAPE_LABELS[shape]} shape.`,
-        confirmLabel: 'Replace sessions',
-        block: next,
-      });
+    confirm.request({ title: 'Change the split?', confirmLabel: REBUILD, lines: describeReset(block, { kind: 'split' }), apply: () => onChange(next) });
+  }
+
+  function changeTrainingDays(days: TrainingDays) {
+    const next = relayoutBlock(block, days);
+    confirm.request({
+      title: 'Change training days?',
+      confirmLabel: REBUILD,
+      lines: describeReset(block, { kind: 'training-days', days }),
+      apply: () => onChange(next),
+    });
   }
 
   function resetToSplit() {
-    setPending({
-      title: 'Reset to the split?',
-      description: `Every session of this block is rebuilt from the ${splitLabel} split.`,
-      confirmLabel: 'Reset sessions',
-      block: reshaped(block, block.split.shape, language),
-    });
+    const next = reshaped(block, block.split.shape, language);
+    confirm.request({ title: 'Reset to the split?', confirmLabel: REBUILD, lines: describeReset(block, { kind: 'reset' }), apply: () => onChange(next) });
+  }
+
+  function removeBlock() {
+    confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeReset(block, { kind: 'remove-block' }), apply: onRemove });
   }
 
   return (
@@ -280,7 +271,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
                     icon: Trash2,
                     tone: 'destructive',
                     disabledReason: status.kind === 'upcoming' ? undefined : STARTED_REASON,
-                    onSelect: onRemove,
+                    onSelect: removeBlock,
                   },
                 ]}
               />
@@ -323,6 +314,9 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
                     ))}
                   </SelectContent>
                 </Select>
+              </Setting>
+              <Setting label="Training days">
+                <OptionSelect size="sm" label="Training days" options={TRAINING_DAY_OPTIONS} value={block.trainingDays} onChange={changeTrainingDays} />
               </Setting>
               <Setting label="Split name">
                 <Input
@@ -367,20 +361,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
         </>
       )}
       <CopyBlockDialog open={copying} onOpenChange={setCopying} programs={otherPrograms} journeys={journeys} onCopy={copySessions} />
-      <ConfirmDialog
-        open={pending !== null}
-        onOpenChange={open => {
-          if (!open) setPending(null);
-        }}
-        title={shownPending?.title ?? ''}
-        description={shownPending?.description}
-        confirmLabel={shownPending?.confirmLabel}
-        tone="destructive"
-        onConfirm={() => {
-          if (pending) onChange(pending.block);
-          setPending(null);
-        }}
-      />
+      {confirm.dialog}
     </header>
   );
 }

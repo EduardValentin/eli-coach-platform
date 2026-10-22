@@ -23,7 +23,7 @@ export function SegmentedChoice<Value extends string>({ legend, options, value, 
         {options.map(option => (
           <label
             key={option.value}
-            className="flex cursor-pointer items-center justify-center rounded-field px-2 py-1 text-xs font-medium whitespace-nowrap text-text-secondary transition-colors hover:text-text-primary has-checked:bg-card has-checked:text-text-primary has-checked:shadow-card has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50 motion-reduce:transition-none"
+            className="flex cursor-pointer items-center justify-center rounded-field px-2 py-1 text-xs font-medium whitespace-nowrap text-text-secondary transition-colors hover:text-primary has-checked:bg-active-surface has-checked:text-primary-foreground has-checked:hover:text-primary-foreground has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50 motion-reduce:transition-none"
           >
             <input type="radio" name={name} value={option.value} checked={option.value === value} onChange={() => onChange(option.value)} className="sr-only" />
             {option.label}

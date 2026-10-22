@@ -6,6 +6,7 @@ import {
   EXERCISE_TAGS,
   EXERCISE_TYPES,
   MEASURES,
+  MOVEMENT_PATTERN_LABELS,
   MOVEMENT_PATTERNS,
   MUSCLES,
   defaultMeasureFor,
@@ -237,9 +238,10 @@ describe('draftProblems', () => {
 });
 
 describe('movement pattern and role', () => {
-  it('lists ten movement patterns and three roles', () => {
+  it('lists eleven movement patterns, Conditioning last, and three roles', () => {
     // assert
-    expect(MOVEMENT_PATTERNS).toEqual(['squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull', 'core', 'carry', 'isolation']);
+    expect(MOVEMENT_PATTERNS).toEqual(['squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull', 'core', 'carry', 'isolation', 'conditioning']);
+    expect(MOVEMENT_PATTERN_LABELS.conditioning).toBe('Conditioning');
     expect(EXERCISE_ROLES).toEqual(['main-compound', 'secondary-compound', 'isolation']);
   });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
 import type { CardioSegment, CardioSession, RoundsSegment } from './program';
-import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasHardRounds, isLightCardio, roundsText } from './programCardio';
+import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasHardRounds, isLightCardio, roundsText, segmentMinutes } from './programCardio';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
   return {
@@ -142,7 +142,7 @@ describe('cardioMinutes', () => {
   it.each([
     ['liss', 30],
     ['moderate', 25],
-    ['hiit', 14],
+    ['hiit', 26],
     ['finisher', 7],
   ] as const)('adds up the %s preset to %i minutes', (kind, minutes) => {
     // act
@@ -152,7 +152,7 @@ describe('cardioMinutes', () => {
     expect(total).toBe(minutes);
   });
 
-  it('counts three seconds a rep, the easy time between exercises and the rest between rounds', () => {
+  it('counts three seconds a rep, the easy time after every exercise and the rest between rounds', () => {
     // arrange
     const items = [
       { id: 'i1', exerciseId: 'burpee', reps: 10 },
@@ -164,7 +164,20 @@ describe('cardioMinutes', () => {
     const total = cardioMinutes(cardio);
 
     // assert
-    expect(total).toBe(4);
+    expect(total).toBe(5);
+  });
+
+  it('counts the easy time after a single exercise in every round', () => {
+    // arrange
+    const items = [{ id: 'i1', exerciseId: 'jacks', workSeconds: 30 }];
+    const segment = rounds({ items, easySeconds: 90, restBetweenRoundsSeconds: 0, rounds: 8 });
+
+    // act
+    const [total, own] = [cardioMinutes(session([segment])), segmentMinutes(segment)];
+
+    // assert
+    expect(total).toBe(16);
+    expect(own).toBe(16);
   });
 });
 
@@ -210,7 +223,7 @@ describe('cardioEdits', () => {
     expect(next.id).toBe(empty.id);
     expect(next.originId).toBe(empty.originId);
     expect(next.name).toBe('Intervals');
-    expect(cardioMinutes(next)).toBe(14);
+    expect(cardioMinutes(next)).toBe(26);
   });
 
   it('adds each kind of segment with editable defaults', () => {
@@ -267,6 +280,27 @@ describe('cardioEdits', () => {
       { id: AN_ID, exerciseId: 'plank', workSeconds: 30 },
     ]);
     expect((removed.segments[0] as RoundsSegment).items).toEqual([{ ...plank, workSeconds: 45 }]);
+  });
+
+  it('reorders round exercises', () => {
+    // arrange
+    const items = [
+      { id: 'i1', exerciseId: 'burpee', reps: 10 },
+      { id: 'i2', exerciseId: 'jacks', workSeconds: 30 },
+      { id: 'i3', exerciseId: 'climber', workSeconds: 30 },
+    ];
+    const start = session([rounds({ items })]);
+    const order = (cardio: CardioSession) => (cardio.segments[0] as RoundsSegment).items.map(item => item.id);
+
+    // act
+    const up = cardioEdits(start, LIBRARY).moveRoundsItemUp('r', 'i3');
+    const down = cardioEdits(start, LIBRARY).moveRoundsItemDown('r', 'i1');
+    const pastTheEnd = cardioEdits(start, LIBRARY).moveRoundsItemDown('r', 'i3');
+
+    // assert
+    expect(order(up)).toEqual(['i1', 'i3', 'i2']);
+    expect(order(down)).toEqual(['i2', 'i1', 'i3']);
+    expect(pastTheEnd).toEqual(start);
   });
 
   it('adds a dropped cardio exercise as a steady segment', () => {

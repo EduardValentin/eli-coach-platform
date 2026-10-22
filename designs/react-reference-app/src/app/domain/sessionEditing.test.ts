@@ -32,6 +32,9 @@ const LIBRARY: Exercise[] = [
   exercise('plank', { pattern: 'core', primaryMuscles: ['Core'] }),
   exercise('hips', { type: 'mobility', measuredIn: 'reps', pattern: undefined }),
   exercise('catCow', { type: 'mobility', measuredIn: 'time', pattern: undefined }),
+  exercise('worldsGreatest', { type: 'mobility', measuredIn: 'reps', pattern: undefined }),
+  exercise('hamstringStretch', { type: 'stretching', measuredIn: 'time', pattern: undefined }),
+  exercise('quadStretch', { type: 'stretching', measuredIn: 'time', pattern: undefined }),
 ];
 
 const CONTEXT: SessionEditContext = { blockType: 'foundation', library: LIBRARY, equipment: [] };
@@ -237,6 +240,52 @@ describe('sessionEdits', () => {
     ]);
     expect(twice).toEqual(withCatCow);
     expect(removed.warmUp.items).toEqual([{ ...hips, sets: 2 }]);
+  });
+
+  it('reorders warm-up exercises', () => {
+    // arrange
+    const start = ['hips', 'catCow', 'worldsGreatest'].reduce((session, id) => sessionEdits(session, CONTEXT).addWarmUpItem(id), emptySession());
+    const [hips, , worldsGreatest] = start.warmUp.items;
+    const order = (session: Session) => session.warmUp.items.map(item => item.exerciseId);
+
+    // act
+    const up = sessionEdits(start, CONTEXT).moveWarmUpItemUp(worldsGreatest.id);
+    const down = sessionEdits(start, CONTEXT).moveWarmUpItemDown(hips.id);
+    const beforeTheStart = sessionEdits(start, CONTEXT).moveWarmUpItemUp(hips.id);
+
+    // assert
+    expect(order(up)).toEqual(['hips', 'worldsGreatest', 'catCow']);
+    expect(order(down)).toEqual(['catCow', 'hips', 'worldsGreatest']);
+    expect(beforeTheStart).toEqual(start);
+  });
+
+  it('keeps a cool-down note and stretches with seconds each', () => {
+    // arrange
+    const session = emptySession();
+
+    // act
+    const noted = sessionEdits(session, CONTEXT).changeCoolDown({ ...session.coolDown, enabled: true, note: 'Easy walk' });
+    const withHamstring = sessionEdits(noted, CONTEXT).addCoolDownItem('hamstringStretch');
+    const withQuad = sessionEdits(withHamstring, CONTEXT).addCoolDownItem('quadStretch');
+    const twice = sessionEdits(withQuad, CONTEXT).addCoolDownItem('quadStretch');
+    const [hamstring, quad] = withQuad.coolDown.items;
+    const changed = sessionEdits(withQuad, CONTEXT).changeCoolDownItem({ ...quad, seconds: 60 });
+    const reordered = sessionEdits(withQuad, CONTEXT).moveCoolDownItemUp(quad.id);
+    const removed = sessionEdits(changed, CONTEXT).removeCoolDownItem(hamstring.id);
+
+    // assert
+    expect(withQuad.coolDown).toEqual({
+      enabled: true,
+      note: 'Easy walk',
+      items: [
+        { id: expect.any(String), exerciseId: 'hamstringStretch', seconds: 30 },
+        { id: expect.any(String), exerciseId: 'quadStretch', seconds: 30 },
+      ],
+    });
+    expect(twice).toEqual(withQuad);
+    expect(reordered.coolDown.items).toEqual([quad, hamstring]);
+    expect(sessionEdits(reordered, CONTEXT).moveCoolDownItemDown(quad.id)).toEqual(withQuad);
+    expect(removed.coolDown.items).toEqual([{ ...quad, seconds: 60 }]);
   });
 });
 

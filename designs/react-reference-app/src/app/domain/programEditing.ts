@@ -8,6 +8,7 @@ import { quickAddSlot, sessionEdits, type SessionEditContext } from './sessionEd
 export type LibraryTarget =
   | { kind: 'slot'; sessionId: string; slot: Slot }
   | { kind: 'warm-up'; sessionId: string }
+  | { kind: 'cool-down'; sessionId: string }
   | { kind: 'substitution'; sessionId: string; rowId: string }
   | { kind: 'cardio-exercise'; sessionId: string; segmentId: string }
   | { kind: 'rounds-item'; sessionId: string; segmentId: string };
@@ -19,6 +20,7 @@ function pickedSession(block: Block, session: Session, pick: LibraryPick, contex
   const { exercise, target } = pick;
   if (target?.kind === 'substitution') return edits.addSubstitution(target.rowId, exercise.id);
   if (target?.kind === 'warm-up' || exercise.type === 'mobility') return edits.addWarmUpItem(exercise.id);
+  if (target?.kind === 'cool-down' || exercise.type === 'stretching') return edits.addCoolDownItem(exercise.id);
   const slot = target?.kind === 'slot' ? target.slot : quickAddSlot(block, session, exercise);
   return edits.add(exercise, { slot });
 }

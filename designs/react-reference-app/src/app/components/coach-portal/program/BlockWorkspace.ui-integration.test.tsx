@@ -291,13 +291,13 @@ describe('BlockWorkspace', () => {
 
     // assert
     const built = session('Intervals');
-    expect(within(built).getByText('14 min')).toBeInTheDocument();
+    expect(within(built).getAllByText('26 min')[0]).toBeInTheDocument();
     expect(within(built).getAllByRole('article').map(segment => within(segment).getAllByText(/^(Steady|Rounds)$/)[0].textContent)).toEqual([
       'Steady',
       'Rounds',
       'Steady',
     ]);
-    expect(within(day('Saturday')).getByText('14 min')).toBeInTheDocument();
+    expect(within(day('Saturday')).getByText('26 min')).toBeInTheDocument();
   });
 
   it('edits a steady segment and adds rounds', async () => {
@@ -320,7 +320,7 @@ describe('BlockWorkspace', () => {
 
     // assert
     expect(within(cardio).getAllByRole('article')).toHaveLength(2);
-    expect(within(cardio).getByRole('button', { name: 'Add exercise to the rounds' })).toBeInTheDocument();
+    expect(within(within(cardio).getByRole('article', { name: /Rounds/ })).getByRole('button', { name: 'Add exercise' })).toBeInTheDocument();
   });
 
   it('replaces a segment exercise from the library in cardio mode', async () => {
@@ -344,25 +344,79 @@ describe('BlockWorkspace', () => {
     expect(within(session('Moderate cardio')).getByRole('button', { name: 'Replace Rowing machine' })).toBeInTheDocument();
   });
 
-  it('removes a warm-up exercise and adds one from the library', async () => {
+  it('edits a warm-up exercise with its sets and reps and removes it', async () => {
     // arrange
     const user = await openFirstBlock();
-    const warmUp = within(session('Full Body A')).getByRole('group', { name: 'Warm-up' });
-    expect(within(warmUp).getByText('90/90 Hip Switches · 1 × 45 s')).toBeInTheDocument();
+    const warmUp = within(session('Full Body A')).getByRole('list', { name: 'Warm-up exercises' });
+    expect(within(warmUp).getByRole('textbox', { name: '90/90 Hip Switches reps' })).toHaveValue('10');
 
     // act
-    await user.click(within(warmUp).getByRole('button', { name: 'Remove 90/90 Hip Switches' }));
+    await retype(user, within(warmUp).getByRole('spinbutton', { name: '90/90 Hip Switches sets' }), '2');
+    await retype(user, within(warmUp).getByRole('textbox', { name: '90/90 Hip Switches reps' }), '8');
 
     // assert
-    expect(within(warmUp).queryByText(/90\/90 Hip Switches/)).not.toBeInTheDocument();
+    expect(within(warmUp).getByRole('spinbutton', { name: '90/90 Hip Switches sets' })).toHaveValue(2);
+    expect(within(warmUp).getByRole('textbox', { name: '90/90 Hip Switches reps' })).toHaveValue('8');
 
     // act
-    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add mobility exercise' }));
+    await user.click(within(warmUp).getByRole('button', { name: '90/90 Hip Switches actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+
+    // assert
+    expect(within(session('Full Body A')).queryByRole('spinbutton', { name: '90/90 Hip Switches sets' })).not.toBeInTheDocument();
+  });
+
+  it('adds a timed conditioning exercise to the warm-up from the mobility picker and sets its seconds', async () => {
+    // arrange
+    const user = await openFirstBlock();
+
+    // act
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add warm-up exercise' }));
+
+    // assert
     expect(within(library()).getByRole('radio', { name: 'Mobility' })).toBeChecked();
-    await addFromLibrary(user, '90/90 Hip Switches');
+    expect(within(library()).getByRole('button', { name: 'Add Jumping Jacks' })).toBeInTheDocument();
+
+    // act
+    await addFromLibrary(user, 'Jumping Jacks');
 
     // assert
-    expect(within(warmUp).getByText('90/90 Hip Switches · 1 × 10')).toBeInTheDocument();
+    const warmUp = within(session('Full Body A')).getByRole('list', { name: 'Warm-up exercises' });
+    expect(within(warmUp).getByRole('spinbutton', { name: 'Jumping Jacks seconds' })).toHaveValue(45);
+
+    // act
+    await retype(user, within(warmUp).getByRole('spinbutton', { name: 'Jumping Jacks seconds' }), '60');
+
+    // assert
+    expect(within(warmUp).getByRole('spinbutton', { name: 'Jumping Jacks seconds' })).toHaveValue(60);
+  });
+
+  it('reveals the cool-down note and a stretch list once the cool-down is on', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    expect(within(session('Full Body A')).queryByRole('textbox', { name: 'Cool-down note' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(within(session('Full Body A')).getByRole('switch', { name: 'Cool-down' }));
+
+    // assert
+    const note = within(session('Full Body A')).getByRole('textbox', { name: 'Cool-down note' });
+    expect(note).toHaveAttribute('placeholder', 'Easy walk and a few stretches');
+
+    // act
+    await user.type(note, 'Walk for five minutes');
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add stretch' }));
+
+    // assert
+    expect(within(library()).getByRole('radio', { name: 'Stretching' })).toBeChecked();
+
+    // act
+    await addFromLibrary(user, 'Couch Stretch');
+
+    // assert
+    expect(note).toHaveValue('Walk for five minutes');
+    const stretches = within(session('Full Body A')).getByRole('list', { name: 'Stretches' });
+    expect(within(stretches).getByRole('spinbutton', { name: 'Couch Stretch seconds' })).toHaveValue(30);
   });
 
   it('removes substitutions and suggests them again', async () => {
@@ -428,11 +482,86 @@ describe('BlockWorkspace', () => {
     // act
     await user.click(screen.getByRole('combobox', { name: 'Split shape' }));
     await user.click(screen.getByRole('option', { name: 'Upper / lower' }));
-    await user.click(within(screen.getByRole('dialog', { name: 'Replace the sessions?' })).getByRole('button', { name: 'Replace sessions' }));
+    const confirm = screen.getByRole('dialog', { name: 'Change the split?' });
+    expect(within(confirm).getByText(/^Full Body A · \d+ exercises$/)).toBeInTheDocument();
+    await user.click(within(confirm).getByRole('button', { name: 'Rebuild sessions' }));
 
     // assert
     expect(within(day('Monday')).getByRole('button', { name: 'Lower A' })).toBeInTheDocument();
     expect(within(session('Lower A')).getAllByText('Drop an exercise here')).toHaveLength(4);
+  });
+
+  it('asks before fewer training days drop a session and rebuilds the week', async () => {
+    // arrange
+    const user = await openFirstBlock();
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Training days' }));
+    await user.click(screen.getByRole('option', { name: '2 days' }));
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Change training days?' });
+    expect(within(confirm).getByText(/^Full Body C · \d+ exercises$/)).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Rebuild sessions' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Training days' })).toHaveTextContent('2 days');
+    expect(within(day('Monday')).getByRole('button', { name: 'Full Body A' })).toBeInTheDocument();
+    expect(within(day('Thursday')).getByRole('button', { name: 'Full Body B' })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Full Body C' })).not.toBeInTheDocument();
+  });
+
+  it('asks before a cardio day with segments becomes a rest day, naming the session', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    await user.click(within(session('Cardio')).getByRole('button', { name: 'Easy cardio' }));
+
+    // act
+    await chooseInDayMenu(user, 'Saturday', 'Rest');
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Make Saturday a rest day?' });
+    expect(within(confirm).getByText('Easy cardio · 1 segment')).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Change day' }));
+
+    // assert
+    expect(within(day('Saturday')).getByText('Rest')).toBeInTheDocument();
+  });
+
+  it('builds rounds from cardio and conditioning exercises and shows their minutes', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    await user.click(within(session('Cardio')).getByRole('button', { name: 'Add segment' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rounds' }));
+    const rounds = () => within(session('Cardio')).getByRole('article', { name: /Rounds/ });
+
+    // act
+    await user.click(within(rounds()).getByRole('button', { name: 'Add exercise' }));
+
+    // assert
+    expect(within(library()).getByRole('radio', { name: 'Cardio' })).toBeChecked();
+    expect(within(library()).getByRole('button', { name: 'Add Burpee' })).toBeInTheDocument();
+
+    // act
+    await addFromLibrary(user, 'Burpee');
+
+    // assert
+    expect(within(rounds()).getByRole('spinbutton', { name: 'Burpee reps' })).toHaveValue(12);
+    expect(within(rounds()).getByText('4 min')).toBeInTheDocument();
+
+    // act
+    await retype(user, within(rounds()).getByRole('spinbutton', { name: 'Rounds' }), '5');
+
+    // assert
+    expect(within(rounds()).getByText('7 min')).toBeInTheDocument();
   });
 
   it('collapses the block header to one line once the editor scrolls past it and expands it on demand', async () => {

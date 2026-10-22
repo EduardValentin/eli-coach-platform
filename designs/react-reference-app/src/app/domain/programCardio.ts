@@ -1,5 +1,5 @@
 import type { Exercise } from '../context/TrainingContext';
-import { newId, type CardioIntensity, type CardioSegment, type CardioSession, type RoundsItem, type RoundsSegment, type SteadySegment } from './program';
+import { newId, swappedWithNeighbour, type CardioIntensity, type CardioSegment, type CardioSession, type RoundsItem, type RoundsSegment, type SteadySegment } from './program';
 
 export type CardioPresetKind = 'liss' | 'moderate' | 'hiit' | 'finisher';
 export type SegmentKind = CardioSegment['kind'];
@@ -97,8 +97,12 @@ function itemSeconds(item: RoundsItem): number {
 function segmentSeconds(segment: CardioSegment): number {
   if (segment.kind === 'steady') return segment.minutes * SECONDS_PER_MINUTE;
   const work = segment.items.reduce((total, item) => total + itemSeconds(item), 0);
-  const easy = segment.easySeconds * Math.max(0, segment.items.length - 1);
+  const easy = segment.easySeconds * segment.items.length;
   return (work + easy) * segment.rounds + segment.restBetweenRoundsSeconds * Math.max(0, segment.rounds - 1);
+}
+
+export function segmentMinutes(segment: CardioSegment): number {
+  return Math.round(segmentSeconds(segment) / SECONDS_PER_MINUTE);
 }
 
 export function cardioMinutes(session: CardioSession): number {
@@ -154,12 +158,15 @@ export function cardioEdits(session: CardioSession, library: readonly Exercise[]
     withSegments(segments.map(other => (other.id === segmentId ? change(other) : other)));
 
   function swapWithNeighbour(segmentId: string, step: number): CardioSession {
-    const index = segments.findIndex(other => other.id === segmentId);
-    const target = index + step;
-    if (index < 0 || target < 0 || target >= segments.length) return session;
-    const next = [...segments];
-    [next[index], next[target]] = [next[target], next[index]];
-    return withSegments(next);
+    const next = swappedWithNeighbour(segments, segmentId, step);
+    return next === segments ? session : withSegments(next);
+  }
+
+  function moveRoundsItem(segmentId: string, itemId: string, step: number): CardioSession {
+    const segment = segments.find(other => other.id === segmentId);
+    if (segment?.kind !== 'rounds') return session;
+    const items = swappedWithNeighbour(segment.items, itemId, step);
+    return items === segment.items ? session : mapSegment(segmentId, () => ({ ...segment, items }));
   }
 
   return {
@@ -202,6 +209,12 @@ export function cardioEdits(session: CardioSession, library: readonly Exercise[]
     },
     changeRoundsItem(segmentId: string, item: RoundsItem): CardioSession {
       return mapSegment(segmentId, other => withItems(other, items => items.map(current => (current.id === item.id ? item : current))));
+    },
+    moveRoundsItemUp(segmentId: string, itemId: string): CardioSession {
+      return moveRoundsItem(segmentId, itemId, -1);
+    },
+    moveRoundsItemDown(segmentId: string, itemId: string): CardioSession {
+      return moveRoundsItem(segmentId, itemId, 1);
     },
     removeRoundsItem(segmentId: string, itemId: string): CardioSession {
       return mapSegment(segmentId, other => withItems(other, items => items.filter(current => current.id !== itemId)));
