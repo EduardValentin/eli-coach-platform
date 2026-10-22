@@ -87,12 +87,13 @@ export const EXERCISE_ROLE_LABELS: Record<ExerciseRole, string> = {
   isolation: 'Isolation',
 };
 
-export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
+export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery', 'Conditioning'] as const;
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export const EXERCISE_TAG_LABELS: Record<ExerciseTag, string> = {
   Strength: 'Strength',
   Hypertrophy: 'Hypertrophy',
   Recovery: 'Recovery',
+  Conditioning: 'Conditioning',
 };
 
 export function labelsOf<Value extends string>(values: readonly Value[]): Record<Value, string> {

@@ -1,4 +1,4 @@
-import { hasIntervals } from '../../domain/programCardio';
+import { hasHardRounds } from '../../domain/programCardio';
 import { templateText } from '../../domain/programTemplates';
 import type { Block, Weekday } from '../../domain/program';
 import { CardioDay } from './CardioDay';
@@ -20,7 +20,7 @@ export function DayContent({ view, block, weekday }: DayContentProps) {
       {session && <SessionDay session={session} exercisesById={view.exercisesById} language={language} />}
       {cardio && <CardioDay cardio={cardio} exercisesById={view.exercisesById} />}
       {!session && !cardio && <p className="py-6 text-center text-sm text-text-secondary">Rest day. A short walk still counts.</p>}
-      {cardio && hasIntervals(cardio) && <p className={NOTE_CLASS}>{templateText('hiitAside', language).text}</p>}
+      {cardio && hasHardRounds(cardio) && <p className={NOTE_CLASS}>{templateText('hiitAside', language).text}</p>}
       {(session || cardio) && <p className={NOTE_CLASS}>{templateText('lowEnergy', language).text}</p>}
     </div>
   );

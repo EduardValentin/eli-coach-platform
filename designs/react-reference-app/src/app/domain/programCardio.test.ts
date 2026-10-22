@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
-import type { CardioSession } from './program';
-import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasIntervals, isLightCardio } from './programCardio';
+import type { CardioSegment, CardioSession, RoundsSegment } from './program';
+import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasHardRounds, isLightCardio, roundsText } from './programCardio';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
   return {
@@ -26,12 +26,25 @@ const LIBRARY: Exercise[] = [
   exercise('treadmill', { name: 'Treadmill walk', equipment: ['Treadmill'] }),
   exercise('squat', { name: 'Back Squat', type: 'resistance', measuredIn: 'reps', equipment: ['Barbell'] }),
   exercise('plank', { name: 'Plank', type: 'resistance' }),
-  exercise('pushUp', { name: 'Push-Up', type: 'resistance', measuredIn: 'reps' }),
-  exercise('burpee', { name: 'Burpee', type: 'resistance', measuredIn: 'reps' }),
+  exercise('pushUp', { name: 'Push-Up', type: 'resistance', measuredIn: 'reps', tags: ['Conditioning', 'Hypertrophy'] }),
+  exercise('burpee', { name: 'Burpee', type: 'resistance', measuredIn: 'reps', tags: ['Conditioning'] }),
+  exercise('jacks', { name: 'Jumping Jacks', type: 'resistance', tags: ['Conditioning'] }),
+  exercise('climber', { name: 'Mountain Climber', type: 'resistance', tags: ['Conditioning'] }),
 ];
+
+const AN_ID = expect.any(String);
 
 function session(segments: CardioSession['segments']): CardioSession {
   return { id: 'c', originId: 'c', name: 'Cardio', segments };
+}
+
+function rounds(overrides: Partial<RoundsSegment> = {}): RoundsSegment {
+  return { id: 'r', kind: 'rounds', items: [], easySeconds: 0, restBetweenRoundsSeconds: 60, rounds: 3, intensity: 'hard', ...overrides };
+}
+
+function withoutIds(segment: CardioSegment) {
+  if (segment.kind === 'steady') return { ...segment, id: undefined };
+  return { ...segment, id: undefined, items: segment.items.map(item => ({ ...item, id: undefined })) };
 }
 
 describe('CARDIO_INTENSITY_TEXT', () => {
@@ -53,9 +66,7 @@ describe('cardioPreset', () => {
     // assert
     expect(preset.name).toBe('Easy cardio');
     expect(preset.originId).toBe(preset.id);
-    expect(preset.segments).toEqual([
-      { id: expect.any(String), exerciseId: 'treadmill', plan: { kind: 'steady', minutes: 30, intensity: 'easy' } },
-    ]);
+    expect(preset.segments).toEqual([{ id: AN_ID, kind: 'steady', exerciseId: 'treadmill', minutes: 30, intensity: 'easy' }]);
   });
 
   it('falls back to the first cardio exercise when none matches', () => {
@@ -63,7 +74,7 @@ describe('cardioPreset', () => {
     const preset = cardioPreset('liss', LIBRARY.filter(item => item.id !== 'treadmill'));
 
     // assert
-    expect(preset.segments[0].exerciseId).toBe('rower');
+    expect(preset.segments[0]).toMatchObject({ exerciseId: 'rower' });
   });
 
   it('builds moderate cardio as twenty-five moderate minutes', () => {
@@ -72,44 +83,54 @@ describe('cardioPreset', () => {
 
     // assert
     expect(preset.name).toBe('Moderate cardio');
-    expect(preset.segments.map(segment => segment.plan)).toEqual([{ kind: 'steady', minutes: 25, intensity: 'moderate' }]);
+    expect(preset.segments.map(withoutIds)).toEqual([{ kind: 'steady', exerciseId: 'treadmill', minutes: 25, intensity: 'moderate' }]);
   });
 
-  it('builds intervals between an easy warm-up and cool-down', () => {
+  it('builds eight hard rounds of thirty seconds on the first conditioning or cardio exercise between an easy warm-up and cool-down', () => {
     // act
     const preset = cardioPreset('hiit', LIBRARY);
 
     // assert
     expect(preset.name).toBe('Intervals');
-    expect(preset.segments.map(segment => segment.plan)).toEqual([
-      { kind: 'steady', minutes: 5, intensity: 'easy' },
-      { kind: 'intervals', workSeconds: 30, easySeconds: 90, rounds: 8, intensity: 'hard' },
-      { kind: 'steady', minutes: 5, intensity: 'easy' },
+    expect(preset.segments.map(withoutIds)).toEqual([
+      { kind: 'steady', exerciseId: 'treadmill', minutes: 5, intensity: 'easy' },
+      {
+        kind: 'rounds',
+        items: [{ exerciseId: 'rower', workSeconds: 30 }],
+        easySeconds: 90,
+        restBetweenRoundsSeconds: 0,
+        rounds: 8,
+        intensity: 'hard',
+      },
+      { kind: 'steady', exerciseId: 'treadmill', minutes: 5, intensity: 'easy' },
     ]);
   });
 
-  it('builds a finisher circuit from the first two bodyweight resistance exercises', () => {
+  it('builds a finisher as three rounds of the first three conditioning exercises', () => {
     // act
     const preset = cardioPreset('finisher', LIBRARY);
 
     // assert
     expect(preset.name).toBe('Finisher');
-    expect(preset.segments.map(segment => segment.plan)).toEqual([
+    expect(preset.segments.map(withoutIds)).toEqual([
       {
-        kind: 'circuit',
+        kind: 'rounds',
         items: [
-          { exerciseId: 'plank', seconds: 30 },
-          { exerciseId: 'pushUp', seconds: 30 },
+          { exerciseId: 'pushUp', workSeconds: 30 },
+          { exerciseId: 'burpee', workSeconds: 30 },
+          { exerciseId: 'jacks', workSeconds: 30 },
         ],
+        easySeconds: 0,
+        restBetweenRoundsSeconds: 60,
         rounds: 3,
-        restSeconds: 60,
+        intensity: 'hard',
       },
     ]);
   });
 
   it('gives each preset fresh ids', () => {
     // act
-    const [first, second] = [cardioPreset('liss', LIBRARY), cardioPreset('liss', LIBRARY)];
+    const [first, second] = [cardioPreset('finisher', LIBRARY), cardioPreset('finisher', LIBRARY)];
 
     // assert
     expect(first.id).not.toBe(second.id);
@@ -121,8 +142,8 @@ describe('cardioMinutes', () => {
   it.each([
     ['liss', 30],
     ['moderate', 25],
-    ['hiit', 26],
-    ['finisher', 5],
+    ['hiit', 14],
+    ['finisher', 7],
   ] as const)('adds up the %s preset to %i minutes', (kind, minutes) => {
     // act
     const total = cardioMinutes(cardioPreset(kind, LIBRARY));
@@ -131,17 +152,19 @@ describe('cardioMinutes', () => {
     expect(total).toBe(minutes);
   });
 
-  it('counts three seconds a rep for circuit items without seconds', () => {
+  it('counts three seconds a rep, the easy time between exercises and the rest between rounds', () => {
     // arrange
-    const circuit = session([
-      { id: 's', exerciseId: 'burpee', plan: { kind: 'circuit', items: [{ exerciseId: 'burpee', reps: 20 }], rounds: 4, restSeconds: 60 } },
-    ]);
+    const items = [
+      { id: 'i1', exerciseId: 'burpee', reps: 10 },
+      { id: 'i2', exerciseId: 'jacks', workSeconds: 40 },
+    ];
+    const cardio = session([rounds({ items, easySeconds: 20, restBetweenRoundsSeconds: 60, rounds: 2 })]);
 
     // act
-    const total = cardioMinutes(circuit);
+    const total = cardioMinutes(cardio);
 
     // assert
-    expect(total).toBe(7);
+    expect(total).toBe(4);
   });
 });
 
@@ -154,12 +177,16 @@ describe('cardio character', () => {
     expect(verdicts).toEqual([true, false, false, false]);
   });
 
-  it('spots sessions with an intervals segment', () => {
+  it('spots sessions with hard rounds', () => {
+    // arrange
+    const easyRounds = session([rounds({ intensity: 'moderate' })]);
+
     // act
-    const verdicts = (['liss', 'moderate', 'hiit', 'finisher'] as const).map(kind => hasIntervals(cardioPreset(kind, LIBRARY)));
+    const verdicts = (['liss', 'moderate', 'hiit', 'finisher'] as const).map(kind => hasHardRounds(cardioPreset(kind, LIBRARY)));
 
     // assert
-    expect(verdicts).toEqual([false, false, true, false]);
+    expect(verdicts).toEqual([false, false, true, true]);
+    expect(hasHardRounds(easyRounds)).toBe(false);
   });
 });
 
@@ -183,7 +210,7 @@ describe('cardioEdits', () => {
     expect(next.id).toBe(empty.id);
     expect(next.originId).toBe(empty.originId);
     expect(next.name).toBe('Intervals');
-    expect(cardioMinutes(next)).toBe(26);
+    expect(cardioMinutes(next)).toBe(14);
   });
 
   it('adds each kind of segment with editable defaults', () => {
@@ -191,57 +218,55 @@ describe('cardioEdits', () => {
     const edits = cardioEdits(emptyCardioSession(), LIBRARY);
 
     // act
-    const kinds = (['steady', 'intervals', 'circuit'] as const).map(kind => edits.addSegment(kind).segments[0]);
+    const kinds = (['steady', 'rounds'] as const).map(kind => edits.addSegment(kind).segments[0]);
 
     // assert
-    expect(kinds.map(segment => segment.plan)).toEqual([
-      { kind: 'steady', minutes: 10, intensity: 'moderate' },
-      { kind: 'intervals', workSeconds: 30, easySeconds: 90, rounds: 6, intensity: 'hard' },
-      { kind: 'circuit', items: [], rounds: 3, restSeconds: 60 },
+    expect(kinds.map(withoutIds)).toEqual([
+      { kind: 'steady', exerciseId: 'treadmill', minutes: 10, intensity: 'moderate' },
+      { kind: 'rounds', items: [], easySeconds: 0, restBetweenRoundsSeconds: 60, rounds: 3, intensity: 'hard' },
     ]);
-    expect(kinds[0].exerciseId).toBe('treadmill');
   });
 
-  it('replaces the exercise, changes the plan, reorders and removes segments', () => {
+  it('replaces the exercise, changes the segment, reorders and removes segments', () => {
     // arrange
     const start = session([
-      { id: 's1', exerciseId: 'treadmill', plan: { kind: 'steady', minutes: 5, intensity: 'easy' } },
-      { id: 's2', exerciseId: 'treadmill', plan: { kind: 'steady', minutes: 20, intensity: 'moderate' } },
+      { id: 's1', kind: 'steady', exerciseId: 'treadmill', minutes: 5, intensity: 'easy' },
+      { id: 's2', kind: 'steady', exerciseId: 'treadmill', minutes: 20, intensity: 'moderate' },
     ]);
 
     // act
     const replaced = cardioEdits(start, LIBRARY).replaceExercise('s2', 'rower');
-    const planned = cardioEdits(replaced, LIBRARY).changePlan('s2', { kind: 'steady', minutes: 25, intensity: 'hard' });
-    const moved = cardioEdits(planned, LIBRARY).moveUp('s2');
+    const changed = cardioEdits(replaced, LIBRARY).changeSegment({ id: 's2', kind: 'steady', exerciseId: 'rower', minutes: 25, intensity: 'hard' });
+    const moved = cardioEdits(changed, LIBRARY).moveUp('s2');
     const dragged = cardioEdits(moved, LIBRARY).moveBefore('s1', 's2');
     const removed = cardioEdits(dragged, LIBRARY).remove('s1');
 
     // assert
-    expect(moved.segments.map(segment => [segment.id, segment.exerciseId])).toEqual([
-      ['s2', 'rower'],
-      ['s1', 'treadmill'],
+    expect(moved.segments).toEqual([
+      { id: 's2', kind: 'steady', exerciseId: 'rower', minutes: 25, intensity: 'hard' },
+      { id: 's1', kind: 'steady', exerciseId: 'treadmill', minutes: 5, intensity: 'easy' },
     ]);
-    expect(moved.segments[0].plan).toEqual({ kind: 'steady', minutes: 25, intensity: 'hard' });
     expect(dragged.segments.map(segment => segment.id)).toEqual(['s1', 's2']);
     expect(removed.segments.map(segment => segment.id)).toEqual(['s2']);
   });
 
-  it('adds circuit exercises by reps or seconds and keeps the first as the segment exercise', () => {
+  it('adds round exercises by reps or work seconds, changes and removes them', () => {
     // arrange
-    const start = session([{ id: 'c1', exerciseId: '', plan: { kind: 'circuit', items: [], rounds: 3, restSeconds: 60 } }]);
+    const start = session([rounds()]);
 
     // act
-    const withPushUp = cardioEdits(start, LIBRARY).addCircuitItem('c1', 'pushUp');
-    const withPlank = cardioEdits(withPushUp, LIBRARY).addCircuitItem('c1', 'plank');
-    const removed = cardioEdits(withPlank, LIBRARY).removeCircuitItem('c1', 0);
+    const withPushUp = cardioEdits(start, LIBRARY).addRoundsItem('r', 'pushUp');
+    const withPlank = cardioEdits(withPushUp, LIBRARY).addRoundsItem('r', 'plank');
+    const [pushUp, plank] = (withPlank.segments[0] as RoundsSegment).items;
+    const changed = cardioEdits(withPlank, LIBRARY).changeRoundsItem('r', { ...plank, workSeconds: 45 });
+    const removed = cardioEdits(changed, LIBRARY).removeRoundsItem('r', pushUp.id);
 
     // assert
-    expect(withPlank.segments[0]).toEqual({
-      id: 'c1',
-      exerciseId: 'pushUp',
-      plan: { kind: 'circuit', items: [{ exerciseId: 'pushUp', reps: 12 }, { exerciseId: 'plank', seconds: 30 }], rounds: 3, restSeconds: 60 },
-    });
-    expect(removed.segments[0].exerciseId).toBe('plank');
+    expect([pushUp, plank]).toEqual([
+      { id: AN_ID, exerciseId: 'pushUp', reps: 12 },
+      { id: AN_ID, exerciseId: 'plank', workSeconds: 30 },
+    ]);
+    expect((removed.segments[0] as RoundsSegment).items).toEqual([{ ...plank, workSeconds: 45 }]);
   });
 
   it('adds a dropped cardio exercise as a steady segment', () => {
@@ -249,6 +274,19 @@ describe('cardioEdits', () => {
     const next = cardioEdits(emptyCardioSession(), LIBRARY).addSteady('rower');
 
     // assert
-    expect(next.segments.map(segment => [segment.exerciseId, segment.plan])).toEqual([['rower', { kind: 'steady', minutes: 10, intensity: 'moderate' }]]);
+    expect(next.segments.map(withoutIds)).toEqual([{ kind: 'steady', exerciseId: 'rower', minutes: 10, intensity: 'moderate' }]);
+  });
+});
+
+describe('roundsText', () => {
+  it('reads the round count and each exercise with its work seconds or reps', () => {
+    // arrange
+    const segment = rounds({ rounds: 4, items: [{ id: 'i1', exerciseId: 'burpee', reps: 10 }, { id: 'i2', exerciseId: 'jacks', workSeconds: 30 }] });
+
+    // act
+    const text = roundsText(segment, id => LIBRARY.find(item => item.id === id)?.name ?? '');
+
+    // assert
+    expect(text).toBe('4 rounds · Burpee 10 reps, Jumping Jacks 30 s');
   });
 });

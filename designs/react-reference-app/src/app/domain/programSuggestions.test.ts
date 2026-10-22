@@ -245,7 +245,7 @@ describe('newBlock and initialContent', () => {
 
     // assert
     expect(block.cardioSessions.map(cardio => cardio.name)).toEqual(['Easy cardio', 'Easy cardio', 'Moderate cardio']);
-    expect(block.cardioSessions[0].segments[0].exerciseId).toBe('bike');
+    expect(block.cardioSessions[0].segments[0]).toMatchObject({ kind: 'steady', exerciseId: 'bike' });
   });
 
   it('fills texts and settings from the setup', () => {
@@ -269,6 +269,16 @@ describe('newBlock and initialContent', () => {
     expect(content.plan.blocks.map(b => b.type)).toEqual(['foundation', 'hypertrophy', 'deload']);
     expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
     expect(content.plan.blocks.every(b => b.sessions.every(s => s.rows.length === 0))).toBe(true);
+    expect(content.plan.blocks.map(b => b.trainingDays)).toEqual([3, 3, 3]);
+  });
+
+  it('starts every session with an empty warm-up and the cool-down off', () => {
+    // act
+    const [session] = initialContent(SETUP, []).plan.blocks[0].sessions;
+
+    // assert
+    expect(session.warmUp).toEqual({ items: [] });
+    expect(session.coolDown).toEqual({ enabled: false, note: '', items: [] });
   });
 
   it('builds the sessions of the chosen split rather than the one the days suggest', () => {
@@ -277,7 +287,8 @@ describe('newBlock and initialContent', () => {
 
     // assert
     expect(content.plan.blocks[0].split.shape).toBe('full-body');
-    expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
+    expect(content.plan.blocks[0].sessions.map(s => s.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C', 'Full Body D']);
+    expect(content.plan.blocks.map(b => b.trainingDays)).toEqual([4, 4, 4]);
   });
 
   it('sets the calibration week from the suggestion', () => {
@@ -294,8 +305,8 @@ describe('estimatedMinutes', () => {
     id: 's',
     originId: 's',
     name: 'A',
-    warmUp: { mobilityExerciseIds: [], warmUpSetsNote: '' },
-    coolDown: false,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, note: '', items: [] },
     rows: [
       row({ id: '1', sets: setsOf(4), restSeconds: 150 }),
       row({ id: '2', slot: 'B', sets: setsOf(3), restSeconds: 105 }),
@@ -314,7 +325,7 @@ describe('estimatedMinutes', () => {
 
   it('adds the cool-down', () => {
     // act
-    const minutes = estimatedMinutes({ ...session, coolDown: true });
+    const minutes = estimatedMinutes({ ...session, coolDown: { ...session.coolDown, enabled: true } });
 
     // assert
     expect(minutes).toBe(42);

@@ -1,6 +1,6 @@
 import type { Exercise } from '../context/TrainingContext';
 import type { Equipment } from './exercises';
-import { newId, SLOTS, type Block, type BlockType, type Row, type Session, type Slot } from './program';
+import { newId, SLOTS, type Block, type BlockType, type Row, type Session, type Slot, type WarmUpItem } from './program';
 import { resetRowDefaults } from './programDefaults';
 import { emptyRow, substitutionsFor } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
@@ -11,7 +11,9 @@ export type SlotUnit = { key: string; group?: string; rows: Row[] };
 
 export const SINGLE_CARD_SLOTS: readonly Slot[] = ['A', 'B'];
 export const MAX_SUBSTITUTIONS = 2;
-const MAX_MOBILITY_EXERCISES = 4;
+const MAX_WARM_UP_ITEMS = 4;
+const WARM_UP_REPS = 10;
+const WARM_UP_SECONDS = 45;
 
 function nextSlot(slot: Slot): Slot {
   return SLOTS[Math.min(SLOTS.indexOf(slot) + 1, SLOTS.length - 1)];
@@ -56,6 +58,11 @@ function insertedAfter(rows: Row[], row: Row, afterRowId: string): Row[] {
   return [...rows.slice(0, after + 1), row, ...rows.slice(after + 1)];
 }
 
+function warmUpItem(exercise: Exercise | undefined, exerciseId: string): WarmUpItem {
+  if (exercise?.measuredIn === 'time') return { id: newId(), exerciseId, sets: 1, seconds: WARM_UP_SECONDS };
+  return { id: newId(), exerciseId, sets: 1, reps: { min: WARM_UP_REPS, max: WARM_UP_REPS } };
+}
+
 export function slotUnits(session: Session, slot: Slot): SlotUnit[] {
   const units: SlotUnit[] = [];
   for (const row of session.rows.filter(other => other.slot === slot)) {
@@ -81,6 +88,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
   const rowOf = (rowId: string) => rows.find(row => row.id === rowId);
   const reslotted = (row: Row, slot: Slot): Row => ({ ...row, slot });
   const mapRow = (rowId: string, change: (row: Row) => Row) => withRows(rows.map(row => (row.id === rowId ? change(row) : row)));
+  const withWarmUp = (items: WarmUpItem[]): Session => ({ ...session, warmUp: { items } });
 
   function filledRow(exercise: Exercise, slot: Slot, group?: string): Row {
     return {
@@ -196,14 +204,17 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
         return exercise ? { ...row, substitutions: substitutionsFor(exercise, context.library, context.equipment) } : row;
       });
     },
-    addMobility(exerciseId: string): Session {
-      const { mobilityExerciseIds } = session.warmUp;
-      if (mobilityExerciseIds.includes(exerciseId) || mobilityExerciseIds.length >= MAX_MOBILITY_EXERCISES) return session;
-      return { ...session, warmUp: { ...session.warmUp, mobilityExerciseIds: [...mobilityExerciseIds, exerciseId] } };
+    addWarmUpItem(exerciseId: string): Session {
+      const { items } = session.warmUp;
+      if (items.some(item => item.exerciseId === exerciseId) || items.length >= MAX_WARM_UP_ITEMS) return session;
+      const exercise = context.library.find(item => item.id === exerciseId);
+      return withWarmUp([...items, warmUpItem(exercise, exerciseId)]);
     },
-    removeMobility(exerciseId: string): Session {
-      const mobilityExerciseIds = session.warmUp.mobilityExerciseIds.filter(id => id !== exerciseId);
-      return { ...session, warmUp: { ...session.warmUp, mobilityExerciseIds } };
+    changeWarmUpItem(item: WarmUpItem): Session {
+      return withWarmUp(session.warmUp.items.map(other => (other.id === item.id ? item : other)));
+    },
+    removeWarmUpItem(itemId: string): Session {
+      return withWarmUp(session.warmUp.items.filter(item => item.id !== itemId));
     },
   };
 }

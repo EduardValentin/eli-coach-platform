@@ -19,7 +19,7 @@ import { WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
-import { cardioFor, cardioSegmentText, restLabel, sessionAnchor, sessionFor } from './programView';
+import { cardioFor, cardioSegmentText, restLabel, sessionAnchor, sessionFor, warmUpLines } from './programView';
 
 type Scheduled = { kind: 'session'; session: Session; days: Weekday[] } | { kind: 'cardio'; cardio: CardioSession; days: Weekday[] };
 
@@ -116,8 +116,7 @@ function ExerciseReadCard({ session, row, exercisesById }: { session: Session; r
 function SessionReadCard({ session, days, exercisesById }: { session: Session; days: readonly Weekday[]; exercisesById: ReadonlyMap<string, Exercise> }) {
   const headingId = useId();
   const count = session.rows.length;
-  const mobility = session.warmUp.mobilityExerciseIds.flatMap(id => exercisesById.get(id)?.name ?? []);
-  const hasWarmUp = session.warmUp.warmUpSetsNote.trim() !== '' || mobility.length > 0;
+  const warmUp = warmUpLines(session, exercisesById);
 
   return (
     <article id={sessionAnchor(session.id)} aria-labelledby={headingId} className={ARTICLE_CLASS}>
@@ -128,11 +127,10 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
         meta={`${count} ${count === 1 ? 'exercise' : 'exercises'} · ~${estimatedMinutes(session)} min`}
       />
       <div className="grid gap-4 p-3 sm:p-4">
-        {hasWarmUp && (
+        {warmUp.length > 0 && (
           <div className="grid gap-2 rounded-control bg-surface-subtle p-3">
             <p className={LABEL_CLASS}>Warm-up</p>
-            {session.warmUp.warmUpSetsNote && <p className="text-sm text-text-primary">{session.warmUp.warmUpSetsNote}</p>}
-            {mobility.length > 0 && <p className="text-sm text-text-secondary">{`Mobility: ${mobility.join(', ')}`}</p>}
+            <p className="text-sm text-text-secondary">{warmUp.join(', ')}</p>
           </div>
         )}
         <div className="grid gap-3 lg:grid-cols-2">
@@ -140,7 +138,7 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
             <ExerciseReadCard key={row.id} session={session} row={row} exercisesById={exercisesById} />
           ))}
         </div>
-        {session.coolDown && <p className="text-sm text-text-secondary">Ends with a cool-down</p>}
+        {session.coolDown.enabled && <p className="text-sm text-text-secondary">Ends with a cool-down</p>}
       </div>
     </article>
   );
@@ -154,7 +152,7 @@ function CardioReadCard({ cardio, days, exercisesById }: { cardio: CardioSession
       <ol aria-label="Segments" className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
         {cardio.segments.map(segment => (
           <li key={segment.id} className="grid content-start gap-1 rounded-control border border-l-4 border-border border-l-training-recovery bg-card p-3">
-            <p className={LABEL_CLASS}>{SEGMENT_KIND_LABELS[segment.plan.kind]}</p>
+            <p className={LABEL_CLASS}>{SEGMENT_KIND_LABELS[segment.kind]}</p>
             <p className="text-sm text-text-primary">{cardioSegmentText(segment, exercisesById)}</p>
           </li>
         ))}

@@ -64,7 +64,8 @@ function withVersion(program: Program, number: number, change: (version: Program
 function exerciseIdsOf(version: ProgramVersion): string[] {
   const ids = version.content.plan.blocks.flatMap(block =>
     block.sessions.flatMap(session => [
-      ...session.warmUp.mobilityExerciseIds,
+      ...session.warmUp.items.map(item => item.exerciseId),
+      ...session.coolDown.items.map(item => item.exerciseId),
       ...session.rows.flatMap(row => [row.exerciseId, ...row.substitutions]),
     ]),
   );

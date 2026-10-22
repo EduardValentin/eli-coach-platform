@@ -13,7 +13,7 @@ import { cn } from '../ui/utils';
 import { Emphasised, headedText, LIFESTYLE_FALLBACK, nonEmptyLines, NUTRITION_FALLBACK, template } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
-import { cardioDayLabel, cardioSegmentText, currentBlock, dayEntries, type ProgramView } from './programView';
+import { cardioDayLabel, cardioSegmentText, currentBlock, dayEntries, warmUpLines, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
 const DISCLAIMER_PLACEHOLDER = 'Disclaimer (page 8) — placeholder';
@@ -261,7 +261,7 @@ function WeekTable({ block }: { block: Block }) {
 
 function EverySession({ view, block }: { view: ProgramView; block: Block }) {
   const warmUp = headedText(template(view, 'warmUp'));
-  const hasCoolDown = block.sessions.some(session => session.coolDown);
+  const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
   return (
     <div data-print-keep className={cn(BOX_CLASS, 'grid gap-3 text-sm')}>
       <h3 className={H3_CLASS}>Every session</h3>
@@ -288,24 +288,21 @@ function CardHeader({ title, minutes }: { title: string; minutes: number }) {
 type SessionCardProps = { view: ProgramView; block: Block; session: Session };
 
 function SessionCard({ view, block, session }: SessionCardProps) {
-  const mobility = session.warmUp.mobilityExerciseIds.flatMap(id => view.exercisesById.get(id)?.name ?? []);
+  const warmUp = warmUpLines(session, view.exercisesById);
   return (
     <section aria-label={session.name} data-print-card className="grid gap-3">
       <div data-print-heading className="grid gap-3">
         <CardHeader title={session.name} minutes={estimatedMinutes(session)} />
-        {(session.warmUp.warmUpSetsNote || mobility.length > 0) && (
-          <div className="grid gap-0.5 text-sm">
-            <p>
-              <span className="font-semibold">Warm-up: </span>
-              {mobility.length > 0 ? `mobility for ${mobility.join(', ')}.` : 'light cardio and warm-up sets.'}
-            </p>
-            {session.warmUp.warmUpSetsNote && <p className="text-text-secondary">{session.warmUp.warmUpSetsNote}</p>}
-          </div>
+        {warmUp.length > 0 && (
+          <p className="text-sm">
+            <span className="font-semibold">Warm-up: </span>
+            {warmUp.join(', ')}
+          </p>
         )}
       </div>
       <SessionTable session={session} exercisesById={view.exercisesById} />
       <TrackingTable session={session} block={block} exercisesById={view.exercisesById} />
-      {session.coolDown && <p className="text-sm text-text-secondary">Finish with the cool-down.</p>}
+      {session.coolDown.enabled && <p className="text-sm text-text-secondary">Finish with the cool-down.</p>}
     </section>
   );
 }

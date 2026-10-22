@@ -61,6 +61,9 @@ describe('programForSeed', () => {
     const [block] = program!.versions[0].content.plan.blocks;
     for (const session of block.sessions) {
       expect(session.rows.map(row => row.slot)).toEqual(['A', 'B', 'C', 'C', 'D']);
+      expect(session.rows.slice(0, 2).map(row => exercisesById.get(row.exerciseId)?.pattern)).toEqual(
+        block.sessions.indexOf(session) % 2 === 0 ? ['squat', expect.stringMatching(/hinge|lunge/)] : ['hinge', expect.stringMatching(/squat|lunge/)],
+      );
       expect(new Set(session.rows.map(row => row.exerciseId)).size).toBe(session.rows.length);
       for (const row of session.rows) {
         const pattern = exercisesById.get(row.exerciseId)?.pattern;
@@ -69,24 +72,24 @@ describe('programForSeed', () => {
     }
   });
 
-  it('pairs two accessories in one superset group in every seeded session', () => {
+  it('pairs a push and a pull accessory in one superset group in every Full Body session', () => {
     // act
     const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
 
     // assert
     for (const session of program!.versions[0].content.plan.blocks[0].sessions) {
       const accessories = session.rows.filter(row => row.slot === 'C');
-      expect(accessories).toHaveLength(2);
+      expect(accessories.map(row => exercisesById.get(row.exerciseId)?.pattern)).toEqual(['horizontal-push', 'vertical-pull']);
       expect(accessories[0].supersetGroup).toBeDefined();
       expect(accessories[1].supersetGroup).toBe(accessories[0].supersetGroup);
       expect(session.rows.filter(row => row.slot !== 'C').every(row => row.supersetGroup === undefined)).toBe(true);
     }
   });
 
-  it('seeds a single accessory without a superset when the library has only one', () => {
+  it('seeds a single accessory without a superset when the library has no pull', () => {
     // arrange
-    const [firstIsolation] = SAMPLE_EXERCISES.filter(exercise => exercise.pattern === 'isolation');
-    const library = SAMPLE_EXERCISES.filter(exercise => exercise.pattern !== 'isolation' || exercise === firstIsolation);
+    const pulls = ['horizontal-pull', 'vertical-pull'];
+    const library = SAMPLE_EXERCISES.filter(exercise => !pulls.includes(exercise.pattern ?? ''));
 
     // act
     const program = programForSeed('draft', CLIENT, library);
@@ -94,8 +97,29 @@ describe('programForSeed', () => {
     // assert
     const [session] = program!.versions[0].content.plan.blocks[0].sessions;
     const accessories = session.rows.filter(row => row.slot === 'C');
-    expect(accessories.map(row => row.exerciseId)).toEqual([firstIsolation.id]);
+    expect(accessories).toHaveLength(1);
     expect(accessories[0].supersetGroup).toBeUndefined();
+  });
+
+  it('opens every seeded session with one mobility exercise for 45 seconds and leaves the cool-down off', () => {
+    // act
+    const program = programForSeed('two-versions', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    const sessions = program!.versions.flatMap(version => version.content.plan.blocks.flatMap(block => block.sessions));
+    for (const session of sessions) {
+      expect(session.warmUp.items).toEqual([{ id: expect.any(String), exerciseId: expect.any(String), sets: 1, seconds: 45 }]);
+      expect(exercisesById.get(session.warmUp.items[0].exerciseId)?.type).toBe('mobility');
+      expect(session.coolDown).toEqual({ enabled: false, note: '', items: [] });
+    }
+  });
+
+  it('gives every seeded block as many training days as sessions', () => {
+    // act
+    const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
+
+    // assert
+    for (const block of program!.versions[0].content.plan.blocks) expect(block.trainingDays).toBe(block.sessions.length);
   });
 
   it('prefers the exercise whose role matches the slot', () => {
@@ -141,7 +165,9 @@ describe('programForSeed', () => {
     // assert
     const [cardio] = program!.versions[0].content.plan.blocks[0].cardioSessions;
     expect(cardio.name).toBe('Easy cardio');
-    expect(exercisesById.get(cardio.segments[0].exerciseId)?.type).toBe('cardio');
+    expect(cardio.segments[0]).toMatchObject({ kind: 'steady' });
+    const [segment] = cardio.segments;
+    expect(segment.kind === 'steady' && exercisesById.get(segment.exerciseId)?.type).toBe('cardio');
   });
 
   it('makes one cardio day intervals in the two-versions seed', () => {

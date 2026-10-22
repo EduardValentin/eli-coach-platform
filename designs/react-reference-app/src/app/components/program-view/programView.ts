@@ -2,6 +2,7 @@ import { addDays, startOfDay, startOfWeek } from 'date-fns';
 import type { Exercise } from '../../context/TrainingContext';
 import {
   WEEKDAYS,
+  warmUpItemText,
   type Block,
   type CalendarEntry,
   type CardioSegment,
@@ -12,7 +13,7 @@ import {
   type Weekday,
 } from '../../domain/program';
 import { currentPosition, type PlanPosition } from '../../domain/programCalendar';
-import { CARDIO_INTENSITY_TEXT } from '../../domain/programCardio';
+import { CARDIO_INTENSITY_TEXT, roundsText } from '../../domain/programCardio';
 
 const SECONDS_PER_MINUTE = 60;
 
@@ -90,13 +91,16 @@ export function cardioDayLabel(block: Block, weekday: Weekday): string {
   return cardioFor(block, weekday)?.name ?? 'Cardio';
 }
 
-export function cardioSegmentText({ exerciseId, plan }: CardioSegment, exercisesById: ReadonlyMap<string, Exercise>): string {
-  const nameOf = (id: string) => exercisesById.get(id)?.name ?? 'Exercise removed';
-  if (plan.kind === 'steady') return `${nameOf(exerciseId)} · ${plan.minutes} min · ${CARDIO_INTENSITY_TEXT[plan.intensity]}`;
-  if (plan.kind === 'intervals') {
-    const rounds = `${plan.rounds} × ${plan.workSeconds} s on, ${plan.easySeconds} s easy`;
-    return `${nameOf(exerciseId)} · ${rounds} · ${CARDIO_INTENSITY_TEXT[plan.intensity]}`;
-  }
-  const items = plan.items.map(item => `${nameOf(item.exerciseId)} ${item.seconds === undefined ? `${item.reps ?? 0} reps` : `${item.seconds} s`}`);
-  return `${plan.rounds} rounds of ${items.join(', ')} · ${plan.restSeconds} s rest between rounds`;
+export function exerciseName(exerciseId: string, exercisesById: ReadonlyMap<string, Exercise>): string {
+  return exercisesById.get(exerciseId)?.name ?? 'Exercise removed';
+}
+
+export function cardioSegmentText(segment: CardioSegment, exercisesById: ReadonlyMap<string, Exercise>): string {
+  const nameOf = (id: string) => exerciseName(id, exercisesById);
+  if (segment.kind === 'rounds') return roundsText(segment, nameOf);
+  return `${nameOf(segment.exerciseId)} · ${segment.minutes} min · ${CARDIO_INTENSITY_TEXT[segment.intensity]}`;
+}
+
+export function warmUpLines(session: Session, exercisesById: ReadonlyMap<string, Exercise>): string[] {
+  return session.warmUp.items.map(item => `${exerciseName(item.exerciseId, exercisesById)} · ${warmUpItemText(item)}`);
 }

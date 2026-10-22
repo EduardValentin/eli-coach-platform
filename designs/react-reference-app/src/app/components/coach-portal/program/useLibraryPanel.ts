@@ -13,16 +13,16 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
   if (!block || !panelTarget) return null;
   const { target, nonce } = panelTarget;
   const key = `${nonce}`;
-  if (target.kind === 'cardio-exercise' || target.kind === 'circuit-item') {
+  if (target.kind === 'cardio-exercise' || target.kind === 'rounds-item') {
     const cardio = block.cardioSessions.find(other => other.id === target.sessionId);
     if (!cardio) return null;
     const label = `Adding to ${cardio.name}`;
-    if (target.kind === 'circuit-item') return { key, label, type: 'resistance', patterns: [], equipment: 'bodyweight' };
+    if (target.kind === 'rounds-item') return { key, label, type: 'resistance', patterns: [], equipment: 'bodyweight' };
     return { key, label, type: 'cardio', patterns: [], equipment: 'hers' };
   }
   const session = block.sessions.find(other => other.id === target.sessionId);
   if (!session) return null;
-  if (target.kind === 'mobility') return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', patterns: [], equipment: 'hers' };
+  if (target.kind === 'warm-up') return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', patterns: [], equipment: 'hers' };
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
     return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [], equipment: 'hers' };

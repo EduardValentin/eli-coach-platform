@@ -2,14 +2,14 @@ import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import { cycleModeOf, type CycleMode } from './cycleMode';
 import { EQUIPMENT, type Equipment } from './exercises';
 import type { ClientJourney, OnboardingAnswer } from './journey';
-import type { LevelHint, ProgramLanguage, SplitShape } from './program';
+import type { LevelHint, ProgramLanguage, SplitShape, TrainingDays } from './program';
 import { splitShapeFor } from './programSuggestions';
 import { STEPS_DEFAULT } from './programDefaults';
 
 export type ProgramSetup = {
   goal: string;
   level: LevelHint;
-  trainingDays: 2 | 3 | 4 | 5;
+  trainingDays: TrainingDays;
   sessionMinutes: 30 | 45 | 60;
   cycleMode: CycleMode;
   language: ProgramLanguage;

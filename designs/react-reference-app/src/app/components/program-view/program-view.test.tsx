@@ -222,8 +222,8 @@ describe('DayContent', () => {
     return withSession(view, session => ({
       ...session,
       name: 'Lower A',
-      coolDown: true,
-      warmUp: { warmUpSetsNote: 'Two light ramp-up sets', mobilityExerciseIds: [deadlift.id] },
+      coolDown: { enabled: true, note: '', items: [] },
+      warmUp: { items: [{ id: 'w1', exerciseId: deadlift.id, sets: 2, reps: { min: 8, max: 8 } }] },
       rows: [
         { ...session.rows[0], slot: 'A', supersetGroup: undefined, exerciseId: squat.id, sets: [warmUp, heavy, byFeel], restSeconds: 120, cues: 'Brace before you descend', substitutions: [deadlift.id] },
         { ...session.rows[1], slot: 'C', supersetGroup: 'g', exerciseId: deadlift.id, sets: [byFeel] },
@@ -262,8 +262,7 @@ describe('DayContent', () => {
     // assert
     expect(screen.getByRole('heading', { level: 3, name: 'Lower A' })).toBeInTheDocument();
     expect(screen.getByText(/^~\d+ min$/)).toBeInTheDocument();
-    expect(screen.getByText('Two light ramp-up sets')).toBeInTheDocument();
-    expect(within(screen.getByRole('list', { name: 'Mobility' })).getByText(deadlift.name)).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Warm-up exercises' })).getByText(`${deadlift.name} · 2 × 8`)).toBeInTheDocument();
     expect(screen.getByText('Cool-down')).toBeInTheDocument();
     expect(screen.getByText(/Low-energy session/)).toBeInTheDocument();
   });
@@ -321,31 +320,27 @@ describe('DayContent', () => {
 
     // assert
     expect(screen.getByRole('heading', { level: 3, name: 'Intervals' })).toBeInTheDocument();
-    expect(screen.getByText('26 min')).toBeInTheDocument();
+    expect(screen.getByText('14 min')).toBeInTheDocument();
     const segments = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem');
     expect(segments.map(segment => segment.textContent)).toEqual([
       'Stationary bike · 5 min · You can hold a conversation',
-      'Stationary bike · 8 × 30 s hard / 90 s easy · Hard: only a few words at a time',
+      'Rounds · 8 rounds · Stationary bike 30 s · Hard: only a few words at a time',
       'Stationary bike · 5 min · You can hold a conversation',
     ]);
     expect(screen.getByText(/Swap this for a 30-minute easy walk/)).toBeInTheDocument();
   });
 
-  it('renders a circuit with its rounds, rest and exercises', () => {
+  it('renders rounds as the round count and its exercises', () => {
     // arrange
     const view = viewAt(TODAY);
     const block = withCardio(view, 'finisher');
-    const [circuit] = block.cardioSessions[0].segments;
-    if (circuit.plan.kind !== 'circuit') throw new Error('expected a circuit');
-    const names = circuit.plan.items.map(item => SAMPLE_EXERCISES.find(exercise => exercise.id === item.exerciseId)?.name);
 
     // act
     render(<DayContent view={view} block={block} weekday="sat" />);
 
     // assert
     const segment = within(screen.getByRole('list', { name: 'Segments' })).getAllByRole('listitem')[0];
-    expect(segment).toHaveTextContent('Circuit · 3 rounds · 60 s rest between rounds');
-    expect(within(segment).getAllByRole('listitem').map(item => item.textContent)).toEqual(names.map(name => `${name} · 30 s`));
+    expect(segment).toHaveTextContent('Rounds · 3 rounds · Wall Sit 30 s, Kettlebell Swing 30 s, Push-Up 30 s · Hard: only a few words at a time');
   });
 });
 

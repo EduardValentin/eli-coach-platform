@@ -11,8 +11,8 @@ function session(id: string): Session {
     id,
     originId: id,
     name: id,
-    warmUp: { mobilityExerciseIds: [], warmUpSetsNote: '' },
-    coolDown: false,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, note: '', items: [] },
     rows: [],
   };
 }
@@ -23,6 +23,7 @@ function blockWith(shape: Block['split']['shape'], sessions: Session[]): Block {
     originId: 'block',
     type: 'hypertrophy',
     weeks: 6,
+    trainingDays: 4,
     calibrationWeek: false,
     introText: '',
     clientNote: '',
@@ -54,25 +55,29 @@ describe('SPLIT_TEMPLATES', () => {
     expect([upperLower.shape, upperLower.label]).toEqual(['upper-lower', 'Upper / Lower']);
   });
 
-  it('names Full Body sessions by the day count', () => {
+  it('names Full Body sessions by the day count, up to five days', () => {
     // act
     const two = SPLIT_TEMPLATES['full-body'].sessions(2);
-    const three = SPLIT_TEMPLATES['full-body'].sessions(3);
+    const five = SPLIT_TEMPLATES['full-body'].sessions(5);
 
     // assert
     expect(two.map(template => template.name)).toEqual(['Full Body A', 'Full Body B']);
-    expect(three.map(template => template.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C']);
+    expect(five.map(template => template.name)).toEqual(['Full Body A', 'Full Body B', 'Full Body C', 'Full Body D', 'Full Body E']);
   });
 
-  it('rotates the Full Body main lift and pairs it with the complementary compound', () => {
+  it('covers every pattern in each Full Body session, alternating squat and hinge as the main lift', () => {
     // act
     const templates = SPLIT_TEMPLATES['full-body'].sessions(3);
 
     // assert
+    const accessories = [
+      ['C', ['horizontal-push', 'vertical-push']],
+      ['C', ['horizontal-pull', 'vertical-pull']],
+    ];
     expect(templates.map(patternsOf)).toEqual([
-      [['A', ['squat']], ['B', ['hinge', 'lunge']], ['C', ['isolation']], ['D', ['core']]],
-      [['A', ['hinge']], ['B', ['squat', 'lunge']], ['C', ['isolation']], ['D', ['core']]],
-      [['A', ['horizontal-push']], ['B', ['horizontal-pull', 'vertical-pull']], ['C', ['isolation']], ['D', ['core']]],
+      [['A', ['squat']], ['B', ['hinge', 'lunge']], ...accessories, ['D', ['core']]],
+      [['A', ['hinge']], ['B', ['squat', 'lunge']], ...accessories, ['D', ['core']]],
+      [['A', ['squat']], ['B', ['hinge', 'lunge']], ...accessories, ['D', ['core']]],
     ]);
   });
 
@@ -81,7 +86,7 @@ describe('SPLIT_TEMPLATES', () => {
     const [template] = SPLIT_TEMPLATES['full-body'].sessions(2);
 
     // assert
-    expect(template.slots.map(plan => plan.label)).toEqual(['Main lift', 'Secondary', 'Accessories', 'Core / finisher']);
+    expect(template.slots.map(plan => plan.label)).toEqual(['Main lift', 'Secondary', 'Accessories', 'Accessories', 'Core / finisher']);
   });
 
   it('alternates lower and upper sessions and repeats Lower A on a fifth day', () => {
@@ -115,6 +120,8 @@ describe('SPLIT_TEMPLATES', () => {
       SPLIT_TEMPLATES['full-body'].layout(3),
       SPLIT_TEMPLATES['upper-lower'].layout(4),
       SPLIT_TEMPLATES['upper-lower'].layout(5),
+      SPLIT_TEMPLATES['full-body'].layout(4),
+      SPLIT_TEMPLATES['upper-lower'].layout(2),
     ];
 
     // assert
@@ -123,6 +130,8 @@ describe('SPLIT_TEMPLATES', () => {
       ['mon', 'wed', 'fri'],
       ['mon', 'tue', 'thu', 'fri'],
       ['mon', 'tue', 'wed', 'fri', 'sat'],
+      ['mon', 'tue', 'thu', 'fri'],
+      ['mon', 'thu'],
     ]);
   });
 });
@@ -138,6 +147,22 @@ describe('slotPlanFor', () => {
 
     // assert
     expect(plan).toEqual({ slot: 'B', patterns: ['vertical-push', 'horizontal-push'], label: 'Secondary' });
+  });
+
+  it('joins the patterns of a slot planned as a superset', () => {
+    // arrange
+    const sessions = [session('a'), session('b')];
+    const block = blockWith('full-body', sessions);
+
+    // act
+    const plan = slotPlanFor(block, sessions[1], 'C');
+
+    // assert
+    expect(plan).toEqual({
+      slot: 'C',
+      patterns: ['horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull'],
+      label: 'Accessories',
+    });
   });
 
   it('finds nothing for a session outside the block', () => {

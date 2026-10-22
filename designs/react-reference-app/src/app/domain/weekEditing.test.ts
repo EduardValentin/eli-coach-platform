@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { Block } from './program';
+import type { Block, Session } from './program';
 import { cardioPreset } from './programCardio';
-import { newBlock } from './programSuggestions';
-import { blockWithCardio, blockWithDay, plannedSessions } from './weekEditing';
+import { emptyRow, newBlock } from './programSuggestions';
+import { blockWithCardio, blockWithDay, describeReset, plannedSessions, relayoutBlock } from './weekEditing';
 
 function block(): Block {
   return newBlock('foundation', 4, {
@@ -19,6 +19,16 @@ function block(): Block {
     },
     library: [],
   });
+}
+
+function filled(session: Session, exerciseCount: number): Session {
+  const rows = Array.from({ length: exerciseCount }, (_, index) => ({ ...emptyRow('foundation', 'C'), exerciseId: `e${index}` }));
+  return { ...session, rows };
+}
+
+function filledBlock(...exerciseCounts: number[]): Block {
+  const start = block();
+  return { ...start, sessions: start.sessions.map((session, index) => filled(session, exerciseCounts[index] ?? 0)) };
 }
 
 describe('blockWithDay', () => {
@@ -102,5 +112,128 @@ describe('plannedSessions', () => {
 
     // assert
     expect(planned).toEqual(['Easy cardio', 'Full Body B', 'Easy cardio', 'Full Body C', 'Full Body A']);
+  });
+});
+
+describe('relayoutBlock', () => {
+  it('starts with as many training days as the block has sessions', () => {
+    // act
+    const start = block();
+
+    // assert
+    expect(start.trainingDays).toBe(3);
+    expect(start.sessions).toHaveLength(3);
+  });
+
+  it('keeps the first sessions and adds empty ones from the split for more training days', () => {
+    // arrange
+    const start = filledBlock(5, 4, 3);
+
+    // act
+    const next = relayoutBlock(start, 5);
+
+    // assert
+    expect(next.trainingDays).toBe(5);
+    expect(next.sessions.slice(0, 3)).toEqual(start.sessions);
+    expect(next.sessions.slice(3).map(session => [session.name, session.rows])).toEqual([
+      ['Full Body D', []],
+      ['Full Body E', []],
+    ]);
+    expect(['mon', 'tue', 'wed', 'fri', 'sat'].map(day => next.calendar[day as keyof Block['calendar']])).toEqual(
+      next.sessions.map(session => ({ kind: 'session', sessionId: session.id })),
+    );
+  });
+
+  it('drops the sessions past the new day count and keeps cardio on the days left free', () => {
+    // arrange
+    const start = filledBlock(5, 4, 3);
+
+    // act
+    const next = relayoutBlock(start, 2);
+
+    // assert
+    expect(next.sessions).toEqual(start.sessions.slice(0, 2));
+    expect(next.calendar.mon).toEqual({ kind: 'session', sessionId: start.sessions[0].id });
+    expect(next.calendar.thu).toEqual({ kind: 'session', sessionId: start.sessions[1].id });
+    expect(next.cardioSessions).toEqual(start.cardioSessions);
+    expect(next.calendar.tue).toEqual({ kind: 'cardio', cardioId: start.cardioSessions[0].id });
+  });
+
+  it('drops the cardio sessions that no free day is left for', () => {
+    // arrange
+    const start = { ...block(), cardioSessions: Array.from({ length: 4 }, () => cardioPreset('liss', [])) };
+
+    // act
+    const next = relayoutBlock(start, 5);
+
+    // assert
+    expect(next.cardioSessions).toEqual(start.cardioSessions.slice(0, 2));
+    expect([next.calendar.thu, next.calendar.sun]).toEqual(start.cardioSessions.slice(0, 2).map(cardio => ({ kind: 'cardio', cardioId: cardio.id })));
+  });
+});
+
+describe('describeReset', () => {
+  it('names every session with exercises when the split changes or resets', () => {
+    // arrange
+    const start = filledBlock(5, 1, 0);
+
+    // act
+    const split = describeReset(start, { kind: 'split' });
+    const reset = describeReset(start, { kind: 'reset' });
+
+    // assert
+    expect(split).toEqual(['Full Body A · 5 exercises', 'Full Body B · 1 exercise']);
+    expect(reset).toEqual(split);
+  });
+
+  it('names the sessions and cardio that fewer or more training days drop', () => {
+    // arrange
+    const start = { ...filledBlock(5, 4, 3), cardioSessions: [...Array.from({ length: 3 }, () => cardioPreset('liss', [])), cardioPreset('hiit', [])] };
+
+    // act
+    const fewer = describeReset(start, { kind: 'training-days', days: 2 });
+    const more = describeReset(start, { kind: 'training-days', days: 5 });
+
+    // assert
+    expect(fewer).toEqual(['Full Body C · 3 exercises']);
+    expect(more).toEqual(['Easy cardio · 1 segment', 'Intervals · 3 segments']);
+  });
+
+  it('names the cardio a day loses when its kind changes', () => {
+    // arrange
+    const start = filledBlock(5, 4, 3);
+
+    // act
+    const cardioDay = describeReset(start, { kind: 'day', weekday: 'tue' });
+    const sessionDay = describeReset(start, { kind: 'day', weekday: 'mon' });
+    const restDay = describeReset(start, { kind: 'day', weekday: 'sun' });
+
+    // assert
+    expect(cardioDay).toEqual(['Easy cardio · 1 segment']);
+    expect(sessionDay).toEqual([]);
+    expect(restDay).toEqual([]);
+  });
+
+  it('names the removed session', () => {
+    // arrange
+    const start = filledBlock(5, 4, 0);
+
+    // act
+    const strength = describeReset(start, { kind: 'remove-session', sessionId: start.sessions[1].id });
+    const empty = describeReset(start, { kind: 'remove-session', sessionId: start.sessions[2].id });
+    const cardio = describeReset(start, { kind: 'remove-session', sessionId: start.cardioSessions[0].id });
+
+    // assert
+    expect(strength).toEqual(['Full Body B · 4 exercises']);
+    expect(empty).toEqual([]);
+    expect(cardio).toEqual(['Easy cardio · 1 segment']);
+  });
+
+  it('finds nothing to lose in empty sessions', () => {
+    // act
+    const lost = describeReset(block(), { kind: 'split' });
+
+    // assert
+    expect(lost).toEqual([]);
   });
 });

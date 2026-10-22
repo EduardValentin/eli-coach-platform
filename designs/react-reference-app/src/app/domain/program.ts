@@ -46,31 +46,42 @@ export type Row = {
   cues: string;
   touched: RowField[];
 };
+export type WarmUpItem = { id: string; exerciseId: string; sets: number; reps?: Range; seconds?: number };
+export type CoolDownItem = { id: string; exerciseId: string; seconds: number };
+export type CoolDown = { enabled: boolean; note: string; items: CoolDownItem[] };
 export type Session = {
   id: string;
   originId: string;
   name: string;
-  warmUp: { mobilityExerciseIds: string[]; warmUpSetsNote: string };
-  coolDown: boolean;
+  warmUp: { items: WarmUpItem[] };
+  coolDown: CoolDown;
   rows: Row[];
 };
 export type CardioIntensity = 'easy' | 'moderate' | 'hard';
-export type CircuitItem = { exerciseId: string; reps?: number; seconds?: number };
-export type CardioPlan =
-  | { kind: 'steady'; minutes: number; intensity: CardioIntensity }
-  | { kind: 'intervals'; workSeconds: number; easySeconds: number; rounds: number; intensity: CardioIntensity }
-  | { kind: 'circuit'; items: CircuitItem[]; rounds: number; restSeconds: number };
-export type CardioSegment = { id: string; exerciseId: string; plan: CardioPlan };
+export type RoundsItem = { id: string; exerciseId: string; workSeconds?: number; reps?: number };
+export type SteadySegment = { id: string; kind: 'steady'; exerciseId: string; minutes: number; intensity: CardioIntensity };
+export type RoundsSegment = {
+  id: string;
+  kind: 'rounds';
+  items: RoundsItem[];
+  easySeconds: number;
+  restBetweenRoundsSeconds: number;
+  rounds: number;
+  intensity: CardioIntensity;
+};
+export type CardioSegment = SteadySegment | RoundsSegment;
 export type CardioSession = { id: string; originId: string; name: string; segments: CardioSegment[] };
 export type CalendarEntry =
   | { kind: 'session'; sessionId: string }
   | { kind: 'cardio'; cardioId: string }
   | { kind: 'rest' };
+export type TrainingDays = 2 | 3 | 4 | 5;
 export type Block = {
   id: string;
   originId: string;
   type: BlockType;
   weeks: number;
+  trainingDays: TrainingDays;
   calibrationWeek: boolean;
   introText: string;
   clientNote: string;
@@ -171,6 +182,11 @@ export function setsSummary(sets: readonly SetSpec[], repsSuffix = ''): string {
   return parts.join(' · ');
 }
 
+export function warmUpItemText(item: WarmUpItem): string {
+  const amount = item.seconds === undefined ? formatRange(item.reps ?? { min: 0, max: 0 }) : `${item.seconds} s`;
+  return `${item.sets} × ${amount}`;
+}
+
 export function positionLabel(session: Session, row: Row): string {
   if (row.supersetGroup === undefined) return row.slot;
   const group = session.rows.filter(
@@ -198,6 +214,11 @@ function calendarWithIds(
   return Object.fromEntries(entries) as Record<Weekday, CalendarEntry>;
 }
 
+function segmentWithFreshIds(segment: CardioSegment): CardioSegment {
+  if (segment.kind === 'steady') return { ...segment, id: newId() };
+  return { ...segment, id: newId(), items: segment.items.map(item => ({ ...item, id: newId() })) };
+}
+
 export function blockWithFreshIds(block: Block): Block {
   const sessionIds = new Map(block.sessions.map(session => [session.id, newId()]));
   const cardioIds = new Map(block.cardioSessions.map(cardio => [cardio.id, newId()]));
@@ -213,7 +234,7 @@ export function blockWithFreshIds(block: Block): Block {
     cardioSessions: block.cardioSessions.map(cardio => ({
       ...cardio,
       id: cardioIds.get(cardio.id) as string,
-      segments: cardio.segments.map(segment => ({ ...segment, id: newId() })),
+      segments: cardio.segments.map(segmentWithFreshIds),
     })),
   };
 }

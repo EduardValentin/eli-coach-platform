@@ -49,7 +49,7 @@ const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string) =>
   ({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 }) as Row;
 
 const session = (id: string, rows: Row[] = [row('bench')], name = id): Session =>
-  ({ id, name, rows, coolDown: false }) as Session;
+  ({ id, originId: id, name, rows, warmUp: { items: [] }, coolDown: { enabled: false, note: '', items: [] } });
 
 type Spec = {
   type?: BlockType;
@@ -239,6 +239,25 @@ describe('blockShorterThanElapsed', () => {
 
 describe('cardio schedule warnings', () => {
   const legs = session('legs', [row('squat')], 'Lower A');
+
+  it('counts a finisher of hard rounds as HIIT, but not rounds at a lower intensity', () => {
+    // arrange
+    const [block] = blocks({ cardio: { tue: 'hiit', thu: 'hiit', sat: 'finisher' } });
+    const softened = {
+      ...block,
+      cardioSessions: block.cardioSessions.map(cardio =>
+        cardio.name === 'Finisher' ? { ...cardio, segments: cardio.segments.map(segment => ({ ...segment, intensity: 'moderate' as const })) } : cardio,
+      ),
+    };
+
+    // act
+    const found = warnings(content([block]), context());
+    const passed = warnings(content([softened]), context());
+
+    // assert
+    expect(codes(found)).toContain('hiit-over-two');
+    expect(codes(passed)).not.toContain('hiit-over-two');
+  });
 
   it('warns about more than two cardio sessions with intervals', () => {
     // arrange

@@ -117,7 +117,7 @@ function SettingsToggle({ expanded, buttonRef, onToggle }: SettingsToggleProps) 
 }
 
 function reshaped(block: Block, shape: SplitShape, language: ProgramLanguage): Block {
-  const days = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
+  const days = block.trainingDays;
   const sessions = emptySessionsFor(shape, days);
   return {
     ...block,

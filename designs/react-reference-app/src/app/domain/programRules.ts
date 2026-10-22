@@ -13,7 +13,7 @@ import {
   type Weekday,
 } from './program';
 import { blockDates, blockSpan, currentPosition, nextCheckpoint } from './programCalendar';
-import { hasIntervals, isLightCardio } from './programCardio';
+import { hasHardRounds, isLightCardio } from './programCardio';
 import { estimatedMinutes } from './programSuggestions';
 
 export type BlockingCode =
@@ -280,11 +280,11 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
     }
     const cardio = cardioOn(block, day);
     const legs = sessionOn(block, following);
-    if (cardio && hasIntervals(cardio) && legs && isHeavyLegSession(legs, exercises)) {
+    if (cardio && hasHardRounds(cardio) && legs && isHeavyLegSession(legs, exercises)) {
       findings.push({ code: 'hiit-before-heavy-legs', blockId: block.id, detail: legs.name });
     }
   }
-  if (block.cardioSessions.filter(hasIntervals).length > MAX_HIIT_SESSIONS) {
+  if (block.cardioSessions.filter(hasHardRounds).length > MAX_HIIT_SESSIONS) {
     findings.push({ code: 'hiit-over-two', blockId: block.id });
   }
   return findings;

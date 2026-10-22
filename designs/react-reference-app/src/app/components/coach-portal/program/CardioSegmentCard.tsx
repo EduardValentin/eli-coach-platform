@@ -2,7 +2,7 @@ import { useId, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import type { CardioIntensity, CardioPlan, CardioSegment, CardioSession, CircuitItem } from '../../../domain/program';
+import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, type CardioEdits } from '../../../domain/programCardio';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { LABEL_CLASS } from '../../typography';
@@ -13,7 +13,6 @@ import { RowTextField } from './RowTextField';
 import { SegmentedChoice } from './SegmentedChoice';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
-type CircuitPlan = Extract<CardioPlan, { kind: 'circuit' }>;
 type ItemMeasure = 'reps' | 'seconds';
 
 type CardioSegmentCardProps = {
@@ -25,7 +24,7 @@ type CardioSegmentCardProps = {
   edits: CardioEdits;
   onChange: (cardio: CardioSession) => void;
   onReplaceExercise: () => void;
-  onAddCircuitItem: () => void;
+  onAddRoundsItem: () => void;
 };
 
 const INTENSITY_OPTIONS = (Object.keys(CARDIO_INTENSITY_LABELS) as CardioIntensity[]).map(value => ({ value, label: CARDIO_INTENSITY_LABELS[value] }));
@@ -64,29 +63,30 @@ function IntensityField({ value, onChange }: { value: CardioIntensity; onChange:
   );
 }
 
-function measuredItem(item: CircuitItem, measure: ItemMeasure, amount: number): CircuitItem {
-  return measure === 'seconds' ? { exerciseId: item.exerciseId, seconds: amount } : { exerciseId: item.exerciseId, reps: amount };
+function measuredItem(item: RoundsItem, measure: ItemMeasure, amount: number): RoundsItem {
+  const base = { id: item.id, exerciseId: item.exerciseId };
+  return measure === 'seconds' ? { ...base, workSeconds: amount } : { ...base, reps: amount };
 }
 
-function CircuitFields({ plan, library, onPlan, onItem, onRemoveItem, onAddItem }: {
-  plan: CircuitPlan;
+function RoundsFields({ segment, library, onSegment, onItem, onRemoveItem, onAddItem }: {
+  segment: RoundsSegment;
   library: readonly Exercise[];
-  onPlan: (plan: CircuitPlan) => void;
-  onItem: (index: number, item: CircuitItem) => void;
-  onRemoveItem: (index: number) => void;
+  onSegment: (segment: RoundsSegment) => void;
+  onItem: (item: RoundsItem) => void;
+  onRemoveItem: (itemId: string) => void;
   onAddItem: () => void;
 }) {
   const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
   return (
     <div className="grid gap-3">
-      {plan.items.length > 0 && (
-        <ol aria-label="Circuit exercises" className="grid divide-y divide-border-subtle rounded-field border border-border-subtle bg-surface-base">
-          {plan.items.map((item, index) => {
+      {segment.items.length > 0 && (
+        <ol aria-label="Round exercises" className="grid divide-y divide-border-subtle rounded-field border border-border-subtle bg-surface-base">
+          {segment.items.map(item => {
             const name = nameOf(item.exerciseId);
-            const measure: ItemMeasure = item.seconds === undefined ? 'reps' : 'seconds';
-            const amount = item.seconds ?? item.reps ?? 0;
+            const measure: ItemMeasure = item.workSeconds === undefined ? 'reps' : 'seconds';
+            const amount = item.workSeconds ?? item.reps ?? 0;
             return (
-              <li key={`${item.exerciseId}-${index}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
+              <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
                 <span className="min-w-0 flex-1 basis-32 text-sm font-medium text-text-primary">{name}</span>
                 <RowTextField
                   className="w-16"
@@ -96,12 +96,12 @@ function CircuitFields({ plan, library, onPlan, onItem, onRemoveItem, onAddItem 
                   format={String}
                   parse={parseCount}
                   problem={COUNT_PROBLEM}
-                  onCommit={next => onItem(index, measuredItem(item, measure, next))}
+                  onCommit={next => onItem(measuredItem(item, measure, next))}
                 />
                 <div className="w-28">
-                  <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(index, measuredItem(item, next, amount))} />
+                  <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(measuredItem(item, next, amount))} />
                 </div>
-                <Button variant="ghost" size="icon-xs" aria-label={`Remove ${name}`} onClick={() => onRemoveItem(index)}>
+                <Button variant="ghost" size="icon-xs" aria-label={`Remove ${name}`} onClick={() => onRemoveItem(item.id)}>
                   <X aria-hidden="true" />
                 </Button>
               </li>
@@ -110,67 +110,59 @@ function CircuitFields({ plan, library, onPlan, onItem, onRemoveItem, onAddItem 
         </ol>
       )}
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-        <Button variant="outline" size="xs" aria-label="Add exercise to the circuit" onClick={onAddItem}>
+        <Button variant="outline" size="xs" aria-label="Add exercise to the rounds" onClick={onAddItem}>
           <Plus aria-hidden="true" />
           Add exercise
         </Button>
-        <NumberField label="Rounds" value={plan.rounds} onCommit={rounds => onPlan({ ...plan, rounds })} />
-        <NumberField label="Rest" unit="s" value={plan.restSeconds} onCommit={restSeconds => onPlan({ ...plan, restSeconds })} />
+        <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
+        <NumberField label="Easy" unit="s" value={segment.easySeconds} onCommit={easySeconds => onSegment({ ...segment, easySeconds })} />
+        <NumberField label="Rest" unit="s" value={segment.restBetweenRoundsSeconds} onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })} />
+        <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
       </div>
     </div>
   );
 }
 
-function PlanFields({ segment, library, edits, onChange, onAddCircuitItem }: Pick<CardioSegmentCardProps, 'segment' | 'library' | 'edits' | 'onChange' | 'onAddCircuitItem'>) {
-  const { plan } = segment;
-  const changePlan = (next: CardioPlan) => onChange(edits.changePlan(segment.id, next));
-  if (plan.kind === 'steady') {
+function SegmentFields({ segment, library, edits, onChange, onAddRoundsItem }: Pick<CardioSegmentCardProps, 'segment' | 'library' | 'edits' | 'onChange' | 'onAddRoundsItem'>) {
+  const changeSegment = (next: CardioSegment) => onChange(edits.changeSegment(next));
+  if (segment.kind === 'steady') {
     return (
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <NumberField label="Minutes" value={plan.minutes} onCommit={minutes => changePlan({ ...plan, minutes })} />
-        <IntensityField value={plan.intensity} onChange={intensity => changePlan({ ...plan, intensity })} />
-      </div>
-    );
-  }
-  if (plan.kind === 'intervals') {
-    return (
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <NumberField label="Work" unit="s" value={plan.workSeconds} onCommit={workSeconds => changePlan({ ...plan, workSeconds })} />
-        <NumberField label="Easy" unit="s" value={plan.easySeconds} onCommit={easySeconds => changePlan({ ...plan, easySeconds })} />
-        <NumberField label="Rounds" value={plan.rounds} onCommit={rounds => changePlan({ ...plan, rounds })} />
-        <IntensityField value={plan.intensity} onChange={intensity => changePlan({ ...plan, intensity })} />
+        <NumberField label="Minutes" value={segment.minutes} onCommit={minutes => changeSegment({ ...segment, minutes })} />
+        <IntensityField value={segment.intensity} onChange={intensity => changeSegment({ ...segment, intensity })} />
       </div>
     );
   }
   return (
-    <CircuitFields
-      plan={plan}
+    <RoundsFields
+      segment={segment}
       library={library}
-      onPlan={changePlan}
-      onItem={(index, item) => onChange(edits.changeCircuitItem(segment.id, index, item))}
-      onRemoveItem={index => onChange(edits.removeCircuitItem(segment.id, index))}
-      onAddItem={onAddCircuitItem}
+      onSegment={changeSegment}
+      onItem={item => onChange(edits.changeRoundsItem(segment.id, item))}
+      onRemoveItem={itemId => onChange(edits.removeRoundsItem(segment.id, itemId))}
+      onAddItem={onAddRoundsItem}
     />
   );
 }
 
 type DropState = { isOver: boolean; canDrop: boolean; itemType: string | symbol | null };
 
-function dropHint(itemType: string | symbol | null, plan: CardioPlan): string {
+function dropHint(itemType: string | symbol | null, segment: CardioSegment): string {
   if (itemType === CARDIO_SEGMENT) return 'Move here';
-  return plan.kind === 'circuit' ? 'Add to the circuit' : 'Replace';
+  return segment.kind === 'rounds' ? 'Add to the rounds' : 'Replace';
 }
 
-function circuitCount(plan: CircuitPlan): string {
-  return `${plan.items.length} ${plan.items.length === 1 ? 'exercise' : 'exercises'}`;
+function itemCount(segment: RoundsSegment): string {
+  return `${segment.items.length} ${segment.items.length === 1 ? 'exercise' : 'exercises'}`;
 }
 
 export function CardioSegmentCard(props: CardioSegmentCardProps) {
-  const { cardioId, segment, position, count, library, edits, onChange, onReplaceExercise, onAddCircuitItem } = props;
+  const { cardioId, segment, position, count, library, edits, onChange, onReplaceExercise, onAddRoundsItem } = props;
   const headingId = useId();
-  const kindLabel = SEGMENT_KIND_LABELS[segment.plan.kind];
-  const exerciseName = library.find(item => item.id === segment.exerciseId)?.name ?? 'Choose an exercise';
-  const isCircuit = segment.plan.kind === 'circuit';
+  const kindLabel = SEGMENT_KIND_LABELS[segment.kind];
+  const steadyExerciseId = segment.kind === 'steady' ? segment.exerciseId : '';
+  const exerciseName = library.find(item => item.id === steadyExerciseId)?.name ?? 'Choose an exercise';
+  const isRounds = segment.kind === 'rounds';
   const label = `${position}. ${kindLabel}`;
 
   const [{ isDragging }, drag] = useDrag<CardioSegmentItem, void, { isDragging: boolean }>(
@@ -187,17 +179,17 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
           return moving.cardioId === cardioId && moving.segmentId !== segment.id;
         }
         const { exercise } = item as LibraryItem;
-        return isCircuit ? exercise.type !== 'mobility' : exercise.type === 'cardio';
+        return isRounds ? exercise.type !== 'mobility' : exercise.type === 'cardio';
       },
       drop: (item, monitor) => {
         if (monitor.didDrop()) return;
         if (monitor.getItemType() === CARDIO_SEGMENT) onChange(edits.moveBefore((item as CardioSegmentItem).segmentId, segment.id));
-        else if (isCircuit) onChange(edits.addCircuitItem(segment.id, (item as LibraryItem).exercise.id));
+        else if (isRounds) onChange(edits.addRoundsItem(segment.id, (item as LibraryItem).exercise.id));
         else onChange(edits.replaceExercise(segment.id, (item as LibraryItem).exercise.id));
       },
       collect: monitor => ({ isOver: monitor.isOver({ shallow: true }), canDrop: monitor.canDrop(), itemType: monitor.getItemType() }),
     }),
-    [cardioId, segment.id, isCircuit, edits, onChange],
+    [cardioId, segment.id, isRounds, edits, onChange],
   );
   const targeted = isOver && canDrop;
 
@@ -221,8 +213,8 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
         </span>
         <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
           <Badge tone="tint-cyan">{kindLabel}</Badge>
-          {segment.plan.kind === 'circuit' ? (
-            <span className="text-sm text-text-secondary">{circuitCount(segment.plan)}</span>
+          {segment.kind === 'rounds' ? (
+            <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
           ) : (
             <Button variant="link" size="xs" className="h-auto min-w-0 px-0 text-sm font-medium text-text-primary" aria-label={`Replace ${exerciseName}`} onClick={onReplaceExercise}>
               <span className="truncate">{exerciseName}</span>
@@ -239,12 +231,12 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
         />
       </div>
       <div className="pl-9.5">
-        <PlanFields segment={segment} library={library} edits={edits} onChange={onChange} onAddCircuitItem={onAddCircuitItem} />
+        <SegmentFields segment={segment} library={library} edits={edits} onChange={onChange} onAddRoundsItem={onAddRoundsItem} />
       </div>
       {targeted && (
         <p aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-control bg-brand-secondary-soft">
           <span className="rounded-control bg-card px-3 py-1.5 text-sm font-medium text-brand-secondary shadow-raised">
-            {dropHint(itemType, segment.plan)}
+            {dropHint(itemType, segment)}
           </span>
         </p>
       )}

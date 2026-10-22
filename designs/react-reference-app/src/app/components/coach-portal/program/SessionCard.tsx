@@ -1,7 +1,7 @@
 import { useId, useRef, useState, type Ref } from 'react';
 import { Eraser, PencilLine, Plus, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { SLOTS, type Block, type Session, type Slot } from '../../../domain/program';
+import { SLOTS, warmUpItemText, type Block, type Session, type Slot } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { estimatedMinutes } from '../../../domain/programSuggestions';
 import { sessionEdits, type SessionEditContext } from '../../../domain/sessionEditing';
@@ -12,7 +12,6 @@ import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
-import { Textarea } from '../../ui/textarea';
 import { cn } from '../../ui/utils';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 import { SlotGroup } from './SlotGroup';
@@ -44,49 +43,40 @@ function acceptsMobility(dragged: DraggedItem): boolean {
 type WarmUpCardProps = {
   session: Session;
   library: readonly Exercise[];
-  onChange: (session: Session) => void;
-  onPickMobility: () => void;
-  onAddMobility: (exerciseId: string) => void;
-  onRemoveMobility: (exerciseId: string) => void;
+  onPickExercise: () => void;
+  onAddExercise: (exerciseId: string) => void;
+  onRemoveItem: (itemId: string) => void;
 };
 
-function WarmUpCard({ session, library, onChange, onPickMobility, onAddMobility, onRemoveMobility }: WarmUpCardProps) {
-  const noteId = useId();
-  const mobility = session.warmUp.mobilityExerciseIds.map(id => ({ id, name: library.find(item => item.id === id)?.name ?? 'Unknown exercise' }));
+function WarmUpCard({ session, library, onPickExercise, onAddExercise, onRemoveItem }: WarmUpCardProps) {
+  const items = session.warmUp.items.map(item => ({
+    id: item.id,
+    name: library.find(exercise => exercise.id === item.exerciseId)?.name ?? 'Unknown exercise',
+    amount: warmUpItemText(item),
+  }));
   return (
     <DropZone
-      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onAddMobility(dragged.item.exercise.id) }}
+      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onAddExercise(dragged.item.exercise.id) }}
       accepts={acceptsMobility}
       className="rounded-control border border-border-subtle bg-surface-subtle p-3"
       activeClassName="ring-2 ring-primary/40"
     >
       <fieldset className="grid gap-2">
         <legend className={cn(LABEL_CLASS, 'mb-2')}>Warm-up</legend>
-        <label htmlFor={noteId} className="sr-only">
-          Warm-up note
-        </label>
-        <Textarea
-          id={noteId}
-          rows={2}
-          placeholder="3–5 min easy cardio, then…"
-          value={session.warmUp.warmUpSetsNote}
-          onChange={event => onChange({ ...session, warmUp: { ...session.warmUp, warmUpSetsNote: event.target.value } })}
-          className="min-h-0 bg-surface-base"
-        />
         <div className="flex flex-wrap items-center gap-2">
-          {mobility.length > 0 && (
-            <ul aria-label="Mobility exercises" className="flex flex-wrap gap-2">
-              {mobility.map(item => (
+          {items.length > 0 && (
+            <ul aria-label="Warm-up exercises" className="flex flex-wrap gap-2">
+              {items.map(item => (
                 <li key={item.id} className="flex items-center gap-1 rounded-full border border-border bg-surface-base py-0.5 pr-0.5 pl-3 text-sm text-text-primary">
-                  {item.name}
-                  <Button variant="ghost" size="icon-xs" aria-label={`Remove ${item.name}`} onClick={() => onRemoveMobility(item.id)}>
+                  {`${item.name} · ${item.amount}`}
+                  <Button variant="ghost" size="icon-xs" aria-label={`Remove ${item.name}`} onClick={() => onRemoveItem(item.id)}>
                     <X aria-hidden="true" />
                   </Button>
                 </li>
               ))}
             </ul>
           )}
-          <Button variant="ghost" size="xs" onClick={onPickMobility}>
+          <Button variant="ghost" size="xs" onClick={onPickExercise}>
             <Plus aria-hidden="true" />
             Add mobility exercise
           </Button>
@@ -150,7 +140,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
           {overTarget && <span>Over target</span>}
         </p>
         <label className="flex items-center gap-2 text-sm text-text-primary">
-          <Switch checked={session.coolDown} onCheckedChange={coolDown => onChange({ ...session, coolDown })} />
+          <Switch checked={session.coolDown.enabled} onCheckedChange={enabled => onChange({ ...session, coolDown: { ...session.coolDown, enabled } })} />
           Cool-down
         </label>
         <RowActionsMenu
@@ -165,10 +155,9 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
         <WarmUpCard
           session={session}
           library={library}
-          onChange={onChange}
-          onPickMobility={() => onOpenLibrary({ kind: 'mobility', sessionId: session.id })}
-          onAddMobility={exerciseId => onChange(edits.addMobility(exerciseId))}
-          onRemoveMobility={exerciseId => onChange(edits.removeMobility(exerciseId))}
+          onPickExercise={() => onOpenLibrary({ kind: 'warm-up', sessionId: session.id })}
+          onAddExercise={exerciseId => onChange(edits.addWarmUpItem(exerciseId))}
+          onRemoveItem={itemId => onChange(edits.removeWarmUpItem(itemId))}
         />
         {SLOTS.map(slot => (
           <SlotGroup

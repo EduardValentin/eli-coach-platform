@@ -44,7 +44,6 @@ const SUGGESTED_BLOCKS: Record<LevelHint, SuggestedBlock[]> = {
   ],
 };
 
-const WARM_UP_SETS_NOTE = '2–3 light sets, 10 → 6 → 3';
 const SECONDS_PER_SET = 45;
 const SESSION_OVERHEAD_MINUTES = 8;
 const COOL_DOWN_MINUTES = 5;
@@ -110,8 +109,8 @@ function emptySession(name: string): Session {
     id,
     originId: id,
     name,
-    warmUp: { mobilityExerciseIds: [], warmUpSetsNote: WARM_UP_SETS_NOTE },
-    coolDown: false,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, note: '', items: [] },
     rows: [],
   };
 }
@@ -162,6 +161,7 @@ export function newBlock(type: BlockType, weeks: number, { setup, library, previ
     originId: newId(),
     type,
     weeks,
+    trainingDays: previous?.trainingDays ?? setup.trainingDays,
     calibrationWeek: false,
     ...blockTexts(type, setup),
     clientNote: '',
@@ -210,7 +210,7 @@ export function estimatedMinutes(session: Session): number {
       seconds += row.sets.length * (2 * SECONDS_PER_SET + row.restSeconds);
     }
   }
-  const coolDown = session.coolDown ? COOL_DOWN_MINUTES : 0;
+  const coolDown = session.coolDown.enabled ? COOL_DOWN_MINUTES : 0;
   return Math.round(SESSION_OVERHEAD_MINUTES + seconds / 60 + coolDown);
 }
 

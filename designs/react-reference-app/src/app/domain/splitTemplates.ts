@@ -10,23 +10,38 @@ export type SplitTemplate = {
   layout: (sessionCount: number) => Weekday[];
 };
 
+const SESSION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const CORE: SlotPlan = { slot: 'D', patterns: ['core'], label: 'Core / finisher' };
+
+function mainAndSecondary(main: MovementPattern[], secondary: MovementPattern[]): SlotPlan[] {
+  return [
+    { slot: 'A', patterns: main, label: 'Main lift' },
+    { slot: 'B', patterns: secondary, label: 'Secondary' },
+  ];
+}
+
 function sessionTemplate(name: string, main: MovementPattern[], secondary: MovementPattern[]): SessionTemplate {
   return {
     name,
-    slots: [
-      { slot: 'A', patterns: main, label: 'Main lift' },
-      { slot: 'B', patterns: secondary, label: 'Secondary' },
-      { slot: 'C', patterns: ['isolation'], label: 'Accessories' },
-      { slot: 'D', patterns: ['core'], label: 'Core / finisher' },
-    ],
+    slots: [...mainAndSecondary(main, secondary), { slot: 'C', patterns: ['isolation'], label: 'Accessories' }, CORE],
   };
 }
 
-const FULL_BODY_SESSIONS: SessionTemplate[] = [
-  sessionTemplate('Full Body A', ['squat'], ['hinge', 'lunge']),
-  sessionTemplate('Full Body B', ['hinge'], ['squat', 'lunge']),
-  sessionTemplate('Full Body C', ['horizontal-push'], ['horizontal-pull', 'vertical-pull']),
+const FULL_BODY_LOWER: [MovementPattern[], MovementPattern[]][] = [
+  [['squat'], ['hinge', 'lunge']],
+  [['hinge'], ['squat', 'lunge']],
 ];
+const FULL_BODY_ACCESSORIES: SlotPlan[] = [
+  { slot: 'C', patterns: ['horizontal-push', 'vertical-push'], label: 'Accessories' },
+  { slot: 'C', patterns: ['horizontal-pull', 'vertical-pull'], label: 'Accessories' },
+];
+
+function fullBodySessions(days: number): SessionTemplate[] {
+  return SESSION_LETTERS.slice(0, days).map((letter, index) => {
+    const [main, secondary] = FULL_BODY_LOWER[index % FULL_BODY_LOWER.length];
+    return { name: `Full Body ${letter}`, slots: [...mainAndSecondary(main, secondary), ...FULL_BODY_ACCESSORIES, CORE] };
+  });
+}
 
 const UPPER_LOWER_SESSIONS: SessionTemplate[] = [
   sessionTemplate('Lower A', ['squat'], ['hinge', 'lunge']),
@@ -36,32 +51,29 @@ const UPPER_LOWER_SESSIONS: SessionTemplate[] = [
   sessionTemplate('Lower C', ['squat'], ['hinge', 'lunge']),
 ];
 
-const FULL_BODY_LAYOUTS: Partial<Record<number, Weekday[]>> = {
+const LAYOUTS: Partial<Record<number, Weekday[]>> = {
   2: ['mon', 'thu'],
   3: ['mon', 'wed', 'fri'],
-};
-
-const UPPER_LOWER_LAYOUTS: Partial<Record<number, Weekday[]>> = {
   4: ['mon', 'tue', 'thu', 'fri'],
   5: ['mon', 'tue', 'wed', 'fri', 'sat'],
 };
 
-function layoutFrom(layouts: Partial<Record<number, Weekday[]>>) {
-  return (sessionCount: number): Weekday[] => [...(layouts[sessionCount] ?? WEEKDAYS.slice(0, sessionCount))];
+function layout(sessionCount: number): Weekday[] {
+  return [...(LAYOUTS[sessionCount] ?? WEEKDAYS.slice(0, sessionCount))];
 }
 
 export const SPLIT_TEMPLATES: Record<SplitShape, SplitTemplate> = {
   'full-body': {
     shape: 'full-body',
     label: 'Full Body',
-    sessions: days => FULL_BODY_SESSIONS.slice(0, days),
-    layout: layoutFrom(FULL_BODY_LAYOUTS),
+    sessions: fullBodySessions,
+    layout,
   },
   'upper-lower': {
     shape: 'upper-lower',
     label: 'Upper / Lower',
     sessions: days => UPPER_LOWER_SESSIONS.slice(0, days),
-    layout: layoutFrom(UPPER_LOWER_LAYOUTS),
+    layout,
   },
 };
 
@@ -69,5 +81,8 @@ export function slotPlanFor(block: Block, session: Session, slot: Slot): SlotPla
   const index = block.sessions.findIndex(other => other.id === session.id);
   if (index < 0) return undefined;
   const template = SPLIT_TEMPLATES[block.split.shape].sessions(block.sessions.length)[index];
-  return template?.slots.find(plan => plan.slot === slot);
+  const plans = template?.slots.filter(plan => plan.slot === slot) ?? [];
+  const [first] = plans;
+  if (!first) return undefined;
+  return { ...first, patterns: plans.flatMap(plan => plan.patterns) };
 }

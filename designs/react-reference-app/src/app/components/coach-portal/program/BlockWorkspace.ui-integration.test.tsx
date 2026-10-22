@@ -166,14 +166,14 @@ describe('BlockWorkspace', () => {
     // arrange
     const user = await openFirstBlock();
     await clearFirstSession(user);
-    for (const name of ['Lateral Raises', 'Biceps Curl']) {
+    for (const name of ['Overhead Press', 'Dumbbell Rows']) {
       await user.click(within(slotGroup('C · Accessories')).getByRole('button', { name: 'Add exercise to Accessories' }));
       await addFromLibrary(user, name);
     }
     expect(positions()).toEqual(['C', 'C']);
 
     // act
-    await user.click(within(card(/Lateral Raises$/)).getByRole('button', { name: 'Lateral Raises actions' }));
+    await user.click(within(card(/Overhead Press$/)).getByRole('button', { name: 'Overhead Press actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Superset with next' }));
 
     // assert
@@ -291,16 +291,16 @@ describe('BlockWorkspace', () => {
 
     // assert
     const built = session('Intervals');
-    expect(within(built).getByText('26 min')).toBeInTheDocument();
-    expect(within(built).getAllByRole('article').map(segment => within(segment).getByText(/^(Steady|Intervals|Circuit)$/).textContent)).toEqual([
+    expect(within(built).getByText('14 min')).toBeInTheDocument();
+    expect(within(built).getAllByRole('article').map(segment => within(segment).getAllByText(/^(Steady|Rounds)$/)[0].textContent)).toEqual([
       'Steady',
-      'Intervals',
+      'Rounds',
       'Steady',
     ]);
-    expect(within(day('Saturday')).getByText('26 min')).toBeInTheDocument();
+    expect(within(day('Saturday')).getByText('14 min')).toBeInTheDocument();
   });
 
-  it('edits a steady segment and adds a circuit', async () => {
+  it('edits a steady segment and adds rounds', async () => {
     // arrange
     const user = await openFirstBlock();
     await chooseInDayMenu(user, 'Saturday', 'Cardio');
@@ -316,11 +316,11 @@ describe('BlockWorkspace', () => {
 
     // act
     await user.click(within(cardio).getByRole('button', { name: 'Add segment' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Circuit' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rounds' }));
 
     // assert
     expect(within(cardio).getAllByRole('article')).toHaveLength(2);
-    expect(within(cardio).getByRole('button', { name: 'Add exercise to the circuit' })).toBeInTheDocument();
+    expect(within(cardio).getByRole('button', { name: 'Add exercise to the rounds' })).toBeInTheDocument();
   });
 
   it('replaces a segment exercise from the library in cardio mode', async () => {
@@ -344,20 +344,25 @@ describe('BlockWorkspace', () => {
     expect(within(session('Moderate cardio')).getByRole('button', { name: 'Replace Rowing machine' })).toBeInTheDocument();
   });
 
-  it('adds a mobility exercise to the warm-up and removes its chip', async () => {
+  it('removes a warm-up exercise and adds one from the library', async () => {
     // arrange
     const user = await openFirstBlock();
-    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add mobility exercise' }));
-    expect(within(library()).getByRole('radio', { name: 'Mobility' })).toBeChecked();
-    await addFromLibrary(user, '90/90 Hip Switches');
     const warmUp = within(session('Full Body A')).getByRole('group', { name: 'Warm-up' });
-    expect(within(warmUp).getByText('90/90 Hip Switches')).toBeInTheDocument();
+    expect(within(warmUp).getByText('90/90 Hip Switches · 1 × 45 s')).toBeInTheDocument();
 
     // act
     await user.click(within(warmUp).getByRole('button', { name: 'Remove 90/90 Hip Switches' }));
 
     // assert
-    expect(within(warmUp).queryByText('90/90 Hip Switches')).not.toBeInTheDocument();
+    expect(within(warmUp).queryByText(/90\/90 Hip Switches/)).not.toBeInTheDocument();
+
+    // act
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add mobility exercise' }));
+    expect(within(library()).getByRole('radio', { name: 'Mobility' })).toBeChecked();
+    await addFromLibrary(user, '90/90 Hip Switches');
+
+    // assert
+    expect(within(warmUp).getByText('90/90 Hip Switches · 1 × 10')).toBeInTheDocument();
   });
 
   it('removes substitutions and suggests them again', async () => {

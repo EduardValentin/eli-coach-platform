@@ -30,6 +30,8 @@ const LIBRARY: Exercise[] = [
   exercise('raise'),
   exercise('kickback'),
   exercise('plank', { pattern: 'core', primaryMuscles: ['Core'] }),
+  exercise('hips', { type: 'mobility', measuredIn: 'reps', pattern: undefined }),
+  exercise('catCow', { type: 'mobility', measuredIn: 'time', pattern: undefined }),
 ];
 
 const CONTEXT: SessionEditContext = { blockType: 'foundation', library: LIBRARY, equipment: [] };
@@ -203,19 +205,38 @@ describe('sessionEdits', () => {
     expect(rowOf(swapped, 'curl').sets).toEqual(sets);
   });
 
-  it('adds and removes substitutions and mobility exercises', () => {
+  it('adds and removes substitutions', () => {
     // arrange
     const session = withExercises(['curl', 'C']);
     const rowId = session.rows[0].id;
 
     // act
-    const next = sessionEdits(sessionEdits(session, CONTEXT).removeSubstitution(rowId, 'raise'), CONTEXT).addMobility('hips');
-    const cleared = sessionEdits(next, CONTEXT).removeMobility('hips');
+    const next = sessionEdits(session, CONTEXT).removeSubstitution(rowId, 'raise');
 
     // assert
     expect(next.rows[0].substitutions).toEqual(['kickback']);
-    expect(next.warmUp.mobilityExerciseIds).toEqual(['hips']);
-    expect(cleared.warmUp.mobilityExerciseIds).toEqual([]);
+  });
+
+  it('adds warm-up exercises as one set of reps or seconds, changes and removes them', () => {
+    // arrange
+    const session = emptySession();
+
+    // act
+    const withHips = sessionEdits(session, CONTEXT).addWarmUpItem('hips');
+    const withCatCow = sessionEdits(withHips, CONTEXT).addWarmUpItem('catCow');
+    const twice = sessionEdits(withCatCow, CONTEXT).addWarmUpItem('hips');
+    const [hips, catCow] = withCatCow.warmUp.items;
+    const changed = sessionEdits(withCatCow, CONTEXT).changeWarmUpItem({ ...hips, sets: 2 });
+    const removed = sessionEdits(changed, CONTEXT).removeWarmUpItem(catCow.id);
+
+    // assert
+    expect(session.warmUp.items).toEqual([]);
+    expect([hips, catCow]).toEqual([
+      { id: expect.any(String), exerciseId: 'hips', sets: 1, reps: { min: 10, max: 10 } },
+      { id: expect.any(String), exerciseId: 'catCow', sets: 1, seconds: 45 },
+    ]);
+    expect(twice).toEqual(withCatCow);
+    expect(removed.warmUp.items).toEqual([{ ...hips, sets: 2 }]);
   });
 });
 

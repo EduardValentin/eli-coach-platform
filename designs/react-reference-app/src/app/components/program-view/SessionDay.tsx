@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot } from './DayParts';
-import { plainText, restLabel } from './programView';
+import { plainText, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
@@ -163,8 +163,7 @@ type SessionDayProps = { session: Session; exercisesById: Library; language: Pro
 
 export function SessionDay({ session, exercisesById, language }: SessionDayProps) {
   const headingId = useId();
-  const mobility = namesOf(session.warmUp.mobilityExerciseIds, exercisesById);
-  const note = session.warmUp.warmUpSetsNote.trim();
+  const warmUp = warmUpLines(session, exercisesById);
   const item = (row: Row) => (
     <li key={row.id}>
       <ExerciseCard session={session} row={row} exercisesById={exercisesById} language={language} />
@@ -174,19 +173,16 @@ export function SessionDay({ session, exercisesById, language }: SessionDayProps
   return (
     <section aria-labelledby={headingId} className="@container grid gap-4">
       <DayHeader headingId={headingId} name={session.name} meta={`~${estimatedMinutes(session)} min`} />
-      {(note !== '' || mobility.length > 0) && (
+      {warmUp.length > 0 && (
         <div className="grid gap-2 rounded-card bg-surface-subtle p-4">
           <p className={LABEL_CLASS}>Warm-up</p>
-          {note !== '' && <p className="text-sm leading-relaxed text-text-primary">{note}</p>}
-          {mobility.length > 0 && (
-            <ul aria-label="Mobility" className="flex flex-wrap gap-1.5">
-              {mobility.map(name => (
-                <li key={name}>
-                  <Badge tone="tint-slate">{name}</Badge>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul aria-label="Warm-up exercises" className="flex flex-wrap gap-1.5">
+            {warmUp.map(line => (
+              <li key={line}>
+                <Badge tone="tint-slate">{line}</Badge>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       <ol className="grid items-start gap-3 @3xl:grid-cols-2">
@@ -194,7 +190,7 @@ export function SessionDay({ session, exercisesById, language }: SessionDayProps
           rows.length > 1 ? <Superset key={rows[0].id}>{rows.map(item)}</Superset> : item(rows[0]),
         )}
       </ol>
-      {session.coolDown && (
+      {session.coolDown.enabled && (
         <p className="flex items-center gap-2 text-sm text-text-secondary">
           <Wind aria-hidden="true" className="size-4" />
           <span>Cool-down</span>

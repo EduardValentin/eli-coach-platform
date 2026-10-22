@@ -11,6 +11,7 @@ import {
   roleForSlot,
   isWorkingSet,
   setsSummary,
+  warmUpItemText,
   workingSets,
   type Program,
   type ProgramContent,
@@ -46,8 +47,8 @@ function sessionOf(rows: Row[]): Session {
     id: 'session-1',
     originId: 'session-1',
     name: 'Lower A',
-    warmUp: { mobilityExerciseIds: [], warmUpSetsNote: '' },
-    coolDown: false,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, note: '', items: [] },
     rows,
   };
 }
@@ -284,5 +285,16 @@ describe('workingSets', () => {
     // assert
     expect(working).toEqual([first, second]);
     expect([warmUp, first].map(isWorkingSet)).toEqual([false, true]);
+  });
+});
+
+describe('warmUpItemText', () => {
+  it('reads the sets and the reps or seconds of a warm-up exercise', () => {
+    // act
+    const timed = warmUpItemText({ id: 'w1', exerciseId: 'e', sets: 1, seconds: 45 });
+    const counted = warmUpItemText({ id: 'w2', exerciseId: 'e', sets: 2, reps: { min: 8, max: 10 } });
+
+    // assert
+    expect([timed, counted]).toEqual(['1 × 45 s', '2 × 8–10']);
   });
 });

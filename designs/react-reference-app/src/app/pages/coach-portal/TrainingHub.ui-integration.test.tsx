@@ -87,11 +87,12 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Dumbbell Rows')).toBeInTheDocument();
+    expect(screen.getByText('Burpee')).toBeInTheDocument();
+    expect(screen.queryByText('Dumbbell Rows')).not.toBeInTheDocument();
     expect(screen.queryByText('Hip Thrust')).not.toBeInTheDocument();
     expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 30')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -401,7 +402,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 23' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 30' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 

@@ -1,11 +1,11 @@
 import type { Exercise } from '../context/TrainingContext';
-import { newId, type CardioIntensity, type CardioPlan, type CardioSegment, type CardioSession, type CircuitItem } from './program';
+import { newId, type CardioIntensity, type CardioSegment, type CardioSession, type RoundsItem, type RoundsSegment, type SteadySegment } from './program';
 
 export type CardioPresetKind = 'liss' | 'moderate' | 'hiit' | 'finisher';
-export type SegmentKind = CardioPlan['kind'];
+export type SegmentKind = CardioSegment['kind'];
 export const CARDIO_PRESET_KINDS: readonly CardioPresetKind[] = ['liss', 'moderate', 'hiit', 'finisher'];
-export const SEGMENT_KINDS: readonly SegmentKind[] = ['steady', 'intervals', 'circuit'];
-export const SEGMENT_KIND_LABELS: Record<SegmentKind, string> = { steady: 'Steady', intervals: 'Intervals', circuit: 'Circuit' };
+export const SEGMENT_KINDS: readonly SegmentKind[] = ['steady', 'rounds'];
+export const SEGMENT_KIND_LABELS: Record<SegmentKind, string> = { steady: 'Steady', rounds: 'Rounds' };
 export const CARDIO_INTENSITY_LABELS: Record<CardioIntensity, string> = { easy: 'Easy', moderate: 'Moderate', hard: 'Hard' };
 
 export const CARDIO_INTENSITY_TEXT: Record<CardioIntensity, string> = {
@@ -17,7 +17,10 @@ export const CARDIO_INTENSITY_TEXT: Record<CardioIntensity, string> = {
 const STEADY_NAME_PATTERN = /walk|bike|cycling|ellip/i;
 const SECONDS_PER_REP = 3;
 const SECONDS_PER_MINUTE = 60;
-const FINISHER_EXERCISES = 2;
+const FINISHER_EXERCISES = 3;
+const PRESET_WORK_SECONDS = 30;
+const NEW_ITEM_REPS = 12;
+const NEW_ITEM_SECONDS = 30;
 
 export const CARDIO_PRESET_NAMES: Record<CardioPresetKind, string> = {
   liss: 'Easy cardio',
@@ -30,38 +33,56 @@ function available(library: readonly Exercise[]): Exercise[] {
   return library.filter(exercise => exercise.archivedAt === undefined);
 }
 
+function isConditioning(exercise: Exercise): boolean {
+  return exercise.tags.includes('Conditioning');
+}
+
 function steadyExerciseId(library: readonly Exercise[]): string {
   const cardio = available(library).filter(exercise => exercise.type === 'cardio');
   const picked = cardio.find(exercise => STEADY_NAME_PATTERN.test(exercise.name)) ?? cardio[0];
   return picked?.id ?? '';
 }
 
-function segment(exerciseId: string, plan: CardioPlan): CardioSegment {
-  return { id: newId(), exerciseId, plan };
+function steady(exerciseId: string, minutes: number, intensity: CardioIntensity): SteadySegment {
+  return { id: newId(), kind: 'steady', exerciseId, minutes, intensity };
 }
 
-function steady(exerciseId: string, minutes: number, intensity: CardioIntensity): CardioSegment {
-  return segment(exerciseId, { kind: 'steady', minutes, intensity });
+function timedItem(exercise: Exercise): RoundsItem {
+  return { id: newId(), exerciseId: exercise.id, workSeconds: PRESET_WORK_SECONDS };
 }
 
-function finisherCircuit(library: readonly Exercise[]): CardioSegment {
-  const bodyweight = available(library)
-    .filter(exercise => exercise.type === 'resistance' && exercise.equipment.length === 0)
-    .slice(0, FINISHER_EXERCISES);
-  const items = bodyweight.map(exercise => ({ exerciseId: exercise.id, seconds: 30 }));
-  return segment(items[0]?.exerciseId ?? '', { kind: 'circuit', items, rounds: 3, restSeconds: 60 });
+function intervalRounds(library: readonly Exercise[]): RoundsSegment {
+  const exercise = available(library).find(item => item.type === 'cardio' || isConditioning(item));
+  return {
+    id: newId(),
+    kind: 'rounds',
+    items: exercise ? [timedItem(exercise)] : [],
+    easySeconds: 90,
+    restBetweenRoundsSeconds: 0,
+    rounds: 8,
+    intensity: 'hard',
+  };
+}
+
+function finisherRounds(library: readonly Exercise[]): RoundsSegment {
+  const conditioning = available(library).filter(isConditioning).slice(0, FINISHER_EXERCISES);
+  return {
+    id: newId(),
+    kind: 'rounds',
+    items: conditioning.map(timedItem),
+    easySeconds: 0,
+    restBetweenRoundsSeconds: 60,
+    rounds: 3,
+    intensity: 'hard',
+  };
 }
 
 function presetSegments(kind: CardioPresetKind, library: readonly Exercise[]): CardioSegment[] {
-  if (kind === 'finisher') return [finisherCircuit(library)];
+  if (kind === 'finisher') return [finisherRounds(library)];
   const exerciseId = steadyExerciseId(library);
   if (kind === 'liss') return [steady(exerciseId, 30, 'easy')];
   if (kind === 'moderate') return [steady(exerciseId, 25, 'moderate')];
-  return [
-    steady(exerciseId, 5, 'easy'),
-    segment(exerciseId, { kind: 'intervals', workSeconds: 30, easySeconds: 90, rounds: 8, intensity: 'hard' }),
-    steady(exerciseId, 5, 'easy'),
-  ];
+  return [steady(exerciseId, 5, 'easy'), intervalRounds(library), steady(exerciseId, 5, 'easy')];
 }
 
 export function cardioPreset(kind: CardioPresetKind, library: readonly Exercise[]): CardioSession {
@@ -69,47 +90,61 @@ export function cardioPreset(kind: CardioPresetKind, library: readonly Exercise[
   return { id, originId: id, name: CARDIO_PRESET_NAMES[kind], segments: presetSegments(kind, library) };
 }
 
-function planSeconds(plan: CardioPlan): number {
-  if (plan.kind === 'steady') return plan.minutes * SECONDS_PER_MINUTE;
-  if (plan.kind === 'intervals') return (plan.workSeconds + plan.easySeconds) * plan.rounds;
-  const roundSeconds = plan.items.reduce((total, item) => total + (item.seconds ?? (item.reps ?? 0) * SECONDS_PER_REP), 0);
-  return roundSeconds * plan.rounds + plan.restSeconds * Math.max(0, plan.rounds - 1);
+function itemSeconds(item: RoundsItem): number {
+  return item.workSeconds ?? (item.reps ?? 0) * SECONDS_PER_REP;
+}
+
+function segmentSeconds(segment: CardioSegment): number {
+  if (segment.kind === 'steady') return segment.minutes * SECONDS_PER_MINUTE;
+  const work = segment.items.reduce((total, item) => total + itemSeconds(item), 0);
+  const easy = segment.easySeconds * Math.max(0, segment.items.length - 1);
+  return (work + easy) * segment.rounds + segment.restBetweenRoundsSeconds * Math.max(0, segment.rounds - 1);
 }
 
 export function cardioMinutes(session: CardioSession): number {
-  const seconds = session.segments.reduce((total, { plan }) => total + planSeconds(plan), 0);
+  const seconds = session.segments.reduce((total, segment) => total + segmentSeconds(segment), 0);
   return Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
-export function hasIntervals(session: CardioSession): boolean {
-  return session.segments.some(({ plan }) => plan.kind === 'intervals');
+function itemAmount(item: RoundsItem): string {
+  return item.workSeconds === undefined ? `${item.reps ?? 0} reps` : `${item.workSeconds} s`;
+}
+
+export function roundsText(segment: RoundsSegment, nameOf: (exerciseId: string) => string): string {
+  const items = segment.items.map(item => `${nameOf(item.exerciseId)} ${itemAmount(item)}`);
+  return `${segment.rounds} rounds · ${items.join(', ')}`;
+}
+
+export function hasHardRounds(session: CardioSession): boolean {
+  return session.segments.some(segment => segment.kind === 'rounds' && segment.intensity === 'hard');
 }
 
 export function isLightCardio(session: CardioSession): boolean {
-  return session.segments.every(({ plan }) => plan.kind === 'steady' && plan.intensity === 'easy');
+  return session.segments.every(segment => segment.kind === 'steady' && segment.intensity === 'easy');
 }
 
-const NEW_SEGMENT_PLANS: Record<SegmentKind, CardioPlan> = {
-  steady: { kind: 'steady', minutes: 10, intensity: 'moderate' },
-  intervals: { kind: 'intervals', workSeconds: 30, easySeconds: 90, rounds: 6, intensity: 'hard' },
-  circuit: { kind: 'circuit', items: [], rounds: 3, restSeconds: 60 },
-};
-const CIRCUIT_REPS = 12;
-const CIRCUIT_SECONDS = 30;
+function newSteady(exerciseId: string): SteadySegment {
+  return steady(exerciseId, 10, 'moderate');
+}
+
+function newSegment(kind: SegmentKind, library: readonly Exercise[]): CardioSegment {
+  if (kind === 'steady') return newSteady(steadyExerciseId(library));
+  return { id: newId(), kind: 'rounds', items: [], easySeconds: 0, restBetweenRoundsSeconds: 60, rounds: 3, intensity: 'hard' };
+}
 
 export function emptyCardioSession(): CardioSession {
   const id = newId();
   return { id, originId: id, name: 'Cardio', segments: [] };
 }
 
-function circuitItem(exercise: Exercise | undefined, exerciseId: string): CircuitItem {
-  return exercise?.measuredIn === 'time' ? { exerciseId, seconds: CIRCUIT_SECONDS } : { exerciseId, reps: CIRCUIT_REPS };
+function newItem(exercise: Exercise | undefined, exerciseId: string): RoundsItem {
+  if (exercise?.measuredIn === 'time') return { id: newId(), exerciseId, workSeconds: NEW_ITEM_SECONDS };
+  return { id: newId(), exerciseId, reps: NEW_ITEM_REPS };
 }
 
-function withItems(segment: CardioSegment, change: (items: CircuitItem[]) => CircuitItem[]): CardioSegment {
-  if (segment.plan.kind !== 'circuit') return segment;
-  const items = change(segment.plan.items);
-  return { ...segment, exerciseId: items[0]?.exerciseId ?? '', plan: { ...segment.plan, items } };
+function withItems(segment: CardioSegment, change: (items: RoundsItem[]) => RoundsItem[]): CardioSegment {
+  if (segment.kind !== 'rounds') return segment;
+  return { ...segment, items: change(segment.items) };
 }
 
 export function cardioEdits(session: CardioSession, library: readonly Exercise[]) {
@@ -134,17 +169,16 @@ export function cardioEdits(session: CardioSession, library: readonly Exercise[]
       return { ...session, name: preset.name, segments: preset.segments };
     },
     addSegment(kind: SegmentKind): CardioSession {
-      const exerciseId = kind === 'circuit' ? '' : steadyExerciseId(library);
-      return withSegments([...segments, segment(exerciseId, structuredClone(NEW_SEGMENT_PLANS[kind]))]);
+      return withSegments([...segments, newSegment(kind, library)]);
     },
     addSteady(exerciseId: string): CardioSession {
-      return withSegments([...segments, segment(exerciseId, structuredClone(NEW_SEGMENT_PLANS.steady))]);
+      return withSegments([...segments, newSteady(exerciseId)]);
     },
     replaceExercise(segmentId: string, exerciseId: string): CardioSession {
-      return mapSegment(segmentId, other => ({ ...other, exerciseId }));
+      return mapSegment(segmentId, other => (other.kind === 'steady' ? { ...other, exerciseId } : other));
     },
-    changePlan(segmentId: string, plan: CardioPlan): CardioSession {
-      return mapSegment(segmentId, other => ({ ...other, plan }));
+    changeSegment(segment: CardioSegment): CardioSession {
+      return mapSegment(segment.id, () => segment);
     },
     moveUp(segmentId: string): CardioSession {
       return swapWithNeighbour(segmentId, -1);
@@ -162,15 +196,15 @@ export function cardioEdits(session: CardioSession, library: readonly Exercise[]
     remove(segmentId: string): CardioSession {
       return withSegments(segments.filter(other => other.id !== segmentId));
     },
-    addCircuitItem(segmentId: string, exerciseId: string): CardioSession {
+    addRoundsItem(segmentId: string, exerciseId: string): CardioSession {
       const exercise = library.find(item => item.id === exerciseId);
-      return mapSegment(segmentId, other => withItems(other, items => [...items, circuitItem(exercise, exerciseId)]));
+      return mapSegment(segmentId, other => withItems(other, items => [...items, newItem(exercise, exerciseId)]));
     },
-    changeCircuitItem(segmentId: string, index: number, item: CircuitItem): CardioSession {
-      return mapSegment(segmentId, other => withItems(other, items => items.map((current, at) => (at === index ? item : current))));
+    changeRoundsItem(segmentId: string, item: RoundsItem): CardioSession {
+      return mapSegment(segmentId, other => withItems(other, items => items.map(current => (current.id === item.id ? item : current))));
     },
-    removeCircuitItem(segmentId: string, index: number): CardioSession {
-      return mapSegment(segmentId, other => withItems(other, items => items.filter((_, at) => at !== index)));
+    removeRoundsItem(segmentId: string, itemId: string): CardioSession {
+      return mapSegment(segmentId, other => withItems(other, items => items.filter(current => current.id !== itemId)));
     },
   };
 }

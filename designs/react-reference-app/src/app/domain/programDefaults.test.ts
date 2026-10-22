@@ -44,6 +44,7 @@ function blockOf(rows: Row[]): Block {
     originId: 'block-1',
     type: 'hypertrophy',
     weeks: 4,
+    trainingDays: 2,
     calibrationWeek: false,
     introText: '',
     clientNote: '',
@@ -63,8 +64,8 @@ function blockOf(rows: Row[]): Block {
         id: 'session-1',
         originId: 'session-1',
         name: 'A',
-        warmUp: { mobilityExerciseIds: [], warmUpSetsNote: '' },
-        coolDown: false,
+        warmUp: { items: [] },
+        coolDown: { enabled: false, note: '', items: [] },
         rows,
       },
     ],
@@ -296,7 +297,7 @@ describe('cardioDefaults', () => {
 
     // assert
     expect(sessions.map(session => session.name)).toEqual(['Easy cardio']);
-    expect(sessions[0].segments[0].exerciseId).toBe('bike');
+    expect(sessions[0].segments[0]).toMatchObject({ kind: 'steady', exerciseId: 'bike' });
   });
 
   it('gives a foundation two easy cardio sessions', () => {

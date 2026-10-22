@@ -15,7 +15,7 @@ import {
 import type { ProgramSetup } from '../domain/programOnboarding';
 import { cardioPreset } from '../domain/programCardio';
 import { emptyRow, initialContent, substitutionsFor } from '../domain/programSuggestions';
-import { slotPlanFor, type SlotPlan } from '../domain/splitTemplates';
+import { SPLIT_TEMPLATES, type SlotPlan } from '../domain/splitTemplates';
 
 export const PROGRAM_SEEDS = ['none', 'draft', 'published', 'two-versions'] as const;
 export type ProgramSeed = (typeof PROGRAM_SEEDS)[number];
@@ -60,22 +60,37 @@ function seededRow(plan: SlotPlan, exercise: Exercise, seed: SeedContext, supers
   };
 }
 
-function rowsForSlot(plan: SlotPlan, seed: SeedContext, used: Set<string>): Row[] {
-  const picks: Exercise[] = [];
-  for (let count = plan.slot === 'C' ? 2 : 1; count > 0; count -= 1) {
+function picksFor(plan: SlotPlan, count: number, seed: SeedContext, used: Set<string>): { plan: SlotPlan; exercise: Exercise }[] {
+  const picks: { plan: SlotPlan; exercise: Exercise }[] = [];
+  for (let remaining = count; remaining > 0; remaining -= 1) {
     const exercise = candidateFor(plan, seed.library, used);
     if (!exercise) break;
     used.add(exercise.id);
-    picks.push(exercise);
+    picks.push({ plan, exercise });
   }
+  return picks;
+}
+
+function rowsForSlot(plans: SlotPlan[], seed: SeedContext, used: Set<string>): Row[] {
+  const perPlan = plans.length === 1 && plans[0].slot === 'C' ? 2 : 1;
+  const picks = plans.flatMap(plan => picksFor(plan, perPlan, seed, used));
   const supersetGroup = picks.length > 1 ? newId() : undefined;
-  return picks.map(exercise => seededRow(plan, exercise, seed, supersetGroup));
+  return picks.map(({ plan, exercise }) => seededRow(plan, exercise, seed, supersetGroup));
+}
+
+const WARM_UP_SECONDS = 45;
+
+function seededWarmUp(library: readonly Exercise[]): Session['warmUp'] {
+  const mobility = library.find(exercise => exercise.type === 'mobility' && exercise.archivedAt === undefined);
+  return { items: mobility ? [{ id: newId(), exerciseId: mobility.id, sets: 1, seconds: WARM_UP_SECONDS }] : [] };
 }
 
 function filledSession(session: Session, seed: SeedContext): Session {
   const used = new Set<string>();
-  const plans = SLOTS.flatMap(slot => slotPlanFor(seed.block, session, slot) ?? []);
-  return { ...session, rows: plans.flatMap(plan => rowsForSlot(plan, seed, used)) };
+  const index = seed.block.sessions.indexOf(session);
+  const template = SPLIT_TEMPLATES[seed.block.split.shape].sessions(seed.block.sessions.length)[index];
+  const rows = SLOTS.flatMap(slot => rowsForSlot(template.slots.filter(plan => plan.slot === slot), seed, used));
+  return { ...session, warmUp: seededWarmUp(seed.library), rows };
 }
 
 function filledContent(library: readonly Exercise[], client: SeedClient): ProgramContent {

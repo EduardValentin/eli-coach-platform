@@ -139,7 +139,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
                   edits={edits}
                   onChange={onChange}
                   onReplaceExercise={() => onOpenLibrary({ kind: 'cardio-exercise', sessionId: cardio.id, segmentId: segment.id })}
-                  onAddCircuitItem={() => onOpenLibrary({ kind: 'circuit-item', sessionId: cardio.id, segmentId: segment.id })}
+                  onAddRoundsItem={() => onOpenLibrary({ kind: 'rounds-item', sessionId: cardio.id, segmentId: segment.id })}
                 />
               </li>
             ))}

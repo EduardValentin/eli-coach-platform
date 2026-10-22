@@ -41,7 +41,7 @@ describe('the exercise vocabularies', () => {
     expect(EXERCISE_TYPES).toEqual(['resistance', 'cardio', 'mobility', 'stretching', 'breathing']);
     expect(MEASURES).toEqual(['reps', 'time', 'distance', 'breaths']);
     expect(DIFFICULTIES).toEqual(['Beginner', 'Intermediate', 'Advanced']);
-    expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery']);
+    expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery', 'Conditioning']);
   });
 
   it('lists nineteen muscles ending with Full body and twenty-three pieces of equipment without Bodyweight', () => {

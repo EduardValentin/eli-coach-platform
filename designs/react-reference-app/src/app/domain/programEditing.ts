@@ -7,10 +7,10 @@ import { quickAddSlot, sessionEdits, type SessionEditContext } from './sessionEd
 
 export type LibraryTarget =
   | { kind: 'slot'; sessionId: string; slot: Slot }
-  | { kind: 'mobility'; sessionId: string }
+  | { kind: 'warm-up'; sessionId: string }
   | { kind: 'substitution'; sessionId: string; rowId: string }
   | { kind: 'cardio-exercise'; sessionId: string; segmentId: string }
-  | { kind: 'circuit-item'; sessionId: string; segmentId: string };
+  | { kind: 'rounds-item'; sessionId: string; segmentId: string };
 
 export type LibraryPick = { exercise: Exercise; target: LibraryTarget | null; openSessionId: string | undefined };
 
@@ -18,7 +18,7 @@ function pickedSession(block: Block, session: Session, pick: LibraryPick, contex
   const edits = sessionEdits(session, context);
   const { exercise, target } = pick;
   if (target?.kind === 'substitution') return edits.addSubstitution(target.rowId, exercise.id);
-  if (target?.kind === 'mobility' || exercise.type === 'mobility') return edits.addMobility(exercise.id);
+  if (target?.kind === 'warm-up' || exercise.type === 'mobility') return edits.addWarmUpItem(exercise.id);
   const slot = target?.kind === 'slot' ? target.slot : quickAddSlot(block, session, exercise);
   return edits.add(exercise, { slot });
 }
@@ -27,7 +27,7 @@ function pickedCardio(cardio: CardioSession, pick: LibraryPick, library: Session
   const edits = cardioEdits(cardio, library);
   const { exercise, target } = pick;
   if (target?.kind === 'cardio-exercise') return edits.replaceExercise(target.segmentId, exercise.id);
-  if (target?.kind === 'circuit-item') return edits.addCircuitItem(target.segmentId, exercise.id);
+  if (target?.kind === 'rounds-item') return edits.addRoundsItem(target.segmentId, exercise.id);
   return exercise.type === 'cardio' ? edits.addSteady(exercise.id) : cardio;
 }
 

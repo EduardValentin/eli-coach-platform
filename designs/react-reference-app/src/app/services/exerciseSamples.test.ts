@@ -77,6 +77,27 @@ describe('the sample exercises', () => {
     }
   });
 
+  it('tags the conditioning exercises the cardio picker offers', () => {
+    // act
+    const conditioning = SAMPLE_EXERCISES.filter((exercise) => exercise.tags.includes('Conditioning'));
+
+    // assert
+    expect(conditioning.map((exercise) => exercise.name)).toEqual([
+      'Wall Sit',
+      'Kettlebell Swing',
+      'Push-Up',
+      'Jumping Jacks',
+      'Burpee',
+      'Mountain Climber',
+      'Squat Jump',
+    ]);
+    for (const exercise of conditioning) {
+      expect(exercise.type).toBe('resistance');
+      expect(['isolation', 'secondary-compound']).toContain(exercise.role);
+      expect(exercise.equipment.every((item) => item === 'Kettlebell')).toBe(true);
+    }
+  });
+
   it('has no two exercises with the same name, ignoring case', () => {
     // act
     const names = SAMPLE_EXERCISES.map((exercise) => exercise.name.trim().toLowerCase());

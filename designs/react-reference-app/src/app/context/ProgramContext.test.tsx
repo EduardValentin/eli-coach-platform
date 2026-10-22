@@ -304,7 +304,7 @@ describe('seeds', () => {
 });
 
 describe('exercise consumers', () => {
-  it('lists one consumer per version with its rows, substitutions and warm-up mobility', () => {
+  it('lists one consumer per version with its rows, substitutions and warm-up exercises', () => {
     // arrange
     renderPrograms('?pseed=two-versions');
     act(() => {
@@ -318,7 +318,7 @@ describe('exercise consumers', () => {
                   ...block,
                   sessions: block.sessions.map(session => ({
                     ...session,
-                    warmUp: { ...session.warmUp, mobilityExerciseIds: ['e17'] },
+                    warmUp: { items: [{ id: 'w', exerciseId: 'e17', sets: 1, seconds: 45 }] },
                   })),
                 },
           ),
