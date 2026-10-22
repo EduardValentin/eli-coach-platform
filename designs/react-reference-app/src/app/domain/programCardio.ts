@@ -110,12 +110,12 @@ export function cardioMinutes(session: CardioSession): number {
   return Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
-function itemAmount(item: RoundsItem): string {
+export function roundsItemAmount(item: RoundsItem): string {
   return item.workSeconds === undefined ? `${item.reps ?? 0} reps` : `${item.workSeconds} s`;
 }
 
 export function roundsText(segment: RoundsSegment, nameOf: (exerciseId: string) => string): string {
-  const items = segment.items.length > 0 ? [segment.items.map(item => `${nameOf(item.exerciseId)} ${itemAmount(item)}`).join(', ')] : [];
+  const items = segment.items.length > 0 ? [segment.items.map(item => `${nameOf(item.exerciseId)} ${roundsItemAmount(item)}`).join(', ')] : [];
   const easy = segment.easySeconds > 0 ? [`${segment.easySeconds} s easy between`] : [];
   const rest = segment.restBetweenRoundsSeconds > 0 ? [`${segment.restBetweenRoundsSeconds} s between rounds`] : [];
   return [`${segment.rounds} rounds`, ...items, ...easy, ...rest].join(' · ');

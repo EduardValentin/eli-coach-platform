@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, setsSummary, setText, uniformSets, workingSets, type Block, type Session, type WorkingSet } from '../../domain/program';
 import { repsSuffix } from '../coach-portal/program/rowFields';
+import { DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 
 type TrackingTableProps = { session: Session; block: Block; exercisesById: ReadonlyMap<string, Exercise> };
@@ -25,11 +26,8 @@ export function TrackingTable({ session, block, exercisesById }: TrackingTablePr
 
   return (
     <div data-print-keep className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs text-text-primary">
-        <caption className="mb-1.5 text-left text-label font-semibold uppercase tracking-wide text-text-secondary">
-          <span className="sr-only">{session.name} · </span>
-          tracking
-        </caption>
+      <table className="w-full border-collapse text-document-table text-text-primary">
+        <caption className="mb-document-tight text-left text-document-body font-semibold text-text-primary">{`Track ${session.name}`}</caption>
         <thead>
           <tr>
             <th scope="col" className={cell}>
@@ -47,7 +45,7 @@ export function TrackingTable({ session, block, exercisesById }: TrackingTablePr
           <tr>
             <td colSpan={2} className={cell} />
             {weeks.map(week => (
-              <th key={week} scope="col" className={`${cell} font-normal text-text-secondary`}>
+              <th key={week} scope="col" className={cn(cell, DOCUMENT_NOTE_CLASS)}>
                 {HINT}
               </th>
             ))}

@@ -30,6 +30,12 @@ const twMerge = extendTailwindMerge({
         'phone-value',
         'public-footer-cta-heading-sm',
         'public-footer-cta-heading-md',
+        'document-title',
+        'document-section',
+        'document-card',
+        'document-body',
+        'document-table',
+        'document-note',
       ],
       radius: [
         'checkbox',
@@ -56,7 +62,8 @@ const twMerge = extendTailwindMerge({
       ],
       tracking: ['label', 'section-eyebrow'],
       leading: ['display-snug'],
-      container: ['reading', 'content', 'portal', 'stage'],
+      container: ['reading', 'content', 'portal', 'stage', 'measure'],
+      spacing: ['document-tight', 'document-gap', 'document-section'],
     },
   },
 });

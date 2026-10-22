@@ -3,6 +3,7 @@ import { useId, type ReactNode } from 'react';
 import { templateText, type TemplateKey } from '../../domain/programTemplates';
 import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { cn } from '../ui/utils';
 import type { ProgramView } from './programView';
 
 export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.';
@@ -30,15 +31,6 @@ export function parseTemplate(text: string): ParsedTemplate {
   const heading = HEADING_LINE.exec(lines[0] ?? '');
   const body = heading ? lines.slice(1) : lines;
   return { title: heading?.[1] ?? '', paragraphs: body.map(paragraphOf) };
-}
-
-export type HeadedText = { heading: string | null; body: string };
-
-export function headedText(text: string): HeadedText {
-  const [first = '', ...rest] = text.trim().split('\n');
-  const match = HEADING_LINE.exec(first.trim());
-  if (!match) return { heading: null, body: text };
-  return { heading: match[1], body: rest.join('\n') };
 }
 
 export function Emphasised({ text }: { text: string }) {
@@ -80,12 +72,14 @@ function Paragraph({ paragraph }: { paragraph: TemplateParagraph }) {
   );
 }
 
-export function TemplateBody({ paragraphs }: { paragraphs: readonly TemplateParagraph[] }) {
+type TemplateBodyProps = { paragraphs: readonly TemplateParagraph[]; className?: string };
+
+export function TemplateBody({ paragraphs, className }: TemplateBodyProps) {
   return (
-    <div className="grid max-w-prose gap-3 text-sm leading-relaxed text-text-primary">
+    <div className={cn('max-w-prose space-y-3 text-sm leading-relaxed text-text-primary', className)}>
       {runsOf(paragraphs).map((run, index) =>
         run.kind === 'list' ? (
-          <ul key={index} className="grid list-disc gap-1.5 pl-5 marker:text-text-label">
+          <ul key={index} className="list-disc space-y-1.5 pl-5 marker:text-text-label">
             {run.items.map(item => (
               <li key={item}>
                 <Emphasised text={item} />

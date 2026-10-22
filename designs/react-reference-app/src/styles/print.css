@@ -51,31 +51,13 @@
     overflow: visible;
   }
 
-  /* Chrome misplaces content after a grid item that fragments across pages, so the
-     document flows as plain blocks in print. */
-  [data-program-document],
-  [data-program-document] section {
-    display: block;
-  }
-
-  [data-program-document] > * + * {
-    margin-top: 8mm;
-  }
-
-  [data-program-document] section > * + * {
-    margin-top: 3mm;
-  }
-
-  [data-program-document] section > section + section {
-    margin-top: 8mm;
-  }
-
   [data-program-document] > header {
     margin-inline: 0;
     padding-inline: 6mm;
   }
 
   [data-program-document] [data-print-keep],
+  [data-program-document] [data-print-heading],
   [data-program-document] [data-print-card] > :not(table),
   [data-program-document] tbody {
     break-inside: avoid;
@@ -83,6 +65,7 @@
 
   [data-program-document] h2,
   [data-program-document] h3,
+  [data-program-document] h4,
   [data-program-document] [data-print-heading] {
     break-after: avoid;
   }

@@ -1,10 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { BLOCK_TYPE_LABELS, currentVersion, formatRange, workingSets } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, currentVersion, formatRange, warmUpItemText, workingSets } from '../../domain/program';
 import type { CycleMode } from '../../domain/cycleMode';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
+import { parseTemplate, template } from './ProgramText';
 import { TrackingTable } from './TrackingTable';
 import { currentBlock, viewOf, type ProgramView } from './programView';
 
@@ -48,7 +49,7 @@ describe('TrackingTable', () => {
     render(<TrackingTable session={session} block={block} exercisesById={view.exercisesById} />);
 
     // assert
-    const table = screen.getByRole('table', { name: `${session.name} · tracking` });
+    const table = screen.getByRole('table', { name: `Track ${session.name}` });
     expect(within(table).getByRole('columnheader', { name: 'Week 1 (calibration)' })).toBeInTheDocument();
     expect(within(table).getByRole('columnheader', { name: 'Week 6' })).toBeInTheDocument();
     expect(within(table).getAllByRole('columnheader', { name: 'kg × reps' })).toHaveLength(6);
@@ -133,7 +134,7 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const week = screen.getByRole('table', { name: 'Your week' });
+    const week = screen.getByRole('table', { name: 'This week' });
     expect(within(week).getAllByRole('columnheader')).toHaveLength(7);
     expect(within(week).getAllByRole('cell')).toHaveLength(7);
   });
@@ -170,7 +171,7 @@ describe('ProgramDocument', () => {
     render(<ProgramDocument view={view} />);
 
     // assert
-    const grid = screen.getByRole('table', { name: `${session.name} · tracking` });
+    const grid = screen.getByRole('table', { name: `Track ${session.name}` });
     const [, , ...body] = within(grid).getAllByRole('row');
     expect(body).toHaveLength(workingCount);
     expect(within(body[0]).getByRole('cell', { name: new RegExp(`^1 · ${formatRange(firstSet.reps)}`) })).toBeInTheDocument();
@@ -203,7 +204,7 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Your plan' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Listening to your cycle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
-    expect(screen.getAllByRole('table', { name: / · tracking$/ })).toHaveLength(sessionCount);
+    expect(screen.getAllByRole('table', { name: /^Track / })).toHaveLength(sessionCount);
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Disclaimer (page 8) — placeholder');
   });
 
@@ -217,6 +218,91 @@ describe('ProgramDocument', () => {
     // assert
     expect(screen.queryByRole('heading', { name: 'Listening to your cycle' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
+  });
+
+  it('titles the block section with the intro template line, never a generic heading as well', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const block = blockOf(view);
+    const { title } = parseTemplate(block.introText || template(view, `block.${block.type}`));
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument();
+    expect(screen.getAllByText(title)).toHaveLength(1);
+    expect(screen.queryByRole('heading', { name: `${BLOCK_TYPE_LABELS[block.type]} block` })).not.toBeInTheDocument();
+  });
+
+  it('titles the split and steps sections with their template lines', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const block = blockOf(view);
+    const split = parseTemplate(block.split.text).title;
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    expect(screen.getByRole('heading', { level: 2, name: split })).toBeInTheDocument();
+    expect(screen.getAllByText(split)).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: `Daily steps: ${block.dailySteps.toLocaleString('en-US')}` })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'This week' })).toBeInTheDocument();
+  });
+
+  it('lists each warm-up exercise with its sets and amount on the session card', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const [session] = blockOf(view).sessions;
+    const lines = session.warmUp.items.map(item => `${view.exercisesById.get(item.exerciseId)?.name} · ${warmUpItemText(item)}`);
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const card = screen.getByRole('region', { name: session.name });
+    expect(lines.length).toBeGreaterThan(0);
+    expect(within(card).getByRole('heading', { level: 4, name: 'Warm-up' })).toBeInTheDocument();
+    const items = within(card).getAllByRole('listitem').map(item => item.textContent);
+    for (const line of lines) expect(items).toContain(line);
+  });
+
+  it('prints the cool-down note and stretches when the cool-down is on', () => {
+    // arrange
+    const view = viewFor('adapted');
+    const [session] = blockOf(view).sessions;
+    const [stretch] = SAMPLE_EXERCISES;
+    session.coolDown = { enabled: true, note: 'Walk easy for five minutes.', items: [{ id: 'cd-1', exerciseId: stretch.id, seconds: 30 }] };
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const card = screen.getByRole('region', { name: session.name });
+    expect(within(card).getByRole('heading', { level: 4, name: 'Cool-down' })).toBeInTheDocument();
+    expect(within(card).getByText('Walk easy for five minutes.')).toBeInTheDocument();
+    expect(within(card).getAllByRole('listitem').map(item => item.textContent)).toContain(`${stretch.name} · 30 s`);
+  });
+
+  it('prints a rounds segment as its rounds, its exercises and the non-zero easy and rest times', () => {
+    // arrange
+    const view = viewFor('adapted', 'two-versions');
+    const cardio = blockOf(view).cardioSessions.find(candidate => candidate.segments.some(segment => segment.kind === 'rounds'));
+    if (!cardio) throw new Error('rounds cardio missing');
+    const rounds = cardio.segments.find(segment => segment.kind === 'rounds');
+    if (rounds?.kind !== 'rounds') throw new Error('rounds segment missing');
+    const [item] = rounds.items;
+
+    // act
+    render(<ProgramDocument view={view} />);
+
+    // assert
+    const card = screen.getByRole('region', { name: cardio.name });
+    expect(within(card).getByText(`${rounds.rounds} rounds`)).toBeInTheDocument();
+    expect(within(card).getAllByRole('listitem').map(entry => entry.textContent)).toContain(`${view.exercisesById.get(item.exerciseId)?.name} · ${item.workSeconds} s`);
+    expect(within(card).getByText(`${rounds.easySeconds} s easy between exercises`)).toBeInTheDocument();
+    expect(within(card).queryByText(/between rounds/)).not.toBeInTheDocument();
   });
 
   it('shows what changed from version 2', () => {

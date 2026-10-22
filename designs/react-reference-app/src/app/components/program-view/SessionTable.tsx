@@ -1,12 +1,14 @@
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { repsSuffix } from '../coach-portal/program/rowFields';
+import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { restLabel } from './programView';
 
 type SessionTableProps = { session: Session; exercisesById: ReadonlyMap<string, Exercise> };
 
-const HEAD_CLASS = 'border-b border-text-primary px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-text-secondary first:pl-0 last:pr-0';
+const HEAD_CLASS = cn(DOCUMENT_LABEL_CLASS, 'border-b border-text-primary px-2 py-1.5 text-left first:pl-0 last:pr-0');
+const LINE_CLASS = cn(DOCUMENT_NOTE_CLASS, 'mt-0.5 block font-normal');
 const CELL_CLASS = 'px-2 py-1 align-top tabular-nums first:pl-0 last:pr-0';
 const NO_VALUE = '—';
 
@@ -44,13 +46,13 @@ function ExerciseRows({ session, row, exercisesById }: ExerciseRowsProps) {
             <>
               <td rowSpan={span} className={cn(CELL_CLASS, 'py-2 font-semibold text-text-primary')}>
                 <span className="block">{positionLabel(session, row)}</span>
-                {isSuperset(session, row) && <span className="block text-xs font-normal text-text-secondary">Superset</span>}
+                {isSuperset(session, row) && <span className={LINE_CLASS}>Superset</span>}
               </td>
               <th scope="rowgroup" rowSpan={span} className={cn(CELL_CLASS, 'py-2 text-left font-normal')}>
                 <span className="block font-semibold text-text-primary">{exercise ? exercise.name : 'Exercise removed'}</span>
-                {row.cues && <span className="mt-0.5 block text-xs text-text-secondary">{row.cues}</span>}
-                {swaps.length > 0 && <span className="mt-0.5 block text-xs text-text-secondary">Swap for: {swaps.join(', ')}</span>}
-                {row.progression.kind === 'custom' && <span className="mt-0.5 block text-xs text-text-secondary">{row.progression.text}</span>}
+                {row.cues && <span className={LINE_CLASS}>{row.cues}</span>}
+                {swaps.length > 0 && <span className={LINE_CLASS}>Swap for: {swaps.join(', ')}</span>}
+                {row.progression.kind === 'custom' && <span className={LINE_CLASS}>{row.progression.text}</span>}
               </th>
             </>
           )}
@@ -72,7 +74,7 @@ function ExerciseRows({ session, row, exercisesById }: ExerciseRowsProps) {
 export function SessionTable({ session, exercisesById }: SessionTableProps) {
   const rows = session.rows.filter(row => row.exerciseId !== '' && row.sets.length > 0);
   return (
-    <table aria-label={`${session.name} exercises`} className="w-full border-collapse text-sm text-text-primary">
+    <table aria-label={`${session.name} exercises`} className="w-full border-collapse text-document-table text-text-primary">
       <colgroup>
         <col className="w-[9%]" />
         <col />

@@ -208,6 +208,19 @@
   --space-4: 0.75rem;
   --space-5: 1rem;
   --space-6: 1.5rem;
+  /* Printed program scale. In print the document root is 10.5pt, so each rem
+     stop lands on a point size: 28 / 16 / 13 / 10.5 / 9.5 / 9 pt and a
+     6 / 12 / 24 pt rhythm. */
+  --font-size-document-title: 2.6667rem;
+  --font-size-document-section: 1.5238rem;
+  --font-size-document-card: 1.2381rem;
+  --font-size-document-body: 1rem;
+  --font-size-document-table: 0.9048rem;
+  --font-size-document-note: 0.8571rem;
+  --space-document-tight: 0.5714rem;
+  --space-document-gap: 1.1429rem;
+  --space-document-section: 2.2857rem;
+  --container-measure: 75ch;
   --space-7: 2rem;
   --space-8: 3rem;
   --space-9: 4rem;
@@ -495,6 +508,22 @@
   --text-value-lg--line-height: 2rem;
   --text-value-lg--font-weight: var(--font-weight-medium);
   --text-value-lg--letter-spacing: -0.025em;
+  --text-document-title: var(--font-size-document-title);
+  --text-document-title--line-height: 1.1;
+  --text-document-section: var(--font-size-document-section);
+  --text-document-section--line-height: 1.25;
+  --text-document-card: var(--font-size-document-card);
+  --text-document-card--line-height: 1.3;
+  --text-document-body: var(--font-size-document-body);
+  --text-document-body--line-height: 1.45;
+  --text-document-table: var(--font-size-document-table);
+  --text-document-table--line-height: 1.35;
+  --text-document-note: var(--font-size-document-note);
+  --text-document-note--line-height: 1.35;
+  --spacing-document-tight: var(--space-document-tight);
+  --spacing-document-gap: var(--space-document-gap);
+  --spacing-document-section: var(--space-document-section);
+  --container-measure: var(--container-measure);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
