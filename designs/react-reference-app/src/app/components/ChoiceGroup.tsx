@@ -9,7 +9,7 @@ import { RadioGroup } from './ui/radio-group';
 import { cn } from './ui/utils';
 
 type ChoiceGroupProps = ComponentPropsWithoutRef<typeof RadioGroup> & {
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
 };
 
 export const ChoiceGroup = forwardRef<
@@ -21,7 +21,7 @@ export const ChoiceGroup = forwardRef<
       ref={ref}
       data-size={size}
       className={cn(
-        'group/choice inline-flex w-full max-w-full flex-wrap rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px] gap-1',
+        'group/choice inline-flex w-full max-w-full flex-wrap rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px] gap-1 data-[size=xs]:gap-0.5',
         className,
       )}
       loop
@@ -41,7 +41,7 @@ export function ChoiceOption({
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        'flex min-w-fit flex-1 h-[calc(var(--size-control-sm)-6px)] group-data-[size=md]/choice:h-[calc(var(--size-control-md)-8px)] items-center justify-center rounded-[calc(var(--radius-field)-3px)] px-3 text-sm font-semibold text-text-secondary whitespace-nowrap outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=checked]:bg-active-surface data-[state=checked]:text-primary-foreground data-[state=checked]:hover:text-primary-foreground disabled:pointer-events-none disabled:opacity-50',
+        'flex min-w-fit flex-1 h-[calc(var(--size-control-sm)-6px)] group-data-[size=md]/choice:h-[calc(var(--size-control-md)-8px)] group-data-[size=xs]/choice:h-[calc(var(--size-control-xs)-8px)] group-data-[size=xs]/choice:px-2 group-data-[size=xs]/choice:text-xs group-data-[size=xs]/choice:font-medium items-center justify-center rounded-[calc(var(--radius-field)-3px)] px-3 text-sm font-semibold text-text-secondary whitespace-nowrap outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=checked]:bg-active-surface data-[state=checked]:text-primary-foreground data-[state=checked]:hover:text-primary-foreground disabled:pointer-events-none disabled:opacity-50',
         className,
       )}
       {...props}

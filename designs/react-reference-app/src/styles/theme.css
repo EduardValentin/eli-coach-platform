@@ -65,17 +65,12 @@
   --training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
   --training-recovery: #00796b;
   --training-recovery-soft: rgba(0, 121, 107, 0.1);
-  --training-lighter: #2563eb;
-  --training-lighter-soft: rgba(37, 99, 235, 0.1);
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
   --training-foundation: #2563eb;
   --training-foundation-soft: rgba(37, 99, 235, 0.1);
   --training-deload: #616161;
   --training-deload-soft: rgba(97, 97, 97, 0.1);
-  /* At or near muscular failure on the reps-in-reserve scale. The scale's other two
-     stops are --metric-energy (moderate reserve) and --training-recovery (ample). */
-  --effort-critical: #DC2626;
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* Categorical tints named by hue */
@@ -208,6 +203,10 @@
   --space-4: 0.75rem;
   --space-5: 1rem;
   --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+  --space-10: 6rem;
   /* Printed program scale. In print the document root is 10.5pt, so each rem
      stop lands on a point size: 28 / 16 / 13 / 10.5 / 9.5 / 9 pt and a
      6 / 12 / 24 pt rhythm. */
@@ -221,10 +220,6 @@
   --space-document-gap: 1.1429rem;
   --space-document-section: 2.2857rem;
   --container-measure: 75ch;
-  --space-7: 2rem;
-  --space-8: 3rem;
-  --space-9: 4rem;
-  --space-10: 6rem;
   --size-public-platform-phone-base: 16.25rem;
   --size-public-platform-phone-sm: 17.5rem;
   --radius-checkbox: 0.25rem;
@@ -327,15 +322,12 @@
   --color-status-pending-soft: var(--status-pending-soft);
   --color-metric-energy: var(--metric-energy);
   --color-metric-energy-soft: var(--metric-energy-soft);
-  --color-effort-critical: var(--effort-critical);
   --color-training-strength: var(--training-strength);
   --color-training-strength-soft: var(--training-strength-soft);
   --color-training-hypertrophy: var(--training-hypertrophy);
   --color-training-hypertrophy-soft: var(--training-hypertrophy-soft);
   --color-training-recovery: var(--training-recovery);
   --color-training-recovery-soft: var(--training-recovery-soft);
-  --color-training-lighter: var(--training-lighter);
-  --color-training-lighter-soft: var(--training-lighter-soft);
   --color-training-rest: var(--training-rest);
   --color-training-rest-soft: var(--training-rest-soft);
   --color-training-foundation: var(--training-foundation);

@@ -2,8 +2,8 @@ import { addDays, differenceInCalendarDays, format } from 'date-fns';
 import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../domain/program';
 import { blockDates, blockStatus, checkpointsWithin, currentPosition, planWeeks } from '../../domain/programCalendar';
 import { formatJourneyDate } from '../../utils/journeyLabels';
+import { HintPopover } from '../HintPopover';
 import { Badge } from '../ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
 
@@ -47,20 +47,19 @@ function todayMarker(blocks: readonly Block[], dayOne: Date | null, today: Date)
 function TodayMarkerLabel({ marker, today }: { marker: TodayMarker; today: Date }) {
   const exact = `${format(today, EXACT_DATE)} · week ${marker.weekOfPlan}`;
   return (
-    <Tooltip>
-      <TooltipTrigger
+    <HintPopover hint={exact} side="bottom" align="center">
+      <button
         type="button"
         aria-label={`Today · ${exact}`}
-        className={cn('absolute top-0 cursor-default rounded-sm text-xs font-semibold whitespace-nowrap text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring', {
+        className={cn('absolute top-0 cursor-default rounded-tile text-xs font-semibold whitespace-nowrap text-text-primary', {
           '-translate-x-1/2': marker.offset >= MARKER_EDGE && marker.offset <= 1 - MARKER_EDGE,
           '-translate-x-full': marker.offset > 1 - MARKER_EDGE,
         })}
         style={{ left: `${marker.offset * 100}%` }}
       >
         {`Today · week ${marker.weekOfPlan}`}
-      </TooltipTrigger>
-      <TooltipContent>{exact}</TooltipContent>
-    </Tooltip>
+      </button>
+    </HintPopover>
   );
 }
 
@@ -80,7 +79,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
         role="group"
         aria-label="Plan timeline"
         tabIndex={0}
-        className="overflow-x-auto px-6 pt-5 pb-3 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
+        className="overflow-x-auto px-6 pt-5 pb-3"
       >
         <div className="relative grid" style={{ minWidth: `${weeks * REM_PER_WEEK}rem` }}>
           {marker && (
@@ -103,7 +102,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
                   style={{ flexGrow: block.weeks, flexBasis: 0 }}
                 >
                   <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-0.5', BLOCK_SWATCH[block.type])} />
-                  <Badge tone="count" className="opacity-100">
+                  <Badge tone="count">
                     {index + 1}
                   </Badge>
                   <span
@@ -135,7 +134,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
               </span>
             ))}
           </div>
-          <ol aria-hidden="true" className="mt-1 flex border-t border-border text-[11px] leading-none tabular-nums text-text-secondary">
+          <ol aria-hidden="true" className="mt-1 flex border-t border-border text-caption leading-none tabular-nums text-text-secondary">
             {Array.from({ length: weeks }, (_, week) => (
               <li key={week} className="relative flex flex-1 justify-center border-l border-border pt-2 last:border-r">
                 {week + 1}

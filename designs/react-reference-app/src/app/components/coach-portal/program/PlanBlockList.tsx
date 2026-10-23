@@ -132,7 +132,7 @@ function BlockRow({ blocks, index, status, dayOne, today, instructionsId, handle
           aria-label={`Reorder ${typeLabel} block`}
           aria-describedby={instructionsId}
           onKeyDown={onHandleKey}
-          className="flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:cursor-grabbing"
+          className="flex size-(--size-control-sm) shrink-0 cursor-grab touch-none items-center justify-center rounded-field text-text-secondary hover:bg-surface-quiet hover:text-text-primary active:cursor-grabbing"
         >
           <GripVertical aria-hidden="true" size={18} />
         </button>

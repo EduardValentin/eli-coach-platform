@@ -12,6 +12,7 @@ import {
 } from '../../../domain/programCardio';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { LABEL_CLASS } from '../../typography';
+import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu';
 import { cn } from '../../ui/utils';
@@ -92,7 +93,7 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
         <h3 id={headingId} className="sr-only">
           {cardio.name}
         </h3>
-        <span className="rounded-field bg-training-recovery-soft px-2 py-0.5 text-xs font-medium text-training-recovery">Cardio</span>
+        <Badge tone="training-recovery">Cardio</Badge>
         <SessionNameInput value={cardio.name} onChange={name => onChange({ ...cardio, name })} />
         {segments.length > 0 && <p className="text-sm text-text-secondary tabular-nums">{`${cardioMinutes(cardio)} min`}</p>}
       </header>

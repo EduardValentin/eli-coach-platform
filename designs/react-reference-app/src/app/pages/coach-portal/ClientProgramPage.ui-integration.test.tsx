@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { format } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -87,7 +87,7 @@ describe('ClientProgramPage', () => {
     expect(within(timeline).getByText('Today · week 1')).toBeInTheDocument();
   });
 
-  it('names the exact date on the today marker and shows it in a tooltip on focus', async () => {
+  it('names the exact date on the today marker and shows it as a hint on focus', async () => {
     // arrange
     const user = userEvent.setup();
     const exact = `${format(new Date(), 'd MMMM yyyy')} · week 1`;
@@ -101,7 +101,7 @@ describe('ClientProgramPage', () => {
 
     // assert
     expect(marker).toHaveFocus();
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(exact);
+    await waitFor(() => expect(marker).toHaveAccessibleDescription(exact));
   });
 
   it('stacks each text the client reads as its own card under its own title, the first one open', async () => {

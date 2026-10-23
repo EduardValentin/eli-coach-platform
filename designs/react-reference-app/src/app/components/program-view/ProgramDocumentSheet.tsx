@@ -16,7 +16,7 @@ export function ProgramDocumentSheet({ view, backTo, backLabel }: ProgramDocumen
           Print or save as PDF
         </Button>
       </div>
-      <main data-program-sheet className="mx-auto max-w-[210mm] overflow-hidden border border-border shadow-sm">
+      <main data-program-sheet className="mx-auto max-w-[210mm] overflow-hidden border border-border shadow-card">
         <ProgramDocument view={view} />
       </main>
     </div>

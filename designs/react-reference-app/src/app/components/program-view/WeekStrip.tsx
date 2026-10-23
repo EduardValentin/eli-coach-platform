@@ -63,8 +63,8 @@ export function WeekStrip({ block, weekStart, today, selected, onSelect }: WeekS
               'flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-control py-2 text-center text-text-secondary transition-colors',
               'hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
               {
-                'bg-surface-inverted text-surface-inverted-foreground hover:bg-surface-inverted': isSelected,
-                'ring-2 ring-brand ring-inset': isToday,
+                'bg-primary text-primary-foreground hover:bg-primary': isSelected,
+                'ring-2 ring-primary ring-inset': isToday,
               },
             )}
           >

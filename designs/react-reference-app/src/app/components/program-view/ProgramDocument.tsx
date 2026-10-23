@@ -23,7 +23,7 @@ const LIST_DASH = /^—\s*/;
 const SECTION_TITLE_CLASS = 'font-serif text-document-section font-semibold text-balance text-text-primary';
 const CARD_TITLE_CLASS = 'text-document-card font-semibold text-text-primary';
 const PROSE_CLASS = 'max-w-measure space-y-document-tight text-document-body';
-const BOX_CLASS = 'rounded-md border border-divider p-document-gap';
+const BOX_CLASS = 'rounded-field border border-divider p-document-gap';
 
 function sessionsPerWeek(block: Block): string {
   const { sessions, cardio } = weekCounts(block);
@@ -92,7 +92,7 @@ function Cover({ view, block }: { view: ProgramView; block: Block | null }) {
         <p>{`Program · Version ${version.number} · ${date}`}</p>
         <p>{`Coach: ${COACH_NAME}`}</p>
         {block && (
-          <p className="inline-flex items-center gap-2 rounded-full border border-divider bg-white px-3 py-0.5 font-medium text-text-primary">
+          <p className="inline-flex items-center gap-2 rounded-full border border-divider bg-surface-base px-3 py-0.5 font-medium text-text-primary">
             <span aria-hidden="true" className={cn('size-2 rounded-full', BLOCK_SWATCH[block.type])} />
             {`${BLOCK_TYPE_LABELS[block.type]} block`}
           </p>
@@ -369,7 +369,7 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
       data-parity-root="ProgramDocument"
       data-program-document
       aria-label={`${view.clientName} program`}
-      className="mx-auto w-full max-w-[210mm] space-y-document-section bg-white px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]"
+      className="mx-auto w-full max-w-[210mm] space-y-document-section bg-surface-base px-4 pb-10 text-document-body text-text-primary sm:px-[16mm] sm:pb-[18mm]"
     >
       <RunningHeader text={`${view.clientName} · Program v${version.number}`} />
       <Cover view={view} block={block} />

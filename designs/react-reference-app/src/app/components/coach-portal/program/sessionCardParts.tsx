@@ -12,7 +12,7 @@ export function CollapsedSessionHeader({ headingId, name, summary, onExpand }: C
         type="button"
         aria-expanded={false}
         onClick={onExpand}
-        className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet"
       >
         <span id={headingId} className="font-serif text-lg text-text-primary">
           {name}

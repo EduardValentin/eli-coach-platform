@@ -22,7 +22,7 @@ import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
-import { SegmentedChoice } from './SegmentedChoice';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 
 export type LibraryType = 'resistance' | 'mobility' | 'stretching' | 'cardio';
 export type LibraryPurpose = {
@@ -158,7 +158,13 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
           </div>
           {purpose && <PurposeChip purpose={purpose} onDismiss={onDismissPurpose} />}
           <SearchField ref={searchRef} size="sm" aria-label="Search exercises" placeholder="Search exercises" value={query} onChange={event => setQuery(event.target.value)} />
-          <SegmentedChoice legend="Exercise type" options={TYPE_OPTIONS} value={type} onChange={setType} />
+          <ChoiceGroup size="xs" aria-label="Exercise type" value={type} onValueChange={value => setType(value as LibraryType)}>
+            {TYPE_OPTIONS.map(option => (
+              <ChoiceOption key={option.value} value={option.value}>
+                {option.label}
+              </ChoiceOption>
+            ))}
+          </ChoiceGroup>
           <div className="grid grid-cols-2 gap-2">
             {type === 'resistance' && (
               <MultiSelect label="Pattern" selected={patterns} options={MOVEMENT_PATTERNS} labels={MOVEMENT_PATTERN_LABELS} onToggle={value => setPatterns(toggled(patterns, value))} />

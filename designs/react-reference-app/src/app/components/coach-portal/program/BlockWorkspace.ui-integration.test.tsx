@@ -216,7 +216,7 @@ describe('BlockWorkspace', () => {
     const user = await openFirstBlock();
     const main = card(/^A /);
     await user.click(within(main).getByRole('button', { name: 'Sets' }));
-    const kind = within(main).getByRole('group', { name: 'Set 3 kind' });
+    const kind = within(main).getByRole('radiogroup', { name: 'Set 3 kind' });
 
     // act
     await user.click(within(kind).getByRole('radio', { name: 'Warm-up' }));

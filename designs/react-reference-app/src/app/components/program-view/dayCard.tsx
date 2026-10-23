@@ -6,7 +6,7 @@ import { cn } from '../ui/utils';
 import { BLOCK_SOFT } from './blockColours';
 
 const KIND_CHIP_CLASS =
-  'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-left text-xs font-medium outline-none hover:shadow-soft focus-visible:ring-[3px] focus-visible:ring-ring/50';
+  'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-left text-xs font-medium outline-none hover:shadow-soft';
 
 export function sessionChipClass(type: BlockType): string {
   return cn(KIND_CHIP_CLASS, BLOCK_SOFT[type], 'text-text-primary');

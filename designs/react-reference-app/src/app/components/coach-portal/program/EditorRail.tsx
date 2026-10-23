@@ -22,7 +22,7 @@ type EditorRailProps = {
 
 type Detail = { text: string; tone: 'muted' | 'warning' | 'default' };
 
-const ENTRY_CLASS = 'w-full rounded-field text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
+const ENTRY_CLASS = 'w-full rounded-field text-left text-sm transition-colors';
 
 function weekSpan(startWeek: number, endWeek: number): string {
   return startWeek === endWeek ? `week ${startWeek}` : `weeks ${startWeek}–${endWeek}`;

@@ -7,6 +7,7 @@ import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEdi
 import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { RowActionsMenu } from '../../RowActionsMenu';
+import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { useIsDesktop } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
@@ -96,7 +97,7 @@ function CollapsedBlockBar({ block, index, status, toggle }: BarProps & { toggle
   return (
     <div className="flex items-center gap-3 py-2 pr-2 pl-4">
       <BlockNumber block={block} index={index} size="md" />
-      <p className="truncate text-base font-semibold text-text-primary">{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</p>
+      <p className={cn(WIDGET_TITLE_CLASS, 'truncate')}>{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</p>
       {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
       <div className="ml-auto">
         <SettingsToggle {...toggle} />

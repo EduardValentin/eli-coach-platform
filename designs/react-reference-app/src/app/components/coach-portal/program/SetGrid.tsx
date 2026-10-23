@@ -6,7 +6,7 @@ import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
 import { RowTextField } from './RowTextField';
 import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
-import { SegmentedChoice } from './SegmentedChoice';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };
 type SetKind = SetSpec['kind'];
@@ -105,12 +105,13 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
                     {index + 1}
                   </th>
                   <td className={cn(CELL_CLASS, 'w-40')}>
-                    <SegmentedChoice
-                      legend={`${label} kind`}
-                      options={KIND_OPTIONS}
-                      value={set.kind}
-                      onChange={kind => changeSet(index, asKind(set, kind, rirForNewWorking))}
-                    />
+                    <ChoiceGroup size="xs" aria-label={`${label} kind`} value={set.kind} onValueChange={kind => changeSet(index, asKind(set, kind as SetKind, rirForNewWorking))}>
+                      {KIND_OPTIONS.map(option => (
+                        <ChoiceOption key={option.value} value={option.value}>
+                          {option.label}
+                        </ChoiceOption>
+                      ))}
+                    </ChoiceGroup>
                   </td>
                   <td className={CELL_CLASS}>
                     <RowTextField

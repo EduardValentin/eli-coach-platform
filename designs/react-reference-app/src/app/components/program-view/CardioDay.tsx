@@ -2,6 +2,7 @@ import { useId } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import type { CardioSegment, CardioSession } from '../../domain/program';
 import { CARDIO_INTENSITY_TEXT, cardioMinutes, roundsText } from '../../domain/programCardio';
+import { WIDGET_TITLE_CLASS } from '../typography';
 import { ColumnBreak, DayHeader } from './DayParts';
 import { exerciseName } from './programView';
 
@@ -15,7 +16,7 @@ function Segment({ segment, exercisesById }: { segment: CardioSegment; exercises
   const amount = segment.kind === 'steady' ? `${segment.minutes} min` : roundsText(segment, nameOf);
   return (
     <li className={SEGMENT_CLASS}>
-      <p className="text-base font-semibold text-text-primary">{title}</p>
+      <p className={WIDGET_TITLE_CLASS}>{title}</p>
       <ColumnBreak />
       <p className="text-sm font-medium text-text-primary tabular-nums">{amount}</p>
       <ColumnBreak />

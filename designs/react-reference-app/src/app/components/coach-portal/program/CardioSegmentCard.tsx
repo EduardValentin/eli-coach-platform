@@ -15,7 +15,7 @@ import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } fro
 import { ExerciseItemList } from './ExerciseItemList';
 import { CountField } from './RowTextField';
 import { parseWholeNumber } from './rowFields';
-import { SegmentedChoice } from './SegmentedChoice';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
 type ItemMeasure = 'reps' | 'seconds';
@@ -55,7 +55,13 @@ function IntensityField({ value, onChange }: { value: CardioIntensity; onChange:
         Intensity
       </span>
       <div className="w-60 max-w-full">
-        <SegmentedChoice legend="Intensity" options={INTENSITY_OPTIONS} value={value} onChange={onChange} />
+        <ChoiceGroup size="xs" aria-label="Intensity" value={value} onValueChange={next => onChange(next as CardioIntensity)}>
+          {INTENSITY_OPTIONS.map(option => (
+            <ChoiceOption key={option.value} value={option.value}>
+              {option.label}
+            </ChoiceOption>
+          ))}
+        </ChoiceGroup>
       </div>
     </div>
   );
@@ -102,7 +108,13 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
             <>
               <CountField className="w-16" label={`${name} ${measure}`} value={amount} onCommit={next => onItem(measuredItem(item, measure, next))} />
               <div className="w-28">
-                <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(measuredItem(item, next, amount))} />
+                <ChoiceGroup size="xs" aria-label={`${name} measured in`} value={measure} onValueChange={next => onItem(measuredItem(item, next as ItemMeasure, amount))}>
+                  {MEASURE_OPTIONS.map(option => (
+                    <ChoiceOption key={option.value} value={option.value}>
+                      {option.label}
+                    </ChoiceOption>
+                  ))}
+                </ChoiceGroup>
               </div>
             </>
           );
@@ -202,7 +214,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />
         <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
-          <Badge tone="tint-cyan">{kindLabel}</Badge>
+          <Badge tone="training-recovery">{kindLabel}</Badge>
           {segment.kind === 'rounds' ? (
             <span className="text-sm text-text-secondary">{itemCount(segment)}</span>
           ) : (

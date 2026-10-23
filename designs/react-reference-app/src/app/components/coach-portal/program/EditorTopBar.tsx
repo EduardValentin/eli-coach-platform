@@ -6,9 +6,10 @@ import type { ProgramVersion } from '../../../domain/program';
 import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from '../../../utils/journeyLabels';
 import { RowActionsMenu } from '../../RowActionsMenu';
+import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
+import { cn } from '../../ui/utils';
 
 type EditorTopBarProps = {
   journey: ClientJourney;
@@ -40,7 +41,7 @@ function draftLine(name: string, version: ProgramVersion, basedOn: ProgramVersio
 function Breadcrumb({ currentTitle, onOverview }: { currentTitle: string | null; onOverview: () => void }) {
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
-      <ol className="flex min-w-0 items-center gap-1 text-base font-semibold text-text-primary">
+      <ol className={cn(WIDGET_TITLE_CLASS, 'flex min-w-0 items-center gap-1')}>
         {currentTitle === null ? (
           <li aria-current="page" className="truncate">
             Overview
@@ -51,7 +52,7 @@ function Breadcrumb({ currentTitle, onOverview }: { currentTitle: string | null;
               <button
                 type="button"
                 onClick={onOverview}
-                className="rounded-tile text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="rounded-tile text-text-secondary transition-colors hover:text-text-primary"
               >
                 Overview
               </button>
@@ -72,15 +73,10 @@ function Breadcrumb({ currentTitle, onOverview }: { currentTitle: string | null;
 function WarningsButton({ count, onClick }: { count: number; onClick: () => void }) {
   const label = `${counted(count, 'thing')} worth a look`;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" aria-label={label} onClick={onClick} className="text-warning tabular-nums">
-          <AlertTriangle aria-hidden="true" />
-          {count}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    <Button variant="ghost" aria-label={label} onClick={onClick} className="text-warning tabular-nums">
+      <AlertTriangle aria-hidden="true" />
+      {count}
+    </Button>
   );
 }
 

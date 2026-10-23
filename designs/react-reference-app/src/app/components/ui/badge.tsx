@@ -31,6 +31,8 @@ const badgeVariants = cva(
           "border-transparent bg-tint-lime-soft text-text-primary [&>svg]:text-text-secondary",
         "tint-cyan":
           "border-transparent bg-tint-cyan-soft text-text-primary [&>svg]:text-text-secondary",
+        "training-recovery":
+          "border-transparent bg-training-recovery-soft text-training-recovery",
         count:
           "rounded-full border-transparent bg-current/12 px-1.5 min-w-5 justify-center text-[11px] font-medium tabular-nums opacity-80",
       },
