@@ -8,8 +8,12 @@ import {
   FindRecipeUseCase,
   ListFoodsUseCase,
   ListRecipesUseCase,
+  OpenRecipePhotoUseCase,
+  RecipePhotoSaving,
   StartRecipeUseCase,
   type NutritionLibraryIncidents,
+  type RecipePhotoRenditions,
+  type RecipePhotoStore,
 } from "@eli-coach-platform/domain/nutrition";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 
@@ -18,6 +22,7 @@ import { RecipeLibraryController } from "~/features/nutrition-library/api/coach/
 import { PostgresFoodLibrary } from "~/features/nutrition-library/data/foods/food-library-repository.server";
 import { RandomFoodIds } from "~/features/nutrition-library/data/foods/random-food-ids.server";
 import { RandomRecipeIds } from "~/features/nutrition-library/data/recipes/random-recipe-ids.server";
+import { RandomRecipePhotoIds } from "~/features/nutrition-library/data/recipes/random-recipe-photo-ids.server";
 import { PostgresRecipeLibrary } from "~/features/nutrition-library/data/recipes/recipe-library-repository.server";
 import { PostgresNutritionTags } from "~/features/nutrition-library/data/tags/nutrition-tags-repository.server";
 
@@ -30,6 +35,8 @@ type NutritionLibraryFeatureHandles = {
   clock: Clock;
   database: DatabaseClient;
   incidents: NutritionLibraryIncidents;
+  photoRenditions: RecipePhotoRenditions;
+  photoStore: RecipePhotoStore;
 };
 
 export function composeNutritionLibraryFeature(
@@ -40,6 +47,12 @@ export function composeNutritionLibraryFeature(
   const tags = new PostgresNutritionTags(handles.database);
   const writeHandles = { clock: handles.clock, incidents: handles.incidents };
   const recipeReads = { recipes, foods: library, tags };
+  const photos = new RecipePhotoSaving({
+    renditions: handles.photoRenditions,
+    ids: new RandomRecipePhotoIds(),
+    store: handles.photoStore,
+    incidents: handles.incidents,
+  });
 
   return {
     foodLibrary: new FoodLibraryController({
@@ -61,8 +74,17 @@ export function composeNutritionLibraryFeature(
         ...recipeReads,
         ...writeHandles,
         ids: new RandomRecipeIds(),
+        photos,
       }),
-      editRecipe: new EditRecipeUseCase({ ...recipeReads, ...writeHandles }),
+      editRecipe: new EditRecipeUseCase({
+        ...recipeReads,
+        ...writeHandles,
+        photos,
+      }),
+      openRecipePhoto: new OpenRecipePhotoUseCase({
+        recipes,
+        store: handles.photoStore,
+      }),
     }),
   };
 }

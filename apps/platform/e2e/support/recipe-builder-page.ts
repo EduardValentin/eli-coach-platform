@@ -1,12 +1,14 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
+import { expectButtonsAlongTopEdgeOf } from "./overlay-bar";
 import { HYDRATION_RETRY_TIMEOUT_MS, escapedPattern } from "./locator-text";
 import { expectMacroTiles, NO_MACROS, type MacroValues } from "./macro-tiles";
 import {
   NUTRITION_TAG_FAMILIES,
   NUTRITION_TAGS,
 } from "./nutrition-tag-families";
+import type { SamplePhoto } from "./sample-photos";
 
 export type RecipeIngredient = {
   food: string;
@@ -40,6 +42,10 @@ const RECIPE_PATH = /\/coach\/nutrition\/recipe-builder\/([^/]+)$/;
 const EMPTY_ZONE =
   "Drag foods here (or use the + on a food) to add ingredients.";
 const TEXT_FIELDS: readonly ProblemField[] = ["Recipe name", "Instructions"];
+const UPLOAD_FAILED =
+  "The upload didn’t go through. Your entries are still here.";
+const SAVE_ROUTE = /\/api\/coach\/recipes(\/[^/.]+)?(\.data)?$/;
+const SERVED_PHOTO = /\/api\/recipes\/[^/]+\/photo\/[^/]+$/;
 const DRAG_HANDLE_POSITION = { x: 6, y: 6 };
 const DRAG_STEPS = 8;
 const BACKDROP_POSITION = { x: 370, y: 420 };
@@ -88,6 +94,46 @@ export class RecipeBuilderPage {
 
   private get saveButton(): Locator {
     return this.page.getByRole("button", { name: "Save recipe" });
+  }
+
+  private get savingButton(): Locator {
+    return this.page.getByRole("button", { name: "Saving…" });
+  }
+
+  private get photoInput(): Locator {
+    return this.page.getByLabel("Recipe photo file input", { exact: true });
+  }
+
+  private get uploadPhotoButton(): Locator {
+    return this.page.getByRole("button", { name: "Upload recipe photo" });
+  }
+
+  private get replacePhotoButton(): Locator {
+    return this.page.getByRole("button", { name: "Replace recipe photo" });
+  }
+
+  private get removePhotoButton(): Locator {
+    return this.page.getByRole("button", { name: "Remove recipe photo" });
+  }
+
+  private get photoControl(): Locator {
+    return this.uploadPhotoButton.or(this.replacePhotoButton);
+  }
+
+  private get uploadFailure(): Locator {
+    return this.main.getByRole("alert").filter({ hasText: UPLOAD_FAILED });
+  }
+
+  private get photoProblem(): Locator {
+    return this.main.getByRole("alert").filter({ hasNotText: UPLOAD_FAILED });
+  }
+
+  private get tryAgainButton(): Locator {
+    return this.main.getByRole("button", { name: "Try again" });
+  }
+
+  private visualOf(name: string): Locator {
+    return this.main.getByRole("img", { name, exact: true });
   }
 
   private get openLibraryButton(): Locator {
@@ -408,6 +454,151 @@ export class RecipeBuilderPage {
 
   async save(): Promise<void> {
     await this.saveButton.click();
+  }
+
+  async attachPhoto(photo: SamplePhoto): Promise<void> {
+    await this.waitUntilInteractive();
+    await this.photoInput.setInputFiles(photo);
+  }
+
+  async replacePhoto(photo: SamplePhoto): Promise<void> {
+    const chooser = this.page.waitForEvent("filechooser");
+    await this.replacePhotoButton.click();
+    await (await chooser).setFiles(photo);
+  }
+
+  async removePhoto(): Promise<void> {
+    await this.removePhotoButton.click();
+  }
+
+  async expectPhotoShown(name: string): Promise<void> {
+    const photo = this.visualOf(name);
+
+    await expect(photo).toBeVisible();
+    await expect
+      .poll(() =>
+        photo.evaluate(
+          (element) =>
+            element instanceof HTMLImageElement &&
+            element.complete &&
+            element.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    await expect(this.replacePhotoButton).toBeEnabled();
+    await expect(this.removePhotoButton).toBeEnabled();
+    await expect(this.uploadPhotoButton).toHaveCount(0);
+  }
+
+  async expectNoPhoto(name: string): Promise<void> {
+    await expect(this.visualOf(name)).toBeVisible();
+    await expect(this.visualOf(name)).not.toHaveJSProperty("tagName", "IMG");
+    await expect(this.uploadPhotoButton).toBeVisible();
+    await expect(this.replacePhotoButton).toHaveCount(0);
+    await expect(this.removePhotoButton).toHaveCount(0);
+  }
+
+  async servedPhotoPath(name: string): Promise<string> {
+    await this.expectPhotoShown(name);
+    const source = await this.visualOf(name).getAttribute("src");
+    const path = source && new URL(source, this.page.url()).pathname;
+
+    if (!path || !SERVED_PHOTO.test(path)) {
+      throw new Error(`${source} is not a served recipe photo.`);
+    }
+
+    return path;
+  }
+
+  async choosePhotoWithKeyboard(photo: SamplePhoto): Promise<void> {
+    await this.waitUntilInteractiveByKeyboard();
+    await tabTo(this.page, this.uploadPhotoButton);
+    const chooser = this.page.waitForEvent("filechooser");
+    await this.page.keyboard.press("Enter");
+    await (await chooser).setFiles(photo);
+  }
+
+  async removePhotoWithKeyboard(): Promise<void> {
+    await tabTo(this.page, this.removePhotoButton);
+    await this.page.keyboard.press("Enter");
+  }
+
+  async expectOverlayBarAlongTopEdgeOf(name: string): Promise<void> {
+    const [preview, replace, remove] = await Promise.all([
+      this.visualOf(name).boundingBox(),
+      this.replacePhotoButton.boundingBox(),
+      this.removePhotoButton.boundingBox(),
+    ]);
+
+    if (!preview || !replace || !remove) {
+      throw new Error("The photo preview, Replace or Remove is not rendered.");
+    }
+
+    expectButtonsAlongTopEdgeOf([replace, remove], preview);
+  }
+
+  async delayNextSave(milliseconds: number): Promise<() => number> {
+    let saves = 0;
+
+    await this.page.route(
+      (url) => SAVE_ROUTE.test(url.pathname),
+      async (route) => {
+        saves += 1;
+        await new Promise((resolve) => setTimeout(resolve, milliseconds));
+        await route.continue();
+      },
+    );
+
+    return () => saves;
+  }
+
+  async expectSaving(): Promise<void> {
+    await expect(this.savingButton).toBeVisible();
+    await expect(this.savingButton).toBeDisabled();
+  }
+
+  async submitWhileSaving(): Promise<void> {
+    await this.nameField.focus();
+    await this.page.keyboard.press("Enter");
+    await this.savingButton.click({ force: true });
+  }
+
+  async expectPhotoProblem(message: string): Promise<void> {
+    await expect(this.photoProblem).toHaveText(message);
+    await expect(this.photoControl).toHaveAttribute("aria-invalid", "true");
+    await expect(this.photoControl).toHaveAccessibleDescription(message);
+  }
+
+  async expectNoPhotoProblem(): Promise<void> {
+    await expect(this.photoProblem).toHaveCount(0);
+    await expect(this.photoControl).not.toHaveAttribute("aria-invalid");
+  }
+
+  async expectFocusOnReplacePhoto(): Promise<void> {
+    await expect(this.replacePhotoButton).toBeFocused();
+  }
+
+  async expectFocusOnUploadPhoto(): Promise<void> {
+    await expect(this.uploadPhotoButton).toBeFocused();
+  }
+
+  async failNextSave(): Promise<void> {
+    await this.page.route(
+      (url) => SAVE_ROUTE.test(url.pathname),
+      (route) => route.abort("failed"),
+      { times: 1 },
+    );
+  }
+
+  async expectUploadFailed(): Promise<void> {
+    await expect(this.uploadFailure).toBeVisible();
+    await expect(this.tryAgainButton).toBeEnabled();
+    await expect(this.savingButton).toHaveCount(0);
+    await this.expectSaveAvailable();
+  }
+
+  async retryUpload(): Promise<void> {
+    await this.tryAgainButton.click();
   }
 
   async cancel(): Promise<void> {

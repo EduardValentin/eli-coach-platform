@@ -24,8 +24,11 @@ const issued = vi.hoisted(() => ({
   queries: [] as { statement: string; values: unknown[] }[],
   failure: null as Error | null,
   videoIds: [] as string[],
+  photoIds: [] as string[],
   filesAtDeletion: [] as string[],
+  photosAtDeletion: [] as string[],
   videoFolder: "",
+  photoFolder: "",
 }));
 
 vi.mock("./database", async () => {
@@ -40,6 +43,13 @@ vi.mock("./database", async () => {
 
         issued.queries.push({ statement, values });
 
+        if (/^\s*select photo_id/.test(statement)) {
+          return {
+            rows: issued.photoIds.map((photoId) => ({ photoId })),
+            rowCount: issued.photoIds.length,
+          };
+        }
+
         if (/^\s*select/.test(statement)) {
           return {
             rows: issued.videoIds.map((videoId) => ({ videoId })),
@@ -49,6 +59,9 @@ vi.mock("./database", async () => {
 
         issued.filesAtDeletion = exists(issued.videoFolder)
           ? readdirSync(issued.videoFolder)
+          : [];
+        issued.photosAtDeletion = exists(issued.photoFolder)
+          ? readdirSync(issued.photoFolder)
           : [];
 
         return { rows: [], rowCount: 2 };
@@ -76,6 +89,8 @@ describe("cleanUpRunLibraries", () => {
   let runId: string;
   let videoRoot: string;
   let videos: string;
+  let photoRoot: string;
+  let photos: string;
   let log: MockInstance;
 
   beforeEach(() => {
@@ -83,12 +98,19 @@ describe("cleanUpRunLibraries", () => {
     videoRoot = mkdtempSync(join(tmpdir(), "exercise-videos-"));
     videos = join(videoRoot, "videos");
     mkdirSync(videos);
+    photoRoot = mkdtempSync(join(tmpdir(), "recipe-photos-"));
+    photos = join(photoRoot, "photos");
+    mkdirSync(photos);
     issued.queries.length = 0;
     issued.failure = null;
     issued.videoIds = [];
+    issued.photoIds = [];
     issued.filesAtDeletion = [];
+    issued.photosAtDeletion = [];
     issued.videoFolder = videos;
+    issued.photoFolder = photos;
     vi.stubEnv("EXERCISE_VIDEO_ROOT", videoRoot);
+    vi.stubEnv("RECIPE_PHOTO_ROOT", photoRoot);
     log = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
@@ -96,6 +118,7 @@ describe("cleanUpRunLibraries", () => {
     log.mockRestore();
     vi.unstubAllEnvs();
     rmSync(videoRoot, { force: true, recursive: true });
+    rmSync(photoRoot, { force: true, recursive: true });
     if (existsSync(registryPathFor(runId))) {
       rmSync(registryPathFor(runId));
     }
@@ -114,6 +137,10 @@ describe("cleanUpRunLibraries", () => {
     expect(issued.queries).toEqual([
       {
         statement: expect.stringMatching(/select video_file_id/),
+        values: [["user_coach_one", "user_coach_two"]],
+      },
+      {
+        statement: expect.stringMatching(/select photo_id/),
         values: [["user_coach_one", "user_coach_two"]],
       },
       {
@@ -177,6 +204,7 @@ describe("cleanUpRunLibraries", () => {
     );
     expect(issued.queries.map(({ statement }) => statement)).toEqual([
       expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/select photo_id/),
       expect.stringMatching(/delete from app\.recipes/),
       expect.stringMatching(/delete from app\.foods/),
       expect.stringMatching(/delete from app\.exercises/),
@@ -197,6 +225,78 @@ describe("cleanUpRunLibraries", () => {
     expect(result).toEqual({ allCleaned: false });
     expect(issued.queries.map(({ statement }) => statement)).toEqual([
       expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/select photo_id/),
+    ]);
+    expect(existsSync(registryPathFor(runId))).toBe(true);
+  });
+
+  it("removes the run's recipe photo files before it deletes their recipes, and only those", async () => {
+    // arrange
+    writeFileSync(join(photos, "photo-of-the-run"), "run");
+    writeFileSync(join(photos, "photo-kept"), "kept");
+    recordCoachAccount("user_coach_one", runId);
+    issued.photoIds = ["photo-of-the-run"];
+
+    // act
+    const result = await cleanUpRunLibraries(runId, "[test]");
+
+    // assert
+    expect(result).toEqual({ allCleaned: true });
+    expect(issued.photosAtDeletion).toEqual(["photo-kept"]);
+    expect(existsSync(join(photos, "photo-kept"))).toBe(true);
+  });
+
+  it("reports only the recipe photo files it actually removed", async () => {
+    // arrange
+    writeFileSync(join(photos, "photo-stored"), "stored");
+    recordCoachAccount("user_coach_one", runId);
+    issued.photoIds = ["photo-stored", "photo-already-gone"];
+
+    // act
+    await cleanUpRunLibraries(runId, "[test]");
+
+    // assert
+    expect(loggedLines(log)).toContain("[test] Recipe photos: removed 1");
+  });
+
+  it("says it skipped the recipe photo files when no photo root is set, and still deletes the recipes, the foods and the exercises", async () => {
+    // arrange
+    vi.stubEnv("RECIPE_PHOTO_ROOT", "");
+    recordCoachAccount("user_coach_one", runId);
+    issued.photoIds = ["photo-of-the-run"];
+
+    // act
+    const result = await cleanUpRunLibraries(runId, "[test]");
+
+    // assert
+    expect(result).toEqual({ allCleaned: true });
+    expect(loggedLines(log)).toContain(
+      "[test] Recipe photos: skipped, RECIPE_PHOTO_ROOT is not set",
+    );
+    expect(issued.queries.map(({ statement }) => statement)).toEqual([
+      expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/select photo_id/),
+      expect.stringMatching(/delete from app\.recipes/),
+      expect.stringMatching(/delete from app\.foods/),
+      expect.stringMatching(/delete from app\.exercises/),
+    ]);
+  });
+
+  it("keeps the recipes, the foods, the exercises and the record for a rerun when a recipe photo file cannot be removed", async () => {
+    // arrange
+    mkdirSync(join(photos, "photo-unremovable"));
+    writeFileSync(join(photos, "photo-unremovable", "part"), "part");
+    recordCoachAccount("user_coach_one", runId);
+    issued.photoIds = ["photo-unremovable"];
+
+    // act
+    const result = await cleanUpRunLibraries(runId, "[test]");
+
+    // assert
+    expect(result).toEqual({ allCleaned: false });
+    expect(issued.queries.map(({ statement }) => statement)).toEqual([
+      expect.stringMatching(/select video_file_id/),
+      expect.stringMatching(/select photo_id/),
     ]);
     expect(existsSync(registryPathFor(runId))).toBe(true);
   });

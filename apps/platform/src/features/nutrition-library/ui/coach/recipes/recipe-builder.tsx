@@ -45,17 +45,26 @@ import {
   recipeFormResolver,
   recipeFormValuesOf,
   recipeMacrosOf,
-  recipeRequestOf,
+  recipeSaveBodyOf,
   refusedFieldsInFocusOrder,
   shownRecipeProblemsOf,
   type RecipeFormValues,
   type RecipeProblemField,
 } from "./recipe-form";
+import {
+  serverPhotoRefusalMessage,
+  UNTOUCHED_PHOTO,
+  type RecipePhotoEntry,
+  type RecipePhotoUpload,
+} from "./recipe-photo-entry";
+import type { RecipePhotoFieldHandle } from "./recipe-photo-field";
 
 const SAVE_FAILED = "We couldn't save the recipe. Try again in a moment.";
 
 const TABBABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+type RefusalShown = "fields" | "photo" | "none";
 
 type RecipeBuilderProps = { view: RecipeBuilderView };
 
@@ -63,6 +72,9 @@ type RecipeSaveOptions = {
   form: UseFormReturn<RecipeFormValues>;
   recipe: RecipeBuilderView["recipe"];
   takenNames: RefObject<readonly string[]>;
+  photo: RecipePhotoEntry;
+  onPhotoChange: (photo: RecipePhotoEntry) => void;
+  photoField: RefObject<RecipePhotoFieldHandle | null>;
 };
 
 export function RecipeBuilder({ view }: RecipeBuilderProps) {
@@ -130,9 +142,32 @@ function useLibraryDrawer() {
   return { open, openLibrary, closeLibrary, openButton, closeButton, drawer };
 }
 
-function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
+function photoUploadOf({
+  saving,
+  chosenFile,
+  failedUpload,
+}: {
+  saving: boolean;
+  chosenFile: File | null;
+  failedUpload: File | null;
+}): RecipePhotoUpload {
+  if (chosenFile === null) return "idle";
+  if (saving) return "sending";
+
+  return chosenFile === failedUpload ? "failed" : "idle";
+}
+
+function useRecipeSave({
+  form,
+  recipe,
+  takenNames,
+  photo,
+  onPhotoChange,
+  photoField,
+}: RecipeSaveOptions) {
   const navigate = useNavigate();
   const sentName = useRef("");
+  const [failedUpload, setFailedUpload] = useState<File | null>(null);
 
   const rememberTakenName = (refused: RecipeProblems) => {
     if (refused.name === "taken") {
@@ -150,30 +185,53 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
     );
   };
 
-  const settleSave = (outcome: SaveOutcome<RecipeProblems>) => {
-    if (outcome.status === "saved") {
-      toast.success(recipe ? "Recipe updated" : "Recipe created");
-      void navigate(outcome.redirectTo);
-      return;
+  const showRefusedPhoto = (refused: RecipeProblems): boolean => {
+    if (refused.photo === undefined || photo.chosen.kind !== "attach") {
+      return false;
     }
 
-    if (outcome.status === "failed") {
-      toast.error(SAVE_FAILED);
-      return;
-    }
+    onPhotoChange({
+      ...photo,
+      problem: serverPhotoRefusalMessage(refused.photo, photo.chosen.file),
+    });
+    return true;
+  };
 
-    rememberTakenName(outcome.problems);
-
+  const showRefusal = (refused: RecipeProblems): RefusalShown => {
     const refusedFields = refusedFieldsInFocusOrder(
-      recipeFieldProblemsOf(outcome.problems),
+      recipeFieldProblemsOf(refused),
     );
+    markRefused(refusedFields);
+    const photoShown = showRefusedPhoto(refused);
 
-    if (refusedFields.length === 0) {
-      toast.error(SAVE_FAILED);
-      return;
+    if (photoShown && refusedFields.length === 0) {
+      photoField.current?.queueReplaceFocus();
     }
 
-    markRefused(refusedFields);
+    if (refusedFields.length > 0) return "fields";
+
+    return photoShown ? "photo" : "none";
+  };
+
+  const settleSave = (outcome: SaveOutcome<RecipeProblems>) => {
+    switch (outcome.status) {
+      case "saved":
+        toast.success(recipe ? "Recipe updated" : "Recipe created");
+        void navigate(outcome.redirectTo);
+        return;
+      case "refused":
+        rememberTakenName(outcome.problems);
+        if (showRefusal(outcome.problems) === "none") toast.error(SAVE_FAILED);
+        return;
+      case "failed":
+        if (photo.chosen.kind === "attach") {
+          setFailedUpload(photo.chosen.file);
+          return;
+        }
+
+        toast.error(SAVE_FAILED);
+        return;
+    }
   };
 
   const { save, saving } = useSaveFetcher({
@@ -187,17 +245,19 @@ function useRecipeSave({ form, recipe, takenNames }: RecipeSaveOptions) {
 
   const submit = form.handleSubmit((submitted) => {
     sentName.current = submitted.name;
-    save(recipeRequestOf(submitted));
+    setFailedUpload(null);
+    save(recipeSaveBodyOf(submitted, photo.chosen));
   });
 
-  if (saving) return { submit, saveState: "saving" as const };
-
-  return {
-    submit,
-    saveState: form.formState.isValid
+  const chosenFile = photo.chosen.kind === "attach" ? photo.chosen.file : null;
+  const photoUpload = photoUploadOf({ saving, chosenFile, failedUpload });
+  const saveState = saving
+    ? ("saving" as const)
+    : form.formState.isValid
       ? ("ready" as const)
-      : ("blocked" as const),
-  };
+      : ("blocked" as const);
+
+  return { submit, saveState, photoUpload };
 }
 
 function RecipeWorkspace({ view }: RecipeBuilderProps) {
@@ -222,7 +282,16 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
     control: form.control,
     name: "ingredients",
   });
-  const { submit, saveState } = useRecipeSave({ form, recipe, takenNames });
+  const photoField = useRef<RecipePhotoFieldHandle>(null);
+  const [photo, setPhoto] = useState<RecipePhotoEntry>(UNTOUCHED_PHOTO);
+  const { submit, saveState, photoUpload } = useRecipeSave({
+    form,
+    recipe,
+    takenNames,
+    photo,
+    onPhotoChange: setPhoto,
+    photoField,
+  });
   const values = form.watch();
   const problems = shownRecipeProblemsOf(form.formState.errors);
   const isDragging = useDragLayer((monitor) => monitor.isDragging());
@@ -261,6 +330,7 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
         onSave={() => void submit()}
         openLibraryRef={library.openButton}
         problem={problems.name}
+        photoUpload={photoUpload}
         saveState={saveState}
       />
 
@@ -282,7 +352,16 @@ function RecipeWorkspace({ view }: RecipeBuilderProps) {
             Recipe builder
           </h1>
 
-          <RecipeVisualChoice form={form} values={values} />
+          <RecipeVisualChoice
+            form={form}
+            onPhotoChange={setPhoto}
+            onRetry={() => void submit()}
+            photo={photo}
+            ref={photoField}
+            photoUpload={photoUpload}
+            stored={recipe?.photo ?? null}
+            values={values}
+          />
           <IngredientZone
             fields={ingredients.fields}
             foods={foods}

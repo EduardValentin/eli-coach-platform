@@ -3,13 +3,11 @@ import type { UploadState } from "@eli-coach-platform/infrastructure/http";
 import {
   Alert,
   AlertAction,
-  Button,
   FileDropzone,
   InlineProblem,
-  MediaRemoveButton,
+  MediaOverlayActions,
   Progress,
 } from "@eli-coach-platform/ui/primitives";
-import { RefreshCw } from "lucide-react";
 import { useEffect, useId, useImperativeHandle, useRef, type Ref } from "react";
 
 import type { ExerciseView } from "~/features/exercise-library/public/exercises";
@@ -181,25 +179,15 @@ export function ExerciseVideoField({
                 preload="metadata"
                 src={shownUrl}
               />
-              <MediaRemoveButton
-                aria-label="Remove video"
-                className="absolute top-2 right-2"
+              <MediaOverlayActions
                 disabled={busy}
-                onClick={remove}
+                onRemove={remove}
+                onReplace={() => replaceInput.current?.click()}
+                replaceProps={problemDescription}
+                replaceRef={replaceButton}
+                subject="video"
               />
             </div>
-            <Button
-              aria-label="Replace video"
-              disabled={busy}
-              onClick={() => replaceInput.current?.click()}
-              ref={replaceButton}
-              size="sm"
-              variant="ghost"
-              {...problemDescription}
-            >
-              <RefreshCw aria-hidden="true" size={16} />
-              Replace
-            </Button>
           </div>
           <VideoUploadProgress upload={upload} />
           {upload.state === "failed" && (

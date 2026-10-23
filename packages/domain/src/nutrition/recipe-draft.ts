@@ -11,6 +11,7 @@ import {
   type TagFamily,
 } from "./nutrition";
 import type { NutritionTag } from "./nutrition-tags";
+import type { RecipePhotoRefusal } from "./recipe-photo";
 
 type RecipeIngredientInput = {
   foodId: string;
@@ -60,13 +61,17 @@ export type RecipeDraftProblems = {
   tagIds?: "unknown";
 };
 
+export type RecipeSaveProblems = RecipeDraftProblems & {
+  photo?: RecipePhotoRefusal;
+};
+
 type RecipeDraftContext = {
   otherNames: readonly string[];
   tags: readonly Pick<NutritionTag, "id" | "family">[];
   pickableFoodIds: readonly string[];
 };
 
-type RecipeDraftResult =
+export type RecipeDraftResult =
   | { status: "valid"; draft: RecipeDraft }
   | { status: "invalid"; problems: RecipeDraftProblems };
 

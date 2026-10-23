@@ -76,6 +76,7 @@ function createUseCase() {
     foodEditFailed: vi.fn(),
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
+    recipePhotoCleanupFailed: vi.fn(),
   } satisfies NutritionLibraryIncidents;
   const useCase = new EditFoodUseCase({
     library,

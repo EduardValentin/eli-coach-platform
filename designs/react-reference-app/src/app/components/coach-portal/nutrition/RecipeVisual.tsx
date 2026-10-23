@@ -23,15 +23,21 @@ export function RecipeVisual({
   className = '',
   iconSize = 28,
 }: RecipeVisualProps) {
-  const [imgFailed, setImgFailed] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
 
-  if (recipe.imageUrl && !imgFailed) {
+  if (recipe.imageUrl && recipe.imageUrl !== failedImageUrl) {
+    const imageUrl = recipe.imageUrl;
+    const markFailed = () => setFailedImageUrl(imageUrl);
+    const markFailedWhenAlreadyBroken = (image: HTMLImageElement | null) => {
+      if (image?.complete && image.naturalWidth === 0) markFailed();
+    };
     return (
       <img
-        src={recipe.imageUrl}
+        ref={markFailedWhenAlreadyBroken}
+        src={imageUrl}
         alt={recipe.name}
         loading="lazy"
-        onError={() => setImgFailed(true)}
+        onError={markFailed}
         className={`object-cover ${className}`}
         data-parity="recipe-visual"
       />

@@ -36,6 +36,9 @@ Object.assign(process.env, {
   EXERCISE_VIDEO_ROOT: fs.mkdtempSync(
     path.join(os.tmpdir(), "eli-coach-platform-lighthouse-exercise-videos-"),
   ),
+  RECIPE_PHOTO_ROOT: fs.mkdtempSync(
+    path.join(os.tmpdir(), "eli-coach-platform-lighthouse-recipe-photos-"),
+  ),
   PORT: "3000",
 });
 

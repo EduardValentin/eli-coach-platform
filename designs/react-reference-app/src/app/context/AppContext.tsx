@@ -44,6 +44,7 @@ import { PROGRAM_SEEDS, type ProgramSeed } from '../services/programSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
+import { RECIPE_PHOTO_UPLOAD_OUTCOMES, type RecipePhotoUpload } from '../services/recipePhotoService';
 import {
   EXERCISE_VIDEO_UPLOAD_OUTCOMES,
   type ExerciseVideoUpload,
@@ -167,6 +168,7 @@ type AppState = {
   foodSeed: FoodSeed;
   foodSave: FoodSaveOutcome;
   recipeSave: RecipeSaveOutcome;
+  recipePhotoUpload: RecipePhotoUpload;
   resourceSeed: ResourceSeed;
   resourceLoad: ResourceLoad;
   resourceUpload: ResourceUpload;
@@ -229,6 +231,7 @@ const defaultState: AppState = {
   foodSeed: 'seeded',
   foodSave: 'ok',
   recipeSave: 'ok',
+  recipePhotoUpload: 'works',
   resourceSeed: 'seeded',
   resourceLoad: 'works',
   resourceUpload: 'works',
@@ -568,6 +571,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('rsave'),
     defaultState.recipeSave,
   );
+  state.recipePhotoUpload = optionOrDefault(
+    RECIPE_PHOTO_UPLOAD_OUTCOMES,
+    params.get('rphoto'),
+    defaultState.recipePhotoUpload,
+  );
   state.resourceSeed = optionOrDefault(
     RESOURCE_SEEDS,
     params.get('rseed'),
@@ -667,6 +675,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('nutseed');
     url.searchParams.delete('fsave');
     url.searchParams.delete('rsave');
+    url.searchParams.delete('rphoto');
     url.searchParams.delete('rseed');
     url.searchParams.delete('rload');
     url.searchParams.delete('rupload');
@@ -816,6 +825,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.recipeSave !== defaultState.recipeSave) {
       url.searchParams.set('rsave', appState.recipeSave);
+    }
+    if (appState.recipePhotoUpload !== defaultState.recipePhotoUpload) {
+      url.searchParams.set('rphoto', appState.recipePhotoUpload);
     }
     if (appState.resourceSeed !== defaultState.resourceSeed) {
       url.searchParams.set('rseed', appState.resourceSeed);

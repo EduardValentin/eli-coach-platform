@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { Check, Dumbbell, Film, RefreshCw, Target } from 'lucide-react';
+import { Check, Dumbbell, Film, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
@@ -45,7 +45,7 @@ import { libraryReturnPath, toggled } from '../../utils/libraryListing';
 import { InlineProblem } from '../../components/InlineProblem';
 import { ChoiceGroup, ChoiceOption } from '../../components/ChoiceGroup';
 import { FileDropzone } from '../../components/FileDropzone';
-import { MediaRemoveButton } from '../../components/MediaRemoveButton';
+import { MediaOverlayActions } from '../../components/MediaOverlayActions';
 import { MultiSelect } from '../../components/MultiSelect';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
@@ -232,26 +232,15 @@ const VideoField = forwardRef<VideoFieldHandle, VideoFieldProps>(function VideoF
                 aria-label="Demo video preview"
                 className="h-full w-full object-contain"
               />
-              <MediaRemoveButton
-                aria-label="Remove video"
+              <MediaOverlayActions
+                subject="video"
                 disabled={busy}
-                onClick={remove}
-                className="absolute top-2 right-2"
+                replaceRef={replaceButton}
+                replaceProps={refusal}
+                onReplace={() => input.current?.click()}
+                onRemove={remove}
               />
             </div>
-            <Button
-              ref={replaceButton}
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label="Replace video"
-              disabled={busy}
-              onClick={() => input.current?.click()}
-              {...refusal}
-            >
-              <RefreshCw aria-hidden="true" />
-              Replace
-            </Button>
           </div>
           <VideoSaveProgress saving={saving} />
           {saving.state === 'failed' && (

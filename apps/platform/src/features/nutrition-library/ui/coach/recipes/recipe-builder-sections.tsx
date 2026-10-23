@@ -19,7 +19,6 @@ import {
   IconChoicePopover,
   InlineProblem,
   Input,
-  ItemVisual,
   Label,
   Legend,
   SearchField,
@@ -51,10 +50,7 @@ import type {
 import { COACH_RECIPES_PATH } from "~/features/nutrition-library/public/paths";
 import { MacroTiles } from "~/features/nutrition-library/ui/shared/macro-tiles";
 import { CATEGORY_DOT } from "~/features/nutrition-library/ui/shared/nutrition-tints";
-import {
-  RECIPE_ICON_APPEARANCE,
-  recipeGlyphOf,
-} from "~/features/nutrition-library/ui/shared/recipe-icons";
+import { RECIPE_ICON_APPEARANCE } from "~/features/nutrition-library/ui/shared/recipe-icons";
 import {
   TAG_FAMILY_APPEARANCE,
   TAG_FAMILY_LABELS,
@@ -65,6 +61,12 @@ import {
   type RecipeFieldProblems,
   type RecipeFormValues,
 } from "./recipe-form";
+import type { RecipePhotoEntry, RecipePhotoUpload } from "./recipe-photo-entry";
+import {
+  RecipePhotoField,
+  type RecipePhotoFieldHandle,
+  type StoredRecipePhoto,
+} from "./recipe-photo-field";
 
 type RecipeForm = UseFormReturn<RecipeFormValues>;
 
@@ -98,6 +100,7 @@ export function BuilderTopBar({
   form,
   problem,
   saveState,
+  photoUpload,
   onSave,
   onOpenLibrary,
   openLibraryRef,
@@ -105,6 +108,7 @@ export function BuilderTopBar({
   form: RecipeForm;
   problem: string | undefined;
   saveState: SaveState;
+  photoUpload: RecipePhotoUpload;
   onSave: () => void;
   onOpenLibrary: () => void;
   openLibraryRef: Ref<HTMLButtonElement>;
@@ -160,14 +164,20 @@ export function BuilderTopBar({
         </Link>
         <Button
           aria-busy={saveState === "saving" || undefined}
-          aria-label="Save recipe"
+          aria-label={photoUpload === "sending" ? "Saving…" : "Save recipe"}
           disabled={saveState !== "ready"}
           onClick={onSave}
           size="sm"
           variant="primary"
         >
-          <Save aria-hidden="true" size={16} />
-          <span className="hidden sm:inline">Save recipe</span>
+          {photoUpload === "sending" ? (
+            "Saving…"
+          ) : (
+            <>
+              <Save aria-hidden="true" size={16} />
+              <span className="hidden sm:inline">Save recipe</span>
+            </>
+          )}
         </Button>
       </div>
     </header>
@@ -332,41 +342,49 @@ export function FoodDragPreview() {
 export function RecipeVisualChoice({
   form,
   values,
+  photo,
+  stored,
+  photoUpload,
+  onPhotoChange,
+  onRetry,
+  ref,
 }: {
   form: RecipeForm;
   values: RecipeFormValues;
+  photo: RecipePhotoEntry;
+  stored: StoredRecipePhoto;
+  photoUpload: RecipePhotoUpload;
+  onPhotoChange: (photo: RecipePhotoEntry) => void;
+  onRetry: () => void;
+  ref?: Ref<RecipePhotoFieldHandle>;
 }) {
   const chosen = values.icon;
 
   return (
-    <div className="mb-4">
-      <div className="relative mb-3 overflow-hidden rounded-card">
-        <ItemVisual
-          className="h-40 w-full rounded-card"
-          data-parity="recipe-visual"
-          icon={recipeGlyphOf(chosen)}
-          iconSize={48}
-          name={values.name.trim() || "Recipe"}
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <IconChoicePopover
-          data-parity="recipe-icon-popover"
-          label="Meal icon"
-          noneLabel="None"
-          onChange={(icon) =>
-            form.setValue("icon", icon, { shouldDirty: true })
-          }
-          options={RECIPE_ICON_CHOICES}
-          triggerLabel={
-            chosen === null
-              ? "Choose icon"
-              : `Icon: ${RECIPE_ICON_APPEARANCE[chosen].label}`
-          }
-          value={chosen}
-        />
-      </div>
-    </div>
+    <RecipePhotoField
+      icon={chosen}
+      name={values.name.trim() || "Recipe"}
+      onChange={onPhotoChange}
+      onRetry={onRetry}
+      photo={photo}
+      ref={ref}
+      stored={stored}
+      upload={photoUpload}
+    >
+      <IconChoicePopover
+        data-parity="recipe-icon-popover"
+        label="Meal icon"
+        noneLabel="None"
+        onChange={(icon) => form.setValue("icon", icon, { shouldDirty: true })}
+        options={RECIPE_ICON_CHOICES}
+        triggerLabel={
+          chosen === null
+            ? "Choose icon"
+            : `Icon: ${RECIPE_ICON_APPEARANCE[chosen].label}`
+        }
+        value={chosen}
+      />
+    </RecipePhotoField>
   );
 }
 

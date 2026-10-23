@@ -20,6 +20,7 @@ const COACH: AccountSnapshot = {
 
 const FOOD_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const RECIPE_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+const PHOTO_ID = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
 
 const OATS_REQUEST = {
   name: "Oats",
@@ -137,6 +138,49 @@ describe("composeNutritionLibraryFeature", () => {
       error: new Error("database down"),
     });
   });
+
+  it("opens a recipe photo by finding its recipe in the recipes table before the photo store", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeNutritionLibraryFeature(handles);
+
+    // act
+    const opening = feature.recipeLibrary.openPhoto(coachArgs(), {
+      recipeId: RECIPE_ID,
+      photoId: PHOTO_ID,
+    });
+
+    // assert
+    await expect(opening).rejects.toThrow("database down");
+    expect(handles.photoStore.open).not.toHaveBeenCalled();
+  });
+
+  it("renders and stores nothing for a recipe creation that could not reach the recipes table", async () => {
+    // arrange
+    const handles = createHandles();
+    const feature = composeNutritionLibraryFeature(handles);
+    const form = new FormData();
+    form.set(
+      "recipe",
+      JSON.stringify({ ...PORRIDGE_REQUEST, photo: "attach" }),
+    );
+    form.set("photo", new File([new Uint8Array([1, 2, 3])], "porridge.jpg"));
+
+    // act
+    const response = await feature.recipeLibrary.create(
+      coachArgs(
+        new Request("https://evoa.fit/api/coach/recipes", {
+          body: form,
+          method: "POST",
+        }),
+      ),
+    );
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(handles.photoRenditions.render).not.toHaveBeenCalled();
+    expect(handles.photoStore.store).not.toHaveBeenCalled();
+  });
 });
 
 function createHandles() {
@@ -148,7 +192,10 @@ function createHandles() {
       foodEditFailed: vi.fn(),
       recipeCreationFailed: vi.fn(),
       recipeEditFailed: vi.fn(),
+      recipePhotoCleanupFailed: vi.fn(),
     },
+    photoRenditions: { render: vi.fn() },
+    photoStore: { store: vi.fn(), open: vi.fn(), remove: vi.fn() },
   };
 }
 

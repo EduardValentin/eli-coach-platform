@@ -4,7 +4,12 @@ import type { FoodFields } from "../support/food-requests";
 import { NO_MACROS } from "../support/macro-tiles";
 import type { RecipeCard } from "../support/nutrition-library-page";
 import type { SavedRecipe } from "../support/recipe-builder-page";
-import type { RecipeFields } from "../support/recipe-requests";
+import {
+  RecipePhotoSamples,
+  storedRecipePhotoIds,
+} from "../support/recipe-photo-files";
+import { type RecipeFields, saladNamed } from "../support/recipe-requests";
+import { readServedPhoto } from "../support/served-photos";
 import {
   setDesktopViewport,
   setPhoneViewport,
@@ -15,6 +20,22 @@ const UNKNOWN_FOOD_ID = "9e8d7c6b-5a49-4382-9716-a5b4c3d2e1f0";
 const NOT_A_FOOD_ID = "not-a-food";
 const UNKNOWN_RECIPE_ID = "1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d";
 const NOT_A_RECIPE_ID = "not-a-recipe";
+const NOT_FOUND = 404;
+const NOT_A_PHOTO_REFUSAL =
+  "bowl.gif is not a .jpg, .png or .webp — only JPEG, PNG and WebP photos are supported";
+const OVER_THE_CAP_REFUSAL = "bowl-large.png is larger than 10 MB";
+const NO_PHOTO_INSIDE_REFUSAL =
+  "bowl-notes.jpg doesn’t contain a JPEG, PNG or WebP photo.";
+
+const recipePhotos = new RecipePhotoSamples();
+
+function photoIdOf(photoPath: string): string {
+  const photoId = photoPath.split("/").pop();
+
+  if (!photoId) throw new Error(`${photoPath} names no photo.`);
+
+  return photoId;
+}
 
 function oatsNamed(name: string): FoodFields {
   return {
@@ -41,18 +62,6 @@ function yoghurtNamed(name: string): FoodFields {
     fat: 5,
     defaultPortionGrams: 150,
     tagIds: [],
-  };
-}
-
-function saladNamed(name: string): RecipeFields {
-  return {
-    name,
-    ingredients: [],
-    prepMinutes: 5,
-    cookMinutes: 10,
-    instructions: "",
-    icon: "salad",
-    tagIds: ["mt-lunch", "di-vegetarian"],
   };
 }
 
@@ -1867,5 +1876,325 @@ test(
 
     // assert
     expect(clientStatuses).toEqual([403, 403]);
+  },
+);
+
+test(
+  "the coach gives a recipe a photo, finds it on the card as one screen-sized WebP without its metadata, and replaces it keeping only the new file",
+  { tag: "@critical" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const name = `Chicken rice bowl ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeBuilder.openNew();
+    await recipeBuilder.enterDetails({ name });
+
+    // act
+    await recipeBuilder.attachPhoto(await recipePhotos.cameraJpeg());
+
+    // assert
+    await recipeBuilder.expectPhotoShown(name);
+    await recipeBuilder.expectNoPhotoProblem();
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe created");
+    await nutritionLibrary.expectRecipePhoto(name);
+    const firstPhoto = await nutritionLibrary.recipePhotoPath(name);
+    const served = await recipeRequests.openPhoto(firstPhoto);
+    expect(served.status).toBe(200);
+    expect(served.headers["content-type"]).toBe("image/webp");
+    expect(await readServedPhoto(served.bytes)).toEqual({
+      format: "webp",
+      width: 1200,
+      height: 900,
+      carriesMetadata: false,
+    });
+    expect(storedRecipePhotoIds()).toContain(photoIdOf(firstPhoto));
+
+    // act
+    await nutritionLibrary.editRecipe(name);
+    await recipeBuilder.expectPhotoShown(name);
+    await recipeBuilder.replacePhoto(await recipePhotos.screenshotPng());
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe updated");
+    const secondPhoto = await nutritionLibrary.recipePhotoPath(name);
+    expect(secondPhoto).not.toBe(firstPhoto);
+    expect(
+      await readServedPhoto(
+        (await recipeRequests.openPhoto(secondPhoto)).bytes,
+      ),
+    ).toEqual({
+      format: "webp",
+      width: 1200,
+      height: 675,
+      carriesMetadata: false,
+    });
+    expect(storedRecipePhotoIds()).toContain(photoIdOf(secondPhoto));
+    expect(storedRecipePhotoIds()).not.toContain(photoIdOf(firstPhoto));
+    expect((await recipeRequests.openPhoto(firstPhoto)).status).toBe(NOT_FOUND);
+  },
+);
+
+test(
+  "the recipe photo refuses a file that is not a JPEG, PNG or WebP photo or one over 10 MB on the spot, keeping what was there",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    signInAsCoach,
+  }) => {
+    // arrange
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeBuilder.openNew();
+    await recipeBuilder.expectNew();
+
+    // act
+    await recipeBuilder.attachPhoto(recipePhotos.notAPhoto());
+
+    // assert
+    await recipeBuilder.expectPhotoProblem(NOT_A_PHOTO_REFUSAL);
+    await recipeBuilder.expectNoPhoto("Recipe");
+
+    // act
+    await recipeBuilder.attachPhoto(recipePhotos.overTheCap());
+
+    // assert
+    await recipeBuilder.expectPhotoProblem(OVER_THE_CAP_REFUSAL);
+    await recipeBuilder.expectNoPhoto("Recipe");
+
+    // act
+    await recipeBuilder.attachPhoto(await recipePhotos.cameraJpeg());
+
+    // assert
+    await recipeBuilder.expectPhotoShown("Recipe");
+    await recipeBuilder.expectNoPhotoProblem();
+
+    // act
+    await recipeBuilder.replacePhoto(recipePhotos.notAPhoto());
+
+    // assert
+    await recipeBuilder.expectPhotoProblem(NOT_A_PHOTO_REFUSAL);
+    await recipeBuilder.expectPhotoShown("Recipe");
+  },
+);
+
+test(
+  "a file that only looks like a photo is refused on save under the visual, and her entries and choice stay",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const name = `Lime rice bowl ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeBuilder.openNew();
+    await recipeBuilder.enterDetails({ name, prepMinutes: "10" });
+    await recipeBuilder.attachPhoto(recipePhotos.textNamedAsPhoto());
+    await recipeBuilder.expectNoPhotoProblem();
+    const storedBefore = storedRecipePhotoIds();
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await recipeBuilder.expectPhotoProblem(NO_PHOTO_INSIDE_REFUSAL);
+    await recipeBuilder.expectFocusOnReplacePhoto();
+    await recipeBuilder.expectStillNew();
+    await recipeBuilder.expectSaveAvailable();
+    expect(storedRecipePhotoIds()).toEqual(storedBefore);
+
+    // act
+    await recipeBuilder.replacePhoto(await recipePhotos.cameraJpeg());
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe created");
+    await nutritionLibrary.expectRecipeCard({
+      name,
+      minutes: "10",
+      macros: NO_MACROS,
+      tags: [],
+    });
+    await nutritionLibrary.expectRecipePhoto(name);
+  },
+);
+
+test(
+  "a failed photo upload tells her so, keeps her entries and the photo, and Try again saves them",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const name = `Salmon sweet potato ${scenarioTag}`;
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeBuilder.openNew();
+    await recipeBuilder.enterDetails({ name, cookMinutes: "25" });
+    await recipeBuilder.attachPhoto(await recipePhotos.screenshotPng());
+    await recipeBuilder.failNextSave();
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await recipeBuilder.expectUploadFailed();
+    await recipeBuilder.expectStillNew();
+    await recipeBuilder.expectPhotoShown(name);
+
+    // act
+    await recipeBuilder.retryUpload();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe created");
+    await nutritionLibrary.expectRecipeCard({
+      name,
+      minutes: "25",
+      macros: NO_MACROS,
+      tags: [],
+    });
+    await nutritionLibrary.expectRecipePhoto(name);
+  },
+);
+
+test(
+  "removing a saved photo leaves the recipe with its icon and deletes the file",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionCoach,
+    recipeBuilder,
+    recipeRequests,
+    scenarioTag,
+    signInAsCoach,
+  }) => {
+    // arrange
+    const salad = saladNamed(`Greek salad ${scenarioTag}`);
+    await provisionCoach();
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeRequests.createWithPhotoAccepted(
+      salad,
+      await recipePhotos.cameraJpeg(),
+    );
+    await nutritionLibrary.openWithTabParam("recipes");
+    const photoPath = await nutritionLibrary.recipePhotoPath(salad.name);
+    await nutritionLibrary.editRecipe(salad.name);
+    await recipeBuilder.expectPhotoShown(salad.name);
+
+    // act
+    await recipeBuilder.removePhoto();
+
+    // assert
+    await recipeBuilder.expectNoPhoto(salad.name);
+    await recipeBuilder.expectFocusOnUploadPhoto();
+
+    // act
+    await recipeBuilder.save();
+
+    // assert
+    await nutritionLibrary.expectTab("Recipes");
+    await nutritionLibrary.expectConfirmation("Recipe updated");
+    await nutritionLibrary.expectRecipeCard(saladCardOf(salad.name));
+    await nutritionLibrary.expectRecipeIcon(salad.name);
+    expect(storedRecipePhotoIds()).not.toContain(photoIdOf(photoPath));
+    expect((await recipeRequests.openPhoto(photoPath)).status).toBe(NOT_FOUND);
+  },
+);
+
+test(
+  "a recipe's photo address answers not found to a signed-out visitor and a signed-in client",
+  { tag: "@completeness" },
+  async ({
+    coachDashboard,
+    nutritionLibrary,
+    page,
+    provisionAccount,
+    provisionCoach,
+    publicNav,
+    recipeRequests,
+    scenarioTag,
+    signIn,
+    signInAsCoach,
+    visitorRecipeRequests,
+  }) => {
+    // arrange
+    const salad = saladNamed(`Caprese salad ${scenarioTag}`);
+    await provisionCoach();
+    await provisionAccount("CLIENT");
+    await page.goto("/store");
+    await signInAsCoach();
+    await coachDashboard.open();
+    await recipeRequests.createWithPhotoAccepted(
+      salad,
+      await recipePhotos.cameraJpeg(),
+    );
+    await nutritionLibrary.openWithTabParam("recipes");
+    const photoPath = await nutritionLibrary.recipePhotoPath(salad.name);
+    expect((await recipeRequests.openPhoto(photoPath)).status).toBe(200);
+    await page.goto("/");
+    await publicNav.signOut();
+
+    // act
+    const visitor = await visitorRecipeRequests.openPhoto(photoPath);
+
+    // assert
+    expect(visitor.status).toBe(NOT_FOUND);
+
+    // arrange
+    await page.goto("/store");
+    await signIn();
+
+    // act
+    const client = await recipeRequests.openPhoto(photoPath);
+
+    // assert
+    expect(client.status).toBe(NOT_FOUND);
   },
 );

@@ -3,6 +3,7 @@ import type { CyclePhase } from './CycleContext';
 import { phaseForDate } from './CycleContext';
 import { useAppState } from './AppContext';
 import { foodsForSeed, recipesForSeed } from '../services/foodSamples';
+import { RecipePhotoServer, type RecipePhotoAnswer } from '../services/recipePhotoService';
 import { computeRecipeMacros } from '../domain/recipes';
 import type { RecipeIcon } from '../components/coach-portal/nutrition/recipe-icons';
 import {
@@ -76,7 +77,7 @@ export interface Recipe {
   mealRoleIds: string[]; // meal-time tag ids (a recipe's role: breakfast/lunch/…)
   tagIds: string[];      // cycle-phase / nutrient / dietary tag ids
   macroOverride?: RecipeMacros;
-  imageUrl?: string;     // data-URL from client-side FileReader (mocked, no backend)
+  imageUrl?: string;
   icon?: RecipeIcon;     // meal-type icon shown when no imageUrl is set
   archivedAt?: string;
 }
@@ -432,6 +433,7 @@ interface NutritionContextType {
   getRecipe(id: string): Recipe | undefined;
   addRecipe(input: Omit<Recipe, 'id'>): Recipe;
   updateRecipe(id: string, patch: Partial<Omit<Recipe, 'id'>>): void;
+  uploadRecipePhoto(file: File): Promise<RecipePhotoAnswer>;
   archiveRecipe(id: string): void;
   restoreRecipe(id: string): Recipe;
   deleteRecipe(id: string): LibraryDeletion;
@@ -466,6 +468,11 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setFoods(foodsForSeed(appState.foodSeed));
     setRecipes(recipesForSeed(appState.foodSeed));
   }, [appState.foodSeed]);
+  const [photoServer] = useState(() => new RecipePhotoServer());
+
+  useEffect(() => {
+    photoServer.releaseHeldUploads(appState.recipePhotoUpload);
+  }, [photoServer, appState.recipePhotoUpload]);
   const [tags] = useState<Tag[]>(MOCK_TAGS);
   const [equivalenceGroups, setEquivalenceGroups] = useState<EquivalenceGroup[]>(MOCK_EQUIVALENCE_GROUPS);
   const [plans, setPlans] = useState<ClientNutritionPlan[]>(MOCK_PLANS);
@@ -630,6 +637,8 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch, id } : r)));
   };
 
+  const uploadRecipePhoto = (file: File) => photoServer.upload(file, { outcome: appState.recipePhotoUpload });
+
   const archiveRecipe = (id: string) => {
     setRecipes((prev) => prev.map((r) => (r.id === id ? archivedItem(r, new Date()) : r)));
   };
@@ -711,7 +720,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         getFood, addFood, updateFood, archiveFood, restoreFood, deleteFood, getFoodUsage,
         addFoodTag, removeFoodTag,
         addEquivalenceGroup, assignFoodToGroup,
-        recipes, getRecipe, addRecipe, updateRecipe, archiveRecipe, restoreRecipe, deleteRecipe, getRecipeUsage,
+        recipes, getRecipe, addRecipe, updateRecipe, uploadRecipePhoto, archiveRecipe, restoreRecipe, deleteRecipe, getRecipeUsage,
         getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, saveDay, copyDayToPhase, setPhaseTargetOverride,
         setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative, setSlotSelection,
         setPreferences, markBlockComplete, carryOverBlock,

@@ -1,3 +1,4 @@
+import { joinBasePath } from "@eli-coach-platform/config";
 import { cn, LABEL_CLASS } from "@eli-coach-platform/ui/lib";
 import {
   cardVariants,
@@ -39,6 +40,14 @@ export function RecipeCard({ recipe, tags }: RecipeCardProps) {
         data-parity="recipe-visual"
         icon={recipeGlyphOf(recipe.icon)}
         name={recipe.name}
+        photo={
+          recipe.photo === null
+            ? undefined
+            : {
+                src: joinBasePath(import.meta.env.BASE_URL, recipe.photo.path),
+                alt: recipe.name,
+              }
+        }
       />
       <div className="flex flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">

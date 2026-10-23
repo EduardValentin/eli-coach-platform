@@ -1,6 +1,7 @@
 import type { APIRequestContext } from "@playwright/test";
 
 import { answerOf, type ApiAnswer } from "./api-answers";
+import type { SamplePhoto } from "./sample-photos";
 
 type RecipeIngredientFields = {
   foodId: string;
@@ -17,6 +18,26 @@ export type RecipeFields = {
   icon: string | null;
   tagIds: readonly string[];
 };
+
+export type ServedRecipePhoto = {
+  status: number;
+  headers: Readonly<Record<string, string>>;
+  bytes: Buffer;
+};
+
+const LUNCH_AND_VEGETARIAN_TAG_IDS = ["mt-lunch", "di-vegetarian"];
+
+export function saladNamed(name: string): RecipeFields {
+  return {
+    name,
+    ingredients: [],
+    prepMinutes: 5,
+    cookMinutes: 10,
+    instructions: "",
+    icon: "salad",
+    tagIds: LUNCH_AND_VEGETARIAN_TAG_IDS,
+  };
+}
 
 const RECIPES_PATH = "/api/coach/recipes";
 
@@ -37,6 +58,43 @@ export class RecipeRequests {
         `Creating ${fields.name} answered ${answer.status}: ${JSON.stringify(answer.body)}.`,
       );
     }
+  }
+
+  async createWithPhoto(
+    fields: RecipeFields,
+    photo: SamplePhoto,
+  ): Promise<ApiAnswer> {
+    return answerOf(
+      await this.request.post(RECIPES_PATH, {
+        multipart: {
+          recipe: JSON.stringify({ ...fields, photo: "attach" }),
+          photo,
+        },
+      }),
+    );
+  }
+
+  async createWithPhotoAccepted(
+    fields: RecipeFields,
+    photo: SamplePhoto,
+  ): Promise<void> {
+    const answer = await this.createWithPhoto(fields, photo);
+
+    if (answer.status !== SAVED) {
+      throw new Error(
+        `Creating ${fields.name} with a photo answered ${answer.status}: ${JSON.stringify(answer.body)}.`,
+      );
+    }
+  }
+
+  async openPhoto(photoPath: string): Promise<ServedRecipePhoto> {
+    const response = await this.request.get(photoPath);
+
+    return {
+      status: response.status(),
+      headers: response.headers(),
+      bytes: await response.body(),
+    };
   }
 
   async edit(recipeId: string, fields: RecipeFields): Promise<ApiAnswer> {

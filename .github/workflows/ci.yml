@@ -29,13 +29,13 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@v6.1.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -84,13 +84,13 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@v6.1.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -144,11 +144,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.3.0
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Build and push platform image
         id: build_platform
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: docker/Dockerfile.react-router
@@ -168,7 +168,7 @@ jobs:
 
       - name: Build and push migration image
         id: build_migration
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: docker/Dockerfile.db-migrations
@@ -183,7 +183,7 @@ jobs:
 
       - name: Build and push design reference image
         id: build_design_reference
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: docker/Dockerfile.design-reference
@@ -200,7 +200,7 @@ jobs:
 
       - name: Build and push Postgres runtime image
         id: build_postgres_runtime
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: docker/Dockerfile.postgres-runtime
@@ -245,7 +245,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload image refs artifact
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: image-refs-${{ github.sha }}
           path: image-refs.json
@@ -325,10 +325,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.3.0
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Build image for scan
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: ${{ steps.image.outputs.dockerfile }}
@@ -389,7 +389,7 @@ jobs:
           echo "edge_hostname=${TEST_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
 
       - name: Connect to Tailscale
-        uses: tailscale/github-action@780049a30b6ff5c378a9e7b389d15ece7a204888
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}

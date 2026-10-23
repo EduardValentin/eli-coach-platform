@@ -234,6 +234,57 @@ describe('DevToggle exercise video upload', () => {
   });
 });
 
+describe('DevToggle recipe photo upload', () => {
+  it('drives the recipe photo save through, holds it, fails it or has the server refuse it', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Recipe photo upload' }));
+
+    // assert
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Works',
+      'Holds',
+      'Fails',
+      'Refused',
+    ]);
+  });
+
+  it('keeps the chosen outcome in the address so the state can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+    await user.click(screen.getByRole('combobox', { name: 'Recipe photo upload' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'Holds' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Recipe photo upload' })).toHaveTextContent('Holds');
+    expect(new URLSearchParams(window.location.search).get('rphoto')).toBe('holds');
+  });
+
+  it('reads the outcome from a shared address', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?rphoto=refused');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Exercises' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Recipe photo upload' })).toHaveTextContent('Refused');
+    expect(new URLSearchParams(window.location.search).get('rphoto')).toBe('refused');
+  });
+});
+
 describe('DevToggle resource opening', () => {
   it('keeps a failing opening in the address so the state can be shared', async () => {
     // arrange

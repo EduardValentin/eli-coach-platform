@@ -7,11 +7,19 @@ import type { NutritionTag } from "./nutrition-tags";
 import { Recipe } from "./recipe";
 import type { RecipeDraftInput } from "./recipe-draft";
 import type { RecipeAddition } from "./recipe-library";
+import { MAX_RECIPE_PHOTO_BYTES, type RecipePhotoChoice } from "./recipe-photo";
+import type { RecipePhotoRendition } from "./recipe-photo-renditions";
+import { RecipePhotoSaving } from "./recipe-photo-saving";
 
 const STORED_AT = new Date("2026-10-13T09:00:00.000Z");
 const NOW = new Date("2026-10-14T09:00:00.000Z");
 const COACH_ACCOUNT_ID = "coach-account-1";
 const OTHER_COACH_ACCOUNT_ID = "coach-account-2";
+const PHOTO_ID = "7a1b0000-0000-4000-8000-000000000001";
+const RECEIVED_PHOTO = new Uint8Array([0xff, 0xd8, 0xff]);
+const RENDERED_PHOTO = new Uint8Array([0x52, 0x49, 0x46, 0x46]);
+const KEEP: RecipePhotoChoice = { kind: "keep" };
+const ATTACH: RecipePhotoChoice = { kind: "attach", bytes: RECEIVED_PHOTO };
 
 const TAGS: NutritionTag[] = [
   { id: "mt-breakfast", family: "meal-time", label: "Breakfast", order: 1 },
@@ -49,6 +57,7 @@ function recipeCalled(id: string, name: string, ownerAccountId: string) {
     icon: null,
     mealRoleIds: [],
     tagIds: [],
+    photo: null,
     archivedAt: null,
     createdAt: STORED_AT,
     updatedAt: STORED_AT,
@@ -87,7 +96,7 @@ function createUseCase() {
         (recipe) => recipe.toSnapshot().ownerAccountId === ownerAccountId,
       ),
     ),
-    add: vi.fn(async (): Promise<RecipeAddition> => "added"),
+    add: vi.fn(async (_recipe: Recipe): Promise<RecipeAddition> => "added"),
   };
   const foods = {
     list: vi.fn(async (ownerAccountId: string) =>
@@ -102,7 +111,18 @@ function createUseCase() {
     foodEditFailed: vi.fn(),
     recipeCreationFailed: vi.fn(),
     recipeEditFailed: vi.fn(),
+    recipePhotoCleanupFailed: vi.fn(),
   } satisfies NutritionLibraryIncidents;
+  const renditions = {
+    render: vi.fn(async (): Promise<RecipePhotoRendition> => ({
+      status: "rendered",
+      bytes: RENDERED_PHOTO,
+    })),
+  };
+  const photoStore = {
+    store: vi.fn(async (_photoId: string, _bytes: Uint8Array) => undefined),
+    remove: vi.fn(async (_photoId: string) => undefined),
+  };
   const useCase = new CreateRecipeUseCase({
     recipes,
     foods,
@@ -110,9 +130,15 @@ function createUseCase() {
     ids: { generate: () => "recipe-3" },
     clock: { now: () => NOW },
     incidents,
+    photos: new RecipePhotoSaving({
+      renditions,
+      ids: { generate: () => PHOTO_ID },
+      store: photoStore,
+      incidents,
+    }),
   });
 
-  return { useCase, recipes, foods, tags, incidents };
+  return { useCase, recipes, foods, tags, incidents, renditions, photoStore };
 }
 
 describe("CreateRecipeUseCase", () => {
@@ -123,6 +149,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: PORRIDGE,
     });
 
@@ -141,6 +168,7 @@ describe("CreateRecipeUseCase", () => {
       icon: "pot",
       mealRoleIds: ["mt-breakfast"],
       tagIds: ["di-vegetarian"],
+      photo: null,
       archivedAt: null,
       createdAt: NOW,
       updatedAt: NOW,
@@ -156,6 +184,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: { ...PORRIDGE, ingredients: [] },
     });
 
@@ -171,6 +200,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: { ...PORRIDGE, name: " ", cookMinutes: 10_000 },
     });
 
@@ -194,6 +224,7 @@ describe("CreateRecipeUseCase", () => {
       // act
       const result = await useCase.execute({
         ownerAccountId: COACH_ACCOUNT_ID,
+        photo: KEEP,
         draft: {
           ...PORRIDGE,
           ingredients: [
@@ -219,6 +250,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: { ...PORRIDGE, name: " OMELETTE  " },
     });
 
@@ -234,6 +266,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: { ...PORRIDGE, name: "pancakes" },
     });
 
@@ -250,6 +283,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: PORRIDGE,
     });
 
@@ -266,6 +300,7 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: PORRIDGE,
     });
 
@@ -286,11 +321,139 @@ describe("CreateRecipeUseCase", () => {
     // act
     const result = await useCase.execute({
       ownerAccountId: COACH_ACCOUNT_ID,
+      photo: KEEP,
       draft: PORRIDGE,
     });
 
     // assert
     expect(result).toEqual({ status: "failed" });
+    expect(incidents.recipeCreationFailed).toHaveBeenCalledWith({
+      error: failure,
+    });
+  });
+
+  it("stores the rendition of the photo she attached under a new photo id and adds the recipe holding it", async () => {
+    // arrange
+    const { useCase, recipes, renditions, photoStore } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: PORRIDGE,
+      photo: ATTACH,
+    });
+
+    // assert
+    expect(result.status).toBe("created");
+    expect(renditions.render).toHaveBeenCalledExactlyOnceWith(RECEIVED_PHOTO);
+    expect(photoStore.store).toHaveBeenCalledExactlyOnceWith(
+      PHOTO_ID,
+      RENDERED_PHOTO,
+    );
+    expect(recipes.add.mock.calls[0]?.[0].toSnapshot().photo).toEqual({
+      photoId: PHOTO_ID,
+    });
+    expect(photoStore.remove).not.toHaveBeenCalled();
+  });
+
+  it.each<RecipePhotoChoice>([{ kind: "keep" }, { kind: "remove" }])(
+    "adds a recipe without a photo for a $kind choice, rendering and storing nothing",
+    async (photo) => {
+      // arrange
+      const { useCase, recipes, renditions, photoStore } = createUseCase();
+
+      // act
+      const result = await useCase.execute({
+        ownerAccountId: COACH_ACCOUNT_ID,
+        draft: PORRIDGE,
+        photo,
+      });
+
+      // assert
+      expect(result.status).toBe("created");
+      expect(recipes.add.mock.calls[0]?.[0].photo).toBeNull();
+      expect(renditions.render).not.toHaveBeenCalled();
+      expect(photoStore.store).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses a photo the renderer cannot read, storing nothing and adding nothing", async () => {
+    // arrange
+    const { useCase, recipes, renditions, photoStore } = createUseCase();
+    renditions.render.mockResolvedValueOnce({ status: "refused" });
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: PORRIDGE,
+      photo: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { photo: "unsupported" },
+    });
+    expect(photoStore.store).not.toHaveBeenCalled();
+    expect(recipes.add).not.toHaveBeenCalled();
+  });
+
+  it("names a photo over 10 MB beside the draft's own problems, storing nothing", async () => {
+    // arrange
+    const { useCase, recipes, photoStore } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: { ...PORRIDGE, name: " " },
+      photo: {
+        kind: "attach",
+        bytes: new Uint8Array(MAX_RECIPE_PHOTO_BYTES + 1),
+      },
+    });
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: { name: "missing", photo: "too-large" },
+    });
+    expect(photoStore.store).not.toHaveBeenCalled();
+    expect(recipes.add).not.toHaveBeenCalled();
+  });
+
+  it("removes the stored photo when the library finds the name taken meanwhile", async () => {
+    // arrange
+    const { useCase, recipes, photoStore } = createUseCase();
+    recipes.add.mockResolvedValueOnce("name-taken");
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: PORRIDGE,
+      photo: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "invalid", problems: { name: "taken" } });
+    expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(PHOTO_ID);
+  });
+
+  it("removes the stored photo when the write fails and answers that the creation failed", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const { useCase, recipes, photoStore, incidents } = createUseCase();
+    recipes.add.mockRejectedValueOnce(failure);
+
+    // act
+    const result = await useCase.execute({
+      ownerAccountId: COACH_ACCOUNT_ID,
+      draft: PORRIDGE,
+      photo: ATTACH,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "failed" });
+    expect(photoStore.remove).toHaveBeenCalledExactlyOnceWith(PHOTO_ID);
     expect(incidents.recipeCreationFailed).toHaveBeenCalledWith({
       error: failure,
     });

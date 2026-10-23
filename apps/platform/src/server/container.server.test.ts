@@ -18,6 +18,9 @@ const clientResourceRoot = mkdtempSync(
 const exerciseVideoRoot = mkdtempSync(
   join(tmpdir(), "eli-coach-exercise-videos-container-unit-"),
 );
+const recipePhotoRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-recipe-photos-container-unit-"),
+);
 
 function createRuntimeEnvironmentWithoutDatabase() {
   return loadRuntimeEnvironment({
@@ -30,6 +33,7 @@ function createRuntimeEnvironmentWithoutDatabase() {
     STORE_ASSET_ROOT: storeAssetRoot,
     CLIENT_RESOURCE_ROOT: clientResourceRoot,
     EXERCISE_VIDEO_ROOT: exerciseVideoRoot,
+    RECIPE_PHOTO_ROOT: recipePhotoRoot,
   });
 }
 
@@ -38,6 +42,7 @@ describe("platform container", () => {
     await rm(storeAssetRoot, { force: true, recursive: true });
     await rm(clientResourceRoot, { force: true, recursive: true });
     await rm(exerciseVideoRoot, { force: true, recursive: true });
+    await rm(recipePhotoRoot, { force: true, recursive: true });
   });
 
   afterEach(() => {
@@ -93,6 +98,7 @@ describe("platform container", () => {
     vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);
     vi.stubEnv("CLIENT_RESOURCE_ROOT", clientResourceRoot);
     vi.stubEnv("EXERCISE_VIDEO_ROOT", exerciseVideoRoot);
+    vi.stubEnv("RECIPE_PHOTO_ROOT", recipePhotoRoot);
     vi.resetModules();
     const { getPlatformContainer } = await import("./container.server");
 

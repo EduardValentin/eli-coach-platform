@@ -45,4 +45,8 @@ export const nutritionLibraryApiRoutes = [
     "./api/recipes/recipes.ts",
   ),
   route(NUTRITION_LIBRARY_API_PATHS.recipe.slice(1), "./api/recipes/recipe.ts"),
+  route(
+    NUTRITION_LIBRARY_API_PATHS.recipePhoto.slice(1),
+    "./api/recipes/recipe-photo.ts",
+  ),
 ];

@@ -5,6 +5,7 @@ import {
 } from "@eli-coach-platform/config";
 import { RESOURCE_RENDITIONS } from "@eli-coach-platform/domain/client-resources";
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
+import { RECIPE_PHOTO_RENDITION } from "@eli-coach-platform/domain/nutrition";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
@@ -16,6 +17,7 @@ import {
   createClientResourceStore,
   createExerciseVideoStore,
   createProgressPhotoStore,
+  createRecipePhotoStore,
 } from "@eli-coach-platform/infrastructure/private-files/server";
 import {
   createExerciseVideoFormatDetector,
@@ -27,6 +29,7 @@ import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/id
 import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
 import {
   createProgressPhotoRenditions,
+  createRecipePhotoRenditions,
   createResourceImagePages,
 } from "@eli-coach-platform/infrastructure/images/server";
 import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
@@ -151,6 +154,8 @@ export function createPlatformContainer(options: {
     clock,
     database: database.client,
     incidents,
+    photoRenditions: createRecipePhotoRenditions(RECIPE_PHOTO_RENDITION),
+    photoStore: createRecipePhotoStore(environment.RECIPE_PHOTO_ROOT),
   });
   const waitlist = composeWaitlistFeature({
     botVerifier,

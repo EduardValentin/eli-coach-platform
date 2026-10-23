@@ -266,8 +266,8 @@ Prerequisites:
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
   start the relay.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`,
-  `STORE_ASSET_ROOT`, `CLIENT_MEDIA_ROOT`, `CLIENT_RESOURCE_ROOT` and `EXERCISE_VIDEO_ROOT` included — `pnpm secrets:local:prepare`,
-  `pnpm store:assets:local:prepare`, `pnpm client:media:local:prepare`, `pnpm client:resources:local:prepare` and `pnpm exercise:videos:local:prepare` provide them. A `.env` predating one of
+  `STORE_ASSET_ROOT`, `CLIENT_MEDIA_ROOT`, `CLIENT_RESOURCE_ROOT`, `EXERCISE_VIDEO_ROOT` and `RECIPE_PHOTO_ROOT` included — `pnpm secrets:local:prepare`,
+  `pnpm store:assets:local:prepare`, `pnpm client:media:local:prepare`, `pnpm client:resources:local:prepare`, `pnpm exercise:videos:local:prepare` and `pnpm recipe:photos:local:prepare` provide them. A `.env` predating one of
   them fails as `Timed out waiting 120000ms from config.webServer`, which
   names neither the variable nor the schema; the `ZodError` that explains it
   is further up, in the `[WebServer]` output.

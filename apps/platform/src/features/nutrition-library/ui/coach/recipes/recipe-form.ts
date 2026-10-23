@@ -17,10 +17,13 @@ import type {
   FoodView,
   NutritionTagView,
 } from "~/features/nutrition-library/public/foods";
-import type {
-  RecipeBuilderView,
-  RecipeRequest,
+import {
+  RECIPE_FORM_FIELDS,
+  type RecipeBuilderView,
+  type RecipeRequest,
 } from "~/features/nutrition-library/public/recipes";
+
+import type { ChosenRecipePhoto } from "./recipe-photo-entry";
 
 type SavedRecipe = NonNullable<RecipeBuilderView["recipe"]>;
 
@@ -116,7 +119,7 @@ export function recipeFormValuesOf(recipe: SavedRecipe): RecipeFormValues {
   };
 }
 
-export function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
+function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
   const amountOf = (entered: string) =>
     entered.trim() === "" ? 0 : Number(entered);
 
@@ -133,6 +136,24 @@ export function recipeRequestOf(values: RecipeFormValues): RecipeRequest {
     icon: values.icon,
     tagIds: [...values.tagIds],
   };
+}
+
+export function recipeSaveBodyOf(
+  values: RecipeFormValues,
+  photo: ChosenRecipePhoto,
+): RecipeRequest | FormData {
+  const request: RecipeRequest = {
+    ...recipeRequestOf(values),
+    photo: photo.kind,
+  };
+
+  if (photo.kind !== "attach") return request;
+
+  const formData = new FormData();
+  formData.append(RECIPE_FORM_FIELDS.recipe, JSON.stringify(request));
+  formData.append(RECIPE_FORM_FIELDS.photo, photo.file);
+
+  return formData;
 }
 
 export function recipeMacrosOf(
