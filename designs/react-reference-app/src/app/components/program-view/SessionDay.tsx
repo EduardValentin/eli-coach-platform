@@ -11,7 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/colla
 import { cn } from '../ui/utils';
 import { WatchVideoButton } from '../WatchVideoButton';
 import { ColumnBreak, DayHeader, Dot, RoutineCard } from './DayParts';
-import { coolDownLines, plainText, restLabel, warmUpLines } from './programView';
+import { PositionBadge } from './PositionBadge';
+import { coolDownLines, exerciseNameOf, plainText, restLabel, warmUpLines } from './programView';
 
 type Library = ReadonlyMap<string, Exercise>;
 
@@ -103,10 +104,8 @@ function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardPro
     <article aria-labelledby={headingId} className="grid gap-3 rounded-card border border-border/50 bg-card p-4 shadow-soft">
       <div className="grid gap-2">
         <h4 id={headingId} className="flex items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-inverted text-xs font-semibold text-surface-inverted-foreground tabular-nums">
-            {positionLabel(session, row)}
-          </span>{' '}
-          <span className="min-w-0 text-base leading-snug font-semibold text-text-primary">{exercise?.name ?? 'Exercise removed'}</span>
+          <PositionBadge label={positionLabel(session, row)} size="md" />{' '}
+          <span className="min-w-0 text-base leading-snug font-semibold text-text-primary">{exerciseNameOf(exercise)}</span>
         </h4>
         {exercise && exercise.primaryMuscles.length > 0 && (
           <ul aria-label="Muscles" className="flex flex-wrap gap-1 pl-11">

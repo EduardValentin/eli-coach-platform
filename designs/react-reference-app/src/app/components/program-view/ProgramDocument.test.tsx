@@ -5,7 +5,7 @@ import type { CycleMode } from '../../domain/cycleMode';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
 import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
-import { parseTemplate, template } from './ProgramText';
+import { parseTemplate, programTemplate } from './ProgramText';
 import { TrackingTable } from './TrackingTable';
 import { currentBlock, viewOf, type ProgramView } from './programView';
 
@@ -224,7 +224,7 @@ describe('ProgramDocument', () => {
     // arrange
     const view = viewFor('adapted');
     const block = blockOf(view);
-    const { title } = parseTemplate(block.introText || template(view, `block.${block.type}`));
+    const { title } = parseTemplate(block.introText || programTemplate(view, `block.${block.type}`));
 
     // act
     render(<ProgramDocument view={view} />);

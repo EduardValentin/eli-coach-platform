@@ -1,6 +1,6 @@
 import { useId, type Ref } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { CardioIntensity, CardioSegment, CardioSession, RoundsItem, RoundsSegment } from '../../../domain/program';
 import { CARDIO_INTENSITY_LABELS, SEGMENT_KIND_LABELS, segmentMinutes, type CardioEdits } from '../../../domain/programCardio';
@@ -9,9 +9,12 @@ import { LABEL_CLASS } from '../../typography';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
-import { RowTextField } from './RowTextField';
-import { COUNT_PROBLEM, parseCount, parseWholeNumber } from './rowFields';
+import { counted } from '../../../utils/counted';
+import { exerciseNameOf } from '../../program-view/programView';
+import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
+import { ExerciseItemList } from './ExerciseItemList';
+import { CountField } from './RowTextField';
+import { parseWholeNumber } from './rowFields';
 import { SegmentedChoice } from './SegmentedChoice';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
@@ -36,11 +39,11 @@ const MEASURE_OPTIONS: { value: ItemMeasure; label: string }[] = [
 ];
 type NumberFieldProps = { label: string; unit?: string; value: number; parse?: (text: string) => number | null; onCommit: (value: number) => void };
 
-function NumberField({ label, unit, value, parse = parseCount, onCommit }: NumberFieldProps) {
+function NumberField({ label, unit, value, parse, onCommit }: NumberFieldProps) {
   return (
     <label className="grid content-start gap-1">
       <span className={LABEL_CLASS}>{label}</span>
-      <RowTextField className="w-20" type="number" label={label} value={value} format={String} parse={parse} problem={COUNT_PROBLEM} suffix={unit} onCommit={onCommit} />
+      <CountField className="w-20" label={label} value={value} parse={parse} suffix={unit} onCommit={onCommit} />
     </label>
   );
 }
@@ -72,7 +75,7 @@ type RoundsFieldsProps = {
 };
 
 function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFieldsProps) {
-  const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
+  const nameOf = (id: string) => exerciseNameOf(library.find(item => item.id === id));
   const onSegment = (next: RoundsSegment) => onChange(edits.changeSegment(next));
   const onItem = (item: RoundsItem) => onChange(edits.changeRoundsItem(segment.id, item));
   const { items } = segment;
@@ -82,40 +85,29 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
         <NumberField label="Rounds" value={segment.rounds} onCommit={rounds => onSegment({ ...segment, rounds })} />
         <IntensityField value={segment.intensity} onChange={intensity => onSegment({ ...segment, intensity })} />
       </div>
-      {items.length > 0 && (
-        <ol aria-label="Round exercises" className={ITEM_LIST_CLASS}>
-          {items.map((item, index) => {
-            const name = nameOf(item.exerciseId);
-            const measure: ItemMeasure = item.workSeconds === undefined ? 'reps' : 'seconds';
-            const amount = item.workSeconds ?? item.reps ?? 0;
-            return (
-              <ExerciseItemRow
-                key={item.id}
-                name={name}
-                position={index + 1}
-                count={items.length}
-                onMoveUp={() => onChange(edits.moveRoundsItemUp(segment.id, item.id))}
-                onMoveDown={() => onChange(edits.moveRoundsItemDown(segment.id, item.id))}
-                onRemove={() => onChange(edits.removeRoundsItem(segment.id, item.id))}
-              >
-                <RowTextField
-                  className="w-16"
-                  type="number"
-                  label={`${name} ${measure}`}
-                  value={amount}
-                  format={String}
-                  parse={parseCount}
-                  problem={COUNT_PROBLEM}
-                  onCommit={next => onItem(measuredItem(item, measure, next))}
-                />
-                <div className="w-28">
-                  <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(measuredItem(item, next, amount))} />
-                </div>
-              </ExerciseItemRow>
-            );
-          })}
-        </ol>
-      )}
+      <ExerciseItemList
+        label="Round exercises"
+        items={items}
+        nameOf={nameOf}
+        actions={{
+          onMoveUp: itemId => onChange(edits.moveRoundsItemUp(segment.id, itemId)),
+          onMoveDown: itemId => onChange(edits.moveRoundsItemDown(segment.id, itemId)),
+          onRemove: itemId => onChange(edits.removeRoundsItem(segment.id, itemId)),
+        }}
+      >
+        {(item, name) => {
+          const measure: ItemMeasure = item.workSeconds === undefined ? 'reps' : 'seconds';
+          const amount = item.workSeconds ?? item.reps ?? 0;
+          return (
+            <>
+              <CountField className="w-16" label={`${name} ${measure}`} value={amount} onCommit={next => onItem(measuredItem(item, measure, next))} />
+              <div className="w-28">
+                <SegmentedChoice legend={`${name} measured in`} options={MEASURE_OPTIONS} value={measure} onChange={next => onItem(measuredItem(item, next, amount))} />
+              </div>
+            </>
+          );
+        }}
+      </ExerciseItemList>
       <Button variant="outline" size="xs" className="w-fit" onClick={onAddItem}>
         <Plus aria-hidden="true" />
         Add exercise
@@ -161,7 +153,7 @@ function dropHint(itemType: string | symbol | null, segment: CardioSegment): str
 }
 
 function itemCount(segment: RoundsSegment): string {
-  return `${segment.items.length} ${segment.items.length === 1 ? 'exercise' : 'exercises'}`;
+  return counted(segment.items.length, 'exercise');
 }
 
 export function CardioSegmentCard(props: CardioSegmentCardProps) {
@@ -205,20 +197,10 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
-      className={cn('relative grid gap-3 rounded-control border bg-card p-3 transition-[border-color,box-shadow,opacity] motion-reduce:transition-none', {
-        'border-brand-secondary ring-2 ring-brand-secondary/20': targeted,
-        'border-border': !targeted,
-        'opacity-40': isDragging,
-      })}
+      className={cn(DRAGGABLE_CARD_CLASS, 'grid gap-3 p-3', draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span
-          ref={drag as unknown as Ref<HTMLSpanElement>}
-          aria-hidden="true"
-          className="flex h-7 shrink-0 cursor-grab touch-none items-center select-none text-text-secondary hover:text-text-primary active:cursor-grabbing"
-        >
-          <GripVertical size={16} />
-        </span>
+        <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} />
         <h5 id={headingId} className="flex min-w-0 flex-1 items-center gap-2.5">
           <Badge tone="tint-cyan">{kindLabel}</Badge>
           {segment.kind === 'rounds' ? (
@@ -242,13 +224,7 @@ export function CardioSegmentCard(props: CardioSegmentCardProps) {
       <div className="pl-9.5">
         <SegmentFields segment={segment} library={library} edits={edits} onChange={onChange} onAddRoundsItem={onAddRoundsItem} />
       </div>
-      {targeted && (
-        <p aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-control bg-brand-secondary-soft">
-          <span className="rounded-control bg-card px-3 py-1.5 text-sm font-medium text-brand-secondary shadow-raised">
-            {dropHint(itemType, segment)}
-          </span>
-        </p>
-      )}
+      {targeted && <DropOverlay>{dropHint(itemType, segment)}</DropOverlay>}
     </article>
   );
 }

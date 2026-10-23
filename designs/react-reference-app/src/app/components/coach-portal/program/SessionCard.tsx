@@ -11,10 +11,11 @@ import { slotPlanOrFallback } from '../../../domain/splitTemplates';
 import { warmUpEdits } from '../../../domain/warmUpEditing';
 import { describeLoss } from '../../../domain/weekEditing';
 import { RowActionsMenu } from '../../RowActionsMenu';
-import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
+import { sessionSummary } from '../../program-view/programView';
 import { CoolDownCard } from './CoolDownCard';
 import { useResetConfirm } from './ResetConfirm';
+import { CollapsedSessionHeader, SESSION_ARTICLE_CLASS, SessionNameInput } from './sessionCardParts';
 import { SlotGroup } from './SlotGroup';
 import { WarmUpCard } from './WarmUpCard';
 
@@ -30,25 +31,6 @@ type SessionCardProps = {
   onOpenLibrary: (target: LibraryTarget) => void;
 };
 
-function CollapsedSession({ session, headingId, onExpand }: { session: Session; headingId: string; onExpand: () => void }) {
-  const count = session.rows.length;
-  return (
-    <h3>
-      <button
-        type="button"
-        aria-expanded={false}
-        onClick={onExpand}
-        className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        <span id={headingId} className="font-serif text-lg text-text-primary">
-          {session.name}
-        </span>
-        <span className="text-sm text-text-secondary tabular-nums">{`${count} ${count === 1 ? 'exercise' : 'exercises'} · ~${estimatedMinutes(session)} min`}</span>
-      </button>
-    </h3>
-  );
-}
-
 export function SessionCard({ session, block, expanded, articleRef, library, context, onExpand, onChange, onOpenLibrary }: SessionCardProps) {
   const headingId = useId();
   const nameField = useRef<HTMLInputElement>(null);
@@ -56,7 +38,6 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   const edits = rowEdits(session, context);
   const minutes = estimatedMinutes(session);
   const overTarget = isOverTarget(session, block);
-  const articleClass = 'rounded-card border border-border bg-card shadow-card';
 
   function clear() {
     confirm.request({
@@ -69,25 +50,19 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
 
   if (!expanded) {
     return (
-      <article ref={articleRef} aria-labelledby={headingId} className={articleClass}>
-        <CollapsedSession session={session} headingId={headingId} onExpand={onExpand} />
+      <article ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
+        <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session)} onExpand={onExpand} />
       </article>
     );
   }
 
   return (
-    <article ref={articleRef} aria-labelledby={headingId} className={cn(articleClass, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
+    <article ref={articleRef} aria-labelledby={headingId} className={cn(SESSION_ARTICLE_CLASS, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
       <header className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card/95 px-3 py-2 backdrop-blur-sm lg:top-[calc(var(--block-header-height)-1.5rem)]">
         <h3 id={headingId} className="sr-only">
           {session.name}
         </h3>
-        <Input
-          ref={nameField}
-          aria-label="Session name"
-          value={session.name}
-          onChange={event => onChange({ ...session, name: event.target.value })}
-          className="h-auto w-auto min-w-0 flex-1 basis-40 border-transparent bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-control-border-soft md:text-xl"
-        />
+        <SessionNameInput value={session.name} inputRef={nameField} onChange={name => onChange({ ...session, name })} />
         <p className={cn('flex gap-2 text-sm tabular-nums', { 'text-warning': overTarget, 'text-text-secondary': !overTarget })}>
           <span>{`~${minutes} min · target ${block.targetMinutes}`}</span>
           {overTarget && <span>Over target</span>}

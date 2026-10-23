@@ -3,6 +3,7 @@ import { Plus, Sparkles, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { withField, type LastSetTechnique, type Row } from '../../../domain/program';
 import { MAX_SUBSTITUTIONS } from '../../../domain/substitutions';
+import { exerciseNameOf } from '../../program-view/programView';
 import { LABEL_CLASS } from '../../typography';
 import { WatchVideoButton } from '../../WatchVideoButton';
 import { Button } from '../../ui/button';
@@ -39,7 +40,7 @@ function acceptsSubstitution(dragged: DraggedItem): boolean {
 }
 
 function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitution, onRemoveSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
-  const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
+  const nameOf = (id: string) => exerciseNameOf(library.find(item => item.id === id));
   const room = row.substitutions.length < MAX_SUBSTITUTIONS;
   return (
     <DropZone rules={substitutionDrop} accepts={acceptsSubstitution} className="rounded-field" activeClassName="ring-2 ring-primary/40">

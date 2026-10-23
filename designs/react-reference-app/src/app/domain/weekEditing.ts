@@ -12,6 +12,7 @@ import {
   type TrainingDays,
   type Weekday,
 } from './program';
+import { counted } from '../utils/counted';
 import { emptySessionsFor, splitFor, spreadCalendar } from './programSuggestions';
 
 export type PlannedSession = { kind: 'strength'; session: Session } | { kind: 'cardio'; cardio: CardioSession };
@@ -121,10 +122,6 @@ export function relayoutBlock(block: Block, days: TrainingDays): Block {
     cardioSessions,
   );
   return { ...block, trainingDays: days, sessions, cardioSessions, calendar };
-}
-
-function counted(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
 
 function sessionLoss(session: Session): string[] {

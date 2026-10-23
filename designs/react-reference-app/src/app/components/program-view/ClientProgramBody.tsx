@@ -13,23 +13,17 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DayContent } from './DayContent';
 import { PlanTimeline } from './PlanTimeline';
 import { FocusCard } from './FocusCard';
-import { LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, ProgramText, template, TemplateBody, templateCard, TextCardStack } from './ProgramText';
+import { blockIntroCards, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, ProgramText, programTemplate, TemplateBody, templateCard, TextCardStack } from './ProgramText';
 import { WeekStrip } from './WeekStrip';
 import { WhatChangedBanner, readDismissedVersion } from './WhatChangedBanner';
 import { currentBlock, weekStart, type ProgramView } from './programView';
 
 function AboutBlock({ view, block }: { view: ProgramView; block: Block }) {
-  const calibration = view.position.status === 'in-plan' && view.position.calibration;
-  const cards = [
-    templateCard('intro', block.introText || template(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
-    ...(block.clientNote ? [templateCard('note', block.clientNote, 'A note from your coach')] : []),
-    ...(calibration ? [templateCard('calibration', template(view, 'calibration'), 'Calibration week')] : []),
-  ];
-  return <TextCardStack cards={cards} />;
+  return <TextCardStack cards={blockIntroCards(view, block, 'A note from your coach')} />;
 }
 
 function CardioAndSteps({ view, block }: { view: ProgramView; block: Block }) {
-  const steps = fillTemplate(template(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
+  const steps = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
   return (
     <div className="grid gap-3">
       <ProgramText text={steps} />
@@ -129,11 +123,11 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
           </Section>
           {program.cycleMode === 'adapted' && (
             <Section title="Listening to your cycle" id="cycle" icon={HeartPulse}>
-              <TextCardStack cards={[templateCard('cycle', template(view, 'cycle'), 'Listening to your cycle')]} />
+              <TextCardStack cards={[templateCard('cycle', programTemplate(view, 'cycle'), 'Listening to your cycle')]} />
             </Section>
           )}
           <Section title="How to read your session" id="legend" icon={ListChecks}>
-            <TemplateBody paragraphs={parseTemplate(template(view, 'legend')).paragraphs} />
+            <TemplateBody paragraphs={parseTemplate(programTemplate(view, 'legend')).paragraphs} />
           </Section>
           <Section title="Cardio and steps" id="cardio" icon={Footprints}>
             <CardioAndSteps view={view} block={block} />

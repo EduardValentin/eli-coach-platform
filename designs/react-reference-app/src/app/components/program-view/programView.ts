@@ -7,13 +7,16 @@ import {
   warmUpItemText,
   type Block,
   type CardioSegment,
+  type CardioSession,
   type Program,
   type ProgramVersion,
   type Session,
   type Weekday,
 } from '../../domain/program';
 import { currentPosition, type PlanPosition } from '../../domain/programCalendar';
-import { CARDIO_INTENSITY_TEXT, roundsText } from '../../domain/programCardio';
+import { cardioMinutes, CARDIO_INTENSITY_TEXT, roundsText } from '../../domain/programCardio';
+import { estimatedMinutes } from '../../domain/sessionTiming';
+import { counted } from '../../utils/counted';
 
 const SECONDS_PER_MINUTE = 60;
 
@@ -56,6 +59,14 @@ export function dayEntryLabel(block: Block, weekday: Weekday): string {
   return 'Rest';
 }
 
+export function sessionSummary(session: Session): string {
+  return `${counted(session.rows.length, 'exercise')} · ~${estimatedMinutes(session)} min`;
+}
+
+export function cardioSummary(cardio: CardioSession): string {
+  return cardio.segments.length > 0 ? `Cardio · ${cardioMinutes(cardio)} min` : 'Cardio · no segments';
+}
+
 export function sessionAnchor(sessionId: string): string {
   return `program-session-${sessionId}`;
 }
@@ -83,8 +94,12 @@ export function plainText(markdown: string): string {
   return markdown.replaceAll('**', '');
 }
 
+export function exerciseNameOf(exercise: Exercise | undefined): string {
+  return exercise?.name ?? 'Exercise removed';
+}
+
 export function exerciseName(exerciseId: string, exercisesById: ReadonlyMap<string, Exercise>): string {
-  return exercisesById.get(exerciseId)?.name ?? 'Exercise removed';
+  return exerciseNameOf(exercisesById.get(exerciseId));
 }
 
 export function cardioSegmentText(segment: CardioSegment, exercisesById: ReadonlyMap<string, Exercise>): string {

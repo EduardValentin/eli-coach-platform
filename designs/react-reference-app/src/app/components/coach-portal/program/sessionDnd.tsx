@@ -1,9 +1,10 @@
 import type { ReactNode, Ref } from 'react';
 import { useDragLayer, useDrop } from 'react-dnd';
-import { GripVertical, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
+import { DragPreview, InsertionLine } from './dndParts';
 
 export const LIBRARY_EXERCISE = 'LIBRARY_EXERCISE';
 export const PLAN_ROW = 'PLAN_ROW';
@@ -49,13 +50,7 @@ export function DropSeparator({ rules }: { rules: SessionDropRules }) {
   const [{ isOver, canDrop }, drop] = useSessionDrop(rules);
   return (
     <div ref={drop as unknown as Ref<HTMLDivElement>} aria-hidden="true" className={cn('relative', { 'py-2': canDrop, 'py-1': !canDrop })}>
-      <div
-        className={cn('mx-3 h-0.5 rounded-full transition-all duration-200 motion-reduce:transition-none', {
-          'h-1 bg-primary': isOver && canDrop,
-          'bg-border': canDrop && !isOver,
-          'bg-transparent': !canDrop,
-        })}
-      />
+      <InsertionLine isOver={isOver} canDrop={canDrop} />
     </div>
   );
 }
@@ -109,12 +104,5 @@ export function SessionDragLayer() {
   if (!item || !offset) return null;
   const label = dragLabel(type, item);
   if (label === null) return null;
-  return (
-    <div className="pointer-events-none fixed top-0 left-0 z-[100]" style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
-      <div className="inline-flex items-center gap-2 rounded-control border border-primary bg-card px-3 py-2 shadow-raised">
-        <GripVertical aria-hidden="true" size={14} className="text-text-secondary" />
-        <span className="text-sm font-medium text-text-primary">{label}</span>
-      </div>
-    </div>
-  );
+  return <DragPreview offset={offset} label={label} />;
 }

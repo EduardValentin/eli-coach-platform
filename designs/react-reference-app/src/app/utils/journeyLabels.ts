@@ -125,3 +125,7 @@ export function startPathLabel(
 }
 
 export { bundleLengthLabel };
+
+export function journeyClientName(journey: ClientJourney): string {
+  return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
+}

@@ -3,7 +3,7 @@ import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, setsSummary, setText, hasUniformSets, workingSets, type Block, type Session, type WorkingSet } from '../../domain/program';
 import { DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
-import { repsSuffix } from './programView';
+import { exerciseNameOf, repsSuffix } from './programView';
 
 type TrackingTableProps = { session: Session; block: Block; exercisesById: ReadonlyMap<string, Exercise> };
 
@@ -62,7 +62,7 @@ export function TrackingTable({ session, block, exercisesById }: TrackingTablePr
                   <tr key={setIndex}>
                     {setIndex === 0 && (
                       <th scope="row" rowSpan={sets.length} className={cell}>
-                        <span className="block">{exercise?.name ?? 'Exercise removed'}</span>
+                        <span className="block">{exerciseNameOf(exercise)}</span>
                         {hasUniformSets(row.sets) && <span className="block font-normal text-text-secondary">{setsSummary(row.sets, suffix)}</span>}
                       </th>
                     )}

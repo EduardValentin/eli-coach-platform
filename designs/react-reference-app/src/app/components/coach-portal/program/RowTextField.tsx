@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { InlineProblem } from '../../InlineProblem';
 import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
+import { COUNT_PROBLEM, parseCount } from './rowFields';
 
 type RowTextFieldProps<Value> = {
   label: string;
@@ -65,4 +66,10 @@ export function RowTextField<Value>({ label, value, format, parse, problem, onCo
       {invalid && <InlineProblem id={problemId}>{problem}</InlineProblem>}
     </div>
   );
+}
+
+type CountFieldProps = Pick<RowTextFieldProps<number>, 'label' | 'value' | 'onCommit' | 'suffix' | 'className'> & { parse?: (text: string) => number | null };
+
+export function CountField({ parse = parseCount, ...field }: CountFieldProps) {
+  return <RowTextField type="number" format={String} parse={parse} problem={COUNT_PROBLEM} {...field} />;
 }

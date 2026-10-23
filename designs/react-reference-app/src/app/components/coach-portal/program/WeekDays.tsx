@@ -1,9 +1,10 @@
 import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
-import { cardioMinutes, emptyCardioSession } from '../../../domain/programCardio';
+import { emptyCardioSession } from '../../../domain/programCardio';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
-import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
+import { CARDIO_CHIP_CLASS, CardioLength, DayCardFrame, DayName, RestLabel, sessionChipClass } from '../../program-view/dayCard';
+import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import {
   DropdownMenu,
@@ -14,14 +15,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
-import { cn } from '../../ui/utils';
-import { BLOCK_SOFT } from '../../program-view/blockColours';
 import { useResetConfirm, type ResetRequest } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
 type DayCardProps = WeekDaysProps & { day: Weekday; onRequest: (request: ResetRequest) => void };
-
-const KIND_BADGE_CLASS = 'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-xs font-medium';
 
 function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoose: (choice: DayChoice) => void }) {
   return (
@@ -61,14 +58,10 @@ function DayMenu({ block, day, onChoose }: { block: Block; day: Weekday; onChoos
 function CardioSummary({ cardio, onOpen }: { cardio: CardioSession; onOpen: () => void }) {
   return (
     <>
-      <button
-        type="button"
-        onClick={onOpen}
-        className={cn(KIND_BADGE_CLASS, 'bg-training-recovery-soft text-left text-training-recovery outline-none hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ring/50')}
-      >
+      <button type="button" onClick={onOpen} className={CARDIO_CHIP_CLASS}>
         <span className="truncate">{cardio.name}</span>
       </button>
-      {cardio.segments.length > 0 && <span className="px-0.5 text-xs text-text-secondary tabular-nums">{`${cardioMinutes(cardio)} min`}</span>}
+      <CardioLength cardio={cardio} />
     </>
   );
 }
@@ -87,22 +80,14 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
 }
 
 function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {
-  const entry = block.calendar[day];
   const session = sessionOn(block, day);
   const cardio = cardioOn(block, day);
-  const weekday = WEEKDAY_LABELS[day];
 
   return (
-    <li
-      className={cn('grid content-start gap-2 rounded-control border p-2', {
-        'border-border bg-card': entry.kind !== 'rest',
-        'border-border-subtle bg-surface-subtle': entry.kind === 'rest',
-      })}
-    >
+    <DayCardFrame entry={block.calendar[day].kind}>
       <div className="flex items-center justify-between gap-1">
-        <h4 className={LABEL_CLASS}>
-          <span aria-hidden="true">{weekday.slice(0, 3)}</span>
-          <span className="sr-only">{weekday}</span>
+        <h4>
+          <DayName day={day} />
         </h4>
         <DayMenu
           block={block}
@@ -118,17 +103,13 @@ function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProp
         />
       </div>
       {session && (
-        <button
-          type="button"
-          onClick={() => onOpenSession(session.id)}
-          className={cn(KIND_BADGE_CLASS, BLOCK_SOFT[block.type], 'text-left text-text-primary outline-none hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ring/50')}
-        >
+        <button type="button" onClick={() => onOpenSession(session.id)} className={sessionChipClass(block.type)}>
           <span className="truncate">{session.name}</span>
         </button>
       )}
       {cardio && <CardioSummary cardio={cardio} onOpen={() => onOpenSession(cardio.id)} />}
-      {!session && !cardio && <span className={cn(KIND_BADGE_CLASS, 'text-text-secondary')}>Rest</span>}
-    </li>
+      {!session && !cardio && <RestLabel />}
+    </DayCardFrame>
   );
 }
 

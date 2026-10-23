@@ -6,9 +6,9 @@ import type { CoolDownEdits } from '../../../domain/coolDownEditing';
 import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { Textarea } from '../../ui/textarea';
-import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
-import { RowTextField } from './RowTextField';
-import { COUNT_PROBLEM, parseCount } from './rowFields';
+import { exerciseNameOf } from '../../program-view/programView';
+import { ExerciseItemList } from './ExerciseItemList';
+import { CountField } from './RowTextField';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 
 type CoolDownCardProps = {
@@ -52,36 +52,20 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                 onChange={event => onChange(edits.change({ ...coolDown, note: event.target.value }))}
               />
             </div>
-            {items.length > 0 && (
-              <ol aria-label="Stretches" className={ITEM_LIST_CLASS}>
-                {items.map((item, index) => {
-                  const name = library.find(other => other.id === item.exerciseId)?.name ?? 'Unknown exercise';
-                  return (
-                    <ExerciseItemRow
-                      key={item.id}
-                      name={name}
-                      position={index + 1}
-                      count={items.length}
-                      onMoveUp={() => onChange(edits.moveUp(item.id))}
-                      onMoveDown={() => onChange(edits.moveDown(item.id))}
-                      onRemove={() => onChange(edits.remove(item.id))}
-                    >
-                      <RowTextField
-                        className="w-16"
-                        type="number"
-                        label={`${name} seconds`}
-                        value={item.seconds}
-                        format={String}
-                        parse={parseCount}
-                        problem={COUNT_PROBLEM}
-                        suffix="s"
-                        onCommit={seconds => onChange(edits.changeItem({ ...item, seconds }))}
-                      />
-                    </ExerciseItemRow>
-                  );
-                })}
-              </ol>
-            )}
+            <ExerciseItemList
+              label="Stretches"
+              items={items}
+              nameOf={exerciseId => exerciseNameOf(library.find(other => other.id === exerciseId))}
+              actions={{
+                onMoveUp: itemId => onChange(edits.moveUp(itemId)),
+                onMoveDown: itemId => onChange(edits.moveDown(itemId)),
+                onRemove: itemId => onChange(edits.remove(itemId)),
+              }}
+            >
+              {(item, name) => (
+                <CountField className="w-16" label={`${name} seconds`} value={item.seconds} suffix="s" onCommit={seconds => onChange(edits.changeItem({ ...item, seconds }))} />
+              )}
+            </ExerciseItemList>
             <Button variant="ghost" size="xs" className="w-fit" onClick={onPickStretch}>
               <Plus aria-hidden="true" />
               Add stretch

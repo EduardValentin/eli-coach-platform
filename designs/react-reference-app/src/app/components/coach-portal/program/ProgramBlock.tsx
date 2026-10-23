@@ -14,6 +14,7 @@ import {
   type ProgramVersion,
 } from '../../../domain/program';
 import { currentPosition, dayOneOf } from '../../../domain/programCalendar';
+import { counted } from '../../../utils/counted';
 import { clientDetailPathForJourney, clientPronouns } from '../../../utils/journeyLabels';
 import { EmptyState } from '../../EmptyState';
 import { SettingsBody, SettingsSection } from '../../SettingsSection';
@@ -33,7 +34,7 @@ function missingFrom(version: ProgramVersion): string[] {
   );
   const missing: string[] = [];
   if (!content.header.focus.trim()) missing.push('Focus not set');
-  if (emptySessions > 0) missing.push(`${emptySessions} ${emptySessions === 1 ? 'session' : 'sessions'} without exercises`);
+  if (emptySessions > 0) missing.push(`${counted(emptySessions, 'session')} without exercises`);
   if (version.number >= 2 && !version.whatChanged.trim()) missing.push('What changed not written');
   return missing;
 }

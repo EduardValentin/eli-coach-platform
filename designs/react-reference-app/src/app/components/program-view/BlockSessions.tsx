@@ -12,14 +12,14 @@ import {
   type SetSpec,
   type Weekday,
 } from '../../domain/program';
-import { cardioMinutes, SEGMENT_KIND_LABELS } from '../../domain/programCardio';
-import { estimatedMinutes } from '../../domain/sessionTiming';
+import { SEGMENT_KIND_LABELS } from '../../domain/programCardio';
 import { scheduledItems } from '../../domain/weekEditing';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { RoutineCard } from './DayParts';
-import { cardioSegmentText, coolDownLines, repsSuffix, restLabel, sessionAnchor, warmUpLines } from './programView';
+import { PositionBadge } from './PositionBadge';
+import { cardioSegmentText, cardioSummary, coolDownLines, exerciseNameOf, repsSuffix, restLabel, sessionAnchor, sessionSummary, warmUpLines } from './programView';
 
 const ARTICLE_CLASS = 'scroll-mt-6 rounded-card border border-border bg-card shadow-card';
 
@@ -57,10 +57,8 @@ function ExerciseReadCard({ session, row, exercisesById }: { session: Session; r
     <article aria-labelledby={headingId} className="grid content-start gap-3 rounded-control border border-border bg-card p-3">
       <div className="grid gap-1">
         <h4 id={headingId} className="flex items-center gap-2.5">
-          <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-surface-inverted px-1.5 text-xs font-semibold text-surface-inverted-foreground tabular-nums">
-            {positionLabel(session, row)}
-          </span>{' '}
-          <span className="min-w-0 text-sm font-medium text-text-primary">{exercise?.name ?? 'Exercise removed'}</span>
+          <PositionBadge label={positionLabel(session, row)} size="sm" />{' '}
+          <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseNameOf(exercise)}</span>
         </h4>
         <p className="flex flex-wrap items-center gap-1 pl-9.5">
           {exercise?.primaryMuscles.map(muscle => (
@@ -90,7 +88,6 @@ function ExerciseReadCard({ session, row, exercisesById }: { session: Session; r
 
 function SessionReadCard({ session, days, exercisesById }: { session: Session; days: readonly Weekday[]; exercisesById: ReadonlyMap<string, Exercise> }) {
   const headingId = useId();
-  const count = session.rows.length;
   const warmUp = warmUpLines(session, exercisesById);
 
   return (
@@ -99,7 +96,7 @@ function SessionReadCard({ session, days, exercisesById }: { session: Session; d
         headingId={headingId}
         name={session.name}
         days={days}
-        meta={`${count} ${count === 1 ? 'exercise' : 'exercises'} · ~${estimatedMinutes(session)} min`}
+        meta={sessionSummary(session)}
       />
       <div className="grid gap-4 p-3 sm:p-4">
         {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
@@ -120,7 +117,7 @@ function CardioReadCard({ cardio, days, exercisesById }: { cardio: CardioSession
   const headingId = useId();
   return (
     <article id={sessionAnchor(cardio.id)} aria-labelledby={headingId} className={ARTICLE_CLASS}>
-      <CardHeader headingId={headingId} name={cardio.name} days={days} meta={cardio.segments.length > 0 ? `Cardio · ${cardioMinutes(cardio)} min` : 'Cardio · no segments'} />
+      <CardHeader headingId={headingId} name={cardio.name} days={days} meta={cardioSummary(cardio)} />
       <ol aria-label="Segments" className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
         {cardio.segments.map(segment => (
           <li key={segment.id} className="grid content-start gap-1 rounded-control border border-l-4 border-border border-l-training-recovery bg-card p-3">

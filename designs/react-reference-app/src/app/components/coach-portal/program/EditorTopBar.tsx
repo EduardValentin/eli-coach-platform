@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { AlertTriangle, ArrowLeft, ChevronRight, Eye, Send, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
 import type { ProgramVersion } from '../../../domain/program';
-import { clientDetailPathForJourney, formatJourneyDate } from '../../../utils/journeyLabels';
+import { counted } from '../../../utils/counted';
+import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from '../../../utils/journeyLabels';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
@@ -69,7 +70,7 @@ function Breadcrumb({ currentTitle, onOverview }: { currentTitle: string | null;
 }
 
 function WarningsButton({ count, onClick }: { count: number; onClick: () => void }) {
-  const label = `${count} ${count === 1 ? 'thing' : 'things'} worth a look`;
+  const label = `${counted(count, 'thing')} worth a look`;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -99,7 +100,7 @@ export function EditorTopBar({
   warningsCount,
 }: EditorTopBarProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  const name = `${journey.identity.firstName} ${journey.identity.lastName}`;
+  const name = journeyClientName(journey);
 
   return (
     <>

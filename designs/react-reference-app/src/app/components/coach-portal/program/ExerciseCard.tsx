@@ -1,6 +1,6 @@
 import { useId, useState, type Ref } from 'react';
 import { useDrag } from 'react-dnd';
-import { ArrowDown, ArrowUp, ChevronDown, GripVertical, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { positionLabel, setsSummary, type Row, type Session } from '../../../domain/program';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
@@ -9,7 +9,9 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
-import { repsSuffix } from '../../program-view/programView';
+import { PositionBadge } from '../../program-view/PositionBadge';
+import { exerciseNameOf, repsSuffix } from '../../program-view/programView';
+import { DragHandle, DRAGGABLE_CARD_CLASS, draggableCardState, DropOverlay } from './dndParts';
 import { formatRest } from './rowFields';
 import { acceptsIntoSession, LIBRARY_EXERCISE, PLAN_ROW, useSessionDrop, type DraggedItem, type PlanRowItem } from './sessionDnd';
 import { SetGrid } from './SetGrid';
@@ -55,7 +57,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
   const setsId = useId();
   const detailsId = useId();
   const position = positionLabel(session, row);
-  const name = exercise?.name ?? 'Unknown exercise';
+  const name = exerciseNameOf(exercise);
   const changeRow = (next: Row) => onChange(edits.replaceRow(next));
 
   const [{ isDragging }, drag] = useDrag<PlanRowItem, void, { isDragging: boolean }>(
@@ -83,28 +85,13 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
     <article
       ref={drop as unknown as Ref<HTMLElement>}
       aria-labelledby={headingId}
-      className={cn(
-        'relative scroll-mt-4 rounded-control border bg-card transition-[border-color,box-shadow,opacity] motion-reduce:transition-none lg:scroll-mt-[calc(var(--block-header-height)+4rem)]',
-        {
-          'border-brand-secondary ring-2 ring-brand-secondary/20': targeted,
-          'border-border': !targeted,
-          'opacity-40': isDragging,
-        },
-      )}
+      className={cn(DRAGGABLE_CARD_CLASS, 'scroll-mt-4 lg:scroll-mt-[calc(var(--block-header-height)+4rem)]', draggableCardState({ targeted, dragging: isDragging }))}
     >
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2 p-3">
-        <span
-          ref={drag as unknown as Ref<HTMLSpanElement>}
-          aria-hidden="true"
-          className="mt-0.5 flex h-7 shrink-0 cursor-grab touch-none items-center select-none text-text-secondary hover:text-text-primary active:cursor-grabbing"
-        >
-          <GripVertical size={16} />
-        </span>
+        <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-0.5" />
         <div className="grid min-w-0 flex-1 basis-48 gap-1">
           <h5 id={headingId} className="flex items-center gap-2.5">
-            <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-surface-inverted px-1.5 text-xs font-semibold text-surface-inverted-foreground tabular-nums">
-              {position}
-            </span>{' '}
+            <PositionBadge label={position} size="sm" />{' '}
             <span className="min-w-0 text-sm font-medium text-text-primary">{name}</span>
             {exercise?.archivedAt && <Badge tone="muted">archived</Badge>}
           </h5>
@@ -164,11 +151,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
           />
         </div>
       )}
-      {targeted && (
-        <p aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-control bg-brand-secondary-soft">
-          <span className="rounded-control bg-card px-3 py-1.5 text-sm font-medium text-brand-secondary shadow-raised">{dropHint(row, itemType)}</span>
-        </p>
-      )}
+      {targeted && <DropOverlay>{dropHint(row, itemType)}</DropOverlay>}
     </article>
   );
 }

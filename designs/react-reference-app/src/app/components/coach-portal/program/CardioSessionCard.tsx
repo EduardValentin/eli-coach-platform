@@ -14,9 +14,10 @@ import type { LibraryTarget } from '../../../domain/programEditing';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../ui/dropdown-menu';
-import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
+import { cardioSummary } from '../../program-view/programView';
 import { CardioSegmentCard } from './CardioSegmentCard';
+import { CollapsedSessionHeader, SESSION_ARTICLE_CLASS, SessionNameInput } from './sessionCardParts';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 
 type CardioSessionCardProps = {
@@ -29,15 +30,8 @@ type CardioSessionCardProps = {
   onOpenLibrary: (target: LibraryTarget) => void;
 };
 
-const ARTICLE_CLASS = 'rounded-card border border-border bg-card shadow-card';
-
 function acceptsCardioExercise(dragged: DraggedItem): boolean {
   return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'cardio';
-}
-
-function summary(cardio: CardioSession): string {
-  if (cardio.segments.length === 0) return 'Cardio · no segments';
-  return `Cardio · ${cardioMinutes(cardio)} min`;
 }
 
 function PresetRow({ onChoose }: { onChoose: (kind: (typeof CARDIO_PRESET_KINDS)[number]) => void }) {
@@ -86,37 +80,20 @@ export function CardioSessionCard({ cardio, expanded, articleRef, library, onExp
 
   if (!expanded) {
     return (
-      <article ref={articleRef} aria-labelledby={headingId} className={ARTICLE_CLASS}>
-        <h3>
-          <button
-            type="button"
-            aria-expanded={false}
-            onClick={onExpand}
-            className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-card px-4 py-3 text-left outline-none hover:bg-surface-quiet focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <span id={headingId} className="font-serif text-lg text-text-primary">
-              {cardio.name}
-            </span>
-            <span className="text-sm text-text-secondary tabular-nums">{summary(cardio)}</span>
-          </button>
-        </h3>
+      <article ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
+        <CollapsedSessionHeader headingId={headingId} name={cardio.name} summary={cardioSummary(cardio)} onExpand={onExpand} />
       </article>
     );
   }
 
   return (
-    <article ref={articleRef} aria-labelledby={headingId} className={cn(ARTICLE_CLASS, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
+    <article ref={articleRef} aria-labelledby={headingId} className={cn(SESSION_ARTICLE_CLASS, 'scroll-mt-4 lg:scroll-mt-(--block-header-height)')}>
       <header className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card px-3 py-2">
         <h3 id={headingId} className="sr-only">
           {cardio.name}
         </h3>
         <span className="rounded-field bg-training-recovery-soft px-2 py-0.5 text-xs font-medium text-training-recovery">Cardio</span>
-        <Input
-          aria-label="Session name"
-          value={cardio.name}
-          onChange={event => onChange({ ...cardio, name: event.target.value })}
-          className="h-auto w-auto min-w-0 flex-1 basis-40 border-transparent bg-transparent px-1 font-serif text-xl text-text-primary shadow-none hover:border-control-border-soft md:text-xl"
-        />
+        <SessionNameInput value={cardio.name} onChange={name => onChange({ ...cardio, name })} />
         {segments.length > 0 && <p className="text-sm text-text-secondary tabular-nums">{`${cardioMinutes(cardio)} min`}</p>}
       </header>
       <DropZone

@@ -5,11 +5,12 @@ import { blockDates, nextCheckpoint } from '../../domain/programCalendar';
 import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
 import { fillTemplate } from '../../domain/programTemplates';
 import { estimatedMinutes } from '../../domain/sessionTiming';
+import { counted } from '../../utils/counted';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { BLOCK_SWATCH } from './blockColours';
-import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, template, TemplateBody, type TemplateParagraph } from './ProgramText';
+import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, programTemplate, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
 import { cardioSegmentText, coolDownLines, currentBlock, dayEntryLabel, exerciseName, warmUpLines, type ProgramView } from './programView';
@@ -41,13 +42,9 @@ function nextCheckInReading(view: ProgramView): string {
   return format(nextCheckpoint(view.dayOne, view.preferredWeekday, view.today), 'EEEE, d MMMM');
 }
 
-function weeksText(weeks: number): string {
-  return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
-}
-
 function blockLabel(view: ProgramView, block: Block): string {
   const { blocks } = view.version.content.plan;
-  return `Block ${blocks.indexOf(block) + 1} of ${blocks.length} · ${weeksText(block.weeks)}`;
+  return `Block ${blocks.indexOf(block) + 1} of ${blocks.length} · ${counted(block.weeks, 'week')}`;
 }
 
 function Prose({ paragraphs }: { paragraphs: readonly TemplateParagraph[] }) {
@@ -149,7 +146,7 @@ function PlanStrip({ view }: { view: ProgramView }) {
               {BLOCK_TYPE_LABELS[block.type]}
               {isCurrent && <span className="font-normal text-text-secondary"> · now</span>}
             </span>
-            <span>{weeksText(block.weeks)}</span>
+            <span>{counted(block.weeks, 'week')}</span>
             {dates && <span>{`${formatJourneyDate(dates.start)} – ${formatJourneyDate(dates.end)}`}</span>}
           </li>
         );
@@ -159,7 +156,7 @@ function PlanStrip({ view }: { view: ProgramView }) {
 }
 
 function Legend({ view }: { view: ProgramView }) {
-  const { title: parsedTitle, paragraphs } = parseTemplate(template(view, 'legend'));
+  const { title: parsedTitle, paragraphs } = parseTemplate(programTemplate(view, 'legend'));
   const title = parsedTitle || 'How to read your session';
   return (
     <aside aria-label={title} data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight bg-surface-subtle')}>
@@ -183,8 +180,8 @@ function Legend({ view }: { view: ProgramView }) {
 }
 
 function BlockSection({ view, block }: { view: ProgramView; block: Block }) {
-  const intro = parseTemplate(block.introText || template(view, `block.${block.type}`));
-  const calibration = parseTemplate(template(view, 'calibration'));
+  const intro = parseTemplate(block.introText || programTemplate(view, `block.${block.type}`));
+  const calibration = parseTemplate(programTemplate(view, 'calibration'));
   return (
     <Section label={blockLabel(view, block)} title={intro.title || `${BLOCK_TYPE_LABELS[block.type]} block`}>
       <Prose paragraphs={intro.paragraphs} />
@@ -238,7 +235,7 @@ function SubHeading({ children }: { children: ReactNode }) {
 }
 
 function EverySession({ view, block }: { view: ProgramView; block: Block }) {
-  const warmUp = parseTemplate(template(view, 'warmUp'));
+  const warmUp = parseTemplate(programTemplate(view, 'warmUp'));
   const hasCoolDown = block.sessions.some(session => session.coolDown.enabled);
   return (
     <div data-print-keep className={cn(BOX_CLASS, 'space-y-document-gap')}>
@@ -247,8 +244,8 @@ function EverySession({ view, block }: { view: ProgramView; block: Block }) {
         <SubHeading>{warmUp.title || 'Warm-up'}</SubHeading>
         <Prose paragraphs={warmUp.paragraphs} />
       </div>
-      <Prose paragraphs={parseTemplate(template(view, 'progression')).paragraphs} />
-      {hasCoolDown && <Prose paragraphs={parseTemplate(template(view, 'coolDown')).paragraphs} />}
+      <Prose paragraphs={parseTemplate(programTemplate(view, 'progression')).paragraphs} />
+      {hasCoolDown && <Prose paragraphs={parseTemplate(programTemplate(view, 'coolDown')).paragraphs} />}
       <p className={DOCUMENT_NOTE_CLASS}>{NO_WEIGHT_NOTE}</p>
     </div>
   );
@@ -358,7 +355,7 @@ function CardioSection({ view, block }: { view: ProgramView; block: Block }) {
 }
 
 function StepsSection({ view, block }: { view: ProgramView; block: Block }) {
-  const text = fillTemplate(template(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
+  const text = fillTemplate(programTemplate(view, 'steps'), { steps: block.dailySteps.toLocaleString('en-US') });
   return <TemplateSection label="Cardio and steps" text={text} fallbackTitle="Daily steps" />;
 }
 
@@ -396,8 +393,8 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
           <StepsSection view={view} block={block} />
         </>
       )}
-      {program.cycleMode === 'adapted' && <TemplateSection label="Cycle" text={template(view, 'cycle')} fallbackTitle="Listening to your cycle" />}
-      <TemplateSection label="Low-energy days" text={template(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
+      {program.cycleMode === 'adapted' && <TemplateSection label="Cycle" text={programTemplate(view, 'cycle')} fallbackTitle="Listening to your cycle" />}
+      <TemplateSection label="Low-energy days" text={programTemplate(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
       <TemplateSection label="Beyond training" text={content.nutritionNotes || NUTRITION_FALLBACK} fallbackTitle="Nutrition" />
       <TemplateSection label="Beyond training" text={content.lifestyleNotes || LIFESTYLE_FALLBACK} fallbackTitle="Lifestyle" />
       <footer data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>

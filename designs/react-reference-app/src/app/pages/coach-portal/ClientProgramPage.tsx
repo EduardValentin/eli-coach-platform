@@ -6,7 +6,7 @@ import { ProgramSummary } from '../../components/coach-portal/program/ProgramSum
 import { CollapsiblePortalWidget } from '../../components/CollapsiblePortalWidget';
 import { BlockSessions } from '../../components/program-view/BlockSessions';
 import { journeyProgramView } from '../../components/program-view/journeyProgramView';
-import { template, templateCard, TextCardStack, type TextCard } from '../../components/program-view/ProgramText';
+import { blockIntroCards, programTemplate, templateCard, TextCardStack, type TextCard } from '../../components/program-view/ProgramText';
 import { currentBlock, weekDates, type ProgramView } from '../../components/program-view/programView';
 import { WeekDayCards } from '../../components/program-view/WeekDayCards';
 import { PortalBackLink } from '../../components/PortalBackLink';
@@ -20,7 +20,8 @@ import { useTraining } from '../../context/TrainingContext';
 import { BLOCK_TYPE_LABELS, currentVersion, weekCounts, type Block, type Program, type ProgramVersion, type VersionState } from '../../domain/program';
 import { splitLabel } from '../../domain/splitTemplates';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
-import { clientDetailPathForJourney, formatJourneyDate } from '../../utils/journeyLabels';
+import { counted } from '../../utils/counted';
+import { clientDetailPathForJourney, formatJourneyDate, journeyClientName } from '../../utils/journeyLabels';
 
 const VERSION_STATE_LABELS: Record<VersionState, string> = {
   published: 'Published',
@@ -40,19 +41,16 @@ function documentPath(clientId: string, version: ProgramVersion): string {
 
 function weekText(block: Block): string {
   const { sessions, cardio } = weekCounts(block);
-  const cardioText = cardio > 0 ? ` and ${cardio} cardio ${cardio === 1 ? 'day' : 'days'}` : '';
-  return `${splitLabel(block)} · ${sessions} ${sessions === 1 ? 'session' : 'sessions'}${cardioText} a week`;
+  const cardioText = cardio > 0 ? ` and ${counted(cardio, 'cardio day')}` : '';
+  return `${splitLabel(block)} · ${counted(sessions, 'session')}${cardioText} a week`;
 }
 
 function clientTexts(view: ProgramView, block: Block): TextCard[] {
-  const calibration = view.position.status === 'in-plan' && view.position.calibration;
   return [
-    templateCard('intro', block.introText || template(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
-    ...(block.clientNote ? [templateCard('note', block.clientNote, 'Client note')] : []),
-    ...(calibration ? [templateCard('calibration', template(view, 'calibration'), 'Calibration week')] : []),
+    ...blockIntroCards(view, block, 'Client note'),
     templateCard('split', block.split.text, `Split · ${splitLabel(block)}`),
-    ...(view.program.cycleMode === 'adapted' ? [templateCard('cycle', template(view, 'cycle'), 'Listening to your cycle')] : []),
-    templateCard('low-energy', template(view, 'lowEnergy'), 'Low-energy session'),
+    ...(view.program.cycleMode === 'adapted' ? [templateCard('cycle', programTemplate(view, 'cycle'), 'Listening to your cycle')] : []),
+    templateCard('low-energy', programTemplate(view, 'lowEnergy'), 'Low-energy session'),
   ];
 }
 
@@ -121,7 +119,7 @@ export function ClientProgramPage() {
   const program = journey ? programFor(journey.callId) : undefined;
   if (!journey || !program) return <ClientNotFound />;
 
-  const name = `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
+  const name = journeyClientName(journey);
   const current = currentVersion(program);
   const view = current && journeyProgramView({ journey, program, version: current, exercises, today: new Date() });
   const block = view && currentBlock(view);

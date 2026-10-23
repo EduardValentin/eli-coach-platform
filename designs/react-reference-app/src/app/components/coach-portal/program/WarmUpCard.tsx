@@ -2,10 +2,11 @@ import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { formatRange, type Session, type WarmUpItem } from '../../../domain/program';
 import { WARM_UP_REPS, WARM_UP_SECONDS, type WarmUpEdits } from '../../../domain/warmUpEditing';
+import { exerciseNameOf } from '../../program-view/programView';
 import { Button } from '../../ui/button';
-import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
-import { RowTextField } from './RowTextField';
-import { COUNT_PROBLEM, parseCount, parseRange, RANGE_PROBLEM } from './rowFields';
+import { ExerciseItemList } from './ExerciseItemList';
+import { CountField, RowTextField } from './RowTextField';
+import { parseRange, RANGE_PROBLEM } from './rowFields';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 
 type WarmUpCardProps = {
@@ -23,19 +24,7 @@ function acceptsLibraryExercise(dragged: DraggedItem): boolean {
 function AmountField({ item, exercise, name, onChange }: { item: WarmUpItem; exercise: Exercise | undefined; name: string; onChange: (item: WarmUpItem) => void }) {
   const base = { id: item.id, exerciseId: item.exerciseId, sets: item.sets };
   if (exercise?.measuredIn === 'time') {
-    return (
-      <RowTextField
-        className="w-16"
-        type="number"
-        label={`${name} seconds`}
-        value={item.seconds ?? WARM_UP_SECONDS}
-        format={String}
-        parse={parseCount}
-        problem={COUNT_PROBLEM}
-        suffix="s"
-        onCommit={seconds => onChange({ ...base, seconds })}
-      />
-    );
+    return <CountField className="w-16" label={`${name} seconds`} value={item.seconds ?? WARM_UP_SECONDS} suffix="s" onCommit={seconds => onChange({ ...base, seconds })} />;
   }
   return (
     <RowTextField
@@ -52,7 +41,7 @@ function AmountField({ item, exercise, name, onChange }: { item: WarmUpItem; exe
 }
 
 export function WarmUpCard({ session, library, edits, onChange, onPickExercise }: WarmUpCardProps) {
-  const { items } = session.warmUp;
+  const exerciseOf = (exerciseId: string) => library.find(other => other.id === exerciseId);
   return (
     <DropZone
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
@@ -62,38 +51,23 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
     >
       <section className="grid gap-2">
         <h4 className="text-sm font-semibold text-text-primary">Warm-up</h4>
-        {items.length > 0 && (
-          <ol aria-label="Warm-up exercises" className={ITEM_LIST_CLASS}>
-            {items.map((item, index) => {
-              const exercise = library.find(other => other.id === item.exerciseId);
-              const name = exercise?.name ?? 'Unknown exercise';
-              return (
-                <ExerciseItemRow
-                  key={item.id}
-                  name={name}
-                  position={index + 1}
-                  count={items.length}
-                  onMoveUp={() => onChange(edits.moveUp(item.id))}
-                  onMoveDown={() => onChange(edits.moveDown(item.id))}
-                  onRemove={() => onChange(edits.remove(item.id))}
-                >
-                  <RowTextField
-                    className="w-14"
-                    type="number"
-                    label={`${name} sets`}
-                    value={item.sets}
-                    format={String}
-                    parse={parseCount}
-                    problem={COUNT_PROBLEM}
-                    suffix="sets ×"
-                    onCommit={sets => onChange(edits.change({ ...item, sets }))}
-                  />
-                  <AmountField item={item} exercise={exercise} name={name} onChange={next => onChange(edits.change(next))} />
-                </ExerciseItemRow>
-              );
-            })}
-          </ol>
-        )}
+        <ExerciseItemList
+          label="Warm-up exercises"
+          items={session.warmUp.items}
+          nameOf={exerciseId => exerciseNameOf(exerciseOf(exerciseId))}
+          actions={{
+            onMoveUp: itemId => onChange(edits.moveUp(itemId)),
+            onMoveDown: itemId => onChange(edits.moveDown(itemId)),
+            onRemove: itemId => onChange(edits.remove(itemId)),
+          }}
+        >
+          {(item, name) => (
+            <>
+              <CountField className="w-14" label={`${name} sets`} value={item.sets} suffix="sets ×" onCommit={sets => onChange(edits.change({ ...item, sets }))} />
+              <AmountField item={item} exercise={exerciseOf(item.exerciseId)} name={name} onChange={next => onChange(edits.change(next))} />
+            </>
+          )}
+        </ExerciseItemList>
         <Button variant="ghost" size="xs" className="w-fit" onClick={onPickExercise}>
           <Plus aria-hidden="true" />
           Add warm-up exercise

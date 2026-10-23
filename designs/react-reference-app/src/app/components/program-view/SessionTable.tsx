@@ -2,7 +2,7 @@ import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
-import { repsSuffix, restLabel } from './programView';
+import { exerciseNameOf, repsSuffix, restLabel } from './programView';
 
 type SessionTableProps = { session: Session; exercisesById: ReadonlyMap<string, Exercise> };
 
@@ -48,7 +48,7 @@ function ExerciseRows({ session, row, exercisesById }: ExerciseRowsProps) {
                 {isSuperset(session, row) && <span className={LINE_CLASS}>Superset</span>}
               </td>
               <th scope="rowgroup" rowSpan={span} className={cn(CELL_CLASS, 'py-2 text-left font-normal')}>
-                <span className="block font-semibold text-text-primary">{exercise ? exercise.name : 'Exercise removed'}</span>
+                <span className="block font-semibold text-text-primary">{exerciseNameOf(exercise)}</span>
                 {row.cues && <span className={LINE_CLASS}>{row.cues}</span>}
                 {swaps.length > 0 && <span className={LINE_CLASS}>Swap for: {swaps.join(', ')}</span>}
                 {row.progression.kind === 'custom' && <span className={LINE_CLASS}>{row.progression.text}</span>}

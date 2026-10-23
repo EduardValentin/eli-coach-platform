@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
+import { BLOCK_TYPE_LABELS, type Block } from '../../domain/program';
 import { templateText, type TemplateKey } from '../../domain/programTemplates';
 import { LABEL_CLASS, WIDGET_SUBHEADING_CLASS } from '../typography';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -9,7 +10,7 @@ import type { ProgramView } from './programView';
 export const NUTRITION_FALLBACK = 'Your coach will add nutrition guidance here.';
 export const LIFESTYLE_FALLBACK = 'Nothing extra this time.';
 
-export function template(view: ProgramView, key: TemplateKey): string {
+export function programTemplate(view: ProgramView, key: TemplateKey): string {
   return templateText(key, view.program.language).text;
 }
 
@@ -110,6 +111,15 @@ export function ProgramText({ text }: { text: string }) {
 }
 
 export type TextCard = { key: string; title: string; eyebrow?: string; content: ReactNode };
+
+export function blockIntroCards(view: ProgramView, block: Block, noteTitle: string): TextCard[] {
+  const calibration = view.position.status === 'in-plan' && view.position.calibration;
+  return [
+    templateCard('intro', block.introText || programTemplate(view, `block.${block.type}`), `${BLOCK_TYPE_LABELS[block.type]} block`),
+    ...(block.clientNote ? [templateCard('note', block.clientNote, noteTitle)] : []),
+    ...(calibration ? [templateCard('calibration', programTemplate(view, 'calibration'), 'Calibration week')] : []),
+  ];
+}
 
 export function templateCard(key: string, text: string, fallbackTitle: string): TextCard {
   const { title, paragraphs } = parseTemplate(text);
