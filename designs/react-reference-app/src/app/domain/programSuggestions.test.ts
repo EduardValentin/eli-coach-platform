@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Exercise } from '../context/TrainingContext';
-import { exercise as fixtureExercise, row, workingSets } from '../../test/programFixtures';
-import type { Equipment } from './exercises';
+import { equippedExercise, row, workingSets } from '../../test/programFixtures';
 import type { Block, CardioSession, SetSpec } from './program';
 import type { ProgramSetup } from './programOnboarding';
 import {
@@ -28,10 +26,6 @@ const SETUP: ProgramSetup = {
 
 function cardio(id: string): CardioSession {
   return { id, originId: id, name: 'Easy cardio', segments: [] };
-}
-
-function exercise(id: string, equipment: Equipment[], overrides: Partial<Exercise> = {}): Exercise {
-  return fixtureExercise(id, { equipment, primaryMuscles: ['Chest'], pattern: 'horizontal-push', ...overrides });
 }
 
 describe('suggested structure', () => {
@@ -153,7 +147,7 @@ describe('emptyRow', () => {
 });
 
 describe('newBlock and initialContent', () => {
-  const library = [exercise('bike', ['Bike'], { name: 'Stationary bike', type: 'cardio', measuredIn: 'time' })];
+  const library = [equippedExercise('bike', ['Bike'], { name: 'Stationary bike', type: 'cardio', measuredIn: 'time' })];
 
   function previousBlock() {
     const built = newBlock('hypertrophy', 6, { setup: SETUP, library });

@@ -20,7 +20,7 @@ export function warmUpEdits(session: Session, library: readonly Exercise[]) {
       const exercise = library.find(item => item.id === exerciseId);
       return withItems([...items, warmUpItem(exercise, exerciseId)]);
     },
-    change(item: WarmUpItem): Session {
+    changeItem(item: WarmUpItem): Session {
       return withItems(items.map(other => (other.id === item.id ? item : other)));
     },
     remove(itemId: string): Session {

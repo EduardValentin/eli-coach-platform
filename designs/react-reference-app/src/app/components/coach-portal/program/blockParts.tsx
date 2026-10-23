@@ -7,9 +7,17 @@ import { cn } from '../../ui/utils';
 
 export const STARTED_BLOCK_REASON = 'A block that has started stays in the plan.';
 
+export function endedText(status: Extract<BlockStatus, { kind: 'ended' }>): string {
+  return `ended ${formatJourneyDate(status.end)}`;
+}
+
+export function currentWeekText(block: Block, status: Extract<BlockStatus, { kind: 'current' }>): string {
+  return `week ${status.weekOfBlock} of ${block.weeks}`;
+}
+
 export function blockProgress(block: Block, status: BlockStatus): string | null {
-  if (status.kind === 'ended') return `ended ${formatJourneyDate(status.end)}`;
-  if (status.kind === 'current') return `week ${status.weekOfBlock} of ${block.weeks}`;
+  if (status.kind === 'ended') return endedText(status);
+  if (status.kind === 'current') return currentWeekText(block, status);
   return null;
 }
 

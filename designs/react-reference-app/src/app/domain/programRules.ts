@@ -10,7 +10,7 @@ import {
   hasExercises,
   scheduledSessions,
   sessionOn,
-  WEEKDAY_LABELS,
+  weekdayAbbreviation,
   WEEKDAYS,
   type Block,
   type LevelHint,
@@ -226,10 +226,6 @@ function isHeavyLegSession(session: Session, exercisesById: Exercises): boolean 
   return session.rows
     .filter(row => row.slot === 'A')
     .some(row => primaryMusclesOf(row.exerciseId, exercisesById).some(muscle => HEAVY_LEG_MUSCLES.includes(muscle)));
-}
-
-function weekdayAbbreviation(day: Weekday): string {
-  return WEEKDAY_LABELS[day].slice(0, 3);
 }
 
 function nextDay(day: Weekday): Weekday {

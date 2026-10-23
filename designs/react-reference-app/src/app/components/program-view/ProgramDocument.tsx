@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import type { ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, WEEKDAY_LABELS, WEEKDAYS, weekCounts, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, WEEKDAY_LABELS, WEEKDAYS, weekdayAbbreviation, weekCounts, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates, nextCheckpoint } from '../../domain/programCalendar';
 import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
 import { fillTemplate } from '../../domain/programTemplates';
@@ -208,7 +208,7 @@ function WeekTable({ block }: { block: Block }) {
           <tr>
             {WEEKDAYS.map(weekday => (
               <th key={weekday} scope="col" className={cn(DOCUMENT_LABEL_CLASS, 'border-b border-text-primary px-1 py-1 text-left')}>
-                {WEEKDAY_LABELS[weekday].slice(0, 3)}
+                {weekdayAbbreviation(weekday)}
               </th>
             ))}
           </tr>

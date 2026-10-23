@@ -25,6 +25,9 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
   sat: 'Saturday',
   sun: 'Sunday',
 };
+export function weekdayAbbreviation(day: Weekday): string {
+  return WEEKDAY_LABELS[day].slice(0, 3);
+}
 export type Slot = 'A' | 'B' | 'C' | 'D';
 export const SLOTS: readonly Slot[] = ['A', 'B', 'C', 'D'];
 export type Range = { min: number; max: number };

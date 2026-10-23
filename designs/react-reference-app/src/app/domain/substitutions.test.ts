@@ -1,26 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import type { Exercise } from '../context/TrainingContext';
-import { exercise as fixtureExercise } from '../../test/programFixtures';
-import type { Equipment } from './exercises';
+import { equippedExercise } from '../../test/programFixtures';
 import { substitutionsFor } from './substitutions';
 
-function exercise(id: string, equipment: Equipment[], overrides: Partial<Exercise> = {}): Exercise {
-  return fixtureExercise(id, { equipment, primaryMuscles: ['Chest'], pattern: 'horizontal-push', ...overrides });
-}
-
 describe('substitutionsFor', () => {
-  const target = exercise('bench', ['Barbell', 'Bench']);
+  const target = equippedExercise('bench', ['Barbell', 'Bench']);
 
   it('picks a lighter and a heavier match within the client equipment', () => {
     // arrange
     const library = [
       target,
-      exercise('machine-press', ['Machine']),
-      exercise('db-press', ['Dumbbells']),
-      exercise('pushup', []),
-      exercise('row', [], { pattern: 'horizontal-pull' }),
-      exercise('archived', [], { archivedAt: '2026-01-01' }),
-      exercise('other-muscle', [], { primaryMuscles: ['Triceps'] }),
+      equippedExercise('machine-press', ['Machine']),
+      equippedExercise('db-press', ['Dumbbells']),
+      equippedExercise('pushup', []),
+      equippedExercise('row', [], { pattern: 'horizontal-pull' }),
+      equippedExercise('archived', [], { archivedAt: '2026-01-01' }),
+      equippedExercise('other-muscle', [], { primaryMuscles: ['Triceps'] }),
     ];
 
     // act
@@ -32,7 +26,7 @@ describe('substitutionsFor', () => {
 
   it('falls back to equipment the client lacks', () => {
     // arrange
-    const library = [target, exercise('cable-fly', ['Cable']), exercise('db-press', ['Dumbbells'])];
+    const library = [target, equippedExercise('cable-fly', ['Cable']), equippedExercise('db-press', ['Dumbbells'])];
 
     // act
     const ids = substitutionsFor(target, library, ['Dumbbells']);

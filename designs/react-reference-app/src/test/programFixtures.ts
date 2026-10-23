@@ -1,5 +1,6 @@
 import type { Exercise } from '../app/context/TrainingContext';
 import { currentBlock, type ProgramView } from '../app/components/program-view/programView';
+import type { Equipment } from '../app/domain/exercises';
 import type { Block, Row, Session, SetSpec } from '../app/domain/program';
 
 export function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
@@ -17,6 +18,10 @@ export function exercise(id: string, overrides: Partial<Exercise> = {}): Exercis
     tags: [],
     ...overrides,
   };
+}
+
+export function equippedExercise(id: string, equipment: Equipment[], overrides: Partial<Exercise> = {}): Exercise {
+  return exercise(id, { equipment, primaryMuscles: ['Chest'], pattern: 'horizontal-push', ...overrides });
 }
 
 export function workingSets(count: number): SetSpec[] {

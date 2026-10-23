@@ -10,5 +10,5 @@ export function useDrawerKeyboard(drawer: RefObject<HTMLElement | null> | null, 
     };
     document.addEventListener('keydown', keepKeyboardInDrawer);
     return () => document.removeEventListener('keydown', keepKeyboardInDrawer);
-  }, [drawer]);
+  }, [drawer, onEscape]);
 }

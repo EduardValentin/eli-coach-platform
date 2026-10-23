@@ -21,7 +21,7 @@ describe('warmUpEdits', () => {
 
     // act
     const twice = warmUpEdits(withCatCow, LIBRARY).add('hips');
-    const changed = warmUpEdits(withCatCow, LIBRARY).change({ ...hips, sets: 2 });
+    const changed = warmUpEdits(withCatCow, LIBRARY).changeItem({ ...hips, sets: 2 });
     const removed = warmUpEdits(changed, LIBRARY).remove(catCow.id);
 
     // assert

@@ -164,7 +164,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
     onRemove: () =>
       confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove }),
   };
-  const toggle = (expanded: boolean): SettingsToggleProps => ({ expanded, buttonRef: settings.toggleButton, onToggle: settings.toggle });
+  const toggleControl = { buttonRef: settings.toggleButton, onToggle: settings.toggle };
 
   return (
     <header
@@ -173,10 +173,10 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
     >
       <h2 className="sr-only">{BLOCK_TYPE_LABELS[block.type]}</h2>
       {settings.collapsed ? (
-        <CollapsedBlockBar block={block} index={index} status={status} toggle={toggle(false)} />
+        <CollapsedBlockBar block={block} index={index} status={status} toggle={{ ...toggleControl, expanded: false }} />
       ) : (
         <>
-          <BlockTitleBar block={block} index={index} status={status} toggle={settings.collapsible ? toggle(true) : null} actions={actions} onChangeType={onChange} />
+          <BlockTitleBar block={block} index={index} status={status} toggle={settings.collapsible ? { ...toggleControl, expanded: true } : null} actions={actions} onChangeType={onChange} />
           <BlockSettings block={block} weeks={weeks} onChange={onChange} onChangeShape={changeShape} onChangeTrainingDays={changeTrainingDays} />
         </>
       )}
