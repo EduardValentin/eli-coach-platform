@@ -1,7 +1,6 @@
 import { useId, useState } from 'react';
-import type { Block, BlockType } from '../../../domain/program';
+import type { Block } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
-import { reDefaultedBlock } from '../../../domain/programDefaults';
 import { blockingMessage, blockShorterThanElapsed, type BlockingCode, type RuleFinding } from '../../../domain/programRules';
 
 type WeeksFieldInput = {
@@ -12,10 +11,6 @@ type WeeksFieldInput = {
   today: Date;
   onCommit: (weeks: number) => void;
 };
-
-export function blockWithType(block: Block, type: BlockType): Block {
-  return { ...reDefaultedBlock(block, type), weeks: type === 'deload' ? 1 : block.weeks };
-}
 
 export function weeksLocked(block: Block, status: BlockStatus): boolean {
   return block.type === 'deload' || status.kind === 'ended';
@@ -45,7 +40,7 @@ export function useWeeksField({ blocks, index, status, dayOne, today, onCommit }
       return;
     }
     const withWeeks = blocks.map((other, at) => (at === index ? { ...block, weeks } : other));
-    const refusal = elapsedRefusal(status, weeks) ?? blockShorterThanElapsed(withWeeks, blocks, dayOne, today)[0];
+    const refusal = elapsedRefusal(status, weeks) ?? blockShorterThanElapsed({ draftBlocks: withWeeks, publishedBlocks: blocks, dayOne, today })[0];
     if (refusal) {
       setText(String(block.weeks));
       setProblem(blockingMessage(refusal));

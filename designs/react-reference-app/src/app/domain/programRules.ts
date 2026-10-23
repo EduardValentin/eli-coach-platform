@@ -1,19 +1,29 @@
-import { addDays, differenceInCalendarDays, format, isAfter, max, startOfDay } from 'date-fns';
+import { addDays, format, isAfter, max, startOfDay } from 'date-fns';
 import type { Exercise } from '../context/TrainingContext';
+import { canStartWork, workStartDate } from './coachingSubscription';
 import type { Muscle } from './exercises';
+import type { ClientJourney } from './journey';
 import {
   BLOCK_TYPE_LABELS,
+  cardioOn,
+  currentVersion,
+  hasExercises,
+  scheduledSessions,
+  sessionOn,
+  WEEKDAY_LABELS,
   WEEKDAYS,
   type Block,
-  type CardioSession,
   type LevelHint,
+  type Program,
   type ProgramContent,
+  type ProgramVersion,
+  type Row,
   type Session,
   type Weekday,
 } from './program';
-import { blockDates, blockSpan, currentPosition, nextCheckpoint } from './programCalendar';
+import { blockDates, checkInWeekdayOf, currentPosition, dayOneOf, nextCheckpoint } from './programCalendar';
 import { hasHardRounds, isLightCardio } from './programCardio';
-import { estimatedMinutes } from './programSuggestions';
+import { estimatedMinutes, isOverTarget } from './sessionTiming';
 import { slotPlanFor } from './splitTemplates';
 
 export type BlockingCode =
@@ -52,15 +62,23 @@ export type RuleContext = {
   exercisesById: ReadonlyMap<string, Exercise>;
 };
 
-type Exercises = ReadonlyMap<string, Exercise>;
+export type RuleInput = {
+  journey: ClientJourney | null;
+  program: Program;
+  draft: ProgramVersion;
+  today: Date;
+  exercises: readonly Exercise[];
+};
 
-const DAYS_PER_WEEK = 7;
+type Exercises = ReadonlyMap<string, Exercise>;
+type ElapsedInput = { draftBlocks: readonly Block[]; publishedBlocks: readonly Block[] | null; dayOne: Date | null; today: Date };
+type SessionPlace = { block: Block; session: Session };
+
 const MINIMUM_CONTENT_DAYS = 14;
 const MAX_WEEKS_WITHOUT_DELOAD = 8;
 const MAX_HIIT_SESSIONS = 2;
-const TARGET_MINUTES_TOLERANCE = 10;
 
-export const LARGE_MUSCLE_GROUPS: readonly Muscle[][] = [
+const LARGE_MUSCLE_GROUPS: readonly Muscle[][] = [
   ['Chest'],
   ['Upper back', 'Lats'],
   ['Shoulders'],
@@ -70,15 +88,6 @@ export const LARGE_MUSCLE_GROUPS: readonly Muscle[][] = [
 ];
 const LARGE_MUSCLE_GROUP_LABELS = ['Chest', 'Back', 'Shoulders', 'Glutes', 'Quadriceps', 'Hamstrings'];
 const HEAVY_LEG_MUSCLES: readonly Muscle[] = ['Glutes', 'Quadriceps', 'Hamstrings'];
-const WEEKDAY_LABELS: Record<Weekday, string> = {
-  mon: 'Mon',
-  tue: 'Tue',
-  wed: 'Wed',
-  thu: 'Thu',
-  fri: 'Fri',
-  sat: 'Sat',
-  sun: 'Sun',
-};
 
 const BLOCKING_MESSAGES: Record<BlockingCode, string> = {
   'foundation-not-first': 'Foundation must be the first block',
@@ -116,7 +125,22 @@ export function warningMessage(finding: RuleFinding<WarningCode>): string {
   return interpolate(WARNING_MESSAGES[finding.code], finding.detail);
 }
 
-export function minimumContentWindow(ctx: RuleContext): { from: Date; to: Date } {
+export function ruleContextFor({ journey, program, draft, today, exercises }: RuleInput): RuleContext {
+  const subscription = journey?.subscription;
+  return {
+    versionNumber: draft.number,
+    publishDay: today,
+    dayOne: dayOneOf(journey),
+    preferredWeekday: checkInWeekdayOf(journey),
+    level: program.level,
+    startDate: subscription && !canStartWork(subscription, today) ? workStartDate(subscription) : null,
+    detailsPending: journey?.stage === 'needs-details',
+    publishedBlocks: currentVersion(program)?.content.plan.blocks ?? null,
+    exercisesById: new Map(exercises.map(exercise => [exercise.id, exercise])),
+  };
+}
+
+function minimumContentWindow(ctx: RuleContext): { from: Date; to: Date } {
   const checkpoint = nextCheckpoint(ctx.dayOne ?? ctx.publishDay, ctx.preferredWeekday, ctx.publishDay);
   return {
     from: ctx.publishDay,
@@ -124,7 +148,7 @@ export function minimumContentWindow(ctx: RuleContext): { from: Date; to: Date }
   };
 }
 
-function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[] {
+export function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[] {
   const findings: RuleFinding<BlockingCode>[] = [];
   if (blocks[0]?.type === 'deload') findings.push({ code: 'starts-with-deload' });
   blocks.forEach((block, index) => {
@@ -136,16 +160,12 @@ function sequenceProblems(blocks: readonly Block[]): RuleFinding<BlockingCode>[]
   return findings;
 }
 
-function referencedSessions(block: Block): Session[] {
-  const ids = new Set(
-    Object.values(block.calendar).flatMap(entry => (entry.kind === 'session' ? [entry.sessionId] : [])),
-  );
-  return block.sessions.filter(session => ids.has(session.id));
+export function hasUnfilledSessions(block: Block): boolean {
+  return scheduledSessions(block).some(session => !hasExercises(session));
 }
 
 function hasEmptyCardioDay(block: Block): boolean {
-  const ids = new Set(Object.values(block.calendar).flatMap(entry => (entry.kind === 'cardio' ? [entry.cardioId] : [])));
-  return block.cardioSessions.some(cardio => ids.has(cardio.id) && cardio.segments.length === 0);
+  return WEEKDAYS.some(day => cardioOn(block, day)?.segments.length === 0);
 }
 
 function missingSessionProblems(
@@ -157,9 +177,7 @@ function missingSessionProblems(
   return blocks.flatMap((block, index) => {
     const { start, end } = blockDates(blocks, index, dayOne);
     const overlaps = start <= window.to && end >= startOfDay(window.from);
-    const hasEmptySession =
-      referencedSessions(block).some(session => !session.rows.some(row => row.exerciseId !== '')) || hasEmptyCardioDay(block);
-    if (!overlaps || !hasEmptySession) return [];
+    if (!overlaps || !(hasUnfilledSessions(block) || hasEmptyCardioDay(block))) return [];
     return [
       {
         code: 'missing-sessions' as const,
@@ -170,17 +188,11 @@ function missingSessionProblems(
   });
 }
 
-export function blockShorterThanElapsed(
-  draftBlocks: readonly Block[],
-  publishedBlocks: readonly Block[] | null,
-  dayOne: Date | null,
-  today: Date,
-): RuleFinding<BlockingCode>[] {
+export function blockShorterThanElapsed({ draftBlocks, publishedBlocks, dayOne, today }: ElapsedInput): RuleFinding<BlockingCode>[] {
   if (!publishedBlocks || !dayOne) return [];
   const position = currentPosition(publishedBlocks, dayOne, today);
   if (position.status !== 'in-plan') return [];
-  const weekOfPlan = Math.floor(differenceInCalendarDays(today, dayOne) / DAYS_PER_WEEK) + 1;
-  const weekOfBlock = weekOfPlan - blockSpan(publishedBlocks, position.blockIndex).startWeek + 1;
+  const { weekOfBlock } = position;
   const { originId } = publishedBlocks[position.blockIndex];
   const block = draftBlocks.find(other => other.originId === originId);
   if (block && block.weeks >= weekOfBlock) return [];
@@ -196,7 +208,7 @@ export function blockingProblems(
   const findings = [
     ...sequenceProblems(blocks),
     ...missingSessionProblems(blocks, ctx),
-    ...blockShorterThanElapsed(blocks, ctx.publishedBlocks, ctx.dayOne, ctx.publishDay),
+    ...blockShorterThanElapsed({ draftBlocks: blocks, publishedBlocks: ctx.publishedBlocks, dayOne: ctx.dayOne, today: ctx.publishDay }),
   ];
   if (ctx.versionNumber >= 2 && whatChanged.trim() === '') findings.push({ code: 'what-changed-missing' });
   if (ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(ctx.publishDay))) {
@@ -210,15 +222,14 @@ function primaryMusclesOf(exerciseId: string, exercises: Exercises): readonly Mu
   return exercises.get(exerciseId)?.primaryMuscles ?? [];
 }
 
-export function isHeavyLegSession(session: Session, exercisesById: Exercises): boolean {
+function isHeavyLegSession(session: Session, exercisesById: Exercises): boolean {
   return session.rows
     .filter(row => row.slot === 'A')
     .some(row => primaryMusclesOf(row.exerciseId, exercisesById).some(muscle => HEAVY_LEG_MUSCLES.includes(muscle)));
 }
 
-function sessionOn(block: Block, day: Weekday): Session | undefined {
-  const entry = block.calendar[day];
-  return entry.kind === 'session' ? block.sessions.find(session => session.id === entry.sessionId) : undefined;
+function weekdayAbbreviation(day: Weekday): string {
+  return WEEKDAY_LABELS[day].slice(0, 3);
 }
 
 function nextDay(day: Weekday): Weekday {
@@ -257,11 +268,6 @@ function muscleFrequencyWarnings(block: Block, exercises: Exercises): RuleFindin
   });
 }
 
-function cardioOn(block: Block, day: Weekday): CardioSession | undefined {
-  const entry = block.calendar[day];
-  return entry.kind === 'cardio' ? block.cardioSessions.find(cardio => cardio.id === entry.cardioId) : undefined;
-}
-
 function isHardDay(block: Block, day: Weekday): boolean {
   const cardio = cardioOn(block, day);
   return sessionOn(block, day) !== undefined || (cardio !== undefined && !isLightCardio(cardio));
@@ -275,7 +281,7 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
       findings.push({
         code: 'hard-days-in-a-row',
         blockId: block.id,
-        detail: `${WEEKDAY_LABELS[day]} and ${WEEKDAY_LABELS[following]}`,
+        detail: `${weekdayAbbreviation(day)} and ${weekdayAbbreviation(following)}`,
       });
     }
     const cardio = cardioOn(block, day);
@@ -290,38 +296,39 @@ function scheduleWarnings(block: Block, exercises: Exercises): RuleFinding<Warni
   return findings;
 }
 
+function roleSlotWarning({ block, session }: SessionPlace, row: Row, exercises: Exercises): RuleFinding<WarningCode>[] {
+  const exercise = exercises.get(row.exerciseId);
+  const planned = slotPlanFor(block, session, row.slot)?.patterns;
+  if (!exercise?.pattern || !planned || planned.includes(exercise.pattern)) return [];
+  return [{ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name }];
+}
+
+function sharesMuscleWithLaterPartner(row: Row, later: readonly Row[], exercises: Exercises): boolean {
+  if (row.supersetGroup === undefined) return false;
+  const muscles = primaryMusclesOf(row.exerciseId, exercises);
+  return later.some(
+    other =>
+      other.slot === row.slot &&
+      other.supersetGroup === row.supersetGroup &&
+      primaryMusclesOf(other.exerciseId, exercises).some(muscle => muscles.includes(muscle)),
+  );
+}
+
+function supersetMuscleWarning({ block, session }: SessionPlace, index: number, exercises: Exercises): RuleFinding<WarningCode>[] {
+  if (!sharesMuscleWithLaterPartner(session.rows[index], session.rows.slice(index + 1), exercises)) return [];
+  return [{ code: 'superset-same-muscle', blockId: block.id, sessionId: session.id, detail: session.name }];
+}
+
+function overTargetWarning({ block, session }: SessionPlace): RuleFinding<WarningCode>[] {
+  if (!isOverTarget(session, block)) return [];
+  return [{ code: 'session-over-target', blockId: block.id, sessionId: session.id, detail: `${session.name}, ${estimatedMinutes(session)} min` }];
+}
+
 function sessionWarnings(block: Block, exercises: Exercises): RuleFinding<WarningCode>[] {
   return block.sessions.flatMap(session => {
-    const findings: RuleFinding<WarningCode>[] = [];
-    session.rows.forEach((row, index) => {
-      const exercise = exercises.get(row.exerciseId);
-      const planned = slotPlanFor(block, session, row.slot)?.patterns;
-      if (exercise?.pattern && planned && !planned.includes(exercise.pattern)) {
-        findings.push({ code: 'role-slot-mismatch', blockId: block.id, sessionId: session.id, detail: exercise.name });
-      }
-      const sharesMuscle = session.rows.slice(index + 1).some(
-        other =>
-          row.supersetGroup !== undefined &&
-          other.slot === row.slot &&
-          other.supersetGroup === row.supersetGroup &&
-          primaryMusclesOf(other.exerciseId, exercises).some(muscle =>
-            primaryMusclesOf(row.exerciseId, exercises).includes(muscle),
-          ),
-      );
-      if (sharesMuscle) {
-        findings.push({ code: 'superset-same-muscle', blockId: block.id, sessionId: session.id, detail: session.name });
-      }
-    });
-    const minutes = estimatedMinutes(session);
-    if (minutes > block.targetMinutes + TARGET_MINUTES_TOLERANCE) {
-      findings.push({
-        code: 'session-over-target',
-        blockId: block.id,
-        sessionId: session.id,
-        detail: `${session.name}, ${minutes} min`,
-      });
-    }
-    return findings;
+    const place = { block, session };
+    const rowFindings = session.rows.flatMap((row, index) => [...roleSlotWarning(place, row, exercises), ...supersetMuscleWarning(place, index, exercises)]);
+    return [...rowFindings, ...overTargetWarning(place)];
   });
 }
 

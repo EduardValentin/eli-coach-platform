@@ -3,7 +3,7 @@ import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, GripVertical, Link2, Link2Off, RotateCcw, Trash2 } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { positionLabel, setsSummary, type Row, type Session } from '../../../domain/program';
-import { SINGLE_CARD_SLOTS, type SessionEdits } from '../../../domain/sessionEditing';
+import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -18,23 +18,25 @@ type ExerciseCardProps = {
   row: Row;
   exercise: Exercise | undefined;
   library: readonly Exercise[];
-  edits: SessionEdits;
+  edits: RowEdits;
   onChange: (session: Session) => void;
   onAddSubstitution: (rowId: string) => void;
 };
 
+function groupingActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | 'edits' | 'onChange'>): RowMenuAction[] {
+  if (SINGLE_CARD_SLOTS.includes(row.slot)) return [];
+  const group = row.supersetGroup;
+  if (group) return [{ name: 'ungroup', label: 'Ungroup', icon: Link2Off, onSelect: () => onChange(edits.ungroup(group)) }];
+  return [{ name: 'superset', label: 'Superset with next', icon: Link2, disabled: !edits.canSupersetWithNext(row.id), onSelect: () => onChange(edits.supersetWithNext(row.id)) }];
+}
+
 function menuActions({ row, edits, onChange }: Pick<ExerciseCardProps, 'row' | 'edits' | 'onChange'>): RowMenuAction[] {
   const { rows } = edits.session;
   const index = rows.findIndex(other => other.id === row.id);
-  const grouping: RowMenuAction[] = SINGLE_CARD_SLOTS.includes(row.slot)
-    ? []
-    : row.supersetGroup
-    ? [{ name: 'ungroup', label: 'Ungroup', icon: Link2Off, onSelect: () => onChange(edits.ungroup(row.supersetGroup as string)) }]
-    : [{ name: 'superset', label: 'Superset with next', icon: Link2, disabled: !edits.canSupersetWithNext(row.id), onSelect: () => onChange(edits.supersetWithNext(row.id)) }];
   return [
     { name: 'up', label: 'Move up', icon: ArrowUp, disabled: index === 0, onSelect: () => onChange(edits.moveUp(row.id)) },
     { name: 'down', label: 'Move down', icon: ArrowDown, disabled: index === rows.length - 1, onSelect: () => onChange(edits.moveDown(row.id)) },
-    ...grouping,
+    ...groupingActions({ row, edits, onChange }),
     { name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) },
     { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: () => onChange(edits.remove(row.id)) },
   ];
@@ -156,6 +158,7 @@ export function ExerciseCard({ session, row, exercise, library, edits, onChange,
             }}
             onChange={changeRow}
             onAddSubstitution={() => onAddSubstitution(row.id)}
+            onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
             onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
           />
         </div>

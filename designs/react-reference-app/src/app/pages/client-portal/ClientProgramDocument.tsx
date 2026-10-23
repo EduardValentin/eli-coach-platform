@@ -12,14 +12,14 @@ const PROGRAM_PATH = '/portal/program';
 export function ClientProgramDocument() {
   const { version: requested } = useParams();
   const { demoJourney } = useClientJourneys();
-  const { seeded, programFor } = usePrograms();
+  const { hydrated, programFor } = usePrograms();
   const { exercises } = useTraining();
   const program = programFor(demoJourney.callId);
   const version = requested
     ? program?.versions.find(candidate => candidate.number === Number(requested) && candidate.state !== 'draft')
     : program && currentVersion(program);
 
-  if (!seeded) return null;
+  if (!hydrated) return null;
   if (!program || !version) return <Navigate to={PROGRAM_PATH} replace />;
 
   const view = journeyProgramView({ journey: demoJourney, program, version, exercises, today: new Date() });

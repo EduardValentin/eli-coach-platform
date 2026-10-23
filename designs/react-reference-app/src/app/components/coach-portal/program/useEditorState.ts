@@ -1,47 +1,19 @@
 import { isAfter, startOfDay } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { dayOneOf, usePrograms } from '../../../context/ProgramContext';
-import { useTraining, type Exercise } from '../../../context/TrainingContext';
-import { canStartWork, workStartDate } from '../../../domain/coachingSubscription';
+import { usePrograms } from '../../../context/ProgramContext';
+import { useTraining } from '../../../context/TrainingContext';
 import type { ClientJourney } from '../../../domain/journey';
-import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../../domain/onboardingAnswers';
-import {
-  currentVersion,
-  type Block,
-  type BlockType,
-  type Program,
-  type ProgramContent,
-  type ProgramVersion,
-} from '../../../domain/program';
-import { currentPosition, weekdayFromOnboarding } from '../../../domain/programCalendar';
+import type { Block, BlockType, Program, ProgramContent, ProgramVersion } from '../../../domain/program';
+import { currentPosition } from '../../../domain/programCalendar';
 import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
-import { blockingProblems, warnings, type RuleContext } from '../../../domain/programRules';
+import { blockingProblems, ruleContextFor, warnings } from '../../../domain/programRules';
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { sectionFromHash, sectionHash, type EditorSection } from './editorSection';
 import type { BlocksUpdate } from './PlanBlockList';
 
 type EditorInput = { journey: ClientJourney; program: Program; draft: ProgramVersion; programPath: string };
-
-function ruleContextFor(
-  { journey, program, draft }: Omit<EditorInput, 'programPath'>,
-  today: Date,
-  exercises: readonly Exercise[],
-): RuleContext {
-  const subscription = journey.subscription;
-  return {
-    versionNumber: draft.number,
-    publishDay: today,
-    dayOne: dayOneOf(journey),
-    preferredWeekday: weekdayFromOnboarding(collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY)),
-    level: program.level,
-    startDate: subscription && !canStartWork(subscription, today) ? workStartDate(subscription) : null,
-    detailsPending: journey.stage === 'needs-details',
-    publishedBlocks: currentVersion(program)?.content.plan.blocks ?? null,
-    exercisesById: new Map(exercises.map(exercise => [exercise.id, exercise])),
-  };
-}
 
 function defaultSection(draft: ProgramVersion, dayOne: Date | null, today: Date): EditorSection {
   const { blocks } = draft.content.plan;
@@ -56,9 +28,9 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   const location = useLocation();
   const navigate = useNavigate();
   const today = new Date();
-  const ctx = ruleContextFor({ journey, program, draft }, today, exercises);
+  const ruleContext = ruleContextFor({ journey, program, draft, today, exercises });
   const { content } = draft;
-  const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ctx.dayOne, today);
+  const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ruleContext.dayOne, today);
   const journeySetup = setupFromJourney(journey);
   const setup: ProgramSetup = {
     ...journeySetup,
@@ -114,11 +86,11 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
 
   return {
     today,
-    ctx,
+    ruleContext,
     selected,
-    problems: blockingProblems(content, draft.whatChanged, ctx),
-    warnings: warnings(content, ctx),
-    opensOn: ctx.startDate && isAfter(startOfDay(ctx.startDate), startOfDay(today)) ? ctx.startDate : null,
+    problems: blockingProblems(content, draft.whatChanged, ruleContext),
+    warnings: warnings(content, ruleContext),
+    opensOn: ruleContext.startDate && isAfter(startOfDay(ruleContext.startDate), startOfDay(today)) ? ruleContext.startDate : null,
     select,
     updateBlocks,
     replaceBlock,

@@ -82,7 +82,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
           key={block.id}
           blocks={blocks}
           index={blockIndex}
-          status={blockStatus(blocks, blockIndex, dayOne, today)}
+          status={blockStatus({ blocks, dayOne, today }, blockIndex)}
           dayOne={dayOne}
           today={today}
           language={program.language}

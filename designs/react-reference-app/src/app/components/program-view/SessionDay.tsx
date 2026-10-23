@@ -2,7 +2,8 @@ import { useId, type ReactNode } from 'react';
 import { ChevronDown, Timer } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type ProgramLanguage, type Row, type Session, type SetSpec } from '../../domain/program';
-import { estimatedMinutes } from '../../domain/programSuggestions';
+import { sessionUnits } from '../../domain/sessionEditing';
+import { estimatedMinutes } from '../../domain/sessionTiming';
 import { templateText } from '../../domain/programTemplates';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
@@ -134,17 +135,6 @@ function ExerciseCard({ session, row, exercisesById, language }: ExerciseCardPro
   );
 }
 
-function groupsOf(session: Session): Row[][] {
-  const groups: Row[][] = [];
-  for (const row of session.rows) {
-    const previous = groups.at(-1)?.[0];
-    const joinsPrevious = previous !== undefined && row.supersetGroup !== undefined && previous.supersetGroup === row.supersetGroup && previous.slot === row.slot;
-    if (joinsPrevious) groups[groups.length - 1].push(row);
-    else groups.push([row]);
-  }
-  return groups;
-}
-
 function Superset({ children }: { children: ReactNode }) {
   const labelId = useId();
   return (
@@ -175,8 +165,8 @@ export function SessionDay({ session, exercisesById, language }: SessionDayProps
       <DayHeader headingId={headingId} name={session.name} meta={`~${estimatedMinutes(session)} min`} />
       {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
       <ol className="grid items-start gap-3 @3xl:grid-cols-2">
-        {groupsOf(session).map(rows =>
-          rows.length > 1 ? <Superset key={rows[0].id}>{rows.map(item)}</Superset> : item(rows[0]),
+        {sessionUnits(session).map(({ key, rows }) =>
+          rows.length > 1 ? <Superset key={key}>{rows.map(item)}</Superset> : item(rows[0]),
         )}
       </ol>
       {session.coolDown.enabled && (

@@ -90,7 +90,7 @@ export function PlanTimeline({ blocks, dayOne, preferredWeekday, today }: PlanTi
           )}
           <ol aria-label="Plan blocks" className="flex h-14 overflow-hidden rounded-tile">
             {blocks.map((block, index) => {
-              const status = blockStatus(blocks, index, dayOne, today).kind;
+              const status = blockStatus({ blocks, dayOne, today }, index).kind;
               const label = `${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`;
               return (
                 <li
@@ -188,7 +188,7 @@ export function PlanStrip({ blocks, dayOne, today }: PlanStripProps) {
         <span
           key={block.id}
           className={cn('rounded-full', BLOCK_SWATCH[block.type], {
-            'opacity-40': blockStatus(blocks, index, dayOne, today).kind === 'ended',
+            'opacity-40': blockStatus({ blocks, dayOne, today }, index).kind === 'ended',
           })}
           style={{ flexGrow: block.weeks, flexBasis: 0 }}
         />

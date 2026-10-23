@@ -3,21 +3,20 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
 import { PlanTimeline } from '../coach-portal/program/PlanTimeline';
-import { WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { LABEL_CLASS } from '../typography';
 import { Button } from '../ui/button';
-import { BLOCK_TYPE_LABELS, WEEKDAYS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, cardioOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
 import { weekdayOf } from '../../domain/programCalendar';
 import { fillTemplate } from '../../domain/programTemplates';
-import { SPLIT_TEMPLATES } from '../../domain/splitTemplates';
+import { splitLabel } from '../../domain/splitTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DayContent } from './DayContent';
 import { FocusCard } from './FocusCard';
 import { LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, ProgramText, template, TemplateBody, templateCard, TextCardStack } from './ProgramText';
 import { WeekStrip } from './WeekStrip';
 import { WhatChangedBanner, readDismissedVersion } from './WhatChangedBanner';
-import { cardioFor, currentBlock, weekStart, type ProgramView } from './programView';
+import { currentBlock, weekStart, type ProgramView } from './programView';
 
 function AboutBlock({ view, block }: { view: ProgramView; block: Block }) {
   const calibration = view.position.status === 'in-plan' && view.position.calibration;
@@ -36,7 +35,7 @@ function CardioAndSteps({ view, block }: { view: ProgramView; block: Block }) {
       <ProgramText text={steps} />
       <ul className="divide-y divide-border-subtle">
         {WEEKDAYS.flatMap(weekday => {
-          const cardio = cardioFor(block, weekday);
+          const cardio = cardioOn(block, weekday);
           if (!cardio) return [];
           return [
             <li key={weekday} className="flex items-baseline justify-between gap-3 py-2.5 text-sm">
@@ -126,7 +125,7 @@ export function ClientProgramBody({ view }: { view: ProgramView }) {
             <AboutBlock view={view} block={block} />
           </Section>
           <Section title="Your split" id="split" icon={Dumbbell}>
-            <TextCardStack cards={[templateCard('split', block.split.text, block.split.name || SPLIT_TEMPLATES[block.split.shape].label)]} />
+            <TextCardStack cards={[templateCard('split', block.split.text, splitLabel(block))]} />
           </Section>
           {program.cycleMode === 'adapted' && (
             <Section title="Listening to your cycle" id="cycle" icon={HeartPulse}>

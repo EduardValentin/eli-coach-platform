@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Session } from '../../../domain/program';
-import type { SessionEdits } from '../../../domain/sessionEditing';
+import type { CoolDownEdits } from '../../../domain/coolDownEditing';
 import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { Textarea } from '../../ui/textarea';
@@ -14,7 +14,7 @@ import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 type CoolDownCardProps = {
   session: Session;
   library: readonly Exercise[];
-  edits: SessionEdits;
+  edits: CoolDownEdits;
   onChange: (session: Session) => void;
   onPickStretch: () => void;
 };
@@ -29,7 +29,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
   const { items } = coolDown;
   return (
     <DropZone
-      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addCoolDownItem(dragged.item.exercise.id)) }}
+      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsStretch}
       className="rounded-control border border-border-subtle bg-surface-subtle p-3"
       activeClassName="ring-2 ring-primary/40"
@@ -37,7 +37,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-semibold text-text-primary">Cool-down</h4>
-          <Switch aria-label="Cool-down" checked={coolDown.enabled} onCheckedChange={enabled => onChange(edits.changeCoolDown({ ...coolDown, enabled }))} />
+          <Switch aria-label="Cool-down" checked={coolDown.enabled} onCheckedChange={enabled => onChange(edits.change({ ...coolDown, enabled }))} />
         </div>
         {coolDown.enabled && (
           <>
@@ -49,7 +49,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                 id={noteId}
                 placeholder="Easy walk and a few stretches"
                 value={coolDown.note}
-                onChange={event => onChange(edits.changeCoolDown({ ...coolDown, note: event.target.value }))}
+                onChange={event => onChange(edits.change({ ...coolDown, note: event.target.value }))}
               />
             </div>
             {items.length > 0 && (
@@ -62,9 +62,9 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                       name={name}
                       position={index + 1}
                       count={items.length}
-                      onMoveUp={() => onChange(edits.moveCoolDownItemUp(item.id))}
-                      onMoveDown={() => onChange(edits.moveCoolDownItemDown(item.id))}
-                      onRemove={() => onChange(edits.removeCoolDownItem(item.id))}
+                      onMoveUp={() => onChange(edits.moveUp(item.id))}
+                      onMoveDown={() => onChange(edits.moveDown(item.id))}
+                      onRemove={() => onChange(edits.remove(item.id))}
                     >
                       <RowTextField
                         className="w-16"
@@ -75,7 +75,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
                         parse={parseCount}
                         problem={COUNT_PROBLEM}
                         suffix="s"
-                        onCommit={seconds => onChange(edits.changeCoolDownItem({ ...item, seconds }))}
+                        onCommit={seconds => onChange(edits.changeItem({ ...item, seconds }))}
                       />
                     </ExerciseItemRow>
                   );

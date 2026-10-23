@@ -1,17 +1,17 @@
 import { TriangleAlert } from 'lucide-react';
-import { dayOneOf } from '../../../context/ProgramContext';
 import { deriveStatus } from '../../../domain/coachingSubscription';
 import type { ClientJourney } from '../../../domain/journey';
-import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../../domain/onboardingAnswers';
 import { BLOCK_TYPE_LABELS, currentVersion, type Block, type Program } from '../../../domain/program';
 import {
   blockDates,
+  checkInWeekdayOf,
   currentPosition,
+  dayOneOf,
   daysUntil,
   nextCheckpoint,
-  weekdayFromOnboarding,
   type PlanPosition,
 } from '../../../domain/programCalendar';
+import { hasUnfilledSessions } from '../../../domain/programRules';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { Reading } from '../../Reading';
 import { PlanTimeline } from './PlanTimeline';
@@ -22,18 +22,11 @@ export function coachingHasEnded(journey: ClientJourney, now: Date): boolean {
   return journey.subscription ? deriveStatus(journey.subscription, now) === 'ended' : false;
 }
 
-function isUnfilled(block: Block): boolean {
-  const scheduled = new Set(
-    Object.values(block.calendar).flatMap(entry => (entry.kind === 'session' ? [entry.sessionId] : [])),
-  );
-  return block.sessions
-    .filter(session => scheduled.has(session.id))
-    .some(session => session.rows.every(row => row.exerciseId === ''));
-}
+type StartedPlan = { blocks: readonly Block[]; dayOne: Date; today: Date };
 
-function unfilledUpcoming(blocks: Block[], currentIndex: number, dayOne: Date, today: Date) {
+function unfilledUpcoming({ blocks, dayOne, today }: StartedPlan, currentIndex: number) {
   return blocks.flatMap((block, index) => {
-    if (index <= currentIndex || !isUnfilled(block)) return [];
+    if (index <= currentIndex || !hasUnfilledSessions(block)) return [];
     const days = daysUntil(today, blockDates(blocks, index, dayOne).start);
     return days <= UPCOMING_WINDOW_DAYS ? [{ number: index + 1, days }] : [];
   });
@@ -55,8 +48,8 @@ export function ProgramSummary({ journey, program }: { journey: ClientJourney; p
   const today = new Date();
   const blocks = version.content.plan.blocks;
   const position = currentPosition(blocks, dayOne, today);
-  const checkInDay = weekdayFromOnboarding(collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY));
-  const upcoming = position.status === 'in-plan' ? unfilledUpcoming(blocks, position.blockIndex, dayOne, today) : [];
+  const checkInDay = checkInWeekdayOf(journey);
+  const upcoming = position.status === 'in-plan' ? unfilledUpcoming({ blocks, dayOne, today }, position.blockIndex) : [];
 
   return (
     <div className="grid grid-cols-1 gap-5">

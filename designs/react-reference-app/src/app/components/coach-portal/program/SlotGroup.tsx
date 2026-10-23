@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { MOVEMENT_PATTERN_LABELS } from '../../../domain/exercises';
 import type { Session, Slot } from '../../../domain/program';
-import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type SessionEdits } from '../../../domain/sessionEditing';
+import { SINGLE_CARD_SLOTS, slotUnits, type Placement, type RowEdits } from '../../../domain/sessionEditing';
 import type { SlotPlan } from '../../../domain/splitTemplates';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -14,7 +14,7 @@ type SlotGroupProps = {
   session: Session;
   plan: SlotPlan;
   library: readonly Exercise[];
-  edits: SessionEdits;
+  edits: RowEdits;
   onChange: (session: Session) => void;
   onAdd: (slot: Slot) => void;
   onAddSubstitution: (rowId: string) => void;

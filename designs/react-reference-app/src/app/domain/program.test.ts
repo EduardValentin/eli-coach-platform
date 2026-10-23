@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { ProgramSetup } from './programOnboarding';
 import { initialContent } from './programSuggestions';
 import {
+  cardioOn,
   contentWithFreshIds,
   currentVersion,
   draftOf,
   filledSessionCount,
+  hasExercises,
+  mapCalendar,
+  scheduledSessions,
+  sessionOn,
   newId,
   positionLabel,
   roleForSlot,
@@ -296,5 +301,63 @@ describe('warmUpItemText', () => {
 
     // assert
     expect([timed, counted]).toEqual(['1 × 45 s', '2 × 8–10']);
+  });
+});
+
+describe('calendar lookups', () => {
+  const content = initialContent(
+    { goal: '', level: 'beginner', trainingDays: 3, sessionMinutes: 60, cycleMode: 'general', language: 'en', dailySteps: 6000, equipment: [], splitShape: 'full-body' },
+    [],
+  );
+  const [block] = content.plan.blocks;
+  const cardio = { id: 'cardio', originId: 'cardio', name: 'Easy cardio', segments: [] };
+  const withCardio = { ...block, cardioSessions: [cardio], calendar: { ...block.calendar, tue: { kind: 'cardio' as const, cardioId: 'cardio' } } };
+
+  it('finds the session or cardio placed on a day', () => {
+    // act
+    const monday = sessionOn(withCardio, 'mon');
+    const tuesday = cardioOn(withCardio, 'tue');
+
+    // assert
+    expect(monday).toBe(block.sessions[0]);
+    expect(sessionOn(withCardio, 'tue')).toBeUndefined();
+    expect(tuesday).toBe(cardio);
+    expect(cardioOn(withCardio, 'mon')).toBeUndefined();
+    expect(sessionOn(withCardio, 'sun')).toBeUndefined();
+  });
+
+  it('lists the sessions the calendar schedules, leaving out unplaced ones', () => {
+    // arrange
+    const unplaced = { ...withCardio, calendar: { ...withCardio.calendar, fri: { kind: 'rest' as const } } };
+
+    // act
+    const scheduled = scheduledSessions(unplaced);
+
+    // assert
+    expect(scheduled).toEqual(block.sessions.slice(0, 2));
+  });
+
+  it('builds a whole calendar from one entry per day', () => {
+    // act
+    const calendar = mapCalendar(day => (day === 'wed' ? { kind: 'cardio', cardioId: 'cardio' } : { kind: 'rest' }));
+
+    // assert
+    expect(Object.keys(calendar)).toEqual(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+    expect(calendar.wed).toEqual({ kind: 'cardio', cardioId: 'cardio' });
+    expect(calendar.mon).toEqual({ kind: 'rest' });
+  });
+});
+
+describe('hasExercises', () => {
+  it('needs at least one row with a chosen exercise', () => {
+    // arrange
+    const empty = sessionOf([{ ...row('A'), exerciseId: '' }]);
+    const filled = sessionOf([{ ...row('A'), exerciseId: '' }, row('B')]);
+
+    // act
+    const results = [hasExercises(sessionOf([])), hasExercises(empty), hasExercises(filled)];
+
+    // assert
+    expect(results).toEqual([false, false, true]);
   });
 });

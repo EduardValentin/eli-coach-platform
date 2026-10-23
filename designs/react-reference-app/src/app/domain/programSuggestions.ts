@@ -1,6 +1,8 @@
 import type { Equipment } from './exercises';
 import {
   blockWithFreshIds,
+  copiedSessions,
+  mapCalendar,
   newId,
   roleForSlot,
   WEEKDAYS,
@@ -10,6 +12,7 @@ import {
   type CardioSession,
   type LevelHint,
   type ProgramContent,
+  type ProgramLanguage,
   type Row,
   type Session,
   type SetSpec,
@@ -21,6 +24,7 @@ import type { ProgramSetup } from './programOnboarding';
 import { cardioDefaults, reDefaultedBlock, rowDefaults } from './programDefaults';
 import { fillTemplate, templateText } from './programTemplates';
 import { SPLIT_TEMPLATES } from './splitTemplates';
+import { substitutionsFor } from './substitutions';
 import type { Exercise } from '../context/TrainingContext';
 
 type SuggestedBlock = { type: BlockType; weeks: number; calibrationWeek: boolean };
@@ -44,11 +48,6 @@ const SUGGESTED_BLOCKS: Record<LevelHint, SuggestedBlock[]> = {
   ],
 };
 
-const SECONDS_PER_SET = 45;
-const SESSION_OVERHEAD_MINUTES = 8;
-const COOL_DOWN_MINUTES = 5;
-const LIGHT_EQUIPMENT: readonly Equipment[] = ['Bands', 'Dumbbells'];
-const MAX_SUBSTITUTIONS = 2;
 const MAIN_COMPOUND_WARM_UPS: readonly SetSpec[] = [
   { kind: 'warm-up', reps: { min: 8, max: 8 } },
   { kind: 'warm-up', reps: { min: 5, max: 5 } },
@@ -67,10 +66,7 @@ export function spreadCalendar(
   sessionIds: string[],
   cardio: CardioSession[],
 ): Record<Weekday, CalendarEntry> {
-  const calendar = Object.fromEntries(WEEKDAYS.map(day => [day, { kind: 'rest' }])) as Record<
-    Weekday,
-    CalendarEntry
-  >;
+  const calendar = mapCalendar((): CalendarEntry => ({ kind: 'rest' }));
   const sessionDays = SPLIT_TEMPLATES[shape].layout(sessionIds.length);
   sessionIds.forEach((sessionId, index) => {
     calendar[sessionDays[index]] = { kind: 'session', sessionId };
@@ -85,6 +81,9 @@ export function spreadCalendar(
 function warmUpsFor(slot: Slot): SetSpec[] {
   return roleForSlot(slot) === 'main-compound' ? MAIN_COMPOUND_WARM_UPS.map(set => structuredClone(set)) : [];
 }
+
+export type RowContext = { blockType: BlockType; library: readonly Exercise[]; equipment: readonly Equipment[] };
+export type RowPlacement = { slot: Slot; supersetGroup?: string };
 
 export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): Row {
   const defaults = rowDefaults(type, roleForSlot(slot));
@@ -103,6 +102,19 @@ export function emptyRow(type: BlockType, slot: Slot, supersetGroup?: string): R
   };
 }
 
+export function filledRow(exercise: Exercise, { slot, supersetGroup }: RowPlacement, context: RowContext): Row {
+  return {
+    ...emptyRow(context.blockType, slot, supersetGroup),
+    exerciseId: exercise.id,
+    cues: exercise.cues,
+    substitutions: substitutionsFor(exercise, context.library, context.equipment),
+  };
+}
+
+export function splitFor(shape: SplitShape, days: number, language: ProgramLanguage): Pick<Block['split'], 'shape' | 'text'> {
+  return { shape, text: fillTemplate(templateText(`split.${shape}`, language).text, { days }) };
+}
+
 function emptySession(name: string): Session {
   const id = newId();
   return {
@@ -117,14 +129,6 @@ function emptySession(name: string): Session {
 
 export function emptySessionsFor(shape: SplitShape, days: number): Session[] {
   return SPLIT_TEMPLATES[shape].sessions(days).map(template => emptySession(template.name));
-}
-
-export function copiedSessions(sessions: Session[]): Session[] {
-  return sessions.map(session => ({
-    ...session,
-    id: newId(),
-    rows: session.rows.map(row => ({ ...row, id: newId() })),
-  }));
 }
 
 function blockTexts(type: BlockType, setup: ProgramSetup): Pick<Block, 'introText' | 'missedDayNote'> {
@@ -165,13 +169,7 @@ export function newBlock(type: BlockType, weeks: number, { setup, library, previ
     calibrationWeek: false,
     ...blockTexts(type, setup),
     clientNote: '',
-    split: previous
-      ? { ...previous.split }
-      : {
-          shape,
-          name: '',
-          text: fillTemplate(templateText(`split.${shape}`, setup.language).text, { days: setup.trainingDays }),
-        },
+    split: previous ? { ...previous.split } : { name: '', ...splitFor(shape, setup.trainingDays, setup.language) },
     targetMinutes: setup.sessionMinutes,
     calendar: spreadCalendar(
       previous?.split.shape ?? shape,
@@ -198,50 +196,4 @@ export function initialContent(setup: ProgramSetup, library: readonly Exercise[]
     nutritionNotes: '',
     lifestyleNotes: '',
   };
-}
-export function estimatedMinutes(session: Session): number {
-  const supersetsSeen = new Set<string>();
-  let seconds = 0;
-  for (const row of session.rows) {
-    if (row.supersetGroup === undefined) {
-      seconds += row.sets.length * (SECONDS_PER_SET + row.restSeconds);
-    } else if (!supersetsSeen.has(row.supersetGroup)) {
-      supersetsSeen.add(row.supersetGroup);
-      seconds += row.sets.length * (2 * SECONDS_PER_SET + row.restSeconds);
-    }
-  }
-  const coolDown = session.coolDown.enabled ? COOL_DOWN_MINUTES : 0;
-  return Math.round(SESSION_OVERHEAD_MINUTES + seconds / 60 + coolDown);
-}
-
-function isLight(exercise: Exercise): boolean {
-  return exercise.equipment.every(item => LIGHT_EQUIPMENT.includes(item));
-}
-
-function pickPair(candidates: Exercise[]): Exercise[] {
-  const light = candidates.find(isLight);
-  const heavy = candidates.find(candidate => !isLight(candidate));
-  const picked = [light, heavy].filter((candidate): candidate is Exercise => candidate !== undefined);
-  const rest = candidates.filter(candidate => !picked.includes(candidate));
-  return [...picked, ...rest].slice(0, MAX_SUBSTITUTIONS);
-}
-
-export function substitutionsFor(
-  exercise: Exercise,
-  library: readonly Exercise[],
-  equipment: readonly Equipment[],
-): string[] {
-  const candidates = library.filter(
-    other =>
-      other.id !== exercise.id &&
-      other.archivedAt === undefined &&
-      other.pattern !== undefined &&
-      other.pattern === exercise.pattern &&
-      other.primaryMuscles.some(muscle => exercise.primaryMuscles.includes(muscle)),
-  );
-  const owned = candidates.filter(candidate => candidate.equipment.every(item => equipment.includes(item)));
-  const others = candidates.filter(candidate => !owned.includes(candidate));
-  const picks = pickPair(owned);
-  const remaining = MAX_SUBSTITUTIONS - picks.length;
-  return [...picks, ...pickPair(others).slice(0, remaining)].map(pick => pick.id);
 }

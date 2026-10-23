@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
-import type { Equipment, Muscle, MovementPattern } from './exercises';
-import type { Block, CardioSession, Row, Session, SetSpec } from './program';
+import { exercise as fixtureExercise, row, workingSets } from '../../test/programFixtures';
+import type { Equipment } from './exercises';
+import type { Block, CardioSession, SetSpec } from './program';
 import type { ProgramSetup } from './programOnboarding';
 import {
   emptyRow,
   emptySessionsFor,
-  estimatedMinutes,
   initialContent,
   newBlock,
   splitShapeFor,
   spreadCalendar,
-  substitutionsFor,
   suggestedBlocks,
 } from './programSuggestions';
 
@@ -27,50 +26,12 @@ const SETUP: ProgramSetup = {
   splitShape: 'full-body',
 };
 
-function setsOf(count: number): SetSpec[] {
-  return Array.from({ length: count }, () => ({ kind: 'working', reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
-}
-
 function cardio(id: string): CardioSession {
   return { id, originId: id, name: 'Easy cardio', segments: [] };
 }
 
-function row(overrides: Partial<Row>): Row {
-  return {
-    id: 'r',
-    exerciseId: 'e',
-    slot: 'A',
-    sets: setsOf(3),
-    restSeconds: 60,
-    lastSetTechnique: 'none',
-    substitutions: [],
-    progression: { kind: 'double' },
-    cues: '',
-    touched: [],
-    ...overrides,
-  };
-}
-
-function exercise(
-  id: string,
-  equipment: Equipment[],
-  overrides: Partial<Exercise> = {},
-): Exercise {
-  return {
-    id,
-    name: id,
-    cues: '',
-    type: 'resistance',
-    measuredIn: 'reps',
-    perSide: false,
-    equipment,
-    difficulty: 'Beginner',
-    primaryMuscles: ['Chest'] as Muscle[],
-    secondaryMuscles: [],
-    pattern: 'horizontal-push' as MovementPattern,
-    tags: [],
-    ...overrides,
-  };
+function exercise(id: string, equipment: Equipment[], overrides: Partial<Exercise> = {}): Exercise {
+  return fixtureExercise(id, { equipment, primaryMuscles: ['Chest'], pattern: 'horizontal-push', ...overrides });
 }
 
 describe('suggested structure', () => {
@@ -199,7 +160,7 @@ describe('newBlock and initialContent', () => {
     const [first, ...others] = built.sessions;
     const sets: SetSpec[] = [
       { kind: 'warm-up', reps: { min: 8, max: 8 } },
-      ...setsOf(4).map((set, index) => ({ ...set, ...(index === 0 ? { weightKg: 50 } : {}) })),
+      ...workingSets(4).map((set, index) => ({ ...set, ...(index === 0 ? { weightKg: 50 } : {}) })),
     ];
     return { ...built, sessions: [{ ...first, rows: [row({ sets })] }, ...others] };
   }
@@ -297,79 +258,5 @@ describe('newBlock and initialContent', () => {
 
     // assert
     expect(content.plan.blocks.map(b => b.calibrationWeek)).toEqual([true, false, false]);
-  });
-});
-
-describe('estimatedMinutes', () => {
-  const session: Session = {
-    id: 's',
-    originId: 's',
-    name: 'A',
-    warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
-    rows: [
-      row({ id: '1', sets: setsOf(4), restSeconds: 150 }),
-      row({ id: '2', slot: 'B', sets: setsOf(3), restSeconds: 105 }),
-      row({ id: '3', slot: 'C', sets: setsOf(3), restSeconds: 75, supersetGroup: 'g' }),
-      row({ id: '4', slot: 'C', sets: setsOf(3), restSeconds: 75, supersetGroup: 'g' }),
-    ],
-  };
-
-  it('counts superset rest once per round', () => {
-    // act
-    const minutes = estimatedMinutes(session);
-
-    // assert
-    expect(minutes).toBe(37);
-  });
-
-  it('adds the cool-down', () => {
-    // act
-    const minutes = estimatedMinutes({ ...session, coolDown: { ...session.coolDown, enabled: true } });
-
-    // assert
-    expect(minutes).toBe(42);
-  });
-});
-
-describe('substitutionsFor', () => {
-  const target = exercise('bench', ['Barbell', 'Bench']);
-
-  it('picks a lighter and a heavier match within the client equipment', () => {
-    // arrange
-    const library = [
-      target,
-      exercise('machine-press', ['Machine']),
-      exercise('db-press', ['Dumbbells']),
-      exercise('pushup', []),
-      exercise('row', [], { pattern: 'horizontal-pull' }),
-      exercise('archived', [], { archivedAt: '2026-01-01' }),
-      exercise('other-muscle', [], { primaryMuscles: ['Triceps'] }),
-    ];
-
-    // act
-    const ids = substitutionsFor(target, library, ['Dumbbells', 'Machine']);
-
-    // assert
-    expect(ids).toEqual(['db-press', 'machine-press']);
-  });
-
-  it('falls back to equipment the client lacks', () => {
-    // arrange
-    const library = [target, exercise('cable-fly', ['Cable']), exercise('db-press', ['Dumbbells'])];
-
-    // act
-    const ids = substitutionsFor(target, library, ['Dumbbells']);
-
-    // assert
-    expect(ids).toEqual(['db-press', 'cable-fly']);
-  });
-
-  it('returns nothing without a matching exercise', () => {
-    // act
-    const ids = substitutionsFor(target, [target], []);
-
-    // assert
-    expect(ids).toEqual([]);
   });
 });

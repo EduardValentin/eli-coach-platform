@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Plus, Sparkles, X } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import type { LastSetTechnique, Row } from '../../../domain/program';
-import { MAX_SUBSTITUTIONS } from '../../../domain/sessionEditing';
+import { withField, type LastSetTechnique, type Row } from '../../../domain/program';
+import { MAX_SUBSTITUTIONS } from '../../../domain/substitutions';
 import { LABEL_CLASS } from '../../typography';
 import { WatchVideoButton } from '../../WatchVideoButton';
 import { Button } from '../../ui/button';
@@ -10,7 +10,6 @@ import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
 import { cn } from '../../ui/utils';
-import { withField } from './rowFields';
 import { DropZone, LIBRARY_EXERCISE, type DraggedItem, type SessionDropRules } from './sessionDnd';
 
 type ExerciseRowDetailsProps = {
@@ -20,6 +19,7 @@ type ExerciseRowDetailsProps = {
   substitutionDrop: SessionDropRules;
   onChange: (row: Row) => void;
   onAddSubstitution: () => void;
+  onRemoveSubstitution: (exerciseId: string) => void;
   onSuggestSubstitutions: () => void;
 };
 
@@ -38,7 +38,7 @@ function acceptsSubstitution(dragged: DraggedItem): boolean {
   return dragged.kind === LIBRARY_EXERCISE && dragged.item.exercise.type === 'resistance';
 }
 
-function Substitutions({ row, exercise, library, substitutionDrop, onChange, onAddSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
+function Substitutions({ row, exercise, library, substitutionDrop, onAddSubstitution, onRemoveSubstitution, onSuggestSubstitutions }: ExerciseRowDetailsProps) {
   const nameOf = (id: string) => library.find(item => item.id === id)?.name ?? 'Unknown exercise';
   const room = row.substitutions.length < MAX_SUBSTITUTIONS;
   return (
@@ -54,7 +54,7 @@ function Substitutions({ row, exercise, library, substitutionDrop, onChange, onA
                   variant="ghost"
                   size="icon-xs"
                   aria-label={`Remove ${nameOf(id)}`}
-                  onClick={() => onChange(withField(row, 'substitutions', row.substitutions.filter(other => other !== id)))}
+                  onClick={() => onRemoveSubstitution(id)}
                 >
                   <X aria-hidden="true" />
                 </Button>

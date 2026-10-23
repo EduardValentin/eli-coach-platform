@@ -5,9 +5,10 @@ import { AppProvider } from './AppContext';
 import { AssessmentCallProvider } from './AssessmentCallContext';
 import { AWAITING_REVIEW_CALL_ID, ClientJourneyProvider, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
 import { ClientProfileProvider } from './ClientProfileContext';
-import { dayOneOf, ProgramProvider, usePrograms, type ProgramContextType } from './ProgramContext';
+import { ProgramProvider, usePrograms, type ProgramContextType } from './ProgramContext';
 import { TrainingProvider } from './TrainingContext';
 import { currentVersion, draftOf, type ProgramContent } from '../domain/program';
+import { dayOneOf } from '../domain/programCalendar';
 import type { ProgramSetup } from '../domain/programOnboarding';
 import { emptyRow } from '../domain/programSuggestions';
 
@@ -304,7 +305,7 @@ describe('seeds', () => {
 });
 
 describe('exercise consumers', () => {
-  it('lists one consumer per version with its rows, substitutions and warm-up exercises', () => {
+  it('lists one consumer per program with the exercises of every version', () => {
     // arrange
     renderPrograms('?pseed=two-versions');
     act(() => {
@@ -330,9 +331,55 @@ describe('exercise consumers', () => {
     const consumers = hooks.programs.exerciseConsumers();
 
     // assert
-    expect(consumers).toHaveLength(4);
+    expect(consumers).toHaveLength(2);
     expect(consumers.some(consumer => consumer.exerciseIds.includes('e17'))).toBe(true);
     expect(consumers.every(consumer => !consumer.exerciseIds.includes(''))).toBe(true);
+  });
+
+  it('counts the exercises of cardio segments and rounds', () => {
+    // arrange
+    renderPrograms('?pseed=published');
+    act(() => {
+      hooks.programs.startDraft(DEMO_JOURNEY_CALL_ID);
+      hooks.programs.updateDraft(DEMO_JOURNEY_CALL_ID, content => ({
+        ...content,
+        plan: {
+          blocks: content.plan.blocks.map((block, index) =>
+            index > 0
+              ? block
+              : {
+                  ...block,
+                  cardioSessions: [
+                    {
+                      id: 'cardio',
+                      originId: 'cardio',
+                      name: 'Intervals',
+                      segments: [
+                        { id: 'steady', kind: 'steady', exerciseId: 'steady-bike', minutes: 10, intensity: 'easy' },
+                        {
+                          id: 'rounds',
+                          kind: 'rounds',
+                          items: [{ id: 'item', exerciseId: 'rounds-burpee', reps: 10 }],
+                          easySeconds: 0,
+                          restBetweenRoundsSeconds: 60,
+                          rounds: 3,
+                          intensity: 'hard',
+                        },
+                      ],
+                    },
+                  ],
+                },
+          ),
+        },
+      }));
+    });
+
+    // act
+    const [consumer] = hooks.programs.exerciseConsumers();
+
+    // assert
+    expect(hooks.programs.exerciseConsumers()).toHaveLength(1);
+    expect(consumer.exerciseIds).toEqual(expect.arrayContaining(['steady-bike', 'rounds-burpee']));
   });
 });
 

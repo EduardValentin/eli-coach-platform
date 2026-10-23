@@ -1,4 +1,6 @@
 import { addDays, differenceInCalendarDays, getDay, startOfDay } from 'date-fns';
+import type { ClientJourney } from './journey';
+import { CHECK_IN_DAY_KEY, collaborationPreference } from './onboardingAnswers';
 import { WEEKDAYS, type Block, type Weekday } from './program';
 
 const DAYS_PER_WEEK = 7;
@@ -13,6 +15,8 @@ const ONBOARDING_WEEKDAYS: Record<string, Weekday> = {
   Saturday: 'sat',
   Sunday: 'sun',
 };
+
+export type PlanSchedule = { blocks: readonly Block[]; dayOne: Date | null; today: Date };
 
 export type PlanPosition =
   | { status: 'before' }
@@ -97,12 +101,20 @@ export function weekdayFromOnboarding(label: string | null): Weekday {
   return (label && ONBOARDING_WEEKDAYS[label]) || 'mon';
 }
 
+export function checkInWeekdayOf(journey: ClientJourney | null): Weekday {
+  return weekdayFromOnboarding(journey ? collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY) : null);
+}
+
+export function dayOneOf(journey: ClientJourney | null): Date | null {
+  return journey?.programReadyAt ?? null;
+}
+
 export type BlockStatus =
   | { kind: 'ended'; end: Date }
   | { kind: 'current'; weekOfBlock: number; calibration: boolean }
   | { kind: 'upcoming'; start: Date | null };
 
-export function blockStatus(blocks: readonly Block[], index: number, dayOne: Date | null, today: Date): BlockStatus {
+export function blockStatus({ blocks, dayOne, today }: PlanSchedule, index: number): BlockStatus {
   if (!dayOne) return { kind: 'upcoming', start: null };
   const { start, end } = blockDates(blocks, index, dayOne);
   if (end < startOfDay(today)) return { kind: 'ended', end };

@@ -6,11 +6,8 @@ import {
   equipmentChipsOf,
   equipmentForChips,
   estimatedCycleDay,
-  levelHintOf,
   recurringSymptoms,
-  sessionMinutesOf,
   setupFromJourney,
-  trainingDaysOf,
 } from './programOnboarding';
 import { EQUIPMENT } from './exercises';
 
@@ -78,22 +75,29 @@ function withTrainingDays(days: string): ClientJourney {
 
 describe('answer mappers', () => {
   it('maps the experience level', () => {
-    // act
-    const levels = [
-      levelHintOf('I train consistently and follow a structured program'),
-      levelHintOf('I train regularly, but without a structured plan'),
-      levelHintOf('I have trained before, but not recently'),
-      levelHintOf(null),
+    // arrange
+    const answers = [
+      'I train consistently and follow a structured program',
+      'I train regularly, but without a structured plan',
+      'I have trained before, but not recently',
+      '',
     ];
+
+    // act
+    const levels = answers.map(experienceLevel => setupFromJourney(withGoalAnswers({ experienceLevel })).level);
 
     // assert
     expect(levels).toEqual(['intermediate', 'beginner', 'beginner', 'beginner']);
   });
 
   it('maps training days and session minutes with defaults', () => {
+    // arrange
+    const dayAnswers = ['2 days', '3 days', '4 days', '5 or more days', ''];
+    const minuteAnswers = ['Up to 30 minutes', '30–45 minutes', '45–60 minutes', ''];
+
     // act
-    const days = ['2 days', '3 days', '4 days', '5 or more days', null].map(trainingDaysOf);
-    const minutes = ['Up to 30 minutes', '30–45 minutes', '45–60 minutes', null].map(sessionMinutesOf);
+    const days = dayAnswers.map(trainingDaysPerWeek => setupFromJourney(withGoalAnswers({ trainingDaysPerWeek })).trainingDays);
+    const minutes = minuteAnswers.map(minutesPerSession => setupFromJourney(withGoalAnswers({ minutesPerSession })).sessionMinutes);
 
     // assert
     expect(days).toEqual([2, 3, 4, 5, 3]);

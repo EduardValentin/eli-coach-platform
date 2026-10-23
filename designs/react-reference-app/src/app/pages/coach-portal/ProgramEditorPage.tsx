@@ -23,7 +23,7 @@ import { useRailDrawer } from '../../components/coach-portal/program/useRailDraw
 import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
 import { blockWithLibraryPick } from '../../domain/programEditing';
-import { plannedSessions, type PlannedSession } from '../../domain/weekEditing';
+import { plannedId, plannedSessions } from '../../domain/weekEditing';
 import type { Exercise } from '../../context/TrainingContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { Button } from '../../components/ui/button';
@@ -35,10 +35,6 @@ import type { ClientJourney } from '../../domain/journey';
 import { currentVersion, draftOf, type Block, type Program, type ProgramVersion } from '../../domain/program';
 import { recurringSymptoms } from '../../domain/programOnboarding';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
-
-function plannedId(entry: PlannedSession): string {
-  return entry.kind === 'cardio' ? entry.cardio.id : entry.session.id;
-}
 
 function openSessionOf(block: Block, chosen: string | undefined): string | undefined {
   const ids = plannedSessions(block).map(plannedId);
@@ -60,7 +56,7 @@ function ProgramEditor(props: EditorProps) {
   const [previewing, setPreviewing] = useState(false);
   const [openSessions, setOpenSessions] = useState<Record<string, string>>({});
   const { content } = draft;
-  const { today, ctx } = editor;
+  const { today, ruleContext } = editor;
   const { cycleMode } = program;
   const selected = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' as const } : editor.selected;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
@@ -91,8 +87,8 @@ function ProgramEditor(props: EditorProps) {
       return (
         <PlanOverview
           content={content}
-          dayOne={ctx.dayOne}
-          preferredWeekday={ctx.preferredWeekday}
+          dayOne={ruleContext.dayOne}
+          preferredWeekday={ruleContext.preferredWeekday}
           today={today}
           level={program.level}
           onChange={editor.updateBlocks}
@@ -110,7 +106,7 @@ function ProgramEditor(props: EditorProps) {
           blockIndex={blockIndex}
           content={content}
           program={program}
-          dayOne={ctx.dayOne}
+          dayOne={ruleContext.dayOne}
           today={today}
           library={exercises}
           equipment={program.equipment}
@@ -199,7 +195,7 @@ function ProgramEditor(props: EditorProps) {
           <EditorRail
             content={content}
             cycleMode={cycleMode}
-            dayOne={ctx.dayOne}
+            dayOne={ruleContext.dayOne}
             today={today}
             selected={selected}
             onSelect={selectFromRail}
@@ -259,13 +255,13 @@ export function ProgramEditorPage() {
   useCoachPortalScope();
   const { id = '' } = useParams();
   const journey = useJourneyClient(id);
-  const { seeded, programFor } = usePrograms();
+  const { hydrated, programFor } = usePrograms();
   const navigate = useNavigate();
   const isSetup = useLocation().pathname.endsWith('/new');
   const programPath = `/coach/clients/${id}/program`;
   const draftPath = `${programPath}/draft`;
 
-  if (!seeded) return null;
+  if (!hydrated) return null;
   if (!journey) return <Navigate to="/coach/clients" replace />;
   const program = programFor(journey.callId);
   if (isSetup && program) return <Navigate to={draftPath} replace />;

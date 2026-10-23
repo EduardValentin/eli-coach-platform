@@ -2,35 +2,28 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAppState } from './AppContext';
 import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
 import { useTraining } from './TrainingContext';
-import { canStartWork, workStartDate } from '../domain/coachingSubscription';
 import { cycleModeOf, type CycleMode } from '../domain/cycleMode';
 import type { ClientJourney } from '../domain/journey';
-import { CHECK_IN_DAY_KEY, collaborationPreference } from '../domain/onboardingAnswers';
 import {
   contentWithFreshIds,
   currentVersion,
   draftOf,
+  programExerciseIds,
   type Program,
   type ProgramContent,
   type ProgramVersion,
 } from '../domain/program';
-import { weekdayFromOnboarding } from '../domain/programCalendar';
 import { clientEquipment, type ProgramSetup } from '../domain/programOnboarding';
-import {
-  blockingProblems,
-  type BlockingCode,
-  type RuleContext,
-  type RuleFinding,
-} from '../domain/programRules';
+import { blockingProblems, ruleContextFor, type BlockingCode, type RuleFinding } from '../domain/programRules';
 import { initialContent } from '../domain/programSuggestions';
-import { programForSeed, type ProgramSeed, type SeedClient } from '../services/programSamples';
+import { seededPrograms, type ProgramSeed, type SeedClient } from '../services/programSamples';
 
 export type PublishOutcome =
   | { status: 'published'; version: ProgramVersion }
   | { status: 'blocked'; problems: RuleFinding<BlockingCode>[] };
 
 export type ProgramContextType = {
-  seeded: boolean;
+  hydrated: boolean;
   programFor(callId: string): Program | undefined;
   createProgram(callId: string, setup: ProgramSetup): Program;
   updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'equipment' | 'level' | 'cycleMode' | 'language'>>): void;
@@ -53,23 +46,15 @@ function seedClient(callId: string, journey: ClientJourney | null, dayOne: Date 
   return { callId, dayOne, cycleMode: seededCycleMode(journey), equipment: journey ? clientEquipment(journey) : [] };
 }
 
-export function dayOneOf(journey: ClientJourney | null): Date | null {
-  return journey?.programReadyAt ?? null;
-}
-
 function withVersion(program: Program, number: number, change: (version: ProgramVersion) => ProgramVersion): Program {
   return { ...program, versions: program.versions.map(version => (version.number === number ? change(version) : version)) };
 }
 
-function exerciseIdsOf(version: ProgramVersion): string[] {
-  const ids = version.content.plan.blocks.flatMap(block =>
-    block.sessions.flatMap(session => [
-      ...session.warmUp.items.map(item => item.exerciseId),
-      ...session.coolDown.items.map(item => item.exerciseId),
-      ...session.rows.flatMap(row => [row.exerciseId, ...row.substitutions]),
-    ]),
-  );
-  return [...new Set(ids.filter(id => id !== ''))];
+function withoutSeededCalls(programs: Record<string, Program>): Record<string, Program> {
+  const next = { ...programs };
+  delete next[DEMO_JOURNEY_CALL_ID];
+  delete next[AWAITING_REVIEW_CALL_ID];
+  return next;
 }
 
 function publishedAfter(program: Program, version: ProgramVersion, now: Date): Program {
@@ -90,8 +75,8 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const programsRef = useRef(programsByCall);
   const exercisesRef = useRef(exercises);
   exercisesRef.current = exercises;
-  const [seeded, setSeeded] = useState(false);
-  const seededSeed = useRef<ProgramSeed>('none');
+  const [hydrated, setHydrated] = useState(false);
+  const appliedSeed = useRef<ProgramSeed>('none');
   const readyAt = demoJourney?.programReadyAt ?? null;
 
   const commit = useCallback((next: Record<string, Program>) => {
@@ -107,24 +92,28 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
     [commit],
   );
 
+  const changeDraft = useCallback(
+    (callId: string, update: (version: ProgramVersion) => ProgramVersion) =>
+      change(callId, program => {
+        const draft = draftOf(program);
+        return draft ? withVersion(program, draft.number, update) : program;
+      }),
+    [change],
+  );
+
   useEffect(() => {
-    setSeeded(true);
+    setHydrated(true);
     const seed = appState.programSeed;
-    const seedChanged = seed !== seededSeed.current;
+    const seedChanged = seed !== appliedSeed.current;
     const demo = programsRef.current[DEMO_JOURNEY_CALL_ID];
     const consistent = demo?.versions.some(version => version.publishedAt?.getTime() === readyAt?.getTime());
     if (!seedChanged && (seed === 'none' || consistent)) return;
-    seededSeed.current = seed;
-    const library = exercisesRef.current;
-    const next = { ...programsRef.current };
-    delete next[DEMO_JOURNEY_CALL_ID];
-    delete next[AWAITING_REVIEW_CALL_ID];
-    const seeded = programForSeed(seed, seedClient(DEMO_JOURNEY_CALL_ID, demoJourney, readyAt), library);
-    if (seeded) next[DEMO_JOURNEY_CALL_ID] = seeded;
-    const awaitingReview = seedClient(AWAITING_REVIEW_CALL_ID, journeyForCall(AWAITING_REVIEW_CALL_ID), readyAt);
-    const reference = seed === 'two-versions' ? programForSeed('published', awaitingReview, library) : null;
-    if (reference) next[AWAITING_REVIEW_CALL_ID] = reference;
-    commit(next);
+    appliedSeed.current = seed;
+    const clients = {
+      demo: seedClient(DEMO_JOURNEY_CALL_ID, demoJourney, readyAt),
+      awaitingReview: seedClient(AWAITING_REVIEW_CALL_ID, journeyForCall(AWAITING_REVIEW_CALL_ID), readyAt),
+    };
+    commit({ ...withoutSeededCalls(programsRef.current), ...seededPrograms(seed, clients, exercisesRef.current) });
   }, [appState.programSeed, readyAt, demoJourney, journeyForCall, commit]);
 
   const programFor = useCallback((callId: string) => programsByCall[callId], [programsByCall]);
@@ -153,21 +142,13 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const updateDraft = useCallback<ProgramContextType['updateDraft']>(
-    (callId, update) =>
-      change(callId, program => {
-        const draft = draftOf(program);
-        return draft ? withVersion(program, draft.number, version => ({ ...version, content: update(version.content) })) : program;
-      }),
-    [change],
+    (callId, update) => changeDraft(callId, version => ({ ...version, content: update(version.content) })),
+    [changeDraft],
   );
 
   const setWhatChanged = useCallback<ProgramContextType['setWhatChanged']>(
-    (callId, text) =>
-      change(callId, program => {
-        const draft = draftOf(program);
-        return draft ? withVersion(program, draft.number, version => ({ ...version, whatChanged: text })) : program;
-      }),
-    [change],
+    (callId, text) => changeDraft(callId, version => ({ ...version, whatChanged: text })),
+    [changeDraft],
   );
 
   const startDraft = useCallback<ProgramContextType['startDraft']>(
@@ -204,22 +185,7 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       const program = programsRef.current[callId];
       const draft = program && draftOf(program);
       if (!program || !draft) return { status: 'blocked', problems: [] };
-      const journey = journeyForCall(callId);
-      const subscription = journey?.subscription;
-      const dayOne = dayOneOf(journey);
-      const context: RuleContext = {
-        versionNumber: draft.number,
-        publishDay: now,
-        dayOne,
-        preferredWeekday: weekdayFromOnboarding(
-          journey ? collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY) : null,
-        ),
-        level: program.level,
-        startDate: subscription && !canStartWork(subscription, now) ? workStartDate(subscription) : null,
-        detailsPending: journey?.stage === 'needs-details',
-        publishedBlocks: currentVersion(program)?.content.plan.blocks ?? null,
-        exercisesById: new Map(exercisesRef.current.map(exercise => [exercise.id, exercise])),
-      };
+      const context = ruleContextFor({ journey: journeyForCall(callId), program, draft, today: now, exercises: exercisesRef.current });
       const problems = blockingProblems(draft.content, draft.whatChanged, context);
       if (problems.length > 0) return { status: 'blocked', problems };
       commit({ ...programsRef.current, [callId]: publishedAfter(program, draft, now) });
@@ -230,13 +196,13 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   );
 
   const exerciseConsumers = useCallback(
-    () => Object.values(programsByCall).flatMap(program => program.versions.map(version => ({ exerciseIds: exerciseIdsOf(version) }))),
-    [programs],
+    () => Object.values(programsByCall).map(program => ({ exerciseIds: programExerciseIds(program) })),
+    [programsByCall],
   );
 
   const value = useMemo<ProgramContextType>(
-    () => ({ seeded, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
-    [seeded, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
+    () => ({ hydrated, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers }),
+    [hydrated, programFor, programs, createProgram, updateSetup, updateDraft, setWhatChanged, startDraft, discardDraft, publishDraft, exerciseConsumers],
   );
 
   return <ProgramContext.Provider value={value}>{children}</ProgramContext.Provider>;

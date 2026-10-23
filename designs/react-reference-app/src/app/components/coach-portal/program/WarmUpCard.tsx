@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
 import { formatRange, type Session, type WarmUpItem } from '../../../domain/program';
-import type { SessionEdits } from '../../../domain/sessionEditing';
+import { WARM_UP_REPS, WARM_UP_SECONDS, type WarmUpEdits } from '../../../domain/warmUpEditing';
 import { Button } from '../../ui/button';
 import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
 import { RowTextField } from './RowTextField';
@@ -11,13 +11,10 @@ import { DropZone, LIBRARY_EXERCISE, type DraggedItem } from './sessionDnd';
 type WarmUpCardProps = {
   session: Session;
   library: readonly Exercise[];
-  edits: SessionEdits;
+  edits: WarmUpEdits;
   onChange: (session: Session) => void;
   onPickExercise: () => void;
 };
-
-const WARM_UP_REPS = { min: 10, max: 10 };
-const WARM_UP_SECONDS = 45;
 
 function acceptsLibraryExercise(dragged: DraggedItem): boolean {
   return dragged.kind === LIBRARY_EXERCISE;
@@ -58,7 +55,7 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
   const { items } = session.warmUp;
   return (
     <DropZone
-      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addWarmUpItem(dragged.item.exercise.id)) }}
+      rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsLibraryExercise}
       className="rounded-control border border-border-subtle bg-surface-subtle p-3"
       activeClassName="ring-2 ring-primary/40"
@@ -76,9 +73,9 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
                   name={name}
                   position={index + 1}
                   count={items.length}
-                  onMoveUp={() => onChange(edits.moveWarmUpItemUp(item.id))}
-                  onMoveDown={() => onChange(edits.moveWarmUpItemDown(item.id))}
-                  onRemove={() => onChange(edits.removeWarmUpItem(item.id))}
+                  onMoveUp={() => onChange(edits.moveUp(item.id))}
+                  onMoveDown={() => onChange(edits.moveDown(item.id))}
+                  onRemove={() => onChange(edits.remove(item.id))}
                 >
                   <RowTextField
                     className="w-14"
@@ -89,9 +86,9 @@ export function WarmUpCard({ session, library, edits, onChange, onPickExercise }
                     parse={parseCount}
                     problem={COUNT_PROBLEM}
                     suffix="sets ×"
-                    onCommit={sets => onChange(edits.changeWarmUpItem({ ...item, sets }))}
+                    onCommit={sets => onChange(edits.change({ ...item, sets }))}
                   />
-                  <AmountField item={item} exercise={exercise} name={name} onChange={next => onChange(edits.changeWarmUpItem(next))} />
+                  <AmountField item={item} exercise={exercise} name={name} onChange={next => onChange(edits.change(next))} />
                 </ExerciseItemRow>
               );
             })}

@@ -4,7 +4,7 @@ import {
   formatRange,
   isWorkingSet,
   positionLabel,
-  WEEKDAYS,
+  WEEKDAY_LABELS,
   type Block,
   type CardioSession,
   type Row,
@@ -13,41 +13,16 @@ import {
   type Weekday,
 } from '../../domain/program';
 import { cardioMinutes, SEGMENT_KIND_LABELS } from '../../domain/programCardio';
-import { estimatedMinutes } from '../../domain/programSuggestions';
+import { estimatedMinutes } from '../../domain/sessionTiming';
+import { scheduledItems } from '../../domain/weekEditing';
 import { repsSuffix } from '../coach-portal/program/rowFields';
-import { WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { RoutineCard } from './DayParts';
-import { cardioFor, cardioSegmentText, coolDownLines, restLabel, sessionAnchor, sessionFor, warmUpLines } from './programView';
-
-type Scheduled = { kind: 'session'; session: Session; days: Weekday[] } | { kind: 'cardio'; cardio: CardioSession; days: Weekday[] };
+import { cardioSegmentText, coolDownLines, restLabel, sessionAnchor, warmUpLines } from './programView';
 
 const ARTICLE_CLASS = 'scroll-mt-6 rounded-card border border-border bg-card shadow-card';
-
-function scheduledOn(block: Block, day: Weekday): Scheduled | null {
-  const session = sessionFor(block, day);
-  if (session) return { kind: 'session', session, days: [] };
-  const cardio = cardioFor(block, day);
-  return cardio ? { kind: 'cardio', cardio, days: [] } : null;
-}
-
-function idOf(item: Scheduled): string {
-  return item.kind === 'session' ? item.session.id : item.cardio.id;
-}
-
-function scheduledOf(block: Block): Scheduled[] {
-  const byId = new Map<string, Scheduled>();
-  for (const day of WEEKDAYS) {
-    const item = scheduledOn(block, day);
-    if (!item) continue;
-    const scheduled = byId.get(idOf(item)) ?? item;
-    scheduled.days.push(day);
-    byId.set(idOf(item), scheduled);
-  }
-  return [...byId.values()];
-}
 
 function daysText(days: readonly Weekday[]): string {
   return days.map(day => WEEKDAY_LABELS[day]).join(' · ');
@@ -162,8 +137,8 @@ function CardioReadCard({ cardio, days, exercisesById }: { cardio: CardioSession
 export function BlockSessions({ block, exercisesById }: { block: Block; exercisesById: ReadonlyMap<string, Exercise> }) {
   return (
     <div className="grid gap-5">
-      {scheduledOf(block).map(item =>
-        item.kind === 'session' ? (
+      {scheduledItems(block).map(item =>
+        item.kind === 'strength' ? (
           <SessionReadCard key={item.session.id} session={item.session} days={item.days} exercisesById={exercisesById} />
         ) : (
           <CardioReadCard key={item.cardio.id} cardio={item.cardio} days={item.days} exercisesById={exercisesById} />

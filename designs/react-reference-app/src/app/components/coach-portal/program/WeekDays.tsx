@@ -1,8 +1,8 @@
 import { useId } from 'react';
 import { Bed, Dumbbell, HeartPulse, MoreHorizontal } from 'lucide-react';
-import { WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
+import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type CardioSession, type Weekday } from '../../../domain/program';
 import { cardioMinutes, emptyCardioSession } from '../../../domain/programCardio';
-import { blockWithDay, describeReset, type DayChoice } from '../../../domain/weekEditing';
+import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
 import { LABEL_CLASS, WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import {
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, WEEKDAY_LABELS } from './program-constants';
+import { BLOCK_SOFT } from './program-constants';
 import { useResetConfirm, type ResetRequest } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };
@@ -83,13 +83,13 @@ function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
 
 function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
   const keepsContent = choice.kind !== 'rest' && choice.kind === block.calendar[day].kind;
-  return keepsContent ? [] : describeReset(block, { kind: 'day', weekday: day });
+  return keepsContent ? [] : describeLoss(block, { kind: 'day', weekday: day });
 }
 
 function DayCard({ block, day, onChange, onOpenSession, onRequest }: DayCardProps) {
   const entry = block.calendar[day];
-  const session = entry.kind === 'session' ? block.sessions.find(other => other.id === entry.sessionId) : undefined;
-  const cardio = entry.kind === 'cardio' ? block.cardioSessions.find(other => other.id === entry.cardioId) : undefined;
+  const session = sessionOn(block, day);
+  const cardio = cardioOn(block, day);
   const weekday = WEEKDAY_LABELS[day];
 
   return (

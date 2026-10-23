@@ -5,14 +5,15 @@ import type { Block, BlockType, CalendarEntry, Row, Session, Slot, Weekday } fro
 import { cardioPreset, type CardioPresetKind } from './programCardio';
 import {
   blockShorterThanElapsed,
-  blockingMessage,
   blockingProblems,
-  isHeavyLegSession,
-  minimumContentWindow,
+  ruleContextFor,
+  sequenceProblems,
   warningMessage,
   warnings,
   type RuleContext,
 } from './programRules';
+import type { ClientJourney } from './journey';
+import type { Program, ProgramVersion } from './program';
 
 const publishDay = new Date(2026, 9, 20);
 
@@ -128,16 +129,33 @@ describe('blockingProblems sequence', () => {
   });
 });
 
-describe('minimumContentWindow', () => {
-  it('runs from the publish day to the later of the next check-in and two weeks', () => {
-    const window = minimumContentWindow(context({ preferredWeekday: 'mon' }));
-    expect(window.from).toEqual(publishDay);
-    expect(window.to).toEqual(new Date(2026, 10, 9));
+describe('the window that must hold filled sessions', () => {
+  const empty = session('s1', [row('')]);
+  const filledThenEmpty = (firstWeeks: number) =>
+    blocks({ type: 'foundation', weeks: firstWeeks, days: { mon: 's1' } }, { type: 'hypertrophy', weeks: 2, sessions: [empty], days: { mon: 's1' } });
+
+  it('runs to the next check-in form when it falls later than two weeks', () => {
+    // arrange
+    const dayOne = addDays(publishDay, 2);
+
+    // act
+    const found = blockingProblems(content(filledThenEmpty(2)), 'x', context({ dayOne, preferredWeekday: 'mon' }));
+
+    // assert
+    expect(found).toContainEqual({ code: 'missing-sessions', blockId: 'b2', detail: 'Hypertrophy block 2' });
   });
 
-  it('uses two weeks when the next check-in is sooner', () => {
-    const window = minimumContentWindow(context({ dayOne: addDays(publishDay, -13), preferredWeekday: 'wed' }));
-    expect(window.to).toEqual(addDays(publishDay, 14));
+  it('runs two weeks when the next check-in form is sooner', () => {
+    // arrange
+    const dayOne = addDays(publishDay, -13);
+
+    // act
+    const inside = blockingProblems(content(filledThenEmpty(3)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
+    const outside = blockingProblems(content(filledThenEmpty(4)), 'x', context({ dayOne, preferredWeekday: 'wed' }));
+
+    // assert
+    expect(codes(inside)).toContain('missing-sessions');
+    expect(codes(outside)).not.toContain('missing-sessions');
   });
 });
 
@@ -198,36 +216,36 @@ describe('blockShorterThanElapsed', () => {
   const dayOne = addDays(publishDay, -35);
 
   it('flags a block cut shorter than the weeks already run', () => {
-    const found = blockShorterThanElapsed(blocks({ weeks: 3 }), blocks({ weeks: 8 }), dayOne, publishDay);
+    const found = blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 3 }), publishedBlocks: blocks({ weeks: 8 }), dayOne, today: publishDay });
     expect(found).toEqual([{ code: 'block-shorter-than-elapsed', blockId: 'b1', detail: '5' }]);
   });
 
   it('flags a block that would cut the running week', () => {
-    expect(blockShorterThanElapsed(blocks({ weeks: 5 }), blocks({ weeks: 8 }), dayOne, publishDay)).toHaveLength(1);
+    expect(blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 5 }), publishedBlocks: blocks({ weeks: 8 }), dayOne, today: publishDay })).toHaveLength(1);
   });
 
   it('passes when the block covers the running week', () => {
-    expect(blockShorterThanElapsed(blocks({ weeks: 6 }), blocks({ weeks: 8 }), dayOne, publishDay)).toEqual([]);
+    expect(blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 6 }), publishedBlocks: blocks({ weeks: 8 }), dayOne, today: publishDay })).toEqual([]);
   });
 
   it('passes without a day 1', () => {
-    expect(blockShorterThanElapsed(blocks({ weeks: 1 }), blocks({ weeks: 8 }), null, publishDay)).toEqual([]);
+    expect(blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 1 }), publishedBlocks: blocks({ weeks: 8 }), dayOne: null, today: publishDay })).toEqual([]);
   });
 
   it('passes without a published plan', () => {
-    expect(blockShorterThanElapsed(blocks({ weeks: 1 }), null, dayOne, publishDay)).toEqual([]);
+    expect(blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 1 }), publishedBlocks: null, dayOne, today: publishDay })).toEqual([]);
   });
 
   it('shrinking the current block in a draft is caught against the published plan', () => {
     const published = blocks({ weeks: 6 }, { weeks: 4 });
     const draft = blocks({ weeks: 3 }, { weeks: 4 });
-    const found = blockShorterThanElapsed(draft, published, dayOne, publishDay);
+    const found = blockShorterThanElapsed({ draftBlocks: draft, publishedBlocks: published, dayOne, today: publishDay });
     expect(found).toEqual([{ code: 'block-shorter-than-elapsed', blockId: 'b1', detail: '5' }]);
   });
 
   it('flags a current block that the draft removed', () => {
     const published = blocks({ weeks: 6 }, { weeks: 4 });
-    const found = blockShorterThanElapsed(blocks({ weeks: 4 }).map(block => ({ ...block, originId: 'other' })), published, dayOne, publishDay);
+    const found = blockShorterThanElapsed({ draftBlocks: blocks({ weeks: 4 }).map(block => ({ ...block, originId: 'other' })), publishedBlocks: published, dayOne, today: publishDay });
     expect(found).toHaveLength(1);
   });
 
@@ -350,5 +368,59 @@ describe('slot pattern warnings', () => {
 
     // assert
     expect(codes(found)).not.toContain('role-slot-mismatch');
+  });
+});
+
+describe('sequenceProblems', () => {
+  it('reports only the order rules of the plan', () => {
+    // arrange
+    const planBlocks = blocks({ type: 'deload', weeks: 2 }, { type: 'foundation' }, { type: 'deload' }, { type: 'deload', weeks: 1 });
+
+    // act
+    const found = sequenceProblems(planBlocks);
+
+    // assert
+    expect(codes(found)).toEqual(['starts-with-deload', 'deload-not-one-week', 'foundation-not-first', 'deload-not-one-week', 'consecutive-deloads']);
+  });
+});
+
+describe('ruleContextFor', () => {
+  const published = { number: 1, state: 'published', content: content(blocks({ type: 'foundation' })) } as ProgramVersion;
+  const draft = { number: 2, state: 'draft', content: content(blocks({ type: 'hypertrophy' })) } as ProgramVersion;
+  const program = { level: 'advanced', versions: [published, draft] } as Program;
+  const library = [...exercises.values()];
+
+  it('reads day 1, the check-in day and a pending details request from the journey', () => {
+    // arrange
+    const dayOne = addDays(publishDay, -7);
+    const journey = {
+      stage: 'needs-details',
+      programReadyAt: dayOne,
+      onboarding: { answers: { 'nutrition-lifestyle': { checkInDay: 'Thursday' } } },
+    } as unknown as ClientJourney;
+
+    // act
+    const ruleContext = ruleContextFor({ journey, program, draft, today: publishDay, exercises: library });
+
+    // assert
+    expect(ruleContext).toMatchObject({
+      versionNumber: 2,
+      publishDay,
+      dayOne,
+      preferredWeekday: 'thu',
+      level: 'advanced',
+      startDate: null,
+      detailsPending: true,
+      publishedBlocks: published.content.plan.blocks,
+    });
+    expect(ruleContext.exercisesById.get('squat')).toBe(exercises.get('squat'));
+  });
+
+  it('falls back to no day 1 and a Monday check-in without a journey', () => {
+    // act
+    const ruleContext = ruleContextFor({ journey: null, program, draft, today: publishDay, exercises: library });
+
+    // assert
+    expect(ruleContext).toMatchObject({ dayOne: null, preferredWeekday: 'mon', detailsPending: false, startDate: null });
   });
 });

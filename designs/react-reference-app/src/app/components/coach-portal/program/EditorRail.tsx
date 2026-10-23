@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { GanttChart, Plus } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, filledSessionCount, type Block, type CycleMode, type ProgramContent } from '../../../domain/program';
-import { blockSpan, blockStatus, daysUntil } from '../../../domain/programCalendar';
+import { blockSpan, blockStatus, daysUntil, type PlanSchedule } from '../../../domain/programCalendar';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { LABEL_CLASS } from '../../typography';
 import { cn } from '../../ui/utils';
@@ -27,9 +27,10 @@ function weekSpan(startWeek: number, endWeek: number): string {
   return startWeek === endWeek ? `week ${startWeek}` : `weeks ${startWeek}–${endWeek}`;
 }
 
-function blockDetail(blocks: readonly Block[], index: number, dayOne: Date | null, today: Date): Detail {
+function blockDetail(schedule: PlanSchedule, index: number): Detail {
+  const { blocks, today } = schedule;
   const block = blocks[index];
-  const status = blockStatus(blocks, index, dayOne, today);
+  const status = blockStatus(schedule, index);
   if (status.kind === 'ended') return { text: `ended ${formatJourneyDate(status.end)}`, tone: 'muted' };
   if (status.kind === 'current') {
     const calibration = status.calibration ? ' · calibration' : '';
@@ -158,7 +159,7 @@ export function EditorRail({ content, cycleMode, dayOne, today, selected, onSele
               key={block.id}
               blocks={blocks}
               index={index}
-              detail={blockDetail(blocks, index, dayOne, today)}
+              detail={blockDetail({ blocks, dayOne, today }, index)}
               current={isSameSection(section, selected)}
               onClick={() => onSelect(section)}
             />

@@ -3,7 +3,7 @@ import { addDays, format, isSameDay } from 'date-fns';
 import { Dumbbell, Footprints, Moon, type LucideIcon } from 'lucide-react';
 import { WEEKDAYS, type Block, type CalendarEntry, type Weekday } from '../../domain/program';
 import { cn } from '../ui/utils';
-import { cardioDayLabel, dayEntries, sessionFor } from './programView';
+import { dayEntryLabel } from './programView';
 
 export function dayTabId(weekday: Weekday): string {
   return `program-day-tab-${weekday}`;
@@ -11,13 +11,6 @@ export function dayTabId(weekday: Weekday): string {
 
 export function dayPanelId(weekday: Weekday): string {
   return `program-day-panel-${weekday}`;
-}
-
-function entryLabel(block: Block, weekday: Weekday): string {
-  const entry = dayEntries(block, weekday);
-  if (entry.kind === 'rest') return 'Rest';
-  if (entry.kind === 'session') return sessionFor(block, weekday)?.name ?? 'Session';
-  return cardioDayLabel(block, weekday);
 }
 
 const ENTRY_ICONS: Record<CalendarEntry['kind'], LucideIcon> = { session: Dumbbell, cardio: Footprints, rest: Moon };
@@ -54,7 +47,7 @@ export function WeekStrip({ block, weekStart, today, selected, onSelect }: WeekS
         const date = addDays(weekStart, index);
         const isSelected = weekday === selected;
         const isToday = isSameDay(date, today);
-        const EntryIcon = ENTRY_ICONS[dayEntries(block, weekday).kind];
+        const EntryIcon = ENTRY_ICONS[block.calendar[weekday].kind];
         return (
           <button
             key={weekday}
@@ -80,7 +73,7 @@ export function WeekStrip({ block, weekStart, today, selected, onSelect }: WeekS
               <span className={cn('text-base font-semibold tabular-nums', { 'text-text-primary': !isSelected })}>{format(date, 'd')}</span>
             </span>
             <EntryIcon aria-hidden="true" className="size-3.5" />
-            <span className="sr-only">{entryLabel(block, weekday)}</span>
+            <span className="sr-only">{dayEntryLabel(block, weekday)}</span>
           </button>
         );
       })}

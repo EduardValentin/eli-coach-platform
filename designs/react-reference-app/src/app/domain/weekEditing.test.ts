@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Block, Session } from './program';
 import { cardioPreset } from './programCardio';
 import { emptyRow, newBlock } from './programSuggestions';
-import { blockWithCardio, blockWithDay, describeReset, plannedSessions, relayoutBlock } from './weekEditing';
+import { blockWithCardio, blockWithDay, blockWithSplit, describeLoss, plannedSessions, relayoutBlock, scheduledItems } from './weekEditing';
 
 function block(): Block {
   return newBlock('foundation', 4, {
@@ -218,14 +218,14 @@ describe('relayoutBlock', () => {
   });
 });
 
-describe('describeReset', () => {
+describe('describeLoss', () => {
   it('names every session with exercises when the split changes or resets', () => {
     // arrange
     const start = filledBlock(5, 1, 0);
 
     // act
-    const split = describeReset(start, { kind: 'split' });
-    const reset = describeReset(start, { kind: 'reset' });
+    const split = describeLoss(start, { kind: 'split' });
+    const reset = describeLoss(start, { kind: 'reset' });
 
     // assert
     expect(split).toEqual(['Full Body A · 5 exercises', 'Full Body B · 1 exercise']);
@@ -237,8 +237,8 @@ describe('describeReset', () => {
     const start = { ...filledBlock(5, 4, 3), cardioSessions: [...Array.from({ length: 3 }, () => cardioPreset('liss', [])), cardioPreset('hiit', [])] };
 
     // act
-    const fewer = describeReset(start, { kind: 'training-days', days: 2 });
-    const more = describeReset(start, { kind: 'training-days', days: 5 });
+    const fewer = describeLoss(start, { kind: 'training-days', days: 2 });
+    const more = describeLoss(start, { kind: 'training-days', days: 5 });
 
     // assert
     expect(fewer).toEqual(['Full Body C · 3 exercises']);
@@ -250,9 +250,9 @@ describe('describeReset', () => {
     const start = filledBlock(5, 4, 3);
 
     // act
-    const cardioDay = describeReset(start, { kind: 'day', weekday: 'tue' });
-    const sessionDay = describeReset(start, { kind: 'day', weekday: 'mon' });
-    const restDay = describeReset(start, { kind: 'day', weekday: 'sun' });
+    const cardioDay = describeLoss(start, { kind: 'day', weekday: 'tue' });
+    const sessionDay = describeLoss(start, { kind: 'day', weekday: 'mon' });
+    const restDay = describeLoss(start, { kind: 'day', weekday: 'sun' });
 
     // assert
     expect(cardioDay).toEqual(['Easy cardio · 1 segment']);
@@ -262,20 +262,20 @@ describe('describeReset', () => {
 
   it('finds nothing to lose on a day whose strength session has no exercises', () => {
     // act
-    const lost = describeReset(block(), { kind: 'day', weekday: 'mon' });
+    const lost = describeLoss(block(), { kind: 'day', weekday: 'mon' });
 
     // assert
     expect(lost).toEqual([]);
   });
 
-  it('names the removed session', () => {
+  it('names the cleared session', () => {
     // arrange
     const start = filledBlock(5, 4, 0);
 
     // act
-    const strength = describeReset(start, { kind: 'remove-session', sessionId: start.sessions[1].id });
-    const empty = describeReset(start, { kind: 'remove-session', sessionId: start.sessions[2].id });
-    const cardio = describeReset(start, { kind: 'remove-session', sessionId: start.cardioSessions[0].id });
+    const strength = describeLoss(start, { kind: 'clear-session', sessionId: start.sessions[1].id });
+    const empty = describeLoss(start, { kind: 'clear-session', sessionId: start.sessions[2].id });
+    const cardio = describeLoss(start, { kind: 'clear-session', sessionId: start.cardioSessions[0].id });
 
     // assert
     expect(strength).toEqual(['Full Body B · 4 exercises']);
@@ -288,7 +288,7 @@ describe('describeReset', () => {
     const start = filledBlock(5, 0, 2);
 
     // act
-    const lost = describeReset(start, { kind: 'remove-block' });
+    const lost = describeLoss(start, { kind: 'remove-block' });
 
     // assert
     expect(lost).toEqual(['Full Body A · 5 exercises', 'Full Body C · 2 exercises', 'Easy cardio · 1 segment', 'Easy cardio · 1 segment']);
@@ -296,9 +296,44 @@ describe('describeReset', () => {
 
   it('finds nothing to lose in empty sessions', () => {
     // act
-    const lost = describeReset(block(), { kind: 'split' });
+    const lost = describeLoss(block(), { kind: 'split' });
 
     // assert
     expect(lost).toEqual([]);
+  });
+});
+
+describe('blockWithSplit', () => {
+  it('rebuilds empty sessions and the split text for the new shape, keeping the split name and cardio', () => {
+    // arrange
+    const start = { ...filledBlock(2, 2, 2), split: { ...block().split, name: 'My split' } };
+
+    // act
+    const next = blockWithSplit(start, 'upper-lower', 'en');
+
+    // assert
+    expect(next.split).toMatchObject({ shape: 'upper-lower', name: 'My split' });
+    expect(next.split.text).toMatch(/^\*\*Your split: Upper \/ Lower/);
+    expect(next.sessions.map(session => session.name)).toEqual(['Lower A', 'Upper A', 'Lower B']);
+    expect(next.sessions.every(session => session.rows.length === 0)).toBe(true);
+    expect(next.cardioSessions).toEqual(start.cardioSessions);
+    expect(Object.values(next.calendar).filter(entry => entry.kind === 'session')).toHaveLength(3);
+  });
+});
+
+describe('scheduledItems', () => {
+  it('lists each scheduled session once with every day it falls on, in week order', () => {
+    // arrange
+    const start = block();
+    const [first] = start.sessions;
+    const twice = { ...start, calendar: { ...start.calendar, sun: { kind: 'session' as const, sessionId: first.id } } };
+
+    // act
+    const items = scheduledItems(twice);
+
+    // assert
+    expect(items[0]).toMatchObject({ kind: 'strength', days: ['mon', 'sun'] });
+    expect(items.filter(item => item.kind === 'strength')).toHaveLength(3);
+    expect(items.filter(item => item.kind === 'cardio')).toHaveLength(start.cardioSessions.length);
   });
 });

@@ -11,20 +11,25 @@ export type SplitTemplate = {
 };
 
 const SESSION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
-const CORE: SlotPlan = { slot: 'D', patterns: ['core'], label: 'Core / finisher' };
+const SLOT_LABELS: Record<Slot, string> = { A: 'Main lift', B: 'Secondary', C: 'Accessories', D: 'Core / finisher' };
+const CORE: SlotPlan = { slot: 'D', patterns: ['core'], label: SLOT_LABELS.D };
+const ISOLATION: SlotPlan = { slot: 'C', patterns: ['isolation'], label: SLOT_LABELS.C };
+const FALLBACK_SLOT_PLANS: Record<Slot, SlotPlan> = {
+  A: { slot: 'A', patterns: [], label: SLOT_LABELS.A },
+  B: { slot: 'B', patterns: [], label: SLOT_LABELS.B },
+  C: ISOLATION,
+  D: CORE,
+};
 
 function mainAndSecondary(main: MovementPattern[], secondary: MovementPattern[]): SlotPlan[] {
   return [
-    { slot: 'A', patterns: main, label: 'Main lift' },
-    { slot: 'B', patterns: secondary, label: 'Secondary' },
+    { slot: 'A', patterns: main, label: SLOT_LABELS.A },
+    { slot: 'B', patterns: secondary, label: SLOT_LABELS.B },
   ];
 }
 
 function sessionTemplate(name: string, main: MovementPattern[], secondary: MovementPattern[]): SessionTemplate {
-  return {
-    name,
-    slots: [...mainAndSecondary(main, secondary), { slot: 'C', patterns: ['isolation'], label: 'Accessories' }, CORE],
-  };
+  return { name, slots: [...mainAndSecondary(main, secondary), ISOLATION, CORE] };
 }
 
 const FULL_BODY_LOWER: [MovementPattern[], MovementPattern[]][] = [
@@ -32,8 +37,8 @@ const FULL_BODY_LOWER: [MovementPattern[], MovementPattern[]][] = [
   [['hinge'], ['squat', 'lunge']],
 ];
 const FULL_BODY_ACCESSORIES: SlotPlan[] = [
-  { slot: 'C', patterns: ['horizontal-push', 'vertical-push'], label: 'Accessories' },
-  { slot: 'C', patterns: ['horizontal-pull', 'vertical-pull'], label: 'Accessories' },
+  { slot: 'C', patterns: ['horizontal-push', 'vertical-push'], label: SLOT_LABELS.C },
+  { slot: 'C', patterns: ['horizontal-pull', 'vertical-pull'], label: SLOT_LABELS.C },
 ];
 
 function fullBodySessions(days: number): SessionTemplate[] {
@@ -85,4 +90,12 @@ export function slotPlanFor(block: Block, session: Session, slot: Slot): SlotPla
   const [first] = plans;
   if (!first) return undefined;
   return { ...first, patterns: plans.flatMap(plan => plan.patterns) };
+}
+
+export function splitLabel(block: Block): string {
+  return block.split.name || SPLIT_TEMPLATES[block.split.shape].label;
+}
+
+export function slotPlanOrFallback(block: Block, session: Session, slot: Slot): SlotPlan {
+  return slotPlanFor(block, session, slot) ?? FALLBACK_SLOT_PLANS[slot];
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PROGRAM_SEEDS, programForSeed, type SeedClient } from './programSamples';
+import { PROGRAM_SEEDS, programForSeed, seededPrograms, seedRequiresProgramReady, type SeedClient } from './programSamples';
 import { SAMPLE_EXERCISES } from './exerciseSamples';
 import { currentVersion, draftOf, roleForSlot } from '../domain/program';
 import { slotPlanFor } from '../domain/splitTemplates';
@@ -177,5 +177,30 @@ describe('programForSeed', () => {
     // assert
     const names = currentVersion(program!)?.content.plan.blocks[0].cardioSessions.map(cardio => cardio.name);
     expect(names?.filter(name => name === 'Intervals')).toHaveLength(1);
+  });
+});
+
+describe('seededPrograms', () => {
+  const clients = { demo: CLIENT, awaitingReview: { ...CLIENT, callId: 'call-2' } };
+
+  it('seeds the demo client alone, adding the reference client only for two versions', () => {
+    // act
+    const published = seededPrograms('published', clients, SAMPLE_EXERCISES);
+    const twoVersions = seededPrograms('two-versions', clients, SAMPLE_EXERCISES);
+    const none = seededPrograms('none', clients, SAMPLE_EXERCISES);
+
+    // assert
+    expect(Object.keys(published)).toEqual(['call-1']);
+    expect(Object.keys(twoVersions)).toEqual(['call-1', 'call-2']);
+    expect(twoVersions['call-2'].versions.map(version => version.state)).toEqual(['published']);
+    expect(none).toEqual({});
+  });
+
+  it('needs a program-ready journey for every seed with a published version', () => {
+    // act
+    const needs = PROGRAM_SEEDS.filter(seedRequiresProgramReady);
+
+    // assert
+    expect(needs).toEqual(['published', 'two-versions']);
   });
 });

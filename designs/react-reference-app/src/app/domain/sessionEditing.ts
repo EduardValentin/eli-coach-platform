@@ -1,20 +1,14 @@
 import type { Exercise } from '../context/TrainingContext';
-import type { Equipment } from './exercises';
-import { newId, SLOTS, swappedWithNeighbour, type Block, type BlockType, type CoolDown, type CoolDownItem, type Row, type Session, type Slot, type WarmUpItem } from './program';
+import { newId, SLOTS, withField, type Block, type Row, type Session, type Slot } from './program';
 import { resetRowDefaults } from './programDefaults';
-import { emptyRow, substitutionsFor } from './programSuggestions';
+import { filledRow, type RowContext } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
+import { MAX_SUBSTITUTIONS, substitutionsFor } from './substitutions';
 
-export type SessionEditContext = { blockType: BlockType; library: readonly Exercise[]; equipment: readonly Equipment[] };
 export type Placement = { slot: Slot; beforeRowId?: string };
 export type SlotUnit = { key: string; group?: string; rows: Row[] };
 
 export const SINGLE_CARD_SLOTS: readonly Slot[] = ['A', 'B'];
-export const MAX_SUBSTITUTIONS = 2;
-const MAX_WARM_UP_ITEMS = 4;
-const WARM_UP_REPS = 10;
-const WARM_UP_SECONDS = 45;
-const STRETCH_SECONDS = 30;
 
 function nextSlot(slot: Slot): Slot {
   return SLOTS[Math.min(SLOTS.indexOf(slot) + 1, SLOTS.length - 1)];
@@ -59,19 +53,23 @@ function insertedAfter(rows: Row[], row: Row, afterRowId: string): Row[] {
   return [...rows.slice(0, after + 1), row, ...rows.slice(after + 1)];
 }
 
-export function warmUpItem(exercise: Exercise | undefined, exerciseId: string): WarmUpItem {
-  if (exercise?.measuredIn === 'time') return { id: newId(), exerciseId, sets: 1, seconds: WARM_UP_SECONDS };
-  return { id: newId(), exerciseId, sets: 1, reps: { min: WARM_UP_REPS, max: WARM_UP_REPS } };
-}
-
-export function slotUnits(session: Session, slot: Slot): SlotUnit[] {
+function unitsOf(rows: readonly Row[]): SlotUnit[] {
   const units: SlotUnit[] = [];
-  for (const row of session.rows.filter(other => other.slot === slot)) {
+  for (const row of rows) {
     const last = units.at(-1);
-    if (row.supersetGroup !== undefined && last?.group === row.supersetGroup) last.rows.push(row);
+    const joinsLast = row.supersetGroup !== undefined && last?.group === row.supersetGroup && last.rows[0].slot === row.slot;
+    if (joinsLast) last.rows.push(row);
     else units.push({ key: row.id, group: row.supersetGroup, rows: [row] });
   }
   return units;
+}
+
+export function slotUnits(session: Session, slot: Slot): SlotUnit[] {
+  return unitsOf(session.rows.filter(row => row.slot === slot));
+}
+
+export function sessionUnits(session: Session): SlotUnit[] {
+  return unitsOf(session.rows);
 }
 
 export function quickAddSlot(block: Block, session: Session, exercise: Exercise): Slot {
@@ -83,35 +81,12 @@ export function quickAddSlot(block: Block, session: Session, exercise: Exercise)
   return matching ?? 'C';
 }
 
-export function sessionEdits(session: Session, context: SessionEditContext) {
+export function rowEdits(session: Session, context: RowContext) {
   const { rows } = session;
   const withRows = (next: Row[]): Session => ({ ...session, rows: tidy(next) });
   const rowOf = (rowId: string) => rows.find(row => row.id === rowId);
   const reslotted = (row: Row, slot: Slot): Row => ({ ...row, slot });
   const mapRow = (rowId: string, change: (row: Row) => Row) => withRows(rows.map(row => (row.id === rowId ? change(row) : row)));
-  const withWarmUp = (items: WarmUpItem[]): Session => ({ ...session, warmUp: { items } });
-  const withCoolDownItems = (items: CoolDownItem[]): Session => ({ ...session, coolDown: { ...session.coolDown, items } });
-
-  function moveWarmUpItem(itemId: string, step: number): Session {
-    const { items } = session.warmUp;
-    const next = swappedWithNeighbour(items, itemId, step);
-    return next === items ? session : withWarmUp(next);
-  }
-
-  function moveCoolDownItem(itemId: string, step: number): Session {
-    const { items } = session.coolDown;
-    const next = swappedWithNeighbour(items, itemId, step);
-    return next === items ? session : withCoolDownItems(next);
-  }
-
-  function filledRow(exercise: Exercise, slot: Slot, group?: string): Row {
-    return {
-      ...emptyRow(context.blockType, slot, group),
-      exerciseId: exercise.id,
-      cues: exercise.cues,
-      substitutions: substitutionsFor(exercise, context.library, context.equipment),
-    };
-  }
 
   function swap(rowId: string, otherId: string): Session {
     const row = rowOf(rowId);
@@ -133,7 +108,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
   function add(exercise: Exercise, placement: Placement): Session {
     const slot = openSlot(rows, placement.slot);
     const beforeRowId = slot === placement.slot ? placement.beforeRowId : undefined;
-    return withRows(inserted(rows, filledRow(exercise, slot), beforeRowId));
+    return withRows(inserted(rows, filledRow(exercise, { slot }, context), beforeRowId));
   }
 
   return {
@@ -153,7 +128,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
       if (SINGLE_CARD_SLOTS.includes(target.slot)) return add(exercise, { slot: target.slot });
       const group = target.supersetGroup ?? newId();
       const grouped = rows.map(row => (row.id === targetRowId ? inGroup(row, group) : row));
-      return withRows(insertedAfter(grouped, filledRow(exercise, target.slot, group), targetRowId));
+      return withRows(insertedAfter(grouped, filledRow(exercise, { slot: target.slot, supersetGroup: group }, context), targetRowId));
     },
     supersetOnto(rowId: string, targetRowId: string): Session {
       const row = rowOf(rowId);
@@ -210,7 +185,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
       });
     },
     removeSubstitution(rowId: string, exerciseId: string): Session {
-      return mapRow(rowId, row => ({ ...row, substitutions: row.substitutions.filter(id => id !== exerciseId) }));
+      return mapRow(rowId, row => withField(row, 'substitutions', row.substitutions.filter(id => id !== exerciseId)));
     },
     suggestSubstitutions(rowId: string): Session {
       return mapRow(rowId, row => {
@@ -218,45 +193,7 @@ export function sessionEdits(session: Session, context: SessionEditContext) {
         return exercise ? { ...row, substitutions: substitutionsFor(exercise, context.library, context.equipment) } : row;
       });
     },
-    addWarmUpItem(exerciseId: string): Session {
-      const { items } = session.warmUp;
-      if (items.some(item => item.exerciseId === exerciseId) || items.length >= MAX_WARM_UP_ITEMS) return session;
-      const exercise = context.library.find(item => item.id === exerciseId);
-      return withWarmUp([...items, warmUpItem(exercise, exerciseId)]);
-    },
-    changeWarmUpItem(item: WarmUpItem): Session {
-      return withWarmUp(session.warmUp.items.map(other => (other.id === item.id ? item : other)));
-    },
-    removeWarmUpItem(itemId: string): Session {
-      return withWarmUp(session.warmUp.items.filter(item => item.id !== itemId));
-    },
-    moveWarmUpItemUp(itemId: string): Session {
-      return moveWarmUpItem(itemId, -1);
-    },
-    moveWarmUpItemDown(itemId: string): Session {
-      return moveWarmUpItem(itemId, 1);
-    },
-    changeCoolDown(coolDown: CoolDown): Session {
-      return { ...session, coolDown };
-    },
-    addCoolDownItem(exerciseId: string): Session {
-      const { items } = session.coolDown;
-      if (items.some(item => item.exerciseId === exerciseId)) return session;
-      return withCoolDownItems([...items, { id: newId(), exerciseId, seconds: STRETCH_SECONDS }]);
-    },
-    changeCoolDownItem(item: CoolDownItem): Session {
-      return withCoolDownItems(session.coolDown.items.map(other => (other.id === item.id ? item : other)));
-    },
-    moveCoolDownItemUp(itemId: string): Session {
-      return moveCoolDownItem(itemId, -1);
-    },
-    moveCoolDownItemDown(itemId: string): Session {
-      return moveCoolDownItem(itemId, 1);
-    },
-    removeCoolDownItem(itemId: string): Session {
-      return withCoolDownItems(session.coolDown.items.filter(item => item.id !== itemId));
-    },
   };
 }
 
-export type SessionEdits = ReturnType<typeof sessionEdits>;
+export type RowEdits = ReturnType<typeof rowEdits>;

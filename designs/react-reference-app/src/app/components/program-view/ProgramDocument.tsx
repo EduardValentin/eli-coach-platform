@@ -1,10 +1,10 @@
 import { format } from 'date-fns';
 import type { ReactNode } from 'react';
-import { BLOCK_TYPE_LABELS, WEEKDAYS, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session, type Weekday } from '../../domain/program';
+import { BLOCK_TYPE_LABELS, WEEKDAY_LABELS, WEEKDAYS, weekCounts, type Block, type CardioSegment, type CardioSession, type RoundsSegment, type Session } from '../../domain/program';
 import { blockDates, nextCheckpoint } from '../../domain/programCalendar';
 import { cardioMinutes, roundsItemAmount } from '../../domain/programCardio';
-import { estimatedMinutes } from '../../domain/programSuggestions';
 import { fillTemplate } from '../../domain/programTemplates';
+import { estimatedMinutes } from '../../domain/sessionTiming';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { BLOCK_SWATCH } from '../coach-portal/program/program-constants';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
@@ -12,40 +12,21 @@ import { cn } from '../ui/utils';
 import { Emphasised, LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, template, TemplateBody, type TemplateParagraph } from './ProgramText';
 import { SessionTable } from './SessionTable';
 import { TrackingTable } from './TrackingTable';
-import { cardioDayLabel, cardioSegmentText, coolDownLines, currentBlock, dayEntries, exerciseName, warmUpLines, type ProgramView } from './programView';
+import { cardioSegmentText, coolDownLines, currentBlock, dayEntryLabel, exerciseName, warmUpLines, type ProgramView } from './programView';
 
 const COACH_NAME = 'Eli';
-const DISCLAIMER_PLACEHOLDER = 'Disclaimer (page 8) — placeholder';
+const DISCLAIMER_TEXT = "Your coach's full disclaimer accompanies this program.";
 const NO_WEIGHT_NOTE = 'No weight listed? Pick one that lets you finish the set at the RIR shown.';
 const LIST_DASH = /^—\s*/;
-
-const WEEKDAY_ABBREVIATIONS: Record<Weekday, string> = {
-  mon: 'Mon',
-  tue: 'Tue',
-  wed: 'Wed',
-  thu: 'Thu',
-  fri: 'Fri',
-  sat: 'Sat',
-  sun: 'Sun',
-};
 
 const SECTION_TITLE_CLASS = 'font-serif text-document-section font-semibold text-balance text-text-primary';
 const CARD_TITLE_CLASS = 'text-document-card font-semibold text-text-primary';
 const PROSE_CLASS = 'max-w-measure space-y-document-tight text-document-body';
 const BOX_CLASS = 'rounded-md border border-divider p-document-gap';
 
-function entryLabel(block: Block, weekday: Weekday): string {
-  const entry = dayEntries(block, weekday);
-  if (entry.kind === 'session') return block.sessions.find(session => session.id === entry.sessionId)?.name ?? 'Session';
-  if (entry.kind === 'cardio') return cardioDayLabel(block, weekday);
-  return 'Rest';
-}
-
 function sessionsPerWeek(block: Block): string {
-  const entries = Object.values(block.calendar);
-  const strength = entries.filter(entry => entry.kind === 'session').length;
-  const cardio = entries.filter(entry => entry.kind === 'cardio').length;
-  return cardio > 0 ? `${strength} strength · ${cardio} cardio` : `${strength} strength`;
+  const { sessions, cardio } = weekCounts(block);
+  return cardio > 0 ? `${sessions} strength · ${cardio} cardio` : `${sessions} strength`;
 }
 
 function nowReading(view: ProgramView, block: Block): string {
@@ -230,7 +211,7 @@ function WeekTable({ block }: { block: Block }) {
           <tr>
             {WEEKDAYS.map(weekday => (
               <th key={weekday} scope="col" className={cn(DOCUMENT_LABEL_CLASS, 'border-b border-text-primary px-1 py-1 text-left')}>
-                {WEEKDAY_ABBREVIATIONS[weekday]}
+                {WEEKDAY_LABELS[weekday].slice(0, 3)}
               </th>
             ))}
           </tr>
@@ -238,10 +219,10 @@ function WeekTable({ block }: { block: Block }) {
         <tbody>
           <tr>
             {WEEKDAYS.map(weekday => {
-              const isRest = dayEntries(block, weekday).kind === 'rest';
+              const isRest = block.calendar[weekday].kind === 'rest';
               return (
                 <td key={weekday} className={cn('border-b border-divider px-1 py-2 align-top font-medium', { 'font-normal text-text-secondary': isRest })}>
-                  {entryLabel(block, weekday)}
+                  {dayEntryLabel(block, weekday)}
                 </td>
               );
             })}
@@ -419,8 +400,9 @@ export function ProgramDocument({ view }: { view: ProgramView }) {
       <TemplateSection label="Low-energy days" text={template(view, 'lowEnergy')} fallbackTitle="Low-energy session" />
       <TemplateSection label="Beyond training" text={content.nutritionNotes || NUTRITION_FALLBACK} fallbackTitle="Nutrition" />
       <TemplateSection label="Beyond training" text={content.lifestyleNotes || LIFESTYLE_FALLBACK} fallbackTitle="Lifestyle" />
-      <footer data-print-keep className={cn(BOX_CLASS, DOCUMENT_NOTE_CLASS)}>
-        {DISCLAIMER_PLACEHOLDER}
+      <footer data-print-keep className={cn(BOX_CLASS, 'space-y-document-tight')}>
+        <p className={CARD_TITLE_CLASS}>Disclaimer</p>
+        <p className={DOCUMENT_NOTE_CLASS}>{DISCLAIMER_TEXT}</p>
       </footer>
     </article>
   );

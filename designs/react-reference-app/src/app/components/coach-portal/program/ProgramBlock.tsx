@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { CircleCheck, CircleDashed, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
-import { dayOneOf, usePrograms } from '../../../context/ProgramContext';
+import { usePrograms } from '../../../context/ProgramContext';
 import { isBeforeStage, type ClientJourney } from '../../../domain/journey';
 import {
   BLOCK_TYPE_LABELS,
@@ -13,7 +13,7 @@ import {
   type Program,
   type ProgramVersion,
 } from '../../../domain/program';
-import { currentPosition } from '../../../domain/programCalendar';
+import { currentPosition, dayOneOf } from '../../../domain/programCalendar';
 import { clientDetailPathForJourney, clientPronouns } from '../../../utils/journeyLabels';
 import { EmptyState } from '../../EmptyState';
 import { SettingsBody, SettingsSection } from '../../SettingsSection';

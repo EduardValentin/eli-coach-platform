@@ -205,7 +205,7 @@ describe('ProgramDocument', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Listening to your cycle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Low-energy session' })).toBeInTheDocument();
     expect(screen.getAllByRole('table', { name: /^Track / })).toHaveLength(sessionCount);
-    expect(screen.getByRole('contentinfo')).toHaveTextContent('Disclaimer (page 8) — placeholder');
+    expect(screen.getByRole('contentinfo')).toHaveTextContent("Your coach's full disclaimer accompanies this program.");
   });
 
   it('omits the cycle section for a general program but keeps the low-energy session', () => {

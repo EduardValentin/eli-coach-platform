@@ -73,7 +73,7 @@ import {
   RESOURCE_UPLOAD_OUTCOMES,
   RESOURCE_WRITE_OUTCOMES,
 } from '../services/resourceService';
-import { PROGRAM_SEEDS } from '../services/programSamples';
+import { PROGRAM_SEEDS, seedRequiresProgramReady } from '../services/programSamples';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
@@ -1282,8 +1282,7 @@ export function DevToggle() {
                     onValueChange={(value) => {
                       const programSeed = optionOrDefault(PROGRAM_SEEDS, value, 'none');
                       const needsPublished =
-                        programSeed !== 'none' &&
-                        programSeed !== 'draft' &&
+                        seedRequiresProgramReady(programSeed) &&
                         isBeforeStage(appState.journeyStage, 'program-ready');
                       setAppState({
                         programSeed,

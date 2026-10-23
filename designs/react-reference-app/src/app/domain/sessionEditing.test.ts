@@ -1,26 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
+import { exercise as fixtureExercise } from '../../test/programFixtures';
 import { positionLabel, type Row, type Session } from './program';
-import { emptySessionsFor } from './programSuggestions';
-import { quickAddSlot, sessionEdits, slotUnits, type SessionEditContext } from './sessionEditing';
-import { newBlock } from './programSuggestions';
+import { emptySessionsFor, newBlock, type RowContext } from './programSuggestions';
+import { quickAddSlot, rowEdits, sessionUnits, slotUnits } from './sessionEditing';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
-  return {
-    id,
-    name: id,
-    cues: `${id} cues`,
-    type: 'resistance',
-    measuredIn: 'reps',
-    perSide: false,
-    equipment: [],
-    difficulty: 'Beginner',
-    primaryMuscles: ['Glutes'],
-    secondaryMuscles: [],
-    pattern: 'isolation',
-    tags: [],
-    ...overrides,
-  };
+  return fixtureExercise(id, { cues: `${id} cues`, primaryMuscles: ['Glutes'], pattern: 'isolation', ...overrides });
 }
 
 const LIBRARY: Exercise[] = [
@@ -37,7 +23,7 @@ const LIBRARY: Exercise[] = [
   exercise('quadStretch', { type: 'stretching', measuredIn: 'time', pattern: undefined }),
 ];
 
-const CONTEXT: SessionEditContext = { blockType: 'foundation', library: LIBRARY, equipment: [] };
+const CONTEXT: RowContext = { blockType: 'foundation', library: LIBRARY, equipment: [] };
 
 function byId(id: string): Exercise {
   return LIBRARY.find(item => item.id === id) as Exercise;
@@ -48,7 +34,7 @@ function emptySession(): Session {
 }
 
 function withExercises(...ids: [string, Row['slot']][]): Session {
-  return ids.reduce((session, [id, slot]) => sessionEdits(session, CONTEXT).add(byId(id), { slot }), emptySession());
+  return ids.reduce((session, [id, slot]) => rowEdits(session, CONTEXT).add(byId(id), { slot }), emptySession());
 }
 
 function layout(session: Session): string[] {
@@ -59,13 +45,13 @@ function rowOf(session: Session, exerciseId: string): Row {
   return session.rows.find(row => row.exerciseId === exerciseId) as Row;
 }
 
-describe('sessionEdits', () => {
+describe('rowEdits', () => {
   it('adds an exercise with block defaults, cues and substitutions', () => {
     // arrange
     const session = emptySession();
 
     // act
-    const next = sessionEdits(session, CONTEXT).add(byId('curl'), { slot: 'C' });
+    const next = rowEdits(session, CONTEXT).add(byId('curl'), { slot: 'C' });
 
     // assert
     const [row] = next.rows;
@@ -79,7 +65,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['squat', 'A']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).add(byId('hinge'), { slot: 'A' });
+    const next = rowEdits(session, CONTEXT).add(byId('hinge'), { slot: 'A' });
 
     // assert
     expect(layout(next)).toEqual(['A:squat', 'B:hinge']);
@@ -98,7 +84,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['curl', 'C'], ['raise', 'C']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).add(byId('kickback'), { slot: 'C', beforeRowId: rowOf(session, 'raise').id });
+    const next = rowEdits(session, CONTEXT).add(byId('kickback'), { slot: 'C', beforeRowId: rowOf(session, 'raise').id });
 
     // assert
     expect(layout(next)).toEqual(['C:curl', 'C:kickback', 'C:raise']);
@@ -109,7 +95,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['curl', 'C'], ['plank', 'D'], ['raise', 'C']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).supersetOnto(rowOf(session, 'plank').id, rowOf(session, 'curl').id);
+    const next = rowEdits(session, CONTEXT).supersetOnto(rowOf(session, 'plank').id, rowOf(session, 'curl').id);
 
     // assert
     expect(layout(next)).toEqual(['C1:curl', 'C2:plank', 'C:raise']);
@@ -120,7 +106,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['curl', 'C']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).addOnto(byId('raise'), rowOf(session, 'curl').id);
+    const next = rowEdits(session, CONTEXT).addOnto(byId('raise'), rowOf(session, 'curl').id);
 
     // assert
     expect(layout(next)).toEqual(['C1:curl', 'C2:raise']);
@@ -131,7 +117,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['squat', 'A'], ['hinge', 'B']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).swap(rowOf(session, 'hinge').id, rowOf(session, 'squat').id);
+    const next = rowEdits(session, CONTEXT).swap(rowOf(session, 'hinge').id, rowOf(session, 'squat').id);
 
     // assert
     expect(layout(next)).toEqual(['A:hinge', 'B:squat']);
@@ -140,11 +126,11 @@ describe('sessionEdits', () => {
 
   it('moves a card out of a superset and dissolves a group of one', () => {
     // arrange
-    const grouped = sessionEdits(withExercises(['curl', 'C'], ['raise', 'C']), CONTEXT);
+    const grouped = rowEdits(withExercises(['curl', 'C'], ['raise', 'C']), CONTEXT);
     const session = grouped.supersetWithNext(grouped.session.rows[0].id);
 
     // act
-    const next = sessionEdits(session, CONTEXT).move(rowOf(session, 'raise').id, { slot: 'D' });
+    const next = rowEdits(session, CONTEXT).move(rowOf(session, 'raise').id, { slot: 'D' });
 
     // assert
     expect(layout(next)).toEqual(['C:curl', 'D:raise']);
@@ -156,7 +142,7 @@ describe('sessionEdits', () => {
     const session = withExercises(['squat', 'A'], ['curl', 'C']);
 
     // act
-    const next = sessionEdits(session, CONTEXT).moveUp(rowOf(session, 'curl').id);
+    const next = rowEdits(session, CONTEXT).moveUp(rowOf(session, 'curl').id);
 
     // assert
     expect(layout(next)).toEqual(['A:curl', 'C:squat']);
@@ -164,11 +150,11 @@ describe('sessionEdits', () => {
 
   it('ungroups a superset', () => {
     // arrange
-    const edits = sessionEdits(withExercises(['curl', 'C'], ['raise', 'C']), CONTEXT);
+    const edits = rowEdits(withExercises(['curl', 'C'], ['raise', 'C']), CONTEXT);
     const session = edits.supersetWithNext(edits.session.rows[0].id);
 
     // act
-    const next = sessionEdits(session, CONTEXT).ungroup(session.rows[0].supersetGroup as string);
+    const next = rowEdits(session, CONTEXT).ungroup(session.rows[0].supersetGroup as string);
 
     // assert
     expect(layout(next)).toEqual(['C:curl', 'C:raise']);
@@ -176,7 +162,7 @@ describe('sessionEdits', () => {
 
   it('groups consecutive superset members into one unit', () => {
     // arrange
-    const edits = sessionEdits(withExercises(['curl', 'C'], ['raise', 'C'], ['kickback', 'C']), CONTEXT);
+    const edits = rowEdits(withExercises(['curl', 'C'], ['raise', 'C'], ['kickback', 'C']), CONTEXT);
     const session = edits.supersetWithNext(edits.session.rows[0].id);
 
     // act
@@ -186,20 +172,32 @@ describe('sessionEdits', () => {
     expect(units.map(unit => unit.rows.map(row => row.exerciseId))).toEqual([['curl', 'raise'], ['kickback']]);
   });
 
+  it('groups the whole session into slot units in order', () => {
+    // arrange
+    const edits = rowEdits(withExercises(['squat', 'A'], ['curl', 'C'], ['raise', 'C'], ['plank', 'D']), CONTEXT);
+    const session = edits.supersetWithNext(rowOf(edits.session, 'curl').id);
+
+    // act
+    const units = sessionUnits(session);
+
+    // assert
+    expect(units.map(unit => unit.rows.map(row => row.exerciseId))).toEqual([['squat'], ['curl', 'raise'], ['plank']]);
+  });
+
   it('keeps the sets of a row moved to another group in a deload block', () => {
     // arrange
-    const deload: SessionEditContext = { ...CONTEXT, blockType: 'deload' };
-    const added = sessionEdits(emptySession(), deload).add(byId('curl'), { slot: 'C' });
+    const deload: RowContext = { ...CONTEXT, blockType: 'deload' };
+    const added = rowEdits(emptySession(), deload).add(byId('curl'), { slot: 'C' });
     const sets: Row['sets'] = [
       { kind: 'warm-up', reps: { min: 8, max: 8 } },
       { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
       { kind: 'working', reps: { min: 10, max: 12 }, rir: { min: 4, max: 4 }, weightKg: 17 },
     ];
-    const session = sessionEdits(added, deload).replaceRow({ ...added.rows[0], sets });
+    const session = rowEdits(added, deload).replaceRow({ ...added.rows[0], sets });
 
     // act
-    const moved = sessionEdits(session, deload).move(session.rows[0].id, { slot: 'D' });
-    const swapped = sessionEdits(sessionEdits(moved, deload).add(byId('squat'), { slot: 'A' }), deload).moveUp(moved.rows[0].id);
+    const moved = rowEdits(session, deload).move(session.rows[0].id, { slot: 'D' });
+    const swapped = rowEdits(rowEdits(moved, deload).add(byId('squat'), { slot: 'A' }), deload).moveUp(moved.rows[0].id);
 
     // assert
     expect(layout(moved)).toEqual(['D:curl']);
@@ -208,84 +206,17 @@ describe('sessionEdits', () => {
     expect(rowOf(swapped, 'curl').sets).toEqual(sets);
   });
 
-  it('adds and removes substitutions', () => {
+  it('removes a substitution and marks the substitutions as touched', () => {
     // arrange
     const session = withExercises(['curl', 'C']);
     const rowId = session.rows[0].id;
 
     // act
-    const next = sessionEdits(session, CONTEXT).removeSubstitution(rowId, 'raise');
+    const next = rowEdits(session, CONTEXT).removeSubstitution(rowId, 'raise');
 
     // assert
     expect(next.rows[0].substitutions).toEqual(['kickback']);
-  });
-
-  it('adds warm-up exercises as one set of reps or seconds, changes and removes them', () => {
-    // arrange
-    const session = emptySession();
-
-    // act
-    const withHips = sessionEdits(session, CONTEXT).addWarmUpItem('hips');
-    const withCatCow = sessionEdits(withHips, CONTEXT).addWarmUpItem('catCow');
-    const twice = sessionEdits(withCatCow, CONTEXT).addWarmUpItem('hips');
-    const [hips, catCow] = withCatCow.warmUp.items;
-    const changed = sessionEdits(withCatCow, CONTEXT).changeWarmUpItem({ ...hips, sets: 2 });
-    const removed = sessionEdits(changed, CONTEXT).removeWarmUpItem(catCow.id);
-
-    // assert
-    expect(session.warmUp.items).toEqual([]);
-    expect([hips, catCow]).toEqual([
-      { id: expect.any(String), exerciseId: 'hips', sets: 1, reps: { min: 10, max: 10 } },
-      { id: expect.any(String), exerciseId: 'catCow', sets: 1, seconds: 45 },
-    ]);
-    expect(twice).toEqual(withCatCow);
-    expect(removed.warmUp.items).toEqual([{ ...hips, sets: 2 }]);
-  });
-
-  it('reorders warm-up exercises', () => {
-    // arrange
-    const start = ['hips', 'catCow', 'worldsGreatest'].reduce((session, id) => sessionEdits(session, CONTEXT).addWarmUpItem(id), emptySession());
-    const [hips, , worldsGreatest] = start.warmUp.items;
-    const order = (session: Session) => session.warmUp.items.map(item => item.exerciseId);
-
-    // act
-    const up = sessionEdits(start, CONTEXT).moveWarmUpItemUp(worldsGreatest.id);
-    const down = sessionEdits(start, CONTEXT).moveWarmUpItemDown(hips.id);
-    const beforeTheStart = sessionEdits(start, CONTEXT).moveWarmUpItemUp(hips.id);
-
-    // assert
-    expect(order(up)).toEqual(['hips', 'worldsGreatest', 'catCow']);
-    expect(order(down)).toEqual(['catCow', 'hips', 'worldsGreatest']);
-    expect(beforeTheStart).toEqual(start);
-  });
-
-  it('keeps a cool-down note and stretches with seconds each', () => {
-    // arrange
-    const session = emptySession();
-
-    // act
-    const noted = sessionEdits(session, CONTEXT).changeCoolDown({ ...session.coolDown, enabled: true, note: 'Easy walk' });
-    const withHamstring = sessionEdits(noted, CONTEXT).addCoolDownItem('hamstringStretch');
-    const withQuad = sessionEdits(withHamstring, CONTEXT).addCoolDownItem('quadStretch');
-    const twice = sessionEdits(withQuad, CONTEXT).addCoolDownItem('quadStretch');
-    const [hamstring, quad] = withQuad.coolDown.items;
-    const changed = sessionEdits(withQuad, CONTEXT).changeCoolDownItem({ ...quad, seconds: 60 });
-    const reordered = sessionEdits(withQuad, CONTEXT).moveCoolDownItemUp(quad.id);
-    const removed = sessionEdits(changed, CONTEXT).removeCoolDownItem(hamstring.id);
-
-    // assert
-    expect(withQuad.coolDown).toEqual({
-      enabled: true,
-      note: 'Easy walk',
-      items: [
-        { id: expect.any(String), exerciseId: 'hamstringStretch', seconds: 30 },
-        { id: expect.any(String), exerciseId: 'quadStretch', seconds: 30 },
-      ],
-    });
-    expect(twice).toEqual(withQuad);
-    expect(reordered.coolDown.items).toEqual([quad, hamstring]);
-    expect(sessionEdits(reordered, CONTEXT).moveCoolDownItemDown(quad.id)).toEqual(withQuad);
-    expect(removed.coolDown.items).toEqual([{ ...quad, seconds: 60 }]);
+    expect(next.rows[0].touched).toContain('substitutions');
   });
 });
 

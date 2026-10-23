@@ -52,15 +52,15 @@ function numberAnswer(answer: OnboardingAnswer | undefined): number | null {
   return typeof answer === 'number' ? answer : null;
 }
 
-export function levelHintOf(experienceLevel: string | null): LevelHint {
+function levelHintOf(experienceLevel: string | null): LevelHint {
   return experienceLevel === STRUCTURED_LEVEL ? 'intermediate' : 'beginner';
 }
 
-export function trainingDaysOf(answer: string | null): ProgramSetup['trainingDays'] {
+function trainingDaysOf(answer: string | null): ProgramSetup['trainingDays'] {
   return (answer && TRAINING_DAYS[answer]) || 3;
 }
 
-export function sessionMinutesOf(answer: string | null): ProgramSetup['sessionMinutes'] {
+function sessionMinutesOf(answer: string | null): ProgramSetup['sessionMinutes'] {
   return (answer && SESSION_MINUTES[answer]) || 60;
 }
 

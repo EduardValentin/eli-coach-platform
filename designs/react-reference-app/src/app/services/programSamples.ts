@@ -14,9 +14,9 @@ import {
 } from '../domain/program';
 import type { ProgramSetup } from '../domain/programOnboarding';
 import { cardioPreset } from '../domain/programCardio';
-import { emptyRow, initialContent, substitutionsFor } from '../domain/programSuggestions';
-import { warmUpItem } from '../domain/sessionEditing';
+import { filledRow, initialContent } from '../domain/programSuggestions';
 import { SPLIT_TEMPLATES, type SlotPlan } from '../domain/splitTemplates';
+import { warmUpItem } from '../domain/warmUpEditing';
 
 export const PROGRAM_SEEDS = ['none', 'draft', 'published', 'two-versions'] as const;
 export type ProgramSeed = (typeof PROGRAM_SEEDS)[number];
@@ -34,6 +34,11 @@ const SEED_SETUP: ProgramSetup = {
 };
 
 export type SeedClient = { callId: string; dayOne: Date | null; cycleMode: CycleMode; equipment: Equipment[] };
+export type SeedClients = { demo: SeedClient; awaitingReview: SeedClient };
+
+export function seedRequiresProgramReady(seed: ProgramSeed): boolean {
+  return seed !== 'none' && seed !== 'draft';
+}
 
 const TWO_VERSIONS_WHAT_CHANGED =
   'Added a second lower day and raised steps to 8,000, because your technique is stable and energy is good.';
@@ -51,32 +56,26 @@ function candidateFor(plan: SlotPlan, library: readonly Exercise[], used: Readon
 }
 
 type SeedContext = { block: Block; library: readonly Exercise[]; equipment: readonly Equipment[] };
+type SessionSeed = SeedContext & { used: Set<string> };
+type Pick = { plan: SlotPlan; exercise: Exercise };
 
-function seededRow(plan: SlotPlan, exercise: Exercise, seed: SeedContext, supersetGroup?: string): Row {
-  return {
-    ...emptyRow(seed.block.type, plan.slot, supersetGroup),
-    exerciseId: exercise.id,
-    cues: exercise.cues,
-    substitutions: substitutionsFor(exercise, seed.library, seed.equipment),
-  };
-}
-
-function picksFor(plan: SlotPlan, count: number, seed: SeedContext, used: Set<string>): { plan: SlotPlan; exercise: Exercise }[] {
-  const picks: { plan: SlotPlan; exercise: Exercise }[] = [];
+function picksFor(plan: SlotPlan, count: number, seed: SessionSeed): Pick[] {
+  const picks: Pick[] = [];
   for (let remaining = count; remaining > 0; remaining -= 1) {
-    const exercise = candidateFor(plan, seed.library, used);
+    const exercise = candidateFor(plan, seed.library, seed.used);
     if (!exercise) break;
-    used.add(exercise.id);
+    seed.used.add(exercise.id);
     picks.push({ plan, exercise });
   }
   return picks;
 }
 
-function rowsForSlot(plans: SlotPlan[], seed: SeedContext, used: Set<string>): Row[] {
+function rowsForSlot(plans: SlotPlan[], seed: SessionSeed): Row[] {
   const perPlan = plans.length === 1 && plans[0].slot === 'C' ? 2 : 1;
-  const picks = plans.flatMap(plan => picksFor(plan, perPlan, seed, used));
+  const picks = plans.flatMap(plan => picksFor(plan, perPlan, seed));
   const supersetGroup = picks.length > 1 ? newId() : undefined;
-  return picks.map(({ plan, exercise }) => seededRow(plan, exercise, seed, supersetGroup));
+  const context = { blockType: seed.block.type, library: seed.library, equipment: seed.equipment };
+  return picks.map(({ plan, exercise }) => filledRow(exercise, { slot: plan.slot, supersetGroup }, context));
 }
 
 function seededWarmUp(library: readonly Exercise[]): Session['warmUp'] {
@@ -85,10 +84,10 @@ function seededWarmUp(library: readonly Exercise[]): Session['warmUp'] {
 }
 
 function filledSession(session: Session, seed: SeedContext): Session {
-  const used = new Set<string>();
+  const sessionSeed = { ...seed, used: new Set<string>() };
   const index = seed.block.sessions.indexOf(session);
   const template = SPLIT_TEMPLATES[seed.block.split.shape].sessions(seed.block.sessions.length)[index];
-  const rows = SLOTS.flatMap(slot => rowsForSlot(template.slots.filter(plan => plan.slot === slot), seed, used));
+  const rows = SLOTS.flatMap(slot => rowsForSlot(template.slots.filter(plan => plan.slot === slot), sessionSeed));
   return { ...session, warmUp: seededWarmUp(seed.library), rows };
 }
 
@@ -158,4 +157,13 @@ export function programForSeed(seed: ProgramSeed, client: SeedClient, library: r
     return programOf(client, [{ number: 1, state: 'published', publishedAt, whatChanged: '', content }]);
   }
   return twoVersions(client, publishedAt, withIntervalsDay(content, library));
+}
+
+export function seededPrograms(seed: ProgramSeed, clients: SeedClients, library: readonly Exercise[]): Record<string, Program> {
+  const demo = programForSeed(seed, clients.demo, library);
+  const reference = seed === 'two-versions' ? programForSeed('published', clients.awaitingReview, library) : null;
+  return {
+    ...(demo ? { [clients.demo.callId]: demo } : {}),
+    ...(reference ? { [clients.awaitingReview.callId]: reference } : {}),
+  };
 }

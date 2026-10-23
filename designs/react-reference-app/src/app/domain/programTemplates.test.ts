@@ -4,7 +4,7 @@ import { fillTemplate, templateText, type TemplateKey } from './programTemplates
 const KEYS: TemplateKey[] = [
   'legend', 'warmUp', 'coolDown', 'progression', 'steps', 'cycle', 'hiitAside', 'missedDay', 'calibration',
   'block.foundation', 'block.hypertrophy', 'block.strength', 'block.deload',
-  'split.full-body', 'split.upper-lower', 'split.lower-focus', 'lowEnergy',
+  'split.full-body', 'split.upper-lower', 'lowEnergy',
 ];
 
 describe('templateText', () => {
@@ -36,9 +36,8 @@ describe('fillTemplate', () => {
     expect(fillTemplate('Daily steps: [8,000]', { steps: '8,000' })).toBe('Daily steps: 8,000');
   });
 
-  it('replaces the frequency placeholders with a number', () => {
+  it('replaces the frequency placeholder with a number', () => {
     expect(fillTemplate('Full Body, [2–3]x per week', { days: 3 })).toBe('Full Body, 3x per week');
-    expect(fillTemplate('Lower-focus, [3–5]x per week', { days: 4 })).toBe('Lower-focus, 4x per week');
   });
 
   it('keeps a placeholder with no value', () => {

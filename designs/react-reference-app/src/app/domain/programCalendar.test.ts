@@ -132,13 +132,13 @@ describe('weekdayFromOnboarding', () => {
 
 describe('blockStatus', () => {
   it('treats every block as upcoming before day 1 is known', () => {
-    expect(blockStatus(blocks, 0, null, new Date(2026, 8, 20))).toEqual({ kind: 'upcoming', start: null });
+    expect(blockStatus({ blocks, dayOne: null, today: new Date(2026, 8, 20) }, 0)).toEqual({ kind: 'upcoming', start: null });
   });
 
   it('marks ended, current and upcoming blocks from day 1', () => {
     const today = new Date(2026, 9, 21);
-    expect(blockStatus(blocks, 0, dayOne, today)).toEqual({ kind: 'ended', end: new Date(2026, 9, 13) });
-    expect(blockStatus(blocks, 1, dayOne, today)).toEqual({ kind: 'current', weekOfBlock: 2, calibration: false });
-    expect(blockStatus(blocks, 2, dayOne, today)).toEqual({ kind: 'upcoming', start: new Date(2026, 10, 25) });
+    expect(blockStatus({ blocks, dayOne, today }, 0)).toEqual({ kind: 'ended', end: new Date(2026, 9, 13) });
+    expect(blockStatus({ blocks, dayOne, today }, 1)).toEqual({ kind: 'current', weekOfBlock: 2, calibration: false });
+    expect(blockStatus({ blocks, dayOne, today }, 2)).toEqual({ kind: 'upcoming', start: new Date(2026, 10, 25) });
   });
 });

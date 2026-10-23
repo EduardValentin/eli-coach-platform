@@ -14,10 +14,8 @@ import {
 } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { STEPS_STEP, TARGET_MINUTES } from '../../../domain/programDefaults';
-import { blockWithSessionsFrom } from '../../../domain/programEditing';
-import { emptySessionsFor, spreadCalendar } from '../../../domain/programSuggestions';
-import { fillTemplate, templateText } from '../../../domain/programTemplates';
-import { describeReset, relayoutBlock } from '../../../domain/weekEditing';
+import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEditing';
+import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { IconHint } from '../../IconHint';
 import { InlineProblem } from '../../InlineProblem';
@@ -33,7 +31,7 @@ import { CopyBlockDialog } from './CopyBlockDialog';
 import { OptionSelect, type Option } from './OptionSelect';
 import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
 import { useResetConfirm } from './ResetConfirm';
-import { blockWithType, useWeeksField } from './weeksField';
+import { useWeeksField } from './weeksField';
 
 type BlockHeaderProps = {
   blocks: Block[];
@@ -113,27 +111,6 @@ function SettingsToggle({ expanded, buttonRef, onToggle }: SettingsToggleProps) 
   );
 }
 
-function reshaped(block: Block, shape: SplitShape, language: ProgramLanguage): Block {
-  const days = block.trainingDays;
-  const sessions = emptySessionsFor(shape, days);
-  return {
-    ...block,
-    split: {
-      ...block.split,
-      shape,
-      text: fillTemplate(templateText(`split.${shape}`, language).text, {
-        days,
-      }),
-    },
-    sessions,
-    calendar: spreadCalendar(
-      shape,
-      sessions.map(session => session.id),
-      block.cardioSessions,
-    ),
-  };
-}
-
 function statusLine(block: Block, status: BlockStatus): string | null {
   if (status.kind === 'ended') return `Ended ${formatJourneyDate(status.end)}`;
   if (status.kind === 'current') return `Week ${status.weekOfBlock} of ${block.weeks}`;
@@ -183,14 +160,14 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
     confirm.request({
       title: "Replace this block's sessions?",
       confirmLabel: 'Replace sessions',
-      lines: describeReset(block, { kind: 'reset' }),
+      lines: describeLoss(block, { kind: 'reset' }),
       apply: () => onChange(next),
     });
   }
 
   function changeShape(shape: SplitShape) {
-    const next = reshaped(block, shape, language);
-    confirm.request({ title: 'Change the split?', confirmLabel: REBUILD, lines: describeReset(block, { kind: 'split' }), apply: () => onChange(next) });
+    const next = blockWithSplit(block, shape, language);
+    confirm.request({ title: 'Change the split?', confirmLabel: REBUILD, lines: describeLoss(block, { kind: 'split' }), apply: () => onChange(next) });
   }
 
   function changeTrainingDays(days: TrainingDays) {
@@ -198,18 +175,18 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
     confirm.request({
       title: 'Change training days?',
       confirmLabel: REBUILD,
-      lines: describeReset(block, { kind: 'training-days', days }),
+      lines: describeLoss(block, { kind: 'training-days', days }),
       apply: () => onChange(next),
     });
   }
 
   function resetToSplit() {
-    const next = reshaped(block, block.split.shape, language);
-    confirm.request({ title: 'Reset to the split?', confirmLabel: REBUILD, lines: describeReset(block, { kind: 'reset' }), apply: () => onChange(next) });
+    const next = blockWithSplit(block, block.split.shape, language);
+    confirm.request({ title: 'Reset to the split?', confirmLabel: REBUILD, lines: describeLoss(block, { kind: 'reset' }), apply: () => onChange(next) });
   }
 
   function removeBlock() {
-    confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeReset(block, { kind: 'remove-block' }), apply: onRemove });
+    confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove });
   }
 
   return (

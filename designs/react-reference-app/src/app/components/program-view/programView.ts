@@ -1,12 +1,12 @@
 import { addDays, startOfDay, startOfWeek } from 'date-fns';
 import type { Exercise } from '../../context/TrainingContext';
 import {
+  cardioOn,
+  sessionOn,
   WEEKDAYS,
   warmUpItemText,
   type Block,
-  type CalendarEntry,
   type CardioSegment,
-  type CardioSession,
   type Program,
   type ProgramVersion,
   type Session,
@@ -49,20 +49,11 @@ export function currentBlock(view: ProgramView): Block | null {
   return (view.position.status === 'ended' ? blocks.at(-1) : blocks[0]) ?? null;
 }
 
-export function dayEntries(block: Block, weekday: Weekday): CalendarEntry {
-  return block.calendar[weekday];
-}
-
-export function sessionFor(block: Block, weekday: Weekday): Session | null {
-  const entry = dayEntries(block, weekday);
-  if (entry.kind !== 'session') return null;
-  return block.sessions.find(session => session.id === entry.sessionId) ?? null;
-}
-
-export function cardioFor(block: Block, weekday: Weekday): CardioSession | null {
-  const entry = dayEntries(block, weekday);
-  if (entry.kind !== 'cardio') return null;
-  return block.cardioSessions.find(cardio => cardio.id === entry.cardioId) ?? null;
+export function dayEntryLabel(block: Block, weekday: Weekday): string {
+  const kind = block.calendar[weekday].kind;
+  if (kind === 'session') return sessionOn(block, weekday)?.name ?? 'Session';
+  if (kind === 'cardio') return cardioOn(block, weekday)?.name ?? 'Cardio';
+  return 'Rest';
 }
 
 export function sessionAnchor(sessionId: string): string {
@@ -85,10 +76,6 @@ export function restLabel(seconds: number): string {
 
 export function plainText(markdown: string): string {
   return markdown.replaceAll('**', '');
-}
-
-export function cardioDayLabel(block: Block, weekday: Weekday): string {
-  return cardioFor(block, weekday)?.name ?? 'Cardio';
 }
 
 export function exerciseName(exerciseId: string, exercisesById: ReadonlyMap<string, Exercise>): string {

@@ -3,6 +3,7 @@ import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { ArrowRight, GripVertical, Trash2 } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, BLOCK_TYPES, filledSessionCount, type Block, type BlockType } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
+import { blockWithType } from '../../../domain/programEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
 import { RowActionsMenu } from '../../RowActionsMenu';
@@ -10,7 +11,7 @@ import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { cn } from '../../ui/utils';
 import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
-import { blockWithType, useWeeksField } from './weeksField';
+import { useWeeksField } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
 

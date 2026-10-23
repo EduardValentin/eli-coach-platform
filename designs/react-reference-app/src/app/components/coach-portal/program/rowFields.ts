@@ -1,5 +1,5 @@
 import type { Exercise } from '../../../context/TrainingContext';
-import type { Range, Row, RowField } from '../../../domain/program';
+import type { Range } from '../../../domain/program';
 
 export const RANGE_PROBLEM = 'Use a number or a range like 8–12';
 export const REST_PROBLEM = 'Use seconds or m:ss like 1:30';
@@ -11,13 +11,13 @@ const SECONDS_PATTERN = /^(\d+)\s*s?$/;
 const SECONDS_PER_MINUTE = 60;
 const WHOLE_NUMBER_PATTERN = /^\d+$/;
 
-export function parseSeconds(text: string): number | null {
+export function parseWholeNumber(text: string): number | null {
   const trimmed = text.trim();
   return WHOLE_NUMBER_PATTERN.test(trimmed) ? Number(trimmed) : null;
 }
 
 export function parseCount(text: string): number | null {
-  const count = parseSeconds(text);
+  const count = parseWholeNumber(text);
   return count !== null && count > 0 ? count : null;
 }
 
@@ -46,9 +46,4 @@ export function parseRest(text: string): number | null {
 export function repsSuffix(exercise: Exercise | undefined): string {
   if (exercise?.measuredIn === 'time') return ' s';
   return exercise?.perSide ? ' /side' : '';
-}
-
-export function withField<Field extends RowField>(row: Row, field: Field, value: Row[Field]): Row {
-  const touched = row.touched.includes(field) ? row.touched : [...row.touched, field];
-  return { ...row, [field]: value, touched };
 }

@@ -40,7 +40,7 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
-import { PROGRAM_SEEDS, type ProgramSeed } from '../services/programSamples';
+import { PROGRAM_SEEDS, seedRequiresProgramReady, type ProgramSeed } from '../services/programSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
@@ -545,8 +545,7 @@ function parseDevParamsFromURL(): AppState {
     defaultState.programSeed,
   );
   if (
-    state.programSeed !== 'none' &&
-    state.programSeed !== 'draft' &&
+    seedRequiresProgramReady(state.programSeed) &&
     isBeforeStage(state.journeyStage, 'program-ready')
   ) {
     state.journeyStage = 'program-ready';

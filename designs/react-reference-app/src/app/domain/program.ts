@@ -16,6 +16,15 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
 export type SplitShape = 'full-body' | 'upper-lower';
 export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export const WEEKDAYS: readonly Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
+};
 export type Slot = 'A' | 'B' | 'C' | 'D';
 export const SLOTS: readonly Slot[] = ['A', 'B', 'C', 'D'];
 export type Range = { min: number; max: number };
@@ -120,6 +129,11 @@ export type Program = {
   versions: ProgramVersion[];
 };
 
+export function withField<Field extends RowField>(row: Row, field: Field, value: Row[Field]): Row {
+  const touched = row.touched.includes(field) ? row.touched : [...row.touched, field];
+  return { ...row, [field]: value, touched };
+}
+
 export function currentVersion(program: Program): ProgramVersion | undefined {
   return program.versions.find(version => version.state === 'published');
 }
@@ -159,7 +173,7 @@ export function setText(set: WorkingSet, repsSuffix = ''): string {
   return `${formatRange(set.reps)}${repsSuffix} · RIR ${formatRange(set.rir)}`;
 }
 
-export function uniformSets(sets: readonly SetSpec[]): boolean {
+export function hasUniformSets(sets: readonly SetSpec[]): boolean {
   const working = workingSets(sets);
   const [first] = working;
   return working.every(set => sameRange(set.reps, first.reps) && sameRange(set.rir, first.rir));
@@ -167,7 +181,7 @@ export function uniformSets(sets: readonly SetSpec[]): boolean {
 
 function workingSummary(sets: WorkingSet[], repsSuffix: string): string {
   const [first] = sets;
-  if (!uniformSets(sets)) return `${sets.length} sets`;
+  if (!hasUniformSets(sets)) return `${sets.length} sets`;
   return `${sets.length} × ${setText(first, repsSuffix)}`;
 }
 
@@ -209,18 +223,39 @@ export function newId(): string {
   return crypto.randomUUID();
 }
 
-function calendarWithIds(
-  calendar: Record<Weekday, CalendarEntry>,
-  sessionIds: ReadonlyMap<string, string>,
-  cardioIds: ReadonlyMap<string, string>,
-): Record<Weekday, CalendarEntry> {
-  const entries = WEEKDAYS.map((day): [Weekday, CalendarEntry] => {
-    const entry = calendar[day];
-    if (entry.kind === 'session') return [day, { kind: 'session', sessionId: sessionIds.get(entry.sessionId) ?? entry.sessionId }];
-    if (entry.kind === 'cardio') return [day, { kind: 'cardio', cardioId: cardioIds.get(entry.cardioId) ?? entry.cardioId }];
-    return [day, entry];
-  });
-  return Object.fromEntries(entries) as Record<Weekday, CalendarEntry>;
+export function mapCalendar(entryOn: (day: Weekday) => CalendarEntry): Record<Weekday, CalendarEntry> {
+  return Object.fromEntries(WEEKDAYS.map(day => [day, entryOn(day)])) as Record<Weekday, CalendarEntry>;
+}
+
+export function sessionOn(block: Block, day: Weekday): Session | undefined {
+  const entry = block.calendar[day];
+  return entry.kind === 'session' ? block.sessions.find(session => session.id === entry.sessionId) : undefined;
+}
+
+export function cardioOn(block: Block, day: Weekday): CardioSession | undefined {
+  const entry = block.calendar[day];
+  return entry.kind === 'cardio' ? block.cardioSessions.find(cardio => cardio.id === entry.cardioId) : undefined;
+}
+
+export function scheduledSessions(block: Block): Session[] {
+  const ids = new Set(WEEKDAYS.flatMap(day => sessionOn(block, day)?.id ?? []));
+  return block.sessions.filter(session => ids.has(session.id));
+}
+
+export function hasExercises(session: Session): boolean {
+  return session.rows.some(row => row.exerciseId !== '');
+}
+
+export function filledSessionCount(block: Block): number {
+  return block.sessions.filter(hasExercises).length;
+}
+
+export function copiedSessions(sessions: readonly Session[]): Session[] {
+  return sessions.map(session => ({
+    ...session,
+    id: newId(),
+    rows: session.rows.map(row => ({ ...row, id: newId() })),
+  }));
 }
 
 function segmentWithFreshIds(segment: CardioSegment): CardioSegment {
@@ -228,23 +263,32 @@ function segmentWithFreshIds(segment: CardioSegment): CardioSegment {
   return { ...segment, id: newId(), items: segment.items.map(item => ({ ...item, id: newId() })) };
 }
 
+function copiedCardioSessions(cardioSessions: readonly CardioSession[]): CardioSession[] {
+  return cardioSessions.map(cardio => ({ ...cardio, id: newId(), segments: cardio.segments.map(segmentWithFreshIds) }));
+}
+
+function idsByPosition<Item extends { id: string }>(before: readonly Item[], after: readonly Item[]): ReadonlyMap<string, string> {
+  return new Map(before.map((item, index) => [item.id, after[index].id]));
+}
+
+function calendarWithIds(block: Block, sessionIds: ReadonlyMap<string, string>, cardioIds: ReadonlyMap<string, string>): Record<Weekday, CalendarEntry> {
+  return mapCalendar(day => {
+    const entry = block.calendar[day];
+    if (entry.kind === 'session') return { kind: 'session', sessionId: sessionIds.get(entry.sessionId) ?? entry.sessionId };
+    if (entry.kind === 'cardio') return { kind: 'cardio', cardioId: cardioIds.get(entry.cardioId) ?? entry.cardioId };
+    return entry;
+  });
+}
+
 export function blockWithFreshIds(block: Block): Block {
-  const sessionIds = new Map(block.sessions.map(session => [session.id, newId()]));
-  const cardioIds = new Map(block.cardioSessions.map(cardio => [cardio.id, newId()]));
+  const sessions = copiedSessions(block.sessions);
+  const cardioSessions = copiedCardioSessions(block.cardioSessions);
   return {
     ...block,
     id: newId(),
-    calendar: calendarWithIds(block.calendar, sessionIds, cardioIds),
-    sessions: block.sessions.map(session => ({
-      ...session,
-      id: sessionIds.get(session.id) as string,
-      rows: session.rows.map(row => ({ ...row, id: newId() })),
-    })),
-    cardioSessions: block.cardioSessions.map(cardio => ({
-      ...cardio,
-      id: cardioIds.get(cardio.id) as string,
-      segments: cardio.segments.map(segmentWithFreshIds),
-    })),
+    calendar: calendarWithIds(block, idsByPosition(block.sessions, sessions), idsByPosition(block.cardioSessions, cardioSessions)),
+    sessions,
+    cardioSessions,
   };
 }
 
@@ -256,6 +300,28 @@ export function contentWithFreshIds(content: ProgramContent): ProgramContent {
   };
 }
 
-export function filledSessionCount(block: Block): number {
-  return block.sessions.filter(session => session.rows.some(row => row.exerciseId !== '')).length;
+function segmentExerciseIds(segment: CardioSegment): string[] {
+  return segment.kind === 'steady' ? [segment.exerciseId] : segment.items.map(item => item.exerciseId);
+}
+
+function sessionExerciseIds(session: Session): string[] {
+  return [
+    ...session.warmUp.items.map(item => item.exerciseId),
+    ...session.coolDown.items.map(item => item.exerciseId),
+    ...session.rows.flatMap(row => [row.exerciseId, ...row.substitutions]),
+  ];
+}
+
+function blockExerciseIds(block: Block): string[] {
+  return [...block.sessions.flatMap(sessionExerciseIds), ...block.cardioSessions.flatMap(cardio => cardio.segments.flatMap(segmentExerciseIds))];
+}
+
+export function programExerciseIds(program: Program): string[] {
+  const ids = program.versions.flatMap(version => version.content.plan.blocks.flatMap(blockExerciseIds));
+  return [...new Set(ids.filter(id => id !== ''))];
+}
+
+export function weekCounts(block: Block): { sessions: number; cardio: number } {
+  const entries = Object.values(block.calendar);
+  return { sessions: entries.filter(entry => entry.kind === 'session').length, cardio: entries.filter(entry => entry.kind === 'cardio').length };
 }

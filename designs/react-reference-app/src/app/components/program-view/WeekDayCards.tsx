@@ -1,10 +1,10 @@
 import { isSameDay } from 'date-fns';
-import { WEEKDAYS, type Block, type Weekday } from '../../domain/program';
+import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
-import { BLOCK_SOFT, WEEKDAY_LABELS } from '../coach-portal/program/program-constants';
+import { BLOCK_SOFT } from '../coach-portal/program/program-constants';
 import { LABEL_CLASS } from '../typography';
 import { cn } from '../ui/utils';
-import { cardioFor, sessionAnchor, sessionFor } from './programView';
+import { sessionAnchor } from './programView';
 
 const KIND_BADGE_CLASS =
   'inline-flex max-w-full items-center gap-1.5 rounded-field px-2 py-1 text-xs font-medium outline-none hover:brightness-95 focus-visible:ring-[3px] focus-visible:ring-ring/50';
@@ -12,8 +12,8 @@ const KIND_BADGE_CLASS =
 type WeekDayCardsProps = { block: Block; dates: Record<Weekday, Date>; today: Date };
 
 function DayCard({ block, day, date, today }: { block: Block; day: Weekday; date: Date; today: Date }) {
-  const session = sessionFor(block, day);
-  const cardio = cardioFor(block, day);
+  const session = sessionOn(block, day);
+  const cardio = cardioOn(block, day);
   const weekday = WEEKDAY_LABELS[day];
   const isToday = isSameDay(date, today);
 

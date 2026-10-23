@@ -1,11 +1,11 @@
 import { Copy, Plus, X } from 'lucide-react';
-import { formatRange, isWorkingSet, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
+import { formatRange, isWorkingSet, withField, workingSets, type Range, type Row, type SetSpec, type WorkingSet } from '../../../domain/program';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
 import { RowTextField } from './RowTextField';
-import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM, withField } from './rowFields';
+import { formatRest, parseRange, parseRest, RANGE_PROBLEM, REST_PROBLEM } from './rowFields';
 import { SegmentedChoice } from './SegmentedChoice';
 
 type SetGridProps = { row: Row; exerciseName: string; repsSuffix: string; onChange: (row: Row) => void };

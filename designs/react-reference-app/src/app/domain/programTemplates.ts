@@ -16,7 +16,6 @@ export type TemplateKey =
   | 'block.deload'
   | 'split.full-body'
   | 'split.upper-lower'
-  | 'split.lower-focus'
   | 'lowEnergy';
 
 export type TemplateText = { text: string; pending: boolean };
@@ -45,8 +44,6 @@ Every session trains your whole body: legs, glutes, back, chest and core. This m
 **Tip:** leave at least one rest day between sessions.`,
     'split.upper-lower': `**Your split: Upper / Lower, 4x per week**
 We alternate between lower body days (legs and glutes) and upper body days (back, chest, shoulders, arms). Splitting the body this way lets each session go deeper with more exercises per muscle, while every muscle is still trained twice a week.`,
-    'split.lower-focus': `**Your split: Lower-focus, [3–5]x per week**
-Your program puts extra emphasis on glutes and legs, with dedicated upper body work to keep you balanced and strong overall. Glutes recover quickly, so they can be trained often and from different angles.`,
     'warmUp': `**Warm-up (5–10 min)**
 1. 3–5 min light cardio (brisk walk, bike, jumping jacks) until you feel warm.
 2. Mobility for today's movements (listed below).
@@ -79,7 +76,6 @@ None of these are "skipping". Log how you felt in your check-in so we can learn 
 const PLACEHOLDER_VALUE_KEYS: Record<string, string> = {
   '8,000': 'steps',
   '2–3': 'days',
-  '3–5': 'days',
 };
 
 export function templateText(key: TemplateKey, language: ProgramLanguage): TemplateText {

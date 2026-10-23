@@ -17,8 +17,8 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining } from '../../context/TrainingContext';
-import { BLOCK_TYPE_LABELS, currentVersion, type Block, type Program, type ProgramVersion, type VersionState } from '../../domain/program';
-import { SPLIT_TEMPLATES } from '../../domain/splitTemplates';
+import { BLOCK_TYPE_LABELS, currentVersion, weekCounts, type Block, type Program, type ProgramVersion, type VersionState } from '../../domain/program';
+import { splitLabel } from '../../domain/splitTemplates';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 import { clientDetailPathForJourney, formatJourneyDate } from '../../utils/journeyLabels';
 
@@ -38,14 +38,8 @@ function documentPath(clientId: string, version: ProgramVersion): string {
   return `/coach/clients/${clientId}/program/document/${version.number}`;
 }
 
-function splitLabel(block: Block): string {
-  return block.split.name || SPLIT_TEMPLATES[block.split.shape].label;
-}
-
 function weekText(block: Block): string {
-  const days = Object.values(block.calendar);
-  const sessions = days.filter(entry => entry.kind === 'session').length;
-  const cardio = days.filter(entry => entry.kind === 'cardio').length;
+  const { sessions, cardio } = weekCounts(block);
   const cardioText = cardio > 0 ? ` and ${cardio} cardio ${cardio === 1 ? 'day' : 'days'}` : '';
   return `${splitLabel(block)} · ${sessions} ${sessions === 1 ? 'session' : 'sessions'}${cardioText} a week`;
 }

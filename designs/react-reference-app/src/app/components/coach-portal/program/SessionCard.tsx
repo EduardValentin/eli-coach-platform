@@ -1,12 +1,15 @@
 import { useId, useRef, type Ref } from 'react';
 import { Eraser, PencilLine } from 'lucide-react';
 import type { Exercise } from '../../../context/TrainingContext';
-import { SLOTS, type Block, type Session, type Slot } from '../../../domain/program';
+import { coolDownEdits } from '../../../domain/coolDownEditing';
+import { SLOTS, type Block, type Session } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
-import { estimatedMinutes } from '../../../domain/programSuggestions';
-import { sessionEdits, type SessionEditContext } from '../../../domain/sessionEditing';
-import { slotPlanFor, type SlotPlan } from '../../../domain/splitTemplates';
-import { describeReset } from '../../../domain/weekEditing';
+import type { RowContext } from '../../../domain/programSuggestions';
+import { rowEdits } from '../../../domain/sessionEditing';
+import { estimatedMinutes, isOverTarget } from '../../../domain/sessionTiming';
+import { slotPlanOrFallback } from '../../../domain/splitTemplates';
+import { warmUpEdits } from '../../../domain/warmUpEditing';
+import { describeLoss } from '../../../domain/weekEditing';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { Input } from '../../ui/input';
 import { cn } from '../../ui/utils';
@@ -21,18 +24,10 @@ type SessionCardProps = {
   expanded: boolean;
   articleRef: Ref<HTMLElement>;
   library: readonly Exercise[];
-  context: SessionEditContext;
+  context: RowContext;
   onExpand: () => void;
   onChange: (session: Session) => void;
   onOpenLibrary: (target: LibraryTarget) => void;
-};
-
-const OVER_TARGET_MINUTES = 10;
-const FALLBACK_PLANS: Record<Slot, SlotPlan> = {
-  A: { slot: 'A', patterns: [], label: 'Main lift' },
-  B: { slot: 'B', patterns: [], label: 'Secondary' },
-  C: { slot: 'C', patterns: ['isolation'], label: 'Accessories' },
-  D: { slot: 'D', patterns: ['core'], label: 'Core / finisher' },
 };
 
 function CollapsedSession({ session, headingId, onExpand }: { session: Session; headingId: string; onExpand: () => void }) {
@@ -58,16 +53,16 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
   const headingId = useId();
   const nameField = useRef<HTMLInputElement>(null);
   const confirm = useResetConfirm();
-  const edits = sessionEdits(session, context);
+  const edits = rowEdits(session, context);
   const minutes = estimatedMinutes(session);
-  const overTarget = minutes > block.targetMinutes + OVER_TARGET_MINUTES;
+  const overTarget = isOverTarget(session, block);
   const articleClass = 'rounded-card border border-border bg-card shadow-card';
 
   function clear() {
     confirm.request({
       title: `Clear ${session.name}?`,
       confirmLabel: 'Clear session',
-      lines: describeReset(block, { kind: 'remove-session', sessionId: session.id }),
+      lines: describeLoss(block, { kind: 'clear-session', sessionId: session.id }),
       apply: () => onChange(edits.clear()),
     });
   }
@@ -109,7 +104,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
         <WarmUpCard
           session={session}
           library={library}
-          edits={edits}
+          edits={warmUpEdits(session, library)}
           onChange={onChange}
           onPickExercise={() => onOpenLibrary({ kind: 'warm-up', sessionId: session.id })}
         />
@@ -117,7 +112,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
           <SlotGroup
             key={slot}
             session={session}
-            plan={slotPlanFor(block, session, slot) ?? FALLBACK_PLANS[slot]}
+            plan={slotPlanOrFallback(block, session, slot)}
             library={library}
             edits={edits}
             onChange={onChange}
@@ -128,7 +123,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
         <CoolDownCard
           session={session}
           library={library}
-          edits={edits}
+          edits={coolDownEdits(session)}
           onChange={onChange}
           onPickStretch={() => onOpenLibrary({ kind: 'cool-down', sessionId: session.id })}
         />

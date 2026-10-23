@@ -11,7 +11,7 @@ import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { ExerciseItemRow, ITEM_LIST_CLASS } from './ExerciseItemRow';
 import { RowTextField } from './RowTextField';
-import { COUNT_PROBLEM, parseCount, parseSeconds } from './rowFields';
+import { COUNT_PROBLEM, parseCount, parseWholeNumber } from './rowFields';
 import { SegmentedChoice } from './SegmentedChoice';
 import { CARDIO_SEGMENT, LIBRARY_EXERCISE, type CardioSegmentItem, type LibraryItem } from './sessionDnd';
 
@@ -125,14 +125,14 @@ function RoundsFields({ segment, library, edits, onChange, onAddItem }: RoundsFi
           label="Easy between exercises"
           unit="s"
           value={segment.easySeconds}
-          parse={parseSeconds}
+          parse={parseWholeNumber}
           onCommit={easySeconds => onSegment({ ...segment, easySeconds })}
         />
         <NumberField
           label="Rest between rounds"
           unit="s"
           value={segment.restBetweenRoundsSeconds}
-          parse={parseSeconds}
+          parse={parseWholeNumber}
           onCommit={restBetweenRoundsSeconds => onSegment({ ...segment, restBetweenRoundsSeconds })}
         />
       </div>

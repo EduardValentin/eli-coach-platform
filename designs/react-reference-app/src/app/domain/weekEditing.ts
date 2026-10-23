@@ -1,7 +1,21 @@
-import { WEEKDAYS, type Block, type CalendarEntry, type CardioSession, type Session, type TrainingDays, type Weekday } from './program';
-import { emptySessionsFor, spreadCalendar } from './programSuggestions';
+import {
+  cardioOn,
+  mapCalendar,
+  sessionOn,
+  WEEKDAYS,
+  type Block,
+  type CalendarEntry,
+  type CardioSession,
+  type ProgramLanguage,
+  type Session,
+  type SplitShape,
+  type TrainingDays,
+  type Weekday,
+} from './program';
+import { emptySessionsFor, splitFor, spreadCalendar } from './programSuggestions';
 
 export type PlannedSession = { kind: 'strength'; session: Session } | { kind: 'cardio'; cardio: CardioSession };
+export type ScheduledItem = PlannedSession & { days: Weekday[] };
 
 export type DayChoice = { kind: 'session'; sessionId: string } | { kind: 'cardio'; session: CardioSession } | { kind: 'rest' };
 
@@ -22,15 +36,13 @@ export function blockWithDay(block: Block, day: Weekday, choice: DayChoice): Blo
   const { entry, added } = entryFor(block, day, choice);
   const previous = block.calendar[day];
   const removedSession = sessionLeaving(previous, choice);
-  const calendar = Object.fromEntries(
-    WEEKDAYS.map(other => {
-      if (other === day) return [other, entry];
-      const current = block.calendar[other];
-      const leftBehind = choice.kind === 'session' && current.kind === 'session' && current.sessionId === choice.sessionId;
-      const removed = current.kind === 'session' && current.sessionId === removedSession;
-      return [other, leftBehind || removed ? { kind: 'rest' } : current];
-    }),
-  ) as Block['calendar'];
+  const calendar = mapCalendar(other => {
+    if (other === day) return entry;
+    const current = block.calendar[other];
+    const leftBehind = choice.kind === 'session' && current.kind === 'session' && current.sessionId === choice.sessionId;
+    const removed = current.kind === 'session' && current.sessionId === removedSession;
+    return leftBehind || removed ? { kind: 'rest' } : current;
+  });
   const dropped = previous.kind === 'cardio' && entry.kind !== 'cardio' ? previous.cardioId : undefined;
   const cardioSessions = [...block.cardioSessions.filter(cardio => cardio.id !== dropped), ...(added ? [added] : [])];
   const sessions = block.sessions.filter(session => session.id !== removedSession);
@@ -41,14 +53,46 @@ export function blockWithCardio(block: Block, cardio: CardioSession): Block {
   return { ...block, cardioSessions: block.cardioSessions.map(other => (other.id === cardio.id ? cardio : other)) };
 }
 
+export function blockWithSplit(block: Block, shape: SplitShape, language: ProgramLanguage): Block {
+  const sessions = emptySessionsFor(shape, block.trainingDays);
+  return {
+    ...block,
+    split: { ...block.split, ...splitFor(shape, block.trainingDays, language) },
+    sessions,
+    calendar: spreadCalendar(
+      shape,
+      sessions.map(session => session.id),
+      block.cardioSessions,
+    ),
+  };
+}
+
+export function plannedId(entry: PlannedSession): string {
+  return entry.kind === 'cardio' ? entry.cardio.id : entry.session.id;
+}
+
+function plannedOn(block: Block, day: Weekday): PlannedSession | undefined {
+  const session = sessionOn(block, day);
+  if (session) return { kind: 'strength', session };
+  const cardio = cardioOn(block, day);
+  return cardio ? { kind: 'cardio', cardio } : undefined;
+}
+
+export function scheduledItems(block: Block): ScheduledItem[] {
+  const byId = new Map<string, ScheduledItem>();
+  for (const day of WEEKDAYS) {
+    const planned = plannedOn(block, day);
+    if (!planned) continue;
+    const item = byId.get(plannedId(planned)) ?? { ...planned, days: [] };
+    item.days.push(day);
+    byId.set(plannedId(planned), item);
+  }
+  return [...byId.values()];
+}
+
 export function plannedSessions(block: Block): PlannedSession[] {
-  const onCalendar = WEEKDAYS.flatMap((day): PlannedSession[] => {
-    const entry = block.calendar[day];
-    if (entry.kind === 'session') return block.sessions.filter(session => session.id === entry.sessionId).map(session => ({ kind: 'strength', session }));
-    if (entry.kind === 'cardio') return block.cardioSessions.filter(cardio => cardio.id === entry.cardioId).map(cardio => ({ kind: 'cardio', cardio }));
-    return [];
-  });
-  const placed = new Set(onCalendar.map(entry => (entry.kind === 'cardio' ? entry.cardio.id : entry.session.id)));
+  const onCalendar = scheduledItems(block);
+  const placed = new Set(onCalendar.map(plannedId));
   const unplaced = block.sessions.filter(session => !placed.has(session.id)).map((session): PlannedSession => ({ kind: 'strength', session }));
   return [...onCalendar, ...unplaced];
 }
@@ -58,7 +102,7 @@ export type ResetChange =
   | { kind: 'reset' }
   | { kind: 'training-days'; days: TrainingDays }
   | { kind: 'day'; weekday: Weekday }
-  | { kind: 'remove-session'; sessionId: string }
+  | { kind: 'clear-session'; sessionId: string }
   | { kind: 'remove-block' };
 
 function placedCardio(block: Block, days: TrainingDays): CardioSession[] {
@@ -93,10 +137,9 @@ function cardioLoss(cardio: CardioSession): string[] {
 }
 
 function lostOnDay(block: Block, weekday: Weekday): string[] {
-  const entry = block.calendar[weekday];
-  if (entry.kind === 'session') return block.sessions.filter(session => session.id === entry.sessionId).flatMap(sessionLoss);
-  if (entry.kind === 'cardio') return block.cardioSessions.filter(cardio => cardio.id === entry.cardioId).flatMap(cardioLoss);
-  return [];
+  const planned = plannedOn(block, weekday);
+  if (!planned) return [];
+  return planned.kind === 'strength' ? sessionLoss(planned.session) : cardioLoss(planned.cardio);
 }
 
 function lostSessions(block: Block, change: Exclude<ResetChange, { kind: 'day' }>): string[] {
@@ -107,7 +150,7 @@ function lostSessions(block: Block, change: Exclude<ResetChange, { kind: 'day' }
       ...block.cardioSessions.filter(cardio => !placed.has(cardio)).flatMap(cardioLoss),
     ];
   }
-  if (change.kind === 'remove-session') {
+  if (change.kind === 'clear-session') {
     return [
       ...block.sessions.filter(session => session.id === change.sessionId).flatMap(sessionLoss),
       ...block.cardioSessions.filter(cardio => cardio.id === change.sessionId).flatMap(cardioLoss),
@@ -117,7 +160,7 @@ function lostSessions(block: Block, change: Exclude<ResetChange, { kind: 'day' }
   return block.sessions.flatMap(sessionLoss);
 }
 
-export function describeReset(block: Block, change: ResetChange): string[] {
+export function describeLoss(block: Block, change: ResetChange): string[] {
   if (change.kind === 'day') return lostOnDay(block, change.weekday);
   return lostSessions(block, change);
 }
