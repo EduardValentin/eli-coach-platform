@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { currentBlockOf } from '../../../test/programFixtures';
 import { BLOCK_TYPE_LABELS, currentVersion, formatRange, warmUpItemText, workingSets } from '../../domain/program';
 import type { CycleMode } from '../../domain/cycleMode';
 import { SAMPLE_EXERCISES } from '../../services/exerciseSamples';
@@ -7,7 +8,7 @@ import { programForSeed } from '../../services/programSamples';
 import { ProgramDocument } from './ProgramDocument';
 import { parseTemplate, programTemplate } from './ProgramText';
 import { TrackingTable } from './TrackingTable';
-import { currentBlock, viewOf, type ProgramView } from './programView';
+import { viewOf, type ProgramView } from './programView';
 
 const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
@@ -29,19 +30,13 @@ function viewFor(cycleMode: CycleMode, seed: 'published' | 'two-versions' = 'pub
   });
 }
 
-function blockOf(view: ProgramView) {
-  const block = currentBlock(view);
-  if (!block) throw new Error('block missing');
-  return block;
-}
-
 const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
 
 describe('TrackingTable', () => {
   it('has a column per week and a row per set', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = { ...blockOf(view), weeks: 6, calibrationWeek: true };
+    const block = { ...currentBlockOf(view), weeks: 6, calibrationWeek: true };
     const session = structuredClone(block.sessions[0]);
     session.rows = [{ ...session.rows[0], sets: [STEADY_SET, STEADY_SET, STEADY_SET, STEADY_SET] }];
 
@@ -63,7 +58,7 @@ describe('TrackingTable', () => {
   it('prescribes each set on its own line when the sets differ', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const session = structuredClone(block.sessions[0]);
     const topSet = { kind: 'working' as const, reps: { min: 5, max: 5 }, rir: { min: 2, max: 2 } };
     session.rows = [{ ...session.rows[0], sets: [topSet, STEADY_SET] }];
@@ -80,7 +75,7 @@ describe('TrackingTable', () => {
   it('skips rows without an exercise', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const session = structuredClone(block.sessions[0]);
     session.rows = [{ ...session.rows[0], exerciseId: '' }];
 
@@ -96,7 +91,7 @@ describe('ProgramDocument', () => {
   it('opens with a cover band naming the client, version, date, coach and current block', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
 
     // act
     render(<ProgramDocument view={view} />);
@@ -112,7 +107,7 @@ describe('ProgramDocument', () => {
   it('gives the current block and week, next check-in, daily steps and sessions per week at a glance', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const sessionDays = Object.values(block.calendar).filter(entry => entry.kind === 'session').length;
 
     // act
@@ -142,7 +137,7 @@ describe('ProgramDocument', () => {
   it('prints one exercise table row per set with the exercise named once', () => {
     // arrange
     const view = viewFor('adapted');
-    const [session] = blockOf(view).sessions;
+    const [session] = currentBlockOf(view).sessions;
     const [row] = session.rows;
     const name = view.exercisesById.get(row.exerciseId)?.name ?? '';
     const setCount = session.rows.reduce((total, candidate) => total + candidate.sets.length, 0);
@@ -163,7 +158,7 @@ describe('ProgramDocument', () => {
   it('tracks each working set of a session with its reps target', () => {
     // arrange
     const view = viewFor('adapted');
-    const [session] = blockOf(view).sessions;
+    const [session] = currentBlockOf(view).sessions;
     const workingCount = session.rows.reduce((total, row) => total + workingSets(row.sets).length, 0);
     const [firstSet] = workingSets(session.rows[0].sets);
 
@@ -195,7 +190,7 @@ describe('ProgramDocument', () => {
   it('lists the plan, sessions with tracking tables and the cycle section for an adapted program', () => {
     // arrange
     const view = viewFor('adapted');
-    const sessionCount = blockOf(view).sessions.length;
+    const sessionCount = currentBlockOf(view).sessions.length;
 
     // act
     render(<ProgramDocument view={view} />);
@@ -223,7 +218,7 @@ describe('ProgramDocument', () => {
   it('titles the block section with the intro template line, never a generic heading as well', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const { title } = parseTemplate(block.introText || programTemplate(view, `block.${block.type}`));
 
     // act
@@ -238,7 +233,7 @@ describe('ProgramDocument', () => {
   it('titles the split and steps sections with their template lines', () => {
     // arrange
     const view = viewFor('adapted');
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const split = parseTemplate(block.split.text).title;
 
     // act
@@ -254,7 +249,7 @@ describe('ProgramDocument', () => {
   it('lists each warm-up exercise with its sets and amount on the session card', () => {
     // arrange
     const view = viewFor('adapted');
-    const [session] = blockOf(view).sessions;
+    const [session] = currentBlockOf(view).sessions;
     const lines = session.warmUp.items.map(item => `${view.exercisesById.get(item.exerciseId)?.name} · ${warmUpItemText(item)}`);
 
     // act
@@ -271,7 +266,7 @@ describe('ProgramDocument', () => {
   it('prints the cool-down note and stretches when the cool-down is on', () => {
     // arrange
     const view = viewFor('adapted');
-    const [session] = blockOf(view).sessions;
+    const [session] = currentBlockOf(view).sessions;
     const [stretch] = SAMPLE_EXERCISES;
     session.coolDown = { enabled: true, note: 'Walk easy for five minutes.', items: [{ id: 'cd-1', exerciseId: stretch.id, seconds: 30 }] };
 
@@ -288,7 +283,7 @@ describe('ProgramDocument', () => {
   it('prints a rounds segment as its rounds, its exercises and the non-zero easy and rest times', () => {
     // arrange
     const view = viewFor('adapted', 'two-versions');
-    const cardio = blockOf(view).cardioSessions.find(candidate => candidate.segments.some(segment => segment.kind === 'rounds'));
+    const cardio = currentBlockOf(view).cardioSessions.find(candidate => candidate.segments.some(segment => segment.kind === 'rounds'));
     if (!cardio) throw new Error('rounds cardio missing');
     const rounds = cardio.segments.find(segment => segment.kind === 'rounds');
     if (rounds?.kind !== 'rounds') throw new Error('rounds segment missing');

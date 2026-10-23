@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { currentBlockOf } from '../../../test/programFixtures';
 import type { Exercise } from '../../context/TrainingContext';
 import { currentVersion, type Session } from '../../domain/program';
 import { cardioPreset } from '../../domain/programCardio';
@@ -11,7 +12,7 @@ import { FocusCard } from './FocusCard';
 import { SessionTable } from './SessionTable';
 import { WeekStrip } from './WeekStrip';
 import { WhatChangedBanner } from './WhatChangedBanner';
-import { currentBlock, viewOf, weekStart, type ProgramView } from './programView';
+import { viewOf, weekStart, type ProgramView } from './programView';
 
 const DAY_ONE = new Date(2026, 8, 16);
 const TODAY = new Date(2026, 8, 22);
@@ -28,14 +29,8 @@ function viewAt(today: Date, cycleDay: number | null = 12, exercises: readonly E
   return viewOf({ program, version, dayOne: DAY_ONE, today, preferredWeekday: 'mon', exercises, cycleDay });
 }
 
-function blockOf(view: ProgramView) {
-  const block = currentBlock(view);
-  if (!block) throw new Error('block missing');
-  return block;
-}
-
 function sessionWith(view: ProgramView, edit: (session: Session) => Session): Session {
-  return edit(blockOf(view).sessions[0]);
+  return edit(currentBlockOf(view).sessions[0]);
 }
 
 describe('FocusCard', () => {
@@ -136,7 +131,7 @@ describe('WeekStrip', () => {
     const user = userEvent.setup();
     const view = viewAt(TODAY);
     const onSelect = vi.fn();
-    render(<WeekStrip block={blockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
+    render(<WeekStrip block={currentBlockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
 
     // act
     const tabs = within(screen.getByRole('tablist', { name: 'This week' })).getAllByRole('tab');
@@ -155,7 +150,7 @@ describe('WeekStrip', () => {
     const user = userEvent.setup();
     const view = viewAt(TODAY);
     const onSelect = vi.fn();
-    render(<WeekStrip block={blockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
+    render(<WeekStrip block={currentBlockOf(view)} weekStart={weekStart(view)} today={TODAY} selected="mon" onSelect={onSelect} />);
     screen.getByRole('tab', { name: /Mon 21/ }).focus();
 
     // act
@@ -176,7 +171,7 @@ describe('WeekStrip', () => {
   it('labels cardio days with their session name', () => {
     // arrange
     const view = viewAt(TODAY);
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const liss = { ...cardioPreset('liss', SAMPLE_EXERCISES), id: 'c1' };
     const hiit = { ...cardioPreset('hiit', SAMPLE_EXERCISES), id: 'c2' };
     const withCardio = {
@@ -199,7 +194,7 @@ describe('DayContent', () => {
   const deadlift = SAMPLE_EXERCISES.find(exercise => exercise.id === 'e2') as Exercise;
 
   function withSession(view: ProgramView, edit: (session: Session) => Session) {
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const session = edit(block.sessions[0]);
     return {
       ...block,
@@ -209,7 +204,7 @@ describe('DayContent', () => {
   }
 
   function withCardio(view: ProgramView, kind: 'hiit' | 'finisher') {
-    const block = blockOf(view);
+    const block = currentBlockOf(view);
     const cardio = { ...cardioPreset(kind, SAMPLE_EXERCISES), id: 'c1' };
     return { ...block, cardioSessions: [cardio], calendar: { ...block.calendar, sat: { kind: 'cardio' as const, cardioId: 'c1' } } };
   }
@@ -321,7 +316,7 @@ describe('DayContent', () => {
     const view = viewAt(TODAY);
 
     // act
-    render(<DayContent view={view} block={blockOf(view)} weekday="sat" />);
+    render(<DayContent view={view} block={currentBlockOf(view)} weekday="sat" />);
 
     // assert
     expect(screen.getByText('Rest day. A short walk still counts.')).toBeInTheDocument();

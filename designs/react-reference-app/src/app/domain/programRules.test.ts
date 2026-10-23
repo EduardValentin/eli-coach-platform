@@ -1,6 +1,7 @@
 import { addDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
+import { exercise as fixtureExercise, row as fixtureRow, session as fixtureSession } from '../../test/programFixtures';
 import type { Block, BlockType, CalendarEntry, Row, Session, Slot, Weekday } from './program';
 import { cardioPreset, type CardioPresetKind } from './programCardio';
 import {
@@ -18,7 +19,7 @@ import type { Program, ProgramVersion } from './program';
 const publishDay = new Date(2026, 9, 20);
 
 const exercise = (id: string, primaryMuscles: Exercise['primaryMuscles'], role?: Exercise['role'], pattern?: Exercise['pattern']) =>
-  ({ id, name: `Exercise ${id}`, primaryMuscles, role, pattern }) as Exercise;
+  fixtureExercise(id, { name: `Exercise ${id}`, primaryMuscles, role, pattern });
 
 const exercises = new Map(
   [
@@ -50,11 +51,10 @@ const context = (overrides: Partial<RuleContext> = {}): RuleContext => ({
 
 const THREE_SETS = Array.from({ length: 3 }, () => ({ kind: 'working' as const, reps: { min: 8, max: 12 }, rir: { min: 1, max: 2 } }));
 
-const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string) =>
-  ({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 }) as Row;
+const row = (exerciseId: string, slot: Slot = 'A', supersetGroup?: string): Row =>
+  fixtureRow({ id: `${exerciseId}-${slot}`, exerciseId, slot, supersetGroup, sets: THREE_SETS, restSeconds: 90 });
 
-const session = (id: string, rows: Row[] = [row('bench')], name = id): Session =>
-  ({ id, originId: id, name, rows, warmUp: { items: [] }, coolDown: { enabled: false, note: '', items: [] } });
+const session = (id: string, rows: Row[] = [row('bench')], name = id): Session => fixtureSession({ id, name, rows });
 
 type Spec = {
   type?: BlockType;

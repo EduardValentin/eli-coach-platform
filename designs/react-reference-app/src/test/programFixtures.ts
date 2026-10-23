@@ -1,5 +1,6 @@
 import type { Exercise } from '../app/context/TrainingContext';
-import type { Row, Session, SetSpec } from '../app/domain/program';
+import { currentBlock, type ProgramView } from '../app/components/program-view/programView';
+import type { Block, Row, Session, SetSpec } from '../app/domain/program';
 
 export function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
   return {
@@ -49,4 +50,10 @@ export function session(overrides: Partial<Session> = {}): Session {
     rows: [],
     ...overrides,
   };
+}
+
+export function currentBlockOf(view: ProgramView): Block {
+  const block = currentBlock(view);
+  if (!block) throw new Error('block missing');
+  return block;
 }

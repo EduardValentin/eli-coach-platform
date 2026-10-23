@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { row as fixtureRow } from '../../test/programFixtures';
 import type { Exercise } from '../context/TrainingContext';
 import type { ExerciseRole } from './exercises';
 import { cardioMinutes } from './programCardio';
@@ -23,19 +24,7 @@ const WARM_UPS: SetSpec[] = [
 ];
 
 function row(overrides: Partial<Row> = {}): Row {
-  return {
-    id: newId(),
-    exerciseId: 'exercise-1',
-    slot: 'A',
-    sets: setsOf(3, { min: 8, max: 10 }, { min: 1, max: 2 }),
-    restSeconds: 90,
-    lastSetTechnique: 'none',
-    substitutions: [],
-    progression: { kind: 'double' },
-    cues: '',
-    touched: [],
-    ...overrides,
-  };
+  return fixtureRow({ id: newId(), exerciseId: 'exercise-1', sets: setsOf(3, { min: 8, max: 10 }, { min: 1, max: 2 }), restSeconds: 90, ...overrides });
 }
 
 function blockOf(rows: Row[]): Block {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { row as fixtureRow, session as fixtureSession } from '../../test/programFixtures';
 import type { ProgramSetup } from './programOnboarding';
 import { initialContent } from './programSuggestions';
 import {
@@ -27,35 +28,14 @@ import {
   type VersionState,
 } from './program';
 
+const STEADY_SET = { kind: 'working' as const, reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } };
+
 function row(slot: Row['slot'], supersetGroup?: string): Row {
-  return {
-    id: newId(),
-    exerciseId: 'exercise-1',
-    slot,
-    supersetGroup,
-    sets: [
-      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
-      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
-      { kind: 'working', reps: { min: 8, max: 10 }, rir: { min: 1, max: 2 } },
-    ],
-    restSeconds: 90,
-    lastSetTechnique: 'none',
-    substitutions: [],
-    progression: { kind: 'double' },
-    cues: '',
-    touched: [],
-  };
+  return fixtureRow({ id: newId(), exerciseId: 'exercise-1', slot, supersetGroup, sets: [STEADY_SET, STEADY_SET, STEADY_SET], restSeconds: 90 });
 }
 
 function sessionOf(rows: Row[]): Session {
-  return {
-    id: 'session-1',
-    originId: 'session-1',
-    name: 'Lower A',
-    warmUp: { items: [] },
-    coolDown: { enabled: false, note: '', items: [] },
-    rows,
-  };
+  return fixtureSession({ id: 'session-1', name: 'Lower A', rows });
 }
 
 const emptyContent: ProgramContent = {

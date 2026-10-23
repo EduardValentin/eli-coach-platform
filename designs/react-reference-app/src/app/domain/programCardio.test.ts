@@ -1,23 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Exercise } from '../context/TrainingContext';
+import { exercise as fixtureExercise } from '../../test/programFixtures';
 import type { CardioSegment, CardioSession, RoundsSegment } from './program';
 import { CARDIO_INTENSITY_TEXT, cardioEdits, cardioMinutes, cardioPreset, emptyCardioSession, hasHardRounds, isLightCardio, roundsText, segmentMinutes } from './programCardio';
 
 function exercise(id: string, overrides: Partial<Exercise> = {}): Exercise {
-  return {
-    id,
-    name: id,
-    cues: '',
-    type: 'cardio',
-    measuredIn: 'time',
-    perSide: false,
-    equipment: [],
-    difficulty: 'Beginner',
-    primaryMuscles: [],
-    secondaryMuscles: [],
-    tags: [],
-    ...overrides,
-  };
+  return fixtureExercise(id, { type: 'cardio', measuredIn: 'time', ...overrides });
 }
 
 const LIBRARY: Exercise[] = [
