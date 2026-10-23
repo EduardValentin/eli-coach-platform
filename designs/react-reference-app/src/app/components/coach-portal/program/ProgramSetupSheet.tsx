@@ -31,7 +31,9 @@ function optionsOf(labels: Record<string, string>): OnboardingOption[] {
   return Object.entries(labels).map(([value, label]) => ({ value, label }));
 }
 
-function field(id: keyof ProgramSetup | 'equipmentChips', label: string, kind: 'select' | 'radio' | 'chips', options: OnboardingOption[]): OnboardingField {
+type SetupFieldSpec = { id: keyof ProgramSetup | 'equipmentChips'; label: string; kind: 'select' | 'radio' | 'chips'; options: OnboardingOption[] };
+
+function field({ id, label, kind, options }: SetupFieldSpec): OnboardingField {
   return { id, label, kind, requirement: 'optional', options };
 }
 
@@ -43,22 +45,22 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
   const goal = findOnboardingField('primaryGoal')?.options ?? [];
   const equipment = findOnboardingField('availableEquipment')?.options ?? [];
   const steps = DAILY_STEPS.map(value => ({ value: String(value), label: value.toLocaleString('en-US') }));
-  const cyclePanels = journey.identity.gender === 'male' ? [] : [{ name: 'Cycle', fields: [field('cycleMode', 'Cycle mode', 'select', optionsOf(CYCLE_MODE_LABELS))] }];
+  const cyclePanels = journey.identity.gender === 'male' ? [] : [{ name: 'Cycle', fields: [field({ id: 'cycleMode', label: 'Cycle mode', kind: 'select', options: optionsOf(CYCLE_MODE_LABELS) })] }];
   return [
     {
       name: FIRST_PANEL,
-      fields: [field('goal', 'Goal', 'select', goal), field('level', 'Level', 'select', optionsOf(LEVEL_LABELS)), field('language', 'Program language', 'select', optionsOf(LANGUAGE_LABELS))],
+      fields: [field({ id: 'goal', label: 'Goal', kind: 'select', options: goal }), field({ id: 'level', label: 'Level', kind: 'select', options: optionsOf(LEVEL_LABELS) }), field({ id: 'language', label: 'Program language', kind: 'select', options: optionsOf(LANGUAGE_LABELS) })],
     },
     {
       name: 'Schedule',
       fields: [
-        field('splitShape', 'Split', 'radio', splitOptions()),
-        field('trainingDays', 'Training days', 'radio', optionsOf(TRAINING_DAY_LABELS)),
-        field('sessionMinutes', 'Session length', 'radio', optionsOf(SESSION_MINUTE_LABELS)),
-        field('dailySteps', 'Daily steps', 'select', steps),
+        field({ id: 'splitShape', label: 'Split', kind: 'radio', options: splitOptions() }),
+        field({ id: 'trainingDays', label: 'Training days', kind: 'radio', options: optionsOf(TRAINING_DAY_LABELS) }),
+        field({ id: 'sessionMinutes', label: 'Session length', kind: 'radio', options: optionsOf(SESSION_MINUTE_LABELS) }),
+        field({ id: 'dailySteps', label: 'Daily steps', kind: 'select', options: steps }),
       ],
     },
-    { name: 'Equipment', fields: [{ ...field('equipmentChips', 'Equipment', 'chips', equipment), exclusiveOptions: [BODYWEIGHT_ONLY] }] },
+    { name: 'Equipment', fields: [{ ...field({ id: 'equipmentChips', label: 'Equipment', kind: 'chips', options: equipment }), exclusiveOptions: [BODYWEIGHT_ONLY] }] },
     ...cyclePanels,
   ];
 }

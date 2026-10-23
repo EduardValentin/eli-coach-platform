@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
 import type { ClientJourney } from '../../../domain/journey';
-import type { Block, Program, ProgramContent } from '../../../domain/program';
+import type { Block, Program, ProgramLanguage } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
 import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
@@ -16,8 +16,8 @@ import { WeekDays } from './WeekDays';
 type BlockWorkspaceProps = {
   block: Block;
   blockIndex: number;
-  content: ProgramContent;
-  program: Program;
+  blocks: Block[];
+  language: ProgramLanguage;
   dayOne: Date | null;
   today: Date;
   library: readonly Exercise[];
@@ -49,11 +49,10 @@ function prefersReducedMotion(): boolean {
 }
 
 export function BlockWorkspace(props: BlockWorkspaceProps) {
-  const { block, blockIndex, content, program, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
+  const { block, blockIndex, blocks, language, dayOne, today, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary } = props;
   const header = useStickyHeaderHeight();
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
-  const { blocks } = content.plan;
   const planned = plannedSessions(block);
   const context = { blockType: block.type, library, equipment };
 
@@ -85,7 +84,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
           status={blockStatus({ blocks, dayOne, today }, blockIndex)}
           dayOne={dayOne}
           today={today}
-          language={program.language}
+          language={language}
           otherPrograms={otherPrograms}
           journeys={journeys}
           onChange={onChange}
@@ -122,7 +121,7 @@ export function BlockWorkspace(props: BlockWorkspaceProps) {
           ),
         )}
       </div>
-      <BlockTexts block={block} language={program.language} onChange={onChange} />
+      <BlockTexts block={block} language={language} onChange={onChange} />
       <SessionDragLayer />
     </section>
   );

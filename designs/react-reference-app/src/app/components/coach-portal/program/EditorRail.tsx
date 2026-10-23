@@ -8,6 +8,7 @@ import { cn } from '../../ui/utils';
 import { isSameSection, sectionTitle, type EditorSection } from './editorSection';
 import { BLOCK_SWATCH } from '../../program-view/blockColours';
 import { PlanStrip } from '../../program-view/PlanTimeline';
+import { blockProgress } from './blockParts';
 
 type EditorRailProps = {
   content: ProgramContent;
@@ -31,14 +32,9 @@ function blockDetail(schedule: PlanSchedule, index: number): Detail {
   const { blocks, today } = schedule;
   const block = blocks[index];
   const status = blockStatus(schedule, index);
-  if (status.kind === 'ended') return { text: `ended ${formatJourneyDate(status.end)}`, tone: 'muted' };
-  if (status.kind === 'current') {
-    const calibration = status.calibration ? ' · calibration' : '';
-    return {
-      text: `week ${status.weekOfBlock} of ${block.weeks}${calibration}`,
-      tone: 'default',
-    };
-  }
+  const progress = blockProgress(block, status);
+  if (status.kind === 'ended') return { text: progress ?? '', tone: 'muted' };
+  if (status.kind === 'current') return { text: `${progress}${status.calibration ? ' · calibration' : ''}`, tone: 'default' };
   const { startWeek, endWeek } = blockSpan(blocks, index);
   const empty = filledSessionCount(block) === 0;
   const when = status.start ? `starts in ${daysUntil(today, status.start)} days` : weekSpan(startWeek, endWeek);

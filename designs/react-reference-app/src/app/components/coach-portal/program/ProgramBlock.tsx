@@ -21,6 +21,7 @@ import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { BLOCK_SOFT, BLOCK_SWATCH } from '../../program-view/blockColours';
+import { filledSessionsText } from './blockParts';
 import { NextVersionAction } from './NextVersionAction';
 import { ProgramSummary } from './ProgramSummary';
 
@@ -61,7 +62,7 @@ function DraftBlocks({ blocks }: { blocks: readonly Block[] }) {
           <li key={block.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0">
             <BlockChip block={block} />
             <span className={cn('text-sm tabular-nums', filled < total ? 'text-warning' : 'text-text-secondary')}>
-              {`${filled} of ${total} sessions`}
+              {filledSessionsText(filled, total)}
             </span>
           </li>
         );

@@ -25,14 +25,12 @@ import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { SegmentedChoice } from './SegmentedChoice';
 
 export type LibraryType = 'resistance' | 'mobility' | 'stretching' | 'cardio';
-export type EquipmentFilter = 'hers' | 'bodyweight';
 export type LibraryPurpose = {
   key: string;
   label: string;
   type: LibraryType;
   alsoTagged?: ExerciseTag;
   patterns: MovementPattern[];
-  equipment: EquipmentFilter;
 };
 export type LibraryPresentation = 'pane' | 'drawer';
 
@@ -125,7 +123,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, asideR
     setAppliedPurpose(purpose.key);
     setType(purpose.type);
     setPatterns(purpose.patterns);
-    setBodyweightOnly(purpose.equipment === 'bodyweight');
+    setBodyweightOnly(false);
   }
   const needle = query.trim().toLowerCase();
   const alsoTagged = purpose?.type === type ? purpose.alsoTagged : undefined;

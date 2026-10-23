@@ -3,9 +3,9 @@ import type { Exercise } from '../../../context/TrainingContext';
 import type { Block } from '../../../domain/program';
 import type { LibraryTarget } from '../../../domain/programEditing';
 import { slotPlanFor } from '../../../domain/splitTemplates';
-import { wrapTabWithin } from '../../../utils/focusTrap';
 import { useIsWide } from '../../ui/use-desktop';
 import type { LibraryPurpose } from './LibraryPanel';
+import { useDrawerKeyboard } from './useDrawerKeyboard';
 
 type PanelTarget = { target: LibraryTarget; nonce: number };
 
@@ -17,18 +17,18 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
     const cardio = block.cardioSessions.find(other => other.id === target.sessionId);
     if (!cardio) return null;
     const label = `Adding to ${cardio.name}`;
-    if (target.kind === 'rounds-item') return { key, label, type: 'cardio', alsoTagged: 'Conditioning', patterns: [], equipment: 'hers' };
-    return { key, label, type: 'cardio', patterns: [], equipment: 'hers' };
+    if (target.kind === 'rounds-item') return { key, label, type: 'cardio', alsoTagged: 'Conditioning', patterns: [] };
+    return { key, label, type: 'cardio', patterns: [] };
   }
   const session = block.sessions.find(other => other.id === target.sessionId);
   if (!session) return null;
   if (target.kind === 'warm-up') {
-    return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', alsoTagged: 'Conditioning', patterns: [], equipment: 'hers' };
+    return { key, label: `Adding to ${session.name} · Warm-up`, type: 'mobility', alsoTagged: 'Conditioning', patterns: [] };
   }
-  if (target.kind === 'cool-down') return { key, label: `Adding to ${session.name} · Cool-down`, type: 'stretching', patterns: [], equipment: 'hers' };
+  if (target.kind === 'cool-down') return { key, label: `Adding to ${session.name} · Cool-down`, type: 'stretching', patterns: [] };
   if (target.kind === 'slot') {
     const plan = slotPlanFor(block, session, target.slot);
-    return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [], equipment: 'hers' };
+    return { key, label: `Adding to ${session.name} · ${plan?.label ?? target.slot}`, type: 'resistance', patterns: plan?.patterns ?? [] };
   }
   const row = session.rows.find(other => other.id === target.rowId);
   const exercise = library.find(item => item.id === row?.exerciseId);
@@ -37,7 +37,6 @@ export function libraryPurpose(block: Block | undefined, panelTarget: PanelTarge
     label: `Adding a substitution for ${exercise?.name ?? 'this exercise'}`,
     type: 'resistance',
     patterns: exercise?.pattern ? [exercise.pattern] : [],
-    equipment: 'hers',
   };
 }
 
@@ -98,15 +97,7 @@ export function useLibraryPanel() {
     if (returnRequest > 0 && opener.current?.isConnected) opener.current.focus();
   }, [returnRequest]);
 
-  useEffect(() => {
-    if (!isDrawer) return;
-    const keepKeyboardInDrawer = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) close();
-      if (event.key === 'Tab') wrapTabWithin(aside.current, event);
-    };
-    document.addEventListener('keydown', keepKeyboardInDrawer);
-    return () => document.removeEventListener('keydown', keepKeyboardInDrawer);
-  }, [isDrawer]);
+  useDrawerKeyboard(isDrawer ? aside : null, close);
 
   return { isWide, visible, panelTarget, aside, search, openFor, close, toggle, finishTarget, dismissTarget: () => setPanelTarget(null) };
 }

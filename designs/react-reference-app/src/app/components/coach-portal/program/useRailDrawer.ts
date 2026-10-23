@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useIsDesktop } from '../../ui/use-desktop';
-import { wrapTabWithin } from '../../../utils/focusTrap';
+import { useDrawerKeyboard } from './useDrawerKeyboard';
 
 export function useRailDrawer() {
   const [open, setOpen] = useState(false);
@@ -26,15 +26,7 @@ export function useRailDrawer() {
     (open ? closeButton : openButton).current?.focus();
   }, [open]);
 
-  useEffect(() => {
-    if (!isDrawer) return;
-    const keepKeyboardInRail = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') hide();
-      if (event.key === 'Tab') wrapTabWithin(aside.current, event);
-    };
-    document.addEventListener('keydown', keepKeyboardInRail);
-    return () => document.removeEventListener('keydown', keepKeyboardInRail);
-  }, [isDrawer]);
+  useDrawerKeyboard(isDrawer ? aside : null, hide);
 
   return { open, show, hide, openButton, closeButton, aside };
 }

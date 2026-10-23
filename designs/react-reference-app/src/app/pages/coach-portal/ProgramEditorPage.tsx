@@ -2,38 +2,29 @@ import { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
-import { Library, ListTree, X } from 'lucide-react';
+import { Library, ListTree } from 'lucide-react';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { AddBlockDialog } from '../../components/coach-portal/program/AddBlockDialog';
-import { BlockWorkspace } from '../../components/coach-portal/program/BlockWorkspace';
-import { EditorRail } from '../../components/coach-portal/program/EditorRail';
-import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
-import { CycleRulesEditor } from '../../components/coach-portal/program/CycleRulesEditor';
-import { sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
-import { HeaderSection } from '../../components/coach-portal/program/HeaderSection';
-import { LifestyleSection } from '../../components/coach-portal/program/LifestyleSection';
-import { NutritionSection } from '../../components/coach-portal/program/NutritionSection';
-import { PublishChecklist, type ChecklistStart } from '../../components/coach-portal/program/PublishChecklist';
-import { PlanOverview } from '../../components/coach-portal/program/PlanOverview';
 import { ClientPreviewDialog } from '../../components/coach-portal/program/ClientPreviewDialog';
-import { journeyProgramView } from '../../components/program-view/journeyProgramView';
-import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
-import { useEditorState } from '../../components/coach-portal/program/useEditorState';
-import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
-import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
+import { EditorSectionContent, type OpenBlock } from '../../components/coach-portal/program/EditorSectionContent';
+import { sectionTitle, type EditorSection } from '../../components/coach-portal/program/editorSection';
+import { EditorTopBar } from '../../components/coach-portal/program/EditorTopBar';
 import { LibraryPanel } from '../../components/coach-portal/program/LibraryPanel';
-import { blockWithLibraryPick } from '../../domain/programEditing';
-import { plannedId, plannedSessions } from '../../domain/weekEditing';
-import type { Exercise } from '../../context/TrainingContext';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { Button } from '../../components/ui/button';
-import { cn } from '../../components/ui/utils';
+import { ProgramOutlineDrawer } from '../../components/coach-portal/program/ProgramOutlineDrawer';
+import { ProgramSetupSheet } from '../../components/coach-portal/program/ProgramSetupSheet';
+import { PublishChecklist, type ChecklistStart } from '../../components/coach-portal/program/PublishChecklist';
+import { useEditorState } from '../../components/coach-portal/program/useEditorState';
+import { libraryPurpose, useLibraryPanel } from '../../components/coach-portal/program/useLibraryPanel';
+import { useRailDrawer } from '../../components/coach-portal/program/useRailDrawer';
 import { useCoachPortalScope } from '../../components/coach-portal/useCoachPortalScope';
+import { journeyProgramView } from '../../components/program-view/journeyProgramView';
+import { Button } from '../../components/ui/button';
 import { usePrograms } from '../../context/ProgramContext';
-import { useTraining } from '../../context/TrainingContext';
+import { useTraining, type Exercise } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
 import { currentVersion, draftOf, type Block, type Program, type ProgramVersion } from '../../domain/program';
-import { recurringSymptoms } from '../../domain/programOnboarding';
+import { blockWithLibraryPick } from '../../domain/programEditing';
+import { plannedId, plannedSessions } from '../../domain/weekEditing';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
 
 function openSessionOf(block: Block, chosen: string | undefined): string | undefined {
@@ -48,8 +39,6 @@ function ProgramEditor(props: EditorProps) {
   const editor = useEditorState(props);
   const rail = useRailDrawer();
   const panel = useLibraryPanel();
-  const { programs, updateSetup } = usePrograms();
-  const { journeys } = useClientJourneys();
   const { exercises } = useTraining();
   const [addingBlock, setAddingBlock] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistStart | null>(null);
@@ -58,12 +47,17 @@ function ProgramEditor(props: EditorProps) {
   const { content } = draft;
   const { today, ruleContext } = editor;
   const { cycleMode } = program;
-  const selected = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' as const } : editor.selected;
+  const selected: EditorSection = editor.selected.kind === 'cycle' && cycleMode === 'general' ? { kind: 'header' } : editor.selected;
   const blockIndex = selected.kind === 'block' ? content.plan.blocks.findIndex(block => block.id === selected.blockId) : -1;
-
   const block = blockIndex >= 0 ? content.plan.blocks[blockIndex] : undefined;
-  const chosenSession = block ? openSessions[block.id] : undefined;
-  const openSessionId = block && openSessionOf(block, chosenSession);
+  const openSessionId = block && openSessionOf(block, openSessions[block.id]);
+  const openBlock: OpenBlock | undefined = block && {
+    block,
+    index: blockIndex,
+    openSessionId,
+    onOpenSession: sessionId => setOpenSessions(current => ({ ...current, [block.id]: sessionId })),
+    onOpenLibrary: panel.openFor,
+  };
 
   function addFromLibrary(exercise: Exercise) {
     if (!block) return;
@@ -80,69 +74,6 @@ function ProgramEditor(props: EditorProps) {
   function selectFromRail(section: EditorSection) {
     editor.select(section);
     rail.hide();
-  }
-
-  function renderSection() {
-    if (selected.kind === 'plan') {
-      return (
-        <PlanOverview
-          content={content}
-          dayOne={ruleContext.dayOne}
-          preferredWeekday={ruleContext.preferredWeekday}
-          today={today}
-          level={program.level}
-          onChange={editor.updateBlocks}
-          onOpenBlock={blockId => editor.select({ kind: 'block', blockId })}
-          onUseSuggestion={editor.applySuggestion}
-        />
-      );
-    }
-    if (selected.kind === 'block') {
-      return (
-        <BlockWorkspace
-          block={content.plan.blocks[blockIndex]}
-          openSessionId={openSessionId}
-          onOpenSession={sessionId => setOpenSessions(current => ({ ...current, [content.plan.blocks[blockIndex].id]: sessionId }))}
-          blockIndex={blockIndex}
-          content={content}
-          program={program}
-          dayOne={ruleContext.dayOne}
-          today={today}
-          library={exercises}
-          equipment={program.equipment}
-          onChange={editor.replaceBlock}
-          onRemove={() => editor.removeBlock(content.plan.blocks[blockIndex].id)}
-          otherPrograms={programs().filter(other => other.callId !== program.callId)}
-          journeys={journeys}
-          onOpenLibrary={panel.openFor}
-        />
-      );
-    }
-    if (selected.kind === 'header') {
-      return (
-        <HeaderSection
-          journey={journey}
-          program={program}
-          version={draft}
-          content={content}
-          onContentChange={editor.replaceContent}
-          onSetupChange={patch => updateSetup(program.callId, patch)}
-        />
-      );
-    }
-    if (selected.kind === 'cycle') {
-      return (
-        <CycleRulesEditor
-          rules={content.cycleRules}
-          symptoms={recurringSymptoms(journey)}
-          onChange={cycleRules => editor.replaceContent({ ...content, cycleRules })}
-        />
-      );
-    }
-    if (selected.kind === 'nutrition') {
-      return <NutritionSection notes={content.nutritionNotes} onChange={nutritionNotes => editor.replaceContent({ ...content, nutritionNotes })} />;
-    }
-    return <LifestyleSection notes={content.lifestyleNotes} onChange={lifestyleNotes => editor.replaceContent({ ...content, lifestyleNotes })} />;
   }
 
   return (
@@ -173,40 +104,23 @@ function ProgramEditor(props: EditorProps) {
         warningsCount={editor.warnings.length}
       />
       <div className="flex min-h-0 flex-1">
-        {rail.open && (
-          <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay-medium lg:hidden" data-parity="drawer-backdrop" onClick={rail.hide} />
-        )}
-        <aside
-          ref={rail.aside}
-          aria-label="Program outline"
-          className={cn(
-            'fixed inset-y-0 left-0 z-50 flex w-80 shrink-0 flex-col overflow-y-auto border-r border-border bg-card duration-300 ease-out motion-reduce:transition-none lg:visible lg:relative lg:z-auto lg:w-72 lg:translate-x-0',
-            {
-              'translate-x-0 shadow-drawer transition-[translate]': rail.open,
-              'invisible -translate-x-full transition-[translate,visibility]': !rail.open,
-            },
-          )}
-        >
-          <div className="flex justify-end p-2 lg:hidden">
-            <Button ref={rail.closeButton} onClick={rail.hide} variant="ghost" size="icon-sm" aria-label="Close program sections">
-              <X size={18} />
-            </Button>
-          </div>
-          <EditorRail
-            content={content}
-            cycleMode={cycleMode}
-            dayOne={ruleContext.dayOne}
-            today={today}
-            selected={selected}
-            onSelect={selectFromRail}
-            onAddBlock={() => {
-              rail.hide();
-              setAddingBlock(true);
-            }}
-          />
-        </aside>
+        <ProgramOutlineDrawer
+          rail={rail}
+          content={content}
+          cycleMode={cycleMode}
+          dayOne={ruleContext.dayOne}
+          today={today}
+          selected={selected}
+          onSelect={selectFromRail}
+          onAddBlock={() => {
+            rail.hide();
+            setAddingBlock(true);
+          }}
+        />
         <main aria-label="Program editor" className="min-w-0 flex-1 overflow-y-auto bg-surface-page p-4 [overflow-anchor:none] lg:p-6">
-          <div className="mx-auto w-full max-w-5xl">{renderSection()}</div>
+          <div className="mx-auto w-full max-w-5xl">
+            <EditorSectionContent section={selected} journey={journey} program={program} draft={draft} editor={editor} openBlock={openBlock} />
+          </div>
         </main>
         {block && panel.visible && (
           <LibraryPanel

@@ -1,36 +1,18 @@
-import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { ChevronDown, Copy, Info, RotateCcw, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState, type Ref } from 'react';
+import { ChevronDown, Copy, RotateCcw, Trash2 } from 'lucide-react';
 import type { ClientJourney } from '../../../domain/journey';
-import {
-  BLOCK_TYPE_LABELS,
-  BLOCK_TYPES,
-  type Block,
-  type BlockType,
-  type Program,
-  type ProgramLanguage,
-  type Session,
-  type SplitShape,
-  type TrainingDays,
-} from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, type Block, type Program, type ProgramLanguage, type Session, type SplitShape, type TrainingDays } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
-import { STEPS_STEP, TARGET_MINUTES } from '../../../domain/programDefaults';
 import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEditing';
-import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
-import { IconHint } from '../../IconHint';
-import { InlineProblem } from '../../InlineProblem';
 import { RowActionsMenu } from '../../RowActionsMenu';
-import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Switch } from '../../ui/switch';
 import { useIsDesktop } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
+import { BlockNumber, blockProgress, BlockTypeSelect, STARTED_BLOCK_REASON } from './blockParts';
+import { BlockSettings } from './BlockSettings';
 import { CopyBlockDialog } from './CopyBlockDialog';
-import { OptionSelect, type Option } from './OptionSelect';
-import { BLOCK_SWATCH } from '../../program-view/blockColours';
 import { useResetConfirm } from './ResetConfirm';
 import { useWeeksField } from './weeksField';
 
@@ -47,31 +29,8 @@ type BlockHeaderProps = {
   onRemove: () => void;
 };
 
-const SPLIT_SHAPES = Object.keys(SPLIT_TEMPLATES) as SplitShape[];
-const TRAINING_DAY_OPTIONS: Option<TrainingDays>[] = ([2, 3, 4, 5] as const).map(days => ({ value: days, label: `${days} days` }));
 const REBUILD = 'Rebuild sessions';
-const MIN_STEPS = 4000;
-const MAX_STEPS = 12000;
-const STARTED_REASON = 'A block that has started stays in the plan.';
 const COLLAPSE_AFTER_PX = 80;
-const CALIBRATION_HINT = 'Week 1 keeps the planned values; she stops 2–3 reps short while finding her weights.';
-
-function stepOptions(current: number): Option<number>[] {
-  const values = new Set<number>([current]);
-  for (let steps = MIN_STEPS; steps <= MAX_STEPS; steps += STEPS_STEP) values.add(steps);
-  return [...values].sort((a, b) => a - b).map(value => ({ value, label: value.toLocaleString('en-US') }));
-}
-
-function Setting({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid content-start gap-1.5">
-      <span aria-hidden="true" className={LABEL_CLASS}>
-        {label}
-      </span>
-      {children}
-    </div>
-  );
-}
 
 function useScrolledPast(threshold: number) {
   const ref = useRef<HTMLElement>(null);
@@ -88,18 +47,36 @@ function useScrolledPast(threshold: number) {
   return { ref, past };
 }
 
-function BlockNumber({ block, index }: { block: Block; index: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'flex size-8 shrink-0 items-center justify-center rounded-tile text-sm font-semibold text-primary-foreground tabular-nums',
-        BLOCK_SWATCH[block.type],
-      )}
-    >
-      {index + 1}
-    </span>
-  );
+function useCollapsingSettings() {
+  const scroll = useScrolledPast(COLLAPSE_AFTER_PX);
+  const isDesktop = useIsDesktop();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const toggleButton = useRef<HTMLButtonElement>(null);
+  const refocusToggle = useRef(false);
+  const collapsible = isDesktop && scroll.past;
+
+  useEffect(() => {
+    if (!scroll.past) setSettingsOpen(false);
+  }, [scroll.past]);
+
+  useEffect(() => {
+    if (!refocusToggle.current) return;
+    refocusToggle.current = false;
+    toggleButton.current?.focus();
+  }, [settingsOpen]);
+
+  function toggle() {
+    refocusToggle.current = true;
+    setSettingsOpen(open => !open);
+  }
+
+  return { headerRef: scroll.ref, collapsible, collapsed: collapsible && !settingsOpen, toggleButton, toggle };
+}
+
+function statusLine(block: Block, status: BlockStatus): string | null {
+  const progress = blockProgress(block, status);
+  if (progress) return progress.charAt(0).toUpperCase() + progress.slice(1);
+  return status.kind === 'upcoming' && status.start ? `Starts ${formatJourneyDate(status.start)}` : null;
 }
 
 type SettingsToggleProps = { expanded: boolean; buttonRef: Ref<HTMLButtonElement>; onToggle: () => void };
@@ -112,230 +89,94 @@ function SettingsToggle({ expanded, buttonRef, onToggle }: SettingsToggleProps) 
   );
 }
 
-function statusLine(block: Block, status: BlockStatus): string | null {
-  if (status.kind === 'ended') return `Ended ${formatJourneyDate(status.end)}`;
-  if (status.kind === 'current') return `Week ${status.weekOfBlock} of ${block.weeks}`;
-  return status.start ? `Starts ${formatJourneyDate(status.start)}` : null;
+type BarProps = { block: Block; index: number; status: BlockStatus };
+
+function CollapsedBlockBar({ block, index, status, toggle }: BarProps & { toggle: SettingsToggleProps }) {
+  const line = statusLine(block, status);
+  return (
+    <div className="flex items-center gap-3 py-2 pr-2 pl-4">
+      <BlockNumber block={block} index={index} size="md" />
+      <p className="truncate text-base font-semibold text-text-primary">{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</p>
+      {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
+      <div className="ml-auto">
+        <SettingsToggle {...toggle} />
+      </div>
+    </div>
+  );
+}
+
+type BlockActions = { onCopy: () => void; onReset: () => void; onRemove: () => void };
+
+function BlockTitleBar({ block, index, status, toggle, actions, onChangeType }: BarProps & { toggle: SettingsToggleProps | null; actions: BlockActions; onChangeType: (block: Block) => void }) {
+  const line = statusLine(block, status);
+  return (
+    <div className="flex items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
+      <BlockNumber block={block} index={index} size="md" />
+      <BlockTypeSelect value={block.type} label="Block type" appearance="title" onChange={type => onChangeType(blockWithType(block, type))} />
+      {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
+      <div className="ml-auto flex items-center gap-1">
+        {toggle && <SettingsToggle {...toggle} />}
+        <RowActionsMenu
+          label="Block actions"
+          parityRoot="BlockActionsMenu"
+          actions={[
+            { name: 'copy', label: 'Copy from another client…', icon: Copy, onSelect: actions.onCopy },
+            { name: 'reset', label: 'Reset to split', icon: RotateCcw, onSelect: actions.onReset },
+            {
+              name: 'remove',
+              label: 'Remove block',
+              icon: Trash2,
+              tone: 'destructive',
+              disabledReason: status.kind === 'upcoming' ? undefined : STARTED_BLOCK_REASON,
+              onSelect: actions.onRemove,
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function BlockHeader({ blocks, index, status, dayOne, today, language, otherPrograms, journeys, onChange, onRemove }: BlockHeaderProps) {
   const block = blocks[index];
   const [copying, setCopying] = useState(false);
   const confirm = useResetConfirm();
-  const weeks = useWeeksField({
-    blocks,
-    index,
-    status,
-    dayOne,
-    today,
-    onCommit: value => onChange({ ...block, weeks: value }),
-  });
-  const scroll = useScrolledPast(COLLAPSE_AFTER_PX);
-  const isDesktop = useIsDesktop();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsToggle = useRef<HTMLButtonElement>(null);
-  const refocusToggle = useRef(false);
-  const collapsible = isDesktop && scroll.past;
-  const collapsed = collapsible && !settingsOpen;
-  const line = statusLine(block, status);
-  const splitLabel = SPLIT_TEMPLATES[block.split.shape].label;
+  const weeks = useWeeksField({ blocks, index, status, dayOne, today, onCommit: value => onChange({ ...block, weeks: value }) });
+  const settings = useCollapsingSettings();
 
-  useEffect(() => {
-    if (!scroll.past) setSettingsOpen(false);
-  }, [scroll.past]);
-
-  useEffect(() => {
-    if (!refocusToggle.current) return;
-    refocusToggle.current = false;
-    settingsToggle.current?.focus();
-  }, [settingsOpen]);
-
-  function toggleSettings() {
-    refocusToggle.current = true;
-    setSettingsOpen(open => !open);
+  function rebuild(title: string, next: Block, lines: string[]) {
+    confirm.request({ title, confirmLabel: REBUILD, lines, apply: () => onChange(next) });
   }
 
   function copySessions(sessions: Session[]) {
     setCopying(false);
     const next = blockWithSessionsFrom(block, sessions);
-    confirm.request({
-      title: "Replace this block's sessions?",
-      confirmLabel: 'Replace sessions',
-      lines: describeLoss(block, { kind: 'reset' }),
-      apply: () => onChange(next),
-    });
+    confirm.request({ title: "Replace this block's sessions?", confirmLabel: 'Replace sessions', lines: describeLoss(block, { kind: 'reset' }), apply: () => onChange(next) });
   }
 
-  function changeShape(shape: SplitShape) {
-    const next = blockWithSplit(block, shape, language);
-    confirm.request({ title: 'Change the split?', confirmLabel: REBUILD, lines: describeLoss(block, { kind: 'split' }), apply: () => onChange(next) });
-  }
-
-  function changeTrainingDays(days: TrainingDays) {
-    const next = relayoutBlock(block, days);
-    confirm.request({
-      title: 'Change training days?',
-      confirmLabel: REBUILD,
-      lines: describeLoss(block, { kind: 'training-days', days }),
-      apply: () => onChange(next),
-    });
-  }
-
-  function resetToSplit() {
-    const next = blockWithSplit(block, block.split.shape, language);
-    confirm.request({ title: 'Reset to the split?', confirmLabel: REBUILD, lines: describeLoss(block, { kind: 'reset' }), apply: () => onChange(next) });
-  }
-
-  function removeBlock() {
-    confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove });
-  }
+  const changeShape = (shape: SplitShape) => rebuild('Change the split?', blockWithSplit(block, shape, language), describeLoss(block, { kind: 'split' }));
+  const changeTrainingDays = (days: TrainingDays) =>
+    rebuild('Change training days?', relayoutBlock(block, days), describeLoss(block, { kind: 'training-days', days }));
+  const actions: BlockActions = {
+    onCopy: () => setCopying(true),
+    onReset: () => rebuild('Reset to the split?', blockWithSplit(block, block.split.shape, language), describeLoss(block, { kind: 'reset' })),
+    onRemove: () =>
+      confirm.request({ title: `Remove block ${index + 1}?`, confirmLabel: 'Remove block', lines: describeLoss(block, { kind: 'remove-block' }), apply: onRemove }),
+  };
+  const toggle = (expanded: boolean): SettingsToggleProps => ({ expanded, buttonRef: settings.toggleButton, onToggle: settings.toggle });
 
   return (
     <header
-      ref={scroll.ref}
-      className={cn('z-10 rounded-card border border-border bg-card shadow-card lg:sticky lg:-top-6', { 'lg:rounded-t-none lg:border-t-0': collapsed })}
+      ref={settings.headerRef}
+      className={cn('z-10 rounded-card border border-border bg-card shadow-card lg:sticky lg:-top-6', { 'lg:rounded-t-none lg:border-t-0': settings.collapsed })}
     >
       <h2 className="sr-only">{BLOCK_TYPE_LABELS[block.type]}</h2>
-      {collapsed ? (
-        <div className="flex items-center gap-3 py-2 pr-2 pl-4">
-          <BlockNumber block={block} index={index} />
-          <p className="truncate text-base font-semibold text-text-primary">{`${BLOCK_TYPE_LABELS[block.type]} · ${block.weeks} wk`}</p>
-          {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
-          <div className="ml-auto">
-            <SettingsToggle expanded={false} buttonRef={settingsToggle} onToggle={toggleSettings} />
-          </div>
-        </div>
+      {settings.collapsed ? (
+        <CollapsedBlockBar block={block} index={index} status={status} toggle={toggle(false)} />
       ) : (
         <>
-          <div className="flex items-center gap-3 border-b border-border-subtle py-2.5 pr-2 pl-4">
-            <BlockNumber block={block} index={index} />
-            <Select value={block.type} onValueChange={value => onChange(blockWithType(block, value as BlockType))}>
-              <SelectTrigger
-                aria-label="Block type"
-                className="w-auto border-transparent bg-transparent px-2 text-lg font-semibold text-text-primary shadow-none hover:bg-surface-quiet md:text-lg"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {BLOCK_TYPES.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {BLOCK_TYPE_LABELS[type]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {line && <p className="truncate text-sm text-text-secondary">{line}</p>}
-            <div className="ml-auto flex items-center gap-1">
-              {collapsible && <SettingsToggle expanded buttonRef={settingsToggle} onToggle={toggleSettings} />}
-              <RowActionsMenu
-                label="Block actions"
-                parityRoot="BlockActionsMenu"
-                actions={[
-                  {
-                    name: 'copy',
-                    label: 'Copy from another client…',
-                    icon: Copy,
-                    onSelect: () => setCopying(true),
-                  },
-                  {
-                    name: 'reset',
-                    label: 'Reset to split',
-                    icon: RotateCcw,
-                    onSelect: resetToSplit,
-                  },
-                  {
-                    name: 'remove',
-                    label: 'Remove block',
-                    icon: Trash2,
-                    tone: 'destructive',
-                    disabledReason: status.kind === 'upcoming' ? undefined : STARTED_REASON,
-                    onSelect: removeBlock,
-                  },
-                ]}
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 px-4 py-3">
-            <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-              <Setting label="Weeks">
-                <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-                  <Input size="sm" className="w-16 tabular-nums" aria-label="Weeks" {...weeks.inputProps} />
-                  wk
-                </span>
-                {weeks.problem && <InlineProblem id={weeks.problemId}>{weeks.problem}</InlineProblem>}
-              </Setting>
-              {block.type !== 'deload' && (
-                <Setting label="Calibration">
-                  <span className="flex min-h-(--size-control-sm) items-center gap-1">
-                    <label className="flex items-center gap-2 text-sm text-text-primary">
-                      <Switch checked={block.calibrationWeek} onCheckedChange={checked => onChange({ ...block, calibrationWeek: checked })} />
-                      Calibration week
-                    </label>
-                    <IconHint label="What a calibration week is" icon={<Info aria-hidden="true" size={14} />} size="compact" tone="muted">
-                      {CALIBRATION_HINT}
-                    </IconHint>
-                  </span>
-                </Setting>
-              )}
-            </div>
-            <div className="flex flex-wrap items-start gap-x-4 gap-y-4">
-              <Setting label="Split">
-                <Select value={block.split.shape} onValueChange={value => changeShape(value as SplitShape)}>
-                  <SelectTrigger size="sm" className="w-36" aria-label="Split shape">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPLIT_SHAPES.map(shape => (
-                      <SelectItem key={shape} value={shape}>
-                        {SPLIT_TEMPLATES[shape].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Setting>
-              <Setting label="Training days">
-                <OptionSelect size="sm" label="Training days" options={TRAINING_DAY_OPTIONS} value={block.trainingDays} onChange={changeTrainingDays} />
-              </Setting>
-              <Setting label="Split name">
-                <Input
-                  size="sm"
-                  className="w-40"
-                  aria-label="Split name"
-                  placeholder={splitLabel}
-                  value={block.split.name}
-                  onChange={event =>
-                    onChange({
-                      ...block,
-                      split: { ...block.split, name: event.target.value },
-                    })
-                  }
-                />
-              </Setting>
-              <Setting label="Target">
-                <Select value={String(block.targetMinutes)} onValueChange={value => onChange({ ...block, targetMinutes: Number(value) })}>
-                  <SelectTrigger size="sm" className="w-28" aria-label="Target minutes">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TARGET_MINUTES.map(minutes => (
-                      <SelectItem key={minutes} value={String(minutes)}>
-                        {`${minutes} min`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Setting>
-              <Setting label="Daily steps">
-                <OptionSelect
-                  size="sm"
-                  label="Daily steps"
-                  options={stepOptions(block.dailySteps)}
-                  value={block.dailySteps}
-                  onChange={dailySteps => onChange({ ...block, dailySteps })}
-                />
-              </Setting>
-            </div>
-          </div>
+          <BlockTitleBar block={block} index={index} status={status} toggle={settings.collapsible ? toggle(true) : null} actions={actions} onChangeType={onChange} />
+          <BlockSettings block={block} weeks={weeks} onChange={onChange} onChangeShape={changeShape} onChangeTrainingDays={changeTrainingDays} />
         </>
       )}
       <CopyBlockDialog open={copying} onOpenChange={setCopying} programs={otherPrograms} journeys={journeys} onCopy={copySessions} />

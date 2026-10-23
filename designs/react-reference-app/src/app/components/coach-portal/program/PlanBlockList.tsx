@@ -1,17 +1,15 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { ArrowRight, GripVertical, Trash2 } from 'lucide-react';
-import { BLOCK_TYPE_LABELS, BLOCK_TYPES, filledSessionCount, type Block, type BlockType } from '../../../domain/program';
+import { BLOCK_TYPE_LABELS, filledSessionCount, type Block } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { blockWithType } from '../../../domain/programEditing';
 import { splitLabel } from '../../../domain/splitTemplates';
-import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { Input } from '../../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { cn } from '../../ui/utils';
-import { BLOCK_SWATCH } from '../../program-view/blockColours';
+import { BlockNumber, blockProgress, BlockTypeSelect, filledSessionsText, STARTED_BLOCK_REASON } from './blockParts';
 import { useWeeksField } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -28,7 +26,6 @@ type PlanBlockListProps = {
 type DraggedBlock = { id: string; index: number; label: string };
 
 const PLAN_BLOCK = 'PLAN_BLOCK';
-const STARTED_REASON = 'A block that has started stays in the plan.';
 
 function moved(blocks: Block[], from: number, to: number): Block[] {
   const next = [...blocks];
@@ -88,7 +85,6 @@ type BlockRowProps = {
   blocks: Block[];
   index: number;
   status: BlockStatus;
-  movable: boolean;
   dayOne: Date | null;
   today: Date;
   instructionsId: string;
@@ -98,19 +94,14 @@ type BlockRowProps = {
   onOpen: () => void;
 };
 
-function statusLine(block: Block, status: BlockStatus): string | null {
-  if (status.kind === 'ended') return `ended ${formatJourneyDate(status.end)}`;
-  if (status.kind === 'current') return `week ${status.weekOfBlock} of ${block.weeks}`;
-  return null;
-}
-
-function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsId, handleRef, onHandleKey, onChange, onOpen }: BlockRowProps) {
+function BlockRow({ blocks, index, status, dayOne, today, instructionsId, handleRef, onHandleKey, onChange, onOpen }: BlockRowProps) {
   const block = blocks[index];
-  const n = index + 1;
+  const position = index + 1;
+  const movable = status.kind === 'upcoming';
   const typeLabel = BLOCK_TYPE_LABELS[block.type];
   const filled = filledSessionCount(block);
   const total = block.sessions.length;
-  const line = statusLine(block, status);
+  const line = blockProgress(block, status);
   const weeks = useWeeksField({
     blocks,
     index,
@@ -125,7 +116,7 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
       item: {
         id: block.id,
         index,
-        label: `${n} ${typeLabel} · ${block.weeks} wk`,
+        label: `${position} ${typeLabel} · ${block.weeks} wk`,
       },
       canDrag: movable,
       collect: monitor => ({ isDragging: monitor.isDragging() }),
@@ -161,33 +152,19 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
         <span aria-hidden="true" className="size-(--size-control-sm) shrink-0" />
       )}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-        <span
-          aria-hidden="true"
-          className={cn(
-            'flex size-7 shrink-0 items-center justify-center rounded-tile text-xs font-semibold text-primary-foreground tabular-nums',
-            BLOCK_SWATCH[block.type],
-          )}
-        >
-          {n}
-        </span>
+        <BlockNumber block={block} index={index} size="sm" />
         {status.kind === 'ended' ? (
           <span className="w-40 text-sm font-medium text-text-primary">{typeLabel}</span>
         ) : (
-          <Select value={block.type} onValueChange={value => onChange(current => replaceAt(current, index, blockWithType(current[index], value as BlockType)))}>
-            <SelectTrigger size="sm" className="w-40" aria-label={`Type of block ${n}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BLOCK_TYPES.map(type => (
-                <SelectItem key={type} value={type}>
-                  {BLOCK_TYPE_LABELS[type]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <BlockTypeSelect
+            value={block.type}
+            label={`Type of block ${position}`}
+            appearance="field"
+            onChange={type => onChange(current => replaceAt(current, index, blockWithType(current[index], type)))}
+          />
         )}
         <span className="flex items-center gap-1.5 text-sm text-text-secondary">
-          <Input size="sm" className="w-16 tabular-nums" aria-label={`Weeks of block ${n}`} {...weeks.inputProps} />
+          <Input size="sm" className="w-16 tabular-nums" aria-label={`Weeks of block ${position}`} {...weeks.inputProps} />
           wk
         </span>
         <span className="min-w-0 flex-1 basis-28 truncate text-sm text-text-label">
@@ -200,7 +177,7 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
             'text-text-secondary': filled === total,
           })}
         >
-          {`${filled} of ${total} sessions`}
+          {filledSessionsText(filled, total)}
         </span>
         {weeks.problem && (
           <div className="basis-full">
@@ -209,7 +186,7 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
         )}
       </div>
       <RowActionsMenu
-        label={`Block ${n} actions`}
+        label={`Block ${position} actions`}
         actions={[
           { name: 'open', label: 'Open', icon: ArrowRight, onSelect: onOpen },
           {
@@ -217,7 +194,7 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
             label: 'Remove',
             icon: Trash2,
             tone: 'destructive',
-            disabledReason: status.kind === 'upcoming' ? undefined : STARTED_REASON,
+            disabledReason: movable ? undefined : STARTED_BLOCK_REASON,
             onSelect: () => onChange(current => current.filter(other => other.id !== block.id)),
           },
         ]}
@@ -275,7 +252,6 @@ export function PlanBlockList({ blocks, statuses, dayOne, today, onChange, onOpe
               blocks={blocks}
               index={index}
               status={statuses[index]}
-              movable={statuses[index].kind === 'upcoming'}
               dayOne={dayOne}
               today={today}
               instructionsId={instructionsId}
