@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES, EQUIPMENT, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MUSCLES, measureAllowedFor } from '../domain/exercises';
+import { DIFFICULTIES, EQUIPMENT, EXERCISE_ROLES, EXERCISE_TAGS, EXERCISE_TYPES, MEASURES, MOVEMENT_PATTERNS, MUSCLES, measureAllowedFor } from '../domain/exercises';
 import { LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP, SAMPLE_EXERCISES } from './exerciseSamples';
 
 describe('the sample exercises', () => {
@@ -15,6 +15,26 @@ describe('the sample exercises', () => {
       for (const item of exercise.equipment) expect(EQUIPMENT).toContain(item);
       for (const tag of exercise.tags) expect(EXERCISE_TAGS).toContain(tag);
     }
+  });
+
+  it('gives every resistance sample a pattern and a role', () => {
+    // act
+    const resistance = SAMPLE_EXERCISES.filter((exercise) => exercise.type === 'resistance');
+
+    // assert
+    expect(resistance.length).toBeGreaterThan(0);
+    for (const exercise of resistance) {
+      expect(MOVEMENT_PATTERNS).toContain(exercise.pattern);
+      expect(EXERCISE_ROLES).toContain(exercise.role);
+    }
+  });
+
+  it('files jumping jacks, burpees and mountain climbers under the conditioning pattern', () => {
+    // act
+    const conditioning = SAMPLE_EXERCISES.filter((exercise) => exercise.pattern === 'conditioning').map((exercise) => exercise.name);
+
+    // assert
+    expect(conditioning).toEqual(['Jumping Jacks', 'Burpee', 'Mountain Climber']);
   });
 
   it('never lists a muscle as both primary and secondary', () => {
@@ -46,6 +66,44 @@ describe('the sample exercises', () => {
 
     // assert
     expect(new Set(clips)).toEqual(new Set([LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP]));
+  });
+
+  it('carries enough isolation exercises to pair the accessories of a session', () => {
+    // act
+    const isolation = SAMPLE_EXERCISES.filter((exercise) => exercise.pattern === 'isolation' && !exercise.archivedAt);
+
+    // assert
+    expect(isolation.map((exercise) => exercise.name)).toEqual([
+      'Lateral Raises',
+      'Lying Leg Curl',
+      'Cable Hip Abduction',
+      'Triceps Pushdown',
+      'Biceps Curl',
+    ]);
+    for (const exercise of isolation) {
+      expect(exercise).toMatchObject({ role: 'isolation', difficulty: 'Beginner', tags: ['Hypertrophy'] });
+    }
+  });
+
+  it('tags the conditioning exercises the cardio picker offers', () => {
+    // act
+    const conditioning = SAMPLE_EXERCISES.filter((exercise) => exercise.tags.includes('Conditioning'));
+
+    // assert
+    expect(conditioning.map((exercise) => exercise.name)).toEqual([
+      'Wall Sit',
+      'Kettlebell Swing',
+      'Push-Up',
+      'Jumping Jacks',
+      'Burpee',
+      'Mountain Climber',
+      'Squat Jump',
+    ]);
+    for (const exercise of conditioning) {
+      expect(exercise.type).toBe('resistance');
+      expect(['isolation', 'secondary-compound']).toContain(exercise.role);
+      expect(exercise.equipment.every((item) => item === 'Kettlebell')).toBe(true);
+    }
   });
 
   it('has no two exercises with the same name, ignoring case', () => {

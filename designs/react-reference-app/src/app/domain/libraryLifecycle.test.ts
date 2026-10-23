@@ -20,10 +20,6 @@ const ARCHIVED_AT = new Date('2026-10-11T09:30:00.000Z');
 const squat = { id: 'e1', name: 'Back squat' };
 const lunge = { id: 'e2', name: 'Lunge', archivedAt: '2026-10-01T08:00:00.000Z' };
 
-function program(exercises: { exerciseId: string; swapVariants?: string[] }[]) {
-  return { weeks: [{ days: [{ exercises }] }] };
-}
-
 function mealPlan(slot: { recipeId?: string; clientSelectedRecipeId?: string; alternativeRecipeIds: string[] }) {
   return { blocks: [{ days: [{ slots: [slot] }] }] };
 }
@@ -172,34 +168,20 @@ describe('what a picker offers', () => {
 });
 
 describe('how often an exercise is used', () => {
-  it('counts the templates and the client plans that prescribe it', () => {
+  it('counts programs that prescribe the exercise', () => {
     // arrange
-    const programs = {
-      templates: [program([{ exerciseId: 'e1' }]), program([{ exerciseId: 'e1' }])],
-      plans: [program([{ exerciseId: 'e1' }]), program([{ exerciseId: 'e3' }])],
-    };
+    const programs = [{ exerciseIds: ['e1', 'e2'] }, { exerciseIds: ['e3'] }];
 
     // act
     const usage = exerciseUsage('e1', programs);
 
     // assert
-    expect(usage).toEqual({ template: 2, plan: 1 });
-  });
-
-  it('counts a swap variant as a use', () => {
-    // arrange
-    const programs = { templates: [], plans: [program([{ exerciseId: 'e1', swapVariants: ['e2'] }])] };
-
-    // act
-    const usage = exerciseUsage('e2', programs);
-
-    // assert
-    expect(usage).toEqual({ template: 0, plan: 1 });
+    expect(usage).toEqual({ program: 1 });
   });
 
   it('allows deleting an exercise no program mentions', () => {
     // arrange
-    const programs = { templates: [], plans: [program([{ exerciseId: 'e1' }])] };
+    const programs = [{ exerciseIds: ['e1'] }];
 
     // act
     const usage = exerciseUsage('e9', programs);
@@ -259,19 +241,18 @@ describe('the in-use hint', () => {
   it('is absent when nothing uses the item', () => {
     // arrange
     // act
-    const hint = usageHint({ template: 0, plan: 0 });
+    const hint = usageHint({ program: 0 });
 
     // assert
     expect(hint).toBeUndefined();
   });
 
   it.each<[LibraryUsage, string]>([
-    [{ plan: 3 }, 'Used in 3 plans'],
+    [{ program: 3 }, 'Used in 3 programs'],
+    [{ program: 1 }, 'Used in 1 program'],
     [{ recipe: 1 }, 'Used in 1 recipe'],
     [{ 'meal-plan': 2 }, 'Used in 2 meal plans'],
-    [{ template: 1, plan: 0 }, 'Used in 1 template'],
-    [{ template: 2, plan: 3 }, 'Used in 2 templates and 3 plans'],
-    [{ template: 1, plan: 1 }, 'Used in 1 template and 1 plan'],
+    [{ program: 2, recipe: 0 }, 'Used in 2 programs'],
   ])('counts the places with plurals', (usage, expected) => {
     // arrange
     // act

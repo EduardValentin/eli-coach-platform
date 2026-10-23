@@ -5,7 +5,6 @@ import { RequireSession } from './RequireSession';
 import { PortalLayout } from './client-portal/PortalLayout';
 import { CoachLayout } from './coach-portal/CoachLayout';
 import { ClientOnboarding } from '../pages/client-portal/ClientOnboarding';
-import { WorkoutViewer } from '../pages/client-portal/WorkoutViewer';
 import { AppProvider, type PrototypeSession } from '../context/AppContext';
 
 // Denied requests never mount the guarded component, so the real route targets
@@ -20,7 +19,6 @@ function renderRoute(path: string, session: PrototypeSession) {
           <Route element={<RequireSession session="client" />}>
             <Route path="/portal" element={<PortalLayout />} />
             <Route path="/portal/onboarding" element={<ClientOnboarding />} />
-            <Route path="/portal/workout/:planId/:weekIdx/:dayIdx" element={<WorkoutViewer />} />
           </Route>
           <Route element={<RequireSession session="coach" />}>
             <Route path="/coach" element={<CoachLayout />} />
@@ -36,7 +34,6 @@ function renderRoute(path: string, session: PrototypeSession) {
 const GUARDED_CLIENT_PATHS = [
   '/portal',
   '/portal/onboarding',
-  '/portal/workout/plan-1/0/0',
 ] as const;
 
 describe('RequireSession', () => {

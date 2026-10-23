@@ -42,7 +42,7 @@ import {
   SheetDialogActions,
   SheetDialogBody,
   SheetDialogHeader,
-} from '../workout/ResponsiveSheetDialog';
+} from '../ResponsiveSheetDialog';
 
 type AddResource = (
   upload: NewResourceUpload,

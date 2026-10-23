@@ -1,0 +1,145 @@
+import { useId } from 'react';
+import type { Exercise } from '../../context/TrainingContext';
+import {
+  formatRange,
+  isWorkingSet,
+  positionLabel,
+  WEEKDAY_LABELS,
+  type Block,
+  type CardioSession,
+  type Row,
+  type Session,
+  type SetSpec,
+  type Weekday,
+} from '../../domain/program';
+import { SEGMENT_KIND_LABELS } from '../../domain/programCardio';
+import { scheduledItems } from '../../domain/weekEditing';
+import { LABEL_CLASS } from '../typography';
+import { Badge } from '../ui/badge';
+import { cn } from '../ui/utils';
+import { RoutineCard } from './DayParts';
+import { PositionBadge } from './PositionBadge';
+import { cardioSegmentText, cardioSummary, coolDownLines, exerciseNameOf, repsSuffix, restLabel, sessionAnchor, sessionSummary, warmUpLines } from './programView';
+
+const ARTICLE_CLASS = 'scroll-mt-6 rounded-card border border-border bg-card shadow-card';
+
+function daysText(days: readonly Weekday[]): string {
+  return days.map(day => WEEKDAY_LABELS[day]).join(' · ');
+}
+
+function setLine(set: SetSpec, index: number, suffix: string): string {
+  const weight = set.weightKg === undefined ? '' : ` · ${set.weightKg} kg`;
+  if (!isWorkingSet(set)) return `Set ${index + 1} · Warm-up · ${formatRange(set.reps)}${suffix || ' reps'}${weight}`;
+  return `Set ${index + 1} · ${formatRange(set.reps)}${suffix} · RIR ${formatRange(set.rir)}${weight}`;
+}
+
+function CardHeader({ headingId, name, days, meta }: { headingId: string; name: string; days: readonly Weekday[]; meta: string }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-border-subtle px-4 py-3 sm:px-5">
+      <div className="grid gap-1">
+        <p className={LABEL_CLASS}>{daysText(days)}</p>
+        <h3 id={headingId} className="font-serif text-xl text-text-primary">
+          {name}
+        </h3>
+      </div>
+      <p className="text-sm text-text-secondary tabular-nums">{meta}</p>
+    </div>
+  );
+}
+
+function ExerciseReadCard({ session, row, exercisesById }: { session: Session; row: Row; exercisesById: ReadonlyMap<string, Exercise> }) {
+  const headingId = useId();
+  const exercise = exercisesById.get(row.exerciseId);
+  const suffix = repsSuffix(exercise);
+  const swaps = row.substitutions.flatMap(id => exercisesById.get(id)?.name ?? []);
+
+  return (
+    <article aria-labelledby={headingId} className="grid content-start gap-3 rounded-control border border-border bg-card p-3">
+      <div className="grid gap-1">
+        <h4 id={headingId} className="flex items-center gap-2.5">
+          <PositionBadge label={positionLabel(session, row)} size="sm" />{' '}
+          <span className="min-w-0 text-sm font-medium text-text-primary">{exerciseNameOf(exercise)}</span>
+        </h4>
+        <p className="flex flex-wrap items-center gap-1 pl-9.5">
+          {exercise?.primaryMuscles.map(muscle => (
+            <Badge key={muscle} tone="muted">
+              {muscle}
+            </Badge>
+          ))}
+          <span className="text-xs text-text-secondary tabular-nums">{[`Rest ${restLabel(row.restSeconds)}`, row.tempo && `Tempo ${row.tempo}`].filter(Boolean).join(' · ')}</span>
+        </p>
+      </div>
+      <ol aria-label="Sets" className="grid gap-1 border-t border-border-subtle pt-2.5 pl-9.5 text-sm tabular-nums">
+        {row.sets.map((set, index) => (
+          <li key={index} className={cn({ 'text-text-secondary': !isWorkingSet(set), 'text-text-primary': isWorkingSet(set) })}>
+            {setLine(set, index, suffix)}
+          </li>
+        ))}
+      </ol>
+      {(row.cues || swaps.length > 0) && (
+        <div className="grid gap-1 pl-9.5 text-xs text-text-secondary">
+          {row.cues && <p>{row.cues}</p>}
+          {swaps.length > 0 && <p>{`Swap for: ${swaps.join(', ')}`}</p>}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function SessionReadCard({ session, days, exercisesById }: { session: Session; days: readonly Weekday[]; exercisesById: ReadonlyMap<string, Exercise> }) {
+  const headingId = useId();
+  const warmUp = warmUpLines(session, exercisesById);
+
+  return (
+    <article id={sessionAnchor(session.id)} aria-labelledby={headingId} className={ARTICLE_CLASS}>
+      <CardHeader
+        headingId={headingId}
+        name={session.name}
+        days={days}
+        meta={sessionSummary(session)}
+      />
+      <div className="grid gap-4 p-3 sm:p-4">
+        {warmUp.length > 0 && <RoutineCard title="Warm-up" listLabel="Warm-up exercises" lines={warmUp} />}
+        <div className="grid gap-3 lg:grid-cols-2">
+          {session.rows.map(row => (
+            <ExerciseReadCard key={row.id} session={session} row={row} exercisesById={exercisesById} />
+          ))}
+        </div>
+        {session.coolDown.enabled && (
+          <RoutineCard title="Cool-down" listLabel="Cool-down stretches" note={session.coolDown.note} lines={coolDownLines(session, exercisesById)} />
+        )}
+      </div>
+    </article>
+  );
+}
+
+function CardioReadCard({ cardio, days, exercisesById }: { cardio: CardioSession; days: readonly Weekday[]; exercisesById: ReadonlyMap<string, Exercise> }) {
+  const headingId = useId();
+  return (
+    <article id={sessionAnchor(cardio.id)} aria-labelledby={headingId} className={ARTICLE_CLASS}>
+      <CardHeader headingId={headingId} name={cardio.name} days={days} meta={cardioSummary(cardio)} />
+      <ol aria-label="Segments" className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
+        {cardio.segments.map(segment => (
+          <li key={segment.id} className="grid content-start gap-1 rounded-control border border-l-4 border-border border-l-training-recovery bg-card p-3">
+            <p className={LABEL_CLASS}>{SEGMENT_KIND_LABELS[segment.kind]}</p>
+            <p className="text-sm text-text-primary">{cardioSegmentText(segment, exercisesById)}</p>
+          </li>
+        ))}
+      </ol>
+    </article>
+  );
+}
+
+export function BlockSessions({ block, exercisesById }: { block: Block; exercisesById: ReadonlyMap<string, Exercise> }) {
+  return (
+    <div className="grid gap-5">
+      {scheduledItems(block).map(item =>
+        item.kind === 'strength' ? (
+          <SessionReadCard key={item.session.id} session={item.session} days={item.days} exercisesById={exercisesById} />
+        ) : (
+          <CardioReadCard key={item.cardio.id} cardio={item.cardio} days={item.days} exercisesById={exercisesById} />
+        ),
+      )}
+    </div>
+  );
+}

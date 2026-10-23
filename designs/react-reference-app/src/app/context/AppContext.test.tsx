@@ -75,6 +75,80 @@ describe('prototype scope', () => {
   });
 });
 
+function JourneyStageProbe() {
+  const { appState } = useAppState();
+
+  return <p>stage {appState.journeyStage}</p>;
+}
+
+function renderJourneyStage(search: string) {
+  window.history.replaceState(null, '', `/${search}`);
+
+  return render(
+    <MemoryRouter>
+      <AppProvider>
+        <JourneyStageProbe />
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('journey stage dev param', () => {
+  it('keeps program-ready in MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?jstage=program-ready');
+
+    // assert
+    expect(screen.getByText('stage program-ready')).toBeInTheDocument();
+  });
+
+  it('ignores review-call-scheduled in MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?jstage=review-call-scheduled');
+
+    // assert
+    expect(screen.getByText('stage approved')).toBeInTheDocument();
+  });
+
+  it('reads review-call-scheduled in Post-MVP', () => {
+    // arrange
+    // act
+    renderJourneyStage('?scope=post-mvp&jstage=review-call-scheduled');
+
+    // assert
+    expect(screen.getByText('stage review-call-scheduled')).toBeInTheDocument();
+  });
+
+  it('lifts the stage to program-ready when a published program is seeded', () => {
+    // arrange
+    // act
+    renderJourneyStage('?pseed=published&jstage=approved');
+
+    // assert
+    expect(screen.getByText('stage program-ready')).toBeInTheDocument();
+  });
+
+  it('lifts the default stage to program-ready for two versions', () => {
+    // arrange
+    // act
+    renderJourneyStage('?pseed=two-versions');
+
+    // assert
+    expect(screen.getByText('stage program-ready')).toBeInTheDocument();
+  });
+
+  it('leaves the stage alone for a draft program seed', () => {
+    // arrange
+    // act
+    renderJourneyStage('?pseed=draft&jstage=approved');
+
+    // assert
+    expect(screen.getByText('stage approved')).toBeInTheDocument();
+  });
+});
+
 function SubscriptionParamsProbe() {
   const { appState, setAppState } = useAppState();
 

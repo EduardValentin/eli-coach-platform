@@ -4,7 +4,6 @@ import {
   CalendarCheck,
   Droplet,
   FolderOpen,
-  History,
   MessageSquare,
   Settings,
   UserCircle,
@@ -27,10 +26,9 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     tab: true,
   },
   {
-    name: 'My Plan',
-    href: '/portal/plan',
+    name: 'Program',
+    href: '/portal/program',
     icon: Calendar,
-    postMvp: true,
     tab: true,
   },
   {
@@ -52,13 +50,7 @@ export const CLIENT_PORTAL_LINKS: readonly ClientPortalLink[] = [
     icon: UserCircle,
     tab: true,
   },
-  { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
-  {
-    name: 'History',
-    href: '/portal/history',
-    icon: History,
-    postMvp: true,
-  },
+  { name: 'Cycle', href: '/portal/cycle', icon: Droplet, postMvp: true },
   {
     name: 'Nutrition',
     href: '/portal/nutrition',

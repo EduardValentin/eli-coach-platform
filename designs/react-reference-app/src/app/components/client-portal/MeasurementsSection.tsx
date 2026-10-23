@@ -24,7 +24,7 @@ import {
   SheetDialogActions,
   SheetDialogBody,
   SheetDialogHeader,
-} from '../workout/ResponsiveSheetDialog';
+} from '../ResponsiveSheetDialog';
 import { OnboardingFieldControl } from './onboarding/OnboardingFieldControl';
 import { ProgressPhotoBlock } from './onboarding/ProgressPhotoBlock';
 import {

@@ -84,6 +84,26 @@ describe('DevToggle prototype mode', () => {
   });
 });
 
+describe('DevToggle journey stage on leaving Post-MVP', () => {
+  it.each([
+    ['review-call-scheduled', 'approved'],
+    ['program-ready', 'program-ready'],
+  ])('moves %s to %s', async (stage, expected) => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle(`?scope=post-mvp&jstage=${stage}`);
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Prototype mode' }));
+    await user.click(screen.getByRole('option', { name: 'MVP' }));
+
+    // assert
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('jstage') ?? 'approved').toBe(expected);
+  });
+});
+
 describe('DevToggle links sent by the coach', () => {
   it('opens the payment link with its token in the fragment and the dev settings in the query', async () => {
     // arrange

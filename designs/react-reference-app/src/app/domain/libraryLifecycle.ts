@@ -13,24 +13,14 @@ type NamedArchivableItem = ArchivableItem & {
 
 const MAX_LIBRARY_NAME_LENGTH = 80;
 
-export type UsageKind = 'template' | 'plan' | 'recipe' | 'meal-plan';
+export type UsageKind = 'program' | 'recipe' | 'meal-plan';
 
 export type LibraryUsage = Readonly<Partial<Record<UsageKind, number>>>;
 
 export type LibraryDeletion = 'deleted' | 'in-use';
 
-type PrescribedExercise = {
-  exerciseId: string;
-  swapVariants?: readonly string[];
-};
-
-type ExerciseProgram = {
-  weeks: readonly { days: readonly { exercises: readonly PrescribedExercise[] }[] }[];
-};
-
-type TrainingPrograms = {
-  templates: readonly ExerciseProgram[];
-  plans: readonly ExerciseProgram[];
+export type ExerciseConsumer = {
+  exerciseIds: readonly string[];
 };
 
 type RecipeWithIngredients = {
@@ -47,11 +37,10 @@ type ClientMealPlan = {
   blocks: readonly { days: readonly { slots: readonly PlannedMealSlot[] }[] }[];
 };
 
-const USAGE_ORDER: readonly UsageKind[] = ['template', 'plan', 'recipe', 'meal-plan'];
+const USAGE_ORDER: readonly UsageKind[] = ['program', 'recipe', 'meal-plan'];
 
 const USAGE_NOUNS: Record<UsageKind, { one: string; many: string }> = {
-  template: { one: 'template', many: 'templates' },
-  plan: { one: 'plan', many: 'plans' },
+  program: { one: 'program', many: 'programs' },
   recipe: { one: 'recipe', many: 'recipes' },
   'meal-plan': { one: 'meal plan', many: 'meal plans' },
 };
@@ -125,22 +114,8 @@ export function isDeletable(usage: LibraryUsage): boolean {
   return USAGE_ORDER.every((kind) => usedCount(usage, kind) === 0);
 }
 
-function prescribes(program: ExerciseProgram, exerciseId: string): boolean {
-  return program.weeks.some((week) =>
-    week.days.some((day) =>
-      day.exercises.some(
-        (prescribed) =>
-          prescribed.exerciseId === exerciseId || (prescribed.swapVariants ?? []).includes(exerciseId),
-      ),
-    ),
-  );
-}
-
-export function exerciseUsage(exerciseId: string, programs: TrainingPrograms): LibraryUsage {
-  return {
-    template: programs.templates.filter((template) => prescribes(template, exerciseId)).length,
-    plan: programs.plans.filter((plan) => prescribes(plan, exerciseId)).length,
-  };
+export function exerciseUsage(exerciseId: string, programs: readonly ExerciseConsumer[]): LibraryUsage {
+  return { program: programs.filter((program) => program.exerciseIds.includes(exerciseId)).length };
 }
 
 export function foodUsage(foodId: string, recipes: readonly RecipeWithIngredients[]): LibraryUsage {

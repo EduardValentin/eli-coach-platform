@@ -16,6 +16,8 @@ import {
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { ProgramProvider } from '../../context/ProgramContext';
+import { TrainingProvider } from '../../context/TrainingContext';
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -70,7 +72,9 @@ function renderDetails(
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
+            <TrainingProvider>
             <ClientJourneyProvider>
+              <ProgramProvider>
               <NotificationProvider>
               <CheckinProvider>
                 <MessagingProvider>
@@ -81,7 +85,9 @@ function renderDetails(
                 </MessagingProvider>
               </CheckinProvider>
               </NotificationProvider>
+              </ProgramProvider>
             </ClientJourneyProvider>
+            </TrainingProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -344,8 +350,8 @@ describe('the coach view of a client in onboarding', () => {
     // assert
     const widget = onboardingWidget();
     expect(
-      within(widget).getByRole('link', { name: 'Build her program' }),
-    ).toHaveAttribute('href', '/coach/training/builder/ac-demo-client-1');
+      within(widget).queryByRole('link', { name: 'Build her program' }),
+    ).not.toBeInTheDocument();
     expect(
       within(widget).getByRole('button', { name: 'Review answers' }),
     ).toBeInTheDocument();
@@ -462,9 +468,6 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(reviewed).queryByRole('button', { name: /review/i }),
     ).not.toBeInTheDocument();
-    expect(
-      within(reviewed).getByRole('link', { name: 'Build her program' }),
-    ).toBeInTheDocument();
   });
 
   it('approves the answers from the dialog through the same confirmation and turns the widget to building her program', async () => {
@@ -494,9 +497,6 @@ describe('the coach view of a client in onboarding', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const widget = onboardingWidget();
     expect(within(widget).getByText('Approved')).toBeInTheDocument();
-    expect(
-      within(widget).getByRole('link', { name: 'Build her program' }),
-    ).toBeInTheDocument();
   });
 
   it('offers no way to reopen review once approved', () => {
@@ -609,7 +609,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, invitation, onboarding, subscription, weekly check-in, measurements and the assessment call last', () => {
+  it('lays the page out as profile, invitation, onboarding, program, subscription, weekly check-in, measurements and the assessment call last', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -625,6 +625,7 @@ describe('the coach reading who a client is', () => {
       'Profile',
       'Invitation',
       'Onboarding',
+      'Program',
       'Subscription',
       'Weekly check-in',
       'Measurements',
@@ -1090,21 +1091,6 @@ describe('the coach reading about a client by his or their pronouns', () => {
     ).toBeInTheDocument();
   });
 
-  it('offers to build his program', () => {
-    // arrange
-    const urlQuery = '?jstage=submitted&jgender=male';
-
-    // act
-    renderDetails(urlQuery);
-
-    // assert
-    expect(
-      within(onboardingWidget()).getByRole('link', {
-        name: 'Build his program',
-      }),
-    ).toBeInTheDocument();
-  });
-
   it('asks which answers the coach wants him to revisit', async () => {
     // arrange
     const user = renderDetails('?jstage=submitted&jgender=male');
@@ -1151,8 +1137,8 @@ describe('the coach reading about a client by his or their pronouns', () => {
   });
 });
 
-const PHASE_BASED_FOR_HER =
-  'Phase-based — her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.';
+const ADAPTED_FOR_HER =
+  'Adapted to symptoms — the program keeps the same sessions all cycle and adds adjustment rules for the days she reports symptoms.';
 
 function cycleModeInfoButton(): HTMLElement {
   return within(onboardingWidget()).getByRole('button', {
@@ -1191,12 +1177,9 @@ describe('the coach reading what cycle mode means', () => {
 
     // assert
     const hint = await screen.findByRole('dialog');
-    expect(hint).toHaveTextContent(PHASE_BASED_FOR_HER);
+    expect(hint).toHaveTextContent(ADAPTED_FOR_HER);
     expect(hint).toHaveTextContent(
-      'Symptom-based — one of those does not hold, so her program follows the symptoms she reports.',
-    );
-    expect(hint).toHaveTextContent(
-      'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
+      'General — no cycle-driven adjustments; the low-energy session stays available.',
     );
     expect(hint).toHaveTextContent(
       'Not answered yet — the cycle form is empty.',
@@ -1213,7 +1196,7 @@ describe('the coach reading what cycle mode means', () => {
     // assert
     expect(cycleModeInfoButton()).toHaveFocus();
     expect(await screen.findByRole('dialog')).toHaveTextContent(
-      PHASE_BASED_FOR_HER,
+      ADAPTED_FOR_HER,
     );
   });
 

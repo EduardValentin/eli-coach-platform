@@ -101,10 +101,9 @@ describe('PortalSidebar prototype mode', () => {
 
     // act
     const postMvpLinks = [
-      'My Plan',
       'Messages',
-      'History',
       'Nutrition',
+      'Cycle',
     ].flatMap((name) => screen.queryAllByRole('link', { name }));
 
     // assert
@@ -117,9 +116,7 @@ describe('PortalSidebar prototype mode', () => {
 
     // act
     const postMvpLinks = [
-      'My Plan',
       'Messages',
-      'History',
       'Nutrition',
     ].flatMap((name) => screen.queryAllByRole('link', { name }));
 
@@ -178,7 +175,7 @@ describe('PortalSidebar waiting count', () => {
 
   it('marks More when a counted link sits in the sheet', () => {
     // arrange
-    renderSidebar({ countByHref: { '/portal/cycle': 1 } });
+    renderSidebar({ countByHref: { '/portal/resources': 1 } });
 
     // act
     const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
@@ -202,7 +199,7 @@ describe('PortalSidebar waiting count', () => {
 });
 
 describe('PortalSidebar mobile tabs', () => {
-  it('puts Dashboard, Check-ins and Profile on the bar and Cycle under More in MVP', () => {
+  it('puts Dashboard, Program, Check-ins and Profile on the bar and Resources under More in MVP', () => {
     // arrange
     renderSidebar();
 
@@ -213,12 +210,12 @@ describe('PortalSidebar mobile tabs', () => {
       .map((link) => link.textContent);
 
     // assert
-    expect(tabNames).toEqual(['Dashboard', 'Check-ins', 'Profile']);
+    expect(tabNames).toEqual(['Dashboard', 'Program', 'Check-ins', 'Profile']);
     expect(within(bar).getByRole('button', { name: 'More' })).toBeVisible();
-    expect(within(bar).queryByRole('link', { name: 'Cycle' })).toBeNull();
+    expect(within(bar).queryByRole('link', { name: 'Resources' })).toBeNull();
   });
 
-  it('caps the bar at four tabs in Post-MVP and moves Profile under More', () => {
+  it('caps the bar at four tabs in Post-MVP', () => {
     // arrange
     renderSidebar({ search: '?scope=post-mvp' });
 
@@ -229,8 +226,7 @@ describe('PortalSidebar mobile tabs', () => {
       .map((link) => link.textContent);
 
     // assert
-    expect(tabNames).toEqual(['Dashboard', 'My Plan', 'Messages', 'Check-ins']);
-    expect(within(bar).queryByRole('link', { name: 'Profile' })).toBeNull();
+    expect(tabNames).toEqual(['Dashboard', 'Program', 'Messages', 'Check-ins']);
   });
 });
 
@@ -274,7 +270,7 @@ describe('PortalSidebar More sheet', () => {
       name: 'Client portal more',
     });
     expect(
-      within(sheetNavigation).getByRole('link', { name: 'Cycle' }),
+      within(sheetNavigation).getByRole('link', { name: 'Resources' }),
     ).toBeInTheDocument();
     expect(
       within(sheet).getByRole('button', { name: 'Sign out' }),
@@ -317,7 +313,7 @@ describe('PortalSidebar More sheet', () => {
     // arrange
     const user = userEvent.setup();
     const tabLinks = CLIENT_PORTAL_LINKS.filter((link) =>
-      ['Dashboard', 'Check-ins', 'Profile'].includes(link.name),
+      ['Dashboard', 'Program', 'Check-ins', 'Profile'].includes(link.name),
     );
     renderSidebar({ links: tabLinks });
 

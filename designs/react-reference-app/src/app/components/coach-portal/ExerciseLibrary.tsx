@@ -3,12 +3,14 @@ import { Activity, Archive, Dumbbell, SearchX } from 'lucide-react';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
   countsByStatus,
+  isDeletable,
   itemsWithStatus,
   parseStatus,
   usageHint,
   type LibraryItemStatus,
 } from '../../domain/libraryLifecycle';
-import { EXERCISE_TYPE_LABELS } from '../../domain/exercises';
+import { EXERCISE_TYPE_LABELS, MOVEMENT_PATTERN_LABELS } from '../../domain/exercises';
+import { useExerciseUsage } from '../../hooks/useExerciseUsage';
 import { useLibraryLifecycle } from '../../hooks/useLibraryLifecycle';
 import { useListingSearchParams } from '../../hooks/useListingSearchParams';
 import {
@@ -82,6 +84,7 @@ function ExerciseRow({
           title={exercise.name}
           summary={[
             EXERCISE_TYPE_LABELS[exercise.type],
+            ...(exercise.pattern ? [MOVEMENT_PATTERN_LABELS[exercise.pattern]] : []),
             exercise.equipment.length > 0 ? exercise.equipment.join(', ') : 'No equipment',
           ].join(' · ')}
           glyphParity="exercise-glyph"
@@ -120,13 +123,13 @@ function ExerciseRow({
 }
 
 export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => void }) {
-  const { exercises, archiveExercise, restoreExercise, deleteExercise, getExerciseUsage } =
-    useTraining();
+  const { exercises, archiveExercise, restoreExercise, deleteExercise } = useTraining();
+  const usageOf = useExerciseUsage();
   const listing = useListingSearchParams();
   const lifecycle = useLibraryLifecycle({
     archive: archiveExercise,
     restore: restoreExercise,
-    remove: deleteExercise,
+    remove: (id) => (isDeletable(usageOf(id)) ? deleteExercise(id) : 'in-use'),
   });
 
   const selection: ExerciseSelection = {
@@ -242,7 +245,7 @@ export function ExerciseLibrary({ onEdit }: { onEdit: (exerciseId: string) => vo
                     <LibraryItemActions
                       itemName={exercise.name}
                       status={status}
-                      usage={usageHint(getExerciseUsage(exercise.id))}
+                      usage={usageHint(usageOf(exercise.id))}
                       onEdit={() => onEdit(exercise.id)}
                       onArchive={() => lifecycle.archive(exercise)}
                       onRestore={() => lifecycle.restore(exercise)}

@@ -1,17 +1,26 @@
 import * as React from "react";
 
 const DESKTOP_BREAKPOINT = 1024;
+const WIDE_BREAKPOINT = 1280;
 
-export function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = React.useState(false);
+function useMinWidth(pixels: number) {
+  const [matches, setMatches] = React.useState(false);
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
-    const onChange = () => setIsDesktop(mql.matches);
+    const mql = window.matchMedia(`(min-width: ${pixels}px)`);
+    const onChange = () => setMatches(mql.matches);
     mql.addEventListener("change", onChange);
-    setIsDesktop(mql.matches);
+    setMatches(mql.matches);
     return () => mql.removeEventListener("change", onChange);
-  }, []);
+  }, [pixels]);
 
-  return isDesktop;
+  return matches;
+}
+
+export function useIsDesktop() {
+  return useMinWidth(DESKTOP_BREAKPOINT);
+}
+
+export function useIsWide() {
+  return useMinWidth(WIDE_BREAKPOINT);
 }

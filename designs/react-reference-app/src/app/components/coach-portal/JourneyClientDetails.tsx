@@ -9,6 +9,7 @@ import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
+import { ProgramBlock } from './program/ProgramBlock';
 import { ScheduleCheckinAction } from './ScheduleCheckinAction';
 import { WeeklyCheckinPanel } from './WeeklyCheckinPanel';
 import { PortalBackLink } from '../PortalBackLink';
@@ -73,9 +74,9 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       )}
       <OnboardingPanel
         journey={journey}
-        clientId={journey.callId}
         heightCm={statedHeightCm(journey.onboarding.answers)}
       />
+      <ProgramBlock journey={journey} />
       {journey.subscription && (
         <>
           <SubscriptionSummary

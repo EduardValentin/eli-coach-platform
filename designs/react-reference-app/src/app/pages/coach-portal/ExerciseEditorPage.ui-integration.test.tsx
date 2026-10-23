@@ -77,6 +77,11 @@ async function choose(user: ReturnType<typeof userEvent.setup>, combobox: HTMLEl
   await user.click(screen.getByRole('option', { name: option }));
 }
 
+async function chooseMovement(user: ReturnType<typeof userEvent.setup>) {
+  await choose(user, field(/^Movement pattern/), 'Squat');
+  await choose(user, field(/^Role/), 'Main compound');
+}
+
 async function tick(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement, option: string) {
   await user.click(trigger);
   await user.click(screen.getByRole('checkbox', { name: option }));
@@ -122,11 +127,11 @@ describe('a new exercise', () => {
   it('lays the fields out in the agreed order', () => {
     // arrange & act
     renderEditor(NEW);
-    const titles = screen.getAllByText(/^(Name|Type|Measured in|Sides|Primary muscles|Secondary muscles|Equipment|Difficulty|Tags|Form cues|Demo video)$/, { selector: 'label, p' });
+    const titles = screen.getAllByText(/^(Name|Type|Measured in|Sides|Primary muscles|Secondary muscles|Equipment|Movement pattern|Role|Difficulty|Tags|Form cues|Demo video)$/, { selector: 'label, p' });
 
     // assert
     expect(titles.map((title) => title.textContent)).toEqual([
-      'Name* (required)', 'Type', 'Measured in', 'Sides', 'Primary muscles* (required)', 'Secondary muscles', 'Equipment', 'Difficulty', 'Tags', 'Form cues', 'Demo video',
+      'Name* (required)', 'Type', 'Measured in', 'Sides', 'Primary muscles* (required)', 'Secondary muscles', 'Equipment', 'Movement pattern* (required)', 'Role* (required)', 'Difficulty', 'Tags', 'Form cues', 'Demo video',
     ]);
   });
 
@@ -137,8 +142,24 @@ describe('a new exercise', () => {
     // assert
     expect(nameField()).toBeInTheDocument();
     expect(screen.getByText('Primary muscles', { selector: 'label' })).toHaveTextContent('Primary muscles* (required)');
-    expect(screen.getAllByText('*')).toHaveLength(2);
+    expect(screen.getAllByText('*')).toHaveLength(4);
     expect(multi('Primary muscles (required)')).toBeInTheDocument();
+  });
+
+  it('asks for a movement pattern and a role on a resistance exercise and hides them for mobility', async () => {
+    // arrange
+    const user = renderEditor(NEW);
+
+    // assert
+    expect(field(/^Movement pattern/)).toBeInTheDocument();
+    expect(field(/^Role/)).toBeInTheDocument();
+
+    // act
+    await choose(user, field('Type'), 'Mobility');
+
+    // assert
+    expect(screen.queryByRole('combobox', { name: /^Movement pattern/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /^Role/ })).not.toBeInTheDocument();
   });
 
   it('drops the star from Primary muscles for cardio', async () => {
@@ -351,6 +372,7 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW);
     await user.type(nameField(), 'Cossack squat');
     await tick(user, multi('Primary muscles (required)'), 'Glutes');
+    await chooseMovement(user);
     expect(primary()).toBeEnabled();
 
     // act
@@ -369,6 +391,7 @@ describe('a new exercise', () => {
     const user = renderEditor(NEW);
     await user.type(nameField(), 'Cossack squat');
     await tick(user, multi('Primary muscles (required)'), 'Glutes');
+    await chooseMovement(user);
     await user.click(screen.getByLabelText('Form cues'));
     await user.paste('a'.repeat(1001));
 
@@ -413,6 +436,7 @@ describe('a new exercise', () => {
     await tick(user, multi(/^Primary muscles \(required\)/), 'Glutes');
     await tick(user, multi('Secondary muscles'), 'Core');
     await tick(user, multi('Equipment'), 'Kettlebell');
+    await chooseMovement(user);
     await user.click(screen.getByRole('checkbox', { name: 'Hypertrophy' }));
     await user.click(primary());
 
@@ -766,6 +790,7 @@ describe('saving with a newly chosen video', () => {
     const user = renderEditor(NEW);
     await user.type(nameField(), 'Cossack squat');
     await tick(user, multi('Primary muscles (required)'), 'Adductors');
+    await chooseMovement(user);
     await user.upload(screen.getByLabelText(VIDEO_PROMPT), fileNamed('cossack.mp4', 'video/mp4'));
 
     // act

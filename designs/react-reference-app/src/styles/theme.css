@@ -65,13 +65,12 @@
   --training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
   --training-recovery: #00796b;
   --training-recovery-soft: rgba(0, 121, 107, 0.1);
-  --training-lighter: #2563eb;
-  --training-lighter-soft: rgba(37, 99, 235, 0.1);
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
-  /* At or near muscular failure on the reps-in-reserve scale. The scale's other two
-     stops are --metric-energy (moderate reserve) and --training-recovery (ample). */
-  --effort-critical: #DC2626;
+  --training-foundation: #2563eb;
+  --training-foundation-soft: rgba(37, 99, 235, 0.1);
+  --training-deload: #616161;
+  --training-deload-soft: rgba(97, 97, 97, 0.1);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* Categorical tints named by hue */
@@ -208,6 +207,19 @@
   --space-8: 3rem;
   --space-9: 4rem;
   --space-10: 6rem;
+  /* Printed program scale. In print the document root is 10.5pt, so each rem
+     stop lands on a point size: 28 / 16 / 13 / 10.5 / 9.5 / 9 pt and a
+     6 / 12 / 24 pt rhythm. */
+  --font-size-document-title: 2.6667rem;
+  --font-size-document-section: 1.5238rem;
+  --font-size-document-card: 1.2381rem;
+  --font-size-document-body: 1rem;
+  --font-size-document-table: 0.9048rem;
+  --font-size-document-note: 0.8571rem;
+  --space-document-tight: 0.5714rem;
+  --space-document-gap: 1.1429rem;
+  --space-document-section: 2.2857rem;
+  --container-measure: 75ch;
   --size-public-platform-phone-base: 16.25rem;
   --size-public-platform-phone-sm: 17.5rem;
   --radius-checkbox: 0.25rem;
@@ -310,17 +322,18 @@
   --color-status-pending-soft: var(--status-pending-soft);
   --color-metric-energy: var(--metric-energy);
   --color-metric-energy-soft: var(--metric-energy-soft);
-  --color-effort-critical: var(--effort-critical);
   --color-training-strength: var(--training-strength);
   --color-training-strength-soft: var(--training-strength-soft);
   --color-training-hypertrophy: var(--training-hypertrophy);
   --color-training-hypertrophy-soft: var(--training-hypertrophy-soft);
   --color-training-recovery: var(--training-recovery);
   --color-training-recovery-soft: var(--training-recovery-soft);
-  --color-training-lighter: var(--training-lighter);
-  --color-training-lighter-soft: var(--training-lighter-soft);
   --color-training-rest: var(--training-rest);
   --color-training-rest-soft: var(--training-rest-soft);
+  --color-training-foundation: var(--training-foundation);
+  --color-training-foundation-soft: var(--training-foundation-soft);
+  --color-training-deload: var(--training-deload);
+  --color-training-deload-soft: var(--training-deload-soft);
   --color-surface-inverted: var(--surface-inverted);
   --color-surface-inverted-foreground: var(--surface-inverted-foreground);
   /* === Marketing / public landing utilities === */
@@ -487,6 +500,22 @@
   --text-value-lg--line-height: 2rem;
   --text-value-lg--font-weight: var(--font-weight-medium);
   --text-value-lg--letter-spacing: -0.025em;
+  --text-document-title: var(--font-size-document-title);
+  --text-document-title--line-height: 1.1;
+  --text-document-section: var(--font-size-document-section);
+  --text-document-section--line-height: 1.25;
+  --text-document-card: var(--font-size-document-card);
+  --text-document-card--line-height: 1.3;
+  --text-document-body: var(--font-size-document-body);
+  --text-document-body--line-height: 1.45;
+  --text-document-table: var(--font-size-document-table);
+  --text-document-table--line-height: 1.35;
+  --text-document-note: var(--font-size-document-note);
+  --text-document-note--line-height: 1.35;
+  --spacing-document-tight: var(--space-document-tight);
+  --spacing-document-gap: var(--space-document-gap);
+  --spacing-document-section: var(--space-document-section);
+  --container-measure: var(--container-measure);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

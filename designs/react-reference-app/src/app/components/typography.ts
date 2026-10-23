@@ -5,3 +5,6 @@ export const WIDGET_SUBHEADING_CLASS = 'text-sm font-medium text-text-primary';
 export const LABEL_CLASS = 'text-label uppercase text-text-secondary';
 export const VALUE_CLASS = 'text-sm font-medium text-text-primary';
 export const VALUE_LG_CLASS = 'text-value-lg text-text-primary';
+export const DOCUMENT_LABEL_CLASS =
+  'text-document-note font-semibold tracking-label [font-variant-caps:all-small-caps] text-text-secondary';
+export const DOCUMENT_NOTE_CLASS = 'text-document-note text-text-secondary';

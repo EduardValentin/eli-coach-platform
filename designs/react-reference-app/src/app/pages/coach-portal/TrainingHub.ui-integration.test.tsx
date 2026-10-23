@@ -5,7 +5,10 @@ import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { TrainingHub } from './TrainingHub';
 import { AppProvider } from '../../context/AppContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -31,12 +34,18 @@ function renderHub(path = '/coach/training') {
       <AppProvider>
         <ClientProfileProvider>
           <TrainingProvider>
-            <Routes>
-              <Route path="/coach/training" element={<TrainingHub />} />
-              <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
-              <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
-            </Routes>
-            <Toaster />
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <ProgramProvider>
+                  <Routes>
+                    <Route path="/coach/training" element={<TrainingHub />} />
+                    <Route path="/coach/training/exercises/new" element={<ExerciseEditorStandIn />} />
+                    <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorStandIn />} />
+                  </Routes>
+                  <Toaster />
+                </ProgramProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
           </TrainingProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -78,11 +87,12 @@ describe('the exercise library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByText('Lateral Raises')).toBeInTheDocument();
-    expect(screen.queryByText('Leg Press')).not.toBeInTheDocument();
+    expect(screen.getByText('Burpee')).toBeInTheDocument();
+    expect(screen.queryByText('Dumbbell Rows')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hip Thrust')).not.toBeInTheDocument();
     expect(screen.queryByText('Plank')).not.toBeInTheDocument();
     expect(screen.queryByText('Walking Lunges')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1–10 of 16')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–10 of 30')).toBeInTheDocument();
   });
 
   it('narrows the table to exercises carrying the selected tag', async () => {
@@ -119,7 +129,7 @@ describe('the exercise library filters', () => {
     await user.click(screen.getByRole('button', { name: 'Tags' }));
 
     // assert
-    expect(screen.getByRole('checkbox', { name: 'Recovery 6' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Recovery 9' })).toBeInTheDocument();
   });
 
   it('narrows to equipment-free exercises', async () => {
@@ -302,7 +312,7 @@ describe('the empty exercise library seed', () => {
 });
 
 describe('the Training page in MVP mode', () => {
-  it('is the exercise library, without the plan tabs', () => {
+  it('is the exercise library', () => {
     // arrange
     // act
     renderHub();
@@ -325,7 +335,7 @@ describe('the Training page in MVP mode', () => {
     expect(screen.getByText('Exercise editor new')).toBeInTheDocument();
   });
 
-  it('keeps the plan tabs in Post-MVP mode', () => {
+  it('is the same library in Post-MVP mode', () => {
     // arrange
     window.history.replaceState(null, '', '/?scope=post-mvp');
 
@@ -333,35 +343,9 @@ describe('the Training page in MVP mode', () => {
     renderHub();
 
     // assert
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Training & Programs' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Client Plans' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toBeInTheDocument();
-  });
-
-  it('opens the tab the link names in Post-MVP mode', () => {
-    // arrange
-    window.history.replaceState(null, '', '/?scope=post-mvp');
-
-    // act
-    renderHub('/coach/training?tab=exercises&type=cardio');
-
-    // assert
-    expect(screen.getByRole('tab', { name: 'Exercise Library' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Bike Intervals')).toBeInTheDocument();
-    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
-  });
-
-  it('falls back to Client Plans for a tab it does not know', () => {
-    // arrange
-    window.history.replaceState(null, '', '/?scope=post-mvp');
-
-    // act
-    renderHub('/coach/training?tab=nope');
-
-    // assert
-    expect(screen.getByRole('tab', { name: 'Client Plans' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: 'Exercises' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 });
 
@@ -402,6 +386,7 @@ describe('archiving an exercise', () => {
     // act
     await chooseAction(user, 'Hip Thrust', 'Restore');
     await chooseOption(user, 'Status', 'Active');
+    await user.type(screen.getByRole('searchbox', { name: 'Search exercises' }), 'hip thrust');
 
     // assert
     expect(await screen.findByText('"Hip Thrust" restored as "Hip Thrust (2)"')).toBeInTheDocument();
@@ -417,7 +402,7 @@ describe('archiving an exercise', () => {
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
 
     // assert
-    expect(screen.getByRole('option', { name: 'Active 16' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Active 30' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Archived 1' })).toBeInTheDocument();
   });
 
@@ -437,6 +422,7 @@ describe('archiving an exercise', () => {
 describe('deleting an exercise', () => {
   it('marks an exercise in use and says how often it is used', async () => {
     // arrange
+    window.history.replaceState(null, '', '/?pseed=published');
     const user = renderLibrary();
     await user.click(
       within(exerciseRow('Barbell Back Squat')).getByRole('button', { name: 'Actions for Barbell Back Squat' }),
@@ -446,21 +432,19 @@ describe('deleting an exercise', () => {
     await user.hover(screen.getByRole('menuitem', { name: 'Delete' }));
 
     // assert
-    expect(await screen.findByText(/^Used in 2 templates and \d+ plans?$/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Used in 1 program$/)).toBeInTheDocument();
   });
 
-  it('is unavailable while a plan uses it', async () => {
+  it('is unavailable while a program uses it', async () => {
     // arrange
+    window.history.replaceState(null, '', '/?pseed=published');
     const user = renderLibrary();
 
     // act
     await user.click(screen.getByRole('button', { name: 'Actions for Barbell Back Squat' }));
 
     // assert
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('asks to confirm, naming the exercise and saying it is removed for good', async () => {

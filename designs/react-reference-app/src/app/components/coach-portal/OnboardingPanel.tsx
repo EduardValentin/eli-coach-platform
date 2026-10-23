@@ -5,7 +5,6 @@ import {
   MessageSquareText,
   TriangleAlert,
 } from 'lucide-react';
-import { Link } from 'react-router';
 import { toast } from 'sonner';
 import {
   Accordion,
@@ -150,7 +149,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  const mode = cycleModeOf(journey.onboarding);
+  const mode = cycleModeOf(journey.onboarding, journey.identity.gender);
   return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
 }
 
@@ -384,12 +383,10 @@ function WorkStartNote({
 
 function StageActions({
   journey,
-  clientId,
   onReview,
   onApprove,
 }: {
   journey: ClientJourney;
-  clientId: string;
   onReview: () => void;
   onApprove: () => void;
 }) {
@@ -403,8 +400,6 @@ function StageActions({
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const canApprove =
     journey.stage === 'submitted' || journey.stage === 'reviewing';
-  const canBuild =
-    !journey.subscription || canStartWork(journey.subscription, new Date());
 
   if (!isPostMvp && !reviewAction) return null;
 
@@ -418,13 +413,6 @@ function StageActions({
             data-parity="review-action"
           >
             {reviewAction}
-          </Button>
-        )}
-        {isPostMvp && canBuild && (
-          <Button variant="primary" asChild>
-            <Link to={`/coach/training/builder/${clientId}`}>
-              Build {possessive.lower} program
-            </Link>
           </Button>
         )}
         {!isPostMvp && canApprove && (
@@ -449,11 +437,9 @@ function StageActions({
 
 function SubmittedOnboarding({
   journey,
-  clientId,
   heightCm,
 }: {
   journey: ClientJourney;
-  clientId: string;
   heightCm: number;
 }) {
   const { startReview, approveAnswers, requestDetails } = useClientJourneys();
@@ -517,7 +503,6 @@ function SubmittedOnboarding({
 
       <StageActions
         journey={journey}
-        clientId={clientId}
         onReview={enterReview}
         onApprove={() => setConfirmApproveOpen(true)}
       />
@@ -554,11 +539,9 @@ function SubmittedOnboarding({
 
 export function OnboardingPanel({
   journey,
-  clientId,
   heightCm,
 }: {
   journey: ClientJourney;
-  clientId: string;
   heightCm: number;
 }) {
   const submitted = !isBeforeStage(journey.stage, 'submitted');
@@ -578,8 +561,7 @@ export function OnboardingPanel({
       {submitted ? (
         <SubmittedOnboarding
           journey={journey}
-          clientId={clientId}
-          heightCm={heightCm}
+            heightCm={heightCm}
         />
       ) : (
         <p className="text-sm text-text-secondary">

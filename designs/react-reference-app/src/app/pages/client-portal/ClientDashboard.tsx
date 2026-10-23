@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Target as TargetIcon, Activity, Flame, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Target as TargetIcon, Activity, Flame } from "lucide-react";
 import { useTraining } from "../../context/TrainingContext";
 import { useCycle } from "../../context/CycleContext";
 import { useClientProfile } from "../../context/ClientProfileContext";
 import { useUnitPreferences } from "../../context/UnitPreferencesContext";
 import { useClientJourneys } from "../../context/ClientJourneyContext";
 import { isBeforeStage } from "../../domain/journey";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { PortalPageHeader } from "../../components/PortalPageHeader";
 import { ProgramStatusCard } from "../../components/client-portal/ProgramStatusCard";
 import { MeasurementsNudge } from "../../components/client-portal/MeasurementsNudge";
@@ -18,32 +18,19 @@ import { ProfileDetailsWidget } from "../../components/ProfileDetailsWidget";
 import { ProgressWidget } from "../../components/ProgressWidget";
 import { MACRO_BAR } from "../../components/coach-portal/nutrition/nutrition-constants";
 import { useAppState } from "../../context/AppContext";
-import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { cn } from "../../components/ui/utils";
 import { WidgetLink } from "../../components/WidgetLink";
 import { LABEL_CLASS, VALUE_LG_CLASS } from "../../components/typography";
 
-const DAY_NAMES = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
 export function ClientDashboard() {
-  const { clientActivePlan, getClientActiveGoal, activeWorkout } =
-    useTraining();
+  const { getClientActiveGoal } = useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
   const { demoJourney } = useClientJourneys();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === "post-mvp";
   const { weightUnit, heightUnit } = useUnitPreferences();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [bookingReview, setBookingReview] = useState(false);
   const firstName = clientProfile?.firstName;
@@ -72,37 +59,10 @@ export function ClientDashboard() {
   const pctOf = (kcal: number) =>
     macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0;
 
-  // Determine today's workout from the active plan
-  const todayInfo = useMemo(() => {
-    if (!clientActivePlan) return null;
-    // Get day of week: JS Date: 0=Sun, we need 0=Mon
-    const jsDay = new Date().getDay();
-    const dayIdx = jsDay === 0 ? 6 : jsDay - 1; // Convert to 0=Mon
-    const weekIdx = (clientActivePlan.currentWeekNumber || 1) - 1;
-    const week = clientActivePlan.weeks[weekIdx];
-    if (!week) return null;
-    const day = week.days[dayIdx];
-    if (!day) return null;
-    return {
-      day,
-      dayIdx,
-      weekIdx,
-      dayName: DAY_NAMES[dayIdx],
-      isRest: day.type === "Rest",
-    };
-  }, [clientActivePlan]);
-
   const activeGoal = getClientActiveGoal("client-1");
   const goalEmptyMessage = isBeforeStage(demoJourney.stage, "program-ready")
     ? "Eli sets your goal when your program is ready."
     : "No goal set yet.";
-
-  const handleStartWorkout = () => {
-    if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
-    navigate(
-      `/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`,
-    );
-  };
 
   const reviewRequested = searchParams.get("review") === "1";
   const reviewOpened = useRef(false);
@@ -112,13 +72,6 @@ export function ClientDashboard() {
     reviewOpened.current = true;
     setBookingReview(true);
   }, [reviewRequested]);
-
-  const hasActiveSession = Boolean(
-    activeWorkout && activeWorkout.status === "in-progress",
-  );
-  const showStartCTA = Boolean(
-    todayInfo && !todayInfo.isRest && !hasActiveSession,
-  );
 
   return (
     <div className="w-full" data-parity="dashboard-page">
@@ -153,17 +106,19 @@ export function ClientDashboard() {
           className="h-full"
         />
 
-        <CyclePhaseWidget
-          presentation="client"
-          phase={clientPhase}
-          headingId="phase-heading"
-          className="h-full"
-          footer={
-            <WidgetLink trailing="arrow" to="/portal/cycle">
-              View cycle tracker
-            </WidgetLink>
-          }
-        />
+        {isPostMvp && (
+          <CyclePhaseWidget
+            presentation="client"
+            phase={clientPhase}
+            headingId="phase-heading"
+            className="h-full"
+            footer={
+              <WidgetLink trailing="arrow" to="/portal/cycle">
+                View cycle tracker
+              </WidgetLink>
+            }
+          />
+        )}
 
         {isPostMvp && (
           <ClientWidget
@@ -304,51 +259,6 @@ export function ClientDashboard() {
           </ClientWidget>
         )}
 
-        {isPostMvp && (
-          <ClientWidget
-            eyebrow="Today's focus"
-            icon={Activity}
-            headingId="focus-heading"
-            className="h-full lg:col-span-2"
-            action={
-              todayInfo && !todayInfo.isRest ? (
-                <Badge tone="pending">
-                  {todayInfo.dayName} &middot; {todayInfo.day.type}
-                </Badge>
-              ) : todayInfo?.isRest ? (
-                <Badge tone="muted">Rest Day</Badge>
-              ) : null
-            }
-          >
-            {activeGoal && (
-              <Badge tone="brand-secondary" className="mb-4">
-                <TargetIcon size={12} />
-                {activeGoal.type}
-              </Badge>
-            )}
-
-            {todayInfo?.isRest ? (
-              <p className="text-sm text-text-secondary leading-relaxed mb-10 max-w-2xl">
-                Today is a rest day. Focus on recovery, sleep, and nutrition.
-                Your body builds muscle during rest, not just in the gym.
-              </p>
-            ) : (
-              <p className="text-sm text-text-secondary leading-relaxed mb-10 max-w-2xl">
-                {todayInfo
-                  ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
-                  : "No active plan assigned yet. Your coach will set one up soon!"}
-              </p>
-            )}
-
-            {todayInfo?.isRest && (
-              <div className="mt-auto px-6 py-3.5 bg-surface-muted text-text-secondary text-sm font-medium rounded-control flex items-center gap-3">
-                <Activity size={16} />
-                Enjoy your rest day
-              </div>
-            )}
-          </ClientWidget>
-        )}
-
         {/* Profile Details Card - Spans 1 col */}
         <ProfileDetailsWidget
           presentation="client"
@@ -369,21 +279,6 @@ export function ClientDashboard() {
           onOpenChange={setBookingReview}
           open={bookingReview}
         />
-      )}
-
-      {isPostMvp && showStartCTA && (
-        <div className="mt-8 flex justify-center sm:justify-start">
-          <Button
-            type="button"
-            onClick={handleStartWorkout}
-            variant="primary"
-            size="md"
-            className="shadow-sm hover:shadow"
-          >
-            Start today's workout
-            <Play size={16} className="fill-current" aria-hidden="true" />
-          </Button>
-        </div>
       )}
     </div>
   );

@@ -26,6 +26,7 @@ import type {
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
 import {
+  isBeforeStage,
   JOURNEY_GENDERS,
   JOURNEY_STAGES,
   type JourneyGender,
@@ -72,6 +73,7 @@ import {
   RESOURCE_UPLOAD_OUTCOMES,
   RESOURCE_WRITE_OUTCOMES,
 } from '../services/resourceService';
+import { PROGRAM_SEEDS, seedRequiresProgramReady } from '../services/programSamples';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
@@ -380,9 +382,7 @@ export function DevToggle() {
   const { appState, setAppState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const journeyStages = JOURNEY_STAGES.filter(
-    (stage) =>
-      isPostMvp ||
-      (stage !== 'program-ready' && stage !== 'review-call-scheduled'),
+    (stage) => isPostMvp || stage !== 'review-call-scheduled',
   );
   const { replaceBookings, settings: callSettings, replaceMeetingLink } =
     useAssessmentCalls();
@@ -489,8 +489,7 @@ export function DevToggle() {
     const prototypeMode = parsePrototypeModeControl(value);
     const journeyStage =
       prototypeMode === 'mvp' &&
-      (appState.journeyStage === 'program-ready' ||
-        appState.journeyStage === 'review-call-scheduled')
+      appState.journeyStage === 'review-call-scheduled'
         ? 'approved'
         : appState.journeyStage;
 
@@ -498,7 +497,7 @@ export function DevToggle() {
   };
 
   return (
-    <>
+    <div data-print-hidden>
       <button
         onClick={() => setIsOpen(true)}
         className="pointer-events-auto fixed right-4 z-[9999] bg-surface-inverted text-surface-inverted-foreground p-3 rounded-full shadow-lg hover:bg-brand transition-colors bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:bottom-4"
@@ -1270,6 +1269,35 @@ export function DevToggle() {
                           {stage}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-program-seed" className={DEV_LABEL_CLASS}>
+                    Program
+                  </Label>
+                  <Select
+                    value={appState.programSeed}
+                    onValueChange={(value) => {
+                      const programSeed = optionOrDefault(PROGRAM_SEEDS, value, 'none');
+                      const needsPublished =
+                        seedRequiresProgramReady(programSeed) &&
+                        isBeforeStage(appState.journeyStage, 'program-ready');
+                      setAppState({
+                        programSeed,
+                        ...(needsPublished ? { journeyStage: 'program-ready' } : {}),
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="dev-program-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">No program</SelectItem>
+                      <SelectItem value="draft">Draft version 1</SelectItem>
+                      <SelectItem value="published">Version 1 published</SelectItem>
+                      <SelectItem value="two-versions">Two versions and a draft</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2131,6 +2159,6 @@ export function DevToggle() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

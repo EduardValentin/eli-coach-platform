@@ -6,12 +6,16 @@ import { useTraining, type Exercise } from '../../context/TrainingContext';
 import {
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
+  EXERCISE_ROLE_LABELS,
   EXERCISE_TAGS,
   EXERCISE_TAG_LABELS,
   EXERCISE_TYPES,
   EXERCISE_TYPE_LABELS,
   MEASURE_EXAMPLES,
   MEASURE_LABELS,
+  MOVEMENT_PATTERNS,
+  MOVEMENT_PATTERN_LABELS,
   MUSCLES,
   defaultMeasureFor,
   draftProblems,
@@ -23,8 +27,10 @@ import {
   type Difficulty,
   type Equipment,
   type ExerciseDraft,
+  type ExerciseRole,
   type ExerciseType,
   type Measure,
+  type MovementPattern,
   type Muscle,
 } from '../../domain/exercises';
 import {
@@ -73,6 +79,8 @@ const EMPTY: Draft = {
   secondaryMuscles: [],
   equipment: [],
   difficulty: 'Beginner',
+  pattern: null,
+  role: null,
   tags: [],
   cues: '',
 };
@@ -88,6 +96,8 @@ function draftFrom(exercise: Exercise): Draft {
     secondaryMuscles: exercise.secondaryMuscles,
     equipment: exercise.equipment,
     difficulty: exercise.difficulty,
+    pattern: exercise.pattern ?? null,
+    role: exercise.role ?? null,
     tags: exercise.tags,
     cues: exercise.cues,
   };
@@ -278,6 +288,7 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
   const ids = {
     name: useId(), nameProblem: useId(), type: useId(), measure: useId(),
     sidesLabel: useId(), primary: useId(), primaryProblem: useId(), secondary: useId(), equipment: useId(),
+    pattern: useId(), patternProblem: useId(), role: useId(), roleProblem: useId(),
     difficulty: useId(), tagsLabel: useId(), cues: useId(), cuesProblem: useId(), videoLabel: useId(),
   };
 
@@ -318,6 +329,8 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
     secondaryMuscles: [...draft.secondaryMuscles],
     equipment: [...draft.equipment],
     difficulty: draft.difficulty,
+    pattern: draft.type === 'resistance' ? draft.pattern ?? undefined : undefined,
+    role: draft.type === 'resistance' ? draft.role ?? undefined : undefined,
     tags: [...draft.tags],
     videoUrl,
     thumbnailUrl: editing?.thumbnailUrl,
@@ -494,6 +507,59 @@ function ExerciseEditor({ editing, library }: { editing: Exercise | undefined; l
                 onToggle={(item: Equipment) => set('equipment', toggled(draft.equipment, item))}
               />
             </SettingsRow>
+            {draft.type === 'resistance' && (
+              <>
+                <SettingsRow
+                  htmlFor={ids.pattern}
+                  title="Movement pattern"
+                  required
+                  layout="stacked"
+                  problem={
+                    shownProblems.pattern && <InlineProblem id={ids.patternProblem}>{shownProblems.pattern}</InlineProblem>
+                  }
+                >
+                  <Select
+                    value={draft.pattern ?? ''}
+                    onValueChange={(value) => set('pattern', value as MovementPattern)}
+                  >
+                    <SelectTrigger
+                      id={ids.pattern}
+                      aria-invalid={shownProblems.pattern ? true : undefined}
+                      aria-describedby={shownProblems.pattern ? ids.patternProblem : undefined}
+                    >
+                      <SelectValue placeholder="Choose a pattern" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MOVEMENT_PATTERNS.map((pattern) => (
+                        <SelectItem key={pattern} value={pattern}>{MOVEMENT_PATTERN_LABELS[pattern]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingsRow>
+                <SettingsRow
+                  htmlFor={ids.role}
+                  title="Role"
+                  required
+                  layout="stacked"
+                  problem={shownProblems.role && <InlineProblem id={ids.roleProblem}>{shownProblems.role}</InlineProblem>}
+                >
+                  <Select value={draft.role ?? ''} onValueChange={(value) => set('role', value as ExerciseRole)}>
+                    <SelectTrigger
+                      id={ids.role}
+                      aria-invalid={shownProblems.role ? true : undefined}
+                      aria-describedby={shownProblems.role ? ids.roleProblem : undefined}
+                    >
+                      <SelectValue placeholder="Choose a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXERCISE_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>{EXERCISE_ROLE_LABELS[role]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingsRow>
+              </>
+            )}
             <SettingsRow htmlFor={ids.difficulty} title="Difficulty" layout="stacked">
               <Select value={draft.difficulty} onValueChange={(value) => set('difficulty', value as Difficulty)}>
                 <SelectTrigger id={ids.difficulty}><SelectValue /></SelectTrigger>

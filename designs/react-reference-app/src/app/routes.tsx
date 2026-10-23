@@ -12,6 +12,7 @@ import { TrainingProvider } from "./context/TrainingContext";
 import { CheckinProvider } from "./context/CheckinContext";
 import { AssessmentCallProvider } from "./context/AssessmentCallContext";
 import { ClientJourneyProvider } from "./context/ClientJourneyContext";
+import { ProgramProvider } from "./context/ProgramContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { ResourceProvider } from "./context/ResourceContext";
 import { Store } from "./pages/Store";
@@ -24,9 +25,9 @@ import { CheckoutComplete } from "./pages/CheckoutComplete";
 import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
+import { ClientProgram } from "./pages/client-portal/ClientProgram";
+import { ClientProgramDocument } from "./pages/client-portal/ClientProgramDocument";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
-import { ClientPlan } from "./pages/client-portal/ClientPlan";
-import { WorkoutViewer } from "./pages/client-portal/WorkoutViewer";
 import { CoachLayout } from "./components/coach-portal/CoachLayout";
 import { CoachDashboard } from "./pages/coach-portal/CoachDashboard";
 import { CoachAssessmentCalls } from "./pages/coach-portal/CoachAssessmentCalls";
@@ -37,17 +38,14 @@ import { TrainingHub } from "./pages/coach-portal/TrainingHub";
 import { ExerciseEditorPage } from "./pages/coach-portal/ExerciseEditorPage";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
 import { FoodEditorPage } from "./pages/coach-portal/FoodEditorPage";
+import { ClientProgramPage } from "./pages/coach-portal/ClientProgramPage";
+import { ClientProgramDocument as CoachProgramDocument } from "./pages/coach-portal/ClientProgramDocument";
+import { ProgramEditorPage } from "./pages/coach-portal/ProgramEditorPage";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
 import { NutritionPlanBuilderPage } from "./pages/coach-portal/NutritionPlanBuilderPage";
 import { NutritionDayEditorPage } from "./pages/coach-portal/NutritionDayEditorPage";
-import { PlanBuilderPage } from "./pages/coach-portal/PlanBuilderPage";
-import { ClientPlanBuilderPage } from "./pages/coach-portal/ClientPlanBuilderPage";
 import { CoachCheckins } from "./pages/coach-portal/CoachCheckins";
-import { WorkoutReview } from "./pages/coach-portal/WorkoutReview";
-import { WorkoutHistory } from "./pages/coach-portal/WorkoutHistory";
 import { CoachSettings } from "./pages/coach-portal/CoachSettings";
-import { ClientWorkoutHistory } from "./pages/client-portal/ClientWorkoutHistory";
-import { ClientWorkoutReview } from "./pages/client-portal/ClientWorkoutReview";
 import { ClientCycleTracker } from "./pages/client-portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/client-portal/ClientOnboarding";
 import { ClientWelcome } from "./pages/client-portal/ClientWelcome";
@@ -89,6 +87,7 @@ function Root() {
           <CycleProvider>
             <AssessmentCallProvider>
             <ClientJourneyProvider>
+            <ProgramProvider>
             <NotificationProvider>
             <CheckinProvider>
             <MessagingProvider>
@@ -103,6 +102,7 @@ function Root() {
             </MessagingProvider>
             </CheckinProvider>
             </NotificationProvider>
+            </ProgramProvider>
             </ClientJourneyProvider>
             </AssessmentCallProvider>
           </CycleProvider>
@@ -150,10 +150,8 @@ export const router = createBrowserRouter(
           Component: PortalLayout,
           children: [
             { index: true, Component: ClientDashboard },
+            { path: "program", Component: ClientProgram },
             { path: "messages", Component: ClientMessages },
-            { path: "plan", Component: ClientPlan },
-            { path: "history", Component: ClientWorkoutHistory },
-            { path: "history/:logId", Component: ClientWorkoutReview },
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },
             { path: "nutrition", Component: ClientNutrition },
@@ -162,8 +160,9 @@ export const router = createBrowserRouter(
             { path: "settings", Component: ClientSettings }
           ]
         },
-        { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
         { path: "portal/checkins/:checkinId/join", element: <CheckinJoin party="client" /> },
+        { path: "portal/program/document", Component: ClientProgramDocument },
+        { path: "portal/program/document/:version", Component: ClientProgramDocument },
         { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
         { path: "portal/ended", Component: PortalEnded },
@@ -184,6 +183,7 @@ export const router = createBrowserRouter(
             { path: "messages", Component: CoachMessages },
             { path: "clients", Component: ClientsList },
             { path: "clients/:id", Component: ClientDetails },
+            { path: "clients/:id/program", Component: ClientProgramPage },
             { path: "training", Component: TrainingHub },
             { path: "training/exercises/new", Component: ExerciseEditorPage },
             { path: "training/exercises/:exerciseId", Component: ExerciseEditorPage },
@@ -192,12 +192,7 @@ export const router = createBrowserRouter(
             { path: "nutrition/foods/:foodId", Component: FoodEditorPage },
             { path: "nutrition/client/:clientId/plan", Component: NutritionPlanBuilderPage },
             { path: "nutrition/client/:clientId/plan/day/:date", Component: NutritionDayEditorPage },
-            { path: "training/template-builder", Component: PlanBuilderPage },
-            { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
-            { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
             { path: "checkins", Component: CoachCheckins },
-            { path: "clients/:id/workout/:logId", Component: WorkoutReview },
-            { path: "clients/:id/history", Component: WorkoutHistory },
             { path: "clients/:id/cycle", Component: CoachClientCycle },
             { path: "clients/:id/resources", Component: CoachClientResources },
             { path: "clients/:id/edit", Component: EditClientProfile },
@@ -206,6 +201,9 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "coach/checkins/:checkinId/join", element: <CheckinJoin party="coach" /> },
+        { path: "coach/clients/:id/program/new", Component: ProgramEditorPage },
+        { path: "coach/clients/:id/program/draft", Component: ProgramEditorPage },
+        { path: "coach/clients/:id/program/document/:version", Component: CoachProgramDocument },
         { path: "coach/nutrition/recipe-builder", Component: RecipeBuilderPage },
         { path: "coach/nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
           ]

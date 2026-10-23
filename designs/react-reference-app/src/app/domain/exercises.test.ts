@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   DIFFICULTIES,
   EQUIPMENT,
+  EXERCISE_ROLES,
   EXERCISE_TAGS,
   EXERCISE_TYPES,
   MEASURES,
+  MOVEMENT_PATTERN_LABELS,
+  MOVEMENT_PATTERNS,
   MUSCLES,
   defaultMeasureFor,
   draftProblems,
@@ -28,6 +31,8 @@ const squat: ExerciseDraft = {
   equipment: ['Barbell', 'Squat rack'],
   difficulty: 'Intermediate',
   tags: ['Strength'],
+  pattern: 'squat',
+  role: 'main-compound',
   cues: '',
 };
 
@@ -37,7 +42,7 @@ describe('the exercise vocabularies', () => {
     expect(EXERCISE_TYPES).toEqual(['resistance', 'cardio', 'mobility', 'stretching', 'breathing']);
     expect(MEASURES).toEqual(['reps', 'time', 'distance', 'breaths']);
     expect(DIFFICULTIES).toEqual(['Beginner', 'Intermediate', 'Advanced']);
-    expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery']);
+    expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery', 'Conditioning']);
   });
 
   it('lists nineteen muscles ending with Full body and twenty-three pieces of equipment without Bodyweight', () => {
@@ -229,6 +234,41 @@ describe('draftProblems', () => {
     expect(resistance.primaryMuscles).toBe('Pick at least one primary muscle');
     expect(mobility.primaryMuscles).toBe('Pick at least one primary muscle');
     expect(cardio.primaryMuscles).toBeUndefined();
+  });
+});
+
+describe('movement pattern and role', () => {
+  it('lists eleven movement patterns, Conditioning last, and three roles', () => {
+    // assert
+    expect(MOVEMENT_PATTERNS).toEqual(['squat', 'lunge', 'hinge', 'horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull', 'core', 'carry', 'isolation', 'conditioning']);
+    expect(MOVEMENT_PATTERN_LABELS.conditioning).toBe('Conditioning');
+    expect(EXERCISE_ROLES).toEqual(['main-compound', 'secondary-compound', 'isolation']);
+  });
+
+  it('requires pattern and role on a resistance exercise', () => {
+    // arrange
+    const draft = { ...squat, pattern: null, role: null };
+
+    // act
+    const problems = draftProblems(draft, []);
+
+    // assert
+    expect(problems.pattern).toBe('Choose a movement pattern');
+    expect(problems.role).toBe('Choose a role');
+  });
+
+  it('ignores pattern and role on mobility, cardio, stretching and breathing', () => {
+    for (const type of ['mobility', 'cardio', 'stretching', 'breathing'] as const) {
+      // arrange
+      const draft = { ...squat, type, pattern: null, role: null };
+
+      // act
+      const problems = draftProblems(draft, []);
+
+      // assert
+      expect(problems).not.toHaveProperty('pattern');
+      expect(problems).not.toHaveProperty('role');
+    }
   });
 });
 
