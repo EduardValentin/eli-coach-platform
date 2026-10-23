@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +10,6 @@ import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider, useCheckins } from '../../context/CheckinContext';
 import { ClientJourneyProvider, useClientJourneys } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { CoachProfileProvider } from '../../context/CoachProfileContext';
 import { MessagingProvider } from '../../context/MessagingContext';
 import { NotificationProvider } from '../../context/NotificationContext';
@@ -79,7 +79,17 @@ function DemoPanel() {
   );
 }
 
-function renderPanel(urlQuery: string) {
+function WednesdayPreferringPanel() {
+  const { demoJourney } = useClientJourneys();
+  const journey = {
+    ...demoJourney,
+    settings: { ...demoJourney.settings, preferredCheckInWeekday: 'wed' as const },
+  };
+
+  return <WeeklyCheckinPanel journey={journey} />;
+}
+
+function renderPanel(urlQuery: string, content: ReactNode = <DemoPanel />) {
   const path = `/coach/clients/ac-demo-client-1?session=coach&${urlQuery}`;
   window.history.replaceState({}, '', path);
 
@@ -87,13 +97,12 @@ function renderPanel(urlQuery: string) {
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <CoachProfileProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <NotificationProvider>
                   <MessagingProvider>
                     <CheckinProvider>
-                      <DemoPanel />
+                      {content}
                       <Toaster />
                       <DevToggle />
                     </CheckinProvider>
@@ -101,7 +110,6 @@ function renderPanel(urlQuery: string) {
                 </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </CoachProfileProvider>
       </AppProvider>
     </MemoryRouter>,
@@ -318,6 +326,23 @@ describe('setting up a weekly check-in', () => {
         .map((hour) => hour.textContent),
     ).toEqual(['5:00 PM', '6:00 PM', '7:00 PM']);
     expect(within(dialog).getByRole('button', { name: 'Set up' })).toBeDisabled();
+  });
+
+  it('suggests the check-in day from her preferences', async () => {
+    // arrange
+    const user = renderPanel('jstage=approved', <WednesdayPreferringPanel />);
+
+    // act
+    await user.click(setUpAction());
+
+    // assert
+    const dialog = await openedDialog(SET_UP_DIALOG);
+    expect(
+      within(within(dialog).getByRole('radiogroup', { name: 'Day (required)' })).getByRole(
+        'radio',
+        { name: 'Wednesday' },
+      ),
+    ).toBeChecked();
   });
 
   it('counts the weeks that would clash at each hour', async () => {

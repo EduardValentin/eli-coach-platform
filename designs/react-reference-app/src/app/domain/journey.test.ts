@@ -1,28 +1,33 @@
 import { describe, expect, it } from 'vitest';
+import { openedClientProfile, UNSET_CLIENT_SETTINGS } from './clientProfile';
 import {
   advance,
   clientStatusLabel,
   emptyOnboarding,
   isBeforeStage,
   type ClientJourney,
+  type JourneyIdentity,
   type JourneyEvent,
   type JourneyStage,
 } from './journey';
+
+const JANE: JourneyIdentity = {
+  firstName: 'Jane',
+  lastName: 'Doe',
+  dateOfBirth: '1998-03-14',
+  email: 'jane@example.com',
+  gender: 'female',
+  country: 'Romania',
+};
 
 function journeyAt(stage: JourneyStage): ClientJourney {
   return {
     callId: 'ac-1',
     callStartsAt: new Date('2026-03-10T15:00:00.000Z'),
     stage,
-    identity: {
-      firstName: 'Jane',
-      lastName: 'Doe',
-      dateOfBirth: '1998-03-14',
-      email: 'jane@example.com',
-      gender: 'female',
-      country: 'Romania',
-    },
-    profile: null,
+    bookedIdentity: JANE,
+    profile: openedClientProfile(JANE),
+    settings: UNSET_CLIENT_SETTINGS,
     pricing: 'regular',
     paymentLink: null,
     paidAt: null,

@@ -14,7 +14,6 @@ import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider, useCheckins } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { CLIENT_PORTAL_LINKS, type ClientPortalLink } from './navigation-links';
 import { PORTAL_MAIN_ID, PortalSidebar } from './PortalSidebar';
@@ -70,7 +69,6 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
   render(
     <MemoryRouter>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -88,7 +86,6 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

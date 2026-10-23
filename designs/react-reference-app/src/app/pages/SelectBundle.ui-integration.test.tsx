@@ -8,7 +8,6 @@ import { SelectBundle } from './SelectBundle';
 import { AppProvider } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { StoreProvider } from '../context/StoreContext';
 import { findCheckoutSession } from '../services/checkoutService';
 
@@ -51,7 +50,6 @@ function renderPage(address: string) {
     <MemoryRouter initialEntries={[`/select-bundle${address}`]}>
       <AppProvider>
         <StoreProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <SecondLinkProbe />
@@ -61,7 +59,6 @@ function renderPage(address: string) {
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,

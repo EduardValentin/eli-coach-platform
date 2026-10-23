@@ -12,7 +12,6 @@ import {
   useClientJourneys,
 } from '../context/ClientJourneyContext';
 import { ClientJourneyGate } from '../components/client-portal/ClientJourneyGate';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../context/UnitPreferencesContext';
 
 const DEMO_TOKEN = 'inv-seed-ac-demo-client-1';
@@ -46,7 +45,6 @@ function renderInvitation(address: string) {
   render(
     <MemoryRouter initialEntries={[address]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <SessionProbe />
@@ -56,7 +54,6 @@ function renderInvitation(address: string) {
               </Routes>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -68,7 +65,6 @@ function renderInvitationThroughPortal(address: string) {
   render(
     <MemoryRouter initialEntries={[address]}>
       <AppProvider>
-        <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -85,7 +81,6 @@ function renderInvitationThroughPortal(address: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

@@ -28,7 +28,6 @@ import {
   DEMO_JOURNEY_CALL_ID,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   emptyOnboardingDraft,
@@ -93,7 +92,6 @@ function renderOnboarding(devParams: string) {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -118,7 +116,6 @@ function renderOnboarding(devParams: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

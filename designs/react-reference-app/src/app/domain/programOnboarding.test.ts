@@ -1,17 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { seedJourney } from '../services/clientJourneySamples';
 import type { ClientJourney, OnboardingFormId } from './journey';
+import type { CoachingFacts } from './clientProfile';
 import {
-  clientEquipment,
-  equipmentChipsOf,
-  equipmentForChips,
   estimatedCycleDay,
   recurringSymptoms,
   setupFromJourney,
 } from './programOnboarding';
-import { EQUIPMENT } from './exercises';
 
-function demoJourney(cycleOverrides: Record<string, unknown> = {}): ClientJourney {
+function demoJourney(cycleOverrides: Record<string, unknown> = {}, stage: ClientJourney['stage'] = 'approved'): ClientJourney {
   const journey = seedJourney({
     callId: 'program-onboarding',
     identity: {
@@ -22,7 +19,7 @@ function demoJourney(cycleOverrides: Record<string, unknown> = {}): ClientJourne
       gender: 'female',
       country: 'RO',
     },
-    stage: 'approved',
+    stage,
     startPath: 'immediate',
     subscriptionStatus: 'active',
     pricing: 'regular',
@@ -32,6 +29,7 @@ function demoJourney(cycleOverrides: Record<string, unknown> = {}): ClientJourne
     measurementsDue: 'none',
     lifeStage: 'none',
     seededPhotos: 'none',
+    seededAvatar: 'none',
     refund: 'none',
     paymentProblem: false,
     cardOnFile: 'visa',
@@ -51,62 +49,14 @@ function demoJourney(cycleOverrides: Record<string, unknown> = {}): ClientJourne
   } as ClientJourney;
 }
 
-function withGoalAnswers(answers: Record<string, string | string[]>): ClientJourney {
+function withCoaching(edit: Partial<CoachingFacts>): ClientJourney {
   const journey = demoJourney();
-  return {
-    ...journey,
-    onboarding: {
-      ...journey.onboarding,
-      answers: {
-        ...journey.onboarding.answers,
-        'goal-availability': { ...journey.onboarding.answers['goal-availability'], ...answers },
-      },
-    },
-  };
+  const { profile } = journey;
+  return { ...journey, profile: { ...profile, coaching: profile.coaching && { ...profile.coaching, ...edit } } };
 }
-
-function withEquipment(chips: string[]): ClientJourney {
-  return withGoalAnswers({ availableEquipment: chips });
-}
-
-function withTrainingDays(days: string): ClientJourney {
-  return withGoalAnswers({ trainingDaysPerWeek: days });
-}
-
-describe('answer mappers', () => {
-  it('maps the experience level', () => {
-    // arrange
-    const answers = [
-      'I train consistently and follow a structured program',
-      'I train regularly, but without a structured plan',
-      'I have trained before, but not recently',
-      '',
-    ];
-
-    // act
-    const levels = answers.map(experienceLevel => setupFromJourney(withGoalAnswers({ experienceLevel })).level);
-
-    // assert
-    expect(levels).toEqual(['intermediate', 'beginner', 'beginner', 'beginner']);
-  });
-
-  it('maps training days and session minutes with defaults', () => {
-    // arrange
-    const dayAnswers = ['2 days', '3 days', '4 days', '5 or more days', ''];
-    const minuteAnswers = ['Up to 30 minutes', '30–45 minutes', '45–60 minutes', ''];
-
-    // act
-    const days = dayAnswers.map(trainingDaysPerWeek => setupFromJourney(withGoalAnswers({ trainingDaysPerWeek })).trainingDays);
-    const minutes = minuteAnswers.map(minutesPerSession => setupFromJourney(withGoalAnswers({ minutesPerSession })).sessionMinutes);
-
-    // assert
-    expect(days).toEqual([2, 3, 4, 5, 3]);
-    expect(minutes).toEqual([30, 45, 60, 60]);
-  });
-});
 
 describe('setupFromJourney', () => {
-  it('reads the demo client onboarding', () => {
+  it('reads the demo client profile once her answers are approved', () => {
     // act
     const setup = setupFromJourney(demoJourney());
 
@@ -123,64 +73,35 @@ describe('setupFromJourney', () => {
     });
   });
 
-  it('suggests the upper and lower split for four training days', () => {
+  it('follows the coach edits to her coaching facts', () => {
     // act
-    const setup = setupFromJourney(withTrainingDays('4 days'));
+    const setup = setupFromJourney(
+      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general', equipment: ['Dumbbells', 'Bands'] }),
+    );
 
     // assert
-    expect(setup.splitShape).toBe('upper-lower');
+    expect(setup).toMatchObject({
+      trainingDays: 4,
+      splitShape: 'upper-lower',
+      level: 'advanced',
+      cycleMode: 'general',
+      equipment: ['Dumbbells', 'Bands'],
+    });
   });
 
-  it('starts the equipment from the onboarding chips', () => {
+  it('starts from neutral defaults before her answers are approved', () => {
     // act
-    const setup = setupFromJourney(withEquipment(['Dumbbells', 'Resistance bands']));
+    const setup = setupFromJourney(demoJourney({}, 'submitted'));
 
     // assert
-    expect(setup.equipment).toEqual(['Dumbbells', 'Bench', 'Bands']);
-  });
-});
-
-describe('clientEquipment', () => {
-  it('lists every equipment value for a full gym', () => {
-    // act
-    const equipment = clientEquipment(withEquipment(['Full gym']));
-
-    // assert
-    expect(equipment).toEqual([...EQUIPMENT]);
-  });
-
-  it('maps chips, deduplicates and ignores unknown chips', () => {
-    // act
-    const equipment = clientEquipment(withEquipment(['Barbell', 'Dumbbells', 'Resistance bands', 'Unknown']));
-
-    // assert
-    expect(equipment).toEqual(['Barbell', 'Squat rack', 'Bench', 'EZ bar', 'Trap bar', 'Dumbbells', 'Bands']);
-  });
-
-  it('is empty for bodyweight only', () => {
-    // act
-    const equipment = clientEquipment(withEquipment(['Bodyweight only']));
-
-    // assert
-    expect(equipment).toEqual([]);
-  });
-});
-
-describe('equipment chips', () => {
-  it('reads the chips she picked in onboarding', () => {
-    // act
-    const chips = equipmentChipsOf(withEquipment(['Dumbbells', 'Resistance bands']));
-
-    // assert
-    expect(chips).toEqual(['Dumbbells', 'Resistance bands']);
-  });
-
-  it('maps chips to library equipment', () => {
-    // act
-    const equipment = equipmentForChips(['Kettlebells', 'Resistance bands']);
-
-    // assert
-    expect(equipment).toEqual(['Kettlebell', 'Bands']);
+    expect(setup).toMatchObject({
+      goal: '',
+      level: 'beginner',
+      trainingDays: 3,
+      sessionMinutes: 60,
+      cycleMode: 'general',
+      equipment: [],
+    });
   });
 });
 

@@ -60,7 +60,7 @@ export function ClientWelcome() {
           className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md"
           data-parity="welcome-heading"
         >
-          Welcome to Evoa Fitness, {demoJourney.identity.firstName}
+          Welcome to Evoa Fitness, {demoJourney.profile.identity.firstName}
         </h1>
 
         <p className="mt-5 text-lg leading-relaxed text-text-primary">
@@ -75,7 +75,7 @@ export function ClientWelcome() {
 
         <div className="mt-4 grid gap-4 text-base leading-relaxed text-text-secondary">
           <p>{TOGETHER}</p>
-          <p>{FORM_INTRO[welcomeWording(demoJourney.identity.gender)]}</p>
+          <p>{FORM_INTRO[welcomeWording(demoJourney.profile.identity.gender)]}</p>
           <p>{PACE}</p>
           <p>{CLOSING}</p>
         </div>

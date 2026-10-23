@@ -7,7 +7,6 @@ import { ClientProgramPage } from './ClientProgramPage';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
@@ -38,7 +37,6 @@ function renderPage(clientId: string, query: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -50,7 +48,6 @@ function renderPage(clientId: string, query: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </TrainingProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

@@ -38,7 +38,7 @@ export function OnboardingReviewDialog({
   const [openForms, setOpenForms] = useState<string[]>(() =>
     forms.map((form) => form.formId),
   );
-  const { object } = clientPronouns(journey.identity.gender);
+  const { object } = clientPronouns(journey.profile.identity.gender);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,7 +48,7 @@ export function OnboardingReviewDialog({
       >
         <DialogHeader>
           <DialogTitle>
-            Review {journey.identity.firstName}&rsquo;s answers
+            Review {journey.profile.identity.firstName}&rsquo;s answers
           </DialogTitle>
           <DialogDescription>
             Tick any answer you want {object} to revisit, then approve or ask

@@ -17,7 +17,7 @@ type CopyBlockDialogProps = {
 };
 
 function clientName(program: Program, journeys: Record<string, ClientJourney>): string {
-  const identity = journeys[program.callId]?.identity;
+  const identity = journeys[program.callId]?.profile.identity;
   return identity ? `${identity.firstName} ${identity.lastName}` : program.callId;
 }
 

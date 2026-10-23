@@ -41,12 +41,14 @@ import {
   PHOTO_PROCESSING_OUTCOMES,
   PHOTO_REMOVAL_OUTCOMES,
 } from '../services/measurementService';
+import { PROFILE_SAVE_OUTCOMES } from '../services/clientProfileService';
 import {
   PROTOTYPE_CARDS_ON_FILE,
   PROTOTYPE_DAYS_SINCE_PAYMENT,
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_REFUNDS,
+  PROTOTYPE_SEEDED_AVATARS,
   PROTOTYPE_SEEDED_PHOTOS,
   type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
@@ -405,7 +407,7 @@ export function DevToggle() {
       ? [
           {
             key: `${journey.callId}-payment`,
-            label: `Open payment link · ${journey.identity.firstName} ${journey.identity.lastName}`,
+            label: `Open payment link · ${journey.profile.identity.firstName} ${journey.profile.identity.lastName}`,
             to: withDevParams(`/select-bundle#${journey.paymentLink.token}`),
           },
         ]
@@ -414,7 +416,7 @@ export function DevToggle() {
       ? [
           {
             key: `${journey.callId}-invitation`,
-            label: `Open invitation link · ${journey.identity.firstName} ${journey.identity.lastName}`,
+            label: `Open invitation link · ${journey.profile.identity.firstName} ${journey.profile.identity.lastName}`,
             to: withDevParams(`/invitation#${journey.invitation.token}`),
           },
         ]
@@ -1841,6 +1843,38 @@ export function DevToggle() {
 
                 <div className="space-y-2">
                   <Label
+                    htmlFor="dev-profile-save"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Profile saves
+                  </Label>
+                  <Select
+                    value={appState.profileSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        profileSave: optionOrDefault(
+                          PROFILE_SAVE_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-profile-save"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
                     htmlFor="dev-seeded-photos"
                     className={DEV_LABEL_CLASS}
                   >
@@ -1864,6 +1898,35 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="latest">On the latest entry</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-seeded-avatar"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Seeded profile picture
+                  </Label>
+                  <Select
+                    value={appState.journeySeededAvatar}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeySeededAvatar: optionOrDefault(
+                          PROTOTYPE_SEEDED_AVATARS,
+                          value,
+                          'none',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-seeded-avatar" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="picture">Picture</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

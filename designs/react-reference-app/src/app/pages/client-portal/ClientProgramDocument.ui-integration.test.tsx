@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
@@ -30,7 +29,6 @@ function renderDocumentRoute(path: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-          <ClientProfileProvider>
             <UnitPreferencesProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
@@ -44,7 +42,6 @@ function renderDocumentRoute(path: string) {
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </UnitPreferencesProvider>
-          </ClientProfileProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>,

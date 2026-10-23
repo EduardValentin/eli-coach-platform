@@ -6,7 +6,6 @@ import { Navbar } from './Navbar';
 import { AppProvider, useAppState } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { STORE_PRODUCTS, StoreProvider, useStore } from '../context/StoreContext';
 import { SignInError } from '../services/authService';
 
@@ -59,14 +58,12 @@ function renderNavbar(url = '/') {
     <MemoryRouter initialEntries={['/']}>
       <AppProvider>
         <StoreProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <Navbar />
                 <SessionProbe />
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,
@@ -91,14 +88,12 @@ function renderNavbarWithCart() {
     <MemoryRouter initialEntries={['/']}>
       <AppProvider>
         <StoreProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <Navbar />
                 <CartFixture />
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,

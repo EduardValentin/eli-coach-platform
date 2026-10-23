@@ -1,5 +1,5 @@
 import { subDays } from 'date-fns';
-import { AWAITING_REVIEW_CALL_ID } from '../context/ClientJourneyContext';
+import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 import type { Resource, ResourceFileKind } from '../domain/resources';
 import { documentPageArt, plateGuideArt } from '../utils/resourcePageArt';
 import {
@@ -40,7 +40,7 @@ type SampleSpec = {
 
 const SAMPLE_SPECS: SampleSpec[] = [
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Plate portions guide',
     description: 'Half the plate vegetables, a quarter protein, a quarter carbs. Keep it on the fridge.',
     tags: ['Nutrition'],
@@ -51,7 +51,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     opened: false,
   },
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Glute activation warm-up',
     description: 'Run through this before every lower-body session. Ten minutes is enough.',
     tags: ['Training', 'Glutes'],
@@ -63,7 +63,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     opened: false,
   },
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Luteal phase meal ideas',
     description: 'Warm, filling meals for the week before your period, with easy swaps.',
     tags: ['Nutrition', 'Cycle'],
@@ -74,7 +74,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     opened: true,
   },
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Weekly macro tracker',
     description: 'Fill in one row a day. Totals add up on their own.',
     tags: ['Nutrition', 'Tracking'],
@@ -85,7 +85,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     opened: true,
   },
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Hip thrust form checklist',
     description: '',
     tags: ['Training', 'Form'],
@@ -97,7 +97,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     opened: true,
   },
   {
-    clientId: 'client-1',
+    clientId: DEMO_JOURNEY_CALL_ID,
     title: 'Sleep and recovery basics',
     description: 'What a good night does for your training, and the small habits that get you there.',
     tags: ['Recovery', 'Sleep', 'Habits'],

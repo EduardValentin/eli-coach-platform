@@ -1,5 +1,5 @@
 import type { CoachingSubscription } from './coachingSubscription';
-import type { JourneyProfile } from './clientProfile';
+import type { ClientProfile, ClientSettings } from './clientProfile';
 import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
 export type JourneyStage =
@@ -196,8 +196,9 @@ export type ClientJourney = {
   callId: string;
   callStartsAt: Date;
   stage: JourneyStage;
-  identity: JourneyIdentity;
-  profile: JourneyProfile | null;
+  bookedIdentity: JourneyIdentity;
+  profile: ClientProfile;
+  settings: ClientSettings;
   pricing: JourneyPricing;
   bookingNotes: string | null;
   paymentLink: JourneyPaymentLink | null;

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Target as TargetIcon, Activity, Flame } from "lucide-react";
+import { Target as TargetIcon, Flame } from "lucide-react";
 import { useTraining } from "../../context/TrainingContext";
 import { useCycle } from "../../context/CycleContext";
-import { useClientProfile } from "../../context/ClientProfileContext";
+import { useNutrition } from "../../context/NutritionContext";
+import { measuredWeights } from "../../domain/clientProfile";
 import { useUnitPreferences } from "../../context/UnitPreferencesContext";
 import { useClientJourneys } from "../../context/ClientJourneyContext";
 import { isBeforeStage } from "../../domain/journey";
@@ -14,7 +15,6 @@ import { ReviewCallScheduler } from "../../components/client-portal/ReviewCallSc
 import { ClientWidget } from "../../components/client-portal/ClientWidget";
 import { GoalWidget } from "../../components/GoalWidget";
 import { CyclePhaseWidget } from "../../components/CyclePhaseWidget";
-import { ProfileDetailsWidget } from "../../components/ProfileDetailsWidget";
 import { ProgressWidget } from "../../components/ProgressWidget";
 import { MACRO_BAR } from "../../components/coach-portal/nutrition/nutrition-constants";
 import { useAppState } from "../../context/AppContext";
@@ -26,38 +26,20 @@ import { LABEL_CLASS, VALUE_LG_CLASS } from "../../components/typography";
 export function ClientDashboard() {
   const { getClientActiveGoal } = useTraining();
   const { clientPhase } = useCycle();
-  const { clientProfile } = useClientProfile();
   const { demoJourney } = useClientJourneys();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === "post-mvp";
-  const { weightUnit, heightUnit } = useUnitPreferences();
+  const { weightUnit } = useUnitPreferences();
   const [searchParams] = useSearchParams();
   const [bookingReview, setBookingReview] = useState(false);
-  const firstName = clientProfile?.firstName;
-  const greeting = firstName ? `Welcome back, ${firstName}.` : "Welcome back.";
-
-  // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
-  const proteinG = clientProfile?.proteinGrams ?? 0;
-  const carbsG = clientProfile?.carbsGrams ?? 0;
-  const fatsG = clientProfile?.fatsGrams ?? 0;
-  const macros = [
-    {
-      label: "Protein",
-      grams: proteinG,
-      kcal: proteinG * 4,
-      barClass: MACRO_BAR.protein,
-    },
-    {
-      label: "Carbs",
-      grams: carbsG,
-      kcal: carbsG * 4,
-      barClass: MACRO_BAR.carb,
-    },
-    { label: "Fats", grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
-  ];
-  const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
-  const pctOf = (kcal: number) =>
-    macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0;
+  const { profile } = demoJourney;
+  const greeting = `Welcome back, ${profile.identity.firstName}.`;
+  const { startingWeightKg, currentWeightKg } = measuredWeights(demoJourney.measurements);
+  const weights =
+    startingWeightKg !== null && currentWeightKg !== null
+      ? { startingWeightKg, currentWeightKg }
+      : null;
+  const primaryGoal = profile.coaching?.primaryGoal ?? null;
 
   const activeGoal = getClientActiveGoal("client-1");
   const goalEmptyMessage = isBeforeStage(demoJourney.stage, "program-ready")
@@ -92,7 +74,7 @@ export function ClientDashboard() {
       <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3">
         <ProgressWidget
           presentation="client"
-          profile={clientProfile}
+          profile={weights}
           weightUnit={weightUnit}
           headingId="progress-heading"
           className="h-full"
@@ -120,54 +102,56 @@ export function ClientDashboard() {
           />
         )}
 
-        {isPostMvp && (
-          <ClientWidget
-            eyebrow="Daily nutrition"
-            icon={Flame}
-            headingId="nutrition-heading"
-            className="h-full lg:col-span-2"
-          >
-            {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
+        {isPostMvp && <DailyNutritionWidget primaryGoal={primaryGoal} />}
+
+      </div>
+
+      {isPostMvp && (
+        <ReviewCallScheduler
+          onOpenChange={setBookingReview}
+          open={bookingReview}
+        />
+      )}
+    </div>
+  );
+}
+
+function DailyNutritionWidget({ primaryGoal }: { primaryGoal: string | null }) {
+  const { getPlan } = useNutrition();
+  const dailyTarget = getPlan("client-1")?.dailyTarget;
+
+  const proteinG = dailyTarget?.protein ?? 0;
+  const carbsG = dailyTarget?.carb ?? 0;
+  const fatsG = dailyTarget?.fat ?? 0;
+  const macros = [
+    {
+      label: "Protein",
+      grams: proteinG,
+      kcal: proteinG * 4,
+      barClass: MACRO_BAR.protein,
+    },
+    {
+      label: "Carbs",
+      grams: carbsG,
+      kcal: carbsG * 4,
+      barClass: MACRO_BAR.carb,
+    },
+    { label: "Fats", grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
+  ];
+  const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
+  const pctOf = (kcal: number) =>
+    macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0;
+
+  return (
+      <ClientWidget
+        eyebrow="Daily nutrition"
+        icon={Flame}
+        headingId="nutrition-heading"
+        className="h-full lg:col-span-2"
+      >
+        {dailyTarget ? (
+          <>
             <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Flame
-                    size={13}
-                    className="text-metric-energy"
-                    strokeWidth={2.5}
-                    aria-hidden="true"
-                  />
-                  <span className={LABEL_CLASS}>BMR</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
-                    {clientProfile?.bmr.toLocaleString() ?? "--"}
-                  </span>
-                  <span className="text-sm font-medium text-text-secondary">
-                    kcal
-                  </span>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Activity
-                    size={13}
-                    className="text-text-secondary"
-                    strokeWidth={2.5}
-                    aria-hidden="true"
-                  />
-                  <span className={LABEL_CLASS}>Maintenance</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
-                    {clientProfile?.maintenanceCalories.toLocaleString() ??
-                      "--"}
-                  </span>
-                  <span className="text-sm font-medium text-text-secondary">
-                    kcal
-                  </span>
-                </div>
-              </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
                   <TargetIcon
@@ -180,7 +164,7 @@ export function ClientDashboard() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
-                    {clientProfile?.dailyCalories.toLocaleString() ?? "--"}
+                    {dailyTarget.kcal.toLocaleString()}
                   </span>
                   <span className="text-sm font-medium text-text-secondary">
                     kcal
@@ -189,27 +173,12 @@ export function ClientDashboard() {
               </div>
             </div>
 
-            {/* Goal / deficit note */}
-            {clientProfile &&
-              (() => {
-                const delta =
-                  clientProfile.dailyCalories -
-                  clientProfile.maintenanceCalories;
-                const deltaLabel =
-                  delta === 0
-                    ? "at maintenance"
-                    : delta < 0
-                      ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
-                      : `+${delta.toLocaleString()} kcal/day surplus`;
-                return (
-                  <p className="flex flex-wrap items-center gap-1.5 mb-5 text-xs text-text-secondary">
-                    <Badge tone="muted">{clientProfile.primaryGoal}</Badge>
-                    <span>{deltaLabel}</span>
-                  </p>
-                );
-              })()}
+            {primaryGoal && (
+              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-xs text-text-secondary">
+                <Badge tone="muted">{primaryGoal}</Badge>
+              </p>
+            )}
 
-            {/* Macro split */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className={LABEL_CLASS}>Macros</span>
@@ -256,30 +225,12 @@ export function ClientDashboard() {
                 ))}
               </ul>
             </div>
-          </ClientWidget>
+          </>
+        ) : (
+          <p className="text-sm text-text-secondary">
+            Your coach has not built your nutrition plan yet.
+          </p>
         )}
-
-        {/* Profile Details Card - Spans 1 col */}
-        <ProfileDetailsWidget
-          presentation="client"
-          profile={clientProfile}
-          units={{ weightUnit, heightUnit }}
-          headingId="profile-details-heading"
-          className="h-full"
-          footer={
-            <WidgetLink trailing="arrow" to="/portal/profile">
-              View full profile
-            </WidgetLink>
-          }
-        />
-      </div>
-
-      {isPostMvp && (
-        <ReviewCallScheduler
-          onOpenChange={setBookingReview}
-          open={bookingReview}
-        />
-      )}
-    </div>
+      </ClientWidget>
   );
 }

@@ -15,7 +15,6 @@ import {
   ClientJourneyProvider,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import { paymentLinkExpiresAt } from '../../services/paymentLinkService';
 
@@ -127,7 +126,6 @@ function renderPage(urlQuery = '', bookings = SEEDED_BOOKINGS) {
   render(
     <MemoryRouter initialEntries={[`/coach/assessment-calls${query}`]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <SeedBookings bookings={bookings} />
             <ClientJourneyProvider>
@@ -136,7 +134,6 @@ function renderPage(urlQuery = '', bookings = SEEDED_BOOKINGS) {
               <Toaster />
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

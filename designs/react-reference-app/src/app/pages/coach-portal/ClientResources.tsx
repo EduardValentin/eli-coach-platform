@@ -19,11 +19,10 @@ import {
 import { ResourceViewer } from '../../components/resources/ResourceViewer';
 import { Button } from '../../components/ui/button';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { fullName, useClientProfile } from '../../context/ClientProfileContext';
-import type { JourneyIdentity } from '../../domain/journey';
 import type { Resource } from '../../domain/resources';
 import { useClientResources, useResourceTags } from '../../hooks/useClientResources';
+import { useJourneyClient } from '../../hooks/useJourneyClient';
+import { journeyClientName } from '../../utils/journeyLabels';
 import { possessive } from '../../utils/resourceLabels';
 import { saveDownload } from '../../utils/saveDownload';
 
@@ -166,26 +165,12 @@ function CoachResourceLibrary({
 type ResourceClient = { clientId: string; names: ClientNames };
 
 function useResourceClient(id: string): ResourceClient | null {
-  const { journeyForCall } = useClientJourneys();
-  const { getProfile } = useClientProfile();
-  const journey = journeyForCall(id);
-  if (journey) {
-    return { clientId: journey.callId, names: journeyNames(journey.identity) };
-  }
-
-  const profile = getProfile(id);
-  if (!profile) return null;
+  const journey = useJourneyClient(id);
+  if (!journey) return null;
 
   return {
-    clientId: profile.id,
-    names: { first: profile.firstName, full: fullName(profile) },
-  };
-}
-
-function journeyNames(identity: JourneyIdentity): ClientNames {
-  return {
-    first: identity.firstName,
-    full: `${identity.firstName} ${identity.lastName}`.trim(),
+    clientId: journey.callId,
+    names: { first: journey.profile.identity.firstName, full: journeyClientName(journey) },
   };
 }
 

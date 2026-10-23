@@ -6,7 +6,6 @@ import { ProgramBlock } from './ProgramBlock';
 import { AppProvider } from '../../../context/AppContext';
 import { AssessmentCallProvider } from '../../../context/AssessmentCallContext';
 import { ClientJourneyProvider, useClientJourneys } from '../../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { ProgramProvider, usePrograms, type ProgramContextType } from '../../../context/ProgramContext';
 import type { ProgramContent } from '../../../domain/program';
 import { TrainingProvider } from '../../../context/TrainingContext';
@@ -65,7 +64,6 @@ function renderBlock(query: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -77,7 +75,6 @@ function renderBlock(query: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </TrainingProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -89,7 +86,7 @@ function programSection(): HTMLElement {
 }
 
 describe('ProgramBlock', () => {
-  it('offers to build a program once her onboarding is sent', () => {
+  it('offers to build a program once her answers are approved', () => {
     // arrange
     const query = '&pseed=none&jstage=approved';
 
@@ -99,16 +96,16 @@ describe('ProgramBlock', () => {
     // assert
     const section = programSection();
     expect(within(section).getByText('No program yet')).toBeInTheDocument();
-    expect(within(section).getByText('Build it from her onboarding answers.')).toBeInTheDocument();
+    expect(within(section).getByText('Build it from her profile.')).toBeInTheDocument();
     expect(within(section).getByRole('link', { name: 'Build program' })).toHaveAttribute(
       'href',
       '/coach/clients/c1/program/new',
     );
   });
 
-  it('holds the program back until her onboarding is sent', () => {
+  it.each(['invited', 'submitted', 'needs-details'])('holds the program back until her answers are approved (%s)', (stage) => {
     // arrange
-    const query = '&pseed=none&jstage=invited';
+    const query = `&pseed=none&jstage=${stage}`;
 
     // act
     renderBlock(query);
@@ -116,7 +113,7 @@ describe('ProgramBlock', () => {
     // assert
     const section = programSection();
     expect(within(section).getByText('No program yet')).toBeInTheDocument();
-    expect(within(section).getByText('Available once her onboarding is sent.')).toBeInTheDocument();
+    expect(within(section).getByText('The program opens once her answers are approved.')).toBeInTheDocument();
     expect(within(section).queryByRole('link', { name: 'Build program' })).not.toBeInTheDocument();
   });
 

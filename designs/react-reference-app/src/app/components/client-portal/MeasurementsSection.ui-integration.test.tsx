@@ -6,7 +6,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import { PROGRESS_PHOTO_CONSENT_COPY } from '../../domain/onboardingCopy';
 import { Toaster } from '../ui/sonner';
@@ -46,7 +45,6 @@ function renderSection(devParams = '') {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -55,7 +53,6 @@ function renderSection(devParams = '') {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

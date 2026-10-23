@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAppState } from './AppContext';
 import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
 import { useTraining } from './TrainingContext';
-import { cycleModeOf, type CycleMode } from '../domain/cycleMode';
+import { coachingFactsFromAnswers, type CoachingFacts } from '../domain/clientProfile';
 import type { ClientJourney } from '../domain/journey';
 import {
   contentWithFreshIds,
@@ -13,7 +13,7 @@ import {
   type ProgramContent,
   type ProgramVersion,
 } from '../domain/program';
-import { clientEquipment, type ProgramSetup } from '../domain/programOnboarding';
+import type { ProgramSetup } from '../domain/programOnboarding';
 import { blockingProblems, ruleContextFor, type BlockingCode, type RuleFinding } from '../domain/programRules';
 import { initialContent } from '../domain/programSuggestions';
 import { seededPrograms, type ProgramSeed, type SeedClient } from '../services/programSamples';
@@ -38,12 +38,13 @@ export type ProgramContextType = {
 
 const ProgramContext = createContext<ProgramContextType | null>(null);
 
-function seededCycleMode(journey: ClientJourney | null): CycleMode {
-  return (journey && cycleModeOf(journey.onboarding, journey.identity.gender)) ?? 'general';
+function seedFacts(journey: ClientJourney): CoachingFacts {
+  return journey.profile.coaching ?? coachingFactsFromAnswers(journey.onboarding, journey.profile.identity.gender);
 }
 
 function seedClient(callId: string, journey: ClientJourney | null, dayOne: Date | null): SeedClient {
-  return { callId, dayOne, cycleMode: seededCycleMode(journey), equipment: journey ? clientEquipment(journey) : [] };
+  const facts = journey && seedFacts(journey);
+  return { callId, dayOne, cycleMode: facts?.cycleMode ?? 'general', equipment: facts ? [...facts.equipment] : [] };
 }
 
 function withVersion(program: Program, number: number, change: (version: ProgramVersion) => ProgramVersion): Program {

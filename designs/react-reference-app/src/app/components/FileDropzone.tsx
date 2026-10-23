@@ -6,7 +6,7 @@ import {
   type DragEvent,
   type Ref,
 } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, type LucideIcon } from 'lucide-react';
 import { buttonVariants } from './ui/button';
 import { cn } from './ui/utils';
 
@@ -127,15 +127,19 @@ export const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(func
   );
 });
 
+type FilePickerButtonSize = 'xs' | 'sm';
+
 export function FilePickerButton({
   children,
+  size = 'xs',
+  icon: Icon,
   ...picker
-}: FilePickerProps & { children: string }) {
+}: FilePickerProps & { children: string; size?: FilePickerButtonSize; icon?: LucideIcon }) {
   return (
     <label
       className={buttonVariants({
         variant: 'outline',
-        size: 'xs',
+        size,
         className: 'cursor-pointer',
       })}
       data-chip-control=""
@@ -145,6 +149,7 @@ export function FilePickerButton({
         describedBy={[picker['aria-describedby']]}
         label={children}
       />
+      {Icon && <Icon aria-hidden="true" size={16} />}
       <span aria-hidden="true">{children}</span>
     </label>
   );

@@ -1,20 +1,11 @@
 import { addDays, differenceInCalendarDays, getDay, startOfDay } from 'date-fns';
 import type { ClientJourney } from './journey';
-import { CHECK_IN_DAY_KEY, collaborationPreference } from './onboardingAnswers';
 import { WEEKDAYS, type Block, type Weekday } from './program';
 
 const DAYS_PER_WEEK = 7;
 const CHECKPOINT_INTERVAL_DAYS = 14;
 const JS_DAY_TO_WEEKDAY: readonly Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-const ONBOARDING_WEEKDAYS: Record<string, Weekday> = {
-  Monday: 'mon',
-  Tuesday: 'tue',
-  Wednesday: 'wed',
-  Thursday: 'thu',
-  Friday: 'fri',
-  Saturday: 'sat',
-  Sunday: 'sun',
-};
+const DEFAULT_CHECK_IN_WEEKDAY: Weekday = 'mon';
 
 export type PlanSchedule = { blocks: readonly Block[]; dayOne: Date | null; today: Date };
 
@@ -97,12 +88,8 @@ export function daysUntil(from: Date, to: Date): number {
   return differenceInCalendarDays(to, from);
 }
 
-export function weekdayFromOnboarding(label: string | null): Weekday {
-  return (label && ONBOARDING_WEEKDAYS[label]) || 'mon';
-}
-
 export function checkInWeekdayOf(journey: ClientJourney | null): Weekday {
-  return weekdayFromOnboarding(journey ? collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY) : null);
+  return journey?.settings.preferredCheckInWeekday ?? DEFAULT_CHECK_IN_WEEKDAY;
 }
 
 export function dayOneOf(journey: ClientJourney | null): Date | null {

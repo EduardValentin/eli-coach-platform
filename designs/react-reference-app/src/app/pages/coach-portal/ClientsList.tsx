@@ -27,10 +27,6 @@ import { ListingToolbar } from '../../components/ListingToolbar';
 import { TablePanel } from '../../components/TablePanel';
 import { EmptyState } from '../../components/EmptyState';
 import { SortableTableHead } from '../../components/SortableTableHead';
-import { useClientProfile } from '../../context/ClientProfileContext';
-import {
-  useTraining,
-} from '../../context/TrainingContext';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -41,19 +37,18 @@ import {
 import {
   CLIENT_STATUS_GROUPS,
   clientStatus,
-  clientStatusNamed,
   isCancelledOrEnded,
 } from '../../domain/clientStatus';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
-import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
+import { getInitials } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
 import { NeedsRefundBadge } from '../../components/coach-portal/NeedsRefundBadge';
 import { needsRefund } from '../../domain/coachingSubscription';
 import { ClientsUnavailable } from '../../components/coach-portal/ClientsUnavailable';
 import {
   clientDetailPathForJourney,
-  journeyCallIdForClient,
+  journeyClientName,
 } from '../../utils/journeyLabels';
 import {
   countsByStatus,
@@ -73,52 +68,6 @@ import {
   type RosterStatusOption,
 } from '../../utils/clientRosterListing';
 
-type RosterClient = {
-  id: string;
-  name: string;
-  email: string;
-  status: RosterStatus;
-  joinDate: string;
-};
-
-const MOCK_CLIENTS: RosterClient[] = [
-  {
-    id: 'c1',
-    name: 'Jane Doe',
-    email: 'jane@example.com',
-    status: 'Active',
-    joinDate: '2025-10-01',
-  },
-  {
-    id: 'c2',
-    name: 'Jessica Alba',
-    email: 'jessica@example.com',
-    status: 'Active',
-    joinDate: '2025-11-15',
-  },
-  {
-    id: 'c3',
-    name: 'Emma Stone',
-    email: 'emma@example.com',
-    status: 'Active',
-    joinDate: '2025-12-05',
-  },
-  {
-    id: 'c4',
-    name: 'Sarah Jenkins',
-    email: 'sarah@example.com',
-    status: 'Inactive',
-    joinDate: '2025-01-10',
-  },
-  {
-    id: 'c5',
-    name: 'Mia Thermopolis',
-    email: 'mia@example.com',
-    status: 'Inactive',
-    joinDate: '2025-03-22',
-  },
-];
-
 const STATUS_PARAM = 'status';
 const QUERY_PARAM = 'q';
 const SORT_PARAM = 'sort';
@@ -130,10 +79,6 @@ function hasStarted(journey: ClientJourney): boolean {
   return !isBeforeStage(journey.stage, 'invited');
 }
 
-function journeyName(journey: ClientJourney): string {
-  return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
-}
-
 function rowActionLabel(name: string, awaitsReview: boolean): string {
   return awaitsReview
     ? `Review onboarding for ${name}`
@@ -141,39 +86,21 @@ function rowActionLabel(name: string, awaitsReview: boolean): string {
 }
 
 function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
-  const name = journeyName(journey);
+  const name = journeyClientName(journey);
   const awaitsReview =
     awaitsCoachReview(journey.stage) && !isCancelledOrEnded(journey, now);
 
   return {
     id: journey.callId,
     name,
-    email: journey.identity.email,
+    email: journey.profile.identity.email,
     status: clientStatus(journey, now),
     bundleMonths: journey.subscription?.bundle ?? null,
     joinedAt: journey.subscription?.purchasedAt ?? null,
     detailPath: clientDetailPathForJourney(journey),
     actionLabel: rowActionLabel(name, awaitsReview),
+    avatarUrl: journey.profile.avatarUrl ?? undefined,
     needsRefund: needsRefund(journey.subscription),
-  };
-}
-
-function mockRosterRow(
-  client: RosterClient,
-  avatarUrl: string | undefined,
-  bundleMonths: number | null,
-): RosterRow {
-  return {
-    id: client.id,
-    name: client.name,
-    email: client.email,
-    status: clientStatusNamed(client.status),
-    bundleMonths,
-    joinedAt: parseISO(client.joinDate),
-    detailPath: `/coach/clients/${client.id}`,
-    actionLabel: rowActionLabel(client.name, false),
-    avatarUrl,
-    needsRefund: false,
   };
 }
 
@@ -352,51 +279,17 @@ function emptyRosterCopy(
 
 export function ClientsList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getProfile } = useClientProfile();
-  const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
   const { journeys } = useClientJourneys();
   const { appState } = useAppState();
 
   const now = new Date();
 
-  const isPostMvp = appState.prototypeMode === 'post-mvp';
-  const startedJourneys = Object.values(journeys).filter(hasStarted);
-  const startedCallIds = new Set(
-    startedJourneys.map((journey) => journey.callId),
-  );
-
-  const bundleMonthsForClient = (id: string) => {
-    const subjectId = trainingClientIdFor(id);
-    const activeSubscription =
-      getClientActiveSubscription(subjectId) ??
-      [...getClientSubscriptions(subjectId)].sort((one, other) =>
-        (other.startDate || '').localeCompare(one.startDate || ''),
-      )[0];
-
-    return activeSubscription?.months ?? null;
-  };
-
   const isRosterSeeded = appState.clientsRoster === 'seeded';
-  const journeyRows = isRosterSeeded
-    ? startedJourneys.map((journey) => journeyRosterRow(journey, now))
+  const rows: RosterRow[] = isRosterSeeded
+    ? Object.values(journeys)
+        .filter(hasStarted)
+        .map((journey) => journeyRosterRow(journey, now))
     : [];
-
-  const showsMockRows = isPostMvp && isRosterSeeded;
-
-  const mockRows = (showsMockRows ? MOCK_CLIENTS : [])
-    .filter((client) => {
-      const callId = journeyCallIdForClient(client.id);
-      return !(callId !== null && startedCallIds.has(callId));
-    })
-    .map((client) =>
-      mockRosterRow(
-        client,
-        getProfile(client.id)?.avatarUrl,
-        bundleMonthsForClient(client.id),
-      ),
-    );
-
-  const rows: RosterRow[] = [...journeyRows, ...mockRows];
 
   const status = parseRosterStatus(searchParams.get(STATUS_PARAM));
   const query = searchParams.get(QUERY_PARAM) ?? '';

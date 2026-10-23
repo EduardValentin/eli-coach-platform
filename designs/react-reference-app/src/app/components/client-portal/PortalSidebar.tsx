@@ -10,7 +10,8 @@ import {
 } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
-import { useClientProfile, fullName } from '../../context/ClientProfileContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { journeyClientName } from '../../utils/journeyLabels';
 import { AttentionDot } from '../AttentionDot';
 import { NavigationCount, NavigationCountLabel } from '../NavigationCount';
 import { NotificationBell } from '../NotificationBell';
@@ -110,8 +111,9 @@ function ClientNameBlock({
   size: NameBlockSize;
   onNavigate?: () => void;
 }) {
-  const { clientProfile } = useClientProfile();
-  const displayName = clientProfile ? fullName(clientProfile) : 'Client';
+  const { demoJourney } = useClientJourneys();
+  const displayName = journeyClientName(demoJourney);
+  const { avatarUrl } = demoJourney.profile;
   const avatar = AVATAR_BY_SIZE[size];
 
   return (
@@ -121,9 +123,9 @@ function ClientNameBlock({
       data-parity="name-block"
       className="flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity"
     >
-      {clientProfile?.avatarUrl ? (
+      {avatarUrl ? (
         <img
-          src={clientProfile.avatarUrl}
+          src={avatarUrl}
           alt=""
           data-parity="avatar"
           className={cn(

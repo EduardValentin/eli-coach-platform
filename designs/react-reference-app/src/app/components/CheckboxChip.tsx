@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { cn } from './ui/utils';
 
-type CheckboxChipSize = 'touch' | 'compact';
+export type CheckboxChipSize = 'touch' | 'compact';
 
 interface CheckboxChipProps {
   checked: boolean;

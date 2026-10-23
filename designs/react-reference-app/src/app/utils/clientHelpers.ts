@@ -6,10 +6,6 @@ export function getInitials(name: string): string {
     .join('');
 }
 
-export function trainingClientIdFor(clientId: string): string {
-  return clientId === 'c1' ? 'client-1' : clientId;
-}
-
 export function firstNameOf(fullName: string): string {
   return fullName.split(' ')[0];
 }

@@ -39,7 +39,7 @@ describe('total daily energy expenditure', () => {
   it('scales the basal rate by the activity multiplier', () => {
     // arrange & act
     const tdee = calculateTotalDailyEnergyExpenditure({
-      activityLevel: 'moderately-active',
+      activityLevel: 'Active',
       basalMetabolicRate: 1370,
     });
 
@@ -50,13 +50,13 @@ describe('total daily energy expenditure', () => {
   it('leaves a sedentary client barely above her basal rate', () => {
     // arrange & act
     const tdee = calculateTotalDailyEnergyExpenditure({
-      activityLevel: 'sedentary',
+      activityLevel: 'Mostly sitting',
       basalMetabolicRate: 1370,
     });
 
     // assert
     expect(tdee).toBe(1644);
-    expect(ACTIVITY_MULTIPLIERS.sedentary).toBe(1.2);
+    expect(ACTIVITY_MULTIPLIERS['Mostly sitting']).toBe(1.2);
   });
 });
 

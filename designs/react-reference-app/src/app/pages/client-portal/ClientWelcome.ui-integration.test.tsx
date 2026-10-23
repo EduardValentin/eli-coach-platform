@@ -9,7 +9,6 @@ import {
   ClientJourneyProvider,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { CoachProfileProvider } from '../../context/CoachProfileContext';
 
 function WelcomeSeenProbe() {
@@ -30,7 +29,6 @@ function renderWelcome(devParams: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <CoachProfileProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <WelcomeSeenProbe />
@@ -43,7 +41,6 @@ function renderWelcome(devParams: string) {
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </CoachProfileProvider>
       </AppProvider>
     </MemoryRouter>,

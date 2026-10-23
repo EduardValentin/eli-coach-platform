@@ -23,7 +23,7 @@ export function JourneyMeasurements({
   return (
     <MeasurementsTable
       className="mb-8"
-      emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
+      emptyMessage={noMeasurementsYetLine(journey.profile.identity.gender)}
       headingId="measurements-panel-heading"
       heightCm={heightCm}
       measurements={journey.measurements}
@@ -35,7 +35,7 @@ export function JourneyMeasurements({
       <PhotoViewDialog
         entry={viewing}
         onClose={() => setViewingEntryId(null)}
-        viewer={{ role: 'coach', clientFirstName: journey.identity.firstName }}
+        viewer={{ role: 'coach', clientFirstName: journey.profile.identity.firstName }}
       />
     </MeasurementsTable>
   );

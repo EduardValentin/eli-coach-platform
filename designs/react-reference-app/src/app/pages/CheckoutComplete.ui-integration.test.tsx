@@ -5,7 +5,6 @@ import { CheckoutComplete } from './CheckoutComplete';
 import { AppProvider } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 
 const CONFIRMATION_URL = '/checkout/complete';
 
@@ -15,13 +14,11 @@ function renderConfirmation() {
   render(
     <MemoryRouter initialEntries={[CONFIRMATION_URL]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <CheckoutComplete />
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

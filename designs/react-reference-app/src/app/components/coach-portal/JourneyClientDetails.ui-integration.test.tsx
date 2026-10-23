@@ -15,7 +15,6 @@ import {
   ClientJourneyProvider,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
@@ -70,7 +69,6 @@ function renderDetails(
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <TrainingProvider>
             <ClientJourneyProvider>
@@ -89,7 +87,6 @@ function renderDetails(
             </ClientJourneyProvider>
             </TrainingProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -98,7 +95,22 @@ function renderDetails(
 }
 
 function onboardingWidget(): HTMLElement {
-  return screen.getByRole('region', { name: 'Onboarding', hidden: true });
+  const widget = screen
+    .getByRole('heading', { level: 2, name: 'Onboarding', hidden: true })
+    .closest('section');
+  if (!widget) throw new Error('No onboarding widget');
+  return widget;
+}
+
+function onboardingTrigger(): HTMLElement {
+  return screen.getByRole('button', { name: 'Onboarding' });
+}
+
+function regionTitles(): (string | null | undefined)[] {
+  return screen
+    .getAllByRole('region')
+    .flatMap((region) => region.getAttribute('aria-labelledby') ?? [])
+    .map((id) => document.getElementById(id)?.textContent);
 }
 
 function subscriptionPanel(): HTMLElement {
@@ -514,12 +526,12 @@ describe('the coach view of a client in onboarding', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides the build action and explains the wait on the withdrawal-window path', () => {
+  it('hides the build action and explains the wait on the withdrawal-window path', async () => {
     // arrange
-    const urlQuery = '?jstage=approved&jstart=waiting';
+    const user = renderDetails('?jstage=approved&jstart=waiting');
 
     // act
-    renderDetails(urlQuery);
+    await user.click(onboardingTrigger());
 
     // assert
     const widget = onboardingWidget();
@@ -617,11 +629,7 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
-    const regions = screen
-      .getAllByRole('region')
-      .flatMap((region) => region.getAttribute('aria-labelledby') ?? [])
-      .map((id) => document.getElementById(id)?.textContent);
-    expect(regions).toEqual([
+    expect(regionTitles()).toEqual([
       'Profile',
       'Invitation',
       'Onboarding',
@@ -631,6 +639,58 @@ describe('the coach reading who a client is', () => {
       'Measurements',
       'Assessment call',
     ]);
+  });
+
+  it('moves her onboarding down above the assessment call once her answers are approved', () => {
+    // arrange
+    const urlQuery = '?jstage=approved';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(regionTitles()).toEqual([
+      'Profile',
+      'Program',
+      'Subscription',
+      'Weekly check-in',
+      'Measurements',
+      'Onboarding',
+      'Assessment call',
+    ]);
+  });
+
+  it('collapses her approved onboarding, keeping her status and the screening warning in its header', async () => {
+    // arrange
+    const user = renderDetails('?jstage=approved', { postMvp: false });
+    const widget = onboardingWidget();
+
+    // assert
+    expect(onboardingTrigger()).toHaveAttribute('aria-expanded', 'false');
+    expect(within(widget).getByText('Approved')).toBeInTheDocument();
+    expect(
+      within(widget).getByRole('button', { name: /Safety screening needs a look/ }),
+    ).toBeInTheDocument();
+    expect(within(widget).queryByRole('heading', { name: 'Answers' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(onboardingTrigger());
+
+    // assert
+    expect(onboardingTrigger()).toHaveAttribute('aria-expanded', 'true');
+    expect(within(widget).getByRole('heading', { name: 'Answers' })).toBeInTheDocument();
+  });
+
+  it('keeps her onboarding open where it was until her answers are approved', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(screen.queryByRole('button', { name: 'Onboarding' })).not.toBeInTheDocument();
+    expect(within(onboardingWidget()).getByRole('heading', { name: 'Answers' })).toBeInTheDocument();
   });
 
   it('keeps her subscription on its own and her weekly check-in alone in a row of its own', () => {
@@ -648,15 +708,11 @@ describe('the coach reading who a client is', () => {
     expect(screen.getByRole('region', { name: 'Measurements' }).parentElement).not.toBe(row);
   });
 
-  it('reads who she is from her booking, her facts from the onboarding she sent and her weights from her first and latest measurements, in kilograms and centimetres', () => {
+  it('reads only who she is in the profile widget and leads to her full profile', () => {
     // arrange
-    window.localStorage.setItem(
-      'eli.unitPreferences',
-      JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
-    );
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 8, 30, 12));
-    const urlQuery = '?jstage=submitted';
+    const urlQuery = '?jstage=approved';
 
     // act
     renderDetails(urlQuery);
@@ -666,19 +722,7 @@ describe('the coach reading who a client is', () => {
       within(profileBlock())
         .getAllByRole('term')
         .map((term) => term.textContent),
-    ).toEqual([
-      'Age',
-      'Gender',
-      'Country',
-      'Phone',
-      'Height',
-      'Starting weight',
-      'Current weight',
-      'Activity level',
-      'Primary goal',
-      'Dietary restrictions',
-      'Client notes',
-    ]);
+    ).toEqual(['Age', 'Gender', 'Country', 'Phone', 'Email']);
     expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
     expect(profileReading('Gender')).toHaveTextContent('Female');
     expect(profileReading('Country')).toHaveTextContent('Romania');
@@ -687,25 +731,14 @@ describe('the coach reading who a client is', () => {
         name: '+40712345678',
       }),
     ).toHaveAttribute('href', 'tel:+40712345678');
-    expect(profileReading('Height')).toHaveTextContent(/^165 cm$/);
-    expect(profileReading('Starting weight')).toHaveTextContent(/^67.4 kg$/);
-    expect(profileReading('Current weight')).toHaveTextContent(/^66.1 kg$/);
-    expect(profileReading('Activity level')).toHaveTextContent(
-      /^Mostly sitting$/,
+    expect(profileReading('Email')).toHaveTextContent('jane@example.com');
+    expect(within(profileBlock()).getByRole('link', { name: 'View profile' })).toHaveAttribute(
+      'href',
+      '/coach/clients/c1/profile',
     );
-    expect(profileReading('Primary goal')).toHaveTextContent(/^Lose fat$/);
-    expect(profileReading('Dietary restrictions')).toHaveTextContent(
-      /^Lactose, mild$/,
-    );
-    expect(profileReading('Client notes')).toHaveTextContent(
-      /^Night shifts twice a week, so those days start late\.$/,
-    );
-    expect(
-      within(profileBlock()).queryByText(/profile fills in/),
-    ).not.toBeInTheDocument();
   });
 
-  it('reads who she is from her booking and leaves her facts and weights blank until she sends her onboarding', () => {
+  it('reads the same identity before she sends her onboarding, with no line about it filling in', () => {
     // arrange
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 8, 30, 12));
@@ -716,29 +749,8 @@ describe('the coach reading who a client is', () => {
 
     // assert
     expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
-    expect(profileReading('Gender')).toHaveTextContent(/^Female$/);
-    expect(profileReading('Country')).toHaveTextContent(/^Romania$/);
-    expect(
-      within(profileReading('Phone')).getByRole('link', {
-        name: '+40712345678',
-      }),
-    ).toHaveAttribute('href', 'tel:+40712345678');
-    expect(
-      [
-        'Height',
-        'Starting weight',
-        'Current weight',
-        'Activity level',
-        'Primary goal',
-        'Dietary restrictions',
-        'Client notes',
-      ].map((label) => profileReading(label).textContent),
-    ).toEqual(Array(7).fill('—'));
-    expect(
-      within(profileBlock()).getByText(
-        'Her profile fills in once she sends her onboarding.',
-      ),
-    ).toBeInTheDocument();
+    expect(profileReading('Email')).toHaveTextContent('jane@example.com');
+    expect(within(profileBlock()).queryByText(/profile fills in/)).not.toBeInTheDocument();
   });
 
   it('keeps the assessment call collapsed until the coach opens it', async () => {
@@ -1013,11 +1025,6 @@ describe('the coach reading about a client by his or their pronouns', () => {
       within(onboardingWidget()).getByText('His answers are not in yet.'),
     ).toBeInTheDocument();
     expect(
-      within(profileBlock()).getByText(
-        'His profile fills in once he sends his onboarding.',
-      ),
-    ).toBeInTheDocument();
-    expect(
       within(subscriptionPanel()).getByText('Starts when his program is delivered'),
     ).toBeInTheDocument();
     expect(
@@ -1035,11 +1042,6 @@ describe('the coach reading about a client by his or their pronouns', () => {
     // assert
     expect(
       within(onboardingWidget()).getByText('Their answers are not in yet.'),
-    ).toBeInTheDocument();
-    expect(
-      within(profileBlock()).getByText(
-        'Their profile fills in once they send their onboarding.',
-      ),
     ).toBeInTheDocument();
     expect(
       within(subscriptionPanel()).getByText('Starts when their program is delivered'),
@@ -1121,12 +1123,12 @@ describe('the coach reading about a client by his or their pronouns', () => {
     ).toBeInTheDocument();
   });
 
-  it('explains when the coach can start building their program', () => {
+  it('explains when the coach can start building their program', async () => {
     // arrange
-    const urlQuery = '?jstage=approved&jstart=waiting&jgender=prefer-not-to-say';
+    const user = renderDetails('?jstage=approved&jstart=waiting&jgender=prefer-not-to-say');
 
     // act
-    renderDetails(urlQuery);
+    await user.click(onboardingTrigger());
 
     // assert
     expect(
@@ -1137,26 +1139,8 @@ describe('the coach reading about a client by his or their pronouns', () => {
   });
 });
 
-const ADAPTED_FOR_HER =
-  'Adapted to symptoms — the program keeps the same sessions all cycle and adds adjustment rules for the days she reports symptoms.';
-
-function cycleModeInfoButton(): HTMLElement {
-  return within(onboardingWidget()).getByRole('button', {
-    name: 'What cycle mode means',
-  });
-}
-
-async function tabTo(
-  user: ReturnType<typeof userEvent.setup>,
-  target: HTMLElement,
-) {
-  for (let step = 0; step < 50 && document.activeElement !== target; step++) {
-    await user.tab();
-  }
-}
-
-describe('the coach reading what cycle mode means', () => {
-  it('offers an info button beside the cycle mode fact', () => {
+describe('the onboarding widget once the profile holds the facts', () => {
+  it('keeps the check-in day, channel, cycle mode and ratio out of it', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -1164,63 +1148,17 @@ describe('the coach reading what cycle mode means', () => {
     renderDetails(urlQuery, { postMvp: false });
 
     // assert
-    const term = within(onboardingWidget()).getByText('Cycle mode');
-    expect(term.closest('dt')).toContainElement(cycleModeInfoButton());
-  });
-
-  it('explains every cycle mode when the coach hovers the info button', async () => {
-    // arrange
-    const user = renderDetails('?jstage=submitted', { postMvp: false });
-
-    // act
-    await user.hover(cycleModeInfoButton());
-
-    // assert
-    const hint = await screen.findByRole('dialog');
-    expect(hint).toHaveTextContent(ADAPTED_FOR_HER);
-    expect(hint).toHaveTextContent(
-      'General — no cycle-driven adjustments; the low-energy session stays available.',
-    );
-    expect(hint).toHaveTextContent(
-      'Not answered yet — the cycle form is empty.',
-    );
-  });
-
-  it('explains the cycle modes when the info button takes keyboard focus', async () => {
-    // arrange
-    const user = renderDetails('?jstage=submitted', { postMvp: false });
-
-    // act
-    await tabTo(user, cycleModeInfoButton());
-
-    // assert
-    expect(cycleModeInfoButton()).toHaveFocus();
-    expect(await screen.findByRole('dialog')).toHaveTextContent(
-      ADAPTED_FOR_HER,
-    );
-  });
-
-  it.each([
-    ['a man', 'male'],
-    ['a client who preferred not to say', 'prefer-not-to-say'],
-  ])('leaves cycle mode out of the facts for %s', (_who, gender) => {
-    // arrange
-    const urlQuery = `?jstage=submitted&jgender=${gender}`;
-
-    // act
-    renderDetails(urlQuery, { postMvp: false });
-
-    // assert
+    const widget = onboardingWidget();
+    for (const label of ['Waist-to-height ratio', 'Check-in day', 'Channel', 'Cycle mode']) {
+      expect(within(widget).queryByText(label)).not.toBeInTheDocument();
+    }
     expect(
-      within(onboardingWidget()).queryByText('Cycle mode'),
-    ).not.toBeInTheDocument();
-    expect(
-      within(onboardingWidget()).queryByRole('button', {
-        name: 'What cycle mode means',
-      }),
+      within(widget).queryByRole('button', { name: 'What cycle mode means' }),
     ).not.toBeInTheDocument();
   });
+});
 
+describe('the coach reading a client whose coaching is closing', () => {
   it('flags a client who still needs her refund next to her name', () => {
     // arrange
     const urlQuery = '?jstage=submitted&jstart=waiting&jrefund=due';

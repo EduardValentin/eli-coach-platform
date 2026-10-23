@@ -47,6 +47,7 @@ function submittedJourney(lifeStage: PrototypeLifeStage): ClientJourney {
     measurementsDue: 'none',
     lifeStage,
     seededPhotos: 'none',
+    seededAvatar: 'none',
     refund: 'none',
     paymentProblem: false,
     cardOnFile: 'visa',

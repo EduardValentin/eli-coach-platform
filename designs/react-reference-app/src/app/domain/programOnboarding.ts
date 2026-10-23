@@ -1,6 +1,7 @@
 import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import { cycleModeOf, type CycleMode } from './cycleMode';
-import { EQUIPMENT, type Equipment } from './exercises';
+import type { CoachingFacts, SessionMinutes } from './clientProfile';
+import type { Equipment } from './exercises';
 import type { ClientJourney, OnboardingAnswer } from './journey';
 import type { LevelHint, ProgramLanguage, SplitShape, TrainingDays } from './program';
 import { splitShapeFor } from './programSuggestions';
@@ -10,7 +11,7 @@ export type ProgramSetup = {
   goal: string;
   level: LevelHint;
   trainingDays: TrainingDays;
-  sessionMinutes: 30 | 45 | 60;
+  sessionMinutes: SessionMinutes;
   cycleMode: CycleMode;
   language: ProgramLanguage;
   dailySteps: number;
@@ -18,26 +19,15 @@ export type ProgramSetup = {
   splitShape: SplitShape;
 };
 
-const STRUCTURED_LEVEL = 'I train consistently and follow a structured program';
-const TRAINING_DAYS: Record<string, ProgramSetup['trainingDays']> = {
-  '2 days': 2,
-  '3 days': 3,
-  '4 days': 4,
-  '5 or more days': 5,
-};
-const SESSION_MINUTES: Record<string, ProgramSetup['sessionMinutes']> = {
-  'Up to 30 minutes': 30,
-  '30–45 minutes': 45,
-  '45–60 minutes': 60,
-};
-const EQUIPMENT_BY_CHIP: Record<string, readonly Equipment[]> = {
-  'Full gym': EQUIPMENT,
-  Machines: ['Machine', 'Cable', 'Smith machine'],
-  Barbell: ['Barbell', 'Squat rack', 'Bench', 'EZ bar', 'Trap bar'],
-  Dumbbells: ['Dumbbells', 'Bench'],
-  Kettlebells: ['Kettlebell'],
-  'Resistance bands': ['Bands'],
-  'Bodyweight only': [],
+type CoachingSetup = Pick<ProgramSetup, 'goal' | 'level' | 'trainingDays' | 'sessionMinutes' | 'cycleMode' | 'equipment'>;
+
+const UNAPPROVED_SETUP: CoachingSetup = {
+  goal: '',
+  level: 'beginner',
+  trainingDays: 3,
+  sessionMinutes: 60,
+  cycleMode: 'general',
+  equipment: [],
 };
 
 function textAnswer(answer: OnboardingAnswer | undefined): string | null {
@@ -52,48 +42,31 @@ function numberAnswer(answer: OnboardingAnswer | undefined): number | null {
   return typeof answer === 'number' ? answer : null;
 }
 
-function levelHintOf(experienceLevel: string | null): LevelHint {
-  return experienceLevel === STRUCTURED_LEVEL ? 'intermediate' : 'beginner';
-}
+function coachingSetup(coaching: CoachingFacts | null): CoachingSetup {
+  if (!coaching) return UNAPPROVED_SETUP;
 
-function trainingDaysOf(answer: string | null): ProgramSetup['trainingDays'] {
-  return (answer && TRAINING_DAYS[answer]) || 3;
-}
-
-function sessionMinutesOf(answer: string | null): ProgramSetup['sessionMinutes'] {
-  return (answer && SESSION_MINUTES[answer]) || 60;
-}
-
-export function setupFromJourney(journey: ClientJourney): ProgramSetup {
-  const goalAnswers = journey.onboarding.answers['goal-availability'];
-  const trainingDays = trainingDaysOf(textAnswer(goalAnswers.trainingDaysPerWeek));
   return {
-    goal: textAnswer(goalAnswers.primaryGoal) ?? '',
-    level: levelHintOf(textAnswer(goalAnswers.experienceLevel)),
-    trainingDays,
-    sessionMinutes: sessionMinutesOf(textAnswer(goalAnswers.minutesPerSession)),
-    cycleMode: cycleModeOf(journey.onboarding, journey.identity.gender) ?? 'general',
-    language: 'en',
-    dailySteps: STEPS_DEFAULT,
-    equipment: clientEquipment(journey),
-    splitShape: splitShapeFor(trainingDays),
+    goal: coaching.primaryGoal ?? '',
+    level: coaching.level,
+    trainingDays: coaching.trainingDays,
+    sessionMinutes: coaching.sessionMinutes,
+    cycleMode: coaching.cycleMode,
+    equipment: [...coaching.equipment],
   };
 }
 
-export function equipmentChipsOf(journey: ClientJourney): string[] {
-  return listAnswer(journey.onboarding.answers['goal-availability'].availableEquipment);
-}
-
-export function equipmentForChips(chips: readonly string[]): Equipment[] {
-  return [...new Set(chips.flatMap(chip => EQUIPMENT_BY_CHIP[chip] ?? []))];
-}
-
-export function clientEquipment(journey: ClientJourney): Equipment[] {
-  return equipmentForChips(equipmentChipsOf(journey));
+export function setupFromJourney(journey: ClientJourney): ProgramSetup {
+  const facts = coachingSetup(journey.profile.coaching);
+  return {
+    ...facts,
+    language: 'en',
+    dailySteps: STEPS_DEFAULT,
+    splitShape: splitShapeFor(facts.trainingDays),
+  };
 }
 
 export function estimatedCycleDay(journey: ClientJourney, today: Date): number | null {
-  if (cycleModeOf(journey.onboarding, journey.identity.gender) !== 'adapted') return null;
+  if (cycleModeOf(journey.onboarding, journey.profile.identity.gender) !== 'adapted') return null;
   const answers = journey.onboarding.answers['cycle-context'];
   const lastPeriodStart = textAnswer(answers.lastPeriodStart);
   if (answers.lastPeriodUnknown === 'true' || !lastPeriodStart) return null;

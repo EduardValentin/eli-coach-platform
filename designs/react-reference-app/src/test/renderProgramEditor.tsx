@@ -6,7 +6,6 @@ import { Toaster } from '../app/components/ui/sonner';
 import { AppProvider } from '../app/context/AppContext';
 import { AssessmentCallProvider } from '../app/context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../app/context/ClientJourneyContext';
-import { ClientProfileProvider } from '../app/context/ClientProfileContext';
 import { ProgramProvider } from '../app/context/ProgramContext';
 import { TrainingProvider } from '../app/context/TrainingContext';
 import { UnitPreferencesProvider } from '../app/context/UnitPreferencesContext';
@@ -45,7 +44,6 @@ export function renderProgramEditor(search: string, path = '/coach/clients/c1/pr
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <UnitPreferencesProvider>
-          <ClientProfileProvider>
             <TrainingProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
@@ -60,7 +58,6 @@ export function renderProgramEditor(search: string, path = '/coach/clients/c1/pr
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </TrainingProvider>
-          </ClientProfileProvider>
         </UnitPreferencesProvider>
       </AppProvider>
     </MemoryRouter>,

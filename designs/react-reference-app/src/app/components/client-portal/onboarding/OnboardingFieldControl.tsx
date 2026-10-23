@@ -1,8 +1,8 @@
 import { DateField } from '../../DateField';
-import { useId, type ReactElement } from 'react';
+import { useId, type ReactElement, type ReactNode } from 'react';
 import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
-import { CheckboxChip } from '../../CheckboxChip';
+import { CheckboxChip, type CheckboxChipSize } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { CheckboxField } from '../../CheckboxField';
 import { Input } from '../../ui/input';
@@ -44,6 +44,8 @@ import {
 type FieldControlProps = {
   control: Control<OnboardingValues>;
   field: OnboardingField;
+  labelAdornment?: ReactNode;
+  chipSize?: CheckboxChipSize;
 };
 
 type FieldController = ControllerRenderProps<OnboardingValues>;
@@ -179,12 +181,14 @@ function LabelLines({ field }: { field: OnboardingField }) {
   );
 }
 
-function UnitSuffixes({
+function LabelTrailing({
   field,
   unit,
+  adornment,
 }: {
   field: OnboardingField;
   unit: string | null;
+  adornment: ReactNode;
 }) {
   return (
     <>
@@ -193,11 +197,12 @@ function UnitSuffixes({
           {suffix}
         </LabelSuffix>
       ))}
+      {adornment}
     </>
   );
 }
 
-export function OnboardingFieldControl({ control, field }: FieldControlProps) {
+export function OnboardingFieldControl({ control, field, labelAdornment, chipSize }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
   const parityHook = `field-${field.id}`;
@@ -243,7 +248,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   <Legend
                     id={legendId}
                     required={required}
-                    trailing={<UnitSuffixes field={field} unit={unit} />}
+                    trailing={<LabelTrailing field={field} unit={unit} adornment={labelAdornment} />}
                   >
                     <LabelLines field={field} />
                   </Legend>
@@ -279,6 +284,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                         <CheckboxChip
                           aria-label={option.label}
                           key={option.value}
+                          size={chipSize}
                           checked={asList(controller.value).includes(
                             option.value,
                           )}
@@ -312,7 +318,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormLabel
               layout="wrap"
               required={required}
-              trailing={<UnitSuffixes field={field} unit={unit} />}
+              trailing={<LabelTrailing field={field} unit={unit} adornment={labelAdornment} />}
             >
               <LabelLines field={field} />
             </FormLabel>

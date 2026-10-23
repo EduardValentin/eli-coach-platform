@@ -29,7 +29,8 @@ import type {
 } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
-import { useClientProfile, fullName } from '../../context/ClientProfileContext';
+import { useJourneyClient } from '../../hooks/useJourneyClient';
+import { journeyClientName } from '../../utils/journeyLabels';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -82,13 +83,12 @@ export function NutritionPlanBuilderPage() {
     foods,
   } = useNutrition();
   const { getPhaseForDate } = useCycle();
-  const { getProfile } = useClientProfile();
+  const journey = useJourneyClient(clientId);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
   const { appState, setAppState } = useAppState();
   const { nutritionBlockCompleted } = appState;
 
-  const profile = getProfile(clientId);
   const plan = getPlan(clientId);
   const block = plan?.blocks.find((b) => b.status === 'active');
 
@@ -139,10 +139,7 @@ export function NutritionPlanBuilderPage() {
     });
 
   const handleCreate = () => {
-    const target = profile
-      ? seedDailyTarget(profile)
-      : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
-    createBlock(clientId, target, computeNextPhases());
+    createBlock(clientId, seedDailyTarget(), computeNextPhases());
   };
 
   // Auto-create on mount when there is no active block and no review block awaiting action.
@@ -153,7 +150,6 @@ export function NutritionPlanBuilderPage() {
     if (!clientId) return; // no client — nothing to do
     if (block) return; // block already exists
     if (reviewBlock) return; // review panel is showing — coach must choose
-    // Guard: only auto-create when there is enough context (profile preferred, but not required)
     autoCreatedRef.current = true;
     handleCreate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +179,7 @@ export function NutritionPlanBuilderPage() {
           <ArrowLeft size={20} />
         </Button>
         <h1 className="font-serif text-lg font-medium text-text-primary">
-          {profile ? fullName(profile) : 'Client'} · Nutrition plan
+          {journey ? journeyClientName(journey) : 'Client'} · Nutrition plan
         </h1>
         {pastBlocks.length > 0 && (
           <Select

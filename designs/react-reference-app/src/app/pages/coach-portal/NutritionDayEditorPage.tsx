@@ -28,7 +28,8 @@ import type {
   Food,
   ClientFoodPreferences,
 } from '../../context/NutritionContext';
-import { useClientProfile, fullName } from '../../context/ClientProfileContext';
+import { useJourneyClient } from '../../hooks/useJourneyClient';
+import { journeyClientName } from '../../utils/journeyLabels';
 import { useAppState } from '../../context/AppContext';
 import { pickableItems } from '../../domain/libraryLifecycle';
 import { Button } from '../../components/ui/button';
@@ -120,7 +121,6 @@ export function NutritionDayEditorPage() {
 
   const { getPlan, saveDay, copyDayToPhase, getPreferences, recipes, foods } =
     useNutrition();
-  const { getProfile } = useClientProfile();
   const { appState } = useAppState();
   const { nutritionPreferenceConflict } = appState;
 
@@ -139,7 +139,7 @@ export function NutritionDayEditorPage() {
   const block = plan?.blocks.find((b) => b.status === 'active');
   const day = block?.days.find((d) => d.date === date);
 
-  const profile = getProfile(clientId);
+  const journey = useJourneyClient(clientId);
   const prefs = getPreferences(clientId);
 
   // Effective prefs: when the preference-conflict toggle is on, union food-salmon into disliked.
@@ -343,7 +343,7 @@ export function NutritionDayEditorPage() {
           <ArrowLeft size={20} />
         </Button>
         <h1 className="font-serif text-lg font-medium text-text-primary">
-          {profile ? fullName(profile) : 'Client'} ·{' '}
+          {journey ? journeyClientName(journey) : 'Client'} ·{' '}
           {format(parseISO(date), 'EEEE, MMM d')}
         </h1>
         <div className="ml-auto flex items-center gap-3">
@@ -485,7 +485,7 @@ export function NutritionDayEditorPage() {
               Save changes to {format(parseISO(date), 'EEEE, MMM d')}?
             </DialogTitle>
             <DialogDescription className="leading-relaxed">
-              This updates {profile ? fullName(profile) : 'the client'}’s plan.
+              This updates {journey ? journeyClientName(journey) : 'the client'}’s plan.
             </DialogDescription>
           </DialogHeader>
 

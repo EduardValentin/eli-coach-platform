@@ -7,7 +7,6 @@ import { ProgramEditorPage } from '../../../pages/coach-portal/ProgramEditorPage
 import { AppProvider } from '../../../context/AppContext';
 import { AssessmentCallProvider } from '../../../context/AssessmentCallContext';
 import { ClientJourneyProvider, DEMO_JOURNEY_CALL_ID } from '../../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { ProgramProvider, usePrograms } from '../../../context/ProgramContext';
 import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
@@ -48,7 +47,6 @@ async function openFirstBlock(search: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <UnitPreferencesProvider>
-          <ClientProfileProvider>
             <TrainingProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
@@ -61,7 +59,6 @@ async function openFirstBlock(search: string) {
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </TrainingProvider>
-          </ClientProfileProvider>
         </UnitPreferencesProvider>
       </AppProvider>
     </MemoryRouter>,

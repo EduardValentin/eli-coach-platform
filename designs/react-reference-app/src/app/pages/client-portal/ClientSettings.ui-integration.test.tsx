@@ -13,7 +13,6 @@ import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 
@@ -50,7 +49,6 @@ function renderSettings(devParams: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-          <ClientProfileProvider>
             <UnitPreferencesProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
@@ -77,7 +75,6 @@ function renderSettings(devParams: string) {
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </UnitPreferencesProvider>
-          </ClientProfileProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>,
@@ -633,5 +630,32 @@ describe('the payment method', () => {
       within(subscriptionSection()).getByRole('status'),
     ).toHaveTextContent(/^Your last payment didn't go through\./);
     expect(window.location.search).toContain('jpayproblem=1');
+  });
+});
+
+describe('her check-in and contact preferences', () => {
+  it('shows her check-in day and channel read-only, saying her coach changes them', async () => {
+    // arrange
+    renderSettings('jstage=approved');
+    const user = userEvent.setup();
+    const preferences = screen.getByRole('region', { name: 'Check-ins and contact' });
+
+    // act
+    await user.hover(within(preferences).getByRole('button', { name: "Why the channel can't be changed" }));
+
+    // assert
+    expect(within(preferences).getByText('Monday')).toBeInTheDocument();
+    expect(within(preferences).getByText('Email')).toBeInTheDocument();
+    expect(within(preferences).queryByRole('radio')).not.toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Your coach changes these for you for now.');
+  });
+
+  it('leaves them out before her answers are approved', () => {
+    // act
+    renderSettings('jstage=submitted');
+
+    // assert
+    expect(screen.getByRole('region', { name: 'Units & Measurements' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Check-ins and contact' })).not.toBeInTheDocument();
   });
 });

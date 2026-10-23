@@ -9,7 +9,6 @@ import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { CoachProfileProvider } from '../../context/CoachProfileContext';
 import { MessagingProvider } from '../../context/MessagingContext';
 import { NotificationProvider } from '../../context/NotificationContext';
@@ -51,7 +50,6 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <CoachProfileProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <NotificationProvider>
@@ -75,7 +73,6 @@ function renderAt(path: string) {
                 </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </CoachProfileProvider>
       </AppProvider>
     </MemoryRouter>,

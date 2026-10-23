@@ -22,7 +22,7 @@ function shortCallMoment(startsAt: Date): string {
 }
 
 export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
-  const { identity } = journey;
+  const identity = journey.bookedIdentity;
 
   return (
     <CollapsiblePortalWidget

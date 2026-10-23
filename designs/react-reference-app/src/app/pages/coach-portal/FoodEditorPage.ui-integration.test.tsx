@@ -5,7 +5,6 @@ import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FoodEditorPage } from './FoodEditorPage';
 import { AppProvider } from '../../context/AppContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { NutritionProvider, useNutrition } from '../../context/NutritionContext';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -39,7 +38,6 @@ function renderEditor(entry: InitialEntry, probeName = 'Chicken breast'): User {
   render(
     <MemoryRouter initialEntries={[entry]}>
       <AppProvider>
-        <ClientProfileProvider>
           <NutritionProvider>
             <SavedFoodProbe name={probeName} />
             <Routes>
@@ -49,7 +47,6 @@ function renderEditor(entry: InitialEntry, probeName = 'Chicken breast'): User {
             </Routes>
             <Toaster />
           </NutritionProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

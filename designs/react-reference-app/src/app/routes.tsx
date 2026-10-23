@@ -53,9 +53,8 @@ import { PortalEnded } from "./pages/client-portal/PortalEnded";
 import { PaymentMethodStandIn } from "./pages/PaymentMethodStandIn";
 import { ClientJourneyGate } from "./components/client-portal/ClientJourneyGate";
 import { CoachClientCycle } from "./pages/coach-portal/CoachClientCycle";
-import { EditClientProfile } from "./pages/coach-portal/EditClientProfile";
+import { ClientProfilePage } from "./pages/coach-portal/ClientProfilePage";
 import { CycleProvider } from "./context/CycleContext";
-import { ClientProfileProvider } from "./context/ClientProfileContext";
 import { NutritionProvider } from "./context/NutritionContext";
 import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/client-portal/ClientProfile";
@@ -81,7 +80,6 @@ function Root() {
       <StoreProvider>
         <TrainingProvider>
           <CoachProfileProvider>
-          <ClientProfileProvider>
           <NutritionProvider>
           <UnitPreferencesProvider>
           <CycleProvider>
@@ -108,7 +106,6 @@ function Root() {
           </CycleProvider>
           </UnitPreferencesProvider>
           </NutritionProvider>
-          </ClientProfileProvider>
           </CoachProfileProvider>
         </TrainingProvider>
       </StoreProvider>
@@ -195,7 +192,7 @@ export const router = createBrowserRouter(
             { path: "checkins", Component: CoachCheckins },
             { path: "clients/:id/cycle", Component: CoachClientCycle },
             { path: "clients/:id/resources", Component: CoachClientResources },
-            { path: "clients/:id/edit", Component: EditClientProfile },
+            { path: "clients/:id/profile", Component: ClientProfilePage },
             { path: "profile", Component: EditCoachProfile },
             { path: "settings", Component: CoachSettings },
           ]

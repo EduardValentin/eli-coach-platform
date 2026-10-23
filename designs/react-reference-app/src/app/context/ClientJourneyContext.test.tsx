@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { AppProvider } from './AppContext';
@@ -8,7 +8,6 @@ import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from './AssessmentCallContext';
-import { ClientProfileProvider } from './ClientProfileContext';
 import {
   ClientJourneyProvider,
   DEMO_JOURNEY_CALL_ID,
@@ -72,17 +71,42 @@ function JourneyProbe() {
 }
 
 function ProfileProbe() {
-  const { demoJourney, submitOnboarding, saveOnboardingDraft, answerRequest } =
-    useClientJourneys();
-  const { profile } = demoJourney;
+  const {
+    demoJourney,
+    submitOnboarding,
+    saveOnboardingDraft,
+    answerRequest,
+    startReview,
+    approveAnswers,
+    updateClientProfile,
+  } = useClientJourneys();
+  const [saveOutcome, setSaveOutcome] = useState('');
+  const { profile, settings } = demoJourney;
+  const { coaching } = profile;
+
+  const editProfile = () =>
+    updateClientProfile(DEMO_JOURNEY_CALL_ID, {
+      identity: { firstName: 'Anna' },
+      coaching: { trainingDays: 5 },
+    }).then(
+      () => setSaveOutcome('saved'),
+      () => setSaveOutcome('failed'),
+    );
 
   return (
     <>
-      <output aria-label="profile">
-        {profile
-          ? `${profile.heightCm} cm · ${profile.dietaryRestrictions}`
+      <output aria-label="name">
+        {profile.identity.firstName} {profile.identity.lastName}
+      </output>
+      <output aria-label="coaching">
+        {coaching
+          ? `${coaching.heightCm} cm · ${coaching.trainingDays} days · ${coaching.dietaryRestrictions}`
           : 'none'}
       </output>
+      <output aria-label="preferences">
+        {settings.preferredCheckInWeekday ?? 'no day'} · {settings.preferredChannel ?? 'no channel'}
+      </output>
+      <output aria-label="save outcome">{saveOutcome}</output>
       <button
         type="button"
         onClick={() =>
@@ -112,21 +136,32 @@ function ProfileProbe() {
       >
         answer the request
       </button>
+      <button
+        type="button"
+        onClick={() => {
+          startReview(DEMO_JOURNEY_CALL_ID);
+          approveAnswers(DEMO_JOURNEY_CALL_ID);
+        }}
+      >
+        approve answers
+      </button>
+      <button type="button" onClick={editProfile}>
+        edit profile
+      </button>
     </>
   );
 }
 
 function renderProbe(jstage: string, probe: ReactNode = <JourneyProbe />) {
-  window.history.replaceState({}, '', `/?jstage=${jstage}`);
+  const search = `?jstage=${jstage}`;
+  window.history.replaceState({}, '', `/${search}`);
 
   render(
-    <MemoryRouter initialEntries={[`/?jstage=${jstage}`]}>
+    <MemoryRouter initialEntries={[`/${search}`]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>{probe}</ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -176,14 +211,12 @@ describe('syncing bookings into journeys', () => {
     render(
       <MemoryRouter initialEntries={['/?jstage=invited']}>
         <AppProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <SeedDemoIdBooking />
               <ClientJourneyProvider>
                 <JourneyProbe />
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </AppProvider>
       </MemoryRouter>,
     );
@@ -231,16 +264,20 @@ describe('completing checkout', () => {
   });
 });
 
+const SAVE_TIMEOUT = { timeout: 3000 };
+
 describe('keeping her profile', () => {
-  it('has no profile while she is still filling in her onboarding', () => {
+  it('has no coaching facts or preferences before her answers are approved', () => {
     // act
     renderProbe('onboarding', <ProfileProbe />);
 
     // assert
-    expect(screen.getByLabelText('profile')).toHaveTextContent('none');
+    expect(screen.getByLabelText('name')).toHaveTextContent('Jane Doe');
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('none');
+    expect(screen.getByLabelText('preferences')).toHaveTextContent('no day · no channel');
   });
 
-  it('builds her profile from her answers when she sends her onboarding', async () => {
+  it('leaves her profile untouched when she sends her onboarding', async () => {
     // arrange
     const user = renderProbe('onboarding', <ProfileProbe />);
 
@@ -248,21 +285,55 @@ describe('keeping her profile', () => {
     await user.click(screen.getByRole('button', { name: 'send onboarding' }));
 
     // assert
-    expect(screen.getByLabelText('profile')).toHaveTextContent('165 cm · None');
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('none');
   });
 
-  it('rebuilds her profile from the merged answers when she answers a detail request', async () => {
+  it('leaves her profile untouched when she answers a detail request', async () => {
     // arrange
     const user = renderProbe('needs-details', <ProfileProbe />);
 
     // act
-    await user.click(
-      screen.getByRole('button', { name: 'answer the request' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'answer the request' }));
 
     // assert
-    expect(screen.getByLabelText('profile')).toHaveTextContent(
-      '165 cm · Vegan, Lactose, mild',
-    );
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('none');
+  });
+
+  it('fills her coaching facts and preferences from her answers once they are approved', async () => {
+    // arrange
+    const user = renderProbe('submitted', <ProfileProbe />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'approve answers' }));
+
+    // assert
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('165 cm · 3 days · Lactose, mild');
+    expect(screen.getByLabelText('preferences')).toHaveTextContent('mon · email');
+  });
+
+  it('saves an edit to her identity and coaching facts', async () => {
+    // arrange
+    const user = renderProbe('approved', <ProfileProbe />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'edit profile' }));
+
+    // assert
+    expect(await screen.findByText('saved', {}, SAVE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByLabelText('name')).toHaveTextContent('Anna Doe');
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('165 cm · 5 days · Lactose, mild');
+  });
+
+  it('keeps her profile as it was when the save fails', async () => {
+    // arrange
+    const user = renderProbe('approved&jprofile=fails', <ProfileProbe />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'edit profile' }));
+
+    // assert
+    expect(await screen.findByText('failed', {}, SAVE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.getByLabelText('name')).toHaveTextContent('Jane Doe');
+    expect(screen.getByLabelText('coaching')).toHaveTextContent('165 cm · 3 days · Lactose, mild');
   });
 });

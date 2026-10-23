@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import type { ClientJourney } from './journey';
 import type { Block } from './program';
 import {
   blockDates,
   blockSpan,
   blockStatus,
+  checkInWeekdayOf,
   checkpointDate,
   checkpointsWithin,
   currentPosition,
   daysUntil,
   nextCheckpoint,
   planWeeks,
-  weekdayFromOnboarding,
   weekdayOf,
 } from './programCalendar';
 
@@ -117,16 +118,27 @@ describe('daysUntil', () => {
   });
 });
 
-describe('weekdayFromOnboarding', () => {
-  it('maps full English names', () => {
-    expect(weekdayFromOnboarding('Monday')).toBe('mon');
-    expect(weekdayFromOnboarding('Sunday')).toBe('sun');
-    expect(weekdayFromOnboarding('Thursday')).toBe('thu');
+describe('checkInWeekdayOf', () => {
+  it('reads her preferred check-in weekday from her settings', () => {
+    // arrange
+    const journey = { settings: { preferredCheckInWeekday: 'thu', preferredChannel: 'email' } } as ClientJourney;
+
+    // act
+    const weekday = checkInWeekdayOf(journey);
+
+    // assert
+    expect(weekday).toBe('thu');
   });
 
-  it('defaults to Monday', () => {
-    expect(weekdayFromOnboarding(null)).toBe('mon');
-    expect(weekdayFromOnboarding('Someday')).toBe('mon');
+  it('defaults to Monday before her preferences are set', () => {
+    // arrange
+    const journey = { settings: { preferredCheckInWeekday: null, preferredChannel: null } } as ClientJourney;
+
+    // act
+    const weekdays = [checkInWeekdayOf(journey), checkInWeekdayOf(null)];
+
+    // assert
+    expect(weekdays).toEqual(['mon', 'mon']);
   });
 });
 

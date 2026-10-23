@@ -6,7 +6,6 @@ import { ProgramStatusCard } from './ProgramStatusCard';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 
 const SERVICE_TIMEOUT = 4000;
@@ -34,7 +33,6 @@ function renderCard(devParams: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -48,7 +46,6 @@ function renderCard(devParams: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

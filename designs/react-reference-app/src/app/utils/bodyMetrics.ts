@@ -1,4 +1,4 @@
-import type { ActivityLevel } from '../context/ClientProfileContext';
+import type { ActivityLevel } from '../domain/clientProfile';
 
 // Mifflin-St Jeor defines a constant for two sexes only. The coach picks one
 // because it selects which formula to apply, not because it describes the
@@ -13,10 +13,10 @@ const SEX_CONSTANT: Record<MetabolicSex, number> = {
 };
 
 export const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
-  'sedentary': 1.2,
-  'lightly-active': 1.375,
-  'moderately-active': 1.55,
-  'very-active': 1.725,
+  'Mostly sitting': 1.2,
+  'Lightly active': 1.375,
+  Active: 1.55,
+  'Very active': 1.725,
 };
 
 export function calculateBasalMetabolicRate(measurements: {

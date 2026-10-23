@@ -40,6 +40,7 @@ export type OnboardingField = {
   requires?: readonly string[];
   exclusiveOptions?: readonly string[];
   unitSuffix?: string;
+  maxLength?: number;
   range?: NumericRange;
   step?: string;
   relativeTo?: RelativeRange;

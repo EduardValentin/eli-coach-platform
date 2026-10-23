@@ -17,7 +17,6 @@ import {
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
 import type { JourneyStage } from '../../domain/journey';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
@@ -200,7 +199,6 @@ function renderSection(
   render(
     <MemoryRouter initialEntries={[`/coach${options.urlQuery ?? ''}`]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <SeedBookings bookings={bookings} />
@@ -214,7 +212,6 @@ function renderSection(
               <ReducedPricingDriver />
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

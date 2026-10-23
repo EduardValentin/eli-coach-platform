@@ -17,11 +17,3 @@ export function weightChangeKg(
 ): number {
   return currentWeightKg - startingWeightKg;
 }
-
-export function statedHeightCm(answers: {
-  'goal-availability': Record<string, unknown>;
-}): number {
-  const stated = answers['goal-availability'].height;
-
-  return typeof stated === 'number' ? stated : 0;
-}

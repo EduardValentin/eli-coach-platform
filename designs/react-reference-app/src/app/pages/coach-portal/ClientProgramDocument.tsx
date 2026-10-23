@@ -21,6 +21,6 @@ export function ClientProgramDocument() {
   if (!version) return <Navigate to={programPath} replace />;
 
   const view = journeyProgramView({ journey, program, version, exercises, today: new Date() });
-  const firstName = journey.identity.firstName;
+  const firstName = journey.profile.identity.firstName;
   return <ProgramDocumentSheet view={view} backTo={programPath} backLabel={`Back to ${firstName}'s program`} />;
 }

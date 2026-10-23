@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { NutritionHub } from './NutritionHub';
 import { AppProvider } from '../../context/AppContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { NutritionProvider } from '../../context/NutritionContext';
 
 afterEach(() => {
@@ -20,14 +21,16 @@ function renderHub(path = '/coach/nutrition') {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
-          <NutritionProvider>
-            <Routes>
-              <Route path="/coach/nutrition" element={<NutritionHub />} />
-              <Route path="/coach/nutrition/foods/new" element={<NewFoodStandIn />} />
-            </Routes>
-          </NutritionProvider>
-        </ClientProfileProvider>
+        <AssessmentCallProvider>
+          <ClientJourneyProvider>
+            <NutritionProvider>
+              <Routes>
+                <Route path="/coach/nutrition" element={<NutritionHub />} />
+                <Route path="/coach/nutrition/foods/new" element={<NewFoodStandIn />} />
+              </Routes>
+            </NutritionProvider>
+          </ClientJourneyProvider>
+        </AssessmentCallProvider>
       </AppProvider>
     </MemoryRouter>,
   );

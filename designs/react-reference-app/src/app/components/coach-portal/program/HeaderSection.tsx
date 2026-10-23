@@ -1,9 +1,12 @@
 import { useId } from 'react';
 import { usePrograms } from '../../../context/ProgramContext';
 import { CYCLE_MODE_LABELS, type CycleMode } from '../../../domain/cycleMode';
-import type { ClientJourney, OnboardingAnswer } from '../../../domain/journey';
+import { SESSION_MINUTE_LABELS, TRAINING_DAY_LABELS, type CoachingFacts } from '../../../domain/clientProfile';
+import type { ClientJourney } from '../../../domain/journey';
 import type { LevelHint, Program, ProgramContent, ProgramLanguage, ProgramVersion } from '../../../domain/program';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../SettingsSection';
+import { equipmentReading } from '../../client-profile/profileFields';
+import { clientPronouns } from '../../../utils/journeyLabels';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 import { OptionSelect, type Option } from './OptionSelect';
@@ -30,21 +33,16 @@ const LANGUAGES: Option<ProgramLanguage>[] = [
   { value: 'ro', label: 'Romanian' },
 ];
 
-function answerText(answer: OnboardingAnswer | undefined): string | null {
-  if (Array.isArray(answer)) return answer.join(', ') || null;
-  return answer === undefined || answer === '' ? null : String(answer);
-}
+function profileFacts(coaching: CoachingFacts | null): [string, string][] {
+  if (!coaching) return [];
 
-function onboardingFacts(journey: ClientJourney): [string, string][] {
-  const goal = journey.onboarding.answers['goal-availability'];
-  const safety = journey.onboarding.answers['safety-screening'];
   const facts: [string, string | null][] = [
-    ['Goal', answerText(goal.primaryGoal)],
-    ['Equipment', answerText(goal.availableEquipment)],
-    ['Place', answerText(goal.trainingPlace)],
-    ['Days per week', answerText(goal.trainingDaysPerWeek)],
-    ['Minutes per session', answerText(goal.minutesPerSession)],
-    ['Limitations', answerText(safety.boneOrJointProblemList)],
+    ['Goal', coaching.primaryGoal],
+    ['Equipment', equipmentReading(coaching.equipment)],
+    ['Place', coaching.trainingPlace],
+    ['Days per week', TRAINING_DAY_LABELS[coaching.trainingDays]],
+    ['Minutes per session', SESSION_MINUTE_LABELS[coaching.sessionMinutes]],
+    ['Limitations', coaching.limitations || null],
   ];
   return facts.filter((fact): fact is [string, string] => fact[1] !== null);
 }
@@ -89,9 +87,9 @@ export function HeaderSection({ journey, program, version, content, onContentCha
         <SettingsRow htmlFor={ids.note} title="Personal note" layout="stacked">
           <Textarea id={ids.note} value={header.personalNote} onChange={event => change({ personalNote: event.target.value })} />
         </SettingsRow>
-        <SettingsRow title="From onboarding" layout="stacked">
+        <SettingsRow title={`From ${clientPronouns(journey.profile.identity.gender).possessive.lower} profile`} layout="stacked">
           <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
-            {onboardingFacts(journey).map(([term, detail]) => (
+            {profileFacts(journey.profile.coaching).map(([term, detail]) => (
               <div key={term} className="contents">
                 <dt className="text-text-secondary">{term}</dt>
                 <dd className="text-text-primary">{detail}</dd>
@@ -102,7 +100,7 @@ export function HeaderSection({ journey, program, version, content, onContentCha
         <SettingsRow htmlFor={ids.level} title="Level" layout="stacked">
           <OptionSelect id={ids.level} options={LEVELS} value={program.level} onChange={level => onSetupChange({ level })} />
         </SettingsRow>
-        {journey.identity.gender !== 'male' && (
+        {journey.profile.identity.gender !== 'male' && (
           <SettingsRow htmlFor={ids.cycle} title="Cycle mode" layout="stacked">
             <OptionSelect id={ids.cycle} options={CYCLE_MODES} value={program.cycleMode} onChange={cycleMode => onSetupChange({ cycleMode })} />
           </SettingsRow>
