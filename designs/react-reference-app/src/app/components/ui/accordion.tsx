@@ -41,6 +41,18 @@ const CHEVRON_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
   title: "",
 };
 
+function AccordionChevron({ className }: { className?: string }) {
+  return (
+    <ChevronDownIcon
+      aria-hidden="true"
+      className={cn(
+        "text-text-secondary pointer-events-none size-4 shrink-0 transition-transform duration-200",
+        className,
+      )}
+    />
+  );
+}
+
 function AccordionTrigger({
   className,
   children,
@@ -69,12 +81,7 @@ function AccordionTrigger({
         >
           {children}
           {chevron === "trailing" && (
-            <ChevronDownIcon
-              className={cn(
-                "text-text-secondary pointer-events-none size-4 shrink-0 transition-transform duration-200",
-                CHEVRON_LAYOUT_CLASS[layout],
-              )}
-            />
+            <AccordionChevron className={CHEVRON_LAYOUT_CLASS[layout]} />
           )}
         </AccordionPrimitive.Trigger>
       </HeadingTag>
@@ -98,4 +105,4 @@ function AccordionContent({
   );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionChevron, AccordionItem, AccordionTrigger, AccordionContent };

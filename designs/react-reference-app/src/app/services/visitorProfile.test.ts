@@ -56,7 +56,7 @@ describe('normalizePhone', () => {
     });
 
     // assert
-    expect(result).toEqual({ status: 'valid', e164: '+40712345678' });
+    expect(result).toEqual({ status: 'valid', e164: '+40712345678', nationalNumber: '712345678' });
   });
 
   it('refuses letters, too few digits, too many digits and an E.164 over 15 digits', () => {

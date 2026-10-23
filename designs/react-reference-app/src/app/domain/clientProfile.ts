@@ -118,9 +118,9 @@ const HAS_ALLERGIES = 'Yes';
 const NO_DIETARY_RESTRICTIONS = 'None';
 const HAS_BONE_OR_JOINT_PROBLEM = 'Yes';
 const STRUCTURED_EXPERIENCE = 'I train consistently and follow a structured program';
-const DEFAULT_TRAINING_DAYS: TrainingDays = 3;
-const DEFAULT_SESSION_MINUTES: SessionMinutes = 60;
-const DEFAULT_CYCLE_MODE: CycleMode = 'general';
+export const DEFAULT_TRAINING_DAYS: TrainingDays = 3;
+export const DEFAULT_SESSION_MINUTES: SessionMinutes = 60;
+export const DEFAULT_CYCLE_MODE: CycleMode = 'general';
 
 const TRAINING_DAYS_BY_ANSWER: Record<string, TrainingDays> = {
   '2 days': 2,
@@ -254,7 +254,7 @@ export function openedClientProfile(identity: JourneyIdentity): ClientProfile {
   return { identity, avatarUrl: null, coaching: null, coachNotes: '' };
 }
 
-export function withApprovedFacts(journey: ClientJourney): ClientJourney {
+export function seededAtApproval(journey: ClientJourney): ClientJourney {
   const { onboarding, profile } = journey;
 
   return {

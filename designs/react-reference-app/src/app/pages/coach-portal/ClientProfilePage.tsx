@@ -1,9 +1,9 @@
+import { Fragment } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router';
-import { CalendarCheck, Dumbbell, Lock, UserRound } from 'lucide-react';
+import { CalendarCheck, Dumbbell, Info, Lock, UserRound } from 'lucide-react';
 import { AvatarField } from '../../components/AvatarField';
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
-import { CycleModeInfo } from '../../components/client-profile/CycleModeInfo';
 import { IdentityFields } from '../../components/client-profile/IdentityFields';
 import { PreferenceRows } from '../../components/client-profile/PreferenceRows';
 import { ProfileFieldRows } from '../../components/client-profile/ProfileFieldRows';
@@ -17,6 +17,7 @@ import {
 } from '../../components/client-profile/profileFields';
 import { useMeasureUnits, type MeasureUnits } from '../../components/client-portal/measureUnits';
 import { asText } from '../../components/client-portal/onboarding/onboardingValues';
+import { IconHint } from '../../components/IconHint';
 import { PortalBackLink } from '../../components/PortalBackLink';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { SettingsBody, SettingsSection } from '../../components/SettingsSection';
@@ -28,6 +29,8 @@ import { useJourneyClient } from '../../hooks/useJourneyClient';
 import {
   clientDetailPathForJourney,
   clientPronouns,
+  CYCLE_MODE_DEFINITIONS,
+  CYCLE_MODE_INFO_LABEL,
   journeyClientName,
 } from '../../utils/journeyLabels';
 
@@ -44,6 +47,28 @@ const CLOSING_FIELDS: readonly OnboardingField[] = [
   PROFILE_FIELDS.dietaryRestrictions,
   PROFILE_FIELDS.coachNotes,
 ];
+
+function CycleModeInfo() {
+  return (
+    <IconHint
+      label={CYCLE_MODE_INFO_LABEL}
+      icon={<Info aria-hidden="true" size={14} />}
+      size="compact"
+      tone="muted"
+      parity="cycle-mode-info"
+      contentParityRoot="CycleModeTooltip"
+    >
+      <dl className="space-y-1">
+        {CYCLE_MODE_DEFINITIONS.map(({ term, meaning }) => (
+          <div key={term}>
+            <dt className="inline font-semibold">{term}</dt>{' '}
+            <dd className="inline">— {meaning}</dd>
+          </div>
+        ))}
+      </dl>
+    </IconHint>
+  );
+}
 
 const COACHING_ADORNMENTS = {
   cycleMode: <CycleModeInfo />,
@@ -174,16 +199,18 @@ function CoachClientProfile({ journey }: { journey: ClientJourney }) {
     <div className="w-full max-w-3xl" data-parity-root="ClientProfilePage">
       <PortalBackLink to={clientDetailPathForJourney(journey)}>Back to {name}</PortalBackLink>
       <PortalPageHeader eyebrow={name} title="Profile" />
-      <AvatarField
-        name={name}
-        detail={profile.identity.email}
-        avatarUrl={profile.avatarUrl}
-        onChange={(avatarUrl) => updateClientAvatar(journey.callId, avatarUrl)}
-      />
-      <div className="space-y-6 sm:space-y-8" key={`${journey.stage}-${profile.identity.gender}`}>
-        <AboutSection journey={journey} />
-        <CoachingSection journey={journey} />
-        {profile.coaching && <PreferencesSection journey={journey} />}
+      <div className="space-y-6 sm:space-y-8">
+        <AvatarField
+          name={name}
+          detail={profile.identity.email}
+          avatarUrl={profile.avatarUrl}
+          onChange={(avatarUrl) => updateClientAvatar(journey.callId, avatarUrl)}
+        />
+        <Fragment key={`${journey.stage}-${profile.identity.gender}`}>
+          <AboutSection journey={journey} />
+          <CoachingSection journey={journey} />
+          {profile.coaching && <PreferencesSection journey={journey} />}
+        </Fragment>
       </div>
     </div>
   );

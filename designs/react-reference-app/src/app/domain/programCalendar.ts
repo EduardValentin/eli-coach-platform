@@ -58,6 +58,10 @@ export function currentPosition(blocks: readonly Block[], dayOne: Date | null, t
   };
 }
 
+export function jsDayOf(weekday: Weekday): number {
+  return JS_DAY_TO_WEEKDAY.indexOf(weekday);
+}
+
 export function weekdayOf(date: Date): Weekday {
   return JS_DAY_TO_WEEKDAY[getDay(date)];
 }

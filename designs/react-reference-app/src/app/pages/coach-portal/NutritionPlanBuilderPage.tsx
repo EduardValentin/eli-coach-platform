@@ -13,7 +13,7 @@ import {
   dayMacros,
   dayTargetFor,
   slotMacros,
-  seedDailyTarget,
+  DEFAULT_DAILY_TARGET,
   isoLocal,
   shoppingListForDays,
 } from '../../context/NutritionContext';
@@ -139,7 +139,7 @@ export function NutritionPlanBuilderPage() {
     });
 
   const handleCreate = () => {
-    createBlock(clientId, seedDailyTarget(), computeNextPhases());
+    createBlock(clientId, DEFAULT_DAILY_TARGET, computeNextPhases());
   };
 
   // Auto-create on mount when there is no active block and no review block awaiting action.

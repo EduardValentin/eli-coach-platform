@@ -60,7 +60,7 @@ import {
 } from '../services/clientJourneySamples';
 import {
   editedProfile,
-  withApprovedFacts,
+  seededAtApproval,
   type ClientProfileEdit,
 } from '../domain/clientProfile';
 import { saveClientProfile } from '../services/clientProfileService';
@@ -582,7 +582,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         const transition = advance(journey, 'approve-answers');
 
         return transition.status === 'advanced'
-          ? withApprovedFacts(transition.journey)
+          ? seededAtApproval(transition.journey)
           : journey;
       });
     },

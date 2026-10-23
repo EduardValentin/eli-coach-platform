@@ -4,15 +4,12 @@ import { COUNTRIES, findCountry } from '../../services/countries';
 import { checkBirthDate, MIN_BOOKING_AGE, normalizePhone } from '../../services/visitorProfile';
 import { asText, type OnboardingValues } from '../client-portal/onboarding/onboardingValues';
 
-export const IDENTITY_PROBLEMS = {
+const IDENTITY_PROBLEMS = {
   dateOfBirthMissing: 'Choose a date of birth.',
   dateOfBirthTooYoung: `Choose a date at least ${MIN_BOOKING_AGE} years ago.`,
   dateOfBirthImpossible: 'Enter a real date of birth.',
   phone: 'Enter a phone number with digits only, 4 to 14 digits after the country code.',
 } as const;
-
-const NATIONAL_PREFIX = /^0/;
-const PHONE_SEPARATORS = /[\s().-]/g;
 
 function countryCodeNamed(name: string): string {
   return COUNTRIES.find((country) => country.name === name)?.code ?? '';
@@ -51,20 +48,23 @@ function callingCodeOf(values: OnboardingValues): string {
   return findCountry(asText(values.phoneCountry))?.callingCode ?? '';
 }
 
+function normalizedPhoneOf(values: OnboardingValues) {
+  return normalizePhone({ callingCode: callingCodeOf(values), nationalNumber: asText(values.phoneNumber) });
+}
+
 export function phoneProblem(values: OnboardingValues): string | true {
-  const callingCode = callingCodeOf(values);
-  const phone = normalizePhone({ callingCode, nationalNumber: asText(values.phoneNumber) });
+  const phone = normalizedPhoneOf(values);
 
   if (phone.status === 'empty') return true;
-  if (phone.status === 'invalid' || callingCode.length === 0) return IDENTITY_PROBLEMS.phone;
+  if (phone.status === 'invalid' || callingCodeOf(values).length === 0) return IDENTITY_PROBLEMS.phone;
 
   return true;
 }
 
 function phoneOf(values: OnboardingValues): JourneyPhone | undefined {
-  const number = asText(values.phoneNumber).replace(PHONE_SEPARATORS, '').replace(NATIONAL_PREFIX, '');
+  const phone = normalizedPhoneOf(values);
 
-  return number.length > 0 ? { diallingCode: callingCodeOf(values), number } : undefined;
+  return phone.status === 'valid' ? { diallingCode: callingCodeOf(values), number: phone.nationalNumber } : undefined;
 }
 
 export function sharedIdentityOf(values: OnboardingValues): IdentityEdit {

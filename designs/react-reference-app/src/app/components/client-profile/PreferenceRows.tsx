@@ -7,7 +7,7 @@ import { ABSENT_VALUE } from '../constants';
 import { SettingsRow, SettingsRows } from '../SettingsSection';
 import { ReadOnlyValue } from './ReadOnlyValue';
 
-export type PreferenceCopy = {
+type PreferenceCopy = {
   checkInDay: string;
   channel: string;
   hint: string;

@@ -7,9 +7,9 @@ import {
   coachingEndsAt,
   type CheckinScheduling,
 } from '../../domain/checkins';
-import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
+import { WEEKDAY_NAMES } from '../../domain/checkinSeries';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
-import { WEEKDAY_LABELS, type Weekday } from '../../domain/program';
+import { jsDayOf } from '../../domain/programCalendar';
 import { coachCheckinsPath } from '../../utils/checkinLinks';
 import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
@@ -41,10 +41,6 @@ function coachingEndsLine(gender: JourneyGender, scheduling: CheckinScheduling):
   return `${possessive.capitalised} coaching ${coaching}, so no weekly check-in can be set up.`;
 }
 
-function suggestedWeekdayOf(preferred: Weekday | null): number | null {
-  return preferred && weekdayNamed(WEEKDAY_LABELS[preferred]);
-}
-
 function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {
   return { ...scheduledClientOf(journey), gender: journey.profile.identity.gender };
 }
@@ -58,7 +54,8 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   const scheduling = checkinSchedulingFor(journey, new Date());
   const coachingEnds = coachingEndsAt(journey.subscription) !== undefined;
   const series = coachingEnds ? null : seriesFor(client.id);
-  const suggestedWeekday = suggestedWeekdayOf(journey.settings.preferredCheckInWeekday);
+  const preferred = journey.settings.preferredCheckInWeekday;
+  const suggestedWeekday = preferred && jsDayOf(preferred);
 
   const openDialog = (mode: WeeklyCheckinMode) =>
     setDialog((current) => ({ mode, open: true, openings: current.openings + 1 }));

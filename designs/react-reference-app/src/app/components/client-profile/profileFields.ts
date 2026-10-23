@@ -36,7 +36,7 @@ import { asList, asText, type OnboardingValues } from '../client-portal/onboardi
 const MAX_NAME_LENGTH = 60;
 const MAX_NOTE_LENGTH = 500;
 
-export const BODYWEIGHT_ONLY = 'Bodyweight only';
+const BODYWEIGHT_ONLY = 'Bodyweight only';
 
 function options(values: readonly string[]): OnboardingOption[] {
   return values.map((value) => ({ value, label: value }));

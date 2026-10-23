@@ -9,7 +9,7 @@ import { ProfileFieldRows } from './ProfileFieldRows';
 import { dateOfBirthProblem, phoneProblem } from './identityForm';
 import { ReadOnlyValue } from './ReadOnlyValue';
 
-export type EmailCopy = {
+type EmailCopy = {
   address: string;
   description: string;
   hint: string;

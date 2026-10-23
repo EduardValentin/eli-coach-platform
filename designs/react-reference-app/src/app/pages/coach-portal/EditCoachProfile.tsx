@@ -53,58 +53,60 @@ export function EditCoachProfile() {
         subtitle="Update how you appear to your clients across the platform."
       />
 
-      <AvatarField
-        name={coachProfile.name}
-        detail="Profile picture"
-        avatarUrl={coachProfile.avatarUrl ?? null}
-        onChange={async (avatarUrl) => updateCoachProfile({ avatarUrl: avatarUrl ?? undefined })}
-      />
+      <div className="space-y-6 sm:space-y-8">
+        <AvatarField
+          name={coachProfile.name}
+          detail="Profile picture"
+          avatarUrl={coachProfile.avatarUrl ?? null}
+          onChange={async (avatarUrl) => updateCoachProfile({ avatarUrl: avatarUrl ?? undefined })}
+        />
 
-      <SettingsSection
-        headingId="coach-profile-details-heading"
-        title="Details"
-        description="Your name and bio appear to clients in messages and on the platform."
-        footer={
-          <>
-            <Link
-              to="/coach"
-              className={buttonVariants({ variant: 'ghost', size: 'md' })}
-            >
-              Cancel
-            </Link>
-            <Button
-              onClick={handleSave}
-              variant="primary"
-              size="md"
-              disabled={!isDirty}
-            >
-              <Check size={16} />
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <SettingsRows>
-          <SettingsRow htmlFor={NAME_FIELD_ID} title="Name" layout="stacked">
-            <Input
-              id={NAME_FIELD_ID}
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </SettingsRow>
+        <SettingsSection
+          headingId="coach-profile-details-heading"
+          title="Details"
+          description="Your name and bio appear to clients in messages and on the platform."
+          footer={
+            <>
+              <Link
+                to="/coach"
+                className={buttonVariants({ variant: 'ghost', size: 'md' })}
+              >
+                Cancel
+              </Link>
+              <Button
+                onClick={handleSave}
+                variant="primary"
+                size="md"
+                disabled={!isDirty}
+              >
+                <Check size={16} />
+                Save Changes
+              </Button>
+            </>
+          }
+        >
+          <SettingsRows>
+            <SettingsRow htmlFor={NAME_FIELD_ID} title="Name" layout="stacked">
+              <Input
+                id={NAME_FIELD_ID}
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </SettingsRow>
 
-          <SettingsRow htmlFor={BIO_FIELD_ID} title="Bio" layout="stacked">
-            <Textarea
-              id={BIO_FIELD_ID}
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              rows={5}
-              placeholder="A short bio that clients can read on your profile."
-            />
-          </SettingsRow>
-        </SettingsRows>
-      </SettingsSection>
+            <SettingsRow htmlFor={BIO_FIELD_ID} title="Bio" layout="stacked">
+              <Textarea
+                id={BIO_FIELD_ID}
+                value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                rows={5}
+                placeholder="A short bio that clients can read on your profile."
+              />
+            </SettingsRow>
+          </SettingsRows>
+        </SettingsSection>
+      </div>
     </div>
   );
 }

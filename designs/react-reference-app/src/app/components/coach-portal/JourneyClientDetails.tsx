@@ -26,7 +26,7 @@ function invitationAwaitingAccount(journey: ClientJourney) {
     : null;
 }
 
-function SubscriptionWidgets({ journey }: { journey: ClientJourney }) {
+function SubscriptionAndCheckinWidgets({ journey }: { journey: ClientJourney }) {
   if (!journey.subscription) return null;
 
   return (
@@ -49,7 +49,7 @@ function SubscriptionWidgets({ journey }: { journey: ClientJourney }) {
   );
 }
 
-function RecordWidgets({ journey }: { journey: ClientJourney }) {
+function ClientRecordWidgets({ journey }: { journey: ClientJourney }) {
   const units = useMeasureUnits();
   const invitation = invitationAwaitingAccount(journey);
   const answersApproved = !isBeforeStage(journey.stage, 'approved');
@@ -61,7 +61,7 @@ function RecordWidgets({ journey }: { journey: ClientJourney }) {
       {invitation && <InvitationBlock journey={journey} invitation={invitation} />}
       {!answersApproved && onboarding}
       <ProgramBlock journey={journey} />
-      <SubscriptionWidgets journey={journey} />
+      <SubscriptionAndCheckinWidgets journey={journey} />
       <JourneyMeasurements
         journey={journey}
         heightCm={journey.profile.coaching?.heightCm ?? 0}
@@ -111,7 +111,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         </div>
       </header>
 
-      <RecordWidgets journey={journey} />
+      <ClientRecordWidgets journey={journey} />
     </div>
   );
 }

@@ -24,7 +24,7 @@ import {
 import {
   openedClientProfile,
   UNSET_CLIENT_SETTINGS,
-  withApprovedFacts,
+  seededAtApproval,
 } from '../domain/clientProfile';
 import {
   cancel,
@@ -576,7 +576,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       : undefined,
   };
 
-  return reached('approved') ? withApprovedFacts(journey) : journey;
+  return reached('approved') ? seededAtApproval(journey) : journey;
 }
 
 export function heldJourney(

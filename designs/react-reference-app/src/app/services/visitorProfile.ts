@@ -29,7 +29,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type PhoneNormalization =
   | { status: 'empty' }
-  | { status: 'valid'; e164: string }
+  | { status: 'valid'; e164: string; nationalNumber: string }
   | { status: 'invalid' };
 
 export type BirthDateCheck = 'ok' | 'too_young' | 'impossible';
@@ -116,7 +116,7 @@ export function normalizePhone(input: {
 
   if (!withinNationalBounds || !withinE164) return { status: 'invalid' };
 
-  return { status: 'valid', e164: `+${countryDigits}${national}` };
+  return { status: 'valid', e164: `+${countryDigits}${national}`, nationalNumber: national };
 }
 
 // Reads the booking day's local calendar date and re-expresses it at UTC

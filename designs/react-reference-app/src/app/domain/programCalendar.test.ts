@@ -6,6 +6,7 @@ import {
   blockSpan,
   blockStatus,
   checkInWeekdayOf,
+  jsDayOf,
   checkpointDate,
   checkpointsWithin,
   currentPosition,
@@ -115,6 +116,16 @@ describe('daysUntil', () => {
 
   it('is exact across the October daylight saving change', () => {
     expect(daysUntil(new Date(2026, 9, 24), new Date(2026, 9, 26))).toBe(2);
+  });
+});
+
+describe('jsDayOf', () => {
+  it('numbers the weekdays as the calendar does, from Sunday as 0', () => {
+    // act
+    const days = (['sun', 'mon', 'wed', 'sat'] as const).map(jsDayOf);
+
+    // assert
+    expect(days).toEqual([0, 1, 3, 6]);
   });
 });
 

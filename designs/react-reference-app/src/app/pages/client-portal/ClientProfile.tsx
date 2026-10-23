@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { useForm } from 'react-hook-form';
 import { Droplet, Dumbbell, ShieldCheck, User } from 'lucide-react';
 import { AvatarField } from '../../components/AvatarField';
@@ -185,17 +186,18 @@ export function ClientProfile() {
         />
       </div>
 
-      <AvatarField
-        name={name}
-        detail={profile.identity.email}
-        avatarUrl={profile.avatarUrl}
-        onChange={(avatarUrl) => updateClientAvatar(demoJourney.callId, avatarUrl)}
-      />
-
-      <div className="space-y-6 lg:space-y-8" key={`${demoJourney.callId}-${demoJourney.stage}`}>
-        <AboutYouSection journey={demoJourney} />
-        <CoachingSections journey={demoJourney} />
-        {appState.prototypeMode === 'post-mvp' && <MenstrualHealthWidget />}
+      <div className="space-y-6 sm:space-y-8">
+        <AvatarField
+          name={name}
+          detail={profile.identity.email}
+          avatarUrl={profile.avatarUrl}
+          onChange={(avatarUrl) => updateClientAvatar(demoJourney.callId, avatarUrl)}
+        />
+        <Fragment key={`${demoJourney.callId}-${demoJourney.stage}`}>
+          <AboutYouSection journey={demoJourney} />
+          <CoachingSections journey={demoJourney} />
+          {appState.prototypeMode === 'post-mvp' && <MenstrualHealthWidget />}
+        </Fragment>
       </div>
 
       <MeasurementsSection />

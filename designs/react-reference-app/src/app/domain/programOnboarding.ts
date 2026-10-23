@@ -1,6 +1,12 @@
 import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import { cycleModeOf, type CycleMode } from './cycleMode';
-import type { CoachingFacts, SessionMinutes } from './clientProfile';
+import {
+  DEFAULT_CYCLE_MODE,
+  DEFAULT_SESSION_MINUTES,
+  DEFAULT_TRAINING_DAYS,
+  type CoachingFacts,
+  type SessionMinutes,
+} from './clientProfile';
 import type { Equipment } from './exercises';
 import type { ClientJourney, OnboardingAnswer } from './journey';
 import type { LevelHint, ProgramLanguage, SplitShape, TrainingDays } from './program';
@@ -24,9 +30,9 @@ type CoachingSetup = Pick<ProgramSetup, 'goal' | 'level' | 'trainingDays' | 'ses
 const UNAPPROVED_SETUP: CoachingSetup = {
   goal: '',
   level: 'beginner',
-  trainingDays: 3,
-  sessionMinutes: 60,
-  cycleMode: 'general',
+  trainingDays: DEFAULT_TRAINING_DAYS,
+  sessionMinutes: DEFAULT_SESSION_MINUTES,
+  cycleMode: DEFAULT_CYCLE_MODE,
   equipment: [],
 };
 
@@ -56,12 +62,12 @@ function coachingSetup(coaching: CoachingFacts | null): CoachingSetup {
 }
 
 export function setupFromJourney(journey: ClientJourney): ProgramSetup {
-  const facts = coachingSetup(journey.profile.coaching);
+  const coachingPart = coachingSetup(journey.profile.coaching);
   return {
-    ...facts,
+    ...coachingPart,
     language: 'en',
     dailySteps: STEPS_DEFAULT,
-    splitShape: splitShapeFor(facts.trainingDays),
+    splitShape: splitShapeFor(coachingPart.trainingDays),
   };
 }
 

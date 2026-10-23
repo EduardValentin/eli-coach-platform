@@ -57,7 +57,7 @@ export function AvatarField({ name, detail, avatarUrl, onChange }: AvatarFieldPr
       aria-labelledby={headingId}
       className={cn(
         cardVariants({ variant: 'panel' }),
-        'mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row lg:mb-8 lg:p-8',
+        'flex flex-col items-center gap-6 p-6 sm:flex-row lg:p-8',
       )}
       data-parity="avatar-field"
     >
