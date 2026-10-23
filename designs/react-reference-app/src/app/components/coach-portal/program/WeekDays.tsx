@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT } from './program-constants';
+import { BLOCK_SOFT } from '../../program-view/blockColours';
 import { useResetConfirm, type ResetRequest } from './ResetConfirm';
 
 type WeekDaysProps = { block: Block; onChange: (block: Block) => void; onOpenSession: (sessionId: string) => void };

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { BLOCK_TYPE_LABELS } from '../../domain/program';
 import { nextCheckpoint } from '../../domain/programCalendar';
 import { ClientWidget } from '../client-portal/ClientWidget';
-import { BLOCK_SWATCH } from '../coach-portal/program/program-constants';
+import { BLOCK_SWATCH } from './blockColours';
 import { LABEL_CLASS, VALUE_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';

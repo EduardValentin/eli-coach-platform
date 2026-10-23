@@ -1,9 +1,9 @@
 import { Fragment } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, setsSummary, setText, hasUniformSets, workingSets, type Block, type Session, type WorkingSet } from '../../domain/program';
-import { repsSuffix } from '../coach-portal/program/rowFields';
 import { DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
+import { repsSuffix } from './programView';
 
 type TrackingTableProps = { session: Session; block: Block; exercisesById: ReadonlyMap<string, Exercise> };
 

@@ -74,6 +74,11 @@ export function restLabel(seconds: number): string {
   return `${seconds} s`;
 }
 
+export function repsSuffix(exercise: Exercise | undefined): string {
+  if (exercise?.measuredIn === 'time') return ' s';
+  return exercise?.perSide ? ' /side' : '';
+}
+
 export function plainText(markdown: string): string {
   return markdown.replaceAll('**', '');
 }

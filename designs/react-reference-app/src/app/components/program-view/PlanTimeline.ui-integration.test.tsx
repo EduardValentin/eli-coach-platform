@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { addDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
-import type { Block, BlockType } from '../../../domain/program';
+import type { Block, BlockType } from '../../domain/program';
 import { PlanTimeline } from './PlanTimeline';
 
 const dayOne = new Date(2026, 8, 7);

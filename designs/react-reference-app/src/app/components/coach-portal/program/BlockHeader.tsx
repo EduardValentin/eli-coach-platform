@@ -15,6 +15,7 @@ import {
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { STEPS_STEP, TARGET_MINUTES } from '../../../domain/programDefaults';
 import { blockWithSessionsFrom, blockWithType } from '../../../domain/programEditing';
+import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { blockWithSplit, describeLoss, relayoutBlock } from '../../../domain/weekEditing';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { IconHint } from '../../IconHint';
@@ -29,7 +30,7 @@ import { useIsDesktop } from '../../ui/use-desktop';
 import { cn } from '../../ui/utils';
 import { CopyBlockDialog } from './CopyBlockDialog';
 import { OptionSelect, type Option } from './OptionSelect';
-import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
+import { BLOCK_SWATCH } from '../../program-view/blockColours';
 import { useResetConfirm } from './ResetConfirm';
 import { useWeeksField } from './weeksField';
 
@@ -46,7 +47,7 @@ type BlockHeaderProps = {
   onRemove: () => void;
 };
 
-const SPLIT_SHAPES = Object.keys(SPLIT_SHAPE_LABELS) as SplitShape[];
+const SPLIT_SHAPES = Object.keys(SPLIT_TEMPLATES) as SplitShape[];
 const TRAINING_DAY_OPTIONS: Option<TrainingDays>[] = ([2, 3, 4, 5] as const).map(days => ({ value: days, label: `${days} days` }));
 const REBUILD = 'Rebuild sessions';
 const MIN_STEPS = 4000;
@@ -137,7 +138,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
   const collapsible = isDesktop && scroll.past;
   const collapsed = collapsible && !settingsOpen;
   const line = statusLine(block, status);
-  const splitLabel = SPLIT_SHAPE_LABELS[block.split.shape];
+  const splitLabel = SPLIT_TEMPLATES[block.split.shape].label;
 
   useEffect(() => {
     if (!scroll.past) setSettingsOpen(false);
@@ -286,7 +287,7 @@ export function BlockHeader({ blocks, index, status, dayOne, today, language, ot
                   <SelectContent>
                     {SPLIT_SHAPES.map(shape => (
                       <SelectItem key={shape} value={shape}>
-                        {SPLIT_SHAPE_LABELS[shape]}
+                        {SPLIT_TEMPLATES[shape].label}
                       </SelectItem>
                     ))}
                   </SelectContent>

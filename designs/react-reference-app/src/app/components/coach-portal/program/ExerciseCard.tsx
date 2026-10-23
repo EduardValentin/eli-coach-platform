@@ -9,7 +9,8 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
 import { ExerciseRowDetails } from './ExerciseRowDetails';
-import { formatRest, repsSuffix } from './rowFields';
+import { repsSuffix } from '../../program-view/programView';
+import { formatRest } from './rowFields';
 import { acceptsIntoSession, LIBRARY_EXERCISE, PLAN_ROW, useSessionDrop, type DraggedItem, type PlanRowItem } from './sessionDnd';
 import { SetGrid } from './SetGrid';
 

@@ -1,4 +1,3 @@
-import type { Exercise } from '../../../context/TrainingContext';
 import type { Range } from '../../../domain/program';
 
 export const RANGE_PROBLEM = 'Use a number or a range like 8–12';
@@ -41,9 +40,4 @@ export function parseRest(text: string): number | null {
   if (minutes) return Number(minutes[1]) * SECONDS_PER_MINUTE + Number(minutes[2]);
   const seconds = SECONDS_PATTERN.exec(trimmed);
   return seconds ? Number(seconds[1]) : null;
-}
-
-export function repsSuffix(exercise: Exercise | undefined): string {
-  if (exercise?.measuredIn === 'time') return ' s';
-  return exercise?.perSide ? ' /side' : '';
 }

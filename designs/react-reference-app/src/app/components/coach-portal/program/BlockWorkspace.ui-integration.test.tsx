@@ -481,7 +481,7 @@ describe('BlockWorkspace', () => {
 
     // act
     await user.click(screen.getByRole('combobox', { name: 'Split shape' }));
-    await user.click(screen.getByRole('option', { name: 'Upper / lower' }));
+    await user.click(screen.getByRole('option', { name: 'Upper / Lower' }));
     const confirm = screen.getByRole('dialog', { name: 'Change the split?' });
     expect(within(confirm).getByText(/^Full Body A · \d+ exercises$/)).toBeInTheDocument();
     await user.click(within(confirm).getByRole('button', { name: 'Rebuild sessions' }));

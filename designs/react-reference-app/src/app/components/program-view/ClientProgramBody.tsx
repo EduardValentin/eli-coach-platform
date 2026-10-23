@@ -2,7 +2,6 @@ import { CalendarDays, Download, Dumbbell, Footprints, HeartPulse, History, Info
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
-import { PlanTimeline } from '../coach-portal/program/PlanTimeline';
 import { LABEL_CLASS } from '../typography';
 import { Button } from '../ui/button';
 import { BLOCK_TYPE_LABELS, cardioOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type ProgramVersion, type Weekday } from '../../domain/program';
@@ -12,6 +11,7 @@ import { fillTemplate } from '../../domain/programTemplates';
 import { splitLabel } from '../../domain/splitTemplates';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { DayContent } from './DayContent';
+import { PlanTimeline } from './PlanTimeline';
 import { FocusCard } from './FocusCard';
 import { LIFESTYLE_FALLBACK, NUTRITION_FALLBACK, parseTemplate, ProgramText, template, TemplateBody, templateCard, TextCardStack } from './ProgramText';
 import { WeekStrip } from './WeekStrip';

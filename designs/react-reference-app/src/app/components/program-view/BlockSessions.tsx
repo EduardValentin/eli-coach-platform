@@ -15,12 +15,11 @@ import {
 import { cardioMinutes, SEGMENT_KIND_LABELS } from '../../domain/programCardio';
 import { estimatedMinutes } from '../../domain/sessionTiming';
 import { scheduledItems } from '../../domain/weekEditing';
-import { repsSuffix } from '../coach-portal/program/rowFields';
 import { LABEL_CLASS } from '../typography';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { RoutineCard } from './DayParts';
-import { cardioSegmentText, coolDownLines, restLabel, sessionAnchor, warmUpLines } from './programView';
+import { cardioSegmentText, coolDownLines, repsSuffix, restLabel, sessionAnchor, warmUpLines } from './programView';
 
 const ARTICLE_CLASS = 'scroll-mt-6 rounded-card border border-border bg-card shadow-card';
 

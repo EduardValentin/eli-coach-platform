@@ -1,7 +1,7 @@
 import { isSameDay } from 'date-fns';
 import { cardioOn, sessionOn, WEEKDAY_LABELS, WEEKDAYS, type Block, type Weekday } from '../../domain/program';
 import { cardioMinutes } from '../../domain/programCardio';
-import { BLOCK_SOFT } from '../coach-portal/program/program-constants';
+import { BLOCK_SOFT } from './blockColours';
 import { LABEL_CLASS } from '../typography';
 import { cn } from '../ui/utils';
 import { sessionAnchor } from './programView';

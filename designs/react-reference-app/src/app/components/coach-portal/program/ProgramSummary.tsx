@@ -14,7 +14,7 @@ import {
 import { hasUnfilledSessions } from '../../../domain/programRules';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { Reading } from '../../Reading';
-import { PlanTimeline } from './PlanTimeline';
+import { PlanTimeline } from '../../program-view/PlanTimeline';
 
 const UPCOMING_WINDOW_DAYS = 14;
 

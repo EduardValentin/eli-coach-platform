@@ -10,7 +10,7 @@ import { InlineProblem } from '../../InlineProblem';
 import { WIDGET_TITLE_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { PlanBlockList, type BlocksUpdate } from './PlanBlockList';
-import { PlanTimeline } from './PlanTimeline';
+import { PlanTimeline } from '../../program-view/PlanTimeline';
 
 type PlanOverviewProps = {
   content: ProgramContent;

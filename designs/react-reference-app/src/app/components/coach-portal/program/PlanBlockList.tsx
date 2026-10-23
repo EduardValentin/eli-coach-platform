@@ -4,13 +4,14 @@ import { ArrowRight, GripVertical, Trash2 } from 'lucide-react';
 import { BLOCK_TYPE_LABELS, BLOCK_TYPES, filledSessionCount, type Block, type BlockType } from '../../../domain/program';
 import type { BlockStatus } from '../../../domain/programCalendar';
 import { blockWithType } from '../../../domain/programEditing';
+import { splitLabel } from '../../../domain/splitTemplates';
 import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { InlineProblem } from '../../InlineProblem';
 import { RowActionsMenu } from '../../RowActionsMenu';
 import { Input } from '../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { cn } from '../../ui/utils';
-import { BLOCK_SWATCH, SPLIT_SHAPE_LABELS } from './program-constants';
+import { BLOCK_SWATCH } from '../../program-view/blockColours';
 import { useWeeksField } from './weeksField';
 
 export type BlocksUpdate = (blocks: Block[]) => Block[];
@@ -190,7 +191,7 @@ function BlockRow({ blocks, index, status, movable, dayOne, today, instructionsI
           wk
         </span>
         <span className="min-w-0 flex-1 basis-28 truncate text-sm text-text-label">
-          {block.split.name || SPLIT_SHAPE_LABELS[block.split.shape]}
+          {splitLabel(block)}
           {line && <span className="text-text-secondary">{` · ${line}`}</span>}
         </span>
         <span

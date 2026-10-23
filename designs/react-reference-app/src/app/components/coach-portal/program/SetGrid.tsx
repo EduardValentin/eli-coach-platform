@@ -18,7 +18,7 @@ const KIND_OPTIONS: { value: SetKind; label: string }[] = [
   { value: 'working', label: 'Working' },
 ];
 const WEIGHT_PROBLEM = 'Use a weight in kg, or leave it empty';
-const WARM_UP_REPS: Range = { min: 8, max: 8 };
+const NEW_SET_REPS: Range = { min: 8, max: 8 };
 const FALLBACK_RIR: Range = { min: 2, max: 2 };
 
 function parseWeight(text: string): number | undefined | null {
@@ -61,11 +61,11 @@ export function SetGrid({ row, exerciseName, repsSuffix, onChange }: SetGridProp
   function addWarmUp() {
     const firstWorkingIndex = sets.findIndex(isWorkingSet);
     const at = firstWorkingIndex < 0 ? sets.length : firstWorkingIndex;
-    changeSets([...sets.slice(0, at), { kind: 'warm-up', reps: { ...WARM_UP_REPS } }, ...sets.slice(at)]);
+    changeSets([...sets.slice(0, at), { kind: 'warm-up', reps: { ...NEW_SET_REPS } }, ...sets.slice(at)]);
   }
 
   function addWorking() {
-    const next: SetSpec = lastWorking ? structuredClone(lastWorking) : { kind: 'working', reps: { ...WARM_UP_REPS }, rir: { ...FALLBACK_RIR } };
+    const next: SetSpec = lastWorking ? structuredClone(lastWorking) : { kind: 'working', reps: { ...NEW_SET_REPS }, rir: { ...FALLBACK_RIR } };
     changeSets([...sets, next]);
   }
 

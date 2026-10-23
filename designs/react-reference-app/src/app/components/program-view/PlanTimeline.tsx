@@ -1,11 +1,11 @@
 import { addDays, differenceInCalendarDays, format } from 'date-fns';
-import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../../domain/program';
-import { blockDates, blockStatus, checkpointsWithin, currentPosition, planWeeks } from '../../../domain/programCalendar';
-import { formatJourneyDate } from '../../../utils/journeyLabels';
-import { Badge } from '../../ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
-import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, BLOCK_SWATCH } from './program-constants';
+import { BLOCK_TYPE_LABELS, type Block, type Weekday } from '../../domain/program';
+import { blockDates, blockStatus, checkpointsWithin, currentPosition, planWeeks } from '../../domain/programCalendar';
+import { formatJourneyDate } from '../../utils/journeyLabels';
+import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { cn } from '../ui/utils';
+import { BLOCK_SOFT, BLOCK_SWATCH } from './blockColours';
 
 const DAYS_PER_WEEK = 7;
 const REM_PER_WEEK = 3.5;

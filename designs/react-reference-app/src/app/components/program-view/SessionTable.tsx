@@ -1,9 +1,8 @@
 import type { Exercise } from '../../context/TrainingContext';
 import { formatRange, isWorkingSet, positionLabel, type Row, type Session, type SetSpec } from '../../domain/program';
-import { repsSuffix } from '../coach-portal/program/rowFields';
 import { DOCUMENT_LABEL_CLASS, DOCUMENT_NOTE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
-import { restLabel } from './programView';
+import { repsSuffix, restLabel } from './programView';
 
 type SessionTableProps = { session: Session; exercisesById: ReadonlyMap<string, Exercise> };
 

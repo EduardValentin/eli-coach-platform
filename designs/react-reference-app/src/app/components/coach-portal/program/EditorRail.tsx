@@ -6,8 +6,8 @@ import { formatJourneyDate } from '../../../utils/journeyLabels';
 import { LABEL_CLASS } from '../../typography';
 import { cn } from '../../ui/utils';
 import { isSameSection, sectionTitle, type EditorSection } from './editorSection';
-import { PlanStrip } from './PlanTimeline';
-import { BLOCK_SWATCH } from './program-constants';
+import { BLOCK_SWATCH } from '../../program-view/blockColours';
+import { PlanStrip } from '../../program-view/PlanTimeline';
 
 type EditorRailProps = {
   content: ProgramContent;

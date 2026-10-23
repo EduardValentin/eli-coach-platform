@@ -20,7 +20,7 @@ import { SettingsBody, SettingsSection } from '../../SettingsSection';
 import { LABEL_CLASS } from '../../typography';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';
-import { BLOCK_SOFT, BLOCK_SWATCH } from './program-constants';
+import { BLOCK_SOFT, BLOCK_SWATCH } from '../../program-view/blockColours';
 import { NextVersionAction } from './NextVersionAction';
 import { ProgramSummary } from './ProgramSummary';
 
