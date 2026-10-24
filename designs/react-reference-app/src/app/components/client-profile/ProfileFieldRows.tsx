@@ -17,7 +17,6 @@ export function ProfileFieldRows({ control, fields, adornments }: ProfileFieldRo
       {fields.map((field) => (
         <SettingsBody key={field.id}>
           <OnboardingFieldControl
-            chipSize="compact"
             control={control}
             field={field}
             labelAdornment={adornments?.[field.id]}

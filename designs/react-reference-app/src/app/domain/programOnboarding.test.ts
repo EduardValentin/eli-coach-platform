@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { seedJourney } from '../services/clientJourneySamples';
 import type { ClientJourney, OnboardingFormId } from './journey';
 import type { CoachingFacts } from './clientProfile';
+import { EQUIPMENT } from './exercises';
 import {
   estimatedCycleDay,
+  libraryEquipmentFor,
   recurringSymptoms,
   setupFromJourney,
 } from './programOnboarding';
@@ -76,7 +78,7 @@ describe('setupFromJourney', () => {
   it('follows the coach edits to her coaching facts', () => {
     // act
     const setup = setupFromJourney(
-      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general', equipment: ['Dumbbells', 'Bands'] }),
+      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general', equipment: ['Dumbbells', 'Resistance bands'] }),
     );
 
     // assert
@@ -85,7 +87,7 @@ describe('setupFromJourney', () => {
       splitShape: 'upper-lower',
       level: 'advanced',
       cycleMode: 'general',
-      equipment: ['Dumbbells', 'Bands'],
+      equipment: ['Dumbbells', 'Bench', 'Bands'],
     });
   });
 
@@ -102,6 +104,32 @@ describe('setupFromJourney', () => {
       cycleMode: 'general',
       equipment: [],
     });
+  });
+});
+
+describe('libraryEquipmentFor', () => {
+  it('lists every library item for a full gym', () => {
+    // act
+    const equipment = libraryEquipmentFor(['Full gym']);
+
+    // assert
+    expect(equipment).toEqual([...EQUIPMENT]);
+  });
+
+  it('maps her equipment to library items without repeats', () => {
+    // act
+    const equipment = libraryEquipmentFor(['Barbell', 'Dumbbells', 'Resistance bands']);
+
+    // assert
+    expect(equipment).toEqual(['Barbell', 'Squat rack', 'Bench', 'EZ bar', 'Trap bar', 'Dumbbells', 'Bands']);
+  });
+
+  it('has no library items for bodyweight only', () => {
+    // act
+    const equipment = libraryEquipmentFor(['Bodyweight only']);
+
+    // assert
+    expect(equipment).toEqual([]);
   });
 });
 

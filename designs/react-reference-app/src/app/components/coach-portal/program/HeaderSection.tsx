@@ -5,7 +5,6 @@ import { SESSION_MINUTE_LABELS, TRAINING_DAY_LABELS, type CoachingFacts } from '
 import type { ClientJourney } from '../../../domain/journey';
 import type { LevelHint, Program, ProgramContent, ProgramLanguage, ProgramVersion } from '../../../domain/program';
 import { SettingsRow, SettingsRows, SettingsSection } from '../../SettingsSection';
-import { equipmentReading } from '../../client-profile/profileFields';
 import { clientPronouns } from '../../../utils/journeyLabels';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
@@ -38,7 +37,7 @@ function profileFacts(coaching: CoachingFacts | null): [string, string][] {
 
   const facts: [string, string | null][] = [
     ['Goal', coaching.primaryGoal],
-    ['Equipment', equipmentReading(coaching.equipment)],
+    ['Equipment', coaching.equipment.join(', ') || null],
     ['Place', coaching.trainingPlace],
     ['Days per week', TRAINING_DAY_LABELS[coaching.trainingDays]],
     ['Minutes per session', SESSION_MINUTE_LABELS[coaching.sessionMinutes]],

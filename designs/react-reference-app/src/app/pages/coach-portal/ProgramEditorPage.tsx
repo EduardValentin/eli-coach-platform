@@ -22,6 +22,7 @@ import { Button } from '../../components/ui/button';
 import { usePrograms } from '../../context/ProgramContext';
 import { useTraining, type Exercise } from '../../context/TrainingContext';
 import type { ClientJourney } from '../../domain/journey';
+import { libraryEquipmentFor } from '../../domain/programOnboarding';
 import { currentVersion, draftOf, type Block, type Program, type ProgramVersion } from '../../domain/program';
 import { blockWithLibraryPick } from '../../domain/programEditing';
 import { plannedId, plannedSessions } from '../../domain/weekEditing';
@@ -127,7 +128,7 @@ function ProgramEditor(props: EditorProps) {
             presentation={panel.isWide ? 'pane' : 'drawer'}
             purpose={libraryPurpose(block, panel.panelTarget, exercises)}
             library={exercises}
-            equipment={program.equipment}
+            equipment={libraryEquipmentFor(journey.profile.coaching?.equipment ?? [])}
             asideRef={panel.aside}
             searchRef={panel.search}
             onAdd={addFromLibrary}

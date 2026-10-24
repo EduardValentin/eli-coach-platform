@@ -1,5 +1,6 @@
 import {
   ACTIVITY_LEVELS,
+  BODYWEIGHT_ONLY,
   CLIENT_LEVEL_LABELS,
   CLIENT_LEVELS,
   SESSION_MINUTE_LABELS,
@@ -7,6 +8,7 @@ import {
   TRAINING_DAY_LABELS,
   TRAINING_DAY_OPTIONS,
   TRAINING_PLACES,
+  clientEquipmentOf,
   type ActivityLevel,
   type CoachingFacts,
   type SessionMinutes,
@@ -14,7 +16,6 @@ import {
   type TrainingPlace,
 } from '../../domain/clientProfile';
 import { CYCLE_MODE_LABELS, type CycleMode } from '../../domain/cycleMode';
-import { EQUIPMENT, type Equipment } from '../../domain/exercises';
 import { JOURNEY_GENDERS } from '../../domain/journey';
 import {
   findOnboardingField,
@@ -35,8 +36,6 @@ import { asList, asText, type OnboardingValues } from '../client-portal/onboardi
 
 const MAX_NAME_LENGTH = 60;
 const MAX_NOTE_LENGTH = 500;
-
-const BODYWEIGHT_ONLY = 'Bodyweight only';
 
 function options(values: readonly string[]): OnboardingOption[] {
   return values.map((value) => ({ value, label: value }));
@@ -88,7 +87,7 @@ export const PROFILE_FIELDS = {
     label: 'Equipment',
     kind: 'chips',
     requirement: 'required',
-    options: options([...EQUIPMENT, BODYWEIGHT_ONLY]),
+    options: findOnboardingField('availableEquipment')?.options ?? [],
     exclusiveOptions: [BODYWEIGHT_ONLY],
   },
   trainingPlace: {
@@ -160,18 +159,6 @@ export const SHARED_FACT_FIELDS: readonly OnboardingField[] = [
   PROFILE_FIELDS.limitations,
 ];
 
-export function equipmentChoiceOf(equipment: readonly Equipment[]): string[] {
-  return equipment.length === 0 ? [BODYWEIGHT_ONLY] : [...equipment];
-}
-
-export function equipmentOfChoice(choice: readonly string[]): Equipment[] {
-  return EQUIPMENT.filter((item) => choice.includes(item));
-}
-
-export function equipmentReading(equipment: readonly Equipment[]): string {
-  return equipmentChoiceOf(equipment).join(', ');
-}
-
 function measureValue(kind: 'height' | 'weight', canonical: number | null, units: MeasureUnits): string {
   return canonical === null ? '' : String(toDisplayMeasure(kind, canonical, units));
 }
@@ -187,7 +174,7 @@ export function sharedFactValues(facts: SharedCoachingFacts, units: MeasureUnits
     height: measureValue('height', facts.heightCm, units),
     trainingDays: String(facts.trainingDays),
     sessionMinutes: String(facts.sessionMinutes),
-    equipment: equipmentChoiceOf(facts.equipment),
+    equipment: [...facts.equipment],
     trainingPlace: facts.trainingPlace ?? '',
     limitations: facts.limitations,
   };
@@ -198,7 +185,7 @@ export function sharedFactsOf(values: OnboardingValues, units: MeasureUnits): Sh
     heightCm: canonicalMeasure('height', values.height, units),
     trainingDays: Number(asText(values.trainingDays)) as TrainingDays,
     sessionMinutes: Number(asText(values.sessionMinutes)) as SessionMinutes,
-    equipment: equipmentOfChoice(asList(values.equipment)),
+    equipment: clientEquipmentOf(asList(values.equipment)),
     trainingPlace: (asText(values.trainingPlace) || null) as TrainingPlace | null,
     limitations: asText(values.limitations).trim(),
   };

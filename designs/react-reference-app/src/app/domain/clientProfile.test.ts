@@ -7,7 +7,6 @@ import {
   preferencesFromAnswers,
   type CoachingFacts,
 } from './clientProfile';
-import { EQUIPMENT } from './exercises';
 import {
   emptyOnboardingDraft,
   type JourneyIdentity,
@@ -95,7 +94,7 @@ describe('seeding her coaching facts from her approved answers', () => {
       heightCm: 165,
       trainingDays: 3,
       sessionMinutes: 45,
-      equipment: ['Dumbbells', 'Bench', 'Bands'],
+      equipment: ['Dumbbells', 'Resistance bands'],
       trainingPlace: 'Gym',
       limitations: 'Right shoulder aches.',
       level: 'beginner',
@@ -143,14 +142,15 @@ describe('seeding her coaching facts from her approved answers', () => {
     expect(minutes).toEqual([30, 45, 60, 60]);
   });
 
-  it('gives every library item for a full gym and nothing for bodyweight only', () => {
+  it('keeps the equipment she picked as she picked it, dropping anything outside the list', () => {
     // act
-    const fullGym = coachingFactsFromAnswers(draftWith({ goal: { availableEquipment: ['Full gym'] } }), 'female');
-    const bodyweight = coachingFactsFromAnswers(draftWith({ goal: { availableEquipment: ['Bodyweight only'] } }), 'female');
+    const facts = coachingFactsFromAnswers(
+      draftWith({ goal: { availableEquipment: ['Kettlebells', 'Full gym', 'Trampoline'] } }),
+      'female',
+    );
 
     // assert
-    expect(fullGym.equipment).toEqual([...EQUIPMENT]);
-    expect(bodyweight.equipment).toEqual([]);
+    expect(facts.equipment).toEqual(['Kettlebells', 'Full gym']);
   });
 
   it('keeps her limitations empty unless she answered yes to a bone or joint problem', () => {

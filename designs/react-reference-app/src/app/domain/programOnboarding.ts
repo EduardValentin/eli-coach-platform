@@ -4,10 +4,11 @@ import {
   DEFAULT_CYCLE_MODE,
   DEFAULT_SESSION_MINUTES,
   DEFAULT_TRAINING_DAYS,
+  type ClientEquipment,
   type CoachingFacts,
   type SessionMinutes,
 } from './clientProfile';
-import type { Equipment } from './exercises';
+import { EQUIPMENT, type Equipment } from './exercises';
 import type { ClientJourney, OnboardingAnswer } from './journey';
 import type { LevelHint, ProgramLanguage, SplitShape, TrainingDays } from './program';
 import { splitShapeFor } from './programSuggestions';
@@ -24,6 +25,20 @@ export type ProgramSetup = {
   equipment: Equipment[];
   splitShape: SplitShape;
 };
+
+const LIBRARY_EQUIPMENT_BY_CLIENT_EQUIPMENT: Record<ClientEquipment, readonly Equipment[]> = {
+  'Full gym': EQUIPMENT,
+  Machines: ['Machine', 'Cable', 'Smith machine'],
+  Barbell: ['Barbell', 'Squat rack', 'Bench', 'EZ bar', 'Trap bar'],
+  Dumbbells: ['Dumbbells', 'Bench'],
+  Kettlebells: ['Kettlebell'],
+  'Resistance bands': ['Bands'],
+  'Bodyweight only': [],
+};
+
+export function libraryEquipmentFor(equipment: readonly ClientEquipment[]): Equipment[] {
+  return [...new Set(equipment.flatMap((chip) => LIBRARY_EQUIPMENT_BY_CLIENT_EQUIPMENT[chip]))];
+}
 
 type CoachingSetup = Pick<ProgramSetup, 'goal' | 'level' | 'trainingDays' | 'sessionMinutes' | 'cycleMode' | 'equipment'>;
 
@@ -57,7 +72,7 @@ function coachingSetup(coaching: CoachingFacts | null): CoachingSetup {
     trainingDays: coaching.trainingDays,
     sessionMinutes: coaching.sessionMinutes,
     cycleMode: coaching.cycleMode,
-    equipment: [...coaching.equipment],
+    equipment: libraryEquipmentFor(coaching.equipment),
   };
 }
 

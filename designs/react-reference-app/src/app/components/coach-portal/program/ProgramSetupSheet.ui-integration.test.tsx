@@ -206,9 +206,18 @@ describe('ProgramSetupSheet', () => {
 
     // assert
     const equipment = screen.getByRole('group', { name: 'Equipment' });
-    expect(within(equipment).getByRole('checkbox', { name: 'Barbell' })).toBeChecked();
-    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebell' })).toBeChecked();
-    expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).not.toBeChecked();
+    expect(within(equipment).getAllByRole('checkbox').map((chip) => chip.getAttribute('aria-label'))).toEqual([
+      'Full gym',
+      'Machines',
+      'Barbell',
+      'Dumbbells',
+      'Kettlebells',
+      'Resistance bands',
+      'Bodyweight only',
+    ]);
+    expect(within(equipment).getByRole('checkbox', { name: 'Full gym' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).not.toBeChecked();
   });
 
   it('keeps bodyweight only exclusive of every other chip', async () => {
@@ -222,14 +231,14 @@ describe('ProgramSetupSheet', () => {
 
     // assert
     expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
-    expect(within(equipment).getByRole('checkbox', { name: 'Barbell' })).not.toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
     expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).not.toBeChecked();
 
     // act
-    await user.click(within(equipment).getByRole('checkbox', { name: 'Kettlebell' }));
+    await user.click(within(equipment).getByRole('checkbox', { name: 'Kettlebells' }));
 
     // assert
-    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebell' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).toBeChecked();
     expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).not.toBeChecked();
   });
 

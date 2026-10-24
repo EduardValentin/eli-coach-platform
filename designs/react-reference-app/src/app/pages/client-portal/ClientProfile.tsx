@@ -178,7 +178,7 @@ export function ClientProfile() {
   const name = journeyClientName(demoJourney);
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-3xl">
       <div data-parity-root="ClientProfileHeader">
         <PortalPageHeader
           title="Your Profile"

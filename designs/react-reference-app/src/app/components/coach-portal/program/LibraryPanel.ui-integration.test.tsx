@@ -1,8 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
+import { Toaster } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { stubEditorBrowserApis, stubPhoneViewport } from '../../../../test/renderProgramEditor';
+import { ClientProfilePage } from '../../../pages/coach-portal/ClientProfilePage';
 import { ProgramEditorPage } from '../../../pages/coach-portal/ProgramEditorPage';
 import { AppProvider } from '../../../context/AppContext';
 import { AssessmentCallProvider } from '../../../context/AssessmentCallContext';
@@ -68,6 +70,42 @@ async function openFirstBlock(search: string) {
     within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation 4 wk/ }),
   );
   return user;
+}
+
+function renderEditorThenProfile() {
+  const url = '/coach/clients/c1/program/draft?session=coach&jstage=approved&pseed=draft';
+  window.history.replaceState(null, '', url);
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <UnitPreferencesProvider>
+          <TrainingProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <ProgramProvider>
+                  <Routes>
+                    <Route path="/coach/clients/:id/program/draft" element={<ProgramEditorPage />} />
+                    <Route path="/coach/clients/:id/profile" element={<ClientProfilePage />} />
+                  </Routes>
+                  <Link to="/coach/clients/c1/profile">open her profile</Link>
+                  <Link to="/coach/clients/c1/program/draft">open the draft</Link>
+                  <Toaster />
+                </ProgramProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </TrainingProvider>
+        </UnitPreferencesProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+  return userEvent.setup();
+}
+
+async function openFirstBlockOfDraft(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation 4 wk/ }),
+  );
+  expect(within(library()).getByRole('switch', { name: 'Only her equipment' })).toBeChecked();
 }
 
 function firstSession(): HTMLElement {
@@ -143,6 +181,26 @@ describe('LibraryPanel', () => {
     // assert
     expect(within(firstSession()).getByText('archived')).toBeInTheDocument();
     expect(within(library()).getAllByRole('button', { name: 'Add Hip Thrust' })).toHaveLength(1);
+  });
+
+  it('filters on the equipment in her profile, following a later profile edit', async () => {
+    // arrange
+    const user = renderEditorThenProfile();
+    await openFirstBlockOfDraft(user);
+    expect(within(library()).getByRole('button', { name: 'Add Barbell Back Squat' })).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'open her profile' }));
+    const coaching = screen.getByRole('region', { name: 'Coaching' });
+    await user.click(within(coaching).getByRole('checkbox', { name: 'Bodyweight only' }));
+    await user.click(within(coaching).getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Changes saved', {}, { timeout: 3000 });
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'open the draft' }));
+    await openFirstBlockOfDraft(user);
+
+    // assert
+    expect(within(library()).queryByRole('button', { name: 'Add Barbell Back Squat' })).not.toBeInTheDocument();
+    expect(within(library()).getAllByRole('button', { name: 'Add Push-Up' }).length).toBeGreaterThan(0);
   });
 
   it('narrows the list by search', async () => {

@@ -1,3 +1,4 @@
+import { CLIENT_EQUIPMENT } from './clientProfile';
 import type { JourneyGender, OnboardingFormId } from './journey';
 
 export type OnboardingFieldKind =
@@ -273,15 +274,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
       kind: 'chips',
       requirement: 'required',
       hint: 'Pick everything you have access to.',
-      options: options([
-        'Full gym',
-        'Machines',
-        'Barbell',
-        'Dumbbells',
-        'Kettlebells',
-        'Resistance bands',
-        'Bodyweight only',
-      ]),
+      options: options(CLIENT_EQUIPMENT),
     },
     {
       id: 'trainingPlace',

@@ -1,5 +1,4 @@
 import { cycleModeOf, type CycleMode } from './cycleMode';
-import { EQUIPMENT, type Equipment } from './exercises';
 import type {
   ClientJourney,
   JourneyGender,
@@ -9,11 +8,6 @@ import type {
   OnboardingDraft,
   OnboardingFormAnswers,
 } from './journey';
-import {
-  CHECK_IN_CHANNEL_KEY,
-  CHECK_IN_DAY_KEY,
-  collaborationPreference,
-} from './onboardingAnswers';
 import { WEEKDAYS, WEEKDAY_LABELS, type LevelHint, type TrainingDays, type Weekday } from './program';
 
 export type SessionMinutes = 30 | 45 | 60;
@@ -43,6 +37,20 @@ export const CLIENT_LEVEL_LABELS: Record<LevelHint, string> = {
   advanced: 'Advanced',
 };
 
+export const CLIENT_EQUIPMENT = [
+  'Full gym',
+  'Machines',
+  'Barbell',
+  'Dumbbells',
+  'Kettlebells',
+  'Resistance bands',
+  'Bodyweight only',
+] as const;
+
+export type ClientEquipment = (typeof CLIENT_EQUIPMENT)[number];
+
+export const BODYWEIGHT_ONLY: ClientEquipment = 'Bodyweight only';
+
 export const TRAINING_PLACES = ['Home', 'Gym', 'Both'] as const;
 
 export type TrainingPlace = (typeof TRAINING_PLACES)[number];
@@ -64,7 +72,7 @@ export type CoachingFacts = {
   heightCm: number | null;
   trainingDays: TrainingDays;
   sessionMinutes: SessionMinutes;
-  equipment: Equipment[];
+  equipment: ClientEquipment[];
   trainingPlace: TrainingPlace | null;
   limitations: string;
   level: LevelHint;
@@ -135,15 +143,8 @@ const SESSION_MINUTES_BY_ANSWER: Record<string, SessionMinutes> = {
   '45–60 minutes': 60,
 };
 
-const EQUIPMENT_BY_CHIP: Record<string, readonly Equipment[]> = {
-  'Full gym': EQUIPMENT,
-  Machines: ['Machine', 'Cable', 'Smith machine'],
-  Barbell: ['Barbell', 'Squat rack', 'Bench', 'EZ bar', 'Trap bar'],
-  Dumbbells: ['Dumbbells', 'Bench'],
-  Kettlebells: ['Kettlebell'],
-  'Resistance bands': ['Bands'],
-  'Bodyweight only': [],
-};
+const CHECK_IN_DAY_KEY = 'checkInDay';
+const CHECK_IN_CHANNEL_KEY = 'checkInChannel';
 
 function numberAnswer(answer: OnboardingAnswer | undefined): number | null {
   return typeof answer === 'number' ? answer : null;
@@ -207,8 +208,8 @@ function activityLevelOf(answer: string | null): ActivityLevel | null {
   return ACTIVITY_LEVELS.find((level) => level === answer) ?? null;
 }
 
-function equipmentForChips(chips: readonly string[]): Equipment[] {
-  return [...new Set(chips.flatMap((chip) => EQUIPMENT_BY_CHIP[chip] ?? []))];
+export function clientEquipmentOf(chips: readonly string[]): ClientEquipment[] {
+  return chips.filter((chip): chip is ClientEquipment => CLIENT_EQUIPMENT.some((equipment) => equipment === chip));
 }
 
 export function coachingFactsFromAnswers(
@@ -223,7 +224,7 @@ export function coachingFactsFromAnswers(
     heightCm: numberAnswer(goal.height),
     trainingDays: (trainingDaysAnswer && TRAINING_DAYS_BY_ANSWER[trainingDaysAnswer]) || DEFAULT_TRAINING_DAYS,
     sessionMinutes: (minutesAnswer && SESSION_MINUTES_BY_ANSWER[minutesAnswer]) || DEFAULT_SESSION_MINUTES,
-    equipment: equipmentForChips(listAnswer(goal.availableEquipment)),
+    equipment: clientEquipmentOf(listAnswer(goal.availableEquipment)),
     trainingPlace: trainingPlaceOf(textAnswer(goal.trainingPlace)),
     limitations: limitations(draft.answers['safety-screening']),
     level: levelOf(textAnswer(goal.experienceLevel)),
@@ -244,9 +245,11 @@ function channelOfAnswer(answer: string | null): PreferredChannel | null {
 }
 
 export function preferencesFromAnswers(draft: OnboardingDraft): ClientSettings {
+  const collaboration = draft.answers['nutrition-lifestyle'];
+
   return {
-    preferredCheckInWeekday: weekdayOfAnswer(collaborationPreference(draft, CHECK_IN_DAY_KEY)),
-    preferredChannel: channelOfAnswer(collaborationPreference(draft, CHECK_IN_CHANNEL_KEY)),
+    preferredCheckInWeekday: weekdayOfAnswer(textAnswer(collaboration[CHECK_IN_DAY_KEY])),
+    preferredChannel: channelOfAnswer(textAnswer(collaboration[CHECK_IN_CHANNEL_KEY])),
   };
 }
 

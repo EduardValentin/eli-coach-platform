@@ -6,14 +6,20 @@ import { CYCLE_MODE_LABELS, type CycleMode } from '../../../domain/cycleMode';
 import type { ClientJourney } from '../../../domain/journey';
 import { findOnboardingField, type OnboardingField, type OnboardingOption } from '../../../domain/onboardingSchema';
 import type { LevelHint, ProgramLanguage, SplitShape } from '../../../domain/program';
-import { CLIENT_LEVEL_LABELS, SESSION_MINUTE_LABELS, TRAINING_DAY_LABELS } from '../../../domain/clientProfile';
-import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
+import {
+  clientEquipmentOf,
+  CLIENT_LEVEL_LABELS,
+  SESSION_MINUTE_LABELS,
+  TRAINING_DAY_LABELS,
+  type ClientEquipment,
+} from '../../../domain/clientProfile';
+import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
-import { equipmentChoiceOf, equipmentOfChoice, PROFILE_FIELDS } from '../../client-profile/profileFields';
+import { PROFILE_FIELDS } from '../../client-profile/profileFields';
 import { SettingsSection } from '../../SettingsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
 import { Button, buttonVariants } from '../../ui/button';
@@ -62,7 +68,7 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
   ];
 }
 
-function valuesFrom(setup: ProgramSetup): OnboardingValues {
+function valuesFrom(setup: ProgramSetup, equipment: readonly ClientEquipment[]): OnboardingValues {
   return {
     goal: setup.goal,
     level: setup.level,
@@ -70,7 +76,7 @@ function valuesFrom(setup: ProgramSetup): OnboardingValues {
     splitShape: setup.splitShape,
     trainingDays: String(setup.trainingDays),
     sessionMinutes: String(setup.sessionMinutes),
-    equipment: equipmentChoiceOf(setup.equipment),
+    equipment: [...equipment],
     cycleMode: setup.cycleMode,
     dailySteps: String(setup.dailySteps),
   };
@@ -91,13 +97,15 @@ function setupFrom(values: OnboardingValues): ProgramSetup {
     sessionMinutes: Number(text(values, 'sessionMinutes')) as ProgramSetup['sessionMinutes'],
     cycleMode: text(values, 'cycleMode') as CycleMode,
     dailySteps: Number(text(values, 'dailySteps')),
-    equipment: equipmentOfChoice(asList(values.equipment)),
+    equipment: libraryEquipmentFor(clientEquipmentOf(asList(values.equipment))),
   };
 }
 
 export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
   const { createProgram } = usePrograms();
-  const form = useForm<OnboardingValues>({ defaultValues: valuesFrom(setupFromJourney(journey)) });
+  const form = useForm<OnboardingValues>({
+    defaultValues: valuesFrom(setupFromJourney(journey), journey.profile.coaching?.equipment ?? []),
+  });
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
@@ -137,7 +145,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
               </AccordionTrigger>
               <AccordionContent className="grid gap-6 pt-1 pb-6">
                 {panel.fields.map(definition => (
-                  <OnboardingFieldControl key={definition.id} control={form.control} field={definition} chipSize="compact" />
+                  <OnboardingFieldControl key={definition.id} control={form.control} field={definition} />
                 ))}
               </AccordionContent>
             </AccordionItem>

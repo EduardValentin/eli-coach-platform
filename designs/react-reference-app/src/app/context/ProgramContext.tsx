@@ -13,7 +13,7 @@ import {
   type ProgramContent,
   type ProgramVersion,
 } from '../domain/program';
-import type { ProgramSetup } from '../domain/programOnboarding';
+import { libraryEquipmentFor, type ProgramSetup } from '../domain/programOnboarding';
 import { blockingProblems, ruleContextFor, type BlockingCode, type RuleFinding } from '../domain/programRules';
 import { initialContent } from '../domain/programSuggestions';
 import { seededPrograms, type ProgramSeed, type SeedClient } from '../services/programSamples';
@@ -44,7 +44,7 @@ function seedFacts(journey: ClientJourney): CoachingFacts {
 
 function seedClient(callId: string, journey: ClientJourney | null, dayOne: Date | null): SeedClient {
   const facts = journey && seedFacts(journey);
-  return { callId, dayOne, cycleMode: facts?.cycleMode ?? 'general', equipment: facts ? [...facts.equipment] : [] };
+  return { callId, dayOne, cycleMode: facts?.cycleMode ?? 'general', equipment: facts ? libraryEquipmentFor(facts.equipment) : [] };
 }
 
 function withVersion(program: Program, number: number, change: (version: ProgramVersion) => ProgramVersion): Program {

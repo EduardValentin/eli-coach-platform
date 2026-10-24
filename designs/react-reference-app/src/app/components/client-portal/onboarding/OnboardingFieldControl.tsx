@@ -2,7 +2,7 @@ import { DateField } from '../../DateField';
 import { useId, type ReactElement, type ReactNode } from 'react';
 import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
-import { CheckboxChip, type CheckboxChipSize } from '../../CheckboxChip';
+import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { CheckboxField } from '../../CheckboxField';
 import { Input } from '../../ui/input';
@@ -45,7 +45,6 @@ type FieldControlProps = {
   control: Control<OnboardingValues>;
   field: OnboardingField;
   labelAdornment?: ReactNode;
-  chipSize?: CheckboxChipSize;
 };
 
 type FieldController = ControllerRenderProps<OnboardingValues>;
@@ -202,7 +201,7 @@ function LabelTrailing({
   );
 }
 
-export function OnboardingFieldControl({ control, field, labelAdornment, chipSize }: FieldControlProps) {
+export function OnboardingFieldControl({ control, field, labelAdornment }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
   const parityHook = `field-${field.id}`;
@@ -284,7 +283,6 @@ export function OnboardingFieldControl({ control, field, labelAdornment, chipSiz
                         <CheckboxChip
                           aria-label={option.label}
                           key={option.value}
-                          size={chipSize}
                           checked={asList(controller.value).includes(
                             option.value,
                           )}
