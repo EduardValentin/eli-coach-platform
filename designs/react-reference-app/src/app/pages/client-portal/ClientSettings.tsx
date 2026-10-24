@@ -34,6 +34,7 @@ export function ClientSettings() {
         <UnitPreferencesSettings
           sampleWeightKg={currentWeightKg ?? undefined}
           sampleHeightCm={coaching?.heightCm ?? undefined}
+          description="Saved to your account, so every device shows the same units."
         />
       </div>
 

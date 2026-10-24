@@ -695,6 +695,11 @@ describe("her units", () => {
     ).toBeChecked();
     expect(within(units).getByText("e.g. 66.1 kg")).toBeInTheDocument();
     expect(within(units).getByText("e.g. 170 cm")).toBeInTheDocument();
+    expect(
+      within(units).getByText(
+        "Saved to your account, so every device shows the same units.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("reads the samples in pounds and feet and inches when she measures that way", async () => {

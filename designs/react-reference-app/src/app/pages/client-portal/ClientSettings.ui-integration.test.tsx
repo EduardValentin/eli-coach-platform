@@ -212,7 +212,7 @@ describe('the subscription section', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps the units section on the page', () => {
+  it('keeps the units section on the page, saved to her account', () => {
     // arrange
     renderSettings('jstart=waiting');
 
@@ -221,6 +221,9 @@ describe('the subscription section', () => {
 
     // assert
     expect(units).toBeVisible();
+    expect(
+      within(units).getByText('Saved to your account, so every device shows the same units.'),
+    ).toBeInTheDocument();
   });
 });
 

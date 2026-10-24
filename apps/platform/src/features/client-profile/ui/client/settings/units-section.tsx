@@ -87,7 +87,7 @@ export function UnitsSection({ units, sample }: UnitsSectionProps) {
 
   return (
     <SettingsSection
-      description="Preferences are saved to this device."
+      description="Saved to your account, so every device shows the same units."
       headingId="units-heading"
       icon={SlidersHorizontal}
       title="Units & Measurements"
