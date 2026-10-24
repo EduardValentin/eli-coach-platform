@@ -197,7 +197,7 @@ describe("ClientProfileController load", () => {
 });
 
 describe("ClientProfileController save", () => {
-  it("saves her coaching facts and the coach's notes and answers no content", async () => {
+  it("saves her coaching facts and the coach's notes and answers that it is saved", async () => {
     // arrange
     const { controller, updateClientProfile } = createController({
       update: { status: "saved" },
@@ -210,7 +210,8 @@ describe("ClientProfileController save", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
     expect(updateClientProfile).toHaveBeenCalledWith({
       clientId: CLIENT_ID,
       edit: { coaching: COACHING, coachNotes: "Moved to mornings." },

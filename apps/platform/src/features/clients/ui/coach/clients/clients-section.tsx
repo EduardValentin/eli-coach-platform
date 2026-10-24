@@ -6,15 +6,8 @@ import {
   SearchField,
 } from "@eli-coach-platform/ui/primitives";
 import { Users, UserX } from "lucide-react";
-import {
-  useLoaderData,
-  type LoaderFunctionArgs,
-  type MetaFunction,
-  type ShouldRevalidateFunctionArgs,
-} from "react-router";
 
 import type { RosterClient } from "~/features/clients/public/coach-clients";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 
 import { ClientStatusFilter } from "./client-status-filter";
 import { ClientsTable } from "./clients-table";
@@ -23,40 +16,13 @@ import {
   emptyRosterCopy,
   filterRoster,
   hasActiveRosterFilters,
-  haveOnlyRosterParamsChanged,
   sortRoster,
 } from "./roster-listing";
 import { useRosterParams } from "./use-roster-params";
 
 const SEARCH_FIELD_ID = "clients-search";
 
-export async function loader(args: LoaderFunctionArgs) {
-  return args.context.get(clientsContext).coachClients.loadRoster(args);
-}
-
-export function shouldRevalidate({
-  currentUrl,
-  defaultShouldRevalidate,
-  nextUrl,
-}: ShouldRevalidateFunctionArgs) {
-  return haveOnlyRosterParamsChanged({ currentUrl, nextUrl })
-    ? false
-    : defaultShouldRevalidate;
-}
-
-export const meta: MetaFunction = () => [{ title: "Clients | Evoa" }];
-
-export default function CoachClientsRoute() {
-  const { clients } = useLoaderData<typeof loader>();
-
-  if (clients === null) {
-    return <ClientsUnavailable />;
-  }
-
-  return <ClientsSection clients={clients} />;
-}
-
-function ClientsUnavailable() {
+export function ClientsUnavailable() {
   return (
     <div className="w-full" data-parity-root="ClientsUnavailable">
       <DeadEndPanel
@@ -68,7 +34,12 @@ function ClientsUnavailable() {
   );
 }
 
-function ClientsSection({ clients }: { clients: readonly RosterClient[] }) {
+type ClientsSectionProps = {
+  clients: readonly RosterClient[];
+  avatarUrls: Readonly<Record<string, string | null>>;
+};
+
+export function ClientsSection({ clients, avatarUrls }: ClientsSectionProps) {
   const {
     changeQuery,
     chooseSort,
@@ -79,7 +50,9 @@ function ClientsSection({ clients }: { clients: readonly RosterClient[] }) {
     status,
   } = useRosterParams();
   const selection = { query, status };
-  const shown = sortRoster(filterRoster(clients, selection), sort);
+  const shown = sortRoster(filterRoster(clients, selection), sort).map(
+    (client) => ({ ...client, avatarUrl: avatarUrls[client.clientId] ?? null }),
+  );
   const emptyCopy = emptyRosterCopy({ rosterSize: clients.length, selection });
 
   return (

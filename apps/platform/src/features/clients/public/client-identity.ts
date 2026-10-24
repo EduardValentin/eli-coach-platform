@@ -32,6 +32,10 @@ export const clientIdentityProblemsAnswerSchema = z.object({
   problems: clientIdentityProblemsSchema,
 });
 
+export const clientIdentitySavedAnswerSchema = z.object({
+  status: z.literal("saved"),
+});
+
 export const clientIdentityRefusalSchema = z.object({
   error: z.enum(["not-found", "not-on-journey", "ended"]),
 });

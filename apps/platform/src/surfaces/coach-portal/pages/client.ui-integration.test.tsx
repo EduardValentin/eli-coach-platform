@@ -374,6 +374,63 @@ describe("the coach's client page", () => {
     ]);
   });
 
+  it("moves her approved onboarding below her measurements, folded, just above the assessment call", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: {
+        ...SUBMITTED_REVIEW,
+        submitted: { ...SUBMITTED, stage: "approved" },
+      },
+      profile: PROFILE,
+      measurements: SUBMITTED_MEASUREMENTS,
+    });
+
+    // assert
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual([
+      "Profile",
+      "Subscription",
+      "Weekly check-in",
+      "Measurements",
+      "Onboarding",
+      "Assessment call",
+    ]);
+    expect(screen.getByRole("button", { name: "Onboarding" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  it("shows her picture in the header when her profile has one", async () => {
+    // arrange
+    const pictureUrl = `/api/client-profile/avatar/${CLIENT_ID}`;
+
+    // act
+    await renderClientPage({
+      profile: { ...AWAITING_ONBOARDING_PROFILE, avatarUrl: pictureUrl },
+    });
+
+    // assert
+    const header = screen.getByRole("banner");
+    expect(header.querySelector("img")).toHaveAttribute("src", pictureUrl);
+    expect(header.querySelector("img")).toHaveAttribute("alt", "");
+  });
+
+  it("leads from her profile widget to her full profile", async () => {
+    // arrange, act
+    await renderClientPage();
+
+    // assert
+    const profile = screen.getByRole("region", { name: "Profile" });
+    expect(
+      within(profile).getByRole("link", { name: "View profile" }),
+    ).toHaveAttribute("href", `${coachClientPath(CLIENT_ID)}/profile`);
+  });
+
   it("reads her weekly check-in under her subscription", async () => {
     // arrange, act
     await renderClientPage({ scheduling: "allowed", weekly: WEEKLY });

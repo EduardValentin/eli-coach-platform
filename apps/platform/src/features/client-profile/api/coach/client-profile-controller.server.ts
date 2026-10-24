@@ -16,6 +16,7 @@ import { requirePortalAccess } from "~/features/accounts/server/guards/require-p
 import {
   clientProfileProblemsAnswerSchema,
   clientProfileRefusalSchema,
+  clientProfileSavedAnswerSchema,
   clientProfileSchema,
   coachProfileRequestSchema,
   type ClientProfileView,
@@ -119,7 +120,9 @@ function presentReading(reading: ClientProfileReading) {
 
 function savedResponse(result: UpdateClientProfileResult): Response {
   if (result.status === "saved") {
-    return new Response(null, { status: 204 });
+    return Response.json(
+      clientProfileSavedAnswerSchema.parse({ status: result.status }),
+    );
   }
 
   if (result.status === "invalid") {

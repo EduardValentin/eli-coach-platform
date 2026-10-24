@@ -7,8 +7,10 @@ import {
   checkInsCoachRoutes,
 } from "../../features/check-ins/routes";
 import { COACH_CLIENT_RESOURCES_ROUTE_SEGMENT } from "../../features/client-resources/public/paths";
-import { COACH_CLIENTS_ROUTE_SEGMENT } from "../../features/clients/public/paths";
-import { clientsCoachRoutes } from "../../features/clients/routes";
+import {
+  COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
+  COACH_CLIENTS_ROUTE_SEGMENT,
+} from "../../features/clients/public/paths";
 import { coachScheduleCoachRoutes } from "../../features/coach-schedule/routes";
 import { exerciseLibraryCoachRoutes } from "../../features/exercise-library/routes";
 import {
@@ -29,13 +31,14 @@ export const coachPortalRoutes = [
         "./pages/assessment-calls.tsx",
       ),
       ...coachScheduleCoachRoutes,
-      ...clientsCoachRoutes,
+      route(COACH_CLIENTS_ROUTE_SEGMENT, "./pages/clients.tsx"),
       ...checkInsCoachRoutes,
       route(`${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId`, "./pages/client.tsx"),
       route(
         COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
         "./pages/client-resources.tsx",
       ),
+      route(COACH_CLIENT_PROFILE_ROUTE_SEGMENT, "./pages/client-profile.tsx"),
     ]),
     ...checkInsCoachJoinRoutes,
     ...nutritionLibraryCoachBuilderRoutes,

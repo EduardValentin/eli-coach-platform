@@ -13,6 +13,7 @@ import { requirePortalAccess } from "~/features/accounts/server/guards/require-p
 import {
   clientProfileProblemsAnswerSchema,
   clientProfileRefusalSchema,
+  clientProfileSavedAnswerSchema,
 } from "~/features/client-profile/public/client-profile";
 import {
   ownClientProfileSchema,
@@ -83,7 +84,9 @@ export class OwnClientProfileController {
 
 function savedResponse(result: UpdateOwnClientProfileResult): Response {
   if (result.status === "saved") {
-    return new Response(null, { status: 204 });
+    return Response.json(
+      clientProfileSavedAnswerSchema.parse({ status: result.status }),
+    );
   }
 
   if (result.status === "invalid") {

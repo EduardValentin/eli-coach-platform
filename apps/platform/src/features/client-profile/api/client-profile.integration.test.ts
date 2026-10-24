@@ -140,7 +140,8 @@ describe.sequential("client profile integration", () => {
       );
 
       // assert
-      expect(saved.status).toBe(204);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toEqual({ status: "saved" });
       expect(await onboarding.profileRowOf(clientId)).toEqual(
         expect.objectContaining({
           level: "intermediate",
@@ -244,7 +245,8 @@ describe.sequential("client profile integration", () => {
       });
 
       // assert
-      expect(saved.status).toBe(204);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toEqual({ status: "saved" });
       expect(await onboarding.profileRowOf(clientId)).toEqual(
         expect.objectContaining({
           heightCm: "166.5",
@@ -317,7 +319,8 @@ describe.sequential("client profile integration", () => {
       );
 
       // assert
-      expect(saved.status).toBe(204);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toEqual({ status: "saved" });
       expect(await profiles.identityRowOf(clientId)).toEqual({
         firstName: "Ana-Maria",
         lastName: "Ionescu",
@@ -341,7 +344,8 @@ describe.sequential("client profile integration", () => {
       );
 
       // assert
-      expect(saved.status).toBe(204);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toEqual({ status: "saved" });
       expect(await profiles.identityRowOf(clientId)).toEqual(
         expect.objectContaining({
           firstName: "Ana-Maria",
@@ -408,7 +412,8 @@ describe.sequential("client profile integration", () => {
       const forAnonymous = await profiles.openAvatarAnonymously(clientId);
 
       // assert
-      expect(uploaded.status).toBe(204);
+      expect(uploaded.status).toBe(200);
+      expect(await uploaded.json()).toEqual({ status: "uploaded" });
       const avatar = await profiles.avatarRowOf(clientId);
       expect(avatar).toEqual(
         expect.objectContaining({
@@ -449,7 +454,8 @@ describe.sequential("client profile integration", () => {
       );
 
       // assert
-      expect(replaced.status).toBe(204);
+      expect(replaced.status).toBe(200);
+      expect(await replaced.json()).toEqual({ status: "uploaded" });
       const current = await profiles.avatarRowOf(clientId);
       expect(current?.avatarId).not.toBe(previous?.avatarId);
       expect(
@@ -470,7 +476,8 @@ describe.sequential("client profile integration", () => {
       const removed = await profiles.removeAvatar(OWNER, OWN_AVATAR_API);
 
       // assert
-      expect(removed.status).toBe(204);
+      expect(removed.status).toBe(200);
+      expect(await removed.json()).toEqual({ status: "removed" });
       expect(await profiles.avatarRowOf(clientId)).toBeUndefined();
       expect(
         await profiles.storedFileOf(uploaded?.storageKey ?? ""),
@@ -490,7 +497,8 @@ describe.sequential("client profile integration", () => {
       );
 
       // assert
-      expect(removed.status).toBe(204);
+      expect(removed.status).toBe(200);
+      expect(await removed.json()).toEqual({ status: "removed" });
       expect(await profiles.avatarRowOf(clientId)).toBeUndefined();
     });
 

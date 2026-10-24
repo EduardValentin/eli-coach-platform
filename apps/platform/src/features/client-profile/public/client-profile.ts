@@ -88,6 +88,10 @@ export const clientProfileProblemsAnswerSchema = z.object({
   problems: clientProfileProblemsSchema,
 });
 
+export const clientProfileSavedAnswerSchema = z.object({
+  status: z.literal("saved"),
+});
+
 export const clientProfileRefusalSchema = z.object({
   error: z.enum([
     "not-found",

@@ -101,4 +101,23 @@ describe("FieldLayout", () => {
     const lines = [...(container.firstElementChild?.children ?? [])];
     expect(lines.map((line) => line.tagName)).toEqual(order);
   });
+  it("sets an adornment after the label's suffixes", () => {
+    // arrange, act
+    render(
+      <FieldLayout
+        label="Coach notes"
+        labelAdornment={<svg aria-hidden="true" data-testid="lock" />}
+        suffixes={[{ text: "(private)" }]}
+      >
+        {(control) => <textarea {...control} />}
+      </FieldLayout>,
+    );
+
+    // assert
+    const label = screen.getByText("Coach notes").closest("label");
+    expect(label?.lastElementChild).toBe(screen.getByTestId("lock"));
+    expect(
+      screen.getByRole("textbox", { name: /^Coach notes/ }),
+    ).toBeInTheDocument();
+  });
 });

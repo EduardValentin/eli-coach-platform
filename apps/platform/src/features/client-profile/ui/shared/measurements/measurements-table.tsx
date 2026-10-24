@@ -26,6 +26,7 @@ import {
   MEASUREMENTS_COPY,
   type MeasurementRow,
 } from "~/features/client-profile/public/measurements";
+import { COACH_MEASURE_UNITS } from "~/features/client-profile/ui/shared/measure-field/coach-measure-units";
 
 type CoachRatioBasis = { heightCm: number | null; ratioHidden: boolean };
 
@@ -43,8 +44,6 @@ type MeasurementsTableProps = MeasurementsPerspective & {
   children?: ReactNode;
   onViewPhotos?: (row: MeasurementRow) => void;
 };
-
-const COACH_UNITS: MeasureUnits = { weight: "kg", length: "cm" };
 
 const RATIO_COLUMN = "Ratio";
 
@@ -124,7 +123,8 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
   } = props;
   const timeZone = useCalendarDayTimeZone();
   const history = newestFirst(measurements);
-  const units = props.perspective === "client" ? props.units : COACH_UNITS;
+  const units =
+    props.perspective === "client" ? props.units : COACH_MEASURE_UNITS;
   const ratioBasis = props.perspective === "coach" ? props : null;
   const columns = ratioBasis ? MEASUREMENTS_COPY.columns : VALUE_COLUMNS;
   const viewPhotos = history.some(hasPhotos) ? onViewPhotos : undefined;

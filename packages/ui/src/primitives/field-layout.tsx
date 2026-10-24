@@ -26,6 +26,7 @@ type FieldLayoutProps = Omit<
   hint?: string;
   hintPlacement?: FieldHintPlacement;
   label: React.ReactNode;
+  labelAdornment?: React.ReactNode;
   labelLayout?: LabelLayout;
   required?: boolean;
   suffixes?: readonly FieldLabelSuffix[];
@@ -39,6 +40,7 @@ export function FieldLayout({
   hint,
   hintPlacement = "before-control",
   label,
+  labelAdornment,
   labelLayout = "wrap",
   required,
   suffixes = [],
@@ -57,11 +59,16 @@ export function FieldLayout({
         invalid={invalid}
         layout={labelLayout}
         required={required}
-        trailing={suffixes.map((suffix) => (
-          <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
-            {suffix.text}
-          </LabelSuffix>
-        ))}
+        trailing={
+          <>
+            {suffixes.map((suffix) => (
+              <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
+                {suffix.text}
+              </LabelSuffix>
+            ))}
+            {labelAdornment}
+          </>
+        }
       >
         {label}
       </Label>

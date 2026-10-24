@@ -23,6 +23,7 @@ import {
   clientAvatarRefusalSchema,
   clientAvatarUrlSchema,
   clientAvatarUrlsSchema,
+  clientAvatarWrittenAnswerSchema,
   type ClientAvatarRefusal,
   type ClientAvatarUrl,
   type ClientAvatarUrls,
@@ -222,7 +223,9 @@ export class ClientAvatarController {
 
   private writtenResponse(result: AvatarWriteResult): Response {
     if (result.status === "uploaded" || result.status === "removed") {
-      return new Response(null, { status: 204 });
+      return Response.json(
+        clientAvatarWrittenAnswerSchema.parse({ status: result.status }),
+      );
     }
 
     return this.refusalResponse(

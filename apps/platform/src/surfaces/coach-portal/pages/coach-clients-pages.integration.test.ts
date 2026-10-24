@@ -11,6 +11,10 @@ import {
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";
 import {
+  ClientProfileJourney,
+  coachAvatarApi,
+} from "~integration-test-config/client-profile-journey";
+import {
   ANA,
   CoachingSalesJourney,
 } from "~integration-test-config/coaching-sales-journey";
@@ -29,6 +33,7 @@ import {
   stripeSubscriptionObject,
   SubscriptionLifecycleJourney,
 } from "~integration-test-config/subscription-lifecycle-journey";
+import { smallWebp } from "~integration-test-config/sample-images";
 import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/stripe-api";
 
 const suite = new ApiIntegrationTestSuite();
@@ -37,6 +42,7 @@ const sales = new CoachingSalesJourney(rig);
 const clients = new ClientsJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
+const profiles = new ClientProfileJourney(rig);
 
 const CLIENTS_PAGE = "/coach/clients";
 const UNKNOWN_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
@@ -148,6 +154,28 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Ana Popescu");
       expect(texts).toContain("Cancelled");
       expect(texts).not.toContain("Onboarding");
+    });
+
+    it("shows a client's picture beside her name once she has one", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+      await profiles.uploadAvatar(COACH_SESSION, coachAvatarApi(clientId), {
+        bytes: await smallWebp(),
+        fileName: "ana.webp",
+        mimeType: "image/webp",
+      });
+
+      // act
+      const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
+
+      // assert
+      const page = await visibleDocument(response);
+
+      expect(response.status).toBe(200);
+      expect(page).toMatch(
+        new RegExp(`src="[^"]*/api/client-profile/avatar/${clientId}"`),
+      );
     });
 
     it("says no one has paid yet while the roster is empty", async () => {
@@ -355,6 +383,36 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).not.toContain("Re-send invitation");
     });
 
+    it("folds an approved client's onboarding under the measurements and links to her profile", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await onboarding.submit(ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+      await onboarding.approve(COACH_SESSION, clientId);
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}`,
+      );
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("View profile");
+      expect(page).toMatch(
+        new RegExp(`href="[^"]*${CLIENTS_PAGE}/${clientId}/profile"`),
+      );
+      expect(texts).not.toContain("Review answers");
+      expect(texts.indexOf("Measurements")).toBeLessThan(
+        texts.indexOf("Onboarding"),
+      );
+      expect(texts.indexOf("Onboarding")).toBeLessThan(
+        texts.indexOf("Assessment call"),
+      );
+    });
     it("answers 404 for a client no one paid for and for an id that is not one", async () => {
       // arrange
       await sales.payForCall();
@@ -406,6 +464,83 @@ describe.sequential("coach clients pages integration", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toContain("/sign-in");
+    });
+  });
+
+  describe("a client's profile page", () => {
+    it("reads an approved client's identity, coaching facts and preferences", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await onboarding.submit(ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+      await onboarding.approve(COACH_SESSION, clientId);
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}/profile`,
+      );
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Profile");
+      expect(texts).toContain(`${ANA.firstName} ${ANA.lastName}`);
+      expect(texts).toContain("About her");
+      expect(texts).toContain("Coaching");
+      expect(texts).toContain("Preferences");
+      expect(texts).toContain("Upload picture");
+      expect(readingOf(page, "identity-email")).toBe(ANA.email);
+      expect(texts).not.toContain(
+        "These fill in once her answers are approved.",
+      );
+    });
+
+    it("says a submitted client's coaching facts fill in once her answers are approved", async () => {
+      // arrange
+      await onboarding.admit(ANA, ADMITTED_CLIENT);
+      await onboarding.submit(ADMITTED_CLIENT);
+      const clientId = await onboarding.clientIdOf(ADMITTED_CLIENT);
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${clientId}/profile`,
+      );
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("These fill in once her answers are approved.");
+      expect(texts).not.toContain("Preferences");
+    });
+
+    it("answers 404 for a client no one paid for", async () => {
+      // arrange, act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}/${UNKNOWN_CLIENT_ID}/profile`,
+      );
+
+      // assert
+      expect(response.status).toBe(404);
+    });
+
+    it("keeps a CLIENT out", async () => {
+      // arrange
+      await rig.provisionClient();
+
+      // act
+      const response = await rig.requestAs(
+        CLIENT_SESSION,
+        `${CLIENTS_PAGE}/${UNKNOWN_CLIENT_ID}/profile`,
+      );
+
+      // assert
+      expect(response.status).toBe(403);
     });
   });
 });

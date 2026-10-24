@@ -92,4 +92,20 @@ describe("PortalPageHeader", () => {
     // assert
     expect(heading).not.toHaveFocus();
   });
+  it("sets an eyebrow above the title in the tracked label type", () => {
+    // arrange, act
+    render(<PortalPageHeader eyebrow="Ana Popescu" title="Profile" />);
+
+    // assert
+    const eyebrow = screen.getByText("Ana Popescu");
+    expect(eyebrow.tagName).toBe("P");
+    expect(eyebrow).toHaveClass(
+      "text-label",
+      "uppercase",
+      "text-text-secondary",
+    );
+    expect(eyebrow.nextElementSibling).toBe(
+      screen.getByRole("heading", { level: 1, name: "Profile" }),
+    );
+  });
 });

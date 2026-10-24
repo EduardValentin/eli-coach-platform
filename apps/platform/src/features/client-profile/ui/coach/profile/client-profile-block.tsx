@@ -1,5 +1,9 @@
 import { PhoneLink, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
+import {
+  PortalWidget,
+  Reading,
+  WidgetLink,
+} from "@eli-coach-platform/ui/portal";
 import { UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -9,8 +13,10 @@ import {
   labelForGender,
 } from "~/features/assessment-calls/public/visitor-profile";
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
+import { coachClientProfilePath } from "~/features/clients/public/paths";
 
 type ClientProfileBlockProps = {
+  clientId: string;
   profile: ClientProfileView;
 };
 
@@ -29,7 +35,10 @@ const PROFILE_READINGS: readonly ProfileReading[] = [
   { id: "phone", label: "Phone", parity: "profile-phone" },
 ];
 
-export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
+export function ClientProfileBlock({
+  clientId,
+  profile,
+}: ClientProfileBlockProps) {
   const timeZone = useCalendarDayTimeZone();
   const [now] = useState(() => new Date());
   const { identity } = profile;
@@ -48,6 +57,15 @@ export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
     <PortalWidget
       data-parity-root="ClientProfileBlock"
       className="mb-8"
+      footer={
+        <WidgetLink
+          data-parity="view-profile"
+          to={coachClientProfilePath(clientId)}
+          trailing="arrow"
+        >
+          View profile
+        </WidgetLink>
+      }
       headingId="profile-panel-heading"
       icon={UserRound}
       title="Profile"
@@ -62,6 +80,13 @@ export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
             valueParity={reading.parity}
           />
         ))}
+        <Reading
+          as="dl-item"
+          className="col-span-full"
+          label="Email"
+          value={identity.email}
+          valueParity="profile-email"
+        />
       </dl>
     </PortalWidget>
   );

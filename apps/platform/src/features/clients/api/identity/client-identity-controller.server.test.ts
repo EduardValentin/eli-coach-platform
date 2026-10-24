@@ -39,7 +39,7 @@ const ENTERED = {
 };
 
 describe("ClientIdentityController saveOwn", () => {
-  it("saves her names, date of birth, country and her phone in E.164 and answers no content", async () => {
+  it("saves her names, date of birth, country and her phone in E.164 and answers that it is saved", async () => {
     // arrange
     const { controller, updateOwn } = createController();
 
@@ -47,7 +47,8 @@ describe("ClientIdentityController saveOwn", () => {
     const response = await controller.saveOwn(accountArgs(CLIENT, ENTERED));
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
     expect(updateOwn).toHaveBeenCalledWith({
       authSubjectId: "user_ana",
       identity: {
@@ -138,7 +139,8 @@ describe("ClientIdentityController saveAsCoach", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
     expect(updateAsCoach).toHaveBeenCalledWith({
       clientId: CLIENT_ID,
       identity: {

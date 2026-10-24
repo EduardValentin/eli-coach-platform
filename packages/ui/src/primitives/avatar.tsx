@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
+import type { DataAttributes } from "../lib/data-attributes";
 
 const avatarClasses = cva(
   "relative flex shrink-0 overflow-hidden rounded-full",
@@ -15,7 +16,7 @@ const avatarClasses = cva(
         quiet: "",
         muted: "opacity-70",
         heading:
-          "[&_[data-slot=avatar-fallback]]:bg-surface-quiet [&_[data-slot=avatar-fallback]]:font-heading [&_[data-slot=avatar-fallback]]:font-semibold",
+          "[&_[data-slot=avatar-fallback]]:bg-surface-quiet [&_[data-slot=avatar-fallback]]:font-heading [&_[data-slot=avatar-fallback]]:font-semibold [&_[data-slot=avatar-image]]:rounded-full [&_[data-slot=avatar-image]]:border [&_[data-slot=avatar-image]]:border-border-default/50 [&_[data-slot=avatar-image]]:object-cover",
       },
     },
     defaultVariants: {
@@ -25,10 +26,12 @@ const avatarClasses = cva(
   },
 );
 
-type AvatarProps = VariantProps<typeof avatarClasses> & {
-  imageUrl?: string;
-  name: string;
-};
+type AvatarProps = VariantProps<typeof avatarClasses> &
+  DataAttributes & {
+    imageUrl?: string;
+    imageAlt?: string;
+    name: string;
+  };
 
 function initialsOf(name: string): string {
   return name
@@ -39,12 +42,19 @@ function initialsOf(name: string): string {
     .join("");
 }
 
-export function Avatar({ imageUrl, name, size, tone }: AvatarProps) {
+export function Avatar({
+  imageUrl,
+  imageAlt = "",
+  name,
+  size,
+  tone,
+  ...dataAttributes
+}: AvatarProps) {
   return (
-    <span className={cn(avatarClasses({ size, tone }))}>
+    <span {...dataAttributes} className={cn(avatarClasses({ size, tone }))}>
       {imageUrl ? (
         <img
-          alt=""
+          alt={imageAlt}
           className="aspect-square size-full"
           data-slot="avatar-image"
           src={imageUrl}

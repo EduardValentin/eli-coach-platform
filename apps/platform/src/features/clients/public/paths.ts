@@ -29,12 +29,24 @@ export function coachClientPath(clientId: string): string {
   return `${COACH_CLIENTS_PATH}/${encodeURIComponent(clientId)}`;
 }
 
+const PROFILE_SEGMENT = "profile";
+
+export const COACH_CLIENT_PROFILE_ROUTE_SEGMENT = `${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId/${PROFILE_SEGMENT}`;
+
+export function coachClientProfilePath(clientId: string): string {
+  return `${coachClientPath(clientId)}/${PROFILE_SEGMENT}`;
+}
+
 export const CLIENTS_API_PATHS = {
   clients: "/api/clients",
   invitation: "/api/clients/invitation",
   invitationResends: "/api/clients/invitation-resends",
   ownIdentity: "/api/clients/identity",
 } as const;
+
+export function coachClientIdentityPath(clientId: string): string {
+  return `${CLIENTS_API_PATHS.clients}/${encodeURIComponent(clientId)}/identity`;
+}
 
 export function invitationPath(link: { token: string }): string {
   return `${INVITATION_PATH}#${link.token}`;

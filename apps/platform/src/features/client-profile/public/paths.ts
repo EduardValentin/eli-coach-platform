@@ -20,3 +20,11 @@ export function progressPhotoPath(photoId: string): string {
 export function clientAvatarPath(clientId: string): string {
   return `${CLIENT_PROFILE_API_PATHS.avatars}/${encodeURIComponent(clientId)}`;
 }
+
+export function coachClientProfileApiPath(clientId: string): string {
+  return `${CLIENT_PROFILE_API_PATHS.coachProfiles}/${encodeURIComponent(clientId)}`;
+}
+
+export function coachClientAvatarApiPath(clientId: string): string {
+  return `${coachClientProfileApiPath(clientId)}/avatar`;
+}

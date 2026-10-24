@@ -106,6 +106,14 @@ export default function CoachClientRoute() {
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const viewedEntry = measurements.find((entry) => entry.id === viewingEntryId);
+  const answersApproved = review.submitted?.stage === "approved";
+  const onboarding = (
+    <OnboardingPanel
+      client={client}
+      review={review}
+      statusBadge={<ClientStatusBadge status={client.status} />}
+    />
+  );
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -113,7 +121,11 @@ export default function CoachClientRoute() {
 
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">
-          <Avatar name={name} size="lg" />
+          <Avatar
+            imageUrl={profile.avatarUrl ?? undefined}
+            name={name}
+            size="lg"
+          />
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
@@ -139,15 +151,11 @@ export default function CoachClientRoute() {
         </div>
       </header>
 
-      <ClientProfileBlock profile={profile} />
+      <ClientProfileBlock clientId={client.clientId} profile={profile} />
       {client.invitation && (
         <InvitationBlock client={client} invitation={client.invitation} />
       )}
-      <OnboardingPanel
-        client={client}
-        review={review}
-        statusBadge={<ClientStatusBadge status={client.status} />}
-      />
+      {!answersApproved && onboarding}
       {subscription && (
         <>
           <SubscriptionSummary
@@ -184,6 +192,7 @@ export default function CoachClientRoute() {
           viewer={{ role: "coach", clientFirstName: client.firstName }}
         />
       </MeasurementsTable>
+      {answersApproved && onboarding}
       <AssessmentCallBlock client={client} />
     </div>
   );

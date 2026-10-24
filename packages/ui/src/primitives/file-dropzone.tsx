@@ -1,4 +1,4 @@
-import { Upload } from "lucide-react";
+import { Upload, type LucideIcon } from "lucide-react";
 import {
   useId,
   useState,
@@ -123,24 +123,31 @@ export function FileDropzone({ prompt, hint, ...picker }: FileDropzoneProps) {
   );
 }
 
+type FilePickerButtonSize = "xs" | "sm";
+
 type FilePickerButtonProps = FilePickerProps & {
   children: string;
+  size?: FilePickerButtonSize;
+  icon?: LucideIcon;
 };
 
 export function FilePickerButton({
   children,
+  size = "xs",
+  icon: Icon,
   ...picker
 }: FilePickerButtonProps) {
   return (
     <label
       className={buttonVariants({
         className: "cursor-pointer",
-        size: "xs",
+        size,
         variant: "outline",
       })}
       data-chip-control=""
     >
       <HiddenFileInput {...picker} label={children} />
+      {Icon && <Icon aria-hidden="true" size={16} />}
       <span aria-hidden="true">{children}</span>
     </label>
   );

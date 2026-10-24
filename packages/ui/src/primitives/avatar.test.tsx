@@ -113,4 +113,42 @@ describe("avatar", () => {
     expect(picture).toHaveClass("aspect-square", "size-full");
     expect(root?.textContent).toBe("");
   });
+  it("names a picture that stands on its own with the alt text it is given", () => {
+    // arrange, act
+    const { root } = renderAvatar(
+      <Avatar
+        data-parity="avatar"
+        imageAlt="Ana Popescu's profile picture"
+        imageUrl="/api/client-profile/avatar/ana"
+        name="Ana Popescu"
+        size="lg"
+      />,
+    );
+
+    // assert
+    expect(root).toHaveAttribute("data-parity", "avatar");
+    expect(root?.querySelector("img")).toHaveAttribute(
+      "alt",
+      "Ana Popescu's profile picture",
+    );
+  });
+
+  it("rings a roster picture in a faint border and fills the circle with it", () => {
+    // arrange, act
+    const { root } = renderAvatar(
+      <Avatar
+        imageUrl="/api/client-profile/avatar/ana"
+        name="Ana"
+        tone="heading"
+      />,
+    );
+
+    // assert
+    expect(root).toHaveClass(
+      "[&_[data-slot=avatar-image]]:rounded-full",
+      "[&_[data-slot=avatar-image]]:border",
+      "[&_[data-slot=avatar-image]]:border-border-default/50",
+      "[&_[data-slot=avatar-image]]:object-cover",
+    );
+  });
 });

@@ -13,6 +13,10 @@ export const clientAvatarUrlsSchema = z.record(
 
 export type ClientAvatarUrls = z.infer<typeof clientAvatarUrlsSchema>;
 
+export const clientAvatarWrittenAnswerSchema = z.object({
+  status: z.enum(["uploaded", "removed"]),
+});
+
 export const clientAvatarRefusalSchema = z.object({
   error: z.enum([
     "not-found",

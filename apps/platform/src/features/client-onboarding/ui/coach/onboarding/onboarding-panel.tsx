@@ -3,7 +3,10 @@ import {
   formatDayMonth,
   useCalendarDayTimeZone,
 } from "@eli-coach-platform/ui/lib";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
+import {
+  CollapsiblePortalWidget,
+  PortalWidget,
+} from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { ClipboardList, MessageSquareText } from "lucide-react";
@@ -204,30 +207,32 @@ export function OnboardingPanel({
   statusBadge,
 }: OnboardingPanelProps) {
   const submitted = review.submitted;
-
-  return (
-    <PortalWidget
-      action={statusBadge}
-      className="mb-8"
-      data-parity-root="OnboardingPanel"
-      headingId="onboarding-panel-heading"
-      icon={ClipboardList}
-      title={PANEL_TITLE}
-      titleAdornment={
-        submitted ? <ScreeningWarning submitted={submitted} /> : null
-      }
-    >
-      {submitted ? (
-        <SubmittedOnboarding
-          client={client}
-          review={review}
-          submitted={submitted}
-        />
-      ) : (
-        <p className="text-sm text-text-secondary">
-          {answersNotInLine(client.gender)}
-        </p>
-      )}
-    </PortalWidget>
+  const frame = {
+    action: statusBadge,
+    className: "mb-8",
+    "data-parity-root": "OnboardingPanel",
+    headingId: "onboarding-panel-heading",
+    icon: ClipboardList,
+    title: PANEL_TITLE,
+    titleAdornment: submitted ? (
+      <ScreeningWarning submitted={submitted} />
+    ) : null,
+  };
+  const body = submitted ? (
+    <SubmittedOnboarding
+      client={client}
+      review={review}
+      submitted={submitted}
+    />
+  ) : (
+    <p className="text-sm text-text-secondary">
+      {answersNotInLine(client.gender)}
+    </p>
   );
+
+  if (submitted?.stage === "approved") {
+    return <CollapsiblePortalWidget {...frame}>{body}</CollapsiblePortalWidget>;
+  }
+
+  return <PortalWidget {...frame}>{body}</PortalWidget>;
 }

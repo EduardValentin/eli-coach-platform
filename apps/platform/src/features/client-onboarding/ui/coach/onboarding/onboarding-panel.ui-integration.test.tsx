@@ -232,6 +232,66 @@ describe("the onboarding panel on a client page", () => {
   });
 });
 
+describe("the onboarding panel once her answers are approved", () => {
+  it("folds her answers away under its heading, keeping the status and the screening signal in the header", async () => {
+    // arrange, act
+    await renderPanel({
+      review: reviewView({
+        ...submittedReviewIn("approved"),
+        screening: { outcome: "needs-review", yesCount: 1 },
+      }),
+    });
+
+    // assert
+    expect(screen.getByRole("button", { name: "Onboarding" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Answers" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(STATUS_BADGE)).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Safety screening needs a look: 1 yes answer",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens her answers from its heading", async () => {
+    // arrange
+    const user = await renderPanel({
+      review: reviewView(submittedReviewIn("approved")),
+    });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Onboarding" }));
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Answers" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /^Goals and availability/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps her answers in view while they still await a review", async () => {
+    // arrange, act
+    await renderPanel({
+      review: reviewView(submittedReviewIn("awaiting-review")),
+    });
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Answers" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Onboarding" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("the screening signal beside the panel title", () => {
   it("counts the yes answers when the screening needs a look", async () => {
     // arrange, act

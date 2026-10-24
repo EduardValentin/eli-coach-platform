@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
@@ -10,6 +11,8 @@ import type { ClientProfileView } from "~/features/client-profile/public/client-
 import { ClientProfileBlock } from "./client-profile-block";
 
 const NOW = new Date("2026-03-13T23:30:00.000Z");
+
+const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 
 const IDENTITY: ClientProfileView["identity"] = {
   firstName: "Ana",
@@ -44,9 +47,9 @@ afterEach(() => {
 });
 
 describe("the client's profile block", () => {
-  it("reads her identity only: age on the coach's calendar with her date of birth, gender, country and phone", () => {
+  it("reads her identity only: age on the coach's calendar with her date of birth, gender, country, phone and email", () => {
     // arrange, act
-    render(<ClientProfileBlock profile={PROFILE} />);
+    renderBlock(PROFILE);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
@@ -55,6 +58,7 @@ describe("the client's profile block", () => {
       ["Gender", "Female"],
       ["Country", "Romania"],
       ["Phone", "+40712345678"],
+      ["Email", "ana@example.com"],
     ]);
     expect(
       within(profile).getByRole("link", { name: "+40712345678" }),
@@ -69,12 +73,25 @@ describe("the client's profile block", () => {
     };
 
     // act
-    render(<ClientProfileBlock profile={withoutPhone} />);
+    renderBlock(withoutPhone);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
-    expect(readings(profile).at(-1)).toEqual(["Phone", "—"]);
-    expect(within(profile).queryByRole("link")).toBeNull();
+    expect(readings(profile)[3]).toEqual(["Phone", "—"]);
+    expect(
+      within(profile).queryByRole("link", { name: /^\+/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("links to her full profile page", () => {
+    // arrange, act
+    renderBlock(PROFILE);
+
+    // assert
+    const profile = screen.getByRole("region", { name: "Profile" });
+    expect(
+      within(profile).getByRole("link", { name: "View profile" }),
+    ).toHaveAttribute("href", `/coach/clients/${CLIENT_ID}/profile`);
   });
 
   it.each([
@@ -88,13 +105,21 @@ describe("the client's profile block", () => {
     };
 
     // act
-    render(<ClientProfileBlock profile={profileOf} />);
+    renderBlock(profileOf);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
     expect(readings(profile)[1]).toEqual(["Gender", genderLabel]);
   });
 });
+
+function renderBlock(profile: ClientProfileView) {
+  render(
+    <MemoryRouter>
+      <ClientProfileBlock clientId={CLIENT_ID} profile={profile} />
+    </MemoryRouter>,
+  );
+}
 
 function coachIsIn(timeZone: string) {
   const actual = new Intl.DateTimeFormat().resolvedOptions();

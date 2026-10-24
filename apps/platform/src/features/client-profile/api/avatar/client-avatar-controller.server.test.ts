@@ -81,7 +81,7 @@ describe("ClientAvatarController open", () => {
 });
 
 describe("ClientAvatarController uploadOwn", () => {
-  it("hands her photo to the use case and answers no content once it is her avatar", async () => {
+  it("hands her photo to the use case and answers that it is uploaded once it is her avatar", async () => {
     // arrange
     const { controller, useCases } = createController();
 
@@ -91,7 +91,8 @@ describe("ClientAvatarController uploadOwn", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "uploaded" });
     expect(useCases.uploadOwnClientAvatar).toHaveBeenCalledWith({
       authSubjectId: "user_ana",
       avatar: {
@@ -169,7 +170,10 @@ describe("ClientAvatarController coach writes", () => {
     );
 
     // assert
-    expect([uploaded.status, removed.status]).toEqual([204, 204]);
+    expect([await uploaded.json(), await removed.json()]).toEqual([
+      { status: "uploaded" },
+      { status: "removed" },
+    ]);
     expect(useCases.uploadClientAvatarAsCoach).toHaveBeenCalledWith(
       expect.objectContaining({ clientId: CLIENT_ID }),
     );
@@ -194,7 +198,7 @@ describe("ClientAvatarController coach writes", () => {
 });
 
 describe("ClientAvatarController removeOwn", () => {
-  it("removes her avatar and answers no content", async () => {
+  it("removes her avatar and answers that it is removed", async () => {
     // arrange
     const { controller, useCases } = createController();
 
@@ -204,7 +208,8 @@ describe("ClientAvatarController removeOwn", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "removed" });
     expect(useCases.removeOwnClientAvatar).toHaveBeenCalledWith("user_ana");
   });
 });

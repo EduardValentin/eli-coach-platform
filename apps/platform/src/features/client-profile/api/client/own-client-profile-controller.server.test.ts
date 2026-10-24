@@ -106,7 +106,7 @@ describe("OwnClientProfileController load", () => {
 });
 
 describe("OwnClientProfileController save", () => {
-  it("saves the facts she shares with her coach and answers no content", async () => {
+  it("saves the facts she shares with her coach and answers that it is saved", async () => {
     // arrange
     const { controller, updateOwnClientProfile } = createController();
 
@@ -116,7 +116,8 @@ describe("OwnClientProfileController save", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
     expect(updateOwnClientProfile).toHaveBeenCalledWith({
       authSubjectId: "user_ana",
       facts: SHARED,

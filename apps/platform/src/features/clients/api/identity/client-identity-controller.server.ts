@@ -16,6 +16,7 @@ import { normalizeVisitorPhone } from "~/features/assessment-calls/public/visito
 import {
   clientIdentityProblemsAnswerSchema,
   clientIdentityRefusalSchema,
+  clientIdentitySavedAnswerSchema,
   coachClientIdentityRequestSchema,
   ownClientIdentityRequestSchema,
   type OwnClientIdentityRequest,
@@ -152,7 +153,9 @@ export class ClientIdentityController {
       IdentityUpdateResult | Extract<IdentityReading, { status: "invalid" }>,
   ): Response {
     if (result.status === "saved") {
-      return new Response(null, { status: 204 });
+      return Response.json(
+        clientIdentitySavedAnswerSchema.parse({ status: result.status }),
+      );
     }
 
     if (result.status === "invalid") {

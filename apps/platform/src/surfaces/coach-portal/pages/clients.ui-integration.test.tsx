@@ -22,7 +22,7 @@ import {
   coachClientPath,
 } from "~/features/clients/public/paths";
 
-import CoachClientsRoute, { shouldRevalidate } from "./clients-page";
+import CoachClientsRoute, { shouldRevalidate } from "./clients";
 
 const COACH_TIME_ZONE = "Europe/Bucharest";
 
@@ -121,6 +121,24 @@ describe("the coach's clients page", () => {
       "",
     ]);
     expect(rowCells(3)).toEqual(["Onboarding", "—", "Sep 01, 2026", ""]);
+  });
+
+  it("shows a client's picture where she has one and her initials otherwise", async () => {
+    // arrange
+    const pictureUrl = `/api/client-profile/avatar/${ANA.clientId}`;
+
+    // act
+    await renderClientsPage({ avatarUrls: { [ANA.clientId]: pictureUrl } });
+
+    // assert
+    const [anaRow, carlaRow] = bodyRows();
+    expect(anaRow.querySelector("img")).toHaveAttribute("src", pictureUrl);
+    expect(anaRow.querySelector("img")).toHaveAttribute("alt", "");
+    expect(carlaRow.querySelector("img")).toBeNull();
+    expect(within(carlaRow).getByText("CM")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
   });
 
   it("offers every status in its group with the number of clients under it", async () => {
@@ -473,13 +491,15 @@ function ClientPageStandIn() {
 }
 
 type ClientsPageOptions = {
+  avatarUrls?: Record<string, string | null>;
   clients?: ClientRoster["clients"];
   url?: string;
 };
 
 async function renderClientsRouter(options?: ClientsPageOptions) {
   const user = userEvent.setup();
-  const roster: ClientRoster = {
+  const roster = {
+    avatarUrls: options?.avatarUrls ?? {},
     clients: options?.clients === undefined ? ROSTER : options.clients,
   };
   const loadRoster = vi.fn(() => roster);
