@@ -28,6 +28,8 @@ import {
   clientAvatarWrittenAnswerSchema,
 } from "~/features/client-profile/public/client-avatar";
 
+import { clientAvatarSrc } from "./client-avatar-src";
+
 type AvatarFieldProps = {
   name: string;
   detail: ReactNode;
@@ -144,7 +146,7 @@ export function AvatarField({
       <Avatar
         data-parity="avatar"
         imageAlt={`${name}'s profile picture`}
-        imageUrl={avatarUrl ?? undefined}
+        imageUrl={clientAvatarSrc(avatarUrl) ?? undefined}
         name={name}
         size="lg"
       />

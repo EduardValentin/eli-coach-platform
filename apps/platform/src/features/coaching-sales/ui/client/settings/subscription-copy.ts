@@ -5,10 +5,6 @@ export type OfferedCancellation = NonNullable<
   ClientSettings["cancellation"]
 >["rule"];
 
-export const SETTINGS_TITLE = "Settings";
-
-export const SETTINGS_META_TITLE = "Settings | Evoa";
-
 export const SUBSCRIPTION_TITLE = "Subscription";
 
 export const CANCELLATION_ROW_TITLE = "Cancellation";

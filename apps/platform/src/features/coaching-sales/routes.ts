@@ -4,7 +4,6 @@ import { CLIENT_ENDED_ROUTE_SEGMENT } from "../clients/public/paths";
 
 import {
   CHECKOUT_COMPLETE_ROUTE_SEGMENT,
-  CLIENT_SETTINGS_ROUTE_SEGMENT,
   COACHING_SALES_API_PATHS,
   SELECT_BUNDLE_ROUTE_SEGMENT,
 } from "./public/paths";
@@ -24,13 +23,6 @@ export const coachingSalesPublicRoutes = [
 
 export const coachingSalesClientRoutes = [
   route(CLIENT_ENDED_ROUTE_SEGMENT, "./ui/client/ended/ended-page.tsx"),
-];
-
-export const coachingSalesClientShellRoutes = [
-  route(
-    CLIENT_SETTINGS_ROUTE_SEGMENT,
-    "./ui/client/settings/settings-page.tsx",
-  ),
 ];
 
 export const coachingSalesApiRoutes = [

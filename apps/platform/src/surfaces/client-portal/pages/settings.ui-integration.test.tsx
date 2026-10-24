@@ -25,6 +25,10 @@ import {
   vi,
 } from "vitest";
 
+import { clientAction as saveUnitPreference } from "~/features/client-profile/api/client/unit-preference";
+import type { ClientSettingsView } from "~/features/client-profile/public/client-settings";
+import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
 import { CLIENT_ENDED_PATH } from "~/features/clients/public/paths";
 import { clientAction as cancelSubscription } from "~/features/coaching-sales/api/client/subscription-cancellation";
 import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
@@ -34,9 +38,62 @@ import {
 } from "~/features/coaching-sales/public/paths";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
-import SettingsRoute from "./settings-page";
+import SettingsRoute from "./settings";
 
 const CANCELLATION_URL = COACHING_SALES_API_PATHS.subscriptionCancellation;
+const UNIT_PREFERENCE_URL = `http://localhost${CLIENT_PROFILE_API_PATHS.unitPreference}`;
+const UNSAVED = "Your changes weren't saved. Try again.";
+
+const METRIC = { weightUnit: "kg", heightUnit: "cm" } as const;
+const IMPERIAL = { weightUnit: "lb", heightUnit: "ft-in" } as const;
+
+const SUBMITTED_SETTINGS: ClientSettingsView = {
+  units: METRIC,
+  preferredCheckInWeekday: null,
+  preferredChannel: null,
+};
+
+const APPROVED_SETTINGS: ClientSettingsView = {
+  units: METRIC,
+  preferredCheckInWeekday: "monday",
+  preferredChannel: "email",
+};
+
+const SUBMITTED_PROFILE: OwnClientProfileView = {
+  identity: {
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: "+40712345678",
+  },
+  coaching: null,
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+  avatarUrl: null,
+  startingWeightKg: 67.4,
+  currentWeightKg: 66.1,
+};
+
+const APPROVED_PROFILE: OwnClientProfileView = {
+  ...SUBMITTED_PROFILE,
+  coaching: {
+    heightCm: 170,
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym"],
+    trainingPlace: "Gym",
+    limitations: "",
+    level: "beginner",
+    primaryGoal: "Lose fat",
+    goalWeightKg: 62,
+    activityLevel: "Lightly active",
+    cycleMode: "adapted",
+    dietaryRestrictions: "None",
+  },
+  preferences: APPROVED_SETTINGS,
+};
 
 const WAITING_REFUNDABLE: ClientSettings = {
   subscription: {
@@ -96,6 +153,8 @@ type Loaded = { settings: ClientSettings; ended: boolean };
 
 const server = setupServer();
 
+let storedClientSettings: ClientSettingsView | null = null;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
 });
@@ -115,7 +174,7 @@ afterAll(() => {
 });
 
 describe("the settings page", () => {
-  it("heads the page with no subtitle and frames her subscription as its own section", async () => {
+  it("heads the page with what it holds and frames her subscription as its own section", async () => {
     // arrange, act
     await renderSettings({ settings: WAITING_REFUNDABLE });
 
@@ -125,9 +184,10 @@ describe("the settings page", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Settings" })
-        .nextElementSibling,
-    ).not.toBeInTheDocument();
+      screen.getByText(
+        "Your coaching, and how your measurements are shown across the app.",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "Subscription" }),
     ).toBeInTheDocument();
@@ -614,6 +674,177 @@ describe("a cancellation the platform refuses", () => {
   });
 });
 
+describe("her units", () => {
+  it("shows her body weight and height units with a sample in each from her own figures", async () => {
+    // arrange, act
+    await renderSettings({
+      settings: WAITING_REFUNDABLE,
+      profile: APPROVED_PROFILE,
+    });
+
+    // assert
+    const units = screen.getByRole("region", { name: "Units & Measurements" });
+    expect(
+      within(units).getByRole("radiogroup", { name: "Body weight & loads" }),
+    ).toBeInTheDocument();
+    expect(
+      within(units).getByRole("radio", { name: "Kilograms" }),
+    ).toBeChecked();
+    expect(
+      within(units).getByRole("radio", { name: "Centimetres" }),
+    ).toBeChecked();
+    expect(within(units).getByText("e.g. 66.1 kg")).toBeInTheDocument();
+    expect(within(units).getByText("e.g. 170 cm")).toBeInTheDocument();
+  });
+
+  it("reads the samples in pounds and feet and inches when she measures that way", async () => {
+    // arrange, act
+    await renderSettings({
+      settings: WAITING_REFUNDABLE,
+      clientSettings: { ...APPROVED_SETTINGS, units: IMPERIAL },
+      profile: APPROVED_PROFILE,
+    });
+
+    // assert
+    const units = screen.getByRole("region", { name: "Units & Measurements" });
+    expect(within(units).getByRole("radio", { name: "Pounds" })).toBeChecked();
+    expect(
+      within(units).getByRole("radio", { name: "Feet and inches" }),
+    ).toBeChecked();
+    expect(within(units).getByText("e.g. 145.7 lb")).toBeInTheDocument();
+    expect(within(units).getByText("e.g. 5'7\"")).toBeInTheDocument();
+  });
+
+  it("samples a neutral height until her coach holds hers", async () => {
+    // arrange, act
+    await renderSettings({ settings: WAITING_REFUNDABLE });
+
+    // assert
+    const units = screen.getByRole("region", { name: "Units & Measurements" });
+    expect(within(units).getByText("e.g. 165 cm")).toBeInTheDocument();
+  });
+
+  it("saves the unit she chooses beside the one she keeps", async () => {
+    // arrange
+    const saves = recordUnitSaves(
+      () => new HttpResponse(null, { status: 204 }),
+    );
+    const user = await renderSettings({ settings: WAITING_REFUNDABLE });
+    const units = screen.getByRole("region", { name: "Units & Measurements" });
+
+    // act
+    await user.click(within(units).getByRole("radio", { name: "Pounds" }));
+
+    // assert
+    await waitFor(() =>
+      expect(saves).toEqual([{ weightUnit: "lb", heightUnit: "cm" }]),
+    );
+    await waitFor(() =>
+      expect(
+        within(units).getByRole("radio", { name: "Pounds" }),
+      ).toBeChecked(),
+    );
+    expect(within(units).getByText("e.g. 145.7 lb")).toBeInTheDocument();
+  });
+
+  it("keeps her units and says the change wasn't saved when the save is refused", async () => {
+    // arrange
+    recordUnitSaves(() =>
+      HttpResponse.json({ error: "ended" }, { status: 409 }),
+    );
+    const user = await renderSettings({ settings: WAITING_REFUNDABLE });
+    const units = screen.getByRole("region", { name: "Units & Measurements" });
+
+    // act
+    await user.click(
+      within(units).getByRole("radio", { name: "Feet and inches" }),
+    );
+
+    // assert
+    expect(await screen.findByText(UNSAVED)).toBeInTheDocument();
+    expect(
+      within(units).getByRole("radio", { name: "Centimetres" }),
+    ).toBeChecked();
+  });
+});
+
+describe("her check-ins and contact", () => {
+  it("reads her preferred check-in day and channel once her answers are approved", async () => {
+    // arrange, act
+    await renderSettings({
+      settings: WAITING_REFUNDABLE,
+      clientSettings: APPROVED_SETTINGS,
+      profile: APPROVED_PROFILE,
+    });
+
+    // assert
+    const preferences = screen.getByRole("region", {
+      name: "Check-ins and contact",
+    });
+    expect(within(preferences).getByText("Check-in day")).toBeInTheDocument();
+    expect(
+      within(preferences).getByText("The day that suits you for check-ins."),
+    ).toBeInTheDocument();
+    expect(within(preferences).getByText("Monday")).toBeInTheDocument();
+    expect(
+      within(preferences).getByText("Where you hear from your coach."),
+    ).toBeInTheDocument();
+    expect(within(preferences).getByText("Email")).toBeInTheDocument();
+  });
+
+  it("says why she can't change them when she asks", async () => {
+    // arrange
+    const user = await renderSettings({
+      settings: WAITING_REFUNDABLE,
+      clientSettings: APPROVED_SETTINGS,
+      profile: APPROVED_PROFILE,
+    });
+
+    // act
+    await user.hover(
+      screen.getByRole("button", { name: "Why the channel can't be changed" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText("Your coach changes these for you for now."),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves them out before her answers are approved", async () => {
+    // arrange, act
+    await renderSettings({ settings: WAITING_REFUNDABLE });
+
+    // assert
+    expect(
+      screen.queryByRole("region", { name: "Check-ins and contact" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+function recordUnitSaves(answer: () => Response): unknown[] {
+  const saves: unknown[] = [];
+
+  server.use(
+    http.put(UNIT_PREFERENCE_URL, async ({ request }) => {
+      const preference = await request.json();
+      saves.push(preference);
+      const response = answer();
+
+      if (response.status < 400) {
+        storedClientSettings = {
+          ...(storedClientSettings ?? SUBMITTED_SETTINGS),
+          units: preference as ClientSettingsView["units"],
+        };
+      }
+
+      return response;
+    }),
+  );
+
+  return saves;
+}
+
 function paymentMethodRow(): HTMLElement {
   const row = within(screen.getByRole("region", { name: "Subscription" }))
     .getByText("Payment method")
@@ -663,12 +894,15 @@ function recordCancellations(response: Response): string[] {
 
 async function renderSettings(options: {
   settings: ClientSettings;
+  clientSettings?: ClientSettingsView;
+  profile?: OwnClientProfileView;
   ended?: boolean;
   entry?: string;
   waitFor?: () => Promise<unknown>;
 }) {
   const user = userEvent.setup();
   const loaded = options;
+  storedClientSettings = options.clientSettings ?? SUBMITTED_SETTINGS;
   const router = createMemoryRouter(
     [
       {
@@ -683,7 +917,11 @@ async function renderSettings(options: {
             throw redirect(CLIENT_ENDED_PATH);
           }
 
-          return loaded.settings;
+          return {
+            clientSettings: storedClientSettings ?? SUBMITTED_SETTINGS,
+            profile: loaded.profile ?? SUBMITTED_PROFILE,
+            subscription: loaded.settings,
+          };
         },
         path: CLIENT_SETTINGS_PATH,
       },
@@ -694,6 +932,10 @@ async function renderSettings(options: {
       {
         action: frameworkModeAction(cancelSubscription),
         path: CANCELLATION_URL,
+      },
+      {
+        action: frameworkModeAction(saveUnitPreference),
+        path: CLIENT_PROFILE_API_PATHS.unitPreference,
       },
     ],
     { initialEntries: [options.entry ?? CLIENT_SETTINGS_PATH] },

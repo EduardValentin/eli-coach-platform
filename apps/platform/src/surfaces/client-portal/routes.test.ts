@@ -83,7 +83,7 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.objectContaining({
           file: expect.stringMatching(
-            /features\/coaching-sales\/ui\/client\/settings\/settings-page\.tsx$/,
+            /surfaces\/client-portal\/pages\/settings\.tsx$/,
           ),
           path: "client/settings",
         }),

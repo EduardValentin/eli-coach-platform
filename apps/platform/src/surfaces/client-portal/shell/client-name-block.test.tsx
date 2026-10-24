@@ -16,9 +16,12 @@ afterEach(() => {
 describe("ClientNameBlock", () => {
   it("shows the client's name beside a decorative medallion", () => {
     // arrange, act
-    render(<ClientNameBlock displayName="Ana Popescu" size="md" />, {
-      wrapper: MemoryRouter,
-    });
+    render(
+      <ClientNameBlock avatarUrl={null} displayName="Ana Popescu" size="md" />,
+      {
+        wrapper: MemoryRouter,
+      },
+    );
 
     // assert
     expect(screen.getByText("Ana Popescu")).toBeVisible();
@@ -27,9 +30,12 @@ describe("ClientNameBlock", () => {
 
   it("links to her profile under her name", () => {
     // arrange, act
-    render(<ClientNameBlock displayName="Client" size="sm" />, {
-      wrapper: MemoryRouter,
-    });
+    render(
+      <ClientNameBlock avatarUrl={null} displayName="Client" size="sm" />,
+      {
+        wrapper: MemoryRouter,
+      },
+    );
 
     // assert
     expect(screen.getByRole("link", { name: "Client" })).toHaveAttribute(
@@ -44,6 +50,7 @@ describe("ClientNameBlock", () => {
     const onNavigate = vi.fn();
     render(
       <ClientNameBlock
+        avatarUrl={null}
         displayName="Ana Popescu"
         onNavigate={onNavigate}
         size="md"
@@ -56,5 +63,27 @@ describe("ClientNameBlock", () => {
 
     // assert
     expect(onNavigate).toHaveBeenCalledOnce();
+  });
+
+  it("shows her picture in place of the medallion once she has one, leaving her name to name the link", () => {
+    // arrange, act
+    const { container } = render(
+      <ClientNameBlock
+        avatarUrl="/api/client-profile/avatar/client-ana?v=avatar-1"
+        displayName="Ana Popescu"
+        size="md"
+      />,
+      { wrapper: MemoryRouter },
+    );
+
+    // assert
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      "/api/client-profile/avatar/client-ana?v=avatar-1",
+    );
+    expect(container.querySelector("img")).toHaveAttribute("alt", "");
+    expect(
+      screen.getByRole("link", { name: "Ana Popescu" }),
+    ).toBeInTheDocument();
   });
 });

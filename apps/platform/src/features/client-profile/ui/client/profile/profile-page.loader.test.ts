@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { MeasurementsPage } from "~/features/client-profile/public/measurements";
+import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
 import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import {
@@ -28,14 +29,33 @@ const MEASUREMENTS_PAGE: MeasurementsPage = {
   dueLine: null,
 };
 
+const OWN_PROFILE: OwnClientProfileView = {
+  identity: {
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: "+40712345678",
+  },
+  coaching: null,
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+  avatarUrl: null,
+  startingWeightKg: 66.1,
+  currentWeightKg: 66.1,
+};
+
 describe("client profile loader", () => {
-  it("loads her measurements page from her profile", async () => {
+  it("loads her own profile beside her measurements page", async () => {
     // arrange
     const loadPage = vi.fn().mockResolvedValue(MEASUREMENTS_PAGE);
+    const load = vi.fn().mockResolvedValue(OWN_PROFILE);
     const args = createRequestArgs({
       contexts: [
         contextEntry(clientProfileContext, {
           clientMeasurements: { loadPage },
+          ownProfile: { load },
         } as unknown as ClientProfileFeature),
       ],
       request: new Request("https://evoa.fit/client/profile"),
@@ -45,7 +65,11 @@ describe("client profile loader", () => {
     const loaded = await loader(args);
 
     // assert
-    expect(loaded).toEqual(MEASUREMENTS_PAGE);
+    expect(loaded).toEqual({
+      measurements: MEASUREMENTS_PAGE,
+      profile: OWN_PROFILE,
+    });
     expect(loadPage).toHaveBeenCalledWith(args);
+    expect(load).toHaveBeenCalledWith(args);
   });
 });

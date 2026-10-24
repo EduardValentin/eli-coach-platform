@@ -164,6 +164,10 @@ export function coachIdentitySchema(moment: IdentityMoment) {
   );
 }
 
+export function ownIdentitySchema(moment: IdentityMoment) {
+  return withIdentityRules(z.object(identityShape), moment);
+}
+
 function phoneCountryOf(identity: ProfileIdentity): string {
   const { phone } = identity;
 

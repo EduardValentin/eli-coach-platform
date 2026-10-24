@@ -9,10 +9,8 @@ import { clientOnboardingClientRoutes } from "../../features/client-onboarding/r
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
 import { clientResourcesClientRoutes } from "../../features/client-resources/routes";
 import { clientsClientRoutes } from "../../features/clients/routes";
-import {
-  coachingSalesClientRoutes,
-  coachingSalesClientShellRoutes,
-} from "../../features/coaching-sales/routes";
+import { CLIENT_SETTINGS_ROUTE_SEGMENT } from "../../features/coaching-sales/public/paths";
+import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
@@ -24,7 +22,7 @@ export const clientPortalRoutes = [
         ...checkInsClientRoutes,
         ...clientProfileClientRoutes,
         ...clientResourcesClientRoutes,
-        ...coachingSalesClientShellRoutes,
+        route(CLIENT_SETTINGS_ROUTE_SEGMENT, "./pages/settings.tsx"),
       ]),
       ...clientsClientRoutes,
       ...coachingSalesClientRoutes,

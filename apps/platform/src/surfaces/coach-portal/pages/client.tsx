@@ -21,6 +21,7 @@ import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
+import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
 import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
 import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
 import { clientFullName } from "~/features/clients/public/clients";
@@ -122,7 +123,7 @@ export default function CoachClientRoute() {
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">
           <Avatar
-            imageUrl={profile.avatarUrl ?? undefined}
+            imageUrl={clientAvatarSrc(profile.avatarUrl) ?? undefined}
             name={name}
             size="lg"
           />

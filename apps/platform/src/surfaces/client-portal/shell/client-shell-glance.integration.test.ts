@@ -12,6 +12,10 @@ import { ApiIntegrationTestSuite } from "~integration-test-config/api-integratio
 import { CheckInsJourney } from "~integration-test-config/check-ins-journey";
 import { ClientOnboardingJourney } from "~integration-test-config/client-onboarding-journey";
 import {
+  ClientProfileJourney,
+  OWN_AVATAR_API,
+} from "~integration-test-config/client-profile-journey";
+import {
   ANA,
   CALL_ENDED_INSTANT,
   CoachingSalesJourney,
@@ -25,6 +29,7 @@ import {
   textNodesOf,
   visibleDocument,
 } from "~integration-test-config/rendered-page";
+import { landscapePng } from "~integration-test-config/sample-images";
 import {
   stripeSubscriptionObject,
   SubscriptionLifecycleJourney,
@@ -39,6 +44,7 @@ const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
 const checkIns = new CheckInsJourney(rig);
 const lifecycle = new SubscriptionLifecycleJourney(rig);
+const profiles = new ClientProfileJourney(rig);
 
 const ANA_SESSION: AccountSession = {
   sessionId: "sess_client_shell_glance_ana",
@@ -127,6 +133,30 @@ describe.sequential("client shell at a glance integration", () => {
     // assert
     expect(response.status).toBe(200);
     expect(await visibleDocument(response)).not.toContain(NEXT_CHECK_IN_ROOT);
+  });
+
+  it("shows her picture in her name block once she has uploaded one", async () => {
+    // arrange
+    await onboarding.admit(ANA, ANA_SESSION);
+    await onboarding.submit(ANA_SESSION);
+    const clientId = await onboarding.clientIdOf(ANA_SESSION);
+    await profiles.uploadAvatar(ANA_SESSION, OWN_AVATAR_API, {
+      bytes: await landscapePng(),
+      fileName: "me.png",
+      mimeType: "image/png",
+    });
+    const avatar = await profiles.avatarRowOf(clientId);
+
+    // act
+    const response = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await visibleDocument(response)).toMatch(
+      new RegExp(
+        `<img alt="" class="[^"]*" data-parity="avatar" src="${suite.path(`/api/client-profile/avatar/${clientId}`)}\\?v=${avatar?.avatarId}"`,
+      ),
+    );
   });
 
   it("shows a client whose coaching has ended no next check-in", async () => {

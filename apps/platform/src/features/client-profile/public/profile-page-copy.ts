@@ -2,5 +2,5 @@ export const CLIENT_PROFILE_PAGE_COPY = {
   metaTitle: "Profile | Evoa",
   title: "Your Profile",
   subtitle:
-    "Your coach keeps this up to date. Mention any changes at your next check-in.",
+    "Keep your details up to date so your coach plans with the right facts.",
 } as const;

@@ -36,6 +36,10 @@ import {
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
+import {
   cameraJpegWithOrientationAndLocation,
   landscapePng,
 } from "~integration-test-config/sample-images";
@@ -64,6 +68,9 @@ const MARIA: Visitor = {
 };
 
 const EDITED_AT = new Date("2026-10-26T10:00:00.000Z");
+
+const PROFILE_PAGE = "/client/profile";
+const SETTINGS_PAGE = "/client/settings";
 
 const SEEDED_COACHING = {
   heightCm: 165,
@@ -565,6 +572,81 @@ describe.sequential("client profile integration", () => {
       // assert
       expect(refused.status).toBe(403);
       expect(await profiles.avatarRowOf(strangerId)).toBeUndefined();
+    });
+  });
+
+  describe("her profile and settings pages", () => {
+    it("shows her who she is, her training and the facts her coach keeps once her answers are approved, without the coach's notes", async () => {
+      // arrange
+      const clientId = await approvedClient();
+      await profiles.putJson(COACH_SESSION, coachProfileApi(clientId), {
+        coaching: SEEDED_COACHING,
+        coachNotes: "Coach only.",
+      });
+
+      // act
+      const response = await rig.requestAs(OWNER, PROFILE_PAGE);
+
+      // assert
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Your Profile");
+      expect(texts).toContain(
+        "Keep your details up to date so your coach plans with the right facts.",
+      );
+      expect(texts).toContain("About you");
+      expect(texts).toContain("Your training");
+      expect(texts).toContain("Your coach keeps these up to date");
+      expect(texts).toContain(ANA.email);
+      expect(page).not.toContain("Coach only.");
+    });
+
+    it("offers only who she is before her answers are approved", async () => {
+      // arrange
+      await submittedClient();
+
+      // act
+      const response = await rig.requestAs(OWNER, PROFILE_PAGE);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+      expect(response.status).toBe(200);
+      expect(texts).toContain("About you");
+      expect(texts).not.toContain("Your training");
+      expect(texts).not.toContain("Your coach keeps these up to date");
+    });
+
+    it("shows her units and, once her answers are approved, her check-in day and channel read-only", async () => {
+      // arrange
+      await approvedClient();
+
+      // act
+      const response = await rig.requestAs(OWNER, SETTINGS_PAGE);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Settings");
+      expect(texts).toContain("Subscription");
+      expect(texts).toContain("Units &amp; Measurements");
+      expect(texts).toContain("Check-ins and contact");
+      expect(texts).toContain("Check-in day");
+      expect(texts).toContain("Channel");
+    });
+
+    it("leaves her check-in day and channel out of her settings before her answers are approved", async () => {
+      // arrange
+      await submittedClient();
+
+      // act
+      const response = await rig.requestAs(OWNER, SETTINGS_PAGE);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Units &amp; Measurements");
+      expect(texts).not.toContain("Check-ins and contact");
     });
   });
 });

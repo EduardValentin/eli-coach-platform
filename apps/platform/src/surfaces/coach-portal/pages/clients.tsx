@@ -6,6 +6,7 @@ import {
 } from "react-router";
 
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
 import {
   ClientsSection,
   ClientsUnavailable,
@@ -51,5 +52,12 @@ export default function CoachClientsRoute() {
     return <ClientsUnavailable />;
   }
 
-  return <ClientsSection avatarUrls={avatarUrls} clients={clients} />;
+  const avatarSrcs = Object.fromEntries(
+    Object.entries(avatarUrls).map(([clientId, avatarUrl]) => [
+      clientId,
+      clientAvatarSrc(avatarUrl),
+    ]),
+  );
+
+  return <ClientsSection avatarUrls={avatarSrcs} clients={clients} />;
 }

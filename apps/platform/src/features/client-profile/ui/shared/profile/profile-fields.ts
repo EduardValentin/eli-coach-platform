@@ -63,7 +63,7 @@ const SESSION_MINUTE_LABELS: Record<SessionMinutes, string> = {
   60: "60 min",
 };
 
-const CLIENT_LEVEL_LABELS: Record<ClientLevel, string> = {
+export const CLIENT_LEVEL_LABELS: Record<ClientLevel, string> = {
   beginner: "Beginner",
   intermediate: "Intermediate",
   advanced: "Advanced",
@@ -375,7 +375,7 @@ function canonicalMeasure(
     : null;
 }
 
-function sharedFactValues(
+export function sharedFactValues(
   facts: SharedFactsView,
   units: MeasureUnits,
 ): SharedFactValues {
@@ -389,7 +389,7 @@ function sharedFactValues(
   };
 }
 
-function sharedFactsOf(values: SharedFactValues, units: MeasureUnits) {
+export function sharedFactsOf(values: SharedFactValues, units: MeasureUnits) {
   return {
     heightCm: canonicalMeasure("height", values.height, units),
     trainingDays: Number(values.trainingDays),
@@ -452,21 +452,23 @@ export function nextChipsValue(
 
 type FactProblemMessage<Values> = { field: keyof Values; message: string };
 
-export function coachingProblemMessages(
+function presentProblems<Values>(
+  messages: (FactProblemMessage<Values> | null)[],
+): FactProblemMessage<Values>[] {
+  return messages.filter(
+    (message): message is FactProblemMessage<Values> => message !== null,
+  );
+}
+
+export function sharedFactProblemMessages(
   problems: ClientProfileProblems,
   units: MeasureUnits,
-): FactProblemMessage<CoachingValues>[] {
-  const messages: (FactProblemMessage<CoachingValues> | null)[] = [
+): FactProblemMessage<SharedFactValues>[] {
+  return presentProblems<SharedFactValues>([
     problems.heightCm
       ? {
           field: "height",
           message: outOfRangeMessage(COACHING_FIELDS.height, units),
-        }
-      : null,
-    problems.goalWeightKg
-      ? {
-          field: "goalWeight",
-          message: outOfRangeMessage(COACHING_FIELDS.goalWeight, units),
         }
       : null,
     problems.limitations
@@ -475,19 +477,31 @@ export function coachingProblemMessages(
           message: lengthProblemMessage(MAX_PROFILE_NOTE_LENGTH),
         }
       : null,
-    problems.dietaryRestrictions
-      ? { field: "dietaryRestrictions", message: TEXT_REQUIRED_MESSAGE }
-      : null,
-    problems.coachNotes
-      ? {
-          field: "coachNotes",
-          message: lengthProblemMessage(MAX_PROFILE_NOTE_LENGTH),
-        }
-      : null,
-  ];
+  ]);
+}
 
-  return messages.filter(
-    (message): message is FactProblemMessage<CoachingValues> =>
-      message !== null,
-  );
+export function coachingProblemMessages(
+  problems: ClientProfileProblems,
+  units: MeasureUnits,
+): FactProblemMessage<CoachingValues>[] {
+  return [
+    ...sharedFactProblemMessages(problems, units),
+    ...presentProblems<CoachingValues>([
+      problems.goalWeightKg
+        ? {
+            field: "goalWeight",
+            message: outOfRangeMessage(COACHING_FIELDS.goalWeight, units),
+          }
+        : null,
+      problems.dietaryRestrictions
+        ? { field: "dietaryRestrictions", message: TEXT_REQUIRED_MESSAGE }
+        : null,
+      problems.coachNotes
+        ? {
+            field: "coachNotes",
+            message: lengthProblemMessage(MAX_PROFILE_NOTE_LENGTH),
+          }
+        : null,
+    ]),
+  ];
 }
