@@ -1,10 +1,12 @@
 import { test } from "../support/fixtures";
 import { profilePictureSample } from "../support/sample-photos";
-import { BONE_OR_JOINT_PROBLEM_LIST } from "../support/submitted-clients";
+import {
+  BONE_OR_JOINT_PROBLEM_LIST,
+  SEEDED_PREFERENCE_READINGS,
+} from "../support/submitted-clients";
 
 const JOURNEY_TIMEOUT_MS = 240_000;
 const EMAIL_REASON = "Why the email can't be changed";
-const SEEDED_PREFERENCES = { checkInDay: "Monday", channel: "Email" };
 const PREFERENCES_REASON = "Your coach changes these for you for now.";
 const COACH_RENAMED_LAST_NAME = "Marinescu";
 const CLIENT_RENAMED_LAST_NAME = "Ionescu";
@@ -62,7 +64,7 @@ test(
     await coaching.expectChosen("Training days per week", "3 days");
     await coaching.expectText("Limitations", BONE_OR_JOINT_PROBLEM_LIST);
     await coaching.expectText("Coach notes", "");
-    await preferences.expectReadings(SEEDED_PREFERENCES);
+    await preferences.expectReadings(SEEDED_PREFERENCE_READINGS);
 
     // act
     await about.fillText("Last name", COACH_RENAMED_LAST_NAME);
@@ -189,7 +191,7 @@ test(
     await clientSettings.open();
 
     // assert
-    await clientSettings.preferences.expectReadings(SEEDED_PREFERENCES);
+    await clientSettings.preferences.expectReadings(SEEDED_PREFERENCE_READINGS);
     await clientSettings.preferences.expectReason(PREFERENCES_REASON);
 
     // act

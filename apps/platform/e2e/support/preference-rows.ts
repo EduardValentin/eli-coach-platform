@@ -52,13 +52,11 @@ export class PreferenceRows {
     await expect(this.row(row).getByRole("radio")).toHaveCount(0);
   }
 
-  async expectReadings(readings: PreferenceReadings): Promise<void> {
-    await this.expectRow(CHECK_IN_DAY_ROW, readings.checkInDay);
-    await this.expectRow(CHANNEL_ROW, readings.channel);
-  }
-
-  async expectReason(text: string): Promise<void> {
-    const reason = this.reason(CHECK_IN_DAY_ROW);
+  private async expectRowReason(
+    row: PreferenceRow,
+    text: string,
+  ): Promise<void> {
+    const reason = this.reason(row);
 
     await expect(async () => {
       await reason.hover();
@@ -66,6 +64,16 @@ export class PreferenceRows {
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
     }).toPass();
+  }
+
+  async expectReadings(readings: PreferenceReadings): Promise<void> {
+    await this.expectRow(CHECK_IN_DAY_ROW, readings.checkInDay);
+    await this.expectRow(CHANNEL_ROW, readings.channel);
+  }
+
+  async expectReason(text: string): Promise<void> {
+    await this.expectRowReason(CHECK_IN_DAY_ROW, text);
+    await this.expectRowReason(CHANNEL_ROW, text);
   }
 
   async expectAbsent(): Promise<void> {

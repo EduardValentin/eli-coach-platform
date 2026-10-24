@@ -51,6 +51,21 @@ export type ClientProfileRecord = {
   updatedAt: Date;
 };
 
+export const PROFILE_BEFORE_APPROVAL: Pick<
+  ClientProfileRecord,
+  | "heightCm"
+  | "activityLevel"
+  | "primaryGoal"
+  | "dietaryRestrictions"
+  | "coachingSeededAt"
+> = {
+  heightCm: null,
+  activityLevel: null,
+  primaryGoal: null,
+  dietaryRestrictions: null,
+  coachingSeededAt: null,
+};
+
 const CLIENT_ID_BY_EMAIL = "select id from app.clients where email = $1";
 
 const DRAFT = `

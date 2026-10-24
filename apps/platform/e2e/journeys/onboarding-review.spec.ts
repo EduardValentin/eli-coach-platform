@@ -1,10 +1,12 @@
 import { latestEmailTo } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
+import { PROFILE_BEFORE_APPROVAL } from "../support/onboarding-records";
 import { daysAfter } from "../support/paid-clients";
 import {
   BONE_OR_JOINT_PROBLEM_LIST,
   BOOKING_CONTACT,
   PROTOTYPE_DETAIL_REQUEST,
+  SEEDED_PREFERENCE_READINGS,
   SLEEP_HOURS,
 } from "../support/submitted-clients";
 
@@ -22,14 +24,6 @@ const SAFETY_FORM = "A few safety questions";
 const GOAL_FORM = "Your goal and your week";
 const CYCLE_FORM = "Your cycle and hormonal health";
 const NOTE = PROTOTYPE_DETAIL_REQUEST.note;
-const PROFILE_BEFORE_APPROVAL = {
-  heightCm: null,
-  activityLevel: null,
-  primaryGoal: null,
-  dietaryRestrictions: null,
-  coachingSeededAt: null,
-};
-const SEEDED_PREFERENCES = { checkInDay: "Monday", channel: "Email" };
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -84,7 +78,7 @@ test(
 
     // assert
     await coachClientProfile.expectOpen(client);
-    await coachClientProfile.coaching.expectLine(
+    await coachClientProfile.coaching.expectPendingNotice(
       "These fill in once her answers are approved.",
     );
     await coachClientProfile.preferences.expectAbsent();
@@ -278,7 +272,9 @@ test(
       "Dietary restrictions",
       "Lactose, mild",
     );
-    await coachClientProfile.preferences.expectReadings(SEEDED_PREFERENCES);
+    await coachClientProfile.preferences.expectReadings(
+      SEEDED_PREFERENCE_READINGS,
+    );
 
     // act
     await page.goto("/");
@@ -296,7 +292,7 @@ test(
     await clientSettings.open();
 
     // assert
-    await clientSettings.preferences.expectReadings(SEEDED_PREFERENCES);
+    await clientSettings.preferences.expectReadings(SEEDED_PREFERENCE_READINGS);
   },
 );
 

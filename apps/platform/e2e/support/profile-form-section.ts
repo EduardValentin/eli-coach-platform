@@ -63,16 +63,12 @@ export class ProfileFormSection {
     }).toPass();
   }
 
-  async expectShown(): Promise<void> {
-    await expect(this.section).toBeVisible();
-  }
-
   async expectAbsent(): Promise<void> {
     await expect(this.section).toHaveCount(0);
   }
 
-  async expectLine(line: string): Promise<void> {
-    await expect(this.section.getByText(line, { exact: true })).toBeVisible();
+  async expectPendingNotice(notice: string): Promise<void> {
+    await expect(this.section.getByText(notice, { exact: true })).toBeVisible();
     await expect(this.saveButton).toHaveCount(0);
   }
 

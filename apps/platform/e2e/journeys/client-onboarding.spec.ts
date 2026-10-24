@@ -2,6 +2,7 @@ import { requiredName } from "@eli-coach-platform/test-support";
 
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";
+import { PROFILE_BEFORE_APPROVAL } from "../support/onboarding-records";
 import {
   samplePhotoOf,
   UNPROCESSABLE_PHOTO,
@@ -16,13 +17,6 @@ const OUTSIDE_SCREENING_AGE_DATE_OF_BIRTH = "1950-01-01";
 const SUBMISSION_API_PATH = "/api/client-onboarding/submission";
 const DRAFT_API_PATH = "/api/client-onboarding/draft";
 const METRIC_UNITS = { weightUnit: "kg", heightUnit: "cm" };
-const PROFILE_BEFORE_APPROVAL = {
-  heightCm: null,
-  activityLevel: null,
-  primaryGoal: null,
-  dietaryRestrictions: null,
-  coachingSeededAt: null,
-};
 
 const FEMALE_HEALTH_CONSENT =
   "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.";

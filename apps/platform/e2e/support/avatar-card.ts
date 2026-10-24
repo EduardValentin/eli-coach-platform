@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { initialsOf } from "./avatar-initials";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { expectImageLoaded } from "./loaded-images";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
@@ -35,6 +36,10 @@ export class AvatarCard {
     });
   }
 
+  private get initials() {
+    return this.card.locator('[data-slot="avatar-fallback"]');
+  }
+
   private picker(label: string | RegExp): Locator {
     return this.card.getByLabel(label, { exact: true });
   }
@@ -47,12 +52,8 @@ export class AvatarCard {
     return this.page.getByText(message, { exact: true }).first();
   }
 
-  async expectDetail(detail: string): Promise<void> {
-    await expect(this.card.getByText(detail, { exact: true })).toBeVisible();
-  }
-
   async expectInitials(): Promise<void> {
-    await expect(this.card).toBeVisible();
+    await expect(this.initials).toHaveText(initialsOf(this.name));
     await expect(this.picture).toHaveCount(0);
     await expect(this.picker(UPLOAD_LABEL)).toHaveCount(1);
     await expect(this.removeButton).toHaveCount(0);

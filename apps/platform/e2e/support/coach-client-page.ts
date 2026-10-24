@@ -1,6 +1,7 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { initialsOf } from "./avatar-initials";
 import { clientPronouns } from "./client-pronouns";
 import type { ConfirmationLabels } from "./confirmation-dialog";
 import { DisabledAction } from "./disabled-action";
@@ -269,6 +270,10 @@ export class CoachClientPage {
     return this.headerOf(fullName).locator('img[data-slot="avatar-image"]');
   }
 
+  private headerInitialsOf(fullName: string): Locator {
+    return this.headerOf(fullName).locator('[data-slot="avatar-fallback"]');
+  }
+
   private async expandOnboardingIfCollapsed(): Promise<void> {
     if ((await this.onboardingTrigger.count()) > 0) {
       await this.expand(this.onboardingTrigger);
@@ -404,7 +409,9 @@ export class CoachClientPage {
   }
 
   async expectHeaderInitials(fullName: string): Promise<void> {
-    await expect(this.headerOf(fullName)).toBeVisible();
+    await expect(this.headerInitialsOf(fullName)).toHaveText(
+      initialsOf(fullName),
+    );
     await expect(this.headerPictureOf(fullName)).toHaveCount(0);
   }
 

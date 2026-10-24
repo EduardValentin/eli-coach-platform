@@ -18,7 +18,7 @@ import {
   type JoinEmphasis,
 } from "./check-in-tabs";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
-import { CheckInRows } from "./check-in-rows";
+import { AD_HOC, CheckInRows } from "./check-in-rows";
 import {
   CheckInToolbar,
   type AddressParams,
@@ -38,7 +38,6 @@ const WAITING_REASON =
 const NO_LONGER_WAITING = "This request is no longer waiting for an answer.";
 const COACH = "your coach";
 const COACH_FINDING_A_NEW_TIME = "Your coach is finding a new time";
-const AD_HOC = "Ad-hoc";
 const REVIEW_URL = /[?&]checkin=/;
 const CHECK_IN_ANCHOR = '[id^="checkin-"]';
 

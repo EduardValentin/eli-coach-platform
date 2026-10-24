@@ -222,7 +222,9 @@ export class CheckInToolbar {
     await expect(target).toHaveAttribute("aria-selected", "true");
   }
 
-  async visitEveryPage(visit: () => Promise<void>): Promise<void> {
+  async visitEveryPageThenReturnToFirst(
+    visit: () => Promise<void>,
+  ): Promise<void> {
     let pageNumber = 1;
 
     await visit();
