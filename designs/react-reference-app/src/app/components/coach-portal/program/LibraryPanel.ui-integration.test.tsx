@@ -203,6 +203,30 @@ describe('LibraryPanel', () => {
     expect(within(library()).getAllByRole('button', { name: 'Add Push-Up' }).length).toBeGreaterThan(0);
   });
 
+  it('suggests substitutions from the equipment in her profile, following a later profile edit', async () => {
+    // arrange
+    const user = renderEditorThenProfile();
+    await user.click(screen.getByRole('link', { name: 'open her profile' }));
+    const coaching = screen.getByRole('region', { name: 'Coaching' });
+    await user.click(within(coaching).getByRole('checkbox', { name: 'Bodyweight only' }));
+    await user.click(within(coaching).getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Changes saved', {}, { timeout: 3000 });
+    await user.click(screen.getByRole('link', { name: 'open the draft' }));
+    await openFirstBlockOfDraft(user);
+    await clearFirstSession(user);
+    await user.click(within(library()).getByRole('switch', { name: 'Only her equipment' }));
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add Leg Press' }));
+
+    // assert
+    const card = within(firstSession()).getByRole('article', { name: 'A Leg Press' });
+    await user.click(within(card).getByRole('button', { name: 'Details for Leg Press' }));
+    const substitutions = within(card).getByRole('group', { name: 'Substitutions' });
+    expect(within(substitutions).getByText('Squat Jump')).toBeInTheDocument();
+    expect(within(substitutions).queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+  });
+
   it('narrows the list by search', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');

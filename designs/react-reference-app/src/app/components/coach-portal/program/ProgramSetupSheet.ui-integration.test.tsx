@@ -76,8 +76,10 @@ function renderProfileThenSheet() {
                   <Routes>
                     <Route path="/coach/clients/:id/profile" element={<ClientProfilePage />} />
                     <Route path="/coach/clients/:id/program/new" element={<ProgramEditorPage />} />
+                    <Route path="/coach/clients/:id/program/draft" element={<p>Editor</p>} />
                   </Routes>
                   <Link to="/coach/clients/c1/program/new">open the program setup</Link>
+                  <Link to="/coach/clients/c1/profile">open her profile</Link>
                   <Toaster />
                 </ProgramProvider>
               </ClientJourneyProvider>
@@ -271,6 +273,24 @@ describe('ProgramSetupSheet', () => {
     // assert
     expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Intermediate');
     expect(screen.getByRole('radio', { name: '5+ days' })).toBeChecked();
+  });
+
+  it('saves the equipment chosen here on her profile', async () => {
+    // arrange
+    const user = renderProfileThenSheet();
+    await user.click(screen.getByRole('link', { name: 'open the program setup' }));
+    await openPanel(user, 'Equipment');
+    await user.click(within(screen.getByRole('group', { name: 'Equipment' })).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Continue to plan' }));
+    await screen.findByText('Editor', {}, { timeout: 3000 });
+    await user.click(screen.getByRole('link', { name: 'open her profile' }));
+
+    // assert
+    const coaching = screen.getByRole('region', { name: 'Coaching' });
+    expect(within(coaching).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
+    expect(within(coaching).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
   });
 
   it('returns to the client page on cancel', async () => {

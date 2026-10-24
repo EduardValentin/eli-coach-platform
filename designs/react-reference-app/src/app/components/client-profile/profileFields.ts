@@ -1,6 +1,7 @@
 import {
   ACTIVITY_LEVELS,
   BODYWEIGHT_ONLY,
+  CLIENT_EQUIPMENT,
   CLIENT_LEVEL_LABELS,
   CLIENT_LEVELS,
   SESSION_MINUTE_LABELS,
@@ -87,7 +88,7 @@ export const PROFILE_FIELDS = {
     label: 'Equipment',
     kind: 'chips',
     requirement: 'required',
-    options: findOnboardingField('availableEquipment')?.options ?? [],
+    options: options(CLIENT_EQUIPMENT),
     exclusiveOptions: [BODYWEIGHT_ONLY],
   },
   trainingPlace: {

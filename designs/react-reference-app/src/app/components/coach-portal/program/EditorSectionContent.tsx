@@ -42,7 +42,7 @@ function OpenBlockWorkspace({ program, draft, editor, openBlock }: Pick<EditorSe
       blockIndex={openBlock.index}
       blocks={draft.content.plan.blocks}
       language={program.language}
-      equipment={program.equipment}
+      equipment={editor.equipment}
       dayOne={editor.ruleContext.dayOne}
       today={editor.today}
       library={exercises}

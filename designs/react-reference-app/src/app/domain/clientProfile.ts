@@ -208,8 +208,8 @@ function activityLevelOf(answer: string | null): ActivityLevel | null {
   return ACTIVITY_LEVELS.find((level) => level === answer) ?? null;
 }
 
-export function clientEquipmentOf(chips: readonly string[]): ClientEquipment[] {
-  return chips.filter((chip): chip is ClientEquipment => CLIENT_EQUIPMENT.some((equipment) => equipment === chip));
+export function clientEquipmentOf(answers: readonly string[]): ClientEquipment[] {
+  return answers.filter((answer): answer is ClientEquipment => CLIENT_EQUIPMENT.some((item) => item === answer));
 }
 
 export function coachingFactsFromAnswers(

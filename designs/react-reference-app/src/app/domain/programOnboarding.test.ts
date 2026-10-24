@@ -78,7 +78,7 @@ describe('setupFromJourney', () => {
   it('follows the coach edits to her coaching facts', () => {
     // act
     const setup = setupFromJourney(
-      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general', equipment: ['Dumbbells', 'Resistance bands'] }),
+      withCoaching({ trainingDays: 4, level: 'advanced', cycleMode: 'general' }),
     );
 
     // assert
@@ -87,7 +87,6 @@ describe('setupFromJourney', () => {
       splitShape: 'upper-lower',
       level: 'advanced',
       cycleMode: 'general',
-      equipment: ['Dumbbells', 'Bench', 'Bands'],
     });
   });
 
@@ -102,7 +101,6 @@ describe('setupFromJourney', () => {
       trainingDays: 3,
       sessionMinutes: 60,
       cycleMode: 'general',
-      equipment: [],
     });
   });
 });

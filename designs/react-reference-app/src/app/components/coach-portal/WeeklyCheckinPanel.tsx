@@ -9,7 +9,7 @@ import {
 } from '../../domain/checkins';
 import { WEEKDAY_NAMES } from '../../domain/checkinSeries';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
-import { jsDayOf } from '../../domain/programCalendar';
+import { weeklyRuleWeekdayOf } from '../../domain/programCalendar';
 import { coachCheckinsPath } from '../../utils/checkinLinks';
 import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
@@ -55,7 +55,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   const coachingEnds = coachingEndsAt(journey.subscription) !== undefined;
   const series = coachingEnds ? null : seriesFor(client.id);
   const preferred = journey.settings.preferredCheckInWeekday;
-  const suggestedWeekday = preferred && jsDayOf(preferred);
+  const suggestedWeekday = preferred && weeklyRuleWeekdayOf(preferred);
 
   const openDialog = (mode: WeeklyCheckinMode) =>
     setDialog((current) => ({ mode, open: true, openings: current.openings + 1 }));

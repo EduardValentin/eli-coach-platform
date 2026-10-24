@@ -1,4 +1,4 @@
-import { CLIENT_EQUIPMENT } from './clientProfile';
+import { BODYWEIGHT_ONLY, CLIENT_EQUIPMENT } from './clientProfile';
 import type { JourneyGender, OnboardingFormId } from './journey';
 
 export type OnboardingFieldKind =
@@ -275,6 +275,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
       requirement: 'required',
       hint: 'Pick everything you have access to.',
       options: options(CLIENT_EQUIPMENT),
+      exclusiveOptions: [BODYWEIGHT_ONLY],
     },
     {
       id: 'trainingPlace',

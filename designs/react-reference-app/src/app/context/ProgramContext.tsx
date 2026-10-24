@@ -26,7 +26,7 @@ export type ProgramContextType = {
   hydrated: boolean;
   programFor(callId: string): Program | undefined;
   createProgram(callId: string, setup: ProgramSetup): Program;
-  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'equipment' | 'level' | 'cycleMode' | 'language'>>): void;
+  updateSetup(callId: string, patch: Partial<Pick<Program, 'goal' | 'level' | 'cycleMode' | 'language'>>): void;
   updateDraft(callId: string, update: (content: ProgramContent) => ProgramContent): void;
   setWhatChanged(callId: string, text: string): void;
   startDraft(callId: string): void;
@@ -125,7 +125,6 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       const program: Program = {
         callId,
         goal: setup.goal,
-        equipment: setup.equipment,
         language: setup.language,
         cycleMode: setup.cycleMode,
         level: setup.level,

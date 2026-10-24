@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
+import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { usePrograms } from '../../../context/ProgramContext';
 import { CYCLE_MODE_LABELS, type CycleMode } from '../../../domain/cycleMode';
 import type { ClientJourney } from '../../../domain/journey';
@@ -13,12 +15,13 @@ import {
   TRAINING_DAY_LABELS,
   type ClientEquipment,
 } from '../../../domain/clientProfile';
-import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
+import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { splitShapeFor } from '../../../domain/programSuggestions';
 import { SPLIT_TEMPLATES } from '../../../domain/splitTemplates';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
 import { OnboardingFieldControl } from '../../client-portal/onboarding/OnboardingFieldControl';
 import { asList, type OnboardingValues } from '../../client-portal/onboarding/onboardingValues';
+import { UNSAVED_MESSAGE } from '../../client-profile/ProfileFormSection';
 import { PROFILE_FIELDS } from '../../client-profile/profileFields';
 import { SettingsSection } from '../../SettingsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
@@ -68,7 +71,7 @@ function panelsFor(journey: ClientJourney): SetupPanel[] {
   ];
 }
 
-function valuesFrom(setup: ProgramSetup, equipment: readonly ClientEquipment[]): OnboardingValues {
+function valuesFrom(setup: ProgramSetup, clientEquipment: readonly ClientEquipment[]): OnboardingValues {
   return {
     goal: setup.goal,
     level: setup.level,
@@ -76,7 +79,7 @@ function valuesFrom(setup: ProgramSetup, equipment: readonly ClientEquipment[]):
     splitShape: setup.splitShape,
     trainingDays: String(setup.trainingDays),
     sessionMinutes: String(setup.sessionMinutes),
-    equipment: [...equipment],
+    equipment: [...clientEquipment],
     cycleMode: setup.cycleMode,
     dailySteps: String(setup.dailySteps),
   };
@@ -97,15 +100,21 @@ function setupFrom(values: OnboardingValues): ProgramSetup {
     sessionMinutes: Number(text(values, 'sessionMinutes')) as ProgramSetup['sessionMinutes'],
     cycleMode: text(values, 'cycleMode') as CycleMode,
     dailySteps: Number(text(values, 'dailySteps')),
-    equipment: libraryEquipmentFor(clientEquipmentOf(asList(values.equipment))),
   };
+}
+
+function sameEquipment(chosen: readonly ClientEquipment[], current: readonly ClientEquipment[]): boolean {
+  return chosen.length === current.length && chosen.every(item => current.includes(item));
 }
 
 export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourney; onCreated: () => void }) {
   const { createProgram } = usePrograms();
+  const { updateClientProfile } = useClientJourneys();
+  const currentEquipment = journey.profile.coaching?.equipment ?? [];
   const form = useForm<OnboardingValues>({
-    defaultValues: valuesFrom(setupFromJourney(journey), journey.profile.coaching?.equipment ?? []),
+    defaultValues: valuesFrom(setupFromJourney(journey), currentEquipment),
   });
+  const { isSubmitting } = form.formState;
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
@@ -115,10 +124,17 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
     return () => subscription.unsubscribe();
   }, [form]);
 
-  function create() {
-    createProgram(journey.callId, setupFrom(form.getValues()));
+  const create = form.handleSubmit(async values => {
+    const equipment = clientEquipmentOf(asList(values.equipment));
+    try {
+      if (!sameEquipment(equipment, currentEquipment)) await updateClientProfile(journey.callId, { coaching: { equipment } });
+    } catch {
+      toast.error(UNSAVED_MESSAGE);
+      return;
+    }
+    createProgram(journey.callId, setupFrom(values));
     onCreated();
-  }
+  });
 
   return (
     <SettingsSection
@@ -130,7 +146,7 @@ export function ProgramSetupSheet({ journey, onCreated }: { journey: ClientJourn
           <Link to={clientDetailPathForJourney(journey)} className={buttonVariants({ variant: 'outline' })}>
             Cancel
           </Link>
-          <Button type="button" onClick={create}>
+          <Button type="button" onClick={create} disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
             Continue to plan
           </Button>
         </>

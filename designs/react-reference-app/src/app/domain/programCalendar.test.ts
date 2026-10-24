@@ -6,7 +6,7 @@ import {
   blockSpan,
   blockStatus,
   checkInWeekdayOf,
-  jsDayOf,
+  weeklyRuleWeekdayOf,
   checkpointDate,
   checkpointsWithin,
   currentPosition,
@@ -119,10 +119,10 @@ describe('daysUntil', () => {
   });
 });
 
-describe('jsDayOf', () => {
-  it('numbers the weekdays as the calendar does, from Sunday as 0', () => {
+describe('weeklyRuleWeekdayOf', () => {
+  it('numbers the weekdays as a weekly check-in rule does, from Sunday as 0', () => {
     // act
-    const days = (['sun', 'mon', 'wed', 'sat'] as const).map(jsDayOf);
+    const days = (['sun', 'mon', 'wed', 'sat'] as const).map(weeklyRuleWeekdayOf);
 
     // assert
     expect(days).toEqual([0, 1, 3, 6]);

@@ -29,7 +29,6 @@ const SEED_SETUP: ProgramSetup = {
   cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
-  equipment: [],
   splitShape: 'full-body',
 };
 
@@ -92,7 +91,7 @@ function filledSession(session: Session, seed: SeedContext): Session {
 }
 
 function filledContent(library: readonly Exercise[], client: SeedClient): ProgramContent {
-  const content = initialContent({ ...SEED_SETUP, cycleMode: client.cycleMode, equipment: client.equipment }, library);
+  const content = initialContent({ ...SEED_SETUP, cycleMode: client.cycleMode }, library);
   return {
     ...content,
     plan: {
@@ -108,7 +107,6 @@ function programOf(client: SeedClient, versions: Program['versions']): Program {
   return {
     callId: client.callId,
     goal: SEED_SETUP.goal,
-    equipment: client.equipment,
     language: SEED_SETUP.language,
     cycleMode: client.cycleMode,
     level: SEED_SETUP.level,

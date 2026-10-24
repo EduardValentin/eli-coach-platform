@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Form } from '../ui/form';
 import type { OnboardingValues } from '../client-portal/onboarding/onboardingValues';
 
-const UNSAVED_MESSAGE = "Your changes weren't saved. Try again.";
+export const UNSAVED_MESSAGE = "Your changes weren't saved. Try again.";
 
 type ProfileFormSectionProps = {
   headingId: string;

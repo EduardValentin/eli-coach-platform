@@ -22,7 +22,6 @@ export type ProgramSetup = {
   cycleMode: CycleMode;
   language: ProgramLanguage;
   dailySteps: number;
-  equipment: Equipment[];
   splitShape: SplitShape;
 };
 
@@ -36,11 +35,11 @@ const LIBRARY_EQUIPMENT_BY_CLIENT_EQUIPMENT: Record<ClientEquipment, readonly Eq
   'Bodyweight only': [],
 };
 
-export function libraryEquipmentFor(equipment: readonly ClientEquipment[]): Equipment[] {
-  return [...new Set(equipment.flatMap((chip) => LIBRARY_EQUIPMENT_BY_CLIENT_EQUIPMENT[chip]))];
+export function libraryEquipmentFor(clientEquipment: readonly ClientEquipment[]): Equipment[] {
+  return [...new Set(clientEquipment.flatMap((item) => LIBRARY_EQUIPMENT_BY_CLIENT_EQUIPMENT[item]))];
 }
 
-type CoachingSetup = Pick<ProgramSetup, 'goal' | 'level' | 'trainingDays' | 'sessionMinutes' | 'cycleMode' | 'equipment'>;
+type CoachingSetup = Pick<ProgramSetup, 'goal' | 'level' | 'trainingDays' | 'sessionMinutes' | 'cycleMode'>;
 
 const UNAPPROVED_SETUP: CoachingSetup = {
   goal: '',
@@ -48,7 +47,6 @@ const UNAPPROVED_SETUP: CoachingSetup = {
   trainingDays: DEFAULT_TRAINING_DAYS,
   sessionMinutes: DEFAULT_SESSION_MINUTES,
   cycleMode: DEFAULT_CYCLE_MODE,
-  equipment: [],
 };
 
 function textAnswer(answer: OnboardingAnswer | undefined): string | null {
@@ -72,7 +70,6 @@ function coachingSetup(coaching: CoachingFacts | null): CoachingSetup {
     trainingDays: coaching.trainingDays,
     sessionMinutes: coaching.sessionMinutes,
     cycleMode: coaching.cycleMode,
-    equipment: libraryEquipmentFor(coaching.equipment),
   };
 }
 

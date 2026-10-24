@@ -19,7 +19,6 @@ const SETUP: ProgramSetup = {
   cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
-  equipment: ['Dumbbells', 'Bench'],
   splitShape: 'full-body',
 };
 
@@ -99,7 +98,6 @@ describe('creating a program', () => {
     const program = hooks.programs.programFor(DEMO_JOURNEY_CALL_ID);
     expect(program).toMatchObject({
       goal: 'Lose fat',
-      equipment: ['Dumbbells', 'Bench'],
       level: 'beginner',
       language: 'en',
       cycleMode: 'adapted',

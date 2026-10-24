@@ -1,5 +1,5 @@
 import type { CycleMode } from './cycleMode';
-import type { Equipment, ExerciseRole } from './exercises';
+import type { ExerciseRole } from './exercises';
 
 export type { CycleMode };
 
@@ -125,7 +125,6 @@ export type ProgramVersion = {
 export type Program = {
   callId: string;
   goal: string;
-  equipment: Equipment[];
   language: ProgramLanguage;
   cycleMode: CycleMode;
   level: LevelHint;
