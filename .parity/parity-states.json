@@ -6192,5 +6192,76 @@
     {
       "waitFor": "[data-parity=\"field-firstName-error\"]"
     }
+  ],
+  "client-avatar-none": {
+    "prototype": [
+      {
+        "click": "[aria-label=\"Open Dev Toggle\"]"
+      },
+      {
+        "click": "role=tab[name=\"Journey\"]"
+      },
+      {
+        "click": "#dev-seeded-avatar"
+      },
+      {
+        "click": "role=option[name=\"None\"]"
+      },
+      {
+        "click": "[aria-label=\"Close Dev Settings\"]"
+      }
+    ],
+    "real": []
+  },
+  "onboarding-trigger-hover": [
+    {
+      "hover": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    }
+  ],
+  "onboarding-trigger-focus-visible": [
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "click": "[data-parity-root=\"OnboardingPanel\"] h2 > [data-slot=\"accordion-trigger\"]"
+    },
+    {
+      "hover": "h1"
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Tab"
+    }
+  ],
+  "avatar-upload-hover": [
+    {
+      "hover": "[data-parity=\"avatar-actions\"] label"
+    }
+  ],
+  "avatar-upload-focus-visible": [
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
+    },
+    {
+      "press": "Shift+Tab"
+    }
+  ],
+  "avatar-remove-hover": [
+    {
+      "hover": "[data-parity=\"avatar-actions\"] >> role=button[name=\"Remove\" s]"
+    }
+  ],
+  "avatar-remove-focus-visible": [
+    {
+      "click": "[data-parity-root=\"ClientProfileAbout\"] [data-parity=\"field-firstName\"] input"
+    },
+    {
+      "press": "Shift+Tab"
+    },
+    {
+      "press": "Shift+Tab"
+    }
   ]
 }
