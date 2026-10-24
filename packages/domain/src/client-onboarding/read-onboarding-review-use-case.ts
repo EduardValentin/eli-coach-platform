@@ -23,12 +23,10 @@ import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
 import type { OnboardingFormId } from "./onboarding-schema";
 import {
-  cycleModeOf,
   flaggedAnswerIds,
   isPregnancyFlagged,
   screeningOutcome,
   withholdsNutritionAdvice,
-  type CycleMode,
   type OnboardingSubmission,
   type ScreeningOutcome,
 } from "./onboarding-submission";
@@ -47,7 +45,6 @@ type SubmittedOnboardingReview = {
   screening: { outcome: ScreeningOutcome; yesCount: number };
   withholdsNutritionAdvice: boolean;
   pregnancyContext: boolean;
-  cycleMode: CycleMode | null;
   flaggedQuestions: OnboardingQuestionId[];
   forms: ReviewedForm[];
   openRequest: DetailRequestSnapshot | null;
@@ -87,17 +84,6 @@ function reviewedForms(review: OnboardingReview): ReviewedForm[] {
     ),
     ...answeredOfTotal(form.fields, answers[form.id]),
   }));
-}
-
-function cycleModeFor(
-  review: OnboardingReview,
-  submission: OnboardingSubmission,
-): CycleMode | null {
-  const asksCycle = review
-    .reviewableForms()
-    .some((form) => form.id === "cycle-context");
-
-  return asksCycle ? cycleModeOf(submission.answers) : null;
 }
 
 export class ReadOnboardingReviewUseCase {
@@ -149,7 +135,6 @@ export class ReadOnboardingReviewUseCase {
       },
       withholdsNutritionAdvice: withholdsNutritionAdvice(answers),
       pregnancyContext: isPregnancyFlagged(answers),
-      cycleMode: cycleModeFor(review, submission),
       flaggedQuestions,
       forms: reviewedForms(review),
       openRequest: review.openRequest()?.toSnapshot() ?? null,

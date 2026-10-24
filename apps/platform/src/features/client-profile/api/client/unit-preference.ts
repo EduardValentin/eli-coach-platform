@@ -12,7 +12,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
 
-    return args.context.get(clientProfileContext).unitPreference.save(args);
+    return args.context
+      .get(clientProfileContext)
+      .clientSettings.saveUnits(args);
   });
 }
 

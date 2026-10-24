@@ -2,7 +2,7 @@ import {
   hasStartedAnswering,
   type OnboardingFormDefinition,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/client-settings";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {

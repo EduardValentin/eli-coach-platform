@@ -1,7 +1,7 @@
 import type { VisitorGender } from "../assessment-call";
 import type { ClientIdentity } from "../client";
 import type { MeasurementEntry } from "../measurement";
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 
 import {
   emptyAnswers,

@@ -14,7 +14,7 @@ import type {
   ProgressPhotoOutcomes,
 } from "@eli-coach-platform/domain/client-profile";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreference } from "@eli-coach-platform/domain/client-settings";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,

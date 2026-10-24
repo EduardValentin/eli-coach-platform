@@ -33,6 +33,9 @@ export {
   type JoinLinkResult,
 } from "./resolve-join-link-use-case";
 export {
+  MAX_BOOKING_AGE,
+  MAX_VISITOR_NAME_LENGTH,
+  MIN_BOOKING_AGE,
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
   type VisitorGender,

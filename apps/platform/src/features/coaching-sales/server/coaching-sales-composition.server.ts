@@ -60,6 +60,7 @@ import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api
 import { CoachingSubscriptionEventHandler } from "~/features/coaching-sales/api/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import type {
+  ClientProfileOpener,
   ClientWriter,
   CoachingStandingWriter,
 } from "~/features/coaching-sales/data/client-writers.server";
@@ -110,6 +111,7 @@ export type CoachingSalesFeatureHandles = {
     generator: PaymentLinkTokenGenerator;
     hasher: PaymentLinkTokenHasher;
   };
+  openClientProfile: ClientProfileOpener;
   paidClientAdmission: PaidClientAdmission;
   paymentCheckout: PaymentCheckout;
   paymentCustomerCards: PaymentCustomerCards;
@@ -129,6 +131,7 @@ export function composeCoachingSalesFeature(
   const purchases = new PostgresCoachingPurchases({
     clock,
     database,
+    openClientProfile: handles.openClientProfile,
     writeClient: handles.writeClient,
     writeCoachingStanding: handles.writeCoachingStanding,
   });

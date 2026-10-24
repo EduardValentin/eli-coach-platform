@@ -5,8 +5,7 @@ import {
   type ClientIdentities,
   type ClientIdentity,
 } from "../client";
-import { ClientProfile } from "../client-profile";
-import type { ClientUnitPreferencesSource } from "../unit-preference";
+import type { ClientSettingsSource } from "../client-settings";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -157,9 +156,9 @@ function answerPorts(
         .mockResolvedValue({ draft: null, submission: SUBMISSION }),
     } satisfies ClientOnboardingSource,
     reviews: createReviews(overrides.requests ?? [askedRequest()]),
-    unitPreferences: {
+    settings: {
       findByClientId: vi.fn().mockResolvedValue(null),
-    } satisfies ClientUnitPreferencesSource,
+    } satisfies ClientSettingsSource,
     stamps: {
       record: vi.fn().mockResolvedValue(undefined),
     } satisfies OnboardingReviewStamps,
@@ -169,31 +168,6 @@ function answerPorts(
 }
 
 describe("AnswerOnboardingDetailsUseCase", () => {
-  it("keeps the photo consent she gave at onboarding on the profile it re-saves", async () => {
-    // arrange
-    const ports = answerPorts();
-    ports.onboardings.findByClientId.mockResolvedValue({
-      draft: null,
-      submission: {
-        ...SUBMISSION,
-        consents: { ...SUBMISSION.consents, progressPhotosAt: SUBMITTED_AT },
-      },
-    });
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
-
-    // act
-    await useCase.execute({
-      authSubjectId: "user_ana",
-      answers: { "goal-availability": { weight: 72 } },
-    });
-
-    // assert
-    const [{ profile }] = ports.reviews.recordAnswer.mock.calls[0];
-    expect(profile.toSnapshot().progressPhotosConsentedAt).toEqual(
-      SUBMITTED_AT,
-    );
-  });
-
   it("records her asked answers and the answered request with the stamps that return her to in-review", async () => {
     // arrange
     const ports = answerPorts();
@@ -215,37 +189,11 @@ describe("AnswerOnboardingDetailsUseCase", () => {
         "goal-availability": { weight: 72 },
       },
       answeredAt: NOW,
-      profile: expect.any(ClientProfile),
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
     expect(ports.incidents.onboardingDetailsAnswered).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       questionCount: 1,
-    });
-  });
-
-  it("rebuilds her profile facts from her answers with the new ones merged in", async () => {
-    // arrange
-    const ports = answerPorts({ requests: [askedRequest([HEIGHT])] });
-    const useCase = new AnswerOnboardingDetailsUseCase(ports);
-
-    // act
-    await useCase.execute({
-      authSubjectId: "user_ana",
-      answers: { "goal-availability": { height: 170 } },
-    });
-
-    // assert
-    const [recorded] = ports.reviews.recordAnswer.mock.calls[0];
-    expect(recorded.profile.toSnapshot()).toEqual({
-      clientId: CLIENT.clientId,
-      heightCm: 170,
-      activityLevel: null,
-      primaryGoal: null,
-      dietaryRestrictions: "None",
-      clientNotes: null,
-      progressPhotosConsentedAt: null,
-      updatedAt: NOW,
     });
   });
 

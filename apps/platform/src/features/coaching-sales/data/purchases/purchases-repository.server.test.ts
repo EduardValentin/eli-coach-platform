@@ -19,12 +19,11 @@ const ADMITTED_CLIENT_ID = "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d";
 const SUBSCRIPTION_ID = "8e9f0a1b-2c3d-4e5f-9a6b-7c8d9e0f1a2b";
 
 describe("PostgresCoachingPurchases#recordCompletion", () => {
-  it("records the event in the ledger, admits the client and then records the purchase under the id the domain gave it and her standing in the same transaction", async () => {
+  it("records the event in the ledger, admits the client, opens her profile and then records the purchase under the id the domain gave it and her standing in the same transaction", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
-    const { purchases, writeClient, writeCoachingStanding } = createPurchases(
-      database.client,
-    );
+    const { purchases, openClientProfile, writeClient, writeCoachingStanding } =
+      createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -38,6 +37,10 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
       database.transaction,
       purchase().client,
     );
+    expect(openClientProfile).toHaveBeenCalledWith(database.transaction, {
+      clientId: ADMITTED_CLIENT_ID,
+      at: NOW,
+    });
     expect(database.insertedRows).toEqual([
       { id: "evt_1", receivedAt: NOW },
       expect.objectContaining({
@@ -69,9 +72,8 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
   it("answers a duplicate event with the client it recorded and writes nothing else when the ledger already holds the event", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([]);
-    const { purchases, writeClient, writeCoachingStanding } = createPurchases(
-      database.client,
-    );
+    const { purchases, openClientProfile, writeClient, writeCoachingStanding } =
+      createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
@@ -83,6 +85,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     });
     expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
     expect(writeClient).not.toHaveBeenCalled();
+    expect(openClientProfile).not.toHaveBeenCalled();
     expect(writeCoachingStanding).not.toHaveBeenCalled();
     expect(database.update).not.toHaveBeenCalled();
   });
@@ -209,14 +212,16 @@ function createPurchases(
 ) {
   const writeClient = vi.fn().mockResolvedValue(options.admitted ?? "written");
   const writeCoachingStanding = vi.fn().mockResolvedValue(undefined);
+  const openClientProfile = vi.fn().mockResolvedValue(undefined);
   const purchases = new PostgresCoachingPurchases({
     clock: { now: () => NOW },
     database,
+    openClientProfile,
     writeClient,
     writeCoachingStanding,
   });
 
-  return { purchases, writeClient, writeCoachingStanding };
+  return { purchases, openClientProfile, writeClient, writeCoachingStanding };
 }
 
 function purchase(): CoachingPurchase {

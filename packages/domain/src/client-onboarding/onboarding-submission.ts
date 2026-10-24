@@ -1,3 +1,6 @@
+import type { VisitorGender } from "../assessment-call";
+import type { CycleMode } from "../client-profile";
+
 import type {
   OnboardingAnswer,
   OnboardingAnswersByForm,
@@ -87,35 +90,27 @@ export function screeningOutcome({
   return "needs-review";
 }
 
-export type CycleMode = "phase-based" | "symptom-based" | "manual";
-
 const NO_PERIOD_VALUE = "No, or very rarely";
 const COMBINED_PILL_VALUE = "Combined pill";
-const NO_LIFE_STAGE_VALUE = "None of these";
-
-function isOnlyNoneOfThese(lifeStage: OnboardingAnswer | undefined): boolean {
-  return (
-    Array.isArray(lifeStage) &&
-    lifeStage.length === 1 &&
-    lifeStage[0] === NO_LIFE_STAGE_VALUE
-  );
-}
+const PERIMENOPAUSE_VALUES: ReadonlySet<OnboardingAnswer | undefined> = new Set(
+  ["Yes, perimenopause", "Yes, menopause"],
+);
 
 export function cycleModeOf(
   answers: OnboardingAnswersByForm,
+  gender: VisitorGender,
 ): CycleMode | null {
+  if (gender === "male") return "general";
+
   const cycle = answers["cycle-context"];
   if (Object.keys(cycle).length === 0) return null;
-  if (cycle.hormonalContraception === "Something else") return "manual";
 
-  const isPhaseBased =
-    cycle.cycleRegularity !== NO_PERIOD_VALUE &&
-    cycle.hormonalContraception !== COMBINED_PILL_VALUE &&
-    isOnlyNoneOfThese(cycle.lifeStage) &&
-    (cycle.perimenopauseOrMenopause === "No" ||
-      cycle.perimenopauseOrMenopause === "I'm not sure");
+  const isGeneral =
+    cycle.cycleRegularity === NO_PERIOD_VALUE ||
+    cycle.hormonalContraception === COMBINED_PILL_VALUE ||
+    PERIMENOPAUSE_VALUES.has(cycle.perimenopauseOrMenopause);
 
-  return isPhaseBased ? "phase-based" : "symptom-based";
+  return isGeneral ? "general" : "adapted";
 }
 
 const MIGRAINE_CONTRACEPTION_SIGNAL = {

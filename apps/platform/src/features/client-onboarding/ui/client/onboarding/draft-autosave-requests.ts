@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/client-settings";
 
 import type { SaveDraftRequest } from "~/features/client-onboarding/public/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/public/paths";

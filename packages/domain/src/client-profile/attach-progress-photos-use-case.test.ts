@@ -17,17 +17,14 @@ type ProfileConsent = "consented" | "not-consented" | "no-profile";
 function profileWith(consent: ProfileConsent): ClientProfile | null {
   if (consent === "no-profile") return null;
 
-  return ClientProfile.fromOnboarding({
+  return ClientProfile.reconstitute({
     clientId: "client-1",
-    facts: {
-      heightCm: 168,
-      activityLevel: null,
-      primaryGoal: null,
-      dietaryRestrictions: "None",
-      clientNotes: null,
-    },
+    coaching: null,
+    coachNotes: null,
+    coachingSeededAt: null,
     progressPhotosConsentedAt: consent === "consented" ? CONSENTED_AT : null,
-    now: CONSENTED_AT,
+    createdAt: CONSENTED_AT,
+    updatedAt: CONSENTED_AT,
   });
 }
 
@@ -40,7 +37,7 @@ function createPorts(consent: ProfileConsent = "consented") {
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(profileWith(consent)),
       recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
-    } satisfies ClientProfiles,
+    } satisfies Pick<ClientProfiles, "findByClientId" | "recordPhotoConsent">,
     photos: {
       add: vi.fn(async (photo: ProgressPhoto) => {
         added.push(photo);

@@ -1,11 +1,10 @@
-import { ClientProfile } from "../client-profile";
 import type { MeasurementIds } from "../measurement";
 import type { Clock } from "../shared";
 import {
   measureUnitsOf,
   UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+  type ClientSettingsSource,
+} from "../client-settings";
 
 import {
   ClientOnboarding,
@@ -18,7 +17,6 @@ import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingConsents } from "./onboarding-consents";
 import type { OnboardingParticipants } from "./onboarding-participants";
-import { profileFactsOf } from "./onboarding-profile-facts";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import { screeningOutcome } from "./onboarding-submission";
 
@@ -44,7 +42,7 @@ type SubmitOnboardingResult =
 type SubmitOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
-  unitPreferences: ClientUnitPreferencesSource;
+  settings: ClientSettingsSource;
   changes: ClientOnboardingChanges;
   measurementIds: MeasurementIds;
   stamps: OnboardingSubmissionStamps;
@@ -73,9 +71,9 @@ export class SubmitOnboardingUseCase {
       return { status: "ended" };
     }
 
-    const [stored, preference] = await Promise.all([
+    const [stored, settings] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),
-      this.options.unitPreferences.findByClientId(client.clientId),
+      this.options.settings.findByClientId(client.clientId),
     ]);
     const onboarding = ClientOnboarding.reconstitute({
       client: identity,
@@ -85,7 +83,7 @@ export class SubmitOnboardingUseCase {
       answers: command.answers,
       consents: command.consents,
       units: measureUnitsOf(
-        (preference ?? UnitPreference.metric()).toSnapshot(),
+        (settings?.unitPreference() ?? UnitPreference.metric()).toSnapshot(),
       ),
       now,
     });
@@ -112,12 +110,6 @@ export class SubmitOnboardingUseCase {
       submission: outcome.submission,
       entryId,
       measurementEntry: outcome.measurementEntry,
-      profile: ClientProfile.fromOnboarding({
-        clientId: client.clientId,
-        facts: profileFactsOf(outcome.submission.answers),
-        progressPhotosConsentedAt: outcome.submission.consents.progressPhotosAt,
-        now,
-      }),
     });
 
     if (recorded.status === "already-submitted") {

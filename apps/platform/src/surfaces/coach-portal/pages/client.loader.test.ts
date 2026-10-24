@@ -93,18 +93,31 @@ const MEASUREMENTS: MeasurementRow[] = [
 
 const PROFILE: ClientProfileView = {
   identity: {
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
     dateOfBirth: "1994-03-14",
     gender: "female",
     country: "RO",
     phone: null,
   },
-  facts: {
+  coaching: {
     heightCm: 168,
-    activityLevel: "Lightly active",
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym"],
+    trainingPlace: "Gym",
+    limitations: "",
+    level: "beginner",
     primaryGoal: "Lose fat",
+    goalWeightKg: 62,
+    activityLevel: "Lightly active",
+    cycleMode: "adapted",
     dietaryRestrictions: "None",
-    clientNotes: null,
   },
+  coachNotes: null,
+  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  avatarUrl: null,
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
 };
@@ -145,12 +158,13 @@ describe("coach client page loader", () => {
     expect(loadMeasurements).toHaveBeenCalledWith(args, CLIENT_ID);
   });
 
-  it("reads her identity alone as her profile before she has sent her onboarding", async () => {
+  it("reads her identity alone as her profile before her answers are approved", async () => {
     // arrange
     const { args, loadProfile } = routeArguments();
     const awaiting: ClientProfileView = {
-      identity: PROFILE.identity,
-      facts: null,
+      ...PROFILE,
+      coaching: null,
+      settings: { preferredCheckInWeekday: null, preferredChannel: null },
       startingWeightKg: null,
       currentWeightKg: null,
     };

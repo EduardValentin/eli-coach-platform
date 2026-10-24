@@ -22,4 +22,12 @@ export const clientsApiRoutes = [
     CLIENTS_API_PATHS.invitationResends.slice(1),
     "./api/coach/invitation-resends.ts",
   ),
+  route(
+    CLIENTS_API_PATHS.ownIdentity.slice(1),
+    "./api/identity/own-client-identity.ts",
+  ),
+  route(
+    `${CLIENTS_API_PATHS.clients.slice(1)}/:clientId/identity`,
+    "./api/identity/coach-client-identity.ts",
+  ),
 ];

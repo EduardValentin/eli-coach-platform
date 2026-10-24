@@ -2,11 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ClientReach } from "../client";
 
-import { UnitPreference } from "../unit-preference";
+import {
+  ClientSettings,
+  UnitPreference,
+  type ClientSettingsSource,
+} from "../client-settings";
 import { ClientProfile } from "./client-profile";
 import type { ClientProfiles } from "./client-profiles";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
-import type { ClientUnitPreferencesSource } from "../unit-preference";
 import {
   MeasurementHistory,
   type MeasurementRecord,
@@ -31,6 +34,21 @@ const LATEST: MeasurementRecord = {
   photos: [],
 };
 
+function settingsWith(
+  preference: UnitPreference | null,
+): ClientSettings | null {
+  return (
+    preference &&
+    ClientSettings.reconstitute({
+      clientId: "client-1",
+      unitPreference: preference.toSnapshot(),
+      preferredCheckInWeekday: null,
+      preferredChannel: null,
+      updatedAt: CONSENTED_AT,
+    })
+  );
+}
+
 function createPorts(stored: {
   client: { clientId: string } | null;
   consentedAt: Date | null;
@@ -43,34 +61,32 @@ function createPorts(stored: {
     } satisfies Pick<ClientReach, "findByAuthSubjectId">,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(
-        ClientProfile.fromOnboarding({
+        ClientProfile.reconstitute({
           clientId: "client-1",
-          facts: {
-            heightCm: 168,
-            activityLevel: null,
-            primaryGoal: null,
-            dietaryRestrictions: "None",
-            clientNotes: null,
-          },
+          coaching: null,
+          coachNotes: null,
+          coachingSeededAt: null,
           progressPhotosConsentedAt: stored.consentedAt,
-          now: CONSENTED_AT,
+          createdAt: CONSENTED_AT,
+          updatedAt: CONSENTED_AT,
         }),
       ),
-      recordPhotoConsent: vi.fn(),
-    } satisfies ClientProfiles,
+    } satisfies Pick<ClientProfiles, "findByClientId">,
     records: {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
     } satisfies ClientMeasurementRecords,
-    unitPreferences: {
+    settings: {
       findByClientId: vi
         .fn()
         .mockResolvedValue(
-          stored.unitPreference === undefined
-            ? IMPERIAL
-            : stored.unitPreference,
+          settingsWith(
+            stored.unitPreference === undefined
+              ? IMPERIAL
+              : stored.unitPreference,
+          ),
         ),
-    } satisfies ClientUnitPreferencesSource,
+    } satisfies ClientSettingsSource,
   };
 }
 
@@ -97,9 +113,7 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
     expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
     expect(ports.records.listByClientId).toHaveBeenCalledWith("client-1");
     expect(ports.profiles.findByClientId).toHaveBeenCalledWith("client-1");
-    expect(ports.unitPreferences.findByClientId).toHaveBeenCalledWith(
-      "client-1",
-    );
+    expect(ports.settings.findByClientId).toHaveBeenCalledWith("client-1");
   });
 
   it("reads her units as metric while she has never chosen any", async () => {
@@ -144,6 +158,6 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
     // assert
     expect(reading).toBeNull();
     expect(ports.records.listByClientId).not.toHaveBeenCalled();
-    expect(ports.unitPreferences.findByClientId).not.toHaveBeenCalled();
+    expect(ports.settings.findByClientId).not.toHaveBeenCalled();
   });
 });

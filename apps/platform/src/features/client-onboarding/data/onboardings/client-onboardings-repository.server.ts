@@ -1,6 +1,7 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
+  type DatabaseTransaction,
 } from "@eli-coach-platform/db";
 import type {
   ClientOnboardingChanges,
@@ -9,13 +10,12 @@ import type {
   OnboardingDraft,
   OnboardingSubmission,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { eq, sql, type SQL } from "drizzle-orm";
 
 import type {
-  ClientProfileWriter,
   MeasurementEntryWriter,
+  PhotoConsentWriter,
 } from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
   clientOnboardingConstraints,
@@ -37,21 +37,21 @@ type RecordedSubmission = Awaited<
 
 type ClientOnboardingsOptions = {
   database: DatabaseClient;
-  clientProfileWriter: ClientProfileWriter;
   measurementEntryWriter: MeasurementEntryWriter;
+  photoConsentWriter: PhotoConsentWriter;
 };
 
 export class PostgresClientOnboardings
   implements ClientOnboardingSource, ClientOnboardingChanges
 {
   private readonly database: DatabaseClient;
-  private readonly clientProfileWriter: ClientProfileWriter;
   private readonly measurementEntryWriter: MeasurementEntryWriter;
+  private readonly photoConsentWriter: PhotoConsentWriter;
 
   constructor(options: ClientOnboardingsOptions) {
     this.database = options.database;
-    this.clientProfileWriter = options.clientProfileWriter;
     this.measurementEntryWriter = options.measurementEntryWriter;
+    this.photoConsentWriter = options.photoConsentWriter;
   }
 
   async findByClientId(clientId: string): Promise<{
@@ -136,7 +136,6 @@ export class PostgresClientOnboardings
     submission: OnboardingSubmission;
     entryId: string;
     measurementEntry: MeasurementEntry;
-    profile: ClientProfile;
   }): Promise<RecordedSubmission> {
     const { clientId, entryId, measurementEntry, submission } = input;
 
@@ -153,7 +152,10 @@ export class PostgresClientOnboardings
           entryId,
           entry: measurementEntry,
         });
-        await this.clientProfileWriter(transaction, input.profile);
+        await this.recordPhotoConsentOf(transaction, {
+          clientId,
+          consents: submission.consents,
+        });
         await transaction
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));
@@ -166,6 +168,20 @@ export class PostgresClientOnboardings
       }
 
       throw error;
+    }
+  }
+
+  private async recordPhotoConsentOf(
+    transaction: DatabaseTransaction,
+    submitted: { clientId: string; consents: OnboardingConsents },
+  ): Promise<void> {
+    const at = submitted.consents.progressPhotosAt;
+
+    if (at) {
+      await this.photoConsentWriter(transaction, {
+        clientId: submitted.clientId,
+        at,
+      });
     }
   }
 }

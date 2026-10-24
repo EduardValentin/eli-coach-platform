@@ -132,6 +132,16 @@ const INSERT_SUBSCRIPTION = `
     $18, $13
   )
 `;
+const OPEN_CLIENT_PROFILE = `
+  insert into app.client_profiles (client_id, created_at, updated_at)
+  values ($1, $2, $2)
+`;
+const OPEN_CLIENT_SETTINGS = `
+  insert into app.client_settings (
+    client_id, weight_unit, height_unit, updated_at
+  )
+  values ($1, 'kg', 'cm', $2)
+`;
 const INSERT_INVITATION = `
   insert into app.client_invitations (
     id, client_id, email, token_hash, sent_at, expires_at,
@@ -292,6 +302,8 @@ async function insertPaidClient(
     period.paidThrough,
     period.programStartsAt,
   ]);
+  await connection.query(OPEN_CLIENT_PROFILE, [clientId, paidAt]);
+  await connection.query(OPEN_CLIENT_SETTINGS, [clientId, paidAt]);
 
   return {
     clientId,

@@ -1,10 +1,9 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { waistToHeightRatio } from "@eli-coach-platform/domain/measurement";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
 } from "@eli-coach-platform/ui/lib";
-import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
+import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { ClipboardList, MessageSquareText } from "lucide-react";
@@ -22,19 +21,12 @@ import {
   ANSWERS_HEADING,
   APPROVE_ACTION,
   APPROVE_CONFIRM,
-  CYCLE_MODE_LABELS,
-  CYCLE_MODE_NOT_ANSWERED,
-  FACT_LABELS,
-  NOT_CHOSEN_YET,
   PANEL_TITLE,
-  RATIO_HIDDEN_NOTE,
-  ratioWaitingLine,
   REVIEW_ACTIONS,
   waitingLine,
 } from "~/features/client-onboarding/public/onboarding-review-copy";
 
 import { AnswerGroups } from "./answer-groups";
-import { CycleModeInfo } from "./cycle-mode-info";
 import { OnboardingReviewDialog } from "./onboarding-review-dialog";
 import { toggleQuestion } from "./question-ids";
 import { ScreeningWarning } from "./screening-warning";
@@ -59,12 +51,6 @@ type SubmittedOnboardingProps = {
   submitted: SubmittedReview;
 };
 
-type OnboardingFactsProps = {
-  gender: VisitorGender;
-  review: OnboardingReviewView;
-  submitted: SubmittedReview;
-};
-
 type StageActionsProps = {
   onApprove: () => void;
   onReview: () => void;
@@ -72,67 +58,6 @@ type StageActionsProps = {
 };
 
 const NO_QUESTIONS: readonly QuestionId[] = [];
-
-function ratioValue(
-  review: OnboardingReviewView,
-  submitted: SubmittedReview,
-  gender: VisitorGender,
-): string {
-  if (submitted.pregnancyContext) {
-    return RATIO_HIDDEN_NOTE;
-  }
-
-  const ratio = waistToHeightRatio(
-    review.submittedWaistCm,
-    review.statedHeightCm,
-  );
-
-  return ratio ?? ratioWaitingLine(gender);
-}
-
-function cycleModeValue(submitted: SubmittedReview): string {
-  return submitted.cycleMode
-    ? CYCLE_MODE_LABELS[submitted.cycleMode]
-    : CYCLE_MODE_NOT_ANSWERED;
-}
-
-function OnboardingFacts({ gender, review, submitted }: OnboardingFactsProps) {
-  return (
-    <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-      <Reading
-        as="dl-item"
-        label={FACT_LABELS.ratio}
-        value={
-          <span className="tabular-nums">
-            {ratioValue(review, submitted, gender)}
-          </span>
-        }
-        valueParity="fact-ratio"
-      />
-      <Reading
-        as="dl-item"
-        label={FACT_LABELS.checkInDay}
-        value={submitted.checkInDay ?? NOT_CHOSEN_YET}
-        valueParity="fact-checkin-day"
-      />
-      <Reading
-        as="dl-item"
-        label={FACT_LABELS.channel}
-        value={submitted.checkInChannel ?? NOT_CHOSEN_YET}
-        valueParity="fact-channel"
-      />
-      {gender === "female" && (
-        <Reading
-          as="dl-item"
-          label={FACT_LABELS.cycleMode}
-          labelAdornment={<CycleModeInfo />}
-          value={cycleModeValue(submitted)}
-          valueParity="fact-cycle-mode"
-        />
-      )}
-    </dl>
-  );
-}
 
 function RequestStatus({ request }: { request: OpenDetailRequest }) {
   const timeZone = useCalendarDayTimeZone();
@@ -222,16 +147,7 @@ function SubmittedOnboarding({
 
   return (
     <div className="space-y-6">
-      <OnboardingFacts
-        gender={client.gender}
-        review={review}
-        submitted={submitted}
-      />
-
-      <div
-        className="space-y-3 border-t border-border-subtle pt-6"
-        data-parity="answers-section"
-      >
+      <div className="space-y-3" data-parity="answers-section">
         <h3 className="text-sm font-medium text-text-primary">
           {ANSWERS_HEADING}
         </h3>

@@ -44,8 +44,7 @@ export type ClientProfileRecord = {
   heightCm: string | null;
   activityLevel: string | null;
   primaryGoal: string | null;
-  dietaryRestrictions: string;
-  clientNotes: string | null;
+  dietaryRestrictions: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -60,7 +59,7 @@ const DRAFT = `
 
 const UNIT_PREFERENCE = `
   select weight_unit as "weightUnit", height_unit as "heightUnit"
-  from app.client_unit_preferences
+  from app.client_settings
   where client_id = (${CLIENT_ID_BY_EMAIL})
 `;
 
@@ -121,7 +120,6 @@ const CLIENT_PROFILE = `
     activity_level as "activityLevel",
     primary_goal as "primaryGoal",
     dietary_restrictions as "dietaryRestrictions",
-    client_notes as "clientNotes",
     created_at as "createdAt",
     updated_at as "updatedAt"
   from app.client_profiles

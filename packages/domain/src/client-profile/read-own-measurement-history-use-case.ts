@@ -1,9 +1,6 @@
 import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
-import {
-  UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+import { UnitPreference, type ClientSettingsSource } from "../client-settings";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
 import type { ClientProfiles } from "./client-profiles";
 import {
@@ -23,9 +20,9 @@ export type OwnMeasurementHistoryReading = {
 type ReadOwnMeasurementHistoryUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   clock: Clock;
-  profiles: ClientProfiles;
+  profiles: Pick<ClientProfiles, "findByClientId">;
   records: ClientMeasurementRecords;
-  unitPreferences: ClientUnitPreferencesSource;
+  settings: ClientSettingsSource;
 };
 
 export class ReadOwnMeasurementHistoryUseCase {
@@ -44,10 +41,10 @@ export class ReadOwnMeasurementHistoryUseCase {
       return null;
     }
 
-    const [records, profile, unitPreference] = await Promise.all([
+    const [records, profile, settings] = await Promise.all([
       this.options.records.listByClientId(client.clientId),
       this.options.profiles.findByClientId(client.clientId),
-      this.options.unitPreferences.findByClientId(client.clientId),
+      this.options.settings.findByClientId(client.clientId),
     ]);
     const history = MeasurementHistory.of(records);
 
@@ -55,7 +52,7 @@ export class ReadOwnMeasurementHistoryUseCase {
       history,
       consentedAt: profile?.toSnapshot().progressPhotosConsentedAt ?? null,
       dueLine: history.dueLine(this.options.clock.now()),
-      units: unitPreference ?? UnitPreference.metric(),
+      units: settings?.unitPreference() ?? UnitPreference.metric(),
     };
   }
 }

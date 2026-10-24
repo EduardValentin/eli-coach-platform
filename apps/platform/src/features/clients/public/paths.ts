@@ -30,8 +30,10 @@ export function coachClientPath(clientId: string): string {
 }
 
 export const CLIENTS_API_PATHS = {
+  clients: "/api/clients",
   invitation: "/api/clients/invitation",
   invitationResends: "/api/clients/invitation-resends",
+  ownIdentity: "/api/clients/identity",
 } as const;
 
 export function invitationPath(link: { token: string }): string {

@@ -232,6 +232,7 @@ function createHandles(
     featureFlags: { execute: async () => featureFlags },
     incidents: createIncidents(),
     linkTokens: createLinkTokens(),
+    openClientProfile: async () => undefined,
     paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,

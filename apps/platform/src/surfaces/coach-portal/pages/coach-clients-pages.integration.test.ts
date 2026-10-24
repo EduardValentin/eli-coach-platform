@@ -200,7 +200,7 @@ describe.sequential("coach clients pages integration", () => {
   });
 
   describe("a client's page", () => {
-    it("reads an invited client's identity with an otherwise empty profile, the collapsed assessment call, invitation, subscription and the panel line before she has answered", async () => {
+    it("reads an invited client's identity in her profile widget, the collapsed assessment call, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       const { callId } = await sales.payForCall();
       const clientId = await clients.clientIdPaidFor(callId);
@@ -219,9 +219,6 @@ describe.sequential("coach clients pages integration", () => {
       expect(page).toContain("<title>Ana Popescu | Evoa</title>");
       expect(texts).toContain("Ana Popescu");
       expect(texts).toContain("Back to Clients");
-      expect(texts).toContain(
-        "Her profile fills in once she sends her onboarding.",
-      );
       expect(
         ["profile-age", "profile-gender", "profile-country"].map((parity) =>
           readingOf(page, parity),
@@ -230,17 +227,7 @@ describe.sequential("coach clients pages integration", () => {
       expect(page).toMatch(
         /data-parity="profile-phone"[^>]*><a[^>]*href="tel:\+40712345678"/,
       );
-      expect(
-        [
-          "profile-height",
-          "profile-starting-weight",
-          "profile-current-weight",
-          "profile-activity",
-          "profile-goal",
-          "profile-restrictions",
-          "profile-notes",
-        ].map((parity) => readingOf(page, parity)),
-      ).toEqual(Array.from({ length: 7 }, () => "—"));
+      expect(readingOf(page, "profile-height")).toBeUndefined();
       expect(texts).toContain("Assessment call");
       expect(page).toMatch(
         /<button[^>]*aria-expanded="false"[^>]*>(?:(?!<\/button>)[\s\S])*Assessment call/,
@@ -258,7 +245,7 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("She has not sent any measurements yet.");
     });
 
-    it("reads a submitted client's profile and her answers for review, without an invitation once her account exists", async () => {
+    it("reads a submitted client's identity and her answers for review, without an invitation once her account exists", async () => {
       // arrange
       await onboarding.admit(ANA, ADMITTED_CLIENT);
       await onboarding.submit(ADMITTED_CLIENT);
@@ -275,18 +262,9 @@ describe.sequential("coach clients pages integration", () => {
       const texts = textNodesOf(page);
 
       expect(response.status).toBe(200);
-      expect(texts).not.toContain(
-        "Her profile fills in once she sends her onboarding.",
-      );
       expect(readingOf(page, "profile-gender")).toBe("Female");
       expect(readingOf(page, "profile-country")).toBe("Romania");
-      expect(readingOf(page, "profile-height")).toBe("165 cm");
-      expect(readingOf(page, "profile-starting-weight")).toBe("66.1 kg");
-      expect(readingOf(page, "profile-current-weight")).toBe("66.1 kg");
-      expect(readingOf(page, "profile-activity")).toBe("Mostly sitting");
-      expect(readingOf(page, "profile-goal")).toBe("Lose fat");
-      expect(readingOf(page, "profile-restrictions")).toBe("Lactose, mild");
-      expect(readingOf(page, "profile-notes")).toBe("—");
+      expect(readingOf(page, "profile-goal")).toBeUndefined();
       expect(texts).toContain("Awaiting review");
       expect(texts).toContain("Review answers");
       expect(texts).toContain("Approve answers");

@@ -1,5 +1,4 @@
 import { ONBOARDING_FORM_IDS } from "@eli-coach-platform/domain/client-onboarding";
-import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
 import { z } from "zod";
 
 import { questionIdSchema } from "./onboarding";
@@ -15,8 +14,6 @@ const REVIEW_STAGES = [
 ] as const;
 
 export type ReviewStage = (typeof REVIEW_STAGES)[number];
-
-const CYCLE_MODES = ["phase-based", "symptom-based", "manual"] as const;
 
 const reviewAnswerSchema = z.object({
   fieldId: z.string().min(1),
@@ -53,10 +50,6 @@ const submittedReviewSchema = z.object({
   }),
   withholdsNutritionAdvice: z.boolean(),
   pregnancyContext: z.boolean(),
-  cycleMode: z.enum(CYCLE_MODES).nullable(),
-  checkInDay: z.string().nullable(),
-  checkInWeekday: z.enum(WEEKDAYS).nullable(),
-  checkInChannel: z.string().nullable(),
   forms: z.array(reviewFormSchema),
   openRequest: openDetailRequestSchema.nullable(),
 });

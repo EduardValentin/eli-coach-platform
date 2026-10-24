@@ -162,7 +162,7 @@ export default function CoachClientRoute() {
             <WeeklyCheckInPanel
               client={client}
               scheduling={scheduling}
-              suggestedWeekday={review.submitted?.checkInWeekday ?? null}
+              suggestedWeekday={profile.settings.preferredCheckInWeekday}
               weekly={weekly}
             />
           </div>
@@ -172,7 +172,7 @@ export default function CoachClientRoute() {
         className="mb-8"
         emptyMessage={MEASUREMENTS_COPY.empty(client.gender)}
         headingId="measurements-panel-heading"
-        heightCm={profile.facts?.heightCm ?? null}
+        heightCm={profile.coaching?.heightCm ?? null}
         measurements={measurements}
         onViewPhotos={(entry) => setViewingEntryId(entry.id)}
         perspective="coach"

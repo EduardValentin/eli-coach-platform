@@ -20,59 +20,6 @@ export const SCREENING_COPY = {
   nutritionOnHold: "Nutrition advice on hold",
 } as const;
 
-export const FACT_LABELS = {
-  ratio: "Waist-to-height ratio",
-  checkInDay: "Check-in day",
-  channel: "Channel",
-  cycleMode: "Cycle mode",
-} as const;
-
-export const CYCLE_MODE_LABELS = {
-  "phase-based": "Phase-based",
-  "symptom-based": "Symptom-based",
-  manual: "Set by Eli",
-} as const;
-
-export const CYCLE_MODE_NOT_ANSWERED = "Not answered yet";
-
-export const CYCLE_MODE_INFO_LABEL = "What cycle mode means";
-
-type CycleModeDefinition = {
-  readonly meaning: string;
-  readonly term: string;
-};
-
-export const CYCLE_MODE_DEFINITIONS: readonly CycleModeDefinition[] = [
-  {
-    term: CYCLE_MODE_LABELS["phase-based"],
-    meaning:
-      "her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.",
-  },
-  {
-    term: CYCLE_MODE_LABELS["symptom-based"],
-    meaning:
-      "one of those does not hold, so her program follows the symptoms she reports.",
-  },
-  {
-    term: CYCLE_MODE_LABELS.manual,
-    meaning:
-      "her contraception is one the product does not classify; you decide how her program adapts.",
-  },
-  {
-    term: CYCLE_MODE_NOT_ANSWERED,
-    meaning: "the cycle form is empty.",
-  },
-];
-
-export const RATIO_HIDDEN_NOTE =
-  "Not shown during pregnancy or right after birth.";
-
-export function ratioWaitingLine(gender: VisitorGender): string {
-  return `Waiting on ${possessivePronoun(gender).lower} first measurements`;
-}
-
-export const NOT_CHOSEN_YET = "Not chosen yet";
-
 export const NOT_ANSWERED = "Not answered";
 
 export const NEEDS_A_LOOK = "Needs a look";

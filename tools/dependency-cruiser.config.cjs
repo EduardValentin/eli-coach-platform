@@ -60,7 +60,7 @@ const DOMAIN_SLICE_ORDER = [
   "assessment-call",
   "client",
   "notification",
-  "unit-preference",
+  "client-settings",
   "measurement",
   "client-invitation",
   "client-profile",

@@ -3,7 +3,7 @@ import {
   toDisplayMeasure,
   UnitPreference,
   type MeasureKind,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 
 const CANONICAL_UNITS = measureUnitsOf(UnitPreference.metric().toSnapshot());
 

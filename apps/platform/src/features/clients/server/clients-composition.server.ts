@@ -1,10 +1,12 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
-import type {
-  ClientIdentities,
-  ClientIds,
-  ClientReach,
+import {
+  UpdateClientIdentityAsCoachUseCase,
+  UpdateOwnClientIdentityUseCase,
+  type ClientIdentities,
+  type ClientIds,
+  type ClientReach,
 } from "@eli-coach-platform/domain/client";
 import {
   AcceptInvitationUseCase,
@@ -38,8 +40,10 @@ import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/serv
 
 import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
 import { CoachClientsController } from "~/features/clients/api/coach/coach-clients-controller.server";
+import { ClientIdentityController } from "~/features/clients/api/identity/client-identity-controller.server";
 import { InvitationsController } from "~/features/clients/api/public/invitations-controller.server";
 import { PostgresClientIdentities } from "~/features/clients/data/clients/client-identities-reader.server";
+import { PostgresClientIdentityChanges } from "~/features/clients/data/clients/client-identity-changes.server";
 import { PostgresClientReach } from "~/features/clients/data/clients/client-reach-reader.server";
 import { PostgresClientRoster } from "~/features/clients/data/clients/client-roster-reader.server";
 import {
@@ -56,6 +60,7 @@ import { writeReviewStamps } from "~/features/clients/data/journeys/review-stamp
 import { EmailClientInvitationNotifications } from "~/features/clients/email/email-client-invitation-notifications.server";
 
 export type ClientsFeature = {
+  clientIdentity: ClientIdentityController;
   clientJourney: ClientJourneyController;
   coachClients: CoachClientsController;
   invitations: InvitationsController;
@@ -105,6 +110,7 @@ export function composeClientsFeature(
   const journeys = new PostgresClientJourneys(database);
   const onboardingClients = new PostgresOnboardingClients(database);
   const roster = new PostgresClientRoster(database);
+  const identityChanges = new PostgresClientIdentityChanges(database);
 
   const invitationPorts = {
     clients: new PostgresInvitedClients(database),
@@ -140,6 +146,19 @@ export function composeClientsFeature(
 
   return {
     feature: {
+      clientIdentity: new ClientIdentityController({
+        updateClientIdentityAsCoach: new UpdateClientIdentityAsCoachUseCase({
+          changes: identityChanges,
+          clients: clientReach,
+          clock,
+        }),
+        updateOwnClientIdentity: new UpdateOwnClientIdentityUseCase({
+          changes: identityChanges,
+          clients: clientReach,
+          clock,
+          identities: clientIdentities,
+        }),
+      }),
       clientJourney: new ClientJourneyController({
         markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
         readClientJourney: new ReadClientJourneyUseCase({ journeys }),

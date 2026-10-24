@@ -9,7 +9,7 @@ import {
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 
 export type OnboardingValue = string | string[];
 

@@ -3,7 +3,7 @@ import {
   type OnboardingField,
   type OnboardingFormId,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
   Alert,

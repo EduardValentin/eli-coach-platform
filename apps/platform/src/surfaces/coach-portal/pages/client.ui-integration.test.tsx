@@ -91,25 +91,39 @@ const SUBSCRIPTION: ClientSubscription = {
 
 const AWAITING_ONBOARDING_PROFILE: ClientProfileView = {
   identity: {
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
     dateOfBirth: "1994-03-14",
     gender: "female",
     country: "RO",
     phone: "+40712345678",
   },
-  facts: null,
+  coaching: null,
+  coachNotes: null,
+  settings: { preferredCheckInWeekday: null, preferredChannel: null },
+  avatarUrl: null,
   startingWeightKg: null,
   currentWeightKg: null,
 };
 
 const PROFILE: ClientProfileView = {
   ...AWAITING_ONBOARDING_PROFILE,
-  facts: {
+  coaching: {
     heightCm: 168,
-    activityLevel: "Lightly active",
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym"],
+    trainingPlace: "Gym",
+    limitations: "",
+    level: "beginner",
     primaryGoal: "Lose fat",
+    goalWeightKg: 62,
+    activityLevel: "Lightly active",
+    cycleMode: "adapted",
     dietaryRestrictions: "Vegetarian",
-    clientNotes: null,
   },
+  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
 };
@@ -149,10 +163,6 @@ const ENDED_SUBSCRIPTION: ClientSubscription = {
 };
 
 const SUBMITTED: SubmittedReview = {
-  checkInChannel: "WhatsApp",
-  checkInDay: "Monday",
-  checkInWeekday: "monday",
-  cycleMode: "phase-based",
   forms: [
     {
       answered: 1,
@@ -446,21 +456,7 @@ describe("the coach's client page", () => {
     expect(within(call).getByText("Build strength")).toBeVisible();
   });
 
-  it("reads her identity and says her profile fills in once she sends her onboarding", async () => {
-    // arrange, act
-    await renderClientPage();
-
-    // assert
-    const profile = screen.getByRole("region", { name: "Profile" });
-    expect(
-      within(profile).getByText(
-        "Her profile fills in once she sends her onboarding.",
-      ),
-    ).toBeInTheDocument();
-    expect(within(profile).getByText("Romania")).toBeInTheDocument();
-  });
-
-  it("reads her profile once she has sent her onboarding", async () => {
+  it("reads her identity alone in the profile widget, whatever her coaching facts hold", async () => {
     // arrange, act
     await renderClientPage({
       client: AWAITING_REVIEW,
@@ -471,8 +467,8 @@ describe("the coach's client page", () => {
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
-    expect(within(profile).getByText("Vegetarian")).toBeInTheDocument();
-    expect(within(profile).queryByText(/profile fills in/)).toBeNull();
+    expect(within(profile).getByText("Romania")).toBeInTheDocument();
+    expect(within(profile).queryByText("Vegetarian")).toBeNull();
   });
 
   it("badges the onboarding panel with her client status", async () => {

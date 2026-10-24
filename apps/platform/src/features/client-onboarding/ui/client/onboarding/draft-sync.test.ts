@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/client-settings";
 
 import type { SaveDraftRequest } from "~/features/client-onboarding/public/onboarding";
 

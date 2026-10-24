@@ -5,7 +5,7 @@ import {
   type ReadOwnMeasurementHistoryUseCase,
   type RecordMeasurementsUseCase,
 } from "@eli-coach-platform/domain/client-profile";
-import { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
+import { UnitPreference } from "@eli-coach-platform/domain/client-settings";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";

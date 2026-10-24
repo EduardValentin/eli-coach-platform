@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 import {
   MEASUREMENT_FIELDS,
   type MeasurementField,

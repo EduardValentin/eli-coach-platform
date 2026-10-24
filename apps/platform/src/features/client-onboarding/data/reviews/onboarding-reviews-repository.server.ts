@@ -12,7 +12,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
-import type { ClientProfileWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
+import type { CoachingSeedWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
   clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
@@ -32,6 +32,8 @@ type RecordDetailRequest = Parameters<OnboardingReviews["recordRequest"]>[0];
 
 type RecordDetailsAnswer = Parameters<OnboardingReviews["recordAnswer"]>[0];
 
+type RecordApproval = Parameters<OnboardingReviews["recordApproval"]>[0];
+
 type ReviewStampProjection = {
   clientId: string;
   stamps: ReviewStamps;
@@ -45,18 +47,18 @@ export type ReviewStampWriter = (
 type OnboardingReviewsOptions = {
   database: DatabaseClient;
   reviewStampWriter: ReviewStampWriter;
-  clientProfileWriter: ClientProfileWriter;
+  coachingSeedWriter: CoachingSeedWriter;
 };
 
 export class PostgresOnboardingReviews implements OnboardingReviews {
   private readonly database: DatabaseClient;
   private readonly reviewStampWriter: ReviewStampWriter;
-  private readonly clientProfileWriter: ClientProfileWriter;
+  private readonly coachingSeedWriter: CoachingSeedWriter;
 
   constructor(options: OnboardingReviewsOptions) {
     this.database = options.database;
     this.reviewStampWriter = options.reviewStampWriter;
-    this.clientProfileWriter = options.clientProfileWriter;
+    this.coachingSeedWriter = options.coachingSeedWriter;
   }
 
   async findByClientId(clientId: string): Promise<StoredOnboardingReview> {
@@ -158,13 +160,17 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
         .update(clientOnboardingSubmissionsTable)
         .set({ answers: mergedAnswersExpression(input.mergedAnswers) })
         .where(eq(clientOnboardingSubmissionsTable.clientId, input.clientId));
-      await this.clientProfileWriter(transaction, input.profile);
     });
   }
 
-  async recordApproval({ clientId, at, stamps }: ReviewMoment): Promise<void> {
-    await this.writeWithStamps({ clientId, stamps }, (transaction) =>
-      transaction
+  async recordApproval({
+    clientId,
+    at,
+    stamps,
+    seed,
+  }: RecordApproval): Promise<void> {
+    await this.writeWithStamps({ clientId, stamps }, async (transaction) => {
+      await transaction
         .insert(clientOnboardingReviewsTable)
         .values({ clientId, openedAt: at, approvedAt: at })
         .onConflictDoUpdate({
@@ -172,8 +178,9 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
           set: {
             approvedAt: sql`coalesce(${clientOnboardingReviewsTable.approvedAt}, excluded.approved_at)`,
           },
-        }),
-    );
+        });
+      await this.coachingSeedWriter(transaction, { clientId, seed, at });
+    });
   }
 
   private async writeWithStamps(

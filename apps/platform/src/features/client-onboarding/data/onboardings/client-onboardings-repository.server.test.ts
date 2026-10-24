@@ -4,15 +4,14 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingSubmission,
 } from "@eli-coach-platform/domain/client-onboarding";
-import { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import type {
-  ClientProfileWriter,
   MeasurementEntryWriter,
+  PhotoConsentWriter,
 } from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
   clientOnboardingDraftsTable,
@@ -195,7 +194,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
 });
 
 describe("PostgresClientOnboardings#recordSubmission", () => {
-  it("records her submission, first measurement and profile and clears her draft in one transaction", async () => {
+  it("records her submission and first measurement and clears her draft in one transaction", async () => {
     // arrange
     const database = createDatabaseRecordingTransaction();
     const writers = createRecordingWriters();
@@ -207,7 +206,6 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       submission: submission(),
       entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
-      profile: profile(),
     });
 
     // assert
@@ -236,10 +234,33 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
         },
       },
     ]);
-    expect(writers.profiles).toEqual([
-      { transaction: database.transactions[0], profile: profile() },
-    ]);
+    expect(writers.photoConsents).toEqual([]);
     expect(database.deletedFrom).toEqual([clientOnboardingDraftsTable]);
+  });
+
+  it("stamps the photo consent she gave on her profile within the same transaction", async () => {
+    // arrange
+    const database = createDatabaseRecordingTransaction();
+    const writers = createRecordingWriters();
+    const onboardings = onboardingsOver(database.client, writers);
+    const consented = submission();
+    consented.consents.progressPhotosAt = CONSENTED_AT;
+
+    // act
+    await onboardings.recordSubmission({
+      clientId: CLIENT_ID,
+      submission: consented,
+      entryId: ENTRY_ID,
+      measurementEntry: measurementEntry(),
+    });
+
+    // assert
+    expect(writers.photoConsents).toEqual([
+      {
+        transaction: database.transactions[0],
+        consent: { clientId: CLIENT_ID, at: CONSENTED_AT },
+      },
+    ]);
   });
 
   it("answers already submitted when a submission already exists for her", async () => {
@@ -256,7 +277,6 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       submission: submission(),
       entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
-      profile: profile(),
     });
 
     // assert
@@ -276,7 +296,6 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       submission: submission(),
       entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
-      profile: profile(),
     });
 
     // assert
@@ -299,7 +318,6 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       submission: submission(),
       entryId: ENTRY_ID,
       measurementEntry: measurementEntry(),
-      profile: profile(),
     });
 
     // assert
@@ -335,19 +353,6 @@ function measurementEntry(): MeasurementEntry {
     waistCm: 72,
     hipsCm: 96.5,
   };
-}
-
-function profile(): ClientProfile {
-  return ClientProfile.reconstitute({
-    clientId: CLIENT_ID,
-    heightCm: 168,
-    activityLevel: "Lightly active",
-    primaryGoal: "Lose fat",
-    dietaryRestrictions: "None",
-    clientNotes: null,
-    progressPhotosConsentedAt: null,
-    updatedAt: SUBMITTED_AT,
-  });
 }
 
 function uniqueViolation(constraint: string): Error {
@@ -406,22 +411,25 @@ function onboardingsOver(
 ): PostgresClientOnboardings {
   return new PostgresClientOnboardings({
     database,
-    clientProfileWriter: writers.clientProfileWriter,
     measurementEntryWriter: writers.measurementEntryWriter,
+    photoConsentWriter: writers.photoConsentWriter,
   });
 }
 
 function createRecordingWriters() {
-  const profiles: { transaction: unknown; profile: ClientProfile }[] = [];
+  const photoConsents: {
+    transaction: unknown;
+    consent: Parameters<PhotoConsentWriter>[1];
+  }[] = [];
   const measurementEntries: {
     transaction: unknown;
     input: Parameters<MeasurementEntryWriter>[1];
   }[] = [];
-  const clientProfileWriter: ClientProfileWriter = async (
+  const photoConsentWriter: PhotoConsentWriter = async (
     transaction,
-    written,
+    consent,
   ) => {
-    profiles.push({ transaction, profile: written });
+    photoConsents.push({ transaction, consent });
   };
   const measurementEntryWriter: MeasurementEntryWriter = async (
     transaction,
@@ -431,10 +439,10 @@ function createRecordingWriters() {
   };
 
   return {
-    clientProfileWriter,
     measurementEntries,
     measurementEntryWriter,
-    profiles,
+    photoConsentWriter,
+    photoConsents,
   };
 }
 

@@ -5,7 +5,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import type pg from "pg";
 
-import { recordClientProfile } from "./client-profiles";
+import { recordSubmittedPhotoConsent } from "./client-profiles";
 import {
   daysBefore,
   inTransaction,
@@ -228,7 +228,7 @@ export async function recordOnboardingSubmitted(
     measurements: FIRST_MEASUREMENTS,
     progressPhotosConsentedAt: null,
   });
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -248,7 +248,7 @@ export async function insertUnmeasuredSubmittedClientRecords(
     measurements: null,
     progressPhotosConsentedAt: photoConsent === "given" ? submittedAt : null,
   });
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -279,7 +279,7 @@ export async function insertProfiledClientRecords(
     ]);
   }
 
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }

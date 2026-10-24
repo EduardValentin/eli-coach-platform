@@ -237,96 +237,83 @@ describe("withholdsNutritionAdvice", () => {
 });
 
 describe("cycleModeOf", () => {
+  it("is general for a man, whatever the cycle form holds", () => {
+    // arrange
+    const answers = answersWithCycle(phaseBasedCycleAnswers());
+
+    // act
+    const mode = cycleModeOf(answers, "male");
+
+    // assert
+    expect(mode).toBe("general");
+  });
+
   it("is null when the cycle form has no answers", () => {
     // arrange
     const answers = emptyAnswers();
 
     // act
-    const mode = cycleModeOf(answers);
+    const mode = cycleModeOf(answers, "female");
 
     // assert
     expect(mode).toBeNull();
   });
 
-  it("is manual whenever contraception is something else", () => {
-    // arrange
-    const answers = answersWithCycle({
-      ...phaseBasedCycleAnswers(),
-      hormonalContraception: "Something else",
-    });
-
-    // act
-    const mode = cycleModeOf(answers);
-
-    // assert
-    expect(mode).toBe("manual");
-  });
-
-  it("is phase-based on a regular cycle, no combined pill, no life stage flag, and no perimenopause", () => {
+  it("is adapted on a regular cycle with no combined pill and no perimenopause", () => {
     // arrange
     const answers = answersWithCycle(phaseBasedCycleAnswers());
 
     // act
-    const mode = cycleModeOf(answers);
+    const mode = cycleModeOf(answers, "female");
 
     // assert
-    expect(mode).toBe("phase-based");
+    expect(mode).toBe("adapted");
   });
 
-  it("is symptom-based once the cycle is irregular or absent", () => {
+  it.each([
+    ["she gets no period", { cycleRegularity: "No, or very rarely" }],
+    ["she is on the combined pill", { hormonalContraception: "Combined pill" }],
+    [
+      "she is in perimenopause",
+      { perimenopauseOrMenopause: "Yes, perimenopause" },
+    ],
+    ["she is in menopause", { perimenopauseOrMenopause: "Yes, menopause" }],
+  ])("is general when %s", (_label, change) => {
     // arrange
     const answers = answersWithCycle({
       ...phaseBasedCycleAnswers(),
-      cycleRegularity: "No, or very rarely",
+      ...change,
     });
 
     // act
-    const mode = cycleModeOf(answers);
+    const mode = cycleModeOf(answers, "female");
 
     // assert
-    expect(mode).toBe("symptom-based");
+    expect(mode).toBe("general");
   });
 
-  it("is symptom-based on the combined pill", () => {
+  it.each([
+    [
+      "contraception she named herself",
+      { hormonalContraception: "Something else" },
+    ],
+    ["a life-stage flag", { lifeStage: ["Pregnant"] }],
+    [
+      "an unsure answer about perimenopause",
+      { perimenopauseOrMenopause: "I'm not sure" },
+    ],
+  ])("stays adapted with %s", (_label, change) => {
     // arrange
     const answers = answersWithCycle({
       ...phaseBasedCycleAnswers(),
-      hormonalContraception: "Combined pill",
+      ...change,
     });
 
     // act
-    const mode = cycleModeOf(answers);
+    const mode = cycleModeOf(answers, "female");
 
     // assert
-    expect(mode).toBe("symptom-based");
-  });
-
-  it("is symptom-based when a life-stage flag other than none applies", () => {
-    // arrange
-    const answers = answersWithCycle({
-      ...phaseBasedCycleAnswers(),
-      lifeStage: ["Pregnant"],
-    });
-
-    // act
-    const mode = cycleModeOf(answers);
-
-    // assert
-    expect(mode).toBe("symptom-based");
-  });
-
-  it("is symptom-based during perimenopause or menopause", () => {
-    // arrange
-    const answers = answersWithCycle({
-      ...phaseBasedCycleAnswers(),
-      perimenopauseOrMenopause: "Yes, perimenopause",
-    });
-
-    // act
-    const mode = cycleModeOf(answers);
-
-    // assert
-    expect(mode).toBe("symptom-based");
+    expect(mode).toBe("adapted");
   });
 });
 

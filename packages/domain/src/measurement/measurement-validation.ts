@@ -2,7 +2,7 @@ import {
   measureUnitLabel,
   toDisplayMeasure,
   type MeasureUnits,
-} from "../unit-preference";
+} from "../client-settings";
 
 import type { MeasurementValues } from "./measurement";
 import {

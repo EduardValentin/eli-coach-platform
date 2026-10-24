@@ -39,7 +39,7 @@ type RecordMeasurementsResult =
 
 type RecordMeasurementsUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
-  profiles: ClientProfiles;
+  profiles: Pick<ClientProfiles, "findByClientId" | "recordPhotoConsent">;
   records: ClientMeasurementRecords;
   measurementIds: MeasurementIds;
   photos: ProgressPhotos;

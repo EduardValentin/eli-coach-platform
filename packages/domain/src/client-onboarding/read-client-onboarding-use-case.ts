@@ -1,7 +1,4 @@
-import {
-  UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+import { UnitPreference, type ClientSettingsSource } from "../client-settings";
 
 import { ClientOnboarding } from "./client-onboarding";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -15,7 +12,7 @@ type ClientOnboardingReading = {
 type ReadClientOnboardingUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
-  unitPreferences: ClientUnitPreferencesSource;
+  settings: ClientSettingsSource;
 };
 
 export class ReadClientOnboardingUseCase {
@@ -33,9 +30,9 @@ export class ReadClientOnboardingUseCase {
 
     const { client, identity } = participant;
 
-    const [stored, unitPreference] = await Promise.all([
+    const [stored, settings] = await Promise.all([
       this.options.onboardings.findByClientId(client.clientId),
-      this.options.unitPreferences.findByClientId(client.clientId),
+      this.options.settings.findByClientId(client.clientId),
     ]);
 
     return {
@@ -43,7 +40,7 @@ export class ReadClientOnboardingUseCase {
         client: identity,
         ...stored,
       }),
-      unitPreference: unitPreference ?? UnitPreference.metric(),
+      unitPreference: settings?.unitPreference() ?? UnitPreference.metric(),
     };
   }
 }

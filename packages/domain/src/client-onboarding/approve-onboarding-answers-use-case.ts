@@ -2,6 +2,7 @@ import type { Clock } from "../shared";
 
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
+import { coachingSeedOf } from "./onboarding-coaching-seed";
 import type { OnboardingParticipants } from "./onboarding-participants";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -58,6 +59,7 @@ export class ApproveOnboardingAnswersUseCase {
       clientId,
       at: now,
       stamps: outcome.review.stamps(),
+      seed: coachingSeedOf(outcome.submission.answers, identity.gender),
     });
     this.options.incidents.onboardingAnswersApproved({ clientId });
 

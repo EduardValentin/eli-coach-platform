@@ -486,7 +486,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
 });
 
 describe("ApproveOnboardingAnswersUseCase", () => {
-  it("records the approval with its stamps in one write and logs it", async () => {
+  it("records the approval with its stamps and the coaching seed of her answers in one write and logs it", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const useCase = new ApproveOnboardingAnswersUseCase(ports);
@@ -505,6 +505,23 @@ describe("ApproveOnboardingAnswersUseCase", () => {
         reviewOpenedAt: OPENED_AT,
         answersApprovedAt: NOW,
       },
+      seed: {
+        coaching: {
+          heightCm: 168,
+          trainingDays: 3,
+          sessionMinutes: 60,
+          equipment: [],
+          trainingPlace: null,
+          limitations: "",
+          level: "beginner",
+          primaryGoal: null,
+          goalWeightKg: null,
+          activityLevel: null,
+          cycleMode: "general",
+          dietaryRestrictions: "None",
+        },
+        preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+      },
     });
     expect(ports.incidents.onboardingAnswersApproved).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
@@ -522,11 +539,13 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     // assert
     expect(result).toEqual({ status: "approved" });
     expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
-    expect(ports.reviews.recordApproval).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
-      at: NOW,
-      stamps: { ...NO_STAMPS, reviewOpenedAt: NOW, answersApprovedAt: NOW },
-    });
+    expect(ports.reviews.recordApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: CLIENT.clientId,
+        at: NOW,
+        stamps: { ...NO_STAMPS, reviewOpenedAt: NOW, answersApprovedAt: NOW },
+      }),
+    );
   });
 
   it("refuses while a request is open", async () => {

@@ -8,8 +8,15 @@ export const CLIENT_PROFILE_API_PATHS = {
   unitPreference: "/api/client-profile/unit-preference",
   measurements: "/api/client-profile/measurements",
   photos: "/api/client-profile/photos",
+  ownProfile: "/api/client-profile/profile",
+  avatars: "/api/client-profile/avatar",
+  coachProfiles: "/api/client-profile/coach",
 } as const;
 
 export function progressPhotoPath(photoId: string): string {
   return `${CLIENT_PROFILE_API_PATHS.photos}/${encodeURIComponent(photoId)}`;
+}
+
+export function clientAvatarPath(clientId: string): string {
+  return `${CLIENT_PROFILE_API_PATHS.avatars}/${encodeURIComponent(clientId)}`;
 }

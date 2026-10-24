@@ -2,7 +2,7 @@ import {
   measureUnitsOf,
   type MeasureUnits,
   type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import {
   createContext,
   useContext,

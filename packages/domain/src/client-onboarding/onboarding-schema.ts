@@ -1,5 +1,10 @@
 import type { VisitorGender } from "../assessment-call";
 import {
+  BODYWEIGHT_ONLY,
+  CLIENT_EQUIPMENT,
+  HEIGHT_RANGE_CM,
+} from "../client-profile";
+import {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
   WEIGHT_MEASUREMENT_FIELD,
   type MeasurementField,
@@ -68,8 +73,6 @@ export type OnboardingField = {
 };
 
 const WEIGHT_RANGE_KG: NumericRange = WEIGHT_MEASUREMENT_FIELD.range;
-
-const HEIGHT_RANGE_CM: NumericRange = { min: 120, max: 230 };
 
 const GOAL_WEIGHT_SPREAD_KG = 60;
 
@@ -286,15 +289,8 @@ const GOAL_FORM: OnboardingFormDefinition = {
       kind: "chips",
       requirement: "required",
       hint: "Pick everything you have access to.",
-      options: options([
-        "Full gym",
-        "Machines",
-        "Barbell",
-        "Dumbbells",
-        "Kettlebells",
-        "Resistance bands",
-        "Bodyweight only",
-      ]),
+      exclusiveOptions: [BODYWEIGHT_ONLY],
+      options: options(CLIENT_EQUIPMENT),
     },
     {
       id: "trainingPlace",

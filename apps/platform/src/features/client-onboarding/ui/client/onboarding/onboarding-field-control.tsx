@@ -8,7 +8,7 @@ import {
   measureStep,
   measureUnitLabel,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import { DateField } from "@eli-coach-platform/ui/calendar";
 import { cn, describedByOf } from "@eli-coach-platform/ui/lib";
 import {

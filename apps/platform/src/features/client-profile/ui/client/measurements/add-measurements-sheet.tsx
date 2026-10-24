@@ -1,5 +1,5 @@
 import { MEASUREMENT_FIELDS } from "@eli-coach-platform/domain/measurement";
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import {
   ResponsiveSheetDialog,
   SheetDialogActions,

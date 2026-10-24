@@ -10,3 +10,9 @@ export const VISITOR_PRIMARY_GOALS = [
 ] as const;
 
 export type VisitorPrimaryGoal = (typeof VISITOR_PRIMARY_GOALS)[number];
+
+export const MIN_BOOKING_AGE = 18;
+
+export const MAX_BOOKING_AGE = 120;
+
+export const MAX_VISITOR_NAME_LENGTH = 60;

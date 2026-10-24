@@ -2,7 +2,7 @@ import {
   fieldProblem,
   type OnboardingField,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import type { Validate } from "react-hook-form";
 
 import {

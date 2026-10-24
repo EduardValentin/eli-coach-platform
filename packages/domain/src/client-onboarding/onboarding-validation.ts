@@ -4,7 +4,7 @@ import {
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "../unit-preference";
+} from "../client-settings";
 import type {
   OnboardingAnswer,
   OnboardingFormAnswers,

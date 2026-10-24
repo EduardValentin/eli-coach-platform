@@ -1,6 +1,6 @@
 import type { VisitorGender } from "../assessment-call";
 import type { ClientIdentity } from "../client";
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
 import { DetailRequest } from "./detail-request";
@@ -43,7 +43,11 @@ type RequestDetailsOutcome =
   | { status: "invalid"; reason: DetailRequestRefusal };
 
 type ApproveAnswersOutcome =
-  | { status: "approved"; review: OnboardingReview }
+  | {
+      status: "approved";
+      review: OnboardingReview;
+      submission: OnboardingSubmission;
+    }
   | { status: "not-reviewable" };
 
 type AnswerDetailsOutcome =
@@ -51,7 +55,6 @@ type AnswerDetailsOutcome =
       status: "answered";
       request: DetailRequest;
       mergedAnswers: OnboardingAnswersByForm;
-      submissionAnswers: OnboardingAnswersByForm;
       review: OnboardingReview;
     }
   | { status: "no-open-request" }
@@ -215,12 +218,16 @@ export class OnboardingReview {
 
   approve(now: Date): ApproveAnswersOutcome {
     const stage = this.stage();
-    if (stage !== "awaiting-review" && stage !== "in-review")
+    if (
+      !this.submission ||
+      (stage !== "awaiting-review" && stage !== "in-review")
+    )
       return { status: "not-reviewable" };
 
     return {
       status: "approved",
       review: this.with({ openedAt: this.openedAt ?? now, approvedAt: now }),
+      submission: this.submission,
     };
   }
 
@@ -250,7 +257,6 @@ export class OnboardingReview {
       status: "answered",
       request: answered,
       mergedAnswers: askedAnswers,
-      submissionAnswers: overlaidAnswers,
       review: this.with({
         submission: { ...this.submission, answers: overlaidAnswers },
         requests: this.requests.map((existing) =>
