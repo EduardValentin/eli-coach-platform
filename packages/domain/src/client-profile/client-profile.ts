@@ -38,7 +38,7 @@ type OpenedClientProfileInput = {
 };
 
 type ProfileChange = {
-  facts: CoachingFactsResult;
+  factsResult: CoachingFactsResult;
   coachNotes: string | null;
   now: Date;
 };
@@ -72,8 +72,8 @@ export class ClientProfile {
       return { status: "not-seeded" };
     }
 
-    return this.changed({
-      facts: CoachingFacts.of({ ...coaching, ...shared }),
+    return this.editedWith({
+      factsResult: CoachingFacts.of({ ...coaching, ...shared }),
       coachNotes,
       now,
     });
@@ -84,8 +84,8 @@ export class ClientProfile {
       return { status: "not-seeded" };
     }
 
-    return this.changed({
-      facts: CoachingFacts.of(edit.coaching),
+    return this.editedWith({
+      factsResult: CoachingFacts.of(edit.coaching),
       coachNotes: edit.coachNotes?.trim() || null,
       now,
     });
@@ -104,15 +104,19 @@ export class ClientProfile {
     };
   }
 
-  private changed(change: ProfileChange): ClientProfileEditResult {
+  private editedWith(change: ProfileChange): ClientProfileEditResult {
     const problems: ClientProfileProblems = {
-      ...(change.facts.status === "invalid" && change.facts.problems),
+      ...(change.factsResult.status === "invalid" &&
+        change.factsResult.problems),
       ...((change.coachNotes?.length ?? 0) > MAX_COACH_NOTES_LENGTH && {
         coachNotes: "too-long",
       }),
     };
 
-    if (change.facts.status === "invalid" || Object.keys(problems).length > 0) {
+    if (
+      change.factsResult.status === "invalid" ||
+      Object.keys(problems).length > 0
+    ) {
       return { status: "invalid", problems };
     }
 
@@ -120,7 +124,7 @@ export class ClientProfile {
       status: "edited",
       profile: new ClientProfile({
         ...this.snapshot,
-        coaching: change.facts.facts.toSnapshot(),
+        coaching: change.factsResult.facts.toSnapshot(),
         coachNotes: change.coachNotes,
         updatedAt: change.now,
       }),

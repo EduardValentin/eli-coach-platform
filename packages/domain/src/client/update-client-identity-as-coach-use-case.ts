@@ -1,4 +1,4 @@
-import type { VisitorGender } from "../assessment-call";
+import type { VisitorCountries, VisitorGender } from "../assessment-call";
 import type { Clock } from "../shared";
 
 import type { ClientIdentityChanges } from "./client-identity-changes";
@@ -23,6 +23,7 @@ type UpdateClientIdentityAsCoachUseCaseOptions = {
   clients: Pick<ClientReach, "findById">;
   changes: ClientIdentityChanges;
   clock: Clock;
+  countries: VisitorCountries;
 };
 
 export class UpdateClientIdentityAsCoachUseCase {
@@ -42,6 +43,7 @@ export class UpdateClientIdentityAsCoachUseCase {
     const result = ClientIdentityEdit.of(
       { ...command.identity, clientId: client.clientId },
       { on: this.options.clock.now(), timeZone: client.timeZone },
+      this.options.countries,
     );
 
     if (result.status === "invalid") {

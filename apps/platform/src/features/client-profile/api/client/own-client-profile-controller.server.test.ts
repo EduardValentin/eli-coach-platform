@@ -54,8 +54,8 @@ const READING: OwnClientProfileReading = {
     phone: null,
   },
   coaching: null,
-  settings: { preferredCheckInWeekday: null, preferredChannel: null },
-  hasAvatar: true,
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+  avatarId: "avatar-7",
   startingWeightKg: null,
   currentWeightKg: null,
 };
@@ -84,8 +84,8 @@ describe("OwnClientProfileController load", () => {
         phone: null,
       },
       coaching: null,
-      settings: { preferredCheckInWeekday: null, preferredChannel: null },
-      avatarUrl: `/api/client-profile/avatar/${CLIENT_ID}`,
+      preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+      avatarUrl: `/api/client-profile/avatar/${CLIENT_ID}?v=avatar-7`,
       startingWeightKg: null,
       currentWeightKg: null,
     });

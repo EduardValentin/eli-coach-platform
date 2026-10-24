@@ -581,7 +581,7 @@ describe.sequential("client measurements integration", () => {
       );
 
       // assert
-      expect(edited.status).toBe(204);
+      expect(edited.status).toBe(200);
       const [onboardingEntry] = tableBodyRowsIn(
         await visibleDocument(response),
         MEASUREMENTS_CAPTION,

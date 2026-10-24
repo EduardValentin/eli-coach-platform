@@ -116,7 +116,7 @@ const PROFILE: ClientProfileView = {
     dietaryRestrictions: "None",
   },
   coachNotes: null,
-  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
   avatarUrl: null,
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
@@ -164,7 +164,7 @@ describe("coach client page loader", () => {
     const awaiting: ClientProfileView = {
       ...PROFILE,
       coaching: null,
-      settings: { preferredCheckInWeekday: null, preferredChannel: null },
+      preferences: { preferredCheckInWeekday: null, preferredChannel: null },
       startingWeightKg: null,
       currentWeightKg: null,
     };

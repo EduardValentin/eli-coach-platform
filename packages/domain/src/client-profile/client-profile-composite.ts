@@ -17,8 +17,8 @@ export type ClientProfileReading = {
   identity: ClientIdentity;
   coaching: CoachingFactsSnapshot | null;
   coachNotes: string | null;
-  settings: ClientPreferences;
-  hasAvatar: boolean;
+  preferences: ClientPreferences;
+  avatarId: string | null;
   startingWeightKg: number | null;
   currentWeightKg: number | null;
 };
@@ -31,10 +31,10 @@ export type ClientProfileReadingPorts = {
   measurements: ClientMeasurementsSource;
 };
 
-export class ClientProfileReadings {
+export class ClientProfileComposite {
   constructor(private readonly ports: ClientProfileReadingPorts) {}
 
-  async of(clientId: string): Promise<ClientProfileReading | null> {
+  async readFor(clientId: string): Promise<ClientProfileReading | null> {
     const identity = await this.ports.identities.findByClientId(clientId);
 
     if (!identity) {
@@ -48,17 +48,17 @@ export class ClientProfileReadings {
       this.ports.measurements.listByClientId(clientId),
     ]);
     const stored = profile?.toSnapshot();
-    const preferences = settings?.toSnapshot();
+    const chosen = settings?.toSnapshot();
 
     return {
       identity,
       coaching: stored?.coaching ?? null,
       coachNotes: stored?.coachNotes ?? null,
-      settings: {
-        preferredCheckInWeekday: preferences?.preferredCheckInWeekday ?? null,
-        preferredChannel: preferences?.preferredChannel ?? null,
+      preferences: {
+        preferredCheckInWeekday: chosen?.preferredCheckInWeekday ?? null,
+        preferredChannel: chosen?.preferredChannel ?? null,
       },
-      hasAvatar: avatar !== null,
+      avatarId: avatar?.toSnapshot().avatarId ?? null,
       startingWeightKg: earliestMeasurementOf(measurements)?.weightKg ?? null,
       currentWeightKg: latestMeasurementOf(measurements)?.weightKg ?? null,
     };

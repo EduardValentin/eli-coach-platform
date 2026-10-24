@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { VisitorCountries } from "../assessment-call";
+
 import type { ClientIdentities, ClientIdentity } from "./client-identities";
 import type { ClientIdentityChanges } from "./client-identity-changes";
 import type { ClientReach, ClientReachReading } from "./client-reach";
@@ -22,10 +24,12 @@ const STORED: ClientIdentity = {
 const EDITED = {
   firstName: "Ana-Maria",
   lastName: "Ionescu",
-  phone: "+40712345678",
+  phone: { country: "RO", nationalNumber: "0712345678" },
   dateOfBirth: "1994-03-15",
   country: "MD",
 };
+
+const SAVED_EDIT = { ...EDITED, phone: "+40712345678" };
 
 function reachOf(portal: ClientReachReading["portal"]): ClientReachReading {
   return {
@@ -63,6 +67,10 @@ function createPorts(
       save: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientIdentityChanges,
     clock: { now: () => NOW },
+    countries: VisitorCountries.of([
+      { code: "RO", callingCode: "+40" },
+      { code: "MD", callingCode: "+373" },
+    ]),
   };
 }
 
@@ -84,7 +92,7 @@ describe("UpdateClientIdentityAsCoachUseCase", () => {
     const [edit] = ports.changes.save.mock.calls[0] ?? [];
     expect(edit?.toSnapshot()).toEqual({
       clientId: "client-1",
-      ...EDITED,
+      ...SAVED_EDIT,
       gender: "prefer_not_to_say",
     });
   });
@@ -143,7 +151,7 @@ describe("UpdateOwnClientIdentityUseCase", () => {
     const [edit] = ports.changes.save.mock.calls[0] ?? [];
     expect(edit?.toSnapshot()).toEqual({
       clientId: "client-1",
-      ...EDITED,
+      ...SAVED_EDIT,
       gender: "female",
     });
   });

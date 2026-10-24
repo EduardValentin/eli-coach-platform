@@ -62,7 +62,7 @@ export const clientProfileSchema = z.object({
   identity: profileIdentitySchema,
   coaching: coachingFactsSchema.nullable(),
   coachNotes: z.string().nullable(),
-  settings: clientPreferencesSchema,
+  preferences: clientPreferencesSchema,
   avatarUrl: z.string().nullable(),
   startingWeightKg: z.number().nullable(),
   currentWeightKg: z.number().nullable(),

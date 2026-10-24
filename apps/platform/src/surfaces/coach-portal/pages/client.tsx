@@ -170,7 +170,7 @@ export default function CoachClientRoute() {
             <WeeklyCheckInPanel
               client={client}
               scheduling={scheduling}
-              suggestedWeekday={profile.settings.preferredCheckInWeekday}
+              suggestedWeekday={profile.preferences.preferredCheckInWeekday}
               weekly={weekly}
             />
           </div>

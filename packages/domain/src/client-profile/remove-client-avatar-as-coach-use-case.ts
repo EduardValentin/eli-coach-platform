@@ -1,14 +1,14 @@
 import type { ClientReach } from "../client";
 
 import {
-  ClientAvatarIntake,
-  type ClientAvatarIntakeOptions,
-} from "./client-avatar-intake";
+  ClientAvatarRemoval,
+  type ClientAvatarRemovalOptions,
+} from "./client-avatar-removal";
 
 type RemoveClientAvatarAsCoachResult =
   { status: "removed" } | { status: "not-found" };
 
-type RemoveClientAvatarAsCoachUseCaseOptions = ClientAvatarIntakeOptions & {
+type RemoveClientAvatarAsCoachUseCaseOptions = ClientAvatarRemovalOptions & {
   clients: Pick<ClientReach, "findById">;
 };
 
@@ -24,7 +24,7 @@ export class RemoveClientAvatarAsCoachUseCase {
       return { status: "not-found" };
     }
 
-    await new ClientAvatarIntake(this.options).remove(client.clientId);
+    await new ClientAvatarRemoval(this.options).remove(client.clientId);
 
     return { status: "removed" };
   }

@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import { VisitorCountries } from "@eli-coach-platform/domain/assessment-call";
 import { ClientIdentityEdit } from "@eli-coach-platform/domain/client";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -19,7 +20,7 @@ describe("PostgresClientIdentityChanges#save", () => {
         clientId: CLIENT_ID,
         firstName: "Ana-Maria",
         lastName: "Ionescu",
-        phone: "+40712345678",
+        phone: { country: "RO", nationalNumber: "0712345678" },
         dateOfBirth: "1994-03-15",
         country: "MD",
         gender: "female",
@@ -28,6 +29,10 @@ describe("PostgresClientIdentityChanges#save", () => {
         on: new Date("2026-10-24T10:00:00.000Z"),
         timeZone: "Europe/Bucharest",
       },
+      VisitorCountries.of([
+        { code: "RO", callingCode: "+40" },
+        { code: "MD", callingCode: "+373" },
+      ]),
     );
     if (result.status !== "valid") throw new Error(result.status);
 

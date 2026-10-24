@@ -182,11 +182,11 @@ describe("ReadClientProfileUseCase", () => {
       identity: IDENTITY,
       coaching: COACHING,
       coachNotes: "Prefers mornings.",
-      settings: {
+      preferences: {
         preferredCheckInWeekday: "monday",
         preferredChannel: "whatsapp",
       },
-      hasAvatar: true,
+      avatarId: "avatar-1",
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });
@@ -210,8 +210,8 @@ describe("ReadClientProfileUseCase", () => {
     expect(reading).toMatchObject({
       coaching: null,
       coachNotes: null,
-      settings: { preferredCheckInWeekday: null, preferredChannel: null },
-      hasAvatar: false,
+      preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+      avatarId: null,
     });
   });
 
@@ -242,11 +242,11 @@ describe("ReadOwnClientProfileUseCase", () => {
     expect(reading).toEqual({
       identity: IDENTITY,
       coaching: COACHING,
-      settings: {
+      preferences: {
         preferredCheckInWeekday: "monday",
         preferredChannel: "whatsapp",
       },
-      hasAvatar: false,
+      avatarId: null,
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });

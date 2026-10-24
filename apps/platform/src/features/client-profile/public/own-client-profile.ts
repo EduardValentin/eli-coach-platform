@@ -10,7 +10,7 @@ import {
 export const ownClientProfileSchema = z.object({
   identity: profileIdentitySchema,
   coaching: coachingFactsSchema.nullable(),
-  settings: clientPreferencesSchema,
+  preferences: clientPreferencesSchema,
   avatarUrl: z.string().nullable(),
   startingWeightKg: z.number().nullable(),
   currentWeightKg: z.number().nullable(),

@@ -183,6 +183,23 @@ describe("PostgresClientProfiles#saveSharedFacts", () => {
     // assert
     expect(outcome).toBe("changed-meanwhile");
   });
+
+  it("refuses to save a profile edited without coaching facts", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates([{ clientId: CLIENT_ID }]);
+    const profiles = new PostgresClientProfiles(database.client);
+
+    // act
+    const saving = profiles.saveSharedFacts({
+      profile: ClientProfile.reconstitute({ ...SEEDED, coaching: null }),
+      expectedUpdatedAt: SEEDED_AT,
+    });
+
+    // assert
+    await expect(saving).rejects.toThrow(
+      "An edited client profile has no coaching facts.",
+    );
+  });
 });
 
 describe("PostgresClientProfiles#saveCoachFacts", () => {

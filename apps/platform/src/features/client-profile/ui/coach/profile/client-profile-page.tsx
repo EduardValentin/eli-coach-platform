@@ -44,7 +44,7 @@ function PreferencesSection({ profile }: { profile: ClientProfileView }) {
           checkInDay: `The day that suits ${object} for check-ins.`,
           hint: `These come from ${possessive.lower} onboarding answers and stay as ${subject.lower} chose them.`,
         }}
-        settings={profile.settings}
+        preferences={profile.preferences}
       />
     </SettingsSection>
   );

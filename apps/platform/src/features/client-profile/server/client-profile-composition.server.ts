@@ -42,8 +42,10 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import { ClientAvatarController } from "~/features/client-profile/api/avatar/client-avatar-controller.server";
 import { ClientSettingsController } from "~/features/client-profile/api/client/client-settings-controller.server";
 import { ClientMeasurementsController } from "~/features/client-profile/api/client/measurements-controller.server";
+import { OwnClientAvatarController } from "~/features/client-profile/api/client/own-client-avatar-controller.server";
 import { OwnClientProfileController } from "~/features/client-profile/api/client/own-client-profile-controller.server";
 import { ClientProfileController } from "~/features/client-profile/api/coach/client-profile-controller.server";
+import { CoachClientAvatarController } from "~/features/client-profile/api/coach/coach-client-avatar-controller.server";
 import { ProgressPhotoController } from "~/features/client-profile/api/photos/progress-photo-controller.server";
 import { PostgresClientAvatars } from "~/features/client-profile/data/avatars/client-avatars-repository.server";
 import { RandomClientAvatarIds } from "~/features/client-profile/data/avatars/random-client-avatar-ids.server";
@@ -67,7 +69,9 @@ export type ClientProfileFeature = {
   avatars: ClientAvatarController;
   clientMeasurements: ClientMeasurementsController;
   clientSettings: ClientSettingsController;
+  coachAvatars: CoachClientAvatarController;
   coachProfile: ClientProfileController;
+  ownAvatar: OwnClientAvatarController;
   ownProfile: OwnClientProfileController;
   progressPhotos: ProgressPhotoController;
 };
@@ -121,7 +125,7 @@ export function composeClientProfileFeature(
     renditions: handles.progressPhotoRenditions,
     clock,
   };
-  const avatarIntakePorts = {
+  const avatarPorts = {
     clients: handles.clientReach,
     avatars,
     avatarIds: new RandomClientAvatarIds(),
@@ -141,21 +145,7 @@ export function composeClientProfileFeature(
   return {
     feature: {
       avatars: new ClientAvatarController({
-        listClientAvatars: new ListClientAvatarsUseCase({ avatars }),
-        openClientAvatar: new OpenClientAvatarUseCase(avatarIntakePorts),
-        readOwnClientAvatar: new ReadOwnClientAvatarUseCase(avatarIntakePorts),
-        removeClientAvatarAsCoach: new RemoveClientAvatarAsCoachUseCase(
-          avatarIntakePorts,
-        ),
-        removeOwnClientAvatar: new RemoveOwnClientAvatarUseCase(
-          avatarIntakePorts,
-        ),
-        uploadClientAvatarAsCoach: new UploadClientAvatarAsCoachUseCase(
-          avatarIntakePorts,
-        ),
-        uploadOwnClientAvatar: new UploadOwnClientAvatarUseCase(
-          avatarIntakePorts,
-        ),
+        openClientAvatar: new OpenClientAvatarUseCase(avatarPorts),
       }),
       clientMeasurements: new ClientMeasurementsController({
         readOwnMeasurementHistory: new ReadOwnMeasurementHistoryUseCase({
@@ -175,7 +165,6 @@ export function composeClientProfileFeature(
       clientSettings: new ClientSettingsController({
         readOwnClientSettings: new ReadOwnClientSettingsUseCase({
           clients: handles.clientReach,
-          clock,
           settings,
         }),
         saveUnitPreference: new SaveUnitPreferenceUseCase({
@@ -184,6 +173,15 @@ export function composeClientProfileFeature(
           clock,
           settings,
         }),
+      }),
+      coachAvatars: new CoachClientAvatarController({
+        listClientAvatars: new ListClientAvatarsUseCase({ avatars }),
+        removeClientAvatarAsCoach: new RemoveClientAvatarAsCoachUseCase(
+          avatarPorts,
+        ),
+        uploadClientAvatarAsCoach: new UploadClientAvatarAsCoachUseCase(
+          avatarPorts,
+        ),
       }),
       coachProfile: new ClientProfileController({
         readClientMeasurementHistory: new ReadClientMeasurementHistoryUseCase({
@@ -194,6 +192,11 @@ export function composeClientProfileFeature(
           clock,
           profiles,
         }),
+      }),
+      ownAvatar: new OwnClientAvatarController({
+        readOwnClientAvatar: new ReadOwnClientAvatarUseCase(avatarPorts),
+        removeOwnClientAvatar: new RemoveOwnClientAvatarUseCase(avatarPorts),
+        uploadOwnClientAvatar: new UploadOwnClientAvatarUseCase(avatarPorts),
       }),
       ownProfile: new OwnClientProfileController({
         readOwnClientProfile: new ReadOwnClientProfileUseCase({

@@ -17,8 +17,11 @@ export function progressPhotoPath(photoId: string): string {
   return `${CLIENT_PROFILE_API_PATHS.photos}/${encodeURIComponent(photoId)}`;
 }
 
-export function clientAvatarPath(clientId: string): string {
-  return `${CLIENT_PROFILE_API_PATHS.avatars}/${encodeURIComponent(clientId)}`;
+export function clientAvatarPath(avatar: {
+  clientId: string;
+  avatarId: string;
+}): string {
+  return `${CLIENT_PROFILE_API_PATHS.avatars}/${encodeURIComponent(avatar.clientId)}?v=${encodeURIComponent(avatar.avatarId)}`;
 }
 
 export function coachClientProfileApiPath(clientId: string): string {

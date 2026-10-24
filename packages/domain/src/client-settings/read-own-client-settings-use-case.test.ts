@@ -36,7 +36,6 @@ function createUseCase(input: {
     settings: {
       findByClientId: vi.fn().mockResolvedValue(input.stored),
     } satisfies ClientSettingsSource,
-    clock: { now: () => OPENED_AT },
   };
 
   return { ports, useCase: new ReadOwnClientSettingsUseCase(ports) };
@@ -56,7 +55,7 @@ describe("ReadOwnClientSettingsUseCase", () => {
     expect(ports.settings.findByClientId).toHaveBeenCalledWith("client-1");
   });
 
-  it("reads the settings she was admitted with while none are stored", async () => {
+  it("reads nothing for a client with no stored settings", async () => {
     // arrange
     const { useCase } = createUseCase({ reach: REACH, stored: null });
 
@@ -64,12 +63,7 @@ describe("ReadOwnClientSettingsUseCase", () => {
     const settings = await useCase.execute("user_ana");
 
     // assert
-    expect(settings).toEqual(
-      ClientSettings.opened({
-        clientId: "client-1",
-        now: OPENED_AT,
-      }).toSnapshot(),
-    );
+    expect(settings).toBeNull();
   });
 
   it("reads nothing for a subject bound to no client", async () => {

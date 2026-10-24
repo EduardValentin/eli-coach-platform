@@ -1,7 +1,6 @@
 import type { ClientReach } from "../client";
 import type { Clock } from "../shared";
 
-import { ClientSettings } from "./client-settings";
 import type { ClientSettingsChanges } from "./client-settings-changes";
 import type { ClientSettingsSource } from "./client-settings-source";
 import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
@@ -39,13 +38,19 @@ export class SaveUnitPreferenceUseCase {
       return { status: "ended" };
     }
 
-    const now = this.options.clock.now();
-    const settings =
-      (await this.options.settings.findByClientId(client.clientId)) ??
-      ClientSettings.opened({ clientId: client.clientId, now });
+    const settings = await this.options.settings.findByClientId(
+      client.clientId,
+    );
+
+    if (!settings) {
+      return { status: "not-on-journey" };
+    }
 
     await this.options.changes.saveUnits(
-      settings.withUnits(UnitPreference.from(command.preference), now),
+      settings.withUnits(
+        UnitPreference.from(command.preference),
+        this.options.clock.now(),
+      ),
     );
 
     return { status: "saved" };

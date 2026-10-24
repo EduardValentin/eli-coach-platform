@@ -28,7 +28,7 @@ import {
 import { clientAction as saveCoachProfile } from "~/features/client-profile/api/coach/coach-client-profile";
 import { clientAction as writeCoachAvatar } from "~/features/client-profile/api/coach/coach-client-avatar";
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
-import { clientAction as saveIdentity } from "~/features/clients/api/identity/coach-client-identity";
+import { clientAction as saveIdentity } from "~/features/clients/api/coach/coach-client-identity";
 import {
   COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
   coachClientPath,
@@ -58,7 +58,7 @@ const BEFORE_APPROVAL: ClientProfileView = {
   },
   coaching: null,
   coachNotes: null,
-  settings: { preferredCheckInWeekday: null, preferredChannel: null },
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
   avatarUrl: null,
   startingWeightKg: null,
   currentWeightKg: null,
@@ -81,7 +81,7 @@ const APPROVED: ClientProfileView = {
     dietaryRestrictions: "None",
   },
   coachNotes: "Prefers mornings.",
-  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
 };
 
 const server = setupServer();

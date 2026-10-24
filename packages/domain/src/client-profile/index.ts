@@ -14,7 +14,7 @@ export {
   type ClientProfileProblems,
   type ClientProfileSnapshot,
 } from "./client-profile";
-export { type ClientProfileReading } from "./client-profile-readings";
+export { type ClientProfileReading } from "./client-profile-composite";
 export {
   type ClientProfileSave,
   type ClientProfileSaveOutcome,

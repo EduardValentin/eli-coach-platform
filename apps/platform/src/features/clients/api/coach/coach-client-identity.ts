@@ -19,7 +19,7 @@ export async function action(args: ActionFunctionArgs) {
 
     return args.context
       .get(clientsContext)
-      .clientIdentity.saveAsCoach(args, args.params.clientId);
+      .coachClientIdentity.save(args, args.params.clientId);
   });
 }
 

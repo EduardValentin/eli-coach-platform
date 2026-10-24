@@ -101,7 +101,7 @@ const AWAITING_ONBOARDING_PROFILE: ClientProfileView = {
   },
   coaching: null,
   coachNotes: null,
-  settings: { preferredCheckInWeekday: null, preferredChannel: null },
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
   avatarUrl: null,
   startingWeightKg: null,
   currentWeightKg: null,
@@ -123,7 +123,7 @@ const PROFILE: ClientProfileView = {
     cycleMode: "adapted",
     dietaryRestrictions: "Vegetarian",
   },
-  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
 };

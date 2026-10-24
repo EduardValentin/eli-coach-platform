@@ -24,7 +24,7 @@ export async function loader(args: LoaderFunctionArgs) {
 
   const avatarUrls = await args.context
     .get(clientProfileContext)
-    .avatars.urlsFor(
+    .coachAvatars.urlsFor(
       args,
       clients.map((client) => client.clientId),
     );

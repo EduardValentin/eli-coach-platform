@@ -55,21 +55,21 @@ export class ClientProfileController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<ClientProfileView> {
-    const target = requireCoachClientId(args, clientId);
+    const target = this.requireCoachClientId(args, clientId);
     const reading = await this.options.readClientProfile.execute(target);
 
     if (!reading) {
-      throw notFoundResponse();
+      throw this.notFoundResponse();
     }
 
-    return clientProfileSchema.parse(presentReading(reading));
+    return clientProfileSchema.parse(this.presentReading(reading));
   }
 
   async loadMeasurements(
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<MeasurementRow[]> {
-    const target = requireCoachClientId(args, clientId);
+    const target = this.requireCoachClientId(args, clientId);
     const history = await this.options.readClientMeasurementHistory.execute({
       clientId: target,
     });
@@ -87,7 +87,7 @@ export class ClientProfileController {
     const target = clientIdSchema.safeParse(clientId);
 
     if (!target.success) {
-      return notFoundResponse();
+      return this.notFoundResponse();
     }
 
     const request = coachProfileRequestSchema.safeParse(
@@ -100,58 +100,61 @@ export class ClientProfileController {
       return createBadRequestResponse("The profile could not be read.");
     }
 
-    return savedResponse(
+    return this.savedResponse(
       await this.options.updateClientProfile.execute({
         clientId: target.data,
         edit: request.data,
       }),
     );
   }
-}
 
-function presentReading(reading: ClientProfileReading) {
-  const { hasAvatar, ...profile } = reading;
+  private presentReading(reading: ClientProfileReading) {
+    const { avatarId, ...profile } = reading;
 
-  return {
-    ...profile,
-    avatarUrl: hasAvatar ? clientAvatarPath(reading.identity.clientId) : null,
-  };
-}
+    return {
+      ...profile,
+      avatarUrl:
+        avatarId === null
+          ? null
+          : clientAvatarPath({ clientId: reading.identity.clientId, avatarId }),
+    };
+  }
 
-function savedResponse(result: UpdateClientProfileResult): Response {
-  if (result.status === "saved") {
+  private savedResponse(result: UpdateClientProfileResult): Response {
+    if (result.status === "saved") {
+      return Response.json(
+        clientProfileSavedAnswerSchema.parse({ status: result.status }),
+      );
+    }
+
+    if (result.status === "invalid") {
+      return Response.json(
+        clientProfileProblemsAnswerSchema.parse({ problems: result.problems }),
+        { status: 422 },
+      );
+    }
+
     return Response.json(
-      clientProfileSavedAnswerSchema.parse({ status: result.status }),
+      clientProfileRefusalSchema.parse({ error: result.status }),
+      { status: REFUSAL_STATUS[result.status] },
     );
   }
 
-  if (result.status === "invalid") {
-    return Response.json(
-      clientProfileProblemsAnswerSchema.parse({ problems: result.problems }),
-      { status: 422 },
-    );
+  private requireCoachClientId(
+    args: LoaderFunctionArgs,
+    clientId: string,
+  ): string {
+    requirePortalAccess(args, { role: "COACH" });
+    const target = clientIdSchema.safeParse(clientId);
+
+    if (!target.success) {
+      throw this.notFoundResponse();
+    }
+
+    return target.data;
   }
 
-  return Response.json(
-    clientProfileRefusalSchema.parse({ error: result.status }),
-    { status: REFUSAL_STATUS[result.status] },
-  );
-}
-
-function requireCoachClientId(
-  args: LoaderFunctionArgs,
-  clientId: string,
-): string {
-  requirePortalAccess(args, { role: "COACH" });
-  const target = clientIdSchema.safeParse(clientId);
-
-  if (!target.success) {
-    throw notFoundResponse();
+  private notFoundResponse(): Response {
+    return new Response("Not Found", { status: 404 });
   }
-
-  return target.data;
-}
-
-function notFoundResponse(): Response {
-  return new Response("Not Found", { status: 404 });
 }

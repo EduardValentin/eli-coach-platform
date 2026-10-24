@@ -122,16 +122,14 @@ function dietaryRestrictionsOf(nutrition: OnboardingFormAnswers): string {
     : NO_DIETARY_RESTRICTIONS;
 }
 
-function preferencesOf(
-  collaboration: OnboardingFormAnswers,
-): ClientPreferences {
-  const checkInDay = textOf(collaboration.checkInDay);
+function preferencesOf(lifestyle: OnboardingFormAnswers): ClientPreferences {
+  const checkInDay = textOf(lifestyle.checkInDay);
 
   return {
     preferredCheckInWeekday: checkInDay ? weekdayNamed(checkInDay) : null,
     preferredChannel: mappedAnswer(
       CHANNELS_BY_ANSWER,
-      collaboration.checkInChannel,
+      lifestyle.checkInChannel,
     ),
   };
 }
@@ -141,7 +139,7 @@ export function coachingSeedOf(
   gender: VisitorGender,
 ): CoachingSeed {
   const goal = answers["goal-availability"];
-  const nutrition = answers["nutrition-lifestyle"];
+  const lifestyle = answers["nutrition-lifestyle"];
   const coaching = CoachingFacts.seeded({
     heightCm: numberOf(goal.height),
     trainingDays:
@@ -161,11 +159,11 @@ export function coachingSeedOf(
     goalWeightKg: numberOf(goal.goalWeight),
     activityLevel: oneOf(ACTIVITY_LEVELS, goal.lifestyleActivityLevel),
     cycleMode: cycleModeOf(answers, gender) ?? "general",
-    dietaryRestrictions: dietaryRestrictionsOf(nutrition),
+    dietaryRestrictions: dietaryRestrictionsOf(lifestyle),
   });
 
   return {
     coaching: coaching.toSnapshot(),
-    preferences: preferencesOf(nutrition),
+    preferences: preferencesOf(lifestyle),
   };
 }

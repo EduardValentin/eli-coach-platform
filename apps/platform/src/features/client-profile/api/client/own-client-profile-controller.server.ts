@@ -1,4 +1,5 @@
 import type {
+  OwnClientProfileReading,
   ReadOwnClientProfileUseCase,
   UpdateOwnClientProfileUseCase,
 } from "@eli-coach-platform/domain/client-profile";
@@ -53,12 +54,7 @@ export class OwnClientProfileController {
       throw new Response("Not Found", { status: 404 });
     }
 
-    const { hasAvatar, ...profile } = reading;
-
-    return ownClientProfileSchema.parse({
-      ...profile,
-      avatarUrl: hasAvatar ? clientAvatarPath(reading.identity.clientId) : null,
-    });
+    return ownClientProfileSchema.parse(this.presentReading(reading));
   }
 
   async save(args: ActionFunctionArgs): Promise<Response> {
@@ -73,31 +69,43 @@ export class OwnClientProfileController {
       return createBadRequestResponse("The profile could not be read.");
     }
 
-    return savedResponse(
+    return this.savedResponse(
       await this.options.updateOwnClientProfile.execute({
         authSubjectId: client.authSubjectId,
         facts: request.data.facts,
       }),
     );
   }
-}
 
-function savedResponse(result: UpdateOwnClientProfileResult): Response {
-  if (result.status === "saved") {
-    return Response.json(
-      clientProfileSavedAnswerSchema.parse({ status: result.status }),
-    );
+  private presentReading(reading: OwnClientProfileReading) {
+    const { avatarId, ...profile } = reading;
+
+    return {
+      ...profile,
+      avatarUrl:
+        avatarId === null
+          ? null
+          : clientAvatarPath({ clientId: reading.identity.clientId, avatarId }),
+    };
   }
 
-  if (result.status === "invalid") {
+  private savedResponse(result: UpdateOwnClientProfileResult): Response {
+    if (result.status === "saved") {
+      return Response.json(
+        clientProfileSavedAnswerSchema.parse({ status: result.status }),
+      );
+    }
+
+    if (result.status === "invalid") {
+      return Response.json(
+        clientProfileProblemsAnswerSchema.parse({ problems: result.problems }),
+        { status: 422 },
+      );
+    }
+
     return Response.json(
-      clientProfileProblemsAnswerSchema.parse({ problems: result.problems }),
-      { status: 422 },
+      clientProfileRefusalSchema.parse({ error: result.status }),
+      { status: REFUSAL_STATUS[result.status] },
     );
   }
-
-  return Response.json(
-    clientProfileRefusalSchema.parse({ error: result.status }),
-    { status: REFUSAL_STATUS[result.status] },
-  );
 }

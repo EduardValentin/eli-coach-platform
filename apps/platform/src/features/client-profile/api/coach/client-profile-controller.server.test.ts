@@ -81,8 +81,8 @@ const SEEDED_READING: ClientProfileReading = {
   identity: IDENTITY,
   coaching: COACHING,
   coachNotes: "Prefers mornings.",
-  settings: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
-  hasAvatar: true,
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  avatarId: "avatar-7",
   startingWeightKg: 64.5,
   currentWeightKg: 63.8,
 };
@@ -106,11 +106,11 @@ describe("ClientProfileController load", () => {
       identity: IDENTITY_VIEW,
       coaching: COACHING,
       coachNotes: "Prefers mornings.",
-      settings: {
+      preferences: {
         preferredCheckInWeekday: "monday",
         preferredChannel: "email",
       },
-      avatarUrl: `/api/client-profile/avatar/${CLIENT_ID}`,
+      avatarUrl: `/api/client-profile/avatar/${CLIENT_ID}?v=avatar-7`,
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });
@@ -124,8 +124,8 @@ describe("ClientProfileController load", () => {
         ...SEEDED_READING,
         coaching: null,
         coachNotes: null,
-        settings: { preferredCheckInWeekday: null, preferredChannel: null },
-        hasAvatar: false,
+        preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+        avatarId: null,
       },
     });
 

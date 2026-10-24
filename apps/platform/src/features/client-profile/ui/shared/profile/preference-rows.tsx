@@ -14,7 +14,7 @@ type PreferenceCopy = {
 };
 
 type PreferenceRowsProps = {
-  settings: ClientProfileView["settings"];
+  preferences: ClientProfileView["preferences"];
   copy: PreferenceCopy;
 };
 
@@ -23,8 +23,8 @@ const PREFERRED_CHANNEL_LABELS: Record<PreferredChannel, string> = {
   whatsapp: "WhatsApp",
 };
 
-export function PreferenceRows({ settings, copy }: PreferenceRowsProps) {
-  const { preferredCheckInWeekday, preferredChannel } = settings;
+export function PreferenceRows({ preferences, copy }: PreferenceRowsProps) {
+  const { preferredCheckInWeekday, preferredChannel } = preferences;
 
   return (
     <SettingsRows>

@@ -1,13 +1,28 @@
 import {
-  MAX_BOOKING_AGE,
   MAX_VISITOR_NAME_LENGTH,
-  MIN_BOOKING_AGE,
+  VisitorBirthDate,
+  type AgeMoment,
+  type VisitorCountries,
+  type VisitorGender,
+  type VisitorPhoneEntry,
 } from "../assessment-call";
-import { instantToWallClock, type CalendarDate } from "../coach-availability";
 
 import type { ClientIdentity } from "./client-identities";
 
-export type ClientIdentityEditInput = Omit<ClientIdentity, "email">;
+export type ClientIdentityEditSnapshot = Omit<ClientIdentity, "email">;
+
+export type EditableClientIdentity = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  country: string;
+  phone: VisitorPhoneEntry;
+};
+
+export type EnteredClientIdentity = EditableClientIdentity & {
+  clientId: string;
+  gender: VisitorGender;
+};
 
 export type ClientIdentityProblems = {
   firstName?: "missing" | "too-long";
@@ -21,52 +36,50 @@ export type ClientIdentityEditResult =
   | { status: "valid"; edit: ClientIdentityEdit }
   | { status: "invalid"; problems: ClientIdentityProblems };
 
-export type IdentityEditMoment = { on: Date; timeZone: string };
-
-export type EditableClientIdentity = Pick<
-  ClientIdentity,
-  "firstName" | "lastName" | "phone" | "dateOfBirth" | "country"
->;
-
-const E164_PHONE = /^\+[1-9]\d{4,14}$/;
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
-const COUNTRY_CODE = /^[A-Z]{2}$/;
-
 export class ClientIdentityEdit {
-  private constructor(private readonly snapshot: ClientIdentityEditInput) {}
+  private constructor(private readonly snapshot: ClientIdentityEditSnapshot) {}
 
   static of(
-    entered: ClientIdentityEditInput,
-    moment: IdentityEditMoment,
+    entered: EnteredClientIdentity,
+    moment: AgeMoment,
+    countries: VisitorCountries,
   ): ClientIdentityEditResult {
+    const { phone: phoneEntry, ...identity } = entered;
+    const phone = countries.phoneOf(phoneEntry);
     const edit = new ClientIdentityEdit({
-      ...entered,
+      ...identity,
       firstName: entered.firstName.trim(),
       lastName: entered.lastName.trim(),
+      phone: phone.status === "valid" ? phone.e164 : null,
     });
-    const problems = edit.problems(moment);
+    const problems: ClientIdentityProblems = {
+      ...edit.problems(moment),
+      ...(phone.status === "invalid" && { phone: "invalid" }),
+      ...(!countries.includes(entered.country) && { country: "invalid" }),
+    };
 
     return Object.keys(problems).length > 0
       ? { status: "invalid", problems }
       : { status: "valid", edit };
   }
 
-  toSnapshot(): ClientIdentityEditInput {
+  toSnapshot(): ClientIdentityEditSnapshot {
     return { ...this.snapshot };
   }
 
-  private problems(moment: IdentityEditMoment): ClientIdentityProblems {
-    const { firstName, lastName, phone, country } = this.snapshot;
+  private problems(moment: AgeMoment): ClientIdentityProblems {
+    const { firstName, lastName, dateOfBirth } = this.snapshot;
     const firstNameProblem = this.nameProblem(firstName);
     const lastNameProblem = this.nameProblem(lastName);
-    const dateOfBirthProblem = this.dateOfBirthProblem(moment);
+    const birthDate = VisitorBirthDate.parse(dateOfBirth);
+    const dateOfBirthProblem = birthDate
+      ? birthDate.bookingProblemOn(moment)
+      : "impossible";
 
     return {
       ...(firstNameProblem && { firstName: firstNameProblem }),
       ...(lastNameProblem && { lastName: lastNameProblem }),
-      ...(phone !== null && !E164_PHONE.test(phone) && { phone: "invalid" }),
       ...(dateOfBirthProblem && { dateOfBirth: dateOfBirthProblem }),
-      ...(!COUNTRY_CODE.test(country) && { country: "invalid" }),
     };
   }
 
@@ -74,49 +87,5 @@ export class ClientIdentityEdit {
     if (name.length === 0) return "missing";
 
     return name.length > MAX_VISITOR_NAME_LENGTH ? "too-long" : null;
-  }
-
-  private dateOfBirthProblem(
-    moment: IdentityEditMoment,
-  ): "impossible" | "too-young" | null {
-    const birth = this.birthDate();
-
-    if (!birth) return "impossible";
-
-    const age = this.ageOn(
-      birth,
-      instantToWallClock(moment.on, moment.timeZone),
-    );
-
-    if (age < 0 || age > MAX_BOOKING_AGE) return "impossible";
-
-    return age < MIN_BOOKING_AGE ? "too-young" : null;
-  }
-
-  private birthDate(): CalendarDate | null {
-    const match = ISO_DATE.exec(this.snapshot.dateOfBirth);
-
-    if (!match) return null;
-
-    const [year, month, day] = match.slice(1).map(Number) as [
-      number,
-      number,
-      number,
-    ];
-    const calendar = new Date(Date.UTC(year, month - 1, day));
-    const isCalendarDate =
-      calendar.getUTCFullYear() === year &&
-      calendar.getUTCMonth() === month - 1 &&
-      calendar.getUTCDate() === day;
-
-    return isCalendarDate ? { year, month, day } : null;
-  }
-
-  private ageOn(birth: CalendarDate, today: CalendarDate): number {
-    const birthdayStillAhead =
-      today.month < birth.month ||
-      (today.month === birth.month && today.day < birth.day);
-
-    return today.year - birth.year - (birthdayStillAhead ? 1 : 0);
   }
 }

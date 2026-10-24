@@ -375,6 +375,33 @@ describe.sequential("client profile integration", () => {
       expect(await profiles.identityRowOf(clientId)).toEqual(before);
     });
 
+    it("names every field outside the booking rules in one answer", async () => {
+      // arrange
+      const clientId = await admittedClient();
+      const before = await profiles.identityRowOf(clientId);
+
+      // act
+      const refused = await profiles.putJson(OWNER, OWN_IDENTITY_API, {
+        ...EDITED_IDENTITY,
+        firstName: " ",
+        dateOfBirth: "2015-01-01",
+        phoneNumber: "12",
+        country: "ZZ",
+      });
+
+      // assert
+      expect(refused.status).toBe(422);
+      expect(await refused.json()).toEqual({
+        problems: {
+          firstName: "missing",
+          dateOfBirth: "too-young",
+          phone: "invalid",
+          country: "invalid",
+        },
+      });
+      expect(await profiles.identityRowOf(clientId)).toEqual(before);
+    });
+
     it("keeps a client off the coach's identity edit", async () => {
       // arrange
       const clientId = await admittedClient();

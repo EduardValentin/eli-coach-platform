@@ -1,13 +1,11 @@
 import type { ClientReach } from "../client";
-import type { Clock } from "../shared";
 
-import { ClientSettings, type ClientSettingsSnapshot } from "./client-settings";
+import type { ClientSettingsSnapshot } from "./client-settings";
 import type { ClientSettingsSource } from "./client-settings-source";
 
 type ReadOwnClientSettingsUseCaseOptions = {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
   settings: ClientSettingsSource;
-  clock: Clock;
 };
 
 export class ReadOwnClientSettingsUseCase {
@@ -21,13 +19,10 @@ export class ReadOwnClientSettingsUseCase {
       return null;
     }
 
-    const settings =
-      (await this.options.settings.findByClientId(client.clientId)) ??
-      ClientSettings.opened({
-        clientId: client.clientId,
-        now: this.options.clock.now(),
-      });
+    const settings = await this.options.settings.findByClientId(
+      client.clientId,
+    );
 
-    return settings.toSnapshot();
+    return settings?.toSnapshot() ?? null;
   }
 }

@@ -9,6 +9,7 @@ import type {
 } from "./client-avatar-renditions";
 import type { ClientAvatarStore } from "./client-avatar-store";
 import type { ClientAvatars } from "./client-avatars";
+import { ClientAvatarRemoval } from "./client-avatar-removal";
 import type { ProgressPhotoFileFacts } from "./progress-photo";
 
 export type ReceivedClientAvatar = ProgressPhotoFileFacts & {
@@ -65,36 +66,8 @@ export class ClientAvatarIntake {
         at: this.options.clock.now(),
       }),
     );
-    await this.deleteFileOf(previous);
+    await new ClientAvatarRemoval(this.options).discardFileOf(previous);
 
     return { status: "uploaded" };
-  }
-
-  async remove(clientId: string): Promise<void> {
-    const current = await this.options.avatars.findByClientId(clientId);
-
-    if (!current) {
-      return;
-    }
-
-    await this.options.avatars.remove(clientId);
-    await this.deleteFileOf(current);
-  }
-
-  private async deleteFileOf(avatar: ClientAvatar | null): Promise<void> {
-    if (!avatar) {
-      return;
-    }
-
-    const { clientId, reference } = avatar.toSnapshot();
-
-    try {
-      await this.options.store.delete(reference);
-    } catch {
-      this.options.incidents.clientAvatarFileOrphaned({
-        clientId,
-        storageKey: reference.storageKey,
-      });
-    }
   }
 }

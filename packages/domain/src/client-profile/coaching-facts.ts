@@ -100,13 +100,7 @@ export class CoachingFacts {
   private constructor(private readonly snapshot: CoachingFactsSnapshot) {}
 
   static of(entered: CoachingFactsSnapshot): CoachingFactsResult {
-    const facts = new CoachingFacts({
-      ...entered,
-      equipment: [...new Set(entered.equipment)],
-      limitations: entered.limitations.trim(),
-      primaryGoal: entered.primaryGoal?.trim() || null,
-      dietaryRestrictions: entered.dietaryRestrictions.trim(),
-    });
+    const facts = new CoachingFacts(entered).normalized();
     const problems = facts.problems();
 
     return Object.keys(problems).length > 0
@@ -115,11 +109,24 @@ export class CoachingFacts {
   }
 
   static seeded(answered: CoachingFactsSnapshot): CoachingFacts {
-    return new CoachingFacts(answered).withinRules();
+    return new CoachingFacts(answered).normalized().clampedToRules();
   }
 
   toSnapshot(): CoachingFactsSnapshot {
     return { ...this.snapshot, equipment: [...this.snapshot.equipment] };
+  }
+
+  private normalized(): CoachingFacts {
+    const { equipment, limitations, primaryGoal, dietaryRestrictions } =
+      this.snapshot;
+
+    return new CoachingFacts({
+      ...this.snapshot,
+      equipment: [...new Set(equipment)],
+      limitations: limitations.trim(),
+      primaryGoal: primaryGoal?.trim() || null,
+      dietaryRestrictions: dietaryRestrictions.trim(),
+    });
   }
 
   private problems(): CoachingFactsProblems {
@@ -143,8 +150,8 @@ export class CoachingFacts {
     };
   }
 
-  private withinRules(): CoachingFacts {
-    const { heightCm, goalWeightKg, equipment } = this.snapshot;
+  private clampedToRules(): CoachingFacts {
+    const { heightCm, goalWeightKg, equipment, limitations } = this.snapshot;
 
     return new CoachingFacts({
       ...this.snapshot,
@@ -154,12 +161,10 @@ export class CoachingFacts {
         : null,
       equipment: this.mixesBodyweightOnly()
         ? equipment.filter((item) => item !== BODYWEIGHT_ONLY)
-        : [...new Set(equipment)],
-      limitations: this.snapshot.limitations
-        .trim()
-        .slice(0, MAX_LIMITATIONS_LENGTH),
+        : equipment,
+      limitations: limitations.slice(0, MAX_LIMITATIONS_LENGTH),
       dietaryRestrictions:
-        this.snapshot.dietaryRestrictions.trim() || NO_DIETARY_RESTRICTIONS,
+        this.snapshot.dietaryRestrictions || NO_DIETARY_RESTRICTIONS,
     });
   }
 

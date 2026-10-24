@@ -9,6 +9,7 @@ export { type ClientIdentityChanges } from "./client-identity-changes";
 export {
   ClientIdentityEdit,
   type ClientIdentityProblems,
+  type EditableClientIdentity,
 } from "./client-identity-edit";
 export {
   COACHING_STATUSES,

@@ -1,8 +1,5 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import type {
-  UpdateClientIdentityAsCoachUseCase,
-  UpdateOwnClientIdentityUseCase,
-} from "@eli-coach-platform/domain/client";
+import type { UpdateClientIdentityAsCoachUseCase } from "@eli-coach-platform/domain/client";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -13,7 +10,7 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import { ClientIdentityController } from "./client-identity-controller.server";
+import { CoachClientIdentityController } from "./coach-client-identity-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
@@ -38,102 +35,13 @@ const ENTERED = {
   phoneNumber: "0712 345 678",
 };
 
-describe("ClientIdentityController saveOwn", () => {
-  it("saves her names, date of birth, country and her phone in E.164 and answers that it is saved", async () => {
-    // arrange
-    const { controller, updateOwn } = createController();
-
-    // act
-    const response = await controller.saveOwn(accountArgs(CLIENT, ENTERED));
-
-    // assert
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ status: "saved" });
-    expect(updateOwn).toHaveBeenCalledWith({
-      authSubjectId: "user_ana",
-      identity: {
-        firstName: "Ana-Maria",
-        lastName: "Ionescu",
-        dateOfBirth: "1994-03-15",
-        country: "RO",
-        phone: "+40712345678",
-      },
-    });
-  });
-
-  it("saves no phone when she leaves it empty", async () => {
-    // arrange
-    const { controller, updateOwn } = createController();
-
-    // act
-    await controller.saveOwn(
-      accountArgs(CLIENT, { ...ENTERED, phoneNumber: "" }),
-    );
-
-    // assert
-    expect(updateOwn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        identity: expect.objectContaining({ phone: null }),
-      }),
-    );
-  });
-
-  it("names a phone and a country it cannot read without saving anything", async () => {
-    // arrange
-    const { controller, updateOwn } = createController();
-
-    // act
-    const response = await controller.saveOwn(
-      accountArgs(CLIENT, { ...ENTERED, phoneNumber: "12", country: "ZZ" }),
-    );
-
-    // assert
-    expect(response.status).toBe(422);
-    expect(await response.json()).toEqual({
-      problems: { phone: "invalid", country: "invalid" },
-    });
-    expect(updateOwn).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    [{ status: "not-on-journey" }, 404],
-    [{ status: "ended" }, 409],
-    [{ status: "invalid", problems: { dateOfBirth: "too-young" } }, 422],
-  ] satisfies [
-    Awaited<ReturnType<UpdateOwnClientIdentityUseCase["execute"]>>,
-    number,
-  ][])("answers %o with %d", async (result, status) => {
-    // arrange
-    const { controller } = createController({ own: result });
-
-    // act
-    const response = await controller.saveOwn(accountArgs(CLIENT, ENTERED));
-
-    // assert
-    expect(response.status).toBe(status);
-  });
-
-  it("refuses the coach on her own route", async () => {
-    // arrange
-    const { controller } = createController();
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.saveOwn(accountArgs(COACH, ENTERED)),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(403);
-  });
-});
-
-describe("ClientIdentityController saveAsCoach", () => {
+describe("CoachClientIdentityController save", () => {
   it("saves her identity with the gender the coach chose", async () => {
     // arrange
     const { controller, updateAsCoach } = createController();
 
     // act
-    const response = await controller.saveAsCoach(
+    const response = await controller.save(
       accountArgs(COACH, { ...ENTERED, gender: "prefer_not_to_say" }),
       CLIENT_ID,
     );
@@ -148,7 +56,7 @@ describe("ClientIdentityController saveAsCoach", () => {
         lastName: "Ionescu",
         dateOfBirth: "1994-03-15",
         country: "RO",
-        phone: "+40712345678",
+        phone: { country: "RO", nationalNumber: "0712 345 678" },
         gender: "prefer_not_to_say",
       },
     });
@@ -159,7 +67,7 @@ describe("ClientIdentityController saveAsCoach", () => {
     const { controller, updateAsCoach } = createController();
 
     // act
-    const response = await controller.saveAsCoach(
+    const response = await controller.save(
       accountArgs(COACH, ENTERED),
       CLIENT_ID,
     );
@@ -174,7 +82,7 @@ describe("ClientIdentityController saveAsCoach", () => {
     const { controller } = createController();
 
     // act
-    const response = await controller.saveAsCoach(
+    const response = await controller.save(
       accountArgs(COACH, { ...ENTERED, gender: "female" }),
       "nope",
     );
@@ -189,7 +97,7 @@ describe("ClientIdentityController saveAsCoach", () => {
 
     // act
     const thrown = await captureThrown(() =>
-      controller.saveAsCoach(
+      controller.save(
         accountArgs(CLIENT, { ...ENTERED, gender: "female" }),
         CLIENT_ID,
       ),
@@ -200,25 +108,15 @@ describe("ClientIdentityController saveAsCoach", () => {
   });
 });
 
-function createController(
-  results: {
-    own?: Awaited<ReturnType<UpdateOwnClientIdentityUseCase["execute"]>>;
-  } = {},
-) {
-  const updateOwn = vi
-    .fn()
-    .mockResolvedValue(results.own ?? { status: "saved" });
+function createController() {
   const updateAsCoach = vi.fn().mockResolvedValue({ status: "saved" });
-  const controller = new ClientIdentityController({
+  const controller = new CoachClientIdentityController({
     updateClientIdentityAsCoach: {
       execute: updateAsCoach,
     } as unknown as UpdateClientIdentityAsCoachUseCase,
-    updateOwnClientIdentity: {
-      execute: updateOwn,
-    } as unknown as UpdateOwnClientIdentityUseCase,
   });
 
-  return { controller, updateAsCoach, updateOwn };
+  return { controller, updateAsCoach };
 }
 
 function accountArgs(account: AccountSnapshot, body: unknown) {

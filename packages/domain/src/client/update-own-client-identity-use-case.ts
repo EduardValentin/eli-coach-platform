@@ -1,3 +1,4 @@
+import type { VisitorCountries } from "../assessment-call";
 import type { Clock } from "../shared";
 
 import type { ClientIdentities } from "./client-identities";
@@ -25,6 +26,7 @@ type UpdateOwnClientIdentityUseCaseOptions = {
   identities: Pick<ClientIdentities, "findByClientId">;
   changes: ClientIdentityChanges;
   clock: Clock;
+  countries: VisitorCountries;
 };
 
 export class UpdateOwnClientIdentityUseCase {
@@ -62,6 +64,7 @@ export class UpdateOwnClientIdentityUseCase {
         gender: current.gender,
       },
       { on: this.options.clock.now(), timeZone: client.timeZone },
+      this.options.countries,
     );
 
     if (result.status === "invalid") {

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { VisitorCountries } from "../assessment-call";
+
 import {
   ClientIdentityEdit,
-  type ClientIdentityEditInput,
+  type ClientIdentityEditSnapshot,
+  type EnteredClientIdentity,
 } from "./client-identity-edit";
 
 const ON = {
@@ -10,7 +13,22 @@ const ON = {
   timeZone: "Europe/Bucharest",
 };
 
-const ENTERED: ClientIdentityEditInput = {
+const COUNTRIES = VisitorCountries.of([
+  { code: "RO", callingCode: "+40" },
+  { code: "MD", callingCode: "+373" },
+]);
+
+const ENTERED: EnteredClientIdentity = {
+  clientId: "client-1",
+  firstName: "Ana",
+  lastName: "Popescu",
+  phone: { country: "RO", nationalNumber: "0712 345 678" },
+  dateOfBirth: "1994-03-14",
+  country: "RO",
+  gender: "female",
+};
+
+const SAVED: ClientIdentityEditSnapshot = {
   clientId: "client-1",
   firstName: "Ana",
   lastName: "Popescu",
@@ -21,28 +39,31 @@ const ENTERED: ClientIdentityEditInput = {
 };
 
 describe("ClientIdentityEdit.of", () => {
-  it("holds her edited identity with her names trimmed", () => {
+  it("holds her edited identity with her names trimmed and her phone in E.164", () => {
     // arrange
     const entered = { ...ENTERED, firstName: "  Ana ", lastName: " Popescu  " };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON);
+    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
 
     // assert
     expect(result.status === "valid" && result.edit.toSnapshot()).toEqual(
-      ENTERED,
+      SAVED,
     );
   });
 
-  it("accepts an identity with no phone", () => {
+  it("holds no phone when she leaves the number empty", () => {
     // arrange
-    const entered = { ...ENTERED, phone: null };
+    const entered = { ...ENTERED, phone: { country: "", nationalNumber: "" } };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON);
+    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
 
     // assert
-    expect(result.status).toBe("valid");
+    expect(result.status === "valid" && result.edit.toSnapshot()).toEqual({
+      ...SAVED,
+      phone: null,
+    });
   });
 
   it("counts her age on the day it is in her own time zone", () => {
@@ -53,7 +74,11 @@ describe("ClientIdentityEdit.of", () => {
     };
 
     // act
-    const result = ClientIdentityEdit.of(turnsEighteenTomorrowInUtc, ON);
+    const result = ClientIdentityEdit.of(
+      turnsEighteenTomorrowInUtc,
+      ON,
+      COUNTRIES,
+    );
 
     // assert
     expect(result.status).toBe("valid");
@@ -66,10 +91,14 @@ describe("ClientIdentityEdit.of", () => {
       { lastName: "P".repeat(61) },
       { lastName: "too-long" },
     ],
-    ["a phone outside E.164", { phone: "0712345678" }, { phone: "invalid" }],
     [
-      "a phone with too many digits",
-      { phone: "+4071234567890123" },
+      "a phone number with too few digits",
+      { phone: { country: "RO", nationalNumber: "12" } },
+      { phone: "invalid" },
+    ],
+    [
+      "a phone under a country it does not know",
+      { phone: { country: "ZZ", nationalNumber: "712345678" } },
       { phone: "invalid" },
     ],
     [
@@ -83,28 +112,44 @@ describe("ClientIdentityEdit.of", () => {
       { dateOfBirth: "impossible" },
     ],
     [
-      "a date of birth over 120 years ago",
-      { dateOfBirth: "1900-01-01" },
-      { dateOfBirth: "impossible" },
-    ],
-    [
       "a client under 18",
       { dateOfBirth: "2010-06-01" },
       { dateOfBirth: "too-young" },
     ],
-    [
-      "a country that is not a code",
-      { country: "Romania" },
-      { country: "invalid" },
-    ],
+    ["a country it does not know", { country: "ZZ" }, { country: "invalid" }],
   ] as const)("names the problem with %s", (_label, change, problems) => {
     // arrange
     const entered = { ...ENTERED, ...change };
 
     // act
-    const result = ClientIdentityEdit.of(entered, ON);
+    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
 
     // assert
     expect(result).toEqual({ status: "invalid", problems });
+  });
+
+  it("names every problem of one entry at once", () => {
+    // arrange
+    const entered = {
+      ...ENTERED,
+      firstName: " ",
+      dateOfBirth: "2015-01-01",
+      phone: { country: "RO", nationalNumber: "12" },
+      country: "ZZ",
+    };
+
+    // act
+    const result = ClientIdentityEdit.of(entered, ON, COUNTRIES);
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: {
+        firstName: "missing",
+        dateOfBirth: "too-young",
+        phone: "invalid",
+        country: "invalid",
+      },
+    });
   });
 });

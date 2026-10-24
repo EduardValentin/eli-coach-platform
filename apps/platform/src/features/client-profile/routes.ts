@@ -30,7 +30,7 @@ export const clientProfileApiRoutes = [
   ),
   route(
     CLIENT_PROFILE_API_PATHS.avatars.slice(1),
-    "./api/avatar/own-avatar.ts",
+    "./api/client/own-avatar.ts",
   ),
   route(
     `${CLIENT_PROFILE_API_PATHS.avatars.slice(1)}/:clientId`,

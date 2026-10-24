@@ -1,13 +1,13 @@
 import {
-  ClientProfileReadings,
+  ClientProfileComposite,
   type ClientProfileReading,
   type ClientProfileReadingPorts,
-} from "./client-profile-readings";
+} from "./client-profile-composite";
 
 export class ReadClientProfileUseCase {
   constructor(private readonly options: ClientProfileReadingPorts) {}
 
   async execute(clientId: string): Promise<ClientProfileReading | null> {
-    return new ClientProfileReadings(this.options).of(clientId);
+    return new ClientProfileComposite(this.options).readFor(clientId);
   }
 }

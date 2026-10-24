@@ -28,7 +28,7 @@ const PROFILE: ClientProfileView = {
   identity: IDENTITY,
   coaching: null,
   coachNotes: null,
-  settings: { preferredCheckInWeekday: null, preferredChannel: null },
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
   avatarUrl: null,
   startingWeightKg: 64.5,
   currentWeightKg: 63.8,

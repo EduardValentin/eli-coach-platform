@@ -120,7 +120,7 @@ function createLoaderArguments(
     coachClients: { loadRoster },
   } as unknown as ClientsFeature;
   const clientProfile = {
-    avatars: { urlsFor },
+    coachAvatars: { urlsFor },
   } as unknown as ClientProfileFeature;
 
   return createRequestArgs({

@@ -83,7 +83,7 @@ describe("SaveUnitPreferenceUseCase", () => {
     });
   });
 
-  it("opens her settings when none are stored yet before saving her units", async () => {
+  it("saves nothing for a client with no stored settings", async () => {
     // arrange
     const { ports, useCase } = createUseCase({
       reach: reachOf("reachable"),
@@ -91,17 +91,14 @@ describe("SaveUnitPreferenceUseCase", () => {
     });
 
     // act
-    await useCase.execute({ authSubjectId: "user_ana", preference: IMPERIAL });
+    const result = await useCase.execute({
+      authSubjectId: "user_ana",
+      preference: IMPERIAL,
+    });
 
     // assert
-    const [saved] = ports.changes.saveUnits.mock.calls[0] ?? [];
-    expect(saved?.toSnapshot()).toEqual({
-      clientId: "client-1",
-      unitPreference: IMPERIAL,
-      preferredCheckInWeekday: null,
-      preferredChannel: null,
-      updatedAt: NOW,
-    });
+    expect(result).toEqual({ status: "not-on-journey" });
+    expect(ports.changes.saveUnits).not.toHaveBeenCalled();
   });
 
   it("saves nothing for a subject bound to no client", async () => {

@@ -1,10 +1,10 @@
 import type { ClientReach } from "../client";
 
 import {
-  ClientProfileReadings,
+  ClientProfileComposite,
   type ClientProfileReading,
   type ClientProfileReadingPorts,
-} from "./client-profile-readings";
+} from "./client-profile-composite";
 
 export type OwnClientProfileReading = Omit<ClientProfileReading, "coachNotes">;
 
@@ -22,7 +22,7 @@ export class ReadOwnClientProfileUseCase {
       await this.options.clients.findByAuthSubjectId(authSubjectId);
     const reading =
       client &&
-      (await new ClientProfileReadings(this.options).of(client.clientId));
+      (await new ClientProfileComposite(this.options).readFor(client.clientId));
 
     if (!reading) {
       return null;

@@ -19,10 +19,10 @@ export const clientsApiRoutes = [
   ),
   route(
     CLIENTS_API_PATHS.ownIdentity.slice(1),
-    "./api/identity/own-client-identity.ts",
+    "./api/client/own-client-identity.ts",
   ),
   route(
     `${CLIENTS_API_PATHS.clients.slice(1)}/:clientId/identity`,
-    "./api/identity/coach-client-identity.ts",
+    "./api/coach/coach-client-identity.ts",
   ),
 ];

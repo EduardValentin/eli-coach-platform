@@ -1,14 +1,14 @@
 import type { ClientReach } from "../client";
 
 import {
-  ClientAvatarIntake,
-  type ClientAvatarIntakeOptions,
-} from "./client-avatar-intake";
+  ClientAvatarRemoval,
+  type ClientAvatarRemovalOptions,
+} from "./client-avatar-removal";
 
 type RemoveOwnClientAvatarResult =
   { status: "removed" } | { status: "not-on-journey" } | { status: "ended" };
 
-type RemoveOwnClientAvatarUseCaseOptions = ClientAvatarIntakeOptions & {
+type RemoveOwnClientAvatarUseCaseOptions = ClientAvatarRemovalOptions & {
   clients: Pick<ClientReach, "findByAuthSubjectId">;
 };
 
@@ -27,7 +27,7 @@ export class RemoveOwnClientAvatarUseCase {
       return { status: "ended" };
     }
 
-    await new ClientAvatarIntake(this.options).remove(client.clientId);
+    await new ClientAvatarRemoval(this.options).remove(client.clientId);
 
     return { status: "removed" };
   }

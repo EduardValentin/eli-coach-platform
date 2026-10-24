@@ -171,10 +171,13 @@ describe.sequential("coach clients pages integration", () => {
 
       // assert
       const page = await visibleDocument(response);
+      const avatar = await profiles.avatarRowOf(clientId);
 
       expect(response.status).toBe(200);
       expect(page).toMatch(
-        new RegExp(`src="[^"]*/api/client-profile/avatar/${clientId}"`),
+        new RegExp(
+          `src="[^"]*/api/client-profile/avatar/${clientId}\\?v=${avatar?.avatarId}"`,
+        ),
       );
     });
 

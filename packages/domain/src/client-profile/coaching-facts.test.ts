@@ -157,6 +157,34 @@ describe("CoachingFacts.seeded", () => {
     });
     expect(CoachingFacts.of(facts.toSnapshot()).status).toBe("valid");
   });
+
+  it("keeps bodyweight only when she answered it twice and nothing else", () => {
+    // arrange
+    const answered = {
+      ...FACTS,
+      equipment: ["Bodyweight only", "Bodyweight only"],
+    } satisfies CoachingFactsSnapshot;
+
+    // act
+    const facts = CoachingFacts.seeded(answered);
+
+    // assert
+    expect(facts.toSnapshot().equipment).toEqual(["Bodyweight only"]);
+  });
+
+  it("drops bodyweight only and repeated equipment from a mixed answer", () => {
+    // arrange
+    const answered = {
+      ...FACTS,
+      equipment: ["Bodyweight only", "Dumbbells", "Dumbbells"],
+    } satisfies CoachingFactsSnapshot;
+
+    // act
+    const facts = CoachingFacts.seeded(answered);
+
+    // assert
+    expect(facts.toSnapshot().equipment).toEqual(["Dumbbells"]);
+  });
 });
 
 describe("CoachingFacts#toSnapshot", () => {

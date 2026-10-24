@@ -9,21 +9,28 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+
+const ALLOWED_METHODS = ["POST", "DELETE"];
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    if (args.request.method !== "PUT") {
-      throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
-    }
+    const { ownAvatar } = args.context.get(clientProfileContext);
 
-    return args.context.get(clientsContext).clientIdentity.saveOwn(args);
+    switch (args.request.method) {
+      case "POST":
+        return ownAvatar.upload(args);
+      case "DELETE":
+        return ownAvatar.remove(args);
+      default:
+        throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
+    }
   });
 }
 
 export async function loader(_args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() => {
-    throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
+    throwMethodNotAllowedResponse({ allowedMethods: ALLOWED_METHODS });
   });
 }
 
