@@ -12,14 +12,7 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { Camera, Trash2 } from "lucide-react";
-import {
-  useEffect,
-  useEffectEvent,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
 import {
@@ -31,10 +24,10 @@ import {
 import { clientAvatarSrc } from "./client-avatar-src";
 
 type AvatarFieldProps = {
-  name: string;
-  detail: ReactNode;
+  clientName: string;
+  email: string;
   avatarUrl: string | null;
-  action: string;
+  avatarEndpoint: string;
 };
 
 type AvatarWrite = "upload" | "removal";
@@ -62,7 +55,7 @@ function failureMessageOf(answer: unknown): string {
     : UNSAVED_PICTURE_MESSAGE;
 }
 
-function useAvatarWrites(action: string) {
+function useAvatarWrites(avatarEndpoint: string) {
   const { data, submit } = useFetcher<unknown>();
   const pendingWrite = useRef<AvatarWrite | null>(null);
 
@@ -93,7 +86,7 @@ function useAvatarWrites(action: string) {
     formData.append(CLIENT_AVATAR_FIELD, file);
     pendingWrite.current = "upload";
     void submit(formData, {
-      action,
+      action: avatarEndpoint,
       encType: "multipart/form-data",
       method: "post",
     });
@@ -103,21 +96,21 @@ function useAvatarWrites(action: string) {
     if (pendingWrite.current) return;
 
     pendingWrite.current = "removal";
-    void submit(null, { action, method: "delete" });
+    void submit(null, { action: avatarEndpoint, method: "delete" });
   };
 
   return { upload, remove };
 }
 
 export function AvatarField({
-  name,
-  detail,
+  clientName,
+  email,
   avatarUrl,
-  action,
+  avatarEndpoint,
 }: AvatarFieldProps) {
   const headingId = useId();
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
-  const writes = useAvatarWrites(action);
+  const writes = useAvatarWrites(avatarEndpoint);
 
   const choose = (file: File) => {
     if (!ClientAvatar.accepts({ mimeType: file.type, sizeBytes: file.size })) {
@@ -145,21 +138,21 @@ export function AvatarField({
     >
       <Avatar
         data-parity="avatar"
-        imageAlt={`${name}'s profile picture`}
-        imageUrl={clientAvatarSrc(avatarUrl) ?? undefined}
-        name={name}
+        imageAlt={`${clientName}'s profile picture`}
+        imageUrl={clientAvatarSrc(avatarUrl)}
+        name={clientName}
         size="lg"
       />
 
       <div className="min-w-0 flex-1 text-center sm:text-left">
         <h2 className={VALUE_LG_CLASS} data-parity="avatar-name" id={headingId}>
-          {name}
+          {clientName}
         </h2>
         <p
           className="mt-1 mb-4 text-sm text-text-secondary"
           data-parity="avatar-detail"
         >
-          {detail}
+          {email}
         </p>
 
         <div

@@ -17,7 +17,7 @@ import { PreferenceRows } from "~/features/client-profile/ui/shared/profile/pref
 import { clientFullName } from "~/features/clients/public/clients";
 import { coachClientPath } from "~/features/clients/public/paths";
 
-import { AboutHerSection } from "./about-her-section";
+import { ClientIdentitySection } from "./client-identity-section";
 import { CoachingSection } from "./coaching-section";
 
 type CoachClientProfileProps = {
@@ -65,17 +65,13 @@ export function CoachClientProfile({
       <PortalPageHeader eyebrow={name} title="Profile" />
       <div className="space-y-6 sm:space-y-8">
         <AvatarField
-          action={coachClientAvatarApiPath(clientId)}
+          avatarEndpoint={coachClientAvatarApiPath(clientId)}
           avatarUrl={profile.avatarUrl}
-          detail={identity.email}
-          name={name}
+          clientName={name}
+          email={identity.email}
         />
-        <AboutHerSection clientId={clientId} identity={identity} />
-        <CoachingSection
-          clientId={clientId}
-          key={identity.gender}
-          profile={profile}
-        />
+        <ClientIdentitySection clientId={clientId} identity={identity} />
+        <CoachingSection clientId={clientId} profile={profile} />
         {profile.coaching && <PreferencesSection profile={profile} />}
       </div>
     </div>

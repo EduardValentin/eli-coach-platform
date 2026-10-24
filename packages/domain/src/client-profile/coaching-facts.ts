@@ -32,6 +32,17 @@ export const ACTIVITY_LEVELS = [
 
 type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
 
+export const PRIMARY_GOALS = [
+  "Lose fat",
+  "Build muscle",
+  "Maintain a healthy weight",
+  "Learn to balance activity and nutrition",
+  "Improve overall health",
+  "Work with my menstrual cycle",
+] as const;
+
+type PrimaryGoal = (typeof PRIMARY_GOALS)[number];
+
 export const CYCLE_MODES = ["adapted", "general"] as const;
 
 export type CycleMode = (typeof CYCLE_MODES)[number];
@@ -60,7 +71,7 @@ export type CoachingFactsSnapshot = {
   trainingPlace: TrainingPlace | null;
   limitations: string;
   level: ClientLevel;
-  primaryGoal: string | null;
+  primaryGoal: PrimaryGoal | null;
   goalWeightKg: number | null;
   activityLevel: ActivityLevel | null;
   cycleMode: CycleMode;
@@ -77,6 +88,10 @@ export type SharedCoachingFacts = Pick<
   | "limitations"
 >;
 
+export type CoachingFactsEntry = Omit<CoachingFactsSnapshot, "primaryGoal"> & {
+  primaryGoal: string | null;
+};
+
 export type CoachingSeed = {
   coaching: CoachingFactsSnapshot;
   preferences: ClientPreferences;
@@ -87,6 +102,7 @@ export type CoachingFactsProblems = {
   goalWeightKg?: "out-of-range";
   equipment?: "exclusive";
   limitations?: "too-long";
+  primaryGoal?: "unknown";
   dietaryRestrictions?: "missing";
 };
 
@@ -99,9 +115,15 @@ type Range = { min: number; max: number };
 export class CoachingFacts {
   private constructor(private readonly snapshot: CoachingFactsSnapshot) {}
 
-  static of(entered: CoachingFactsSnapshot): CoachingFactsResult {
-    const facts = new CoachingFacts(entered).normalized();
-    const problems = facts.problems();
+  static of(entered: CoachingFactsEntry): CoachingFactsResult {
+    const enteredGoal = entered.primaryGoal?.trim() || null;
+    const primaryGoal =
+      PRIMARY_GOALS.find((goal) => goal === enteredGoal) ?? null;
+    const facts = new CoachingFacts({ ...entered, primaryGoal }).normalized();
+    const problems: CoachingFactsProblems = {
+      ...facts.problems(),
+      ...(primaryGoal !== enteredGoal && { primaryGoal: "unknown" }),
+    };
 
     return Object.keys(problems).length > 0
       ? { status: "invalid", problems }
@@ -117,14 +139,12 @@ export class CoachingFacts {
   }
 
   private normalized(): CoachingFacts {
-    const { equipment, limitations, primaryGoal, dietaryRestrictions } =
-      this.snapshot;
+    const { equipment, limitations, dietaryRestrictions } = this.snapshot;
 
     return new CoachingFacts({
       ...this.snapshot,
       equipment: [...new Set(equipment)],
       limitations: limitations.trim(),
-      primaryGoal: primaryGoal?.trim() || null,
       dietaryRestrictions: dietaryRestrictions.trim(),
     });
   }

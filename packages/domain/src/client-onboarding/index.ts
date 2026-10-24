@@ -6,7 +6,6 @@ export { type ClientOnboardingIncidents } from "./client-onboarding-incidents";
 export { type ClientOnboardingSource } from "./client-onboarding-source";
 export { DetailRequest } from "./detail-request";
 export {
-  applyExclusiveOptions,
   hasStartedAnswering,
   reachableFields,
   withoutUnreachable,
@@ -42,7 +41,7 @@ export {
   clearsSafetyScreening,
   type OnboardingSubmission,
 } from "./onboarding-submission";
-export { entryBounds, fieldProblem } from "./onboarding-validation";
+export { fieldProblem } from "./onboarding-validation";
 export { type OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 export { OpenOnboardingReviewUseCase } from "./open-onboarding-review-use-case";
 export { ReadClientOnboardingUseCase } from "./read-client-onboarding-use-case";

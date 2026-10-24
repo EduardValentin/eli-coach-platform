@@ -36,10 +36,10 @@ export function ClientsUnavailable() {
 
 type ClientsSectionProps = {
   clients: readonly RosterClient[];
-  avatarUrls: Readonly<Record<string, string | null>>;
+  avatarSrcs: Readonly<Record<string, string | undefined>>;
 };
 
-export function ClientsSection({ clients, avatarUrls }: ClientsSectionProps) {
+export function ClientsSection({ clients, avatarSrcs }: ClientsSectionProps) {
   const {
     changeQuery,
     chooseSort,
@@ -51,7 +51,7 @@ export function ClientsSection({ clients, avatarUrls }: ClientsSectionProps) {
   } = useRosterParams();
   const selection = { query, status };
   const shown = sortRoster(filterRoster(clients, selection), sort).map(
-    (client) => ({ ...client, avatarUrl: avatarUrls[client.clientId] ?? null }),
+    (client) => ({ ...client, avatarSrc: avatarSrcs[client.clientId] }),
   );
   const emptyCopy = emptyRosterCopy({ rosterSize: clients.length, selection });
 

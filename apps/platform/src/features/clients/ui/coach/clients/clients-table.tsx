@@ -42,7 +42,7 @@ const SORTABLE_COLUMNS: readonly { key: RosterSortKey; label: string }[] = [
   { key: "joined", label: "Join date" },
 ];
 
-type ClientsTableRow = RosterClient & { avatarUrl: string | null };
+type ClientsTableRow = RosterClient & { avatarSrc: string | undefined };
 
 type ClientsTableProps = {
   clients: readonly ClientsTableRow[];
@@ -127,11 +127,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
     >
       <TableCell>
         <div className="flex items-center gap-3">
-          <Avatar
-            imageUrl={client.avatarUrl ?? undefined}
-            name={name}
-            tone="heading"
-          />
+          <Avatar imageUrl={client.avatarSrc} name={name} tone="heading" />
           <div>
             <p
               className="text-sm font-semibold text-text-primary"

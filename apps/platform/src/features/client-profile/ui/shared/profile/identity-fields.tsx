@@ -1,4 +1,3 @@
-import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { SettingsBody, SettingsRow } from "@eli-coach-platform/ui/portal";
 import { useState } from "react";
@@ -27,8 +26,6 @@ const NAME_FIELDS = [IDENTITY_FIELDS.firstName, IDENTITY_FIELDS.lastName];
 
 const COUNTRY_FIELDS = [IDENTITY_FIELDS.country];
 
-const IDENTITY_UNITS: MeasureUnits = { weight: "kg", length: "cm" };
-
 export function IdentityFields({
   control,
   email,
@@ -42,11 +39,7 @@ export function IdentityFields({
 
   return (
     <>
-      <ProfileFieldRows
-        control={control}
-        fields={NAME_FIELDS}
-        units={IDENTITY_UNITS}
-      />
+      <ProfileFieldRows control={control} fields={NAME_FIELDS} />
       <SettingsRow description={email.description} title="Email">
         <ReadOnlyValue
           hint={{ label: "Why the email can't be changed", text: email.hint }}
@@ -75,11 +68,7 @@ export function IdentityFields({
           onNumberChange={phoneNumber.field.onChange}
         />
       </SettingsBody>
-      <ProfileFieldRows
-        control={control}
-        fields={COUNTRY_FIELDS}
-        units={IDENTITY_UNITS}
-      />
+      <ProfileFieldRows control={control} fields={COUNTRY_FIELDS} />
     </>
   );
 }

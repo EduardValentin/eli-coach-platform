@@ -22,14 +22,15 @@ type SettingsPage = {
 };
 
 export async function loader(args: LoaderFunctionArgs): Promise<SettingsPage> {
-  const { clientSettings, ownProfile } = args.context.get(clientProfileContext);
-  const [subscription, settings, profile] = await Promise.all([
+  const { clientSettings: settingsReader, ownProfile } =
+    args.context.get(clientProfileContext);
+  const [subscription, clientSettings, profile] = await Promise.all([
     args.context.get(coachingSalesContext).subscription.loadSettings(args),
-    clientSettings.load(args),
+    settingsReader.load(args),
     ownProfile.load(args),
   ]);
 
-  return { subscription, clientSettings: settings, profile };
+  return { subscription, clientSettings, profile };
 }
 
 export const meta: MetaFunction = () => [

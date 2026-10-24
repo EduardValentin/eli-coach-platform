@@ -5,7 +5,6 @@ import {
 } from "@eli-coach-platform/domain/client-settings";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { Dumbbell } from "lucide-react";
-import { useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -30,55 +29,29 @@ import {
   PROFILE_SAVE_TOASTS,
   ProfileFormSection,
 } from "~/features/client-profile/ui/shared/profile/profile-form-section";
-import {
-  useProfileSectionSave,
-  type ProfileSectionOutcome,
-} from "~/features/client-profile/ui/shared/profile/use-profile-section-save";
+import { useProfileSectionSave } from "~/features/client-profile/ui/shared/profile/use-profile-section-save";
 
 type TrainingFormProps = {
   coaching: NonNullable<OwnClientProfileView["coaching"]>;
   unitPreference: UnitPreferenceSnapshot;
 };
 
-type SharedFactProblems = Parameters<typeof sharedFactProblemMessages>[0];
-
 export function TrainingForm({ coaching, unitPreference }: TrainingFormProps) {
   const units = measureUnitsOf(unitPreference);
-  const submitted = useRef<SharedFactValues | null>(null);
   const form = useForm<SharedFactValues>({
     defaultValues: sharedFactValues(coaching, units),
     resolver: zodResolver(
       profileFieldsSchema<SharedFactValues>(SHARED_FACT_FIELDS, units),
     ),
   });
-
-  const settle = (outcome: ProfileSectionOutcome<SharedFactProblems>) => {
-    if (outcome.status === "saved") {
-      form.reset(submitted.current ?? form.getValues());
-      toast.success(PROFILE_SAVE_TOASTS.saved);
-      return;
-    }
-
-    const problems =
-      outcome.status === "invalid"
-        ? sharedFactProblemMessages(outcome.problems, units)
-        : [];
-
-    if (problems.length === 0) {
-      toast.error(PROFILE_SAVE_TOASTS.unsaved);
-      return;
-    }
-
-    problems.forEach(({ field, message }, index) =>
-      form.setError(field, { message }, { shouldFocus: index === 0 }),
-    );
-  };
-
   const { save, saving } = useProfileSectionSave({
-    action: CLIENT_PROFILE_API_PATHS.ownProfile,
-    onSettled: settle,
-    problemsAnswer: clientProfileProblemsAnswerSchema,
-    savedAnswer: clientProfileSavedAnswerSchema,
+    endpoint: {
+      action: CLIENT_PROFILE_API_PATHS.ownProfile,
+      problemsAnswer: clientProfileProblemsAnswerSchema,
+      savedAnswer: clientProfileSavedAnswerSchema,
+    },
+    form,
+    problemMessagesOf: (problems) => sharedFactProblemMessages(problems, units),
   });
 
   const submit = form.handleSubmit((values) => {
@@ -91,8 +64,7 @@ export function TrainingForm({ coaching, unitPreference }: TrainingFormProps) {
       return;
     }
 
-    submitted.current = values;
-    save(request.data);
+    save(values, request.data);
   });
 
   return (

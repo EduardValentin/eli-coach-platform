@@ -4,6 +4,7 @@ import {
   ACTIVITY_LEVELS,
   CLIENT_LEVELS,
   CYCLE_MODES,
+  PRIMARY_GOALS,
   PROGRESS_PHOTO_VIEWS,
   SESSION_MINUTE_OPTIONS,
   TRAINING_DAY_OPTIONS,
@@ -78,7 +79,7 @@ export const clientProfilesTable = appSchema.table(
     }),
     limitations: text("limitations"),
     level: varchar("level", { enum: CLIENT_LEVELS, length: 16 }),
-    primaryGoal: text("primary_goal"),
+    primaryGoal: text("primary_goal", { enum: PRIMARY_GOALS }),
     goalWeightKg: numeric("goal_weight_kg", {
       precision: 5,
       scale: 2,
@@ -114,6 +115,10 @@ export const clientProfilesTable = appSchema.table(
     check(
       "client_profiles_level_check",
       sql`${table.level} in (${quotedList(CLIENT_LEVELS)})`,
+    ),
+    check(
+      "client_profiles_primary_goal_check",
+      sql`${table.primaryGoal} in (${quotedList(PRIMARY_GOALS)})`,
     ),
     check(
       "client_profiles_activity_level_check",

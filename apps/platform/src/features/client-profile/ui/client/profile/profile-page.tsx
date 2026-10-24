@@ -16,6 +16,7 @@ import { AboutYouForm } from "~/features/client-profile/ui/client/profile/about-
 import { CoachFactsSection } from "~/features/client-profile/ui/client/profile/coach-facts-section";
 import { TrainingForm } from "~/features/client-profile/ui/client/profile/training-form";
 import { AvatarField } from "~/features/client-profile/ui/shared/avatar/avatar-field";
+import { clientFullName } from "~/features/clients/public/clients";
 
 type ClientProfilePage = {
   profile: OwnClientProfileView;
@@ -56,10 +57,10 @@ export default function ClientProfileRoute() {
 
       <div className="space-y-6 sm:space-y-8">
         <AvatarField
-          action={CLIENT_PROFILE_API_PATHS.avatars}
+          avatarEndpoint={CLIENT_PROFILE_API_PATHS.avatars}
           avatarUrl={profile.avatarUrl}
-          detail={identity.email}
-          name={`${identity.firstName} ${identity.lastName}`}
+          clientName={clientFullName(identity)}
+          email={identity.email}
         />
         <AboutYouForm identity={identity} />
         {coaching && (

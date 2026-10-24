@@ -16,7 +16,10 @@ import { useEffect, useEffectEvent } from "react";
 import { useFetcher } from "react-router";
 
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
-import { unitPreferenceSchema } from "~/features/client-profile/public/unit-preference";
+import {
+  unitPreferenceSavedAnswerSchema,
+  unitPreferenceSchema,
+} from "~/features/client-profile/public/unit-preference";
 import { PROFILE_SAVE_TOASTS } from "~/features/client-profile/ui/shared/profile/profile-form-section";
 
 type UnitsSectionProps = {
@@ -25,8 +28,6 @@ type UnitsSectionProps = {
 };
 
 const NEUTRAL_SAMPLE = { weightKg: 66.1, heightCm: 165 };
-
-const CM_PER_INCH = 2.54;
 
 const INCHES_PER_FOOT = 12;
 
@@ -39,13 +40,14 @@ function weightSample(weightKg: number, preference: UnitPreferenceSnapshot) {
 }
 
 function heightSample(heightCm: number, preference: UnitPreferenceSnapshot) {
-  if (preference.heightUnit === "cm") {
-    const units = measureUnitsOf(preference);
+  const units = measureUnitsOf(preference);
+  const height = toDisplayMeasure("height", heightCm, units);
 
-    return `${toDisplayMeasure("height", heightCm, units)} ${measureUnitLabel("height", units)}`;
+  if (preference.heightUnit === "cm") {
+    return `${height} ${measureUnitLabel("height", units)}`;
   }
 
-  const inches = Math.round(heightCm / CM_PER_INCH);
+  const inches = Math.round(height);
 
   return `${Math.floor(inches / INCHES_PER_FOOT)}'${inches % INCHES_PER_FOOT}"`;
 }
@@ -55,13 +57,15 @@ function useUnitPreferenceSave(saved: UnitPreferenceSnapshot) {
   const pending = unitPreferenceSchema.safeParse(json);
   const shown = state !== "idle" && pending.success ? pending.data : saved;
 
-  const refuse = useEffectEvent(() => {
-    toast.error(PROFILE_SAVE_TOASTS.unsaved);
+  const reportUnsaved = useEffectEvent((answer: unknown) => {
+    if (!unitPreferenceSavedAnswerSchema.safeParse(answer).success) {
+      toast.error(PROFILE_SAVE_TOASTS.unsaved);
+    }
   });
 
   useEffect(() => {
-    if (data !== undefined && data !== null) {
-      refuse();
+    if (data !== undefined) {
+      reportUnsaved(data);
     }
   }, [data]);
 

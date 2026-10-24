@@ -1,5 +1,6 @@
 import {
   CoachingFacts,
+  type CoachingFactsEntry,
   type CoachingFactsProblems,
   type CoachingFactsResult,
   type CoachingFactsSnapshot,
@@ -19,7 +20,7 @@ export type ClientProfileSnapshot = {
 };
 
 export type CoachProfileEdit = {
-  coaching: CoachingFactsSnapshot;
+  coaching: CoachingFactsEntry;
   coachNotes: string | null;
 };
 

@@ -45,4 +45,5 @@ ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_session_minu
 ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_training_place_check" CHECK ("app"."client_profiles"."training_place" in ('Home', 'Gym', 'Both'));--> statement-breakpoint
 ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_level_check" CHECK ("app"."client_profiles"."level" in ('beginner', 'intermediate', 'advanced'));--> statement-breakpoint
 ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_activity_level_check" CHECK ("app"."client_profiles"."activity_level" in ('Mostly sitting', 'Lightly active', 'Active', 'Very active'));--> statement-breakpoint
-ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_cycle_mode_check" CHECK ("app"."client_profiles"."cycle_mode" in ('adapted', 'general'));
+ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_cycle_mode_check" CHECK ("app"."client_profiles"."cycle_mode" in ('adapted', 'general'));--> statement-breakpoint
+ALTER TABLE "app"."client_profiles" ADD CONSTRAINT "client_profiles_primary_goal_check" CHECK ("app"."client_profiles"."primary_goal" in ('Lose fat', 'Build muscle', 'Maintain a healthy weight', 'Learn to balance activity and nutrition', 'Improve overall health', 'Work with my menstrual cycle'));

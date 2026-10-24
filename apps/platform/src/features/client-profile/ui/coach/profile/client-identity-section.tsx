@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/toast";
 import { UserRound } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -20,74 +19,46 @@ import {
 } from "~/features/client-profile/ui/shared/profile/identity-form";
 import { IdentityFields } from "~/features/client-profile/ui/shared/profile/identity-fields";
 import { ProfileFieldRows } from "~/features/client-profile/ui/shared/profile/profile-field-control";
-import {
-  PROFILE_SAVE_TOASTS,
-  ProfileFormSection,
-} from "~/features/client-profile/ui/shared/profile/profile-form-section";
-import {
-  useProfileSectionSave,
-  type ProfileSectionOutcome,
-} from "~/features/client-profile/ui/shared/profile/use-profile-section-save";
+import { ProfileFormSection } from "~/features/client-profile/ui/shared/profile/profile-form-section";
+import { useProfileSectionSave } from "~/features/client-profile/ui/shared/profile/use-profile-section-save";
 import {
   clientIdentityProblemsAnswerSchema,
   clientIdentitySavedAnswerSchema,
 } from "~/features/clients/public/client-identity";
 import { coachClientIdentityPath } from "~/features/clients/public/paths";
-import { COACH_MEASURE_UNITS } from "~/features/client-profile/ui/shared/measure-field/coach-measure-units";
 
-type AboutHerSectionProps = {
+type ClientIdentitySectionProps = {
   clientId: string;
   identity: ClientProfileView["identity"];
 };
 
-type IdentityProblems = Parameters<typeof identityProblemMessages>[0];
-
 const GENDER_FIELDS = [IDENTITY_FIELDS.gender];
 
-export function AboutHerSection({ clientId, identity }: AboutHerSectionProps) {
+export function ClientIdentitySection({
+  clientId,
+  identity,
+}: ClientIdentitySectionProps) {
   const timeZone = useCalendarDayTimeZone();
   const [now] = useState(() => new Date());
-  const submitted = useRef<IdentityValues | null>(null);
   const form = useForm<IdentityValues>({
     defaultValues: identityValues(identity),
     resolver: zodResolver(coachIdentitySchema({ now, timeZone })),
   });
+  const { save, saving } = useProfileSectionSave({
+    endpoint: {
+      action: coachClientIdentityPath(clientId),
+      problemsAnswer: clientIdentityProblemsAnswerSchema,
+      savedAnswer: clientIdentitySavedAnswerSchema,
+    },
+    form,
+    problemMessagesOf: identityProblemMessages,
+  });
   const subject = subjectPronoun(identity.gender);
   const object = objectPronoun(identity.gender);
 
-  const settle = (outcome: ProfileSectionOutcome<IdentityProblems>) => {
-    if (outcome.status === "saved") {
-      form.reset(submitted.current ?? form.getValues());
-      toast.success(PROFILE_SAVE_TOASTS.saved);
-      return;
-    }
-
-    const problems =
-      outcome.status === "invalid"
-        ? identityProblemMessages(outcome.problems)
-        : [];
-
-    if (problems.length === 0) {
-      toast.error(PROFILE_SAVE_TOASTS.unsaved);
-      return;
-    }
-
-    problems.forEach(({ field, message }, index) =>
-      form.setError(field, { message }, { shouldFocus: index === 0 }),
-    );
-  };
-
-  const { save, saving } = useProfileSectionSave({
-    action: coachClientIdentityPath(clientId),
-    onSettled: settle,
-    problemsAnswer: clientIdentityProblemsAnswerSchema,
-    savedAnswer: clientIdentitySavedAnswerSchema,
-  });
-
-  const submit = form.handleSubmit((values) => {
-    submitted.current = values;
-    save(identityRequestOf(values));
-  });
+  const submit = form.handleSubmit((values) =>
+    save(values, identityRequestOf(values)),
+  );
 
   return (
     <ProfileFormSection
@@ -109,11 +80,7 @@ export function AboutHerSection({ clientId, identity }: AboutHerSectionProps) {
         }}
         idPrefix="client-profile"
       />
-      <ProfileFieldRows
-        control={form.control}
-        fields={GENDER_FIELDS}
-        units={COACH_MEASURE_UNITS}
-      />
+      <ProfileFieldRows control={form.control} fields={GENDER_FIELDS} />
     </ProfileFormSection>
   );
 }

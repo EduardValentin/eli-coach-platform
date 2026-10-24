@@ -46,14 +46,17 @@ export class ClientIdentityEdit {
     countries: VisitorCountries,
   ): ClientIdentityEditResult {
     const { phone: phoneEntry, ...identity } = entered;
-    const phone = countries.phoneOf(phoneEntry);
+    const phoneReading = countries.phoneOf(phoneEntry);
     const edit = new ClientIdentityEdit({
       ...identity,
       firstName: entered.firstName.trim(),
       lastName: entered.lastName.trim(),
-      phone: phone.status === "valid" ? phone.phone.toSnapshot().e164 : null,
+      phone:
+        phoneReading.status === "valid"
+          ? phoneReading.phone.toSnapshot().e164
+          : null,
     });
-    const problems = edit.problems(moment, phone, countries);
+    const problems = edit.problems(moment, phoneReading, countries);
 
     return Object.keys(problems).length > 0
       ? { status: "invalid", problems }
@@ -66,7 +69,7 @@ export class ClientIdentityEdit {
 
   private problems(
     moment: AgeMoment,
-    phone: VisitorPhoneReading,
+    phoneReading: VisitorPhoneReading,
     countries: VisitorCountries,
   ): ClientIdentityProblems {
     const { firstName, lastName, dateOfBirth, country } = this.snapshot;
@@ -80,7 +83,7 @@ export class ClientIdentityEdit {
     return {
       ...(firstNameProblem && { firstName: firstNameProblem }),
       ...(lastNameProblem && { lastName: lastNameProblem }),
-      ...(phone.status === "invalid" && { phone: "invalid" }),
+      ...(phoneReading.status === "invalid" && { phone: "invalid" }),
       ...(dateOfBirthProblem && { dateOfBirth: dateOfBirthProblem }),
       ...(!countries.includes(country) && { country: "invalid" }),
     };

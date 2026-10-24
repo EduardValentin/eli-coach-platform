@@ -59,5 +59,5 @@ export default function CoachClientsRoute() {
     ]),
   );
 
-  return <ClientsSection avatarUrls={avatarSrcs} clients={clients} />;
+  return <ClientsSection avatarSrcs={avatarSrcs} clients={clients} />;
 }

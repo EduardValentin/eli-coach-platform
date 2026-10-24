@@ -10,6 +10,10 @@ export const unitPreferenceSchema = z.object({
   heightUnit: z.enum(HEIGHT_UNITS),
 }) satisfies z.ZodType<UnitPreferenceSnapshot>;
 
+export const unitPreferenceSavedAnswerSchema = z.object({
+  status: z.literal("saved"),
+});
+
 export const unitPreferenceRefusalSchema = z.object({
   error: z.enum(["not-on-journey", "ended"]),
 });

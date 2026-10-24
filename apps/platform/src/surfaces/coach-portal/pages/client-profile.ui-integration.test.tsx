@@ -181,6 +181,46 @@ describe("the coach's client profile page", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps the coach's unsaved coaching changes when a change of gender is saved", async () => {
+    // arrange
+    const loaded = { profile: APPROVED };
+    recordJsonRequests("put", IDENTITY_URL, () => {
+      loaded.profile = {
+        ...APPROVED,
+        identity: { ...APPROVED.identity, gender: "male" },
+      };
+
+      return HttpResponse.json({ status: "saved" });
+    });
+    const user = await renderProfilePage(loaded);
+    const about = screen.getByRole("region", { name: "About her" });
+    const coaching = screen.getByRole("region", { name: "Coaching" });
+    await user.type(
+      within(coaching).getByRole("textbox", { name: /^Limitations/ }),
+      " and right knee",
+    );
+
+    // act
+    await user.click(within(about).getByRole("radio", { name: "Male" }));
+    await user.click(
+      within(about).getByRole("button", { name: "Save changes" }),
+    );
+
+    // assert
+    expect(await screen.findByText(SAVED)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("group", { name: /^Cycle mode/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      within(screen.getByRole("region", { name: "Coaching" })).getByRole(
+        "textbox",
+        { name: /^Limitations/ },
+      ),
+    ).toHaveValue("Left shoulder and right knee");
+  });
+
   it("keeps her email read-only and says why when the coach asks", async () => {
     // arrange
     const user = await renderProfilePage({ profile: APPROVED });

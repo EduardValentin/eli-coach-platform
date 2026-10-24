@@ -16,6 +16,7 @@ import {
 } from "~/features/client-profile/public/client-settings";
 import {
   unitPreferenceRefusalSchema,
+  unitPreferenceSavedAnswerSchema,
   unitPreferenceSchema,
 } from "~/features/client-profile/public/unit-preference";
 
@@ -69,7 +70,9 @@ export class ClientSettingsController {
     });
 
     if (result.status === "saved") {
-      return new Response(null, { status: 204 });
+      return Response.json(
+        unitPreferenceSavedAnswerSchema.parse({ status: "saved" }),
+      );
     }
 
     return Response.json(

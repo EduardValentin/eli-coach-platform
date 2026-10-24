@@ -3,9 +3,7 @@ import {
   MIN_BOOKING_AGE,
   VisitorBirthDate,
   VisitorCountries,
-  VisitorPhone,
   type VisitorGender,
-  type VisitorPhoneParts,
   type VisitorPhoneReading,
   type VisitorPrimaryGoal,
 } from "@eli-coach-platform/domain/assessment-call";
@@ -183,10 +181,6 @@ const OBJECT_PRONOUNS: Readonly<Record<VisitorGender, string>> = {
 
 export function objectPronoun(gender: VisitorGender): string {
   return OBJECT_PRONOUNS[gender];
-}
-
-export function normalizePhone(parts: VisitorPhoneParts): PhoneNormalization {
-  return normalizationOf(VisitorPhone.read(parts));
 }
 
 export function ageOn(question: AgeQuestion): number {

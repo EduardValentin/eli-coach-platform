@@ -13,6 +13,11 @@ export type MeasureUnits = {
   length: LengthUnit;
 };
 
+export const CANONICAL_MEASURE_UNITS: MeasureUnits = {
+  weight: "kg",
+  length: "cm",
+};
+
 const KG_PER_LB = 0.45359237;
 const CM_PER_IN = 2.54;
 const IN_PER_FT = 12;

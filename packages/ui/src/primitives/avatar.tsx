@@ -16,7 +16,7 @@ const avatarClasses = cva(
         quiet: "",
         muted: "opacity-70",
         heading:
-          "[&_[data-slot=avatar-fallback]]:bg-surface-quiet [&_[data-slot=avatar-fallback]]:font-heading [&_[data-slot=avatar-fallback]]:font-semibold [&_[data-slot=avatar-image]]:rounded-full [&_[data-slot=avatar-image]]:border [&_[data-slot=avatar-image]]:border-border-default/50 [&_[data-slot=avatar-image]]:object-cover",
+          "[&_[data-slot=avatar-fallback]]:bg-surface-quiet [&_[data-slot=avatar-fallback]]:font-heading [&_[data-slot=avatar-fallback]]:font-semibold [&_[data-slot=avatar-image]]:rounded-full [&_[data-slot=avatar-image]]:border [&_[data-slot=avatar-image]]:border-border-default/50",
       },
     },
     defaultVariants: {
@@ -55,7 +55,7 @@ export function Avatar({
       {imageUrl ? (
         <img
           alt={imageAlt}
-          className="aspect-square size-full"
+          className="aspect-square size-full object-cover"
           data-slot="avatar-image"
           src={imageUrl}
         />

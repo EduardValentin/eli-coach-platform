@@ -50,7 +50,8 @@ describe("ClientSettingsController saveUnits", () => {
     );
 
     // assert
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
     expect(saveUnitPreference).toHaveBeenCalledWith({
       authSubjectId: "user_ana",
       preference: { weightUnit: "lb", heightUnit: "ft-in" },

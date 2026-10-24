@@ -209,7 +209,8 @@ describe.sequential("client onboarding integration", () => {
     const response = await rig.requestAs(INVITED_CLIENT, ONBOARDING);
 
     // assert
-    expect(saved.status).toBe(204);
+    expect(saved.status).toBe(200);
+    expect(await saved.json()).toEqual({ status: "saved" });
     const client = await clientRowOf(INVITED_CLIENT);
     expect(await unitPreferenceRowOf(client.id)).toEqual({
       weightUnit: "lb",

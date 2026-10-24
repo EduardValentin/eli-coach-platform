@@ -107,13 +107,6 @@ function displayRange(
   };
 }
 
-export function entryBounds(
-  field: OnboardingField,
-  units: MeasureUnits,
-): NumericRange | null {
-  return field.range ? displayRange(field, field.range, units) : null;
-}
-
 function rangeMessage(
   field: OnboardingField,
   range: NumericRange,

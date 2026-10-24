@@ -1,5 +1,4 @@
 import type { ClientIdentityProblems } from "@eli-coach-platform/domain/client";
-import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { z } from "zod";
 
 import {
@@ -17,7 +16,7 @@ import type { ClientProfileView } from "~/features/client-profile/public/client-
 import {
   lengthProblemMessage,
   MAX_PROFILE_NAME_LENGTH,
-  profileFieldProblem,
+  profileFieldSchema,
   type ProfileField,
 } from "./profile-fields";
 
@@ -34,8 +33,6 @@ export type IdentityValues = {
 type IdentityMoment = { now: Date; timeZone: string };
 
 type ProfileIdentity = ClientProfileView["identity"];
-
-const NO_UNITS: MeasureUnits = { weight: "kg", length: "cm" };
 
 export const IDENTITY_FIELDS = {
   firstName: {
@@ -81,16 +78,6 @@ const IDENTITY_PROBLEMS = {
   country: "Choose one option.",
 } as const;
 
-function textFieldSchema(field: ProfileField) {
-  return z.string().superRefine((value, context) => {
-    const problem = profileFieldProblem(field, value, NO_UNITS);
-
-    if (problem) {
-      context.addIssue({ code: "custom", message: problem });
-    }
-  });
-}
-
 function dateOfBirthProblem(
   dateOfBirth: string,
   moment: IdentityMoment,
@@ -119,10 +106,10 @@ function phoneProblem(values: IdentityValues): string | null {
 }
 
 const identityShape = {
-  firstName: textFieldSchema(IDENTITY_FIELDS.firstName),
-  lastName: textFieldSchema(IDENTITY_FIELDS.lastName),
+  firstName: profileFieldSchema(IDENTITY_FIELDS.firstName),
+  lastName: profileFieldSchema(IDENTITY_FIELDS.lastName),
   dateOfBirth: z.string(),
-  country: textFieldSchema(IDENTITY_FIELDS.country),
+  country: profileFieldSchema(IDENTITY_FIELDS.country),
   phoneCountry: z.string(),
   phoneNumber: z.string(),
   gender: z.string(),
@@ -158,7 +145,7 @@ export function coachIdentitySchema(moment: IdentityMoment) {
   return withIdentityRules(
     z.object({
       ...identityShape,
-      gender: textFieldSchema(IDENTITY_FIELDS.gender),
+      gender: profileFieldSchema(IDENTITY_FIELDS.gender),
     }),
     moment,
   );

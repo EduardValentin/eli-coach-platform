@@ -6,6 +6,7 @@ export {
   type UnitPreferenceSnapshot,
 } from "./unit-preference";
 export {
+  CANONICAL_MEASURE_UNITS,
   formatFeetAndInches,
   measureStep,
   measureUnitLabel,

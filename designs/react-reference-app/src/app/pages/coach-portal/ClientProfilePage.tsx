@@ -206,7 +206,7 @@ function CoachClientProfile({ journey }: { journey: ClientJourney }) {
           avatarUrl={profile.avatarUrl}
           onChange={(avatarUrl) => updateClientAvatar(journey.callId, avatarUrl)}
         />
-        <Fragment key={`${journey.stage}-${profile.identity.gender}`}>
+        <Fragment key={journey.stage}>
           <AboutSection journey={journey} />
           <CoachingSection journey={journey} />
           {profile.coaching && <PreferencesSection journey={journey} />}

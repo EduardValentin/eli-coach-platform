@@ -3,6 +3,7 @@ import {
   BODYWEIGHT_ONLY,
   CLIENT_EQUIPMENT,
   HEIGHT_RANGE_CM,
+  PRIMARY_GOALS,
 } from "../client-profile";
 import {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
@@ -190,14 +191,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
       label: "What is your primary goal?",
       kind: "select",
       requirement: "required",
-      options: options([
-        "Lose fat",
-        "Build muscle",
-        "Maintain a healthy weight",
-        "Learn to balance activity and nutrition",
-        "Improve overall health",
-        "Work with my menstrual cycle",
-      ]),
+      options: options(PRIMARY_GOALS),
     },
     {
       id: "blockers",

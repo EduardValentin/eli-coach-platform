@@ -209,6 +209,17 @@ describe("coachingSeedOf", () => {
     });
   });
 
+  it("seeds no goal when her answer is not one of the profile's goals", () => {
+    // arrange
+    const answers = answersWith({ goal: { primaryGoal: "Run a marathon" } });
+
+    // act
+    const seed = coachingSeedOf(answers, "female");
+
+    // assert
+    expect(seed.coaching.primaryGoal).toBeNull();
+  });
+
   it("reads the email channel and each weekday", () => {
     // arrange
     const answers = answersWith({

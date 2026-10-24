@@ -123,7 +123,7 @@ export default function CoachClientRoute() {
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">
           <Avatar
-            imageUrl={clientAvatarSrc(profile.avatarUrl) ?? undefined}
+            imageUrl={clientAvatarSrc(profile.avatarUrl)}
             name={name}
             size="lg"
           />

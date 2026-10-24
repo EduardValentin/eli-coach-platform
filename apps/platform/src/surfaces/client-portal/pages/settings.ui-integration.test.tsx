@@ -731,9 +731,7 @@ describe("her units", () => {
 
   it("saves the unit she chooses beside the one she keeps", async () => {
     // arrange
-    const saves = recordUnitSaves(
-      () => new HttpResponse(null, { status: 204 }),
-    );
+    const saves = recordUnitSaves(() => HttpResponse.json({ status: "saved" }));
     const user = await renderSettings({ settings: WAITING_REFUNDABLE });
     const units = screen.getByRole("region", { name: "Units & Measurements" });
 

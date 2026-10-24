@@ -7,7 +7,7 @@ import {
 } from "react-router";
 
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { CoachClientProfile } from "~/features/client-profile/ui/coach/profile/client-profile-page";
+import { CoachClientProfile } from "~/features/client-profile/ui/coach/profile/coach-client-profile";
 import { clientFullName } from "~/features/clients/public/clients";
 import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";

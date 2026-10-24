@@ -147,6 +147,23 @@ describe('the coach client profile page', () => {
     expect(saveButton('About her')).toBeDisabled();
   });
 
+  it('keeps unsaved coaching changes when a change of gender is saved', async () => {
+    // arrange
+    const user = renderProfilePage('jstage=approved');
+    await user.type(within(section('Coaching')).getByRole('textbox', { name: /Limitations/ }), ' Knee too.');
+
+    // act
+    await user.click(within(section('About her')).getByRole('radio', { name: 'Male' }));
+    await user.click(saveButton('About her'));
+
+    // assert
+    expect(await screen.findByText('Changes saved', {}, SAVE_TIMEOUT)).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /Cycle mode/ })).not.toBeInTheDocument();
+    expect(within(section('Coaching')).getByRole('textbox', { name: /Limitations/ })).toHaveValue(
+      'Right shoulder aches on overhead pressing. Knee too.',
+    );
+  });
+
   it('saves her coaching facts and coach notes in their own section', async () => {
     // arrange
     const user = renderProfilePage('jstage=approved');

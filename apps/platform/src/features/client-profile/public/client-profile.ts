@@ -5,6 +5,7 @@ import {
   CLIENT_EQUIPMENT,
   CLIENT_LEVELS,
   CYCLE_MODES,
+  PRIMARY_GOALS,
   SESSION_MINUTE_OPTIONS,
   TRAINING_DAY_OPTIONS,
   TRAINING_PLACES,
@@ -36,7 +37,7 @@ export const sharedCoachingFactsSchema = z.object({
 
 export const coachingFactsSchema = sharedCoachingFactsSchema.extend({
   level: z.enum(CLIENT_LEVELS),
-  primaryGoal: z.string().max(TEXT_MAX_LENGTH).nullable(),
+  primaryGoal: z.enum(PRIMARY_GOALS).nullable(),
   goalWeightKg: z.number().nullable(),
   activityLevel: z.enum(ACTIVITY_LEVELS).nullable(),
   cycleMode: z.enum(CYCLE_MODES),
@@ -71,7 +72,9 @@ export const clientProfileSchema = z.object({
 export type ClientProfileView = z.infer<typeof clientProfileSchema>;
 
 export const coachProfileRequestSchema = z.object({
-  coaching: coachingFactsSchema,
+  coaching: coachingFactsSchema.extend({
+    primaryGoal: z.string().max(TEXT_MAX_LENGTH).nullable(),
+  }),
   coachNotes: z.string().max(TEXT_MAX_LENGTH).nullable(),
 });
 
@@ -80,6 +83,7 @@ const clientProfileProblemsSchema = z.object({
   goalWeightKg: z.enum(["out-of-range"]).optional(),
   equipment: z.enum(["exclusive"]).optional(),
   limitations: z.enum(["too-long"]).optional(),
+  primaryGoal: z.enum(["unknown"]).optional(),
   dietaryRestrictions: z.enum(["missing"]).optional(),
   coachNotes: z.enum(["too-long"]).optional(),
 }) satisfies z.ZodType<ClientProfileProblems>;

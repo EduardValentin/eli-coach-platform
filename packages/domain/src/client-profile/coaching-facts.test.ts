@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CoachingFacts,
+  type CoachingFactsEntry,
   type CoachingFactsProblems,
   type CoachingFactsSnapshot,
 } from "./coaching-facts";
@@ -92,19 +93,40 @@ describe("CoachingFacts.of", () => {
       { dietaryRestrictions: "   " },
       { dietaryRestrictions: "missing" },
     ],
-  ] satisfies [
-    string,
-    Partial<CoachingFactsSnapshot>,
-    CoachingFactsProblems,
-  ][])("names the problem with %s", (_label, change, problems) => {
+    [
+      "a goal the profile does not know",
+      { primaryGoal: "Run a marathon" },
+      { primaryGoal: "unknown" },
+    ],
+  ] satisfies [string, Partial<CoachingFactsEntry>, CoachingFactsProblems][])(
+    "names the problem with %s",
+    (_label, change, problems) => {
+      // arrange
+      const entered = { ...FACTS, ...change };
+
+      // act
+      const result = CoachingFacts.of(entered);
+
+      // assert
+      expect(result).toEqual({ status: "invalid", problems });
+    },
+  );
+
+  it("holds a goal from the profile's goals, trimmed", () => {
     // arrange
-    const entered = { ...FACTS, ...change };
+    const entered: CoachingFactsEntry = {
+      ...FACTS,
+      primaryGoal: "  Build muscle ",
+    };
 
     // act
     const result = CoachingFacts.of(entered);
 
     // assert
-    expect(result).toEqual({ status: "invalid", problems });
+    expect(result.status === "valid" && result.facts.toSnapshot()).toEqual({
+      ...FACTS,
+      primaryGoal: "Build muscle",
+    });
   });
 
   it("keeps bodyweight only when it is her one piece of equipment", () => {

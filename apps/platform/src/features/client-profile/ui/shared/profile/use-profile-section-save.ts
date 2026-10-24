@@ -1,5 +1,9 @@
+import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useEffectEvent, useRef } from "react";
+import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 import { useFetcher, type SubmitTarget } from "react-router";
+
+import { PROFILE_SAVE_TOASTS } from "./profile-form-section";
 
 type AnswerReading<Answer> =
   { success: true; data: Answer } | { success: false };
@@ -8,40 +12,60 @@ type AnswerSchema<Answer> = {
   safeParse: (answer: unknown) => AnswerReading<Answer>;
 };
 
-export type ProfileSectionOutcome<Problems> =
-  | { status: "saved" }
-  | { status: "invalid"; problems: Problems }
-  | { status: "failed" };
-
-type ProfileSectionSave<Problems> = {
+type ProfileSectionEndpoint<Problems> = {
   action: string;
   savedAnswer: AnswerSchema<{ status: "saved" }>;
   problemsAnswer: AnswerSchema<{ problems: Problems }>;
-  onSettled: (outcome: ProfileSectionOutcome<Problems>) => void;
 };
 
-export function useProfileSectionSave<Problems>({
-  action,
-  savedAnswer,
-  problemsAnswer,
-  onSettled,
-}: ProfileSectionSave<Problems>) {
+type ProfileProblemMessage<Values extends FieldValues> = {
+  field: FieldPath<Values>;
+  message: string;
+};
+
+type ProfileSectionSave<Values extends FieldValues, Problems> = {
+  form: UseFormReturn<Values>;
+  endpoint: ProfileSectionEndpoint<Problems>;
+  problemMessagesOf: (problems: Problems) => ProfileProblemMessage<Values>[];
+};
+
+export function useProfileSectionSave<Values extends FieldValues, Problems>({
+  form,
+  endpoint,
+  problemMessagesOf,
+}: ProfileSectionSave<Values, Problems>) {
   const { data, state, submit } = useFetcher<unknown>();
-  const awaitingAnswer = useRef(false);
+  const submitted = useRef<Values | null>(null);
 
-  const outcomeOf = (answer: unknown): ProfileSectionOutcome<Problems> => {
-    if (savedAnswer.safeParse(answer).success) return { status: "saved" };
+  const showProblems = (answer: unknown) => {
+    const refused = endpoint.problemsAnswer.safeParse(answer);
+    const problems = refused.success
+      ? problemMessagesOf(refused.data.problems)
+      : [];
 
-    const refused = problemsAnswer.safeParse(answer);
+    if (problems.length === 0) {
+      toast.error(PROFILE_SAVE_TOASTS.unsaved);
+      return;
+    }
 
-    return refused.success
-      ? { status: "invalid", problems: refused.data.problems }
-      : { status: "failed" };
+    problems.forEach(({ field, message }, index) =>
+      form.setError(field, { message }, { shouldFocus: index === 0 }),
+    );
   };
 
   const settle = useEffectEvent((answer: unknown) => {
-    awaitingAnswer.current = false;
-    onSettled(outcomeOf(answer));
+    const values = submitted.current;
+    submitted.current = null;
+
+    if (!values) return;
+
+    if (endpoint.savedAnswer.safeParse(answer).success) {
+      form.reset(values);
+      toast.success(PROFILE_SAVE_TOASTS.saved);
+      return;
+    }
+
+    showProblems(answer);
   });
 
   useEffect(() => {
@@ -50,12 +74,12 @@ export function useProfileSectionSave<Problems>({
     }
   }, [data]);
 
-  const save = (body: SubmitTarget) => {
-    if (awaitingAnswer.current) return;
+  const save = (values: Values, request: SubmitTarget) => {
+    if (submitted.current) return;
 
-    awaitingAnswer.current = true;
-    void submit(body, {
-      action,
+    submitted.current = values;
+    void submit(request, {
+      action: endpoint.action,
       encType: "application/json",
       method: "put",
     });

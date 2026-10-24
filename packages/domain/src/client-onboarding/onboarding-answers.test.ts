@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   answeredOfTotal,
-  applyExclusiveOptions,
   emptyAnswers,
   hasStartedAnswering,
   isFieldReachable,
@@ -124,56 +123,6 @@ describe("reachableFields and withoutUnreachable", () => {
       blockers: ["Busy schedule"],
       experienceLevel: "New to training",
     });
-  });
-});
-
-describe("applyExclusiveOptions", () => {
-  it("clears every other option when an exclusive one is picked", () => {
-    // arrange
-    const previous: readonly string[] = ["Pregnant"];
-    const next: readonly string[] = ["Pregnant", "None of these"];
-
-    // act
-    const selection = applyExclusiveOptions(lifeStageField, previous, next);
-
-    // assert
-    expect(selection).toEqual(["None of these"]);
-  });
-
-  it("removes the exclusive option when a non-exclusive one is picked", () => {
-    // arrange
-    const previous: readonly string[] = ["None of these"];
-    const next: readonly string[] = ["None of these", "Pregnant"];
-
-    // act
-    const selection = applyExclusiveOptions(lifeStageField, previous, next);
-
-    // assert
-    expect(selection).toEqual(["Pregnant"]);
-  });
-
-  it("keeps every non-exclusive option selected together", () => {
-    // arrange
-    const previous: readonly string[] = ["Pregnant"];
-    const next: readonly string[] = ["Pregnant", "Breastfeeding"];
-
-    // act
-    const selection = applyExclusiveOptions(lifeStageField, previous, next);
-
-    // assert
-    expect(selection).toEqual(["Pregnant", "Breastfeeding"]);
-  });
-
-  it("leaves an unpick alone", () => {
-    // arrange
-    const previous: readonly string[] = ["Pregnant", "Breastfeeding"];
-    const next: readonly string[] = ["Breastfeeding"];
-
-    // act
-    const selection = applyExclusiveOptions(lifeStageField, previous, next);
-
-    // assert
-    expect(selection).toEqual(["Breastfeeding"]);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   CLIENT_LEVELS,
   CYCLE_MODES,
   HEIGHT_RANGE_CM,
+  PRIMARY_GOALS,
   SESSION_MINUTE_OPTIONS,
   TRAINING_DAY_OPTIONS,
   TRAINING_PLACES,
@@ -14,15 +15,15 @@ import {
   type TrainingDays,
 } from "@eli-coach-platform/domain/client-profile";
 import type { ClientProfileProblems } from "@eli-coach-platform/domain/client-profile";
-import { ONBOARDING_FORMS } from "@eli-coach-platform/domain/client-onboarding";
 import {
+  CANONICAL_MEASURE_UNITS,
   measureUnitLabel,
   toCanonicalMeasure,
   toDisplayMeasure,
+  type MeasureKind,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/client-settings";
 import { WEIGHT_MEASUREMENT_FIELD } from "@eli-coach-platform/domain/measurement";
-import type { FieldValues } from "react-hook-form";
 import { z } from "zod";
 
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";
@@ -36,7 +37,16 @@ type ProfileMeasureKind = "height" | "weight";
 export type ProfileField = {
   id: string;
   label: string;
-  kind: "text" | "textarea" | "select" | "radio" | "chips" | ProfileMeasureKind;
+  kind:
+    | "text"
+    | "textarea"
+    | "number"
+    | "date"
+    | "select"
+    | "radio"
+    | "chips"
+    | "checkbox"
+    | MeasureKind;
   requirement: "required" | "optional";
   options?: readonly ProfileFieldOption[];
   exclusiveOptions?: readonly string[];
@@ -44,7 +54,22 @@ export type ProfileField = {
   placeholder?: string;
   hint?: string;
   range?: ProfileFieldRange;
+  step?: string;
+  unitSuffix?: string;
+  reassurance?: { value: string; text: string };
 };
+
+type ProfileFieldValues = Record<string, string | string[]>;
+
+type ProfileTextField = ProfileField & {
+  kind: Exclude<ProfileField["kind"], "chips">;
+};
+
+export const TICKED = "true";
+
+export const UNTICKED = "false";
+
+const MEASURE_KINDS: readonly string[] = ["weight", "height", "circumference"];
 
 export const MAX_PROFILE_NAME_LENGTH = 60;
 
@@ -99,14 +124,6 @@ function labelledOptions<Value extends string | number>(
     value: String(value),
     label: labels[value],
   }));
-}
-
-function primaryGoalOptions(): readonly ProfileFieldOption[] {
-  const field = ONBOARDING_FORMS.flatMap((form) => form.fields).find(
-    (candidate) => candidate.id === "primaryGoal",
-  );
-
-  return field?.options ?? [];
 }
 
 export const COACHING_FIELDS = {
@@ -166,7 +183,7 @@ export const COACHING_FIELDS = {
     label: "Primary goal",
     kind: "select",
     requirement: "required",
-    options: primaryGoalOptions(),
+    options: options(PRIMARY_GOALS),
   },
   goalWeight: {
     id: "goalWeight",
@@ -205,14 +222,14 @@ export const COACHING_FIELDS = {
   },
 } as const satisfies Record<string, ProfileField>;
 
-export const SHARED_FACT_FIELDS: readonly ProfileField[] = [
+export const SHARED_FACT_FIELDS = [
   COACHING_FIELDS.height,
   COACHING_FIELDS.trainingDays,
   COACHING_FIELDS.sessionMinutes,
   COACHING_FIELDS.equipment,
   COACHING_FIELDS.trainingPlace,
   COACHING_FIELDS.limitations,
-];
+] as const;
 
 export type SharedFactValues = {
   height: string;
@@ -221,16 +238,6 @@ export type SharedFactValues = {
   equipment: string[];
   trainingPlace: string;
   limitations: string;
-};
-
-export type CoachingValues = SharedFactValues & {
-  level: string;
-  primaryGoal: string;
-  goalWeight: string;
-  activityLevel: string;
-  cycleMode: string;
-  dietaryRestrictions: string;
-  coachNotes: string;
 };
 
 type CoachingFactsView = NonNullable<ClientProfileView["coaching"]>;
@@ -249,31 +256,41 @@ function isBlank(value: string | readonly string[]): boolean {
   return typeof value === "string" ? value.trim() === "" : value.length === 0;
 }
 
-function displayBounds(
-  kind: ProfileMeasureKind,
-  range: ProfileFieldRange,
-  units: MeasureUnits,
-): ProfileFieldRange {
-  return {
-    min: Math.round(toDisplayMeasure(kind, range.min, units)),
-    max: Math.round(toDisplayMeasure(kind, range.max, units)),
-  };
+export function measureKindOf(field: ProfileField): MeasureKind | null {
+  return MEASURE_KINDS.includes(field.kind)
+    ? (field.kind as MeasureKind)
+    : null;
 }
 
-export function measureBounds(
+function displayAmount(
+  field: ProfileField,
+  canonical: number,
+  units: MeasureUnits,
+): number {
+  const measureKind = measureKindOf(field);
+
+  return Math.round(
+    measureKind ? toDisplayMeasure(measureKind, canonical, units) : canonical,
+  );
+}
+
+export function entryBounds(
   field: ProfileField,
   units: MeasureUnits,
 ): ProfileFieldRange | null {
-  if (field.kind !== "height" && field.kind !== "weight") return null;
-
-  return field.range ? displayBounds(field.kind, field.range, units) : null;
+  return field.range
+    ? {
+        min: displayAmount(field, field.range.min, units),
+        max: displayAmount(field, field.range.max, units),
+      }
+    : null;
 }
 
-function outOfRangeMessage(
+export function outOfRangeMessage(
   field: ProfileField & { kind: ProfileMeasureKind },
   units: MeasureUnits,
 ): string {
-  const bounds = measureBounds(field, units);
+  const bounds = entryBounds(field, units);
 
   return bounds
     ? `Enter ${AMOUNT_NOUNS[field.kind]} between ${bounds.min} and ${bounds.max} ${measureUnitLabel(field.kind, units)}.`
@@ -288,14 +305,14 @@ function measureProblem(
 
   if (!Number.isFinite(amount)) return `Enter ${AMOUNT_NOUNS[field.kind]}.`;
 
-  const bounds = measureBounds(field, context.units);
+  const bounds = entryBounds(field, context.units);
 
   return bounds && (amount < bounds.min || amount > bounds.max)
     ? outOfRangeMessage(field, context.units)
     : null;
 }
 
-function requiredMessage(field: ProfileField): string {
+export function requiredMessage(field: ProfileField): string {
   if (field.kind === "height" || field.kind === "weight") {
     return `Enter ${AMOUNT_NOUNS[field.kind]}.`;
   }
@@ -307,7 +324,7 @@ export function lengthProblemMessage(maxLength: number): string {
   return `Keep it to ${maxLength} characters or fewer.`;
 }
 
-export function profileFieldProblem(
+function profileFieldProblem(
   field: ProfileField,
   value: string | readonly string[],
   units: MeasureUnits,
@@ -330,10 +347,12 @@ export function profileFieldProblem(
     : null;
 }
 
-function fieldSchema(field: ProfileField, units: MeasureUnits) {
-  const base = field.kind === "chips" ? z.array(z.string()) : z.string();
-
-  return base.superRefine((value, context) => {
+function refinedByProfileRules<Value extends string | string[]>(
+  schema: z.ZodType<Value, Value>,
+  field: ProfileField,
+  units: MeasureUnits,
+): z.ZodType<Value, Value> {
+  return schema.superRefine((value, context) => {
     const problem = profileFieldProblem(field, value, units);
 
     if (problem) {
@@ -342,18 +361,33 @@ function fieldSchema(field: ProfileField, units: MeasureUnits) {
   });
 }
 
-export function profileFieldsSchema<Values extends FieldValues>(
-  fields: readonly ProfileField[],
-  units: MeasureUnits,
-): z.ZodType<Values, Values> {
-  const shape = Object.fromEntries(
-    fields.map((field) => [field.id, fieldSchema(field, units)]),
-  );
-
-  return z.object(shape) as unknown as z.ZodType<Values, Values>;
+export function profileFieldSchema(
+  field: ProfileTextField,
+  units: MeasureUnits = CANONICAL_MEASURE_UNITS,
+): z.ZodType<string, string> {
+  return refinedByProfileRules(z.string(), field, units);
 }
 
-function measureValue(
+function entrySchemaOf(field: ProfileField, units: MeasureUnits) {
+  return field.kind === "chips"
+    ? refinedByProfileRules(z.array(z.string()), field, units)
+    : profileFieldSchema({ ...field, kind: field.kind }, units);
+}
+
+export function profileFieldsSchema<Values extends ProfileFieldValues>(
+  fields: readonly (ProfileField & { id: keyof Values & string })[],
+  units: MeasureUnits,
+): z.ZodType<Values, Values> {
+  const schema: z.ZodType<ProfileFieldValues, ProfileFieldValues> = z.object(
+    Object.fromEntries(
+      fields.map((field) => [field.id, entrySchemaOf(field, units)]),
+    ),
+  );
+
+  return schema as z.ZodType<Values, Values>;
+}
+
+export function measureValue(
   kind: ProfileMeasureKind,
   canonical: number | null,
   units: MeasureUnits,
@@ -363,7 +397,7 @@ function measureValue(
     : String(toDisplayMeasure(kind, canonical, units));
 }
 
-function canonicalMeasure(
+export function canonicalMeasure(
   kind: ProfileMeasureKind,
   entered: string,
   units: MeasureUnits,
@@ -400,59 +434,12 @@ export function sharedFactsOf(values: SharedFactValues, units: MeasureUnits) {
   };
 }
 
-export function coachingValues(
-  profile: Pick<ClientProfileView, "coachNotes"> & {
-    coaching: CoachingFactsView;
-  },
-  units: MeasureUnits,
-): CoachingValues {
-  const { coaching } = profile;
+export type FactProblemMessage<Values> = {
+  field: keyof Values;
+  message: string;
+};
 
-  return {
-    ...sharedFactValues(coaching, units),
-    level: coaching.level,
-    primaryGoal: coaching.primaryGoal ?? "",
-    goalWeight: measureValue("weight", coaching.goalWeightKg, units),
-    activityLevel: coaching.activityLevel ?? "",
-    cycleMode: coaching.cycleMode,
-    dietaryRestrictions: coaching.dietaryRestrictions,
-    coachNotes: profile.coachNotes ?? "",
-  };
-}
-
-export function coachingOf(values: CoachingValues, units: MeasureUnits) {
-  return {
-    coaching: {
-      ...sharedFactsOf(values, units),
-      level: values.level,
-      primaryGoal: values.primaryGoal || null,
-      goalWeightKg: canonicalMeasure("weight", values.goalWeight, units),
-      activityLevel: values.activityLevel || null,
-      cycleMode: values.cycleMode,
-      dietaryRestrictions: values.dietaryRestrictions.trim(),
-    },
-    coachNotes: values.coachNotes.trim() || null,
-  };
-}
-
-export function nextChipsValue(
-  field: ProfileField,
-  chosen: readonly string[],
-  change: { option: string; checked: boolean },
-): string[] {
-  if (!change.checked)
-    return chosen.filter((picked) => picked !== change.option);
-  if (field.exclusiveOptions?.includes(change.option)) return [change.option];
-
-  return [
-    ...chosen.filter((picked) => !field.exclusiveOptions?.includes(picked)),
-    change.option,
-  ];
-}
-
-type FactProblemMessage<Values> = { field: keyof Values; message: string };
-
-function presentProblems<Values>(
+export function presentProblems<Values>(
   messages: (FactProblemMessage<Values> | null)[],
 ): FactProblemMessage<Values>[] {
   return messages.filter(
@@ -478,30 +465,4 @@ export function sharedFactProblemMessages(
         }
       : null,
   ]);
-}
-
-export function coachingProblemMessages(
-  problems: ClientProfileProblems,
-  units: MeasureUnits,
-): FactProblemMessage<CoachingValues>[] {
-  return [
-    ...sharedFactProblemMessages(problems, units),
-    ...presentProblems<CoachingValues>([
-      problems.goalWeightKg
-        ? {
-            field: "goalWeight",
-            message: outOfRangeMessage(COACHING_FIELDS.goalWeight, units),
-          }
-        : null,
-      problems.dietaryRestrictions
-        ? { field: "dietaryRestrictions", message: TEXT_REQUIRED_MESSAGE }
-        : null,
-      problems.coachNotes
-        ? {
-            field: "coachNotes",
-            message: lengthProblemMessage(MAX_PROFILE_NOTE_LENGTH),
-          }
-        : null,
-    ]),
-  ];
 }

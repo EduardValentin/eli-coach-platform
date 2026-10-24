@@ -100,7 +100,7 @@ describe("avatar", () => {
     expect(fallback).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("shows the picture when there is one, hidden from assistive technology since the name is beside it", () => {
+  it("shows the picture filling the circle when there is one, hidden from assistive technology since the name is beside it", () => {
     // arrange, act
     const { root } = renderAvatar(
       <Avatar imageUrl="/media/eli/eli-portrait-192.webp" name="Eli" />,
@@ -110,7 +110,7 @@ describe("avatar", () => {
     const picture = root?.querySelector("img");
     expect(picture).toHaveAttribute("src", "/media/eli/eli-portrait-192.webp");
     expect(picture).toHaveAttribute("alt", "");
-    expect(picture).toHaveClass("aspect-square", "size-full");
+    expect(picture).toHaveClass("aspect-square", "size-full", "object-cover");
     expect(root?.textContent).toBe("");
   });
   it("names a picture that stands on its own with the alt text it is given", () => {
@@ -133,7 +133,7 @@ describe("avatar", () => {
     );
   });
 
-  it("rings a roster picture in a faint border and fills the circle with it", () => {
+  it("rings a roster picture in a faint border", () => {
     // arrange, act
     const { root } = renderAvatar(
       <Avatar
@@ -148,7 +148,6 @@ describe("avatar", () => {
       "[&_[data-slot=avatar-image]]:rounded-full",
       "[&_[data-slot=avatar-image]]:border",
       "[&_[data-slot=avatar-image]]:border-border-default/50",
-      "[&_[data-slot=avatar-image]]:object-cover",
     );
   });
 });

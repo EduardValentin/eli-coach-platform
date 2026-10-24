@@ -34,11 +34,7 @@ export {
 } from "./resolve-join-link-use-case";
 export { VisitorBirthDate, type AgeMoment } from "./visitor-birth-date";
 export { VisitorCountries, type VisitorPhoneEntry } from "./visitor-countries";
-export {
-  VisitorPhone,
-  type VisitorPhoneParts,
-  type VisitorPhoneReading,
-} from "./visitor-phone";
+export { type VisitorPhoneReading } from "./visitor-phone";
 export {
   MAX_BOOKING_AGE,
   MAX_VISITOR_NAME_LENGTH,
