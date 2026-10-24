@@ -5,6 +5,7 @@ import {
   type VisitorCountries,
   type VisitorGender,
   type VisitorPhoneEntry,
+  type VisitorPhoneReading,
 } from "../assessment-call";
 
 import type { ClientIdentity } from "./client-identities";
@@ -50,13 +51,9 @@ export class ClientIdentityEdit {
       ...identity,
       firstName: entered.firstName.trim(),
       lastName: entered.lastName.trim(),
-      phone: phone.status === "valid" ? phone.e164 : null,
+      phone: phone.status === "valid" ? phone.phone.toSnapshot().e164 : null,
     });
-    const problems: ClientIdentityProblems = {
-      ...edit.problems(moment),
-      ...(phone.status === "invalid" && { phone: "invalid" }),
-      ...(!countries.includes(entered.country) && { country: "invalid" }),
-    };
+    const problems = edit.problems(moment, phone, countries);
 
     return Object.keys(problems).length > 0
       ? { status: "invalid", problems }
@@ -67,8 +64,12 @@ export class ClientIdentityEdit {
     return { ...this.snapshot };
   }
 
-  private problems(moment: AgeMoment): ClientIdentityProblems {
-    const { firstName, lastName, dateOfBirth } = this.snapshot;
+  private problems(
+    moment: AgeMoment,
+    phone: VisitorPhoneReading,
+    countries: VisitorCountries,
+  ): ClientIdentityProblems {
+    const { firstName, lastName, dateOfBirth, country } = this.snapshot;
     const firstNameProblem = this.nameProblem(firstName);
     const lastNameProblem = this.nameProblem(lastName);
     const birthDate = VisitorBirthDate.parse(dateOfBirth);
@@ -79,7 +80,9 @@ export class ClientIdentityEdit {
     return {
       ...(firstNameProblem && { firstName: firstNameProblem }),
       ...(lastNameProblem && { lastName: lastNameProblem }),
+      ...(phone.status === "invalid" && { phone: "invalid" }),
       ...(dateOfBirthProblem && { dateOfBirth: dateOfBirthProblem }),
+      ...(!countries.includes(country) && { country: "invalid" }),
     };
   }
 

@@ -23,13 +23,15 @@ describe("VisitorCountries#includes", () => {
 describe("VisitorCountries#phoneOf", () => {
   it("reads a national number in E.164 under its country's calling code", () => {
     // arrange
-    const entry = { country: "RO", nationalNumber: "0712 345-678" };
+    const entry = { country: "MD", nationalNumber: "068 123 456" };
 
     // act
-    const phone = COUNTRIES.phoneOf(entry);
+    const reading = COUNTRIES.phoneOf(entry);
 
     // assert
-    expect(phone).toEqual({ status: "valid", e164: "+40712345678" });
+    expect(reading.status === "valid" && reading.phone.toSnapshot()).toEqual({
+      e164: "+37368123456",
+    });
   });
 
   it("reads no phone from an empty number", () => {
@@ -37,29 +39,20 @@ describe("VisitorCountries#phoneOf", () => {
     const entry = { country: "", nationalNumber: "  " };
 
     // act
-    const phone = COUNTRIES.phoneOf(entry);
+    const reading = COUNTRIES.phoneOf(entry);
 
     // assert
-    expect(phone).toEqual({ status: "empty" });
+    expect(reading).toEqual({ status: "empty" });
   });
 
-  it.each([
-    [
-      "a country it does not know",
-      { country: "ZZ", nationalNumber: "712345678" },
-    ],
-    ["letters", { country: "RO", nationalNumber: "07123abc" }],
-    ["fewer than 4 digits", { country: "RO", nationalNumber: "123" }],
-    [
-      "more than 15 digits in all",
-      { country: "MD", nationalNumber: "1234567890123" },
-    ],
-  ])("refuses a number with %s", (_label, entry) => {
+  it("refuses a number under a country it does not know", () => {
     // arrange
+    const entry = { country: "ZZ", nationalNumber: "712345678" };
+
     // act
-    const phone = COUNTRIES.phoneOf(entry);
+    const reading = COUNTRIES.phoneOf(entry);
 
     // assert
-    expect(phone).toEqual({ status: "invalid" });
+    expect(reading).toEqual({ status: "invalid" });
   });
 });

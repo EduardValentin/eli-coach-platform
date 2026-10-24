@@ -21,6 +21,35 @@ describe("VisitorBirthDate.parse", () => {
   );
 });
 
+describe("VisitorBirthDate#ageOn", () => {
+  it("counts whole years on the calendar date in her own zone", () => {
+    // arrange
+    const birthDate = VisitorBirthDate.parse("2008-10-25");
+
+    // act
+    const ages = [
+      birthDate?.ageOn(ON),
+      birthDate?.ageOn({ on: ON.on, timeZone: "UTC" }),
+    ];
+
+    // assert
+    expect(ages).toEqual([18, 17]);
+  });
+});
+
+describe("VisitorBirthDate#toSnapshot", () => {
+  it("hands back the calendar date it was read from", () => {
+    // arrange
+    const birthDate = VisitorBirthDate.parse("1994-03-14");
+
+    // act
+    const snapshot = birthDate?.toSnapshot();
+
+    // assert
+    expect(snapshot).toEqual({ year: 1994, month: 3, day: 14 });
+  });
+});
+
 describe("VisitorBirthDate#bookingProblemOn", () => {
   it("finds no problem for an adult of booking age", () => {
     // arrange

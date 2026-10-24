@@ -30,19 +30,24 @@ export class VisitorBirthDate {
     return isCalendarDate ? new VisitorBirthDate({ year, month, day }) : null;
   }
 
+  ageOn(moment: AgeMoment): number {
+    const today = instantToWallClock(moment.on, moment.timeZone);
+    const birthdayStillAhead =
+      today.month < this.date.month ||
+      (today.month === this.date.month && today.day < this.date.day);
+
+    return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
+  }
+
   bookingProblemOn(moment: AgeMoment): BirthDateProblem | null {
-    const age = this.ageOn(instantToWallClock(moment.on, moment.timeZone));
+    const age = this.ageOn(moment);
 
     if (age < 0 || age > MAX_BOOKING_AGE) return "impossible";
 
     return age < MIN_BOOKING_AGE ? "too-young" : null;
   }
 
-  private ageOn(today: CalendarDate): number {
-    const birthdayStillAhead =
-      today.month < this.date.month ||
-      (today.month === this.date.month && today.day < this.date.day);
-
-    return today.year - this.date.year - (birthdayStillAhead ? 1 : 0);
+  toSnapshot(): CalendarDate {
+    return { ...this.date };
   }
 }

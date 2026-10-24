@@ -1,10 +1,22 @@
-import type {
-  VisitorGender,
-  VisitorPrimaryGoal,
+import {
+  MAX_VISITOR_NAME_LENGTH,
+  MIN_BOOKING_AGE,
+  VisitorBirthDate,
+  VisitorCountries,
+  VisitorPhone,
+  type VisitorGender,
+  type VisitorPhoneParts,
+  type VisitorPhoneReading,
+  type VisitorPrimaryGoal,
 } from "@eli-coach-platform/domain/assessment-call";
 import { z } from "zod";
 
-import { findCountry } from "./countries";
+import { COUNTRIES } from "./countries";
+
+export {
+  MAX_BOOKING_AGE,
+  MIN_BOOKING_AGE,
+} from "@eli-coach-platform/domain/assessment-call";
 
 export type ChoiceOption<Value extends string> = {
   readonly value: Value;
@@ -28,20 +40,19 @@ export const VISITOR_PRIMARY_GOAL_OPTIONS: readonly ChoiceOption<VisitorPrimaryG
     },
   ];
 
-export const MIN_BOOKING_AGE = 18;
-export const MAX_BOOKING_AGE = 120;
-const MAX_NAME_LENGTH = 60;
 export const MAX_NOTES_LENGTH = 1000;
+
+const VISITOR_COUNTRIES = VisitorCountries.of(COUNTRIES);
 
 export const BOOKING_FIELD_MESSAGES = {
   birthDateImpossible: "Enter a real date of birth.",
   birthDateMissing: "Choose your date of birth.",
-  birthDateTooYoung: "You must be at least 18 to book a call.",
+  birthDateTooYoung: `You must be at least ${MIN_BOOKING_AGE} to book a call.`,
   country: "Choose your country.",
   email: "Enter a valid email address.",
-  firstName: `Enter your first name, up to ${MAX_NAME_LENGTH} characters.`,
+  firstName: `Enter your first name, up to ${MAX_VISITOR_NAME_LENGTH} characters.`,
   gender: "Choose an option.",
-  lastName: `Enter your last name, up to ${MAX_NAME_LENGTH} characters.`,
+  lastName: `Enter your last name, up to ${MAX_VISITOR_NAME_LENGTH} characters.`,
   notes: `Keep your note under ${MAX_NOTES_LENGTH} characters.`,
   phone:
     "Enter a phone number with digits only, 4 to 14 digits after the country code.",
@@ -51,21 +62,21 @@ export const BOOKING_FIELD_MESSAGES = {
 export type BirthDateCheck = "ok" | "too_young" | "impossible";
 
 export function nameSchema(message: string) {
-  return z.string().trim().min(1, message).max(MAX_NAME_LENGTH, message);
+  return z
+    .string()
+    .trim()
+    .min(1, message)
+    .max(MAX_VISITOR_NAME_LENGTH, message);
 }
 
 export function checkBirthDate(question: AgeQuestion): BirthDateCheck {
-  if (!ISO_DATE.test(question.dateOfBirth)) {
+  const birthDate = VisitorBirthDate.parse(question.dateOfBirth);
+
+  if (!birthDate) {
     return "impossible";
   }
 
-  const age = ageOn(question);
-
-  if (Number.isNaN(age) || age < 0 || age > MAX_BOOKING_AGE) {
-    return "impossible";
-  }
-
-  return age < MIN_BOOKING_AGE ? "too_young" : "ok";
+  return BIRTH_DATE_CHECKS[birthDate.bookingProblemOn(question) ?? "none"];
 }
 
 export function birthDateMessage(check: BirthDateCheck): string | null {
@@ -82,29 +93,13 @@ export function normalizeVisitorPhone(parts: {
   country: string;
   nationalNumber: string;
 }): PhoneNormalization {
-  return normalizePhone({
-    callingCode: findCountry(parts.country)?.callingCode ?? "",
-    nationalNumber: parts.nationalNumber,
-  });
+  return normalizationOf(VISITOR_COUNTRIES.phoneOf(parts));
 }
-
-const MIN_NATIONAL_DIGITS = 4;
-const MAX_NATIONAL_DIGITS = 14;
-const MAX_E164_DIGITS = 15;
-const PHONE_SEPARATORS = /[\s().-]/g;
-const CALLING_CODE = /^\+\d{1,3}$/;
-const NATIONAL_NUMBER = /^\d+$/;
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type PhoneNormalization =
   | { status: "empty" }
   | { status: "valid"; e164: string }
   | { status: "invalid" };
-
-type PhoneParts = {
-  callingCode: string;
-  nationalNumber: string;
-};
 
 type AgeQuestion = {
   dateOfBirth: string;
@@ -112,10 +107,12 @@ type AgeQuestion = {
   timeZone: string;
 };
 
-type CalendarDate = {
-  year: number;
-  month: number;
-  day: number;
+const BIRTH_DATE_CHECKS: Readonly<
+  Record<"none" | "too-young" | "impossible", BirthDateCheck>
+> = {
+  none: "ok",
+  "too-young": "too_young",
+  impossible: "impossible",
 };
 
 export function labelForGender(gender: VisitorGender): string {
@@ -188,39 +185,12 @@ export function objectPronoun(gender: VisitorGender): string {
   return OBJECT_PRONOUNS[gender];
 }
 
-export function normalizePhone(parts: PhoneParts): PhoneNormalization {
-  const compact = parts.nationalNumber.replace(PHONE_SEPARATORS, "");
-
-  if (compact.length === 0) {
-    return { status: "empty" };
-  }
-
-  if (!CALLING_CODE.test(parts.callingCode) || !NATIONAL_NUMBER.test(compact)) {
-    return { status: "invalid" };
-  }
-
-  const national = compact.replace(/^0/, "");
-  const countryDigits = parts.callingCode.slice(1);
-  const withinNationalBounds =
-    national.length >= MIN_NATIONAL_DIGITS &&
-    national.length <= MAX_NATIONAL_DIGITS;
-  const withinE164 = countryDigits.length + national.length <= MAX_E164_DIGITS;
-
-  if (!withinNationalBounds || !withinE164) {
-    return { status: "invalid" };
-  }
-
-  return { status: "valid", e164: `+${countryDigits}${national}` };
+export function normalizePhone(parts: VisitorPhoneParts): PhoneNormalization {
+  return normalizationOf(VisitorPhone.read(parts));
 }
 
 export function ageOn(question: AgeQuestion): number {
-  const birth = parseCalendarDate(question.dateOfBirth);
-  const today = calendarDateIn(question.on, question.timeZone);
-  const birthdayStillAhead =
-    today.month < birth.month ||
-    (today.month === birth.month && today.day < birth.day);
-
-  return today.year - birth.year - (birthdayStillAhead ? 1 : 0);
+  return VisitorBirthDate.parse(question.dateOfBirth)?.ageOn(question) ?? NaN;
 }
 
 export function formatAgeForCard(question: AgeQuestion): string {
@@ -238,27 +208,19 @@ function labelFor<Value extends string>(
   return options.find((option) => option.value === value)?.label ?? value;
 }
 
-function parseCalendarDate(isoDate: string): CalendarDate {
-  const [year, month, day] = isoDate.split("-").map(Number);
-
-  return { year: year ?? 0, month: month ?? 0, day: day ?? 0 };
-}
-
-function calendarDateIn(instant: Date, timeZone: string): CalendarDate {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    day: "numeric",
-    month: "numeric",
-    timeZone,
-    year: "numeric",
-  }).formatToParts(instant);
-  const read = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((part) => part.type === type)?.value);
-
-  return { year: read("year"), month: read("month"), day: read("day") };
+function normalizationOf(reading: VisitorPhoneReading): PhoneNormalization {
+  return reading.status === "valid"
+    ? { status: "valid", e164: reading.phone.toSnapshot().e164 }
+    : reading;
 }
 
 function formatBirthDate(isoDate: string, month: "short" | "long"): string {
-  const birth = parseCalendarDate(isoDate);
+  const birth = VisitorBirthDate.parse(isoDate)?.toSnapshot();
+
+  if (!birth) {
+    throw new RangeError("A stored date of birth is not a calendar date.");
+  }
+
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month,
