@@ -1,10 +1,16 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   ONBOARDING_FORMS,
   type OnboardingAnswersByForm,
   type OnboardingFormAnswers,
 } from "@eli-coach-platform/domain/client-onboarding";
+import {
+  CoachingFacts,
+  type CoachingSeed,
+} from "@eli-coach-platform/domain/client-profile";
 import type pg from "pg";
 
+import { recordCoachingSeeded } from "./approved-clients";
 import { recordSubmittedPhotoConsent } from "./client-profiles";
 import {
   daysBefore,
@@ -98,15 +104,11 @@ export const PROTOTYPE_DETAIL_REQUEST: DetailRequestSeed = {
 
 export const CHRONIC_CONDITION_LIST = "Hypothyroidism, treated since 2019.";
 
-export const SEEDED_FACT_READINGS = {
-  Height: "165 cm",
-  "Starting weight": "66.1 kg",
-  "Current weight": "66.1 kg",
-  "Activity level": "Mostly sitting",
-  "Primary goal": "Lose fat",
-  "Dietary restrictions": "Lactose, mild",
-  "Client notes": "—",
-} as const;
+const SUBMITTED_HEIGHT_CM = 165;
+
+const SUBMITTED_GOAL_WEIGHT_KG = 62;
+
+const SUBMITTED_ALLERGIES = "Lactose, mild";
 
 export const BOOKING_CONTACT: BookingContact = {
   phone: "+40712345678",
@@ -369,11 +371,16 @@ export async function recordOpenDetailRequest(
 
 export async function recordAnswersApproved(
   pool: pg.Pool,
-  clientId: string,
+  client: Pick<PaidClient, "clientId" | "gender">,
 ): Promise<void> {
   await inTransaction(pool, async (connection) => {
-    await connection.query(RECORD_APPROVAL, [clientId]);
-    await connection.query(PROJECT_REVIEW_STAMPS, [clientId]);
+    await connection.query(RECORD_APPROVAL, [client.clientId]);
+    await connection.query(PROJECT_REVIEW_STAMPS, [client.clientId]);
+    await recordCoachingSeeded(
+      connection,
+      client.clientId,
+      approvedCoachingFor(client.gender),
+    );
   });
 }
 
@@ -436,7 +443,7 @@ export async function insertReviewedClientRecords(
       );
       return client;
     case "approved":
-      await recordAnswersApproved(pool, client.clientId);
+      await recordAnswersApproved(pool, client);
       return client;
   }
 }
@@ -465,8 +472,8 @@ function submittedAnswersFor(
   return {
     "goal-availability": {
       weight: FIRST_MEASUREMENTS.weightKg,
-      height: 165,
-      goalWeight: 62,
+      height: SUBMITTED_HEIGHT_CM,
+      goalWeight: SUBMITTED_GOAL_WEIGHT_KG,
       primaryGoal: "Lose fat",
       blockers: ["Busy schedule"],
       experienceLevel: "I train regularly, but without a structured plan",
@@ -493,7 +500,7 @@ function submittedAnswersFor(
     "nutrition-lifestyle": {
       eatingStyle: "No restrictions",
       allergiesOrIntolerances: "Yes",
-      allergiesOrIntolerancesList: "Lactose, mild",
+      allergiesOrIntolerancesList: SUBMITTED_ALLERGIES,
       mealsPerDay: "Three",
       snacksPerDay: "One",
       firstMeal: "7–9am",
@@ -515,6 +522,31 @@ function submittedAnswersFor(
       hips: FIRST_MEASUREMENTS.hipsCm,
       thigh: FIRST_MEASUREMENTS.thighCm,
       arm: FIRST_MEASUREMENTS.armCm,
+    },
+  };
+}
+
+function approvedCoachingFor(gender: VisitorGender): CoachingSeed {
+  const coaching = CoachingFacts.seeded({
+    heightCm: SUBMITTED_HEIGHT_CM,
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym", "Dumbbells"],
+    trainingPlace: "Gym",
+    limitations: BONE_OR_JOINT_PROBLEM_LIST,
+    level: "beginner",
+    primaryGoal: "Lose fat",
+    goalWeightKg: SUBMITTED_GOAL_WEIGHT_KG,
+    activityLevel: "Mostly sitting",
+    cycleMode: gender === "female" ? "adapted" : "general",
+    dietaryRestrictions: SUBMITTED_ALLERGIES,
+  });
+
+  return {
+    coaching: coaching.toSnapshot(),
+    preferences: {
+      preferredCheckInWeekday: "monday",
+      preferredChannel: "email",
     },
   };
 }

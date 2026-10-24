@@ -2,10 +2,7 @@ import { clientPronouns } from "../support/client-pronouns";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
 import { paidThrough } from "../support/subscribed-clients";
-import {
-  PROTOTYPE_DETAIL_REQUEST,
-  SEEDED_FACT_READINGS,
-} from "../support/submitted-clients";
+import { PROTOTYPE_DETAIL_REQUEST } from "../support/submitted-clients";
 const JOURNEY_TIMEOUT_MS = 180_000;
 const WITHDRAWAL_DAYS = 14;
 const DATE_OF_BIRTH = new Date("1994-03-14T00:00:00Z");
@@ -135,12 +132,12 @@ test(
     // assert
     await coachClient.expectOpen(submitted.clientId);
     await coachClient.expectClient(submitted.fullName, submitted.email);
-    await coachClient.expectProfile({
+    await coachClient.expectProfile(submitted.clientId, {
       Age: ageReading(),
       Gender: "Female",
       Country: "Romania",
       Phone: "—",
-      ...SEEDED_FACT_READINGS,
+      Email: submitted.email,
     });
     await coachClient.expectNoInvitation();
     await coachClient.expectStatus("Awaiting review");
@@ -385,11 +382,12 @@ test(
     // assert
     await coachClient.expectOpen(onboarding.clientId);
     await coachClient.expectClient(onboarding.fullName, onboarding.email);
-    await coachClient.expectProfileAwaitingOnboarding(onboarding.gender, {
+    await coachClient.expectProfile(onboarding.clientId, {
       Age: ageReading(),
       Gender: "Female",
       Country: "Romania",
       Phone: "—",
+      Email: onboarding.email,
     });
     await coachClient.expectNoInvitation();
     await coachClient.expectStatus("Onboarding");

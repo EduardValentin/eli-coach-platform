@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { expectJoinEmphasis, type JoinEmphasis } from "./check-in-tabs";
+import { expectImageLoaded } from "./loaded-images";
 import { countedNavigationName } from "./navigation-counts";
 
 export type NavigationMark = "marked" | "unmarked";
@@ -79,6 +80,19 @@ export class ClientPortalShell {
         name: "Client portal navigation",
       }),
     ).toBeVisible();
+  }
+
+  async expectSidebarPicture(displayName: string): Promise<void> {
+    const picture = this.nameLinkIn(this.sidebar, displayName).locator("img");
+
+    await expectImageLoaded(picture);
+  }
+
+  async expectSidebarWithoutPicture(displayName: string): Promise<void> {
+    await expect(this.nameLinkIn(this.sidebar, displayName)).toBeVisible();
+    await expect(
+      this.nameLinkIn(this.sidebar, displayName).locator("img"),
+    ).toHaveCount(0);
   }
 
   async expectDashboardCurrent(): Promise<void> {

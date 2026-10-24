@@ -139,7 +139,7 @@ test(
     // arrange
     await coachAvailability.openEveryDay();
     await provisionCoach();
-    const client = await provisionSubmittedClient("waiting");
+    const client = await provisionSubmittedClient("waiting", "approved");
     await checkInRecords.moveBookingZone(client.clientId, BOOKING_TIME_ZONE);
     const weekly = weeklyAt(18);
     const weeks = weeklyStartsBetween(weekly, waitingPeriodOf(client.paidAt));

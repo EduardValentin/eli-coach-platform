@@ -15,6 +15,14 @@ const WORK_STARTS_DAYS_AFTER_PAYMENT = 14;
 const OUTSIDE_SCREENING_AGE_DATE_OF_BIRTH = "1950-01-01";
 const SUBMISSION_API_PATH = "/api/client-onboarding/submission";
 const DRAFT_API_PATH = "/api/client-onboarding/draft";
+const METRIC_UNITS = { weightUnit: "kg", heightUnit: "cm" };
+const PROFILE_BEFORE_APPROVAL = {
+  heightCm: null,
+  activityLevel: null,
+  primaryGoal: null,
+  dietaryRestrictions: null,
+  coachingSeededAt: null,
+};
 
 const FEMALE_HEALTH_CONSENT =
   "I agree that Evoa stores and uses my health and cycle answers to build and adjust my training program. I can withdraw this at any time.";
@@ -162,6 +170,7 @@ test(
   async ({
     clientDashboard,
     clientOnboarding,
+    clientProfile,
     onboardingRecords,
     page,
     provisionPaidClient,
@@ -351,12 +360,18 @@ test(
       "Sent to your coach",
       workStartsOnLine(client.paidAt),
     );
-    expect(await onboardingRecords.clientProfile()).toMatchObject({
-      activityLevel: "Active",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "None",
-      clientNotes: null,
-    });
+    expect(await onboardingRecords.clientProfile()).toMatchObject(
+      PROFILE_BEFORE_APPROVAL,
+    );
+
+    // act
+    await clientProfile.open();
+
+    // assert
+    await clientProfile.expectOpen();
+    await clientProfile.aboutYou.expectText("First name", client.firstName);
+    await clientProfile.training.expectAbsent();
+    await clientProfile.expectNoCoachFacts();
 
     // act
     await page.goto("/client/onboarding");
@@ -657,7 +672,10 @@ test(
     await expect(page).toHaveURL(/\/client\/onboarding$/);
     expect(await onboardingRecords.submissions()).toHaveLength(0);
     expect(await onboardingRecords.onboardingSubmittedAt()).toBeNull();
-    expect(await onboardingRecords.clientProfile()).toBeNull();
+    expect(await onboardingRecords.clientProfile()).toMatchObject({
+      ...PROFILE_BEFORE_APPROVAL,
+      progressPhotosConsentedAt: null,
+    });
     expect(await onboardingRecords.draft()).not.toBeNull();
 
     // act
@@ -691,11 +709,8 @@ test(
       submission.submittedAt,
     );
     expect(await onboardingRecords.clientProfile()).toMatchObject({
-      heightCm: "178.0",
-      activityLevel: "Active",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "None",
-      clientNotes: null,
+      ...PROFILE_BEFORE_APPROVAL,
+      progressPhotosConsentedAt: submission.progressPhotosConsentedAt,
     });
     expect(await onboardingRecords.draft()).toBeNull();
 
@@ -1244,7 +1259,7 @@ test(
 
     // assert
     await clientOnboarding.expectUnsaved();
-    expect(await onboardingRecords.unitPreference()).toBeNull();
+    expect(await onboardingRecords.unitPreference()).toEqual(METRIC_UNITS);
 
     // act
     await clientOnboarding.answerText("Your weight", "150");
@@ -1291,7 +1306,7 @@ test(
     // assert
     await clientOnboarding.expectUnits("lb · in");
     await clientOnboarding.expectUnsaved();
-    expect(await onboardingRecords.unitPreference()).toBeNull();
+    expect(await onboardingRecords.unitPreference()).toEqual(METRIC_UNITS);
 
     // act
     await clientOnboarding.restoreConnection();

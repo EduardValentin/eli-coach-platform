@@ -7,6 +7,7 @@ import type pg from "pg";
 import type { PaidClientIdentity } from "./paid-clients";
 import {
   insertUnmeasuredSubmittedClientRecords,
+  recordAnswersApproved,
   type PhotoConsentAtOnboarding,
   type SubmittedClient,
 } from "./submitted-clients";
@@ -54,6 +55,7 @@ export async function insertMeasuredClientRecords(
   );
   const units = UnitPreference.of(seed.system).toSnapshot();
 
+  await recordAnswersApproved(pool, client);
   await pool.query(SAVE_UNIT_PREFERENCE, [
     client.clientId,
     units.weightUnit,

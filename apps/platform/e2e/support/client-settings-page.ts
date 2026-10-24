@@ -4,6 +4,7 @@ import { ConfirmationDialog } from "./confirmation-dialog";
 import { tabTo } from "./keyboard";
 import { readLoaderPayloadOf } from "./loader-payload";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import { PreferenceRows } from "./preference-rows";
 
 export type CancellationAction =
   "Cancel and get a full refund" | "Cancel subscription";
@@ -21,7 +22,11 @@ const PAYMENT_METHOD_ROW_TITLE = "Payment method";
 const NO_PAYMENT_METHOD_LINE = "No payment method configured";
 
 export class ClientSettingsPage {
-  constructor(private readonly page: Page) {}
+  readonly preferences: PreferenceRows;
+
+  constructor(private readonly page: Page) {
+    this.preferences = new PreferenceRows(page, "Check-ins and contact");
+  }
 
   private get heading() {
     return this.page.getByRole("heading", { level: 1, name: "Settings" });

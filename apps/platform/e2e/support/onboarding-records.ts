@@ -45,6 +45,8 @@ export type ClientProfileRecord = {
   activityLevel: string | null;
   primaryGoal: string | null;
   dietaryRestrictions: string | null;
+  coachingSeededAt: Date | null;
+  progressPhotosConsentedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -120,6 +122,8 @@ const CLIENT_PROFILE = `
     activity_level as "activityLevel",
     primary_goal as "primaryGoal",
     dietary_restrictions as "dietaryRestrictions",
+    coaching_seeded_at as "coachingSeededAt",
+    progress_photos_consented_at as "progressPhotosConsentedAt",
     created_at as "createdAt",
     updated_at as "updatedAt"
   from app.client_profiles
