@@ -590,12 +590,13 @@ export class CoachCheckInsPage {
     showing: string,
     weeks: PickedCheckIn[],
   ): Promise<void> {
-    const listed = await this.shownRow("Upcoming", showing);
-
-    await expect(listed).toHaveCount(weeks.length);
-    await expect(listed.filter({ hasText: AD_HOC })).toHaveCount(0);
-    for (const week of weeks) {
-      await expect(this.rows.listedAt(listed, week)).toHaveCount(1);
-    }
+    await this.rows.expectEveryWeekListedOnce(
+      {
+        tab: "Upcoming",
+        listed: await this.shownRow("Upcoming", showing),
+        pages: this.toolbar,
+      },
+      weeks,
+    );
   }
 }

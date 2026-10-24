@@ -513,14 +513,15 @@ export class ClientCheckInsPage {
   async expectEveryWeeklyUpcoming(
     weeks: readonly PickedCheckIn[],
   ): Promise<void> {
-    const listed = checkInsListed(this.page, "Upcoming");
-
     await this.showTab("Upcoming");
-    await expect(listed).toHaveCount(weeks.length);
-    await expect(listed.filter({ hasText: AD_HOC })).toHaveCount(0);
-    for (const week of weeks) {
-      await expect(this.rows.listedAt(listed, week)).toHaveCount(1);
-    }
+    await this.rows.expectEveryWeekListedOnce(
+      {
+        tab: "Upcoming",
+        listed: checkInsListed(this.page, "Upcoming"),
+        pages: this.toolbar,
+      },
+      weeks,
+    );
   }
 
   private async upcomingWeekRow(week: PickedCheckIn): Promise<Locator> {

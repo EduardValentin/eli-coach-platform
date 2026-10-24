@@ -8,12 +8,20 @@ import {
   spacedPattern,
 } from "./check-in-moments";
 import type { PickedCheckIn } from "./check-in-picker-dialog";
+import { checkInsListed, type CheckInTab } from "./check-in-tabs";
+import type { CheckInToolbar } from "./check-in-toolbar";
 import type { ConfirmationLabels } from "./confirmation-dialog";
 import { DisabledAction } from "./disabled-action";
 import { isFocused, tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 type CheckInMenuItem = "Reschedule" | "Cancel";
+
+export type PagedListing = {
+  tab: CheckInTab;
+  listed: Locator;
+  pages: CheckInToolbar;
+};
 
 export type RescheduleHoldBack = "moves_exhausted" | "later_week";
 
@@ -25,6 +33,7 @@ export const CANCEL_CHECK_IN_LABELS: ConfirmationLabels = {
 
 const MENU_TRIGGER = /^More actions for the check-in on /;
 const CLASH_BADGE = "Clash";
+const AD_HOC = "Ad-hoc";
 const CANCELLED_BADGE = "Cancelled";
 const RESCHEDULE_HELD_BACK_REASONS: Record<RescheduleHoldBack, string> = {
   moves_exhausted: "This check-in has already been moved twice.",
@@ -209,6 +218,33 @@ export class CheckInRows {
       }),
     ).toBeVisible();
     await expect(row.locator("s")).toHaveCount(0);
+  }
+
+  async expectEveryWeekListedOnce(
+    listing: PagedListing,
+    weeks: readonly PickedCheckIn[],
+  ): Promise<void> {
+    const tally = { listed: 0, adHoc: 0, perWeek: weeks.map(() => 0) };
+
+    await listing.pages.visitEveryPage(async () => {
+      await expect(
+        checkInsListed(this.page, listing.tab).first(),
+      ).toBeVisible();
+      tally.listed += await listing.listed.count();
+      tally.adHoc += await listing.listed.filter({ hasText: AD_HOC }).count();
+      for (const [index, week] of weeks.entries()) {
+        tally.perWeek[index] += await this.listedAt(
+          listing.listed,
+          week,
+        ).count();
+      }
+    });
+
+    expect(tally).toEqual({
+      listed: weeks.length,
+      adHoc: 0,
+      perWeek: weeks.map(() => 1),
+    });
   }
 
   listedAt(listed: Locator, shown: PickedCheckIn): Locator {
