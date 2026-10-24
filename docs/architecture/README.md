@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-24, change review at 2dcfd611. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; 2026-10-12 at commit 612252b7, scope feature-layer bounded contexts. Last update: 2026-10-24, change review at 892fa65d. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
@@ -13,11 +13,11 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 ## Current shape (generated)
 
 <!-- arch:summary -->
-Components: 26, units: 1363, edges: 4906, component cycles: 1, uncovered modules: 0.
+Components: 26, units: 1362, edges: 4899, component cycles: 1, uncovered modules: 0.
 
 | Component | Units | Fan-in | Fan-out | I | A | D | Zone |
 |---|---|---|---|---|---|---|---|
-| C1 packages/domain | 395 | 298 | 0 | 0 | 0.58 | 0.42 | none |
+| C1 packages/domain | 395 | 297 | 0 | 0 | 0.58 | 0.42 | none |
 | C2 packages/db | 6 | 78 | 0 | 0 | 0.15 | 0.85 | pain |
 | C3 packages/config | 18 | 54 | 0 | 0 | 0.24 | 0.76 | none |
 | C4 packages/content | 9 | 23 | 0 | 0 | 0.17 | 0.83 | pain |
@@ -34,12 +34,12 @@ Components: 26, units: 1363, edges: 4906, component cycles: 1, uncovered modules
 | C16 packages/test-support | 4 | 0 | 0 | undefined | 0.12 | undefined | none |
 | C17 apps/platform/src/features/assessment-calls | 46 | 39 | 38 | 0.49 | 0.2 | 0.31 | none |
 | C18 apps/platform/src/features/coaching-sales | 75 | 11 | 64 | 0.85 | 0.15 | 0 | none |
-| C19 apps/platform/src/features/client-onboarding | 51 | 6 | 45 | 0.88 | 0.23 | 0.11 | none |
-| C20 apps/platform/src/features/client-profile | 78 | 20 | 70 | 0.78 | 0.13 | 0.09 | none |
+| C19 apps/platform/src/features/client-onboarding | 51 | 6 | 45 | 0.88 | 0.24 | 0.12 | none |
+| C20 apps/platform/src/features/client-profile | 77 | 21 | 70 | 0.77 | 0.12 | 0.11 | none |
 | C21 apps/platform/src/features/client-resources | 41 | 9 | 36 | 0.8 | 0.14 | 0.06 | none |
 | C22 apps/platform/src/features/check-ins | 73 | 12 | 57 | 0.83 | 0.17 | 0.01 | none |
 | C23 apps/platform/src/features/coach-schedule | 16 | 10 | 12 | 0.55 | 0.12 | 0.34 | none |
-| C24 apps/platform/src/features/clients | 54 | 38 | 46 | 0.55 | 0.17 | 0.28 | none |
+| C24 apps/platform/src/features/clients | 54 | 39 | 46 | 0.54 | 0.17 | 0.29 | none |
 | C25 apps/platform/src/features/exercise-library | 25 | 5 | 22 | 0.81 | 0.14 | 0.04 | none |
 | C26 apps/platform/src/features/nutrition-library | 39 | 5 | 36 | 0.88 | 0.16 | 0.04 | none |
 | C27 apps/platform/src/features/notifications | 12 | 6 | 9 | 0.6 | 0.22 | 0.18 | none |
@@ -162,21 +162,21 @@ Components: 26, units: 1363, edges: 4906, component cycles: 1, uncovered modules
 | C19 | C2 | 5 |
 | C19 | C3 | 2 |
 | C19 | C4 | 1 |
-| C19 | C5 | 14 |
+| C19 | C5 | 13 |
 | C19 | C6 | 12 |
 | C19 | C9 | 5 |
 | C19 | C17 | 1 |
-| C19 | C20 | 8 |
+| C19 | C20 | 9 |
 | C19 | C24 | 2 |
-| C20 | C1 | 45 |
+| C20 | C1 | 44 |
 | C20 | C2 | 9 |
 | C20 | C3 | 2 |
-| C20 | C5 | 27 |
+| C20 | C5 | 28 |
 | C20 | C6 | 16 |
 | C20 | C9 | 9 |
 | C20 | C17 | 8 |
 | C20 | C23 | 1 |
-| C20 | C24 | 5 |
+| C20 | C24 | 6 |
 | C21 | C1 | 17 |
 | C21 | C2 | 3 |
 | C21 | C3 | 1 |
