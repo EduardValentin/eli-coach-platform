@@ -61,7 +61,7 @@ export function AvatarField({ name, detail, avatarUrl, onChange }: AvatarFieldPr
       )}
       data-parity="avatar-field"
     >
-      <Avatar size="lg" data-parity="avatar">
+      <Avatar key={avatarUrl ?? 'initials'} size="lg" data-parity="avatar">
         {avatarUrl && <AvatarImage src={avatarUrl} alt={`${name}'s profile picture`} />}
         <AvatarFallback aria-hidden="true">{getInitials(name)}</AvatarFallback>
       </Avatar>
