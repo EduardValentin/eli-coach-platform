@@ -216,7 +216,9 @@ describe("coach client page meta", () => {
     };
 
     // act
-    const descriptors = meta({ data } as Parameters<typeof meta>[0]);
+    const descriptors = meta({ loaderData: data } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(descriptors).toEqual([{ title: "Ana Popescu | Evoa" }]);

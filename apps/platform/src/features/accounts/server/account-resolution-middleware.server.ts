@@ -11,22 +11,16 @@ import { sessionContext } from "./guards/session-context.server";
 type RefusalReason =
   Exclude<ProvisionAccountResult["outcome"], "active"> | "provisioning-error";
 
-function targetsSignInFailedPage(
-  request: Request,
-  appBasePath: string,
-): boolean {
-  return (
-    new URL(request.url).pathname ===
-    buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH)
-  );
+function targetsSignInFailedPage(url: URL, appBasePath: string): boolean {
+  return url.pathname === buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH);
 }
 
 export function createAccountResolutionMiddleware(): MiddlewareFunction<Response> {
   return async function resolveAccount(args, next) {
-    const { context, request } = args;
+    const { context, url } = args;
     const accounts = context.get(accountsContext);
 
-    if (targetsSignInFailedPage(request, accounts.portal.appBasePath)) {
+    if (targetsSignInFailedPage(url, accounts.portal.appBasePath)) {
       context.set(sessionContext, { kind: "anonymous" });
       return next();
     }

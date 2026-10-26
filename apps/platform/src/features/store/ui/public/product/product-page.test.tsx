@@ -16,7 +16,9 @@ describe("store product details", () => {
     const product = createProduct();
 
     // act
-    const metadata = meta({ data: product } as Parameters<typeof meta>[0]);
+    const metadata = meta({ loaderData: product } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(metadata).toEqual([

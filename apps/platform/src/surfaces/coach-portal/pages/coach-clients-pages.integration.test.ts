@@ -219,6 +219,33 @@ describe.sequential("coach clients pages integration", () => {
       );
     });
 
+    it("sends an anonymous data request to sign in with the page, not the data URL, as the return address", async () => {
+      // arrange, act
+      const response = await suite.request(
+        new Request(suite.url(`${CLIENTS_PAGE}.data`)),
+      );
+
+      // assert
+      expect(response.status).toBe(202);
+      const encodedRedirect = await response.text();
+      expect(encodedRedirect).toContain("/sign-in");
+      expect(encodedRedirect).toContain(
+        encodeURIComponent(suite.path(CLIENTS_PAGE)),
+      );
+      expect(encodedRedirect).not.toContain(".data");
+    });
+
+    it("answers a coach's data request for the clients page", async () => {
+      // arrange, act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        `${CLIENTS_PAGE}.data`,
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+    });
+
     it("is offered from the coach sidebar", async () => {
       // arrange, act
       const dashboard = await visibleDocument(

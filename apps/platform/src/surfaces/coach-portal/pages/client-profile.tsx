@@ -29,10 +29,10 @@ export async function loader(args: LoaderFunctionArgs) {
   return { clientId: client.clientId, profile };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
   {
-    title: data
-      ? `${clientFullName(data.profile.identity)} profile | Evoa`
+    title: loaderData
+      ? `${clientFullName(loaderData.profile.identity)} profile | Evoa`
       : "Profile | Evoa",
   },
 ];

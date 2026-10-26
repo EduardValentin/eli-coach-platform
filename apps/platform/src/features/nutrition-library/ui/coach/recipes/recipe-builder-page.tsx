@@ -20,8 +20,8 @@ export async function loader(args: LoaderFunctionArgs) {
 
 export const handle = RECIPE_BUILDER_ROUTE_HANDLE;
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: `${data?.recipe ? "Edit recipe" : "New recipe"} | Evoa` },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  { title: `${loaderData?.recipe ? "Edit recipe" : "New recipe"} | Evoa` },
 ];
 
 export default function RecipeBuilderRoute() {

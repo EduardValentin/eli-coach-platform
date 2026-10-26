@@ -8,7 +8,9 @@ describe("the checkout confirmation page title", () => {
     const data = { state: "call-first" } as const;
 
     // act
-    const descriptors = meta({ data } as Parameters<typeof meta>[0]);
+    const descriptors = meta({ loaderData: data } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(descriptors).toContainEqual({ title: "A Call Comes First | Evoa" });

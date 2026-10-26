@@ -37,7 +37,7 @@ export class OwnResourcesController {
     const client = requirePortalAccess(args, { role: "CLIENT" });
     const listing = await this.options.listOwnResources.execute({
       requester: requesterOf(client),
-      browse: resourceBrowseInputOf(new URL(args.request.url).searchParams),
+      browse: resourceBrowseInputOf(args.url.searchParams),
     });
 
     if (listing.status === "not-found") {

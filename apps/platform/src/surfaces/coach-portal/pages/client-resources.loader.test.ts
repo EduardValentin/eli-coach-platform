@@ -159,7 +159,9 @@ describe("coach client resources page meta", () => {
     const data = { client: CLIENT, listing: LISTING };
 
     // act
-    const descriptors = meta({ data } as Parameters<typeof meta>[0]);
+    const descriptors = meta({ loaderData: data } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(descriptors).toEqual([{ title: "Andreea’s resources | Evoa" }]);

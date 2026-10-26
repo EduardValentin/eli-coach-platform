@@ -80,8 +80,12 @@ export async function loader(args: LoaderFunctionArgs) {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? `${clientFullName(data.client)} | Evoa` : "Clients | Evoa" },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  {
+    title: loaderData
+      ? `${clientFullName(loaderData.client)} | Evoa`
+      : "Clients | Evoa",
+  },
 ];
 
 export function ErrorBoundary() {

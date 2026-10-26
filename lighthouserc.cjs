@@ -46,7 +46,7 @@ module.exports = {
   ci: {
     collect: {
       startServerCommand:
-        "cd apps/platform && node ./node_modules/@react-router/serve/bin.js ./build/server/index.js",
+        "cd apps/platform && node ./node_modules/@react-router/serve/bin.cjs ./build/server/index.js",
       startServerReadyPattern: "http://",
       startServerReadyTimeout: 30_000,
       numberOfRuns: 3,

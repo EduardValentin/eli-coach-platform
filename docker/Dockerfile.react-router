@@ -67,4 +67,4 @@ EXPOSE 3000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=12 CMD ["node", "/workspace/healthcheck.mjs"]
 
-CMD ["node", "./node_modules/@react-router/serve/bin.js", "./build/server/index.js"]
+CMD ["node", "./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]

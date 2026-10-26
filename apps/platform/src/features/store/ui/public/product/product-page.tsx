@@ -29,8 +29,8 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
   return storeProductSchema.parse(await response.json());
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  if (!data) {
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
+  if (!loaderData) {
     return [
       { title: "Free Resource | Evoa" },
       {
@@ -41,8 +41,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
 
   return [
-    { title: `${data.title} | Free Resources | Evoa` },
-    { name: "description", content: data.cardSummary },
+    { title: `${loaderData.title} | Free Resources | Evoa` },
+    { name: "description", content: loaderData.cardSummary },
   ];
 };
 

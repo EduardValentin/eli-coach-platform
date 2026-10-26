@@ -12,7 +12,7 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const platformDirectory = resolve(currentDirectory, "..");
 
 /** The command a deployed container runs — see docker/Dockerfile.react-router. */
-const SERVE_BINARY_PATH = "node_modules/@react-router/serve/bin.js";
+const SERVE_BINARY_PATH = "node_modules/@react-router/serve/bin.cjs";
 const SERVER_BUILD_PATH = "build/server/index.js";
 /**
  * The rig's wall-clock seam, loaded before a single application module is. It

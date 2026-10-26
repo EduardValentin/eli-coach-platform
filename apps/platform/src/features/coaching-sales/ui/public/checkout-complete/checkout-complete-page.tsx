@@ -39,8 +39,8 @@ export function headers({ loaderHeaders }: HeadersArgs) {
   return loaderHeaders;
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: `${confirmationHeading(data)} | Evoa` },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  { title: `${confirmationHeading(loaderData)} | Evoa` },
   { name: "robots", content: "noindex" },
 ];
 
