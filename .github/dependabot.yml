@@ -11,10 +11,6 @@ updates:
         patterns: ["*"]
         update-types: ["minor", "patch"]
     ignore:
-      - dependency-name: "react-router"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@react-router/*"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
       - dependency-name: "vitest"
