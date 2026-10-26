@@ -6,7 +6,6 @@ import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { ResourceProvider } from '../../context/ResourceContext';
 import { PortalLayout } from './PortalLayout';
@@ -36,7 +35,6 @@ function renderLayout() {
   return render(
     <MemoryRouter initialEntries={['/portal']}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -52,7 +50,6 @@ function renderLayout() {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

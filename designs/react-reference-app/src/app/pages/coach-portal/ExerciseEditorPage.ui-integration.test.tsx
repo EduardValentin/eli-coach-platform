@@ -6,7 +6,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ExerciseEditorPage } from './ExerciseEditorPage';
 import { VIDEO_ACCEPT, VIDEO_MAX_BYTES } from '../../utils/exerciseVideo';
 import { AppProvider } from '../../context/AppContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider, useTraining } from '../../context/TrainingContext';
 import { LANDSCAPE_DEMO_CLIP, PORTRAIT_DEMO_CLIP } from '../../services/exerciseSamples';
 import type { ExerciseVideoUpload } from '../../services/exerciseVideoService';
@@ -45,7 +44,6 @@ function renderEditor(entry: InitialEntry, probeName = 'Back squat') {
   render(
     <MemoryRouter initialEntries={[entry]}>
       <AppProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <SavedExerciseProbe name={probeName} />
             <Routes>
@@ -55,7 +53,6 @@ function renderEditor(entry: InitialEntry, probeName = 'Back squat') {
             </Routes>
             <Toaster />
           </TrainingProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -943,7 +940,6 @@ describe('saving an exercise the editor only partly covers', () => {
     render(
       <MemoryRouter initialEntries={['/coach/training']}>
         <AppProvider>
-          <ClientProfileProvider>
             <TrainingProvider>
               <ThumbnailedExerciseSeeder />
               <Routes>
@@ -951,7 +947,6 @@ describe('saving an exercise the editor only partly covers', () => {
                 <Route path="/coach/training/exercises/:exerciseId" element={<ExerciseEditorPage />} />
               </Routes>
             </TrainingProvider>
-          </ClientProfileProvider>
         </AppProvider>
       </MemoryRouter>,
     );

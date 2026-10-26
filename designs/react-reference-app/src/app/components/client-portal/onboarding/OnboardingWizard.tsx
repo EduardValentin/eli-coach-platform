@@ -99,7 +99,7 @@ export function OnboardingWizard() {
     pendingSave,
   } = useDraftAutosave(journeyId);
 
-  const { gender } = demoJourney.identity;
+  const { gender } = demoJourney.profile.identity;
   const steps = useMemo(() => formsForGender(gender), [gender]);
 
   const [savedDraft] = useState(() => loadDraft(journeyId));
@@ -121,7 +121,7 @@ export function OnboardingWizard() {
   const asksSpecialCategory = stepIndex === firstSpecialCategoryIndex(steps);
   const manualScreening =
     step.id === 'safety-screening' &&
-    needsManualScreening(demoJourney.identity.dateOfBirth, new Date());
+    needsManualScreening(demoJourney.profile.identity.dateOfBirth, new Date());
   const cardDefinition = manualScreening ? { ...step, fields: [] } : step;
 
   const persist = useCallback(
@@ -227,7 +227,7 @@ export function OnboardingWizard() {
 
     if (
       step.id === 'safety-screening' &&
-      screeningOutcome(next, demoJourney.identity, new Date()) === 'cleared'
+      screeningOutcome(next, demoJourney.profile.identity, new Date()) === 'cleared'
     ) {
       toast.success(SCREENING_CLEARED_MESSAGE);
     }

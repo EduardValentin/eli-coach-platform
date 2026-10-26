@@ -9,7 +9,6 @@ import { AppProvider } from '../context/AppContext';
 import { StoreProvider } from '../context/StoreContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { CheckinProvider, useCheckins } from '../context/CheckinContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { checkinSlotAt } from '../domain/checkins';
@@ -49,7 +48,6 @@ function renderBook(search = '', heldCheckinAt?: Date) {
     <MemoryRouter initialEntries={[`/book${search}`]}>
       <AppProvider>
         <StoreProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <NotificationProvider>
@@ -60,7 +58,6 @@ function renderBook(search = '', heldCheckinAt?: Date) {
                 </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,

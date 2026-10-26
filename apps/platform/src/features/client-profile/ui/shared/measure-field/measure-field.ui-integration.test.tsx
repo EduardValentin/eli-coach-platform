@@ -7,7 +7,7 @@ import {
   WEIGHT_MEASUREMENT_FIELD,
   type MeasurementField,
 } from "@eli-coach-platform/domain/measurement";
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";

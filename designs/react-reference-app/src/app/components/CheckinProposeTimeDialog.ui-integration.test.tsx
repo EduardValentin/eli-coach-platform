@@ -8,7 +8,6 @@ import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { CheckinProvider, useCheckins } from '../context/CheckinContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import type { CheckIn } from '../domain/checkins';
 import { formatCheckinDate, formatCheckinTime } from '../utils/dateFormatters';
 
@@ -82,7 +81,6 @@ function renderDialog({ checkinId = JESSICA_UPCOMING, devParams = '' } = {}) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -98,7 +96,6 @@ function renderDialog({ checkinId = JESSICA_UPCOMING, devParams = '' } = {}) {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

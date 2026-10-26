@@ -1,10 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { measuredWeights, profileFromOnboarding } from './clientProfile';
+import {
+  coachingFactsFromAnswers,
+  editedProfile,
+  measuredWeights,
+  openedClientProfile,
+  preferencesFromAnswers,
+  type CoachingFacts,
+} from './clientProfile';
 import {
   emptyOnboardingDraft,
+  type JourneyIdentity,
   type MeasurementEntry,
+  type OnboardingDraft,
   type OnboardingFormAnswers,
 } from './journey';
+
+const IDENTITY: JourneyIdentity = {
+  firstName: 'Ana',
+  lastName: 'Popescu',
+  dateOfBirth: '1994-03-14',
+  email: 'ana@example.com',
+  gender: 'female',
+  country: 'Romania',
+};
 
 function measurement(weightKg: number, day: number): MeasurementEntry {
   return {
@@ -16,66 +34,209 @@ function measurement(weightKg: number, day: number): MeasurementEntry {
   };
 }
 
-function answersWith(forms: {
+function draftWith(forms: {
   goal?: OnboardingFormAnswers;
+  safety?: OnboardingFormAnswers;
+  cycle?: OnboardingFormAnswers;
   food?: OnboardingFormAnswers;
-}) {
-  const empty = emptyOnboardingDraft().answers;
+}): OnboardingDraft {
+  const empty = emptyOnboardingDraft();
 
   return {
     ...empty,
-    'goal-availability': forms.goal ?? {},
-    'nutrition-lifestyle': forms.food ?? {},
+    answers: {
+      ...empty.answers,
+      'goal-availability': forms.goal ?? {},
+      'safety-screening': forms.safety ?? {},
+      'cycle-context': forms.cycle ?? {},
+      'nutrition-lifestyle': forms.food ?? {},
+    },
   };
 }
 
 function restrictionsFor(food: OnboardingFormAnswers) {
-  return profileFromOnboarding(answersWith({ food })).dietaryRestrictions;
+  return coachingFactsFromAnswers(draftWith({ food }), 'female').dietaryRestrictions;
 }
 
-describe('building her profile from the onboarding she sent', () => {
-  it('holds only the facts she stated in her first form', () => {
+function seededFacts(): CoachingFacts {
+  return coachingFactsFromAnswers(
+    draftWith({ goal: { height: 165, trainingDaysPerWeek: '4 days', minutesPerSession: '45–60 minutes' } }),
+    'female',
+  );
+}
+
+describe('seeding her coaching facts from her approved answers', () => {
+  it('takes every coaching fact from the answers she sent', () => {
     // arrange
-    const answers = answersWith({
+    const draft = draftWith({
       goal: {
         height: 165,
-        weight: 66.1,
+        goalWeight: 62,
+        primaryGoal: 'Lose fat',
+        experienceLevel: 'I train regularly, but without a structured plan',
+        trainingDaysPerWeek: '3 days',
+        minutesPerSession: '30–45 minutes',
         lifestyleActivityLevel: 'Mostly sitting',
-        primaryGoal: 'Build muscle',
-        additionalInfo: '  Night shifts twice a week.  ',
+        availableEquipment: ['Dumbbells', 'Resistance bands'],
+        trainingPlace: 'Gym',
+        additionalInfo: 'Night shifts twice a week.',
       },
+      safety: { boneOrJointProblem: 'Yes', boneOrJointProblemList: ' Right shoulder aches. ' },
+      cycle: { cycleRegularity: "Yes, and it's regular", hormonalContraception: 'None' },
+      food: { eatingStyle: 'Vegetarian', allergiesOrIntolerances: 'No' },
     });
 
     // act
-    const profile = profileFromOnboarding(answers);
+    const facts = coachingFactsFromAnswers(draft, 'female');
 
     // assert
-    expect(profile).toEqual({
+    expect(facts).toEqual({
       heightCm: 165,
+      trainingDays: 3,
+      sessionMinutes: 45,
+      equipment: ['Dumbbells', 'Resistance bands'],
+      trainingPlace: 'Gym',
+      limitations: 'Right shoulder aches.',
+      level: 'beginner',
+      primaryGoal: 'Lose fat',
+      goalWeightKg: 62,
       activityLevel: 'Mostly sitting',
-      primaryGoal: 'Build muscle',
-      dietaryRestrictions: 'None',
-      clientNotes: 'Night shifts twice a week.',
+      cycleMode: 'adapted',
+      dietaryRestrictions: 'Vegetarian',
     });
   });
 
-  it('leaves what she did not answer empty', () => {
+  it('makes her intermediate only when she follows a structured program, never advanced', () => {
     // arrange
-    const answers = answersWith({
-      goal: { height: '165', additionalInfo: '   ' },
-    });
+    const experiences = [
+      'I train consistently and follow a structured program',
+      'I train regularly, but without a structured plan',
+      'Returning after a break - 3-6 months',
+      'New to training',
+    ];
 
     // act
-    const profile = profileFromOnboarding(answers);
+    const levels = experiences.map(
+      (experienceLevel) => coachingFactsFromAnswers(draftWith({ goal: { experienceLevel } }), 'female').level,
+    );
 
     // assert
-    expect(profile).toEqual({
-      heightCm: null,
-      activityLevel: null,
-      primaryGoal: null,
-      dietaryRestrictions: 'None',
-      clientNotes: null,
+    expect(levels).toEqual(['intermediate', 'beginner', 'beginner', 'beginner']);
+  });
+
+  it('maps training days and session minutes, with defaults when unanswered', () => {
+    // arrange
+    const dayAnswers = ['2 days', '3 days', '4 days', '5 or more days', ''];
+    const minuteAnswers = ['Up to 30 minutes', '30–45 minutes', '45–60 minutes', ''];
+
+    // act
+    const days = dayAnswers.map(
+      (trainingDaysPerWeek) => coachingFactsFromAnswers(draftWith({ goal: { trainingDaysPerWeek } }), 'female').trainingDays,
+    );
+    const minutes = minuteAnswers.map(
+      (minutesPerSession) => coachingFactsFromAnswers(draftWith({ goal: { minutesPerSession } }), 'female').sessionMinutes,
+    );
+
+    // assert
+    expect(days).toEqual([2, 3, 4, 5, 3]);
+    expect(minutes).toEqual([30, 45, 60, 60]);
+  });
+
+  it('keeps the equipment she picked as she picked it, dropping anything outside the list', () => {
+    // act
+    const facts = coachingFactsFromAnswers(
+      draftWith({ goal: { availableEquipment: ['Kettlebells', 'Full gym', 'Trampoline'] } }),
+      'female',
+    );
+
+    // assert
+    expect(facts.equipment).toEqual(['Kettlebells', 'Full gym']);
+  });
+
+  it('keeps her limitations empty unless she answered yes to a bone or joint problem', () => {
+    // act
+    const declined = coachingFactsFromAnswers(
+      draftWith({ safety: { boneOrJointProblem: 'No', boneOrJointProblemList: 'Knee' } }),
+      'female',
+    );
+
+    // assert
+    expect(declined.limitations).toBe('');
+  });
+
+  it('derives a general cycle mode for a man, the combined pill and menopause', () => {
+    // act
+    const modes = [
+      coachingFactsFromAnswers(draftWith({}), 'male').cycleMode,
+      coachingFactsFromAnswers(draftWith({ cycle: { hormonalContraception: 'Combined pill' } }), 'female').cycleMode,
+      coachingFactsFromAnswers(draftWith({ cycle: { perimenopauseOrMenopause: 'Yes, menopause' } }), 'female').cycleMode,
+    ];
+
+    // assert
+    expect(modes).toEqual(['general', 'general', 'general']);
+  });
+});
+
+describe('seeding her preferences from her approved answers', () => {
+  it('reads her check-in day and channel', () => {
+    // arrange
+    const draft = draftWith({ food: { checkInDay: 'Thursday', checkInChannel: 'WhatsApp' } });
+
+    // act
+    const settings = preferencesFromAnswers(draft);
+
+    // assert
+    expect(settings).toEqual({ preferredCheckInWeekday: 'thu', preferredChannel: 'whatsapp' });
+  });
+
+  it('leaves both empty when she did not answer them', () => {
+    // act
+    const settings = preferencesFromAnswers(draftWith({}));
+
+    // assert
+    expect(settings).toEqual({ preferredCheckInWeekday: null, preferredChannel: null });
+  });
+});
+
+describe('editing her profile', () => {
+  it('opens with her booking identity and no coaching facts', () => {
+    // act
+    const profile = openedClientProfile(IDENTITY);
+
+    // assert
+    expect(profile).toEqual({ identity: IDENTITY, avatarUrl: null, coaching: null, coachNotes: '' });
+  });
+
+  it('changes only the identity and coaching fields an edit names', () => {
+    // arrange
+    const profile = { ...openedClientProfile(IDENTITY), coaching: seededFacts() };
+
+    // act
+    const edited = editedProfile(profile, {
+      identity: { firstName: 'Anna' },
+      coaching: { trainingDays: 5, limitations: 'Left knee' },
+      coachNotes: 'Prefers morning sessions.',
     });
+
+    // assert
+    expect(edited.identity).toEqual({ ...IDENTITY, firstName: 'Anna' });
+    expect(edited.coaching).toEqual({ ...seededFacts(), trainingDays: 5, limitations: 'Left knee' });
+    expect(edited.coachNotes).toBe('Prefers morning sessions.');
+  });
+
+  it('refuses coaching facts and notes before her answers are approved', () => {
+    // arrange
+    const profile = openedClientProfile(IDENTITY);
+
+    // act
+    const edited = editedProfile(profile, {
+      identity: { lastName: 'Ionescu' },
+      coaching: { trainingDays: 5 },
+      coachNotes: 'Too early.',
+    });
+
+    // assert
+    expect(edited).toEqual({ ...profile, identity: { ...IDENTITY, lastName: 'Ionescu' } });
   });
 });
 

@@ -1,30 +1,30 @@
 import { useNavigate } from 'react-router';
+import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import { useNutrition } from '../../../context/NutritionContext';
-import {
-  useClientProfile,
-  fullName,
-} from '../../../context/ClientProfileContext';
+import { isBeforeStage } from '../../../domain/journey';
+import { clientIdForJourney, journeyClientName } from '../../../utils/journeyLabels';
 import { Button } from '../../ui/button';
 import { format, parseISO } from 'date-fns';
 
 export function ClientPlansTab() {
   const navigate = useNavigate();
-  const { listProfiles } = useClientProfile();
+  const { journeys } = useClientJourneys();
   const { getPlan } = useNutrition();
-  const clients = listProfiles();
+  const clients = Object.values(journeys).filter((journey) => !isBeforeStage(journey.stage, 'invited'));
 
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {clients.map((c) => {
-        const plan = getPlan(c.id);
+      {clients.map((journey) => {
+        const clientId = clientIdForJourney(journey);
+        const plan = getPlan(clientId);
         const active = plan?.blocks.find((b) => b.status === 'active');
         return (
           <li
-            key={c.id}
+            key={journey.callId}
             className="rounded-card border border-border bg-card p-4"
           >
             <p className="text-sm font-semibold text-text-primary">
-              {fullName(c)}
+              {journeyClientName(journey)}
             </p>
             <p className="mt-1 text-xs text-text-secondary">
               {active
@@ -35,7 +35,7 @@ export function ClientPlansTab() {
               variant={active ? 'outline' : 'primary'}
               size="xs"
               className="mt-3"
-              onClick={() => navigate(`/coach/nutrition/client/${c.id}/plan`)}
+              onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
             >
               {active ? 'Open plan' : 'Build plan'}
             </Button>

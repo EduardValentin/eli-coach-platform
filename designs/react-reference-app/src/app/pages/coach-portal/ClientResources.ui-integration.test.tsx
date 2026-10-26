@@ -14,7 +14,6 @@ import {
   AWAITING_REVIEW_CALL_ID,
   ClientJourneyProvider,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ResourceProvider } from '../../context/ResourceContext';
 import { ClientResources } from './ClientResources';
 
@@ -49,7 +48,6 @@ function renderPageTree(url: string, beside: ReactNode) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -65,7 +63,6 @@ function renderPageTree(url: string, beside: ReactNode) {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

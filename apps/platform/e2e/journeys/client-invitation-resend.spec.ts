@@ -65,10 +65,11 @@ test(
 
     // assert
     await coachClient.expectClient(invited.fullName, invited.email);
-    await coachClient.expectProfileAwaitingOnboarding(invited.gender, {
+    await coachClient.expectProfile(invited.clientId, {
       Gender: "Female",
       Country: "Romania",
       Phone: "—",
+      Email: invited.email,
     });
     await coachClient.expectStatus("Invited");
     await coachClient.expectAnswersNotIn(invited.gender);

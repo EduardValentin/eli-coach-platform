@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { VisitorGender } from "../assessment-call";
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 import { ClientOnboarding } from "./client-onboarding";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import { noConsents, type OnboardingConsents } from "./onboarding-consents";

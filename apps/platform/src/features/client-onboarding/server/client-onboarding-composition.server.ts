@@ -22,14 +22,15 @@ import type {
   MeasurementIds,
 } from "@eli-coach-platform/domain/measurement";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { ClientUnitPreferencesSource } from "@eli-coach-platform/domain/unit-preference";
+import type { ClientSettingsSource } from "@eli-coach-platform/domain/client-settings";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { ClientOnboardingController } from "~/features/client-onboarding/api/client/client-onboarding-controller.server";
 import { OnboardingReviewController } from "~/features/client-onboarding/api/coach/onboarding-review-controller.server";
 import type {
-  ClientProfileWriter,
+  CoachingSeedWriter,
   MeasurementEntryWriter,
+  PhotoConsentWriter,
 } from "~/features/client-onboarding/data/client-profile-writers.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
 import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/random-detail-request-ids.server";
@@ -48,6 +49,7 @@ type ClientOnboardingFeatureHandles = {
   appBasePath: string;
   attachProgressPhotos: AttachProgressPhotosUseCase;
   clientIdentities: ClientIdentities;
+  clientSettings: ClientSettingsSource;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -60,28 +62,28 @@ type ClientOnboardingFeatureHandles = {
   productEmail: ProductEmail;
   publicAppUrl: string;
   recordMeasurementEntry: MeasurementEntryWriter;
+  recordPhotoConsent: PhotoConsentWriter;
   reviewStampWriter: ReviewStampWriter;
-  saveClientProfile: ClientProfileWriter;
-  unitPreferences: ClientUnitPreferencesSource;
+  seedCoaching: CoachingSeedWriter;
 };
 
 export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
 ): ClientOnboardingFeature {
-  const { clock, incidents, unitPreferences } = handles;
+  const { clock, incidents } = handles;
   const participants = new OnboardingParticipants({
     clients: handles.onboardingClients,
     identities: handles.clientIdentities,
   });
   const onboardings = new PostgresClientOnboardings({
     database: handles.database,
-    clientProfileWriter: handles.saveClientProfile,
     measurementEntryWriter: handles.recordMeasurementEntry,
+    photoConsentWriter: handles.recordPhotoConsent,
   });
   const reviews = new PostgresOnboardingReviews({
     database: handles.database,
     reviewStampWriter: handles.reviewStampWriter,
-    clientProfileWriter: handles.saveClientProfile,
+    coachingSeedWriter: handles.seedCoaching,
   });
   const reviewPorts = { participants, onboardings, reviews, incidents };
   const reviewReadPorts = {
@@ -94,14 +96,14 @@ export function composeClientOnboardingFeature(
       answerOnboardingDetails: new AnswerOnboardingDetailsUseCase({
         ...reviewPorts,
         clock,
-        unitPreferences,
+        settings: handles.clientSettings,
       }),
       attachProgressPhotos: handles.attachProgressPhotos,
       clock,
       readClientOnboarding: new ReadClientOnboardingUseCase({
         participants,
         onboardings,
-        unitPreferences,
+        settings: handles.clientSettings,
       }),
       readOpenDetailRequest: new ReadOpenDetailRequestUseCase(reviewReadPorts),
       saveOnboardingDraft: new SaveOnboardingDraftUseCase({
@@ -119,7 +121,7 @@ export function composeClientOnboardingFeature(
         onboardings,
         participants,
         stamps: handles.onboardingSubmissionStamps,
-        unitPreferences,
+        settings: handles.clientSettings,
       }),
     }),
     coachReview: new OnboardingReviewController({

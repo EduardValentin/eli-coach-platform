@@ -60,6 +60,26 @@ type UnitPreferenceRequestBody = {
   heightUnit: string;
 };
 
+const OPENED_PROFILE_ROW = {
+  heightCm: null,
+  trainingDaysPerWeek: null,
+  sessionMinutes: null,
+  equipment: null,
+  trainingPlace: null,
+  limitations: null,
+  level: null,
+  primaryGoal: null,
+  goalWeightKg: null,
+  activityLevel: null,
+  cycleMode: null,
+  dietaryRestrictions: null,
+  coachNotes: null,
+  coachingSeededAt: null,
+  progressPhotosConsentedAt: null,
+  createdAt: CALL_ENDED_INSTANT,
+  updatedAt: CALL_ENDED_INSTANT,
+};
+
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
@@ -189,7 +209,8 @@ describe.sequential("client onboarding integration", () => {
     const response = await rig.requestAs(INVITED_CLIENT, ONBOARDING);
 
     // assert
-    expect(saved.status).toBe(204);
+    expect(saved.status).toBe(200);
+    expect(await saved.json()).toEqual({ status: "saved" });
     const client = await clientRowOf(INVITED_CLIENT);
     expect(await unitPreferenceRowOf(client.id)).toEqual({
       weightUnit: "lb",
@@ -204,7 +225,7 @@ describe.sequential("client onboarding integration", () => {
     expect(page).not.toContain("(cm)");
   });
 
-  it("records her complete submission with her profile facts and closes the door behind her", async () => {
+  it("records her complete submission, leaves her profile as admission opened it and closes the door behind her", async () => {
     // arrange
     await admitInvitedClient(ANA);
     await putDraft(INVITED_CLIENT, {
@@ -241,15 +262,9 @@ describe.sequential("client onboarding integration", () => {
       expect.objectContaining({ weightKg: "66.10", waistCm: "74.0" }),
     ]);
     expect(await draftRowCountOf(client.id)).toBe(0);
-    expect(await onboarding.profileRowOf(client.id)).toEqual({
-      heightCm: "165.0",
-      activityLevel: "Mostly sitting",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "Lactose, mild",
-      clientNotes: null,
-      createdAt: CALL_ENDED_INSTANT,
-      updatedAt: CALL_ENDED_INSTANT,
-    });
+    expect(await onboarding.profileRowOf(client.id)).toEqual(
+      OPENED_PROFILE_ROW,
+    );
     expect(client.onboardingSubmittedAt).toEqual(CALL_ENDED_INSTANT);
     expect(welcomeAfterSubmission.status).toBe(302);
     expect(welcomeAfterSubmission.headers.get("location")).toBe(
@@ -261,7 +276,7 @@ describe.sequential("client onboarding integration", () => {
     );
   });
 
-  it("stores the three photos she sends with her submission against her first entry, sealed under the media root", async () => {
+  it("stores the three photos she sends with her submission against her first entry, sealed under the media root, and stamps her consent on her profile", async () => {
     // arrange
     await admitInvitedClient(ANA);
 
@@ -303,6 +318,10 @@ describe.sequential("client onboarding integration", () => {
       expect(storedFile).not.toBeNull();
       expect(storedFile?.includes(rendition.subarray(0, 64))).toBe(false);
     }
+    expect(await onboarding.profileRowOf(client.id)).toEqual({
+      ...OPENED_PROFILE_ROW,
+      progressPhotosConsentedAt: new Date(PHOTOS_CONSENTED_AT),
+    });
   });
 
   it("refuses the one photo it cannot accept, stores the others and still records her submission", async () => {
@@ -430,7 +449,9 @@ describe.sequential("client onboarding integration", () => {
     });
     const client = await clientRowOf(INVITED_CLIENT);
     expect(await submissionRowCountOf(client.id)).toBe(0);
-    expect(await onboarding.profileRowOf(client.id)).toBeUndefined();
+    expect(await onboarding.profileRowOf(client.id)).toEqual(
+      OPENED_PROFILE_ROW,
+    );
   });
 
   it("shows the client portal on the public home once she has submitted", async () => {
@@ -677,7 +698,7 @@ async function unitPreferenceRowOf(
     weightUnit: string;
     heightUnit: string;
   }>({
-    sql: 'select weight_unit as "weightUnit", height_unit as "heightUnit" from app.client_unit_preferences where client_id = $1',
+    sql: 'select weight_unit as "weightUnit", height_unit as "heightUnit" from app.client_settings where client_id = $1',
     values: [clientId],
   });
 

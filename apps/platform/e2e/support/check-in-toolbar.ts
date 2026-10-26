@@ -72,6 +72,12 @@ export class CheckInToolbar {
       .getByRole("link", { name: `Go to page ${pageNumber}`, exact: true });
   }
 
+  private get nextPageLink(): Locator {
+    return this.page
+      .getByRole("navigation", { name: "pagination" })
+      .getByRole("link", { name: "Go to next page", exact: true });
+  }
+
   private async tabFromHeadingTo(control: Locator): Promise<void> {
     await this.page
       .getByRole("heading", { level: 1 })
@@ -214,6 +220,24 @@ export class CheckInToolbar {
     await this.tabFromHeadingTo(this.page.getByRole("tab", { selected: true }));
     await this.pressUntilFocused({ key: "ArrowRight", target });
     await expect(target).toHaveAttribute("aria-selected", "true");
+  }
+
+  async visitEveryPageThenReturnToFirst(
+    visit: () => Promise<void>,
+  ): Promise<void> {
+    let pageNumber = 1;
+
+    await visit();
+    while ((await this.nextPageLink.count()) > 0) {
+      pageNumber += 1;
+      await this.nextPageLink.click();
+      await this.expectOnPage(pageNumber);
+      await visit();
+    }
+
+    if (pageNumber > 1) {
+      await this.goToPage(1);
+    }
   }
 
   async goToPage(pageNumber: number): Promise<void> {

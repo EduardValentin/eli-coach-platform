@@ -4,12 +4,12 @@ import {
   emptyDraft,
   type OnboardingAnswersByForm,
 } from "@eli-coach-platform/domain/client-onboarding";
-import { ClientProfile } from "@eli-coach-platform/domain/client-profile";
+import type { CoachingSeed } from "@eli-coach-platform/domain/client-profile";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import type { ClientProfileWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
+import type { CoachingSeedWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
 
 import {
   clientOnboardingConstraints,
@@ -26,6 +26,23 @@ import {
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const FIRST_REQUEST_ID = "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01";
 const SECOND_REQUEST_ID = "3d9a1c44-5b7e-4f0a-8c21-6e4b9d2f7a02";
+const SEED: CoachingSeed = {
+  coaching: {
+    heightCm: 168,
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym"],
+    trainingPlace: "Gym",
+    limitations: "",
+    level: "beginner",
+    primaryGoal: "Lose fat",
+    goalWeightKg: 62,
+    activityLevel: "Mostly sitting",
+    cycleMode: "adapted",
+    dietaryRestrictions: "None",
+  },
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+};
 const OPENED_AT = new Date("2026-09-29T09:00:00.000Z");
 const FIRST_ASKED_AT = new Date("2026-09-29T10:00:00.000Z");
 const FIRST_ANSWERED_AT = new Date("2026-09-30T08:00:00.000Z");
@@ -188,17 +205,19 @@ describe("PostgresOnboardingReviews#recordOpened", () => {
 });
 
 describe("PostgresOnboardingReviews#recordApproval", () => {
-  it("records the approval as her first opening, keeps the first approval moment and projects its stamps in the same transaction", async () => {
+  it("records the approval as her first opening, keeps the first approval moment, seeds her coaching facts and projects its stamps in the same transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const seedWriter = createSeedWriter();
+    const reviews = reviewsOver(database.client, writer, seedWriter);
 
     // act
     await reviews.recordApproval({
       clientId: CLIENT_ID,
       at: APPROVED_AT,
       stamps: APPROVED_STAMPS,
+      seed: SEED,
     });
 
     // assert
@@ -218,6 +237,12 @@ describe("PostgresOnboardingReviews#recordApproval", () => {
     expect(renderConflictSet(database.committed[0], "approvedAt")).toBe(
       'coalesce("app"."client_onboarding_reviews"."approved_at", excluded.approved_at)',
     );
+    expect(seedWriter.calls).toEqual([
+      {
+        transaction: database.transactionHandles[0],
+        seeding: { clientId: CLIENT_ID, seed: SEED, at: APPROVED_AT },
+      },
+    ]);
     expect(writer.calls).toEqual([
       {
         transaction: database.transactionHandles[0],
@@ -329,12 +354,11 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
 });
 
 describe("PostgresOnboardingReviews#recordAnswer", () => {
-  it("stamps the open request, merges her answers, rewrites her profile and projects her stamps in one transaction", async () => {
+  it("stamps the open request, merges her answers and projects her stamps in one transaction", async () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const profileWriter = createProfileWriter();
-    const reviews = reviewsOver(database.client, writer, profileWriter);
+    const reviews = reviewsOver(database.client, writer);
 
     // act
     await reviews.recordAnswer(
@@ -350,9 +374,6 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     expect(database.committed[0]?.values).toEqual({
       answeredAt: FIRST_ANSWERED_AT,
     });
-    expect(profileWriter.calls).toEqual([
-      { transaction: database.transactionHandles[0], profile: profile() },
-    ]);
     expect(writer.calls).toEqual([
       {
         transaction: database.transactionHandles[0],
@@ -385,8 +406,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     // arrange
     const database = createTransactionalDatabase({ answeredRows: [] });
     const writer = createStampWriter();
-    const profileWriter = createProfileWriter();
-    const reviews = reviewsOver(database.client, writer, profileWriter);
+    const reviews = reviewsOver(database.client, writer);
 
     // act
     const recording = reviews.recordAnswer(
@@ -398,7 +418,6 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       "The detail request is no longer open.",
     );
     expect(database.committed).toEqual([]);
-    expect(profileWriter.calls).toEqual([]);
     expect(writer.calls).toEqual([]);
   });
 
@@ -479,6 +498,7 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
           clientId: CLIENT_ID,
           at: APPROVED_AT,
           stamps: APPROVED_STAMPS,
+          seed: SEED,
         }),
     ],
   ])("rolls back %s and rethrows", async (_transition, record) => {
@@ -500,12 +520,12 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
 function reviewsOver(
   database: DatabaseClient,
   writer: StampWriterDouble = createStampWriter(),
-  profileWriter: ProfileWriterDouble = createProfileWriter(),
+  seedWriter: SeedWriterDouble = createSeedWriter(),
 ): PostgresOnboardingReviews {
   return new PostgresOnboardingReviews({
     database,
     reviewStampWriter: writer.write,
-    clientProfileWriter: profileWriter.write,
+    coachingSeedWriter: seedWriter.write,
   });
 }
 
@@ -521,7 +541,6 @@ function answerOf(mergedAnswers: OnboardingAnswersByForm) {
     requestId: FIRST_REQUEST_ID,
     mergedAnswers,
     answeredAt: FIRST_ANSWERED_AT,
-    profile: profile(),
     stamps: ANSWERED_STAMPS,
   };
 }
@@ -701,33 +720,23 @@ function createFailingStampWriter(failure: Error): StampWriterDouble {
   };
 }
 
-type ProfileWriterDouble = {
-  write: ClientProfileWriter;
-  calls: { transaction: unknown; profile: ClientProfile }[];
+type SeedWriterDouble = {
+  write: CoachingSeedWriter;
+  calls: {
+    transaction: unknown;
+    seeding: Parameters<CoachingSeedWriter>[1];
+  }[];
 };
 
-function createProfileWriter(): ProfileWriterDouble {
-  const calls: ProfileWriterDouble["calls"] = [];
+function createSeedWriter(): SeedWriterDouble {
+  const calls: SeedWriterDouble["calls"] = [];
 
   return {
     calls,
-    write: async (transaction, profile) => {
-      calls.push({ transaction, profile });
+    write: async (transaction, seeding) => {
+      calls.push({ transaction, seeding });
     },
   };
-}
-
-function profile(): ClientProfile {
-  return ClientProfile.reconstitute({
-    clientId: CLIENT_ID,
-    heightCm: 168,
-    activityLevel: "Lightly active",
-    primaryGoal: "Lose fat",
-    dietaryRestrictions: "None",
-    clientNotes: null,
-    progressPhotosConsentedAt: null,
-    updatedAt: FIRST_ANSWERED_AT,
-  });
 }
 
 function requestWithStamps() {

@@ -32,7 +32,13 @@ export {
   ResolveJoinLinkUseCase,
   type JoinLinkResult,
 } from "./resolve-join-link-use-case";
+export { VisitorBirthDate, type AgeMoment } from "./visitor-birth-date";
+export { VisitorCountries, type VisitorPhoneEntry } from "./visitor-countries";
+export { type VisitorPhoneReading } from "./visitor-phone";
 export {
+  MAX_BOOKING_AGE,
+  MAX_VISITOR_NAME_LENGTH,
+  MIN_BOOKING_AGE,
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
   type VisitorGender,

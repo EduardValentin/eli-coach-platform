@@ -1,6 +1,7 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { initialsOf } from "./avatar-initials";
 import { clientPronouns } from "./client-pronouns";
 import type { ConfirmationLabels } from "./confirmation-dialog";
 import { DisabledAction } from "./disabled-action";
@@ -10,6 +11,7 @@ import {
   type Availability,
 } from "./control-states";
 import { isFocused, tabTo } from "./keyboard";
+import { expectImageLoaded } from "./loaded-images";
 import {
   countOf,
   escapedPattern,
@@ -57,8 +59,6 @@ export const STOP_WEEKLY_CHECK_IN_LABELS: ConfirmationLabels = {
 
 type WeeklyAction = "Change" | "Stop";
 
-const ABSENT_READING = "—";
-
 const NEEDS_REFUND_LABEL = "Needs refund";
 
 const CANCELLED_OR_ENDED_ACTIONS = [
@@ -69,15 +69,9 @@ const CANCELLED_OR_ENDED_ACTIONS = [
   "Re-send invitation",
 ] as const;
 
-const ONBOARDING_PROFILE_TERMS = [
-  "Height",
-  "Starting weight",
-  "Current weight",
-  "Activity level",
-  "Primary goal",
-  "Dietary restrictions",
-  "Client notes",
-] as const;
+const PROFILE_TERMS = ["Age", "Gender", "Country", "Phone", "Email"] as const;
+
+const VIEW_PROFILE = "View profile";
 
 export class CoachClientPage {
   private readonly measurementsHistory: MeasurementsHistory;
@@ -92,6 +86,20 @@ export class CoachClientPage {
 
   private get onboarding() {
     return this.block("Onboarding");
+  }
+
+  private get onboardingTrigger() {
+    return this.onboarding.getByRole("button", {
+      name: "Onboarding",
+      exact: true,
+    });
+  }
+
+  private get viewProfileLink() {
+    return this.block("Profile").getByRole("link", {
+      name: VIEW_PROFILE,
+      exact: true,
+    });
   }
 
   private get assessmentCall() {
@@ -258,7 +266,22 @@ export class CoachClientPage {
     }
   }
 
+  private headerPictureOf(fullName: string): Locator {
+    return this.headerOf(fullName).locator('img[data-slot="avatar-image"]');
+  }
+
+  private headerInitialsOf(fullName: string): Locator {
+    return this.headerOf(fullName).locator('[data-slot="avatar-fallback"]');
+  }
+
+  private async expandOnboardingIfCollapsed(): Promise<void> {
+    if ((await this.onboardingTrigger.count()) > 0) {
+      await this.expand(this.onboardingTrigger);
+    }
+  }
+
   private async expandForm(form: string): Promise<void> {
+    await this.expandOnboardingIfCollapsed();
     await this.expand(
       this.onboarding.getByRole("button", {
         name: new RegExp(`^${escapedPattern(form)}`),
@@ -363,30 +386,47 @@ export class CoachClientPage {
     ).toHaveAttribute("href", "/coach/clients");
   }
 
-  async expectProfile(readings: Readings): Promise<void> {
-    await this.expectReadings(this.block("Profile"), readings);
+  async expectProfile(clientId: string, readings: Readings): Promise<void> {
+    const profile = this.block("Profile");
+
+    await expect(profile.getByRole("term")).toHaveText([...PROFILE_TERMS]);
+    await this.expectReadings(profile, readings);
+    await expect(this.viewProfileLink).toHaveAttribute(
+      "href",
+      `/coach/clients/${clientId}/profile`,
+    );
   }
 
-  async expectProfileAwaitingOnboarding(
-    gender: VisitorGender,
-    identityReadings: Readings,
-  ): Promise<void> {
-    const profile = this.block("Profile");
-    const { possessiveCapitalised, possessive, subjectSends } =
-      clientPronouns(gender);
+  async openProfile(): Promise<void> {
+    await this.viewProfileLink.click();
+    await expect(this.page).toHaveURL(/\/coach\/clients\/[^/]+\/profile$/);
+  }
 
+  async expectHeaderPicture(fullName: string): Promise<void> {
+    const picture = this.headerPictureOf(fullName);
+
+    await expectImageLoaded(picture);
+  }
+
+  async expectHeaderInitials(fullName: string): Promise<void> {
+    await expect(this.headerInitialsOf(fullName)).toHaveText(
+      initialsOf(fullName),
+    );
+    await expect(this.headerPictureOf(fullName)).toHaveCount(0);
+  }
+
+  async expectOnboardingCollapsed(): Promise<void> {
+    await expect(this.onboardingTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
     await expect(
-      profile.getByText(
-        `${possessiveCapitalised} profile fills in once ${subjectSends} ${possessive} onboarding.`,
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await this.expectReadings(profile, {
-      ...identityReadings,
-      ...Object.fromEntries(
-        ONBOARDING_PROFILE_TERMS.map((term) => [term, ABSENT_READING]),
-      ),
-    });
+      this.onboarding.getByRole("heading", {
+        level: 3,
+        name: "Answers",
+        exact: true,
+      }),
+    ).toHaveCount(0);
   }
 
   async expectAssessmentCallCollapsed(): Promise<void> {
@@ -455,14 +495,6 @@ export class CoachClientPage {
     await expect(
       this.definitionOf(this.block("Subscription"), "Reduced price"),
     ).toHaveText(answer);
-  }
-
-  async expectFacts(readings: Readings): Promise<void> {
-    await this.expectReadings(this.onboarding, readings);
-  }
-
-  async expectNoFact(fact: string): Promise<void> {
-    await expect(this.definitionOf(this.onboarding, fact)).toHaveCount(0);
   }
 
   async expectInvitationLine(line: string): Promise<void> {

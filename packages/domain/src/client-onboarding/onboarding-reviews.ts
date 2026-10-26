@@ -1,4 +1,4 @@
-import type { ClientProfile } from "../client-profile";
+import type { CoachingSeed } from "../client-profile";
 
 import type { DetailRequest } from "./detail-request";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
@@ -16,6 +16,10 @@ type ReviewMoment = {
   stamps: ReviewStamps;
 };
 
+type RecordApproval = ReviewMoment & {
+  seed: CoachingSeed;
+};
+
 type RecordDetailRequest = {
   request: DetailRequest;
   stamps: ReviewStamps;
@@ -26,7 +30,6 @@ type RecordDetailsAnswer = {
   requestId: string;
   mergedAnswers: OnboardingAnswersByForm;
   answeredAt: Date;
-  profile: ClientProfile;
   stamps: ReviewStamps;
 };
 
@@ -37,5 +40,5 @@ export interface OnboardingReviews {
     input: RecordDetailRequest,
   ): Promise<"recorded" | "already-open">;
   recordAnswer(input: RecordDetailsAnswer): Promise<void>;
-  recordApproval(moment: ReviewMoment): Promise<void>;
+  recordApproval(approval: RecordApproval): Promise<void>;
 }

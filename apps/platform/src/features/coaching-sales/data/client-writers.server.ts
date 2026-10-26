@@ -13,3 +13,8 @@ export type CoachingStandingWriter = (
   transaction: DatabaseTransaction,
   input: { clientId: string; standing: CoachingStanding },
 ) => Promise<void>;
+
+export type ClientProfileOpener = (
+  transaction: DatabaseTransaction,
+  admission: { clientId: string; at: Date },
+) => Promise<void>;

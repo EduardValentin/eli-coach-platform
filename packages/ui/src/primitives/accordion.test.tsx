@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   Accordion,
+  AccordionChevron,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
@@ -192,5 +193,41 @@ describe("Accordion", () => {
     expect(trigger).toHaveClass("items-center", "py-0");
     expect(trigger).not.toHaveClass("items-start", "py-4");
     expect(trigger.querySelector("svg")).not.toHaveClass("translate-y-0.5");
+  });
+  it("leaves the chevron out of a trigger that asks for none", () => {
+    // arrange, act
+    render(
+      <Accordion collapsible type="single">
+        <AccordionItem value="call">
+          <AccordionTrigger chevron="none" headingTag="h2" layout="title">
+            Assessment call
+          </AccordionTrigger>
+          <AccordionContent>Booked for Monday.</AccordionContent>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    // assert
+    expect(
+      screen
+        .getByRole("button", { name: "Assessment call" })
+        .querySelector("svg"),
+    ).toBeNull();
+  });
+
+  it("draws the shared chevron on its own, muted and hidden from assistive technology", () => {
+    // arrange, act
+    const { container } = render(<AccordionChevron className="ml-2" />);
+
+    // assert
+    const chevron = container.querySelector("svg");
+    expect(chevron).toHaveAttribute("aria-hidden", "true");
+    expect(chevron).toHaveClass(
+      "pointer-events-none",
+      "size-4",
+      "shrink-0",
+      "text-text-secondary",
+      "ml-2",
+    );
   });
 });

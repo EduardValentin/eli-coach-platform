@@ -5,7 +5,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
@@ -46,7 +45,6 @@ function programTree(url: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-          <ClientProfileProvider>
             <UnitPreferencesProvider>
               <AssessmentCallProvider>
                 <ClientJourneyProvider>
@@ -59,7 +57,6 @@ function programTree(url: string) {
                 </ClientJourneyProvider>
               </AssessmentCallProvider>
             </UnitPreferencesProvider>
-          </ClientProfileProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>

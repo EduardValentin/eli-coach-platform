@@ -2,8 +2,8 @@ import { FolderOpen } from 'lucide-react';
 import { Link } from 'react-router';
 import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
+import { journeyClientName } from '../../utils/journeyLabels';
 import { useMeasureUnits } from '../client-portal/measureUnits';
-import { statedHeightCm } from '../../domain/bodyMetrics';
 import { AssessmentCallBlock } from './AssessmentCallBlock';
 import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
@@ -17,12 +17,8 @@ import { SubscriptionSummary } from '../SubscriptionSummary';
 import { needsRefund } from '../../domain/coachingSubscription';
 import { NeedsRefundBadge } from './NeedsRefundBadge';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { buttonVariants } from '../ui/button';
-
-function journeyName(journey: ClientJourney): string {
-  return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
-}
 
 function invitationAwaitingAccount(journey: ClientJourney) {
   return isBeforeStage(journey.stage, 'account-created')
@@ -30,11 +26,57 @@ function invitationAwaitingAccount(journey: ClientJourney) {
     : null;
 }
 
-export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
-  const name = journeyName(journey);
+function SubscriptionAndCheckinWidgets({ journey }: { journey: ClientJourney }) {
+  if (!journey.subscription) return null;
+
+  return (
+    <>
+      <SubscriptionSummary
+        subscription={journey.subscription}
+        perspective="coach"
+        clientGender={journey.profile.identity.gender}
+        pricing={journey.pricing}
+        headingId="subscription-panel-heading"
+        className="mb-8"
+      />
+      <div
+        className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8"
+        data-parity="record-widgets-row"
+      >
+        <WeeklyCheckinPanel journey={journey} />
+      </div>
+    </>
+  );
+}
+
+function ClientRecordWidgets({ journey }: { journey: ClientJourney }) {
   const units = useMeasureUnits();
   const invitation = invitationAwaitingAccount(journey);
+  const answersApproved = !isBeforeStage(journey.stage, 'approved');
+  const onboarding = <OnboardingPanel journey={journey} />;
+
+  return (
+    <>
+      <ClientProfileBlock journey={journey} />
+      {invitation && <InvitationBlock journey={journey} invitation={invitation} />}
+      {!answersApproved && onboarding}
+      <ProgramBlock journey={journey} />
+      <SubscriptionAndCheckinWidgets journey={journey} />
+      <JourneyMeasurements
+        journey={journey}
+        heightCm={journey.profile.coaching?.heightCm ?? 0}
+        units={units}
+      />
+      {answersApproved && onboarding}
+      <AssessmentCallBlock journey={journey} />
+    </>
+  );
+}
+
+export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
+  const name = journeyClientName(journey);
   const refundDue = needsRefund(journey.subscription);
+  const { avatarUrl } = journey.profile;
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -43,6 +85,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">
           <Avatar size="lg">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
             <AvatarFallback aria-hidden="true">{getInitials(name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
@@ -50,7 +93,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
               {refundDue && <NeedsRefundBadge parity="needs-refund" />}
             </div>
-            <p className="text-text-secondary" data-parity="client-email">{journey.identity.email}</p>
+            <p className="text-text-secondary" data-parity="client-email">{journey.profile.identity.email}</p>
           </div>
         </div>
         <div
@@ -68,39 +111,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         </div>
       </header>
 
-      <ClientProfileBlock journey={journey} />
-      {invitation && (
-        <InvitationBlock journey={journey} invitation={invitation} />
-      )}
-      <OnboardingPanel
-        journey={journey}
-        heightCm={statedHeightCm(journey.onboarding.answers)}
-      />
-      <ProgramBlock journey={journey} />
-      {journey.subscription && (
-        <>
-          <SubscriptionSummary
-            subscription={journey.subscription}
-            perspective="coach"
-            clientGender={journey.identity.gender}
-            pricing={journey.pricing}
-            headingId="subscription-panel-heading"
-            className="mb-8"
-          />
-          <div
-            className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8"
-            data-parity="record-widgets-row"
-          >
-            <WeeklyCheckinPanel journey={journey} />
-          </div>
-        </>
-      )}
-      <JourneyMeasurements
-        journey={journey}
-        heightCm={statedHeightCm(journey.onboarding.answers)}
-        units={units}
-      />
-      <AssessmentCallBlock journey={journey} />
+      <ClientRecordWidgets journey={journey} />
     </div>
   );
 }

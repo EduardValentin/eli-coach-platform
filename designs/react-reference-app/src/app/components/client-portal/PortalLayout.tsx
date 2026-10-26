@@ -3,14 +3,15 @@ import { Outlet } from 'react-router';
 import { PORTAL_MAIN_ID, PortalSidebar } from './PortalSidebar';
 import { CLIENT_PORTAL_LINKS } from './navigation-links';
 import { DEMO_CLIENT, useCheckins } from '../../context/CheckinContext';
-import { SIGNED_IN_CLIENT_ID } from '../../context/ClientProfileContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { useUnopenedResources } from '../../hooks/useClientResources';
 
 const RESOURCES_HREF = '/portal/resources';
 const CHECKINS_HREF = '/portal/checkins';
 
 export function PortalLayout() {
-  const hasUnopenedResources = useUnopenedResources(SIGNED_IN_CLIENT_ID);
+  const { demoJourney } = useClientJourneys();
+  const hasUnopenedResources = useUnopenedResources(demoJourney.callId);
   const { getCheckinsAwaiting } = useCheckins();
   const checkinsAwaiting = getCheckinsAwaiting('client', DEMO_CLIENT.id).length;
 

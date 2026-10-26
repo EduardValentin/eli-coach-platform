@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";

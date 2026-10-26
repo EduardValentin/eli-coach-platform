@@ -61,3 +61,20 @@ export async function cameraPhotoOf(
 
   return { name: `${view}.${format}`, mimeType: `image/${format}`, buffer };
 }
+
+const PROFILE_PICTURE_EDGE = 800;
+
+export async function profilePictureSample(): Promise<SamplePhoto> {
+  const buffer = await sharp({
+    create: {
+      width: PROFILE_PICTURE_EDGE,
+      height: PROFILE_PICTURE_EDGE,
+      channels: 3,
+      background: { r: 90, g: 140, b: 200 },
+    },
+  })
+    .jpeg()
+    .toBuffer();
+
+  return { name: "portrait.jpg", mimeType: "image/jpeg", buffer };
+}

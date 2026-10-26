@@ -8,7 +8,6 @@ import {
   labelForPrimaryGoal,
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
-  normalizePhone,
   objectPronoun,
   possessivePronoun,
   subjectPronoun,
@@ -78,129 +77,6 @@ describe("visitor profile options", () => {
 
     // assert
     expect(bounds).toEqual([18, 120]);
-  });
-});
-
-describe("normalizePhone", () => {
-  it("stores nothing for a blank number", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "   " };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "empty" });
-  });
-
-  it("strips spaces, dots, dashes and parentheses", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "(712) 345.67-8" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "valid", e164: "+40712345678" });
-  });
-
-  it("drops one leading zero", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "0712 345 678" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "valid", e164: "+40712345678" });
-  });
-
-  it("drops only the first of two leading zeros", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "00712345678" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "valid", e164: "+400712345678" });
-  });
-
-  it("rejects letters and other symbols", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "0712 CALL ME" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "invalid" });
-  });
-
-  it("rejects a number shorter than four digits", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "0123" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "invalid" });
-  });
-
-  it("accepts four national digits", () => {
-    // arrange
-    const input = { callingCode: "+40", nationalNumber: "1234" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "valid", e164: "+401234" });
-  });
-
-  it("rejects a number longer than fourteen digits", () => {
-    // arrange
-    const input = { callingCode: "+1", nationalNumber: "123456789012345" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "invalid" });
-  });
-
-  it("rejects a number that would push the whole E.164 form past fifteen digits", () => {
-    // arrange
-    const input = { callingCode: "+358", nationalNumber: "1234567890123" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "invalid" });
-  });
-
-  it("accepts a number that fills the E.164 form exactly", () => {
-    // arrange
-    const input = { callingCode: "+358", nationalNumber: "123456789012" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "valid", e164: "+358123456789012" });
-  });
-
-  it("rejects a calling code that is not a plus and one to three digits", () => {
-    // arrange
-    const input = { callingCode: "40", nationalNumber: "712345678" };
-
-    // act
-    const result = normalizePhone(input);
-
-    // assert
-    expect(result).toEqual({ status: "invalid" });
   });
 });
 

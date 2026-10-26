@@ -1,3 +1,4 @@
+import { BODYWEIGHT_ONLY, CLIENT_EQUIPMENT } from './clientProfile';
 import type { JourneyGender, OnboardingFormId } from './journey';
 
 export type OnboardingFieldKind =
@@ -40,6 +41,7 @@ export type OnboardingField = {
   requires?: readonly string[];
   exclusiveOptions?: readonly string[];
   unitSuffix?: string;
+  maxLength?: number;
   range?: NumericRange;
   step?: string;
   relativeTo?: RelativeRange;
@@ -272,15 +274,8 @@ const GOAL_FORM: OnboardingFormDefinition = {
       kind: 'chips',
       requirement: 'required',
       hint: 'Pick everything you have access to.',
-      options: options([
-        'Full gym',
-        'Machines',
-        'Barbell',
-        'Dumbbells',
-        'Kettlebells',
-        'Resistance bands',
-        'Bodyweight only',
-      ]),
+      options: options(CLIENT_EQUIPMENT),
+      exclusiveOptions: [BODYWEIGHT_ONLY],
     },
     {
       id: 'trainingPlace',

@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../context/AppContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ResourceProvider } from '../../context/ResourceContext';
 import { ClientResources } from './ClientResources';
 
@@ -43,12 +44,14 @@ function renderPageAt(search: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
-          <ResourceProvider>
-            <ClientResources />
-            <LocationProbe />
-          </ResourceProvider>
-        </ClientProfileProvider>
+        <AssessmentCallProvider>
+          <ClientJourneyProvider>
+            <ResourceProvider>
+              <ClientResources />
+              <LocationProbe />
+            </ResourceProvider>
+          </ClientJourneyProvider>
+        </AssessmentCallProvider>
       </AppProvider>
     </MemoryRouter>,
   );

@@ -7,7 +7,6 @@ import { TrainingHub } from './TrainingHub';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 
@@ -32,7 +31,6 @@ function renderHub(path = '/coach/training') {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -47,7 +45,6 @@ function renderHub(path = '/coach/training') {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </TrainingProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

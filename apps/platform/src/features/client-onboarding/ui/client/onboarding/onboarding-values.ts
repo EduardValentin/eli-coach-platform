@@ -7,39 +7,28 @@ import {
 import {
   toCanonicalMeasure,
   toDisplayMeasure,
-  type MeasureKind,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
+
+import {
+  measureKindOf,
+  TICKED,
+  UNTICKED,
+} from "~/features/client-profile/ui/shared/profile/profile-fields";
 
 export type OnboardingValue = string | string[];
 
 export type OnboardingValues = Record<string, OnboardingValue>;
 
-const MEASURE_KINDS: readonly string[] = ["weight", "height", "circumference"];
-
-export const TICKED = "true";
-
-export const UNTICKED = "false";
-
-export function measureKindOf(field: OnboardingField): MeasureKind | null {
-  return MEASURE_KINDS.includes(field.kind)
-    ? (field.kind as MeasureKind)
-    : null;
-}
-
-export function isNumericField(field: OnboardingField): boolean {
-  return measureKindOf(field) !== null || field.kind === "number";
-}
-
-export function asText(value: OnboardingValue | undefined): string {
+function asText(value: OnboardingValue | undefined): string {
   return typeof value === "string" ? value : "";
 }
 
-export function asList(value: OnboardingValue | undefined): string[] {
+function asList(value: OnboardingValue | undefined): string[] {
   return Array.isArray(value) ? value : [];
 }
 
-export function isTicked(value: OnboardingValue | undefined): boolean {
+function isTicked(value: OnboardingValue | undefined): boolean {
   return asText(value) === TICKED;
 }
 

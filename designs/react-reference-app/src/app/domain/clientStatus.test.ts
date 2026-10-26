@@ -1,14 +1,24 @@
 import { addDays, subDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
+import { openedClientProfile, UNSET_CLIENT_SETTINGS } from './clientProfile';
 import {
   CLIENT_STATUS_GROUPS,
   clientStatus,
   type ClientStatus,
 } from './clientStatus';
 import type { CoachingSubscription } from './coachingSubscription';
-import { emptyOnboarding, type ClientJourney, type JourneyStage } from './journey';
+import { emptyOnboarding, type ClientJourney, type JourneyIdentity, type JourneyStage } from './journey';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
+
+const JANE: JourneyIdentity = {
+  firstName: 'Jane',
+  lastName: 'Doe',
+  dateOfBirth: '1998-03-14',
+  email: 'jane@example.com',
+  gender: 'female',
+  country: 'Romania',
+};
 
 function journeyAt(
   stage: JourneyStage,
@@ -18,15 +28,9 @@ function journeyAt(
     callId: 'ac-1',
     callStartsAt: new Date('2026-03-10T15:00:00.000Z'),
     stage,
-    identity: {
-      firstName: 'Jane',
-      lastName: 'Doe',
-      dateOfBirth: '1998-03-14',
-      email: 'jane@example.com',
-      gender: 'female',
-      country: 'Romania',
-    },
-    profile: null,
+    bookedIdentity: JANE,
+    profile: openedClientProfile(JANE),
+    settings: UNSET_CLIENT_SETTINGS,
     pricing: 'regular',
     paymentLink: null,
     paidAt: null,

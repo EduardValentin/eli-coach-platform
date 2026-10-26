@@ -5,13 +5,11 @@ import { ClientDetails } from './ClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
 function renderClientPage(clientId: string) {
   render(
     <MemoryRouter initialEntries={[`/coach/clients/${clientId}`]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <Routes>
@@ -19,7 +17,6 @@ function renderClientPage(clientId: string) {
               </Routes>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

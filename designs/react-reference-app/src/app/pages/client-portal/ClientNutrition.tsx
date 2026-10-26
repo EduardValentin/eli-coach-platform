@@ -5,8 +5,6 @@ import {
   ShoppingCart,
   Clock,
   Utensils as UtensilsIcon,
-  TrendingDown,
-  TrendingUp,
   ArrowLeftRight,
   Check,
 } from 'lucide-react';
@@ -41,7 +39,7 @@ import {
   MACRO_BAR,
   MACRO_DOT,
 } from '../../components/coach-portal/nutrition/nutrition-constants';
-import { useClientProfile } from '../../context/ClientProfileContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { ResponsiveSheetDialog } from '../../components/ResponsiveSheetDialog';
 import { Reading } from '../../components/Reading';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
@@ -579,28 +577,13 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
 interface GoalHeroProps {
   primaryGoal: string;
   goalTarget: number;
-  maintenanceCalories: number;
 }
 
-function GoalHero({
-  primaryGoal,
-  goalTarget,
-  maintenanceCalories,
-}: GoalHeroProps) {
-  const delta = goalTarget - maintenanceCalories;
-  const isDeficit = delta < 0;
-  const absDelta = Math.abs(delta);
-  const DeltaIcon = isDeficit ? TrendingDown : TrendingUp;
-  const deltaLabel = isDeficit
-    ? `−${absDelta.toLocaleString()} kcal/day vs maintenance`
-    : `+${absDelta.toLocaleString()} kcal/day vs maintenance`;
-
+function GoalHero({ primaryGoal, goalTarget }: GoalHeroProps) {
   return (
     <div className="px-5 py-5 border-b border-border-subtle rounded-field">
-      {/* Eyebrow: goal label */}
       <p className={cn(LABEL_CLASS, 'mb-1')}>{primaryGoal}</p>
 
-      {/* Hero: calorie target */}
       <div className="flex items-baseline gap-1.5">
         <span className={cn(VALUE_LG_CLASS, 'leading-none tabular-nums')}>
           {goalTarget.toLocaleString()}
@@ -609,14 +592,6 @@ function GoalHero({
           kcal/day
         </span>
       </div>
-
-      {/* Secondary: deficit/surplus delta */}
-      {delta !== 0 && (
-        <Badge tone="muted" className="mt-2">
-          <DeltaIcon size={11} aria-hidden="true" />
-          {deltaLabel}
-        </Badge>
-      )}
     </div>
   );
 }
@@ -627,9 +602,8 @@ function GoalHero({
 
 export function ClientNutrition() {
   const { getPlan, recipes, foods, setSlotSelection } = useNutrition();
-  const { getProfile } = useClientProfile();
+  const { demoJourney } = useClientJourneys();
   const plan = getPlan('client-1');
-  const profile = getProfile('client-1');
   const block = plan?.blocks.find((b) => b.status === 'active');
 
   const today = localToday();
@@ -690,7 +664,7 @@ export function ClientNutrition() {
 
   // C — Goal-hero values
   const goalTarget = target.kcal;
-  const primaryGoal = profile?.primaryGoal;
+  const primaryGoal = demoJourney.profile.coaching?.primaryGoal;
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -842,14 +816,7 @@ export function ClientNutrition() {
               </div>
             </div>
 
-            {/* C — Goal-hero energy section (replaces old flat BMR/Maintenance/Target line) */}
-            {profile && primaryGoal && (
-              <GoalHero
-                primaryGoal={primaryGoal}
-                goalTarget={goalTarget}
-                maintenanceCalories={profile.maintenanceCalories}
-              />
-            )}
+            {primaryGoal && <GoalHero primaryGoal={primaryGoal} goalTarget={goalTarget} />}
 
             {/* Day macro meter */}
             {dayTotals && (

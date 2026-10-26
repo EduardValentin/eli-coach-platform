@@ -153,6 +153,12 @@ function numberProblem(
     : true;
 }
 
+function lengthProblem(field: OnboardingField, entered: string): string | true {
+  if (field.maxLength === undefined || entered.trim().length <= field.maxLength) return true;
+
+  return `Keep it to ${field.maxLength} characters or fewer.`;
+}
+
 function fieldProblem(
   field: OnboardingField,
   units: MeasureUnits,
@@ -168,7 +174,7 @@ function fieldProblem(
   if (empty)
     return field.requirement === 'required' ? requiredMessage(field) : true;
   if (field.kind === 'date') return dateProblem(field, asText(entry.value));
-  if (!isNumericField(field)) return true;
+  if (!isNumericField(field)) return lengthProblem(field, asText(entry.value));
 
   return numberProblem(field, units, entry);
 }

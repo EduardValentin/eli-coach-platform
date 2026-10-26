@@ -132,12 +132,12 @@ describe('programForSeed', () => {
     expect(exercisesById.get(main!.exerciseId)?.role).toBe(roleForSlot('A'));
   });
 
-  it('stores the client equipment and the onboarding goal', () => {
+  it('stores the onboarding goal', () => {
     // act
     const program = programForSeed('draft', CLIENT, SAMPLE_EXERCISES);
 
     // assert
-    expect(program).toMatchObject({ equipment: ['Dumbbells', 'Bench'], goal: 'Lose fat' });
+    expect(program).toMatchObject({ goal: 'Lose fat' });
   });
 
   it('gives the program the cycle mode it is seeded with', () => {

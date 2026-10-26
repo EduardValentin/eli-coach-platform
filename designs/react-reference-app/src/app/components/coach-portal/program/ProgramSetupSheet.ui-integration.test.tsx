@@ -1,14 +1,15 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
+import { Toaster } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../../context/AppContext';
 import { AssessmentCallProvider } from '../../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { ProgramProvider } from '../../../context/ProgramContext';
 import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
+import { ClientProfilePage } from '../../../pages/coach-portal/ClientProfilePage';
 import { ProgramEditorPage } from '../../../pages/coach-portal/ProgramEditorPage';
 
 beforeAll(() => {
@@ -41,7 +42,6 @@ function renderSheet(query: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <UnitPreferencesProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -55,7 +55,36 @@ function renderSheet(query: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </TrainingProvider>
-        </ClientProfileProvider>
+        </UnitPreferencesProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+  return userEvent.setup();
+}
+
+function renderProfileThenSheet() {
+  const url = '/coach/clients/c1/profile?session=coach&pseed=none&jstage=approved';
+  window.history.replaceState(null, '', url);
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <UnitPreferencesProvider>
+          <TrainingProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <ProgramProvider>
+                  <Routes>
+                    <Route path="/coach/clients/:id/profile" element={<ClientProfilePage />} />
+                    <Route path="/coach/clients/:id/program/new" element={<ProgramEditorPage />} />
+                    <Route path="/coach/clients/:id/program/draft" element={<p>Editor</p>} />
+                  </Routes>
+                  <Link to="/coach/clients/c1/program/new">open the program setup</Link>
+                  <Link to="/coach/clients/c1/profile">open her profile</Link>
+                  <Toaster />
+                </ProgramProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </TrainingProvider>
         </UnitPreferencesProvider>
       </AppProvider>
     </MemoryRouter>,
@@ -108,7 +137,7 @@ describe('ProgramSetupSheet', () => {
     expect(screen.queryByRole('heading', { level: 3, name: 'Cycle' })).not.toBeInTheDocument();
   });
 
-  it('prefills from onboarding and creates the draft', async () => {
+  it('prefills from her profile and creates the draft', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
 
@@ -170,7 +199,7 @@ describe('ProgramSetupSheet', () => {
     expect(screen.getByRole('radio', { name: 'Upper / Lower' })).toBeChecked();
   });
 
-  it('prefills the equipment chips from her onboarding', async () => {
+  it('prefills the equipment from her profile', async () => {
     // arrange
     const user = renderSheet('&pseed=none&jstage=approved');
 
@@ -179,6 +208,15 @@ describe('ProgramSetupSheet', () => {
 
     // assert
     const equipment = screen.getByRole('group', { name: 'Equipment' });
+    expect(within(equipment).getAllByRole('checkbox').map((chip) => chip.getAttribute('aria-label'))).toEqual([
+      'Full gym',
+      'Machines',
+      'Barbell',
+      'Dumbbells',
+      'Kettlebells',
+      'Resistance bands',
+      'Bodyweight only',
+    ]);
     expect(within(equipment).getByRole('checkbox', { name: 'Full gym' })).toBeChecked();
     expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).toBeChecked();
     expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).not.toBeChecked();
@@ -217,6 +255,42 @@ describe('ProgramSetupSheet', () => {
     expect(screen.queryByText(/Suggested from/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Pick everything/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Every session trains the whole body/)).not.toBeInTheDocument();
+  });
+
+  it('prefills what the coach last saved on her profile', async () => {
+    // arrange
+    const user = renderProfileThenSheet();
+    const coaching = screen.getByRole('region', { name: 'Coaching' });
+    await user.click(within(coaching).getByRole('radio', { name: '5+ days' }));
+    await user.click(within(coaching).getByRole('radio', { name: 'Intermediate' }));
+    await user.click(within(coaching).getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Changes saved', {}, { timeout: 3000 });
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'open the program setup' }));
+    await openPanel(user, 'Schedule');
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Level' })).toHaveTextContent('Intermediate');
+    expect(screen.getByRole('radio', { name: '5+ days' })).toBeChecked();
+  });
+
+  it('saves the equipment chosen here on her profile', async () => {
+    // arrange
+    const user = renderProfileThenSheet();
+    await user.click(screen.getByRole('link', { name: 'open the program setup' }));
+    await openPanel(user, 'Equipment');
+    await user.click(within(screen.getByRole('group', { name: 'Equipment' })).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Continue to plan' }));
+    await screen.findByText('Editor', {}, { timeout: 3000 });
+    await user.click(screen.getByRole('link', { name: 'open her profile' }));
+
+    // assert
+    const coaching = screen.getByRole('region', { name: 'Coaching' });
+    expect(within(coaching).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
+    expect(within(coaching).getByRole('checkbox', { name: 'Full gym' })).not.toBeChecked();
   });
 
   it('returns to the client page on cancel', async () => {

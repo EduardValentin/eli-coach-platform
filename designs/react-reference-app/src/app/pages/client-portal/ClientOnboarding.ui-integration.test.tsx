@@ -28,7 +28,6 @@ import {
   DEMO_JOURNEY_CALL_ID,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   emptyOnboardingDraft,
@@ -93,7 +92,6 @@ function renderOnboarding(devParams: string) {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -118,7 +116,6 @@ function renderOnboarding(devParams: string) {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -341,6 +338,29 @@ describe('the onboarding', () => {
 
     // assert
     expect(control).toBeVisible();
+  });
+
+  it('keeps bodyweight only exclusive of everything else she can train with', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+    const equipment = screen.getByRole('group', { name: /What you can train with/ });
+    await userEvent.click(within(equipment).getByRole('checkbox', { name: 'Dumbbells' }));
+    await userEvent.click(within(equipment).getByRole('checkbox', { name: 'Resistance bands' }));
+
+    // act
+    await userEvent.click(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' }));
+
+    // assert
+    expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Dumbbells' })).not.toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Resistance bands' })).not.toBeChecked();
+
+    // act
+    await userEvent.click(within(equipment).getByRole('checkbox', { name: 'Kettlebells' }));
+
+    // assert
+    expect(within(equipment).getByRole('checkbox', { name: 'Kettlebells' })).toBeChecked();
+    expect(within(equipment).getByRole('checkbox', { name: 'Bodyweight only' })).not.toBeChecked();
   });
 
   it('asks for every number as a number, bounded by the range the schema sets', () => {

@@ -20,7 +20,6 @@ const SETUP: ProgramSetup = {
   cycleMode: 'general',
   language: 'en',
   dailySteps: 6000,
-  equipment: [],
   splitShape: 'full-body',
 };
 

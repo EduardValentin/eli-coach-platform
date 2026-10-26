@@ -7,9 +7,9 @@ import {
   coachingEndsAt,
   type CheckinScheduling,
 } from '../../domain/checkins';
-import { WEEKDAY_NAMES, weekdayNamed } from '../../domain/checkinSeries';
+import { WEEKDAY_NAMES } from '../../domain/checkinSeries';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
-import { CHECK_IN_DAY_KEY, collaborationPreference } from '../../domain/onboardingAnswers';
+import { weeklyRuleWeekdayOf } from '../../domain/programCalendar';
 import { coachCheckinsPath } from '../../utils/checkinLinks';
 import { formatClockHour } from '../../utils/dateFormatters';
 import { clientPronouns } from '../../utils/journeyLabels';
@@ -42,7 +42,7 @@ function coachingEndsLine(gender: JourneyGender, scheduling: CheckinScheduling):
 }
 
 function weeklyClientOf(journey: ClientJourney): WeeklyCheckinClient {
-  return { ...scheduledClientOf(journey), gender: journey.identity.gender };
+  return { ...scheduledClientOf(journey), gender: journey.profile.identity.gender };
 }
 
 export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
@@ -54,9 +54,8 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
   const scheduling = checkinSchedulingFor(journey, new Date());
   const coachingEnds = coachingEndsAt(journey.subscription) !== undefined;
   const series = coachingEnds ? null : seriesFor(client.id);
-  const suggestedWeekday = weekdayNamed(
-    collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY),
-  );
+  const preferred = journey.settings.preferredCheckInWeekday;
+  const suggestedWeekday = preferred && weeklyRuleWeekdayOf(preferred);
 
   const openDialog = (mode: WeeklyCheckinMode) =>
     setDialog((current) => ({ mode, open: true, openings: current.openings + 1 }));
@@ -91,7 +90,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
     }
     if (scheduling === 'awaiting_onboarding') {
       return (
-        <DisabledActionHint reason={awaitingOnboardingReason(journey.identity.gender)}>
+        <DisabledActionHint reason={awaitingOnboardingReason(journey.profile.identity.gender)}>
           {setUpAction}
         </DisabledActionHint>
       );
@@ -104,7 +103,7 @@ export function WeeklyCheckinPanel({ journey }: { journey: ClientJourney }) {
     if (coachingEnds) {
       return (
         <p className="text-sm text-text-secondary" data-parity="series-coaching-ends">
-          {coachingEndsLine(journey.identity.gender, scheduling)}
+          {coachingEndsLine(journey.profile.identity.gender, scheduling)}
         </p>
       );
     }

@@ -14,6 +14,7 @@ import {
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
+  createClientAvatarStore,
   createClientResourceStore,
   createExerciseVideoStore,
   createProgressPhotoStore,
@@ -28,6 +29,7 @@ import { createProductEmail } from "@eli-coach-platform/infrastructure/email/ser
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
 import { createLinkTokens } from "@eli-coach-platform/infrastructure/link-tokens/server";
 import {
+  createClientAvatarRenditions,
   createProgressPhotoRenditions,
   createRecipePhotoRenditions,
   createResourceImagePages,
@@ -234,6 +236,8 @@ export function createPlatformContainer(options: {
     incidents,
   });
   const clientProfile = composeClientProfileFeature({
+    clientAvatarRenditions: createClientAvatarRenditions(),
+    clientAvatarStore: createClientAvatarStore(environment),
     clientIdentities: clients.handles.clientIdentities,
     clientReach: clients.handles.clientReach,
     clock,
@@ -246,6 +250,7 @@ export function createPlatformContainer(options: {
     appBasePath: environment.APP_BASE_PATH,
     attachProgressPhotos: clientProfile.handles.attachProgressPhotos,
     clientIdentities: clients.handles.clientIdentities,
+    clientSettings: clientProfile.handles.clientSettings,
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
@@ -258,9 +263,9 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
     recordMeasurementEntry: clientProfile.handles.recordMeasurementEntry,
+    recordPhotoConsent: clientProfile.handles.recordPhotoConsent,
     reviewStampWriter: clients.handles.reviewStampWriter,
-    saveClientProfile: clientProfile.handles.saveClientProfile,
-    unitPreferences: clientProfile.handles.unitPreferences,
+    seedCoaching: clientProfile.handles.seedCoaching,
   });
   const clientResources = composeClientResourcesFeature({
     clientReach: clients.handles.clientReach,
@@ -291,6 +296,7 @@ export function createPlatformContainer(options: {
     featureFlags,
     incidents,
     linkTokens,
+    openClientProfile: clientProfile.handles.openClientProfile,
     paidClientAdmission: clients.handles.paidClientAdmission,
     paymentCheckout: payments.checkout,
     paymentCustomerCards: payments.customerCards,

@@ -125,6 +125,7 @@ function renderClientLayout(
       ],
       Component: ClientLayoutRoute,
       loader: () => ({
+        avatarUrl: null,
         presentation,
         nextCheckIn: null,
         unopenedResources: 0,

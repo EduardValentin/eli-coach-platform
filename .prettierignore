@@ -13,3 +13,4 @@ designs
 .claude
 *.md
 docs/architecture/model
+.architecture

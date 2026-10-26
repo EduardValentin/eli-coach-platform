@@ -230,7 +230,6 @@ describe('quickAddSlot', () => {
       cycleMode: 'general',
       language: 'en',
       dailySteps: 6000,
-      equipment: [],
       splitShape: 'full-body',
     },
     library: [],

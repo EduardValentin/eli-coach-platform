@@ -1,10 +1,5 @@
 import { useState } from 'react';
-import {
-  ClipboardList,
-  Info,
-  MessageSquareText,
-  TriangleAlert,
-} from 'lucide-react';
+import { ClipboardList, MessageSquareText, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Accordion,
@@ -24,8 +19,6 @@ import {
   workStartDate,
   type CoachingSubscription,
 } from '../../domain/coachingSubscription';
-import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
-import { CYCLE_MODE_LABELS, cycleModeOf } from '../../domain/cycleMode';
 import {
   awaitsCoachReview,
   isBeforeStage,
@@ -34,10 +27,6 @@ import {
   type JourneyStage,
 } from '../../domain/journey';
 import {
-  CHECK_IN_CHANNEL_KEY,
-  CHECK_IN_DAY_KEY,
-  collaborationPreference,
-  hasPregnancyContext,
   reviewForms,
   type ReviewAnswer,
   type ReviewForm,
@@ -47,23 +36,15 @@ import {
   screeningOutcome,
   withholdsNutritionAdvice,
 } from '../../domain/safetyScreening';
-import {
-  clientPronouns,
-  CYCLE_MODE_INFO_LABEL,
-  CYCLE_MODE_NOT_ANSWERED,
-  CYCLE_MODE_DEFINITIONS,
-  formatJourneyDate,
-} from '../../utils/journeyLabels';
+import { clientPronouns, formatJourneyDate } from '../../utils/journeyLabels';
+import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
 import { PortalWidget } from '../PortalWidget';
-import { Reading } from '../Reading';
 import { IconHint } from '../IconHint';
 import { WIDGET_SUBHEADING_CLASS } from '../typography';
 import { ClientStatusBadge } from './ClientStatusBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
-
-const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
 
 const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Review answers',
@@ -92,23 +73,10 @@ function openRequest(journey: ClientJourney): DetailRequest | null {
   return request;
 }
 
-function ratioValue(journey: ClientJourney, heightCm: number): string {
-  if (hasPregnancyContext(journey.onboarding)) return RATIO_HIDDEN_NOTE;
-
-  const latest = journey.measurements.at(-1);
-  const ratio = latest ? waistToHeightRatio(latest.waistCm, heightCm) : null;
-
-  const { possessive } = clientPronouns(journey.identity.gender);
-
-  return ratio === null
-    ? `Waiting on ${possessive.lower} first measurements`
-    : formatRatio(ratio);
-}
-
 function screeningWarnings(journey: ClientJourney): string[] {
   const outcome = screeningOutcome(
     journey.onboarding,
-    journey.identity,
+    journey.profile.identity,
     new Date(),
   );
   const yesCount = PARQ_QUESTION_IDS.filter(
@@ -145,80 +113,6 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
         <p key={warning}>{warning}</p>
       ))}
     </IconHint>
-  );
-}
-
-function cycleModeValue(journey: ClientJourney): string {
-  const mode = cycleModeOf(journey.onboarding, journey.identity.gender);
-  return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
-}
-
-function CycleModeInfo() {
-  return (
-    <IconHint
-      label={CYCLE_MODE_INFO_LABEL}
-      icon={<Info aria-hidden="true" size={16} />}
-      className="-my-1.5"
-      parity="fact-cycle-mode-info"
-      contentParityRoot="CycleModeTooltip"
-    >
-      <dl className="space-y-1">
-        {CYCLE_MODE_DEFINITIONS.map(({ term, meaning }) => (
-          <div key={term}>
-            <dt className="inline font-semibold">{term}</dt>{' '}
-            <dd className="inline">— {meaning}</dd>
-          </div>
-        ))}
-      </dl>
-    </IconHint>
-  );
-}
-
-function OnboardingFacts({
-  journey,
-  heightCm,
-}: {
-  journey: ClientJourney;
-  heightCm: number;
-}) {
-  const day = collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY);
-  const channel = collaborationPreference(
-    journey.onboarding,
-    CHECK_IN_CHANNEL_KEY,
-  );
-
-  return (
-    <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-      <Reading
-        as="dl-item"
-        label="Waist-to-height ratio"
-        value={
-          <span className="tabular-nums">{ratioValue(journey, heightCm)}</span>
-        }
-        valueParity="fact-ratio"
-      />
-      <Reading
-        as="dl-item"
-        label="Check-in day"
-        value={day ?? 'Not chosen yet'}
-        valueParity="fact-checkin-day"
-      />
-      <Reading
-        as="dl-item"
-        label="Channel"
-        value={channel ?? 'Not chosen yet'}
-        valueParity="fact-channel"
-      />
-      {journey.identity.gender === 'female' && (
-        <Reading
-          as="dl-item"
-          label="Cycle mode"
-          labelAdornment={<CycleModeInfo />}
-          value={cycleModeValue(journey)}
-          valueParity="fact-cycle-mode"
-        />
-      )}
-    </dl>
   );
 }
 
@@ -396,7 +290,7 @@ function StageActions({
   if (isCancelledOrEnded(journey, new Date())) return null;
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
-  const { possessive } = clientPronouns(journey.identity.gender);
+  const { possessive } = clientPronouns(journey.profile.identity.gender);
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const canApprove =
     journey.stage === 'submitted' || journey.stage === 'reviewing';
@@ -435,20 +329,14 @@ function StageActions({
   );
 }
 
-function SubmittedOnboarding({
-  journey,
-  heightCm,
-}: {
-  journey: ClientJourney;
-  heightCm: number;
-}) {
+function SubmittedOnboarding({ journey }: { journey: ClientJourney }) {
   const { startReview, approveAnswers, requestDetails } = useClientJourneys();
   const [openForms, setOpenForms] = useState<string[]>([]);
   const request = openRequest(journey);
   const [flagged, setFlagged] = useState<string[] | null>(null);
   const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
-  const forms = reviewForms(journey.onboarding, journey.identity.gender);
+  const forms = reviewForms(journey.onboarding, journey.profile.identity.gender);
 
   const enterReview = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);
@@ -473,7 +361,7 @@ function SubmittedOnboarding({
       raisedFrom: 'reviewing',
     });
     setFlagged(null);
-    toast.success(`Email sent to ${journey.identity.email}.`);
+    toast.success(`Email sent to ${journey.profile.identity.email}.`);
   };
 
   const confirmApprove = () => {
@@ -485,9 +373,7 @@ function SubmittedOnboarding({
 
   return (
     <div className="space-y-6">
-      <OnboardingFacts journey={journey} heightCm={heightCm} />
-
-      <div className="space-y-3 border-t border-border-subtle pt-6" data-parity="answers-section">
+      <div className="space-y-3" data-parity="answers-section">
         <h3 className={WIDGET_SUBHEADING_CLASS}>Answers</h3>
         {request && <RequestStatus request={request} />}
         <AnswerGroups
@@ -528,7 +414,7 @@ function SubmittedOnboarding({
       <ConfirmDialog
         open={confirmApproveOpen}
         onOpenChange={setConfirmApproveOpen}
-        title={`Approve ${journey.identity.firstName}'s answers?`}
+        title={`Approve ${journey.profile.identity.firstName}'s answers?`}
         description="You won't be able to ask for more details once you approve."
         confirmLabel="Approve"
         onConfirm={confirmApprove}
@@ -537,37 +423,33 @@ function SubmittedOnboarding({
   );
 }
 
-export function OnboardingPanel({
-  journey,
-  heightCm,
-}: {
-  journey: ClientJourney;
-  heightCm: number;
-}) {
+export function OnboardingPanel({ journey }: { journey: ClientJourney }) {
   const submitted = !isBeforeStage(journey.stage, 'submitted');
-  const { possessive } = clientPronouns(journey.identity.gender);
+  const { possessive } = clientPronouns(journey.profile.identity.gender);
+  const frame = {
+    title: 'Onboarding',
+    icon: ClipboardList,
+    headingId: 'onboarding-panel-heading',
+    titleAdornment: submitted && <ScreeningWarning journey={journey} />,
+    action: <ClientStatusBadge status={clientStatus(journey, new Date())} />,
+    parityRoot: 'OnboardingPanel',
+    className: 'mb-8',
+  };
+  const body = submitted ? (
+    <SubmittedOnboarding journey={journey} />
+  ) : (
+    <p className="text-sm text-text-secondary">
+      {possessive.capitalised} answers are not in yet.
+    </p>
+  );
+
+  if (!isBeforeStage(journey.stage, 'approved')) {
+    return <CollapsiblePortalWidget {...frame}>{body}</CollapsiblePortalWidget>;
+  }
 
   return (
-    <PortalWidget
-      presentation="coach"
-      title="Onboarding"
-      icon={ClipboardList}
-      headingId="onboarding-panel-heading"
-      titleAdornment={submitted && <ScreeningWarning journey={journey} />}
-      action={<ClientStatusBadge status={clientStatus(journey, new Date())} />}
-      parityRoot="OnboardingPanel"
-      className="mb-8"
-    >
-      {submitted ? (
-        <SubmittedOnboarding
-          journey={journey}
-            heightCm={heightCm}
-        />
-      ) : (
-        <p className="text-sm text-text-secondary">
-          {possessive.capitalised} answers are not in yet.
-        </p>
-      )}
+    <PortalWidget presentation="coach" {...frame}>
+      {body}
     </PortalWidget>
   );
 }

@@ -2,7 +2,7 @@ import type {
   OnboardingField,
   OnboardingFormAnswers,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
+import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
 import { describe, expect, it } from "vitest";
 
 import {

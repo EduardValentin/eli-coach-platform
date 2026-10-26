@@ -1,7 +1,5 @@
-import { DEMO_CLIENT } from '../../context/CheckinContext';
-import { DEMO_JOURNEY_CALL_ID } from '../../context/ClientJourneyContext';
 import type { ClientJourney, JourneyGender } from '../../domain/journey';
-import { clientPronouns } from '../../utils/journeyLabels';
+import { clientIdForJourney, clientPronouns, journeyClientName } from '../../utils/journeyLabels';
 import type { ScheduledClient } from '../CheckinScheduleDialog';
 
 export function awaitingOnboardingReason(gender: JourneyGender): string {
@@ -11,11 +9,9 @@ export function awaitingOnboardingReason(gender: JourneyGender): string {
 }
 
 export function scheduledClientOf(journey: ClientJourney): ScheduledClient {
-  const { firstName, lastName } = journey.identity;
-
   return {
-    id: journey.callId === DEMO_JOURNEY_CALL_ID ? DEMO_CLIENT.id : journey.callId,
-    name: `${firstName} ${lastName}`.trim(),
-    firstName,
+    id: clientIdForJourney(journey),
+    name: journeyClientName(journey),
+    firstName: journey.profile.identity.firstName,
   };
 }

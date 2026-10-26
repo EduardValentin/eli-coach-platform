@@ -12,7 +12,6 @@ import {
 import { CheckinProvider } from '../../context/CheckinContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -68,7 +67,6 @@ function renderDashboard(bookings: PrototypeBooking[]) {
   render(
     <MemoryRouter initialEntries={['/coach']}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -79,7 +77,6 @@ function renderDashboard(bookings: PrototypeBooking[]) {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

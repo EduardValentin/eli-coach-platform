@@ -47,10 +47,6 @@ const PAGE_PATH = "/coach/clients/ana";
 const STATUS_BADGE = "Awaiting review";
 
 const SUBMITTED: SubmittedReview = {
-  checkInChannel: "WhatsApp",
-  checkInDay: "Monday",
-  checkInWeekday: "monday",
-  cycleMode: "phase-based",
   forms: [
     {
       answered: 2,
@@ -145,7 +141,7 @@ describe("the onboarding panel on a client page", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Onboarding" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Waist-to-height ratio")).toBeInTheDocument();
+    expect(screen.queryByText("Waist-to-height ratio")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Review answers" }),
     ).toBeInTheDocument();
@@ -215,7 +211,7 @@ describe("the onboarding panel on a client page", () => {
       );
 
       // assert
-      expect(screen.getByText("Waist-to-height ratio")).toBeInTheDocument();
+      expect(screen.getByText("Answers")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /^Goals and availability/ }),
       ).toHaveAttribute("aria-expanded", "true");
@@ -232,6 +228,66 @@ describe("the onboarding panel on a client page", () => {
     // assert
     expect(
       screen.queryByRole("button", { name: /review|approve/i }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("the onboarding panel once her answers are approved", () => {
+  it("folds her answers away under its heading, keeping the status and the screening signal in the header", async () => {
+    // arrange, act
+    await renderPanel({
+      review: reviewView({
+        ...submittedReviewIn("approved"),
+        screening: { outcome: "needs-review", yesCount: 1 },
+      }),
+    });
+
+    // assert
+    expect(screen.getByRole("button", { name: "Onboarding" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Answers" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(STATUS_BADGE)).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Safety screening needs a look: 1 yes answer",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens her answers from its heading", async () => {
+    // arrange
+    const user = await renderPanel({
+      review: reviewView(submittedReviewIn("approved")),
+    });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Onboarding" }));
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Answers" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /^Goals and availability/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps her answers in view while they still await a review", async () => {
+    // arrange, act
+    await renderPanel({
+      review: reviewView(submittedReviewIn("awaiting-review")),
+    });
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Answers" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Onboarding" }),
     ).not.toBeInTheDocument();
   });
 });
@@ -302,131 +358,6 @@ describe("the screening signal beside the panel title", () => {
   });
 });
 
-describe("the onboarding facts", () => {
-  it("reads the ratio from the measurement she sent with her onboarding and her chosen check-in", async () => {
-    // arrange, act
-    await renderPanel({ review: reviewView(SUBMITTED) });
-
-    // assert
-    expect(screen.getByText("0.45")).toBeInTheDocument();
-    expect(screen.getByText("Monday")).toBeInTheDocument();
-    expect(screen.getByText("WhatsApp")).toBeInTheDocument();
-    expect(screen.getByText("Phase-based")).toBeInTheDocument();
-  });
-
-  it("hides the ratio during pregnancy", async () => {
-    // arrange, act
-    await renderPanel({
-      review: reviewView({ ...SUBMITTED, pregnancyContext: true }),
-    });
-
-    // assert
-    expect(
-      screen.getByText("Not shown during pregnancy or right after birth."),
-    ).toBeInTheDocument();
-  });
-
-  it("waits on her first measurements", async () => {
-    // arrange, act
-    await renderPanel({
-      review: { ...reviewView(SUBMITTED), submittedWaistCm: null },
-    });
-
-    // assert
-    expect(
-      screen.getByText("Waiting on her first measurements"),
-    ).toBeInTheDocument();
-  });
-
-  it("says what she has not chosen or answered yet", async () => {
-    // arrange, act
-    await renderPanel({
-      review: reviewView({
-        ...SUBMITTED,
-        checkInChannel: null,
-        checkInDay: null,
-        checkInWeekday: null,
-        cycleMode: null,
-      }),
-    });
-
-    // assert
-    expect(screen.getAllByText("Not chosen yet")).toHaveLength(2);
-    expect(screen.getByText("Not answered yet")).toBeInTheDocument();
-  });
-
-  it.each([
-    ["a man", "male"],
-    ["a client who preferred not to say", "prefer_not_to_say"],
-  ] as const)(
-    "leaves cycle mode out of the facts for %s",
-    async (_who, gender) => {
-      // arrange, act
-      await renderPanel({ review: reviewView(SUBMITTED) }, withGender(gender));
-
-      // assert
-      expect(screen.queryByText("Cycle mode")).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: "What cycle mode means" }),
-      ).not.toBeInTheDocument();
-    },
-  );
-});
-
-const PHASE_BASED_FOR_HER =
-  "Phase-based — her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.";
-
-function cycleModeInfoButton(): HTMLElement {
-  return screen.getByRole("button", { name: "What cycle mode means" });
-}
-
-describe("the cycle mode explanation", () => {
-  it("sits beside the cycle mode label", async () => {
-    // arrange, act
-    await renderPanel({ review: reviewView(SUBMITTED) });
-
-    // assert
-    expect(screen.getByText("Cycle mode")).toContainElement(
-      cycleModeInfoButton(),
-    );
-  });
-
-  it("explains every cycle mode on hover", async () => {
-    // arrange
-    const user = await renderPanel({ review: reviewView(SUBMITTED) });
-
-    // act
-    await user.hover(cycleModeInfoButton());
-
-    // assert
-    const hint = await screen.findByRole("dialog");
-    expect(hint).toHaveTextContent(PHASE_BASED_FOR_HER);
-    expect(hint).toHaveTextContent(
-      "Symptom-based — one of those does not hold, so her program follows the symptoms she reports.",
-    );
-    expect(hint).toHaveTextContent(
-      "Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.",
-    );
-    expect(hint).toHaveTextContent(
-      "Not answered yet — the cycle form is empty.",
-    );
-  });
-
-  it("explains the cycle modes when the info button takes keyboard focus", async () => {
-    // arrange
-    const user = await renderPanel({ review: reviewView(SUBMITTED) });
-
-    // act
-    await user.tab();
-
-    // assert
-    expect(cycleModeInfoButton()).toHaveFocus();
-    expect(await screen.findByRole("dialog")).toHaveTextContent(
-      PHASE_BASED_FOR_HER,
-    );
-  });
-});
-
 describe("the panel for a client who is not a woman", () => {
   it("says his answers are not in while he has not submitted", async () => {
     // arrange, act
@@ -446,32 +377,6 @@ describe("the panel for a client who is not a woman", () => {
     // assert
     expect(
       screen.getByText("Their answers are not in yet."),
-    ).toBeInTheDocument();
-  });
-
-  it("waits on his first measurements", async () => {
-    // arrange, act
-    await renderPanel(
-      { review: { ...reviewView(SUBMITTED), submittedWaistCm: null } },
-      withGender("male"),
-    );
-
-    // assert
-    expect(
-      screen.getByText("Waiting on his first measurements"),
-    ).toBeInTheDocument();
-  });
-
-  it("waits on their first measurements", async () => {
-    // arrange, act
-    await renderPanel(
-      { review: { ...reviewView(SUBMITTED), submittedWaistCm: null } },
-      withGender("prefer_not_to_say"),
-    );
-
-    // assert
-    expect(
-      screen.getByText("Waiting on their first measurements"),
     ).toBeInTheDocument();
   });
 

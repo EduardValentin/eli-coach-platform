@@ -1,15 +1,29 @@
 import { appSchema } from "@eli-coach-platform/db";
-import { PROGRESS_PHOTO_VIEWS } from "@eli-coach-platform/domain/client-profile";
+import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
+import {
+  ACTIVITY_LEVELS,
+  CLIENT_LEVELS,
+  CYCLE_MODES,
+  PRIMARY_GOALS,
+  PROGRESS_PHOTO_VIEWS,
+  SESSION_MINUTE_OPTIONS,
+  TRAINING_DAY_OPTIONS,
+  TRAINING_PLACES,
+  type ClientEquipment,
+} from "@eli-coach-platform/domain/client-profile";
 import {
   HEIGHT_UNITS,
+  PREFERRED_CHANNELS,
   WEIGHT_UNITS,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,
   index,
   integer,
+  jsonb,
   numeric,
+  smallint,
   text,
   timestamp,
   unique,
@@ -49,21 +63,73 @@ export const clientMeasurementsTable = appSchema.table(
   ],
 );
 
-export const clientProfilesTable = appSchema.table("client_profiles", {
-  clientId: uuid("client_id")
-    .primaryKey()
-    .references(() => clientsTable.id),
-  heightCm: numeric("height_cm", { precision: 4, scale: 1, mode: "number" }),
-  activityLevel: text("activity_level"),
-  primaryGoal: text("primary_goal"),
-  dietaryRestrictions: text("dietary_restrictions").notNull(),
-  clientNotes: text("client_notes"),
-  progressPhotosConsentedAt: timestamp("progress_photos_consented_at", {
-    withTimezone: true,
-  }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-});
+export const clientProfilesTable = appSchema.table(
+  "client_profiles",
+  {
+    clientId: uuid("client_id")
+      .primaryKey()
+      .references(() => clientsTable.id),
+    heightCm: numeric("height_cm", { precision: 4, scale: 1, mode: "number" }),
+    trainingDaysPerWeek: smallint("training_days_per_week"),
+    sessionMinutes: smallint("session_minutes"),
+    equipment: jsonb("equipment").$type<ClientEquipment[]>(),
+    trainingPlace: varchar("training_place", {
+      enum: TRAINING_PLACES,
+      length: 8,
+    }),
+    limitations: text("limitations"),
+    level: varchar("level", { enum: CLIENT_LEVELS, length: 16 }),
+    primaryGoal: text("primary_goal", { enum: PRIMARY_GOALS }),
+    goalWeightKg: numeric("goal_weight_kg", {
+      precision: 5,
+      scale: 2,
+      mode: "number",
+    }),
+    activityLevel: varchar("activity_level", {
+      enum: ACTIVITY_LEVELS,
+      length: 32,
+    }),
+    cycleMode: varchar("cycle_mode", { enum: CYCLE_MODES, length: 16 }),
+    dietaryRestrictions: text("dietary_restrictions"),
+    coachNotes: text("coach_notes"),
+    coachingSeededAt: timestamp("coaching_seeded_at", { withTimezone: true }),
+    progressPhotosConsentedAt: timestamp("progress_photos_consented_at", {
+      withTimezone: true,
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      "client_profiles_training_days_per_week_check",
+      sql`${table.trainingDaysPerWeek} in (${numberList(TRAINING_DAY_OPTIONS)})`,
+    ),
+    check(
+      "client_profiles_session_minutes_check",
+      sql`${table.sessionMinutes} in (${numberList(SESSION_MINUTE_OPTIONS)})`,
+    ),
+    check(
+      "client_profiles_training_place_check",
+      sql`${table.trainingPlace} in (${quotedList(TRAINING_PLACES)})`,
+    ),
+    check(
+      "client_profiles_level_check",
+      sql`${table.level} in (${quotedList(CLIENT_LEVELS)})`,
+    ),
+    check(
+      "client_profiles_primary_goal_check",
+      sql`${table.primaryGoal} in (${quotedList(PRIMARY_GOALS)})`,
+    ),
+    check(
+      "client_profiles_activity_level_check",
+      sql`${table.activityLevel} in (${quotedList(ACTIVITY_LEVELS)})`,
+    ),
+    check(
+      "client_profiles_cycle_mode_check",
+      sql`${table.cycleMode} in (${quotedList(CYCLE_MODES)})`,
+    ),
+  ],
+);
 
 export const clientProgressPhotosTable = appSchema.table(
   "client_progress_photos",
@@ -95,8 +161,8 @@ export const clientProgressPhotosTable = appSchema.table(
   ],
 );
 
-export const clientUnitPreferencesTable = appSchema.table(
-  "client_unit_preferences",
+export const clientSettingsTable = appSchema.table(
+  "client_settings",
   {
     clientId: uuid("client_id")
       .primaryKey()
@@ -109,20 +175,52 @@ export const clientUnitPreferencesTable = appSchema.table(
       enum: HEIGHT_UNITS,
       length: 8,
     }).notNull(),
+    preferredCheckInWeekday: varchar("preferred_check_in_weekday", {
+      enum: WEEKDAYS,
+      length: 9,
+    }),
+    preferredChannel: varchar("preferred_channel", {
+      enum: PREFERRED_CHANNELS,
+      length: 8,
+    }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
   (table) => [
     check(
-      "client_unit_preferences_weight_unit_check",
+      "client_settings_weight_unit_check",
       sql`${table.weightUnit} in (${quotedList(WEIGHT_UNITS)})`,
     ),
     check(
-      "client_unit_preferences_height_unit_check",
+      "client_settings_height_unit_check",
       sql`${table.heightUnit} in (${quotedList(HEIGHT_UNITS)})`,
+    ),
+    check(
+      "client_settings_preferred_check_in_weekday_check",
+      sql`${table.preferredCheckInWeekday} in (${quotedList(WEEKDAYS)})`,
+    ),
+    check(
+      "client_settings_preferred_channel_check",
+      sql`${table.preferredChannel} in (${quotedList(PREFERRED_CHANNELS)})`,
     ),
   ],
 );
 
+export const clientAvatarsTable = appSchema.table("client_avatars", {
+  clientId: uuid("client_id")
+    .primaryKey()
+    .references(() => clientsTable.id),
+  avatarId: uuid("avatar_id").notNull().unique(),
+  storageKey: text("storage_key").notNull().unique(),
+  keyId: text("key_id").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+});
+
 function quotedList(values: readonly string[]): SQL {
   return sql.raw(values.map((value) => `'${value}'`).join(", "));
+}
+
+function numberList(values: readonly number[]): SQL {
+  return sql.raw(values.join(", "));
 }

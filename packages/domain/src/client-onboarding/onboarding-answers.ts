@@ -122,21 +122,3 @@ export function withoutUnreachable(
     Object.entries(answers).filter(([id]) => reachableIds.has(id)),
   );
 }
-
-export function applyExclusiveOptions(
-  field: OnboardingField,
-  previous: readonly string[],
-  next: readonly string[],
-): string[] {
-  const exclusiveOptions = field.exclusiveOptions ?? [];
-  if (exclusiveOptions.length === 0) return [...next];
-
-  const removed = previous.find((option) => !next.includes(option));
-  if (removed !== undefined) return [...next];
-
-  const added = next.find((option) => !previous.includes(option));
-  if (added === undefined) return [...next];
-  if (exclusiveOptions.includes(added)) return [added];
-
-  return next.filter((option) => !exclusiveOptions.includes(option));
-}

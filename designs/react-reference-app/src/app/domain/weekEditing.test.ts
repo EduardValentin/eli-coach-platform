@@ -14,7 +14,6 @@ function block(): Block {
       cycleMode: 'general',
       language: 'en',
       dailySteps: 6000,
-      equipment: [],
       splitShape: 'full-body',
     },
     library: [],

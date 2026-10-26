@@ -21,6 +21,7 @@ import { MEASUREMENTS_COPY } from "~/features/client-profile/public/measurements
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
+import { clientAvatarSrc } from "~/features/client-profile/ui/shared/avatar/client-avatar-src";
 import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
 import { coachClientResourcesPath } from "~/features/client-resources/public/paths";
 import { clientFullName } from "~/features/clients/public/clients";
@@ -106,6 +107,14 @@ export default function CoachClientRoute() {
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const viewedEntry = measurements.find((entry) => entry.id === viewingEntryId);
+  const answersApproved = review.submitted?.stage === "approved";
+  const onboarding = (
+    <OnboardingPanel
+      client={client}
+      review={review}
+      statusBadge={<ClientStatusBadge status={client.status} />}
+    />
+  );
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -113,7 +122,11 @@ export default function CoachClientRoute() {
 
       <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-5">
-          <Avatar name={name} size="lg" />
+          <Avatar
+            imageUrl={clientAvatarSrc(profile.avatarUrl)}
+            name={name}
+            size="lg"
+          />
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
@@ -139,15 +152,11 @@ export default function CoachClientRoute() {
         </div>
       </header>
 
-      <ClientProfileBlock profile={profile} />
+      <ClientProfileBlock clientId={client.clientId} profile={profile} />
       {client.invitation && (
         <InvitationBlock client={client} invitation={client.invitation} />
       )}
-      <OnboardingPanel
-        client={client}
-        review={review}
-        statusBadge={<ClientStatusBadge status={client.status} />}
-      />
+      {!answersApproved && onboarding}
       {subscription && (
         <>
           <SubscriptionSummary
@@ -162,7 +171,7 @@ export default function CoachClientRoute() {
             <WeeklyCheckInPanel
               client={client}
               scheduling={scheduling}
-              suggestedWeekday={review.submitted?.checkInWeekday ?? null}
+              suggestedWeekday={profile.preferences.preferredCheckInWeekday}
               weekly={weekly}
             />
           </div>
@@ -172,7 +181,7 @@ export default function CoachClientRoute() {
         className="mb-8"
         emptyMessage={MEASUREMENTS_COPY.empty(client.gender)}
         headingId="measurements-panel-heading"
-        heightCm={profile.facts?.heightCm ?? null}
+        heightCm={profile.coaching?.heightCm ?? null}
         measurements={measurements}
         onViewPhotos={(entry) => setViewingEntryId(entry.id)}
         perspective="coach"
@@ -184,6 +193,7 @@ export default function CoachClientRoute() {
           viewer={{ role: "coach", clientFirstName: client.firstName }}
         />
       </MeasurementsTable>
+      {answersApproved && onboarding}
       <AssessmentCallBlock client={client} />
     </div>
   );

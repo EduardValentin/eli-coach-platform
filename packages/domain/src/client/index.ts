@@ -5,6 +5,12 @@ export {
   type ClientIdentities,
   type ClientIdentity,
 } from "./client-identities";
+export { type ClientIdentityChanges } from "./client-identity-changes";
+export {
+  ClientIdentityEdit,
+  type ClientIdentityProblems,
+  type EditableClientIdentity,
+} from "./client-identity-edit";
 export {
   COACHING_STATUSES,
   CoachingStanding,
@@ -12,3 +18,5 @@ export {
   type CoachingStatus,
 } from "./coaching-standing";
 export { portalReachOf, type PortalReach } from "./portal-reach";
+export { UpdateClientIdentityAsCoachUseCase } from "./update-client-identity-as-coach-use-case";
+export { UpdateOwnClientIdentityUseCase } from "./update-own-client-identity-use-case";

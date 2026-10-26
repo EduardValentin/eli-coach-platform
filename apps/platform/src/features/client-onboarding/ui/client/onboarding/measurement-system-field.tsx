@@ -2,7 +2,7 @@ import {
   UnitPreference,
   type MeasurementSystem,
   type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import {
   ChoiceGroup,
   ChoiceOption,

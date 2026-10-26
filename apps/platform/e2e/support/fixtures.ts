@@ -35,6 +35,7 @@ import {
   STOP_WEEKLY_CHECK_IN_LABELS,
 } from "./coach-client-page";
 import { ClientResourcesOutage } from "./client-resources-outage";
+import { CoachClientProfilePage } from "./coach-client-profile-page";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { CoachDashboardPage } from "./coach-dashboard";
@@ -147,6 +148,7 @@ type PlatformFixtures = {
   coachAssessmentCalls: CoachAssessmentCallsPage;
   coachClients: CoachClientsPage;
   coachClient: CoachClientPage;
+  coachClientProfile: CoachClientProfilePage;
   coachClientResources: CoachClientResourcesPage;
   coachCheckIns: CoachCheckInsPage;
   coachDashboard: CoachDashboardPage;
@@ -521,6 +523,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   coachClient: async ({ page }, use) => {
     await use(new CoachClientPage(page));
+  },
+
+  coachClientProfile: async ({ page }, use) => {
+    await use(new CoachClientProfilePage(page));
   },
 
   coachClientResources: async ({ page }, use) => {

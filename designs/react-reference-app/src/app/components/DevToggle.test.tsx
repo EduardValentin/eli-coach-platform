@@ -8,7 +8,6 @@ import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { CheckinProvider } from '../context/CheckinContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { DevToggle } from './DevToggle';
 
 beforeAll(() => {
@@ -37,7 +36,6 @@ function renderDevToggle(search = '') {
   return render(
     <MemoryRouter initialEntries={[`/${search}`]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -47,7 +45,6 @@ function renderDevToggle(search = '') {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

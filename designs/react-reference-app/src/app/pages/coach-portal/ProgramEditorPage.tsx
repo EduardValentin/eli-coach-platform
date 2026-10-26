@@ -62,7 +62,7 @@ function ProgramEditor(props: EditorProps) {
   function addFromLibrary(exercise: Exercise) {
     if (!block) return;
     const pick = { exercise, target: panel.panelTarget?.target ?? null, openSessionId };
-    editor.replaceBlock(blockWithLibraryPick(block, pick, { blockType: block.type, library: exercises, equipment: program.equipment }));
+    editor.replaceBlock(blockWithLibraryPick(block, pick, { blockType: block.type, library: exercises, equipment: editor.equipment }));
     panel.finishTarget();
   }
 
@@ -127,7 +127,7 @@ function ProgramEditor(props: EditorProps) {
             presentation={panel.isWide ? 'pane' : 'drawer'}
             purpose={libraryPurpose(block, panel.panelTarget, exercises)}
             library={exercises}
-            equipment={program.equipment}
+            equipment={editor.equipment}
             asideRef={panel.aside}
             searchRef={panel.search}
             onAdd={addFromLibrary}

@@ -4,7 +4,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from './AppContext';
 import { AssessmentCallProvider } from './AssessmentCallContext';
 import { AWAITING_REVIEW_CALL_ID, ClientJourneyProvider, DEMO_JOURNEY_CALL_ID, useClientJourneys } from './ClientJourneyContext';
-import { ClientProfileProvider } from './ClientProfileContext';
 import { ProgramProvider, usePrograms, type ProgramContextType } from './ProgramContext';
 import { TrainingProvider } from './TrainingContext';
 import { currentVersion, draftOf, type ProgramContent } from '../domain/program';
@@ -20,7 +19,6 @@ const SETUP: ProgramSetup = {
   cycleMode: 'adapted',
   language: 'en',
   dailySteps: 6000,
-  equipment: ['Dumbbells', 'Bench'],
   splitShape: 'full-body',
 };
 
@@ -37,7 +35,6 @@ function renderPrograms(search = '') {
   render(
     <MemoryRouter>
       <AppProvider>
-        <ClientProfileProvider>
           <TrainingProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
@@ -47,7 +44,6 @@ function renderPrograms(search = '') {
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </TrainingProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
@@ -102,7 +98,6 @@ describe('creating a program', () => {
     const program = hooks.programs.programFor(DEMO_JOURNEY_CALL_ID);
     expect(program).toMatchObject({
       goal: 'Lose fat',
-      equipment: ['Dumbbells', 'Bench'],
       level: 'beginner',
       language: 'en',
       cycleMode: 'adapted',

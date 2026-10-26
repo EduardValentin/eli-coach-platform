@@ -1,8 +1,9 @@
 import {
+  CANONICAL_MEASURE_UNITS,
   measureUnitLabel,
   toDisplayMeasure,
   type MeasureUnits,
-} from "../unit-preference";
+} from "../client-settings";
 
 import type { MeasurementValues } from "./measurement";
 import {
@@ -17,8 +18,6 @@ export type MeasurementRule = Pick<
   MeasurementField,
   "kind" | "requirement" | "range"
 >;
-
-const CANONICAL_UNITS: MeasureUnits = { weight: "kg", length: "cm" };
 
 const CANONICAL_VALUE_KEYS: Record<
   MeasurementFieldId,
@@ -72,7 +71,7 @@ export function hasMeasurementProblem(values: MeasurementValues): boolean {
       measurementProblem(
         field,
         values[CANONICAL_VALUE_KEYS[field.id]],
-        CANONICAL_UNITS,
+        CANONICAL_MEASURE_UNITS,
       ) !== null,
   );
 }

@@ -1,11 +1,8 @@
 import {
-  measureUnitsOf,
+  CANONICAL_MEASURE_UNITS,
   toDisplayMeasure,
-  UnitPreference,
   type MeasureKind,
-} from "@eli-coach-platform/domain/unit-preference";
-
-const CANONICAL_UNITS = measureUnitsOf(UnitPreference.metric().toSnapshot());
+} from "@eli-coach-platform/domain/client-settings";
 
 const CANONICAL_UNIT_LABELS: Record<MeasureKind, string> = {
   weight: "kg",
@@ -21,5 +18,5 @@ export function formatCanonicalMeasure(
   kind: MeasureKind,
   canonical: number,
 ): string {
-  return `${toDisplayMeasure(kind, canonical, CANONICAL_UNITS)} ${CANONICAL_UNIT_LABELS[kind]}`;
+  return `${toDisplayMeasure(kind, canonical, CANONICAL_MEASURE_UNITS)} ${CANONICAL_UNIT_LABELS[kind]}`;
 }

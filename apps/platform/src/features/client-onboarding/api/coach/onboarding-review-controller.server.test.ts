@@ -89,7 +89,6 @@ describe("OnboardingReviewController loadReview", () => {
           screening: { outcome: "needs-review", yesCount: 1 },
           withholdsNutritionAdvice: true,
           pregnancyContext: false,
-          cycleMode: "phase-based",
           flaggedQuestions: [
             { formId: "safety-screening", fieldId: "chestPainOnExertion" },
           ],
@@ -156,10 +155,6 @@ describe("OnboardingReviewController loadReview", () => {
         screening: { outcome: "needs-review", yesCount: 1 },
         withholdsNutritionAdvice: true,
         pregnancyContext: false,
-        cycleMode: "phase-based",
-        checkInDay: "Friday",
-        checkInWeekday: "friday",
-        checkInChannel: "WhatsApp",
         forms: [
           {
             formId: "goal-availability",
@@ -227,12 +222,12 @@ describe("OnboardingReviewController loadReview", () => {
     });
   });
 
-  it("answers no check-in day, no channel and no open request when the client gave none", async () => {
+  it("answers no forms and no open request when the client gave no answers", async () => {
     // arrange
     const { controller } = createController({
       reading: submittedReading({
         answers: answersWith({}),
-        overrides: { cycleMode: null, openRequest: null },
+        overrides: { openRequest: null },
       }),
     });
 
@@ -241,10 +236,6 @@ describe("OnboardingReviewController loadReview", () => {
 
     // assert
     expect(review.submitted).toMatchObject({
-      cycleMode: null,
-      checkInDay: null,
-      checkInWeekday: null,
-      checkInChannel: null,
       forms: [],
       openRequest: null,
     });
@@ -682,7 +673,6 @@ function submittedReading(options: {
     screening: { outcome: "cleared", yesCount: 0 },
     withholdsNutritionAdvice: false,
     pregnancyContext: false,
-    cycleMode: null,
     flaggedQuestions: [],
     forms: [],
     openRequest: null,

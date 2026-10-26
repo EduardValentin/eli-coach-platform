@@ -10,11 +10,13 @@ interface UnitPreferencesSettingsProps {
   sampleWeightKg?: number;
   /** Sample height (cm) used only for the preview text; defaults to a neutral sample. */
   sampleHeightCm?: number;
+  description?: string;
 }
 
 export function UnitPreferencesSettings({
   sampleWeightKg = 66.1,
   sampleHeightCm = 165,
+  description = 'Preferences are saved to this device.',
 }: UnitPreferencesSettingsProps) {
   const { weightUnit, heightUnit, setWeightUnit, setHeightUnit } =
     useUnitPreferences();
@@ -24,7 +26,7 @@ export function UnitPreferencesSettings({
       headingId="units-heading"
       title="Units & Measurements"
       icon={SlidersHorizontal}
-      description="Preferences are saved to this device."
+      description={description}
     >
       <SettingsRows>
         <SettingsRow

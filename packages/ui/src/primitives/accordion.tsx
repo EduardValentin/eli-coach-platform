@@ -37,13 +37,28 @@ const CHEVRON_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
   title: "",
 };
 
+type AccordionTriggerChevron = "trailing" | "none";
+
 type AccordionTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixAccordion.Trigger
 > & {
   headingTag?: AccordionHeadingTag;
   headingId?: string;
   layout?: AccordionTriggerLayout;
+  chevron?: AccordionTriggerChevron;
 };
+
+export function AccordionChevron({ className }: { className?: string }) {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none size-4 shrink-0 text-text-secondary motion-safe:transition-transform motion-safe:duration-200",
+        className,
+      )}
+    />
+  );
+}
 
 export function AccordionTrigger({
   children,
@@ -51,6 +66,7 @@ export function AccordionTrigger({
   headingTag: HeadingTag = "h3",
   headingId,
   layout = "section",
+  chevron = "trailing",
   ...props
 }: AccordionTriggerProps) {
   return (
@@ -66,13 +82,9 @@ export function AccordionTrigger({
           {...props}
         >
           {children}
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none size-4 shrink-0 text-text-secondary motion-safe:transition-transform motion-safe:duration-200",
-              CHEVRON_LAYOUT_CLASS[layout],
-            )}
-          />
+          {chevron === "trailing" && (
+            <AccordionChevron className={CHEVRON_LAYOUT_CLASS[layout]} />
+          )}
         </RadixAccordion.Trigger>
       </HeadingTag>
     </RadixAccordion.Header>

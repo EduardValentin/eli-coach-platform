@@ -206,7 +206,6 @@ describe("ReadOnboardingReviewUseCase", () => {
     expect(result.screening).toEqual({ outcome: "needs-review", yesCount: 3 });
     expect(result.withholdsNutritionAdvice).toBe(true);
     expect(result.pregnancyContext).toBe(true);
-    expect(result.cycleMode).toBe("symptom-based");
     expect(result.flaggedQuestions).toEqual([
       { formId: "safety-screening", fieldId: "heartCondition" },
       { formId: "safety-screening", fieldId: "chronicConditionDiagnosed" },
@@ -265,7 +264,7 @@ describe("ReadOnboardingReviewUseCase", () => {
     });
   });
 
-  it("reads no cycle mode for a male client, whose review has no cycle form", async () => {
+  it("reads no cycle form for a male client", async () => {
     // arrange
     const ports = readPorts({ identity: { ...IDENTITY, gender: "male" } });
     const useCase = new ReadOnboardingReviewUseCase(ports);
@@ -275,13 +274,12 @@ describe("ReadOnboardingReviewUseCase", () => {
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
-    expect(result.cycleMode).toBeNull();
     expect(result.forms.map((form) => form.formId)).not.toContain(
       "cycle-context",
     );
   });
 
-  it("reads an unanswered cycle form as null for a female client", async () => {
+  it("reads no pregnancy context from an unanswered cycle form", async () => {
     // arrange
     const submitted = { ...answers(), "cycle-context": {} };
     const ports = readPorts({ submission: submission(submitted) });
@@ -292,7 +290,6 @@ describe("ReadOnboardingReviewUseCase", () => {
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
-    expect(result.cycleMode).toBeNull();
     expect(result.pregnancyContext).toBe(false);
   });
 

@@ -5,8 +5,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { CycleProvider } from '../../context/CycleContext';
+import { NutritionProvider } from '../../context/NutritionContext';
 import { TrainingProvider } from '../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import { ClientDashboard } from './ClientDashboard';
@@ -39,7 +39,7 @@ function renderDashboard(devParams: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-          <ClientProfileProvider>
+          <NutritionProvider>
             <UnitPreferencesProvider>
               <CycleProvider>
                 <AssessmentCallProvider>
@@ -55,7 +55,7 @@ function renderDashboard(devParams: string) {
                 </AssessmentCallProvider>
               </CycleProvider>
             </UnitPreferencesProvider>
-          </ClientProfileProvider>
+          </NutritionProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>,

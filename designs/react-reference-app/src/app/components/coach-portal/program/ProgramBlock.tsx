@@ -138,17 +138,17 @@ export function ProgramBlock({ journey }: { journey: ClientJourney }) {
   const programPath = `${clientDetailPathForJourney(journey)}/program`;
   const draft = program && draftOf(program);
   const published = program?.versions.some(version => version.state === 'published');
-  const possessive = clientPronouns(journey.identity.gender).possessive.lower;
+  const possessive = clientPronouns(journey.profile.identity.gender).possessive.lower;
 
   let body: ReactNode;
   let footer: ReactNode = null;
   if (!program) {
-    const waiting = isBeforeStage(journey.stage, 'submitted');
+    const waiting = isBeforeStage(journey.stage, 'approved');
     body = (
       <EmptyState
         icon={ClipboardList}
         title="No program yet"
-        description={waiting ? `Available once ${possessive} onboarding is sent.` : `Build it from ${possessive} onboarding answers.`}
+        description={waiting ? `The program opens once ${possessive} answers are approved.` : `Build it from ${possessive} profile.`}
         action={
           !waiting && (
             <Button variant="primary" asChild>

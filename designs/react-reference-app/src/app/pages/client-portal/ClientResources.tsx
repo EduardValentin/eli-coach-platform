@@ -8,13 +8,14 @@ import {
   ResourcesUnavailable,
 } from '../../components/resources/ResourceCollection';
 import { ResourceViewer } from '../../components/resources/ResourceViewer';
-import { SIGNED_IN_CLIENT_ID } from '../../context/ClientProfileContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { isUnopened, type Resource } from '../../domain/resources';
 import { useClientResources } from '../../hooks/useClientResources';
 import { saveDownload } from '../../utils/saveDownload';
 
 export function ClientResources() {
-  const resources = useClientResources(SIGNED_IN_CLIENT_ID);
+  const { demoJourney } = useClientJourneys();
+  const resources = useClientResources(demoJourney.callId);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const { listing } = resources;
   const listed = listing.status === 'ready' ? listing.resources : [];

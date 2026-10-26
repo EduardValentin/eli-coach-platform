@@ -34,7 +34,7 @@ describe("composeClientProfileFeature", () => {
     const { feature } = composeClientProfileFeature(handles);
 
     // act
-    const response = await feature.unitPreference.save(
+    const response = await feature.clientSettings.saveUnits(
       accountArgs({
         account: CLIENT,
         request: {
@@ -120,12 +120,15 @@ describe("composeClientProfileFeature", () => {
 
 function createHandles() {
   return {
+    clientAvatarRenditions: { render: vi.fn() },
+    clientAvatarStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
     clientIdentities: {
       findByClientId: vi.fn().mockResolvedValue(null),
       findByClientIds: vi.fn().mockResolvedValue([]),
     },
     clientReach: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+      findById: vi.fn().mockResolvedValue(null),
     },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
@@ -135,6 +138,7 @@ function createHandles() {
       progressPhotoRefused: vi.fn(),
       progressPhotoDeleted: vi.fn(),
       progressPhotoAccessRefused: vi.fn(),
+      clientAvatarFileOrphaned: vi.fn(),
     },
     progressPhotoRenditions: { render: vi.fn() },
     progressPhotoStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },

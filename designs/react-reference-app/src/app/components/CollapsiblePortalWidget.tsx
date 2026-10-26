@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import {
   Accordion,
+  AccordionChevron,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
@@ -14,6 +15,8 @@ import { WIDGET_TITLE_CLASS } from './typography';
 interface CollapsiblePortalWidgetProps {
   title: ReactNode;
   icon?: LucideIcon;
+  titleAdornment?: ReactNode;
+  action?: ReactNode;
   headingId: string;
   className?: string;
   parityRoot?: string;
@@ -23,6 +26,8 @@ interface CollapsiblePortalWidgetProps {
 export function CollapsiblePortalWidget({
   title,
   icon,
+  titleAdornment,
+  action,
   headingId,
   className,
   parityRoot,
@@ -35,17 +40,28 @@ export function CollapsiblePortalWidget({
       parityRoot={parityRoot}
     >
       <Accordion type="single" collapsible>
-        <AccordionItem value={headingId}>
-          <AccordionTrigger
-            headingTag="h2"
-            headingId={headingId}
-            layout="title"
-          >
-            <span className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}>
-              {icon && <PanelTitleIcon icon={icon} />}
-              {title}
-            </span>
-          </AccordionTrigger>
+        <AccordionItem value={headingId} className="group/collapsible">
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <AccordionTrigger
+                headingTag="h2"
+                headingId={headingId}
+                layout="title"
+                chevron="none"
+                className="min-w-0 flex-initial after:absolute after:inset-0"
+              >
+                <span className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}>
+                  {icon && <PanelTitleIcon icon={icon} />}
+                  {title}
+                </span>
+              </AccordionTrigger>
+              {titleAdornment && <div className="relative flex items-center">{titleAdornment}</div>}
+            </div>
+            <div className="flex shrink-0 items-center gap-4">
+              {action && <div className="relative -my-2 flex items-center">{action}</div>}
+              <AccordionChevron className="group-data-[state=open]/collapsible:rotate-180" />
+            </div>
+          </div>
           <AccordionContent className="pt-4 pb-0">{children}</AccordionContent>
         </AccordionItem>
       </Accordion>

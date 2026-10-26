@@ -1,0 +1,27 @@
+import type { CoachingFactsSnapshot } from "@eli-coach-platform/domain/client-profile";
+
+import { clientProfilesTable } from "~/features/client-profile/data/schema.server";
+
+export type CoachingColumns = Pick<
+  typeof clientProfilesTable.$inferSelect,
+  | "heightCm"
+  | "trainingDaysPerWeek"
+  | "sessionMinutes"
+  | "equipment"
+  | "trainingPlace"
+  | "limitations"
+  | "level"
+  | "primaryGoal"
+  | "goalWeightKg"
+  | "activityLevel"
+  | "cycleMode"
+  | "dietaryRestrictions"
+>;
+
+export function coachingColumnsOf(
+  coaching: CoachingFactsSnapshot,
+): CoachingColumns {
+  const { trainingDays, ...facts } = coaching;
+
+  return { ...facts, trainingDaysPerWeek: trainingDays };
+}

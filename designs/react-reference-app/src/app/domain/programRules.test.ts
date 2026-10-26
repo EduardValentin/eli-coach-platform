@@ -390,13 +390,13 @@ describe('ruleContextFor', () => {
   const program = { level: 'advanced', versions: [published, draft] } as Program;
   const library = [...exercises.values()];
 
-  it('reads day 1, the check-in day and a pending details request from the journey', () => {
+  it('reads day 1, the preferred check-in day and a pending details request from the journey', () => {
     // arrange
     const dayOne = addDays(publishDay, -7);
     const journey = {
       stage: 'needs-details',
       programReadyAt: dayOne,
-      onboarding: { answers: { 'nutrition-lifestyle': { checkInDay: 'Thursday' } } },
+      settings: { preferredCheckInWeekday: 'thu', preferredChannel: 'email' },
     } as unknown as ClientJourney;
 
     // act

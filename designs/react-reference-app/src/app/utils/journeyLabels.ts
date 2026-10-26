@@ -10,6 +10,7 @@ import {
   type VisitorGender,
 } from '../services/visitorProfile';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
+import { DEMO_CLIENT } from '../services/demoClient';
 import type {
   ClientJourney,
   JourneyGender,
@@ -62,8 +63,6 @@ export function clientPronouns(gender: JourneyGender): ClientPronouns {
   };
 }
 
-export const CYCLE_MODE_NOT_ANSWERED = 'Not answered yet';
-
 export const CYCLE_MODE_INFO_LABEL = 'What cycle mode means';
 
 export type CycleModeDefinition = { term: string; meaning: string };
@@ -78,10 +77,6 @@ export const CYCLE_MODE_DEFINITIONS: readonly CycleModeDefinition[] = [
     term: CYCLE_MODE_LABELS.general,
     meaning:
       'no cycle-driven adjustments; the low-energy session stays available.',
-  },
-  {
-    term: CYCLE_MODE_NOT_ANSWERED,
-    meaning: 'the cycle form is empty.',
   },
 ];
 
@@ -106,10 +101,12 @@ export function journeyCallIdForClient(clientId: string): string | null {
   return DEMO_CLIENT_IDS.includes(clientId) ? DEMO_JOURNEY_CALL_ID : null;
 }
 
+export function clientIdForJourney(journey: ClientJourney): string {
+  return journey.callId === DEMO_JOURNEY_CALL_ID ? DEMO_CLIENT.id : journey.callId;
+}
+
 export function clientDetailPathForJourney(journey: ClientJourney): string {
-  return journey.callId === DEMO_JOURNEY_CALL_ID
-    ? '/coach/clients/c1'
-    : `/coach/clients/${journey.callId}`;
+  return `/coach/clients/${clientIdForJourney(journey)}`;
 }
 
 export function startPathLabel(
@@ -127,5 +124,5 @@ export function startPathLabel(
 export { bundleLengthLabel };
 
 export function journeyClientName(journey: ClientJourney): string {
-  return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
+  return `${journey.profile.identity.firstName} ${journey.profile.identity.lastName}`.trim();
 }

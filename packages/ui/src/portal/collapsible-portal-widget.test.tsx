@@ -126,4 +126,77 @@ describe("CollapsiblePortalWidget", () => {
     );
     expect(title.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
+  it("sets an adornment beside the title and an action before the chevron, outside the trigger", () => {
+    // arrange, act
+    render(
+      <CollapsiblePortalWidget
+        action={<span>Approved</span>}
+        headingId="onboarding-heading"
+        title="Onboarding"
+        titleAdornment={<button type="button">Screening warning</button>}
+      >
+        <p>Her answers.</p>
+      </CollapsiblePortalWidget>,
+    );
+
+    // assert
+    const trigger = screen.getByRole("button", { name: "Onboarding" });
+    expect(trigger).not.toHaveTextContent("Approved");
+    expect(trigger.querySelector("svg")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Screening warning" }).parentElement,
+    ).toHaveClass("relative", "flex", "items-center");
+    expect(screen.getByText("Approved").parentElement).toHaveClass(
+      "relative",
+      "-my-2",
+      "flex",
+      "items-center",
+    );
+  });
+
+  it("stretches its trigger over the whole header so a click anywhere on it toggles", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <CollapsiblePortalWidget
+        action={<span>Approved</span>}
+        headingId="onboarding-heading"
+        title="Onboarding"
+      >
+        <p>Her answers.</p>
+      </CollapsiblePortalWidget>,
+    );
+    const trigger = screen.getByRole("button", { name: "Onboarding" });
+
+    // act
+    await user.click(trigger);
+
+    // assert
+    expect(trigger).toHaveClass(
+      "min-w-0",
+      "flex-initial",
+      "after:absolute",
+      "after:inset-0",
+    );
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Her answers.")).toBeVisible();
+  });
+
+  it("ends its header in a chevron that turns with the open state", () => {
+    // arrange, act
+    render(<AssessmentCallWidget />);
+
+    // assert
+    const region = screen.getByRole("region", { name: "Assessment call" });
+    const chevron = [...region.querySelectorAll("svg")].at(-1);
+    expect(chevron).toHaveAttribute("aria-hidden", "true");
+    expect(chevron).toHaveClass(
+      "group-data-[state=open]/collapsible:rotate-180",
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Assessment call" })
+        .contains(chevron ?? null),
+    ).toBe(false);
+  });
 });

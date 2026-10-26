@@ -5,19 +5,16 @@ import { Toaster } from 'sonner';
 import { describe, expect, it } from 'vitest';
 import { RecipeLibrary } from './RecipeLibrary';
 import { AppProvider } from '../../../context/AppContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { NutritionProvider } from '../../../context/NutritionContext';
 
 function renderLibrary() {
   render(
     <MemoryRouter>
       <AppProvider>
-        <ClientProfileProvider>
           <NutritionProvider>
             <RecipeLibrary tabs={null} />
             <Toaster />
           </NutritionProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

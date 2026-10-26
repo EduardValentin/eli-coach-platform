@@ -13,16 +13,13 @@ import {
   type PrototypeMode,
 } from './AppContext';
 import { useAssessmentCalls } from './AssessmentCallContext';
-import { useClientProfile } from './ClientProfileContext';
 import {
   advance,
   isBeforeStage,
   type ClientJourney,
   type DetailRequest,
   type JourneyEvent,
-  type JourneyIdentity,
   type JourneyInvitation,
-  type JourneyPhone,
   type JourneyPricing,
   type JourneyGender,
   type JourneyStage,
@@ -48,15 +45,25 @@ import {
 } from '../domain/coachingSubscription';
 import {
   heldJourney,
+  ROSTER_CALL_IDS,
+  seededIdentity,
   seedJourney,
+  seedRosterJourneys,
   type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
   type PrototypeRefund,
+  type PrototypeSeededAvatar,
   type PrototypeSeededPhotos,
+  type SeededPerson,
 } from '../services/clientJourneySamples';
-import { profileOfJourney } from '../domain/clientProfile';
+import {
+  editedProfile,
+  seededAtApproval,
+  type ClientProfileEdit,
+} from '../domain/clientProfile';
+import { saveClientProfile } from '../services/clientProfileService';
 import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
 import {
@@ -64,12 +71,11 @@ import {
   type PrototypeInvitationStanding,
   type SentInvitation,
 } from '../services/invitationService';
-import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
 export const DEMO_JOURNEY_CALL_ID = 'ac-demo-client-1';
 export const AWAITING_REVIEW_CALL_ID = 'ac-seed-awaiting-review';
 
-const AWAITING_REVIEW_PERSON: DemoPerson = {
+const AWAITING_REVIEW_PERSON: SeededPerson = {
   firstName: 'Andreea',
   lastName: 'Popescu',
   email: 'andreea@example.com',
@@ -77,8 +83,14 @@ const AWAITING_REVIEW_PERSON: DemoPerson = {
   primaryGoal: 'build_muscle',
 };
 
-const DEMO_PHONE: JourneyPhone = { diallingCode: '+40', number: '712345678' };
-const DEMO_PRIMARY_GOAL: VisitorPrimaryGoal = 'lose_weight';
+const DEMO_PERSON: SeededPerson = {
+  firstName: 'Jane',
+  lastName: 'Doe',
+  email: 'jane@example.com',
+  age: 28,
+  phone: { diallingCode: '+40', number: '712345678' },
+  primaryGoal: 'lose_weight',
+};
 const DEMO_BOOKING_NOTES =
   'Wants a structured plan with someone to keep her accountable.';
 
@@ -92,6 +104,7 @@ export type DemoJourneyOptions = {
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
   seededPhotos: PrototypeSeededPhotos;
+  seededAvatar: PrototypeSeededAvatar;
   refund: PrototypeRefund;
   paymentProblem: boolean;
   cardOnFile: PrototypeCardOnFile;
@@ -129,6 +142,8 @@ type ClientJourneyContextType = {
   submitOnboarding: (callId: string, submission: JourneySubmission) => void;
   startReview: (callId: string) => void;
   approveAnswers: (callId: string) => void;
+  updateClientProfile: (callId: string, edit: ClientProfileEdit) => Promise<void>;
+  updateClientAvatar: (callId: string, avatarUrl: string | null) => Promise<void>;
   requestDetails: (callId: string, request: DetailRequest) => void;
   answerRequest: (callId: string, answeredAt: Date) => void;
   markProgramReady: (callId: string, readyAt: Date) => void;
@@ -153,12 +168,6 @@ function applied(journey: ClientJourney, event: JourneyEvent): ClientJourney {
   const transition = advance(journey, event);
 
   return transition.status === 'advanced' ? transition.journey : journey;
-}
-
-function withProfile(journey: ClientJourney): ClientJourney {
-  if (isBeforeStage(journey.stage, 'submitted')) return journey;
-
-  return { ...journey, profile: profileOfJourney(journey) };
 }
 
 function withProgramReady(
@@ -206,10 +215,36 @@ function answeredLastRequest(
   );
 }
 
+function rosterJourneysFor(prototypeMode: PrototypeMode): Record<string, ClientJourney> {
+  if (prototypeMode !== 'post-mvp') return {};
+
+  return Object.fromEntries(
+    seedRosterJourneys(prototypeMode, new Date()).map((journey) => [journey.callId, journey]),
+  );
+}
+
+const SEEDED_CALL_IDS: readonly string[] = [
+  DEMO_JOURNEY_CALL_ID,
+  AWAITING_REVIEW_CALL_ID,
+  ...ROSTER_CALL_IDS,
+];
+
+function seededJourneysOf(journeys: Record<string, ClientJourney>): Record<string, ClientJourney> {
+  return Object.fromEntries(
+    Object.entries(journeys).filter(([callId]) => SEEDED_CALL_IDS.includes(callId)),
+  );
+}
+
+function withoutRoster(journeys: Record<string, ClientJourney>): Record<string, ClientJourney> {
+  return Object.fromEntries(
+    Object.entries(journeys).filter(([callId]) => !ROSTER_CALL_IDS.includes(callId)),
+  );
+}
+
 function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
   return seedJourney({
     callId: AWAITING_REVIEW_CALL_ID,
-    identity: demoIdentity(AWAITING_REVIEW_PERSON, 'female'),
+    identity: seededIdentity(AWAITING_REVIEW_PERSON, 'female'),
     stage: 'submitted',
     startPath: 'immediate',
     subscriptionStatus: 'active',
@@ -220,6 +255,7 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
     measurementsDue: 'none',
     lifeStage: 'none',
     seededPhotos: 'none',
+    seededAvatar: 'none',
     refund: 'none',
     paymentProblem: false,
     cardOnFile: 'visa',
@@ -231,7 +267,6 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
 export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
   const { bookings } = useAssessmentCalls();
-  const { clientProfile } = useClientProfile();
   const {
     journeyStage,
     journeyStartPath,
@@ -243,6 +278,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyMeasurementsDue,
     journeyLifeStage,
     journeySeededPhotos,
+    journeySeededAvatar,
     journeyRefund,
     journeyPaymentProblem,
     journeyCardOnFile,
@@ -254,13 +290,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     ? 'reduced'
     : 'regular';
 
-  const demoPerson: DemoPerson = {
-    firstName: clientProfile?.firstName ?? 'Jane',
-    lastName: clientProfile?.lastName ?? 'Doe',
-    email: clientProfile?.email ?? 'jane@example.com',
-    age: ageForBand(journeyAgeBand, clientProfile?.age ?? 28),
-    phone: DEMO_PHONE,
-    primaryGoal: DEMO_PRIMARY_GOAL,
+  const demoPerson: SeededPerson = {
+    ...DEMO_PERSON,
+    age: ageForBand(journeyAgeBand, DEMO_PERSON.age),
   };
 
   const demoPersonRef = useRef(demoPerson);
@@ -270,7 +302,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     () => ({
       [DEMO_JOURNEY_CALL_ID]: seedJourney({
         callId: DEMO_JOURNEY_CALL_ID,
-        identity: demoIdentity(demoPerson, journeyGender),
+        identity: seededIdentity(demoPerson, journeyGender),
         stage: journeyStage,
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
@@ -281,6 +313,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         measurementsDue: journeyMeasurementsDue,
         lifeStage: journeyLifeStage,
         seededPhotos: journeySeededPhotos,
+        seededAvatar: journeySeededAvatar,
         refund: journeyRefund,
         paymentProblem: journeyPaymentProblem,
         cardOnFile: journeyCardOnFile,
@@ -288,6 +321,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
+      ...rosterJourneysFor(prototypeMode),
     }),
   );
 
@@ -300,7 +334,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         ...previous,
         [DEMO_JOURNEY_CALL_ID]: seedJourney({
           callId: DEMO_JOURNEY_CALL_ID,
-          identity: demoIdentity(demoPersonRef.current, options.gender),
+          identity: seededIdentity(demoPersonRef.current, options.gender),
           stage,
           startPath: options.startPath,
           subscriptionStatus: options.subscriptionStatus,
@@ -311,6 +345,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           measurementsDue: options.measurementsDue,
           lifeStage: options.lifeStage,
           seededPhotos: options.seededPhotos,
+          seededAvatar: options.seededAvatar,
           refund: options.refund,
           paymentProblem: options.paymentProblem,
           cardOnFile: options.cardOnFile,
@@ -333,6 +368,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       measurementsDue: journeyMeasurementsDue,
       lifeStage: journeyLifeStage,
       seededPhotos: journeySeededPhotos,
+      seededAvatar: journeySeededAvatar,
       refund: journeyRefund,
       paymentProblem: journeyPaymentProblem,
       cardOnFile: journeyCardOnFile,
@@ -350,6 +386,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyMeasurementsDue,
     journeyLifeStage,
     journeySeededPhotos,
+    journeySeededAvatar,
     journeyRefund,
     journeyPaymentProblem,
     journeyCardOnFile,
@@ -359,17 +396,15 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setJourneys((previous) => ({
-      ...previous,
+      ...withoutRoster(previous),
       [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
+      ...rosterJourneysFor(prototypeMode),
     }));
   }, [prototypeMode]);
 
   useEffect(() => {
     setJourneys((previous) => {
-      const next: Record<string, ClientJourney> = {
-        [DEMO_JOURNEY_CALL_ID]: previous[DEMO_JOURNEY_CALL_ID],
-        [AWAITING_REVIEW_CALL_ID]: previous[AWAITING_REVIEW_CALL_ID],
-      };
+      const next = seededJourneysOf(previous);
 
       for (const booking of bookings) {
         const journey = previous[booking.id];
@@ -433,7 +468,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               cardOnFile: payment.cardOnFile,
             },
             invitation: journeyInvitationFrom(
-              createInvitation(journey.identity.email, payment.paidAt),
+              createInvitation(journey.profile.identity.email, payment.paidAt),
             ),
           },
           'record-payment',
@@ -518,7 +553,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           { recordedAt: submittedAt, photos },
         );
 
-        return withProfile({
+        return {
           ...submitted,
           measurements: firstEntry
             ? [...submitted.measurements, firstEntry]
@@ -528,7 +563,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
             .progressPhotos
             ? submittedAt
             : submitted.progressPhotosConsentedAt,
-        });
+        };
       });
     },
     [updateJourney],
@@ -543,9 +578,37 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   const approveAnswers = useCallback(
     (callId: string) => {
-      dispatch(callId, 'approve-answers');
+      updateJourney(callId, (journey) => {
+        const transition = advance(journey, 'approve-answers');
+
+        return transition.status === 'advanced'
+          ? seededAtApproval(transition.journey)
+          : journey;
+      });
     },
-    [dispatch],
+    [updateJourney],
+  );
+
+  const updateClientProfile = useCallback(
+    async (callId: string, edit: ClientProfileEdit) => {
+      await saveClientProfile(appState.profileSave);
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        profile: editedProfile(journey.profile, edit),
+      }));
+    },
+    [appState.profileSave, updateJourney],
+  );
+
+  const updateClientAvatar = useCallback(
+    async (callId: string, avatarUrl: string | null) => {
+      await saveClientProfile(appState.profileSave);
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        profile: { ...journey.profile, avatarUrl },
+      }));
+    },
+    [appState.profileSave, updateJourney],
   );
 
   const requestDetails = useCallback(
@@ -566,19 +629,17 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   const answerRequest = useCallback(
     (callId: string, answeredAt: Date) => {
       updateJourney(callId, (journey) =>
-        withProfile(
-          applied(
-            {
-              ...journey,
-              review: {
-                requests: answeredLastRequest(
-                  journey.review.requests,
-                  answeredAt,
-                ),
-              },
+        applied(
+          {
+            ...journey,
+            review: {
+              requests: answeredLastRequest(
+                journey.review.requests,
+                answeredAt,
+              ),
             },
-            'answer-request',
-          ),
+          },
+          'answer-request',
         ),
       );
     },
@@ -716,6 +777,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         submitOnboarding,
         startReview,
         approveAnswers,
+        updateClientProfile,
+        updateClientAvatar,
         requestDetails,
         answerRequest,
         markProgramReady,
@@ -741,20 +804,6 @@ function repricedUntilPaid(
   return { ...journey, pricing };
 }
 
-type DemoPerson = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  age: number;
-  phone?: JourneyPhone;
-  primaryGoal: VisitorPrimaryGoal;
-};
-
-function dateOfBirthForAge(age: number): string {
-  const birthYear = new Date().getFullYear() - age;
-  return `${birthYear}-06-15`;
-}
-
 const AGE_BAND_AGES: Record<JourneyAgeBand, number | null> = {
   adult: null,
   'under-15': PARQ_MIN_AGE - 1,
@@ -763,22 +812,6 @@ const AGE_BAND_AGES: Record<JourneyAgeBand, number | null> = {
 
 function ageForBand(band: JourneyAgeBand, fallback: number): number {
   return AGE_BAND_AGES[band] ?? fallback;
-}
-
-function demoIdentity(
-  person: DemoPerson,
-  gender: JourneyGender,
-): JourneyIdentity {
-  return {
-    firstName: person.firstName,
-    lastName: person.lastName,
-    dateOfBirth: dateOfBirthForAge(person.age),
-    email: person.email,
-    phone: person.phone,
-    gender,
-    country: 'Romania',
-    primaryGoal: person.primaryGoal,
-  };
 }
 
 export function useClientJourneys() {

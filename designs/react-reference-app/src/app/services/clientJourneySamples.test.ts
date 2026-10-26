@@ -15,6 +15,7 @@ import {
 } from '../domain/coachingSubscription';
 import {
   seedJourney,
+  seedRosterJourneys,
   type JourneySeed,
   type PrototypeMeasurementsDue,
   type PrototypeSeededPhotos,
@@ -52,6 +53,7 @@ function journeyAt(
     measurementsDue,
     lifeStage: 'none',
     seededPhotos,
+    seededAvatar: 'none',
     refund: 'none',
     paymentProblem: false,
     cardOnFile: 'visa',
@@ -153,42 +155,60 @@ describe('seeding progress photos', () => {
 });
 
 describe('seeding a client profile', () => {
-  it('leaves her profile empty at every stage before she sends her onboarding', () => {
+  it('opens her profile from her booking with no coaching facts or preferences before approval', () => {
     // arrange
-    const stagesBefore = JOURNEY_STAGES.filter((stage) =>
-      isBeforeStage(stage, 'submitted'),
-    );
+    const stagesBefore = JOURNEY_STAGES.filter((stage) => isBeforeStage(stage, 'approved'));
 
     // act
-    const profiles = stagesBefore.map(
-      (stage) => journeyAt(stage, 'mvp').profile,
-    );
+    const journeys = stagesBefore.map((stage) => journeyAt(stage, 'mvp'));
 
     // assert
-    expect(profiles).toEqual(stagesBefore.map(() => null));
+    for (const journey of journeys) {
+      expect(journey.profile.identity.firstName).toBe('Ana');
+      expect(journey.profile.coaching).toBeNull();
+      expect(journey.settings).toEqual({ preferredCheckInWeekday: null, preferredChannel: null });
+    }
   });
 
-  it('builds her profile from the facts she stated once she sends her onboarding', () => {
+  it('fills her coaching facts and preferences from her answers from approval on', () => {
     // arrange
-    const stagesFrom = JOURNEY_STAGES.filter(
-      (stage) => !isBeforeStage(stage, 'submitted'),
-    );
+    const stagesFrom = JOURNEY_STAGES.filter((stage) => !isBeforeStage(stage, 'approved'));
 
     // act
-    const profiles = stagesFrom.map(
-      (stage) => journeyAt(stage, 'post-mvp').profile,
-    );
+    const journeys = stagesFrom.map((stage) => journeyAt(stage, 'post-mvp'));
 
     // assert
-    for (const profile of profiles) {
-      expect(profile).toEqual({
+    for (const journey of journeys) {
+      expect(journey.profile.coaching).toMatchObject({
         heightCm: 165,
-        activityLevel: 'Mostly sitting',
+        trainingDays: 3,
+        sessionMinutes: 60,
+        trainingPlace: 'Gym',
+        limitations: 'Right shoulder aches on overhead pressing.',
+        level: 'beginner',
         primaryGoal: 'Lose fat',
+        goalWeightKg: 62,
+        activityLevel: 'Mostly sitting',
+        cycleMode: 'adapted',
         dietaryRestrictions: 'Lactose, mild',
-        clientNotes: 'Night shifts twice a week, so those days start late.',
       });
+      expect(journey.settings).toEqual({ preferredCheckInWeekday: 'mon', preferredChannel: 'email' });
     }
+  });
+});
+
+describe('seeding the roster clients', () => {
+  it('replaces the old mock roster with journeys spread over the stages', () => {
+    // act
+    const journeys = seedRosterJourneys('post-mvp', NOW);
+
+    // assert
+    expect(journeys.map((journey) => [journey.callId, journey.profile.identity.firstName, journey.stage])).toEqual([
+      ['c2', 'Jessica', 'program-ready'],
+      ['c3', 'Emma', 'approved'],
+      ['c4', 'Sarah', 'submitted'],
+      ['c5', 'Mia', 'invited'],
+    ]);
   });
 });
 
@@ -213,6 +233,7 @@ function subscriptionSeededWith(overrides: Partial<JourneySeed>) {
     measurementsDue: 'none',
     lifeStage: 'none',
     seededPhotos: 'none',
+    seededAvatar: 'none',
     refund: 'none',
     paymentProblem: false,
     cardOnFile: 'visa',

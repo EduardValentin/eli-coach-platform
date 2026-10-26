@@ -139,9 +139,7 @@ export const MEAL_ROLE_KCAL_SPLIT: Record<string, number> = {
   'mt-breakfast': 0.25, 'mt-lunch': 0.30, 'mt-dinner': 0.30, 'mt-snack': 0.15,
 };
 
-export function seedDailyTarget(p: { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatsGrams: number }): DailyTarget {
-  return { kcal: p.dailyCalories, protein: p.proteinGrams, carb: p.carbsGrams, fat: p.fatsGrams };
-}
+export const DEFAULT_DAILY_TARGET: DailyTarget = { kcal: 2000, protein: 150, carb: 200, fat: 65 };
 
 // Grams of `toFood` that preserve `fromFood`'s kcal contribution at `grams` (falls back to same grams if toFood has 0 kcal).
 export function rescaleGrams(fromFood: Food, toFood: Food, grams: number): number {

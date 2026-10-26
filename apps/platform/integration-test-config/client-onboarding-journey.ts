@@ -15,11 +15,29 @@ export type OnboardingAnswers = Record<string, OnboardingFormAnswers>;
 
 export type ClientProfileRow = {
   heightCm: string | null;
-  activityLevel: string | null;
+  trainingDaysPerWeek: number | null;
+  sessionMinutes: number | null;
+  equipment: string[] | null;
+  trainingPlace: string | null;
+  limitations: string | null;
+  level: string | null;
   primaryGoal: string | null;
-  dietaryRestrictions: string;
-  clientNotes: string | null;
+  goalWeightKg: string | null;
+  activityLevel: string | null;
+  cycleMode: string | null;
+  dietaryRestrictions: string | null;
+  coachNotes: string | null;
+  coachingSeededAt: Date | null;
+  progressPhotosConsentedAt: Date | null;
   createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ClientSettingsRow = {
+  weightUnit: string;
+  heightUnit: string;
+  preferredCheckInWeekday: string | null;
+  preferredChannel: string | null;
   updatedAt: Date;
 };
 
@@ -54,6 +72,7 @@ export type SubmissionPhotos = Partial<Record<ProgressPhotoView, PhotoPart>>;
 
 export const CLIENT_PORTAL = "/client";
 export const SUBMISSION_API = "/api/client-onboarding/submission";
+export const APPROVALS_API = "/api/client-onboarding/approvals";
 export const REGULAR_LAST_PERIOD_START = "2026-09-08";
 
 const CONSENT_GIVEN_AT = new Date("2020-01-01T00:00:00.000Z");
@@ -115,6 +134,18 @@ export class ClientOnboardingJourney {
     }
   }
 
+  async approve(coach: AccountSession, clientId: string): Promise<void> {
+    const response = await this.rig.requestAs(coach, APPROVALS_API, {
+      body: JSON.stringify({ clientId }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`Approving her answers answered ${response.status}.`);
+    }
+  }
+
   async sendSubmission(
     session: AccountSession,
     submission: OnboardingSubmission,
@@ -128,7 +159,18 @@ export class ClientOnboardingJourney {
 
   async profileRowOf(clientId: string): Promise<ClientProfileRow | undefined> {
     const [row] = await this.rig.suite.postgres.queryRows<ClientProfileRow>({
-      sql: 'select height_cm as "heightCm", activity_level as "activityLevel", primary_goal as "primaryGoal", dietary_restrictions as "dietaryRestrictions", client_notes as "clientNotes", created_at as "createdAt", updated_at as "updatedAt" from app.client_profiles where client_id = $1',
+      sql: 'select height_cm as "heightCm", training_days_per_week as "trainingDaysPerWeek", session_minutes as "sessionMinutes", equipment, training_place as "trainingPlace", limitations, level, primary_goal as "primaryGoal", goal_weight_kg as "goalWeightKg", activity_level as "activityLevel", cycle_mode as "cycleMode", dietary_restrictions as "dietaryRestrictions", coach_notes as "coachNotes", coaching_seeded_at as "coachingSeededAt", progress_photos_consented_at as "progressPhotosConsentedAt", created_at as "createdAt", updated_at as "updatedAt" from app.client_profiles where client_id = $1',
+      values: [clientId],
+    });
+
+    return row;
+  }
+
+  async settingsRowOf(
+    clientId: string,
+  ): Promise<ClientSettingsRow | undefined> {
+    const [row] = await this.rig.suite.postgres.queryRows<ClientSettingsRow>({
+      sql: 'select weight_unit as "weightUnit", height_unit as "heightUnit", preferred_check_in_weekday as "preferredCheckInWeekday", preferred_channel as "preferredChannel", updated_at as "updatedAt" from app.client_settings where client_id = $1',
       values: [clientId],
     });
 

@@ -934,6 +934,30 @@ describe("createConsoleLogger", () => {
     });
   });
 
+  it("logs an orphaned client avatar file by client and storage key only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.clientAvatarFileOrphaned({
+      clientId: "client-1",
+      storageKey: "client-1/avatar/avatar-1.bin",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client avatar file could not be deleted.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_avatar_file_orphaned",
+        storageKey: "client-1/avatar/avatar-1.bin",
+      },
+    );
+  });
+
   it("logs a refused progress photo request by requester role and photo only", () => {
     // arrange
     const consoleWarn = vi

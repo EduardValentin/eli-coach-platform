@@ -24,6 +24,8 @@ import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
 import { NextCheckInWidget } from "~/features/check-ins/ui/client/shell/next-check-in-widget";
 import { describeCheckInNotification } from "~/features/check-ins/ui/shared/bell/check-in-bell-copy";
+import type { ClientAvatarUrl } from "~/features/client-profile/public/client-avatar";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { clientsContext } from "~/features/clients/server/guards/clients-context.server";
 import type { NotificationBellReply } from "~/features/notifications/public/notifications";
@@ -49,6 +51,7 @@ const pwaRegistration = createPwaRegistration({
 const NOTIFICATION_DESCRIBERS = [describeCheckInNotification];
 
 type ClientShell = ClientNavigationCounts & {
+  avatarUrl: ClientAvatarUrl;
   bell: NotificationBellReply;
   nextCheckIn: ClientCheckIn | null;
   presentation: ClientShellPresentation;
@@ -60,8 +63,9 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
   );
 
   const { clientCheckIns } = args.context.get(checkInsContext);
-  const [nextCheckIn, unopenedResources, checkInsAwaiting, bell] =
+  const [avatarUrl, nextCheckIn, unopenedResources, checkInsAwaiting, bell] =
     await Promise.all([
+      args.context.get(clientProfileContext).ownAvatar.url(args),
       clientCheckIns.loadNextCheckIn(args),
       args.context.get(clientResourcesContext).ownResources.countUnopened(args),
       clientCheckIns.loadAwaitingCount(args),
@@ -69,6 +73,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
     ]);
 
   return {
+    avatarUrl,
     presentation,
     nextCheckIn,
     unopenedResources,
@@ -95,7 +100,7 @@ export const links: LinksFunction = () => [
 ];
 
 export default function ClientLayoutRoute() {
-  const { bell, presentation, nextCheckIn, ...counts } =
+  const { avatarUrl, bell, presentation, nextCheckIn, ...counts } =
     useLoaderData<typeof loader>();
   const notificationBell = useNotificationBell({
     bell,
@@ -113,7 +118,13 @@ export default function ClientLayoutRoute() {
     <>
       <PortalShell
         asideLabel="Client portal sidebar"
-        brand={<ClientNameBlock displayName={displayName} size="md" />}
+        brand={
+          <ClientNameBlock
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            size="md"
+          />
+        }
         links={navigation.links}
         mobileNavigation={{
           kind: "tabs",
@@ -133,6 +144,7 @@ export default function ClientLayoutRoute() {
             ),
             renderHeader: (closeSheet) => (
               <ClientNameBlock
+                avatarUrl={avatarUrl}
                 displayName={displayName}
                 onNavigate={closeSheet}
                 size="md"
@@ -157,7 +169,13 @@ export default function ClientLayoutRoute() {
             <NotificationBell {...notificationBell} />
           </div>
         }
-        topBarBrand={<ClientNameBlock displayName={displayName} size="sm" />}
+        topBarBrand={
+          <ClientNameBlock
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            size="sm"
+          />
+        }
         topBarLabel="Client portal top bar"
       >
         <Outlet context={presentation} />

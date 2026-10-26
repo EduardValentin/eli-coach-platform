@@ -5,7 +5,6 @@ import { ClientJourneyGate } from './ClientJourneyGate';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
 function renderGate(path: string) {
   window.history.replaceState({}, '', path);
@@ -13,7 +12,6 @@ function renderGate(path: string) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <Routes>
@@ -27,7 +25,6 @@ function renderGate(path: string) {
               </Routes>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

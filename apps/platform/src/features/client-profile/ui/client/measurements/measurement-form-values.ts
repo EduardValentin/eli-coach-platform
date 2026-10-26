@@ -6,7 +6,7 @@ import {
   toCanonicalMeasure,
   toDisplayMeasure,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 
 import {
   measurementEntryRequestSchema,

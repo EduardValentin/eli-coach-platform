@@ -4,7 +4,7 @@ import {
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "../unit-preference";
+} from "../client-settings";
 import type {
   OnboardingAnswer,
   OnboardingFormAnswers,
@@ -105,13 +105,6 @@ function displayRange(
     min: Math.round(displayAmount(field, range.min, units)),
     max: Math.round(displayAmount(field, range.max, units)),
   };
-}
-
-export function entryBounds(
-  field: OnboardingField,
-  units: MeasureUnits,
-): NumericRange | null {
-  return field.range ? displayRange(field, field.range, units) : null;
 }
 
 function rangeMessage(

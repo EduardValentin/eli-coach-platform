@@ -1,4 +1,3 @@
-import type { ClientProfile } from "../client-profile";
 import type { MeasurementEntry } from "../measurement";
 
 import type { OnboardingDraft } from "./onboarding-draft";
@@ -14,7 +13,6 @@ type RecordOnboardingSubmission = {
   submission: OnboardingSubmission;
   entryId: string;
   measurementEntry: MeasurementEntry;
-  profile: ClientProfile;
 };
 
 type RecordedOnboardingSubmission =

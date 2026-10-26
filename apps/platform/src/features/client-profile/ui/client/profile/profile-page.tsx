@@ -7,14 +7,33 @@ import {
 } from "react-router";
 
 import type { MeasurementsPage } from "~/features/client-profile/public/measurements";
+import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/public/paths";
 import { CLIENT_PROFILE_PAGE_COPY } from "~/features/client-profile/public/profile-page-copy";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { MeasurementsSection } from "~/features/client-profile/ui/client/measurements/measurements-section";
+import { AboutYouForm } from "~/features/client-profile/ui/client/profile/about-you-form";
+import { CoachFactsSection } from "~/features/client-profile/ui/client/profile/coach-facts-section";
+import { TrainingForm } from "~/features/client-profile/ui/client/profile/training-form";
+import { AvatarField } from "~/features/client-profile/ui/shared/avatar/avatar-field";
+import { clientFullName } from "~/features/clients/public/clients";
 
-export function loader(args: LoaderFunctionArgs): Promise<MeasurementsPage> {
-  return args.context
-    .get(clientProfileContext)
-    .clientMeasurements.loadPage(args);
+type ClientProfilePage = {
+  profile: OwnClientProfileView;
+  measurements: MeasurementsPage;
+};
+
+export async function loader(
+  args: LoaderFunctionArgs,
+): Promise<ClientProfilePage> {
+  const { clientMeasurements, ownProfile } =
+    args.context.get(clientProfileContext);
+  const [profile, measurements] = await Promise.all([
+    ownProfile.load(args),
+    clientMeasurements.loadPage(args),
+  ]);
+
+  return { profile, measurements };
 }
 
 export const meta: MetaFunction = () => [
@@ -24,10 +43,11 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function ClientProfileRoute() {
-  const page = useLoaderData<typeof loader>();
+  const { profile, measurements } = useLoaderData<typeof loader>();
+  const { coaching, identity } = profile;
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="w-full max-w-3xl">
       <div data-parity-root="ClientProfileHeader">
         <PortalPageHeader
           subtitle={CLIENT_PROFILE_PAGE_COPY.subtitle}
@@ -35,7 +55,29 @@ export default function ClientProfileRoute() {
         />
       </div>
 
-      <MeasurementsSection page={page} />
+      <div className="space-y-6 sm:space-y-8">
+        <AvatarField
+          avatarEndpoint={CLIENT_PROFILE_API_PATHS.avatars}
+          avatarUrl={profile.avatarUrl}
+          clientName={clientFullName(identity)}
+          email={identity.email}
+        />
+        <AboutYouForm identity={identity} />
+        {coaching && (
+          <>
+            <TrainingForm
+              coaching={coaching}
+              unitPreference={measurements.units}
+            />
+            <CoachFactsSection
+              profile={{ ...profile, coaching }}
+              unitPreference={measurements.units}
+            />
+          </>
+        )}
+      </div>
+
+      <MeasurementsSection page={measurements} />
     </div>
   );
 }

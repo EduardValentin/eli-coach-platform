@@ -21,7 +21,27 @@ export const clientProfileApiRoutes = [
     "./api/client/measurements.ts",
   ),
   route(
+    CLIENT_PROFILE_API_PATHS.ownProfile.slice(1),
+    "./api/client/own-profile.ts",
+  ),
+  route(
     `${CLIENT_PROFILE_API_PATHS.photos.slice(1)}/:photoId`,
     "./api/photos/progress-photo.ts",
+  ),
+  route(
+    CLIENT_PROFILE_API_PATHS.avatars.slice(1),
+    "./api/client/own-avatar.ts",
+  ),
+  route(
+    `${CLIENT_PROFILE_API_PATHS.avatars.slice(1)}/:clientId`,
+    "./api/avatar/client-avatar.ts",
+  ),
+  route(
+    `${CLIENT_PROFILE_API_PATHS.coachProfiles.slice(1)}/:clientId`,
+    "./api/coach/coach-client-profile.ts",
+  ),
+  route(
+    `${CLIENT_PROFILE_API_PATHS.coachProfiles.slice(1)}/:clientId/avatar`,
+    "./api/coach/coach-client-avatar.ts",
   ),
 ];

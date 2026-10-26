@@ -30,6 +30,7 @@ import type {
   MeasurementRow,
   MeasurementsPage,
 } from "~/features/client-profile/public/measurements";
+import type { OwnClientProfileView } from "~/features/client-profile/public/own-client-profile";
 import {
   CLIENT_PROFILE_API_PATHS,
   CLIENT_PROFILE_PATH,
@@ -88,6 +89,23 @@ const EARLIER: MeasurementRow = {
 
 const SAVED_ENTRY_ID = "3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f";
 
+const SUBMITTED_PROFILE: OwnClientProfileView = {
+  identity: {
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: "+40712345678",
+  },
+  coaching: null,
+  preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+  avatarUrl: null,
+  startingWeightKg: 67.4,
+  currentWeightKg: 66.1,
+};
+
 const MEASUREMENTS_URL = CLIENT_PROFILE_API_PATHS.measurements;
 const PHOTO_URL = `${CLIENT_PROFILE_API_PATHS.photos}/:photoId`;
 
@@ -127,7 +145,7 @@ describe("the client profile page", () => {
     ).toEqual(["Your Profile"]);
     expect(
       screen.getByText(
-        "Your coach keeps this up to date. Mention any changes at your next check-in.",
+        "Keep your details up to date so your coach plans with the right facts.",
       ),
     ).toBeInTheDocument();
   });
@@ -704,7 +722,10 @@ async function renderProfile(
     [
       {
         Component: ClientProfileRoute,
-        loader: () => storedPage,
+        loader: () => ({
+          measurements: storedPage,
+          profile: SUBMITTED_PROFILE,
+        }),
         path: CLIENT_PROFILE_PATH,
       },
       {

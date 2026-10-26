@@ -8,7 +8,6 @@ import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import { CheckinProvider } from '../context/CheckinContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ClientJourneyProvider } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 
 const SERVICE_TIMEOUT = { timeout: 4000 };
 const TIME_LABEL = /^\d{1,2}:\d{2}\s?[AP]M$/;
@@ -56,7 +55,6 @@ function renderDialog(devParams = '') {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <NotificationProvider>
@@ -72,7 +70,6 @@ function renderDialog(devParams = '') {
               </NotificationProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

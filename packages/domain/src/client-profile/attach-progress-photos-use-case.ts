@@ -19,7 +19,7 @@ type AttachProgressPhotosCommand = {
 };
 
 type AttachProgressPhotosUseCaseOptions = {
-  profiles: ClientProfiles;
+  profiles: Pick<ClientProfiles, "findByClientId">;
   photos: ProgressPhotos;
   photoIds: ProgressPhotoIds;
   store: ProgressPhotoStore;

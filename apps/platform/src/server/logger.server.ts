@@ -3,7 +3,10 @@ import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessm
 import type { CheckInIncidents } from "@eli-coach-platform/domain/check-in";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
+import type {
+  ClientAvatarIncidents,
+  MeasurementIncidents,
+} from "@eli-coach-platform/domain/client-profile";
 import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
@@ -17,6 +20,7 @@ import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   CheckInIncidents &
+  ClientAvatarIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
   ClientResourceIncidents &
@@ -55,6 +59,13 @@ export function createConsoleLogger(): ConsoleLogger {
     callsReadFailed: () => {
       console.error("Assessment calls could not be read.", {
         errorCategory: "assessment_call_listing_failure",
+      });
+    },
+    clientAvatarFileOrphaned: ({ clientId, storageKey }) => {
+      console.error("Client avatar file could not be deleted.", {
+        clientId,
+        errorCategory: "client_avatar_file_orphaned",
+        storageKey,
       });
     },
     checkInInboxFailed: ({ checkInId, event }) => {

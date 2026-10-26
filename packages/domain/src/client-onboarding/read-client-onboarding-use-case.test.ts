@@ -6,9 +6,10 @@ import {
   type ClientIdentity,
 } from "../client";
 import {
+  ClientSettings,
   UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+  type ClientSettingsSource,
+} from "../client-settings";
 
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyDraft } from "./onboarding-draft";
@@ -67,28 +68,39 @@ function createOnboardings() {
   } satisfies ClientOnboardingSource;
 }
 
-function createUnitPreferences(
-  found: Awaited<ReturnType<ClientUnitPreferencesSource["findByClientId"]>>,
-) {
+function settingsWith(
+  preference: UnitPreference | null,
+): ClientSettings | null {
+  return (
+    preference &&
+    ClientSettings.reconstitute({
+      clientId: "client-1",
+      unitPreference: preference.toSnapshot(),
+      preferredCheckInWeekday: null,
+      preferredChannel: null,
+      updatedAt: new Date("2026-09-01T00:00:00.000Z"),
+    })
+  );
+}
+
+function createSettings(found: UnitPreference | null) {
   return {
-    findByClientId: vi.fn().mockResolvedValue(found),
-  } satisfies ClientUnitPreferencesSource;
+    findByClientId: vi.fn().mockResolvedValue(settingsWith(found)),
+  } satisfies ClientSettingsSource;
 }
 
 describe("ReadClientOnboardingUseCase", () => {
   it("reads her onboarding with the units she chose", async () => {
     // arrange
     const onboardings = createOnboardings();
-    const unitPreferences = createUnitPreferences(
-      UnitPreference.of("imperial"),
-    );
+    const settings = createSettings(UnitPreference.of("imperial"));
     const useCase = new ReadClientOnboardingUseCase({
       participants: new OnboardingParticipants({
         clients: createClients(CLIENT),
         identities: createIdentities(),
       }),
       onboardings,
-      unitPreferences,
+      settings,
     });
 
     // act
@@ -107,7 +119,7 @@ describe("ReadClientOnboardingUseCase", () => {
       heightUnit: "ft-in",
     });
     expect(onboardings.findByClientId).toHaveBeenCalledWith("client-1");
-    expect(unitPreferences.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(settings.findByClientId).toHaveBeenCalledWith("client-1");
   });
 
   it("reads metric units while she has chosen none", async () => {
@@ -118,7 +130,7 @@ describe("ReadClientOnboardingUseCase", () => {
         identities: createIdentities(),
       }),
       onboardings: createOnboardings(),
-      unitPreferences: createUnitPreferences(null),
+      settings: createSettings(null),
     });
 
     // act
@@ -140,7 +152,7 @@ describe("ReadClientOnboardingUseCase", () => {
         identities: createIdentities(),
       }),
       onboardings,
-      unitPreferences: createUnitPreferences(null),
+      settings: createSettings(null),
     });
 
     // act
@@ -160,7 +172,7 @@ describe("ReadClientOnboardingUseCase", () => {
         identities: createIdentities(null),
       }),
       onboardings,
-      unitPreferences: createUnitPreferences(null),
+      settings: createSettings(null),
     });
 
     // act

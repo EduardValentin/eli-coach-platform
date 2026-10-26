@@ -177,6 +177,7 @@ function createHandles() {
     },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
+    clientSettings: { findByClientId: vi.fn().mockResolvedValue(null) },
     database: createUnreachableDatabase(),
     incidents: {
       onboardingAnswersApproved: vi.fn(),
@@ -204,9 +205,9 @@ function createHandles() {
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
     recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
+    recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
     reviewStampWriter: vi.fn().mockResolvedValue(undefined),
-    saveClientProfile: vi.fn().mockResolvedValue(undefined),
-    unitPreferences: { findByClientId: vi.fn().mockResolvedValue(null) },
+    seedCoaching: vi.fn().mockResolvedValue(undefined),
   };
 }
 

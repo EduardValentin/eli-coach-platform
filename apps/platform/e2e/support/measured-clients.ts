@@ -1,12 +1,13 @@
 import {
   UnitPreference,
   type MeasurementSystem,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import type pg from "pg";
 
 import type { PaidClientIdentity } from "./paid-clients";
 import {
   insertUnmeasuredSubmittedClientRecords,
+  recordAnswersApproved,
   type PhotoConsentAtOnboarding,
   type SubmittedClient,
 } from "./submitted-clients";
@@ -36,11 +37,10 @@ const INSERT_MEASUREMENT_ENTRY = `
   )
   values (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)
 `;
-const INSERT_UNIT_PREFERENCE = `
-  insert into app.client_unit_preferences (
-    client_id, weight_unit, height_unit, updated_at
-  )
-  values ($1, $2, $3, now())
+const SAVE_UNIT_PREFERENCE = `
+  update app.client_settings
+  set weight_unit = $2, height_unit = $3, updated_at = now()
+  where client_id = $1
 `;
 
 export async function insertMeasuredClientRecords(
@@ -55,7 +55,8 @@ export async function insertMeasuredClientRecords(
   );
   const units = UnitPreference.of(seed.system).toSnapshot();
 
-  await pool.query(INSERT_UNIT_PREFERENCE, [
+  await recordAnswersApproved(pool, client);
+  await pool.query(SAVE_UNIT_PREFERENCE, [
     client.clientId,
     units.weightUnit,
     units.heightUnit,

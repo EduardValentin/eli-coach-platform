@@ -87,8 +87,8 @@ export function CallJourneyActions({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const name =
-    `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
-  const email = journey.identity.email;
+    `${journey.profile.identity.firstName} ${journey.profile.identity.lastName}`.trim();
+  const email = journey.profile.identity.email;
 
   const sendLink = async () => {
     setSending(true);

@@ -19,6 +19,7 @@
     "./client-onboarding": "./src/client-onboarding/index.ts",
     "./client-profile": "./src/client-profile/index.ts",
     "./client-resources": "./src/client-resources/index.ts",
+    "./client-settings": "./src/client-settings/index.ts",
     "./client-roster": "./src/client-roster/index.ts",
     "./coach-availability": "./src/coach-availability/index.ts",
     "./coach-meeting-room": "./src/coach-meeting-room/index.ts",
@@ -35,7 +36,6 @@
     "./payment-link": "./src/payment-link/index.ts",
     "./product": "./src/product/index.ts",
     "./shared": "./src/shared/index.ts",
-    "./unit-preference": "./src/unit-preference/index.ts",
     "./waitlist": "./src/waitlist/index.ts"
   },
   "scripts": {

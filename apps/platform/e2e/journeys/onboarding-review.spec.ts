@@ -1,12 +1,12 @@
-import { clientPronouns } from "../support/client-pronouns";
 import { latestEmailTo } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
+import { PROFILE_BEFORE_APPROVAL } from "../support/onboarding-records";
 import { daysAfter } from "../support/paid-clients";
 import {
   BONE_OR_JOINT_PROBLEM_LIST,
   BOOKING_CONTACT,
   PROTOTYPE_DETAIL_REQUEST,
-  SEEDED_FACT_READINGS,
+  SEEDED_PREFERENCE_READINGS,
   SLEEP_HOURS,
 } from "../support/submitted-clients";
 
@@ -24,13 +24,6 @@ const SAFETY_FORM = "A few safety questions";
 const GOAL_FORM = "Your goal and your week";
 const CYCLE_FORM = "Your cycle and hormonal health";
 const NOTE = PROTOTYPE_DETAIL_REQUEST.note;
-const SEEDED_PROFILE_FACTS = {
-  heightCm: "165.0",
-  activityLevel: "Mostly sitting",
-  primaryGoal: "Lose fat",
-  dietaryRestrictions: "Lactose, mild",
-  clientNotes: null,
-};
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -43,7 +36,9 @@ test(
   async ({
     clientDashboard,
     clientOnboarding,
+    clientSettings,
     coachClient,
+    coachClientProfile,
     onboardingRecords,
     page,
     provisionCoach,
@@ -68,12 +63,6 @@ test(
     await coachClient.expectScreeningWarning(
       "Safety screening needs a look: 1 yes answer",
     );
-    await coachClient.expectFacts({
-      "Waist-to-height ratio": "0.45",
-      "Check-in day": "Monday",
-      Channel: "Email",
-      "Cycle mode": "Phase-based",
-    });
     await coachClient.expectNeedsALook(SAFETY_FORM, "Bone or joint problem");
     await coachClient.expectMeasurements([
       "66.1 kg",
@@ -81,8 +70,21 @@ test(
       "98 cm",
       "57 cm",
       "28 cm",
-      "0.45",
+      "—",
     ]);
+
+    // act
+    await coachClient.openProfile();
+
+    // assert
+    await coachClientProfile.expectOpen(client);
+    await coachClientProfile.coaching.expectPendingNotice(
+      "These fill in once her answers are approved.",
+    );
+    await coachClientProfile.preferences.expectAbsent();
+
+    // act
+    await coachClientProfile.backToClient(client);
     await coachClient.expectReviewActions("Review answers");
 
     // act
@@ -220,9 +222,59 @@ test(
     // assert
     await coachClient.expectStatus("Approved");
     await coachClient.expectNoReviewActions();
+    await coachClient.expectOnboardingCollapsed();
+    await coachClient.expectMeasurements([
+      "66.1 kg",
+      "74 cm",
+      "98 cm",
+      "57 cm",
+      "28 cm",
+      "0.45",
+    ]);
     expect(
       (await onboardingRecords.reviewStamps())?.answersApprovedAt,
     ).toBeInstanceOf(Date);
+
+    // act
+    await coachClient.openProfile();
+
+    // assert
+    await coachClientProfile.expectOpen(client);
+    await coachClientProfile.coaching.expectAmount("Height", "165");
+    await coachClientProfile.coaching.expectChosen(
+      "Training days per week",
+      "3 days",
+    );
+    await coachClientProfile.coaching.expectChosen(
+      "Minutes per session",
+      "60 min",
+    );
+    await coachClientProfile.coaching.expectTicked(["Full gym", "Dumbbells"]);
+    await coachClientProfile.coaching.expectChosen("Training place", "Gym");
+    await coachClientProfile.coaching.expectText(
+      "Limitations",
+      ANSWERED_CONDITIONS,
+    );
+    await coachClientProfile.coaching.expectChosen("Level", "Beginner");
+    await coachClientProfile.coaching.expectSelected(
+      "Primary goal",
+      "Lose fat",
+    );
+    await coachClientProfile.coaching.expectSelected(
+      "Lifestyle activity level",
+      "Mostly sitting",
+    );
+    await coachClientProfile.coaching.expectChosen(
+      "Cycle mode",
+      "Adapted to symptoms",
+    );
+    await coachClientProfile.coaching.expectText(
+      "Dietary restrictions",
+      "Lactose, mild",
+    );
+    await coachClientProfile.preferences.expectReadings(
+      SEEDED_PREFERENCE_READINGS,
+    );
 
     // act
     await page.goto("/");
@@ -235,6 +287,12 @@ test(
       "Your answers are approved",
       "Eli is putting your program together.",
     );
+
+    // act
+    await clientSettings.open();
+
+    // assert
+    await clientSettings.preferences.expectReadings(SEEDED_PREFERENCE_READINGS);
   },
 );
 
@@ -425,7 +483,7 @@ test(
       mealsPerDay: "Three",
     });
     const profileBeforeAnswering = await onboardingRecords.clientProfile();
-    expect(profileBeforeAnswering).toMatchObject(SEEDED_PROFILE_FACTS);
+    expect(profileBeforeAnswering).toMatchObject(PROFILE_BEFORE_APPROVAL);
     const [openRequest] = await onboardingRecords.detailRequests();
     expect(openRequest.answeredAt).toBeNull();
 
@@ -464,13 +522,8 @@ test(
     expect(answered.answers["nutrition-lifestyle"]?.sleepHours).toBe(
       ANSWERED_SLEEP_HOURS,
     );
-    const rebuiltProfile = await onboardingRecords.clientProfile();
-    expect(rebuiltProfile).toMatchObject(SEEDED_PROFILE_FACTS);
-    expect(rebuiltProfile?.createdAt).toEqual(
-      profileBeforeAnswering?.createdAt,
-    );
-    expect(rebuiltProfile?.updatedAt.getTime()).toBeGreaterThan(
-      profileBeforeAnswering?.updatedAt.getTime() ?? Number.POSITIVE_INFINITY,
+    expect(await onboardingRecords.clientProfile()).toEqual(
+      profileBeforeAnswering,
     );
   },
 );
@@ -498,11 +551,11 @@ test(
     await coachClient.open(flagged.clientId);
 
     // assert
-    await coachClient.expectProfile({
+    await coachClient.expectProfile(flagged.clientId, {
       Gender: "Female",
       Country: "Romania",
       Phone: BOOKING_CONTACT.phone,
-      ...SEEDED_FACT_READINGS,
+      Email: flagged.email,
     });
     await coachClient.expectPhoneLink(BOOKING_CONTACT.phone);
     await coachClient.expectSubscription({ Start: "Immediate start" });
@@ -528,13 +581,6 @@ test(
       "Safety screening needs a look: 2 yes answers",
     );
     await coachClient.expectScreeningWarning("Nutrition advice on hold");
-    await coachClient.expectFacts({
-      "Waist-to-height ratio":
-        "Not shown during pregnancy or right after birth.",
-      "Check-in day": "Monday",
-      Channel: "Email",
-      "Cycle mode": "Symptom-based",
-    });
     await coachClient.expectNeedsALook(SAFETY_FORM, "Bone or joint problem");
     await coachClient.expectNeedsALook(
       SAFETY_FORM,
@@ -563,22 +609,16 @@ test(
     await coachClient.open(screenedManually.clientId);
 
     // assert
-    await coachClient.expectProfile({
+    await coachClient.expectProfile(screenedManually.clientId, {
       Gender: "Male",
       Country: "Romania",
       Phone: "—",
-      ...SEEDED_FACT_READINGS,
-      "Starting weight": "—",
-      "Current weight": "—",
+      Email: screenedManually.email,
     });
     await coachClient.expectStatus("Awaiting review");
     await coachClient.expectScreeningWarning(
       "Safety screening: manual screening (age)",
     );
-    await coachClient.expectFacts({
-      "Waist-to-height ratio": `Waiting on ${clientPronouns(screenedManually.gender).possessive} first measurements`,
-    });
-    await coachClient.expectNoFact("Cycle mode");
     await coachClient.expectNoForm(SAFETY_FORM);
     await coachClient.expectNoForm(CYCLE_FORM);
     await coachClient.expectNoMeasurements(screenedManually.gender);

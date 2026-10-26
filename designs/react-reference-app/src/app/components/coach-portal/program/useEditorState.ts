@@ -6,7 +6,7 @@ import { useTraining } from '../../../context/TrainingContext';
 import type { ClientJourney } from '../../../domain/journey';
 import type { Block, BlockType, Program, ProgramContent, ProgramVersion } from '../../../domain/program';
 import { currentPosition } from '../../../domain/programCalendar';
-import { setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
+import { libraryEquipmentFor, setupFromJourney, type ProgramSetup } from '../../../domain/programOnboarding';
 import { blockingProblems, ruleContextFor, warnings } from '../../../domain/programRules';
 import { initialContent, newBlock } from '../../../domain/programSuggestions';
 import { clientDetailPathForJourney } from '../../../utils/journeyLabels';
@@ -31,13 +31,13 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   const ruleContext = ruleContextFor({ journey, program, draft, today, exercises });
   const { content } = draft;
   const selected = sectionFromHash(location.hash, content.plan.blocks) ?? defaultSection(draft, ruleContext.dayOne, today);
+  const equipment = libraryEquipmentFor(journey.profile.coaching?.equipment ?? []);
   const journeySetup = setupFromJourney(journey);
   const setup: ProgramSetup = {
     ...journeySetup,
     level: program.level,
     cycleMode: program.cycleMode,
     language: program.language,
-    equipment: program.equipment,
     splitShape: content.plan.blocks[0]?.split.shape ?? journeySetup.splitShape,
   };
 
@@ -87,6 +87,7 @@ export function useEditorState({ journey, program, draft, programPath }: EditorI
   return {
     today,
     ruleContext,
+    equipment,
     selected,
     problems: blockingProblems(content, draft.whatChanged, ruleContext),
     warnings: warnings(content, ruleContext),

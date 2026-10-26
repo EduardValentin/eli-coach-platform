@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 import type { OnboardingFormAnswers } from "./onboarding-answers";
 import {
-  entryBounds,
   fieldProblem,
   formProblems,
   type OnboardingValidationOptions,
@@ -88,7 +87,6 @@ describe("fieldProblem, numeric range in kg and lb", () => {
 
     // assert
     expect(problem).toBe("Enter a weight between 30 and 300 kg.");
-    expect(entryBounds(weightField, METRIC)).toEqual({ min: 30, max: 300 });
   });
 
   it("converts the bounds to pounds in the message", () => {
@@ -100,7 +98,6 @@ describe("fieldProblem, numeric range in kg and lb", () => {
 
     // assert
     expect(problem).toBe("Enter a weight between 66 and 661 lb.");
-    expect(entryBounds(weightField, IMPERIAL)).toEqual({ min: 66, max: 661 });
   });
 
   it("passes a reading inside the range", () => {

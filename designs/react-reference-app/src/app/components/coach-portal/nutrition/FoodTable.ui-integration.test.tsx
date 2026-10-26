@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { FoodTable } from './FoodTable';
 import { AppProvider } from '../../../context/AppContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { NutritionProvider, type Food } from '../../../context/NutritionContext';
 
 const QUINOA: Food = {
@@ -25,7 +24,6 @@ describe('the food table', () => {
     render(
       <MemoryRouter>
         <AppProvider>
-        <ClientProfileProvider>
           <NutritionProvider>
             <FoodTable
               foods={[QUINOA]}
@@ -35,7 +33,6 @@ describe('the food table', () => {
               empty={null}
             />
           </NutritionProvider>
-        </ClientProfileProvider>
         </AppProvider>
       </MemoryRouter>,
     );

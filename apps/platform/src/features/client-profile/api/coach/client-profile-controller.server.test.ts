@@ -3,8 +3,10 @@ import {
   MeasurementHistory,
   type ClientProfileReading,
   type MeasurementRecord,
+  type CoachingFactsSnapshot,
   type ReadClientMeasurementHistoryUseCase,
   type ReadClientProfileUseCase,
+  type UpdateClientProfileAsCoachUseCase,
 } from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
 
@@ -51,29 +53,49 @@ const IDENTITY: ClientProfileReading["identity"] = {
 };
 
 const IDENTITY_VIEW = {
+  firstName: "Ana",
+  lastName: "Popescu",
+  email: "ana@example.com",
   dateOfBirth: "1994-03-14",
   gender: "female",
   country: "RO",
   phone: "+40712345678",
 };
 
+const COACHING: CoachingFactsSnapshot = {
+  heightCm: 168,
+  trainingDays: 3,
+  sessionMinutes: 60,
+  equipment: ["Full gym"],
+  trainingPlace: "Gym",
+  limitations: "",
+  level: "beginner",
+  primaryGoal: "Lose fat",
+  goalWeightKg: 62,
+  activityLevel: "Mostly sitting",
+  cycleMode: "adapted",
+  dietaryRestrictions: "None",
+};
+
+const SEEDED_READING: ClientProfileReading = {
+  identity: IDENTITY,
+  coaching: COACHING,
+  coachNotes: "Prefers mornings.",
+  preferences: { preferredCheckInWeekday: "monday", preferredChannel: "email" },
+  avatarId: "avatar-7",
+  startingWeightKg: 64.5,
+  currentWeightKg: 63.8,
+};
+
+type UpdateResult = Awaited<
+  ReturnType<UpdateClientProfileAsCoachUseCase["execute"]>
+>;
+
 describe("ClientProfileController load", () => {
-  it("hands the coach her identity, her onboarding facts and her weights as the widget reads them", async () => {
+  it("hands the coach her identity, coaching facts, notes, preferences, avatar and weights", async () => {
     // arrange
-    const facts = {
-      heightCm: 168,
-      activityLevel: "Lightly active",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "Vegetarian, Lactose",
-      clientNotes: "I travel a lot.",
-    };
     const { controller, readClientProfile } = createController({
-      reading: {
-        identity: IDENTITY,
-        facts,
-        startingWeightKg: 64.5,
-        currentWeightKg: 63.8,
-      },
+      reading: SEEDED_READING,
     });
 
     // act
@@ -82,21 +104,28 @@ describe("ClientProfileController load", () => {
     // assert
     expect(profile).toEqual({
       identity: IDENTITY_VIEW,
-      facts,
+      coaching: COACHING,
+      coachNotes: "Prefers mornings.",
+      preferences: {
+        preferredCheckInWeekday: "monday",
+        preferredChannel: "email",
+      },
+      avatarUrl: `/api/client-profile/avatar/${CLIENT_ID}?v=avatar-7`,
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
     });
     expect(readClientProfile).toHaveBeenCalledWith(CLIENT_ID);
   });
 
-  it("hands the coach her identity alone before she has sent her onboarding", async () => {
+  it("hands the coach her identity alone before her answers are approved", async () => {
     // arrange
     const { controller } = createController({
       reading: {
-        identity: IDENTITY,
-        facts: null,
-        startingWeightKg: null,
-        currentWeightKg: null,
+        ...SEEDED_READING,
+        coaching: null,
+        coachNotes: null,
+        preferences: { preferredCheckInWeekday: null, preferredChannel: null },
+        avatarId: null,
       },
     });
 
@@ -104,11 +133,10 @@ describe("ClientProfileController load", () => {
     const profile = await controller.load(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(profile).toEqual({
-      identity: IDENTITY_VIEW,
-      facts: null,
-      startingWeightKg: null,
-      currentWeightKg: null,
+    expect(profile).toMatchObject({
+      coaching: null,
+      coachNotes: null,
+      avatarUrl: null,
     });
   });
 
@@ -165,6 +193,106 @@ describe("ClientProfileController load", () => {
     // assert
     expect((thrown as Response).status).toBe(302);
     expect(readClientProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClientProfileController save", () => {
+  it("saves her coaching facts and the coach's notes and answers that it is saved", async () => {
+    // arrange
+    const { controller, updateClientProfile } = createController({
+      update: { status: "saved" },
+    });
+
+    // act
+    const response = await controller.save(
+      saveArgs({ coaching: COACHING, coachNotes: "Moved to mornings." }),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "saved" });
+    expect(updateClientProfile).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      edit: { coaching: COACHING, coachNotes: "Moved to mornings." },
+    });
+  });
+
+  it.each([
+    [{ status: "not-found" }, 404, { error: "not-found" }],
+    [{ status: "not-seeded" }, 409, { error: "not-seeded" }],
+    [{ status: "changed-meanwhile" }, 409, { error: "changed-meanwhile" }],
+    [
+      { status: "invalid", problems: { heightCm: "out-of-range" } },
+      422,
+      { problems: { heightCm: "out-of-range" } },
+    ],
+  ] satisfies [UpdateResult, number, unknown][])(
+    "answers %o with %d",
+    async (update, status, body) => {
+      // arrange
+      const { controller } = createController({ update });
+
+      // act
+      const response = await controller.save(
+        saveArgs({ coaching: COACHING, coachNotes: null }),
+        CLIENT_ID,
+      );
+
+      // assert
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual(body);
+    },
+  );
+
+  it("refuses a level the profile does not know without saving anything", async () => {
+    // arrange
+    const { controller, updateClientProfile } = createController();
+
+    // act
+    const response = await controller.save(
+      saveArgs({ coaching: { ...COACHING, level: "elite" }, coachNotes: null }),
+      CLIENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(updateClientProfile).not.toHaveBeenCalled();
+  });
+
+  it("answers not found to an id that is not a uuid without saving anything", async () => {
+    // arrange
+    const { controller, updateClientProfile } = createController();
+
+    // act
+    const response = await controller.save(
+      saveArgs({ coaching: COACHING, coachNotes: null }),
+      "not-a-uuid",
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(updateClientProfile).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client account without saving anything", async () => {
+    // arrange
+    const { controller, updateClientProfile } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.save(
+        saveArgs(
+          { coaching: COACHING, coachNotes: null },
+          { session: CLIENT_SESSION },
+        ),
+        CLIENT_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(updateClientProfile).not.toHaveBeenCalled();
   });
 });
 
@@ -272,9 +400,13 @@ function createController(
   options: {
     reading?: ClientProfileReading | null;
     records?: MeasurementRecord[];
+    update?: UpdateResult;
   } = {},
 ) {
   const readClientProfile = vi.fn().mockResolvedValue(options.reading ?? null);
+  const updateClientProfile = vi
+    .fn()
+    .mockResolvedValue(options.update ?? { status: "saved" });
   const readClientMeasurementHistory = vi
     .fn()
     .mockResolvedValue(MeasurementHistory.of(options.records ?? []));
@@ -285,15 +417,37 @@ function createController(
     readClientProfile: {
       execute: readClientProfile,
     } as unknown as ReadClientProfileUseCase,
+    updateClientProfile: {
+      execute: updateClientProfile,
+    } as unknown as UpdateClientProfileAsCoachUseCase,
   });
 
-  return { controller, readClientMeasurementHistory, readClientProfile };
+  return {
+    controller,
+    readClientMeasurementHistory,
+    readClientProfile,
+    updateClientProfile,
+  };
 }
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {
   return createRequestArgs({
     contexts: sessionContexts(options.session),
     request: new Request(`https://evoa.fit/coach/clients/${CLIENT_ID}`),
+  });
+}
+
+function saveArgs(body: unknown, options: { session?: ResolvedSession } = {}) {
+  return createRequestArgs({
+    contexts: sessionContexts(options.session),
+    request: new Request(
+      `https://evoa.fit/api/client-profile/coach/${CLIENT_ID}`,
+      {
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+      },
+    ),
   });
 }
 

@@ -44,10 +44,26 @@ export type ClientProfileRecord = {
   heightCm: string | null;
   activityLevel: string | null;
   primaryGoal: string | null;
-  dietaryRestrictions: string;
-  clientNotes: string | null;
+  dietaryRestrictions: string | null;
+  coachingSeededAt: Date | null;
+  progressPhotosConsentedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export const PROFILE_BEFORE_APPROVAL: Pick<
+  ClientProfileRecord,
+  | "heightCm"
+  | "activityLevel"
+  | "primaryGoal"
+  | "dietaryRestrictions"
+  | "coachingSeededAt"
+> = {
+  heightCm: null,
+  activityLevel: null,
+  primaryGoal: null,
+  dietaryRestrictions: null,
+  coachingSeededAt: null,
 };
 
 const CLIENT_ID_BY_EMAIL = "select id from app.clients where email = $1";
@@ -60,7 +76,7 @@ const DRAFT = `
 
 const UNIT_PREFERENCE = `
   select weight_unit as "weightUnit", height_unit as "heightUnit"
-  from app.client_unit_preferences
+  from app.client_settings
   where client_id = (${CLIENT_ID_BY_EMAIL})
 `;
 
@@ -121,7 +137,8 @@ const CLIENT_PROFILE = `
     activity_level as "activityLevel",
     primary_goal as "primaryGoal",
     dietary_restrictions as "dietaryRestrictions",
-    client_notes as "clientNotes",
+    coaching_seeded_at as "coachingSeededAt",
+    progress_photos_consented_at as "progressPhotosConsentedAt",
     created_at as "createdAt",
     updated_at as "updatedAt"
   from app.client_profiles

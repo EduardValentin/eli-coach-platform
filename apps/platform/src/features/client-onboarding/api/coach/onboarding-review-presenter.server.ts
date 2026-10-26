@@ -6,10 +6,6 @@ import {
   type OnboardingFormId,
   type ReadOnboardingReviewUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import {
-  weekdayNamed,
-  type Weekday,
-} from "@eli-coach-platform/domain/coach-availability";
 
 import type {
   ReviewAnswer,
@@ -40,25 +36,14 @@ const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
   previousPtExperience: "Previous PT experience",
 };
 
-const CHECK_IN_DAY_FIELD_ID = "checkInDay";
-
-const CHECK_IN_CHANNEL_FIELD_ID = "checkInChannel";
-
 export function presentSubmittedReview(
   reading: SubmittedReading,
 ): SubmittedReview {
-  const collaboration = reading.submission.answers["nutrition-lifestyle"];
-  const checkInDay = answerText(collaboration[CHECK_IN_DAY_FIELD_ID]);
-
   return {
     stage: reading.stage,
     screening: reading.screening,
     withholdsNutritionAdvice: reading.withholdsNutritionAdvice,
     pregnancyContext: reading.pregnancyContext,
-    cycleMode: reading.cycleMode,
-    checkInDay,
-    checkInWeekday: weekdayOf(checkInDay),
-    checkInChannel: answerText(collaboration[CHECK_IN_CHANNEL_FIELD_ID]),
     forms: reading.forms.map((form) => presentForm(reading, form)),
     openRequest: reading.openRequest
       ? {
@@ -167,14 +152,6 @@ function describeAnswer(answer: Exclude<OnboardingAnswer, null>): string {
   if (Array.isArray(answer)) return answer.join(", ");
 
   return String(answer);
-}
-
-function weekdayOf(answer: string | null): Weekday | null {
-  return answer === null ? null : weekdayNamed(answer);
-}
-
-function answerText(answer: OnboardingAnswer | undefined): string | null {
-  return isAnswered(answer) ? describeAnswer(answer) : null;
 }
 
 function answerWithUnit(

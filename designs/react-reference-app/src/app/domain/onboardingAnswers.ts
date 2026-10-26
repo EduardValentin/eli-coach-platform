@@ -18,8 +18,6 @@ export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   measurements: 'Measurements',
 };
 
-export const CHECK_IN_DAY_KEY = 'checkInDay';
-export const CHECK_IN_CHANNEL_KEY = 'checkInChannel';
 
 export type AnsweredQuestion = {
   formId: OnboardingFormId;
@@ -134,16 +132,6 @@ export function hasPregnancyContext(draft: OnboardingDraft): boolean {
   return status !== undefined && matchesPregnancyAnswers(status);
 }
 
-export function collaborationPreference(
-  draft: OnboardingDraft,
-  key: string,
-): string | null {
-  const answer = draft.answers['nutrition-lifestyle'][key];
-
-  return answer !== undefined && isAnswered(answer)
-    ? describeAnswer(answer)
-    : null;
-}
 
 export type ReviewAnswer = {
   questionId: string;

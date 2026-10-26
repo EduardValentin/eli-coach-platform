@@ -295,7 +295,7 @@ describe.sequential("onboarding review integration", () => {
     await expectStampsToProjectReviewRows(clientId);
   });
 
-  it("merges only her asked answer into her submission, rebuilds her profile facts from it and returns her to review", async () => {
+  it("merges only her asked answer into her submission, leaves her profile unseeded and returns her to review", async () => {
     // arrange
     const clientId = await clientAskedAboutWeight();
     await rig.holdClock(ANSWERED_INSTANT);
@@ -325,11 +325,10 @@ describe.sequential("onboarding review integration", () => {
     });
     expect(await onboarding.profileRowOf(clientId)).toEqual(
       expect.objectContaining({
-        heightCm: "165.0",
-        primaryGoal: "Lose fat",
-        dietaryRestrictions: "Lactose, mild",
-        createdAt: CALL_ENDED_INSTANT,
-        updatedAt: ANSWERED_INSTANT,
+        heightCm: null,
+        level: null,
+        coachingSeededAt: null,
+        updatedAt: CALL_ENDED_INSTANT,
       }),
     );
     await expectStampsToProjectReviewRows(clientId);
@@ -379,7 +378,7 @@ describe.sequential("onboarding review integration", () => {
     await expectStampsToProjectReviewRows(clientId);
   });
 
-  it("approves her answers for good and refuses every later review step", async () => {
+  it("approves her answers for good, seeds her coaching facts and preferences from them once and refuses every later review step", async () => {
     // arrange
     const clientId = await clientInReview();
     await rig.holdClock(APPROVED_INSTANT);
@@ -410,6 +409,32 @@ describe.sequential("onboarding review integration", () => {
       detailsRequestedAt: null,
       detailsAnsweredAt: null,
       answersApprovedAt: APPROVED_INSTANT,
+    });
+    expect(await onboarding.profileRowOf(clientId)).toEqual({
+      heightCm: "165.0",
+      trainingDaysPerWeek: 3,
+      sessionMinutes: 60,
+      equipment: ["Full gym", "Dumbbells"],
+      trainingPlace: "Gym",
+      limitations: "Right shoulder aches on overhead pressing.",
+      level: "beginner",
+      primaryGoal: "Lose fat",
+      goalWeightKg: "62.00",
+      activityLevel: "Mostly sitting",
+      cycleMode: "adapted",
+      dietaryRestrictions: "Lactose, mild",
+      coachNotes: null,
+      coachingSeededAt: APPROVED_INSTANT,
+      progressPhotosConsentedAt: null,
+      createdAt: CALL_ENDED_INSTANT,
+      updatedAt: APPROVED_INSTANT,
+    });
+    expect(await onboarding.settingsRowOf(clientId)).toEqual({
+      weightUnit: "kg",
+      heightUnit: "cm",
+      preferredCheckInWeekday: "monday",
+      preferredChannel: "email",
+      updatedAt: APPROVED_INSTANT,
     });
     expect(await detailsEmails()).toEqual([]);
     await expectStampsToProjectReviewRows(clientId);

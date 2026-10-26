@@ -1,5 +1,5 @@
 import { DateField } from '../../DateField';
-import { useId, type ReactElement } from 'react';
+import { useId, type ReactElement, type ReactNode } from 'react';
 import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
@@ -44,6 +44,7 @@ import {
 type FieldControlProps = {
   control: Control<OnboardingValues>;
   field: OnboardingField;
+  labelAdornment?: ReactNode;
 };
 
 type FieldController = ControllerRenderProps<OnboardingValues>;
@@ -179,12 +180,14 @@ function LabelLines({ field }: { field: OnboardingField }) {
   );
 }
 
-function UnitSuffixes({
+function LabelTrailing({
   field,
   unit,
+  adornment,
 }: {
   field: OnboardingField;
   unit: string | null;
+  adornment: ReactNode;
 }) {
   return (
     <>
@@ -193,11 +196,12 @@ function UnitSuffixes({
           {suffix}
         </LabelSuffix>
       ))}
+      {adornment}
     </>
   );
 }
 
-export function OnboardingFieldControl({ control, field }: FieldControlProps) {
+export function OnboardingFieldControl({ control, field, labelAdornment }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
   const parityHook = `field-${field.id}`;
@@ -243,7 +247,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   <Legend
                     id={legendId}
                     required={required}
-                    trailing={<UnitSuffixes field={field} unit={unit} />}
+                    trailing={<LabelTrailing field={field} unit={unit} adornment={labelAdornment} />}
                   >
                     <LabelLines field={field} />
                   </Legend>
@@ -312,7 +316,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormLabel
               layout="wrap"
               required={required}
-              trailing={<UnitSuffixes field={field} unit={unit} />}
+              trailing={<LabelTrailing field={field} unit={unit} adornment={labelAdornment} />}
             >
               <LabelLines field={field} />
             </FormLabel>

@@ -515,9 +515,30 @@ describe.sequential("client measurements integration", () => {
       expect(page).not.toContain("View photos from 21 October");
     });
 
-    it("shows the waist-to-height ratio on each entry", async () => {
+    it("shows no waist-to-height ratio before her answers are approved, as her profile holds no height yet", async () => {
       // arrange
       const clientId = await admitSubmittedClient();
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        coachClientPage(clientId),
+      );
+
+      // assert
+      expect(response.status).toBe(200);
+      const [onboardingEntry] = tableBodyRowsIn(
+        await visibleDocument(response),
+        MEASUREMENTS_CAPTION,
+      );
+      expect(onboardingEntry?.[WEIGHT_COLUMN]).toBe("66.1 kg");
+      expect(onboardingEntry?.[RATIO_COLUMN]).toBe("—");
+    });
+
+    it("shows the waist-to-height ratio on each entry from the height on her profile", async () => {
+      // arrange
+      const clientId = await admitSubmittedClient();
+      await onboarding.approve(COACH_SESSION, clientId);
 
       // act
       const response = await rig.requestAs(
@@ -535,9 +556,43 @@ describe.sequential("client measurements integration", () => {
       expect(onboardingEntry?.[RATIO_COLUMN]).toBe("0.45");
     });
 
+    it("follows the height the coach edits on her profile", async () => {
+      // arrange
+      const clientId = await admitSubmittedClient();
+      await onboarding.approve(COACH_SESSION, clientId);
+      const coaching = await coachingFactsOf(clientId);
+      const edited = await rig.requestAs(
+        COACH_SESSION,
+        `/api/client-profile/coach/${clientId}`,
+        {
+          body: JSON.stringify({
+            coaching: { ...coaching, heightCm: 185 },
+            coachNotes: null,
+          }),
+          headers: { "content-type": "application/json" },
+          method: "PUT",
+        },
+      );
+
+      // act
+      const response = await rig.requestAs(
+        COACH_SESSION,
+        coachClientPage(clientId),
+      );
+
+      // assert
+      expect(edited.status).toBe(200);
+      const [onboardingEntry] = tableBodyRowsIn(
+        await visibleDocument(response),
+        MEASUREMENTS_CAPTION,
+      );
+      expect(onboardingEntry?.[RATIO_COLUMN]).toBe("0.40");
+    });
+
     it("blanks the ratio while she is pregnant", async () => {
       // arrange
       const clientId = await admitSubmittedClient(pregnantSubmission());
+      await onboarding.approve(COACH_SESSION, clientId);
 
       // act
       const response = await rig.requestAs(
@@ -669,6 +724,31 @@ async function admitSubmittedClient(
   await onboarding.submitWith(OWNER, submission);
 
   return onboarding.clientIdOf(OWNER);
+}
+
+async function coachingFactsOf(
+  clientId: string,
+): Promise<Record<string, unknown>> {
+  const row = await onboarding.profileRowOf(clientId);
+
+  if (!row || row.coachingSeededAt === null) {
+    throw new Error("Her coaching facts are not seeded.");
+  }
+
+  return {
+    heightCm: Number(row.heightCm),
+    trainingDays: row.trainingDaysPerWeek,
+    sessionMinutes: row.sessionMinutes,
+    equipment: row.equipment,
+    trainingPlace: row.trainingPlace,
+    limitations: row.limitations,
+    level: row.level,
+    primaryGoal: row.primaryGoal,
+    goalWeightKg: Number(row.goalWeightKg),
+    activityLevel: row.activityLevel,
+    cycleMode: row.cycleMode,
+    dietaryRestrictions: row.dietaryRestrictions,
+  };
 }
 
 async function admitStranger(): Promise<void> {

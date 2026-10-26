@@ -5,11 +5,11 @@ import {
   type ClientIdentities,
   type ClientIdentity,
 } from "../client";
-import { ClientProfile } from "../client-profile";
 import {
+  ClientSettings,
   UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+  type ClientSettingsSource,
+} from "../client-settings";
 
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
@@ -159,10 +159,25 @@ function createOnboardings(submission: OnboardingSubmission | null = null) {
   } satisfies ClientOnboardingSource;
 }
 
-function createUnitPreferences(preference: UnitPreference | null = null) {
+function settingsWith(
+  preference: UnitPreference | null,
+): ClientSettings | null {
+  return (
+    preference &&
+    ClientSettings.reconstitute({
+      clientId: "client-1",
+      unitPreference: preference.toSnapshot(),
+      preferredCheckInWeekday: null,
+      preferredChannel: null,
+      updatedAt: new Date("2026-09-01T00:00:00.000Z"),
+    })
+  );
+}
+
+function createSettings(preference: UnitPreference | null = null) {
   return {
-    findByClientId: vi.fn().mockResolvedValue(preference),
-  } satisfies ClientUnitPreferencesSource;
+    findByClientId: vi.fn().mockResolvedValue(settingsWith(preference)),
+  } satisfies ClientSettingsSource;
 }
 
 function createChanges(
@@ -203,7 +218,7 @@ function createUseCase(
     clients?: OnboardingClients;
     identities?: Pick<ClientIdentities, "findByClientId">;
     onboardings?: ClientOnboardingSource;
-    unitPreferences?: ClientUnitPreferencesSource;
+    settings?: ClientSettingsSource;
     changes?: ClientOnboardingChanges;
     stamps?: OnboardingSubmissionStamps;
     incidents?: ClientOnboardingIncidents;
@@ -215,7 +230,7 @@ function createUseCase(
       identities: ports.identities ?? createIdentities(),
     }),
     onboardings: ports.onboardings ?? createOnboardings(),
-    unitPreferences: ports.unitPreferences ?? createUnitPreferences(),
+    settings: ports.settings ?? createSettings(),
     changes: ports.changes ?? createChanges(),
     measurementIds: { generate: () => "entry-1" },
     stamps: ports.stamps ?? createStamps(),
@@ -225,26 +240,6 @@ function createUseCase(
 }
 
 describe("SubmitOnboardingUseCase", () => {
-  it("creates her profile with the date she agreed to share progress photos", async () => {
-    // arrange
-    const changes = createChanges();
-    const useCase = createUseCase({ changes });
-    const consents = { ...givenConsents(), progressPhotosAt: CONSENTED_AT };
-
-    // act
-    await useCase.execute({
-      authSubjectId: "user_radu",
-      answers: completeAnswers(),
-      consents,
-    });
-
-    // assert
-    const [{ profile }] = changes.recordSubmission.mock.calls[0];
-    expect(profile.toSnapshot().progressPhotosConsentedAt).toEqual(
-      CONSENTED_AT,
-    );
-  });
-
   it("records her submission with her first measurements under a fresh entry id, then stamps her journey", async () => {
     // arrange
     const changes = createChanges();
@@ -272,7 +267,6 @@ describe("SubmitOnboardingUseCase", () => {
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
       entryId: "entry-1",
       measurementEntry: { recordedAt: NOW, weightKg: 82.5, waistCm: 88 },
-      profile: expect.any(ClientProfile),
     });
     expect(stamps.recordOnboardingSubmitted).toHaveBeenCalledWith({
       clientId: "client-1",
@@ -284,43 +278,6 @@ describe("SubmitOnboardingUseCase", () => {
     expect(incidents.onboardingSubmissionAccepted).toHaveBeenCalledWith({
       clientId: "client-1",
       screeningOutcome: "cleared",
-    });
-  });
-
-  it("records her profile facts from her answers with her submission, never her identity or weight", async () => {
-    // arrange
-    const changes = createChanges();
-    const useCase = createUseCase({ changes });
-    const answers = completeAnswers();
-    answers["goal-availability"] = {
-      ...answers["goal-availability"],
-      additionalInfo: " Early mornings suit me. ",
-    };
-    answers["nutrition-lifestyle"] = {
-      ...answers["nutrition-lifestyle"],
-      eatingStyle: "Vegetarian",
-      allergiesOrIntolerances: "Yes",
-      allergiesOrIntolerancesList: "Lactose",
-    };
-
-    // act
-    await useCase.execute({
-      authSubjectId: "user_radu",
-      answers,
-      consents: givenConsents(),
-    });
-
-    // assert
-    const [recorded] = changes.recordSubmission.mock.calls[0];
-    expect(recorded.profile.toSnapshot()).toEqual({
-      clientId: "client-1",
-      heightCm: 180,
-      activityLevel: "Mostly sitting",
-      primaryGoal: "Build muscle",
-      dietaryRestrictions: "Vegetarian, Lactose",
-      clientNotes: "Early mornings suit me.",
-      progressPhotosConsentedAt: null,
-      updatedAt: NOW,
     });
   });
 
@@ -361,7 +318,7 @@ describe("SubmitOnboardingUseCase", () => {
       const stamps = createStamps();
       const incidents = createIncidents();
       const useCase = createUseCase({
-        unitPreferences: createUnitPreferences(preference),
+        settings: createSettings(preference),
         changes,
         stamps,
         incidents,

@@ -1,11 +1,16 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   ONBOARDING_FORMS,
   type OnboardingAnswersByForm,
   type OnboardingFormAnswers,
 } from "@eli-coach-platform/domain/client-onboarding";
+import {
+  CoachingFacts,
+  type CoachingSeed,
+} from "@eli-coach-platform/domain/client-profile";
 import type pg from "pg";
 
-import { recordClientProfile } from "./client-profiles";
+import { recordSubmittedPhotoConsent } from "./client-profiles";
 import {
   daysBefore,
   inTransaction,
@@ -17,6 +22,7 @@ import {
   type PaidClientIdentity,
   type StartChoice,
 } from "./paid-clients";
+import type { PreferenceReadings } from "./preference-rows";
 
 export type SubmittedClient = PaidClient & { submittedAt: Date };
 
@@ -98,15 +104,11 @@ export const PROTOTYPE_DETAIL_REQUEST: DetailRequestSeed = {
 
 export const CHRONIC_CONDITION_LIST = "Hypothyroidism, treated since 2019.";
 
-export const SEEDED_FACT_READINGS = {
-  Height: "165 cm",
-  "Starting weight": "66.1 kg",
-  "Current weight": "66.1 kg",
-  "Activity level": "Mostly sitting",
-  "Primary goal": "Lose fat",
-  "Dietary restrictions": "Lactose, mild",
-  "Client notes": "—",
-} as const;
+const SUBMITTED_HEIGHT_CM = 165;
+
+const SUBMITTED_GOAL_WEIGHT_KG = 62;
+
+const SUBMITTED_ALLERGIES = "Lactose, mild";
 
 export const BOOKING_CONTACT: BookingContact = {
   phone: "+40712345678",
@@ -203,6 +205,33 @@ const PROJECT_REVIEW_STAMPS = `
   ) as latest_request on true
   where client.id = review.client_id and client.id = $1
 `;
+const SEED_COACHING = `
+  update app.client_profiles
+  set
+    height_cm = $2,
+    training_days_per_week = $3,
+    session_minutes = $4,
+    equipment = $5,
+    training_place = $6,
+    limitations = $7,
+    level = $8,
+    primary_goal = $9,
+    goal_weight_kg = $10,
+    activity_level = $11,
+    cycle_mode = $12,
+    dietary_restrictions = $13,
+    coaching_seeded_at = $14,
+    updated_at = $14
+  where client_id = $1 and coaching_seeded_at is null
+`;
+const SEED_PREFERENCES = `
+  update app.client_settings
+  set
+    preferred_check_in_weekday = $2,
+    preferred_channel = $3,
+    updated_at = $4
+  where client_id = $1
+`;
 
 export async function insertSubmittedClientRecords(
   pool: pg.Pool,
@@ -228,7 +257,7 @@ export async function recordOnboardingSubmitted(
     measurements: FIRST_MEASUREMENTS,
     progressPhotosConsentedAt: null,
   });
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -248,7 +277,7 @@ export async function insertUnmeasuredSubmittedClientRecords(
     measurements: null,
     progressPhotosConsentedAt: photoConsent === "given" ? submittedAt : null,
   });
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -279,7 +308,7 @@ export async function insertProfiledClientRecords(
     ]);
   }
 
-  await recordClientProfile(pool, client.clientId);
+  await recordSubmittedPhotoConsent(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -369,12 +398,49 @@ export async function recordOpenDetailRequest(
 
 export async function recordAnswersApproved(
   pool: pg.Pool,
-  clientId: string,
+  client: Pick<PaidClient, "clientId" | "gender">,
 ): Promise<void> {
   await inTransaction(pool, async (connection) => {
-    await connection.query(RECORD_APPROVAL, [clientId]);
-    await connection.query(PROJECT_REVIEW_STAMPS, [clientId]);
+    await connection.query(RECORD_APPROVAL, [client.clientId]);
+    await connection.query(PROJECT_REVIEW_STAMPS, [client.clientId]);
+    await recordCoachingSeeded(
+      connection,
+      client.clientId,
+      approvedCoachingFor(client.gender),
+    );
   });
+}
+
+async function recordCoachingSeeded(
+  connection: pg.PoolClient,
+  clientId: string,
+  seed: CoachingSeed,
+): Promise<void> {
+  const { coaching, preferences } = seed;
+  const seededAt = new Date();
+
+  await connection.query(SEED_COACHING, [
+    clientId,
+    coaching.heightCm,
+    coaching.trainingDays,
+    coaching.sessionMinutes,
+    JSON.stringify(coaching.equipment),
+    coaching.trainingPlace,
+    coaching.limitations,
+    coaching.level,
+    coaching.primaryGoal,
+    coaching.goalWeightKg,
+    coaching.activityLevel,
+    coaching.cycleMode,
+    coaching.dietaryRestrictions,
+    seededAt,
+  ]);
+  await connection.query(SEED_PREFERENCES, [
+    clientId,
+    preferences.preferredCheckInWeekday,
+    preferences.preferredChannel,
+    seededAt,
+  ]);
 }
 
 export async function insertClientInState(
@@ -436,7 +502,7 @@ export async function insertReviewedClientRecords(
       );
       return client;
     case "approved":
-      await recordAnswersApproved(pool, client.clientId);
+      await recordAnswersApproved(pool, client);
       return client;
   }
 }
@@ -465,8 +531,8 @@ function submittedAnswersFor(
   return {
     "goal-availability": {
       weight: FIRST_MEASUREMENTS.weightKg,
-      height: 165,
-      goalWeight: 62,
+      height: SUBMITTED_HEIGHT_CM,
+      goalWeight: SUBMITTED_GOAL_WEIGHT_KG,
       primaryGoal: "Lose fat",
       blockers: ["Busy schedule"],
       experienceLevel: "I train regularly, but without a structured plan",
@@ -493,7 +559,7 @@ function submittedAnswersFor(
     "nutrition-lifestyle": {
       eatingStyle: "No restrictions",
       allergiesOrIntolerances: "Yes",
-      allergiesOrIntolerancesList: "Lactose, mild",
+      allergiesOrIntolerancesList: SUBMITTED_ALLERGIES,
       mealsPerDay: "Three",
       snacksPerDay: "One",
       firstMeal: "7–9am",
@@ -515,6 +581,36 @@ function submittedAnswersFor(
       hips: FIRST_MEASUREMENTS.hipsCm,
       thigh: FIRST_MEASUREMENTS.thighCm,
       arm: FIRST_MEASUREMENTS.armCm,
+    },
+  };
+}
+
+export const SEEDED_PREFERENCE_READINGS: PreferenceReadings = {
+  checkInDay: "Monday",
+  channel: "Email",
+};
+
+function approvedCoachingFor(gender: VisitorGender): CoachingSeed {
+  const coaching = CoachingFacts.seeded({
+    heightCm: SUBMITTED_HEIGHT_CM,
+    trainingDays: 3,
+    sessionMinutes: 60,
+    equipment: ["Full gym", "Dumbbells"],
+    trainingPlace: "Gym",
+    limitations: BONE_OR_JOINT_PROBLEM_LIST,
+    level: "beginner",
+    primaryGoal: "Lose fat",
+    goalWeightKg: SUBMITTED_GOAL_WEIGHT_KG,
+    activityLevel: "Mostly sitting",
+    cycleMode: gender === "female" ? "adapted" : "general",
+    dietaryRestrictions: SUBMITTED_ALLERGIES,
+  });
+
+  return {
+    coaching: coaching.toSnapshot(),
+    preferences: {
+      preferredCheckInWeekday: "monday",
+      preferredChannel: "email",
     },
   };
 }

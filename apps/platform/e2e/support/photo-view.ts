@@ -5,6 +5,7 @@ import {
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { tabTo } from "./keyboard";
+import { expectImageLoaded } from "./loaded-images";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import { MeasurementsHistory } from "./measurements-history";
 import { photoNameOf } from "./progress-photo-copy";
@@ -47,18 +48,6 @@ export class PhotoView {
     });
   }
 
-  private async expectLoaded(image: Locator): Promise<void> {
-    await expect(image).toBeVisible();
-    await expect
-      .poll(() =>
-        image.evaluate(
-          (element: HTMLImageElement) =>
-            element.complete && element.naturalWidth > 0,
-        ),
-      )
-      .toBe(true);
-  }
-
   async openFor(date: string): Promise<void> {
     await expect(async () => {
       await this.measurementsHistory.viewPhotosAction(date).click();
@@ -90,7 +79,7 @@ export class PhotoView {
     );
 
     for (const view of views) {
-      await this.expectLoaded(this.photo(view));
+      await expectImageLoaded(this.photo(view));
     }
 
     for (const view of missing) {

@@ -1,10 +1,11 @@
 import { waistToHeightRatio } from "@eli-coach-platform/domain/measurement";
 import {
+  CANONICAL_MEASURE_UNITS,
   measureUnitLabel,
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,
-} from "@eli-coach-platform/domain/unit-preference";
+} from "@eli-coach-platform/domain/client-settings";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
@@ -43,8 +44,6 @@ type MeasurementsTableProps = MeasurementsPerspective & {
   children?: ReactNode;
   onViewPhotos?: (row: MeasurementRow) => void;
 };
-
-const COACH_UNITS: MeasureUnits = { weight: "kg", length: "cm" };
 
 const RATIO_COLUMN = "Ratio";
 
@@ -124,7 +123,8 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
   } = props;
   const timeZone = useCalendarDayTimeZone();
   const history = newestFirst(measurements);
-  const units = props.perspective === "client" ? props.units : COACH_UNITS;
+  const units =
+    props.perspective === "client" ? props.units : CANONICAL_MEASURE_UNITS;
   const ratioBasis = props.perspective === "coach" ? props : null;
   const columns = ratioBasis ? MEASUREMENTS_COPY.columns : VALUE_COLUMNS;
   const viewPhotos = history.some(hasPhotos) ? onViewPhotos : undefined;

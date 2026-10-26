@@ -51,7 +51,7 @@ function version(number: number, state: VersionState): ProgramVersion {
 }
 
 function programWith(versions: ProgramVersion[]): Program {
-  return { callId: 'call-1', goal: 'Build muscle', equipment: [], language: 'en', cycleMode: 'adapted', level: 'beginner', versions };
+  return { callId: 'call-1', goal: 'Build muscle', language: 'en', cycleMode: 'adapted', level: 'beginner', versions };
 }
 
 describe('roleForSlot', () => {
@@ -123,7 +123,6 @@ describe('contentWithFreshIds', () => {
     cycleMode: 'adapted',
     language: 'en',
     dailySteps: 6000,
-    equipment: [],
     splitShape: 'full-body',
   };
 
@@ -186,7 +185,6 @@ describe('filledSessionCount', () => {
       cycleMode: 'general',
       language: 'en',
       dailySteps: 6000,
-      equipment: [],
       splitShape: 'full-body',
     }, []).plan.blocks;
     const [first, ...rest] = block.sessions;
@@ -286,7 +284,7 @@ describe('warmUpItemText', () => {
 
 describe('calendar lookups', () => {
   const content = initialContent(
-    { goal: '', level: 'beginner', trainingDays: 3, sessionMinutes: 60, cycleMode: 'general', language: 'en', dailySteps: 6000, equipment: [], splitShape: 'full-body' },
+    { goal: '', level: 'beginner', trainingDays: 3, sessionMinutes: 60, cycleMode: 'general', language: 'en', dailySteps: 6000, splitShape: 'full-body' },
     [],
   );
   const [block] = content.plan.blocks;

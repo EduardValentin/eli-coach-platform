@@ -7,7 +7,6 @@ import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { CoachProfileProvider } from '../../context/CoachProfileContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { CoachSidebar } from './CoachSidebar';
@@ -38,7 +37,6 @@ function renderSidebar(path = '/coach') {
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <CoachProfileProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <NotificationProvider>
@@ -48,7 +46,6 @@ function renderSidebar(path = '/coach') {
                 </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </CoachProfileProvider>
       </AppProvider>
     </MemoryRouter>,

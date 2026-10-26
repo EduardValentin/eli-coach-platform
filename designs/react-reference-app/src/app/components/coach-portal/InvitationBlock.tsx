@@ -49,9 +49,9 @@ export function InvitationBlock({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const email = journey.identity.email;
+  const email = journey.profile.identity.email;
   const cancelledOrEnded = isCancelledOrEnded(journey, new Date());
-  const { possessive } = clientPronouns(journey.identity.gender);
+  const { possessive } = clientPronouns(journey.profile.identity.gender);
   const standing = invitationStanding(invitation, new Date());
 
   const resend = async () => {

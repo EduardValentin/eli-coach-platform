@@ -28,7 +28,7 @@ export function ScheduleCheckinAction({ journey }: { journey: ClientJourney }) {
 
   if (scheduling === 'awaiting_onboarding') {
     return (
-      <DisabledActionHint reason={awaitingOnboardingReason(journey.identity.gender)}>
+      <DisabledActionHint reason={awaitingOnboardingReason(journey.profile.identity.gender)}>
         {button}
       </DisabledActionHint>
     );

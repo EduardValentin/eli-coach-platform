@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ClientIdentity } from "../client";
-import type { MeasureUnits } from "../unit-preference";
+import type { MeasureUnits } from "../client-settings";
 
 import { DetailRequest } from "./detail-request";
 import {
@@ -369,9 +369,6 @@ describe("OnboardingReview#answer", () => {
       height: 168,
       goalWeight: 66,
     });
-    expect(outcome.submissionAnswers).toEqual(
-      outcome.review.submission?.answers,
-    );
   });
 
   it("clears an asked answer that her other asked answer made unreachable", () => {
@@ -583,6 +580,7 @@ describe("OnboardingReview#approve", () => {
       reviewOpenedAt: OPENED_AT,
       answersApprovedAt: NOW,
     });
+    expect(outcome.submission).toBe(onboardingReview.submission);
   });
 
   it("passes an unopened review through in-review on its way to approved", () => {

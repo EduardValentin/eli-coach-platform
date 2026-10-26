@@ -1,20 +1,25 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, useLocation } from 'react-router';
+import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ClientProfilePage } from './ClientProfilePage';
 import { ClientsList } from './ClientsList';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import { NotificationProvider } from '../../context/NotificationContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
+import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import { DevToggle } from '../../components/DevToggle';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
 
 beforeAll(() => {
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    value: vi.fn(() => 'blob:avatar'),
+  });
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({
@@ -52,7 +57,6 @@ function renderAt(url: string) {
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
-          <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <NotificationProvider>
@@ -64,12 +68,40 @@ function renderAt(url: string) {
                 </NotificationProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
-          </ClientProfileProvider>
         </TrainingProvider>
       </AppProvider>
     </MemoryRouter>,
   );
 
+  return userEvent.setup();
+}
+
+function renderProfileThenList() {
+  const url = '/coach/clients/ac-demo-client-1/profile?session=coach&jstage=approved';
+  window.history.replaceState({}, '', url);
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <UnitPreferencesProvider>
+          <TrainingProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <NotificationProvider>
+                  <CheckinProvider>
+                    <Routes>
+                      <Route path="/coach/clients" element={<ClientsList />} />
+                      <Route path="/coach/clients/:id/profile" element={<ClientProfilePage />} />
+                    </Routes>
+                    <Link to="/coach/clients">open the clients list</Link>
+                  </CheckinProvider>
+                </NotificationProvider>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </TrainingProvider>
+        </UnitPreferencesProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
   return userEvent.setup();
 }
 
@@ -232,13 +264,13 @@ describe('the coach clients list', () => {
     renderList();
 
     // act
-    const inactive = rowFor('Sarah Jenkins');
+    const rows = ['Jessica Alba', 'Emma Stone', 'Sarah Jenkins', 'Mia Thermopolis'].map(rowFor);
 
     // assert
-    expect(
-      within(rowFor('Jessica Alba')).getByText('Active'),
-    ).toBeInTheDocument();
-    expect(within(inactive).getByText('Inactive')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('Active')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('Approved')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('Awaiting review')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('Invited')).toBeInTheDocument();
   });
 
   it('lists clients newest joined first by default', () => {
@@ -250,12 +282,11 @@ describe('the coach clients list', () => {
 
     // assert
     expect(names).toEqual([
+      'Mia Thermopolis',
       'Andreea Popescu',
+      'Sarah Jenkins',
       'Emma Stone',
       'Jessica Alba',
-      'Jane Doe',
-      'Mia Thermopolis',
-      'Sarah Jenkins',
     ]);
   });
 
@@ -268,12 +299,11 @@ describe('the coach clients list', () => {
 
     // assert
     expect(orderedNames()).toEqual([
-      'Sarah Jenkins',
-      'Mia Thermopolis',
-      'Jane Doe',
       'Jessica Alba',
       'Emma Stone',
+      'Sarah Jenkins',
       'Andreea Popescu',
+      'Mia Thermopolis',
     ]);
   });
 
@@ -288,7 +318,6 @@ describe('the coach clients list', () => {
     expect(orderedNames()).toEqual([
       'Andreea Popescu',
       'Emma Stone',
-      'Jane Doe',
       'Jessica Alba',
       'Mia Thermopolis',
       'Sarah Jenkins',
@@ -302,7 +331,6 @@ describe('the coach clients list', () => {
       'Sarah Jenkins',
       'Mia Thermopolis',
       'Jessica Alba',
-      'Jane Doe',
       'Emma Stone',
       'Andreea Popescu',
     ]);
@@ -311,7 +339,7 @@ describe('the coach clients list', () => {
   it('keeps the status count badges scoped to the search, ignoring the chosen status', async () => {
     // arrange
     const user = renderList('?jstage=held');
-    await chooseStatusOption(user, 'Active 3');
+    await chooseStatusOption(user, 'Active 1');
     await user.type(
       screen.getByRole('searchbox', { name: 'Search clients' }),
       'jenkins',
@@ -325,7 +353,7 @@ describe('the coach clients list', () => {
       await screen.findByRole('option', { name: 'All statuses 1' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Inactive 1' }),
+      screen.getByRole('option', { name: 'Awaiting review 1' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'Active 0' }),
@@ -336,7 +364,7 @@ describe('the coach clients list', () => {
     // arrange
     const user = renderList('?jstage=held');
     await user.click(headerButton('Client'));
-    await chooseStatusOption(user, 'Active 3');
+    await chooseStatusOption(user, 'Active 1');
     await user.type(
       screen.getByRole('searchbox', { name: 'Search clients' }),
       'zzz',
@@ -551,5 +579,21 @@ describe('the coach clients list', () => {
     expect(screen.queryByText('No clients yet')).not.toBeInTheDocument();
     expect(orderedNames()).toEqual(['Andreea Popescu', 'Jane Doe']);
     expect(window.location.search).not.toContain('jroster');
+  });
+});
+
+describe('her picture on the clients list', () => {
+  it('shows the picture uploaded on her profile in her row', async () => {
+    // arrange
+    const user = renderProfileThenList();
+    await user.upload(screen.getByLabelText('Upload picture'), new File(['avatar'], 'avatar.png', { type: 'image/png' }));
+    await screen.findByLabelText('Change picture', {}, { timeout: 3000 });
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'open the clients list' }));
+
+    // assert
+    expect(rowFor('Jane Doe').querySelector('img')).toHaveAttribute('src', 'blob:avatar');
+    expect(rowFor('Andreea Popescu').querySelector('img')).toBeNull();
   });
 });

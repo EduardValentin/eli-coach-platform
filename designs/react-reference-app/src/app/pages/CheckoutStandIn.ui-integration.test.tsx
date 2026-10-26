@@ -9,7 +9,6 @@ import {
   ClientJourneyProvider,
   useClientJourneys,
 } from '../context/ClientJourneyContext';
-import { ClientProfileProvider } from '../context/ClientProfileContext';
 import {
   createCheckoutSession,
   type CheckoutSession,
@@ -46,7 +45,6 @@ function renderStandIn(session: CheckoutSession, devParams: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <JourneyProbe />
@@ -57,7 +55,6 @@ function renderStandIn(session: CheckoutSession, devParams: string) {
               </Routes>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

@@ -9,6 +9,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClientCheckIn } from "~/features/check-ins/public/check-ins";
 import type { CheckInsFeature } from "~/features/check-ins/server/check-ins-composition.server";
 import { checkInsContext } from "~/features/check-ins/server/guards/check-ins-context.server";
+import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
@@ -94,13 +96,17 @@ const UNREAD_BELL: NotificationBellReply = {
 };
 
 describe("client shell loader", () => {
-  it("names the client the gate handed over, reads her next check-in and her notification bell and counts the resources she has not opened and the check-ins waiting for her", async () => {
+  it("names the client the gate handed over, reads her picture, her next check-in and her notification bell and counts the resources she has not opened and the check-ins waiting for her", async () => {
     // arrange
+    const avatarUrl = vi
+      .fn()
+      .mockResolvedValue("/api/client-profile/avatar/client_ana?v=avatar-1");
     const countUnopened = vi.fn().mockResolvedValue(2);
     const loadAwaitingCount = vi.fn().mockResolvedValue(3);
     const loadNextCheckIn = vi.fn().mockResolvedValue(NEXT_CHECK_IN);
     const loadBell = vi.fn().mockResolvedValue(UNREAD_BELL);
     const args = shellArguments([contextEntry(clientJourneyContext, ANA)], {
+      avatarUrl,
       countUnopened,
       loadAwaitingCount,
       loadBell,
@@ -112,6 +118,7 @@ describe("client shell loader", () => {
 
     // assert
     expect(shell).toEqual({
+      avatarUrl: "/api/client-profile/avatar/client_ana?v=avatar-1",
       presentation: {
         displayName: "Ana Popescu",
         greeting: "Welcome back, Ana.",
@@ -121,6 +128,7 @@ describe("client shell loader", () => {
       checkInsAwaiting: 3,
       bell: UNREAD_BELL,
     });
+    expect(avatarUrl).toHaveBeenCalledWith(args);
     expect(loadBell).toHaveBeenCalledWith(args);
     expect(countUnopened).toHaveBeenCalledWith(args);
     expect(loadAwaitingCount).toHaveBeenCalledWith(args);
@@ -147,6 +155,7 @@ describe("client shell loader", () => {
 
     // assert
     expect(shell).toEqual({
+      avatarUrl: null,
       presentation: { displayName: "Client", greeting: "Welcome back." },
       nextCheckIn: null,
       unopenedResources: 0,
@@ -157,11 +166,13 @@ describe("client shell loader", () => {
 
   it("refuses to render, without reading anything, when the access layout's gate never ran", async () => {
     // arrange
+    const avatarUrl = vi.fn().mockResolvedValue(null);
     const countUnopened = vi.fn().mockResolvedValue(0);
     const loadAwaitingCount = vi.fn().mockResolvedValue(0);
     const loadNextCheckIn = vi.fn().mockResolvedValue(null);
     const loadBell = vi.fn().mockResolvedValue(EMPTY_BELL);
     const args = shellArguments([], {
+      avatarUrl,
       countUnopened,
       loadAwaitingCount,
       loadBell,
@@ -173,6 +184,7 @@ describe("client shell loader", () => {
 
     // assert
     await expect(loading).rejects.toThrow();
+    expect(avatarUrl).not.toHaveBeenCalled();
     expect(countUnopened).not.toHaveBeenCalled();
     expect(loadAwaitingCount).not.toHaveBeenCalled();
     expect(loadNextCheckIn).not.toHaveBeenCalled();
@@ -230,6 +242,7 @@ describe("client shell revalidation", () => {
 function shellArguments(
   journeyEntries: readonly ContextEntry[],
   reads: {
+    avatarUrl?: ReturnType<typeof vi.fn>;
     countUnopened?: ReturnType<typeof vi.fn>;
     loadAwaitingCount?: ReturnType<typeof vi.fn>;
     loadBell?: ReturnType<typeof vi.fn>;
@@ -237,6 +250,7 @@ function shellArguments(
   } = {},
 ) {
   const {
+    avatarUrl = vi.fn().mockResolvedValue(null),
     countUnopened = vi.fn().mockResolvedValue(0),
     loadAwaitingCount = vi.fn().mockResolvedValue(0),
     loadBell = vi.fn().mockResolvedValue(EMPTY_BELL),
@@ -252,6 +266,9 @@ function shellArguments(
       contextEntry(clientsContext, {
         clientJourney,
       } as unknown as ClientsFeature),
+      contextEntry(clientProfileContext, {
+        ownAvatar: { url: avatarUrl },
+      } as unknown as ClientProfileFeature),
       contextEntry(clientResourcesContext, {
         ownResources: { countUnopened },
       } as unknown as ClientResourcesFeature),

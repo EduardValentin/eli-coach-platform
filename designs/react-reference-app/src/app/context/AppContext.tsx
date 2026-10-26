@@ -39,6 +39,10 @@ import {
   type PhotoProcessing,
   type PhotoRemoval,
 } from '../services/measurementService';
+import {
+  PROFILE_SAVE_OUTCOMES,
+  type ProfileSave,
+} from '../services/clientProfileService';
 import { EXERCISE_SEEDS, type ExerciseSeed } from '../services/exerciseSamples';
 import { PROGRAM_SEEDS, seedRequiresProgramReady, type ProgramSeed } from '../services/programSamples';
 import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
@@ -67,12 +71,14 @@ import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_REFUNDS,
+  PROTOTYPE_SEEDED_AVATARS,
   PROTOTYPE_SEEDED_PHOTOS,
   type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
   type PrototypeRefund,
+  type PrototypeSeededAvatar,
   type PrototypeSeededPhotos,
 } from '../services/clientJourneySamples';
 import {
@@ -149,7 +155,9 @@ type AppState = {
   photoProcessing: PhotoProcessing;
   measurementSave: MeasurementSave;
   photoRemoval: PhotoRemoval;
+  profileSave: ProfileSave;
   journeySeededPhotos: PrototypeSeededPhotos;
+  journeySeededAvatar: PrototypeSeededAvatar;
   journeyRefund: PrototypeRefund;
   journeyPaymentProblem: boolean;
   journeyCardOnFile: PrototypeCardOnFile;
@@ -212,7 +220,9 @@ const defaultState: AppState = {
   photoProcessing: 'works',
   measurementSave: 'works',
   photoRemoval: 'works',
+  profileSave: 'works',
   journeySeededPhotos: 'none',
+  journeySeededAvatar: 'none',
   journeyRefund: 'none',
   journeyPaymentProblem: false,
   journeyCardOnFile: 'visa',
@@ -453,10 +463,20 @@ function parseDevParamsFromURL(): AppState {
     params.get('jremove'),
     defaultState.photoRemoval,
   );
+  state.profileSave = optionOrDefault(
+    PROFILE_SAVE_OUTCOMES,
+    params.get('jprofile'),
+    defaultState.profileSave,
+  );
   state.journeySeededPhotos = optionOrDefault(
     PROTOTYPE_SEEDED_PHOTOS,
     params.get('jphotos'),
     defaultState.journeySeededPhotos,
+  );
+  state.journeySeededAvatar = optionOrDefault(
+    PROTOTYPE_SEEDED_AVATARS,
+    params.get('javatar'),
+    defaultState.journeySeededAvatar,
   );
   state.journeyRefund = optionOrDefault(
     PROTOTYPE_REFUNDS,
@@ -655,7 +675,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jphoto');
     url.searchParams.delete('jsave');
     url.searchParams.delete('jremove');
+    url.searchParams.delete('jprofile');
     url.searchParams.delete('jphotos');
+    url.searchParams.delete('javatar');
     url.searchParams.delete('jrefund');
     url.searchParams.delete('jpayproblem');
     url.searchParams.delete('jcard');
@@ -766,8 +788,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (appState.photoRemoval !== defaultState.photoRemoval) {
       url.searchParams.set('jremove', appState.photoRemoval);
     }
+    if (appState.profileSave !== defaultState.profileSave) {
+      url.searchParams.set('jprofile', appState.profileSave);
+    }
     if (appState.journeySeededPhotos !== defaultState.journeySeededPhotos) {
       url.searchParams.set('jphotos', appState.journeySeededPhotos);
+    }
+    if (appState.journeySeededAvatar !== defaultState.journeySeededAvatar) {
+      url.searchParams.set('javatar', appState.journeySeededAvatar);
     }
     if (appState.journeyRefund !== defaultState.journeyRefund) {
       url.searchParams.set('jrefund', appState.journeyRefund);

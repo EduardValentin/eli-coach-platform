@@ -39,8 +39,8 @@ import {
 
 import type { BookingClientError, BookingDetails } from "./booking-flow";
 import { ChoiceSelectField } from "./choice-select-field";
-import { DateOfBirthField } from "./date-of-birth-field";
-import { PhoneField } from "./phone-field";
+import { DateOfBirthField } from "~/features/assessment-calls/ui/shared/date-of-birth-field";
+import { PhoneField } from "~/features/assessment-calls/ui/shared/phone-field";
 import type { BookAssessmentCallSubmission } from "./submission";
 
 const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([

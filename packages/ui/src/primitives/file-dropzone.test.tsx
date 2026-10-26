@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Camera } from "lucide-react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -256,5 +257,26 @@ describe("FilePickerButton", () => {
     // assert
     expect(onFileChosen).toHaveBeenCalledExactlyOnceWith(plan);
     expect(input).toHaveValue("");
+  });
+  it("grows to the small size and leads with its icon when asked", () => {
+    // arrange, act
+    render(
+      <FilePickerButton
+        accept={ACCEPT}
+        icon={Camera}
+        onFileChosen={vi.fn()}
+        size="sm"
+      >
+        Upload picture
+      </FilePickerButton>,
+    );
+
+    // assert
+    const button = screen.getByLabelText("Upload picture").closest("label");
+    expect(button).toHaveClass("h-(--size-control-sm)");
+    expect(button).not.toHaveClass("h-(--size-control-xs)");
+    const icon = button?.querySelector("svg");
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(icon?.nextElementSibling).toHaveTextContent("Upload picture");
   });
 });

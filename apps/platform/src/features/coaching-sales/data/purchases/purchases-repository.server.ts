@@ -17,6 +17,7 @@ import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
 import type {
+  ClientProfileOpener,
   ClientWriter,
   CoachingStandingWriter,
 } from "~/features/coaching-sales/data/client-writers.server";
@@ -29,6 +30,7 @@ import {
 type PostgresCoachingPurchasesOptions = {
   clock: Clock;
   database: DatabaseClient;
+  openClientProfile: ClientProfileOpener;
   writeClient: ClientWriter;
   writeCoachingStanding: CoachingStandingWriter;
 };
@@ -122,6 +124,11 @@ export class PostgresCoachingPurchases
     if (written === "call_already_has_client") {
       throw new CallAlreadyPaid();
     }
+
+    await this.options.openClientProfile(transaction, {
+      clientId: client.id,
+      at: receivedAt,
+    });
 
     const purchased = subscription.toSnapshot();
 

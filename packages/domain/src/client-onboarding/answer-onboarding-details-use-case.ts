@@ -1,17 +1,15 @@
-import { ClientProfile } from "../client-profile";
 import type { Clock } from "../shared";
 import {
   measureUnitsOf,
   UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "../unit-preference";
+  type ClientSettingsSource,
+} from "../client-settings";
 
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingParticipants } from "./onboarding-participants";
-import { profileFactsOf } from "./onboarding-profile-facts";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviews } from "./onboarding-reviews";
 
@@ -31,7 +29,7 @@ type AnswerOnboardingDetailsUseCaseOptions = {
   participants: Pick<OnboardingParticipants, "byAuthSubjectId">;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
-  unitPreferences: ClientUnitPreferencesSource;
+  settings: ClientSettingsSource;
   clock: Clock;
   incidents: ClientOnboardingIncidents;
 };
@@ -60,10 +58,10 @@ export class AnswerOnboardingDetailsUseCase {
     }
 
     const { clientId } = client;
-    const [stored, reviewed, preference] = await Promise.all([
+    const [stored, reviewed, settings] = await Promise.all([
       this.options.onboardings.findByClientId(clientId),
       this.options.reviews.findByClientId(clientId),
-      this.options.unitPreferences.findByClientId(clientId),
+      this.options.settings.findByClientId(clientId),
     ]);
     const review = OnboardingReview.reconstitute({
       client: identity,
@@ -73,7 +71,7 @@ export class AnswerOnboardingDetailsUseCase {
     const outcome = review.answer({
       answers: command.answers,
       units: measureUnitsOf(
-        (preference ?? UnitPreference.metric()).toSnapshot(),
+        (settings?.unitPreference() ?? UnitPreference.metric()).toSnapshot(),
       ),
       now,
     });
@@ -92,13 +90,6 @@ export class AnswerOnboardingDetailsUseCase {
       requestId: outcome.request.id,
       mergedAnswers: outcome.mergedAnswers,
       answeredAt: now,
-      profile: ClientProfile.fromOnboarding({
-        clientId,
-        facts: profileFactsOf(outcome.submissionAnswers),
-        progressPhotosConsentedAt:
-          review.submission?.consents.progressPhotosAt ?? null,
-        now,
-      }),
       stamps: outcome.review.stamps(),
     });
     this.options.incidents.onboardingDetailsAnswered({

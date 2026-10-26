@@ -4,7 +4,7 @@ import {
   hasPagePreview,
   hasUnopenedResources,
 } from '../domain/resources';
-import { AWAITING_REVIEW_CALL_ID } from '../context/ClientJourneyContext';
+import { AWAITING_REVIEW_CALL_ID, DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 import { sampleResources } from './resourceSamples';
 
 const NOW = new Date('2026-10-03T09:00:00.000Z');
@@ -16,7 +16,7 @@ describe('the seeded resources', () => {
 
     // act
     const unopened = hasUnopenedResources(
-      resources.filter((resource) => resource.clientId === 'client-1'),
+      resources.filter((resource) => resource.clientId === DEMO_JOURNEY_CALL_ID),
     );
 
     // assert
@@ -45,7 +45,7 @@ describe('the seeded resources', () => {
       coachTagVocabulary(resources.filter((resource) => resource.clientId === clientId));
 
     // act
-    const shared = ofClient('client-1').filter((tag) => ofClient('c2').includes(tag));
+    const shared = ofClient(DEMO_JOURNEY_CALL_ID).filter((tag) => ofClient('c2').includes(tag));
 
     // assert
     expect(shared).toEqual(expect.arrayContaining(['Nutrition', 'Training']));

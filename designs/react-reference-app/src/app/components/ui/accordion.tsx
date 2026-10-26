@@ -29,6 +29,8 @@ type AccordionHeadingTag = "h2" | "h3";
 
 type AccordionTriggerLayout = "section" | "title";
 
+type AccordionTriggerChevron = "trailing" | "none";
+
 const TRIGGER_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
   section: "items-start py-4",
   title: "items-center py-0",
@@ -39,17 +41,31 @@ const CHEVRON_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
   title: "",
 };
 
+function AccordionChevron({ className }: { className?: string }) {
+  return (
+    <ChevronDownIcon
+      aria-hidden="true"
+      className={cn(
+        "text-text-secondary pointer-events-none size-4 shrink-0 transition-transform duration-200",
+        className,
+      )}
+    />
+  );
+}
+
 function AccordionTrigger({
   className,
   children,
   headingTag: HeadingTag = "h3",
   headingId,
   layout = "section",
+  chevron = "trailing",
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
   headingTag?: AccordionHeadingTag;
   headingId?: string;
   layout?: AccordionTriggerLayout;
+  chevron?: AccordionTriggerChevron;
 }) {
   return (
     <AccordionPrimitive.Header asChild>
@@ -64,12 +80,9 @@ function AccordionTrigger({
           {...props}
         >
           {children}
-          <ChevronDownIcon
-            className={cn(
-              "text-text-secondary pointer-events-none size-4 shrink-0 transition-transform duration-200",
-              CHEVRON_LAYOUT_CLASS[layout],
-            )}
-          />
+          {chevron === "trailing" && (
+            <AccordionChevron className={CHEVRON_LAYOUT_CLASS[layout]} />
+          )}
         </AccordionPrimitive.Trigger>
       </HeadingTag>
     </AccordionPrimitive.Header>
@@ -92,4 +105,4 @@ function AccordionContent({
   );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionChevron, AccordionItem, AccordionTrigger, AccordionContent };

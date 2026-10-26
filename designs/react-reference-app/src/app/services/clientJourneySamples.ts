@@ -21,7 +21,11 @@ import {
   MEASUREMENTS_CADENCE_DAYS,
   WEIGH_IN_CADENCE_DAYS,
 } from '../domain/measurementSchedule';
-import { profileFromOnboarding } from '../domain/clientProfile';
+import {
+  openedClientProfile,
+  UNSET_CLIENT_SETTINGS,
+  seededAtApproval,
+} from '../domain/clientProfile';
 import {
   cancel,
   periodEnd,
@@ -43,7 +47,7 @@ import { paymentLinkExpiresAt } from './paymentLinkService';
 import { toCents } from '../utils/money';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
-import type { VisitorGender } from './visitorProfile';
+import type { VisitorGender, VisitorPrimaryGoal } from './visitorProfile';
 import type { PrototypeMode } from '../context/AppContext';
 
 export const SEEDED_BUNDLE = 3;
@@ -72,6 +76,15 @@ const SEEDED_PROGRESS_PHOTOS: ProgressPhotoSet = {
   side: SEEDED_PROGRESS_PHOTO,
   back: SEEDED_PROGRESS_PHOTO,
 };
+
+export type PrototypeSeededAvatar = 'none' | 'picture';
+
+export const PROTOTYPE_SEEDED_AVATARS: readonly PrototypeSeededAvatar[] = [
+  'none',
+  'picture',
+];
+
+const SEEDED_AVATAR_URL = `${import.meta.env.BASE_URL}media/avatar-placeholder.svg`;
 
 export type PrototypeRefund = 'none' | 'due' | 'part-refunded' | 'refunded';
 
@@ -132,6 +145,8 @@ const LATEST_ENTRY_AGE_DAYS: Record<PrototypeMeasurementsDue, number> = {
 
 const SEEDED_CALL_HOUR = 15;
 
+const SEEDED_COUNTRY = 'Romania';
+
 export type JourneySeed = {
   callId: string;
   identity: JourneyIdentity;
@@ -145,6 +160,7 @@ export type JourneySeed = {
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
   seededPhotos: PrototypeSeededPhotos;
+  seededAvatar: PrototypeSeededAvatar;
   refund: PrototypeRefund;
   paymentProblem: boolean;
   cardOnFile: PrototypeCardOnFile;
@@ -505,14 +521,16 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       )
     : [];
 
-  return {
+  const journey: ClientJourney = {
     callId,
     callStartsAt: seededCallStart(paymentLinkSentAt),
     stage,
-    identity,
-    profile: reached('submitted')
-      ? profileFromOnboarding(onboarding.answers)
-      : null,
+    bookedIdentity: identity,
+    profile: {
+      ...openedClientProfile(identity),
+      avatarUrl: seed.seededAvatar === 'picture' ? SEEDED_AVATAR_URL : null,
+    },
+    settings: UNSET_CLIENT_SETTINGS,
     pricing,
     bookingNotes,
     paymentLink: reached('payment-link-sent')
@@ -557,18 +575,23 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
         })
       : undefined,
   };
+
+  return reached('approved') ? seededAtApproval(journey) : journey;
 }
 
 export function heldJourney(
   booking: PrototypeBooking,
   pricing: JourneyPricing,
 ): ClientJourney {
+  const identity = identityFromBooking(booking);
+
   return {
     callId: booking.id,
     callStartsAt: booking.startsAt,
     stage: 'held',
-    identity: identityFromBooking(booking),
-    profile: null,
+    bookedIdentity: identity,
+    profile: openedClientProfile(identity),
+    settings: UNSET_CLIENT_SETTINGS,
     pricing,
     bookingNotes: booking.notes.trim() || null,
     paymentLink: null,
@@ -581,4 +604,98 @@ export function heldJourney(
     measurements: [],
     progressPhotosConsentedAt: null,
   };
+}
+
+export type SeededPerson = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  age: number;
+  phone?: JourneyPhone;
+  primaryGoal: VisitorPrimaryGoal;
+};
+
+function dateOfBirthForAge(age: number): string {
+  const birthYear = new Date().getFullYear() - age;
+  return `${birthYear}-06-15`;
+}
+
+export function seededIdentity(
+  person: SeededPerson,
+  gender: JourneyGender,
+): JourneyIdentity {
+  return {
+    firstName: person.firstName,
+    lastName: person.lastName,
+    dateOfBirth: dateOfBirthForAge(person.age),
+    email: person.email,
+    phone: person.phone,
+    gender,
+    country: SEEDED_COUNTRY,
+    primaryGoal: person.primaryGoal,
+  };
+}
+
+type RosterSeed = {
+  callId: string;
+  person: SeededPerson;
+  stage: JourneyStage;
+  daysSincePayment: PrototypeDaysSincePayment;
+};
+
+const ROSTER_SEEDS: readonly RosterSeed[] = [
+  {
+    callId: 'c2',
+    person: { firstName: 'Jessica', lastName: 'Alba', email: 'jessica@example.com', age: 32, primaryGoal: 'build_strength' },
+    stage: 'program-ready',
+    daysSincePayment: '100',
+  },
+  {
+    callId: 'c3',
+    person: { firstName: 'Emma', lastName: 'Stone', email: 'emma@example.com', age: 34, primaryGoal: 'lose_weight' },
+    stage: 'approved',
+    daysSincePayment: '30',
+  },
+  {
+    callId: 'c4',
+    person: { firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah@example.com', age: 26, primaryGoal: 'build_muscle' },
+    stage: 'submitted',
+    daysSincePayment: '13',
+  },
+  {
+    callId: 'c5',
+    person: { firstName: 'Mia', lastName: 'Thermopolis', email: 'mia@example.com', age: 30, primaryGoal: 'maintain_improve_lifestyle' },
+    stage: 'invited',
+    daysSincePayment: '1',
+  },
+];
+
+export const ROSTER_CALL_IDS: readonly string[] = ROSTER_SEEDS.map(({ callId }) => callId);
+
+export function seedRosterJourneys(
+  prototypeMode: PrototypeMode,
+  now: Date,
+): ClientJourney[] {
+  return ROSTER_SEEDS.map(({ callId, person, stage, daysSincePayment }) =>
+    seedJourney({
+      callId,
+      identity: seededIdentity(person, 'female'),
+      stage,
+      startPath: 'immediate',
+      subscriptionStatus: 'active',
+      pricing: 'regular',
+      bookingNotes: null,
+      invitationStanding: 'sent',
+      prototypeMode,
+      measurementsDue: 'none',
+      lifeStage: 'none',
+      seededPhotos: 'none',
+      seededAvatar: 'none',
+      refund: 'none',
+      paymentProblem: false,
+      cardOnFile: 'visa',
+      daysSincePayment,
+      now,
+    }),
+  );
 }

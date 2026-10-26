@@ -1,10 +1,15 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
-import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
-import type {
-  ClientIdentities,
-  ClientIds,
-  ClientReach,
+import {
+  VisitorCountries,
+  type AssessmentCallReader,
+} from "@eli-coach-platform/domain/assessment-call";
+import {
+  UpdateClientIdentityAsCoachUseCase,
+  UpdateOwnClientIdentityUseCase,
+  type ClientIdentities,
+  type ClientIds,
+  type ClientReach,
 } from "@eli-coach-platform/domain/client";
 import {
   AcceptInvitationUseCase,
@@ -36,10 +41,14 @@ import type { PaidClientAdmission } from "@eli-coach-platform/domain/coaching-su
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
+import { COUNTRIES } from "~/features/assessment-calls/public/countries";
 import { ClientJourneyController } from "~/features/clients/api/client/client-journey-controller.server";
+import { OwnClientIdentityController } from "~/features/clients/api/client/own-client-identity-controller.server";
+import { CoachClientIdentityController } from "~/features/clients/api/coach/coach-client-identity-controller.server";
 import { CoachClientsController } from "~/features/clients/api/coach/coach-clients-controller.server";
 import { InvitationsController } from "~/features/clients/api/public/invitations-controller.server";
 import { PostgresClientIdentities } from "~/features/clients/data/clients/client-identities-reader.server";
+import { PostgresClientIdentityChanges } from "~/features/clients/data/clients/client-identity-changes.server";
 import { PostgresClientReach } from "~/features/clients/data/clients/client-reach-reader.server";
 import { PostgresClientRoster } from "~/features/clients/data/clients/client-roster-reader.server";
 import {
@@ -57,8 +66,10 @@ import { EmailClientInvitationNotifications } from "~/features/clients/email/ema
 
 export type ClientsFeature = {
   clientJourney: ClientJourneyController;
+  coachClientIdentity: CoachClientIdentityController;
   coachClients: CoachClientsController;
   invitations: InvitationsController;
+  ownClientIdentity: OwnClientIdentityController;
   readClientPortalStanding: ReadClientPortalStandingUseCase;
 };
 
@@ -105,6 +116,8 @@ export function composeClientsFeature(
   const journeys = new PostgresClientJourneys(database);
   const onboardingClients = new PostgresOnboardingClients(database);
   const roster = new PostgresClientRoster(database);
+  const identityChanges = new PostgresClientIdentityChanges(database);
+  const countries = VisitorCountries.of(COUNTRIES);
 
   const invitationPorts = {
     clients: new PostgresInvitedClients(database),
@@ -144,6 +157,14 @@ export function composeClientsFeature(
         markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
         readClientJourney: new ReadClientJourneyUseCase({ journeys }),
       }),
+      coachClientIdentity: new CoachClientIdentityController({
+        updateClientIdentityAsCoach: new UpdateClientIdentityAsCoachUseCase({
+          changes: identityChanges,
+          clients: clientReach,
+          clock,
+          countries,
+        }),
+      }),
       coachClients: new CoachClientsController({
         listClients: new ListClientsUseCase({
           clock,
@@ -166,6 +187,15 @@ export function composeClientsFeature(
           clock,
           invitations,
           tokenHasher: handles.linkTokens.hasher,
+        }),
+      }),
+      ownClientIdentity: new OwnClientIdentityController({
+        updateOwnClientIdentity: new UpdateOwnClientIdentityUseCase({
+          changes: identityChanges,
+          clients: clientReach,
+          clock,
+          countries,
+          identities: clientIdentities,
         }),
       }),
       readClientPortalStanding,

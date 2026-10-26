@@ -5,7 +5,6 @@ import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FoodLibrary } from './FoodLibrary';
 import { AppProvider } from '../../../context/AppContext';
-import { ClientProfileProvider } from '../../../context/ClientProfileContext';
 import { NutritionProvider } from '../../../context/NutritionContext';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -27,7 +26,6 @@ function renderLibrary(path = '/coach/nutrition'): User {
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppProvider>
-        <ClientProfileProvider>
           <NutritionProvider>
             <Routes>
               <Route path="/coach/nutrition" element={<FoodLibrary tabs={null} />} />
@@ -35,7 +33,6 @@ function renderLibrary(path = '/coach/nutrition'): User {
             </Routes>
             <Toaster />
           </NutritionProvider>
-        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

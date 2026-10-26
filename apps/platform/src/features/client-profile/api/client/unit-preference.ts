@@ -1,5 +1,10 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  ClientActionFunctionArgs,
+  LoaderFunctionArgs,
+} from "react-router";
 
+import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -12,7 +17,9 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
 
-    return args.context.get(clientProfileContext).unitPreference.save(args);
+    return args.context
+      .get(clientProfileContext)
+      .clientSettings.saveUnits(args);
   });
 }
 
@@ -20,4 +27,8 @@ export async function loader(_args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() => {
     throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
   });
+}
+
+export function clientAction({ serverAction }: ClientActionFunctionArgs) {
+  return fetcherOutcomeOf(serverAction);
 }
