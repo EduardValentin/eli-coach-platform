@@ -20,9 +20,11 @@ export function createRequestArgs(options: {
   for (const [key, value] of options.contexts ?? []) {
     context.set(key, value);
   }
+  const request = options.request ?? new Request("http://localhost/");
   return {
     context,
     params: options.params ?? {},
-    request: options.request ?? new Request("http://localhost/"),
+    request,
+    url: new URL(request.url),
   } as unknown as LoaderFunctionArgs & ActionFunctionArgs;
 }

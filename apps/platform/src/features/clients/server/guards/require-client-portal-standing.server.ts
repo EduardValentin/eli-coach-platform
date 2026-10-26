@@ -17,7 +17,7 @@ import { clientsContext } from "./clients-context.server";
 
 type JourneyRequest = {
   context: Readonly<RouterContextProvider>;
-  request: Request;
+  url: URL;
 };
 
 type SignedInStanding = {
@@ -46,7 +46,7 @@ export async function requireClientPortalStanding(
   const { appBasePath } = args.context.get(accountsContext).portal;
   const redirectTo = clientJourneyRedirect(
     signedIn.standing,
-    appPathOf(new URL(args.request.url).pathname, appBasePath),
+    appPathOf(args.url.pathname, appBasePath),
   );
 
   if (!redirectTo) {

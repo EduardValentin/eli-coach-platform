@@ -76,7 +76,7 @@ export class CoachCheckInSeriesController {
     requirePortalAccess(args, { role: "COACH" });
 
     const query = checkInSeriesPreviewQuerySchema.safeParse(
-      Object.fromEntries(new URL(args.request.url).searchParams),
+      Object.fromEntries(args.url.searchParams),
     );
 
     if (!query.success) {

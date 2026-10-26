@@ -165,9 +165,9 @@ export class CheckoutsController {
     return this.redirectInApp(selectBundlePath({ token }));
   }
 
-  async loadConfirmation({ request }: LoaderFunctionArgs) {
+  async loadConfirmation({ url }: LoaderFunctionArgs) {
     const sessionId = checkoutSessionIdSchema.parse(
-      new URL(request.url).searchParams.get("session"),
+      url.searchParams.get("session"),
     );
     const confirmation =
       await this.options.readCheckoutConfirmation.execute(sessionId);

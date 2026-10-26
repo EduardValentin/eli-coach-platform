@@ -34,7 +34,7 @@ export class CoachResourcesController {
     const listing = await this.options.listClientResources.execute({
       requester: { role: coach.role, authSubjectId: coach.authSubjectId },
       clientId: target.data,
-      browse: resourceBrowseInputOf(new URL(args.request.url).searchParams),
+      browse: resourceBrowseInputOf(args.url.searchParams),
     });
 
     if (listing.status === "not-found") {

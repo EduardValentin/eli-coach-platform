@@ -67,7 +67,7 @@ export class SharedCheckInsController {
   async listOpenTimes(args: LoaderFunctionArgs): Promise<Response> {
     const command = this.openTimesCommandOf(
       this.requireCheckInActor(args),
-      args.request,
+      args.url,
     );
 
     if (!command) {
@@ -184,14 +184,14 @@ export class SharedCheckInsController {
 
   private openTimesCommandOf(
     actor: CheckInActor,
-    request: Request,
+    url: URL,
   ): ListOpenCheckInTimesCommand | null {
     if (actor.party !== "coach") {
       return { actor };
     }
 
     const query = openCheckInTimesQuerySchema.safeParse(
-      Object.fromEntries(new URL(request.url).searchParams),
+      Object.fromEntries(url.searchParams),
     );
 
     return query.success ? { actor, clientId: query.data.clientId } : null;

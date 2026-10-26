@@ -10,7 +10,7 @@ import { sessionContext } from "./session-context.server";
 
 type GuardedRequest = {
   context: Readonly<RouterContextProvider>;
-  request: Request;
+  url: URL;
 };
 
 type PortalRecovery = "client-portal" | "coach-portal";
@@ -42,7 +42,7 @@ export function requirePortalAccess(
     const { publicAppUrl, signInUrl } =
       args.context.get(accountsContext).portal;
     throw redirect(
-      buildSignInRedirectTarget(args.request, { publicAppUrl, signInUrl }),
+      buildSignInRedirectTarget(args.url, { publicAppUrl, signInUrl }),
     );
   }
 
@@ -65,10 +65,10 @@ export function requirePortalAccess(
 // the request's own when one is configured; the path and query always survive
 // unchanged so sign-in returns to the exact page that was denied.
 function buildSignInRedirectTarget(
-  request: Request,
+  url: URL,
   options: { publicAppUrl: string | undefined; signInUrl: string },
 ): string {
-  const originalUrl = new URL(request.url);
+  const originalUrl = new URL(url);
 
   if (options.publicAppUrl) {
     const publicOrigin = new URL(options.publicAppUrl);

@@ -25,8 +25,8 @@ type OverrideRejection = {
 export function createFeatureFlagOverrideMiddleware(options: {
   appBasePath: string;
 }): MiddlewareFunction<Response> {
-  return async function applyFeatureFlagOverrides({ request }, next) {
-    const requested = readRequestedOverrides(request);
+  return async function applyFeatureFlagOverrides({ request, url }, next) {
+    const requested = readRequestedOverrides(request, url);
 
     if ("rejection" in requested) {
       return rejectOverrideRequest(requested.rejection);
@@ -60,11 +60,12 @@ export function createFeatureFlagOverrideMiddleware(options: {
 
 function readRequestedOverrides(
   request: Request,
+  url: URL,
 ): RequestedOverrides | OverrideRejection {
   const overrides = readOverridesCookie(request.headers.get("Cookie"));
   let urlChangedOverrides = false;
 
-  for (const [parameter, value] of new URL(request.url).searchParams) {
+  for (const [parameter, value] of url.searchParams) {
     if (!parameter.startsWith(QUERY_PREFIX)) {
       continue;
     }
