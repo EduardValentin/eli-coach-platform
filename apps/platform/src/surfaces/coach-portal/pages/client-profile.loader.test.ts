@@ -113,7 +113,9 @@ describe("coach client profile page meta", () => {
     const data = { clientId: CLIENT_ID, profile: PROFILE };
 
     // act
-    const descriptors = meta({ data } as Parameters<typeof meta>[0]);
+    const descriptors = meta({ loaderData: data } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(descriptors).toEqual([{ title: "Andreea Popescu profile | Evoa" }]);

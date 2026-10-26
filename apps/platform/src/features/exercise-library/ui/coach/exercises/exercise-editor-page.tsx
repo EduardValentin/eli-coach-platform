@@ -88,8 +88,10 @@ export async function loader(args: LoaderFunctionArgs) {
     : exerciseLibrary.load(args, exerciseId);
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: `${data?.exercise ? "Edit exercise" : "New exercise"} | Evoa` },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  {
+    title: `${loaderData?.exercise ? "Edit exercise" : "New exercise"} | Evoa`,
+  },
 ];
 
 export default function ExerciseEditorRoute() {

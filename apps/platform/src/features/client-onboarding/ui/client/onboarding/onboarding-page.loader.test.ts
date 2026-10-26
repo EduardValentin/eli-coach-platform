@@ -39,7 +39,7 @@ describe("onboarding page route", () => {
     const data = { mode: "wizard" } as OnboardingPage;
 
     // act
-    const tags = meta({ data } as Parameters<typeof meta>[0]);
+    const tags = meta({ loaderData: data } as Parameters<typeof meta>[0]);
 
     // assert
     expect(tags).toEqual([
@@ -53,7 +53,7 @@ describe("onboarding page route", () => {
     const data = { mode: "answer" } as OnboardingPage;
 
     // act
-    const tags = meta({ data } as Parameters<typeof meta>[0]);
+    const tags = meta({ loaderData: data } as Parameters<typeof meta>[0]);
 
     // assert
     expect(tags).toEqual([
@@ -67,7 +67,7 @@ describe("onboarding page route", () => {
     const data = undefined;
 
     // act
-    const tags = meta({ data } as Parameters<typeof meta>[0]);
+    const tags = meta({ loaderData: data } as Parameters<typeof meta>[0]);
 
     // assert
     expect(tags).toEqual([

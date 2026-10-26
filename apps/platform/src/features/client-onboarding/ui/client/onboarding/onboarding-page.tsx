@@ -36,8 +36,8 @@ export function loader(args: LoaderFunctionArgs): Promise<OnboardingPage> {
     .controller.loadOnboarding(args);
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: `${headerOf(data).title} | Evoa` },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  { title: `${headerOf(loaderData).title} | Evoa` },
   { name: "robots", content: "noindex" },
 ];
 

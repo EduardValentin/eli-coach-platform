@@ -38,10 +38,10 @@ export async function loader(args: LoaderFunctionArgs) {
   return { client, listing };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
   {
-    title: data
-      ? `${possessive(data.client.firstName)} resources | Evoa`
+    title: loaderData
+      ? `${possessive(loaderData.client.firstName)} resources | Evoa`
       : "Resources | Evoa",
   },
 ];

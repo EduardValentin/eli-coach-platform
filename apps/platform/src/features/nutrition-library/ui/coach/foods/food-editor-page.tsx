@@ -57,8 +57,8 @@ export async function loader(args: LoaderFunctionArgs) {
     : foodLibrary.load(args, foodId);
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: `${data?.food ? "Edit food" : "New food"} | Evoa` },
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
+  { title: `${loaderData?.food ? "Edit food" : "New food"} | Evoa` },
 ];
 
 export default function FoodEditorRoute() {
