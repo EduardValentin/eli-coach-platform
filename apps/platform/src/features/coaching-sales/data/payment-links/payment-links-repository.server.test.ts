@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { PaymentLink } from "@eli-coach-platform/domain/payment-link";
 import { describe, expect, it } from "vitest";
 

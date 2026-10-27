@@ -9,7 +9,7 @@ import {
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain/waitlist";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
 import {

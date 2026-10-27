@@ -1,4 +1,4 @@
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import { COACHING_STATUSES } from "@eli-coach-platform/domain/client";
 import {
   COACHING_BUNDLE_IDS,

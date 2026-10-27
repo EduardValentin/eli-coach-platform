@@ -2,7 +2,7 @@ import {
   CoachAvailability,
   type CoachAvailabilityProps,
 } from "@eli-coach-platform/domain/coach-availability";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it, vi } from "vitest";
 
 import { coachAvailabilityTable } from "../schema.server";

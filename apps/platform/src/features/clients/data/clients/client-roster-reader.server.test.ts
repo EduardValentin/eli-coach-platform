@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";

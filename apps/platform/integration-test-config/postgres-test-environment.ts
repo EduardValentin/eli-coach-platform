@@ -8,7 +8,7 @@ import {
   getBootstrapDatabaseUser,
   getMigrationDatabaseUser,
 } from "@eli-coach-platform/config/runtime";
-import { createManagedDatabasePool } from "@eli-coach-platform/db";
+import { createManagedDatabasePool } from "~/shared/database";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,

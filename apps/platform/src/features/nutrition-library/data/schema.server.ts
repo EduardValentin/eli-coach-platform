@@ -1,4 +1,4 @@
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import {
   COOKING_METHODS,
   FOOD_CATEGORIES,

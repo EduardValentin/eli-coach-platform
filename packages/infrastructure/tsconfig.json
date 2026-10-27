@@ -5,6 +5,7 @@
     "types": ["node", "vite/client"],
     "allowImportingTsExtensions": true,
     "paths": {
+      "~/*": ["../../apps/platform/src/*"],
       "~test-support/*": ["../../apps/platform/test-support/*"]
     }
   }

@@ -8,7 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import { WAITLIST_REDUCED_PRICING_CAP } from "@eli-coach-platform/domain/waitlist";
 
 export const waitlistEntryConstraints = {

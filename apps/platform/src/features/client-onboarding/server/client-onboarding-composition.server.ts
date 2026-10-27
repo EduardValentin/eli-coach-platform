@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AnswerOnboardingDetailsUseCase,

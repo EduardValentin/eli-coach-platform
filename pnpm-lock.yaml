@@ -315,9 +315,6 @@ importers:
       '@eli-coach-platform/content':
         specifier: workspace:*
         version: link:../../packages/content
-      '@eli-coach-platform/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -482,19 +479,6 @@ importers:
         specifier: 'catalog:'
         version: 4.23.15
 
-  packages/db:
-    dependencies:
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
-      pg:
-        specifier: 'catalog:'
-        version: 8.23.1
-    devDependencies:
-      '@types/pg':
-        specifier: 'catalog:'
-        version: 8.23.1
-
   packages/domain: {}
 
   packages/infrastructure:
@@ -505,9 +489,6 @@ importers:
       '@eli-coach-platform/config':
         specifier: workspace:*
         version: link:../config
-      '@eli-coach-platform/db':
-        specifier: workspace:*
-        version: link:../db
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../domain

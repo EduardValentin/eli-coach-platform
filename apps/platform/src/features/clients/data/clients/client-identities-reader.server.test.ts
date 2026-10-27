@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it, vi, type Mock } from "vitest";
 
 import { PostgresClientIdentities } from "./client-identities-reader.server";

@@ -1,7 +1,7 @@
 import {
   isCausedByDatabaseError,
   type DatabaseTransaction,
-} from "@eli-coach-platform/db";
+} from "~/shared/database";
 import { eq, sql } from "drizzle-orm";
 
 import {

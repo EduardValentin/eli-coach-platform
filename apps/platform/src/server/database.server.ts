@@ -7,7 +7,7 @@ import {
   createDatabaseClient,
   createManagedDatabasePool,
   type DatabaseClient,
-} from "@eli-coach-platform/db";
+} from "~/shared/database";
 import type { Pool } from "pg";
 
 export type PlatformDatabase = {

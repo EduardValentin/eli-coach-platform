@@ -33,7 +33,6 @@
   "dependencies": {
     "@clerk/backend": "catalog:",
     "@eli-coach-platform/config": "workspace:*",
-    "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "@fastify/busboy": "catalog:",
     "@file-type/cfbf": "catalog:",

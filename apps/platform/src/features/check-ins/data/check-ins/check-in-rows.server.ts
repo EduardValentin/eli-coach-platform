@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "@eli-coach-platform/db";
+import type { DatabaseTransaction } from "~/shared/database";
 import { CheckIn } from "@eli-coach-platform/domain/check-in";
 import { sql } from "drizzle-orm";
 

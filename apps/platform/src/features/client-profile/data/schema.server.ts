@@ -1,4 +1,4 @@
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import { WEEKDAYS } from "@eli-coach-platform/domain/coach-availability";
 import {
   ACTIVITY_LEVELS,

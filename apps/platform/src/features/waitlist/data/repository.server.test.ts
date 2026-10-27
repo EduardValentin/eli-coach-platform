@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { describe, expect, it, vi } from "vitest";
 import { PostgresWaitlistRepository } from "./repository.server";
 

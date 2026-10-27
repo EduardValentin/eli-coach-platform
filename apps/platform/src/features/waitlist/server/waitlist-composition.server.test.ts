@@ -1,5 +1,5 @@
 import type { WaitlistConfig } from "@eli-coach-platform/config";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { EmailAddress } from "@eli-coach-platform/domain/email-address";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";

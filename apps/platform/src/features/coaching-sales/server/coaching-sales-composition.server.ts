@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/assessment-call";
 import type {
   ClientIdentities,

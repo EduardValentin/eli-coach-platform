@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "@eli-coach-platform/db";
+import type { DatabaseTransaction } from "~/shared/database";
 import type { ReviewStamps } from "@eli-coach-platform/domain/client-onboarding";
 import { eq } from "drizzle-orm";
 

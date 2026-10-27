@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import {
   ClientProfile,
   SESSION_MINUTE_OPTIONS,

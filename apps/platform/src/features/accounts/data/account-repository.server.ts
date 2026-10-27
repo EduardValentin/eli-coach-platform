@@ -1,5 +1,5 @@
 import { Account, type Accounts } from "@eli-coach-platform/domain/account";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { accountsTable } from "./schema.server";
 

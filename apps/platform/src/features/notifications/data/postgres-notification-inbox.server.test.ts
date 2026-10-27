@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { NotificationDraft } from "@eli-coach-platform/domain/notification";
 import { describe, expect, it, vi } from "vitest";
 

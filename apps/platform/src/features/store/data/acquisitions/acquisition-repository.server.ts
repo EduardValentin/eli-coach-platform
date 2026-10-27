@@ -9,7 +9,7 @@ import {
 import { Product } from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 
 type ExistingRequestRow = {
   deliveryStatus: "pending" | "accepted" | "rejected";

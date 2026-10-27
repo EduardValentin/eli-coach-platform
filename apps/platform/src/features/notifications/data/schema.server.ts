@@ -1,4 +1,4 @@
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import {
   NOTIFICATION_PARTIES,
   type NotificationFacts,

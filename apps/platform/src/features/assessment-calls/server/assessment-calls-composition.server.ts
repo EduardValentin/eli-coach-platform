@@ -1,5 +1,5 @@
 import type { AssessmentCallsConfig } from "@eli-coach-platform/config";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import {
   AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,

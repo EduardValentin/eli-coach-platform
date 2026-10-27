@@ -5,7 +5,7 @@ import {
   type PersistPublicationCommand,
 } from "@eli-coach-platform/domain/product";
 
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 
 import { PostgresStoreProductPublicationRepository } from "./publication-repository.server";
 

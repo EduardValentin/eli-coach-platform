@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "@eli-coach-platform/db";
+import type { DatabaseTransaction } from "~/shared/database";
 import type { CoachingSeed } from "@eli-coach-platform/domain/client-profile";
 import { and, eq, isNull } from "drizzle-orm";
 import { describe, expect, it } from "vitest";

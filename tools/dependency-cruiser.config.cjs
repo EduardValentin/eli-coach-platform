@@ -450,14 +450,14 @@ module.exports = {
     {
       name: "route-thinness",
       comment:
-        "A registered route module never imports data/, email/, a controller, the db package or server/ outside guards/.",
+        "A registered route module never imports data/, email/, a controller, shared/database or server/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {
         path: [
           `${FEATURES}[^/]+/(data|email)/`,
           "-controller\\.server\\.ts$",
-          "^packages/db/",
+          "^apps/platform/src/shared/database/",
           "^packages/infrastructure/src/(?!(http|pwa)/)",
           "^packages/config/src/runtime\\.ts$",
           "^apps/platform/src/server/(?!guards/)",

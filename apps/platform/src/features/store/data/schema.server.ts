@@ -13,7 +13,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 
 export const productsTable = appSchema.table(
   "products",

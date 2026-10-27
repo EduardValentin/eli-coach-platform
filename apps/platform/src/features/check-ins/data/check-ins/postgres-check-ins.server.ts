@@ -12,10 +12,7 @@ import {
   UNANSWERED_CHECK_IN_STATUSES,
 } from "@eli-coach-platform/domain/check-in";
 import type { TimeInterval } from "@eli-coach-platform/domain/coach-availability";
-import type {
-  DatabaseClient,
-  DatabaseTransaction,
-} from "@eli-coach-platform/db";
+import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
 import {
   and,
   asc,

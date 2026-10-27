@@ -1,5 +1,5 @@
 import { timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import type { AccountRole } from "@eli-coach-platform/domain/account";
 
 const accountRoleValues = ["CLIENT", "COACH"] as const;

@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";

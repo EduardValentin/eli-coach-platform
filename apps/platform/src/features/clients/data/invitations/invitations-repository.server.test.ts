@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { ClientInvitation } from "@eli-coach-platform/domain/client-invitation";
 import { describe, expect, it } from "vitest";
 

@@ -17,18 +17,14 @@ export default defineConfig({
     table: "__drizzle_migrations",
   },
   out: migrationsFolderOverridePath || "./db/drizzle",
-  // packages/db owns the "app" Postgres schema namespace, but individual tables
-  // can be defined inside other workspace packages that own the feature (e.g.
-  // packages/infrastructure/src/feature-flags/schema.server.ts) or, eventually,
-  // inside this app's own features. Rather than hand-enumerating each such file
-  // here — a step that is easy to forget and whose failure mode is a silent
-  // DROP TABLE migration — the second and third entries glob for any
-  // *.server.ts file with "schema" in its name under sibling packages and
-  // under this app's features, by convention.
+  // shared/database owns the "app" Postgres schema namespace; each table is
+  // defined beside the code that owns it. A schema file missing from these
+  // globs yields a silent DROP TABLE migration, so they match every
+  // *schema*.server.ts file by convention instead of listing each one.
   schema: [
-    "../../packages/db/src/schema/index.ts",
+    "./src/shared/database/schema/index.ts",
+    "./src/**/*schema*.server.ts",
     "../../packages/*/src/**/*schema*.server.ts",
-    "./src/features/*/data/schema.server.ts",
   ],
   ...(databaseUrl ? { dbCredentials: { url: databaseUrl } } : {}),
 });

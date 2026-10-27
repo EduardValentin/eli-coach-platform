@@ -1,7 +1,4 @@
-import type {
-  DatabaseClient,
-  DatabaseTransaction,
-} from "@eli-coach-platform/db";
+import type { DatabaseClient, DatabaseTransaction } from "~/shared/database";
 import { describe, expect, it } from "vitest";
 
 import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../../../.." && pwd)
 LOCAL_POSTGRES_CONTAINER_NAME="${LOCAL_POSTGRES_CONTAINER_NAME:-eli-coach-platform-local-postgres}"
 LOCAL_POSTGRES_ENV_FILE="${LOCAL_POSTGRES_ENV_FILE:-${ROOT_DIR}/.env.postgres}"
 LOCAL_POSTGRES_PORT="${LOCAL_POSTGRES_PORT:-55437}"

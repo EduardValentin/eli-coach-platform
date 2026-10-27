@@ -1,4 +1,4 @@
-import type { DatabaseTransaction } from "@eli-coach-platform/db";
+import type { DatabaseTransaction } from "~/shared/database";
 import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
 import { describe, expect, it } from "vitest";

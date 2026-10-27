@@ -1,7 +1,7 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
-} from "@eli-coach-platform/db";
+} from "~/shared/database";
 import {
   Exercise,
   type ExerciseAddition,

@@ -1,5 +1,5 @@
 import { boolean, serial, text, timestamp } from "drizzle-orm/pg-core";
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 
 export const featureFlagsTable = appSchema.table("feature_flags", {
   id: serial("id").primaryKey(),

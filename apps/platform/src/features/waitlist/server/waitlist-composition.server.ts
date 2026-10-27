@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { WaitlistConfig } from "@eli-coach-platform/config";
 import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
 import {

@@ -10,7 +10,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseClient,
   type DatabaseTransaction,
-} from "@eli-coach-platform/db";
+} from "~/shared/database";
 import { and, eq, gt, sql } from "drizzle-orm";
 
 import { assessmentCallsTable } from "./schema.server";

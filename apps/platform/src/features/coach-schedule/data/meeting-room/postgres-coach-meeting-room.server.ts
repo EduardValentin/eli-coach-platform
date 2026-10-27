@@ -4,7 +4,7 @@ import {
   type CoachMeetingRoomSource,
 } from "@eli-coach-platform/domain/coach-meeting-room";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { eq } from "drizzle-orm";
 
 import {

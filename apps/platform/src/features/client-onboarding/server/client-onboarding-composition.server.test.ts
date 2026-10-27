@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";

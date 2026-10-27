@@ -2,7 +2,7 @@ import {
   isCausedByDatabaseError,
   type DatabaseClient,
   type DatabaseTransaction,
-} from "@eli-coach-platform/db";
+} from "~/shared/database";
 import {
   Food,
   type FoodAddition,

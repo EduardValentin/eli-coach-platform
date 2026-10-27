@@ -2,7 +2,7 @@ import {
   FeatureFlag,
   type FeatureFlags,
 } from "@eli-coach-platform/domain/feature-flag";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { DatabaseClient } from "~/shared/database";
 import { featureFlagsTable } from "./schema.server";
 
 export class PostgresFeatureFlagRepository implements FeatureFlags {

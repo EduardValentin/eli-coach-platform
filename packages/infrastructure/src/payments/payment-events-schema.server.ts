@@ -1,4 +1,4 @@
-import { appSchema } from "@eli-coach-platform/db";
+import { appSchema } from "~/shared/database";
 import { timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const paymentEventsTable = appSchema.table("payment_events", {
