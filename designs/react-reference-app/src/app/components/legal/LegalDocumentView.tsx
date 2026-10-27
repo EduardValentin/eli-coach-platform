@@ -6,7 +6,7 @@ import type {
   LegalDocument,
   LegalDocumentBlock,
   LegalText,
-} from '@content/legal-document';
+} from '~/bounded-contexts/legal/public';
 
 const INLINE_LINK_CLASS =
   'font-medium text-brand underline-offset-4 hover:text-brand-hover hover:underline';

@@ -6,7 +6,7 @@ import {
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
-} from "@eli-coach-platform/content";
+} from "~/bounded-contexts/legal/public";
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,

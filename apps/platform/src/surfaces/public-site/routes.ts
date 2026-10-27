@@ -6,6 +6,7 @@ import {
   assessmentCallsJoinRoutes,
 } from "../../bounded-contexts/scheduling/assessment-calls/routes";
 import { INVITATION_ROUTE_SEGMENT } from "../../bounded-contexts/clients/clients/public/paths";
+import { legalPublicRoutes } from "../../bounded-contexts/legal/legal/routes";
 import { coachingSalesPublicRoutes } from "../../bounded-contexts/sales/coaching-sales/routes";
 import { storePublicRoutes } from "../../bounded-contexts/sales/store/routes";
 
@@ -18,8 +19,7 @@ export const publicSiteRoutes = [
     index("./surfaces/public-site/pages/home.tsx"),
     route("blog", "./pages/blog.tsx"),
     route(PRICING_PATH.slice(1), "./pages/pricing.tsx"),
-    route("privacy", "./pages/privacy.tsx"),
-    route("terms", "./pages/terms.tsx"),
+    ...legalPublicRoutes,
     ...assessmentCallsBookingRoutes,
     ...coachingSalesPublicRoutes,
     ...storePublicRoutes,

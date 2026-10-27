@@ -41,7 +41,7 @@ import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";
-import TermsRoute from "~/surfaces/public-site/pages/terms";
+import TermsRoute from "~/bounded-contexts/legal/legal/ui/public/terms-page";
 import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,

@@ -312,9 +312,6 @@ importers:
       '@eli-coach-platform/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@eli-coach-platform/content':
-        specifier: workspace:*
-        version: link:../../packages/content
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -463,21 +460,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.6.7
-
-  packages/content:
-    devDependencies:
-      '@types/pdfkit':
-        specifier: 'catalog:'
-        version: 0.17.6
-      pdfjs-dist:
-        specifier: 'catalog:'
-        version: 6.4.299
-      pdfkit:
-        specifier: 'catalog:'
-        version: 0.20.2
-      tsx:
-        specifier: 'catalog:'
-        version: 4.23.15
 
   packages/domain: {}
 

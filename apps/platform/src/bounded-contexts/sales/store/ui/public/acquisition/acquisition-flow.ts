@@ -1,4 +1,4 @@
-import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import type {
   StoreAcquisitionErrorCode,
   StoreAcquisitionResponse,

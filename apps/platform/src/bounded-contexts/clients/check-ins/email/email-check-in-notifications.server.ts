@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
+import { COACH_DISPLAY_NAME } from "~/shared/brand";
 import {
   CHECK_IN_RULES,
   type CheckInDelivery,

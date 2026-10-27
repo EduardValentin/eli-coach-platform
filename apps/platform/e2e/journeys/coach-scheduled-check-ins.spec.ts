@@ -1,4 +1,4 @@
-import { COACH_DISPLAY_NAME } from "@eli-coach-platform/content";
+import { COACH_DISPLAY_NAME } from "~/shared/brand";
 
 import { emailMomentOf } from "../support/check-in-moments";
 import { COACH_TIME_ZONE } from "../support/coach-availability";

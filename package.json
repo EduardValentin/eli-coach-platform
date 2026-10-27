@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
-    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/domain/src packages/infrastructure/src && pnpm check:surfaces && node tools/domain-layout.mjs",
+    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/domain/src packages/infrastructure/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
     "client:media:local:prepare": "./scripts/dev/prepare_local_client_media.sh",
     "client:resources:local:prepare": "./scripts/dev/prepare_local_client_resources.sh",
@@ -40,7 +40,7 @@
     "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform",
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local",
     "store:assets:local:prepare": "./scripts/dev/prepare_local_store_assets.sh",
-    "terms:pdf": "pnpm --filter @eli-coach-platform/content terms:pdf",
+    "terms:pdf": "pnpm --filter @eli-coach-platform/platform terms:pdf",
     "test": "pnpm typecheck && vitest run",
     "test:unit": "pnpm typecheck && vitest run --project unit --project tools",
     "test:integration": "vitest run --project integration",

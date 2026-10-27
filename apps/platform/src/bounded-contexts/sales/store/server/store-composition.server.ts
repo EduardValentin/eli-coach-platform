@@ -20,7 +20,7 @@ import {
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
-} from "@eli-coach-platform/content";
+} from "~/bounded-contexts/legal/public";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type {

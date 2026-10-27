@@ -323,7 +323,7 @@ module.exports = {
     {
       name: "feature-server-private",
       comment:
-        "Nothing in a feature outside server/ (api/, data/, email/, public/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
+        "Nothing in a feature outside server/ (adapters/, api/, data/, email/, public/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
       severity: "error",
       from: { path: `${FEATURES}(${COMPONENT})/(?!server/)` },
       to: { path: `${FEATURES}$1/server/(?!guards/)` },
@@ -489,11 +489,11 @@ module.exports = {
     {
       name: "browser-half",
       comment:
-        "R6: a feature's ui/** never imports its data/, api/ or email/ folders and reaches server/ only through guards/; a registered page's loader reads its feature key there, and the .server suffix keeps that key out of the client build.",
+        "R6: a feature's ui/** never imports its adapters/, data/, api/ or email/ folders and reaches server/ only through guards/; a registered page's loader reads its feature key there, and the .server suffix keeps that key out of the client build.",
       severity: "error",
       from: { path: `${FEATURES}${COMPONENT}/ui/` },
       to: {
-        path: `${FEATURES}${COMPONENT}/(data/|api/|email/|server/(?!guards/))`,
+        path: `${FEATURES}${COMPONENT}/(adapters/|data/|api/|email/|server/(?!guards/))`,
       },
     },
     {
@@ -509,12 +509,12 @@ module.exports = {
     {
       name: "route-thinness",
       comment:
-        "A registered route module never imports data/, email/, a controller, shared/database or server/ outside guards/.",
+        "A registered route module never imports adapters/, data/, email/, a controller, shared/database or server/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${FEATURES}${COMPONENT}/(data|email)/`,
+          `${FEATURES}${COMPONENT}/(adapters|data|email)/`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^packages/infrastructure/src/(?!(http|pwa)/)",

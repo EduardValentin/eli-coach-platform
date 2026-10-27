@@ -1,8 +1,8 @@
 import {
   ELI_COACH_CONTACT_EMAIL,
   EVOA_FITNESS_PRIVACY_EMAIL,
-  WAITLIST_MARKETING_CONSENT,
-} from "@eli-coach-platform/content";
+} from "~/shared/brand";
+import { WAITLIST_MARKETING_CONSENT } from "~/bounded-contexts/legal/public";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "~/shared/design-system/lib";
 import {

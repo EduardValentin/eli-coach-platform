@@ -7,7 +7,6 @@ import { RESOURCE_RENDITIONS } from "@eli-coach-platform/domain/client-resources
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import { RECIPE_PHOTO_RENDITION } from "@eli-coach-platform/domain/nutrition";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import {
   createBotDetectionConfig,
@@ -41,6 +40,10 @@ import {
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+import {
+  composeLegal,
+  type LegalComposition,
+} from "~/bounded-contexts/legal/composition.server";
 import {
   composeAccountsFeature,
   type AccountsFeature,
@@ -93,6 +96,8 @@ import {
   type PlatformFeature,
 } from "~/server/platform-composition.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
+import { EVOA_FITNESS_PRIVACY_EMAIL } from "~/shared/brand";
+import { createSha256Hasher } from "~/shared/documents/sha256-hasher.server";
 
 export type PlatformContainer = {
   accounts: AccountsFeature;
@@ -107,6 +112,7 @@ export type PlatformContainer = {
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   exerciseLibrary: ExerciseLibraryFeature;
   featureFlagOverrides: FeatureFlagOverrides;
+  legal: LegalComposition["facades"];
   notifications: NotificationsFeature;
   nutritionLibrary: NutritionLibraryFeature;
   platform: PlatformFeature;
@@ -145,6 +151,7 @@ export function createPlatformContainer(options: {
   const featureFlags = featureFlagOverrides.featureFlags;
   const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
   const linkTokens = createLinkTokens();
+  const legal = composeLegal({ documentHasher: createSha256Hasher() });
   const exerciseLibrary = composeExerciseLibraryFeature({
     clock,
     database: database.client,
@@ -346,6 +353,7 @@ export function createPlatformContainer(options: {
     coachingSales,
     exerciseLibrary,
     featureFlagOverrides,
+    legal: legal.facades,
     notifications,
     nutritionLibrary,
     platform,

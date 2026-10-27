@@ -1,7 +1,5 @@
-import {
-  ELI_COACH_CONTACT_EMAIL,
-  STORE_MARKETING_CONSENT,
-} from "@eli-coach-platform/content";
+import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
+import { STORE_MARKETING_CONSENT } from "~/bounded-contexts/legal/public";
 import {
   Sheet,
   SheetContent,

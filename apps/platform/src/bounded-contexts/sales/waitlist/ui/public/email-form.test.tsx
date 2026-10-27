@@ -3,10 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import {
-  ELI_COACH_CONTACT_EMAIL,
-  EMAIL_SUBADDRESS_REFUSED_MESSAGE,
-} from "@eli-coach-platform/content";
+import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import {
   cleanup,
   render,

@@ -8,7 +8,7 @@ import {
   type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,

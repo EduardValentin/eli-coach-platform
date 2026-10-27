@@ -1,4 +1,4 @@
-import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from '@content/website-and-store-terms/current';
+import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from '~/bounded-contexts/legal/public';
 import { Navbar } from '../components/Navbar';
 import { LegalDocumentView } from '../components/legal/LegalDocumentView';
 import { LegalFooter } from '../components/legal/LegalNav';

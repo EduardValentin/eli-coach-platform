@@ -4,7 +4,7 @@ import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bun
 import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
-} from "@eli-coach-platform/content";
+} from "~/bounded-contexts/legal/public";
 import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";

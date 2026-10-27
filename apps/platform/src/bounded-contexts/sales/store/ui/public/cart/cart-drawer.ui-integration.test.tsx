@@ -11,10 +11,8 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  EMAIL_SUBADDRESS_REFUSED_MESSAGE,
-  STORE_MARKETING_CONSENT,
-} from "@eli-coach-platform/content";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
+import { STORE_MARKETING_CONSENT } from "~/bounded-contexts/legal/public";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { useState } from "react";

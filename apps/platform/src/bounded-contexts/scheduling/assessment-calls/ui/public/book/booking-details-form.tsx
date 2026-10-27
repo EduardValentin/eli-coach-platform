@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
+import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
 import { BotDetectionWidget } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
   Alert,

@@ -1,4 +1,4 @@
-import { PRIVACY_POLICY } from '@content/privacy-policy';
+import { PRIVACY_POLICY } from '~/bounded-contexts/legal/public';
 import { Navbar } from '../components/Navbar';
 import { LegalDocumentView } from '../components/legal/LegalDocumentView';
 import { LegalFooter } from '../components/legal/LegalNav';

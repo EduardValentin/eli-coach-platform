@@ -1,4 +1,4 @@
-import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
+import { EVOA_FITNESS_PRIVACY_EMAIL } from "~/shared/brand";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
 

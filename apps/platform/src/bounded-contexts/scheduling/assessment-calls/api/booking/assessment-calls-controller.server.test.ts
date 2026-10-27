@@ -9,7 +9,7 @@ import {
 } from "@eli-coach-platform/domain/assessment-call";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import { describe, expect, it, vi } from "vitest";
 
 import { bookAssessmentCallResponseSchema } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";

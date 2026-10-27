@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { ELI_PORTRAIT_PATHS } from "@eli-coach-platform/content";
+import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
 
 export const ABOUT_COPY = {
   bioParagraphs: [
