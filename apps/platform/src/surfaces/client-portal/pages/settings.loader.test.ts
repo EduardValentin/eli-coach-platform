@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type ClientProfileFeature,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+  type ClientProfileFeature,
+} from "~/bounded-contexts/clients/public/request-context";
 import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import {
-  type CoachingSalesFeature,
   coachingSalesContext,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+  type CoachingSalesFeature,
+} from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
   createRequestArgs,

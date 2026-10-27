@@ -9,9 +9,9 @@ import {
 import {
   clientOnboardingContext,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+} from "~/bounded-contexts/clients/public/request-context";
 import { MeasurementsNudge } from "~/bounded-contexts/clients/client-profile/ui/client/nudge/measurements-nudge";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/public/request-context";
 import { ProgramStatusCard } from "~/bounded-contexts/sales/coaching-sales/ui/client/status/program-status-card";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 import { clientPortalPageMeta } from "~/surfaces/client-portal/shell/client-portal-meta";

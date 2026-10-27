@@ -8,7 +8,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/public/request-context";
 import {
   isEndedCall,
   LISTING_PARAMS,
@@ -18,7 +18,7 @@ import { AssessmentCallsSection } from "~/bounded-contexts/scheduling/assessment
 import { useCoachClock } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/use-coach-clock";
 import { ViewClientLink } from "~/bounded-contexts/clients/clients/ui/coach/clients/view-client-link";
 import type { CallSalesState } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/public/request-context";
 import { CallSalesStateBadge } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
 import { PaymentLinkAction } from "~/bounded-contexts/sales/coaching-sales/ui/coach/call-sales/payment-link-action";
 import {

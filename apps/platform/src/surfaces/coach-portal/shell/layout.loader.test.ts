@@ -2,14 +2,12 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type CheckInsFeature,
   checkInsContext,
-} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
-import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
-import {
+  type CheckInsFeature,
   notificationsContext,
   type NotificationsFeature,
-} from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
+} from "~/bounded-contexts/clients/public/request-context";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 import {
   contextEntry,
   createRequestArgs,

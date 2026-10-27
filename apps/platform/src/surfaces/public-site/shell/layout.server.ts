@@ -10,7 +10,7 @@ import {
   presentWaitlist,
   type WaitlistPresentation,
 } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/public/request-context";
 
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 

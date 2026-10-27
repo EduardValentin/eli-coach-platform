@@ -5,14 +5,14 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/public/request-context";
 import {
   classifyCalls,
   countCallsLeftToday,
 } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-call-listing";
 import { UpcomingCallsWidget } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/dashboard/upcoming-calls-widget";
 import { useCoachClock } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/use-coach-clock";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/public/request-context";
 import { PendingCheckInsWidget } from "~/bounded-contexts/clients/check-ins/ui/coach/dashboard/pending-check-ins-widget";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/bounded-contexts/scheduling/assessment-calls/ui/coach/assessment-calls-error-boundary";

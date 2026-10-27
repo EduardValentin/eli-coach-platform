@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type AssessmentCallsFeature,
   assessmentCallsContext,
-} from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+  type AssessmentCallsFeature,
+} from "~/bounded-contexts/scheduling/public/request-context";
 import {
-  type CheckInsFeature,
   checkInsContext,
-} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+  type CheckInsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
 import {
   contextEntry,
   createRequestArgs,

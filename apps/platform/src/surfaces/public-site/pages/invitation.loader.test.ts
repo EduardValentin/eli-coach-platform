@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  type AccountsFeature,
   accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+  type AccountsFeature,
+} from "~/bounded-contexts/access/public/request-context";
 import {
   sessionContext,
   type ResolvedSession,

@@ -8,13 +8,13 @@ import {
   type ResolvedSession,
 } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
-  type ClientsFeature,
   clientsContext,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+  type ClientsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
 import {
   waitlistContext,
   type WaitlistFeature,
-} from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+} from "~/bounded-contexts/sales/public/request-context";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 import {

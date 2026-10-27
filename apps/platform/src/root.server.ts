@@ -9,7 +9,7 @@ import { createFeatureContextMiddleware } from "~/composition-root/feature-conte
 const featureFlagOverrideMiddleware: MiddlewareFunction<Response> = (
   args,
   next,
-) => getPlatformContainer().featureFlags.middleware(args, next);
+) => getPlatformContainer().operations.overrideMiddleware(args, next);
 
 export const middleware = [
   refuseCrossSiteMutations,

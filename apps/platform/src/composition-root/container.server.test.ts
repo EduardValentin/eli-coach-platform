@@ -117,7 +117,8 @@ describe("platform container", () => {
     });
 
     // act
-    const waitlist = await container.waitlist.feature.waitlist.getWaitlist();
+    const waitlist =
+      await container.sales.components.waitlist.waitlist.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({
@@ -135,7 +136,7 @@ describe("platform container", () => {
 
     // act
     const confirmation =
-      container.coachingSales.feature.checkouts.loadConfirmation(
+      container.sales.components.coachingSales.checkouts.loadConfirmation(
         createRequestArgs({
           request: new Request(
             "https://eli.example/checkout/complete?session=cs_test_1",

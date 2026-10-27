@@ -6,7 +6,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+import { accountsContext } from "~/bounded-contexts/access/public/request-context";
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
 import { INVITATION_PATH } from "~/bounded-contexts/clients/clients/public/paths";

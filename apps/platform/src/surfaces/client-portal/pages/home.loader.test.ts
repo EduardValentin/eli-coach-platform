@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type ClientOnboardingFeature,
   clientOnboardingContext,
-  type ClientProfileFeature,
+  type ClientOnboardingFeature,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+  type ClientProfileFeature,
+} from "~/bounded-contexts/clients/public/request-context";
 import {
-  type CoachingSalesFeature,
   coachingSalesContext,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+  type CoachingSalesFeature,
+} from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
   createRequestArgs,

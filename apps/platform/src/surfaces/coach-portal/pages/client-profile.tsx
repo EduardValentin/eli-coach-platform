@@ -6,10 +6,12 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+import {
+  clientProfileContext,
+  clientsContext,
+} from "~/bounded-contexts/clients/public/request-context";
 import { CoachClientProfile } from "~/bounded-contexts/clients/client-profile/ui/coach/profile/coach-client-profile";
 import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
-import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;

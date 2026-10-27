@@ -2,28 +2,24 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CoachClientSeriesPanel } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import {
-  type CheckInsFeature,
   checkInsContext,
-} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
-import type { OnboardingReviewView } from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
-import {
-  type ClientOnboardingFeature,
+  type CheckInsFeature,
   clientOnboardingContext,
-  type ClientProfileFeature,
+  type ClientOnboardingFeature,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+  type ClientProfileFeature,
+  clientsContext,
+  type ClientsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
+import type { OnboardingReviewView } from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import type { MeasurementRow } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
-import {
-  type ClientsFeature,
-  clientsContext,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import {
-  type CoachingSalesFeature,
   coachingSalesContext,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+  type CoachingSalesFeature,
+} from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
   createRequestArgs,

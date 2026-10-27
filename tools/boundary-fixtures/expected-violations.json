@@ -2,6 +2,9 @@
   "apps/platform/src/bounded-contexts/access/accounts/public/reaches-later-bounded-context-public.ts": [
     "feature-order-accounts"
   ],
+  "apps/platform/src/bounded-contexts/access/composition.server.ts": [
+    "bounded-context-root-own-components"
+  ],
   "apps/platform/src/bounded-contexts/clients/client-resources/adapters/outbound/persistence/schema.server.ts": [
     "feature-schema-imports-schemas-only"
   ],
@@ -25,6 +28,10 @@
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/inbound/http/reads-store-key.server.ts": [
     "feature-internals"
   ],
+  "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/imports-sibling-composition.server.ts": [
+    "composition-only-from-above",
+    "feature-internals"
+  ],
   "apps/platform/src/bounded-contexts/sales/coaching-sales/adapters/outbound/persistence/schema.server.ts": [
     "feature-schema-foreign-key"
   ],
@@ -33,6 +40,8 @@
     "clerk-confined",
     "not-to-unresolvable"
   ],
+  "apps/platform/src/bounded-contexts/sales/composition.server.ts": [],
+  "apps/platform/src/bounded-contexts/sales/public/request-context.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/adapters/inbound/http/catalog/deeper/not-a-route.ts": [
     "inbound-never-imports-outbound"
   ],
@@ -94,7 +103,12 @@
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/email/design-system-browser-only.server.tsx": [
     "design-system-browser-only"
   ],
+  "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/imports-bounded-context-composition.server.ts": [
+    "composition-only-from-above-bounded-context",
+    "feature-order-store"
+  ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/imports-composition.server.ts": [
+    "composition-only-from-above",
     "feature-server-private"
   ],
   "apps/platform/src/bounded-contexts/sales/store/adapters/outbound/persistence/reaches-later-schema.server.ts": [
@@ -122,6 +136,7 @@
   ],
   "apps/platform/src/bounded-contexts/sales/store/public/reaches-bounded-context-public.ts": [],
   "apps/platform/src/bounded-contexts/sales/store/routes.ts": [
+    "composition-only-from-above",
     "feature-server-private"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half-server-loader.server.ts": [
@@ -135,11 +150,13 @@
     "route-thinness"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/composition-root.tsx": [
+    "composition-only-from-above-container",
     "features-never-reach-server"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/design-system-in-browser-ui.tsx": [],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/loader.server.ts": [
     "browser-half",
+    "composition-only-from-above",
     "feature-server-private"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/reads-request-key.server.ts": [],
@@ -160,12 +177,19 @@
     "config-runtime-readers",
     "route-thinness"
   ],
+  "apps/platform/src/composition-root/container.server.ts": [],
   "apps/platform/src/composition-root/imports-test-support.ts": [
     "no-production-import-of-tests"
   ],
-  "apps/platform/src/root-error-page.tsx": ["composition-root"],
+  "apps/platform/src/root-error-page.tsx": [
+    "composition-only-from-above-container",
+    "composition-root"
+  ],
   "apps/platform/src/root.server.ts": ["server-guards-consumers"],
-  "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/routes.ts": [
+    "composition-only-from-above-container",
+    "root-registry-to-server"
+  ],
   "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
     "ui-subpaths"
   ],
@@ -212,7 +236,11 @@
     "route-thinness",
     "surface-coach-portal-to-feature"
   ],
-  "apps/platform/src/surfaces/public-site/pages/reads-request-key.tsx": [],
+  "apps/platform/src/surfaces/public-site/pages/reads-bounded-context-request-context.tsx": [],
+  "apps/platform/src/surfaces/public-site/pages/reads-request-key.tsx": [
+    "component-key-consumers",
+    "surface-public-site-to-feature"
+  ],
   "apps/platform/src/surfaces/public-site/pages/server-guards-consumers.tsx": [
     "server-guards-consumers"
   ],

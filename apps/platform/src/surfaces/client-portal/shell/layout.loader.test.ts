@@ -8,28 +8,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import {
-  type CheckInsFeature,
   checkInsContext,
-} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
-import {
-  type ClientProfileFeature,
+  type CheckInsFeature,
+  clientJourneyContext,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
-import {
-  type ClientResourcesFeature,
+  type ClientProfileFeature,
   clientResourcesContext,
-} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
-import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
-import { clientJourneyContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-journey-context.server";
-import {
-  type ClientsFeature,
+  type ClientResourcesFeature,
   clientsContext,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
-import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
-import {
+  type ClientsFeature,
   notificationsContext,
   type NotificationsFeature,
-} from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
+} from "~/bounded-contexts/clients/public/request-context";
+import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
+import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
 import {
   contextEntry,
   createRequestArgs,

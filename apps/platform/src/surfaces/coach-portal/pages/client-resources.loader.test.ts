@@ -5,14 +5,12 @@ import type {
   CoachResourceListing,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
 import {
-  type ClientResourcesFeature,
   clientResourcesContext,
-} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
-import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
-import {
-  type ClientsFeature,
+  type ClientResourcesFeature,
   clientsContext,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+  type ClientsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
+import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
 import {
   contextEntry,
   createRequestArgs,

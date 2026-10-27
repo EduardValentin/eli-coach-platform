@@ -8,17 +8,17 @@ import {
 } from "~/composition-root/test-support/request-args";
 
 import {
-  type AccountsFeature,
   accountsContext,
-} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+  type AccountsFeature,
+} from "~/bounded-contexts/access/public/request-context";
 import {
   sessionContext,
   type ResolvedSession,
 } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
 import {
-  type ClientsFeature,
   clientsContext,
-} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+  type ClientsFeature,
+} from "~/bounded-contexts/clients/public/request-context";
 
 import { middleware } from "./access-layout.server";
 

@@ -1,76 +1,81 @@
+import { loadRuntimeEnvironment } from "~/composition-root/runtime-environment";
+import { CLERK_TEST_ENVIRONMENT } from "~test-support/index";
+import { mkdtempSync } from "node:fs";
+import { rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { RouterContextProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 
-import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import { accountsContext } from "~/bounded-contexts/access/public/request-context";
 import {
+  checkInsContext,
   clientOnboardingContext,
   clientProfileContext,
-} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
-import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
-import { featureFlagsContext } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
-import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
-import { notificationsContext } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
-import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
-import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
-import type { PlatformContainer } from "~/composition-root/container.server";
+  clientResourcesContext,
+  clientsContext,
+  notificationsContext,
+} from "~/bounded-contexts/clients/public/request-context";
+import { featureFlagsContext } from "~/bounded-contexts/operations/public/request-context";
+import {
+  exerciseLibraryContext,
+  nutritionLibraryContext,
+} from "~/bounded-contexts/programs/public/request-context";
+import {
+  coachingSalesContext,
+  storeContext,
+  waitlistContext,
+} from "~/bounded-contexts/sales/public/request-context";
+import {
+  assessmentCallsContext,
+  coachScheduleContext,
+} from "~/bounded-contexts/scheduling/public/request-context";
+import { createPlatformContainer } from "~/composition-root/container.server";
 import { createFeatureContextMiddleware } from "~/composition-root/feature-contexts.server";
 import { platformContext } from "~/composition-root/guards/platform-context.server";
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 
+const storeAssetRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-store-assets-feature-contexts-unit-"),
+);
+const clientResourceRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-client-resources-feature-contexts-unit-"),
+);
+const exerciseVideoRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-exercise-videos-feature-contexts-unit-"),
+);
+const recipePhotoRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-recipe-photos-feature-contexts-unit-"),
+);
+
+function createContainerWithoutDatabase() {
+  return createPlatformContainer({
+    runtimeEnvironment: loadRuntimeEnvironment({
+      APP_NAME: "eli-coach-platform",
+      ...CLERK_TEST_ENVIRONMENT,
+      ENVIRONMENT: "local",
+      MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
+      NODE_ENV: "development",
+      PUBLIC_APP_URL: "https://eli.example",
+      STORE_ASSET_ROOT: storeAssetRoot,
+      CLIENT_RESOURCE_ROOT: clientResourceRoot,
+      EXERCISE_VIDEO_ROOT: exerciseVideoRoot,
+      RECIPE_PHOTO_ROOT: recipePhotoRoot,
+    }),
+  });
+}
+
 describe("createFeatureContextMiddleware", () => {
+  afterAll(async () => {
+    await rm(storeAssetRoot, { force: true, recursive: true });
+    await rm(clientResourceRoot, { force: true, recursive: true });
+    await rm(exerciseVideoRoot, { force: true, recursive: true });
+    await rm(recipePhotoRoot, { force: true, recursive: true });
+  });
+
   it("publishes every feature slice of the container on the request context and continues", async () => {
     // arrange
-    const container = {
-      accounts: { kind: "accounts" },
-      assessmentCalls: {
-        feature: { kind: "assessment-calls" },
-        handles: { kind: "assessment-calls-handles" },
-      },
-      checkIns: { kind: "check-ins" },
-      clientOnboarding: { kind: "client-onboarding" },
-      clientProfile: {
-        feature: { kind: "client-profile" },
-        handles: { kind: "client-profile-handles" },
-      },
-      clientResources: { kind: "client-resources" },
-      clients: {
-        feature: { kind: "clients" },
-        handles: { kind: "clients-handles" },
-      },
-      coachSchedule: {
-        feature: { kind: "coach-schedule" },
-        handles: { kind: "coach-schedule-handles" },
-      },
-      coachingSales: {
-        feature: { kind: "coaching-sales" },
-        handles: { kind: "coaching-sales-handles" },
-      },
-      notifications: { kind: "notifications" },
-      exerciseLibrary: { kind: "exercise-library" },
-      featureFlags: {
-        feature: { kind: "feature-flags" },
-        middleware: { kind: "feature-flags-middleware" },
-        reader: { kind: "feature-flags-reader" },
-      },
-      nutritionLibrary: { kind: "nutrition-library" },
-      platform: {
-        appBasePath: "/",
-        botDetection: { provider: "static", token: "t" },
-        metadata: { kind: "meta" },
-        readyz: { kind: "readyz" },
-      },
-      store: { kind: "store" },
-      waitlist: {
-        feature: { kind: "waitlist" },
-        handles: { kind: "waitlist-handles" },
-      },
-    } as unknown as PlatformContainer;
+    const container = createContainerWithoutDatabase();
     const getContainer = vi.fn(() => container);
     const context = new RouterContextProvider();
     const next = vi.fn().mockResolvedValue(new Response("ok"));
@@ -87,32 +92,48 @@ describe("createFeatureContextMiddleware", () => {
 
     // assert
     expect(getContainer).toHaveBeenCalledTimes(1);
-    expect(context.get(accountsContext)).toBe(container.accounts);
-    expect(context.get(assessmentCallsContext)).toBe(
-      container.assessmentCalls.feature,
+    expect(context.get(featureFlagsContext)).toBe(
+      container.operations.components.featureFlags,
     );
-    expect(context.get(checkInsContext)).toBe(container.checkIns);
-    expect(context.get(clientOnboardingContext)).toBe(
-      container.clientOnboarding,
+    expect(context.get(accountsContext)).toBe(
+      container.access.components.accounts,
+    );
+    expect(context.get(coachScheduleContext)).toBe(
+      container.scheduling.components.coachSchedule,
+    );
+    expect(context.get(assessmentCallsContext)).toBe(
+      container.scheduling.components.assessmentCalls,
+    );
+    expect(context.get(clientsContext)).toBe(
+      container.clients.components.clients,
     );
     expect(context.get(clientProfileContext)).toBe(
-      container.clientProfile.feature,
+      container.clients.components.clientProfile,
     );
-    expect(context.get(clientResourcesContext)).toBe(container.clientResources);
-    expect(context.get(clientsContext)).toBe(container.clients.feature);
-    expect(context.get(coachScheduleContext)).toBe(
-      container.coachSchedule.feature,
+    expect(context.get(clientOnboardingContext)).toBe(
+      container.clients.components.clientOnboarding,
+    );
+    expect(context.get(clientResourcesContext)).toBe(
+      container.clients.components.clientResources,
+    );
+    expect(context.get(notificationsContext)).toBe(
+      container.clients.components.notifications,
+    );
+    expect(context.get(checkInsContext)).toBe(
+      container.clients.components.checkIns,
+    );
+    expect(context.get(exerciseLibraryContext)).toBe(
+      container.programs.components.exerciseLibrary,
+    );
+    expect(context.get(nutritionLibraryContext)).toBe(
+      container.programs.components.nutritionLibrary,
+    );
+    expect(context.get(storeContext)).toBe(container.sales.components.store);
+    expect(context.get(waitlistContext)).toBe(
+      container.sales.components.waitlist,
     );
     expect(context.get(coachingSalesContext)).toBe(
-      container.coachingSales.feature,
-    );
-    expect(context.get(notificationsContext)).toBe(container.notifications);
-    expect(context.get(exerciseLibraryContext)).toBe(container.exerciseLibrary);
-    expect(context.get(nutritionLibraryContext)).toBe(
-      container.nutritionLibrary,
-    );
-    expect(context.get(featureFlagsContext)).toBe(
-      container.featureFlags.feature,
+      container.sales.components.coachingSales,
     );
     expect(context.get(platformContext)).toEqual({
       metadata: container.platform.metadata,
@@ -122,8 +143,7 @@ describe("createFeatureContextMiddleware", () => {
       appBasePath: container.platform.appBasePath,
       botDetection: container.platform.botDetection,
     });
-    expect(context.get(storeContext)).toBe(container.store);
-    expect(context.get(waitlistContext)).toBe(container.waitlist.feature);
+    expect(next).toHaveBeenCalledTimes(1);
     expect(response).toBeInstanceOf(Response);
   });
 });

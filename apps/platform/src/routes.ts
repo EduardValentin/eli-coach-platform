@@ -1,22 +1,11 @@
 import type { RouteConfig } from "@react-router/dev/routes";
 
-import { featureFlagsApiRoutes } from "./bounded-contexts/operations/feature-flags/routes";
-import { accountsApiRoutes } from "./bounded-contexts/access/accounts/routes";
-import { assessmentCallsApiRoutes } from "./bounded-contexts/scheduling/assessment-calls/routes";
-import { checkInsApiRoutes } from "./bounded-contexts/clients/check-ins/routes";
-import {
-  clientOnboardingApiRoutes,
-  clientProfileApiRoutes,
-} from "./bounded-contexts/clients/client-profile/routes";
-import { clientResourcesApiRoutes } from "./bounded-contexts/clients/client-resources/routes";
-import { clientsApiRoutes } from "./bounded-contexts/clients/clients/routes";
-import { coachScheduleApiRoutes } from "./bounded-contexts/scheduling/coach-schedule/routes";
-import { coachingSalesApiRoutes } from "./bounded-contexts/sales/coaching-sales/routes";
-import { exerciseLibraryApiRoutes } from "./bounded-contexts/programs/exercise-library/routes";
-import { notificationsApiRoutes } from "./bounded-contexts/clients/notifications/routes";
-import { nutritionLibraryApiRoutes } from "./bounded-contexts/programs/nutrition-library/routes";
-import { storeApiRoutes } from "./bounded-contexts/sales/store/routes";
-import { waitlistApiRoutes } from "./bounded-contexts/sales/waitlist/routes";
+import { accessRoutes } from "./bounded-contexts/access/routes";
+import { clientsRoutes } from "./bounded-contexts/clients/routes";
+import { operationsRoutes } from "./bounded-contexts/operations/routes";
+import { programsRoutes } from "./bounded-contexts/programs/routes";
+import { salesRoutes } from "./bounded-contexts/sales/routes";
+import { schedulingRoutes } from "./bounded-contexts/scheduling/routes";
 import { platformApiRoutes } from "./composition-root/api/routes";
 import { clientPortalRoutes } from "./surfaces/client-portal/routes";
 import { coachPortalRoutes } from "./surfaces/coach-portal/routes";
@@ -25,21 +14,12 @@ import { publicSiteRoutes } from "./surfaces/public-site/routes";
 export default [
   ...publicSiteRoutes,
   ...platformApiRoutes,
-  ...featureFlagsApiRoutes,
-  ...accountsApiRoutes,
-  ...exerciseLibraryApiRoutes,
-  ...nutritionLibraryApiRoutes,
-  ...coachScheduleApiRoutes,
-  ...assessmentCallsApiRoutes,
-  ...clientsApiRoutes,
-  ...notificationsApiRoutes,
-  ...coachingSalesApiRoutes,
-  ...clientOnboardingApiRoutes,
-  ...clientProfileApiRoutes,
-  ...clientResourcesApiRoutes,
-  ...checkInsApiRoutes,
-  ...waitlistApiRoutes,
-  ...storeApiRoutes,
+  ...operationsRoutes.api,
+  ...accessRoutes.api,
+  ...programsRoutes.api,
+  ...schedulingRoutes.api,
+  ...clientsRoutes.api,
+  ...salesRoutes.api,
   ...clientPortalRoutes,
   ...coachPortalRoutes,
 ] satisfies RouteConfig;

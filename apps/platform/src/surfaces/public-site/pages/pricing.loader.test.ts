@@ -1,13 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  type CoachingSalesFeature,
   coachingSalesContext,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
-import {
-  type WaitlistFeature,
+  type CoachingSalesFeature,
   waitlistContext,
-} from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+  type WaitlistFeature,
+} from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
   createRequestArgs,

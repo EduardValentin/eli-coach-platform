@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CoachAssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
 import {
-  type AssessmentCallsFeature,
   assessmentCallsContext,
-} from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+  type AssessmentCallsFeature,
+} from "~/bounded-contexts/scheduling/public/request-context";
 import {
-  type CoachingSalesFeature,
   coachingSalesContext,
-} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+  type CoachingSalesFeature,
+} from "~/bounded-contexts/sales/public/request-context";
 import {
   contextEntry,
   createRequestArgs,
