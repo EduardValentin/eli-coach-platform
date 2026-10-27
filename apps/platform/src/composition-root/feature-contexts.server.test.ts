@@ -1,20 +1,23 @@
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
-import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
-import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/server/guards/coach-schedule-context.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
-import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
-import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
-import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/server/guards/nutrition-library-context.server";
-import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import {
+  clientOnboardingContext,
+  clientProfileContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import { featureFlagsContext } from "~/bounded-contexts/operations/feature-flags/adapters/inbound/http/context.server";
+import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
+import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
+import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import type { PlatformContainer } from "~/composition-root/container.server";
 import { createFeatureContextMiddleware } from "~/composition-root/feature-contexts.server";
 import { platformContext } from "~/composition-root/guards/platform-context.server";
@@ -50,11 +53,15 @@ describe("createFeatureContextMiddleware", () => {
       },
       notifications: { kind: "notifications" },
       exerciseLibrary: { kind: "exercise-library" },
+      featureFlags: {
+        feature: { kind: "feature-flags" },
+        middleware: { kind: "feature-flags-middleware" },
+        reader: { kind: "feature-flags-reader" },
+      },
       nutritionLibrary: { kind: "nutrition-library" },
       platform: {
         appBasePath: "/",
         botDetection: { provider: "static", token: "t" },
-        featureFlags: { kind: "flags" },
         metadata: { kind: "meta" },
         readyz: { kind: "readyz" },
       },
@@ -104,8 +111,10 @@ describe("createFeatureContextMiddleware", () => {
     expect(context.get(nutritionLibraryContext)).toBe(
       container.nutritionLibrary,
     );
+    expect(context.get(featureFlagsContext)).toBe(
+      container.featureFlags.feature,
+    );
     expect(context.get(platformContext)).toEqual({
-      featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
       readyz: container.platform.readyz,
     });

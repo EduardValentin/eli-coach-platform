@@ -7,19 +7,14 @@ import {
   createRequestArgs,
 } from "~/composition-root/test-support/request-args";
 
-import * as featureFlagsRoute from "./feature-flags/feature-flags";
 import * as metadataRoute from "./meta/meta";
 import * as readyzRoute from "./readyz/readyz";
 
-function platformArgs(
-  controllers: Partial<PlatformControllers>,
-  request?: Request,
-) {
+function platformArgs(controllers: Partial<PlatformControllers>) {
   return createRequestArgs({
     contexts: [
       contextEntry(platformContext, controllers as PlatformControllers),
     ],
-    request,
   });
 }
 
@@ -56,37 +51,5 @@ describe("internal routes", () => {
     // assert
     await expect(loaded).resolves.toBe(response);
     expect(getStatus).toHaveBeenCalledTimes(1);
-  });
-
-  it("answers feature flags from the platform context", async () => {
-    // arrange
-    const response = Response.json({ values: { CLIENT_PORTAL: true } });
-    const getSnapshot = vi.fn().mockResolvedValue(response);
-
-    // act
-    const loaded = featureFlagsRoute.loader(
-      platformArgs({ featureFlags: { getSnapshot } as never }),
-    );
-
-    // assert
-    await expect(loaded).resolves.toBe(response);
-    expect(getSnapshot).toHaveBeenCalledTimes(1);
-  });
-
-  it("rejects a feature flag write without reading the platform context", async () => {
-    // arrange
-    const getSnapshot = vi.fn();
-    const args = platformArgs(
-      { featureFlags: { getSnapshot } as never },
-      new Request("https://eli.example/api/feature-flags", { method: "POST" }),
-    );
-
-    // act
-    const response = await featureFlagsRoute.action(args);
-
-    // assert
-    expect(response.status).toBe(405);
-    expect(response.headers.get("Allow")).toBe("GET");
-    expect(getSnapshot).not.toHaveBeenCalled();
   });
 });

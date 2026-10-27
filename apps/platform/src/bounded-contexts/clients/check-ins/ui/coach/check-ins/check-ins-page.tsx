@@ -14,7 +14,7 @@ import type {
   CoachCheckIns,
 } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { coachCheckInJoinPath } from "~/bounded-contexts/clients/check-ins/public/paths";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import {
   CheckInListing,
   type CheckInEmptyCopy,

@@ -1,3 +1,3 @@
-import { target } from "./server/store-composition.server";
+import { target } from "./composition.server";
 
 export const probe = target;

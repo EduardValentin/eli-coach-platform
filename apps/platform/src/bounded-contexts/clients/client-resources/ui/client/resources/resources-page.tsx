@@ -6,7 +6,7 @@ import {
 } from "react-router";
 
 import type { ClientResourceListing } from "~/bounded-contexts/clients/client-resources/public/client-resources";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 
 import { ClientResourceLibrary } from "./client-resource-library";
 

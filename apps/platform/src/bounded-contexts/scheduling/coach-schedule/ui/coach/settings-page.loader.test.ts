@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CoachScheduleFeature } from "~/bounded-contexts/scheduling/coach-schedule/server/coach-schedule-composition.server";
-import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/server/guards/coach-schedule-context.server";
+import {
+  type CoachScheduleFeature,
+  coachScheduleContext,
+} from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

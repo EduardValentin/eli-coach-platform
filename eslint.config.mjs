@@ -79,11 +79,12 @@ export default [
     },
   },
   // The shared upload transport is the one XMLHttpRequest sender, so the
-  // global is refused in every feature's ui/ and api/ and every surface.
+  // global is refused in every component's ui/ and adapters/inbound/http/
+  // and every surface.
   {
     files: [
       "apps/platform/src/bounded-contexts/*/*/ui/**/*.{ts,tsx}",
-      "apps/platform/src/bounded-contexts/*/*/api/**/*.{ts,tsx}",
+      "apps/platform/src/bounded-contexts/*/*/adapters/inbound/http/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.{ts,tsx}",
     ],
     ignores: ["**/*.test.{ts,tsx}"],

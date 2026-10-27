@@ -8,7 +8,7 @@ import {
 } from "react-router";
 
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
-import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
+import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import { storeProductSchema } from "~/bounded-contexts/sales/store/public/store";
 
 import { useStoreCart } from "../cart/cart-provider";

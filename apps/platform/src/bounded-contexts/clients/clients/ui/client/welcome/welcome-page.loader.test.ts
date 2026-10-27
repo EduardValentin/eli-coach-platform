@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import {
+  type ClientsFeature,
+  clientsContext,
+} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

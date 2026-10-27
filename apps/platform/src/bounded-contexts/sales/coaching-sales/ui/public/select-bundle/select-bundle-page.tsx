@@ -18,7 +18,7 @@ import {
   type CheckoutChoice,
 } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import { BundleSelector } from "~/bounded-contexts/sales/coaching-sales/ui/public/bundle-selector/bundle-selector";
 import { CallFirstBanner } from "~/bounded-contexts/sales/coaching-sales/ui/public/call-first-banner";
 

@@ -1,5 +1,6 @@
 import type { RouteConfig } from "@react-router/dev/routes";
 
+import { featureFlagsApiRoutes } from "./bounded-contexts/operations/feature-flags/routes";
 import { accountsApiRoutes } from "./bounded-contexts/access/accounts/routes";
 import { assessmentCallsApiRoutes } from "./bounded-contexts/scheduling/assessment-calls/routes";
 import { checkInsApiRoutes } from "./bounded-contexts/clients/check-ins/routes";
@@ -24,6 +25,7 @@ import { publicSiteRoutes } from "./surfaces/public-site/routes";
 export default [
   ...publicSiteRoutes,
   ...platformApiRoutes,
+  ...featureFlagsApiRoutes,
   ...accountsApiRoutes,
   ...exerciseLibraryApiRoutes,
   ...nutritionLibraryApiRoutes,

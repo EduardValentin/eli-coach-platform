@@ -1,9 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
-import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import {
+  type CoachingSalesFeature,
+  coachingSalesContext,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import {
+  type WaitlistFeature,
+  waitlistContext,
+} from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

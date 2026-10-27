@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
-import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
+import {
+  type AccountsFeature,
+  accountsContext,
+} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import {
   sessionContext,
   type ResolvedSession,

@@ -6,7 +6,7 @@ import {
 } from "react-router";
 
 import type { CoachScheduleSettings } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
-import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/server/guards/coach-schedule-context.server";
+import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/context.server";
 
 import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section";
 

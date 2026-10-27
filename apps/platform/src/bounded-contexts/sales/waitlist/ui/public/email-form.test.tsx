@@ -29,7 +29,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
-import { clientAction as joinWaitlist } from "~/bounded-contexts/sales/waitlist/api/waitlist";
+import { clientAction as joinWaitlist } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/waitlist";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 

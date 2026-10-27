@@ -28,7 +28,7 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as cancelCheckIn } from "~/bounded-contexts/clients/check-ins/api/shared/cancellation";
+import { clientAction as cancelCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/cancellation";
 import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public/paths";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 

@@ -32,7 +32,7 @@ import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
 } from "~/bounded-contexts/clients/clients/public/paths";
-import { clientAction as startProgram } from "~/bounded-contexts/sales/coaching-sales/api/client/program-start";
+import { clientAction as startProgram } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/program-start";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 import type { ProgramStatus } from "~/bounded-contexts/sales/coaching-sales/public/program-status";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";

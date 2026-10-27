@@ -25,8 +25,8 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as editFood } from "~/bounded-contexts/programs/nutrition-library/api/foods/food";
-import { clientAction as createFood } from "~/bounded-contexts/programs/nutrition-library/api/foods/foods";
+import { clientAction as editFood } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/foods/food";
+import { clientAction as createFood } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/foods/foods";
 import type {
   FoodView,
   NutritionTagView,

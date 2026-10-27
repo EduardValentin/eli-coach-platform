@@ -12,17 +12,20 @@ export const clientsClientRoutes = [
 ];
 
 export const clientsApiRoutes = [
-  route(CLIENTS_API_PATHS.invitation.slice(1), "./api/public/invitation.ts"),
+  route(
+    CLIENTS_API_PATHS.invitation.slice(1),
+    "./adapters/inbound/http/public/invitation.ts",
+  ),
   route(
     CLIENTS_API_PATHS.invitationResends.slice(1),
-    "./api/coach/invitation-resends.ts",
+    "./adapters/inbound/http/coach/invitation-resends.ts",
   ),
   route(
     CLIENTS_API_PATHS.ownIdentity.slice(1),
-    "./api/client/own-client-identity.ts",
+    "./adapters/inbound/http/client/own-client-identity.ts",
   ),
   route(
     `${CLIENTS_API_PATHS.clients.slice(1)}/:clientId/identity`,
-    "./api/coach/coach-client-identity.ts",
+    "./adapters/inbound/http/coach/coach-client-identity.ts",
   ),
 ];

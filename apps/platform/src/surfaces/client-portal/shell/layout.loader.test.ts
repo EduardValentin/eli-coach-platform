@@ -7,19 +7,29 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
-import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
-import type { ClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
-import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/server/client-resources-composition.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
-import { ClientJourneyController } from "~/bounded-contexts/clients/clients/api/client/client-journey-controller.server";
-import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
-import { clientJourneyContext } from "~/bounded-contexts/clients/clients/server/guards/client-journey-context.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import {
+  type CheckInsFeature,
+  checkInsContext,
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import {
+  type ClientProfileFeature,
+  clientProfileContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+import {
+  type ClientResourcesFeature,
+  clientResourcesContext,
+} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+import { ClientJourneyController } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/client-journey-controller.server";
+import { clientJourneyContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client-journey-context.server";
+import {
+  type ClientsFeature,
+  clientsContext,
+} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
-import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
-import type { NotificationsFeature } from "~/bounded-contexts/clients/notifications/server/notifications-composition.server";
+import {
+  notificationsContext,
+  type NotificationsFeature,
+} from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

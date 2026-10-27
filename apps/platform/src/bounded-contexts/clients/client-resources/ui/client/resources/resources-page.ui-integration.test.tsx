@@ -25,7 +25,7 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as markOpened } from "~/bounded-contexts/clients/client-resources/api/resources/resource-opened";
+import { clientAction as markOpened } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/resource-opened";
 import type {
   ClientResourceListing,
   ClientResourceView,

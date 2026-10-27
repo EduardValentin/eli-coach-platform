@@ -13,7 +13,7 @@ import {
 } from "react-router";
 
 import { NEW_EXERCISE_PATH } from "~/bounded-contexts/programs/exercise-library/public/paths";
-import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
+import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 
 import { ExerciseListing } from "./exercise-listing";
 import { EXERCISE_LISTING_PARAMS } from "./exercise-listing-params";

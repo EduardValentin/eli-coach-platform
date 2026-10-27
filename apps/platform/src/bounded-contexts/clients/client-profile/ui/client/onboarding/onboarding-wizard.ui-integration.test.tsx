@@ -32,7 +32,7 @@ import { configureAxe } from "vitest-axe";
 import { requiredName } from "~test-support/index";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
-import { clientAction } from "~/bounded-contexts/clients/client-profile/api/onboarding/client-submission";
+import { clientAction } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/client-submission";
 import type {
   OnboardingConsentInstants,
   OnboardingWizardPage,

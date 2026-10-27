@@ -1,0 +1,75 @@
+import { clerkClient, getAuth } from "@clerk/react-router/server";
+import { buildRedirectPath } from "~/shared/http/base-path";
+import type { ProvisionAccountResult } from "~/bounded-contexts/access/accounts/domain/account";
+import { redirect, type MiddlewareFunction } from "react-router";
+
+import { SIGN_IN_FAILED_PATH } from "~/bounded-contexts/access/accounts/public/paths";
+
+import { accountsContext } from "./context.server";
+import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+
+type RefusalReason =
+  Exclude<ProvisionAccountResult["outcome"], "active"> | "provisioning-error";
+
+function targetsSignInFailedPage(url: URL, appBasePath: string): boolean {
+  return url.pathname === buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH);
+}
+
+export function createAccountResolutionMiddleware(): MiddlewareFunction<Response> {
+  return async function resolveAccount(args, next) {
+    const { context, url } = args;
+    const accounts = context.get(accountsContext);
+
+    if (targetsSignInFailedPage(url, accounts.portal.appBasePath)) {
+      context.set(sessionContext, { kind: "anonymous" });
+      return next();
+    }
+
+    const auth = await getAuth(args);
+
+    if (!auth.userId) {
+      context.set(sessionContext, { kind: "anonymous" });
+      return next();
+    }
+
+    let refusalReason: RefusalReason = "provisioning-error";
+
+    try {
+      const result = await accounts.provisioning.execute(auth.userId);
+
+      if (result.outcome === "active") {
+        context.set(sessionContext, {
+          account: result.account,
+          kind: "authenticated",
+        });
+        return next();
+      }
+
+      refusalReason = result.outcome;
+    } catch {
+      // Falls through to revoke + failure redirect below.
+    }
+
+    console.warn("Signed-in subject refused an account.", {
+      authSubjectId: auth.userId,
+      refusalReason,
+    });
+
+    if (auth.sessionId) {
+      try {
+        await clerkClient(args).sessions.revokeSession(auth.sessionId);
+      } catch {
+        // The session dies at token expiry regardless of whether the revoke
+        // call itself succeeds — don't mask the failure page behind it.
+      }
+    }
+
+    context.set(sessionContext, { kind: "anonymous" });
+    // React Router prefixes the router's basename onto a redirect thrown from
+    // a loader, but not onto one thrown from middleware — so under a base path
+    // a bare target would send the visitor outside the application entirely.
+    throw redirect(
+      buildRedirectPath(accounts.portal.appBasePath, SIGN_IN_FAILED_PATH),
+    );
+  };
+}

@@ -7,7 +7,7 @@ import {
 } from "react-router";
 
 import type { ClientEnded } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 
 import {
   COACHING_ENDED_LINE,

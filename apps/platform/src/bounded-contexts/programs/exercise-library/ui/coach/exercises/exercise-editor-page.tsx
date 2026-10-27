@@ -29,7 +29,7 @@ import {
   EXERCISE_LIBRARY_API_PATHS,
   exercisePath,
 } from "~/bounded-contexts/programs/exercise-library/public/paths";
-import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
+import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 
 import {
   ExerciseAboutSection,

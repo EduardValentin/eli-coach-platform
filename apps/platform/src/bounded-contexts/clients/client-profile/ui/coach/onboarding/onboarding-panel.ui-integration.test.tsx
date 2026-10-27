@@ -27,9 +27,9 @@ import type {
   SubmittedReview,
 } from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/bounded-contexts/clients/client-profile/public/paths";
-import { clientAction as approve } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-approvals";
-import { clientAction as requestDetails } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-detail-requests";
-import { clientAction as openReviewOnServer } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-review-openings";
+import { clientAction as approve } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/coach-approvals";
+import { clientAction as requestDetails } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/coach-detail-requests";
+import { clientAction as openReviewOnServer } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/coach-review-openings";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { OnboardingPanel } from "./onboarding-panel";

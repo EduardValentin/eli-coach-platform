@@ -1,24 +1,18 @@
 import type { AppConfig } from "~/composition-root/runtime-environment";
 import type { DatabaseConfig } from "~/shared/database/connection";
-import type { FeatureFlagReader } from "~/bounded-contexts/operations/feature-flags/domain/feature-flag";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 
 import { AppMetadataController } from "~/composition-root/api/meta/app-metadata-controller.server";
-import { FeatureFlagController } from "~/composition-root/api/feature-flags/feature-flags-controller.server";
 import { ReadyzController } from "~/composition-root/api/readyz/readyz-controller.server";
 
 export type PlatformFeature = {
   appBasePath: string;
   botDetection: BotDetectionConfig;
-  featureFlags: FeatureFlagController;
   metadata: AppMetadataController;
   readyz: ReadyzController;
 };
 
-export type PlatformControllers = Pick<
-  PlatformFeature,
-  "featureFlags" | "metadata" | "readyz"
->;
+export type PlatformControllers = Pick<PlatformFeature, "metadata" | "readyz">;
 
 export type RuntimeConfig = Pick<
   PlatformFeature,
@@ -28,7 +22,6 @@ export type RuntimeConfig = Pick<
 type PlatformFeatureHandles = {
   app: AppConfig & DatabaseConfig;
   botDetection: BotDetectionConfig;
-  featureFlags: FeatureFlagReader;
   version: string;
 };
 
@@ -38,7 +31,6 @@ export function composePlatformFeature(
   return {
     appBasePath: handles.app.APP_BASE_PATH,
     botDetection: handles.botDetection,
-    featureFlags: new FeatureFlagController(handles.featureFlags),
     metadata: new AppMetadataController({
       appName: handles.app.APP_NAME,
       environment: handles.app.ENVIRONMENT,

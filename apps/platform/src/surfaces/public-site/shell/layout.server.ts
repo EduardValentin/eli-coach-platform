@@ -4,13 +4,13 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
 import type { PublicSessionState } from "~/bounded-contexts/access/accounts/public/account";
 import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/server/guards/require-client-portal-standing.server";
+import { readClientPortalStanding } from "~/bounded-contexts/clients/clients/adapters/inbound/http/require-client-portal-standing.server";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 import {
   presentWaitlist,
   type WaitlistPresentation,
 } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 

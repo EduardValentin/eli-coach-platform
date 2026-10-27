@@ -14,9 +14,9 @@ import {
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/assessment-calls/public/paths";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import { BundleSelector } from "~/bounded-contexts/sales/coaching-sales/ui/public/bundle-selector/bundle-selector";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import { WaitlistAvailabilityStatus } from "~/bounded-contexts/sales/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/email-form";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";

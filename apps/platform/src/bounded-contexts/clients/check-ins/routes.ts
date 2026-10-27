@@ -25,25 +25,52 @@ export const checkInsCoachJoinRoutes = [
 ];
 
 export const checkInsApiRoutes = [
-  route(CHECK_INS_API_PATHS.requests.slice(1), "./api/client/requests.ts"),
-  route(CHECK_INS_API_PATHS.schedule.slice(1), "./api/coach/schedule.ts"),
-  route(CHECK_INS_API_PATHS.openTimes.slice(1), "./api/shared/open-times.ts"),
-  route(CHECK_INS_API_PATHS.withdrawal.slice(1), "./api/shared/withdrawal.ts"),
-  route(CHECK_INS_API_PATHS.approval.slice(1), "./api/shared/approval.ts"),
-  route(CHECK_INS_API_PATHS.decline.slice(1), "./api/shared/decline.ts"),
-  route(CHECK_INS_API_PATHS.newTime.slice(1), "./api/shared/new-time.ts"),
+  route(
+    CHECK_INS_API_PATHS.requests.slice(1),
+    "./adapters/inbound/http/client/requests.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.schedule.slice(1),
+    "./adapters/inbound/http/coach/schedule.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.openTimes.slice(1),
+    "./adapters/inbound/http/shared/open-times.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.withdrawal.slice(1),
+    "./adapters/inbound/http/shared/withdrawal.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.approval.slice(1),
+    "./adapters/inbound/http/shared/approval.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.decline.slice(1),
+    "./adapters/inbound/http/shared/decline.ts",
+  ),
+  route(
+    CHECK_INS_API_PATHS.newTime.slice(1),
+    "./adapters/inbound/http/shared/new-time.ts",
+  ),
   route(
     CHECK_INS_API_PATHS.cancellation.slice(1),
-    "./api/shared/cancellation.ts",
+    "./adapters/inbound/http/shared/cancellation.ts",
   ),
-  route(CHECK_INS_API_PATHS.series.slice(1), "./api/coach/series.ts"),
+  route(
+    CHECK_INS_API_PATHS.series.slice(1),
+    "./adapters/inbound/http/coach/series.ts",
+  ),
   route(
     CHECK_INS_API_PATHS.seriesPreview.slice(1),
-    "./api/coach/series-preview.ts",
+    "./adapters/inbound/http/coach/series-preview.ts",
   ),
   route(
     CHECK_INS_API_PATHS.seriesChange.slice(1),
-    "./api/coach/series-change.ts",
+    "./adapters/inbound/http/coach/series-change.ts",
   ),
-  route(CHECK_INS_API_PATHS.seriesStop.slice(1), "./api/coach/series-stop.ts"),
+  route(
+    CHECK_INS_API_PATHS.seriesStop.slice(1),
+    "./adapters/inbound/http/coach/series-stop.ts",
+  ),
 ];

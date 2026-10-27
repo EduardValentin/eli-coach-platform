@@ -2,7 +2,7 @@ import { DeadEndLink, DeadEndPage } from "~/shared/design-system/layout";
 import { VideoOff } from "lucide-react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import { COACH_SETTINGS_PATH } from "~/bounded-contexts/scheduling/coach-schedule/public/paths";
 
 export async function loader(args: LoaderFunctionArgs) {

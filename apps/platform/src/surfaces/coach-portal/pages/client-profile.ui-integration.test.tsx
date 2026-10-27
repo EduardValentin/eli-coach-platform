@@ -25,10 +25,10 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as saveCoachProfile } from "~/bounded-contexts/clients/client-profile/api/coach/coach-client-profile";
-import { clientAction as writeCoachAvatar } from "~/bounded-contexts/clients/client-profile/api/coach/coach-client-avatar";
+import { clientAction as saveCoachProfile } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/coach/coach-client-profile";
+import { clientAction as writeCoachAvatar } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/coach/coach-client-avatar";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
-import { clientAction as saveIdentity } from "~/bounded-contexts/clients/clients/api/coach/coach-client-identity";
+import { clientAction as saveIdentity } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/coach-client-identity";
 import {
   COACH_CLIENT_PROFILE_ROUTE_SEGMENT,
   coachClientPath,

@@ -28,11 +28,11 @@ import {
 import { configureAxe } from "vitest-axe";
 
 import type { VisitorGender } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
-import { clientAction as scheduleCheckIn } from "~/bounded-contexts/clients/check-ins/api/coach/schedule";
+import { clientAction as scheduleCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/schedule";
 import {
   clientLoader as openTimesLoader,
   shouldRevalidate as shouldRevalidateOpenTimes,
-} from "~/bounded-contexts/clients/check-ins/api/shared/open-times";
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/open-times";
 import type { CheckInScheduling } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public/paths";
 import {

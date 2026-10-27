@@ -34,9 +34,9 @@ import {
   vi,
 } from "vitest";
 
-import { clientLoader as bellLoader } from "~/bounded-contexts/clients/notifications/api/bell";
-import { clientAction as markAllRead } from "~/bounded-contexts/clients/notifications/api/read-all";
-import { clientAction as markRead } from "~/bounded-contexts/clients/notifications/api/read";
+import { clientLoader as bellLoader } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/bell";
+import { clientAction as markAllRead } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/read-all";
+import { clientAction as markRead } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/read";
 import type {
   NotificationBellReply,
   NotificationDescriber,

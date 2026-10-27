@@ -31,7 +31,7 @@ import { assessmentCallsShape } from "~/bounded-contexts/scheduling/assessment-c
 import {
   featureFlagsShape,
   refineFeatureFlagOverrides,
-} from "~/composition-root/feature-flag-overrides/feature-flags-config.server";
+} from "~/bounded-contexts/operations/feature-flags/config.server";
 import { databaseShape } from "~/shared/database/connection";
 import {
   productEmailShape,

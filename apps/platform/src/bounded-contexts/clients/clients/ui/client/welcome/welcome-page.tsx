@@ -10,7 +10,7 @@ import {
 } from "react-router";
 
 import type { WelcomePage } from "~/bounded-contexts/clients/clients/public/client-journey";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 
 import {
   WELCOME_CLOSING,

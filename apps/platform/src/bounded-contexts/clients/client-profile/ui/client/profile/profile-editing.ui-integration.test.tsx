@@ -20,15 +20,15 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as writeOwnAvatar } from "~/bounded-contexts/clients/client-profile/api/client/own-avatar";
-import { clientAction as saveOwnProfile } from "~/bounded-contexts/clients/client-profile/api/client/own-profile";
+import { clientAction as writeOwnAvatar } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-avatar";
+import { clientAction as saveOwnProfile } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/own-profile";
 import type { MeasurementsPage } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import {
   CLIENT_PROFILE_API_PATHS,
   CLIENT_PROFILE_PATH,
 } from "~/bounded-contexts/clients/client-profile/public/paths";
-import { clientAction as saveOwnIdentity } from "~/bounded-contexts/clients/clients/api/client/own-client-identity";
+import { clientAction as saveOwnIdentity } from "~/bounded-contexts/clients/clients/adapters/inbound/http/client/own-client-identity";
 import { CLIENTS_API_PATHS } from "~/bounded-contexts/clients/clients/public/paths";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 

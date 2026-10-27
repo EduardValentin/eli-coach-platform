@@ -1,21 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { CoachClientSeriesPanel } from "~/bounded-contexts/clients/check-ins/public/check-ins";
-import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import {
+  type CheckInsFeature,
+  checkInsContext,
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import type { OnboardingReviewView } from "~/bounded-contexts/clients/client-profile/public/onboarding-review";
-import type { ClientOnboardingFeature } from "~/bounded-contexts/clients/client-profile/server/client-onboarding-composition.server";
-import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import {
+  type ClientOnboardingFeature,
+  clientOnboardingContext,
+  type ClientProfileFeature,
+  clientProfileContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import type { ClientProfileView } from "~/bounded-contexts/clients/client-profile/public/client-profile";
 import type { MeasurementRow } from "~/bounded-contexts/clients/client-profile/public/measurements";
-import type { ClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
-import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import {
+  type ClientsFeature,
+  clientsContext,
+} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import type { ClientSubscription } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
-import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import {
+  type CoachingSalesFeature,
+  coachingSalesContext,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

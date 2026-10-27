@@ -6,10 +6,12 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import {
+  clientOnboardingContext,
+  clientProfileContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import { MeasurementsNudge } from "~/bounded-contexts/clients/client-profile/ui/client/nudge/measurements-nudge";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import { ProgramStatusCard } from "~/bounded-contexts/sales/coaching-sales/ui/client/status/program-status-card";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 import { clientPortalPageMeta } from "~/surfaces/client-portal/shell/client-portal-meta";

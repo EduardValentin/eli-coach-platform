@@ -28,30 +28,30 @@ export const coachingSalesClientRoutes = [
 export const coachingSalesApiRoutes = [
   route(
     COACHING_SALES_API_PATHS.paymentLinks.slice(1),
-    "./api/coach/payment-links.ts",
+    "./adapters/inbound/http/coach/payment-links.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.bundlePage.slice(1),
-    "./api/public/bundle-page.ts",
+    "./adapters/inbound/http/public/bundle-page.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.checkouts.slice(1),
-    "./api/public/checkouts.ts",
+    "./adapters/inbound/http/public/checkouts.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.subscriptionCancellation.slice(1),
-    "./api/client/subscription-cancellation.ts",
+    "./adapters/inbound/http/client/subscription-cancellation.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.programStart.slice(1),
-    "./api/client/program-start.ts",
+    "./adapters/inbound/http/client/program-start.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.paymentMethodSession.slice(1),
-    "./api/client/payment-method-session.ts",
+    "./adapters/inbound/http/client/payment-method-session.ts",
   ),
   route(
     COACHING_SALES_API_PATHS.stripeWebhooks.slice(1),
-    "./api/stripe-webhooks/stripe-webhooks.ts",
+    "./adapters/inbound/http/stripe-webhooks/stripe-webhooks.ts",
   ),
 ];

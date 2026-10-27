@@ -15,7 +15,7 @@ import {
 } from "react-router";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { clientAction as sendPaymentLink } from "~/bounded-contexts/sales/coaching-sales/api/coach/payment-links";
+import { clientAction as sendPaymentLink } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/coach/payment-links";
 import type { CallSalesState } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 

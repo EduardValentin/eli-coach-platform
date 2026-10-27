@@ -32,7 +32,7 @@ import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detectio
 
 import { requiredName } from "~test-support/index";
 
-import { clientAction as bookAssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/api/booking/bookings";
+import { clientAction as bookAssessmentCall } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/booking/bookings";
 import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_PATH,

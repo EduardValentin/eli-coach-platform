@@ -29,9 +29,9 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as removeExercise } from "~/bounded-contexts/programs/exercise-library/api/exercises/exercise";
-import { clientAction as archiveExercise } from "~/bounded-contexts/programs/exercise-library/api/exercises/exercise-archive";
-import { clientAction as restoreExercise } from "~/bounded-contexts/programs/exercise-library/api/exercises/exercise-restore";
+import { clientAction as removeExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise";
+import { clientAction as archiveExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise-archive";
+import { clientAction as restoreExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise-restore";
 import type {
   ExerciseLibraryView,
   ExerciseView,

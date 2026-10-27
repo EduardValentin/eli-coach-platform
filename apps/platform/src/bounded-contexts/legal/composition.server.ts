@@ -2,7 +2,7 @@ import {
   composeLegalFeature,
   type LegalFeature,
   type LegalFeatureHandles,
-} from "~/bounded-contexts/legal/legal/server/legal-composition.server";
+} from "~/bounded-contexts/legal/legal/composition.server";
 
 export type LegalComposition = {
   components: { legal: LegalFeature };

@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { MeasurementsPage } from "~/bounded-contexts/clients/client-profile/public/measurements";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
-import type { ClientProfileFeature } from "~/bounded-contexts/clients/client-profile/server/client-profile-composition.server";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import {
+  type ClientProfileFeature,
+  clientProfileContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

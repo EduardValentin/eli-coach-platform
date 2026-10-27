@@ -37,8 +37,8 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as uploadResource } from "~/bounded-contexts/clients/client-resources/api/resources/client-resources";
-import { clientAction as changeOrRemoveResource } from "~/bounded-contexts/clients/client-resources/api/resources/resource";
+import { clientAction as uploadResource } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/client-resources";
+import { clientAction as changeOrRemoveResource } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/resources/resource";
 import type {
   ClientResourceView,
   CoachResourceListing,

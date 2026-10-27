@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { NutritionLibraryFeature } from "~/bounded-contexts/programs/nutrition-library/server/nutrition-library-composition.server";
-import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/server/guards/nutrition-library-context.server";
+import {
+  type NutritionLibraryFeature,
+  nutritionLibraryContext,
+} from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

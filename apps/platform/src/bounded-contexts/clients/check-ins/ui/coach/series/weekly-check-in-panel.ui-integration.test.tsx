@@ -33,13 +33,13 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as setUpSeries } from "~/bounded-contexts/clients/check-ins/api/coach/series";
-import { clientAction as changeSeries } from "~/bounded-contexts/clients/check-ins/api/coach/series-change";
+import { clientAction as setUpSeries } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/series";
+import { clientAction as changeSeries } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/series-change";
 import {
   clientLoader as seriesPreviewLoader,
   shouldRevalidate as shouldRevalidateSeriesPreview,
-} from "~/bounded-contexts/clients/check-ins/api/coach/series-preview";
-import { clientAction as stopSeries } from "~/bounded-contexts/clients/check-ins/api/coach/series-stop";
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/series-preview";
+import { clientAction as stopSeries } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/series-stop";
 import type {
   CheckInScheduling,
   CoachClientSeriesPanel,

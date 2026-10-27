@@ -3,7 +3,7 @@ import { VideoOff } from "lucide-react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { CLIENT_CHECK_INS_PATH } from "~/bounded-contexts/clients/check-ins/public/paths";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 
 export async function loader(args: LoaderFunctionArgs) {
   return args.context

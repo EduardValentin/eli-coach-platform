@@ -22,7 +22,7 @@ import {
 import {
   clientLoader as seriesPreviewLoader,
   shouldRevalidate as shouldRevalidateSeriesPreview,
-} from "~/bounded-contexts/clients/check-ins/api/coach/series-preview";
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/coach/series-preview";
 import type {
   CheckInScheduling,
   CoachClientSeriesPanel,

@@ -10,7 +10,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
-import { clientAction as saveSettings } from "~/bounded-contexts/scheduling/coach-schedule/api/settings";
+import { clientAction as saveSettings } from "~/bounded-contexts/scheduling/coach-schedule/adapters/inbound/http/settings";
 import type { CoachScheduleSettings } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
 import { COACH_SETTINGS_API_PATH } from "~/bounded-contexts/scheduling/coach-schedule/public/paths";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
-import type { StoreFeature } from "~/bounded-contexts/sales/store/server/store-composition.server";
+import {
+  storeContext,
+  type StoreFeature,
+} from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

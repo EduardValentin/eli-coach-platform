@@ -7,8 +7,10 @@ import {
   createRequestArgs,
 } from "~/composition-root/test-support/request-args";
 
-import type { AccountsFeature } from "../accounts-composition.server";
-import { accountsContext } from "./accounts-context.server";
+import {
+  type AccountsFeature,
+  accountsContext,
+} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import { requirePortalAccess } from "./require-portal-access.server";
 import { sessionContext, type ResolvedSession } from "./session-context.server";
 

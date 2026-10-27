@@ -18,15 +18,15 @@ import {
 } from "~/bounded-contexts/access/accounts/public/paths";
 import { SignOutControl } from "~/bounded-contexts/access/accounts/ui/shared/sign-out-control";
 import type { ClientCheckIn } from "~/bounded-contexts/clients/check-ins/public/check-ins";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import { NextCheckInWidget } from "~/bounded-contexts/clients/check-ins/ui/client/shell/next-check-in-widget";
 import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
 import type { ClientAvatarUrl } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
-import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
 import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {

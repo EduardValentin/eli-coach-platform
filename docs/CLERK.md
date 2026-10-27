@@ -67,7 +67,7 @@ live via the Clerk CLI against the Dashboard/FAPI:
   which `redirect_url` targets the Account Portal will honour, so it is the
   instance-side complement to this app's own PUBLIC_APP_URL origin rewrite
   (see `buildSignInRedirectTarget` in
-  `apps/platform/src/bounded-contexts/access/accounts/server/require-account.server.ts`):
+  `apps/platform/src/bounded-contexts/access/accounts/server/guards/require-portal-access.server.ts`):
   the app decides the origin it asks Clerk to return to, and the allowlist is
   what stops any other origin being asked for.
 
@@ -108,7 +108,7 @@ this repository does not own either value; see
 A paid client gets her account through a Clerk application invitation that
 the app creates itself, in the same webhook delivery that records her
 payment (`ClerkIdentityInvitations` in
-`apps/platform/src/bounded-contexts/clients/clients/data/identity/`, selected
+`apps/platform/src/bounded-contexts/clients/clients/adapters/outbound/persistence/identity/`, selected
 by `IDENTITY_PROVIDER`):
 
 - `notify: false` — Clerk sends nothing; the app sends its own branded

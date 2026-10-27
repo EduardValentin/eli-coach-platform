@@ -1,8 +1,10 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { AssessmentCallsFeature } from "~/bounded-contexts/scheduling/assessment-calls/server/assessment-calls-composition.server";
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
+import {
+  type AssessmentCallsFeature,
+  assessmentCallsContext,
+} from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

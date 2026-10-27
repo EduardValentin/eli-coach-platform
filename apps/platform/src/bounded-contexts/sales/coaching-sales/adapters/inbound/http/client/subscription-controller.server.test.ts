@@ -1,0 +1,673 @@
+import type { AccountSnapshot } from "~/bounded-contexts/access/accounts/domain/account";
+import {
+  RefundDue,
+  type CancelSubscriptionUseCase,
+  type CoachingSubscriptionSnapshot,
+  type OpenPaymentMethodSessionUseCase,
+  type ReadClientSubscriptionUseCase,
+  type ReadProgramStatusUseCase,
+  type StartProgramNowUseCase,
+} from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  type AccountsFeature,
+  accountsContext,
+} from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
+import {
+  sessionContext,
+  type ResolvedSession,
+} from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/composition-root/test-support/request-args";
+
+import { SubscriptionController } from "./subscription-controller.server";
+
+const CLIENT: AccountSnapshot = {
+  authSubjectId: "user_ana",
+  id: "acct_ana",
+  role: "CLIENT",
+};
+
+const COACH: AccountSnapshot = {
+  authSubjectId: "user_coach",
+  id: "acct_coach",
+  role: "COACH",
+};
+
+const PAID_AT = new Date("2026-10-02T10:00:00.000Z");
+const DAY_13 = new Date("2026-10-15T10:00:00.000Z");
+const DEADLINE = new Date("2026-10-16T10:00:00.000Z");
+const PAID_THROUGH = new Date("2027-01-02T10:00:00.000Z");
+
+const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
+  id: "subscription-1",
+  clientId: "client-1",
+  bundleId: "3-months",
+  months: 3,
+  tier: "regular",
+  amountCents: 44700,
+  currency: "eur",
+  paymentCustomerId: "cus_1",
+  paymentSubscriptionId: "sub_1",
+  checkoutSessionId: "cs_1",
+  paidAt: PAID_AT,
+  paidThrough: PAID_THROUGH,
+  programStartsAt: DEADLINE,
+  startChoice: "waiting",
+  status: "not-started",
+  cancelledAt: null,
+  accessEndsAt: null,
+  paymentProblemSince: null,
+  refund: null,
+};
+
+type Reading = NonNullable<
+  Awaited<ReturnType<ReadClientSubscriptionUseCase["execute"]>>
+>;
+
+const READING: Reading = {
+  subscription: SUBSCRIPTION,
+  status: "not-started",
+  cancellationRule: "full-refund",
+  withdrawalDeadline: DEADLINE,
+  paidThrough: PAID_THROUGH,
+  refundOnCancellationCents: 44700,
+  startNowUntil: DEADLINE,
+  paymentProblem: false,
+  refundDue: false,
+  card: null,
+};
+
+describe("SubscriptionController#loadSettings", () => {
+  it("reads her own subscription with the cancellation that applies now, dates and cents raw", async () => {
+    // arrange
+    const { controller, readClientSubscription } = createController({
+      reading: READING,
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings).toEqual({
+      subscription: {
+        bundleId: "3-months",
+        months: 3,
+        amountCents: 44700,
+        currency: "eur",
+        paidAt: "2026-10-02T10:00:00.000Z",
+        status: "not-started",
+        cancelledAt: null,
+        accessEndsAt: null,
+        paymentProblem: false,
+      },
+      cancellation: {
+        rule: "full-refund",
+        withdrawalDeadline: "2026-10-16T10:00:00.000Z",
+        paidThrough: "2027-01-02T10:00:00.000Z",
+        refundCents: 44700,
+      },
+      startNowUntil: "2026-10-16T10:00:00.000Z",
+      card: null,
+    });
+    expect(readClientSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
+  });
+
+  it("reads the card on file by brand, last four digits and expiry, never its payment method", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: {
+        ...READING,
+        card: {
+          brand: "visa",
+          lastFour: "4242",
+          expiryMonth: 12,
+          expiryYear: 2034,
+          paymentMethodId: "pm_visa",
+        },
+      },
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings.card).toEqual({
+      brand: "visa",
+      lastFour: "4242",
+      expiryMonth: 12,
+      expiryYear: 2034,
+    });
+  });
+
+  it("offers the cancellation without a refund with its dates and no refund amount", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: {
+        ...READING,
+        subscription: { ...SUBSCRIPTION, startChoice: "immediate" },
+        cancellationRule: "no-refund",
+        refundOnCancellationCents: 0,
+        startNowUntil: null,
+      },
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings.cancellation).toEqual({
+      rule: "no-refund",
+      withdrawalDeadline: "2026-10-16T10:00:00.000Z",
+      paidThrough: "2027-01-02T10:00:00.000Z",
+    });
+  });
+
+  it("offers no cancellation once she has cancelled, with her access end and a payment problem", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: {
+        ...READING,
+        subscription: {
+          ...SUBSCRIPTION,
+          status: "cancelled",
+          cancelledAt: DAY_13,
+          accessEndsAt: PAID_THROUGH,
+          paymentProblemSince: DAY_13,
+        },
+        status: "cancelled",
+        cancellationRule: "none",
+        refundOnCancellationCents: 0,
+        startNowUntil: null,
+        paymentProblem: true,
+      },
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings).toMatchObject({
+      subscription: {
+        status: "cancelled",
+        cancelledAt: "2026-10-15T10:00:00.000Z",
+        accessEndsAt: "2027-01-02T10:00:00.000Z",
+        paymentProblem: true,
+      },
+      cancellation: null,
+      startNowUntil: null,
+    });
+  });
+
+  it("answers 404 to a client with no subscription", async () => {
+    // arrange
+    const { controller } = createController({ reading: null });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadSettings(clientArgs()),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+  });
+
+  it("refuses the coach", async () => {
+    // arrange
+    const { controller, readClientSubscription } = createController({
+      reading: READING,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadSettings(clientArgs({ account: COACH })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readClientSubscription).not.toHaveBeenCalled();
+  });
+});
+
+describe("SubscriptionController#loadEnded", () => {
+  it.each([
+    ["a refund is still owed", true],
+    ["nothing is owed", false],
+  ])("tells the ended page whether %s", async (_label, refundDue) => {
+    // arrange
+    const { controller } = createController({
+      reading: { ...READING, status: "ended", refundDue },
+    });
+
+    // act
+    const ended = await controller.loadEnded(clientArgs());
+
+    // assert
+    expect(ended).toEqual({ refundDue });
+  });
+
+  it("tells the ended page that nothing is owed when no subscription is read", async () => {
+    // arrange
+    const { controller } = createController({ reading: null });
+
+    // act
+    const ended = await controller.loadEnded(clientArgs());
+
+    // assert
+    expect(ended).toEqual({ refundDue: false });
+  });
+});
+
+describe("SubscriptionController#cancel", () => {
+  it("cancels the subscription of the signed-in client and answers what it ended", async () => {
+    // arrange
+    const cancelledAt = DAY_13;
+    const { controller, cancelSubscription } = createController({
+      cancelled: {
+        status: "cancelled",
+        rule: "full-refund",
+        subscription: {
+          ...SUBSCRIPTION,
+          status: "ended",
+          cancelledAt,
+          accessEndsAt: cancelledAt,
+          refund: RefundDue.full({
+            amountCents: 44700,
+            cancelledAt,
+          }).toSnapshot(),
+        },
+        refundDue: true,
+      },
+    });
+
+    // act
+    const response = await controller.cancel(apiArgs());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: "cancelled",
+      rule: "full-refund",
+      accessEndsAt: "2026-10-15T10:00:00.000Z",
+      refundDue: true,
+    });
+    expect(cancelSubscription).toHaveBeenCalledWith(CLIENT.authSubjectId);
+  });
+
+  it.each([
+    [
+      "nothing_to_cancel",
+      409,
+      {
+        error: "nothing-to-cancel",
+        message:
+          "This coaching has already ended, so there is nothing to cancel.",
+      },
+    ],
+    ["provider_unavailable", 503, { error: "provider-unavailable" }],
+    ["not_found", 404, { error: "not-found" }],
+  ] as const)(
+    "answers %s with %i",
+    async (status, expectedStatus, expectedBody) => {
+      // arrange
+      const { controller } = createController({ cancelled: { status } });
+
+      // act
+      const response = await controller.cancel(apiArgs());
+
+      // assert
+      expect(response.status).toBe(expectedStatus);
+      expect(await response.json()).toEqual(expectedBody);
+    },
+  );
+
+  it("refuses the coach without cancelling anything", async () => {
+    // arrange
+    const { controller, cancelSubscription } = createController({});
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.cancel(apiArgs({ account: COACH })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(cancelSubscription).not.toHaveBeenCalled();
+  });
+
+  it("refuses an anonymous visitor", async () => {
+    // arrange
+    const { controller, cancelSubscription } = createController({});
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.cancel(apiArgs({ anonymous: true })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(401);
+    expect(cancelSubscription).not.toHaveBeenCalled();
+  });
+});
+
+describe("SubscriptionController#startNow", () => {
+  it("starts the program of the signed-in client now", async () => {
+    // arrange
+    const { controller, startProgramNow } = createController({
+      started: { status: "started" },
+    });
+
+    // act
+    const response = await controller.startNow(apiArgs());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "started" });
+    expect(startProgramNow).toHaveBeenCalledWith(CLIENT.authSubjectId);
+  });
+
+  it.each([
+    [{ status: "refused", reason: "outside-window" }, 409, "outside-window"],
+    [{ status: "refused", reason: "ended" }, 409, "ended"],
+    [{ status: "not_found" }, 404, "not-found"],
+  ] as const)(
+    "answers a refusal %o with %i",
+    async (started, expectedStatus, error) => {
+      // arrange
+      const { controller } = createController({ started });
+
+      // act
+      const response = await controller.startNow(apiArgs());
+
+      // assert
+      expect(response.status).toBe(expectedStatus);
+      expect(await response.json()).toEqual({ error });
+    },
+  );
+});
+
+describe("SubscriptionController#openPaymentMethod", () => {
+  it("sends her to the provider's page with a return to her settings built from configuration", async () => {
+    // arrange
+    const { controller, openPaymentMethodSession } = createController({
+      opened: { status: "opened", url: "https://billing.stripe.com/p/1" },
+    });
+
+    // act
+    const response = await controller.openPaymentMethod(
+      clientArgs(undefined, "https://attacker.example/client/settings"),
+    );
+
+    // assert
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(
+      "https://billing.stripe.com/p/1",
+    );
+    expect(openPaymentMethodSession).toHaveBeenCalledWith({
+      authSubjectId: CLIENT.authSubjectId,
+      returnUrl: "https://evoa.fit/app/client/settings",
+    });
+  });
+
+  it.each([
+    ["ended", "/client/ended"],
+    ["provider_unavailable", "/client/settings?paymentMethod=unavailable"],
+  ] as const)(
+    "sends her back into the portal when the session is %s",
+    async (status, location) => {
+      // arrange
+      const { controller } = createController({ opened: { status } });
+
+      // act
+      const response = await controller.openPaymentMethod(clientArgs());
+
+      // assert
+      expect(response.status).toBe(303);
+      expect(response.headers.get("Location")).toBe(location);
+    },
+  );
+
+  it.each([
+    ["the coach with 403", { account: COACH }, 403],
+    ["an anonymous visitor with 401", { anonymous: true }, 401],
+  ] as const)(
+    "refuses %s without opening a session",
+    async (_label, session, status) => {
+      // arrange
+      const { controller, openPaymentMethodSession } = createController({});
+
+      // act
+      const thrown = await captureThrown(() =>
+        controller.openPaymentMethod(apiArgs(session)),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(status);
+      expect(openPaymentMethodSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it("answers 404 to a client with no subscription", async () => {
+    // arrange
+    const { controller } = createController({
+      opened: { status: "not_found" },
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.openPaymentMethod(clientArgs()),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+  });
+});
+
+describe("SubscriptionController#loadProgramStatus", () => {
+  it.each([
+    [
+      "with the day the work starts",
+      new Date("2026-10-10T10:00:00.000Z"),
+      "2026-10-10T10:00:00.000Z",
+    ],
+    ["with no start day", null, null],
+  ])(
+    "answers her submitted onboarding %s",
+    async (_label, workStartsOn, expectedWorkStartsOn) => {
+      // arrange
+      const { controller, readProgramStatus } = createController({
+        programStatus: {
+          kind: "submitted",
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn,
+          startNowUntil: null,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind: "submitted",
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: expectedWorkStartsOn,
+        startNowUntil: null,
+      });
+      expect(readProgramStatus).toHaveBeenCalledWith("user_ana");
+    },
+  );
+
+  it("carries until when she can start now", async () => {
+    // arrange
+    const { controller } = createController({
+      programStatus: {
+        kind: "submitted",
+        submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+        startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
+      },
+    });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toMatchObject({
+      startNowUntil: "2026-10-10T10:00:00.000Z",
+    });
+  });
+
+  it.each(["in-review", "needs-details", "approved"] as const)(
+    "answers the %s step of her reviewed onboarding",
+    async (kind) => {
+      // arrange
+      const { controller } = createController({
+        programStatus: {
+          kind,
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn: null,
+          startNowUntil: null,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind,
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: null,
+        startNowUntil: null,
+      });
+    },
+  );
+
+  it("answers no status before she has sent her onboarding", async () => {
+    // arrange
+    const { controller } = createController({ programStatus: null });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toBeNull();
+  });
+
+  it("refuses the coach without reading any status", async () => {
+    // arrange
+    const { controller, readProgramStatus } = createController({
+      programStatus: null,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadProgramStatus(clientArgs({ account: COACH })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readProgramStatus).not.toHaveBeenCalled();
+  });
+});
+
+function createController(options: {
+  reading?: Reading | null;
+  cancelled?: Awaited<ReturnType<CancelSubscriptionUseCase["execute"]>>;
+  started?: Awaited<ReturnType<StartProgramNowUseCase["execute"]>>;
+  opened?: Awaited<ReturnType<OpenPaymentMethodSessionUseCase["execute"]>>;
+  programStatus?: Awaited<ReturnType<ReadProgramStatusUseCase["execute"]>>;
+}) {
+  const readProgramStatus = vi
+    .fn()
+    .mockResolvedValue(options.programStatus ?? null);
+  const readClientSubscription = vi
+    .fn()
+    .mockResolvedValue(options.reading ?? null);
+  const cancelSubscription = vi.fn().mockResolvedValue(options.cancelled);
+  const startProgramNow = vi.fn().mockResolvedValue(options.started);
+  const openPaymentMethodSession = vi.fn().mockResolvedValue(options.opened);
+  const controller = new SubscriptionController({
+    appBasePath: "/app",
+    cancelSubscription: {
+      execute: cancelSubscription,
+    } as unknown as CancelSubscriptionUseCase,
+    openPaymentMethodSession: {
+      execute: openPaymentMethodSession,
+    } as unknown as OpenPaymentMethodSessionUseCase,
+    publicAppUrl: "https://evoa.fit",
+    readClientSubscription: {
+      execute: readClientSubscription,
+    } as unknown as ReadClientSubscriptionUseCase,
+    readProgramStatus: {
+      execute: readProgramStatus,
+    } as unknown as ReadProgramStatusUseCase,
+    startProgramNow: {
+      execute: startProgramNow,
+    } as unknown as StartProgramNowUseCase,
+  });
+
+  return {
+    cancelSubscription,
+    controller,
+    openPaymentMethodSession,
+    readClientSubscription,
+    readProgramStatus,
+    startProgramNow,
+  };
+}
+
+function sessionOf(options: {
+  account?: AccountSnapshot;
+  anonymous?: boolean;
+}): ResolvedSession {
+  return options.anonymous
+    ? { kind: "anonymous" }
+    : { account: options.account ?? CLIENT, kind: "authenticated" };
+}
+
+function clientArgs(
+  options: { account?: AccountSnapshot } = {},
+  url = "https://evoa.fit/app/client/settings",
+) {
+  const accounts = {
+    portal: {
+      appBasePath: "/app",
+      publicAppUrl: "https://evoa.fit",
+      signInUrl: "https://accounts.evoa.fit/sign-in",
+    },
+  } as unknown as AccountsFeature;
+
+  return createRequestArgs({
+    contexts: [
+      contextEntry(accountsContext, accounts),
+      contextEntry(sessionContext, sessionOf(options)),
+    ],
+    request: new Request(url, { method: "POST" }),
+  });
+}
+
+function apiArgs(
+  options: { account?: AccountSnapshot; anonymous?: boolean } = {},
+) {
+  return createRequestArgs({
+    contexts: [contextEntry(sessionContext, sessionOf(options))],
+    request: new Request(
+      "https://evoa.fit/app/api/coaching-sales/subscription-cancellation",
+      { method: "POST" },
+    ),
+  });
+}
+
+async function captureThrown(thunk: () => unknown): Promise<unknown> {
+  try {
+    await thunk();
+    return undefined;
+  } catch (thrown) {
+    return thrown;
+  }
+}

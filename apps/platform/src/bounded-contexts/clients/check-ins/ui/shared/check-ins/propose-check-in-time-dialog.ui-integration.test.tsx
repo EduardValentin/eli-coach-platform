@@ -29,11 +29,11 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as proposeNewTime } from "~/bounded-contexts/clients/check-ins/api/shared/new-time";
+import { clientAction as proposeNewTime } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/new-time";
 import {
   clientLoader as openTimesLoader,
   shouldRevalidate as shouldRevalidateOpenTimes,
-} from "~/bounded-contexts/clients/check-ins/api/shared/open-times";
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/open-times";
 import type { ClientCheckIns } from "~/bounded-contexts/clients/check-ins/public/check-ins";
 import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public/paths";
 import {

@@ -18,9 +18,12 @@ function flatOrInConceptFolder(patterns) {
 }
 
 const FEATURE_PUBLIC_FOLDERS = "(public|ui/shared|server/guards)/";
-const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/data/schema\\.server\\.ts$`;
+const FEATURE_SCHEMA = `${FEATURES}${COMPONENT}/adapters/outbound/persistence/schema\\.server\\.ts$`;
+const REQUEST_KEYS = "adapters/inbound/http/[a-z-]*context\\.server\\.ts$";
+const ACCOUNTS_KEY = `${FEATURES}accounts/adapters/inbound/http/context\\.server\\.ts$`;
+const CLIENT_PORTAL_STANDING_GUARD = `${FEATURES}clients/adapters/inbound/http/require-client-portal-standing\\.server\\.ts$`;
 const ROUTE_MODULES = flatOrInConceptFolder([
-  `${FEATURES}${COMPONENT}/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${FEATURES}${COMPONENT}/adapters/inbound/http/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${FEATURES}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
@@ -126,7 +129,7 @@ function featureOrderRule(feature, position) {
 
   return {
     name: `feature-order-${feature}`,
-    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/, and, temporarily until Task 17, any component's domain/. Its data/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
+    comment: `A feature imports only the features before it in FEATURE_ORDER and the public/ of its own and earlier bounded contexts: ${feature} may import ${earlierFeatures.join(", ") || "no other feature"} and ${admittedBoundedContexts.join(", ")} public/, and, temporarily until Task 17, any component's domain/. Its adapters/outbound/persistence/schema.server.ts is held by feature-schema-foreign-key and feature-schema-imports-schemas-only instead.`,
     severity: "error",
     from: { path: `${FEATURES}${feature}/`, pathNot: FEATURE_SCHEMA },
     to: {
@@ -143,13 +146,15 @@ function featureOrderRule(feature, position) {
 function surfaceToFeatureRule(surface, slice) {
   return {
     name: `surface-${surface}-to-feature`,
-    comment: `R2: surfaces/${surface} reaches a feature only through ui/${slice}/, ui/shared/, public/, server/guards/ and routes.ts.`,
+    comment: `R2: surfaces/${surface} reaches a feature only through ui/${slice}/, ui/shared/, public/, server/guards/, its request-context keys and the client portal standing guard in adapters/inbound/http/, and routes.ts.`,
     severity: "error",
     from: { path: `${SURFACES}${surface}/` },
     to: {
       path: FEATURES,
       pathNot: [
         `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+        `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
+        CLIENT_PORTAL_STANDING_GUARD,
         `${FEATURES}${COMPONENT}/ui/${slice}/`,
         `${FEATURES}${COMPONENT}/routes\\.ts$`,
         BOUNDED_CONTEXT_PUBLIC,
@@ -170,7 +175,7 @@ module.exports = {
     {
       name: "feature-internals",
       comment:
-        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/, and, temporarily until Task 17, its domain/.",
+        "R3: a feature imports another feature only through public/, ui/shared/ or server/guards/, the accounts request-context key until Task 11, and, temporarily until Task 17, its domain/.",
       severity: "error",
       from: {
         path: `${FEATURES}(${COMPONENT})/`,
@@ -180,6 +185,7 @@ module.exports = {
         path: `${FEATURES}(?!$1/)${COMPONENT}/`,
         pathNot: [
           `${FEATURES}${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}`,
+          ACCOUNTS_KEY,
           FOREIGN_DOMAIN,
         ],
       },
@@ -187,9 +193,11 @@ module.exports = {
     {
       name: "feature-schema-foreign-key",
       comment:
-        "R3 carve-out: data/schema.server.ts may import any feature's data/schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and, temporarily until Task 17, any component's domain/, and nothing else private.",
+        "R3 carve-out: adapters/outbound/persistence/schema.server.ts may import any feature's schema.server.ts for a foreign key, before or after it in FEATURE_ORDER, and, temporarily until Task 17, any component's domain/, and nothing else private.",
       severity: "error",
-      from: { path: `${FEATURES}(${COMPONENT})/data/schema\\.server\\.ts$` },
+      from: {
+        path: `${FEATURES}(${COMPONENT})/adapters/outbound/persistence/schema\\.server\\.ts$`,
+      },
       to: {
         path: `${FEATURES}(?!$1/)${COMPONENT}/`,
         pathNot: [
@@ -202,9 +210,11 @@ module.exports = {
     {
       name: "feature-schema-imports-schemas-only",
       comment:
-        "A schema file sits outside FEATURE_ORDER, so another feature's data/schema.server.ts is the only thing of that feature it imports: not even its public folders.",
+        "A schema file sits outside FEATURE_ORDER, so another feature's adapters/outbound/persistence/schema.server.ts is the only thing of that feature it imports: not even its public folders.",
       severity: "error",
-      from: { path: `${FEATURES}(${COMPONENT})/data/schema\\.server\\.ts$` },
+      from: {
+        path: `${FEATURES}(${COMPONENT})/adapters/outbound/persistence/schema\\.server\\.ts$`,
+      },
       to: { path: `${FEATURES}(?!$1/)${COMPONENT}/${FEATURE_PUBLIC_FOLDERS}` },
     },
     ...FEATURE_ORDER.map(featureOrderRule),
@@ -250,18 +260,17 @@ module.exports = {
     {
       name: "feature-flag-overrides-root-only",
       comment:
-        "The container and the runtime reader are the only production importers of composition-root/feature-flag-overrides/: the override reader and middleware reach a request through the composition root alone.",
+        "The feature-flags composition is the only production importer of its adapters/outbound/overrides/: the override reader and middleware reach a request through that composition alone.",
       severity: "error",
       from: {
         path: APP,
         pathNot: [
-          "^apps/platform/src/composition-root/container\\.server\\.ts$",
-          "^apps/platform/src/composition-root/runtime-environment\\.ts$",
-          "^apps/platform/src/composition-root/feature-flag-overrides/",
+          `${FEATURES}feature-flags/composition\\.server\\.ts$`,
+          `${FEATURES}feature-flags/adapters/outbound/overrides/`,
         ],
       },
       to: {
-        path: "^apps/platform/src/composition-root/feature-flag-overrides/",
+        path: `${FEATURES}feature-flags/adapters/outbound/overrides/`,
       },
     },
     {
@@ -283,12 +292,32 @@ module.exports = {
       },
     },
     {
+      name: "component-key-consumers",
+      comment:
+        "A component's request-context key in adapters/inbound/http/ is read by that component's adapters/inbound/http/ and ui/ (feature-internals keeps other components out), its composition (the feature type), the accounts guards, the surfaces, the root modules and composition-root/feature-contexts.server.ts.",
+      severity: "error",
+      from: {
+        path: APP,
+        pathNot: [
+          SURFACES,
+          "^apps/platform/src/root(\\.server)?\\.tsx?$",
+          "^apps/platform/src/composition-root/feature-contexts\\.server\\.ts$",
+          `${FEATURES}${COMPONENT}/(adapters/inbound/http|ui)/`,
+          `${FEATURES}${COMPONENT}/composition\\.server\\.ts$`,
+          `${FEATURES}accounts/server/guards/`,
+        ],
+      },
+      to: { path: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}` },
+    },
+    {
       name: "feature-server-private",
       comment:
-        "Nothing in a feature outside server/ (adapters/, api/, data/, email/, public/, ui/, routes.ts) imports its server/ outside guards/: composition and middleware are reachable only from the root and the container.",
+        "Nothing in a component outside composition.server.ts imports its composition.server.ts: composition is reachable only from the composition root.",
       severity: "error",
-      from: { path: `${FEATURES}(${COMPONENT})/(?!server/)` },
-      to: { path: `${FEATURES}$1/server/(?!guards/)` },
+      from: {
+        path: `${FEATURES}(${COMPONENT})/(?!composition\\.server\\.ts$)`,
+      },
+      to: { path: `${FEATURES}$1/composition\\.server\\.ts$` },
     },
     {
       name: "config-runtime-readers",
@@ -324,11 +353,12 @@ module.exports = {
     {
       name: "guards-construct-nothing",
       comment:
-        "A guards module imports only the framework, its feature's public folder, component domains, config types and sibling guards; its feature type comes from the composition as a type-only import.",
+        "A request-context key module (a component's adapters/inbound/http/context.server.ts, the accounts guards, the composition root's guards) imports only the framework, public folders, component domains, config types, sibling keys and guards; its feature type comes from the component's controllers as type-only imports.",
       severity: "error",
       from: {
         path: [
-          `${FEATURES}${COMPONENT}/server/guards/`,
+          `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
+          `${FEATURES}accounts/server/guards/`,
           "^apps/platform/src/composition-root/guards/",
         ],
       },
@@ -336,6 +366,7 @@ module.exports = {
         path: APP,
         pathNot: [
           `${FEATURES}${COMPONENT}/(public|server/guards|domain)/`,
+          `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
           "^apps/platform/src/composition-root/guards/",
           "^apps/platform/src/shared/http/base-path\\.ts$",
           "^apps/platform/src/shared/(email/product-email|submission-checks/bot-detection)-config\\.ts$",
@@ -353,7 +384,7 @@ module.exports = {
         pathNot: [
           `${FEATURES}accounts/`,
           "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
-          `${FEATURES}clients/data/identity/`,
+          `${FEATURES}clients/adapters/outbound/persistence/identity/`,
           "^apps/platform/test-support/",
           "^apps/platform/e2e/",
           "^apps/platform/integration-test-config/",
@@ -411,19 +442,21 @@ module.exports = {
       to: { path: "(^|/)(file-type|@file-type/[^/]+)(/|$)" },
     },
     {
-      name: "feature-api-to-data",
+      name: "inbound-never-imports-outbound",
       comment:
-        "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
+        "An inbound adapter (controller, route, facade) never imports its component's persistence or email adapters; the composition hands them in through ports. A provider adapter's vocabulary under adapters/outbound/<provider>/ stays readable.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/api/` },
-      to: { path: `${FEATURES}${COMPONENT}/(data|email)/` },
+      from: { path: `${FEATURES}${COMPONENT}/adapters/inbound/` },
+      to: {
+        path: `${FEATURES}${COMPONENT}/adapters/outbound/(persistence|email)/`,
+      },
     },
     {
       name: "feature-api-never-imports-ui",
       comment:
-        "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in public/ or a package's browser entry.",
+        "A component's adapters/inbound/ never imports any component's ui/: what a route module's clientAction shares with the browser half lives in public/ or a shared browser entry.",
       severity: "error",
-      from: { path: `${FEATURES}${COMPONENT}/api/` },
+      from: { path: `${FEATURES}${COMPONENT}/adapters/inbound/` },
       to: { path: `${FEATURES}${COMPONENT}/ui/` },
     },
     {
@@ -458,11 +491,12 @@ module.exports = {
     {
       name: "browser-half",
       comment:
-        "R6: a feature's ui/** never imports its adapters/, data/, api/ or email/ folders and reaches server/ only through guards/; a registered page's loader reads its feature key there, and the .server suffix keeps that key out of the client build.",
+        "R6: a component's ui/** never imports its adapters/, composition.server.ts or config.server.ts, except its request-context keys in adapters/inbound/http/: a registered page's loader reads its component key there, and the .server suffix keeps that key out of the client build.",
       severity: "error",
       from: { path: `${FEATURES}${COMPONENT}/ui/` },
       to: {
-        path: `${FEATURES}${COMPONENT}/(adapters/|data/|api/|email/|server/(?!guards/))`,
+        path: `${FEATURES}${COMPONENT}/(adapters/|(composition|config)\\.server\\.ts$)`,
+        pathNot: `${FEATURES}${COMPONENT}/${REQUEST_KEYS}`,
       },
     },
     {
@@ -478,17 +512,18 @@ module.exports = {
     {
       name: "route-thinness",
       comment:
-        "A registered route module never imports adapters/, data/, email/, a controller, shared/database or composition-root/ outside guards/.",
+        "A registered route module never imports adapters/outbound/, the store's management-auth helpers, a composition, a config module, a controller, shared/database or composition-root/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {
         path: [
-          `${FEATURES}${COMPONENT}/(adapters|data|email)/`,
+          `${FEATURES}${COMPONENT}/adapters/outbound/`,
+          `${FEATURES}${COMPONENT}/adapters/inbound/http/management/management-auth/`,
+          `${FEATURES}${COMPONENT}/(composition|config)\\.server\\.ts$`,
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^apps/platform/src/shared/(email|images|documents|private-files|tokens|submission-checks/bot-detection)/",
           "^apps/platform/src/composition-root/(?!guards/)",
-          `${FEATURES}${COMPONENT}/server/(?!guards/)`,
         ],
         dependencyTypesNot: ["type-only"],
       },

@@ -7,12 +7,12 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import { CoachResourceLibrary } from "~/bounded-contexts/clients/client-resources/ui/coach/resources/coach-resource-library";
 import { possessive } from "~/bounded-contexts/clients/client-resources/ui/shared/resources/resource-copy";
 import { clientFullName } from "~/bounded-contexts/clients/clients/public/clients";
 import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;

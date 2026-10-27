@@ -13,7 +13,7 @@ import {
 } from "react-router";
 
 import type { CheckoutConfirmation } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import {
   CALL_FIRST_HEADING,
   CallFirstBanner,

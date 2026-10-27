@@ -4,11 +4,15 @@ import type {
   ClientResourceView,
   CoachResourceListing,
 } from "~/bounded-contexts/clients/client-resources/public/client-resources";
-import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/server/client-resources-composition.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import {
+  type ClientResourcesFeature,
+  clientResourcesContext,
+} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
-import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import {
+  type ClientsFeature,
+  clientsContext,
+} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

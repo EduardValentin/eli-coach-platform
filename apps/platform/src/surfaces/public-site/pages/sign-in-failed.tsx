@@ -5,7 +5,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import { SignInFailedPage } from "~/bounded-contexts/access/accounts/ui/public/sign-in-failed-page";
 import { STORE_PATH } from "~/bounded-contexts/sales/public/paths";
 

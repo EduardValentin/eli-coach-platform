@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClientCheckIns } from "~/bounded-contexts/clients/check-ins/public/check-ins";
-import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/server/check-ins-composition.server";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import {
+  type CheckInsFeature,
+  checkInsContext,
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

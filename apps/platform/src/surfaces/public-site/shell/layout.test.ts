@@ -7,10 +7,14 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/bounded-contexts/access/accounts/server/guards/session-context.server";
-import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/clients-composition.server";
-import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
-import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
-import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
+import {
+  type ClientsFeature,
+  clientsContext,
+} from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import {
+  waitlistContext,
+  type WaitlistFeature,
+} from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 import {

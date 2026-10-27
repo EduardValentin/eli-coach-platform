@@ -1,0 +1,54 @@
+import type {
+  CheckInClashesNotice,
+  CheckInInbox,
+  CheckInNotice,
+  CheckInNotification,
+  CheckInSeriesInboxNotice,
+  CheckInSeriesNotification,
+} from "~/bounded-contexts/clients/check-ins/domain/check-in";
+import type {
+  NotificationDraft,
+  NotificationInbox,
+} from "~/bounded-contexts/clients/notifications/domain/notification";
+import type { Clock } from "~/bounded-contexts/clients/check-ins/domain/clock";
+
+import { CheckInNotificationDrafts } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/inbox/check-in-notification-drafts.server";
+
+type InboxCheckInNoticesOptions = {
+  clock: Clock;
+  inbox: Pick<NotificationInbox, "record">;
+};
+
+export class InboxCheckInNotices implements CheckInInbox {
+  private readonly drafts = new CheckInNotificationDrafts();
+
+  constructor(private readonly options: InboxCheckInNoticesOptions) {}
+
+  checkInEvent(
+    event: CheckInNotification,
+    notice: CheckInNotice,
+  ): Promise<void> {
+    return this.recordNow((now) =>
+      this.drafts.checkInEvent(event, notice, now),
+    );
+  }
+
+  seriesEvent(
+    event: CheckInSeriesNotification,
+    notice: CheckInSeriesInboxNotice,
+  ): Promise<void> {
+    return this.recordNow((now) => this.drafts.seriesEvent(event, notice, now));
+  }
+
+  clashesAdded(notice: CheckInClashesNotice): Promise<void> {
+    return this.recordNow((now) => this.drafts.clashesAdded(notice, now));
+  }
+
+  private async recordNow(
+    draftAt: (now: Date) => NotificationDraft,
+  ): Promise<void> {
+    const now = this.options.clock.now();
+
+    await this.options.inbox.record({ drafts: [draftAt(now)], at: now });
+  }
+}

@@ -5,7 +5,7 @@ import {
 } from "~/bounded-contexts/access/accounts/domain/account";
 import { redirect, type RouterContextProvider } from "react-router";
 
-import { accountsContext } from "./accounts-context.server";
+import { accountsContext } from "~/bounded-contexts/access/accounts/adapters/inbound/http/context.server";
 import { sessionContext } from "./session-context.server";
 
 type GuardedRequest = {

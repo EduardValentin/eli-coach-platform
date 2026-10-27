@@ -10,7 +10,7 @@ import type { MeasurementsPage } from "~/bounded-contexts/clients/client-profile
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import { CLIENT_PROFILE_API_PATHS } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { CLIENT_PROFILE_PAGE_COPY } from "~/bounded-contexts/clients/client-profile/public/profile-page-copy";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import { MeasurementsSection } from "~/bounded-contexts/clients/client-profile/ui/client/measurements/measurements-section";
 import { AboutYouForm } from "~/bounded-contexts/clients/client-profile/ui/client/profile/about-you-form";
 import { CoachFactsSection } from "~/bounded-contexts/clients/client-profile/ui/client/profile/coach-facts-section";

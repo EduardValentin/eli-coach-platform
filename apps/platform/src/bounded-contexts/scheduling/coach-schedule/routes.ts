@@ -12,5 +12,8 @@ export const coachScheduleCoachRoutes = [
 ];
 
 export const coachScheduleApiRoutes = [
-  route(COACH_SETTINGS_API_PATH.slice(1), "./api/settings.ts"),
+  route(
+    COACH_SETTINGS_API_PATH.slice(1),
+    "./adapters/inbound/http/settings.ts",
+  ),
 ];

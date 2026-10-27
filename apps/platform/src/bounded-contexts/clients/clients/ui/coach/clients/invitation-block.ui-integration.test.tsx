@@ -24,7 +24,7 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as resendInvitation } from "~/bounded-contexts/clients/clients/api/coach/invitation-resends";
+import { clientAction as resendInvitation } from "~/bounded-contexts/clients/clients/adapters/inbound/http/coach/invitation-resends";
 import type { ClientInvitationReading } from "~/bounded-contexts/clients/clients/public/coach-clients";
 import {
   CLIENTS_API_PATHS,

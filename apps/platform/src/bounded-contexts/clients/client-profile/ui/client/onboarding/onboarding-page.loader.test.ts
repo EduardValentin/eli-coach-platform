@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { OnboardingPage } from "~/bounded-contexts/clients/client-profile/public/onboarding";
-import type { ClientOnboardingFeature } from "~/bounded-contexts/clients/client-profile/server/client-onboarding-composition.server";
-import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import {
+  type ClientOnboardingFeature,
+  clientOnboardingContext,
+} from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

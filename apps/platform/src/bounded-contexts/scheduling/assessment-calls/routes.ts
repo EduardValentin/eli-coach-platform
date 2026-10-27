@@ -16,9 +16,12 @@ export const assessmentCallsJoinRoutes = [
 ];
 
 export const assessmentCallsApiRoutes = [
-  route(ASSESSMENT_CALL_API_PATHS.slots.slice(1), "./api/booking/slots.ts"),
+  route(
+    ASSESSMENT_CALL_API_PATHS.slots.slice(1),
+    "./adapters/inbound/http/booking/slots.ts",
+  ),
   route(
     ASSESSMENT_CALL_API_PATHS.bookings.slice(1),
-    "./api/booking/bookings.ts",
+    "./adapters/inbound/http/booking/bookings.ts",
   ),
 ];

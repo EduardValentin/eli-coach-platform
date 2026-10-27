@@ -29,15 +29,15 @@ import {
 } from "vitest";
 import { configureAxe } from "vitest-axe";
 
-import { clientAction as approveCheckIn } from "~/bounded-contexts/clients/check-ins/api/shared/approval";
-import { clientAction as cancelCheckIn } from "~/bounded-contexts/clients/check-ins/api/shared/cancellation";
-import { clientAction as declineCheckIn } from "~/bounded-contexts/clients/check-ins/api/shared/decline";
-import { clientAction as proposeNewTime } from "~/bounded-contexts/clients/check-ins/api/shared/new-time";
+import { clientAction as approveCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/approval";
+import { clientAction as cancelCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/cancellation";
+import { clientAction as declineCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/decline";
+import { clientAction as proposeNewTime } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/new-time";
 import {
   clientLoader as openTimesLoader,
   shouldRevalidate as shouldRevalidateOpenTimes,
-} from "~/bounded-contexts/clients/check-ins/api/shared/open-times";
-import { clientAction as withdrawCheckIn } from "~/bounded-contexts/clients/check-ins/api/shared/withdrawal";
+} from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/open-times";
+import { clientAction as withdrawCheckIn } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/shared/withdrawal";
 import type {
   CoachCheckIn,
   CoachCheckIns,

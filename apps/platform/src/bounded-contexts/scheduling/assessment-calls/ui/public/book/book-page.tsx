@@ -18,7 +18,7 @@ import {
 } from "react-router";
 
 import type { OpenSlotsResponse } from "~/bounded-contexts/scheduling/assessment-calls/public/assessment-calls";
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
 import { useSlotPickerProps } from "~/bounded-contexts/scheduling/assessment-calls/ui/shared/slot-picker-props";
 
 import { useRefreshSlotsFetcher } from "./api-client";

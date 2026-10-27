@@ -5,7 +5,7 @@ import {
 } from "react-router";
 
 import { RECIPE_BUILDER_ROUTE_HANDLE } from "~/bounded-contexts/programs/nutrition-library/public/paths";
-import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/server/guards/nutrition-library-context.server";
+import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
 
 import { RecipeBuilder } from "./recipe-builder";
 

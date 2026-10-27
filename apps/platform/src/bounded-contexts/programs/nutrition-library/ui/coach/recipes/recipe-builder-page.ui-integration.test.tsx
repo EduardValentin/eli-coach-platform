@@ -26,8 +26,8 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as editRecipe } from "~/bounded-contexts/programs/nutrition-library/api/recipes/recipe";
-import { clientAction as createRecipe } from "~/bounded-contexts/programs/nutrition-library/api/recipes/recipes";
+import { clientAction as editRecipe } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/recipes/recipe";
+import { clientAction as createRecipe } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/recipes/recipes";
 import type {
   FoodView,
   NutritionTagView,

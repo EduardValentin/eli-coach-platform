@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClientResourceListing } from "~/bounded-contexts/clients/client-resources/public/client-resources";
-import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/server/client-resources-composition.server";
-import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import {
+  type ClientResourcesFeature,
+  clientResourcesContext,
+} from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

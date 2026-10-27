@@ -8,11 +8,11 @@ import {
 
 import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
-import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 import { PreferencesSection } from "~/bounded-contexts/clients/client-profile/ui/client/settings/preferences-section";
 import { UnitsSection } from "~/bounded-contexts/clients/client-profile/ui/client/settings/units-section";
 import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import { SubscriptionSection } from "~/bounded-contexts/sales/coaching-sales/ui/client/settings/subscription-section";
 
 type SettingsPage = {

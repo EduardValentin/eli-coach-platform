@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ExerciseLibraryFeature } from "~/bounded-contexts/programs/exercise-library/server/exercise-library-composition.server";
-import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
+import {
+  type ExerciseLibraryFeature,
+  exerciseLibraryContext,
+} from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/server/coaching-sales-composition.server";
-import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import {
+  type CoachingSalesFeature,
+  coachingSalesContext,
+} from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
 import {
   contextEntry,
   createRequestArgs,

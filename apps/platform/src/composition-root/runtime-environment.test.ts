@@ -1,4 +1,4 @@
-import { resolveFeatureFlagOverridesMode } from "~/composition-root/feature-flag-overrides/feature-flags-config.server";
+import { resolveFeatureFlagOverridesMode } from "~/bounded-contexts/operations/feature-flags/config.server";
 import {
   loadRuntimeEnvironment,
   type RuntimeEnvironment,

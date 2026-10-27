@@ -25,12 +25,12 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as saveUnitPreference } from "~/bounded-contexts/clients/client-profile/api/client/unit-preference";
+import { clientAction as saveUnitPreference } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/client/unit-preference";
 import type { ClientSettingsView } from "~/bounded-contexts/clients/client-profile/public/client-settings";
 import type { OwnClientProfileView } from "~/bounded-contexts/clients/client-profile/public/own-client-profile";
 import { CLIENT_PROFILE_API_PATHS } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { CLIENT_ENDED_PATH } from "~/bounded-contexts/clients/clients/public/paths";
-import { clientAction as cancelSubscription } from "~/bounded-contexts/sales/coaching-sales/api/client/subscription-cancellation";
+import { clientAction as cancelSubscription } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/subscription-cancellation";
 import type { ClientSettings } from "~/bounded-contexts/sales/coaching-sales/public/client-subscription";
 import {
   CLIENT_SETTINGS_PATH,

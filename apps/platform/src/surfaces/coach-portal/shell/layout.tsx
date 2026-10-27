@@ -13,10 +13,10 @@ import {
   COACH_PORTAL_ROUTE_SEGMENT,
   type PortalRouteHandle,
 } from "~/bounded-contexts/access/accounts/public/paths";
-import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
 import { describeCheckInNotification } from "~/bounded-contexts/clients/check-ins/ui/shared/bell/check-in-bell-copy";
 import type { NotificationBellReply } from "~/bounded-contexts/clients/notifications/public/notifications";
-import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/adapters/inbound/http/context.server";
 import { useNotificationBell } from "~/bounded-contexts/clients/notifications/ui/shared/notification-bell";
 
 import {

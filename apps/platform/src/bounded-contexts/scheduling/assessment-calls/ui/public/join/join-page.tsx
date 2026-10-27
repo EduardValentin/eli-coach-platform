@@ -6,7 +6,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
 
 export async function loader({ context, params }: LoaderFunctionArgs) {
   if (!params.bookingId) {

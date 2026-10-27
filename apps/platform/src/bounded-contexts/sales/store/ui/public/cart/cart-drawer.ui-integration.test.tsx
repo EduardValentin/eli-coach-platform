@@ -23,7 +23,7 @@ import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detectio
 
 import { requiredName } from "~test-support/index";
 
-import { clientAction as acquireResources } from "~/bounded-contexts/sales/store/api/acquisitions/acquisitions";
+import { clientAction as acquireResources } from "~/bounded-contexts/sales/store/adapters/inbound/http/acquisitions/acquisitions";
 import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";

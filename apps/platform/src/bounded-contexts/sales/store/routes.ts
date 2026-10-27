@@ -14,30 +14,36 @@ export const storePublicRoutes = [
 ];
 
 export const storeApiRoutes = [
-  route(STORE_API_PATHS.catalog.slice(1), "./api/catalog/catalog.ts"),
+  route(
+    STORE_API_PATHS.catalog.slice(1),
+    "./adapters/inbound/http/catalog/catalog.ts",
+  ),
   route(
     STORE_API_PATHS.acquisitions.slice(1),
-    "./api/acquisitions/acquisitions.ts",
+    "./adapters/inbound/http/acquisitions/acquisitions.ts",
   ),
-  route(STORE_API_PATHS.downloads.slice(1), "./api/downloads/downloads.ts"),
+  route(
+    STORE_API_PATHS.downloads.slice(1),
+    "./adapters/inbound/http/downloads/downloads.ts",
+  ),
   route(
     `${STORE_API_PATHS.covers.slice(1)}/:assetKey`,
-    "./api/covers/covers.ts",
+    "./adapters/inbound/http/covers/covers.ts",
   ),
   route(
     "api/management/store/product-validations",
-    "./api/management/management-product-validations.ts",
+    "./adapters/inbound/http/management/management-product-validations.ts",
   ),
   route(
     "api/management/store/products",
-    "./api/management/management-products.ts",
+    "./adapters/inbound/http/management/management-products.ts",
   ),
   route(
     "api/management/store/products/:productId",
-    "./api/management/management-product.ts",
+    "./adapters/inbound/http/management/management-product.ts",
   ),
   route(
     "api/management/store/products/:productId/versions",
-    "./api/management/management-product-versions.ts",
+    "./adapters/inbound/http/management/management-product-versions.ts",
   ),
 ];

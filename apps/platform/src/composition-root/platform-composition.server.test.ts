@@ -31,7 +31,6 @@ function composePlatform() {
   return composePlatformFeature({
     app: createRuntimeEnvironment(),
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
-    featureFlags: { execute: async () => ({ WAITLIST_MODE: true }) },
     version: "dev",
   });
 }

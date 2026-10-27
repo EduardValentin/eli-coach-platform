@@ -8,7 +8,7 @@ import {
 
 import type { OnboardingPage } from "~/bounded-contexts/clients/client-profile/public/onboarding";
 import { ANSWER_REQUEST_COPY } from "~/bounded-contexts/clients/client-profile/public/onboarding-review-copy";
-import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/context.server";
 
 import { AnswerRequestCard } from "./answer-request-card";
 import { OnboardingWizard } from "./onboarding-wizard";

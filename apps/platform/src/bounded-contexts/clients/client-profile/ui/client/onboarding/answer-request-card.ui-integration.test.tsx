@@ -18,7 +18,7 @@ import {
 } from "vitest";
 
 import { CLIENT_PORTAL_PATH } from "~/bounded-contexts/access/accounts/public/paths";
-import { clientAction } from "~/bounded-contexts/clients/client-profile/api/onboarding/client-detail-answers";
+import { clientAction } from "~/bounded-contexts/clients/client-profile/adapters/inbound/http/onboarding/client-detail-answers";
 import type {
   AnswerDetailsRequest,
   OnboardingAnswerPage,

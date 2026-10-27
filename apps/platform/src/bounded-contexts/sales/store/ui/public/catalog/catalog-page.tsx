@@ -8,7 +8,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
-import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
+import { storeContext } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
 import {
   storeCatalogResponseSchema,
   type StoreProduct,

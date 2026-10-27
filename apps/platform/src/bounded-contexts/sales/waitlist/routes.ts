@@ -5,5 +5,5 @@ import { WAITLIST_API_PATH } from "./public/paths";
 const { route } = relative(import.meta.dirname);
 
 export const waitlistApiRoutes = [
-  route(WAITLIST_API_PATH.slice(1), "./api/waitlist.ts"),
+  route(WAITLIST_API_PATH.slice(1), "./adapters/inbound/http/waitlist.ts"),
 ];

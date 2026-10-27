@@ -26,8 +26,8 @@ import {
   vi,
 } from "vitest";
 
-import { clientAction as editExercise } from "~/bounded-contexts/programs/exercise-library/api/exercises/exercise";
-import { clientAction as createExercise } from "~/bounded-contexts/programs/exercise-library/api/exercises/exercises";
+import { clientAction as editExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise";
+import { clientAction as createExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercises";
 import type { ExerciseView } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 import {
   COACH_TRAINING_PATH,

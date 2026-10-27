@@ -27,22 +27,22 @@ export const exerciseLibraryCoachRoutes = [
 export const exerciseLibraryApiRoutes = [
   route(
     EXERCISE_LIBRARY_API_PATHS.exercises.slice(1),
-    "./api/exercises/exercises.ts",
+    "./adapters/inbound/http/exercises/exercises.ts",
   ),
   route(
     EXERCISE_LIBRARY_API_PATHS.exercise.slice(1),
-    "./api/exercises/exercise.ts",
+    "./adapters/inbound/http/exercises/exercise.ts",
   ),
   route(
     EXERCISE_LIBRARY_API_PATHS.exerciseArchive.slice(1),
-    "./api/exercises/exercise-archive.ts",
+    "./adapters/inbound/http/exercises/exercise-archive.ts",
   ),
   route(
     EXERCISE_LIBRARY_API_PATHS.exerciseRestore.slice(1),
-    "./api/exercises/exercise-restore.ts",
+    "./adapters/inbound/http/exercises/exercise-restore.ts",
   ),
   route(
     EXERCISE_LIBRARY_API_PATHS.exerciseVideo.slice(1),
-    "./api/exercises/exercise-video.ts",
+    "./adapters/inbound/http/exercises/exercise-video.ts",
   ),
 ];
