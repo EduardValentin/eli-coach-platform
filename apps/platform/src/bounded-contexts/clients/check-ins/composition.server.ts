@@ -24,7 +24,6 @@ import {
   SetUpCheckInSeriesUseCase,
   StopCheckInSeriesUseCase,
   WithdrawCheckInRequestUseCase,
-  type CheckInIncidents,
 } from "~/bounded-contexts/clients/check-ins/domain/check-in";
 import type {
   ClientIdentities,
@@ -61,6 +60,8 @@ import { InboxCheckInNotices } from "~/bounded-contexts/clients/check-ins/adapte
 import { PostgresCheckInSeries } from "~/bounded-contexts/clients/check-ins/adapters/outbound/persistence/series/postgres-check-in-series.server";
 import { EmailCheckInNotifications } from "~/bounded-contexts/clients/check-ins/adapters/outbound/email/email-check-in-notifications.server";
 import type { CheckInsFeature } from "~/bounded-contexts/clients/check-ins/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createCheckInsIncidents } from "~/bounded-contexts/clients/check-ins/adapters/outbound/logging/check-ins-incidents.server";
 
 type CheckInsFeatureHandles = {
   appBasePath: string;
@@ -74,7 +75,7 @@ type CheckInsFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   inbox: Pick<NotificationInbox, "record">;
-  incidents: CheckInIncidents;
+  logger: Logger;
   meetingRoom: CoachMeetingRoomSource;
   productEmail: ProductEmail;
   publicAppUrl: string;
@@ -92,6 +93,7 @@ type CheckInsComposition = {
 export function composeCheckInsFeature(
   handles: CheckInsFeatureHandles,
 ): CheckInsComposition {
+  const incidents = createCheckInsIncidents(handles.logger);
   const { availability, clock } = handles;
   const unitOfWork = createUnitOfWork(handles.database);
   const checkIns = new PostgresCheckIns({
@@ -109,7 +111,7 @@ export function composeCheckInsFeature(
   const answerPorts = {
     ...readPorts,
     inbox: new InboxCheckInNotices({ clock, inbox: handles.inbox }),
-    incidents: handles.incidents,
+    incidents,
     notifications: new EmailCheckInNotifications(handles.productEmail, {
       appBasePath: handles.appBasePath,
       clock,
@@ -118,7 +120,7 @@ export function composeCheckInsFeature(
       publicAppUrl: handles.publicAppUrl,
     }),
   };
-  const observedReadPorts = { ...readPorts, incidents: handles.incidents };
+  const observedReadPorts = { ...readPorts, incidents };
   const countCheckInsAwaiting = new CountCheckInsAwaitingUseCase(
     observedReadPorts,
   );

@@ -13,7 +13,6 @@ import {
   JoinWaitlistUseCase,
   Waitlist,
   type WaitlistConsentVersions,
-  type WaitlistIncidents,
 } from "~/bounded-contexts/sales/waitlist/domain/waitlist";
 import type { BotVerifier } from "~/shared/submission-checks/bot-detection/index.server";
 import type { ProductEmail } from "~/shared/email/index.server";
@@ -22,6 +21,8 @@ import { WaitlistController } from "~/bounded-contexts/sales/waitlist/adapters/i
 import { PostgresWaitlistRepository } from "~/bounded-contexts/sales/waitlist/adapters/outbound/persistence/repository.server";
 import { createWaitlistConfirmation } from "~/bounded-contexts/sales/waitlist/adapters/outbound/email/create-waitlist-confirmation.server";
 import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createWaitlistIncidents } from "~/bounded-contexts/sales/waitlist/adapters/outbound/logging/waitlist-incidents.server";
 
 type WaitlistComposition = {
   feature: WaitlistFeature;
@@ -35,7 +36,7 @@ type WaitlistFeatureHandles = {
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
-  incidents: WaitlistIncidents;
+  logger: Logger;
   privacyEmail: string;
   productEmail: ProductEmail;
   waitlist: WaitlistConfig;
@@ -49,6 +50,7 @@ const WAITLIST_CONSENT_VERSIONS = {
 export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
 ): WaitlistComposition {
+  const incidents = createWaitlistIncidents(handles.logger);
   const waitlist = Waitlist.configure({
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
@@ -64,7 +66,7 @@ export function composeWaitlistFeature(
         getWaitlist: new GetWaitlistUseCase({
           clock: handles.clock,
           featureFlags: handles.featureFlags,
-          incidents: handles.incidents,
+          incidents,
           waitlist,
           waitlistEntries,
         }),
@@ -75,7 +77,7 @@ export function composeWaitlistFeature(
           }),
           consentVersions: WAITLIST_CONSENT_VERSIONS,
           emailAcceptance: handles.emailAcceptance,
-          incidents: handles.incidents,
+          incidents,
           waitlist,
           waitlistEntries,
         }),

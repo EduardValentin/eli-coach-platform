@@ -11,7 +11,6 @@ import {
   OpenRecipePhotoUseCase,
   RecipePhotoSaving,
   StartRecipeUseCase,
-  type NutritionLibraryIncidents,
   type RecipePhotoRenditions,
   type RecipePhotoStore,
 } from "~/bounded-contexts/programs/nutrition-library/domain/nutrition";
@@ -26,11 +25,13 @@ import { RandomRecipePhotoIds } from "~/bounded-contexts/programs/nutrition-libr
 import { PostgresRecipeLibrary } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/persistence/recipes/recipe-library-repository.server";
 import { PostgresNutritionTags } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/persistence/tags/nutrition-tags-repository.server";
 import type { NutritionLibraryFeature } from "~/bounded-contexts/programs/nutrition-library/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createNutritionLibraryIncidents } from "~/bounded-contexts/programs/nutrition-library/adapters/outbound/logging/nutrition-library-incidents.server";
 
 type NutritionLibraryFeatureHandles = {
   clock: Clock;
   database: DatabaseClient;
-  incidents: NutritionLibraryIncidents;
+  logger: Logger;
   photoRenditions: RecipePhotoRenditions;
   photoStore: RecipePhotoStore;
 };
@@ -38,16 +39,17 @@ type NutritionLibraryFeatureHandles = {
 export function composeNutritionLibraryFeature(
   handles: NutritionLibraryFeatureHandles,
 ): NutritionLibraryFeature {
+  const incidents = createNutritionLibraryIncidents(handles.logger);
   const library = new PostgresFoodLibrary(handles.database);
   const recipes = new PostgresRecipeLibrary(handles.database);
   const tags = new PostgresNutritionTags(handles.database);
-  const writeHandles = { clock: handles.clock, incidents: handles.incidents };
+  const writeHandles = { clock: handles.clock, incidents };
   const recipeReads = { recipes, foods: library, tags };
   const photos = new RecipePhotoSaving({
     renditions: handles.photoRenditions,
     ids: new RandomRecipePhotoIds(),
     store: handles.photoStore,
-    incidents: handles.incidents,
+    incidents,
   });
 
   return {

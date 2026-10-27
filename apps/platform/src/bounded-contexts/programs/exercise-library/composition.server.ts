@@ -10,7 +10,6 @@ import {
   OpenExerciseVideoUseCase,
   RestoreExerciseUseCase,
   StageExerciseVideoUseCase,
-  type ExerciseLibraryIncidents,
   type ExerciseVideoFormatDetector,
   type ExerciseVideoStore,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
@@ -21,11 +20,13 @@ import { PostgresExerciseLibrary } from "~/bounded-contexts/programs/exercise-li
 import { RandomExerciseIds } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-ids.server";
 import { RandomExerciseVideoIds } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/exercises/random-exercise-video-ids.server";
 import type { ExerciseLibraryFeature } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createExerciseLibraryIncidents } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/logging/exercise-library-incidents.server";
 
 type ExerciseLibraryFeatureHandles = {
   clock: Clock;
   database: DatabaseClient;
-  incidents: ExerciseLibraryIncidents;
+  logger: Logger;
   videoFormats: ExerciseVideoFormatDetector;
   videoStore: ExerciseVideoStore;
 };
@@ -33,12 +34,13 @@ type ExerciseLibraryFeatureHandles = {
 export function composeExerciseLibraryFeature(
   handles: ExerciseLibraryFeatureHandles,
 ): ExerciseLibraryFeature {
+  const incidents = createExerciseLibraryIncidents(handles.logger);
   const library = new PostgresExerciseLibrary(handles.database);
   const { videoStore } = handles;
   const exerciseWriteDependencies = {
     library,
     clock: handles.clock,
-    incidents: handles.incidents,
+    incidents,
     formats: handles.videoFormats,
     videoIds: new RandomExerciseVideoIds(),
     store: videoStore,
@@ -65,13 +67,13 @@ export function composeExerciseLibraryFeature(
       restoreExercise: new RestoreExerciseUseCase({
         library,
         clock: handles.clock,
-        incidents: handles.incidents,
+        incidents,
       }),
       deleteExercise: new DeleteExerciseUseCase({
         library,
         videos: new ExerciseVideoCleanup({
           store: videoStore,
-          incidents: handles.incidents,
+          incidents,
         }),
       }),
     }),

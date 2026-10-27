@@ -41,12 +41,8 @@ function createManagementAuth(): {
   };
 }
 
-function createAcquisitionIncidents() {
-  return {
-    deliveryAcceptanceAuditPending: () => {},
-    deliveryRejected: () => {},
-    retryableDeliveryAuditPending: () => {},
-  };
+function createLogger() {
+  return { error: () => {}, warn: () => {}, info: () => {} };
 }
 
 describe("composeStoreFeature", () => {
@@ -63,7 +59,7 @@ describe("composeStoreFeature", () => {
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
       emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
+      logger: createLogger(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
@@ -88,7 +84,7 @@ describe("composeStoreFeature", () => {
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
       emailAcceptance: createEmailAcceptance("allowed"),
-      incidents: createAcquisitionIncidents(),
+      logger: createLogger(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
@@ -120,7 +116,7 @@ describe("composeStoreFeature", () => {
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
       emailAcceptance: createEmailAcceptance("refused"),
-      incidents: createAcquisitionIncidents(),
+      logger: createLogger(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",

@@ -169,12 +169,7 @@ function createHandles(
     contactEmail: "contact@evoa.fit",
     database: createDatabaseStub(),
     featureFlags: { execute: async () => featureFlags },
-    incidents: {
-      bookingModeReadFailed: () => {},
-      callsReadFailed: () => {},
-      notificationFailed: () => {},
-      slotsReadFailed: () => {},
-    },
+    logger: { error: () => {}, warn: () => {}, info: () => {} },
     meetingRoom: { current: async () => null },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",

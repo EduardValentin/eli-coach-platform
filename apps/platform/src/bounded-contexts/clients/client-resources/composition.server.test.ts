@@ -114,10 +114,14 @@ describe("composeClientResourcesFeature, for the client herself", () => {
 
     // assert
     expect(listing).toEqual({ status: "unavailable" });
-    expect(handles.incidents.resourceListingFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Client resources could not be listed.",
+      {
+        clientId: CLIENT_ID,
+        errorCategory: "client_resource_listing_failure",
+        errorClass: "Error",
+      },
+    );
   });
 
   it("counts her unopened resources in the clients' resources table and reports a failed count", async () => {
@@ -136,10 +140,14 @@ describe("composeClientResourcesFeature, for the client herself", () => {
 
     // assert
     expect(count).toBe(0);
-    expect(handles.incidents.unopenedCountFailed).toHaveBeenCalledWith({
-      clientId: CLIENT_ID,
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Unopened client resources could not be counted.",
+      {
+        clientId: CLIENT_ID,
+        errorCategory: "client_resource_unopened_count_failure",
+        errorClass: "Error",
+      },
+    );
   });
 
   it("looks the resource she opened up in the clients' resources table", async () => {
@@ -172,17 +180,7 @@ function createHandles() {
     documentPages: { read: vi.fn() },
     fileFormats: { detect: vi.fn() },
     imagePages: { render: vi.fn() },
-    incidents: {
-      resourceStored: vi.fn(),
-      resourceRefused: vi.fn(),
-      resourceAccessRefused: vi.fn(),
-      resourceStorageFailed: vi.fn(),
-      resourceListingFailed: vi.fn(),
-      resourceOpeningFailed: vi.fn(),
-      resourceChangeFailed: vi.fn(),
-      resourceFilesOrphaned: vi.fn(),
-      unopenedCountFailed: vi.fn(),
-    },
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     store: {
       storeOriginal: vi.fn(),
       storePage: vi.fn(),

@@ -9,7 +9,6 @@ import {
   MarkResourceOpenedUseCase,
   OpenResourcePreviewUseCase,
   RemoveClientResourceUseCase,
-  type ClientResourceIncidents,
   type ClientResourceStore,
   type ResourceDocumentPages,
   type ResourceFileFormatDetector,
@@ -24,6 +23,8 @@ import { ClientResourcesController } from "~/bounded-contexts/clients/client-res
 import { PostgresClientResources } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/client-resources-repository.server";
 import { RandomClientResourceIds } from "~/bounded-contexts/clients/client-resources/adapters/outbound/persistence/resources/random-client-resource-ids.server";
 import type { ClientResourcesFeature } from "~/bounded-contexts/clients/client-resources/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createClientResourcesIncidents } from "~/bounded-contexts/clients/client-resources/adapters/outbound/logging/client-resources-incidents.server";
 
 type ClientResourcesFeatureHandles = {
   clientReach: Pick<ClientReach, "findByAuthSubjectId" | "findById">;
@@ -32,17 +33,18 @@ type ClientResourcesFeatureHandles = {
   documentPages: ResourceDocumentPages;
   fileFormats: ResourceFileFormatDetector;
   imagePages: ResourceImagePages;
-  incidents: ClientResourceIncidents;
+  logger: Logger;
   store: ClientResourceStore;
 };
 
 export function composeClientResourcesFeature(
   handles: ClientResourcesFeatureHandles,
 ): ClientResourcesFeature {
+  const incidents = createClientResourcesIncidents(handles.logger);
   const accessPorts = {
     resources: new PostgresClientResources(handles.database),
     clients: handles.clientReach,
-    incidents: handles.incidents,
+    incidents,
   };
   const servingPorts = { ...accessPorts, store: handles.store };
 

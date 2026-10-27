@@ -62,7 +62,7 @@ import {
 } from "~/bounded-contexts/scheduling/composition.server";
 import { createPlatformDatabase } from "~/composition-root/database.server";
 import { resolveEmailSubaddressPolicy } from "~/composition-root/email-subaddress-policy.server";
-import { createConsoleLogger } from "~/composition-root/logger.server";
+import { createConsoleLogger } from "~/shared/logging/console-logger.server";
 import {
   composePlatformFeature,
   type PlatformFeature,
@@ -94,7 +94,7 @@ export function createPlatformContainer(options: {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock = systemClock();
-  const incidents = createConsoleLogger();
+  const logger = createConsoleLogger();
   const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
@@ -127,7 +127,7 @@ export function createPlatformContainer(options: {
     database: database.client,
     emailAcceptance,
     featureFlags: operations.reader,
-    incidents,
+    logger,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
@@ -153,8 +153,8 @@ export function createPlatformContainer(options: {
       returnUrl: clientPortalUrl(environment),
     }),
     imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
-    incidents,
     linkTokens,
+    logger,
     meetingRoom: scheduling.handles.meetingRoom,
     productEmail,
     progressPhotoRenditions: createProgressPhotoRenditions(),
@@ -176,7 +176,7 @@ export function createPlatformContainer(options: {
   const programs = composePrograms({
     clock,
     database: database.client,
-    incidents,
+    logger,
     photoRenditions: createRecipePhotoRenditions(RECIPE_PHOTO_RENDITION),
     photoStore: createRecipePhotoStore(environment.RECIPE_PHOTO_ROOT),
     videoFormats: createExerciseVideoFormatDetector(),
@@ -198,8 +198,8 @@ export function createPlatformContainer(options: {
     database: database.client,
     emailAcceptance,
     featureFlags: operations.reader,
-    incidents,
     linkTokens,
+    logger,
     managementAuth: {
       authenticator: managementAuthenticator,
       config: managementAuthConfig,

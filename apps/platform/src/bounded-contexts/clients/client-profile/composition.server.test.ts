@@ -82,7 +82,7 @@ describe("composeClientProfileFeature", () => {
     );
   });
 
-  it("refuses photos whose consent it cannot read through the profiles it composes, reporting through the incidents it is handed", async () => {
+  it("refuses photos whose consent it cannot read through the profiles it composes, reporting through the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const { handles: published } = composeClientProfileFeature(handles);
@@ -103,13 +103,17 @@ describe("composeClientProfileFeature", () => {
 
     // assert
     expect(outcomes).toEqual({ front: "refused" });
-    expect(handles.incidents.progressPhotoRefused).toHaveBeenCalledWith({
-      clientId: UNKNOWN_CLIENT_ID,
-      entryId: UNKNOWN_ENTRY_ID,
-      view: "front",
-      receivedBytes: 3,
-      reason: "storage-failed",
-    });
+    expect(handles.logger.warn).toHaveBeenCalledWith(
+      "Progress photo refused.",
+      {
+        clientId: UNKNOWN_CLIENT_ID,
+        entryId: UNKNOWN_ENTRY_ID,
+        eventCategory: "progress_photo_refused",
+        reason: "storage-failed",
+        receivedBytes: 3,
+        view: "front",
+      },
+    );
     expect(handles.progressPhotoRenditions.render).not.toHaveBeenCalled();
   });
 });
@@ -128,14 +132,7 @@ function createHandles() {
     },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
-    incidents: {
-      measurementEntrySaved: vi.fn(),
-      progressPhotoStored: vi.fn(),
-      progressPhotoRefused: vi.fn(),
-      progressPhotoDeleted: vi.fn(),
-      progressPhotoAccessRefused: vi.fn(),
-      clientAvatarFileOrphaned: vi.fn(),
-    },
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     progressPhotoRenditions: { render: vi.fn() },
     progressPhotoStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
   };
@@ -221,7 +218,10 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.incidents.onboardingDraftSaved).not.toHaveBeenCalled();
+    expect(handles.logger.info).not.toHaveBeenCalledWith(
+      "Client onboarding draft saved.",
+      expect.anything(),
+    );
   });
 
   it("refuses a submission from an account with no client record without stamping anything or attaching its photos", async () => {
@@ -337,19 +337,7 @@ function createOnboardingHandles() {
     contactEmail: "contact@evoa.fit",
     clientSettings: { findByClientId: vi.fn().mockResolvedValue(null) },
     database: createUnreachableDatabase(),
-    incidents: {
-      onboardingAnswersApproved: vi.fn(),
-      onboardingDetailsAnswered: vi.fn(),
-      onboardingDetailsRefused: vi.fn(),
-      onboardingDetailsRequestEmailFailed: vi.fn(),
-      onboardingDetailsRequested: vi.fn(),
-      onboardingDraftSaveFailed: vi.fn(),
-      onboardingDraftSaved: vi.fn(),
-      onboardingReviewOpened: vi.fn(),
-      onboardingReviewStampsRepaired: vi.fn(),
-      onboardingSubmissionAccepted: vi.fn(),
-      onboardingSubmissionRefused: vi.fn(),
-    },
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     measurementIds: { generate: () => "entry-1" },
     measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
     onboardingClients: {

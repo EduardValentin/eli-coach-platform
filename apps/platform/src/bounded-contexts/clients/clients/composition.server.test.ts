@@ -196,10 +196,10 @@ describe("composeClientsFeature client reach", () => {
 describe("composeClientsFeature coach clients", () => {
   it("answers no clients and reports the failure when the roster cannot be read", async () => {
     // arrange
-    const incidents = createIncidents();
+    const logger = createLogger();
     const { feature } = composeClientsFeature({
       ...createHandles(),
-      incidents,
+      logger,
     });
 
     // act
@@ -209,8 +209,12 @@ describe("composeClientsFeature coach clients", () => {
 
     // assert
     expect(roster).toEqual({ clients: null });
-    expect(incidents.rosterReadFailed).toHaveBeenCalledWith(
-      new Error("database down"),
+    expect(logger.error).toHaveBeenCalledWith(
+      "Client roster could not be read.",
+      {
+        errorCategory: "client_roster_read_failure",
+        errorClass: "Error",
+      },
     );
   });
 
@@ -273,23 +277,18 @@ function createHandles(): ClientsFeatureHandles {
         throw new Error("no identity invitation expected");
       },
     },
-    incidents: createIncidents(),
     linkTokens: {
       generator: createTokenGenerator(),
       hasher: createTokenHasher(),
     },
+    logger: createLogger(),
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };
 }
 
-function createIncidents() {
-  return {
-    invitationEmailFailed: vi.fn(),
-    invitationResendFailed: vi.fn(),
-    invitationResent: vi.fn(),
-    rosterReadFailed: vi.fn(),
-  };
+function createLogger() {
+  return { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
 }
 
 function createDatabaseAnswering(

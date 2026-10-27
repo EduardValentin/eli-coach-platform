@@ -21,10 +21,8 @@ import {
   UpdateOwnClientProfileUseCase,
   UploadClientAvatarAsCoachUseCase,
   UploadOwnClientAvatarUseCase,
-  type ClientAvatarIncidents,
   type ClientAvatarRenditions,
   type ClientAvatarStore,
-  type MeasurementIncidents,
   type ProgressPhotoRenditions,
   type ProgressPhotoStore,
 } from "~/bounded-contexts/clients/client-profile/domain/client-profile";
@@ -78,7 +76,6 @@ import {
   RequestOnboardingDetailsUseCase,
   SaveOnboardingDraftUseCase,
   SubmitOnboardingUseCase,
-  type ClientOnboardingIncidents,
   type OnboardingClients,
   type OnboardingReviewStamps,
   type OnboardingSubmissionStamps,
@@ -98,6 +95,8 @@ import {
   type ReviewStampWriter,
 } from "~/bounded-contexts/clients/client-profile/adapters/outbound/persistence/onboarding/reviews/onboarding-reviews-repository.server";
 import { EmailOnboardingDetailsNotifications } from "~/bounded-contexts/clients/client-profile/adapters/outbound/email/onboarding/email-onboarding-details-notifications.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createClientProfileIncidents } from "~/bounded-contexts/clients/client-profile/adapters/outbound/logging/client-profile-incidents.server";
 
 type ClientProfileComposition = {
   feature: ClientProfileFeature;
@@ -122,7 +121,7 @@ type ClientProfileFeatureHandles = {
   clientReach: ClientReach;
   clock: Clock;
   database: DatabaseClient;
-  incidents: MeasurementIncidents & ClientAvatarIncidents;
+  logger: Logger;
   progressPhotoRenditions: ProgressPhotoRenditions;
   progressPhotoStore: ProgressPhotoStore;
 };
@@ -131,6 +130,7 @@ export function composeClientProfileFeature(
   handles: ClientProfileFeatureHandles,
 ): ClientProfileComposition {
   const { clock } = handles;
+  const incidents = createClientProfileIncidents(handles.logger);
   const avatars = new PostgresClientAvatars(handles.database);
   const measurements = new PostgresClientMeasurements(handles.database);
   const records = new PostgresClientMeasurementRecords(handles.database);
@@ -142,7 +142,7 @@ export function composeClientProfileFeature(
     clients: handles.clientReach,
     photos,
     store: handles.progressPhotoStore,
-    incidents: handles.incidents,
+    incidents,
   };
   const photoIntakePorts = {
     ...progressPhotoPorts,
@@ -156,7 +156,7 @@ export function composeClientProfileFeature(
     avatarIds: new RandomClientAvatarIds(),
     store: handles.clientAvatarStore,
     renditions: handles.clientAvatarRenditions,
-    incidents: handles.incidents,
+    incidents,
     clock,
   };
   const profileReadingPorts = {
@@ -266,7 +266,7 @@ type ClientOnboardingFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  incidents: ClientOnboardingIncidents;
+  logger: Logger;
   measurementIds: MeasurementIds;
   measurements: ClientMeasurementsSource;
   onboardingClients: OnboardingClients;
@@ -283,7 +283,8 @@ type ClientOnboardingFeatureHandles = {
 export function composeClientOnboardingFeature(
   handles: ClientOnboardingFeatureHandles,
 ): ClientOnboardingFeature {
-  const { clock, incidents } = handles;
+  const { clock } = handles;
+  const incidents = createClientProfileIncidents(handles.logger);
   const participants = new OnboardingParticipants({
     clients: handles.onboardingClients,
     identities: handles.clientIdentities,

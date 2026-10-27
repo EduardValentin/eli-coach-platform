@@ -27,7 +27,6 @@ import {
   StartProgramNowUseCase,
   type CoachingEndHandler,
   type CoachingPeriodHandler,
-  type CoachingSubscriptionIncidents,
   type PaidClientAdmission,
   type PaymentCheckout,
   type PaymentCustomerCards,
@@ -40,7 +39,6 @@ import {
   ReadCallSalesStatesUseCase,
   ResolvePaymentLinkUseCase,
   SendPaymentLinkUseCase,
-  type CoachingSalesIncidents,
   type PaymentLinkTokenGenerator,
   type PaymentLinkTokenHasher,
 } from "~/bounded-contexts/sales/coaching-sales/domain/payment-link";
@@ -48,7 +46,6 @@ import type { Clock } from "~/bounded-contexts/sales/coaching-sales/domain/clock
 import type { EmailAcceptance } from "~/bounded-contexts/sales/coaching-sales/domain/email-acceptance";
 import type { ProductEmail } from "~/shared/email/index.server";
 import type { PaymentEvents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-events.server";
-import type { PaymentWebhookIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/payments/payment-webhook-incidents.server";
 
 import { SubscriptionController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/client/subscription-controller.server";
 import { CoachSalesController } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/coach/coach-sales-controller.server";
@@ -74,6 +71,8 @@ import {
   createRefundNotifications,
 } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/email/create-coaching-sales-notifications.server";
 import type { CoachingSalesFeature } from "~/bounded-contexts/sales/coaching-sales/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createCoachingSalesIncidents } from "~/bounded-contexts/sales/coaching-sales/adapters/outbound/logging/coaching-sales-incidents.server";
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
@@ -94,9 +93,7 @@ export type CoachingSalesFeatureHandles = {
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
-  incidents: CoachingSalesIncidents &
-    CoachingSubscriptionIncidents &
-    PaymentWebhookIncidents;
+  logger: Logger;
   linkTokens: {
     generator: PaymentLinkTokenGenerator;
     hasher: PaymentLinkTokenHasher;
@@ -118,6 +115,7 @@ export type CoachingSalesFeatureHandles = {
 export function composeCoachingSalesFeature(
   handles: CoachingSalesFeatureHandles,
 ): CoachingSalesComposition {
+  const incidents = createCoachingSalesIncidents(handles.logger);
   const { clock, database } = handles;
   const unitOfWork = createUnitOfWork(database);
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
@@ -137,7 +135,7 @@ export function composeCoachingSalesFeature(
   const { generator: tokenGenerator, hasher: tokenHasher } = handles.linkTokens;
   const salesWindow = new CoachingSalesWindow({
     featureFlags: handles.featureFlags,
-    incidents: handles.incidents,
+    incidents,
   });
   const paymentLinkPorts = {
     calls: handles.assessmentCallReader,
@@ -157,7 +155,7 @@ export function composeCoachingSalesFeature(
     clock,
     coachingEnds: handles.coachingEnds,
     coachingPeriods: handles.coachingPeriods,
-    incidents: handles.incidents,
+    incidents,
     paymentSubscriptions: handles.paymentSubscriptions,
     subscriptions,
   };
@@ -179,7 +177,7 @@ export function composeCoachingSalesFeature(
     }),
     mirrorPaymentCard: new MirrorPaymentCardUseCase({
       cards: paymentCards,
-      incidents: handles.incidents,
+      incidents,
       subscriptions,
     }),
     readClientSubscription: new ReadClientSubscriptionUseCase({
@@ -198,7 +196,7 @@ export function composeCoachingSalesFeature(
     refreshPaymentCard: new RefreshPaymentCardUseCase({
       cards: paymentCards,
       customerCards: handles.paymentCustomerCards,
-      incidents: handles.incidents,
+      incidents,
     }),
     startProgramNow: new StartProgramNowUseCase({
       ...subscriptionPorts,
@@ -227,7 +225,7 @@ export function composeCoachingSalesFeature(
       calls: handles.assessmentCallReader,
       clientIds: handles.clientIds,
       clock,
-      incidents: handles.incidents,
+      incidents,
       paymentCheckout: handles.paymentCheckout,
       paymentSubscriptions: handles.paymentSubscriptions,
       purchases,
@@ -240,7 +238,7 @@ export function composeCoachingSalesFeature(
     sendPaymentLink: new SendPaymentLinkUseCase({
       ...paymentLinkPorts,
       ids: new RandomPaymentLinkIds(),
-      incidents: handles.incidents,
+      incidents,
       notifications: createCoachingSalesNotifications(handles.productEmail, {
         appBasePath: handles.appBasePath,
         clock,
@@ -292,7 +290,7 @@ export function composeCoachingSalesFeature(
           mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
         }),
         completionHandlersByPurpose: byPurpose(paymentCompletionHandler),
-        incidents: handles.incidents,
+        incidents,
         paymentEvents: handles.paymentEvents,
         refundHandler: subscriptionChangeHandler,
         signingSecret: handles.webhookSigningSecret,

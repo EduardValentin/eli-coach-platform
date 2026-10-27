@@ -38,7 +38,7 @@ describe("composeCoachingSalesFeature", () => {
 
   it("closes checkout and its confirmation when the sales mode cannot be read", async () => {
     // arrange
-    const incidents = createIncidents();
+    const logger = createLogger();
     const { feature } = composeCoachingSalesFeature({
       ...createHandles({}),
       featureFlags: {
@@ -46,7 +46,7 @@ describe("composeCoachingSalesFeature", () => {
           throw new Error("database down");
         },
       },
-      incidents,
+      logger,
     });
 
     // act
@@ -64,7 +64,15 @@ describe("composeCoachingSalesFeature", () => {
     // assert
     await expect(confirmation).rejects.toMatchObject({ status: 404 });
     expect(checkout.status).toBe(404);
-    expect(incidents.salesModeReadFailed).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith(
+      "Coaching sales mode feature flag read failed.",
+      {
+        errorCategory: "coaching_sales_mode_read_failure",
+        errorClass: "Error",
+        errorMessage: "database down",
+      },
+    );
   });
 
   it("answers a short token with the call-first page without reading any link", async () => {
@@ -82,8 +90,8 @@ describe("composeCoachingSalesFeature", () => {
 
   it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
     // arrange
-    const incidents = createIncidents();
-    const handles = { ...createHandles({ WAITLIST_MODE: true }), incidents };
+    const logger = createLogger();
+    const handles = { ...createHandles({ WAITLIST_MODE: true }), logger };
     const paidSession = await openCheckoutSession(handles.paymentCheckout);
     const { feature } = composeCoachingSalesFeature({
       ...handles,
@@ -117,10 +125,14 @@ describe("composeCoachingSalesFeature", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(incidents.paymentEventRejected).toHaveBeenCalledWith({
-      eventId: "evt_1",
-      reason: "call_not_found",
-    });
+    expect(logger.error).toHaveBeenCalledWith(
+      "Payment event was not recorded.",
+      {
+        errorCategory: "payment_event_rejected",
+        eventId: "evt_1",
+        reason: "call_not_found",
+      },
+    );
   });
 });
 
@@ -244,11 +256,11 @@ function createHandles(
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
-    incidents: createIncidents(),
     linkTokens: {
       generator: createTokenGenerator(),
       hasher: createTokenHasher(),
     },
+    logger: createLogger(),
     openClientProfile: async () => undefined,
     paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: payments.checkout,
@@ -269,28 +281,8 @@ function createHandles(
   };
 }
 
-function createIncidents() {
-  return {
-    paymentCardRefreshFailed: vi.fn(),
-    coachingEndNotPropagated: vi.fn(),
-    coachingPeriodNotPropagated: vi.fn(),
-    paymentCardEventMirrored: vi.fn(),
-    paymentEventHandlingFailed: vi.fn(),
-    paymentEventRejected: vi.fn(),
-    paymentEventUnrouted: vi.fn(),
-    paymentMethodSessionOpened: vi.fn(),
-    programStartedNow: vi.fn(),
-    refundNotificationFailed: vi.fn(),
-    refundSettled: vi.fn(),
-    renewalHoldApplied: vi.fn(),
-    renewalHoldFailed: vi.fn(),
-    renewalHoldLiftFailed: vi.fn(),
-    subscriptionCancellationFailed: vi.fn(),
-    subscriptionCancelled: vi.fn(),
-    subscriptionEventReconciled: vi.fn(),
-    paymentLinkEmailFailed: vi.fn(),
-    salesModeReadFailed: vi.fn(),
-  };
+function createLogger() {
+  return { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
 }
 
 function createUnreachableDatabase(): DatabaseClient {

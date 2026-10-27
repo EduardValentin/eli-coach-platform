@@ -17,7 +17,6 @@ import {
   ReadClientInvitationUseCase,
   ResendInvitationUseCase,
   ResolveInvitationUseCase,
-  type ClientInvitationIncidents,
   type IdentityInvitations,
   type InvitationTokenGenerator,
   type InvitationTokenHasher,
@@ -35,7 +34,6 @@ import type {
 import {
   ListClientsUseCase,
   ReadClientRecordUseCase,
-  type ClientRosterIncidents,
 } from "~/bounded-contexts/clients/clients/domain/client-roster";
 import type { PaidClientAdmission } from "~/bounded-contexts/sales/coaching-sales/domain/coaching-subscription";
 import type { Clock } from "~/bounded-contexts/clients/clients/domain/clock";
@@ -64,6 +62,8 @@ import { PostgresClientJourneys } from "~/bounded-contexts/clients/clients/adapt
 import { writeReviewStamps } from "~/bounded-contexts/clients/clients/adapters/outbound/persistence/journeys/review-stamps.server";
 import { EmailClientInvitationNotifications } from "~/bounded-contexts/clients/clients/adapters/outbound/email/email-client-invitation-notifications.server";
 import type { ClientsFeature } from "~/bounded-contexts/clients/clients/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createClientsIncidents } from "~/bounded-contexts/clients/clients/adapters/outbound/logging/clients-incidents.server";
 
 type ClientsComposition = {
   feature: ClientsFeature;
@@ -95,7 +95,7 @@ export type ClientsFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   identityInvitations: IdentityInvitations;
-  incidents: ClientInvitationIncidents & ClientRosterIncidents;
+  logger: Logger;
   linkTokens: {
     generator: InvitationTokenGenerator;
     hasher: InvitationTokenHasher;
@@ -107,6 +107,7 @@ export type ClientsFeatureHandles = {
 export function composeClientsFeature(
   handles: ClientsFeatureHandles,
 ): ClientsComposition {
+  const incidents = createClientsIncidents(handles.logger);
   const { clock, database } = handles;
   const clientIdentities = new PostgresClientIdentities(database);
   const clientReach = new PostgresClientReach({ clock, database });
@@ -121,7 +122,7 @@ export function composeClientsFeature(
     clients: new PostgresInvitedClients(database),
     clock,
     identity: handles.identityInvitations,
-    incidents: handles.incidents,
+    incidents,
     invitations,
     notifications: new EmailClientInvitationNotifications(
       handles.productEmail,
@@ -166,7 +167,7 @@ export function composeClientsFeature(
       coachClients: new CoachClientsController({
         listClients: new ListClientsUseCase({
           clock,
-          incidents: handles.incidents,
+          incidents,
           roster,
         }),
         readClientInvitation: new ReadClientInvitationUseCase({

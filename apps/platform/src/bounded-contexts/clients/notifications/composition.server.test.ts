@@ -2,9 +2,9 @@ import type { DatabaseClient } from "~/shared/database";
 import type {
   NotificationExpirySource,
   NotificationInbox,
-  NotificationIncidents,
 } from "~/bounded-contexts/clients/notifications/domain/notification";
 import { describe, expect, it, vi } from "vitest";
+import type { Logger } from "~/shared/logging/console-logger.server";
 import type { SessionAccount } from "~/bounded-contexts/access/public/session";
 
 import { PostgresNotificationInbox } from "~/bounded-contexts/clients/notifications/adapters/outbound/persistence/postgres-notification-inbox.server";
@@ -93,10 +93,7 @@ function createHandles() {
     clock: { now: () => NOW },
     expirySources: [expirySource],
     inbox,
-    incidents: {
-      notificationBellReadFailed: vi.fn(),
-      notificationExpiriesFailed: vi.fn(),
-    } satisfies NotificationIncidents,
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } satisfies Logger,
   };
 }
 

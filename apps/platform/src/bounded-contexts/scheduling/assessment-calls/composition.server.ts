@@ -7,7 +7,6 @@ import {
   ListAssessmentCallsUseCase,
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
-  type AssessmentCallIncidents,
   type AssessmentCallReader,
 } from "~/bounded-contexts/scheduling/assessment-calls/domain/assessment-call";
 import type {
@@ -31,6 +30,8 @@ import {
 } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/persistence/repository.server";
 import { createAssessmentCallNotifications } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/email/create-assessment-call-notifications.server";
 import type { AssessmentCallsFeature } from "~/bounded-contexts/scheduling/assessment-calls/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createAssessmentCallsIncidents } from "~/bounded-contexts/scheduling/assessment-calls/adapters/outbound/logging/assessment-calls-incidents.server";
 
 type AssessmentCallsComposition = {
   feature: AssessmentCallsFeature;
@@ -50,7 +51,7 @@ export type AssessmentCallsFeatureHandles = {
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
   featureFlags: FeatureFlagReader;
-  incidents: AssessmentCallIncidents;
+  logger: Logger;
   meetingRoom: CoachMeetingRoomSource;
   productEmail: ProductEmail;
   publicAppUrl: string;
@@ -59,6 +60,7 @@ export type AssessmentCallsFeatureHandles = {
 export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
 ): AssessmentCallsComposition {
+  const incidents = createAssessmentCallsIncidents(handles.logger);
   const { availability } = handles;
   const unitOfWork = createUnitOfWork(handles.database);
   const reservations = new PostgresAssessmentCallRepository({
@@ -67,7 +69,7 @@ export function composeAssessmentCallsFeature(
   });
   const bookingWindow = new AssessmentCallBookingWindow({
     featureFlags: handles.featureFlags,
-    incidents: handles.incidents,
+    incidents,
   });
 
   return {
@@ -81,7 +83,7 @@ export function composeAssessmentCallsFeature(
           clock: handles.clock,
           emailAcceptance: handles.emailAcceptance,
           ids: new RandomAssessmentCallIds(),
-          incidents: handles.incidents,
+          incidents,
           notifications: createAssessmentCallNotifications(
             handles.productEmail,
             {
@@ -100,7 +102,7 @@ export function composeAssessmentCallsFeature(
           bookingWindow,
           calendar: handles.calendar,
           clock: handles.clock,
-          incidents: handles.incidents,
+          incidents,
         }),
         resolveJoinLink: new ResolveJoinLinkUseCase({
           meetingRoom: handles.meetingRoom,
@@ -112,7 +114,7 @@ export function composeAssessmentCallsFeature(
         clock: handles.clock,
         listAssessmentCalls: new ListAssessmentCallsUseCase({
           availability,
-          incidents: handles.incidents,
+          incidents,
           reservations,
         }),
       }),

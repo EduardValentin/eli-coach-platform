@@ -36,10 +36,7 @@ describe("composeWaitlistFeature", () => {
           throw new Error("database down");
         },
       },
-      incidents: {
-        confirmationDeliveryFailed: () => {},
-        waitlistModeReadFailed: () => {},
-      },
+      logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),
       waitlist: createWaitlistConfig(),
@@ -61,10 +58,7 @@ describe("composeWaitlistFeature", () => {
       database: createDatabaseWithReducedAllocation(),
       emailAcceptance: createEmailAcceptance("allowed"),
       featureFlags: { execute: async () => ({}) },
-      incidents: {
-        confirmationDeliveryFailed: () => {},
-        waitlistModeReadFailed: () => {},
-      },
+      logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),
       waitlist: createWaitlistConfig(),
@@ -87,10 +81,7 @@ describe("composeWaitlistFeature", () => {
       database: createDatabaseStub(),
       emailAcceptance: createEmailAcceptance("refused"),
       featureFlags: { execute: async () => ({}) },
-      incidents: {
-        confirmationDeliveryFailed: () => {},
-        waitlistModeReadFailed: () => {},
-      },
+      logger: { error: () => {}, warn: () => {}, info: () => {} },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),
       waitlist: createWaitlistConfig(),

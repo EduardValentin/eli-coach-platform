@@ -1,8 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import {
-  AcquireProductsUseCase,
-  type AcquisitionIncidents,
-} from "~/bounded-contexts/sales/store/domain/acquisition";
+import { AcquireProductsUseCase } from "~/bounded-contexts/sales/store/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "~/bounded-contexts/sales/store/domain/download-grant";
 import type { EmailAcceptance } from "~/bounded-contexts/sales/store/domain/email-acceptance";
 import {
@@ -47,6 +44,8 @@ import {
 import { PostgresStoreProductPublicationRepository } from "~/bounded-contexts/sales/store/adapters/outbound/persistence/publications/publication-repository.server";
 import { createProductDelivery } from "~/bounded-contexts/sales/store/adapters/outbound/email/create-product-delivery.server";
 import type { StoreFeature } from "~/bounded-contexts/sales/store/adapters/inbound/http/context.server";
+import type { Logger } from "~/shared/logging/console-logger.server";
+import { createStoreIncidents } from "~/bounded-contexts/sales/store/adapters/outbound/logging/store-incidents.server";
 
 export type StoreFeatureHandles = {
   appBasePath: string;
@@ -55,7 +54,7 @@ export type StoreFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   emailAcceptance: EmailAcceptance;
-  incidents: AcquisitionIncidents;
+  logger: Logger;
   managementAuth: {
     authenticator: ManagementAuthenticator;
     config: ManagementAuthConfig;
@@ -74,6 +73,7 @@ const STORE_CONSENT_VERSIONS = {
 export function composeStoreFeature(
   handles: StoreFeatureHandles,
 ): StoreFeature {
+  const incidents = createStoreIncidents(handles.logger);
   const catalogRepository = new PostgresStoreCatalogRepository(
     handles.database,
   );
@@ -99,7 +99,7 @@ export function composeStoreFeature(
       publicAppUrl: handles.publicAppUrl,
     }),
     emailAcceptance: handles.emailAcceptance,
-    incidents: handles.incidents,
+    incidents,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });

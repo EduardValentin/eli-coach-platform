@@ -42,7 +42,7 @@ describe("composeExerciseLibraryFeature", () => {
     await expect(listing).rejects.toThrow("database down");
   });
 
-  it("reports a creation that could not reach the exercises table to the incidents it is handed", async () => {
+  it("reports a creation that could not reach the exercises table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeExerciseLibraryFeature(handles);
@@ -54,12 +54,13 @@ describe("composeExerciseLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.exerciseCreationFailed).toHaveBeenCalledWith({
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Exercise could not be created.",
+      { errorCategory: "exercise_creation_failure", errorClass: "Error" },
+    );
   });
 
-  it("reports an edit that could not reach the exercises table to the incidents it is handed", async () => {
+  it("reports an edit that could not reach the exercises table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeExerciseLibraryFeature(handles);
@@ -72,10 +73,14 @@ describe("composeExerciseLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.exerciseEditFailed).toHaveBeenCalledWith({
-      exerciseId: EXERCISE_ID,
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Exercise edit could not be written.",
+      {
+        errorCategory: "exercise_edit_failure",
+        errorClass: "Error",
+        exerciseId: EXERCISE_ID,
+      },
+    );
   });
 });
 
@@ -117,12 +122,7 @@ function createHandles() {
   return {
     clock: { now: () => new Date("2026-10-14T09:00:00.000Z") },
     database: createUnreachableDatabase(),
-    incidents: {
-      exerciseCreationFailed: vi.fn(),
-      exerciseEditFailed: vi.fn(),
-      exerciseRestoreFailed: vi.fn(),
-      videoCleanupFailed: vi.fn(),
-    },
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     videoFormats: { detect: vi.fn(async () => "mp4") },
     videoStore: {
       receive: vi.fn(async (bytes: AsyncIterable<Uint8Array>) => {

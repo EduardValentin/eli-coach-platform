@@ -50,7 +50,7 @@ describe("composeNutritionLibraryFeature", () => {
     await expect(listing).rejects.toThrow("database down");
   });
 
-  it("reports a creation that could not reach the foods table to the incidents it is handed", async () => {
+  it("reports a creation that could not reach the foods table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeNutritionLibraryFeature(handles);
@@ -62,12 +62,13 @@ describe("composeNutritionLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.foodCreationFailed).toHaveBeenCalledWith({
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Food could not be created.",
+      { errorCategory: "food_creation_failure", errorClass: "Error" },
+    );
   });
 
-  it("reports an edit that could not reach the foods table to the incidents it is handed", async () => {
+  it("reports an edit that could not reach the foods table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeNutritionLibraryFeature(handles);
@@ -80,10 +81,14 @@ describe("composeNutritionLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.foodEditFailed).toHaveBeenCalledWith({
-      foodId: FOOD_ID,
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Food edit could not be written.",
+      {
+        errorCategory: "food_edit_failure",
+        errorClass: "Error",
+        foodId: FOOD_ID,
+      },
+    );
   });
 
   it("lists the recipes from the recipes table", async () => {
@@ -97,7 +102,7 @@ describe("composeNutritionLibraryFeature", () => {
     await expect(listing).rejects.toThrow("database down");
   });
 
-  it("reports a recipe creation that could not reach the recipes table to the incidents it is handed", async () => {
+  it("reports a recipe creation that could not reach the recipes table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeNutritionLibraryFeature(handles);
@@ -109,12 +114,13 @@ describe("composeNutritionLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.recipeCreationFailed).toHaveBeenCalledWith({
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Recipe could not be created.",
+      { errorCategory: "recipe_creation_failure", errorClass: "Error" },
+    );
   });
 
-  it("reports a recipe edit that could not reach the recipes table to the incidents it is handed", async () => {
+  it("reports a recipe edit that could not reach the recipes table to the logger it is handed", async () => {
     // arrange
     const handles = createHandles();
     const feature = composeNutritionLibraryFeature(handles);
@@ -127,10 +133,14 @@ describe("composeNutritionLibraryFeature", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(handles.incidents.recipeEditFailed).toHaveBeenCalledWith({
-      recipeId: RECIPE_ID,
-      error: new Error("database down"),
-    });
+    expect(handles.logger.error).toHaveBeenCalledWith(
+      "Recipe edit could not be written.",
+      {
+        errorCategory: "recipe_edit_failure",
+        errorClass: "Error",
+        recipeId: RECIPE_ID,
+      },
+    );
   });
 
   it("opens a recipe photo by finding its recipe in the recipes table before the photo store", async () => {
@@ -181,13 +191,7 @@ function createHandles() {
   return {
     clock: { now: () => new Date("2026-10-14T09:00:00.000Z") },
     database: createUnreachableDatabase(),
-    incidents: {
-      foodCreationFailed: vi.fn(),
-      foodEditFailed: vi.fn(),
-      recipeCreationFailed: vi.fn(),
-      recipeEditFailed: vi.fn(),
-      recipePhotoCleanupFailed: vi.fn(),
-    },
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
     photoRenditions: { render: vi.fn() },
     photoStore: { store: vi.fn(), open: vi.fn(), remove: vi.fn() },
   };
