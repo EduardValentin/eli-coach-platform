@@ -1,7 +1,5 @@
-import type {
-  AppConfig,
-  ManagementApiConfig,
-} from "@eli-coach-platform/config";
+import type { AppConfig } from "~/composition-root/runtime-environment";
+import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
 import type { ManagementAuthConfig } from "./management-authenticator-contract.server";
 

@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { cn } from "~/shared/design-system/lib";
 import { Button } from "~/shared/design-system/primitives";
 import { X } from "lucide-react";

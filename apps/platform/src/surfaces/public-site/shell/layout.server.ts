@@ -1,4 +1,4 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
+import { buildRedirectPath } from "~/shared/http/base-path";
 import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -12,7 +12,7 @@ import {
 } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
 
-import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
+import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 
 import { resolvePortalDestination } from "./portal-destination";
 

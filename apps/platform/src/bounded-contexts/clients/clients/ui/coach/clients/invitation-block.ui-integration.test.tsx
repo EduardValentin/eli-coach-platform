@@ -31,7 +31,7 @@ import {
   coachClientPath,
 } from "~/bounded-contexts/clients/clients/public/paths";
 
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { InvitationBlock } from "./invitation-block";
 

@@ -6,7 +6,7 @@ import { clientResourcesContext } from "~/bounded-contexts/clients/client-resour
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./resources-page";
 

@@ -1,4 +1,4 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
+import { buildRedirectPath } from "~/shared/http/base-path";
 import { Button } from "~/shared/design-system/primitives";
 import {
   useLoaderData,

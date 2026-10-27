@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import type { RecipeIcon } from "@eli-coach-platform/domain/nutrition";
 import {
   Alert,

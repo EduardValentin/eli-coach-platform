@@ -1,3 +1,3 @@
-import { target } from "./server/container.server";
+import { target } from "./composition-root/container.server";
 
 export const probe = target;

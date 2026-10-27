@@ -22,7 +22,7 @@ import { RESOURCE_UPLOAD_PARTS } from "~/bounded-contexts/clients/client-resourc
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { ClientResourcesController } from "./client-resources-controller.server";
 

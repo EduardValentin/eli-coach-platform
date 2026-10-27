@@ -1,4 +1,4 @@
-import type { ProductEmailConfig } from "@eli-coach-platform/config";
+import type { ProductEmailConfig } from "~/shared/email/product-email-config";
 import { Resend } from "resend";
 
 import { InMemoryProductEmail } from "./in-memory-product-email.server";

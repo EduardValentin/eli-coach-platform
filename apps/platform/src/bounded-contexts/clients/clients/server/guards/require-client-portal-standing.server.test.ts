@@ -14,7 +14,7 @@ import type { ClientsFeature } from "~/bounded-contexts/clients/clients/server/c
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { clientJourneyContext } from "./client-journey-context.server";
 import { clientsContext } from "./clients-context.server";

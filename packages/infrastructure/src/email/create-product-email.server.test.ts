@@ -1,4 +1,4 @@
-import type { ProductEmailConfig } from "@eli-coach-platform/config";
+import type { ProductEmailConfig } from "~/shared/email/product-email-config";
 import { describe, expect, it } from "vitest";
 
 import { createProductEmail } from "./create-product-email.server";

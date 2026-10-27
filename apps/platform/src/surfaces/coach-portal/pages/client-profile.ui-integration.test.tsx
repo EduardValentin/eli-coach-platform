@@ -34,7 +34,7 @@ import {
   coachClientPath,
   coachClientProfilePath,
 } from "~/bounded-contexts/clients/clients/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import CoachClientProfileRoute, { ErrorBoundary } from "./client-profile";
 

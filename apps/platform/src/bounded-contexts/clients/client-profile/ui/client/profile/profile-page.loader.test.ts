@@ -7,7 +7,7 @@ import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./profile-page";
 

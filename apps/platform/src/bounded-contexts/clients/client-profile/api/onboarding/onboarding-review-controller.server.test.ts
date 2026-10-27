@@ -19,7 +19,7 @@ import {
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { OnboardingReviewController } from "./onboarding-review-controller.server";
 

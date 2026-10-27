@@ -36,7 +36,7 @@ import {
   CLIENT_SETTINGS_PATH,
   COACHING_SALES_API_PATHS,
 } from "~/bounded-contexts/sales/coaching-sales/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import SettingsRoute from "./settings";
 

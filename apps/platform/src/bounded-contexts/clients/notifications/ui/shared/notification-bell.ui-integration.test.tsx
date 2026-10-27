@@ -46,7 +46,7 @@ import { NOTIFICATIONS_API_PATHS } from "~/bounded-contexts/clients/notification
 import {
   frameworkModeAction,
   frameworkModeLoader,
-} from "~/server/test-support/framework-mode-action";
+} from "~/composition-root/test-support/framework-mode-action";
 
 import { useNotificationBell } from "./notification-bell";
 

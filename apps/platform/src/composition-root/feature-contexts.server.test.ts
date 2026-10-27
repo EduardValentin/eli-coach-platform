@@ -1,0 +1,122 @@
+import { RouterContextProvider } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+
+import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";
+import { assessmentCallsContext } from "~/bounded-contexts/scheduling/assessment-calls/server/guards/assessment-calls-context.server";
+import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/guards/check-ins-context.server";
+import { clientOnboardingContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-onboarding-context.server";
+import { clientProfileContext } from "~/bounded-contexts/clients/client-profile/server/guards/client-profile-context.server";
+import { clientResourcesContext } from "~/bounded-contexts/clients/client-resources/server/guards/client-resources-context.server";
+import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards/clients-context.server";
+import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedule/server/guards/coach-schedule-context.server";
+import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/server/guards/coaching-sales-context.server";
+import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/server/guards/exercise-library-context.server";
+import { notificationsContext } from "~/bounded-contexts/clients/notifications/server/guards/notifications-context.server";
+import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-library/server/guards/nutrition-library-context.server";
+import { storeContext } from "~/bounded-contexts/sales/store/server/guards/store-context.server";
+import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
+import type { PlatformContainer } from "~/composition-root/container.server";
+import { createFeatureContextMiddleware } from "~/composition-root/feature-contexts.server";
+import { platformContext } from "~/composition-root/guards/platform-context.server";
+import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
+
+describe("createFeatureContextMiddleware", () => {
+  it("publishes every feature slice of the container on the request context and continues", async () => {
+    // arrange
+    const container = {
+      accounts: { kind: "accounts" },
+      assessmentCalls: {
+        feature: { kind: "assessment-calls" },
+        handles: { kind: "assessment-calls-handles" },
+      },
+      checkIns: { kind: "check-ins" },
+      clientOnboarding: { kind: "client-onboarding" },
+      clientProfile: {
+        feature: { kind: "client-profile" },
+        handles: { kind: "client-profile-handles" },
+      },
+      clientResources: { kind: "client-resources" },
+      clients: {
+        feature: { kind: "clients" },
+        handles: { kind: "clients-handles" },
+      },
+      coachSchedule: {
+        feature: { kind: "coach-schedule" },
+        handles: { kind: "coach-schedule-handles" },
+      },
+      coachingSales: {
+        feature: { kind: "coaching-sales" },
+        handles: { kind: "coaching-sales-handles" },
+      },
+      notifications: { kind: "notifications" },
+      exerciseLibrary: { kind: "exercise-library" },
+      nutritionLibrary: { kind: "nutrition-library" },
+      platform: {
+        appBasePath: "/",
+        botDetection: { provider: "static", token: "t" },
+        featureFlags: { kind: "flags" },
+        metadata: { kind: "meta" },
+        readyz: { kind: "readyz" },
+        stripeWebhooks: { kind: "stripe-webhooks" },
+      },
+      store: { kind: "store" },
+      waitlist: {
+        feature: { kind: "waitlist" },
+        handles: { kind: "waitlist-handles" },
+      },
+    } as unknown as PlatformContainer;
+    const getContainer = vi.fn(() => container);
+    const context = new RouterContextProvider();
+    const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+    // act
+    const response = await createFeatureContextMiddleware(getContainer)(
+      {
+        context,
+        request: new Request("http://localhost/"),
+        params: {},
+      } as never,
+      next,
+    );
+
+    // assert
+    expect(getContainer).toHaveBeenCalledTimes(1);
+    expect(context.get(accountsContext)).toBe(container.accounts);
+    expect(context.get(assessmentCallsContext)).toBe(
+      container.assessmentCalls.feature,
+    );
+    expect(context.get(checkInsContext)).toBe(container.checkIns);
+    expect(context.get(clientOnboardingContext)).toBe(
+      container.clientOnboarding,
+    );
+    expect(context.get(clientProfileContext)).toBe(
+      container.clientProfile.feature,
+    );
+    expect(context.get(clientResourcesContext)).toBe(container.clientResources);
+    expect(context.get(clientsContext)).toBe(container.clients.feature);
+    expect(context.get(coachScheduleContext)).toBe(
+      container.coachSchedule.feature,
+    );
+    expect(context.get(coachingSalesContext)).toBe(
+      container.coachingSales.feature,
+    );
+    expect(context.get(notificationsContext)).toBe(container.notifications);
+    expect(context.get(exerciseLibraryContext)).toBe(container.exerciseLibrary);
+    expect(context.get(nutritionLibraryContext)).toBe(
+      container.nutritionLibrary,
+    );
+    expect(context.get(platformContext)).toEqual({
+      featureFlags: container.platform.featureFlags,
+      metadata: container.platform.metadata,
+      readyz: container.platform.readyz,
+      stripeWebhooks: container.platform.stripeWebhooks,
+    });
+    expect(context.get(runtimeConfigContext)).toEqual({
+      appBasePath: container.platform.appBasePath,
+      botDetection: container.platform.botDetection,
+    });
+    expect(context.get(storeContext)).toBe(container.store);
+    expect(context.get(waitlistContext)).toBe(container.waitlist.feature);
+    expect(response).toBeInstanceOf(Response);
+  });
+});

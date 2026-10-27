@@ -24,7 +24,7 @@ import {
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { ClientOnboardingController } from "./client-onboarding-controller.server";
 

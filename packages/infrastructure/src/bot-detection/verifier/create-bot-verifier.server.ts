@@ -1,4 +1,4 @@
-import type { BotDetectionSettings } from "@eli-coach-platform/config";
+import type { BotDetectionSettings } from "~/shared/submission-checks/bot-detection-config";
 
 import type { BotVerifier } from "./bot-verifier-contract.server";
 import { StaticTokenBotVerifier } from "./bot-verifier.server";

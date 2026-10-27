@@ -1,0 +1,127 @@
+import { describe, expect, it, vi } from "vitest";
+
+import type { PlatformControllers } from "~/composition-root/platform-composition.server";
+import { platformContext } from "~/composition-root/guards/platform-context.server";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/composition-root/test-support/request-args";
+
+import * as featureFlagsRoute from "./feature-flags/feature-flags";
+import * as metadataRoute from "./meta/meta";
+import * as readyzRoute from "./readyz/readyz";
+import * as stripeWebhooksRoute from "./stripe-webhooks/stripe-webhooks";
+
+function platformArgs(
+  controllers: Partial<PlatformControllers>,
+  request?: Request,
+) {
+  return createRequestArgs({
+    contexts: [
+      contextEntry(platformContext, controllers as PlatformControllers),
+    ],
+    request,
+  });
+}
+
+describe("internal routes", () => {
+  it("answers app metadata from the platform context", async () => {
+    // arrange
+    const response = Response.json({
+      appName: "eli-coach-platform",
+      environment: "test",
+      version: "dev",
+    });
+    const getMetadata = vi.fn().mockResolvedValue(response);
+
+    // act
+    const loaded = metadataRoute.loader(
+      platformArgs({ metadata: { getMetadata } as never }),
+    );
+
+    // assert
+    await expect(loaded).resolves.toBe(response);
+    expect(getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers readiness status from the platform context", async () => {
+    // arrange
+    const response = Response.json({ status: "ok" });
+    const getStatus = vi.fn().mockReturnValue(response);
+
+    // act
+    const loaded = readyzRoute.loader(
+      platformArgs({ readyz: { getStatus } as never }),
+    );
+
+    // assert
+    await expect(loaded).resolves.toBe(response);
+    expect(getStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers feature flags from the platform context", async () => {
+    // arrange
+    const response = Response.json({ values: { CLIENT_PORTAL: true } });
+    const getSnapshot = vi.fn().mockResolvedValue(response);
+
+    // act
+    const loaded = featureFlagsRoute.loader(
+      platformArgs({ featureFlags: { getSnapshot } as never }),
+    );
+
+    // assert
+    await expect(loaded).resolves.toBe(response);
+    expect(getSnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a feature flag write without reading the platform context", async () => {
+    // arrange
+    const getSnapshot = vi.fn();
+    const args = platformArgs(
+      { featureFlags: { getSnapshot } as never },
+      new Request("https://eli.example/api/feature-flags", { method: "POST" }),
+    );
+
+    // act
+    const response = await featureFlagsRoute.action(args);
+
+    // assert
+    expect(response.status).toBe(405);
+    expect(response.headers.get("Allow")).toBe("GET");
+    expect(getSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("hands a posted Stripe event to the platform's webhook controller", async () => {
+    // arrange
+    const response = new Response(null, { status: 200 });
+    const handleEvent = vi.fn().mockResolvedValue(response);
+    const request = new Request("https://eli.example/api/stripe/webhooks", {
+      body: "{}",
+      method: "POST",
+    });
+
+    // act
+    const answered = await stripeWebhooksRoute.action(
+      platformArgs({ stripeWebhooks: { handleEvent } as never }, request),
+    );
+
+    // assert
+    expect(answered).toBe(response);
+    expect(handleEvent).toHaveBeenCalledWith(request);
+  });
+
+  it("refuses to read Stripe webhooks", async () => {
+    // arrange
+    const handleEvent = vi.fn();
+
+    // act
+    const response = await stripeWebhooksRoute.loader(
+      platformArgs({ stripeWebhooks: { handleEvent } as never }),
+    );
+
+    // assert
+    expect(response.status).toBe(405);
+    expect(response.headers.get("Allow")).toBe("POST");
+    expect(handleEvent).not.toHaveBeenCalled();
+  });
+});

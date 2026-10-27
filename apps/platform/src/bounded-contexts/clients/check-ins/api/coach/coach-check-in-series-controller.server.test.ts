@@ -22,7 +22,7 @@ import {
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { CoachCheckInSeriesController } from "./coach-check-in-series-controller.server";
 

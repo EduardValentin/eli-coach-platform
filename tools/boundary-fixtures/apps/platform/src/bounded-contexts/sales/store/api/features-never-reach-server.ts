@@ -1,3 +1,3 @@
-import { target } from "~/server/logger.server";
+import { target } from "~/composition-root/logger.server";
 
 export const probe = target;

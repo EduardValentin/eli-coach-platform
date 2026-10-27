@@ -16,7 +16,7 @@ import { notificationsApiRoutes } from "./bounded-contexts/clients/notifications
 import { nutritionLibraryApiRoutes } from "./bounded-contexts/programs/nutrition-library/routes";
 import { storeApiRoutes } from "./bounded-contexts/sales/store/routes";
 import { waitlistApiRoutes } from "./bounded-contexts/sales/waitlist/routes";
-import { platformApiRoutes } from "./server/api/routes";
+import { platformApiRoutes } from "./composition-root/api/routes";
 import { clientPortalRoutes } from "./surfaces/client-portal/routes";
 import { coachPortalRoutes } from "./surfaces/coach-portal/routes";
 import { publicSiteRoutes } from "./surfaces/public-site/routes";

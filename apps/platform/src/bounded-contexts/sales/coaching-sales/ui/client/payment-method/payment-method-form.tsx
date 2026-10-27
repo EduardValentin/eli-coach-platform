@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";

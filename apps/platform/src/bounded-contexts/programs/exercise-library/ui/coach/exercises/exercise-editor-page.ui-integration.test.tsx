@@ -37,7 +37,7 @@ import {
   exerciseVideoPath,
   NEW_EXERCISE_PATH,
 } from "~/bounded-contexts/programs/exercise-library/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import ExerciseEditorRoute from "./exercise-editor-page";
 import ExerciseLibraryRoute from "./exercise-library-page";

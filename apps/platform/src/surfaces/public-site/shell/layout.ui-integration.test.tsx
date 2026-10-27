@@ -36,7 +36,7 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
 import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";

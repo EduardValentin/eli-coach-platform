@@ -24,7 +24,6 @@
     "@clerk/backend": "catalog:",
     "@clerk/react-router": "catalog:",
     "@date-fns/tz": "catalog:",
-    "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/infrastructure": "workspace:*",
     "@fastify/busboy": "catalog:",

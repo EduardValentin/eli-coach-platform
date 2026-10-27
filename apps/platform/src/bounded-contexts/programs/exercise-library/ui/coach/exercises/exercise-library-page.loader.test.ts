@@ -5,7 +5,7 @@ import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-lib
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./exercise-library-page";
 

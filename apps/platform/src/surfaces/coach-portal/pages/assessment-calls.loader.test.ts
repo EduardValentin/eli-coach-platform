@@ -9,7 +9,7 @@ import { coachingSalesContext } from "~/bounded-contexts/sales/coaching-sales/se
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./assessment-calls";
 

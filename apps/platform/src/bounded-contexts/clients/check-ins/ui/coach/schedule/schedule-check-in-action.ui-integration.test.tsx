@@ -38,7 +38,7 @@ import { CHECK_INS_API_PATHS } from "~/bounded-contexts/clients/check-ins/public
 import {
   frameworkModeAction,
   frameworkModeLoader,
-} from "~/server/test-support/framework-mode-action";
+} from "~/composition-root/test-support/framework-mode-action";
 
 import { ScheduleCheckInAction } from "./schedule-check-in-action";
 

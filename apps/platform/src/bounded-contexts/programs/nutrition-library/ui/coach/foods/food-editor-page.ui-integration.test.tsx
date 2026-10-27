@@ -38,7 +38,7 @@ import {
   NEW_FOOD_PATH,
   NUTRITION_LIBRARY_API_PATHS,
 } from "~/bounded-contexts/programs/nutrition-library/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import FoodEditorRoute from "./food-editor-page";
 import NutritionRoute from "~/bounded-contexts/programs/nutrition-library/ui/coach/nutrition/nutrition-page";

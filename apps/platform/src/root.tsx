@@ -1,5 +1,5 @@
 import { ClerkProvider } from "@clerk/react-router";
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
 import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
 import { Toaster } from "~/shared/design-system/toast";

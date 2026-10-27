@@ -51,7 +51,7 @@ import {
 } from "~/bounded-contexts/clients/client-resources/public/paths";
 import type { CoachClient } from "~/bounded-contexts/clients/clients/public/coach-clients";
 import { coachClientPath } from "~/bounded-contexts/clients/clients/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import CoachClientResourcesRoute, { ErrorBoundary } from "./client-resources";
 

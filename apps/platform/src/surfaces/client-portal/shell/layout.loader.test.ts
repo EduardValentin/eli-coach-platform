@@ -24,7 +24,7 @@ import {
   contextEntry,
   createRequestArgs,
   type ContextEntry,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 

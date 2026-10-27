@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
 import { WAITLIST_API_PATH } from "~/bounded-contexts/sales/waitlist/public/paths";

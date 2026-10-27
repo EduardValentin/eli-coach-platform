@@ -1,5 +1,5 @@
 import { clerkClient, getAuth } from "@clerk/react-router/server";
-import { buildRedirectPath } from "@eli-coach-platform/config";
+import { buildRedirectPath } from "~/shared/http/base-path";
 import type { ProvisionAccountResult } from "@eli-coach-platform/domain/account";
 import { redirect, type MiddlewareFunction } from "react-router";
 

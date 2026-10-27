@@ -1,3 +1,3 @@
-import { target } from "../../../../../../../packages/config/src/runtime";
+import { target } from "~/shared/database/connection";
 
 export const probe = target;

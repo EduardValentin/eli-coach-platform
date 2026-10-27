@@ -69,8 +69,7 @@
   ],
   "apps/platform/src/bounded-contexts/sales/store/api/thin.ts": [
     "config-runtime-readers",
-    "route-thinness",
-    "workspace-by-name-app"
+    "route-thinness"
   ],
   "apps/platform/src/bounded-contexts/sales/store/api/workspace-by-name-app.ts": [
     "route-thinness-domain",
@@ -97,8 +96,7 @@
     "guards-construct-nothing"
   ],
   "apps/platform/src/bounded-contexts/sales/store/server/store-composition.server.ts": [
-    "config-runtime-readers",
-    "workspace-by-name-app"
+    "config-runtime-readers"
   ],
   "apps/platform/src/bounded-contexts/sales/store/ui/public/browser-half-server-loader.server.ts": [
     "browser-half"
@@ -128,20 +126,19 @@
   "apps/platform/src/bounded-contexts/sales/store/ui/shared/feature-shared-ui-never-imports-actor-ui.ts": [
     "feature-shared-ui-never-imports-actor-ui"
   ],
+  "apps/platform/src/composition-root/api/meta/imports-feature-flag-overrides.server.ts": [
+    "feature-flag-overrides-root-only"
+  ],
+  "apps/platform/src/composition-root/api/meta/thin.ts": [
+    "config-runtime-readers",
+    "route-thinness"
+  ],
+  "apps/platform/src/composition-root/imports-test-support.ts": [
+    "no-production-import-of-tests"
+  ],
   "apps/platform/src/root-error-page.tsx": ["composition-root"],
   "apps/platform/src/root.server.ts": ["server-guards-consumers"],
   "apps/platform/src/routes.ts": ["root-registry-to-server"],
-  "apps/platform/src/server/api/meta/imports-feature-flag-overrides.server.ts": [
-    "feature-flag-overrides-root-only"
-  ],
-  "apps/platform/src/server/api/meta/thin.ts": [
-    "config-runtime-readers",
-    "route-thinness",
-    "workspace-by-name-app"
-  ],
-  "apps/platform/src/server/imports-test-support.ts": [
-    "no-production-import-of-tests"
-  ],
   "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
     "ui-subpaths"
   ],
@@ -174,7 +171,6 @@
     "route-thinness",
     "surface-public-site-to-feature"
   ],
-  "packages/config/src/index.ts": ["config-runtime-readers"],
   "packages/domain/src/account/domain-slices.ts": ["domain-slices"],
   "packages/domain/src/product/domain-no-externals.ts": ["domain-no-externals"],
   "packages/domain/src/product/domain-slice-order.ts": [

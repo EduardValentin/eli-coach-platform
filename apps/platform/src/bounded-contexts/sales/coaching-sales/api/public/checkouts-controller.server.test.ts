@@ -8,7 +8,7 @@ import type {
 } from "@eli-coach-platform/domain/payment-link";
 import { describe, expect, it, vi } from "vitest";
 
-import { createRequestArgs } from "~/server/test-support/request-args";
+import { createRequestArgs } from "~/composition-root/test-support/request-args";
 
 import { CheckoutsController } from "./checkouts-controller.server";
 

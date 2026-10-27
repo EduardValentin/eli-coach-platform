@@ -30,7 +30,7 @@ import {
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { RecipeLibraryController } from "./recipe-library-controller.server";
 

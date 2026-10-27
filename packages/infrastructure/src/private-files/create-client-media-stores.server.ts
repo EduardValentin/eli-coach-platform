@@ -1,4 +1,4 @@
-import type { ClientFilesConfig } from "@eli-coach-platform/config";
+import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 import type {
   ClientAvatarStore,
   ProgressPhotoStore,

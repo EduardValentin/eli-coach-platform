@@ -30,7 +30,7 @@ import { CLIENT_ONBOARDING_API_PATHS } from "~/bounded-contexts/clients/client-p
 import { clientAction as approve } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-approvals";
 import { clientAction as requestDetails } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-detail-requests";
 import { clientAction as openReviewOnServer } from "~/bounded-contexts/clients/client-profile/api/onboarding/coach-review-openings";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { OnboardingPanel } from "./onboarding-panel";
 

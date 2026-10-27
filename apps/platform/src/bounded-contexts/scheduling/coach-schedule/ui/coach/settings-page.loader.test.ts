@@ -5,7 +5,7 @@ import { coachScheduleContext } from "~/bounded-contexts/scheduling/coach-schedu
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./settings-page";
 

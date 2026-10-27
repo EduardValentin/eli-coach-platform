@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 
 import type { ClientAvatarUrl } from "~/bounded-contexts/clients/client-profile/public/client-avatar";
 

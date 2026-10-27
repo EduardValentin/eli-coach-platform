@@ -19,7 +19,7 @@ import { clientAction as sendPaymentLink } from "~/bounded-contexts/sales/coachi
 import type { CallSalesState } from "~/bounded-contexts/sales/coaching-sales/public/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { PaymentLinkAction } from "./payment-link-action";
 

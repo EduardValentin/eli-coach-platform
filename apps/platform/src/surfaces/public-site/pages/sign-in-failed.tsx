@@ -1,4 +1,4 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
+import { buildRedirectPath } from "~/shared/http/base-path";
 import {
   useLoaderData,
   type LoaderFunctionArgs,

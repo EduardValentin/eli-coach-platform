@@ -10,7 +10,7 @@ import { sessionContext } from "~/bounded-contexts/access/accounts/server/guards
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import {
   composeCoachingSalesFeature,

@@ -19,7 +19,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
   /src
     /features    coaching-bundles, store, waitlist
     /surfaces    public-site, client-portal, coach-portal
-    /server      composition root, runtime wiring, resource routes no surface owns
+    /composition-root  composition root, runtime wiring, resource routes no surface owns
     /types       ambient type declarations
 /packages        config, content, db, domain, infrastructure, ui
 /deploy          per-environment Compose stacks

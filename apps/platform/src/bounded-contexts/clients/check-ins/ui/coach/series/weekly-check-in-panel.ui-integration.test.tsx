@@ -51,7 +51,7 @@ import {
 import {
   frameworkModeAction,
   frameworkModeLoader,
-} from "~/server/test-support/framework-mode-action";
+} from "~/composition-root/test-support/framework-mode-action";
 
 import { WeeklyCheckInPanel } from "./weekly-check-in-panel";
 

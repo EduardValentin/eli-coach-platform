@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { requireApiAccount } from "./require-account.server";
 import { sessionContext, type ResolvedSession } from "./session-context.server";

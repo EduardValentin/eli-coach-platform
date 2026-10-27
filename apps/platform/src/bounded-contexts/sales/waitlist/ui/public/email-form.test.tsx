@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
 import { ELI_COACH_CONTACT_EMAIL } from "~/shared/brand";
 import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "~/shared/submission-checks/email-address-copy";
 import {
@@ -31,7 +31,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import { clientAction as joinWaitlist } from "~/bounded-contexts/sales/waitlist/api/waitlist";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";

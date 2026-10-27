@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { COACH_DISPLAY_NAME, ELI_PORTRAIT_PATHS } from "~/shared/brand";
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";

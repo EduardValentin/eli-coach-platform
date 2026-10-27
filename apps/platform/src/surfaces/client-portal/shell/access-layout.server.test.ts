@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import type { AccountsFeature } from "~/bounded-contexts/access/accounts/server/accounts-composition.server";
 import { accountsContext } from "~/bounded-contexts/access/accounts/server/guards/accounts-context.server";

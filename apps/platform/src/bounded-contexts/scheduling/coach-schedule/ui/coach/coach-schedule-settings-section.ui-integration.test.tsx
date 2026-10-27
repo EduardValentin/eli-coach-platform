@@ -13,7 +13,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 import { clientAction as saveSettings } from "~/bounded-contexts/scheduling/coach-schedule/api/settings";
 import type { CoachScheduleSettings } from "~/bounded-contexts/scheduling/coach-schedule/public/coach-schedule-settings";
 import { COACH_SETTINGS_API_PATH } from "~/bounded-contexts/scheduling/coach-schedule/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { CoachScheduleSettingsSection } from "./coach-schedule-settings-section";
 

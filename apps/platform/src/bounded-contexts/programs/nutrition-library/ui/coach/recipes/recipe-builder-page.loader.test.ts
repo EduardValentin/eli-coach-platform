@@ -7,7 +7,7 @@ import { nutritionLibraryContext } from "~/bounded-contexts/programs/nutrition-l
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./recipe-builder-page";
 

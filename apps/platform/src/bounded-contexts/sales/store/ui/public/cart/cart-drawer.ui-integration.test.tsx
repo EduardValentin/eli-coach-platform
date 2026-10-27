@@ -24,7 +24,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 import { requiredName } from "~test-support/index";
 
 import { clientAction as acquireResources } from "~/bounded-contexts/sales/store/api/acquisitions/acquisitions";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider, useStoreCart } from "./cart-provider";

@@ -1,13 +1,11 @@
-import type {
-  DatabaseBootstrapEnvironment,
-  DatabaseConnection,
-} from "@eli-coach-platform/config";
 import {
+  type DatabaseBootstrapEnvironment,
+  type DatabaseConnection,
   buildPostgresConnectionString,
   getApplicationDatabaseUser,
   getBootstrapDatabaseUser,
   getMigrationDatabaseUser,
-} from "@eli-coach-platform/config/runtime";
+} from "~/shared/database/connection";
 import { createManagedDatabasePool } from "~/shared/database";
 import {
   PostgreSqlContainer,

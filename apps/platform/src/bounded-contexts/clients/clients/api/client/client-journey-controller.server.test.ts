@@ -17,7 +17,7 @@ import { clientJourneyContext } from "~/bounded-contexts/clients/clients/server/
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { ClientJourneyController } from "./client-journey-controller.server";
 

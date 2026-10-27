@@ -1,7 +1,4 @@
-import {
-  buildRedirectPath,
-  normalizeBasePath,
-} from "@eli-coach-platform/config";
+import { buildRedirectPath, normalizeBasePath } from "~/shared/http/base-path";
 import type { ClientJourney } from "@eli-coach-platform/domain/client-journey";
 import { redirect, type RouterContextProvider } from "react-router";
 

@@ -1,4 +1,4 @@
-import type { WaitlistConfig } from "@eli-coach-platform/config";
+import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
 import type { DatabaseClient } from "~/shared/database";
 import { EmailAddress } from "@eli-coach-platform/domain/email-address";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";

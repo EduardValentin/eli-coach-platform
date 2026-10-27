@@ -5,7 +5,7 @@ import type { StoreFeature } from "~/bounded-contexts/sales/store/server/store-c
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./catalog-page";
 

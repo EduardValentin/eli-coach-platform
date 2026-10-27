@@ -46,7 +46,7 @@ import type {
   RecipeCardView,
 } from "~/bounded-contexts/programs/nutrition-library/public/recipes";
 import NutritionRoute from "~/bounded-contexts/programs/nutrition-library/ui/coach/nutrition/nutrition-page";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import RecipeBuilderRoute from "./recipe-builder-page";
 

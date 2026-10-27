@@ -34,7 +34,7 @@ import {
   CLIENT_RESOURCES_API_PATHS,
   CLIENT_RESOURCES_PATH,
 } from "~/bounded-contexts/clients/client-resources/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import ClientResourcesRoute from "./resources-page";
 

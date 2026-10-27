@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "~/shared/submission-checks/bot-detection-config";
 import {
   cleanup,
   render,

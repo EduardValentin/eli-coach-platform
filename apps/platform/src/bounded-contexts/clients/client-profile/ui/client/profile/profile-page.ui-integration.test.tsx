@@ -37,7 +37,7 @@ import {
 } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { clientAction as recordMeasurements } from "~/bounded-contexts/clients/client-profile/api/client/measurements";
 import { clientAction as removePhoto } from "~/bounded-contexts/clients/client-profile/api/photos/progress-photo";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import ClientProfileRoute from "./profile-page";
 

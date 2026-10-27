@@ -1,7 +1,7 @@
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import type { IdentityConfig } from "@eli-coach-platform/config";
+import type { IdentityConfig } from "~/bounded-contexts/access/accounts/config.server";
 import { describe, expect, it } from "vitest";
 
 import { ClerkIdentityInvitations } from "./clerk-identity-invitations.server";

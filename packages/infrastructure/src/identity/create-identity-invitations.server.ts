@@ -1,5 +1,5 @@
 import { createClerkClient } from "@clerk/backend";
-import type { IdentityConfig } from "@eli-coach-platform/config";
+import type { IdentityConfig } from "~/bounded-contexts/access/accounts/config.server";
 import type { IdentityInvitations } from "@eli-coach-platform/domain/client-invitation";
 
 import { ClerkIdentityInvitations } from "./clerk-identity-invitations.server";

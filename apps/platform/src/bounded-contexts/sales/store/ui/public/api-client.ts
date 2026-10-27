@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { STORE_API_PATHS } from "~/bounded-contexts/sales/store/public/paths";

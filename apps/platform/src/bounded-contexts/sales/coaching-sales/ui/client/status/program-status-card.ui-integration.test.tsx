@@ -35,7 +35,7 @@ import {
 import { clientAction as startProgram } from "~/bounded-contexts/sales/coaching-sales/api/client/program-start";
 import { COACHING_SALES_API_PATHS } from "~/bounded-contexts/sales/coaching-sales/public/paths";
 import type { ProgramStatus } from "~/bounded-contexts/sales/coaching-sales/public/program-status";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import { ProgramStatusCard } from "./program-status-card";
 

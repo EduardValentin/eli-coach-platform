@@ -1,4 +1,4 @@
-import type { ManagementApiConfig } from "@eli-coach-platform/config";
+import type { ManagementApiConfig } from "~/bounded-contexts/sales/store/config.server";
 
 import { BearerSecretManagementAuthenticator } from "./bearer-secret-authenticator.server";
 import type { ManagementAuthenticator } from "./management-authenticator-contract.server";

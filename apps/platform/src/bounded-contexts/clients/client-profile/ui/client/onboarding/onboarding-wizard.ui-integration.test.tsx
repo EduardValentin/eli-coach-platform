@@ -44,7 +44,7 @@ import {
   CLIENT_PROFILE_API_PATHS,
 } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { CLIENT_ONBOARDING_PATH } from "~/bounded-contexts/clients/clients/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import OnboardingRoute from "./onboarding-page";
 

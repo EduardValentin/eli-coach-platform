@@ -24,7 +24,7 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}${COMPONENT}/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
-  `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${APP}composition-root/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
 const BOUNDED_CONTEXTS = [
@@ -272,35 +272,38 @@ module.exports = {
     {
       name: "composition-root",
       comment:
-        "R5: nothing imports server/** except root.server.ts, the registry (fragments only) and server/guards/ consumers.",
+        "R5: nothing imports composition-root/** except root.server.ts, the registry (fragments only) and composition-root/guards/ consumers.",
       severity: "error",
       from: {
         path: APP,
         pathNot: [
           "^apps/platform/src/root\\.server\\.ts$",
-          "^apps/platform/src/server/",
+          "^apps/platform/src/composition-root/",
           "^apps/platform/src/routes\\.ts$",
           FEATURES,
         ],
       },
       to: {
-        path: "^apps/platform/src/server/",
-        pathNot: "^apps/platform/src/server/guards/",
+        path: "^apps/platform/src/composition-root/",
+        pathNot: "^apps/platform/src/composition-root/guards/",
       },
     },
     {
       name: "feature-flag-overrides-root-only",
       comment:
-        "The container is the only production importer of server/feature-flag-overrides/: the override reader and middleware reach a request through the composition root alone.",
+        "The container and the runtime reader are the only production importers of composition-root/feature-flag-overrides/: the override reader and middleware reach a request through the composition root alone.",
       severity: "error",
       from: {
         path: APP,
         pathNot: [
-          "^apps/platform/src/server/container\\.server\\.ts$",
-          "^apps/platform/src/server/feature-flag-overrides/",
+          "^apps/platform/src/composition-root/container\\.server\\.ts$",
+          "^apps/platform/src/composition-root/runtime-environment\\.ts$",
+          "^apps/platform/src/composition-root/feature-flag-overrides/",
         ],
       },
-      to: { path: "^apps/platform/src/server/feature-flag-overrides/" },
+      to: {
+        path: "^apps/platform/src/composition-root/feature-flag-overrides/",
+      },
     },
     {
       name: "server-guards-consumers",
@@ -315,9 +318,9 @@ module.exports = {
         ],
       },
       to: {
-        path: "^apps/platform/src/server/guards/",
+        path: "^apps/platform/src/composition-root/guards/",
         pathNot:
-          "^apps/platform/src/server/guards/runtime-config-context\\.server\\.ts$",
+          "^apps/platform/src/composition-root/guards/runtime-config-context\\.server\\.ts$",
       },
     },
     {
@@ -331,26 +334,33 @@ module.exports = {
     {
       name: "config-runtime-readers",
       comment:
-        "Only the runtime-environment and database modules, the readyz controller, the migration config and the integration rig read the environment; everything else receives concern values.",
+        "Only the runtime reader, the container and database modules, the readyz controller, the migration config and the integration rig read the environment; everything else receives concern values and may import only their types.",
       severity: "error",
       from: {
         path: "^(apps|packages)/",
         pathNot: [
-          "^apps/platform/src/server/(runtime-environment|database)\\.server\\.ts$",
-          "^apps/platform/src/server/api/readyz/readyz-controller\\.server\\.ts$",
+          "^apps/platform/src/composition-root/runtime-environment\\.ts$",
+          "^apps/platform/src/composition-root/(container|database)\\.server\\.ts$",
+          "^apps/platform/src/composition-root/api/readyz/readyz-controller\\.server\\.ts$",
           "^apps/platform/db/",
           "^apps/platform/integration-test-config/",
         ],
       },
-      to: { path: "^packages/config/src/runtime\\.ts$" },
+      to: {
+        path: [
+          "^apps/platform/src/composition-root/runtime-environment\\.ts$",
+          "^apps/platform/src/shared/database/connection\\.ts$",
+        ],
+        dependencyTypesNot: ["type-only"],
+      },
     },
     {
       name: "features-never-reach-server",
       comment:
-        "Features and the app's server folder stay acyclic: a feature imports nothing under server/.",
+        "Features and the composition root stay acyclic: a feature imports nothing under composition-root/.",
       severity: "error",
       from: { path: FEATURES },
-      to: { path: "^apps/platform/src/server/" },
+      to: { path: "^apps/platform/src/composition-root/" },
     },
     {
       name: "guards-construct-nothing",
@@ -360,17 +370,18 @@ module.exports = {
       from: {
         path: [
           `${FEATURES}${COMPONENT}/server/guards/`,
-          "^apps/platform/src/server/guards/",
+          "^apps/platform/src/composition-root/guards/",
         ],
       },
       to: {
         path: "^(apps/platform/src|packages)/",
         pathNot: [
           `${FEATURES}${COMPONENT}/(public|server/guards)/`,
-          "^apps/platform/src/server/guards/",
+          "^apps/platform/src/composition-root/guards/",
           "^packages/domain/src/",
-          "^packages/config/src/(index|base-path)\\.ts$",
-          "^packages/config/src/concerns/",
+          "^apps/platform/src/shared/http/base-path\\.ts$",
+          "^apps/platform/src/shared/(email/product-email|submission-checks/bot-detection)-config\\.ts$",
+          `${FEATURES}${COMPONENT}/config\\.server\\.ts$`,
         ],
         dependencyTypesNot: ["type-only"],
       },
@@ -468,12 +479,12 @@ module.exports = {
     {
       name: "root-registry-to-server",
       comment:
-        "The registry imports only the platform route fragment from server/.",
+        "The registry imports only the platform route fragment from composition-root/.",
       severity: "error",
       from: { path: "^apps/platform/src/routes\\.ts$" },
       to: {
-        path: "^apps/platform/src/server/",
-        pathNot: "^apps/platform/src/server/api/routes\\.ts$",
+        path: "^apps/platform/src/composition-root/",
+        pathNot: "^apps/platform/src/composition-root/api/routes\\.ts$",
       },
     },
     {
@@ -509,7 +520,7 @@ module.exports = {
     {
       name: "route-thinness",
       comment:
-        "A registered route module never imports adapters/, data/, email/, a controller, shared/database or server/ outside guards/.",
+        "A registered route module never imports adapters/, data/, email/, a controller, shared/database or composition-root/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {
@@ -518,8 +529,7 @@ module.exports = {
           "-controller\\.server\\.ts$",
           "^apps/platform/src/shared/database/",
           "^packages/infrastructure/src/(?!(http|pwa)/)",
-          "^packages/config/src/runtime\\.ts$",
-          "^apps/platform/src/server/(?!guards/)",
+          "^apps/platform/src/composition-root/(?!guards/)",
           `${FEATURES}${COMPONENT}/server/(?!guards/)`,
         ],
         dependencyTypesNot: ["type-only"],
@@ -675,7 +685,7 @@ module.exports = {
           "\\.d\\.ts$",
           "\\.css$",
           "^apps/platform/src/surfaces/client-portal/api/service-worker\\.js$",
-          "^apps/platform/src/server/test-support/request-args\\.ts$",
+          "^apps/platform/src/composition-root/test-support/request-args\\.ts$",
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",
           "^apps/platform/src/surfaces/client-portal/api/readyz\\.ts$",

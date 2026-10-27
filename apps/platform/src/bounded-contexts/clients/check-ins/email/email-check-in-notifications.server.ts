@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { COACH_DISPLAY_NAME } from "~/shared/brand";
 import {
   CHECK_IN_RULES,

@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { ClientFilesConfig } from "@eli-coach-platform/config";
+import type { ClientFilesConfig } from "~/bounded-contexts/clients/client-profile/config.server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {

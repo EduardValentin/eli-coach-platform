@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type {
   CoachingSalesNotifications,

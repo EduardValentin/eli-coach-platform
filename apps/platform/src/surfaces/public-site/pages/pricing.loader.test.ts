@@ -7,7 +7,7 @@ import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./pricing";
 

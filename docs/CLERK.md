@@ -84,7 +84,7 @@ live via the Clerk CLI against the Dashboard/FAPI:
 | `CLERK_WEBHOOK_SIGNING_SECRET` | optional; only needed to receive real webhook deliveries (see below) | required once the TEST relay is in use | required (`ENVIRONMENT=production` enforces this) |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | optional | optional | set once, to the operator's Clerk subject id |
 
-All eight are read by `packages/config`'s runtime environment schema; the
+All eight are read by the composition root's runtime environment schema; the
 publishable key, secret key, sign-in URL and sign-up URL are required
 unconditionally, `IDENTITY_PROVIDER` defaults to `clerk`, and the rest are
 optional and validated only where present (a malformed value fails at boot

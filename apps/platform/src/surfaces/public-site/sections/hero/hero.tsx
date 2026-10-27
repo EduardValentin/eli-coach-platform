@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import type { WaitlistPresentation } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
 import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";

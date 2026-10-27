@@ -7,7 +7,7 @@ import { checkInsContext } from "~/bounded-contexts/clients/check-ins/server/gua
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader } from "./home";
 

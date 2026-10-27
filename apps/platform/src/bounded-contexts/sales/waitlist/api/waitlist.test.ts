@@ -12,7 +12,7 @@ import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/w
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { action } from "./waitlist";
 import { WaitlistController } from "./waitlist-controller.server";

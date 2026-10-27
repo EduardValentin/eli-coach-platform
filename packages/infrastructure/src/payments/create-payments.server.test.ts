@@ -1,7 +1,7 @@
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import type { PaymentsConfig } from "@eli-coach-platform/config";
+import type { PaymentsConfig } from "~/bounded-contexts/sales/coaching-sales/config.server";
 import Stripe from "stripe";
 import { describe, expect, it } from "vitest";
 

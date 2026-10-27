@@ -9,7 +9,7 @@ import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, meta } from "./client-profile";
 

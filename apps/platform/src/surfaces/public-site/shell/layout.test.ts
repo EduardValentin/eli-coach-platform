@@ -12,11 +12,11 @@ import { clientsContext } from "~/bounded-contexts/clients/clients/server/guards
 import { waitlistContext } from "~/bounded-contexts/sales/waitlist/server/guards/waitlist-context.server";
 import type { WaitlistFeature } from "~/bounded-contexts/sales/waitlist/server/waitlist-composition.server";
 import { presentWaitlist } from "~/bounded-contexts/sales/waitlist/ui/shared/waitlist-presentation";
-import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
+import { runtimeConfigContext } from "~/composition-root/guards/runtime-config-context.server";
 import {
   contextEntry,
   createRequestArgs,
-} from "~/server/test-support/request-args";
+} from "~/composition-root/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 

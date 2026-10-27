@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "~/shared/database";
-import type { WaitlistConfig } from "@eli-coach-platform/config";
+import type { WaitlistConfig } from "~/bounded-contexts/sales/waitlist/config.server";
 import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   PRIVACY_POLICY_VERSION,

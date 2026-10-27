@@ -30,7 +30,7 @@ import {
 } from "~/bounded-contexts/clients/client-profile/public/paths";
 import { clientAction as saveOwnIdentity } from "~/bounded-contexts/clients/clients/api/client/own-client-identity";
 import { CLIENTS_API_PATHS } from "~/bounded-contexts/clients/clients/public/paths";
-import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+import { frameworkModeAction } from "~/composition-root/test-support/framework-mode-action";
 
 import ClientProfileRoute from "./profile-page";
 

@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { joinBasePath } from "~/shared/http/base-path";
 import { cn, LABEL_CLASS } from "~/shared/design-system/lib";
 import {
   cardVariants,
