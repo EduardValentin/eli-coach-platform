@@ -1,5 +1,5 @@
 import { measureUnitsOf } from "@eli-coach-platform/domain/client-settings";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { Button } from "~/shared/design-system/primitives";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 

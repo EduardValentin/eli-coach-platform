@@ -1,4 +1,4 @@
-import { AppShell } from "@eli-coach-platform/ui/layout";
+import { AppShell } from "~/shared/design-system/layout";
 import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [

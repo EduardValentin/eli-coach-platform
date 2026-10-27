@@ -1,7 +1,7 @@
 import type { NotificationParty } from "@eli-coach-platform/domain/notification";
-import type { NotificationBellItem } from "@eli-coach-platform/ui/layout";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { pageFocusAction, toast } from "@eli-coach-platform/ui/toast";
+import type { NotificationBellItem } from "~/shared/design-system/layout";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { pageFocusAction, toast } from "~/shared/design-system/toast";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { generatePath, useFetcher, useNavigate, useSubmit } from "react-router";
 

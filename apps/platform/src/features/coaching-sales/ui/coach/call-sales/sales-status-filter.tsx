@@ -1,5 +1,5 @@
-import { CountedSelect } from "@eli-coach-platform/ui/filters";
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { CountedSelect } from "~/shared/design-system/filters";
+import { useSearchParamsWriter } from "~/shared/design-system/lib";
 
 import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";
 import {

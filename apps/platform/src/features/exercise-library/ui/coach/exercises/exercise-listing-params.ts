@@ -4,7 +4,7 @@ import {
   type ExerciseSortKey,
   type ExerciseStatus,
 } from "@eli-coach-platform/domain/exercise";
-import type { SortRule } from "@eli-coach-platform/ui/lib";
+import type { SortRule } from "~/shared/design-system/lib";
 
 export const EXERCISE_FILTER_PARAMS = {
   type: "type",

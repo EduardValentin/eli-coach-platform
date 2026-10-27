@@ -2,15 +2,15 @@ import {
   ACCEPTED_PROGRESS_PHOTO_TYPES,
   ClientAvatar,
 } from "@eli-coach-platform/domain/client-profile";
-import { cn, VALUE_LG_CLASS } from "@eli-coach-platform/ui/lib";
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
+import { cn, VALUE_LG_CLASS } from "~/shared/design-system/lib";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
 import {
   Avatar,
   Button,
   cardVariants,
   FilePickerButton,
-} from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { Camera, Trash2 } from "lucide-react";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useFetcher } from "react-router";

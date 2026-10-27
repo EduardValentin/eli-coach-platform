@@ -1,4 +1,4 @@
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { useSearchParamsWriter } from "~/shared/design-system/lib";
 
 import {
   ALL_STATUSES_OPTION,

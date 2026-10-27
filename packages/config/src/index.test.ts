@@ -11,7 +11,7 @@ import {
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
+import { CLERK_TEST_ENVIRONMENT } from "~test-support/index";
 import { describe, expect, it } from "vitest";
 
 const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";

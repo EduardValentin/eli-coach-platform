@@ -1,6 +1,6 @@
 import { SignInButton } from "@clerk/react-router";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 

@@ -1,4 +1,4 @@
-import { Button, Card } from "@eli-coach-platform/ui/primitives";
+import { Button, Card } from "~/shared/design-system/primitives";
 import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
 import {
   Link,

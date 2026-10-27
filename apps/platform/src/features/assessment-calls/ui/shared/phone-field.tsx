@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import type { ChangeEvent } from "react";
 
 import { COUNTRIES } from "~/features/assessment-calls/public/countries";

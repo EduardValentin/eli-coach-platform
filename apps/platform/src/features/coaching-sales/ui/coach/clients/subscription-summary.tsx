@@ -3,8 +3,8 @@ import {
   ABSENT_VALUE,
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
-import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/lib";
+import { PortalWidget, Reading } from "~/shared/design-system/portal";
 import { CreditCard } from "lucide-react";
 
 import { possessivePronoun } from "~/features/assessment-calls/public/visitor-profile";

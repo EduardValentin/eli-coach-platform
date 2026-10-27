@@ -1,4 +1,4 @@
-import { SettingsSection } from "@eli-coach-platform/ui/portal";
+import { SettingsSection } from "~/shared/design-system/portal";
 import { CalendarCheck } from "lucide-react";
 
 import type { ClientSettingsView } from "~/features/client-profile/public/client-settings";

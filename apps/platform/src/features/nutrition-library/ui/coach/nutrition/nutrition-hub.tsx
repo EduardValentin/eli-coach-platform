@@ -1,13 +1,13 @@
-import { ListingToolbar } from "@eli-coach-platform/ui/filters";
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { ListingToolbar } from "~/shared/design-system/filters";
+import { useSearchParamsWriter } from "~/shared/design-system/lib";
+import { PortalPageHeader } from "~/shared/design-system/portal";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@eli-coach-platform/ui/tabs";
+} from "~/shared/design-system/tabs";
 import { Plus } from "lucide-react";
 import { useRef } from "react";
 import { Link } from "react-router";

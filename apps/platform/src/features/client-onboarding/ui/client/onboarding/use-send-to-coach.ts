@@ -5,7 +5,7 @@ import {
   type OnboardingConsent,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import {
   useCallback,
   useEffect,

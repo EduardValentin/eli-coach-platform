@@ -1,15 +1,15 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
-import { VALUE_CLASS } from "@eli-coach-platform/ui/lib";
+import { VALUE_CLASS } from "~/shared/design-system/lib";
 import {
   PortalWidget,
   WidgetAction,
   WidgetLink,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import {
   DisabledActionHint,
   RowActionsMenu,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { CalendarClock, CalendarRange, CalendarX } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 

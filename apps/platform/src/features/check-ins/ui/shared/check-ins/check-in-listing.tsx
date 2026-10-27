@@ -4,7 +4,7 @@ import {
   ListPager,
   SortControl,
   type SortOption,
-} from "@eli-coach-platform/ui/filters";
+} from "~/shared/design-system/filters";
 import {
   pageOf,
   parsePage,
@@ -16,15 +16,15 @@ import {
   useSearchParamsWriter,
   type SortChoice,
   type SortDirection,
-} from "@eli-coach-platform/ui/lib";
-import { EmptyState } from "@eli-coach-platform/ui/portal";
-import { Badge, Button, SearchField } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/lib";
+import { EmptyState } from "~/shared/design-system/portal";
+import { Badge, Button, SearchField } from "~/shared/design-system/primitives";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@eli-coach-platform/ui/tabs";
+} from "~/shared/design-system/tabs";
 import { CalendarSearch, type LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation } from "react-router";

@@ -1,5 +1,5 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Button, cardVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { Button, cardVariants } from "~/shared/design-system/primitives";
 import { Heart } from "lucide-react";
 import {
   Form,

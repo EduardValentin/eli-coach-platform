@@ -2,8 +2,8 @@ import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlis
 import {
   publicEaseOut,
   useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui/motion";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/motion";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import {
   MotionConfig,
   motion,

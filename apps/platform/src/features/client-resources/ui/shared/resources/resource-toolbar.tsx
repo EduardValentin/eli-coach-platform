@@ -1,4 +1,4 @@
-import { useIsMobileViewport } from "@eli-coach-platform/ui/lib";
+import { useIsMobileViewport } from "~/shared/design-system/lib";
 import {
   SearchField,
   Select,
@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import type { ReactNode } from "react";
 
 import type { ResourceTagOptionView } from "~/features/client-resources/public/client-resources";

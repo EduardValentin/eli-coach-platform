@@ -1,8 +1,8 @@
-import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
+import { cn, useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import {
   buttonVariants,
   cardVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Check } from "lucide-react";
 import {
   Link,

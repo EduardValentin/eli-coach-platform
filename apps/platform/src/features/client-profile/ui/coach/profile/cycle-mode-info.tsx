@@ -1,4 +1,4 @@
-import { IconHint } from "@eli-coach-platform/ui/primitives";
+import { IconHint } from "~/shared/design-system/primitives";
 import { Info } from "lucide-react";
 
 import { CYCLE_MODE_LABELS } from "~/features/client-profile/ui/shared/profile/profile-fields";

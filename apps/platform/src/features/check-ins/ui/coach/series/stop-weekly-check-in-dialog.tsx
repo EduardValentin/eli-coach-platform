@@ -1,5 +1,5 @@
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { toast } from "~/shared/design-system/toast";
 import { useEffect, useEffectEvent, type RefObject } from "react";
 import { generatePath, useFetcher } from "react-router";
 

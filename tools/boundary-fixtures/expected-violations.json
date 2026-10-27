@@ -73,12 +73,10 @@
     "feature-order-store"
   ],
   "apps/platform/src/features/store/email/design-system-browser-only.server.tsx": [
-    "design-system-browser-only",
-    "workspace-by-name-app"
+    "design-system-browser-only"
   ],
   "apps/platform/src/features/store/public/design-system-browser-only.ts": [
-    "design-system-browser-only",
-    "workspace-by-name-app"
+    "design-system-browser-only"
   ],
   "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
   "apps/platform/src/features/store/server/guards/constructs.server.ts": [
@@ -101,9 +99,7 @@
   "apps/platform/src/features/store/ui/public/composition-root.tsx": [
     "features-never-reach-server"
   ],
-  "apps/platform/src/features/store/ui/public/design-system-in-browser-ui.tsx": [
-    "workspace-by-name-app"
-  ],
+  "apps/platform/src/features/store/ui/public/design-system-in-browser-ui.tsx": [],
   "apps/platform/src/features/store/ui/public/loader.server.ts": [
     "browser-half",
     "feature-server-private"
@@ -131,6 +127,16 @@
   ],
   "apps/platform/src/server/imports-test-support.ts": [
     "no-production-import-of-tests"
+  ],
+  "apps/platform/src/shared/design-system/filters/imports-layout.tsx": [
+    "ui-subpaths"
+  ],
+  "apps/platform/src/shared/design-system/lib/imports-primitives.ts": [
+    "ui-lib-is-the-base"
+  ],
+  "apps/platform/src/shared/design-system/primitives/imports-layout.tsx": [
+    "ui-primitives-import-only-lib",
+    "ui-subpaths"
   ],
   "apps/platform/src/surfaces/client-portal/pages/surface-to-feature.tsx": [
     "route-thinness",
@@ -184,11 +190,5 @@
   "packages/infrastructure/src/email/sharp-confined.server.ts": [
     "not-to-unresolvable",
     "sharp-confined"
-  ],
-  "packages/ui/src/filters/imports-layout.tsx": ["ui-subpaths"],
-  "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"],
-  "packages/ui/src/primitives/imports-layout.tsx": [
-    "ui-primitives-import-only-lib",
-    "ui-subpaths"
   ]
 }

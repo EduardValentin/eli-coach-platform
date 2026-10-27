@@ -20,6 +20,7 @@ export default defineConfig({
         currentDirectory,
         "apps/platform/integration-test-config",
       ),
+      "~test-support": resolve(currentDirectory, "apps/platform/test-support"),
     },
   },
   test: {

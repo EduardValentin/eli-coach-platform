@@ -2,9 +2,9 @@ import {
   createPwaRegistration,
   pwaSurfaceDefinitions,
 } from "@eli-coach-platform/infrastructure/pwa";
-import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { Button } from "~/shared/design-system/primitives";
 import { LogOut } from "lucide-react";
 import {
   Outlet,

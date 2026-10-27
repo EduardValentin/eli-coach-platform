@@ -1,4 +1,4 @@
-import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
+import type { PortalNavigationLink } from "~/shared/design-system/layout";
 import {
   Activity,
   CalendarDays,

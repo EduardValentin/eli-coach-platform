@@ -1,6 +1,6 @@
 import type { CoachingBundleId } from "@eli-coach-platform/domain/coaching-bundle";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { publicEaseOut } from "@eli-coach-platform/ui/motion";
+import { cn } from "~/shared/design-system/lib";
+import { publicEaseOut } from "~/shared/design-system/motion";
 import { Star } from "lucide-react";
 import { motion } from "motion/react";
 import { useId } from "react";

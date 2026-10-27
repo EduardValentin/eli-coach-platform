@@ -1,7 +1,7 @@
 import type {
   SlotPickerDays,
   SlotPickerWording,
-} from "@eli-coach-platform/ui/calendar";
+} from "~/shared/design-system/calendar";
 import { useCallback, useMemo } from "react";
 
 import {

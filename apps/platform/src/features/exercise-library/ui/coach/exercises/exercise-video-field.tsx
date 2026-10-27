@@ -7,7 +7,7 @@ import {
   InlineProblem,
   MediaOverlayActions,
   Progress,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useEffect, useId, useImperativeHandle, useRef, type Ref } from "react";
 
 import type { ExerciseView } from "~/features/exercise-library/public/exercises";

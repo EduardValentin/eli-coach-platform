@@ -1,4 +1,4 @@
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { DeadEndPage } from "~/shared/design-system/layout";
 import { CalendarX } from "lucide-react";
 import {
   useLoaderData,

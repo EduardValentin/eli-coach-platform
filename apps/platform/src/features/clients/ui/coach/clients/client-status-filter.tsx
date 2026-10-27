@@ -7,7 +7,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 
 import {
   CLIENT_STATUS_GROUPS,

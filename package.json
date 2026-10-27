@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
-    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/test-support/src packages/ui/src && pnpm check:surfaces && node tools/domain-layout.mjs",
+    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
     "client:media:local:prepare": "./scripts/dev/prepare_local_client_media.sh",
     "client:resources:local:prepare": "./scripts/dev/prepare_local_client_resources.sh",
@@ -53,7 +53,6 @@
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {
-    "@eli-coach-platform/ui": "workspace:*",
     "@eslint/js": "catalog:",
     "@lhci/cli": "catalog:",
     "@testcontainers/postgresql": "catalog:",

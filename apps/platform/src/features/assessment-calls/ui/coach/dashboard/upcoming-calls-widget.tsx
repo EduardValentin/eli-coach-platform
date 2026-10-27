@@ -1,7 +1,7 @@
-import { DashboardAppointmentRow } from "@eli-coach-platform/ui/appointments";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { PortalWidget, WidgetLink } from "@eli-coach-platform/ui/portal";
-import { Badge } from "@eli-coach-platform/ui/primitives";
+import { DashboardAppointmentRow } from "~/shared/design-system/appointments";
+import { cn } from "~/shared/design-system/lib";
+import { PortalWidget, WidgetLink } from "~/shared/design-system/portal";
+import { Badge } from "~/shared/design-system/primitives";
 import { Video } from "lucide-react";
 import { useId } from "react";
 

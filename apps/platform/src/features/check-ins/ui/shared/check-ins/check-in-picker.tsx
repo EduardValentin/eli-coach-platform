@@ -1,12 +1,12 @@
 import { MAX_CHECK_IN_NOTE_LENGTH } from "@eli-coach-platform/domain/check-in";
-import { SlotPicker } from "@eli-coach-platform/ui/calendar";
+import { SlotPicker } from "~/shared/design-system/calendar";
 import {
   ResponsiveSheetDialog,
   SheetDialogBody,
   SheetDialogFooter,
   SheetDialogHeader,
-} from "@eli-coach-platform/ui/layout";
-import { Alert, AlertAction, Button } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/layout";
+import { Alert, AlertAction, Button } from "~/shared/design-system/primitives";
 import {
   useEffect,
   useEffectEvent,

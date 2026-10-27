@@ -1,10 +1,10 @@
-import { useSaveFetcher, type SaveOutcome } from "@eli-coach-platform/ui/lib";
+import { useSaveFetcher, type SaveOutcome } from "~/shared/design-system/lib";
 import {
   PortalBackLink,
   PortalPageHeader,
-} from "@eli-coach-platform/ui/portal";
-import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/portal";
+import { Button, buttonVariants } from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";

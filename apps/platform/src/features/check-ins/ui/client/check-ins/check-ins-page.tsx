@@ -4,10 +4,10 @@ import {
   ELI_PORTRAIT_PATHS,
 } from "@eli-coach-platform/content";
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { Button, DisabledActionHint } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { PortalPageHeader } from "~/shared/design-system/portal";
+import { Button, DisabledActionHint } from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import {

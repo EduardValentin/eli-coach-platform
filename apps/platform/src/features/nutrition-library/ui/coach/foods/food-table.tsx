@@ -1,4 +1,4 @@
-import { EmptyState } from "@eli-coach-platform/ui/portal";
+import { EmptyState } from "~/shared/design-system/portal";
 import {
   Card,
   ItemIdentity,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Pencil, Utensils } from "lucide-react";
 import { useNavigate } from "react-router";
 

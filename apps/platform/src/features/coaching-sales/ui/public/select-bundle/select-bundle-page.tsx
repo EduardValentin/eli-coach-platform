@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { Button } from "~/shared/design-system/primitives";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import type { AppointmentDetail } from "@eli-coach-platform/ui/appointments";
+import type { AppointmentDetail } from "~/shared/design-system/appointments";
 import {
   cleanup,
   render,

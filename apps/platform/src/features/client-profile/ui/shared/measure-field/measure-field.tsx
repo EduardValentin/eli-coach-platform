@@ -10,7 +10,7 @@ import {
   toDisplayMeasure,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/client-settings";
-import { FieldLayout, Input } from "@eli-coach-platform/ui/primitives";
+import { FieldLayout, Input } from "~/shared/design-system/primitives";
 import {
   useController,
   type Control,

@@ -1,10 +1,10 @@
-import { PhoneFrame } from "@eli-coach-platform/ui/layout";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { PhoneFrame } from "~/shared/design-system/layout";
+import { cn } from "~/shared/design-system/lib";
 import {
   publicEase,
   publicSectionRevealViewport,
-} from "@eli-coach-platform/ui/motion";
-import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/motion";
+import { SectionEyebrow } from "~/shared/design-system/primitives";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ComponentType } from "react";

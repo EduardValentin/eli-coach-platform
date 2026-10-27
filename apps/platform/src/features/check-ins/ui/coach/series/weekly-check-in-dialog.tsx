@@ -3,22 +3,22 @@ import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
 import {
   TimeSlotButton,
   type TimeSlotDetail,
-} from "@eli-coach-platform/ui/calendar";
+} from "~/shared/design-system/calendar";
 import {
   ResponsiveSheetDialog,
   SheetDialogBody,
   SheetDialogFooter,
   SheetDialogHeader,
-} from "@eli-coach-platform/ui/layout";
-import { cn } from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/layout";
+import { cn } from "~/shared/design-system/lib";
 import {
   Alert,
   AlertAction,
   ChoiceGroup,
   ChoiceOption,
   RequiredMark,
-} from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import {
   useEffect,
   useEffectEvent,

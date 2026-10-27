@@ -1,7 +1,7 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { Button, DisabledActionHint } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { Button, DisabledActionHint } from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 

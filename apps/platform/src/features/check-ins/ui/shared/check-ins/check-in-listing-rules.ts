@@ -2,7 +2,7 @@ import {
   haveOnlyListingParamsChanged,
   type SortDirection,
   type SortRule,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 
 import {

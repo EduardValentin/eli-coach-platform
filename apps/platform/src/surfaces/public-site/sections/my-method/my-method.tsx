@@ -1,10 +1,10 @@
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   publicEase,
   useClientReducedMotionPreference,
   publicSectionRevealViewport,
-} from "@eli-coach-platform/ui/motion";
-import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/motion";
+import { SectionEyebrow } from "~/shared/design-system/primitives";
 import { motion } from "motion/react";
 import { useState } from "react";
 

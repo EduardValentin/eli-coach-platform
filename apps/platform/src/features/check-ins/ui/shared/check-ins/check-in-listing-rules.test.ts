@@ -1,4 +1,4 @@
-import { parseSort, sortParams } from "@eli-coach-platform/ui/lib";
+import { parseSort, sortParams } from "~/shared/design-system/lib";
 import { describe, expect, it } from "vitest";
 
 import type { CoachCheckIn } from "~/features/check-ins/public/check-ins";

@@ -5,12 +5,12 @@ import {
   type MeasureUnits,
   type UnitPreferenceSnapshot,
 } from "@eli-coach-platform/domain/client-settings";
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import { ABSENT_VALUE } from "~/shared/design-system/lib";
 import {
   Reading,
   SettingsBody,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import { ShieldCheck } from "lucide-react";
 
 import { labelForGender } from "~/features/assessment-calls/public/visitor-profile";

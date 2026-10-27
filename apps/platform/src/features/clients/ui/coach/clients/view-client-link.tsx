@@ -1,4 +1,4 @@
-import { RowActionLink } from "@eli-coach-platform/ui/appointments";
+import { RowActionLink } from "~/shared/design-system/appointments";
 import { UserRound } from "lucide-react";
 
 import { coachClientPath } from "~/features/clients/public/paths";

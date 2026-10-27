@@ -1,4 +1,4 @@
-import type { RowMenuAction } from "@eli-coach-platform/ui/primitives";
+import type { RowMenuAction } from "~/shared/design-system/primitives";
 import { CalendarClock, CalendarX } from "lucide-react";
 import { useState } from "react";
 

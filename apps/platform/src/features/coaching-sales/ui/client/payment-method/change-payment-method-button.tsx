@@ -1,4 +1,4 @@
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { Button } from "~/shared/design-system/primitives";
 import type { ComponentProps } from "react";
 
 import {

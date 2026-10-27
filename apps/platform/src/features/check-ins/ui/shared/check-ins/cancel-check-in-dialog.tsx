@@ -1,4 +1,4 @@
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
 
 import type { CheckInDecisions } from "./check-in-decisions";
 

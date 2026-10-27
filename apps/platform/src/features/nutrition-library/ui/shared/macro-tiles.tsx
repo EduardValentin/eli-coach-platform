@@ -1,5 +1,5 @@
 import type { RecipeMacrosSnapshot } from "@eli-coach-platform/domain/nutrition";
-import { ValueTile } from "@eli-coach-platform/ui/primitives";
+import { ValueTile } from "~/shared/design-system/primitives";
 
 import { MACRO_TILE_TONE } from "~/features/nutrition-library/ui/shared/nutrition-tints";
 

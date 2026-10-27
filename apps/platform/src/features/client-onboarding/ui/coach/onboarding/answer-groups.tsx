@@ -6,8 +6,8 @@ import {
   Badge,
   cardVariants,
   Checkbox,
-} from "@eli-coach-platform/ui/primitives";
-import { cn } from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/primitives";
+import { cn } from "~/shared/design-system/lib";
 
 import type { QuestionId } from "~/features/client-onboarding/public/onboarding";
 import type {

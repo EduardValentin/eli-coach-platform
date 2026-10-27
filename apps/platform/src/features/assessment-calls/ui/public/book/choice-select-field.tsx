@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 
 type ChoiceOption = {
   readonly label: string;

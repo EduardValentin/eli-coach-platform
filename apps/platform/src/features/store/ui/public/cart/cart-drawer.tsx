@@ -7,7 +7,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetTitle,
-} from "@eli-coach-platform/ui/overlays";
+} from "~/shared/design-system/overlays";
 import {
   Alert,
   Button,
@@ -17,7 +17,7 @@ import {
   Label,
   Link,
   linkVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   AlertCircle,
   CheckCircle2,

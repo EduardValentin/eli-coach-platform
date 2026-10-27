@@ -1,4 +1,4 @@
-import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
+import { SectionEyebrow } from "~/shared/design-system/primitives";
 import type { ReactNode } from "react";
 import {
   useLoaderData,

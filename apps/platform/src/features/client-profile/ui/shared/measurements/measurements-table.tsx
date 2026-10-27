@@ -9,8 +9,8 @@ import {
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/lib";
+import { PortalWidget } from "~/shared/design-system/portal";
 import {
   Button,
   Table,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Ruler } from "lucide-react";
 import type { ReactNode } from "react";
 

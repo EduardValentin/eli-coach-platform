@@ -40,6 +40,7 @@
         "db/**/*.ts",
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
+        "test-support/**/*.ts",
         "tooling/**/*.ts"
       ],
       "ignoreDependencies": [

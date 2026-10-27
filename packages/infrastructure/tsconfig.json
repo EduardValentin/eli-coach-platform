@@ -3,6 +3,9 @@
   "include": ["src"],
   "compilerOptions": {
     "types": ["node", "vite/client"],
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "~test-support/*": ["../../apps/platform/test-support/*"]
+    }
   }
 }

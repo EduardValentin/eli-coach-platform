@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import {
   LANDSCAPE_SAMPLE_VIDEO_PATH,
   PORTRAIT_SAMPLE_VIDEO_PATH,
-} from "@eli-coach-platform/test-support/sample-videos";
+} from "~test-support/sample-videos";
 import {
   afterAll,
   afterEach,

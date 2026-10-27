@@ -2,7 +2,7 @@ import { ClerkProvider } from "@clerk/react-router";
 import { joinBasePath } from "@eli-coach-platform/config";
 import dmSansLatinFontUrl from "@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2?url";
 import playfairDisplayLatinFontUrl from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
-import { Toaster } from "@eli-coach-platform/ui/toast";
+import { Toaster } from "~/shared/design-system/toast";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
 import type { PropsWithChildren } from "react";

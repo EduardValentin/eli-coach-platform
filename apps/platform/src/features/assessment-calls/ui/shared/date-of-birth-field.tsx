@@ -1,12 +1,12 @@
-import { Calendar } from "@eli-coach-platform/ui/calendar";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { Calendar } from "~/shared/design-system/calendar";
+import { cn } from "~/shared/design-system/lib";
 import {
   FieldError,
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
 

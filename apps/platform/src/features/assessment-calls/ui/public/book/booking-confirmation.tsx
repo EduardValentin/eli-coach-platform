@@ -1,4 +1,4 @@
-import { buttonVariants, Card } from "@eli-coach-platform/ui/primitives";
+import { buttonVariants, Card } from "~/shared/design-system/primitives";
 import { CircleCheck } from "lucide-react";
 import type { Ref } from "react";
 import { Link as RouterLink } from "react-router";

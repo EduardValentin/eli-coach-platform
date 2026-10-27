@@ -1,4 +1,4 @@
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import { useEffect, useEffectEvent, useRef } from "react";
 import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 import { useFetcher, type SubmitTarget } from "react-router";

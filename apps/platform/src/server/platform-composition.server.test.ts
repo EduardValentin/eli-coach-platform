@@ -4,7 +4,7 @@ import type {
   PaymentEvents,
   PaymentSubscriptionChangeHandler,
 } from "@eli-coach-platform/infrastructure/payments/server";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
+import { CLERK_TEST_ENVIRONMENT } from "~test-support/index";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

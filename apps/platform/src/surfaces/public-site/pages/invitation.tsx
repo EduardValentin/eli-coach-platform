@@ -1,5 +1,5 @@
 import { buildRedirectPath } from "@eli-coach-platform/config";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { Button } from "~/shared/design-system/primitives";
 import {
   useLoaderData,
   type LoaderFunctionArgs,

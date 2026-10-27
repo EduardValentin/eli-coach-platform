@@ -1,10 +1,10 @@
-import { describedByOf, toggled } from "@eli-coach-platform/ui/lib";
+import { describedByOf, toggled } from "~/shared/design-system/lib";
 import {
   SettingsBody,
   SettingsRow,
   SettingsRows,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import {
   CheckboxChip,
   IconChoiceGrid,
@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Flame, Tags, Utensils } from "lucide-react";
 import { useId } from "react";
 import type { PathValue, UseFormReturn } from "react-hook-form";

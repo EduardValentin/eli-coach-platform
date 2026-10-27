@@ -1,6 +1,6 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { createFadeUpVariants } from "@eli-coach-platform/ui/motion";
-import { cardVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { createFadeUpVariants } from "~/shared/design-system/motion";
+import { cardVariants } from "~/shared/design-system/primitives";
 import { CheckCircle2 } from "lucide-react";
 import { motion } from "motion/react";
 

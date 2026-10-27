@@ -1,4 +1,4 @@
-import { EmptyState } from "@eli-coach-platform/ui/portal";
+import { EmptyState } from "~/shared/design-system/portal";
 import { ChefHat } from "lucide-react";
 
 import type { NutritionTagView } from "~/features/nutrition-library/public/foods";

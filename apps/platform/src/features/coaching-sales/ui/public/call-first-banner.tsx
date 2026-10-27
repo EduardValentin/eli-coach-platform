@@ -1,4 +1,4 @@
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import { AlertCircle, Calendar } from "lucide-react";
 import { Link } from "react-router";
 

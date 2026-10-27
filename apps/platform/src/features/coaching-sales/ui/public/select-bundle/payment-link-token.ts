@@ -1,4 +1,4 @@
-import { useFragmentToken } from "@eli-coach-platform/ui/lib";
+import { useFragmentToken } from "~/shared/design-system/lib";
 
 const PAYMENT_LINK_STORAGE_KEY = "coaching-sales:payment-link";
 

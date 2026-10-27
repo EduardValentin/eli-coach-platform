@@ -1,5 +1,5 @@
-import { cn, VALUE_CLASS } from "@eli-coach-platform/ui/lib";
-import { CardBrandMark } from "@eli-coach-platform/ui/primitives";
+import { cn, VALUE_CLASS } from "~/shared/design-system/lib";
+import { CardBrandMark } from "~/shared/design-system/primitives";
 
 import type { ClientSettings } from "~/features/coaching-sales/public/client-subscription";
 

@@ -9,7 +9,7 @@ import {
   Input,
   Label,
   Textarea,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { ChevronLeft, Mail, User, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode, Ref } from "react";

@@ -4,14 +4,14 @@ import {
   ProgressPhoto,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   Card,
   CheckboxField,
   FieldCaption,
   FieldError,
   MediaRemoveButton,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Image as ImageIcon } from "lucide-react";
 import { useEffect, useId, useState, type ChangeEvent } from "react";
 

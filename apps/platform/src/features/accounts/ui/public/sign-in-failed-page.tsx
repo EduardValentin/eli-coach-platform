@@ -1,6 +1,6 @@
 import { SignInButton } from "@clerk/react-router";
-import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { DeadEndPage } from "~/shared/design-system/layout";
+import { Button } from "~/shared/design-system/primitives";
 import { KeyRound, RotateCcw } from "lucide-react";
 import {
   useLoaderData,

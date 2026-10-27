@@ -23,7 +23,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { requiredName } from "@eli-coach-platform/test-support";
+import { requiredName } from "~test-support/index";
 
 import { clientAction as acquireResources } from "~/features/store/api/acquisitions/acquisitions";
 import { frameworkModeAction } from "~/server/test-support/framework-mode-action";

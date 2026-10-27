@@ -1,8 +1,8 @@
-import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
-import { useConfirmedJsonAction } from "@eli-coach-platform/ui/toast";
+import { cn, useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { PortalWidget } from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
+import { useConfirmedJsonAction } from "~/shared/design-system/toast";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useRevalidator } from "react-router";
 

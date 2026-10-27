@@ -1,4 +1,4 @@
-import { WidgetLink } from "@eli-coach-platform/ui/portal";
+import { WidgetLink } from "~/shared/design-system/portal";
 
 import {
   MEASUREMENTS_COPY,

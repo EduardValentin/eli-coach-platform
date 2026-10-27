@@ -2,13 +2,13 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   CollapsiblePortalWidget,
   PortalWidget,
-} from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
+} from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
 import { ClipboardList, MessageSquareText } from "lucide-react";
 import { useState, type ReactNode } from "react";
 

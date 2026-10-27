@@ -1,33 +1,33 @@
 import {
   AppointmentCard,
   type AppointmentDetail,
-} from "@eli-coach-platform/ui/appointments";
+} from "~/shared/design-system/appointments";
 import {
   ListPager,
   ListingToolbar,
   SortControl,
   type SortOption,
-} from "@eli-coach-platform/ui/filters";
+} from "~/shared/design-system/filters";
 import {
   cn,
   pageOf,
   type ListPage,
   type SortChoice,
   type SortDirection,
-} from "@eli-coach-platform/ui/lib";
-import { EmptyState } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/lib";
+import { EmptyState } from "~/shared/design-system/portal";
 import {
   Badge,
   Button,
   cardVariants,
   SearchField,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@eli-coach-platform/ui/tabs";
+} from "~/shared/design-system/tabs";
 import { CalendarSearch } from "lucide-react";
 import type { ReactNode } from "react";
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";

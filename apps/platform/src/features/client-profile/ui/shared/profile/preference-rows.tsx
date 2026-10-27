@@ -1,6 +1,6 @@
 import type { PreferredChannel } from "@eli-coach-platform/domain/client-settings";
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
-import { SettingsRow, SettingsRows } from "@eli-coach-platform/ui/portal";
+import { ABSENT_VALUE } from "~/shared/design-system/lib";
+import { SettingsRow, SettingsRows } from "~/shared/design-system/portal";
 
 import { WEEKDAY_LABELS } from "~/features/coach-schedule/public/coach-schedule-settings";
 import type { ClientProfileView } from "~/features/client-profile/public/client-profile";

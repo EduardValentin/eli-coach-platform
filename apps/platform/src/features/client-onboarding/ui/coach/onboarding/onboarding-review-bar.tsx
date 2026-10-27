@@ -1,4 +1,4 @@
-import { Button, Label, Textarea } from "@eli-coach-platform/ui/primitives";
+import { Button, Label, Textarea } from "~/shared/design-system/primitives";
 import { useId, useState } from "react";
 
 import {

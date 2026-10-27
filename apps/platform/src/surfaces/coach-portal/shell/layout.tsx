@@ -1,4 +1,4 @@
-import { NotificationBell, PortalShell } from "@eli-coach-platform/ui/layout";
+import { NotificationBell, PortalShell } from "~/shared/design-system/layout";
 import { Dumbbell } from "lucide-react";
 import { useState } from "react";
 import {

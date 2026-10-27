@@ -4,13 +4,13 @@ import {
   type OnboardingFormId,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasureUnits } from "@eli-coach-platform/domain/client-settings";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   Alert,
   Button,
   buttonVariants,
   cardVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useId, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";

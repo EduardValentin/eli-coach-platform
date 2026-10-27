@@ -1,9 +1,9 @@
-import { PhoneLink, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
+import { PhoneLink, useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import {
   PortalWidget,
   Reading,
   WidgetLink,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import { UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 

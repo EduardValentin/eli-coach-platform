@@ -1,5 +1,5 @@
-import { SettingsRows, SettingsSection } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { SettingsRows, SettingsSection } from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
 import type { LucideIcon } from "lucide-react";
 import { useId, type FormEventHandler, type ReactNode } from "react";
 

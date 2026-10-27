@@ -1,4 +1,4 @@
-import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
+import { useDisplayTimeZone } from "~/shared/design-system/lib";
 import { useEffect, useState } from "react";
 
 export type CoachClock = {

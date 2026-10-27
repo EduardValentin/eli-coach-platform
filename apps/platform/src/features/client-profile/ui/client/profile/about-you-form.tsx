@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { User } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

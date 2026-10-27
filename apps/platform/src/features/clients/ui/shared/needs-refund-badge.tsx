@@ -1,4 +1,4 @@
-import { Badge } from "@eli-coach-platform/ui/primitives";
+import { Badge } from "~/shared/design-system/primitives";
 
 const NEEDS_REFUND_LABEL = "Needs refund";
 

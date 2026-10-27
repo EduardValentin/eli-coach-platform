@@ -1,6 +1,6 @@
 import type { ResourceSortKey } from "@eli-coach-platform/domain/client-resources";
-import type { SortChoice } from "@eli-coach-platform/ui/lib";
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import type { SortChoice } from "~/shared/design-system/lib";
+import { useSearchParamsWriter } from "~/shared/design-system/lib";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import {

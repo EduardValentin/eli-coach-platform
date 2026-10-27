@@ -1,4 +1,4 @@
-import { Badge } from "@eli-coach-platform/ui/primitives";
+import { Badge } from "~/shared/design-system/primitives";
 import { Clock, Leaf, Moon, Sparkles, type LucideIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 

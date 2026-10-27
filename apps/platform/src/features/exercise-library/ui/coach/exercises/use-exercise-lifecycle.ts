@@ -1,4 +1,4 @@
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import { useEffect, useEffectEvent, useState, type RefObject } from "react";
 import { useFetcher, useSubmit } from "react-router";
 

@@ -1,4 +1,4 @@
-import { InlineProblem } from "@eli-coach-platform/ui/primitives";
+import { InlineProblem } from "~/shared/design-system/primitives";
 
 import {
   PAYMENT_METHOD_UNAVAILABLE_MESSAGE,

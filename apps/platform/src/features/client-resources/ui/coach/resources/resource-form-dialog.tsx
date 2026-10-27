@@ -11,7 +11,7 @@ import {
   SheetDialogActions,
   SheetDialogBody,
   SheetDialogHeader,
-} from "@eli-coach-platform/ui/layout";
+} from "~/shared/design-system/layout";
 import {
   Alert,
   Button,
@@ -23,8 +23,8 @@ import {
   Progress,
   TagInput,
   Textarea,
-} from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import {
   useEffect,
   useId,

@@ -17,7 +17,7 @@ import { MAX_EXERCISE_VIDEO_BYTES } from "@eli-coach-platform/domain/exercise";
 import {
   LANDSCAPE_SAMPLE_VIDEO_PATH,
   PORTRAIT_SAMPLE_VIDEO_PATH,
-} from "@eli-coach-platform/test-support/sample-videos";
+} from "~test-support/sample-videos";
 
 import { platformDirectory } from "./repo-paths";
 

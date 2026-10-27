@@ -1,4 +1,4 @@
-import { CheckboxField } from "@eli-coach-platform/ui/primitives";
+import { CheckboxField } from "~/shared/design-system/primitives";
 import { Link } from "react-router";
 
 type ConsentAgreement = "specialCategory" | "disclaimer";

@@ -1,5 +1,5 @@
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { SettingsBody, SettingsRow } from "@eli-coach-platform/ui/portal";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { SettingsBody, SettingsRow } from "~/shared/design-system/portal";
 import { useState } from "react";
 import { useController, type Control } from "react-hook-form";
 

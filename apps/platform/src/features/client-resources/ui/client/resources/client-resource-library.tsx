@@ -1,4 +1,4 @@
-import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { EmptyState, PortalPageHeader } from "~/shared/design-system/portal";
 import { FolderOpen } from "lucide-react";
 import { useFetchers, useRevalidator, useSubmit } from "react-router";
 

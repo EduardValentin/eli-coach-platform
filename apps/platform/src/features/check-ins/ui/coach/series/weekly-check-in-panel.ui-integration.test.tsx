@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type { Weekday } from "@eli-coach-platform/domain/coach-availability";
-import { Toaster } from "@eli-coach-platform/ui/toast";
+import { Toaster } from "~/shared/design-system/toast";
 import {
   cleanup,
   render,

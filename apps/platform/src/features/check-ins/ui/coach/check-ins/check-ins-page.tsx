@@ -1,5 +1,5 @@
-import { useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
+import { PortalPageHeader } from "~/shared/design-system/portal";
 import { CalendarDays, CalendarPlus, Clock } from "lucide-react";
 import type { ReactNode } from "react";
 import {

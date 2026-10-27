@@ -3,11 +3,11 @@ import {
   formatDayMonthYear,
   PhoneLink,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   CollapsiblePortalWidget,
   Reading,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import { Video } from "lucide-react";
 
 import {

@@ -1,6 +1,6 @@
-import type { AppointmentDetail } from "@eli-coach-platform/ui/appointments";
-import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import type { AppointmentDetail } from "~/shared/design-system/appointments";
+import { haveOnlyListingParamsChanged } from "~/shared/design-system/lib";
+import { PortalPageHeader } from "~/shared/design-system/portal";
 import {
   useLoaderData,
   type LoaderFunctionArgs,

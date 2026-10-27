@@ -1,9 +1,9 @@
-import { toggled } from "@eli-coach-platform/ui/lib";
+import { toggled } from "~/shared/design-system/lib";
 import {
   SettingsRow,
   SettingsRows,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import {
   CheckboxChip,
   ChoiceGroup,
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Dumbbell, Film, Target } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import type { UseFormReturn } from "react-hook-form";

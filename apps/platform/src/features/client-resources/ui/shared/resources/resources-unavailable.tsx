@@ -1,5 +1,5 @@
-import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { DeadEndPanel } from "~/shared/design-system/layout";
+import { Button } from "~/shared/design-system/primitives";
 import { CloudOff } from "lucide-react";
 
 export function ResourcesUnavailable({ onRetry }: { onRetry: () => void }) {

@@ -1,4 +1,4 @@
-import type { SortChoice, SortRule } from "@eli-coach-platform/ui/lib";
+import type { SortChoice, SortRule } from "~/shared/design-system/lib";
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";
 import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/public/paths";

@@ -1,5 +1,5 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
+import { CLERK_TEST_ENVIRONMENT } from "~test-support/index";
 import { describe, expect, it, vi } from "vitest";
 
 import { createPlatformDatabase, DatabaseClosedError } from "./database.server";

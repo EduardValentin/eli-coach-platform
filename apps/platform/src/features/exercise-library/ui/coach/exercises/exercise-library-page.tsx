@@ -1,6 +1,6 @@
-import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { haveOnlyListingParamsChanged } from "~/shared/design-system/lib";
+import { PortalPageHeader } from "~/shared/design-system/portal";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import { Plus } from "lucide-react";
 import { useRef } from "react";
 import {

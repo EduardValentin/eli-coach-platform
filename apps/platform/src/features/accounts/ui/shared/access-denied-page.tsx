@@ -1,4 +1,4 @@
-import { DeadEndLink, DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { DeadEndLink, DeadEndPage } from "~/shared/design-system/layout";
 import { Lock } from "lucide-react";
 
 import {

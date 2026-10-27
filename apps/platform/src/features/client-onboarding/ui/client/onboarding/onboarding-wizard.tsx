@@ -3,9 +3,9 @@ import {
   resolveIntro,
   type OnboardingFormAnswers,
 } from "@eli-coach-platform/domain/client-onboarding";
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
-import { Alert, Stepper } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
+import { Alert, Stepper } from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 

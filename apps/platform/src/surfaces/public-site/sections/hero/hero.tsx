@@ -1,12 +1,12 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { MotionConfig, motion, type Transition } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { buttonVariants } from "~/shared/design-system/primitives";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 

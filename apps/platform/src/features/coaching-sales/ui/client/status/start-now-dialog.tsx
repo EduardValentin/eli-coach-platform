@@ -1,5 +1,5 @@
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { InlineProblem } from "@eli-coach-platform/ui/primitives";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { InlineProblem } from "~/shared/design-system/primitives";
 
 import { IMMEDIATE_START_BODY } from "~/features/coaching-sales/ui/shared/immediate-start-copy";
 

@@ -12,7 +12,7 @@ import {
   windowsInstaller,
   windowsProgram,
   wordDocument,
-} from "@eli-coach-platform/test-support/sample-documents";
+} from "~test-support/sample-documents";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 

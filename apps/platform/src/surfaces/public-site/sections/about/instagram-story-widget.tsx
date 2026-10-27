@@ -1,6 +1,6 @@
-import { PhoneFrame } from "@eli-coach-platform/ui/layout";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { PhoneFrame } from "~/shared/design-system/layout";
+import { cn } from "~/shared/design-system/lib";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import { Heart, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {

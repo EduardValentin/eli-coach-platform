@@ -1,5 +1,5 @@
 import type { ResourceFileKind } from "@eli-coach-platform/domain/client-resources";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   FileImage,
   FileSpreadsheet,

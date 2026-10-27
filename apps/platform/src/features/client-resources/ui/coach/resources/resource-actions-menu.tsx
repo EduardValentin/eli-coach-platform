@@ -1,4 +1,4 @@
-import { Button, RowActionsMenu } from "@eli-coach-platform/ui/primitives";
+import { Button, RowActionsMenu } from "~/shared/design-system/primitives";
 import { Pencil, Trash2 } from "lucide-react";
 
 export type ResourceManagement = {

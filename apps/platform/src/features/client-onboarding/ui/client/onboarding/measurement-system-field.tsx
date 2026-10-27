@@ -7,7 +7,7 @@ import {
   ChoiceGroup,
   ChoiceOption,
   Legend,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useId } from "react";
 
 import { useUnitPreference } from "./unit-preference-store";

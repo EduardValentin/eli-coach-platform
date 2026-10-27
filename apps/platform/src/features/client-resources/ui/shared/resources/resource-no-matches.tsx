@@ -1,5 +1,5 @@
-import { EmptyState } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { EmptyState } from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
 import { SearchX } from "lucide-react";
 
 import { RESOURCE_NO_MATCHES_COPY } from "./resource-copy";

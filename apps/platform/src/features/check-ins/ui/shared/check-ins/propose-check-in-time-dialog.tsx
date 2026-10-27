@@ -1,4 +1,4 @@
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import { generatePath, useRevalidator } from "react-router";
 
 import { CHECK_INS_API_PATHS } from "~/features/check-ins/public/paths";

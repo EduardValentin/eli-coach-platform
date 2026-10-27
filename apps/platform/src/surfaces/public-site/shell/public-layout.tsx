@@ -4,7 +4,7 @@ import type { PublicSessionState } from "~/features/accounts/public/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
 import { STORE_PATH } from "~/features/store/public/paths";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn, MAIN_CONTENT_ID } from "@eli-coach-platform/ui/lib";
+import { cn, MAIN_CONTENT_ID } from "~/shared/design-system/lib";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {

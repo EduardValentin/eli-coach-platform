@@ -1,23 +1,23 @@
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { useClientReducedMotionPreference } from "~/shared/design-system/motion";
 import {
   ViewerDialog,
   ViewerDialogClose,
   ViewerDialogContent,
   ViewerDialogTitle,
   ZoomableImage,
-} from "@eli-coach-platform/ui/overlays";
+} from "~/shared/design-system/overlays";
 import {
   cn,
   formatDayMonth,
   useCalendarDayTimeZone,
   useIsDesktopViewport,
-} from "@eli-coach-platform/ui/lib";
-import { Reading } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/lib";
+import { Reading } from "~/shared/design-system/portal";
 import {
   Badge,
   Button,
   buttonVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   ArrowLeft,
   ChevronLeft,

@@ -3,12 +3,12 @@ import type {
   OnboardingFormAnswers,
   OnboardingFormDefinition,
 } from "@eli-coach-platform/domain/client-onboarding";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   Button,
   cardVariants,
   Legend,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useCallback, useEffect, useId, useMemo, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 

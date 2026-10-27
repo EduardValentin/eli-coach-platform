@@ -1,4 +1,4 @@
-import { IconHint } from "@eli-coach-platform/ui/primitives";
+import { IconHint } from "~/shared/design-system/primitives";
 import { TriangleAlert } from "lucide-react";
 
 import type { SubmittedReview } from "~/features/client-onboarding/public/onboarding-review";

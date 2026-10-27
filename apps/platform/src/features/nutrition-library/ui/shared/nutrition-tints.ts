@@ -1,5 +1,5 @@
 import type { FoodCategory } from "@eli-coach-platform/domain/nutrition";
-import type { ValueTile } from "@eli-coach-platform/ui/primitives";
+import type { ValueTile } from "~/shared/design-system/primitives";
 import type { ComponentProps } from "react";
 
 type MacroTone = ComponentProps<typeof ValueTile>["tone"];

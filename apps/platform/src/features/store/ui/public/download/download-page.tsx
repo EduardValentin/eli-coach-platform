@@ -1,5 +1,5 @@
-import { DeadEndLink } from "@eli-coach-platform/ui/layout";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { DeadEndLink } from "~/shared/design-system/layout";
+import { Button } from "~/shared/design-system/primitives";
 import { Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 

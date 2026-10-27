@@ -1,7 +1,7 @@
 import {
   signStripeWebhook,
   type StripeWebhookEvent,
-} from "@eli-coach-platform/test-support/stripe-webhook-signature";
+} from "~test-support/stripe-webhook-signature";
 
 import { loadIntegrationTestEnvironment } from "./runtime-environment";
 

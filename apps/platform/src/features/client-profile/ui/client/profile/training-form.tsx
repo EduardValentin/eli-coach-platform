@@ -3,7 +3,7 @@ import {
   measureUnitsOf,
   type UnitPreferenceSnapshot,
 } from "@eli-coach-platform/domain/client-settings";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { toast } from "~/shared/design-system/toast";
 import { Dumbbell } from "lucide-react";
 import { useForm } from "react-hook-form";
 

@@ -2,13 +2,13 @@ import {
   describedByOf,
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   SettingsRow,
   SettingsRows,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
 import { CreditCard } from "lucide-react";
 import { useRef } from "react";
 import { useSearchParams } from "react-router";

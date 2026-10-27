@@ -1,4 +1,4 @@
-import { haveOnlyListingParamsChanged } from "@eli-coach-platform/ui/lib";
+import { haveOnlyListingParamsChanged } from "~/shared/design-system/lib";
 import {
   useLoaderData,
   type LoaderFunctionArgs,

@@ -5,9 +5,9 @@ import {
   measureUnitLabel,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/client-settings";
-import { DateField } from "@eli-coach-platform/ui/calendar";
-import { cn, describedByOf } from "@eli-coach-platform/ui/lib";
-import { SettingsBody } from "@eli-coach-platform/ui/portal";
+import { DateField } from "~/shared/design-system/calendar";
+import { cn, describedByOf } from "~/shared/design-system/lib";
+import { SettingsBody } from "~/shared/design-system/portal";
 import {
   CheckboxChip,
   CheckboxField,
@@ -26,7 +26,7 @@ import {
   SelectValue,
   Textarea,
   type FieldControlAttributes,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useId, type ReactElement, type ReactNode } from "react";
 import {
   useController,

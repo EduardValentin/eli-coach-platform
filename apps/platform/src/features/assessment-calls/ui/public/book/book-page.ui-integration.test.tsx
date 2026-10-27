@@ -32,7 +32,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { requiredName } from "@eli-coach-platform/test-support";
+import { requiredName } from "~test-support/index";
 
 import { clientAction as bookAssessmentCall } from "~/features/assessment-calls/api/booking/bookings";
 import {

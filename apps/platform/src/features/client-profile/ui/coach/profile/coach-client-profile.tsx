@@ -2,7 +2,7 @@ import {
   PortalBackLink,
   PortalPageHeader,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import { CalendarCheck } from "lucide-react";
 
 import {

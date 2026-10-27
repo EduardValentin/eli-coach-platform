@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { Toaster } from "@eli-coach-platform/ui/toast";
+import { Toaster } from "~/shared/design-system/toast";
 import {
   cleanup,
   render,

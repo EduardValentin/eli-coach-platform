@@ -1,6 +1,6 @@
-import { PORTAL_PAGE_TITLE_CLASS } from "@eli-coach-platform/ui/lib";
-import { PortalBackLink } from "@eli-coach-platform/ui/portal";
-import { Avatar, buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { PORTAL_PAGE_TITLE_CLASS } from "~/shared/design-system/lib";
+import { PortalBackLink } from "~/shared/design-system/portal";
+import { Avatar, buttonVariants } from "~/shared/design-system/primitives";
 import { FolderOpen } from "lucide-react";
 import { useState } from "react";
 import {

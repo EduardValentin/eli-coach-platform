@@ -1,5 +1,5 @@
-import { VALUE_CLASS } from "@eli-coach-platform/ui/lib";
-import { IconHint } from "@eli-coach-platform/ui/primitives";
+import { VALUE_CLASS } from "~/shared/design-system/lib";
+import { IconHint } from "~/shared/design-system/primitives";
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 

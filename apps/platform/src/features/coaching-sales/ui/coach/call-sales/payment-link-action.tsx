@@ -1,6 +1,6 @@
-import { RowActionButton } from "@eli-coach-platform/ui/appointments";
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { useConfirmedJsonAction } from "@eli-coach-platform/ui/toast";
+import { RowActionButton } from "~/shared/design-system/appointments";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { useConfirmedJsonAction } from "~/shared/design-system/toast";
 import { Send } from "lucide-react";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";

@@ -1,4 +1,4 @@
-import { formatDayMonthYear } from "@eli-coach-platform/ui/lib";
+import { formatDayMonthYear } from "~/shared/design-system/lib";
 
 export const PAYMENT_CONFIRMED_HEADING = "Payment confirmed";
 

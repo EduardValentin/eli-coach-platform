@@ -1,4 +1,4 @@
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 
 type ProgressPhotoFrameShape = "square" | "portrait";
 

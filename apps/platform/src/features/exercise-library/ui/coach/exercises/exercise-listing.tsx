@@ -14,7 +14,7 @@ import {
   CountedSelect,
   ListingToolbar,
   ListPager,
-} from "@eli-coach-platform/ui/filters";
+} from "~/shared/design-system/filters";
 import {
   headerSort,
   pageOf,
@@ -27,9 +27,9 @@ import {
   useSearchParamsWriter,
   type SortChoice,
   type SortDirection,
-} from "@eli-coach-platform/ui/lib";
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { EmptyState } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/lib";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { EmptyState } from "~/shared/design-system/portal";
 import {
   Badge,
   Button,
@@ -46,7 +46,7 @@ import {
   TableRow,
   type RowMenuAction,
   type TableSort,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   Activity,
   Archive,

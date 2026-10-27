@@ -1,4 +1,4 @@
-import { PortalBackLink } from "@eli-coach-platform/ui/portal";
+import { PortalBackLink } from "~/shared/design-system/portal";
 import {
   isRouteErrorResponse,
   useLoaderData,

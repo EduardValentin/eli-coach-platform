@@ -4,6 +4,7 @@
     "src",
     "integration-test-config",
     "tooling",
+    "test-support",
     "e2e",
     "react-router.config.ts",
     "vite.config.ts",
@@ -12,7 +13,8 @@
   "compilerOptions": {
     "paths": {
       "~/*": ["./src/*"],
-      "~integration-test-config/*": ["./integration-test-config/*"]
+      "~integration-test-config/*": ["./integration-test-config/*"],
+      "~test-support/*": ["./test-support/*"]
     },
     "rootDirs": [".", "./.react-router/types"],
     "types": ["node", "vite/client"]

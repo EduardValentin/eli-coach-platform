@@ -1,14 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-import {
-  pdfWithPages,
-  plainText,
-} from "@eli-coach-platform/test-support/sample-documents";
+import { pdfWithPages, plainText } from "~test-support/sample-documents";
 import {
   LANDSCAPE_SAMPLE_VIDEO_PATH,
   PORTRAIT_SAMPLE_VIDEO_PATH,
-} from "@eli-coach-platform/test-support/sample-videos";
+} from "~test-support/sample-videos";
 import { describe, expect, it } from "vitest";
 
 import { createExerciseVideoFormatDetector } from "./file-type-exercise-video-format-detector.server";

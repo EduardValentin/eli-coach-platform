@@ -3,8 +3,8 @@ import {
   CANONICAL_MEASURE_UNITS,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/client-settings";
-import { SettingsBody, SettingsSection } from "@eli-coach-platform/ui/portal";
-import { toast } from "@eli-coach-platform/ui/toast";
+import { SettingsBody, SettingsSection } from "~/shared/design-system/portal";
+import { toast } from "~/shared/design-system/toast";
 import { Dumbbell, Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 

@@ -1,9 +1,9 @@
 import {
   DashboardAppointmentRow,
   RowActionLink,
-} from "@eli-coach-platform/ui/appointments";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { PortalWidget, WidgetLink } from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/appointments";
+import { cn } from "~/shared/design-system/lib";
+import { PortalWidget, WidgetLink } from "~/shared/design-system/portal";
 import { ClipboardCheck } from "lucide-react";
 import { useId } from "react";
 

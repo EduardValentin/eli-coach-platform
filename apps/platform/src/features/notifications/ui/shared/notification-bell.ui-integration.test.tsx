@@ -2,8 +2,8 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { NotificationBell } from "@eli-coach-platform/ui/layout";
-import { toast, Toaster } from "@eli-coach-platform/ui/toast";
+import { NotificationBell } from "~/shared/design-system/layout";
+import { toast, Toaster } from "~/shared/design-system/toast";
 import {
   act,
   cleanup,

@@ -1,4 +1,4 @@
-import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
+import { DeadEndPanel } from "~/shared/design-system/layout";
 import { VideoOff } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 

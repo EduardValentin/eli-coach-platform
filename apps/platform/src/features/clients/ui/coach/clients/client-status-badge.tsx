@@ -1,4 +1,4 @@
-import { Badge } from "@eli-coach-platform/ui/primitives";
+import { Badge } from "~/shared/design-system/primitives";
 
 import {
   CLIENT_STATUS_LABELS,

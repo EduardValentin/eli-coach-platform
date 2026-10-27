@@ -3,12 +3,12 @@ import {
   type LegalDocumentBlock,
   type LegalText,
 } from "@eli-coach-platform/content";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   cardVariants,
   Link,
   linkVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Fragment } from "react";
 
 type LegalDocumentViewProps = {

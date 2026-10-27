@@ -1,9 +1,9 @@
 import { ArrowRight } from "lucide-react";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   buttonVariants,
   cardVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   Link,
   useLoaderData,

@@ -21,7 +21,7 @@ import {
   type ExerciseUnit,
   type Muscle,
 } from "@eli-coach-platform/domain/exercise";
-import { toggled } from "@eli-coach-platform/ui/lib";
+import { toggled } from "~/shared/design-system/lib";
 import type { FieldErrors, Resolver } from "react-hook-form";
 
 import {

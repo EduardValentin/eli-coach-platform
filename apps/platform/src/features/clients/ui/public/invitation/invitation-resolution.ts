@@ -1,4 +1,4 @@
-import { useFragmentToken } from "@eli-coach-platform/ui/lib";
+import { useFragmentToken } from "~/shared/design-system/lib";
 import { useEffect } from "react";
 import { useFetcher } from "react-router";
 

@@ -3,8 +3,8 @@ import {
   useIsDesktopViewport,
   useSaveFetcher,
   type SaveOutcome,
-} from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/lib";
+import { toast } from "~/shared/design-system/toast";
 import {
   useEffect,
   useEffectEvent,

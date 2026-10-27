@@ -11,7 +11,7 @@ import {
   describedByOf,
   LABEL_CLASS,
   toggled,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   Button,
   buttonVariants,
@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import {
   ArrowLeft,
   GripVertical,

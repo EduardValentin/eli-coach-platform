@@ -1,9 +1,9 @@
-import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { cn, useSearchParamsWriter } from "~/shared/design-system/lib";
 import {
   buttonVariants,
   Card,
   cardVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";

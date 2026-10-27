@@ -1,10 +1,10 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { cn, LABEL_CLASS } from "@eli-coach-platform/ui/lib";
+import { cn, LABEL_CLASS } from "~/shared/design-system/lib";
 import {
   cardVariants,
   ItemVisual,
   RowActionsMenu,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Clock, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 

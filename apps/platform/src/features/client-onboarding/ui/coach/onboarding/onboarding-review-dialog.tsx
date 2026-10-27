@@ -1,5 +1,5 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { Dialog, DialogContent } from "@eli-coach-platform/ui/overlays";
+import { Dialog, DialogContent } from "~/shared/design-system/overlays";
 import { useState } from "react";
 
 import type { QuestionId } from "~/features/client-onboarding/public/onboarding";

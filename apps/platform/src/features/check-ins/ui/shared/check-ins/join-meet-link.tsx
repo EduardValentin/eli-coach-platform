@@ -1,4 +1,4 @@
-import { JoinLink } from "@eli-coach-platform/ui/appointments";
+import { JoinLink } from "~/shared/design-system/appointments";
 import { useEffect, useState } from "react";
 
 import type { ListedCheckIn } from "./check-in-listing-rules";

@@ -1,5 +1,5 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Badge, cardVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { Badge, cardVariants } from "~/shared/design-system/primitives";
 import { useId, type ReactNode } from "react";
 
 import type { ClientResourceView } from "~/features/client-resources/public/client-resources";

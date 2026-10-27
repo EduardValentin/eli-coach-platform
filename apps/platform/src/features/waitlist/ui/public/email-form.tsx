@@ -4,12 +4,12 @@ import {
   WAITLIST_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn } from "~/shared/design-system/lib";
 import {
   publicEaseOut,
   useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui/motion";
-import { Button } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/motion";
+import { Button } from "~/shared/design-system/primitives";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import type { FormEvent } from "react";

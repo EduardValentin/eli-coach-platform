@@ -1,4 +1,4 @@
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { PortalPageHeader } from "~/shared/design-system/portal";
 import {
   useLoaderData,
   useOutletContext,

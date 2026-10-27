@@ -3,7 +3,7 @@ import {
   SettingsRow,
   SettingsRows,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
+} from "~/shared/design-system/portal";
 import {
   Alert,
   Button,
@@ -15,9 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@eli-coach-platform/ui/primitives";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { toast } from "~/shared/design-system/toast";
 import { CalendarClock, TriangleAlert } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {

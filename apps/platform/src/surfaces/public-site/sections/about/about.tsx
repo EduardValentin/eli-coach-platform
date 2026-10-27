@@ -2,7 +2,7 @@ import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlis
 import {
   SectionEyebrow,
   buttonVariants,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 

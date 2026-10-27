@@ -1,4 +1,4 @@
-import { parseSort, type SortChoice } from "@eli-coach-platform/ui/lib";
+import { parseSort, type SortChoice } from "~/shared/design-system/lib";
 import { describe, expect, it } from "vitest";
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/public/assessment-calls";

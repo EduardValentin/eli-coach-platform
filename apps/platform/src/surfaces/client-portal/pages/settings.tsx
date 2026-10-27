@@ -1,5 +1,5 @@
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
-import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { PortalPageHeader } from "~/shared/design-system/portal";
 import {
   useLoaderData,
   type LoaderFunctionArgs,

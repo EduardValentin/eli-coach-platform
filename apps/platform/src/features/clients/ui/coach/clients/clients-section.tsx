@@ -1,10 +1,10 @@
-import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
-import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { DeadEndPanel } from "~/shared/design-system/layout";
+import { EmptyState, PortalPageHeader } from "~/shared/design-system/portal";
 import {
   Button,
   cardVariants,
   SearchField,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { Users, UserX } from "lucide-react";
 
 import type { RosterClient } from "~/features/clients/public/coach-clients";

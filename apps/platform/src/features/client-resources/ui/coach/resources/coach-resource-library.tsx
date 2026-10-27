@@ -1,6 +1,6 @@
-import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { ConfirmDialog } from "~/shared/design-system/overlays";
+import { EmptyState, PortalPageHeader } from "~/shared/design-system/portal";
+import { Button } from "~/shared/design-system/primitives";
 import { FolderOpen, Plus } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useRevalidator } from "react-router";

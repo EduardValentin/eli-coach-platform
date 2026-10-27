@@ -5,8 +5,8 @@ import {
   SheetDialogActions,
   SheetDialogBody,
   SheetDialogHeader,
-} from "@eli-coach-platform/ui/layout";
-import { Button } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/layout";
+import { Button } from "~/shared/design-system/primitives";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 

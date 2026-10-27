@@ -1,4 +1,4 @@
-import { formatDayMonth } from "@eli-coach-platform/ui/lib";
+import { formatDayMonth } from "~/shared/design-system/lib";
 import type { ClientInvitationReading } from "~/features/clients/public/coach-clients";
 
 export function invitationStateLine(

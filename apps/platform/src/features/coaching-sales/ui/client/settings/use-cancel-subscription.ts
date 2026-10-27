@@ -1,12 +1,12 @@
 import {
   useConfirmedFetcherDialog,
   type DialogAfterAnswer,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/lib";
+import { toast } from "~/shared/design-system/toast";
 import { useRef, type RefObject } from "react";
 
 import {

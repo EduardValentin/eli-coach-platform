@@ -1,6 +1,6 @@
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
+import { CLERK_TEST_ENVIRONMENT } from "~test-support/index";
 import { describe, expect, it } from "vitest";
 
 import { ReadyzController } from "./readyz-controller.server";

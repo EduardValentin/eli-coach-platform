@@ -1,12 +1,12 @@
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   InlineProblem,
   RadioGroup,
   RadioGroupItem,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { useId, type ReactNode, type Ref } from "react";
 import { Link } from "react-router";
 

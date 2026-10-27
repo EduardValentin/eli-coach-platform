@@ -1,3 +1,3 @@
-import { target } from "../../../../../../packages/ui/src/layout/app-shell";
+import { target } from "../../../shared/design-system/layout/app-shell";
 
 export const probe = target;

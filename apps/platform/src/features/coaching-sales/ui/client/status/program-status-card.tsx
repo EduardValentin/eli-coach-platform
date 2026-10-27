@@ -1,9 +1,9 @@
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/lib";
+import { PortalWidget } from "~/shared/design-system/portal";
+import { buttonVariants } from "~/shared/design-system/primitives";
 import { ClipboardList } from "lucide-react";
 import { Link } from "react-router";
 

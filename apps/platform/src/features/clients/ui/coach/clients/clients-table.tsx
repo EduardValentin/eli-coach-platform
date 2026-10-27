@@ -1,7 +1,7 @@
 import {
   ABSENT_VALUE,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   Avatar,
   buttonVariants,
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
   type TableSort,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";

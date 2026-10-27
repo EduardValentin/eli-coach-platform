@@ -1,5 +1,5 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Link } from "@eli-coach-platform/ui/primitives";
+import { cn } from "~/shared/design-system/lib";
+import { Link } from "~/shared/design-system/primitives";
 
 type LegalNavProps = {
   className?: string;

@@ -1,5 +1,5 @@
-import { PortalWidget, WidgetLink } from "@eli-coach-platform/ui/portal";
-import { DateTimeLabel } from "@eli-coach-platform/ui/primitives";
+import { PortalWidget, WidgetLink } from "~/shared/design-system/portal";
+import { DateTimeLabel } from "~/shared/design-system/primitives";
 import { CalendarCheck } from "lucide-react";
 import { useId } from "react";
 

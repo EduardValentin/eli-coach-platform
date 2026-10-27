@@ -1,7 +1,7 @@
 import {
   useConfirmedFetcherDialog,
   type DialogAfterAnswer,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import { programStartedSchema } from "~/features/coaching-sales/public/client-subscription";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/public/paths";
 

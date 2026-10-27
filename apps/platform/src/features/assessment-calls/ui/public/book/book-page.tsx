@@ -1,6 +1,6 @@
-import { SlotPicker } from "@eli-coach-platform/ui/calendar";
-import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
-import { Alert, Button } from "@eli-coach-platform/ui/primitives";
+import { SlotPicker } from "~/shared/design-system/calendar";
+import { useDisplayTimeZone } from "~/shared/design-system/lib";
+import { Alert, Button } from "~/shared/design-system/primitives";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   useCallback,

@@ -1,4 +1,4 @@
-import { Alert, AlertAction } from "@eli-coach-platform/ui/primitives";
+import { Alert, AlertAction } from "~/shared/design-system/primitives";
 
 export function UnavailableSlots(props: { onRetry: () => void }) {
   return (

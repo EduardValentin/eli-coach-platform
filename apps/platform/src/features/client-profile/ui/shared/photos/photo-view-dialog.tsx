@@ -6,15 +6,15 @@ import {
   cn,
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+} from "~/shared/design-system/lib";
 import {
   ConfirmDialog,
   Dialog,
   DialogContent,
   Lightbox,
   type LightboxPhoto,
-} from "@eli-coach-platform/ui/overlays";
-import { Button } from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/overlays";
+import { Button } from "~/shared/design-system/primitives";
 import { useState } from "react";
 
 import {

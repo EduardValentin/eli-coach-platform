@@ -1,4 +1,4 @@
-import { RowActionLink } from "@eli-coach-platform/ui/appointments";
+import { RowActionLink } from "~/shared/design-system/appointments";
 import { Video } from "lucide-react";
 
 type JoinCallTone = "default" | "live";

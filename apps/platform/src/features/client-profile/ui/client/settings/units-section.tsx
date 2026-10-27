@@ -8,9 +8,9 @@ import {
   SettingsRow,
   SettingsRows,
   SettingsSection,
-} from "@eli-coach-platform/ui/portal";
-import { ChoiceGroup, ChoiceOption } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
+} from "~/shared/design-system/portal";
+import { ChoiceGroup, ChoiceOption } from "~/shared/design-system/primitives";
+import { toast } from "~/shared/design-system/toast";
 import { SlidersHorizontal } from "lucide-react";
 import { useEffect, useEffectEvent } from "react";
 import { useFetcher } from "react-router";

@@ -1,12 +1,12 @@
 import {
   AppointmentCard,
   type AppointmentAttendee,
-} from "@eli-coach-platform/ui/appointments";
+} from "~/shared/design-system/appointments";
 import {
   Badge,
   RowActionsMenu,
   type RowMenuAction,
-} from "@eli-coach-platform/ui/primitives";
+} from "~/shared/design-system/primitives";
 import type { ReactNode } from "react";
 
 import { checkInMomentOf } from "./check-in-listing";
